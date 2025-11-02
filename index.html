@@ -3,27 +3,61 @@
 <head>
   <meta charset="utf-8" />
   <title>Pong — Single Player</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
-    html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    .wrap { display:grid; place-items:center; height:100%; gap:12px; }
-    canvas { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:1px solid #192544; border-radius:10px; touch-action:none; }
-    .hud { text-align:center; font-size:14px; color:var(--muted); user-select:none }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+    
+    #canvas-container { position:relative; width:100%; max-width:min(90vw, 1200px); max-height:min(70vh, 800px); aspect-ratio:3/2; }
+    canvas { width:100%; height:100%; display:block; background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; touch-action:none; image-rendering:auto; }
+    
+    .touch-zone { position:absolute; left:0; top:0; width:50%; height:100%; background:transparent; z-index:1; }
+    .touch-zone.active { background:rgba(90,173,221,0.1); }
+    
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(90vw, 1200px); }
     .hud b { color:var(--fg); }
-    .badge { display:inline-block; padding:2px 8px; border:1px solid #2a3a5f; border-radius:999px; margin:0 4px; color:var(--fg); }
-    .hint { color:#b6c7e6; }
+    .badge { display:inline-block; padding:clamp(4px, 1vw, 8px) clamp(8px, 1.5vw, 12px); border:1px solid #2a3a5f; border-radius:999px; margin:0 clamp(2px, 0.5vw, 4px); color:var(--fg); font-size:clamp(11px, 1.8vw, 14px); }
+    .hint { color:#b6c7e6; font-size:clamp(14px, 2.5vw, 18px); margin-top:clamp(4px, 1vh, 8px); min-height:1.5em; }
+    
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
+    .btn { padding:clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 28px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(14px, 2.5vw, 18px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(80px, 15vw, 120px); min-height:44px; transition:all 0.2s; }
+    .btn:active:not(:disabled) { background:#3a4a7f; transform:scale(0.95); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn.primary { background:#5ad; border-color:#6be; }
+    .btn.primary:active { background:#4bc; }
+    .btn.difficulty { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); min-width:clamp(70px, 12vw, 100px); }
+    .btn.difficulty.active { background:#5ad; border-color:#6be; }
+    
+    @media (max-width: 768px) {
+      .hud { font-size:clamp(10px, 3vw, 14px); }
+      .badge { font-size:clamp(9px, 2.5vw, 12px); padding:clamp(3px, 1vw, 6px) clamp(6px, 1.2vw, 10px); }
+      .hint { font-size:clamp(12px, 3.5vw, 16px); }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <canvas id="game" width="900" height="600"></canvas>
+    <div id="canvas-container">
+      <canvas id="game" width="900" height="600"></canvas>
+      <div class="touch-zone" id="touch-zone"></div>
+    </div>
     <div class="hud">
-      <span class="badge">W/S or ↑/↓ to move</span>
-      <span class="badge">P: Pause</span>
-      <span class="badge">R: Restart</span>
-      <span class="badge">1/2/3: Difficulty</span>
+      <div class="badge" id="touch-indicator">Touch left side to move paddle</div>
       <div class="hint" id="hint"></div>
+      <div class="buttons" id="button-container">
+        <button class="btn primary" id="serve-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+      </div>
+      <div class="buttons">
+        <button class="btn difficulty" data-diff="1">Easy</button>
+        <button class="btn difficulty" data-diff="2">Medium</button>
+        <button class="btn difficulty" data-diff="3">Hard</button>
+      </div>
     </div>
   </div>
 
@@ -80,9 +114,39 @@
       }
     }
 
-    // --- State ---
+    // --- Detect touch device ---
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // --- Responsive canvas setup ---
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
+    const canvasContainer = document.getElementById("canvas-container");
+    let canvasScale = 1;
+    
+    function resizeCanvas() {
+      const containerRect = canvasContainer.getBoundingClientRect();
+      const containerAspect = containerRect.width / containerRect.height;
+      const gameAspect = cfg.court.w / cfg.court.h;
+      
+      if (containerAspect > gameAspect) {
+        // Container is wider - fit to height
+        canvas.style.width = 'auto';
+        canvas.style.height = '100%';
+      } else {
+        // Container is taller - fit to width
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
+      }
+      
+      const rect = canvas.getBoundingClientRect();
+      canvasScale = rect.width / cfg.court.w;
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+    
+    // --- State ---
     const k = { up:false, down:false };
     let lastT = 0, paused = false, over = false;
     const state = {
@@ -94,8 +158,40 @@
     };
 
     const hintEl = document.getElementById("hint");
+    const touchIndicator = document.getElementById("touch-indicator");
+    const serveBtn = document.getElementById("serve-btn");
+    const pauseBtn = document.getElementById("pause-btn");
+    const restartBtn = document.getElementById("restart-btn");
+    const difficultyBtns = document.querySelectorAll(".btn.difficulty");
+    const touchZone = document.getElementById("touch-zone");
+    
     function setHint(msg){ hintEl.textContent = msg; }
-    setHint("Press SPACE to serve.");
+    function updateDifficultyUI() {
+      difficultyBtns.forEach(btn => {
+        const diff = +btn.dataset.diff;
+        btn.classList.toggle('active', diff === state.difficulty);
+      });
+    }
+    function updateServeButton() {
+      if (paused && !over) {
+        serveBtn.textContent = "RESUME";
+        serveBtn.disabled = false;
+      } else if (awaitingSpace && !over) {
+        serveBtn.textContent = "START";
+        serveBtn.disabled = false;
+      } else {
+        serveBtn.textContent = "START";
+        serveBtn.disabled = true;
+      }
+    }
+    
+    if (isTouchDevice) {
+      touchIndicator.style.display = 'inline-block';
+    } else {
+      touchIndicator.style.display = 'none';
+    }
+    
+    setHint(isTouchDevice ? "Tap START to serve." : "Press SPACE to serve.");
 
     // Serve gate: don't move ball until SPACE pressed after reset
     let awaitingSpace = true;
@@ -103,11 +199,12 @@
     function resetRound() {
       state.ball.x = cfg.court.w/2; state.ball.y = cfg.court.h/2;
       state.ball.spd = cfg.ball.speed * globalSpeedScale;
-      // Freeze ball until Space is pressed
+      // Freeze ball until Space/Tap is pressed
       state.ball.vx = 0;
       state.ball.vy = 0;
       awaitingSpace = true;
       over = false;
+      updateServeButton();
     }
 
     function newGame() {
@@ -116,7 +213,10 @@
       state.serveTo = random()<0.5 ? "player":"cpu";
       state.difficulty = cfg.difficulty;
       resetRound();
-      setHint(`Difficulty: ${["Easy","Medium","Hard"][state.difficulty-1]}. SPACE to serve.`);
+      updateDifficultyUI();
+      const diffText = ["Easy","Medium","Hard"][state.difficulty-1];
+      setHint(isTouchDevice ? `Difficulty: ${diffText}. Tap START to serve.` : `Difficulty: ${diffText}. SPACE to serve.`);
+      updateServeButton();
     }
     newGame();
 
@@ -124,45 +224,142 @@
     addEventListener("keydown", e=>{
       if (e.code === "KeyW" || e.code === "ArrowUp")  k.up = true;
       if (e.code === "KeyS" || e.code === "ArrowDown") k.down = true;
-      if (e.code === "KeyP") { paused = !paused; }
+      if (e.code === "KeyP") { 
+        if (!over) {
+          paused = !paused;
+          updateServeButton();
+          setHint(paused ? (isTouchDevice ? "Paused. Tap RESUME to continue." : "Paused. Press SPACE to resume.") : "");
+        }
+      }
       if (e.code === "KeyR") { newGame(); }
       if (e.code === "Space") {
         if (!paused && !over && awaitingSpace) {
-          // Serve the ball
-          const dir = (state.serveTo === "player") ? 1 : -1;
-          state.ball.vx = dir * state.ball.spd;
-          state.ball.vy = (random()*2-1) * (state.ball.spd*0.45);
-          awaitingSpace = false;
-          setHint("");
+          serveBall();
+        } else if (paused) {
+          paused = false;
+          updateServeButton();
         }
       }
-      if (e.code === "Digit1") { state.difficulty = 1; setHint("Easy"); }
-      if (e.code === "Digit2") { state.difficulty = 2; setHint("Medium"); }
-      if (e.code === "Digit3") { state.difficulty = 3; setHint("Hard"); }
+      if (e.code === "Digit1") { state.difficulty = 1; updateDifficultyUI(); setHint("Easy"); }
+      if (e.code === "Digit2") { state.difficulty = 2; updateDifficultyUI(); setHint("Medium"); }
+      if (e.code === "Digit3") { state.difficulty = 3; updateDifficultyUI(); setHint("Hard"); }
     });
     addEventListener("keyup", e=>{
       if (e.code === "KeyW" || e.code === "ArrowUp")  k.up = false;
       if (e.code === "KeyS" || e.code === "ArrowDown") k.down = false;
     });
 
-    // Touch controls (drag left half of canvas to move player paddle)
-    // Works on tablets/phones for mobile-friendly gameplay
+    // Button event handlers
+    function serveBall() {
+      if (!paused && !over && awaitingSpace) {
+        const dir = (state.serveTo === "player") ? 1 : -1;
+        state.ball.vx = dir * state.ball.spd;
+        state.ball.vy = (random()*2-1) * (state.ball.spd*0.45);
+        awaitingSpace = false;
+        setHint("");
+        updateServeButton();
+      } else if (paused) {
+        paused = false;
+        updateServeButton();
+      }
+    }
+    
+    serveBtn.addEventListener("click", serveBall);
+    
+    pauseBtn.addEventListener("click", () => {
+      if (!over) {
+        paused = !paused;
+        updateServeButton();
+        setHint(paused ? "Paused. Tap RESUME to continue." : "");
+      }
+    });
+    
+    restartBtn.addEventListener("click", () => {
+      newGame();
+    });
+    
+    difficultyBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.difficulty = +btn.dataset.diff;
+        updateDifficultyUI();
+        const diffText = ["Easy","Medium","Hard"][state.difficulty-1];
+        setHint(`Difficulty: ${diffText}`);
+      });
+    });
+
+    // Improved touch controls - paddle follows finger on left side
     let touchY = null;
-    canvas.addEventListener("pointerdown", (e)=>{
+    let isTouching = false;
+    
+    function getCanvasCoordinates(e) {
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      if (x < cfg.court.w/2) touchY = y;
+      const scaleX = cfg.court.w / rect.width;
+      const scaleY = cfg.court.h / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+    
+    // Touch zone (left half) for paddle control
+    touchZone.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      const coords = getCanvasCoordinates(e);
+      touchY = coords.y;
+      isTouching = true;
+      touchZone.classList.add('active');
+      
+      // If awaiting serve, tap anywhere to serve
+      if (awaitingSpace && !paused && !over) {
+        serveBall();
+      }
     });
-    canvas.addEventListener("pointermove", (e)=>{
-      if (touchY==null) return;
-      const rect = canvas.getBoundingClientRect();
-      const y = e.clientY - rect.top;
-      const dy = y - touchY;
-      state.player.y = clamp(state.player.y + dy, 0, cfg.court.h - cfg.paddle.h);
-      touchY = y;
+    
+    touchZone.addEventListener("pointermove", (e) => {
+      if (!isTouching) return;
+      e.preventDefault();
+      const coords = getCanvasCoordinates(e);
+      const targetY = coords.y - cfg.paddle.h / 2;
+      state.player.y = clamp(targetY, 0, cfg.court.h - cfg.paddle.h);
     });
-    addEventListener("pointerup", ()=>{ touchY = null; });
+    
+    touchZone.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      isTouching = false;
+      touchZone.classList.remove('active');
+    });
+    
+    touchZone.addEventListener("pointercancel", (e) => {
+      e.preventDefault();
+      isTouching = false;
+      touchZone.classList.remove('active');
+    });
+    
+    // Also support tap-to-serve anywhere on canvas when waiting
+    canvas.addEventListener("pointerdown", (e) => {
+      if (awaitingSpace && !paused && !over && !isTouching) {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        // Only serve if not in touch zone (right side)
+        if (x >= rect.width / 2) {
+          serveBall();
+        }
+      }
+    });
+    
+    // Prevent default touch behaviors
+    document.addEventListener('touchstart', (e) => {
+      if (e.target === canvas || e.target === touchZone) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (e.target === canvas || e.target === touchZone) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     // --- Utils ---
     function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -246,10 +443,13 @@
     function handleScore(){
       if (state.player.score >= cfg.scoreToWin || state.cpu.score >= cfg.scoreToWin){
         over = true;
-        setHint(`${state.player.score > state.cpu.score ? "You win!" : "CPU wins!"} Press R to restart.`);
+        const winner = state.player.score > state.cpu.score ? "You win!" : "CPU wins!";
+        setHint(isTouchDevice ? `${winner} Tap RESTART to play again.` : `${winner} Press R to restart.`);
+        updateServeButton();
       } else {
         resetRound();
-        setHint("SPACE to serve.");
+        setHint(isTouchDevice ? "Tap START to serve." : "SPACE to serve.");
+        updateServeButton();
       }
     }
 
