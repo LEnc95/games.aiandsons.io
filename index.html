@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Pong — Single Player</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    .wrap { display:grid; place-items:center; height:100%; gap:12px; }
+    canvas { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:1px solid #192544; border-radius:10px; touch-action:none; }
+    .hud { text-align:center; font-size:14px; color:var(--muted); user-select:none }
+    .hud b { color:var(--fg); }
+    .badge { display:inline-block; padding:2px 8px; border:1px solid #2a3a5f; border-radius:999px; margin:0 4px; color:var(--fg); }
+    .hint { color:#b6c7e6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <canvas id="game" width="900" height="600"></canvas>
+    <div class="hud">
+      <span class="badge">W/S or ↑/↓ to move</span>
+      <span class="badge">P: Pause</span>
+      <span class="badge">R: Restart</span>
+      <span class="badge">1/2/3: Difficulty</span>
+      <div class="hint" id="hint"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- Config ---
+    // URL Parameters (for easy A/B testing with kids):
+    //   ?difficulty=1|2|3  - Set difficulty (1=Easy, 2=Medium, 3=Hard), default: 2
+    //   ?speed=0.5-2.0     - Global speed multiplier, default: 1.0
+    //   ?seed=<number>     - Deterministic seed for reproducible gameplay (debugging), default: random
+    // Example: ?difficulty=3&speed=1.5&seed=12345
+    const cfg = {
+      court: { w: 900, h: 600, lineW: 4 },
+      paddle: { w: 14, h: 100, speed: 420 },
+      ball:   { r: 9, speed: 360, speedGainOnHit: 1.035, maxSpeed: 980 },
+      scoreToWin: 7,
+      difficulty: 2, // 1=Easy 2=Medium 3=Hard
+      cpuBaseSpeed: 360,
+      cpuMistakeBase: 0.18, // higher = more "mistakes"
+    };
+
+    // Parse URL params overrides e.g. ?difficulty=3&speed=1.2&seed=12345
+    const params = new URLSearchParams(location.search);
+    if (params.get("difficulty")) cfg.difficulty = Math.max(1, Math.min(3, +params.get("difficulty")||2));
+    const globalSpeedScale = Math.max(0.5, Math.min(2, +(params.get("speed")||1)));
+    const seedParam = params.get("seed");
+
+    // --- Seeded PRNG (for deterministic gameplay when seed provided) ---
+    // Linear Congruential Generator for reproducible randomness
+    let rngState = null;
+    let useSeededRNG = false;
+    let initialSeed = null;
+
+    if (seedParam !== null && seedParam !== "") {
+      const seed = +seedParam || 0;
+      initialSeed = Math.abs(seed) % 2147483647;
+      rngState = initialSeed;
+      useSeededRNG = true;
+    }
+
+    function random() {
+      if (useSeededRNG) {
+        // LCG: (a * state + c) mod m
+        // Using constants from Numerical Recipes
+        rngState = (rngState * 1664525 + 1013904223) % 2147483647;
+        return rngState / 2147483647; // Normalize to [0, 1)
+      } else {
+        return Math.random();
+      }
+    }
+
+    function resetRNG() {
+      if (useSeededRNG && initialSeed !== null) {
+        rngState = initialSeed; // Reset to initial seed for full reproducibility
+      }
+    }
+
+    // --- State ---
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const k = { up:false, down:false };
+    let lastT = 0, paused = false, over = false;
+    const state = {
+      player: { x: 30,  y: (cfg.court.h- cfg.paddle.h)/2, vy:0, score:0 },
+      cpu:    { x: cfg.court.w-30-cfg.paddle.w, y: (cfg.court.h-cfg.paddle.h)/2, vy:0, score:0 },
+      ball:   { x: cfg.court.w/2, y: cfg.court.h/2, vx: 0, vy: 0, spd: cfg.ball.speed },
+      serveTo: "player",
+      difficulty: cfg.difficulty
+    };
+
+    const hintEl = document.getElementById("hint");
+    function setHint(msg){ hintEl.textContent = msg; }
+    setHint("Press SPACE to serve.");
+
+    // Serve gate: don't move ball until SPACE pressed after reset
+    let awaitingSpace = true;
+
+    function resetRound() {
+      state.ball.x = cfg.court.w/2; state.ball.y = cfg.court.h/2;
+      state.ball.spd = cfg.ball.speed * globalSpeedScale;
+      // Freeze ball until Space is pressed
+      state.ball.vx = 0;
+      state.ball.vy = 0;
+      awaitingSpace = true;
+      over = false;
+    }
+
+    function newGame() {
+      resetRNG(); // Reset RNG state for reproducible gameplay
+      state.player.score = 0; state.cpu.score = 0;
+      state.serveTo = random()<0.5 ? "player":"cpu";
+      state.difficulty = cfg.difficulty;
+      resetRound();
+      setHint(`Difficulty: ${["Easy","Medium","Hard"][state.difficulty-1]}. SPACE to serve.`);
+    }
+    newGame();
+
+    // --- Input ---
+    addEventListener("keydown", e=>{
+      if (e.code === "KeyW" || e.code === "ArrowUp")  k.up = true;
+      if (e.code === "KeyS" || e.code === "ArrowDown") k.down = true;
+      if (e.code === "KeyP") { paused = !paused; }
+      if (e.code === "KeyR") { newGame(); }
+      if (e.code === "Space") {
+        if (!paused && !over && awaitingSpace) {
+          // Serve the ball
+          const dir = (state.serveTo === "player") ? 1 : -1;
+          state.ball.vx = dir * state.ball.spd;
+          state.ball.vy = (random()*2-1) * (state.ball.spd*0.45);
+          awaitingSpace = false;
+          setHint("");
+        }
+      }
+      if (e.code === "Digit1") { state.difficulty = 1; setHint("Easy"); }
+      if (e.code === "Digit2") { state.difficulty = 2; setHint("Medium"); }
+      if (e.code === "Digit3") { state.difficulty = 3; setHint("Hard"); }
+    });
+    addEventListener("keyup", e=>{
+      if (e.code === "KeyW" || e.code === "ArrowUp")  k.up = false;
+      if (e.code === "KeyS" || e.code === "ArrowDown") k.down = false;
+    });
+
+    // Touch controls (drag left half of canvas to move player paddle)
+    // Works on tablets/phones for mobile-friendly gameplay
+    let touchY = null;
+    canvas.addEventListener("pointerdown", (e)=>{
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (x < cfg.court.w/2) touchY = y;
+    });
+    canvas.addEventListener("pointermove", (e)=>{
+      if (touchY==null) return;
+      const rect = canvas.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const dy = y - touchY;
+      state.player.y = clamp(state.player.y + dy, 0, cfg.court.h - cfg.paddle.h);
+      touchY = y;
+    });
+    addEventListener("pointerup", ()=>{ touchY = null; });
+
+    // --- Utils ---
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+    function sign(v){ return v<0?-1:1; }
+
+    // --- Core update ---
+    // Frame-rate independent physics using delta time (dt)
+    function update(dt){
+      if (paused || over || awaitingSpace) return;
+
+      // Player move (W/S or Arrow keys)
+      const pSpeed = cfg.paddle.speed * globalSpeedScale;
+      const axis = (k.up? -1:0) + (k.down? +1:0);
+      state.player.y = clamp(state.player.y + axis * pSpeed * dt, 0, cfg.court.h - cfg.paddle.h);
+
+      // CPU AI - Adaptive difficulty with error factor
+      // Higher difficulty = faster movement, lower mistake rate
+      const diff = state.difficulty;
+      const cpuTarget = state.ball.y - cfg.paddle.h/2;
+      const mistakeScale = cfg.cpuMistakeBase * (diff===1?1.5:(diff===2?1.0:0.6));
+      const noise = (random()*2-1) * mistakeScale * cfg.court.h; // offset target
+      const adjustedTarget = clamp(cpuTarget + noise, 0, cfg.court.h - cfg.paddle.h);
+      const cpuSpeed = (cfg.cpuBaseSpeed + (diff-1)*120) * globalSpeedScale;
+      const dir = Math.sign(adjustedTarget - state.cpu.y);
+      state.cpu.y = clamp(state.cpu.y + dir * cpuSpeed * dt, 0, cfg.court.h - cfg.paddle.h);
+
+      // Ball physics (delta-time based)
+      state.ball.x += state.ball.vx * dt;
+      state.ball.y += state.ball.vy * dt;
+
+      // Wall bounce
+      if (state.ball.y - cfg.ball.r < 0 && state.ball.vy < 0) {
+        state.ball.y = cfg.ball.r;
+        state.ball.vy *= -1;
+      }
+      if (state.ball.y + cfg.ball.r > cfg.court.h && state.ball.vy > 0) {
+        state.ball.y = cfg.court.h - cfg.ball.r;
+        state.ball.vy *= -1;
+      }
+
+      // Paddle rects
+      const pRect = { x: state.player.x, y: state.player.y, w: cfg.paddle.w, h: cfg.paddle.h };
+      const cRect = { x: state.cpu.x,    y: state.cpu.y,    w: cfg.paddle.w, h: cfg.paddle.h };
+
+      // Collision detection (circle-rectangle using closest point method)
+      function ballIntersects(r){
+        const cx = clamp(state.ball.x, r.x, r.x+r.w);
+        const cy = clamp(state.ball.y, r.y, r.y+r.h);
+        const dx = state.ball.x - cx, dy = state.ball.y - cy;
+        return (dx*dx + dy*dy) <= (cfg.ball.r*cfg.ball.r);
+      }
+      // Paddle bounce with angle based on hit position (prevents tunneling)
+      function bounceFromPaddle(rect, side){
+        // side: +1 if left paddle (ball moving left to right), -1 if right
+        const hitPos = (state.ball.y - rect.y) / rect.h; // 0..1
+        const angle = (hitPos - 0.5) * Math.PI * 0.75;   // fan out
+        state.ball.spd = Math.min(state.ball.spd * cfg.ball.speedGainOnHit, cfg.ball.maxSpeed);
+        state.ball.vx = side * state.ball.spd * Math.cos(angle);
+        state.ball.vy = state.ball.spd * Math.sin(angle);
+        // Nudge out to prevent sticking
+        state.ball.x = side>0 ? rect.x + rect.w + cfg.ball.r : rect.x - cfg.ball.r;
+      }
+
+      // Collide with player
+      if (state.ball.vx < 0 && ballIntersects(pRect)) bounceFromPaddle(pRect, +1);
+      // Collide with CPU
+      if (state.ball.vx > 0 && ballIntersects(cRect)) bounceFromPaddle(cRect, -1);
+
+      // Scoring
+      if (state.ball.x < -cfg.ball.r) {
+        state.cpu.score++;
+        state.serveTo = "player";
+        handleScore();
+      } else if (state.ball.x > cfg.court.w + cfg.ball.r) {
+        state.player.score++;
+        state.serveTo = "cpu";
+        handleScore();
+      }
+    }
+
+    function handleScore(){
+      if (state.player.score >= cfg.scoreToWin || state.cpu.score >= cfg.scoreToWin){
+        over = true;
+        setHint(`${state.player.score > state.cpu.score ? "You win!" : "CPU wins!"} Press R to restart.`);
+      } else {
+        resetRound();
+        setHint("SPACE to serve.");
+      }
+    }
+
+    // --- Render ---
+    function draw(){
+      // Clear
+      ctx.clearRect(0,0,cfg.court.w,cfg.court.h);
+
+      // Midline + center circle
+      ctx.fillStyle = "#1a2a4a";
+      for (let y=0; y<cfg.court.h; y+=20) {
+        ctx.fillRect(cfg.court.w/2 - cfg.lineW/2, y, cfg.lineW, 12);
+      }
+      ctx.beginPath();
+      ctx.arc(cfg.court.w/2, cfg.court.h/2, 60, 0, Math.PI*2);
+      ctx.strokeStyle = "#1a2a4a"; ctx.lineWidth = 2; ctx.stroke();
+
+      // Paddles
+      ctx.fillStyle = "#e7f0ff";
+      ctx.fillRect(state.player.x, state.player.y, cfg.paddle.w, cfg.paddle.h);
+      ctx.fillRect(state.cpu.x, state.cpu.y, cfg.paddle.w, cfg.paddle.h);
+
+      // Ball
+      ctx.beginPath();
+      ctx.arc(state.ball.x, state.ball.y, cfg.ball.r, 0, Math.PI*2);
+      ctx.fill();
+
+      // Score
+      ctx.font = "48px system-ui,Segoe UI,Roboto,Arial";
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText(state.player.score, cfg.court.w*0.25, 18);
+      ctx.fillText(state.cpu.score,    cfg.court.w*0.75, 18);
+
+      // Over / Paused banners
+      if (paused) banner("Paused");
+      if (over)   banner("Game Over");
+    }
+
+    function banner(text){
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "#0b1020";
+      ctx.fillRect(cfg.court.w/2-160, cfg.court.h/2-40, 320, 80);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "#2a3a5f"; ctx.lineWidth = 2; ctx.strokeRect(cfg.court.w/2-160, cfg.court.h/2-40, 320, 80);
+      ctx.fillStyle = "#e7f0ff";
+      ctx.font = "28px system-ui,Segoe UI,Roboto,Arial";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(text, cfg.court.w/2, cfg.court.h/2);
+      ctx.restore();
+    }
+
+    // --- Main Loop ---
+    // requestAnimationFrame-based game loop with delta time
+    function loop(ts){
+      const dt = Math.min(1/30, (ts - lastT) / 1000) || 0; // clamp to avoid jumps on tab switch
+      lastT = ts;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
