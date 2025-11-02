@@ -24,19 +24,26 @@ This Pong game is configured for deployment to Vercel at `cadesgames.aiandsons.i
 ### File Structure
 
 ```
-pingpong/
-├── index.html        # Main game file (self-contained)
-├── vercel.json       # Vercel configuration
-├── assets/          # Future assets folder (currently empty)
-└── v2-server/       # Future multiplayer server (not deployed)
+/
+├── pingpong/
+│   ├── index.html    # Main game file (self-contained)
+│   └── assets/      # Game-specific assets (future)
+├── vercel.json       # Root-level routing configuration
+├── v2-server/       # Future multiplayer server (not deployed)
+└── (future games can be added as additional folders)
 ```
 
 ### Configuration Details
 
 The `vercel.json` file includes:
-- **Rewrites**: Maps `/pingpong` and `/pingpong/` to `index.html`
-- **Cache Headers**: 1-hour cache for optimal performance
+- **Rewrites**: Maps `/pingpong` and `/pingpong/` to `/pingpong/index.html`
+- **Cache Headers**: 1-hour cache for optimal performance (no-cache for index.html)
 - **Security Headers**: X-Content-Type-Options and X-Frame-Options
+
+This monorepo structure allows multiple games to coexist:
+- Each game lives in its own folder (e.g., `pingpong/`, `game2/`, etc.)
+- Root `vercel.json` handles routing to each game's `index.html`
+- Future games can follow the same pattern
 
 ### URL Structure
 
