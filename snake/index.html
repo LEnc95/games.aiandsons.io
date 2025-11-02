@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Snake — Classic Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --snake:#4ad; --food:#fa4; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+    
+    #canvas-container { position:relative; width:100%; max-width:min(90vw, 800px); max-height:min(70vh, 800px); aspect-ratio:1/1; }
+    canvas { width:100%; height:100%; display:block; background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; touch-action:none; image-rendering:auto; }
+    
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(90vw, 800px); }
+    .score-display { display:flex; justify-content:space-around; margin-bottom:clamp(8px, 1.5vh, 12px); font-size:clamp(14px, 2.5vw, 20px); }
+    .score-item { color:var(--fg); }
+    .score-label { color:var(--muted); font-size:0.7em; margin-right:8px; }
+    .hint { color:#b6c7e6; font-size:clamp(14px, 2.5vw, 18px); margin-top:clamp(4px, 1vh, 8px); min-height:1.5em; }
+    
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
+    .btn { padding:clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 28px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(14px, 2.5vw, 18px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(80px, 15vw, 120px); min-height:44px; transition:all 0.2s; }
+    .btn:active:not(:disabled) { background:#3a4a7f; transform:scale(0.95); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn.primary { background:#5ad; border-color:#6be; }
+    .btn.primary:active { background:#4bc; }
+    .btn.difficulty { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); min-width:clamp(70px, 12vw, 100px); }
+    .btn.difficulty.active { background:#5ad; border-color:#6be; }
+    
+    .controls-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; max-width:240px; margin:clamp(12px, 2vh, 16px) auto; }
+    .control-btn { width:100%; aspect-ratio:1; background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:24px; font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-height:60px; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+    .control-btn:active { background:#3a4a7f; transform:scale(0.95); }
+    .control-btn.up { grid-column:2; }
+    .control-btn.down { grid-column:2; grid-row:3; }
+    .control-btn.left { grid-column:1; grid-row:2; }
+    .control-btn.right { grid-column:3; grid-row:2; }
+    
+    @media (max-width: 768px) {
+      .hud { font-size:clamp(10px, 3vw, 14px); }
+      .hint { font-size:clamp(12px, 3.5vw, 16px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="canvas-container">
+      <canvas id="game" width="600" height="600"></canvas>
+    </div>
+    <div class="hud">
+      <div class="score-display">
+        <div class="score-item"><span class="score-label">Score:</span><span id="score">0</span></div>
+        <div class="score-item"><span class="score-label">High:</span><span id="high-score">0</span></div>
+      </div>
+      <div class="hint" id="hint"></div>
+      <div class="buttons" id="button-container">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+      </div>
+      <div class="buttons">
+        <button class="btn difficulty" data-diff="1">Easy</button>
+        <button class="btn difficulty" data-diff="2">Medium</button>
+        <button class="btn difficulty" data-diff="3">Hard</button>
+      </div>
+      <div class="controls-grid" id="controls-grid">
+        <button class="control-btn up" data-dir="up">↑</button>
+        <button class="control-btn left" data-dir="left">←</button>
+        <button class="control-btn right" data-dir="right">→</button>
+        <button class="control-btn down" data-dir="down">↓</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Config ---
+    // URL Parameters: ?difficulty=1|2|3&speed=0.5-2.0&seed=<number>
+    const cfg = {
+      gridSize: 20,
+      cellSize: 30, // 600 / 20
+      initialSpeed: 150, // milliseconds per move
+      speedIncrement: 5, // speed up per food
+      minSpeed: 80, // minimum milliseconds
+      initialLength: 3,
+      difficulty: 2, // 1=Easy 2=Medium 3=Hard
+    };
+
+    // Parse URL params
+    const params = new URLSearchParams(location.search);
+    if (params.get("difficulty")) cfg.difficulty = Math.max(1, Math.min(3, +params.get("difficulty")||2));
+    const globalSpeedScale = Math.max(0.5, Math.min(2, +(params.get("speed")||1)));
+    const seedParam = params.get("seed");
+
+    // --- Seeded PRNG ---
+    let rngState = null;
+    let useSeededRNG = false;
+    let initialSeed = null;
+
+    if (seedParam !== null && seedParam !== "") {
+      const seed = +seedParam || 0;
+      initialSeed = Math.abs(seed) % 2147483647;
+      rngState = initialSeed;
+      useSeededRNG = true;
+    }
+
+    function random() {
+      if (useSeededRNG) {
+        rngState = (rngState * 1664525 + 1013904223) % 2147483647;
+        return rngState / 2147483647;
+      } else {
+        return Math.random();
+      }
+    }
+
+    function resetRNG() {
+      if (useSeededRNG && initialSeed !== null) {
+        rngState = initialSeed;
+      }
+    }
+
+    // --- Detect touch device ---
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // --- Responsive canvas setup ---
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const canvasContainer = document.getElementById("canvas-container");
+    
+    function resizeCanvas() {
+      const containerRect = canvasContainer.getBoundingClientRect();
+      const size = Math.min(containerRect.width, containerRect.height);
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+    // --- State ---
+    let lastT = 0;
+    let paused = false;
+    let gameOver = false;
+    let gameStarted = false;
+    let nextMoveTime = 0;
+    let moveTimer = 0;
+    
+    const state = {
+      snake: [],
+      direction: { x: 1, y: 0 },
+      nextDirection: { x: 1, y: 0 },
+      food: { x: 0, y: 0 },
+      score: 0,
+      speed: cfg.initialSpeed,
+      difficulty: cfg.difficulty
+    };
+
+    // High score (localStorage)
+    function getHighScore() {
+      const stored = localStorage.getItem('snake-high-score');
+      return stored ? +stored : 0;
+    }
+
+    function setHighScore(score) {
+      const current = getHighScore();
+      if (score > current) {
+        localStorage.setItem('snake-high-score', score.toString());
+        return true;
+      }
+      return false;
+    }
+
+    // UI Elements
+    const hintEl = document.getElementById("hint");
+    const scoreEl = document.getElementById("score");
+    const highScoreEl = document.getElementById("high-score");
+    const startBtn = document.getElementById("start-btn");
+    const pauseBtn = document.getElementById("pause-btn");
+    const restartBtn = document.getElementById("restart-btn");
+    const difficultyBtns = document.querySelectorAll(".btn.difficulty");
+    const controlBtns = document.querySelectorAll(".control-btn");
+
+    function setHint(msg) { hintEl.textContent = msg; }
+    function updateScore() { 
+      scoreEl.textContent = state.score;
+      const high = getHighScore();
+      highScoreEl.textContent = high;
+    }
+    function updateDifficultyUI() {
+      difficultyBtns.forEach(btn => {
+        const diff = +btn.dataset.diff;
+        btn.classList.toggle('active', diff === state.difficulty);
+      });
+    }
+    function updateStartButton() {
+      if (gameOver) {
+        startBtn.textContent = "PLAY AGAIN";
+        startBtn.disabled = false;
+      } else if (!gameStarted) {
+        startBtn.textContent = "START";
+        startBtn.disabled = false;
+      } else if (paused) {
+        startBtn.textContent = "RESUME";
+        startBtn.disabled = false;
+      } else {
+        startBtn.textContent = "START";
+        startBtn.disabled = true;
+      }
+    }
+
+    // Initialize
+    updateScore();
+    updateDifficultyUI();
+    setHint(isTouchDevice ? "Tap START to begin. Swipe or use buttons to control." : "Press SPACE to start. Use WASD or Arrow keys.");
+    updateStartButton();
+
+    // --- Game Logic ---
+    function initGame() {
+      resetRNG();
+      gameStarted = false;
+      gameOver = false;
+      paused = false;
+      state.score = 0;
+      state.speed = cfg.initialSpeed / globalSpeedScale;
+      
+      // Calculate base speed by difficulty
+      const baseSpeed = cfg.initialSpeed;
+      const speedMultiplier = cfg.difficulty === 1 ? 1.3 : (cfg.difficulty === 2 ? 1.0 : 0.7);
+      state.speed = (baseSpeed * speedMultiplier) / globalSpeedScale;
+      
+      // Initialize snake in center
+      const center = Math.floor(cfg.gridSize / 2);
+      state.snake = [
+        { x: center, y: center },
+        { x: center - 1, y: center },
+        { x: center - 2, y: center }
+      ];
+      
+      state.direction = { x: 1, y: 0 };
+      state.nextDirection = { x: 1, y: 0 };
+      
+      spawnFood();
+      updateScore();
+      updateStartButton();
+      setHint(isTouchDevice ? "Tap START to begin." : "Press SPACE to start.");
+    }
+
+    function spawnFood() {
+      let attempts = 0;
+      do {
+        state.food = {
+          x: Math.floor(random() * cfg.gridSize),
+          y: Math.floor(random() * cfg.gridSize)
+        };
+        attempts++;
+      } while (
+        state.snake.some(segment => segment.x === state.food.x && segment.y === state.food.y) &&
+        attempts < 100
+      );
+    }
+
+    function changeDirection(newDir) {
+      // Prevent reverse direction
+      if (state.direction.x === -newDir.x && state.direction.y === -newDir.y) {
+        return;
+      }
+      state.nextDirection = newDir;
+    }
+
+    function moveSnake() {
+      // Update direction
+      state.direction = { ...state.nextDirection };
+      
+      // Calculate new head
+      const head = {
+        x: state.snake[0].x + state.direction.x,
+        y: state.snake[0].y + state.direction.y
+      };
+
+      // Check wall collision
+      if (head.x < 0 || head.x >= cfg.gridSize || head.y < 0 || head.y >= cfg.gridSize) {
+        endGame();
+        return;
+      }
+
+      // Check self collision
+      if (state.snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        endGame();
+        return;
+      }
+
+      // Add new head
+      state.snake.unshift(head);
+
+      // Check food collision
+      if (head.x === state.food.x && head.y === state.food.y) {
+        state.score++;
+        spawnFood();
+        // Speed up slightly
+        state.speed = Math.max(
+          cfg.minSpeed / globalSpeedScale,
+          state.speed - cfg.speedIncrement
+        );
+        updateScore();
+      } else {
+        // Remove tail if no food eaten
+        state.snake.pop();
+      }
+    }
+
+    function startGame() {
+      if (gameOver) {
+        initGame();
+      }
+      if (!gameStarted) {
+        gameStarted = true;
+        paused = false;
+        nextMoveTime = performance.now() + state.speed;
+        updateStartButton();
+        setHint("");
+      } else if (paused) {
+        paused = false;
+        nextMoveTime = performance.now() + state.speed;
+        updateStartButton();
+        setHint("");
+      }
+    }
+
+    function pauseGame() {
+      if (gameStarted && !gameOver) {
+        paused = !paused;
+        updateStartButton();
+        setHint(paused ? (isTouchDevice ? "Paused. Tap RESUME to continue." : "Paused. Press SPACE to resume.") : "");
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      gameStarted = false;
+      const isNewHigh = setHighScore(state.score);
+      updateScore();
+      updateStartButton();
+      setHint(
+        isNewHigh 
+          ? (isTouchDevice ? `🎉 New High Score! ${state.score} Tap PLAY AGAIN.` : `🎉 New High Score! ${state.score} Press SPACE to play again.`)
+          : (isTouchDevice ? `Game Over! Score: ${state.score} Tap PLAY AGAIN.` : `Game Over! Score: ${state.score} Press SPACE to play again.`)
+      );
+    }
+
+    // --- Input ---
+    const directions = {
+      up: { x: 0, y: -1 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+      right: { x: 1, y: 0 }
+    };
+
+    // Keyboard controls
+    addEventListener("keydown", e => {
+      if (e.code === "KeyW" || e.code === "ArrowUp") changeDirection(directions.up);
+      if (e.code === "KeyS" || e.code === "ArrowDown") changeDirection(directions.down);
+      if (e.code === "KeyA" || e.code === "ArrowLeft") changeDirection(directions.left);
+      if (e.code === "KeyD" || e.code === "ArrowRight") changeDirection(directions.right);
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (gameOver || !gameStarted) startGame();
+        else if (gameStarted) pauseGame();
+      }
+      if (e.code === "KeyR") initGame();
+      if (e.code === "Digit1") { state.difficulty = 1; updateDifficultyUI(); initGame(); }
+      if (e.code === "Digit2") { state.difficulty = 2; updateDifficultyUI(); initGame(); }
+      if (e.code === "Digit3") { state.difficulty = 3; updateDifficultyUI(); initGame(); }
+    });
+
+    // Button handlers
+    startBtn.addEventListener("click", startGame);
+    pauseBtn.addEventListener("click", pauseGame);
+    restartBtn.addEventListener("click", () => initGame());
+
+    difficultyBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.difficulty = +btn.dataset.diff;
+        updateDifficultyUI();
+        initGame();
+      });
+    });
+
+    controlBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const dir = directions[btn.dataset.dir];
+        if (dir) changeDirection(dir);
+      });
+    });
+
+    // Touch swipe controls
+    let touchStart = null;
+    const minSwipeDistance = 30;
+
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      touchStart = { x: touch.clientX, y: touch.clientY };
+      // Start game on first touch if not started
+      if (!gameStarted && !gameOver) {
+        startGame();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      if (!touchStart) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStart.x;
+      const dy = touch.clientY - touchStart.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance >= minSwipeDistance) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // Horizontal swipe
+          changeDirection(dx > 0 ? directions.right : directions.left);
+        } else {
+          // Vertical swipe
+          changeDirection(dy > 0 ? directions.down : directions.up);
+        }
+      }
+      touchStart = null;
+    }, { passive: false });
+
+    // Prevent default touch behaviors
+    document.addEventListener('touchstart', (e) => {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+
+    // --- Render ---
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      const scale = rect.width / canvas.width;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw grid
+      ctx.strokeStyle = "#1a2a4a";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= cfg.gridSize; i++) {
+        const pos = i * cfg.cellSize;
+        ctx.beginPath();
+        ctx.moveTo(pos, 0);
+        ctx.lineTo(pos, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, pos);
+        ctx.lineTo(canvas.width, pos);
+        ctx.stroke();
+      }
+
+      // Draw food
+      ctx.fillStyle = "#fa4";
+      ctx.beginPath();
+      ctx.arc(
+        state.food.x * cfg.cellSize + cfg.cellSize / 2,
+        state.food.y * cfg.cellSize + cfg.cellSize / 2,
+        cfg.cellSize / 2 - 2,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      // Draw snake
+      state.snake.forEach((segment, index) => {
+        const x = segment.x * cfg.cellSize;
+        const y = segment.y * cfg.cellSize;
+        const size = cfg.cellSize - 2;
+        
+        // Head is brighter
+        if (index === 0) {
+          ctx.fillStyle = "#4ad";
+        } else {
+          const brightness = 1 - (index / state.snake.length) * 0.3;
+          const r = Math.floor(74 * brightness);
+          const g = Math.floor(173 * brightness);
+          const b = Math.floor(221 * brightness);
+          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        }
+        
+        ctx.fillRect(x + 1, y + 1, size, size);
+      });
+
+      // Game over overlay
+      if (gameOver) {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#0b1020";
+        ctx.fillRect(canvas.width / 2 - 150, canvas.height / 2 - 40, 300, 80);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "#2a3a5f";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(canvas.width / 2 - 150, canvas.height / 2 - 40, 300, 80);
+        ctx.fillStyle = "#e7f0ff";
+        ctx.font = "28px system-ui,Segoe UI,Roboto,Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+      }
+
+      // Paused overlay
+      if (paused && gameStarted) {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#0b1020";
+        ctx.fillRect(canvas.width / 2 - 100, canvas.height / 2 - 30, 200, 60);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "#2a3a5f";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(canvas.width / 2 - 100, canvas.height / 2 - 30, 200, 60);
+        ctx.fillStyle = "#e7f0ff";
+        ctx.font = "24px system-ui,Segoe UI,Roboto,Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Paused", canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+      }
+    }
+
+    // --- Main Loop ---
+    function loop(ts) {
+      const dt = (ts - lastT) / 1000 || 0;
+      lastT = ts;
+
+      if (gameStarted && !paused && !gameOver) {
+        // Move snake at intervals
+        if (ts >= nextMoveTime) {
+          moveSnake();
+          nextMoveTime = ts + state.speed;
+        }
+      }
+
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    initGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
+
