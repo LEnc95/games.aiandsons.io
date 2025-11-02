@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tic-Tac-Toe</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+    
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(90vw, 600px); }
+    .score-display { display:flex; justify-content:space-around; margin-bottom:clamp(12px, 2vh, 16px); font-size:clamp(14px, 2.5vw, 18px); }
+    .score-item { color:var(--fg); }
+    .score-label { color:var(--muted); font-size:0.7em; margin-right:8px; }
+    .hint { color:#b6c7e6; font-size:clamp(14px, 2.5vw, 18px); margin:clamp(8px, 1.5vh, 12px) 0; min-height:1.5em; }
+    
+    .board { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:min(90vw, 400px); aspect-ratio:1/1; margin:clamp(8px, 1.5vh, 16px) 0; }
+    .cell { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:3px solid #192544; border-radius:12px; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-size:clamp(48px, 12vw, 72px); font-weight:700; cursor:pointer; touch-action:manipulation; user-select:none; transition:all 0.2s; color:#e7f0ff; }
+    .cell:active:not(:disabled) { background:#1a2a4a; transform:scale(0.95); border-color:#2a3a5f; }
+    .cell:disabled { cursor:not-allowed; opacity:0.6; }
+    .cell.x { color:#fa4; }
+    .cell.o { color:#5ad; }
+    .cell.winner { background:#2a5a2a; border-color:#4a7a4a; animation:pulse 0.5s; }
+    
+    @keyframes pulse { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.1); } }
+    
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
+    .btn { padding:clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 28px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(14px, 2.5vw, 18px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(80px, 15vw, 120px); min-height:44px; transition:all 0.2s; }
+    .btn:active:not(:disabled) { background:#3a4a7f; transform:scale(0.95); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn.primary { background:#5ad; border-color:#6be; }
+    .btn.primary:active { background:#4bc; }
+    .btn.difficulty { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); min-width:clamp(70px, 12vw, 100px); }
+    .btn.difficulty.active { background:#5ad; border-color:#6be; }
+    
+    @media (max-width: 768px) {
+      .hud { font-size:clamp(10px, 3vw, 14px); }
+      .hint { font-size:clamp(12px, 3.5vw, 16px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="score-display">
+        <div class="score-item"><span class="score-label">Wins:</span><span id="wins">0</span></div>
+        <div class="score-item"><span class="score-label">Losses:</span><span id="losses">0</span></div>
+        <div class="score-item"><span class="score-label">Draws:</span><span id="draws">0</span></div>
+      </div>
+      <div class="hint" id="hint">You're X. Tap a square to start!</div>
+      <div class="board" id="board"></div>
+      <div class="buttons">
+        <button class="btn primary" id="new-game-btn">NEW GAME</button>
+        <button class="btn" id="reset-score-btn">RESET SCORE</button>
+      </div>
+      <div class="buttons">
+        <button class="btn difficulty" data-diff="1">Easy</button>
+        <button class="btn difficulty" data-diff="2">Medium</button>
+        <button class="btn difficulty" data-diff="3">Hard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Config
+    const cfg = {
+      difficulty: 2, // 1=Easy 2=Medium 3=Hard
+    };
+
+    // Parse URL params
+    const params = new URLSearchParams(location.search);
+    if (params.get("difficulty")) cfg.difficulty = Math.max(1, Math.min(3, +params.get("difficulty")||2));
+
+    // State
+    let board = Array(9).fill(null);
+    let currentPlayer = 'X'; // Player is X, AI is O
+    let gameOver = false;
+    let difficulty = cfg.difficulty;
+
+    // Score tracking
+    function getScores() {
+      const stored = localStorage.getItem('tictactoe-scores');
+      return stored ? JSON.parse(stored) : { wins: 0, losses: 0, draws: 0 };
+    }
+
+    function updateScore(type) {
+      const scores = getScores();
+      scores[type]++;
+      localStorage.setItem('tictactoe-scores', JSON.stringify(scores));
+      updateScoreDisplay();
+    }
+
+    function resetScores() {
+      localStorage.removeItem('tictactoe-scores');
+      updateScoreDisplay();
+    }
+
+    function updateScoreDisplay() {
+      const scores = getScores();
+      document.getElementById('wins').textContent = scores.wins;
+      document.getElementById('losses').textContent = scores.losses;
+      document.getElementById('draws').textContent = scores.draws;
+    }
+
+    // UI Elements
+    const hintEl = document.getElementById("hint");
+    const boardEl = document.getElementById("board");
+    const newGameBtn = document.getElementById("new-game-btn");
+    const resetScoreBtn = document.getElementById("reset-score-btn");
+    const difficultyBtns = document.querySelectorAll(".btn.difficulty");
+
+    function setHint(msg) { hintEl.textContent = msg; }
+
+    function updateDifficultyUI() {
+      difficultyBtns.forEach(btn => {
+        const diff = +btn.dataset.diff;
+        btn.classList.toggle('active', diff === difficulty);
+      });
+    }
+
+    // Initialize board
+    function renderBoard() {
+      boardEl.innerHTML = '';
+      board.forEach((cell, index) => {
+        const cellEl = document.createElement('div');
+        cellEl.className = 'cell';
+        if (cell) {
+          cellEl.textContent = cell;
+          cellEl.classList.add(cell.toLowerCase());
+        }
+        cellEl.dataset.index = index;
+        if (!gameOver && currentPlayer === 'X' && !cell) {
+          cellEl.addEventListener('click', () => makeMove(index));
+        } else {
+          cellEl.disabled = true;
+        }
+        boardEl.appendChild(cellEl);
+      });
+    }
+
+    function makeMove(index) {
+      if (board[index] || gameOver || currentPlayer !== 'X') return;
+
+      board[index] = currentPlayer;
+      renderBoard();
+
+      const winner = checkWinner();
+      if (winner) {
+        gameOver = true;
+        highlightWinner(winner);
+        if (winner === 'X') {
+          setHint('🎉 You win!');
+          updateScore('wins');
+        } else {
+          setHint('AI wins! Better luck next time.');
+          updateScore('losses');
+        }
+        return;
+      }
+
+      if (isBoardFull()) {
+        gameOver = true;
+        setHint("It's a draw!");
+        updateScore('draws');
+        return;
+      }
+
+      currentPlayer = 'O';
+      setHint('AI is thinking...');
+      setTimeout(() => aiMove(), 300);
+    }
+
+    function aiMove() {
+      let move;
+      if (difficulty === 1) {
+        // Easy: Random
+        const empty = board.map((cell, i) => cell ? null : i).filter(i => i !== null);
+        move = empty[Math.floor(Math.random() * empty.length)];
+      } else if (difficulty === 2) {
+        // Medium: Block wins, sometimes random
+        move = findBestMove();
+        if (Math.random() < 0.3) {
+          const empty = board.map((cell, i) => cell ? null : i).filter(i => i !== null);
+          move = empty[Math.floor(Math.random() * empty.length)];
+        }
+      } else {
+        // Hard: Minimax (unbeatable)
+        move = minimax(board, 'O').index;
+      }
+
+      if (move !== null && move !== undefined) {
+        board[move] = 'O';
+        
+        const winner = checkWinner();
+        if (winner) {
+          gameOver = true;
+          renderBoard();
+          highlightWinner(winner);
+          if (winner === 'X') {
+            setHint('🎉 You win!');
+            updateScore('wins');
+          } else {
+            setHint('AI wins! Better luck next time.');
+            updateScore('losses');
+          }
+          return;
+        }
+
+        if (isBoardFull()) {
+          gameOver = true;
+          renderBoard();
+          setHint("It's a draw!");
+          updateScore('draws');
+          return;
+        }
+
+        currentPlayer = 'X';
+        setHint("Your turn!");
+        renderBoard(); // Re-render to enable player's next move
+      }
+    }
+
+    function findBestMove() {
+      // Try to win
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = 'O';
+          if (checkWinner() === 'O') {
+            board[i] = null;
+            return i;
+          }
+          board[i] = null;
+        }
+      }
+      // Block player
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = 'X';
+          if (checkWinner() === 'X') {
+            board[i] = null;
+            return i;
+          }
+          board[i] = null;
+        }
+      }
+      // Center
+      if (!board[4]) return 4;
+      // Corner
+      const corners = [0, 2, 6, 8];
+      for (const corner of corners) {
+        if (!board[corner]) return corner;
+      }
+      // Any
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) return i;
+      }
+      return null;
+    }
+
+    function minimax(board, player) {
+      const winner = checkWinner();
+      if (winner === 'O') return { score: 10 };
+      if (winner === 'X') return { score: -10 };
+      if (isBoardFull()) return { score: 0 };
+
+      const moves = [];
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = player;
+          const result = minimax(board, player === 'O' ? 'X' : 'O');
+          moves.push({ index: i, score: result.score });
+          board[i] = null;
+        }
+      }
+
+      let bestMove;
+      if (player === 'O') {
+        let bestScore = -Infinity;
+        for (const move of moves) {
+          if (move.score > bestScore) {
+            bestScore = move.score;
+            bestMove = move;
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (const move of moves) {
+          if (move.score < bestScore) {
+            bestScore = move.score;
+            bestMove = move;
+          }
+        }
+      }
+      return bestMove;
+    }
+
+    function checkWinner() {
+      const lines = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+
+      for (const [a, b, c] of lines) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a];
+        }
+      }
+      return null;
+    }
+
+    function highlightWinner(winner) {
+      const lines = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+
+      for (const [a, b, c] of lines) {
+        if (board[a] === winner && board[a] === board[b] && board[a] === board[c]) {
+          const cells = boardEl.children;
+          cells[a].classList.add('winner');
+          cells[b].classList.add('winner');
+          cells[c].classList.add('winner');
+          break;
+        }
+      }
+    }
+
+    function isBoardFull() {
+      return board.every(cell => cell !== null);
+    }
+
+    function newGame() {
+      board = Array(9).fill(null);
+      currentPlayer = 'X';
+      gameOver = false;
+      renderBoard();
+      setHint("Your turn! Tap a square.");
+    }
+
+    // Event listeners
+    newGameBtn.addEventListener("click", newGame);
+    resetScoreBtn.addEventListener("click", () => {
+      if (confirm("Reset all scores?")) {
+        resetScores();
+      }
+    });
+
+    difficultyBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        difficulty = +btn.dataset.diff;
+        updateDifficultyUI();
+        newGame();
+      });
+    });
+
+    // Keyboard shortcuts
+    addEventListener("keydown", e => {
+      if (e.code === "KeyN") newGame();
+      if (e.code === "Digit1") { difficulty = 1; updateDifficultyUI(); newGame(); }
+      if (e.code === "Digit2") { difficulty = 2; updateDifficultyUI(); newGame(); }
+      if (e.code === "Digit3") { difficulty = 3; updateDifficultyUI(); newGame(); }
+    });
+
+    // Initialize
+    updateScoreDisplay();
+    updateDifficultyUI();
+    renderBoard();
+  </script>
+</body>
+</html>
+

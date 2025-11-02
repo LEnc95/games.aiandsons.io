@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Rock Paper Scissors</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+    
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(90vw, 600px); }
+    .score-display { display:flex; justify-content:space-around; margin-bottom:clamp(16px, 3vh, 24px); font-size:clamp(16px, 3vw, 22px); }
+    .score-item { color:var(--fg); }
+    .score-label { color:var(--muted); font-size:0.7em; margin-right:8px; }
+    .hint { color:#b6c7e6; font-size:clamp(16px, 3vw, 22px); margin:clamp(16px, 3vh, 24px) 0; min-height:1.5em; font-weight:600; }
+    .streak { color:#fa4; font-size:clamp(14px, 2.5vw, 18px); margin-top:clamp(8px, 1.5vh, 12px); }
+    
+    .choices { display:flex; justify-content:center; gap:clamp(16px, 3vw, 24px); margin:clamp(24px, 4vh, 32px) 0; }
+    .choice-display { text-align:center; }
+    .choice-icon { font-size:clamp(64px, 12vw, 96px); margin-bottom:clamp(8px, 1.5vh, 12px); }
+    .choice-label { font-size:clamp(14px, 2.5vw, 18px); color:var(--muted); }
+    
+    .buttons { display:flex; gap:clamp(12px, 2vw, 16px); justify-content:center; flex-wrap:wrap; margin-top:clamp(16px, 3vh, 24px); }
+    .btn-choice { width:clamp(80px, 15vw, 120px); height:clamp(80px, 15vw, 120px); background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:3px solid #192544; border-radius:16px; font-size:clamp(40px, 8vw, 60px); cursor:pointer; touch-action:manipulation; user-select:none; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+    .btn-choice:active { background:#1a2a4a; transform:scale(0.95); border-color:#2a3a5f; }
+    .btn-choice.winner { background:#2a5a2a; border-color:#4a7a4a; }
+    .btn-choice.loser { opacity:0.5; }
+    
+    .btn { padding:clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 28px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(14px, 2.5vw, 18px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(100px, 18vw, 140px); min-height:44px; transition:all 0.2s; }
+    .btn:active { background:#3a4a7f; transform:scale(0.95); }
+    .btn.primary { background:#5ad; border-color:#6be; }
+    .btn.primary:active { background:#4bc; }
+    
+    @media (max-width: 768px) {
+      .hud { font-size:clamp(10px, 3vw, 14px); }
+      .hint { font-size:clamp(14px, 3.5vw, 20px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="score-display">
+        <div class="score-item"><span class="score-label">You:</span><span id="player-score">0</span></div>
+        <div class="score-item"><span class="score-label">AI:</span><span id="ai-score">0</span></div>
+        <div class="score-item"><span class="score-label">Streak:</span><span id="streak">0</span></div>
+      </div>
+      <div class="hint" id="hint">Choose Rock, Paper, or Scissors!</div>
+      <div class="choices" id="choices-display" style="display:none;">
+        <div class="choice-display">
+          <div class="choice-icon" id="player-choice">✊</div>
+          <div class="choice-label">You</div>
+        </div>
+        <div class="choice-display">
+          <div class="choice-icon" id="ai-choice">✋</div>
+          <div class="choice-label">AI</div>
+        </div>
+      </div>
+      <div class="buttons">
+        <button class="btn-choice" data-choice="rock">✊</button>
+        <button class="btn-choice" data-choice="paper">✋</button>
+        <button class="btn-choice" data-choice="scissors">✌️</button>
+      </div>
+      <div class="buttons">
+        <button class="btn primary" id="reset-btn">RESET SCORES</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const choices = ['rock', 'paper', 'scissors'];
+    const icons = { rock: '✊', paper: '✋', scissors: '✌️' };
+    
+    let playerScore = 0;
+    let aiScore = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
+
+    function getScores() {
+      const stored = localStorage.getItem('rps-scores');
+      return stored ? JSON.parse(stored) : { player: 0, ai: 0, streak: 0, bestStreak: 0 };
+    }
+
+    function saveScores() {
+      localStorage.setItem('rps-scores', JSON.stringify({
+        player: playerScore,
+        ai: aiScore,
+        streak: currentStreak,
+        bestStreak: bestStreak
+      }));
+    }
+
+    function loadScores() {
+      const scores = getScores();
+      playerScore = scores.player || 0;
+      aiScore = scores.ai || 0;
+      currentStreak = scores.streak || 0;
+      bestStreak = scores.bestStreak || 0;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      document.getElementById('player-score').textContent = playerScore;
+      document.getElementById('ai-score').textContent = aiScore;
+      document.getElementById('streak').textContent = currentStreak;
+    }
+
+    function determineWinner(player, ai) {
+      if (player === ai) return 'draw';
+      if (
+        (player === 'rock' && ai === 'scissors') ||
+        (player === 'paper' && ai === 'rock') ||
+        (player === 'scissors' && ai === 'paper')
+      ) {
+        return 'player';
+      }
+      return 'ai';
+    }
+
+    function playRound(playerChoice) {
+      const aiChoice = choices[Math.floor(Math.random() * choices.length)];
+      const winner = determineWinner(playerChoice, aiChoice);
+
+      // Show choices
+      const choicesDisplay = document.getElementById('choices-display');
+      choicesDisplay.style.display = 'flex';
+      document.getElementById('player-choice').textContent = icons[playerChoice];
+      document.getElementById('ai-choice').textContent = icons[aiChoice];
+
+      // Remove previous winner/loser classes
+      document.querySelectorAll('.btn-choice').forEach(btn => {
+        btn.classList.remove('winner', 'loser');
+      });
+
+      // Highlight results
+      setTimeout(() => {
+        const playerBtn = document.querySelector(`[data-choice="${playerChoice}"]`);
+        const aiBtn = document.querySelector(`[data-choice="${aiChoice}"]`);
+        
+        if (winner === 'player') {
+          playerBtn.classList.add('winner');
+          aiBtn.classList.add('loser');
+          playerScore++;
+          currentStreak++;
+          if (currentStreak > bestStreak) bestStreak = currentStreak;
+          document.getElementById('hint').textContent = '🎉 You win!';
+        } else if (winner === 'ai') {
+          playerBtn.classList.add('loser');
+          aiBtn.classList.add('winner');
+          aiScore++;
+          currentStreak = 0;
+          document.getElementById('hint').textContent = 'AI wins! Try again!';
+        } else {
+          document.getElementById('hint').textContent = "It's a draw!";
+        }
+        
+        updateDisplay();
+        saveScores();
+      }, 300);
+
+      // Reset display after delay
+      setTimeout(() => {
+        choicesDisplay.style.display = 'none';
+        document.querySelectorAll('.btn-choice').forEach(btn => {
+          btn.classList.remove('winner', 'loser');
+        });
+        document.getElementById('hint').textContent = 'Choose Rock, Paper, or Scissors!';
+      }, 2500);
+    }
+
+    // Event listeners
+    document.querySelectorAll('.btn-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playRound(btn.dataset.choice);
+      });
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if (confirm('Reset all scores?')) {
+        playerScore = 0;
+        aiScore = 0;
+        currentStreak = 0;
+        bestStreak = 0;
+        localStorage.removeItem('rps-scores');
+        updateDisplay();
+      }
+    });
+
+    // Keyboard shortcuts
+    addEventListener('keydown', e => {
+      if (e.code === 'KeyR') playRound('rock');
+      if (e.code === 'KeyP') playRound('paper');
+      if (e.code === 'KeyS') playRound('scissors');
+    });
+
+    // Initialize
+    loadScores();
+  </script>
+</body>
+</html>
+

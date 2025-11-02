@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Memory Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow-y:auto; overflow-x:hidden; }
+    body { padding:env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); }
+    
+    .wrap { max-width:900px; margin:0 auto; padding:clamp(12px, 3vh, 20px) clamp(16px, 4vw, 24px); min-height:100vh; display:flex; flex-direction:column; }
+    
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; margin-bottom:clamp(12px, 2vh, 16px); }
+    .stats { display:flex; justify-content:space-around; margin-bottom:clamp(12px, 2vh, 16px); font-size:clamp(14px, 2.5vw, 18px); }
+    .stat-item { color:var(--fg); }
+    .stat-label { color:var(--muted); font-size:0.7em; margin-right:8px; }
+    .hint { color:#b6c7e6; font-size:clamp(14px, 2.5vw, 18px); margin:clamp(8px, 1.5vh, 12px) 0; min-height:1.5em; }
+    
+    .board { display:grid; gap:clamp(6px, 1vw, 10px); margin:clamp(16px, 3vh, 24px) auto; max-width:100%; }
+    .board.grid-4 { grid-template-columns:repeat(4, 1fr); }
+    .board.grid-6 { grid-template-columns:repeat(6, 1fr); }
+    .board.grid-8 { grid-template-columns:repeat(8, 1fr); }
+    
+    .card { aspect-ratio:1/1; background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:3px solid #192544; border-radius:12px; cursor:pointer; touch-action:manipulation; user-select:none; transition:all 0.3s; display:flex; align-items:center; justify-content:center; font-size:clamp(24px, 6vw, 40px); position:relative; overflow:hidden; min-height:60px; }
+    .card:active:not(.flipped):not(.matched) { transform:scale(0.95); border-color:#2a3a5f; }
+    .card.flipped { background:#1a2a4a; border-color:#3a4a5f; }
+    .card.matched { opacity:0.5; border-color:#4a7a4a; cursor:default; }
+    .card-back { position:absolute; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+    .card-front { position:absolute; width:100%; height:100%; display:flex; align-items:center; justify-content:center; opacity:0; transform:rotateY(180deg); transition:all 0.3s; }
+    .card.flipped .card-front { opacity:1; transform:rotateY(0deg); }
+    .card.flipped .card-back { opacity:0; transform:rotateY(180deg); }
+    
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(12px, 2vh, 16px); }
+    .btn { padding:clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 28px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(14px, 2.5vw, 18px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(100px, 18vw, 140px); min-height:44px; transition:all 0.2s; }
+    .btn:active { background:#3a4a7f; transform:scale(0.95); }
+    .btn.primary { background:#5ad; border-color:#6be; }
+    .btn.primary:active { background:#4bc; }
+    .btn.difficulty { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); min-width:clamp(70px, 12vw, 100px); }
+    .btn.difficulty.active { background:#5ad; border-color:#6be; }
+    
+    @media (max-width: 768px) {
+      .hud { font-size:clamp(10px, 3vw, 14px); }
+      .hint { font-size:clamp(12px, 3.5vw, 16px); }
+      .card { min-height:50px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="stats">
+        <div class="stat-item"><span class="stat-label">Time:</span><span id="timer">0</span>s</div>
+        <div class="stat-item"><span class="stat-label">Moves:</span><span id="moves">0</span></div>
+        <div class="stat-item"><span class="stat-label">Best:</span><span id="best-time">-</span></div>
+      </div>
+      <div class="hint" id="hint">Tap two cards to find matches!</div>
+      <div class="board grid-4" id="board"></div>
+      <div class="buttons">
+        <button class="btn primary" id="new-game-btn">NEW GAME</button>
+        <button class="btn" id="reset-best-btn">RESET BEST</button>
+      </div>
+      <div class="buttons">
+        <button class="btn difficulty" data-size="4">Easy (4x4)</button>
+        <button class="btn difficulty" data-size="6">Medium (6x6)</button>
+        <button class="btn difficulty" data-size="8">Hard (8x8)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const emojis = ['🎮', '🎯', '🎨', '🎪', '🎭', '🎬', '🎸', '🎺', '🎻', '🎤', '🎧', '🎵', '🎶', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸', '🏒', '🏑', '🏏', '🎣', '🏊', '🏄', '🚴', '🏇', '🚵'];
+    
+    let gridSize = 4;
+    let cards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let moves = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let canFlip = true;
+
+    function getBestTime() {
+      const key = `memory-best-${gridSize}`;
+      return localStorage.getItem(key) ? +localStorage.getItem(key) : null;
+    }
+
+    function setBestTime(time) {
+      const key = `memory-best-${gridSize}`;
+      const current = getBestTime();
+      if (!current || time < current) {
+        localStorage.setItem(key, time.toString());
+        return true;
+      }
+      return false;
+    }
+
+    function updateDisplay() {
+      document.getElementById('moves').textContent = moves;
+      const best = getBestTime();
+      document.getElementById('best-time').textContent = best ? best + 's' : '-';
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('timer').textContent = elapsed;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function shuffle(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function initGame(size) {
+      gridSize = size;
+      matchedPairs = 0;
+      moves = 0;
+      flippedCards = [];
+      canFlip = true;
+      stopTimer();
+      startTime = null;
+      
+      const totalPairs = (size * size) / 2;
+      const selectedEmojis = emojis.slice(0, totalPairs);
+      const pairs = [...selectedEmojis, ...selectedEmojis];
+      cards = shuffle(pairs).map((emoji, index) => ({
+        id: index,
+        emoji,
+        flipped: false,
+        matched: false
+      }));
+
+      renderBoard();
+      updateDisplay();
+      document.getElementById('hint').textContent = 'Tap two cards to find matches!';
+      
+      // Update board class
+      const board = document.getElementById('board');
+      board.className = `board grid-${gridSize}`;
+      
+      updateDifficultyUI();
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      
+      cards.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card';
+        if (card.flipped) cardEl.classList.add('flipped');
+        if (card.matched) cardEl.classList.add('matched');
+        
+        cardEl.innerHTML = `
+          <div class="card-back">?</div>
+          <div class="card-front">${card.emoji}</div>
+        `;
+        
+        cardEl.addEventListener('click', () => flipCard(index));
+        board.appendChild(cardEl);
+      });
+    }
+
+    function flipCard(index) {
+      if (!canFlip || cards[index].flipped || cards[index].matched) return;
+
+      if (startTime === null) startTimer();
+
+      cards[index].flipped = true;
+      flippedCards.push(index);
+      renderBoard();
+
+      if (flippedCards.length === 2) {
+        canFlip = false;
+        moves++;
+        updateDisplay();
+        
+        const [first, second] = flippedCards;
+        if (cards[first].emoji === cards[second].emoji) {
+          // Match!
+          cards[first].matched = true;
+          cards[second].matched = true;
+          matchedPairs++;
+          
+          setTimeout(() => {
+            flippedCards = [];
+            canFlip = true;
+            renderBoard();
+            
+            if (matchedPairs === (gridSize * gridSize) / 2) {
+              // Win!
+              stopTimer();
+              const time = Math.floor((Date.now() - startTime) / 1000);
+              const isNewBest = setBestTime(time);
+              updateDisplay();
+              
+              document.getElementById('hint').textContent = 
+                isNewBest 
+                  ? `🎉 You win! New best time: ${time}s!`
+                  : `🎉 You win! Time: ${time}s, Moves: ${moves}`;
+            }
+          }, 500);
+        } else {
+          // No match
+          setTimeout(() => {
+            cards[first].flipped = false;
+            cards[second].flipped = false;
+            flippedCards = [];
+            canFlip = true;
+            renderBoard();
+          }, 1000);
+        }
+      }
+    }
+
+    function updateDifficultyUI() {
+      document.querySelectorAll('.btn.difficulty').forEach(btn => {
+        const size = +btn.dataset.size;
+        btn.classList.toggle('active', size === gridSize);
+      });
+    }
+
+    // Event listeners
+    document.getElementById('new-game-btn').addEventListener('click', () => initGame(gridSize));
+    document.getElementById('reset-best-btn').addEventListener('click', () => {
+      if (confirm('Reset best time for this difficulty?')) {
+        const key = `memory-best-${gridSize}`;
+        localStorage.removeItem(key);
+        updateDisplay();
+      }
+    });
+
+    document.querySelectorAll('.btn.difficulty').forEach(btn => {
+      btn.addEventListener('click', () => {
+        initGame(+btn.dataset.size);
+      });
+    });
+
+    // Initialize
+    initGame(4);
+  </script>
+</body>
+</html>
+
