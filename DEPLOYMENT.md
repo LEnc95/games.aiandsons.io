@@ -50,6 +50,13 @@ This monorepo structure allows multiple games to coexist:
 - **Main game**: `https://cadesgames.aiandsons.io/pingpong`
 - **With parameters**: `https://cadesgames.aiandsons.io/pingpong?difficulty=3&speed=1.5&seed=12345`
 
+### Versioning
+
+- The site displays a version badge in the bottom-right of the homepage.
+- Source of truth: `version.json` at the repo root with `{ "version": "x.y.z" }`.
+- Before merging/deploying changes that affect the app, bump `version.json` (e.g., 0.1.0 → 0.1.1).
+- The homepage fetches `version.json` and shows `vX.Y.Z`.
+
 ### Testing
 
 After deployment, test:

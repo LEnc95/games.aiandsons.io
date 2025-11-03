@@ -126,14 +126,20 @@
         }
       }
 
-      // Column numbers (1-7) centered below each column
+      // Column numbers (1-7), positioned where they fit (below board if room, otherwise above)
       const boardH = s*cfg.rows + cfg.gap*(cfg.rows-1);
-      ctx.fillStyle = '#b6c7e6';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
       const fontSize = Math.max(12, Math.floor(s * 0.28));
       ctx.font = `${fontSize}px system-ui,Segoe UI,Roboto,Arial`;
-      const labelY = startY + boardH + 8; // small gap beneath the board
+      ctx.fillStyle = '#b6c7e6';
+      ctx.textAlign = 'center';
+      let labelY = startY + boardH + 6;
+      let baseline = 'top';
+      if (labelY + fontSize + 2 > canvas.height) {
+        // Not enough space at bottom; place labels above the board
+        labelY = startY - 6;
+        baseline = 'bottom';
+      }
+      ctx.textBaseline = baseline;
       for (let c=0;c<cfg.cols;c++){
         const x = startX + c*(s+cfg.gap) + s/2;
         ctx.fillText(String(c+1), x, labelY);
