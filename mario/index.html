@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Micro Mario – HTML5 Canvas Platformer (v2)</title>
+  <style>
+    :root { --bg:#0b0f14; --fg:#e8f0ff; --muted:#94a3b8; --accent:#6ae0ff; }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+    canvas{display:block;width:100vw;height:100vh;background:#0a0f16}
+    .hud{position:fixed;top:56px;left:12px;right:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;pointer-events:none}
+    .pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(6px);padding:8px 12px;border-radius:999px;font-weight:700}
+    .hint{color:var(--muted);font-weight:500}
+    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45)}
+    .card{background:rgba(17,24,39,.9);border:1px solid rgba(255,255,255,.12);padding:24px;border-radius:16px;max-width:620px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+    .card h1{margin:0 0 10px;font-size:28px}
+    .card p{margin:6px 0;color:var(--muted)}
+    .kbd{display:inline-block;border:1px solid rgba(255,255,255,.18);padding:2px 8px;border-radius:6px;margin:0 4px;background:rgba(255,255,255,.06)}
+    .btn{margin-top:14px;background:var(--accent);color:#002230;border:none;font-weight:800;padding:10px 16px;border-radius:12px;cursor:pointer}
+    /* Mobile controls */
+    .controls{position:fixed;bottom:16px;left:16px;right:16px;display:flex;justify-content:space-between;gap:16px;pointer-events:auto}
+    .cluster{display:flex;gap:12px}
+    .ctl{width:64px;height:64px;border-radius:16px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);backdrop-filter:blur(6px);display:grid;place-items:center;color:#d1d5db;font-weight:900;user-select:none}
+    .ctl:active{transform:scale(.96)}
+    @media (min-width:900px){ .controls{display:none} }
+    /* Back button */
+    .back-home{position:fixed;top:12px;left:12px;z-index:9999;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;background:rgba(0,0,0,0.6);color:#fff;text-decoration:none;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;line-height:1;font-weight:600;backdrop-filter:saturate(150%) blur(6px);box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+    .back-home:hover{background:rgba(0,0,0,0.75)}
+    .back-home:focus{outline:2px solid #fff;outline-offset:2px}
+  </style>
+</head>
+
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <div class="hud">
+    <div class="pill" id="hud-level">World 1-1</div>
+    <div class="pill" id="hud-stats">Coins: 0 • Lives: 3 • Time: 400</div>
+    <div class="hint">Move: <span class="kbd">A/←</span><span class="kbd">D/→</span> • Jump: <span class="kbd">W/↑/Space</span> • Reset: <span class="kbd">R</span> • Pause: <span class="kbd">P</span></div>
+  </div>
+
+  <canvas id="game"></canvas>
+
+  <div class="overlay" id="start">
+    <div class="card">
+      <h1>Micro Mario (v2)</h1>
+      <p>Tighter physics, reliable collisions, clearer level layout. Finish by grabbing the flag.</p>
+      <p>Controls: Move <span class="kbd">A/D</span> or <span class="kbd">←/→</span>, Jump <span class="kbd">W</span>/<span class="kbd">↑</span>/<span class="kbd">Space</span>. Mobile buttons included.</p>
+      <button class="btn" id="startBtn">Start</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="gameOver" style="display:none">
+    <div class="card">
+      <h1 id="overTitle">Course Clear!</h1>
+      <p id="overStats">Coins: 0 • Lives: 3 • Time: 400</p>
+      <button class="btn" id="againBtn">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Mobile controls -->
+  <div class="controls" id="touchControls">
+    <div class="cluster">
+      <div class="ctl" data-btn="left">◀</div>
+      <div class="ctl" data-btn="right">▶</div>
+    </div>
+    <div class="cluster">
+      <div class="ctl" data-btn="jump">⤒</div>
+      <div class="ctl" data-btn="pause">⏸</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ===== Canvas & Scaling =====
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(window.devicePixelRatio||1, 2);
+  function resize(){ canvas.width=Math.floor(innerWidth*DPR); canvas.height=Math.floor(innerHeight*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);} resize(); addEventListener('resize', resize);
+
+  // ===== HUD/Overlays =====
+  const elLevel = document.getElementById('hud-level');
+  const elStats = document.getElementById('hud-stats');
+  const startOverlay = document.getElementById('start');
+  const gameOver = document.getElementById('gameOver');
+  const overTitle = document.getElementById('overTitle');
+  const overStats = document.getElementById('overStats');
+  document.getElementById('startBtn').onclick=()=>{startOverlay.style.display='none'; startGame();};
+  document.getElementById('againBtn').onclick=()=>{gameOver.style.display='none'; startGame();};
+
+  // ===== Level Data (32px tiles) =====
+  const TILE = 32;
+  // Legend: X=ground/solid, B=brick, ?=question→coin, C=coin, G=goomba, F=flag, S=start, .=empty
+  const LEVEL_1 = [
+    '................................................................',
+    '................................................................',
+    '................................................................',
+    '.........................C......................................',
+    '....................B..B???..C..................................',
+    '...............C.........................C......................',
+    '.................B.....C.............B..........................',
+    '...............BBB...................BBB..............C.........',
+    'S............................................................F..',
+    'XXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXX',
+  ];
+
+  // Enemy placements (tile coords)
+  const ENEMIES_1 = [ {x:18,y:8}, {x:26,y:8}, {x:45,y:8} ];
+
+  // ===== Game State =====
+  const G = {
+    state:'idle', levelIndex:0, coins:0, lives:3, time:400,
+    keys:{left:false,right:false,up:false},
+    map:null, player:null, enemies:[], particles:[],
+    camX:0, paused:false
+  };
+
+  // ===== Input (keyboard) =====
+  addEventListener('keydown', e=>{
+    if(['ArrowLeft','KeyA'].includes(e.code)) G.keys.left=true;
+    if(['ArrowRight','KeyD'].includes(e.code)) G.keys.right=true;
+    if(['ArrowUp','KeyW','Space'].includes(e.code)) { pressJump(); e.preventDefault(); }
+    if(e.code==='KeyR') loadLevel();
+    if(e.code==='KeyP') togglePause();
+  });
+  addEventListener('keyup', e=>{
+    if(['ArrowLeft','KeyA'].includes(e.code)) G.keys.left=false;
+    if(['ArrowRight','KeyD'].includes(e.code)) G.keys.right=false;
+  });
+
+  // ===== Input (touch) =====
+  const ctlWrap = document.getElementById('touchControls');
+  ctlWrap.addEventListener('pointerdown', (e)=>{
+    const btn = e.target.getAttribute('data-btn');
+    if(btn==='left') G.keys.left=true;
+    if(btn==='right') G.keys.right=true;
+    if(btn==='jump') pressJump();
+    if(btn==='pause') togglePause();
+  });
+  ctlWrap.addEventListener('pointerup', (e)=>{
+    const btn = e.target.getAttribute('data-btn');
+    if(btn==='left') G.keys.left=false;
+    if(btn==='right') G.keys.right=false;
+  });
+
+  function togglePause(){ G.paused = !G.paused; }
+
+  // ===== Utilities =====
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const rectsOverlap=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
+
+  // ===== TileMap =====
+  class TileMap {
+    constructor(rows){ this.rows=rows.map(r=>r.split('')); this.h=this.rows.length; this.w=this.rows[0].length; }
+    get(x,y){ if(x<0||y<0||x>=this.w||y>=this.h) return 'X'; return this.rows[y][x]; }
+    set(x,y,ch){ if(x>=0&&y>=0&&x<this.w&&y<this.h) this.rows[y][x]=ch; }
+    isSolid(ch){ return ch==='X'||ch==='B'||ch==='?'; }
+    widthPx(){ return this.w*TILE; }
+    drawBG(){
+      const W=canvas.width/DPR, H=canvas.height/DPR;
+      const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0b0f14'); g.addColorStop(1,'#0a1220'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#0e1b2b'; for(let i=0;i<6;i++){ const x=(i*360 - (G.camX*0.25)%360)-120; ctx.beginPath(); ctx.arc(x,H-30,160,0,Math.PI*2); ctx.fill(); }
+    }
+    draw(){
+      const startCol=Math.floor(G.camX/TILE)-2, endCol=Math.ceil((G.camX+canvas.width/DPR)/TILE)+2;
+      ctx.textBaseline='middle'; ctx.font='16px system-ui';
+      for(let y=0;y<this.h;y++){
+        for(let x=startCol;x<endCol;x++){
+          const ch=this.get(x,y); if(!ch||ch==='.') continue; const sx=x*TILE-G.camX, sy=y*TILE;
+          if(ch==='X'){ ctx.fillStyle='#3b82f6'; ctx.fillRect(sx,sy,TILE,TILE); ctx.fillStyle='#1e3a8a'; ctx.fillRect(sx,sy+TILE-6,TILE,6); }
+          else if(ch==='B'){ ctx.fillStyle='#f59e0b'; ctx.fillRect(sx,sy,TILE,TILE); ctx.fillStyle='#b45309'; ctx.fillRect(sx+6,sy+6,TILE-12,TILE-12); }
+          else if(ch==='?'){ ctx.fillStyle='#fde68a'; ctx.fillRect(sx,sy,TILE,TILE); ctx.fillStyle='#78350f'; ctx.fillText('?', sx+TILE/2-4, sy+TILE/2+1); }
+          else if(ch==='C'){ ctx.fillStyle='#fbbf24'; ctx.beginPath(); ctx.arc(sx+TILE/2, sy+TILE/2, 6, 0, Math.PI*2); ctx.fill(); }
+          else if(ch==='F'){ ctx.fillStyle='#e5e7eb'; ctx.fillRect(sx+TILE/2-2, sy-5, 4, TILE*6); ctx.fillStyle='#ef4444'; ctx.fillRect(sx+TILE/2+2, sy+6, 14, 10); }
+          else if(ch==='S'){ }
+        }
+      }
+    }
+  }
+
+  // ===== Entities =====
+  class Player{
+    constructor(x,y){ this.x=x; this.y=y; this.w=18; this.h=24; this.vx=0; this.vy=0; this.onGround=false; this.coyote=0; this.jumpQueued=false; }
+    rect(){ return {x:this.x,y:this.y,w:this.w,h:this.h}; }
+    update(dt){
+      if(G.paused) return;
+      const accel=1400, maxRun=240, airCtrl=0.55, groundFric=0.85;
+      const want = (G.keys.left?-1:0) + (G.keys.right?1:0);
+      const control = this.onGround?1:airCtrl; this.vx += want*accel*control*dt;
+      if(this.onGround && want===0) this.vx *= groundFric; this.vx = clamp(this.vx, -maxRun, maxRun);
+      if(this.onGround) this.coyote = 0.1; else this.coyote -= dt;
+      if(this.jumpQueued && this.coyote>0){ this.vy = -520; this.onGround=false; this.coyote=0; this.jumpQueued=false; }
+      this.vy += 1800*dt; if(this.vy>900) this.vy=900;
+      this.x += this.vx*dt; this.resolve(true);
+      this.y += this.vy*dt; this.onGround=false; this.resolve(false);
+      const mid=this.x+this.w/2, viewW=canvas.width/DPR; const target=clamp(mid-viewW*0.45,0, G.map.widthPx()-viewW);
+      G.camX += (target - G.camX)*Math.min(1, dt*6);
+    }
+    resolve(horiz){
+      const r=this.rect(); const fromX=Math.floor((r.x-2)/TILE), toX=Math.ceil((r.x+r.w+2)/TILE);
+      const fromY=Math.floor((r.y-2)/TILE), toY=Math.ceil((r.y+r.h+2)/TILE);
+      for(let y=fromY;y<toY;y++){
+        for(let x=fromX;x<toX;x++){
+          let ch = G.map.get(x,y);
+          if(ch==='C' && rectsOverlap(r,{x:x*TILE,y:y*TILE,w:TILE,h:TILE})) { G.map.set(x,y,'.'); G.coins++; spawnCoin(x*TILE+TILE/2,y*TILE+TILE/2); updateHUD(); continue; }
+          if(ch==='F' && rectsOverlap(r,{x:x*TILE,y:y*TILE-5,w:TILE,h:TILE*6})) { win(); return; }
+          if(!G.map.isSolid(ch)) continue;
+          const tr={x:x*TILE,y:y*TILE,w:TILE,h:TILE}; if(!rectsOverlap(r,tr)) continue;
+          if(horiz){ if(this.vx>0) this.x = tr.x - r.w; else if(this.vx<0) this.x = tr.x + tr.w; this.vx=0; }
+          else { if(this.vy>0){ this.y = tr.y - r.h; this.vy=0; this.onGround=true; } else { this.y = tr.y + tr.h; this.vy=0; if(ch==='?'||ch==='B'){ hitBlock(x,y); } } }
+          r.x=this.x; r.y=this.y;
+        }
+      }
+    }
+    draw(){ const sx=this.x-G.camX, sy=this.y; ctx.fillStyle='#e11d48'; ctx.fillRect(sx,sy,this.w,this.h); ctx.fillStyle='#fff'; ctx.fillRect(sx+4,sy+6,4,4); }
+  }
+
+  class Goomba{
+    constructor(x,y){ this.x=x; this.y=y; this.w=18; this.h=16; this.vx=-50; this.vy=0; this.dead=false; }
+    rect(){ return {x:this.x,y:this.y,w:this.w,h:this.h}; }
+    update(dt){ if(G.paused) return; if(this.dead){ this.vy+=1800*dt; this.y+=this.vy*dt; return; }
+      this.vy+=1800*dt; if(this.vy>900) this.vy=900; this.x+=this.vx*dt; this.resolve(true); this.y+=this.vy*dt; this.resolve(false);
+      const p=G.player, r=this.rect(), pr=p.rect();
+      if(rectsOverlap(r,pr)){
+        const stomp = p.vy>120 && (pr.y+pr.h-6) <= r.y;
+        if(stomp){ this.dead=true; p.vy=-360; G.coins++; updateHUD(); spawnPopText(this.x+this.w/2,this.y,'+1'); }
+        else die();
+      }
+    }
+    resolve(h){ const fromX=Math.floor((this.x-2)/TILE), toX=Math.ceil((this.x+this.w+2)/TILE);
+      const fromY=Math.floor((this.y-2)/TILE), toY=Math.ceil((this.y+this.h+2)/TILE);
+      for(let y=fromY;y<toY;y++) for(let x=fromX;x<toX;x++){
+        if(!G.map.isSolid(G.map.get(x,y))) continue; const tr={x:x*TILE,y:y*TILE,w:TILE,h:TILE}; const rr={x:this.x,y:this.y,w:this.w,h:this.h};
+        if(!rectsOverlap(rr,tr)) continue; if(h){ if(this.vx>0) this.x=tr.x-rr.w; else this.x=tr.x+tr.w; this.vx*=-1; }
+        else { if(this.vy>0){ this.y=tr.y-rr.h; this.vy=0; } else { this.y=tr.y+tr.h; this.vy=0; this.vx*=-1; } }
+      }
+    }
+    draw(){ const sx=this.x-G.camX, sy=this.y; if(this.dead) ctx.globalAlpha=.6; ctx.fillStyle='#a16207'; ctx.fillRect(sx,sy,this.w,this.h); ctx.globalAlpha=1; }
+  }
+
+  // ===== Blocks =====
+  function hitBlock(tx,ty){ const ch=G.map.get(tx,ty); if(ch==='?'){ G.map.set(tx,ty,'B'); G.coins++; spawnCoin(tx*TILE+TILE/2, ty*TILE-6); updateHUD(); bumpAnim(tx,ty); } else if(ch==='B'){ bumpAnim(tx,ty); } }
+  function bumpAnim(tx,ty){ G.particles.push({type:'bump',x:tx*TILE,y:ty*TILE,off:0,life:.18}); }
+
+  // ===== Particles =====
+  function spawnCoin(x,y){ G.particles.push({x,y,vy:-120,life:.6,type:'coin'}); }
+  function spawnPopText(x,y,text){ G.particles.push({x,y,vy:-70,life:.7,type:'text',text}); }
+  function updateParticles(dt){ for(const p of G.particles){ p.life-=dt; if(p.vy) p.y += p.vy*dt; if(p.type==='bump'){ p.off = 6*Math.sin((1-p.life/.18)*Math.PI); } } G.particles=G.particles.filter(p=>p.life>0); }
+  function drawParticles(){ for(const p of G.particles){ const sx=(p.x??0)-G.camX; if(p.type==='coin'){ ctx.fillStyle='#fbbf24'; ctx.beginPath(); ctx.arc(sx, p.y, 6, 0, Math.PI*2); ctx.fill(); }
+    else if(p.type==='text'){ ctx.fillStyle='#fff'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText(p.text, sx, p.y); }
+    else if(p.type==='bump'){ ctx.save(); ctx.translate(sx, p.y - p.off); ctx.fillStyle='#f59e0b'; ctx.fillRect(0,0,TILE,TILE); ctx.restore(); }
+  } }
+
+  // ===== Game Flow =====
+  function loadLevel(){ G.map = new TileMap(LEVEL_1); G.enemies=[]; G.particles=[]; G.camX=0; G.time=400;
+    let sx=0, sy=0;
+    for(let y=0;y<G.map.h;y++){
+      for(let x=0;x<G.map.w;x++){
+        if(G.map.get(x,y)==='S'){ sx=x*TILE+6; sy=y*TILE-8; G.map.set(x,y,'.'); }
+      }
+    }
+    for(const e of ENEMIES_1){ G.enemies.push(new Goomba(e.x*TILE+7, e.y*TILE+8)); }
+    G.player = new Player(sx, sy);
+    elLevel.textContent = 'World 1-1'; updateHUD();
+  }
+
+  function startGame(){ G.state='play'; G.coins=0; G.lives=3; loadLevel(); }
+  function die(){ G.lives -= 1; updateHUD(); if(G.lives<=0){ return gameEnd(false); } loadLevel(); }
+  function win(){ gameEnd(true); }
+  function gameEnd(won){ G.state='over'; overTitle.textContent = won? 'Course Clear!' : 'Game Over'; overStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`; gameOver.style.display='grid'; }
+  function updateHUD(){ elStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`; }
+
+  function pressJump(){ if(G.player){ G.player.jumpQueued = true; setTimeout(()=>{ if(G.player) G.player.jumpQueued=false; }, 120); } }
+
+  // ===== Main Loop =====
+  let last=performance.now();
+  function loop(now){
+    const dt=Math.min(.033,(now-last)/1000); last=now;
+    if(G.state==='play'){
+      if(!G.paused){
+        G.time -= dt; if(G.time<=0) { die(); }
+        G.map.drawBG();
+        G.player.update(dt);
+        for(const e of G.enemies) e.update(dt);
+        updateParticles(dt);
+        const H=canvas.height/DPR; if(G.player.y>H+120) die();
+      }
+      G.map.draw(); for(const e of G.enemies) e.draw(); G.player.draw(); drawParticles();
+      if(G.paused){ ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.fillStyle='#fff'; ctx.font='bold 28px system-ui'; ctx.textAlign='center'; ctx.fillText('Paused', (canvas.width/DPR)/2, (canvas.height/DPR)/2); }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+
+</html>
+
+
