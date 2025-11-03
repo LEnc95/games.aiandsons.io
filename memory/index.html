@@ -73,11 +73,16 @@
         <div class="stat-item"><span class="stat-label">Moves:</span><span id="moves">0</span></div>
         <div class="stat-item"><span class="stat-label">Best:</span><span id="best-time">-</span></div>
       </div>
+      <div class="stats" id="pp-stats" style="display:none">
+        <div class="stat-item"><span class="stat-label">P1:</span><span id="p1-points">0</span> <span style="color:#8aa0c3">(Total <span id="p1-total">0</span>)</span></div>
+        <div class="stat-item"><span class="stat-label">P2:</span><span id="p2-points">0</span> <span style="color:#8aa0c3">(Total <span id="p2-total">0</span>)</span></div>
+      </div>
       <div class="hint" id="hint">Tap two cards to find matches!</div>
       <div class="board grid-4" id="board"></div>
       <div class="buttons">
         <button class="btn primary" id="new-game-btn">NEW GAME</button>
         <button class="btn" id="reset-best-btn">RESET BEST</button>
+        <button class="btn" id="mode-toggle">Mode: Solo</button>
       </div>
       <div class="buttons">
         <button class="btn difficulty" data-size="4">Easy (4x4)</button>
@@ -98,6 +103,15 @@
     let startTime = null;
     let timerInterval = null;
     let canFlip = true;
+    let ppMode = false; // pass-and-play mode
+    let currentPlayer = 1; // 1 or 2
+    let p1Points = 0, p2Points = 0;
+
+    function getPPTotals(){
+      const s = localStorage.getItem('memory-pp-scores');
+      return s ? JSON.parse(s) : { p1: 0, p2: 0, draws: 0 };
+    }
+    function setPPTotals(t){ localStorage.setItem('memory-pp-scores', JSON.stringify(t)); }
 
     function getBestTime() {
       const key = `memory-best-${gridSize}`;
@@ -118,6 +132,17 @@
       document.getElementById('moves').textContent = moves;
       const best = getBestTime();
       document.getElementById('best-time').textContent = best ? best + 's' : '-';
+      const ppStats = document.getElementById('pp-stats');
+      if (ppMode){
+        ppStats.style.display = 'flex';
+        document.getElementById('p1-points').textContent = p1Points;
+        document.getElementById('p2-points').textContent = p2Points;
+        const totals = getPPTotals();
+        document.getElementById('p1-total').textContent = totals.p1;
+        document.getElementById('p2-total').textContent = totals.p2;
+      } else {
+        ppStats.style.display = 'none';
+      }
     }
 
     function startTimer() {
@@ -152,6 +177,8 @@
       canFlip = true;
       stopTimer();
       startTime = null;
+      currentPlayer = 1;
+      if (ppMode){ p1Points = 0; p2Points = 0; }
       
       const totalPairs = (size * size) / 2;
       const selectedEmojis = emojis.slice(0, totalPairs);
@@ -165,7 +192,7 @@
 
       renderBoard();
       updateDisplay();
-      document.getElementById('hint').textContent = 'Tap two cards to find matches!';
+      document.getElementById('hint').textContent = ppMode ? 'Player 1: flip two cards.' : 'Tap two cards to find matches!';
       
       // Update board class
       const board = document.getElementById('board');
@@ -214,6 +241,11 @@
           cards[first].matched = true;
           cards[second].matched = true;
           matchedPairs++;
+          if (ppMode){
+            if (currentPlayer===1) p1Points++; else p2Points++;
+            document.getElementById('hint').textContent = `✅ Match! Player ${currentPlayer} goes again.`;
+            updateDisplay();
+          }
           
           setTimeout(() => {
             flippedCards = [];
@@ -227,10 +259,19 @@
               const isNewBest = setBestTime(time);
               updateDisplay();
               
-              document.getElementById('hint').textContent = 
-                isNewBest 
-                  ? `🎉 You win! New best time: ${time}s!`
-                  : `🎉 You win! Time: ${time}s, Moves: ${moves}`;
+              if (!ppMode){
+                document.getElementById('hint').textContent = 
+                  isNewBest 
+                    ? `🎉 You win! New best time: ${time}s!`
+                    : `🎉 You win! Time: ${time}s, Moves: ${moves}`;
+              } else {
+                const totals = getPPTotals();
+                if (p1Points > p2Points) { totals.p1++; document.getElementById('hint').textContent = `🎉 Player 1 wins! ${p1Points}–${p2Points}`; }
+                else if (p2Points > p1Points) { totals.p2++; document.getElementById('hint').textContent = `🎉 Player 2 wins! ${p2Points}–${p1Points}`; }
+                else { totals.draws++; document.getElementById('hint').textContent = `It's a draw! ${p1Points}–${p2Points}`; }
+                setPPTotals(totals);
+                updateDisplay();
+              }
             }
           }, 500);
         } else {
@@ -241,6 +282,10 @@
             flippedCards = [];
             canFlip = true;
             renderBoard();
+            if (ppMode){
+              currentPlayer = currentPlayer===1 ? 2 : 1;
+              document.getElementById('hint').textContent = `Player ${currentPlayer}: your turn.`;
+            }
           }, 1000);
         }
       }
@@ -269,7 +314,14 @@
       });
     });
 
+    document.getElementById('mode-toggle').addEventListener('click', () => {
+      ppMode = !ppMode;
+      document.getElementById('mode-toggle').textContent = ppMode ? 'Mode: 2-Player' : 'Mode: Solo';
+      initGame(gridSize);
+    });
+
     // Initialize
+    document.getElementById('mode-toggle').textContent = 'Mode: Solo';
     initGame(4);
   </script>
 </body>

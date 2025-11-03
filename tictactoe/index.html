@@ -72,6 +72,7 @@
       <div class="buttons">
         <button class="btn primary" id="new-game-btn">NEW GAME</button>
         <button class="btn" id="reset-score-btn">RESET SCORE</button>
+        <button class="btn" id="mode-toggle-btn">Mode: Vs AI</button>
       </div>
       <div class="buttons">
         <button class="btn difficulty" data-diff="1">Easy</button>
@@ -93,33 +94,37 @@
 
     // State
     let board = Array(9).fill(null);
-    let currentPlayer = 'X'; // Player is X, AI is O
+    let currentPlayer = 'X'; // X always starts
     let gameOver = false;
     let difficulty = cfg.difficulty;
+    let vsAI = true; // true = play vs AI, false = 2-player
 
-    // Score tracking
-    function getScores() {
+    // Score tracking (AI and Pass-and-Play)
+    function getAIScores(){
       const stored = localStorage.getItem('tictactoe-scores');
       return stored ? JSON.parse(stored) : { wins: 0, losses: 0, draws: 0 };
     }
-
-    function updateScore(type) {
-      const scores = getScores();
-      scores[type]++;
-      localStorage.setItem('tictactoe-scores', JSON.stringify(scores));
-      updateScoreDisplay();
+    function setAIScores(s){ localStorage.setItem('tictactoe-scores', JSON.stringify(s)); }
+    function getPPScores(){
+      const stored = localStorage.getItem('tictactoe-pp-scores');
+      return stored ? JSON.parse(stored) : { p1: 0, p2: 0, draws: 0 };
     }
-
-    function resetScores() {
-      localStorage.removeItem('tictactoe-scores');
-      updateScoreDisplay();
-    }
-
-    function updateScoreDisplay() {
-      const scores = getScores();
-      document.getElementById('wins').textContent = scores.wins;
-      document.getElementById('losses').textContent = scores.losses;
-      document.getElementById('draws').textContent = scores.draws;
+    function setPPScores(s){ localStorage.setItem('tictactoe-pp-scores', JSON.stringify(s)); }
+    function updateScoreDisplay(){
+      const labels = document.querySelectorAll('.score-label');
+      if (vsAI){
+        labels[0].textContent = 'Wins:'; labels[1].textContent = 'Losses:'; labels[2].textContent = 'Draws:';
+        const s = getAIScores();
+        document.getElementById('wins').textContent = s.wins;
+        document.getElementById('losses').textContent = s.losses;
+        document.getElementById('draws').textContent = s.draws;
+      } else {
+        labels[0].textContent = 'P1:'; labels[1].textContent = 'P2:'; labels[2].textContent = 'Draws:';
+        const s = getPPScores();
+        document.getElementById('wins').textContent = s.p1;
+        document.getElementById('losses').textContent = s.p2;
+        document.getElementById('draws').textContent = s.draws;
+      }
     }
 
     // UI Elements
@@ -128,6 +133,7 @@
     const newGameBtn = document.getElementById("new-game-btn");
     const resetScoreBtn = document.getElementById("reset-score-btn");
     const difficultyBtns = document.querySelectorAll(".btn.difficulty");
+    const modeToggleBtn = document.getElementById("mode-toggle-btn");
 
     function setHint(msg) { hintEl.textContent = msg; }
 
@@ -149,7 +155,8 @@
           cellEl.classList.add(cell.toLowerCase());
         }
         cellEl.dataset.index = index;
-        if (!gameOver && currentPlayer === 'X' && !cell) {
+        const humanTurn = (!vsAI && (currentPlayer==='X' || currentPlayer==='O')) || (vsAI && currentPlayer==='X');
+        if (!gameOver && humanTurn && !cell) {
           cellEl.addEventListener('click', () => makeMove(index));
         } else {
           cellEl.disabled = true;
@@ -159,7 +166,8 @@
     }
 
     function makeMove(index) {
-      if (board[index] || gameOver || currentPlayer !== 'X') return;
+      if (board[index] || gameOver) return;
+      if (vsAI && currentPlayer !== 'X') return;
 
       board[index] = currentPlayer;
       renderBoard();
@@ -168,26 +176,35 @@
       if (winner) {
         gameOver = true;
         highlightWinner(winner);
-        if (winner === 'X') {
-          setHint('🎉 You win!');
-          updateScore('wins');
+        if (vsAI) {
+          if (winner === 'X') { setHint('🎉 You win!'); const s=getAIScores(); s.wins++; setAIScores(s); }
+          else { setHint('AI wins! Better luck next time.'); const s=getAIScores(); s.losses++; setAIScores(s); }
         } else {
-          setHint('AI wins! Better luck next time.');
-          updateScore('losses');
+          if (winner === 'X') { setHint('🎉 Player 1 wins!'); const s=getPPScores(); s.p1++; setPPScores(s); }
+          else { setHint('🎉 Player 2 wins!'); const s=getPPScores(); s.p2++; setPPScores(s); }
         }
+        updateScoreDisplay();
         return;
       }
 
       if (isBoardFull()) {
         gameOver = true;
         setHint("It's a draw!");
-        updateScore('draws');
+        if (vsAI){ const s=getAIScores(); s.draws++; setAIScores(s); }
+        else { const s=getPPScores(); s.draws++; setPPScores(s); }
+        updateScoreDisplay();
         return;
       }
 
-      currentPlayer = 'O';
-      setHint('AI is thinking...');
-      setTimeout(() => aiMove(), 300);
+      if (vsAI){
+        currentPlayer = 'O';
+        setHint('AI is thinking...');
+        setTimeout(() => aiMove(), 300);
+      } else {
+        currentPlayer = currentPlayer==='X' ? 'O' : 'X';
+        setHint(currentPlayer==='X' ? 'Player 1 turn' : 'Player 2 turn');
+        renderBoard();
+      }
     }
 
     function aiMove() {
@@ -216,13 +233,9 @@
           gameOver = true;
           renderBoard();
           highlightWinner(winner);
-          if (winner === 'X') {
-            setHint('🎉 You win!');
-            updateScore('wins');
-          } else {
-            setHint('AI wins! Better luck next time.');
-            updateScore('losses');
-          }
+          if (winner === 'X') { setHint('🎉 You win!'); const s=getAIScores(); s.wins++; setAIScores(s); }
+          else { setHint('AI wins! Better luck next time.'); const s=getAIScores(); s.losses++; setAIScores(s); }
+          updateScoreDisplay();
           return;
         }
 
@@ -230,7 +243,8 @@
           gameOver = true;
           renderBoard();
           setHint("It's a draw!");
-          updateScore('draws');
+          const s=getAIScores(); s.draws++; setAIScores(s);
+          updateScoreDisplay();
           return;
         }
 
@@ -356,15 +370,16 @@
       currentPlayer = 'X';
       gameOver = false;
       renderBoard();
-      setHint("Your turn! Tap a square.");
+      setHint(vsAI ? "Your turn! Tap a square." : "Player 1 turn");
     }
 
     // Event listeners
     newGameBtn.addEventListener("click", newGame);
     resetScoreBtn.addEventListener("click", () => {
-      if (confirm("Reset all scores?")) {
-        resetScores();
-      }
+      if (!confirm("Reset scores for current mode?")) return;
+      if (vsAI) localStorage.removeItem('tictactoe-scores');
+      else localStorage.removeItem('tictactoe-pp-scores');
+      updateScoreDisplay();
     });
 
     difficultyBtns.forEach(btn => {
@@ -373,6 +388,15 @@
         updateDifficultyUI();
         newGame();
       });
+    });
+
+    modeToggleBtn.addEventListener('click', () => {
+      vsAI = !vsAI;
+      modeToggleBtn.textContent = vsAI ? 'Mode: Vs AI' : 'Mode: 2-Player';
+      // Enable/disable difficulty buttons visually and functionally
+      difficultyBtns.forEach(btn => { btn.disabled = !vsAI; });
+      updateScoreDisplay();
+      newGame();
     });
 
     // Keyboard shortcuts
@@ -384,6 +408,7 @@
     });
 
     // Initialize
+    document.getElementById('mode-toggle-btn').textContent = 'Mode: Vs AI';
     updateScoreDisplay();
     updateDifficultyUI();
     renderBoard();
