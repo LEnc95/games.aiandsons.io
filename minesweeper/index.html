@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Minesweeper</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --cell:#0c142e; --grid:#192544; --flag:#fa4; --mine:#e55; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+
+    #board { display:grid; gap:4px; background:#0e1836; padding:10px; border-radius:12px; border:2px solid var(--grid); }
+    .cell { width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--cell); border:2px solid var(--grid); border-radius:6px; cursor:pointer; user-select:none; font-weight:700; font-size:16px; }
+    .cell.revealed { background:#152750; border-color:#223660; cursor:default; }
+    .cell.mine { background:#3a0f1a; border-color:#5a1f2a; color:#ffdede; }
+    .cell.flag { color:var(--flag); }
+    .cell.zero { color:#9fb3d6; }
+    .n1{ color:#66c; } .n2{ color:#2a6; } .n3{ color:#c33; } .n4{ color:#36c; } .n5{ color:#a52; } .n6{ color:#399; } .n7{ color:#444; } .n8{ color:#777; }
+
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 900px); }
+    .stats { display:flex; justify-content:center; gap:24px; margin-top:4px; }
+    .stats b { color:var(--fg); }
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
+    .btn { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(13px, 2.2vw, 16px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-height:40px; transition:all 0.2s; }
+    .btn:active { background:#3a4a7f; transform:scale(0.95); }
+    .btn.primary { background:#5ad; border-color:#6be; color:#041e2e; }
+    .btn.primary:active { background:#4bc; }
+
+    @media (max-width: 768px) {
+      #board { gap:3px; }
+      .cell { width:34px; height:34px; font-size:15px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Back to Home button -->
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <style>
+    .back-home { position: fixed; top: 12px; left: 12px; z-index: 9999; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.6); color: #fff; text-decoration: none; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; line-height: 1; font-weight: 600; backdrop-filter: saturate(150%) blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .back-home:hover { background: rgba(0,0,0,0.75); }
+    .back-home:focus { outline: 2px solid #fff; outline-offset: 2px; }
+  </style>
+  <div class="wrap">
+    <div class="hud">
+      <div class="buttons">
+        <button class="btn primary preset" data-w="9" data-h="9" data-m="10">Beginner 9×9</button>
+        <button class="btn preset" data-w="16" data-h="16" data-m="40">Intermediate 16×16</button>
+        <button class="btn preset" data-w="30" data-h="16" data-m="99">Expert 30×16</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+      </div>
+      <div class="stats">
+        <div>Mines: <b id="mines-left">0</b></div>
+        <div>Time: <b id="timer">0</b>s</div>
+        <div>Mode: <b id="mode">Reveal</b> (press F to toggle)</div>
+      </div>
+    </div>
+    <div id="board"></div>
+  </div>
+
+  <script>
+    let W=9,H=9,M=10; // width, height, mines
+    let grid, revealed, flagged, started, over, timerId=null, startTs=0, flagMode=false, firstClick=true;
+
+    const boardEl = document.getElementById('board');
+    const minesLeftEl = document.getElementById('mines-left');
+    const timerEl = document.getElementById('timer');
+    const modeEl = document.getElementById('mode');
+
+    function resetTimer(){ if (timerId) clearInterval(timerId); timerId=null; timerEl.textContent='0'; }
+    function startTimer(){ startTs = Date.now(); timerId = setInterval(()=>{ timerEl.textContent = Math.floor((Date.now()-startTs)/1000); }, 1000); }
+
+    function init(w=W,h=H,m=M){
+      W=w; H=h; M=m; firstClick=true; over=false; started=false; resetTimer();
+      grid = Array.from({length:H}, ()=> Array(W).fill(0));
+      revealed = Array.from({length:H}, ()=> Array(W).fill(false));
+      flagged = Array.from({length:H}, ()=> Array(W).fill(false));
+      minesLeftEl.textContent = M;
+      render();
+    }
+
+    function inBounds(x,y){ return x>=0 && x<W && y>=0 && y<H; }
+    function neighbors(x,y){
+      const ns=[]; for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++){ if (dx||dy){ const nx=x+dx, ny=y+dy; if (inBounds(nx,ny)) ns.push([nx,ny]); } }
+      return ns;
+    }
+
+    function placeMines(sx,sy){
+      // ensure first click (sx,sy) is safe including its neighbors
+      const safe = new Set([[sx,sy], ...neighbors(sx,sy)].map(([x,y])=>`${x},${y}`));
+      let placed=0; while(placed<M){
+        const x = Math.floor(Math.random()*W), y = Math.floor(Math.random()*H);
+        if (grid[y][x]===-1) continue; if (safe.has(`${x},${y}`)) continue;
+        grid[y][x] = -1; placed++;
+      }
+      // compute numbers
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++){
+        if (grid[y][x]===-1) continue;
+        let c=0; for (const [nx,ny] of neighbors(x,y)) if (grid[ny][nx]===-1) c++;
+        grid[y][x]=c;
+      }
+    }
+
+    function reveal(x,y){
+      if (over || revealed[y][x] || flagged[y][x]) return;
+      if (!started){ started=true; startTimer(); }
+      if (firstClick){ placeMines(x,y); firstClick=false; }
+      revealed[y][x]=true;
+      if (grid[y][x]===-1){
+        // hit mine
+        over=true; showAllMines(x,y); return;
+      }
+      // flood zeroes
+      if (grid[y][x]===0){
+        const q=[[x,y]]; const seen=new Set([`${x},${y}`]);
+        while(q.length){
+          const [cx,cy]=q.shift();
+          for (const [nx,ny] of neighbors(cx,cy)){
+            if (seen.has(`${nx},${ny}`)) continue;
+            if (flagged[ny][nx]) continue;
+            revealed[ny][nx]=true; seen.add(`${nx},${ny}`);
+            if (grid[ny][nx]===0) q.push([nx,ny]);
+          }
+        }
+      }
+      checkWin();
+      render();
+    }
+
+    function toggleFlag(x,y){
+      if (over || revealed[y][x]) return;
+      flagged[y][x] = !flagged[y][x];
+      const flags = flagged.flat().filter(Boolean).length;
+      minesLeftEl.textContent = Math.max(0, M - flags);
+      renderCell(x,y);
+    }
+
+    function showAllMines(hx,hy){
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++){
+        if (grid[y][x]===-1){ revealed[y][x]=true; }
+      }
+      render();
+      // highlight the one that exploded
+      const idx = hy*W + hx; const cell = boardEl.children[idx];
+      if (cell){ cell.style.boxShadow = '0 0 0 2px #e55 inset'; }
+    }
+
+    function checkWin(){
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++){
+        if (grid[y][x]!==-1 && !revealed[y][x]) return false;
+      }
+      over=true; return true;
+    }
+
+    function render(){
+      boardEl.style.gridTemplateColumns = `repeat(${W}, 1fr)`;
+      boardEl.innerHTML='';
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++){
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.x = x; cell.dataset.y = y;
+        boardEl.appendChild(cell);
+      }
+      boardEl.addEventListener('contextmenu', e=>e.preventDefault());
+      boardEl.onpointerdown = onPointerDown;
+      renderAllCells();
+    }
+
+    function renderAllCells(){
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++) renderCell(x,y);
+    }
+
+    function renderCell(x,y){
+      const idx = y*W + x; const el = boardEl.children[idx]; if (!el) return;
+      el.className = 'cell';
+      if (revealed[y][x]){
+        el.classList.add('revealed');
+        const v = grid[y][x];
+        if (v===-1){ el.classList.add('mine'); el.textContent = '💣'; }
+        else if (v===0){ el.classList.add('zero'); el.textContent = ''; }
+        else { el.classList.add('n'+v); el.textContent = v; }
+      } else {
+        if (flagged[y][x]){ el.classList.add('flag'); el.textContent = '🚩'; }
+        else { el.textContent = ''; }
+      }
+    }
+
+    function posFromEvent(e){
+      if (!(e.target && e.target.classList.contains('cell'))) return null;
+      const x = +e.target.dataset.x, y = +e.target.dataset.y; return [x,y];
+    }
+
+    let pressTimer=null, pressedCell=null;
+    function onPointerDown(e){
+      const p = posFromEvent(e); if (!p) return; const [x,y]=p;
+      if (e.button===2 || e.ctrlKey || e.altKey){ toggleFlag(x,y); return; }
+      if (flagMode){ toggleFlag(x,y); return; }
+      pressedCell = [x,y];
+      pressTimer = setTimeout(()=>{ // long-press -> flag
+        if (pressedCell){ toggleFlag(x,y); pressedCell=null; }
+      }, 450);
+      document.onpointerup = (ev)=>{
+        clearTimeout(pressTimer); document.onpointerup=null;
+        if (!pressedCell) return; // already flagged by long-press
+        const q = posFromEvent(ev); if (!q) return; const [ux,uy]=q;
+        if (ux===x && uy===y){ reveal(x,y); }
+        pressedCell=null;
+      };
+    }
+
+    document.getElementById('restart-btn').addEventListener('click', ()=> init(W,H,M));
+    document.querySelectorAll('.preset').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.preset').forEach(b=>b.classList.remove('primary'));
+        btn.classList.add('primary');
+        init(+btn.dataset.w, +btn.dataset.h, +btn.dataset.m);
+      });
+    });
+
+    addEventListener('keydown', (e)=>{
+      if (e.code==='KeyR'){ init(W,H,M); }
+      if (e.code==='KeyF'){ flagMode=!flagMode; modeEl.textContent = flagMode? 'Flag' : 'Reveal'; }
+    });
+
+    // Boot
+    init(9,9,10);
+  </script>
+</body>
+</html>
+
+

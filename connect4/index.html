@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Connect 4</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --p1:#fa4; --p2:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+
+    #canvas-container { position:relative; width:100%; max-width:min(95vw, 900px); max-height:min(80vh, 800px); aspect-ratio:7/6; }
+    canvas { width:100%; height:100%; display:block; background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; image-rendering:auto; }
+
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 900px); }
+    .hud b { color:var(--fg); }
+    .hint { color:#b6c7e6; font-size:clamp(14px, 2.5vw, 18px); margin-top:clamp(4px, 1vh, 8px); min-height:1.5em; }
+
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
+    .btn { padding:clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 28px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(14px, 2.5vw, 18px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(90px, 14vw, 120px); min-height:44px; transition:all 0.2s; }
+    .btn:active { background:#3a4a7f; transform:scale(0.95); }
+    .btn.primary { background:#5ad; border-color:#6be; color:#041e2e; }
+    .btn.primary:active { background:#4bc; }
+
+    @media (max-width: 768px) {
+      .hud { font-size:clamp(10px, 3vw, 14px); }
+      .hint { font-size:clamp(12px, 3.5vw, 16px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Back to Home button -->
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <style>
+    .back-home {
+      position: fixed; top: 12px; left: 12px; z-index: 9999;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 12px; border-radius: 8px;
+      background: rgba(0,0,0,0.6); color: #fff; text-decoration: none;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px; line-height: 1; font-weight: 600;
+      backdrop-filter: saturate(150%) blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .back-home:hover { background: rgba(0,0,0,0.75); }
+    .back-home:focus { outline: 2px solid #fff; outline-offset: 2px; }
+  </style>
+  <div class="wrap">
+    <div id="canvas-container">
+      <canvas id="game" width="700" height="600"></canvas>
+    </div>
+    <div class="hud">
+      <div><b id="turn-label">Your turn</b> — <span id="mode-label">Mode: Player vs AI</span></div>
+      <div class="hint" id="hint">Click a column or press 1–7 to drop a piece.</div>
+      <div class="buttons">
+        <button class="btn primary" id="new-game-btn">NEW GAME</button>
+        <button class="btn" id="toggle-ai-btn">AI: ON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cfg = { cols: 7, rows: 6, margin: 20, gap: 8, animMs: 140 };
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const turnLabel = document.getElementById('turn-label');
+    const hintEl = document.getElementById('hint');
+    const modeLabel = document.getElementById('mode-label');
+    const newGameBtn = document.getElementById('new-game-btn');
+    const toggleAiBtn = document.getElementById('toggle-ai-btn');
+
+    let board, current, over, vsAI = true; // true = PvAI, false = PvP
+
+    function newGame(){
+      board = Array.from({length: cfg.rows}, ()=>Array(cfg.cols).fill(0));
+      current = 1; over = false;
+      updateUI(); draw();
+    }
+
+    function updateUI(){
+      modeLabel.textContent = `Mode: ${vsAI ? 'Player vs AI':'2 Players'}`;
+      toggleAiBtn.textContent = vsAI ? 'AI: ON' : 'AI: OFF';
+      turnLabel.textContent = over ? 'Game Over' : (current===1 ? 'Your turn' : (vsAI?'AI thinking…':'Player 2 turn'));
+      hintEl.textContent = over ? 'Press NEW GAME to restart.' : 'Click a column or press 1–7 to drop a piece.';
+    }
+
+    function cellSize(){
+      const w = canvas.width - cfg.margin*2;
+      const h = canvas.height - cfg.margin*2;
+      const cw = (w - cfg.gap*(cfg.cols-1)) / cfg.cols;
+      const ch = (h - cfg.gap*(cfg.rows-1)) / cfg.rows;
+      return Math.min(cw, ch);
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const s = cellSize();
+      const startX = cfg.margin + (canvas.width - 2*cfg.margin - (s*cfg.cols + cfg.gap*(cfg.cols-1)))/2;
+      const startY = cfg.margin + (canvas.height - 2*cfg.margin - (s*cfg.rows + cfg.gap*(cfg.rows-1)))/2;
+
+      // Board base
+      ctx.fillStyle = '#0e1836';
+      ctx.strokeStyle = '#192544';
+      ctx.lineWidth = 2;
+      ctx.roundRect(startX-10, startY-10, s*cfg.cols + cfg.gap*(cfg.cols-1)+20, s*cfg.rows + cfg.gap*(cfg.rows-1)+20, 12);
+      ctx.fill(); ctx.stroke();
+
+      for (let r=0;r<cfg.rows;r++){
+        for (let c=0;c<cfg.cols;c++){
+          const x = startX + c*(s+cfg.gap);
+          const y = startY + r*(s+cfg.gap);
+          // Slot
+          ctx.fillStyle = '#102048';
+          ctx.fillRect(x, y, s, s);
+          // Chip
+          const cx = x + s/2, cy = y + s/2, rr = s*0.38;
+          ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI*2);
+          const v = board[r][c];
+          if (v===1) ctx.fillStyle = '#fa4';
+          else if (v===2) ctx.fillStyle = '#5ad';
+          else ctx.fillStyle = '#0b1020';
+          ctx.fill();
+        }
+      }
+    }
+
+    function drop(col){
+      if (over) return false;
+      for (let r=cfg.rows-1;r>=0;r--){
+        if (board[r][col]===0){
+          board[r][col]=current;
+          const w = winner();
+          if (w){ over=true; updateUI(); draw(); return true; }
+          if (isFull()){ over=true; updateUI(); draw(); return true; }
+          current = current===1?2:1;
+          updateUI(); draw();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function isFull(){
+      return board[0].every(v=>v!==0);
+    }
+
+    function winner(){
+      // check all directions
+      const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+      for (let r=0;r<cfg.rows;r++){
+        for (let c=0;c<cfg.cols;c++){
+          const v = board[r][c]; if (!v) continue;
+          for (const [dx,dy] of dirs){
+            let k=1; while(k<4){
+              const rr=r+dy*k, cc=c+dx*k; if (rr<0||rr>=cfg.rows||cc<0||cc>=cfg.cols) break;
+              if (board[rr][cc]!==v) break; k++;
+            }
+            if (k===4) return v;
+          }
+        }
+      }
+      return 0;
+    }
+
+    function validMoves(){
+      const moves=[]; for (let c=0;c<cfg.cols;c++){ if (board[0][c]===0) moves.push(c); } return moves;
+    }
+
+    function simulateDrop(b, col, player){
+      const bb = b.map(row=>row.slice());
+      for (let r=cfg.rows-1;r>=0;r--){ if (bb[r][col]===0){ bb[r][col]=player; break; } }
+      return bb;
+    }
+
+    function hasWinAfter(b, col, player){
+      const bb = simulateDrop(b, col, player);
+      // same winner() but on bb
+      const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+      for (let r=0;r<cfg.rows;r++){
+        for (let c=0;c<cfg.cols;c++){
+          const v = bb[r][c]; if (!v) continue;
+          for (const [dx,dy] of dirs){
+            let k=1; while(k<4){
+              const rr=r+dy*k, cc=c+dx*k; if (rr<0||rr>=cfg.rows||cc<0||cc>=cfg.cols) break;
+              if (bb[rr][cc]!==v) break; k++;
+            }
+            if (k===4) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function aiMove(){
+      if (!vsAI || over || current!==2) return;
+      const moves = validMoves();
+      // 1) Winning move
+      for (const c of moves){ if (hasWinAfter(board, c, 2)) { drop(c); return; } }
+      // 2) Block player's win
+      for (const c of moves){ if (hasWinAfter(board, c, 1)) { drop(c); return; } }
+      // 3) Prefer center, then near-center
+      const pref = [3,2,4,1,5,0,6].filter(c=>moves.includes(c));
+      const choice = pref.length ? pref[0] : moves[Math.floor(Math.random()*moves.length)];
+      drop(choice);
+    }
+
+    canvas.addEventListener('click', (e)=>{
+      if (over) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const s = cellSize();
+      const startX = cfg.margin + (canvas.width - 2*cfg.margin - (s*cfg.cols + cfg.gap*(cfg.cols-1)))/2;
+      const col = Math.max(0, Math.min(cfg.cols-1, Math.floor((x - startX) / (s+cfg.gap))));
+      if (drop(col) && vsAI && !over && current===2){
+        setTimeout(aiMove, 200);
+      }
+    });
+
+    addEventListener('keydown', (e)=>{
+      if (e.code.startsWith('Digit')){
+        const n = +e.code.slice(5);
+        if (n>=1 && n<=7){
+          if (drop(n-1) && vsAI && !over && current===2){ setTimeout(aiMove, 200); }
+        }
+      }
+      if (e.code==='KeyR'){ newGame(); }
+    });
+
+    newGameBtn.addEventListener('click', ()=> newGame());
+    toggleAiBtn.addEventListener('click', ()=>{ vsAI = !vsAI; updateUI(); });
+
+    // Initial draw
+    newGame();
+  </script>
+</body>
+</html>
+
+
