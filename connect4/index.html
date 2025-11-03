@@ -101,18 +101,22 @@
       const boardW = s*cfg.cols + cfg.gap*(cfg.cols-1);
       const boardH = s*cfg.rows + cfg.gap*(cfg.rows-1);
       const startX = cfg.margin + (canvas.width - 2*cfg.margin - boardW)/2;
-      let startY = cfg.margin + (canvas.height - 2*cfg.margin - boardH)/2;
 
-      // Reserve extra padding on the side where labels are rendered
+      // Reserve explicit padding for labels on one side
       const fontSize = Math.max(12, Math.floor(s * 0.28));
-      const labelPad = fontSize + 10; // increased padding
-      // Prefer below when space allows; otherwise place above
-      const canPlaceBelow = (startY + boardH + labelPad) <= (canvas.height - cfg.margin);
-      const placeBelow = canPlaceBelow;
-      if (!placeBelow) {
-        // shift board down to make room above if possible
-        if (startY - labelPad >= cfg.margin) startY += labelPad;
-      }
+      const labelPad = fontSize + 12; // ample space for digits and breathing room
+
+      // Decide which side to render labels based on available space
+      const topBase = cfg.margin, bottomBase = cfg.margin;
+      // First compute naive centered Y
+      let naiveY = topBase + (canvas.height - (topBase + bottomBase) - boardH)/2;
+      const canPlaceBelow = (naiveY + boardH + labelPad) <= (canvas.height - bottomBase);
+      const placeBelow = canPlaceBelow; // prefer below if fits
+
+      // Compute asymmetric margins depending on label side
+      const topMargin = placeBelow ? topBase : (topBase + labelPad);
+      const bottomMargin = placeBelow ? (bottomBase + labelPad) : bottomBase;
+      let startY = topMargin + (canvas.height - (topMargin + bottomMargin) - boardH)/2;
 
       // Board base
       ctx.fillStyle = '#0e1836';
@@ -139,13 +143,13 @@
         }
       }
 
-      // Column numbers (1-7), positioned where they fit (below board if room, otherwise above)
+      // Column numbers (1-7), positioned below if possible else above
       ctx.font = `${fontSize}px system-ui,Segoe UI,Roboto,Arial`;
       ctx.fillStyle = '#b6c7e6';
       ctx.textAlign = 'center';
       let labelY, baseline;
-      if (placeBelow) { labelY = startY + boardH + 8; baseline = 'top'; }
-      else { labelY = startY - 8; baseline = 'bottom'; }
+      if (placeBelow) { labelY = startY + boardH + 10; baseline = 'top'; }
+      else { labelY = startY - 10; baseline = 'bottom'; }
       ctx.textBaseline = baseline;
       for (let c=0;c<cfg.cols;c++){
         const x = startX + c*(s+cfg.gap) + s/2;
