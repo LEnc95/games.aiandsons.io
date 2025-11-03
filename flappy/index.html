@@ -146,9 +146,8 @@
       bird: { x: 80, y: canvas.height / 2, vy: 0, angle: 0 },
       pipes: [],
       score: 0,
-      scrollX: 0,
       parallax: 0,
-      nextPipeX: canvas.width + 100
+      spawnT: 0
     };
 
     function getHighScore() {
@@ -235,15 +234,7 @@
       const minY = cfg.ground.height + gap / 2;
       const maxY = canvas.height - cfg.ground.height - gap / 2;
       const gapY = minY + Math.random() * (maxY - minY);
-      
-      state.pipes.push({
-        x: state.nextPipeX,
-        gapY: gapY,
-        gapSize: gap,
-        passed: false
-      });
-      
-      state.nextPipeX += cfg.pipe.spacing;
+      state.pipes.push({ x: canvas.width + 40, gapY, gapSize: gap, passed: false });
     }
 
     function jump() {
@@ -291,7 +282,6 @@
       if (paused || gameOver || !gameStarted) return;
 
       const speed = cfg.pipe.speed * diff[difficulty].speed;
-      state.scrollX += speed * dt;
       state.parallax += speed * 0.3 * dt;
 
       // Bird physics
@@ -301,23 +291,19 @@
       // Bird rotation based on velocity
       state.bird.angle = Math.min(Math.max(state.bird.vy * 0.003, -0.5), 0.5);
 
-      // Spawn pipes
-      while (state.nextPipeX < state.scrollX + canvas.width + 200) {
-        spawnPipe();
-      }
+      // Spawn pipes on timer based on current speed
+      state.spawnT -= dt;
+      const spawnInterval = Math.max(0.8, cfg.pipe.spacing / speed);
+      if (state.spawnT <= 0) { spawnPipe(); state.spawnT = spawnInterval; }
 
       // Update pipes
       state.pipes = state.pipes.filter(pipe => {
-        pipe.x = state.nextPipeX - state.scrollX + (state.pipes.indexOf(pipe) * cfg.pipe.spacing);
-        
-        // Check if bird passed pipe
+        pipe.x -= speed * dt;
         if (!pipe.passed && pipe.x + cfg.pipe.width < state.bird.x) {
           pipe.passed = true;
           state.score++;
           updateScore();
         }
-
-        // Remove off-screen pipes
         return pipe.x + cfg.pipe.width > -50;
       });
 
@@ -405,6 +391,7 @@
       ctx.stroke();
 
       // Bird
+      const bird = state.bird; const br = cfg.bird.radius;
       ctx.save();
       ctx.translate(bird.x, bird.y);
       ctx.rotate(bird.angle);
