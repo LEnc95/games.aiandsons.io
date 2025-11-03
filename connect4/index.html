@@ -125,6 +125,19 @@
           ctx.fill();
         }
       }
+
+      // Column numbers (1-7) centered below each column
+      const boardH = s*cfg.rows + cfg.gap*(cfg.rows-1);
+      ctx.fillStyle = '#b6c7e6';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const fontSize = Math.max(12, Math.floor(s * 0.28));
+      ctx.font = `${fontSize}px system-ui,Segoe UI,Roboto,Arial`;
+      const labelY = startY + boardH + 8; // small gap beneath the board
+      for (let c=0;c<cfg.cols;c++){
+        const x = startX + c*(s+cfg.gap) + s/2;
+        ctx.fillText(String(c+1), x, labelY);
+      }
     }
 
     function drop(col){
@@ -210,9 +223,13 @@
     canvas.addEventListener('click', (e)=>{
       if (over) return;
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
+      const scaleX = canvas.width / rect.width;
+      const x = (e.clientX - rect.left) * scaleX; // convert to canvas coords
       const s = cellSize();
-      const startX = cfg.margin + (canvas.width - 2*cfg.margin - (s*cfg.cols + cfg.gap*(cfg.cols-1)))/2;
+      const boardW = s*cfg.cols + cfg.gap*(cfg.cols-1);
+      const startX = cfg.margin + (canvas.width - 2*cfg.margin - boardW)/2;
+      // ignore clicks outside the board area
+      if (x < startX || x > startX + boardW) return;
       const col = Math.max(0, Math.min(cfg.cols-1, Math.floor((x - startX) / (s+cfg.gap))));
       if (drop(col) && vsAI && !over && current===2){
         setTimeout(aiMove, 200);
