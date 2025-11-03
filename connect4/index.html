@@ -62,6 +62,11 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('connect4');
+  </script>
   <script>
     const cfg = { cols: 7, rows: 6, margin: 20, gap: 8, animMs: 140 };
     const canvas = document.getElementById('game');
@@ -163,7 +168,14 @@
         if (board[r][col]===0){
           board[r][col]=current;
           const w = winner();
-          if (w){ over=true; updateUI(); draw(); return true; }
+          if (w){ 
+            over=true; 
+            // Award coins: win ? 5 : 0 (only for player 1 wins)
+            if (current === 1 && typeof addCoins === 'function') addCoins(5);
+            updateUI(); 
+            draw(); 
+            return true; 
+          }
           if (isFull()){ over=true; updateUI(); draw(); return true; }
           current = current===1?2:1;
           updateUI(); draw();

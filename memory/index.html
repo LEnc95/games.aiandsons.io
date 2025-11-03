@@ -92,6 +92,11 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('memory');
+  </script>
   <script>
     const emojis = ['🎮', '🎯', '🎨', '🎪', '🎭', '🎬', '🎸', '🎺', '🎻', '🎤', '🎧', '🎵', '🎶', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸', '🏒', '🏑', '🏏', '🎣', '🏊', '🏄', '🚴', '🏇', '🚵'];
     
@@ -257,6 +262,11 @@
               stopTimer();
               const time = Math.floor((Date.now() - startTime) / 1000);
               const isNewBest = setBestTime(time);
+              // Award coins: Math.max(0, base - moves) + (pairs * 1)
+              const base = 20;
+              const pairs = matchedPairs;
+              const coins = Math.max(0, base - moves) + (pairs * 1);
+              if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
               updateDisplay();
               
               if (!ppMode){

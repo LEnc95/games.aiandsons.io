@@ -90,6 +90,13 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+    window.addCoins = addCoinsFn;
+    window.maybeUnlock = maybeUnlock;
+    rememberRecent('snake');
+  </script>
   <script>
     // --- Config ---
     // URL Parameters: ?difficulty=1|2|3&speed=0.5-2.0&seed=<number>
@@ -356,6 +363,15 @@
       gameOver = true;
       gameStarted = false;
       const isNewHigh = setHighScore(state.score);
+      // Award coins: Math.floor(length / 2) where length is snake length
+      const coins = Math.floor(state.snake.length / 2);
+      if (coins > 0 && typeof addCoins === 'function') {
+        addCoins(coins);
+      }
+      // Check achievements: snake-15 (length 15), first-run
+      if (typeof maybeUnlock === 'function') {
+        maybeUnlock({ anyPlay: true, snake: { length: state.snake.length } });
+      }
       updateScore();
       updateStartButton();
       setHint(

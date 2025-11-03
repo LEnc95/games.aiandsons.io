@@ -87,6 +87,11 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('flappy');
+  </script>
   <script>
     const cfg = {
       bird: { radius: 12, jumpPower: -280, gravity: 700, maxVel: 400 },
@@ -271,6 +276,9 @@
 
     function endGame() {
       gameOver = true;
+      // Award coins: Math.floor(distance / 50)
+      const coins = Math.floor((state.score || 0) / 50);
+      if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
       gameStarted = false;
       const isNewHigh = setHighScore(state.score);
       updateScore();

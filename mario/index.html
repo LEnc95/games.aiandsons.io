@@ -69,7 +69,14 @@
     </div>
   </div>
 
-<script>
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { marioShirt } from '../src/prog/cosmetics.js';
+    window.addCoins = addCoinsFn;
+    window.marioShirt = marioShirt;
+    rememberRecent('micro-mario');
+  </script>
+  <script>
 (() => {
   // ===== Canvas & Scaling =====
   const canvas = document.getElementById('game');
@@ -212,7 +219,17 @@
         }
       }
     }
-    draw(){ const sx=this.x-G.camX, sy=this.y; ctx.fillStyle='#e11d48'; ctx.fillRect(sx,sy,this.w,this.h); ctx.fillStyle='#fff'; ctx.fillRect(sx+4,sy+6,4,4); }
+      draw(){ 
+        const sx=this.x-G.camX, sy=this.y; 
+        ctx.fillStyle='#e11d48'; // body
+        ctx.fillRect(sx,sy,this.w,this.h); 
+        // shirt color from cosmetics
+        const shirtColor = typeof marioShirt === 'function' ? marioShirt() : '#ef4444';
+        ctx.fillStyle = shirtColor;
+        ctx.fillRect(sx+2, sy+this.h-16, this.w-4, 10); // shirt area
+        ctx.fillStyle='#fff'; // eyes
+        ctx.fillRect(sx+4,sy+6,4,4); 
+      }
   }
 
   class Goomba{
@@ -267,7 +284,14 @@
   function startGame(){ G.state='play'; G.coins=0; G.lives=3; loadLevel(); }
   function die(){ G.lives -= 1; updateHUD(); if(G.lives<=0){ return gameEnd(false); } loadLevel(); }
   function win(){ gameEnd(true); }
-  function gameEnd(won){ G.state='over'; overTitle.textContent = won? 'Course Clear!' : 'Game Over'; overStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`; gameOver.style.display='grid'; }
+  function gameEnd(won){ 
+    G.state='over'; 
+    overTitle.textContent = won? 'Course Clear!' : 'Game Over'; 
+    overStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`;
+    // Award coins: coinsCollected (already tracked in G.coins)
+    if (G.coins > 0 && typeof addCoins === 'function') addCoins(G.coins);
+    gameOver.style.display='grid'; 
+  }
   function updateHUD(){ elStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`; }
 
   function pressJump(){ if(G.player){ G.player.jumpQueued = true; setTimeout(()=>{ if(G.player) G.player.jumpQueued=false; }, 120); } }

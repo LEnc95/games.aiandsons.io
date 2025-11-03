@@ -73,6 +73,11 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('breakout');
+  </script>
   <script>
     // Config
     const cfg = {
@@ -264,6 +269,10 @@
         if (state.lives <= 0) {
           gameOver = true;
           gameStarted = false;
+          // Award coins: Math.floor(bricksDestroyed / 2) + level * 5
+          const bricksDestroyed = state.bricks.filter(b => !b.alive).length;
+          const coins = Math.floor(bricksDestroyed / 2) + state.level * 5;
+          if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
           updateStartButton();
           setHint(isTouchDevice ? `Game Over! Score: ${state.score} Tap PLAY AGAIN.` : `Game Over! Score: ${state.score} Press SPACE to play again.`);
         } else {

@@ -82,6 +82,13 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+    window.addCoins = addCoinsFn;
+    window.maybeUnlock = maybeUnlock;
+    rememberRecent('tictactoe');
+  </script>
   <script>
     // Config
     const cfg = {
@@ -177,8 +184,16 @@
         gameOver = true;
         highlightWinner(winner);
         if (vsAI) {
-          if (winner === 'X') { setHint('🎉 You win!'); const s=getAIScores(); s.wins++; setAIScores(s); }
-          else { setHint('AI wins! Better luck next time.'); const s=getAIScores(); s.losses++; setAIScores(s); }
+          if (winner === 'X') { 
+            setHint('🎉 You win!'); 
+            const s=getAIScores(); s.wins++; setAIScores(s);
+            // Award coins: win ? 3 : 0
+            if (typeof addCoins === 'function') addCoins(3);
+          }
+          else { 
+            setHint('AI wins! Better luck next time.'); 
+            const s=getAIScores(); s.losses++; setAIScores(s);
+          }
         } else {
           if (winner === 'X') { setHint('🎉 Player 1 wins!'); const s=getPPScores(); s.p1++; setPPScores(s); }
           else { setHint('🎉 Player 2 wins!'); const s=getPPScores(); s.p2++; setPPScores(s); }
@@ -190,7 +205,11 @@
       if (isBoardFull()) {
         gameOver = true;
         setHint("It's a draw!");
-        if (vsAI){ const s=getAIScores(); s.draws++; setAIScores(s); }
+        if (vsAI){ 
+          const s=getAIScores(); s.draws++; setAIScores(s);
+          // Award coins: draw ? 1 : 0
+          if (typeof addCoins === 'function') addCoins(1);
+        }
         else { const s=getPPScores(); s.draws++; setPPScores(s); }
         updateScoreDisplay();
         return;
@@ -233,8 +252,16 @@
           gameOver = true;
           renderBoard();
           highlightWinner(winner);
-          if (winner === 'X') { setHint('🎉 You win!'); const s=getAIScores(); s.wins++; setAIScores(s); }
-          else { setHint('AI wins! Better luck next time.'); const s=getAIScores(); s.losses++; setAIScores(s); }
+          if (winner === 'X') { 
+            setHint('🎉 You win!'); 
+            const s=getAIScores(); s.wins++; setAIScores(s);
+            // Award coins: win ? 3 : 0
+            if (typeof addCoins === 'function') addCoins(3);
+          }
+          else { 
+            setHint('AI wins! Better luck next time.'); 
+            const s=getAIScores(); s.losses++; setAIScores(s);
+          }
           updateScoreDisplay();
           return;
         }
@@ -244,6 +271,8 @@
           renderBoard();
           setHint("It's a draw!");
           const s=getAIScores(); s.draws++; setAIScores(s);
+          // Award coins: draw ? 1 : 0
+          if (typeof addCoins === 'function') addCoins(1);
           updateScoreDisplay();
           return;
         }

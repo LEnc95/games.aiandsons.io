@@ -77,6 +77,15 @@
     </div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+    import { pongPaddleStyle } from '../src/prog/cosmetics.js';
+    window.addCoins = addCoinsFn;
+    window.maybeUnlock = maybeUnlock;
+    window.pongPaddleStyle = pongPaddleStyle;
+    rememberRecent('pong');
+  </script>
   <script>
     // --- Config ---
     // URL Parameters (for easy A/B testing with kids):
@@ -460,6 +469,16 @@
       if (state.player.score >= cfg.scoreToWin || state.cpu.score >= cfg.scoreToWin){
         over = true;
         const winner = state.player.score > state.cpu.score ? "You win!" : "CPU wins!";
+        // Award coins: returns * 1 (player.score is the returns)
+        const coins = state.player.score * 1;
+        if (coins > 0 && typeof addCoins === 'function') {
+          addCoins(coins);
+        }
+        // Check achievements: pong-king (win by 5+)
+        if (state.player.score > state.cpu.score && typeof maybeUnlock === 'function') {
+          const winMargin = state.player.score - state.cpu.score;
+          maybeUnlock({ anyPlay: true, pong: { winMargin } });
+        }
         setHint(isTouchDevice ? `${winner} Tap RESTART to play again.` : `${winner} Press R to restart.`);
         updateServeButton();
       } else {
@@ -484,8 +503,9 @@
       ctx.strokeStyle = "#1a2a4a"; ctx.lineWidth = 2; ctx.stroke();
 
       // Paddles
-      ctx.fillStyle = "#e7f0ff";
+      ctx.fillStyle = typeof pongPaddleStyle === 'function' ? pongPaddleStyle() : "#e7f0ff";
       ctx.fillRect(state.player.x, state.player.y, cfg.paddle.w, cfg.paddle.h);
+      ctx.fillStyle = "#e7f0ff"; // CPU paddle always default
       ctx.fillRect(state.cpu.x, state.cpu.y, cfg.paddle.w, cfg.paddle.h);
 
       // Ball

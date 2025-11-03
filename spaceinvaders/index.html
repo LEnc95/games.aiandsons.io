@@ -50,7 +50,12 @@
     </div>
   </div>
 
-<script>
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('spaceinvaders');
+  </script>
+  <script>
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -127,7 +132,15 @@
   function drawBackground(){ const W=canvas.width/DPR, H=canvas.height/DPR; ctx.save(); ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b0f14'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=0.75; for(let i=0;i<80;i++){ const x=(i*73)%W, y=(i*97)%H, s=(i%3)+1; ctx.fillStyle = i%7===0 ? '#6ae0ff' : '#e8f0ff'; ctx.fillRect(x,y,s,s); } ctx.restore(); }
   function draw(){ drawBackground(); for(const inv of GAME.invaders) inv.draw(); for(const b of GAME.playerBullets) b.draw(); for(const b of GAME.invaderBullets) b.draw(); GAME.player.draw(); }
   function drawPause(){ const W=canvas.width/DPR,H=canvas.height/DPR; ctx.save(); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#ffffff'; ctx.font='bold 28px system-ui'; ctx.textAlign='center'; ctx.fillText('Paused — Press P to resume', W/2, H/2); ctx.restore(); }
-  function endGame(won=false){ GAME.state='over'; gameOverTitle.textContent = won?'You Win!':'Game Over'; finalScoreEl.textContent = `Score: ${GAME.score}`; gameOverOverlay.style.display='grid'; }
+  function endGame(won=false){ 
+    GAME.state='over'; 
+    gameOverTitle.textContent = won?'You Win!':'Game Over'; 
+    finalScoreEl.textContent = `Score: ${GAME.score}`;
+    // Award coins: Math.floor(score / 50)
+    const coins = Math.floor((GAME.score || 0) / 50);
+    if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
+    gameOverOverlay.style.display='grid'; 
+  }
 
   document.getElementById('startBtn').addEventListener('click', ()=>{ startOverlay.style.display='none'; startPlaying(); });
   document.getElementById('restartBtn').addEventListener('click', ()=>{ gameOverOverlay.style.display='none'; startPlaying(); });

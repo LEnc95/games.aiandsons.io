@@ -12,11 +12,26 @@
     html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow-y:auto; overflow-x:hidden; }
     body { padding:env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); }
     
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px clamp(16px,4vw,32px); background:rgba(12,20,46,0.6); backdrop-filter:blur(8px); border-bottom:1px solid rgba(90,173,221,0.2); flex-wrap:wrap; }
+    .topbar-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
+    .topbar-right { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .welcome { font-size:clamp(14px,2vw,16px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .coin-display { display:flex; align-items:center; gap:6px; padding:8px 14px; background:rgba(90,173,221,0.15); border:1px solid rgba(90,173,221,0.3); border-radius:12px; font-weight:600; font-size:14px; }
+    .topbar-btn { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; transition:all 0.2s; cursor:pointer; }
+    .topbar-btn:hover { background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2); }
+    
     .wrap { max-width:1200px; margin:0 auto; padding:clamp(20px, 5vh, 40px) clamp(16px, 4vw, 32px); min-height:100vh; display:flex; flex-direction:column; }
     
     header { text-align:center; margin-bottom:clamp(32px, 6vh, 48px); }
     h1 { font-size:clamp(32px, 6vw, 48px); margin:0 0 clamp(8px, 1.5vh, 12px) 0; color:var(--fg); font-weight:700; }
     .subtitle { font-size:clamp(14px, 2.5vw, 18px); color:var(--muted); margin:0; }
+    
+    .recent-section { margin-bottom:clamp(24px,4vh,32px); }
+    .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0 0 16px 0; color:var(--fg); font-weight:600; }
+    .recent-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
+    .recent-card { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; padding:20px; text-decoration:none; color:var(--fg); display:flex; align-items:center; gap:12px; transition:all 0.2s; }
+    .recent-card:hover { border-color:#2a3a5f; transform:translateY(-2px); }
+    .recent-icon { font-size:32px; }
     
     .games-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(clamp(280px, 30vw, 350px), 1fr)); gap:clamp(20px, 3vw, 32px); margin-top:clamp(24px, 4vh, 32px); }
     
@@ -34,11 +49,6 @@
     
     footer { margin-top:auto; padding-top:clamp(32px, 5vh, 48px); text-align:center; color:var(--muted); font-size:clamp(12px, 2vw, 14px); }
     
-    @media (max-width: 768px) {
-      .games-grid { grid-template-columns:1fr; }
-      .game-card { min-height:clamp(180px, 20vh, 220px); }
-    }
-
     .version-badge {
       position: fixed; right: 12px; bottom: 12px; z-index: 9999;
       padding: 6px 10px; border-radius: 8px;
@@ -48,97 +58,130 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       user-select: none;
     }
+
+    /* Profile Modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:10000; display:none; align-items:center; justify-content:center; padding:20px; }
+    .modal-backdrop.active { display:flex; }
+    .modal { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:32px; max-width:500px; width:100%; }
+    .modal h2 { margin:0 0 16px 0; font-size:24px; }
+    .modal input { width:100%; padding:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--fg); font-size:16px; margin-bottom:16px; }
+    .modal button { padding:12px 24px; background:#5ad; border:none; border-radius:8px; color:#0b1020; font-size:16px; font-weight:600; cursor:pointer; width:100%; }
+    .modal button:hover { background:#6be; }
+
+    /* Badges Modal */
+    .badges-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px; max-height:60vh; overflow-y:auto; margin-top:16px; }
+    .badge-item { padding:16px; background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.1); border-radius:12px; text-align:center; }
+    .badge-item.owned { border-color:#5ad; background:rgba(90,173,221,0.15); }
+    .badge-item h3 { margin:0 0 8px 0; font-size:18px; }
+    .badge-item p { margin:0; font-size:14px; color:var(--muted); }
+    
+    @media (max-width: 768px) {
+      .games-grid { grid-template-columns:1fr; }
+      .game-card { min-height:clamp(180px, 20vh, 220px); }
+      .topbar { flex-direction:column; align-items:stretch; }
+      .topbar-left, .topbar-right { justify-content:center; }
+    }
   </style>
 </head>
 <body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="welcome" id="welcome">Welcome!</span>
+    </div>
+    <div class="topbar-right">
+      <div class="coin-display">
+        <span>🪙</span>
+        <span id="coins">0</span>
+      </div>
+      <a href="/shop.html" class="topbar-btn">Shop</a>
+      <button class="topbar-btn" id="profileBtn">Profile</button>
+      <button class="topbar-btn" id="badgesBtn">Badges</button>
+    </div>
+  </div>
+
   <div class="wrap">
     <header>
       <h1>Cade's Games</h1>
       <p class="subtitle">Choose a game to play</p>
     </header>
+
+    <div class="recent-section" id="recentSection" style="display:none;">
+      <h2>Recently Played</h2>
+      <div class="recent-grid" id="recentGrid"></div>
+    </div>
     
-    <div class="games-grid">
+    <div class="games-grid" id="gamesGrid">
+      <!-- Static fallback (replaced by JS if modules load) -->
       <a href="/pong" class="game-card">
         <div class="game-icon">🏓</div>
         <h2 class="game-title">Pong</h2>
-        <p class="game-desc">Classic paddle game. Play against the computer and see how many points you can score!</p>
+        <p class="game-desc">Classic paddle game. Play against the computer!</p>
         <div class="game-link">Play Pong →</div>
       </a>
-      
       <a href="/snake" class="game-card">
         <div class="game-icon">🐍</div>
         <h2 class="game-title">Snake</h2>
-        <p class="game-desc">Guide the snake to eat food and grow longer. Avoid walls and yourself!</p>
+        <p class="game-desc">Eat food, grow longer, avoid walls and yourself.</p>
         <div class="game-link">Play Snake →</div>
       </a>
-      
       <a href="/tictactoe" class="game-card">
         <div class="game-icon">⭕</div>
         <h2 class="game-title">Tic-Tac-Toe</h2>
-        <p class="game-desc">Classic 3x3 grid game. Play against AI at different difficulty levels!</p>
+        <p class="game-desc">Play vs AI or local 2‑player. Try to get 3 in a row!</p>
         <div class="game-link">Play Tic-Tac-Toe →</div>
       </a>
-      
       <a href="/rps" class="game-card">
         <div class="game-icon">✂️</div>
         <h2 class="game-title">Rock Paper Scissors</h2>
-        <p class="game-desc">Quick rounds of Rock Paper Scissors. See how long you can keep your winning streak!</p>
+        <p class="game-desc">Quick rounds. Build a winning streak!</p>
         <div class="game-link">Play RPS →</div>
       </a>
-      
       <a href="/memory" class="game-card">
         <div class="game-icon">🧠</div>
         <h2 class="game-title">Memory</h2>
-        <p class="game-desc">Flip cards to find matching pairs. Test your memory with different difficulty levels!</p>
+        <p class="game-desc">Flip cards to find pairs. Solo or pass‑and‑play.</p>
         <div class="game-link">Play Memory →</div>
       </a>
-      
       <a href="/breakout" class="game-card">
         <div class="game-icon">🎯</div>
         <h2 class="game-title">Breakout</h2>
-        <p class="game-desc">Break all the bricks with your paddle and ball. Advance through levels and beat your high score!</p>
+        <p class="game-desc">Break all the bricks. Advance levels and score big.</p>
         <div class="game-link">Play Breakout →</div>
       </a>
-
       <a href="/connect4" class="game-card">
         <div class="game-icon">🟡</div>
         <h2 class="game-title">Connect 4</h2>
-        <p class="game-desc">Drop discs to connect four in a row. Play 2‑player or vs a simple AI.</p>
+        <p class="game-desc">Connect four in a row. 2‑player or vs a simple AI.</p>
         <div class="game-link">Play Connect 4 →</div>
       </a>
-
       <a href="/minesweeper" class="game-card">
         <div class="game-icon">💣</div>
         <h2 class="game-title">Minesweeper</h2>
-        <p class="game-desc">Reveal all safe cells without detonating mines. Beginner, Intermediate, and Expert.</p>
+        <p class="game-desc">Clear the board without detonating mines.</p>
         <div class="game-link">Play Minesweeper →</div>
       </a>
-
       <a href="/flappy" class="game-card">
         <div class="game-icon">🐦</div>
         <h2 class="game-title">Flappy Bird</h2>
-        <p class="game-desc">Tap to flap through pipes! Choose bird skins and explore different worlds. Beat your high score!</p>
+        <p class="game-desc">Tap to fly through pipes. Different skins and worlds.</p>
         <div class="game-link">Play Flappy Bird →</div>
       </a>
-
       <a href="/dino" class="game-card">
         <div class="game-icon">🦖</div>
         <h2 class="game-title">Dino Run</h2>
-        <p class="game-desc">Jump and duck to avoid obstacles in this endless runner. Speed ramps and score multipliers included!</p>
+        <p class="game-desc">Endless runner with speed ramp and multipliers.</p>
         <div class="game-link">Play Dino Run →</div>
       </a>
-
       <a href="/spaceinvaders" class="game-card">
         <div class="game-icon">👾</div>
         <h2 class="game-title">Space Invaders</h2>
-        <p class="game-desc">Classic arcade shooter: clear waves, dodge fire, and chase high scores!</p>
+        <p class="game-desc">Classic shooter. Clear waves and dodge fire!</p>
         <div class="game-link">Play Space Invaders →</div>
       </a>
-
       <a href="/mario" class="game-card">
         <div class="game-icon">🍄</div>
         <h2 class="game-title">Micro Mario</h2>
-        <p class="game-desc">Tiny canvas platformer with tight physics. Collect coins and reach the flag!</p>
+        <p class="game-desc">Tiny platformer. Collect coins and reach the flag.</p>
         <div class="game-link">Play Micro Mario →</div>
       </a>
     </div>
@@ -147,8 +190,138 @@
       <p>Made for Cade</p>
     </footer>
   </div>
+
+  <!-- Profile Modal -->
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal">
+      <h2>Set Your Name</h2>
+      <input type="text" id="profileName" placeholder="Enter your name" maxlength="30" />
+      <button onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+
+  <!-- Badges Modal -->
+  <div class="modal-backdrop" id="badgesModal">
+    <div class="modal">
+      <h2>Badges</h2>
+      <div class="badges-grid" id="badgesGrid"></div>
+      <button onclick="closeBadges()" style="margin-top:16px;">Close</button>
+    </div>
+  </div>
+
   <div id="version" class="version-badge" aria-label="App version">v0.0.0</div>
-  <script>
+  
+  <script type="module">
+    import { state, save, rememberRecent } from './src/core/state.js';
+    import { GAMES } from './src/meta/games.js';
+    import { listBadges, maybeUnlock } from './src/prog/achievements.js';
+    window.maybeUnlock = maybeUnlock;
+
+    // Update UI
+    function updateUI() {
+      const welcomeEl = document.getElementById('welcome');
+      const coinsEl = document.getElementById('coins');
+      const recentSection = document.getElementById('recentSection');
+      const recentGrid = document.getElementById('recentGrid');
+      const gamesGrid = document.getElementById('gamesGrid');
+
+      // Welcome & Coins
+      welcomeEl.textContent = state.profile.name || 'Welcome! Click Profile to set your name';
+      coinsEl.textContent = state.coins;
+
+      // Recently Played
+      if (state.recent.length > 0) {
+        recentSection.style.display = 'block';
+        recentGrid.innerHTML = '';
+        const recentGames = state.recent.map(slug => GAMES.find(g => g.slug === slug)).filter(Boolean);
+        recentGames.forEach(game => {
+          const card = document.createElement('a');
+          card.href = game.url;
+          card.className = 'recent-card';
+          card.innerHTML = `
+            <span class="recent-icon">${game.emoji}</span>
+            <span>${game.name}</span>
+          `;
+          card.onclick = () => rememberRecent(game.slug);
+          recentGrid.appendChild(card);
+        });
+      } else {
+        recentSection.style.display = 'none';
+      }
+
+      // Games Grid
+      gamesGrid.innerHTML = '';
+      GAMES.forEach(game => {
+        const card = document.createElement('a');
+        card.href = game.url;
+        card.className = 'game-card';
+        card.innerHTML = `
+          <div class="game-icon">${game.emoji}</div>
+          <h2 class="game-title">${game.name}</h2>
+          <p class="game-desc">Play ${game.name}!</p>
+          <div class="game-link">Play ${game.name} →</div>
+        `;
+        card.onclick = () => rememberRecent(game.slug);
+        gamesGrid.appendChild(card);
+      });
+    }
+
+    // Profile Modal
+    window.saveProfile = () => {
+      const name = document.getElementById('profileName').value.trim();
+      if (name) {
+        state.profile.name = name;
+        if (state.profile.firstRun) {
+          state.profile.firstRun = false;
+        }
+        save();
+        updateUI();
+        document.getElementById('profileModal').classList.remove('active');
+      }
+    };
+
+    document.getElementById('profileBtn').onclick = () => {
+      const modal = document.getElementById('profileModal');
+      document.getElementById('profileName').value = state.profile.name || '';
+      modal.classList.add('active');
+    };
+
+    // Close modals on backdrop click
+    document.getElementById('profileModal').onclick = (e) => {
+      if (e.target.classList.contains('modal-backdrop')) {
+        e.target.classList.remove('active');
+      }
+    };
+
+    // Badges Modal
+    window.closeBadges = () => {
+      document.getElementById('badgesModal').classList.remove('active');
+    };
+
+    document.getElementById('badgesBtn').onclick = () => {
+      const modal = document.getElementById('badgesModal');
+      const grid = document.getElementById('badgesGrid');
+      const badges = listBadges();
+      grid.innerHTML = '';
+      badges.forEach(badge => {
+        const item = document.createElement('div');
+        item.className = 'badge-item' + (badge.owned ? ' owned' : '');
+        item.innerHTML = `
+          <h3>${badge.owned ? '✓' : '○'} ${badge.name}</h3>
+          <p>${badge.desc}</p>
+        `;
+        grid.appendChild(item);
+      });
+      modal.classList.add('active');
+    };
+
+    document.getElementById('badgesModal').onclick = (e) => {
+      if (e.target.classList.contains('modal-backdrop')) {
+        e.target.classList.remove('active');
+      }
+    };
+
+    // Version badge
     (function(){
       const el = document.getElementById('version');
       fetch('version.json', { cache: 'no-cache' })
@@ -158,7 +331,17 @@
         })
         .catch(() => { /* keep default */ });
     })();
+
+    // Initial UI update
+    updateUI();
+    
+    // Check first-run achievement (if not already checked)
+    if (state.profile.firstRun && typeof maybeUnlock === 'function') {
+      maybeUnlock({ anyPlay: true });
+      state.profile.firstRun = false;
+      save();
+      updateUI();
+    }
   </script>
 </body>
 </html>
-

@@ -60,6 +60,11 @@
     <div id="board"></div>
   </div>
 
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('minesweeper');
+  </script>
   <script>
     let W=9,H=9,M=10; // width, height, mines
     let grid, revealed, flagged, started, over, timerId=null, startTs=0, flagMode=false, firstClick=true;
@@ -151,7 +156,11 @@
       for (let y=0;y<H;y++) for (let x=0;x<W;x++){
         if (grid[y][x]!==-1 && !revealed[y][x]) return false;
       }
-      over=true; return true;
+      over=true;
+      // Award coins: boardCleared ? sizeBonus : 0
+      const sizeBonus = Math.floor((W * H) / 10); // e.g., 9x9=81 -> 8 coins, 16x16=256 -> 25 coins
+      if (sizeBonus > 0 && typeof addCoins === 'function') addCoins(sizeBonus);
+      return true;
     }
 
     function render(){
