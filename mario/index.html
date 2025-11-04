@@ -189,42 +189,42 @@
         }
       }
     }
+  }
 
-    function setStartButton(text, disabled){
-      startBtn.textContent = text;
-      startBtn.disabled = !!disabled;
-    }
+  function setStartButton(text, disabled){
+    startBtn.textContent = text;
+    startBtn.disabled = !!disabled;
+  }
 
-    function isValidLevel(level){
-      if(!level || !Array.isArray(level.map) || !level.map.length) return false;
-      const width = level.map[0]?.length ?? 0;
-      if(width <= 0) return false;
-      return level.map.every(row => typeof row === 'string' && row.length === width);
-    }
+  function isValidLevel(level){
+    if(!level || !Array.isArray(level.map) || !level.map.length) return false;
+    const width = level.map[0]?.length ?? 0;
+    if(width <= 0) return false;
+    return level.map.every(row => typeof row === 'string' && row.length === width);
+  }
 
-    async function loadLevels(force=false){
-      if(levelsLoading) return;
-      if(levelsLoaded && !force) return;
-      levelsLoading = true;
-      setStartButton('Loading...', true);
-      try {
-        const res = await fetch(LEVEL_FILE, { cache:'no-store' });
-        if(!res.ok) throw new Error(`Failed to load levels (${res.status})`);
-        const data = await res.json();
-        const parsed = Array.isArray(data.levels) ? data.levels.filter(isValidLevel) : [];
-        if(!parsed.length) throw new Error('No valid levels found in levels.json');
-        LEVELS = parsed;
-        levelsLoaded = true;
-        elLevel.textContent = LEVELS[0]?.name || 'World 1-1';
-        setStartButton('Start', false);
-      } catch (err) {
-        console.error('[Mario] Level loading error:', err);
-        levelsLoaded = false;
-        setStartButton('Retry', false);
-        throw err;
-      } finally {
-        levelsLoading = false;
-      }
+  async function loadLevels(force=false){
+    if(levelsLoading) return;
+    if(levelsLoaded && !force) return;
+    levelsLoading = true;
+    setStartButton('Loading...', true);
+    try {
+      const res = await fetch(LEVEL_FILE, { cache:'no-store' });
+      if(!res.ok) throw new Error(`Failed to load levels (${res.status})`);
+      const data = await res.json();
+      const parsed = Array.isArray(data.levels) ? data.levels.filter(isValidLevel) : [];
+      if(!parsed.length) throw new Error('No valid levels found in levels.json');
+      LEVELS = parsed;
+      levelsLoaded = true;
+      elLevel.textContent = LEVELS[0]?.name || 'World 1-1';
+      setStartButton('Start', false);
+    } catch (err) {
+      console.error('[Mario] Level loading error:', err);
+      levelsLoaded = false;
+      setStartButton('Retry', false);
+      throw err;
+    } finally {
+      levelsLoading = false;
     }
   }
 
