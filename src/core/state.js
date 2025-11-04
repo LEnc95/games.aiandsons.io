@@ -35,19 +35,53 @@ const loadOwnedCosmetics = (equipped) => {
   return base;
 };
 
+const loadInventory = () => {
+  const stored = get('inventory', []);
+  let needsResave = false;
+  let entries;
+
+  if (Array.isArray(stored)) {
+    entries = stored;
+  } else if (stored && typeof stored === 'object') {
+    entries = Object.entries(stored)
+      .filter(([, value]) => value !== false && value != null)
+      .map(([key]) => key);
+    needsResave = true;
+  } else {
+    entries = [];
+    if (stored != null) needsResave = true;
+  }
+
+  const normalized = [];
+  for (const item of entries) {
+    if (typeof item === 'string' && item.trim() !== '') {
+      normalized.push(item);
+    } else {
+      needsResave = true;
+    }
+  }
+
+  return { inventory: new Set(normalized), needsResave };
+};
+
 const cosmetics = loadEquippedCosmetics();
 const cosmeticsOwned = loadOwnedCosmetics(cosmetics);
+const { inventory, needsResave: inventoryNeedsResave } = loadInventory();
 
 export const state = {
   profile: get('profile', { name: '', firstRun: true }),
   coins: get('coins', 0),
   badges: new Set(get('badges', [])),
   cosmetics: get('cosmetics', { paddle: 'default', snake: 'default', marioShirt: 'red' }),
-  inventory: new Set(get('inventory', [])),
+  inventory,
   cosmetics,
   cosmeticsOwned,
   recent: get('recent', []), // array of slugs
 };
+
+if (inventoryNeedsResave) {
+  set('inventory', [...state.inventory]);
+}
 
 export const save = () => {
   set('profile', state.profile);
