@@ -83,44 +83,50 @@
   const ctx = canvas.getContext('2d');
   const DPR = Math.min(window.devicePixelRatio||1, 2);
   function resize(){ canvas.width=Math.floor(innerWidth*DPR); canvas.height=Math.floor(innerHeight*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);} resize(); addEventListener('resize', resize);
+  
+    // ===== HUD/Overlays =====
+    const elLevel = document.getElementById('hud-level');
+    const elStats = document.getElementById('hud-stats');
+    const startOverlay = document.getElementById('start');
+    const gameOver = document.getElementById('gameOver');
+    const overTitle = document.getElementById('overTitle');
+    const overStats = document.getElementById('overStats');
+    const startBtn = document.getElementById('startBtn');
+    const againBtn = document.getElementById('againBtn');
 
-  // ===== HUD/Overlays =====
-  const elLevel = document.getElementById('hud-level');
-  const elStats = document.getElementById('hud-stats');
-  const startOverlay = document.getElementById('start');
-  const gameOver = document.getElementById('gameOver');
-  const overTitle = document.getElementById('overTitle');
-  const overStats = document.getElementById('overStats');
-  document.getElementById('startBtn').onclick=()=>{startOverlay.style.display='none'; startGame();};
-  document.getElementById('againBtn').onclick=()=>{gameOver.style.display='none'; startGame();};
+    // ===== Level Data (32px tiles) =====
+    const TILE = 32;
+    const LEVEL_FILE = 'levels.json';
+    let LEVELS = [];
+    let levelsLoaded = false;
+    let levelsLoading = false;
 
-  // ===== Level Data (32px tiles) =====
-  const TILE = 32;
-  // Legend: X=ground/solid, B=brick, ?=question→coin, C=coin, G=goomba, F=flag, S=start, .=empty
-  const LEVEL_1 = [
-    '................................................................',
-    '................................................................',
-    '................................................................',
-    '.........................C......................................',
-    '....................B..B???..C..................................',
-    '...............C.........................C......................',
-    '.................B.....C.............B..........................',
-    '...............BBB...................BBB..............C.........',
-    'S............................................................F..',
-    'XXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXX',
-    'XXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXX',
-  ];
+    startBtn.disabled = true;
+    startBtn.textContent = 'Loading...';
+    startBtn.addEventListener('click', async ()=>{
+      if(!levelsLoaded){
+        try { await loadLevels(true); } catch (_) {}
+        if(!levelsLoaded) return;
+      }
+      startOverlay.style.display='none';
+      startGame();
+    });
+    againBtn.addEventListener('click', async ()=>{
+      gameOver.style.display='none';
+      if(!levelsLoaded){
+        try { await loadLevels(true); } catch (_) {}
+        if(!levelsLoaded) return;
+      }
+      startGame();
+    });
 
-  // Enemy placements (tile coords)
-  const ENEMIES_1 = [ {x:18,y:8}, {x:26,y:8}, {x:45,y:8} ];
-
-  // ===== Game State =====
-  const G = {
-    state:'idle', levelIndex:0, coins:0, lives:3, time:400,
-    keys:{left:false,right:false,up:false},
-    map:null, player:null, enemies:[], particles:[],
-    camX:0, paused:false
-  };
+    // ===== Game State =====
+    const G = {
+      state:'idle', levelIndex:0, coins:0, lives:3, time:400,
+      keys:{left:false,right:false,up:false},
+      map:null, player:null, enemies:[], particles:[],
+      camX:0, paused:false
+    };
 
   // ===== Input (keyboard) =====
   addEventListener('keydown', e=>{
@@ -181,6 +187,43 @@
           else if(ch==='F'){ ctx.fillStyle='#e5e7eb'; ctx.fillRect(sx+TILE/2-2, sy-5, 4, TILE*6); ctx.fillStyle='#ef4444'; ctx.fillRect(sx+TILE/2+2, sy+6, 14, 10); }
           else if(ch==='S'){ }
         }
+      }
+    }
+
+    function setStartButton(text, disabled){
+      startBtn.textContent = text;
+      startBtn.disabled = !!disabled;
+    }
+
+    function isValidLevel(level){
+      if(!level || !Array.isArray(level.map) || !level.map.length) return false;
+      const width = level.map[0]?.length ?? 0;
+      if(width <= 0) return false;
+      return level.map.every(row => typeof row === 'string' && row.length === width);
+    }
+
+    async function loadLevels(force=false){
+      if(levelsLoading) return;
+      if(levelsLoaded && !force) return;
+      levelsLoading = true;
+      setStartButton('Loading...', true);
+      try {
+        const res = await fetch(LEVEL_FILE, { cache:'no-store' });
+        if(!res.ok) throw new Error(`Failed to load levels (${res.status})`);
+        const data = await res.json();
+        const parsed = Array.isArray(data.levels) ? data.levels.filter(isValidLevel) : [];
+        if(!parsed.length) throw new Error('No valid levels found in levels.json');
+        LEVELS = parsed;
+        levelsLoaded = true;
+        elLevel.textContent = LEVELS[0]?.name || 'World 1-1';
+        setStartButton('Start', false);
+      } catch (err) {
+        console.error('[Mario] Level loading error:', err);
+        levelsLoaded = false;
+        setStartButton('Retry', false);
+        throw err;
+      } finally {
+        levelsLoading = false;
       }
     }
   }
@@ -269,51 +312,118 @@
   } }
 
   // ===== Game Flow =====
-  function loadLevel(){ G.map = new TileMap(LEVEL_1); G.enemies=[]; G.particles=[]; G.camX=0; G.time=400;
-    let sx=0, sy=0;
-    for(let y=0;y<G.map.h;y++){
-      for(let x=0;x<G.map.w;x++){
-        if(G.map.get(x,y)==='S'){ sx=x*TILE+6; sy=y*TILE-8; G.map.set(x,y,'.'); }
+    function loadLevel(){
+      if(!LEVELS.length){
+        console.warn('[Mario] No levels available to load.');
+        return;
+      }
+      const level = LEVELS[G.levelIndex] ?? LEVELS[0];
+      G.map = new TileMap(level.map);
+      G.enemies = [];
+      G.particles = [];
+      G.camX = 0;
+      const parsedTime = Number(level.time);
+      G.time = Number.isFinite(parsedTime) && parsedTime > 0 ? parsedTime : 400;
+      G.paused = false;
+      let sx = TILE * 2;
+      let sy = TILE * 6;
+      for(let y=0;y<G.map.h;y++){
+        for(let x=0;x<G.map.w;x++){
+          if(G.map.get(x,y)==='S'){
+            sx = x*TILE+6;
+            sy = y*TILE-8;
+            G.map.set(x,y,'.');
+          }
+        }
+      }
+      if(Array.isArray(level.enemies)){
+        for(const e of level.enemies){
+          if(!e || typeof e.x !== 'number' || typeof e.y !== 'number') continue;
+          G.enemies.push(new Goomba(e.x*TILE+7, e.y*TILE+8));
+        }
+      }
+      G.player = new Player(sx, sy);
+      G.state = 'play';
+      const levelName = level.name || `Level ${G.levelIndex+1}`;
+      elLevel.textContent = levelName;
+      updateHUD();
+    }
+
+    function startGame(){
+      if(!levelsLoaded || !LEVELS.length){
+        loadLevels(true).catch(()=>{});
+        return;
+      }
+      G.state = 'play';
+      G.coins = 0;
+      G.lives = 3;
+      G.levelIndex = 0;
+      G.paused = false;
+      loadLevel();
+    }
+    function die(){
+      if(G.state!=='play') return;
+      G.lives -= 1;
+      if(G.lives<=0){
+        updateHUD();
+        return gameEnd(false);
+      }
+      updateHUD();
+      loadLevel();
+    }
+    function win(){
+      if(G.state!=='play') return;
+      const nextIndex = G.levelIndex + 1;
+      if(nextIndex < LEVELS.length){
+        G.levelIndex = nextIndex;
+        loadLevel();
+      } else {
+        gameEnd(true);
       }
     }
-    for(const e of ENEMIES_1){ G.enemies.push(new Goomba(e.x*TILE+7, e.y*TILE+8)); }
-    G.player = new Player(sx, sy);
-    elLevel.textContent = 'World 1-1'; updateHUD();
-  }
 
-  function startGame(){ G.state='play'; G.coins=0; G.lives=3; loadLevel(); }
-  function die(){ G.lives -= 1; updateHUD(); if(G.lives<=0){ return gameEnd(false); } loadLevel(); }
-  function win(){ gameEnd(true); }
-  function gameEnd(won){ 
-    G.state='over'; 
-    overTitle.textContent = won? 'Course Clear!' : 'Game Over'; 
-    overStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`;
-    // Award coins: coinsCollected (already tracked in G.coins)
-    if (G.coins > 0 && typeof addCoins === 'function') addCoins(G.coins);
-    gameOver.style.display='grid'; 
-  }
-  function updateHUD(){ elStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${G.time}`; }
+    function gameEnd(won){
+      G.state = 'over';
+      overTitle.textContent = won ? 'Course Clear!' : 'Game Over';
+      const timeDisplay = Math.max(0, Math.floor(G.time));
+      overStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${timeDisplay}`;
+      // Award coins: coinsCollected (already tracked in G.coins)
+      if (G.coins > 0 && typeof addCoins === 'function') addCoins(G.coins);
+      gameOver.style.display = 'grid';
+    }
 
-  function pressJump(){ if(G.player){ G.player.jumpQueued = true; setTimeout(()=>{ if(G.player) G.player.jumpQueued=false; }, 120); } }
+    function updateHUD(){
+      const timeDisplay = Math.max(0, Math.floor(G.time));
+      elStats.textContent = `Coins: ${G.coins} • Lives: ${G.lives} • Time: ${timeDisplay}`;
+    }
+
+    function pressJump(){ if(G.player){ G.player.jumpQueued = true; setTimeout(()=>{ if(G.player) G.player.jumpQueued=false; }, 120); } }
+
+    loadLevels().catch(()=>{});
 
   // ===== Main Loop =====
-  let last=performance.now();
-  function loop(now){
-    const dt=Math.min(.033,(now-last)/1000); last=now;
-    if(G.state==='play'){
-      if(!G.paused){
-        G.time -= dt; if(G.time<=0) { die(); }
-        G.map.drawBG();
-        G.player.update(dt);
-        for(const e of G.enemies) e.update(dt);
-        updateParticles(dt);
-        const H=canvas.height/DPR; if(G.player.y>H+120) die();
+    let last=performance.now();
+    function loop(now){
+      const dt = Math.min(.033,(now-last)/1000); last = now;
+      if(G.state==='play'){
+        if(!G.paused){
+          G.time -= dt;
+          if(G.time<=0){
+            die();
+          } else {
+            updateHUD();
+          }
+          G.map.drawBG();
+          G.player.update(dt);
+          for(const e of G.enemies) e.update(dt);
+          updateParticles(dt);
+          const H = canvas.height/DPR; if(G.player.y>H+120) die();
+        }
+        G.map.draw(); for(const e of G.enemies) e.draw(); G.player.draw(); drawParticles();
+        if(G.paused){ ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.fillStyle='#fff'; ctx.font='bold 28px system-ui'; ctx.textAlign='center'; ctx.fillText('Paused', (canvas.width/DPR)/2, (canvas.height/DPR)/2); }
       }
-      G.map.draw(); for(const e of G.enemies) e.draw(); G.player.draw(); drawParticles();
-      if(G.paused){ ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.fillStyle='#fff'; ctx.font='bold 28px system-ui'; ctx.textAlign='center'; ctx.fillText('Paused', (canvas.width/DPR)/2, (canvas.height/DPR)/2); }
+      requestAnimationFrame(loop);
     }
-    requestAnimationFrame(loop);
-  }
   requestAnimationFrame(loop);
 })();
 </script>
