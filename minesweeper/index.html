@@ -6,21 +6,37 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <style>
-    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --cell:#0c142e; --grid:#192544; --flag:#fa4; --mine:#e55; }
-    * { box-sizing: border-box; }
-    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
-    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+    <style>
+      :root {
+        --bg:#0b1020;
+        --fg:#e7f0ff;
+        --muted:#8aa0c3;
+        --accent:#5ad;
+        --cell:#0c142e;
+        --grid:#192544;
+        --flag:#fa4;
+        --mine:#e55;
+        --board-padding:12px;
+        --cell-gap:4px;
+        --cell-size:36px;
+        --cell-font-size:16px;
+      }
+      * { box-sizing: border-box; }
+      html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+      html.scrollable-root { position:relative; height:auto; min-height:100%; overflow-y:auto; }
+      body.scrollable { position:relative; min-height:100%; height:auto; overflow-y:auto; overflow-x:hidden; touch-action:pan-y; -webkit-overflow-scrolling:touch; }
+      .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); width:min(960px, 100%); margin:0 auto; }
+      body.scrollable .wrap { height:auto; min-height:100vh; justify-content:flex-start; padding-bottom:calc(env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)) + clamp(24px, 6vh, 48px)); }
 
-    #board { display:grid; gap:4px; background:#0e1836; padding:10px; border-radius:12px; border:2px solid var(--grid); }
-    .cell { width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--cell); border:2px solid var(--grid); border-radius:6px; cursor:pointer; user-select:none; font-weight:700; font-size:16px; }
+      #board { display:grid; gap:var(--cell-gap); background:#0e1836; padding:var(--board-padding); border-radius:12px; border:2px solid var(--grid); margin:clamp(16px, 3vh, 24px) auto 0; width:min(var(--board-width, 9999px), calc(100vw - clamp(24px, 8vw, 64px))); max-width:100%; }
+      .cell { width:var(--cell-size); height:var(--cell-size); display:flex; align-items:center; justify-content:center; background:var(--cell); border:2px solid var(--grid); border-radius:calc(var(--cell-size) * 0.22); cursor:pointer; user-select:none; font-weight:700; font-size:var(--cell-font-size); }
     .cell.revealed { background:#152750; border-color:#223660; cursor:default; }
     .cell.mine { background:#3a0f1a; border-color:#5a1f2a; color:#ffdede; }
     .cell.flag { color:var(--flag); }
     .cell.zero { color:#9fb3d6; }
     .n1{ color:#66c; } .n2{ color:#2a6; } .n3{ color:#c33; } .n4{ color:#36c; } .n5{ color:#a52; } .n6{ color:#399; } .n7{ color:#444; } .n8{ color:#777; }
 
-    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 900px); }
+      .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 900px); }
     .stats { display:flex; justify-content:center; gap:24px; margin-top:4px; }
     .stats b { color:var(--fg); }
     .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
@@ -30,8 +46,7 @@
     .btn.primary:active { background:#4bc; }
 
     @media (max-width: 768px) {
-      #board { gap:3px; }
-      .cell { width:34px; height:34px; font-size:15px; }
+        #board { width:min(var(--board-width, 9999px), calc(100vw - clamp(20px, 8vw, 48px))); }
     }
   </style>
 </head>
@@ -66,24 +81,101 @@
     rememberRecent('minesweeper');
   </script>
   <script>
-    let W=9,H=9,M=10; // width, height, mines
-    let grid, revealed, flagged, started, over, timerId=null, startTs=0, flagMode=false, firstClick=true;
+      let W=9,H=9,M=10; // width, height, mines
+      let grid, revealed, flagged, started, over, timerId=null, startTs=0, flagMode=false, firstClick=true;
 
-    const boardEl = document.getElementById('board');
-    const minesLeftEl = document.getElementById('mines-left');
-    const timerEl = document.getElementById('timer');
-    const modeEl = document.getElementById('mode');
+      const boardEl = document.getElementById('board');
+      const minesLeftEl = document.getElementById('mines-left');
+      const timerEl = document.getElementById('timer');
+      const modeEl = document.getElementById('mode');
+      const root = document.documentElement;
+      const wrapEl = document.querySelector('.wrap');
+      const hudEl = document.querySelector('.hud');
+      let layoutRaf = 0;
+
+      function scheduleLayout(){
+        if (layoutRaf) cancelAnimationFrame(layoutRaf);
+        layoutRaf = requestAnimationFrame(() => {
+          layoutRaf = 0;
+          applyResponsiveLayout();
+        });
+      }
+
+      function applyResponsiveLayout(){
+        if (!boardEl) return;
+
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1024;
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 768;
+        const hudHeight = hudEl ? hudEl.offsetHeight : 0;
+        const wrapStyles = wrapEl ? getComputedStyle(wrapEl) : null;
+        const paddingLeft = wrapStyles ? parseFloat(wrapStyles.paddingLeft) || 0 : 0;
+        const paddingRight = wrapStyles ? parseFloat(wrapStyles.paddingRight) || 0 : 0;
+        const wrapGap = wrapStyles ? parseFloat(wrapStyles.rowGap || wrapStyles.gap || '0') : 0;
+        const sidePadding = paddingLeft + paddingRight;
+
+        const availableWidth = Math.max(240, viewportWidth - sidePadding - 24);
+        const availableHeight = viewportHeight - hudHeight - wrapGap - 96;
+
+        let gapPx = 4;
+        let padPx = 12;
+
+        const computeSize = (gapVal, padVal) => {
+          const widthTerm = (availableWidth - padVal * 2 - (W - 1) * gapVal) / W;
+          const heightTerm = availableHeight > 0 ? (availableHeight - padVal * 2 - (H - 1) * gapVal) / H : Infinity;
+          let candidate = Math.min(56, widthTerm, heightTerm);
+          if (!Number.isFinite(candidate) || candidate <= 0) {
+            candidate = Math.min(56, widthTerm);
+          }
+          if (!Number.isFinite(candidate) || candidate <= 0) {
+            candidate = 36;
+          }
+          return candidate;
+        };
+
+        let cellSize = computeSize(gapPx, padPx);
+
+        if (cellSize < 24) {
+          gapPx = Math.max(2, Math.round(cellSize * 0.14));
+          padPx = Math.max(8, Math.round(cellSize * 0.4));
+          cellSize = computeSize(gapPx, padPx);
+        }
+
+        if (cellSize < 16) {
+          gapPx = Math.max(1, Math.round(cellSize * 0.12));
+          padPx = Math.max(6, Math.round(cellSize * 0.32));
+          cellSize = computeSize(gapPx, padPx);
+        }
+
+        cellSize = Math.max(8, Math.min(56, cellSize));
+
+        const boardWidth = W * cellSize + Math.max(0, W - 1) * gapPx + padPx * 2;
+        const boardHeight = H * cellSize + Math.max(0, H - 1) * gapPx + padPx * 2;
+
+        const needsScrollY = boardHeight + hudHeight + wrapGap + padPx + 48 > viewportHeight;
+        const needsScrollX = boardWidth + sidePadding > viewportWidth;
+        const enableScroll = needsScrollY || needsScrollX;
+
+        document.body.classList.toggle('scrollable', enableScroll);
+        document.documentElement.classList.toggle('scrollable-root', enableScroll);
+
+        root.style.setProperty('--cell-size', `${cellSize}px`);
+        root.style.setProperty('--cell-gap', `${gapPx}px`);
+        root.style.setProperty('--board-padding', `${padPx}px`);
+        root.style.setProperty('--cell-font-size', `${Math.max(12, Math.min(24, Math.round(cellSize * 0.55)))}px`);
+        boardEl.style.setProperty('--board-width', `${boardWidth}px`);
+      }
 
     function resetTimer(){ if (timerId) clearInterval(timerId); timerId=null; timerEl.textContent='0'; }
     function startTimer(){ startTs = Date.now(); timerId = setInterval(()=>{ timerEl.textContent = Math.floor((Date.now()-startTs)/1000); }, 1000); }
 
-    function init(w=W,h=H,m=M){
+      function init(w=W,h=H,m=M){
       W=w; H=h; M=m; firstClick=true; over=false; started=false; resetTimer();
       grid = Array.from({length:H}, ()=> Array(W).fill(0));
       revealed = Array.from({length:H}, ()=> Array(W).fill(false));
       flagged = Array.from({length:H}, ()=> Array(W).fill(false));
       minesLeftEl.textContent = M;
       render();
+        scheduleLayout();
     }
 
     function inBounds(x,y){ return x>=0 && x<W && y>=0 && y<H; }
@@ -163,18 +255,19 @@
       return true;
     }
 
-    function render(){
-      boardEl.style.gridTemplateColumns = `repeat(${W}, 1fr)`;
-      boardEl.innerHTML='';
+      function render(){
+        boardEl.style.gridTemplateColumns = `repeat(${W}, 1fr)`;
+        boardEl.innerHTML='';
       for (let y=0;y<H;y++) for (let x=0;x<W;x++){
         const cell = document.createElement('div');
         cell.className = 'cell';
         cell.dataset.x = x; cell.dataset.y = y;
         boardEl.appendChild(cell);
       }
-      boardEl.addEventListener('contextmenu', e=>e.preventDefault());
-      boardEl.onpointerdown = onPointerDown;
+        boardEl.oncontextmenu = e=>e.preventDefault();
+        boardEl.onpointerdown = onPointerDown;
       renderAllCells();
+        scheduleLayout();
     }
 
     function renderAllCells(){
@@ -219,7 +312,7 @@
       };
     }
 
-    document.getElementById('restart-btn').addEventListener('click', ()=> init(W,H,M));
+      document.getElementById('restart-btn').addEventListener('click', ()=> init(W,H,M));
     document.querySelectorAll('.preset').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         document.querySelectorAll('.preset').forEach(b=>b.classList.remove('primary'));
@@ -233,8 +326,15 @@
       if (e.code==='KeyF'){ flagMode=!flagMode; modeEl.textContent = flagMode? 'Flag' : 'Reveal'; }
     });
 
+      window.addEventListener('resize', scheduleLayout);
+      window.addEventListener('orientationchange', () => setTimeout(scheduleLayout, 120));
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', scheduleLayout);
+      }
+
     // Boot
     init(9,9,10);
+      scheduleLayout();
   </script>
 </body>
 </html>
