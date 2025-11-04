@@ -10,7 +10,7 @@
     .hud { position: fixed; top: 56px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
     .hud .pill { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 999px; font-weight: 600; }
     .hud .hint { color: var(--muted); font-weight: 500; }
-    canvas { display: block; width: 100vw; height: 100vh; }
+    canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
     .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.45); color: var(--fg); }
     .card { background: rgba(17,24,39,0.85); border: 1px solid rgba(255,255,255,0.12); padding: 24px; border-radius: 16px; max-width: 520px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
     .card h1 { margin: 0 0 10px; font-size: 28px; }
@@ -21,6 +21,18 @@
     .back-home { position: fixed; top: 12px; left: 12px; z-index: 9999; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.6); color: #fff; text-decoration: none; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; line-height: 1; font-weight: 600; backdrop-filter: saturate(150%) blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); pointer-events: auto; }
     .back-home:hover { background: rgba(0,0,0,0.75); }
     .back-home:focus { outline: 2px solid #fff; outline-offset: 2px; }
+    .touch-controls { position: fixed; left: 0; right: 0; bottom: clamp(16px, 6vh, 40px); display: none; justify-content: space-between; align-items: flex-end; padding: 0 clamp(16px, 10vw, 72px); pointer-events: none; gap: clamp(16px, 6vw, 48px); opacity: 0; transform: translateY(32px); transition: opacity 0.25s ease, transform 0.25s ease; }
+    .touch-controls .cluster { display: flex; gap: clamp(12px, 4vw, 24px); pointer-events: auto; }
+    .touch-btn { pointer-events: auto; width: clamp(64px, 18vw, 88px); height: clamp(64px, 18vw, 88px); border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); background: rgba(8,12,18,0.78); color: var(--fg); font-size: clamp(22px, 6vw, 30px); font-weight: 700; display: grid; place-items: center; box-shadow: 0 12px 24px rgba(0,0,0,0.4); touch-action: none; user-select: none; transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease; }
+    .touch-btn.shoot { background: rgba(106, 224, 255, 0.82); color: #00111c; border-color: rgba(106,224,255,0.82); font-size: clamp(18px, 5vw, 22px); letter-spacing: 0.08em; }
+    .touch-btn:active, .touch-btn.active { transform: scale(0.94); background: rgba(106,224,255,0.9); color: #00111c; border-color: rgba(106,224,255,0.92); }
+    .touch-btn.shoot:active, .touch-btn.shoot.active { background: rgba(255,255,255,0.85); }
+    .touch-controls.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .touch-controls.is-active .cluster { pointer-events: auto; }
+    @media (pointer: coarse) {
+      .touch-controls { display: flex; }
+      .hud .hint { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -37,7 +49,7 @@
     <div class="card">
       <h1>Space Invaders</h1>
       <p>Clear waves of invaders. Dodge enemy fire. Rack up points.</p>
-      <p>Controls: <span class="kbd">A/←</span> <span class="kbd">D/→</span> move, <span class="kbd">Space</span> shoot, <span class="kbd">P</span> pause.</p>
+      <p>Controls: <span class="kbd">A/←</span> <span class="kbd">D/→</span> move, <span class="kbd">Space</span> shoot, <span class="kbd">P</span> pause. On touch screens, use the on-screen move &amp; fire buttons.</p>
       <button class="btn" id="startBtn">Start Game</button>
     </div>
   </div>
@@ -49,6 +61,14 @@
       <button class="btn" id="restartBtn">Play Again</button>
     </div>
   </div>
+
+    <div class="touch-controls" aria-hidden="true">
+      <div class="cluster">
+        <button class="touch-btn" data-action="left" type="button" aria-label="Move left">&larr;</button>
+        <button class="touch-btn" data-action="right" type="button" aria-label="Move right">&rarr;</button>
+      </div>
+      <button class="touch-btn shoot" data-action="shoot" type="button" aria-label="Fire">FIRE</button>
+    </div>
 
   <script type="module">
     import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
@@ -65,6 +85,8 @@
   const gameOverOverlay = document.getElementById('gameOverOverlay');
   const finalScoreEl = document.getElementById('finalScore');
   const gameOverTitle = document.getElementById('gameOverTitle');
+  const touchControls = document.querySelector('.touch-controls');
+  const controlButtons = touchControls ? Array.from(touchControls.querySelectorAll('.touch-btn')) : [];
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
   function resize() {
@@ -107,7 +129,76 @@
   window.addEventListener('keydown', e=>{ if(e.code==='ArrowLeft'||e.code==='KeyA') GAME.keys.left=true; if(e.code==='ArrowRight'||e.code==='KeyD') GAME.keys.right=true; if(e.code==='Space'){ GAME.keys.shoot=true; e.preventDefault(); } if(e.code==='KeyP') togglePause(); });
   window.addEventListener('keyup', e=>{ if(e.code==='ArrowLeft'||e.code==='KeyA') GAME.keys.left=false; if(e.code==='ArrowRight'||e.code==='KeyD') GAME.keys.right=false; if(e.code==='Space') GAME.keys.shoot=false; });
 
-  let touchId=null; canvas.addEventListener('pointerdown', e=>{ touchId=e.pointerId; GAME.keys.shoot=true; }); canvas.addEventListener('pointerup', e=>{ if(touchId===e.pointerId){ GAME.keys.shoot=false; touchId=null; } }); canvas.addEventListener('pointermove', e=>{ if(touchId===e.pointerId && GAME.player){ const rect=canvas.getBoundingClientRect(); const x=(e.clientX-rect.left); GAME.player.x=clamp(x - GAME.player.w/2, 8, canvas.width/DPR - GAME.player.w - 8); } });
+  let activePointerId = null, pointerIsShooting = false;
+  function updatePlayerFromPointer(e){
+    if (!GAME.player) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left);
+    GAME.player.x = clamp(x - GAME.player.w / 2, 8, canvas.width / DPR - GAME.player.w - 8);
+  }
+  canvas.addEventListener('pointerdown', e => {
+    if (activePointerId === null) {
+      activePointerId = e.pointerId;
+      updatePlayerFromPointer(e);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      if (e.pointerType !== 'touch') {
+        GAME.keys.shoot = true;
+        pointerIsShooting = true;
+      } else {
+        pointerIsShooting = false;
+      }
+    } else if (e.pointerType !== 'touch') {
+      GAME.keys.shoot = true;
+      pointerIsShooting = true;
+    }
+    if (e.pointerType === 'touch') e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (activePointerId === e.pointerId) updatePlayerFromPointer(e);
+  });
+  const releasePointer = e => {
+    if (activePointerId === e.pointerId) {
+      if (pointerIsShooting) GAME.keys.shoot = false;
+      activePointerId = null;
+      pointerIsShooting = false;
+      try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    } else if (pointerIsShooting && e.pointerType !== 'touch') {
+      GAME.keys.shoot = false;
+      pointerIsShooting = false;
+    }
+  };
+  canvas.addEventListener('pointerup', releasePointer);
+  canvas.addEventListener('pointercancel', releasePointer);
+
+  if (touchControls) {
+    const setKeyState = (action, pressed) => {
+      if (action === 'left') GAME.keys.left = pressed;
+      else if (action === 'right') GAME.keys.right = pressed;
+      else if (action === 'shoot') GAME.keys.shoot = pressed;
+    };
+    controlButtons.forEach(btn => {
+      const action = btn.dataset.action;
+      let boundPointer = null;
+      const press = e => {
+        e.preventDefault();
+        boundPointer = e.pointerId;
+        btn.classList.add('active');
+        setKeyState(action, true);
+        try { btn.setPointerCapture(e.pointerId); } catch {}
+      };
+      const release = e => {
+        if (boundPointer !== null && e.pointerId !== boundPointer) return;
+        btn.classList.remove('active');
+        setKeyState(action, false);
+        boundPointer = null;
+        try { btn.releasePointerCapture(e.pointerId); } catch {}
+      };
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('pointerleave', release);
+    });
+  }
 
   function togglePause(){ if(GAME.state!=='playing' && GAME.state!=='paused') return; GAME.state = (GAME.state==='playing')?'paused':'playing'; }
   function tryShoot(ts){ if(!GAME.player||!GAME.keys.shoot) return; if(ts - GAME.lastShotAt < GAME.player.cooldown) return; GAME.lastShotAt=ts; GAME.playerBullets.push(new Bullet(GAME.player.x + GAME.player.w/2 - 1.5, GAME.player.y - 10, -520, true)); }
@@ -132,19 +223,54 @@
   function drawBackground(){ const W=canvas.width/DPR, H=canvas.height/DPR; ctx.save(); ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b0f14'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=0.75; for(let i=0;i<80;i++){ const x=(i*73)%W, y=(i*97)%H, s=(i%3)+1; ctx.fillStyle = i%7===0 ? '#6ae0ff' : '#e8f0ff'; ctx.fillRect(x,y,s,s); } ctx.restore(); }
   function draw(){ drawBackground(); for(const inv of GAME.invaders) inv.draw(); for(const b of GAME.playerBullets) b.draw(); for(const b of GAME.invaderBullets) b.draw(); GAME.player.draw(); }
   function drawPause(){ const W=canvas.width/DPR,H=canvas.height/DPR; ctx.save(); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#ffffff'; ctx.font='bold 28px system-ui'; ctx.textAlign='center'; ctx.fillText('Paused — Press P to resume', W/2, H/2); ctx.restore(); }
-  function endGame(won=false){ 
-    GAME.state='over'; 
-    gameOverTitle.textContent = won?'You Win!':'Game Over'; 
+  function endGame(won=false){
+    GAME.state = 'over';
+    gameOverTitle.textContent = won ? 'You Win!' : 'Game Over';
     finalScoreEl.textContent = `Score: ${GAME.score}`;
     // Award coins: Math.floor(score / 50)
     const coins = Math.floor((GAME.score || 0) / 50);
     if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
-    gameOverOverlay.style.display='grid'; 
+    gameOverOverlay.style.display = 'grid';
+    if (activePointerId !== null) {
+      try { canvas.releasePointerCapture(activePointerId); } catch {}
+      activePointerId = null;
+    }
+    pointerIsShooting = false;
+    GAME.keys.left = false;
+    GAME.keys.right = false;
+    GAME.keys.shoot = false;
+    controlButtons.forEach(btn => btn.classList.remove('active'));
+    if (touchControls) {
+      touchControls.classList.remove('is-active');
+      touchControls.setAttribute('aria-hidden', 'true');
+    }
   }
 
-  document.getElementById('startBtn').addEventListener('click', ()=>{ startOverlay.style.display='none'; startPlaying(); });
-  document.getElementById('restartBtn').addEventListener('click', ()=>{ gameOverOverlay.style.display='none'; startPlaying(); });
-  function startPlaying(){ resetGame(); GAME.state='playing'; }
+  document.getElementById('startBtn').addEventListener('click', () => {
+    startOverlay.style.display = 'none';
+    startPlaying();
+  });
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    gameOverOverlay.style.display = 'none';
+    startPlaying();
+  });
+  function startPlaying(){
+    if (activePointerId !== null) {
+      try { canvas.releasePointerCapture(activePointerId); } catch {}
+      activePointerId = null;
+    }
+    pointerIsShooting = false;
+    GAME.keys.left = false;
+    GAME.keys.right = false;
+    GAME.keys.shoot = false;
+    controlButtons.forEach(btn => btn.classList.remove('active'));
+    resetGame();
+    GAME.state = 'playing';
+    if (touchControls) {
+      touchControls.classList.add('is-active');
+      touchControls.setAttribute('aria-hidden', 'false');
+    }
+  }
 })();
 </script>
 
