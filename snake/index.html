@@ -10,7 +10,9 @@
     :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --snake:#4ad; --food:#fa4; }
     * { box-sizing: border-box; }
     html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
-    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); overflow:hidden; position:relative; }
+    .wrap.scrollable { justify-content:flex-start; overflow-y:auto; touch-action:pan-y; -webkit-overflow-scrolling:touch; }
+    .wrap.scrollable::-webkit-scrollbar { width:0; height:0; }
     
     #canvas-container { position:relative; width:100%; max-width:min(90vw, 800px); max-height:min(70vh, 800px); aspect-ratio:1/1; padding-top:20px; padding-bottom:8px; box-sizing:border-box; }
     canvas { width:100%; height:100%; display:block; background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; touch-action:none; image-rendering:auto; }
@@ -152,17 +154,102 @@
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const canvasContainer = document.getElementById("canvas-container");
-    
-    function resizeCanvas() {
-      const containerRect = canvasContainer.getBoundingClientRect();
-      const size = Math.min(containerRect.width, containerRect.height);
-      canvas.style.width = size + 'px';
-      canvas.style.height = size + 'px';
+    const wrap = document.querySelector(".wrap");
+    const hudContainer = document.querySelector(".hud");
+
+    function toNumber(value) {
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : 0;
     }
-    
+
+    function getViewportHeight() {
+      return window.visualViewport?.height ?? window.innerHeight;
+    }
+
+    function resizeCanvas() {
+      const viewportHeight = getViewportHeight();
+      const wrapStyles = wrap ? getComputedStyle(wrap) : null;
+      const paddingTop = wrapStyles ? toNumber(wrapStyles.paddingTop) : 0;
+      const paddingBottom = wrapStyles ? toNumber(wrapStyles.paddingBottom) : 0;
+      const gapValue = wrapStyles ? toNumber(wrapStyles.rowGap || wrapStyles.gap) : 0;
+      const hudHeight = hudContainer ? hudContainer.offsetHeight : 0;
+
+      const rawWidthLimit = canvasContainer.clientWidth || canvasContainer.offsetWidth || viewportHeight || 600;
+      const widthLimit = Math.min(rawWidthLimit, 800);
+
+      let availableHeight = viewportHeight - paddingTop - paddingBottom - gapValue - hudHeight;
+      if (!Number.isFinite(availableHeight)) {
+        availableHeight = widthLimit;
+      }
+
+      const containerStyles = getComputedStyle(canvasContainer);
+      const containerPadding = toNumber(containerStyles.paddingTop) + toNumber(containerStyles.paddingBottom);
+      const availableForBoard = availableHeight - containerPadding;
+
+      let boardSize;
+      if (availableForBoard > 0) {
+        boardSize = Math.min(widthLimit, availableForBoard);
+        const comfortableSize = Math.min(widthLimit, 320);
+        const minimumComfortSize = Math.min(widthLimit, 200);
+        if (availableForBoard >= comfortableSize) {
+          boardSize = Math.max(boardSize, comfortableSize);
+        } else if (availableForBoard >= minimumComfortSize) {
+          boardSize = Math.max(boardSize, minimumComfortSize);
+        }
+      } else {
+        boardSize = Math.min(widthLimit, 260);
+      }
+
+      boardSize = Math.min(boardSize, widthLimit);
+      if (availableForBoard > 0) {
+        boardSize = Math.min(boardSize, availableForBoard);
+      }
+
+      const minimumSize = Math.min(widthLimit, 120);
+      if (availableForBoard > 0 && availableForBoard < minimumSize) {
+        boardSize = availableForBoard;
+      } else {
+        boardSize = Math.max(boardSize, minimumSize);
+      }
+
+      const totalBoardHeight = boardSize + containerPadding;
+
+      canvasContainer.style.maxWidth = `${boardSize}px`;
+      canvasContainer.style.maxHeight = `${boardSize}px`;
+      canvasContainer.style.height = `${boardSize}px`;
+      canvas.style.width = `${boardSize}px`;
+      canvas.style.height = `${boardSize}px`;
+
+      if (wrap) {
+        if (availableHeight < totalBoardHeight + 1) {
+          wrap.classList.add("scrollable");
+        } else {
+          wrap.classList.remove("scrollable");
+        }
+      }
+    }
+
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+    let resizeRaf = 0;
+    function scheduleResize() {
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resizeCanvas();
+      });
+    }
+
+    window.addEventListener('resize', scheduleResize);
+    window.addEventListener('orientationchange', () => setTimeout(scheduleResize, 100));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', scheduleResize);
+      window.visualViewport.addEventListener('scroll', scheduleResize);
+    }
+    if (typeof ResizeObserver !== "undefined" && hudContainer) {
+      const observer = new ResizeObserver(() => scheduleResize());
+      observer.observe(hudContainer);
+    }
 
     // --- State ---
     let lastT = 0;
