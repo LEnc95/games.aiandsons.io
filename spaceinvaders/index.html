@@ -4,24 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Space Invaders – Vanilla JS</title>
-  <style>
-    :root { --bg: #0b0f14; --fg: #e8f0ff; --accent: #6ae0ff; --muted:#6b7280; }
-    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
-    .hud { position: fixed; top: 56px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+    <style>
+      :root { --bg: #0b0f14; --fg: #e8f0ff; --accent: #6ae0ff; --muted:#6b7280; }
+      html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+      .hud { position: fixed; top: calc(env(safe-area-inset-top, 16px) + clamp(32px, 6vh, 56px)); left: calc(env(safe-area-inset-left, 12px)); right: calc(env(safe-area-inset-right, 12px)); display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
     .hud .pill { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 999px; font-weight: 600; }
     .hud .hint { color: var(--muted); font-weight: 500; }
-    canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
-    .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.45); color: var(--fg); }
+      canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
+      .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.45); color: var(--fg); padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px); }
     .card { background: rgba(17,24,39,0.85); border: 1px solid rgba(255,255,255,0.12); padding: 24px; border-radius: 16px; max-width: 520px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
     .card h1 { margin: 0 0 10px; font-size: 28px; }
     .card p { margin: 6px 0; color: var(--muted); }
     .card .kbd { display: inline-block; border: 1px solid rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 6px; margin: 0 4px; background: rgba(255,255,255,0.06); }
     .btn { margin-top: 14px; background: var(--accent); color: #002230; border: none; font-weight: 800; padding: 10px 16px; border-radius: 12px; cursor: pointer; }
     /* Back to Home button, consistent with site */
-    .back-home { position: fixed; top: 12px; left: 12px; z-index: 9999; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.6); color: #fff; text-decoration: none; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; line-height: 1; font-weight: 600; backdrop-filter: saturate(150%) blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); pointer-events: auto; }
+      .back-home { position: fixed; top: calc(env(safe-area-inset-top, 12px)); left: calc(env(safe-area-inset-left, 12px)); z-index: 9999; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.6); color: #fff; text-decoration: none; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; line-height: 1; font-weight: 600; backdrop-filter: saturate(150%) blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); pointer-events: auto; }
     .back-home:hover { background: rgba(0,0,0,0.75); }
     .back-home:focus { outline: 2px solid #fff; outline-offset: 2px; }
-    .touch-controls { position: fixed; left: 0; right: 0; bottom: clamp(16px, 6vh, 40px); display: none; justify-content: space-between; align-items: flex-end; padding: 0 clamp(16px, 10vw, 72px); pointer-events: none; gap: clamp(16px, 6vw, 48px); opacity: 0; transform: translateY(32px); transition: opacity 0.25s ease, transform 0.25s ease; }
+      .touch-controls { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 16px) + clamp(16px, 6vh, 40px)); display: none; justify-content: space-between; align-items: flex-end; padding-left: calc(env(safe-area-inset-left, 0px) + clamp(16px, 10vw, 72px)); padding-right: calc(env(safe-area-inset-right, 0px) + clamp(16px, 10vw, 72px)); pointer-events: none; gap: clamp(16px, 6vw, 48px); opacity: 0; transform: translateY(32px); transition: opacity 0.25s ease, transform 0.25s ease; }
     .touch-controls .cluster { display: flex; gap: clamp(12px, 4vw, 24px); pointer-events: auto; }
     .touch-btn { pointer-events: auto; width: clamp(64px, 18vw, 88px); height: clamp(64px, 18vw, 88px); border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); background: rgba(8,12,18,0.78); color: var(--fg); font-size: clamp(22px, 6vw, 30px); font-weight: 700; display: grid; place-items: center; box-shadow: 0 12px 24px rgba(0,0,0,0.4); touch-action: none; user-select: none; transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease; }
     .touch-btn.shoot { background: rgba(106, 224, 255, 0.82); color: #00111c; border-color: rgba(106,224,255,0.82); font-size: clamp(18px, 5vw, 22px); letter-spacing: 0.08em; }
