@@ -96,7 +96,11 @@
 
     // ===== Level Data (32px tiles) =====
     const TILE = 32;
-    const LEVEL_FILE = 'levels.json';
+    // Get the correct path to levels.json relative to current page
+    const currentPath = window.location.pathname || '/';
+    const lastSlash = currentPath.lastIndexOf('/');
+    const basePath = lastSlash >= 0 ? currentPath.substring(0, lastSlash + 1) : '/';
+    const LEVEL_FILE = basePath + 'levels.json';
     let LEVELS = [];
     let levelsLoaded = false;
     let levelsLoading = false;
@@ -210,10 +214,17 @@
     setStartButton('Loading...', true);
     try {
       const res = await fetch(LEVEL_FILE, { cache:'no-store' });
-      if(!res.ok) throw new Error(`Failed to load levels (${res.status})`);
+      if(!res.ok) {
+        throw new Error(`Failed to load levels: HTTP ${res.status} ${res.statusText}`);
+      }
       const data = await res.json();
+      if(!data || typeof data !== 'object') {
+        throw new Error('Invalid JSON format in levels.json');
+      }
       const parsed = Array.isArray(data.levels) ? data.levels.filter(isValidLevel) : [];
-      if(!parsed.length) throw new Error('No valid levels found in levels.json');
+      if(!parsed.length) {
+        throw new Error('No valid levels found in levels.json');
+      }
       LEVELS = parsed;
       levelsLoaded = true;
       elLevel.textContent = LEVELS[0]?.name || 'World 1-1';
@@ -222,6 +233,14 @@
       console.error('[Mario] Level loading error:', err);
       levelsLoaded = false;
       setStartButton('Retry', false);
+      // Show error in console for debugging
+      console.error('[Mario] Full error details:', {
+        message: err.message,
+        stack: err.stack,
+        url: LEVEL_FILE,
+        currentPath: window.location.pathname,
+        basePath: basePath
+      });
       throw err;
     } finally {
       levelsLoading = false;
