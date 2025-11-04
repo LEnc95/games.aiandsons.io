@@ -90,13 +90,15 @@
     </div>
   </div>
 
-  <script type="module">
-    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
-    import { maybeUnlock } from '../src/prog/achievements.js';
-    window.addCoins = addCoinsFn;
-    window.maybeUnlock = maybeUnlock;
-    rememberRecent('snake');
-  </script>
+    <script type="module">
+      import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+      import { maybeUnlock } from '../src/prog/achievements.js';
+      import { snakeSkinStyle } from '../src/prog/cosmetics.js';
+      window.addCoins = addCoinsFn;
+      window.maybeUnlock = maybeUnlock;
+      window.snakeSkinStyle = snakeSkinStyle;
+      rememberRecent('snake');
+    </script>
   <script>
     // --- Config ---
     // URL Parameters: ?difficulty=1|2|3&speed=0.5-2.0&seed=<number>
@@ -473,8 +475,61 @@
       if (e.target === canvas) e.preventDefault();
     }, { passive: false });
 
-    // --- Render ---
-    function draw() {
+      const DEFAULT_SNAKE_HEX = "#4ad";
+
+      function parseHexColor(hex) {
+        if (typeof hex !== "string") return null;
+        let str = hex.trim();
+        if (str.startsWith("#")) str = str.slice(1);
+        if (str.length === 3) {
+          const r = str[0];
+          const g = str[1];
+          const b = str[2];
+          str = `${r}${r}${g}${g}${b}${b}`;
+        }
+        if (str.length !== 6 || /[^0-9a-f]/i.test(str)) return null;
+        const num = parseInt(str, 16);
+        return {
+          r: (num >> 16) & 255,
+          g: (num >> 8) & 255,
+          b: num & 255
+        };
+      }
+
+      function rgbToCss({ r, g, b }) {
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      function scaleRgb(rgb, factor) {
+        const clampComponent = (value) => Math.max(0, Math.min(255, Math.round(value)));
+        return {
+          r: clampComponent(rgb.r * factor),
+          g: clampComponent(rgb.g * factor),
+          b: clampComponent(rgb.b * factor)
+        };
+      }
+
+      function getSnakePaint() {
+        const fallback = parseHexColor(DEFAULT_SNAKE_HEX);
+        if (typeof snakeSkinStyle !== "function") {
+          return { hex: DEFAULT_SNAKE_HEX, rgb: fallback };
+        }
+        const raw = snakeSkinStyle();
+        if (typeof raw !== "string" || raw.trim() === "") {
+          return { hex: DEFAULT_SNAKE_HEX, rgb: fallback };
+        }
+        const named = {
+          neon: "#00ff88",
+          default: DEFAULT_SNAKE_HEX
+        };
+        const normalized = raw.trim().toLowerCase();
+        const resolved = raw.trim().startsWith("#") ? raw : (named[normalized] ?? raw);
+        const parsed = parseHexColor(resolved) || fallback;
+        return { hex: resolved, rgb: parsed };
+      }
+
+      // --- Render ---
+      function draw() {
       const rect = canvas.getBoundingClientRect();
       const scale = rect.width / canvas.width;
       
@@ -507,25 +562,40 @@
       );
       ctx.fill();
 
-      // Draw snake
-      state.snake.forEach((segment, index) => {
-        const x = segment.x * cfg.cellSize;
-        const y = segment.y * cfg.cellSize;
-        const size = cfg.cellSize - 2;
-        
-        // Head is brighter
-        if (index === 0) {
-          ctx.fillStyle = "#4ad";
-        } else {
-          const brightness = 1 - (index / state.snake.length) * 0.3;
-          const r = Math.floor(74 * brightness);
-          const g = Math.floor(173 * brightness);
-          const b = Math.floor(221 * brightness);
-          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        // Draw snake
+        const { hex: snakeHex, rgb: baseRgb } = getSnakePaint();
+        const headRgb = scaleRgb(baseRgb, 1.15);
+        const bodyLength = Math.max(state.snake.length, 1);
+        const glowHex = typeof snakeHex === "string" ? snakeHex.trim().toLowerCase() : DEFAULT_SNAKE_HEX;
+
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = "transparent";
+        const useGlow = glowHex === "#00ff88";
+        if (useGlow) {
+          ctx.save();
+          ctx.shadowColor = snakeHex;
+          ctx.shadowBlur = 16;
         }
-        
-        ctx.fillRect(x + 1, y + 1, size, size);
-      });
+
+        state.snake.forEach((segment, index) => {
+          const x = segment.x * cfg.cellSize;
+          const y = segment.y * cfg.cellSize;
+          const size = cfg.cellSize - 2;
+          
+          // Head is brighter
+          if (index === 0) {
+            ctx.fillStyle = rgbToCss(headRgb);
+          } else {
+            const brightness = 1 - (index / bodyLength) * 0.3;
+            ctx.fillStyle = rgbToCss(scaleRgb(baseRgb, Math.max(0.4, brightness)));
+          }
+          
+          ctx.fillRect(x + 1, y + 1, size, size);
+        });
+
+        if (useGlow) {
+          ctx.restore();
+        }
 
       // Game over overlay
       if (gameOver) {
