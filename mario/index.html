@@ -97,10 +97,18 @@
     // ===== Level Data (32px tiles) =====
     const TILE = 32;
     // Get the correct path to levels.json relative to current page
-    const currentPath = window.location.pathname || '/';
-    const lastSlash = currentPath.lastIndexOf('/');
-    const basePath = lastSlash >= 0 ? currentPath.substring(0, lastSlash + 1) : '/';
-    const LEVEL_FILE = basePath + 'levels.json';
+    // Try multiple path options to handle different deployment scenarios
+    function getLevelsPath() {
+      const currentPath = window.location.pathname || '';
+      // If we're at /mario/ or /mario/index.html, use relative path
+      if (currentPath.includes('/mario')) {
+        const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+        return basePath + 'levels.json';
+      }
+      // Fallback to relative path
+      return './levels.json';
+    }
+    const LEVEL_FILE = getLevelsPath();
     let LEVELS = [];
     let levelsLoaded = false;
     let levelsLoading = false;
@@ -212,39 +220,67 @@
     if(levelsLoaded && !force) return;
     levelsLoading = true;
     setStartButton('Loading...', true);
-    try {
-      const res = await fetch(LEVEL_FILE, { cache:'no-store' });
-      if(!res.ok) {
-        throw new Error(`Failed to load levels: HTTP ${res.status} ${res.statusText}`);
+    let lastError = null;
+    
+    // Try multiple paths in order
+    const pathsToTry = [
+      LEVEL_FILE,
+      './levels.json',
+      'levels.json',
+      '/mario/levels.json'
+    ].filter((v, i, a) => a.indexOf(v) === i); // Remove duplicates
+    
+    for(const path of pathsToTry) {
+      try {
+        console.log(`[Mario] Trying to load from: ${path}`);
+        const res = await fetch(path, { cache:'no-store' });
+        
+        if(!res.ok) {
+          lastError = new Error(`HTTP ${res.status} ${res.statusText} from ${path}`);
+          continue; // Try next path
+        }
+        
+        const data = await res.json();
+        if(!data || typeof data !== 'object') {
+          lastError = new Error('Invalid JSON format in levels.json');
+          continue;
+        }
+        
+        const parsed = Array.isArray(data.levels) ? data.levels.filter(isValidLevel) : [];
+        if(!parsed.length) {
+          lastError = new Error('No valid levels found in levels.json');
+          continue;
+        }
+        
+        // Success!
+        LEVELS = parsed;
+        levelsLoaded = true;
+        elLevel.textContent = LEVELS[0]?.name || 'World 1-1';
+        setStartButton('Start', false);
+        console.log(`[Mario] Successfully loaded ${parsed.length} levels from ${path}`);
+        levelsLoading = false;
+        return;
+        
+      } catch (err) {
+        lastError = err;
+        console.warn(`[Mario] Failed to load from ${path}:`, err.message);
+        continue; // Try next path
       }
-      const data = await res.json();
-      if(!data || typeof data !== 'object') {
-        throw new Error('Invalid JSON format in levels.json');
-      }
-      const parsed = Array.isArray(data.levels) ? data.levels.filter(isValidLevel) : [];
-      if(!parsed.length) {
-        throw new Error('No valid levels found in levels.json');
-      }
-      LEVELS = parsed;
-      levelsLoaded = true;
-      elLevel.textContent = LEVELS[0]?.name || 'World 1-1';
-      setStartButton('Start', false);
-    } catch (err) {
-      console.error('[Mario] Level loading error:', err);
-      levelsLoaded = false;
-      setStartButton('Retry', false);
-      // Show error in console for debugging
-      console.error('[Mario] Full error details:', {
-        message: err.message,
-        stack: err.stack,
-        url: LEVEL_FILE,
-        currentPath: window.location.pathname,
-        basePath: basePath
-      });
-      throw err;
-    } finally {
-      levelsLoading = false;
     }
+    
+    // All paths failed
+    console.error('[Mario] Failed to load levels from all attempted paths');
+    console.error('[Mario] Full error details:', {
+      message: lastError?.message,
+      stack: lastError?.stack,
+      attemptedPaths: pathsToTry,
+      currentPath: window.location.pathname,
+      href: window.location.href
+    });
+    levelsLoaded = false;
+    setStartButton('Retry', false);
+    levelsLoading = false;
+    throw lastError || new Error('Failed to load levels.json');
   }
 
   // ===== Entities =====
