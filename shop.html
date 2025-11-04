@@ -15,20 +15,25 @@
     .topbar h1 { margin:0; font-size:clamp(20px,3vw,28px); }
     .coin-display { display:flex; align-items:center; gap:6px; padding:8px 14px; background:rgba(90,173,221,0.15); border:1px solid rgba(90,173,221,0.3); border-radius:12px; font-weight:600; font-size:14px; }
     .back-link { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; transition:all 0.2s; }
-    .back-link:hover { background:rgba(255,255,255,0.12); }
-    
-    .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:32px; }
-    .shop-item { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:16px; }
-    .shop-item.owned { border-color:#5ad; background:rgba(90,173,221,0.1); }
-    .shop-item-header { display:flex; align-items:center; justify-content:space-between; }
-    .shop-item-title { font-size:20px; font-weight:600; margin:0; }
-    .shop-item-price { padding:6px 12px; background:rgba(90,173,221,0.2); border-radius:8px; font-weight:600; font-size:14px; }
-    .shop-item-desc { color:var(--muted); font-size:14px; line-height:1.5; margin:0; }
-    .shop-item-preview { padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; text-align:center; min-height:80px; display:flex; align-items:center; justify-content:center; }
-    .shop-item-btn { padding:12px; background:#5ad; border:none; border-radius:8px; color:#0b1020; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.2s; }
-    .shop-item-btn:hover:not(:disabled) { background:#6be; }
-    .shop-item-btn:disabled { opacity:0.5; cursor:not-allowed; }
-    .shop-item-btn.owned { background:rgba(90,173,221,0.3); }
+      .back-link:hover { background:rgba(255,255,255,0.12); }
+      .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:32px; }
+      .shop-item { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:16px; transition:border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+      .shop-item.owned { border-color:#5ad; background:rgba(90,173,221,0.1); }
+      .shop-item.equipped { border-color:#8ad7ff; background:rgba(90,173,221,0.18); box-shadow:0 0 0 2px rgba(90,173,221,0.25); }
+      .shop-item-header { display:flex; align-items:center; justify-content:space-between; }
+      .shop-item-title { font-size:20px; font-weight:600; margin:0; }
+      .shop-item-price { padding:6px 12px; background:rgba(90,173,221,0.2); border-radius:8px; font-weight:600; font-size:14px; transition:background 0.2s, color 0.2s; }
+      .shop-item-price.owned { background:rgba(90,173,221,0.25); color:var(--fg); }
+      .shop-item-price.equipped { background:#5ad; color:#0b1020; }
+      .shop-item-desc { color:var(--muted); font-size:14px; line-height:1.5; margin:0; }
+      .shop-item-preview { padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; text-align:center; min-height:80px; display:flex; align-items:center; justify-content:center; }
+      .shop-item-btn { padding:12px; background:#5ad; border:none; border-radius:8px; color:#0b1020; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+      .shop-item-btn:hover:not(:disabled) { background:#6be; }
+      .shop-item-btn:disabled { opacity:0.5; cursor:not-allowed; }
+      .shop-item-btn.owned { background:rgba(90,173,221,0.25); color:var(--fg); }
+      .shop-item-btn.owned:hover:not(:disabled) { background:rgba(90,173,221,0.4); }
+      .shop-item-btn.equipped { background:#5ad; color:#0b1020; }
+      .shop-item-btn.equipped:hover:not(:disabled) { background:#6be; }
   </style>
 </head>
 <body>
@@ -50,57 +55,146 @@
   <script type="module">
     import { state, save, spendCoins } from './src/core/state.js';
 
-    const items = [
-      { id:'paddle-sky', name:'Sky Paddle', desc:'Blue paddle for Pong', price:10, category:'paddle', preview:'<div style="width:40px;height:120px;background:#6ae0ff;margin:0 auto;border-radius:4px;"></div>' },
-      { id:'snake-neon', name:'Neon Snake', desc:'Bright green snake skin', price:15, category:'snake', preview:'<span style="font-size:32px;color:#00ff88;">🐍</span>' },
-      { id:'mario-blue', name:'Blue Shirt', desc:'Blue shirt for Mario', price:12, category:'marioShirt', preview:'<span style="font-size:32px;">🍄</span><div style="width:20px;height:20px;background:#60a5fa;margin:8px auto;border-radius:4px;"></div>' },
-    ];
+      const DEFAULT_COSMETICS = { paddle: 'default', snake: 'default', marioShirt: 'red' };
 
-    function updateUI() {
-      const coinsEl = document.getElementById('coins');
-      const shopGrid = document.getElementById('shopGrid');
-      
-      coinsEl.textContent = state.coins;
-      
-      shopGrid.innerHTML = '';
-      items.forEach(item => {
-        const owned = state.cosmetics[item.category] === (item.category === 'paddle' ? 'sky' : item.category === 'snake' ? 'neon' : 'blue');
-        const canAfford = state.coins >= item.price;
-        
-        const card = document.createElement('div');
-        card.className = 'shop-item' + (owned ? ' owned' : '');
-        card.innerHTML = `
-          <div class="shop-item-header">
-            <h3 class="shop-item-title">${item.name}</h3>
-            <span class="shop-item-price">${item.price} 🪙</span>
-          </div>
-          <p class="shop-item-desc">${item.desc}</p>
-          <div class="shop-item-preview">${item.preview}</div>
-          <button class="shop-item-btn ${owned ? 'owned' : ''}" 
-                  ${owned ? 'disabled' : !canAfford ? 'disabled' : ''}
-                  onclick="buyItem('${item.id}')">
-            ${owned ? '✓ Owned' : canAfford ? 'Buy' : 'Not enough coins'}
-          </button>
-        `;
-        shopGrid.appendChild(card);
-      });
-    }
+      const items = [
+        { id:'paddle-sky', name:'Sky Paddle', desc:'Blue paddle for Pong', price:10, category:'paddle', value:'sky', preview:'<div style="width:40px;height:120px;background:#6ae0ff;margin:0 auto;border-radius:4px;"></div>' },
+        { id:'snake-neon', name:'Neon Snake', desc:'Bright green snake skin', price:15, category:'snake', value:'neon', preview:'<span style="font-size:32px;color:#00ff88;">🐍</span>' },
+        { id:'mario-blue', name:'Blue Shirt', desc:'Blue shirt for Mario', price:12, category:'marioShirt', value:'blue', preview:'<span style="font-size:32px;">🍄</span><div style="width:20px;height:20px;background:#60a5fa;margin:8px auto;border-radius:4px;"></div>' },
+      ];
 
-    window.buyItem = (id) => {
-      const item = items.find(i => i.id === id);
-      if (!item) return;
-      
-      if (spendCoins(item.price)) {
-        if (item.category === 'paddle') state.cosmetics.paddle = 'sky';
-        else if (item.category === 'snake') state.cosmetics.snake = 'neon';
-        else if (item.category === 'marioShirt') state.cosmetics.marioShirt = 'blue';
+      const itemById = new Map(items.map(item => [item.id, item]));
+
+      const getOwnedList = (category) => {
+        const fallback = DEFAULT_COSMETICS[category];
+        let list = state.cosmeticsOwned[category];
+        let mutated = false;
+
+        if (!Array.isArray(list)) {
+          list = [];
+          if (typeof fallback === 'string') list.push(fallback);
+          state.cosmeticsOwned[category] = list;
+          mutated = true;
+        } else if (typeof fallback === 'string' && !list.includes(fallback)) {
+          list.unshift(fallback);
+          mutated = true;
+        }
+
+        if (mutated) save();
+        return list;
+      };
+
+      function buyItem(id) {
+        const item = itemById.get(id);
+        if (!item) return;
+
+        const ownedList = getOwnedList(item.category);
+        if (ownedList.includes(item.value)) {
+          if (state.cosmetics[item.category] !== item.value) {
+            state.cosmetics[item.category] = item.value;
+            save();
+          }
+          updateUI();
+          return;
+        }
+
+        if (!spendCoins(item.price)) {
+          updateUI();
+          return;
+        }
+
+        ownedList.push(item.value);
+        state.cosmetics[item.category] = item.value;
         save();
         updateUI();
         alert(`Purchased ${item.name}!`);
       }
-    };
 
-    updateUI();
+      function equipItem(id) {
+        const item = itemById.get(id);
+        if (!item) return;
+
+        const ownedList = getOwnedList(item.category);
+        if (!ownedList.includes(item.value)) return;
+        if (state.cosmetics[item.category] === item.value) return;
+
+        state.cosmetics[item.category] = item.value;
+        save();
+        updateUI();
+      }
+
+      function unequipItem(category) {
+        const fallback = DEFAULT_COSMETICS[category];
+        if (typeof fallback !== 'string') return;
+        if (state.cosmetics[category] === fallback) return;
+
+        state.cosmetics[category] = fallback;
+        save();
+        updateUI();
+      }
+
+      function updateUI() {
+        const coinsEl = document.getElementById('coins');
+        const shopGrid = document.getElementById('shopGrid');
+
+        coinsEl.textContent = state.coins;
+
+        shopGrid.innerHTML = '';
+        items.forEach(item => {
+          const ownedList = getOwnedList(item.category);
+          const owned = ownedList.includes(item.value);
+          const equipped = state.cosmetics[item.category] === item.value;
+          const canAfford = state.coins >= item.price;
+
+          const card = document.createElement('div');
+          card.className = 'shop-item';
+          if (owned) card.classList.add('owned');
+          if (equipped) card.classList.add('equipped');
+
+          card.innerHTML = `
+            <div class="shop-item-header">
+              <h3 class="shop-item-title">${item.name}</h3>
+              <span class="shop-item-price"></span>
+            </div>
+            <p class="shop-item-desc">${item.desc}</p>
+            <div class="shop-item-preview">${item.preview}</div>
+            <button class="shop-item-btn" type="button"></button>
+          `;
+
+          const badge = card.querySelector('.shop-item-price');
+          const button = card.querySelector('.shop-item-btn');
+
+          if (equipped) {
+            badge.textContent = 'Equipped';
+            badge.classList.add('equipped');
+            button.textContent = 'Unequip';
+            button.classList.add('equipped');
+            button.addEventListener('click', () => unequipItem(item.category));
+          } else if (owned) {
+            badge.textContent = 'Owned';
+            badge.classList.add('owned');
+            button.textContent = 'Equip';
+            button.classList.add('owned');
+            button.addEventListener('click', () => equipItem(item.id));
+          } else {
+            badge.textContent = `${item.price} 🪙`;
+            button.textContent = canAfford ? 'Buy' : 'Not enough coins';
+            if (!canAfford) {
+              button.disabled = true;
+            } else {
+              button.addEventListener('click', () => buyItem(item.id));
+            }
+          }
+
+          shopGrid.appendChild(card);
+        });
+      }
+
+      window.buyItem = buyItem;
+      window.equipItem = equipItem;
+      window.unequipItem = unequipItem;
+
+      updateUI();
   </script>
 </body>
 </html>
