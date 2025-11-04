@@ -42,6 +42,8 @@ export const state = {
   profile: get('profile', { name: '', firstRun: true }),
   coins: get('coins', 0),
   badges: new Set(get('badges', [])),
+  cosmetics: get('cosmetics', { paddle: 'default', snake: 'default', marioShirt: 'red' }),
+  inventory: new Set(get('inventory', [])),
   cosmetics,
   cosmeticsOwned,
   recent: get('recent', []), // array of slugs
@@ -52,6 +54,7 @@ export const save = () => {
   set('coins', state.coins);
   set('badges', [...state.badges]);
   set('cosmetics', state.cosmetics);
+  set('inventory', [...state.inventory]);
   set('cosmeticsOwned', state.cosmeticsOwned);
   set('recent', state.recent.slice(0, 6));
 };
