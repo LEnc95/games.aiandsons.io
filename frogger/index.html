@@ -202,8 +202,61 @@
 
       for (const lane of lanes) {
         for (const obs of lane.obstacles) {
-          ctx.fillStyle = lane.color;
-          ctx.fillRect(obs.x * CELL + 2, lane.row * CELL + 6, lane.width * CELL - 4, CELL - 12);
+          if (lane.log) {
+            // Draw lily pads — one circular pad per grid column of the obstacle
+            for (let i = 0; i < lane.width; i++) {
+              const cx = (obs.x + i + 0.5) * CELL;
+              const cy = (lane.row + 0.5) * CELL;
+              const r = CELL * 0.38;
+              // Main pad
+              ctx.fillStyle = '#22c55e';
+              ctx.beginPath();
+              ctx.arc(cx, cy, r, 0, Math.PI * 2);
+              ctx.fill();
+              // Classic lily-pad notch (pie-slice cut toward right)
+              ctx.fillStyle = '#0b3a5c';
+              ctx.beginPath();
+              ctx.moveTo(cx, cy);
+              ctx.arc(cx, cy, r + 1, -0.22, 0.22);
+              ctx.closePath();
+              ctx.fill();
+              // Veins radiating from center
+              ctx.strokeStyle = '#15803d';
+              ctx.lineWidth = 1.5;
+              const angles = [Math.PI * 0.5, Math.PI * 0.83, Math.PI * 1.17, Math.PI * 1.5, Math.PI * 1.83];
+              for (const a of angles) {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(a) * (r - 2), cy + Math.sin(a) * (r - 2));
+                ctx.stroke();
+              }
+              // Tiny flower dot
+              ctx.fillStyle = '#fde68a';
+              ctx.beginPath();
+              ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            // Draw cars — body + windshield + wheels
+            const bx = obs.x * CELL + 3;
+            const by = lane.row * CELL + 10;
+            const bw = lane.width * CELL - 6;
+            const bh = CELL - 20;
+            // Car body
+            ctx.fillStyle = lane.color;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, bw, bh, 5);
+            ctx.fill();
+            // Windshield / windows
+            ctx.fillStyle = 'rgba(200,235,255,0.85)';
+            ctx.fillRect(bx + bw * 0.2, by + 4, bw * 0.6, bh * 0.4);
+            // Wheels (dark rectangles at the four corners)
+            const wr = 5;
+            const wh = 6;
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(bx + 2, by + bh - wh + 2, wr * 2, wh);
+            ctx.fillRect(bx + bw - 2 - wr * 2, by + bh - wh + 2, wr * 2, wh);
+          }
         }
       }
 
