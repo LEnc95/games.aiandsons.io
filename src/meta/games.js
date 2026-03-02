@@ -10,6 +10,7 @@ export const GAMES = [
   { slug:'flappy',      name:'Flappy Bird',  emoji:'🐦', scoreHint:'distance',  url:'/flappy' },
   { slug:'dino',        name:'Dino Run',     emoji:'🦖', scoreHint:'distance',  url:'/dino' },
   { slug:'spaceinvaders', name:'Space Invaders', emoji:'👾', scoreHint:'waves', url:'/spaceinvaders' },
+  { slug:'frogger',     name:'Frogger',      emoji:'🐸', scoreHint:'crossings', url:'/frogger' },
   { slug:'micro-mario', name:'Micro Mario',  emoji:'🍄', scoreHint:'coins',     url:'/mario' },
 ];
 

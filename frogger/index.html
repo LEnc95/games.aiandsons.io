@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Frogger — Arcade Crossing</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; padding:0; height:100%; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    body { display:flex; align-items:center; justify-content:center; min-height:100dvh; padding:16px; }
+    .wrap { width:min(94vw, 760px); }
+    canvas { width:100%; background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:14px; display:block; }
+    .hud { display:flex; justify-content:space-between; margin:12px 4px; color:var(--muted); font-weight:600; flex-wrap:wrap; gap:8px; }
+    .controls { display:grid; grid-template-columns:repeat(3, 56px); gap:8px; justify-content:center; margin-top:12px; }
+    .ctrl { height:56px; border-radius:10px; border:2px solid #3a4a6f; background:#2a3a5f; color:#fff; font-size:24px; font-weight:700; }
+    .ctrl:active { transform:scale(0.96); }
+    .up { grid-column:2; }
+    .left { grid-column:1; grid-row:2; }
+    .down { grid-column:2; grid-row:2; }
+    .right { grid-column:3; grid-row:2; }
+    .back-home {
+      position: fixed; top: calc(env(safe-area-inset-top, 12px)); left: calc(env(safe-area-inset-left, 12px)); z-index: 9999;
+      display:inline-flex; align-items:center; padding:8px 12px; border-radius:8px;
+      background:rgba(0,0,0,0.6); color:#fff; text-decoration:none; font-size:14px; font-weight:600;
+    }
+    @media (min-width: 900px) { .controls { display:none; } }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <div class="wrap">
+    <div class="hud">
+      <div>Score: <span id="score">0</span></div>
+      <div>Best: <span id="best">0</span></div>
+      <div>Lives: <span id="lives">3</span></div>
+    </div>
+    <canvas id="game" width="720" height="720"></canvas>
+    <div class="hud" id="hint">Arrow keys or buttons to move. Reach the top to score!</div>
+    <div class="controls">
+      <button class="ctrl up" data-dir="up">↑</button>
+      <button class="ctrl left" data-dir="left">←</button>
+      <button class="ctrl down" data-dir="down">↓</button>
+      <button class="ctrl right" data-dir="right">→</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+    rememberRecent('frogger');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const livesEl = document.getElementById('lives');
+    const hintEl = document.getElementById('hint');
+
+    const COLS = 12;
+    const ROWS = 12;
+    const CELL = canvas.width / COLS;
+    const STORAGE_KEY = 'hs:frogger';
+
+    let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
+    let score = 0;
+    let lives = 3;
+    let gameOver = false;
+
+    const frog = { x: Math.floor(COLS / 2), y: ROWS - 1 };
+    const lanes = [
+      { row: 9, speed: 1.4, dir: 1, width: 2, color: '#ef4444', gap: 3 },
+      { row: 8, speed: 2.0, dir: -1, width: 1, color: '#f97316', gap: 2 },
+      { row: 7, speed: 1.2, dir: 1, width: 3, color: '#f43f5e', gap: 4 },
+      { row: 5, speed: 1.1, dir: -1, width: 3, color: '#14b8a6', gap: 4, log: true },
+      { row: 4, speed: 1.6, dir: 1, width: 2, color: '#22c55e', gap: 3, log: true },
+      { row: 3, speed: 2.1, dir: -1, width: 2, color: '#16a34a', gap: 3, log: true },
+    ];
+
+    for (const lane of lanes) {
+      lane.obstacles = [];
+      let x = Math.random() * 4;
+      while (x < COLS + lane.width) {
+        lane.obstacles.push({ x });
+        x += lane.width + lane.gap;
+      }
+    }
+
+    const resetFrog = () => {
+      frog.x = Math.floor(COLS / 2);
+      frog.y = ROWS - 1;
+    };
+
+    const move = (dx, dy) => {
+      if (gameOver) return;
+      frog.x = Math.max(0, Math.min(COLS - 1, frog.x + dx));
+      frog.y = Math.max(0, Math.min(ROWS - 1, frog.y + dy));
+    };
+
+    const loseLife = () => {
+      lives -= 1;
+      livesEl.textContent = String(lives);
+      if (lives <= 0) {
+        gameOver = true;
+        hintEl.textContent = 'Game over! Press R to restart.';
+        maybeUnlock({ anyPlay: true, frogger: { score } });
+      } else {
+        resetFrog();
+      }
+    };
+
+    const restart = () => {
+      score = 0;
+      lives = 3;
+      gameOver = false;
+      scoreEl.textContent = '0';
+      livesEl.textContent = '3';
+      hintEl.textContent = 'Arrow keys or buttons to move. Reach the top to score!';
+      resetFrog();
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') move(0, -1);
+      else if (e.key === 'ArrowDown') move(0, 1);
+      else if (e.key === 'ArrowLeft') move(-1, 0);
+      else if (e.key === 'ArrowRight') move(1, 0);
+      else if (e.key.toLowerCase() === 'r') restart();
+    });
+
+    document.querySelectorAll('[data-dir]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const d = btn.dataset.dir;
+        if (d === 'up') move(0, -1);
+        if (d === 'down') move(0, 1);
+        if (d === 'left') move(-1, 0);
+        if (d === 'right') move(1, 0);
+      });
+    });
+
+    let lastTime = performance.now();
+    const loop = (t) => {
+      const dt = Math.min(0.033, (t - lastTime) / 1000);
+      lastTime = t;
+
+      for (const lane of lanes) {
+        for (const obs of lane.obstacles) {
+          obs.x += lane.dir * lane.speed * dt;
+          if (lane.dir === 1 && obs.x > COLS + 1) obs.x = -lane.width;
+          if (lane.dir === -1 && obs.x < -lane.width - 1) obs.x = COLS;
+        }
+      }
+
+      if (!gameOver) {
+        if (frog.y <= 1) {
+          score += 1;
+          scoreEl.textContent = String(score);
+          addCoins(2);
+          if (score > best) {
+            best = score;
+            bestEl.textContent = String(best);
+            localStorage.setItem(STORAGE_KEY, String(best));
+          }
+          resetFrog();
+        }
+
+        const inRoad = lanes.filter(l => l.row >= 7).some((lane) => {
+          if (lane.row !== frog.y) return false;
+          return lane.obstacles.some((obs) => frog.x >= obs.x && frog.x < obs.x + lane.width);
+        });
+        if (inRoad) loseLife();
+
+        const riverLanes = lanes.filter(l => l.log);
+        const inRiverRow = riverLanes.find(l => l.row === frog.y);
+        if (inRiverRow) {
+          const onLog = inRiverRow.obstacles.some((obs) => frog.x >= obs.x && frog.x < obs.x + inRiverRow.width);
+          if (!onLog) {
+            loseLife();
+          } else {
+            frog.x = Math.max(0, Math.min(COLS - 1, frog.x + (inRiverRow.dir * inRiverRow.speed * dt)));
+          }
+        }
+      }
+
+      draw();
+      requestAnimationFrame(loop);
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let r = 0; r < ROWS; r++) {
+        let fill = '#1f2937';
+        if (r >= 7 && r <= 9) fill = '#2f1b1b';
+        if (r >= 3 && r <= 5) fill = '#0b3a5c';
+        if (r <= 1) fill = '#1f4d2c';
+        if (r === ROWS - 1) fill = '#3f3f46';
+        ctx.fillStyle = fill;
+        ctx.fillRect(0, r * CELL, canvas.width, CELL);
+      }
+
+      for (const lane of lanes) {
+        for (const obs of lane.obstacles) {
+          ctx.fillStyle = lane.color;
+          ctx.fillRect(obs.x * CELL + 2, lane.row * CELL + 6, lane.width * CELL - 4, CELL - 12);
+        }
+      }
+
+      ctx.fillStyle = '#a3e635';
+      ctx.beginPath();
+      ctx.arc((frog.x + 0.5) * CELL, (frog.y + 0.5) * CELL, CELL * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc((frog.x + 0.38) * CELL, (frog.y + 0.42) * CELL, 3, 0, Math.PI * 2);
+      ctx.arc((frog.x + 0.62) * CELL, (frog.y + 0.42) * CELL, 3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    bestEl.textContent = String(best);
+    resetFrog();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
