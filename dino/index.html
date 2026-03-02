@@ -56,11 +56,12 @@
   </div>
 
   <script type="module">
-    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
     import { maybeUnlock } from '../src/prog/achievements.js';
     window.addCoins = addCoinsFn;
     window.maybeUnlock = maybeUnlock;
     rememberRecent('dino');
+    window.dinoInventory = appState.inventory;
   </script>
   <script>
     const canvas = document.getElementById('game');
@@ -90,12 +91,19 @@
     const state = {
       dino: { x: 120, y: GROUND_Y, w: 44, h: 60, vy: 0, duck:false },
       obs: [],
+      trail: [],
       score: 0,
       mult: 1.0,
       cleared: 0,
       nextSpawn: 0,
       spd: cfg.speed
     };
+
+    const DINO_TRAIL_ITEM_ID = 'dino-trail';
+    const DINO_LIGHTNING_ITEM_ID = 'dino-lightning';
+    const inventory = window.dinoInventory instanceof Set ? window.dinoInventory : new Set();
+    const hasMeteorTrail = inventory.has(DINO_TRAIL_ITEM_ID);
+    const hasLightningTrail = inventory.has(DINO_LIGHTNING_ITEM_ID);
 
     const scoreEl = document.getElementById('score');
     const highEl = document.getElementById('high');
@@ -109,11 +117,34 @@
     function pause(){ if(started&&!over){ paused=!paused; hintEl.textContent = paused?'Paused. Tap RESUME to continue.':''; }}
     function init(){
       state.dino = { x:120, y:GROUND_Y, w:44, h:60, vy:0, duck:false };
-      state.obs=[]; state.score=0; state.mult=1.0; state.cleared=0; state.spd=cfg.speed; state.nextSpawn=0; 
+      state.obs=[]; state.trail=[]; state.score=0; state.mult=1.0; state.cleared=0; state.spd=cfg.speed; state.nextSpawn=0; 
       started=false; paused=false; over=false; updateHUD(); hintEl.textContent='Tap/Click/Space to jump. Hold ↓ to duck.';
     }
 
-    function jump(){ if(!started||paused||over){ if(!started) start(); return; } if(state.dino.y>=GROUND_Y-0.5){ state.dino.vy = cfg.jumpV; state.dino.y -= 1; }}
+    function addTrailBurst(){
+      if(!hasMeteorTrail && !hasLightningTrail) return;
+      const count = hasLightningTrail ? 16 : 10;
+      for(let i=0; i<count; i++){
+        state.trail.push({
+          x: state.dino.x - 2,
+          y: state.dino.y - 20 - Math.random()*18,
+          vx: -120 - Math.random() * (hasLightningTrail ? 200 : 120),
+          vy: (Math.random() - 0.5) * 80,
+          size: hasLightningTrail ? 3 + Math.random() * 5 : 2 + Math.random() * 4,
+          life: hasLightningTrail ? 0.45 + Math.random() * 0.25 : 0.5 + Math.random() * 0.35,
+          maxLife: hasLightningTrail ? 0.7 : 0.85,
+        });
+      }
+    }
+
+    function jump(){
+      if(!started||paused||over){ if(!started) start(); return; }
+      if(state.dino.y>=GROUND_Y-0.5){
+        state.dino.vy = cfg.jumpV;
+        state.dino.y -= 1;
+        addTrailBurst();
+      }
+    }
     function duck(on){ if(!started||paused||over) return; state.dino.duck = on && state.dino.y>=GROUND_Y-0.5; }
 
     function spawnObstacle(){
@@ -147,6 +178,13 @@
         o.x -= state.spd*dt;
         if(o.type==='bird'){ o.flapT += dt*6; }
       }
+      // update jump trail particles
+      for(const p of state.trail){
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+      }
+      state.trail = state.trail.filter(p => p.life > 0);
       // remove passed
       state.obs = state.obs.filter(o=> o.x+o.w> -60);
 
@@ -211,6 +249,24 @@
       }
 
       // dino
+      if(state.trail.length){
+        for(const p of state.trail){
+          const alpha = Math.max(0, p.life / p.maxLife);
+          ctx.globalAlpha = alpha;
+          if(hasLightningTrail){
+            ctx.fillStyle = Math.random() < 0.5 ? '#fde047' : '#ffffff';
+            ctx.fillRect(p.x, p.y, p.size * 1.4, Math.max(2, p.size * 0.5));
+          } else {
+            const gradient = ctx.createLinearGradient(p.x, p.y, p.x + p.size * 4, p.y);
+            gradient.addColorStop(0, '#22d3ee');
+            gradient.addColorStop(1, '#a855f7');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(p.x, p.y, p.size * 4, Math.max(2, p.size * 0.9));
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+
       ctx.fillStyle = '#e7f0ff';
       const w = state.dino.w * (state.dino.duck? cfg.duckScale: 1);
       const h = state.dino.h * (state.dino.duck? cfg.duckScale: 1);
@@ -241,5 +297,4 @@
   </script>
 </body>
 </html>
-
 
