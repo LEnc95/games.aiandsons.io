@@ -166,12 +166,13 @@
 
     function initGame() {
       gs = {
-        skier: { x: W / 2, y: H * 0.25, vx: 0 },
+        skier: { x: W / 2, y: H * 0.65, vx: 0 },
+        trail: [],
         obstacles: [],
         coins: [],
         stars: Array.from({ length: 40 }, () => ({
           x: Math.random() * W,
-          y: Math.random() * H * 0.5,
+          y: Math.random() * H * 0.28,
           r: Math.random() * 1.5 + 0.5,
         })),
         scrollY: 0,
@@ -298,12 +299,12 @@
     function drawBackground(scene, scrollY) {
       const s = SCENES[scene];
 
-      // Sky
-      const grad = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      // Sky — top 30 % of canvas
+      const grad = ctx.createLinearGradient(0, 0, 0, H * 0.30);
       grad.addColorStop(0, s.sky[0]);
       grad.addColorStop(1, s.sky[1]);
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H * 0.45);
+      ctx.fillRect(0, 0, W, H * 0.30);
 
       // Stars (night scene)
       if (scene === 'night') {
@@ -315,44 +316,59 @@
         ctx.globalAlpha = 1;
       }
 
-      // Mountains (parallax, slower)
+      // Mountains (parallax, slower) — scaled to fit smaller sky
       const mOff = (scrollY * 0.12) % W;
       ctx.fillStyle = scene === 'night' ? '#1e3a5f' : scene === 'sunset' ? '#c45432' : '#8ab4cf';
       for (let i = -1; i <= 2; i++) {
         const mx = i * W * 0.9 - mOff;
         ctx.beginPath();
-        ctx.moveTo(mx, H * 0.45);
-        ctx.lineTo(mx + W * 0.18, H * 0.20);
-        ctx.lineTo(mx + W * 0.38, H * 0.32);
-        ctx.lineTo(mx + W * 0.55, H * 0.14);
-        ctx.lineTo(mx + W * 0.72, H * 0.28);
-        ctx.lineTo(mx + W * 0.90, H * 0.45);
+        ctx.moveTo(mx, H * 0.30);
+        ctx.lineTo(mx + W * 0.18, H * 0.12);
+        ctx.lineTo(mx + W * 0.38, H * 0.20);
+        ctx.lineTo(mx + W * 0.55, H * 0.05);
+        ctx.lineTo(mx + W * 0.72, H * 0.16);
+        ctx.lineTo(mx + W * 0.90, H * 0.30);
         ctx.closePath();
         ctx.fill();
 
         // snow caps
         ctx.fillStyle = '#f0f8ff';
         ctx.beginPath();
-        ctx.moveTo(mx + W * 0.55, H * 0.14);
-        ctx.lineTo(mx + W * 0.47, H * 0.22);
-        ctx.lineTo(mx + W * 0.63, H * 0.22);
+        ctx.moveTo(mx + W * 0.55, H * 0.05);
+        ctx.lineTo(mx + W * 0.47, H * 0.13);
+        ctx.lineTo(mx + W * 0.63, H * 0.13);
         ctx.closePath();
         ctx.fill();
         ctx.fillStyle = scene === 'night' ? '#1e3a5f' : scene === 'sunset' ? '#c45432' : '#8ab4cf';
       }
 
-      // Snow slope
+      // Snow slope — fills from horizon to bottom
+      const SNOW_TOP = H * 0.28;
       ctx.fillStyle = s.snowColor;
-      ctx.fillRect(0, H * 0.43, W, H * 0.57);
+      ctx.fillRect(0, SNOW_TOP, W, H - SNOW_TOP);
 
-      // Ski track lines (perspective)
+      // Perspective V-lines radiating from the vanishing point (horizon)
+      const vx = W / 2, vy = SNOW_TOP;
+      ctx.strokeStyle = s.trackLine;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.5;
+      for (let angle = -55; angle <= 55; angle += 10) {
+        const rad = (angle * Math.PI) / 180;
+        ctx.beginPath();
+        ctx.moveTo(vx, vy);
+        ctx.lineTo(vx + Math.sin(rad) * H * 1.5, vy + Math.cos(rad) * H * 1.5);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Horizontal depth lines (perspective cross-hatching)
       ctx.strokeStyle = s.trackLine;
       ctx.lineWidth = 1.5;
       const tOff = scrollY % 60;
-      for (let ty = H * 0.43 + tOff; ty < H; ty += 60) {
-        const frac = (ty - H * 0.43) / (H * 0.57);
-        const lx = W / 2 - 80 - frac * 60;
-        const rx = W / 2 + 80 + frac * 60;
+      for (let ty = SNOW_TOP + tOff; ty < H; ty += 60) {
+        const frac = (ty - SNOW_TOP) / (H - SNOW_TOP);
+        const lx = W / 2 - 70 - frac * 80;
+        const rx = W / 2 + 70 + frac * 80;
         ctx.beginPath(); ctx.moveTo(lx, ty); ctx.lineTo(rx, ty); ctx.stroke();
       }
 
@@ -428,6 +444,12 @@
         }
       }
 
+      // Record ski trail
+      if (gameStarted) {
+        gs.trail.push({ x: gs.skier.x, y: gs.skier.y });
+        if (gs.trail.length > 40) gs.trail.shift();
+      }
+
       updateScoreUI();
     }
 
@@ -445,6 +467,22 @@
       // Coins
       for (const c of gs.coins) {
         if (!c.collected) drawCoin(c.x, c.y);
+      }
+
+      // Ski trail marks
+      if (gs.trail.length > 1) {
+        ctx.save();
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        for (let i = 1; i < gs.trail.length; i++) {
+          const alpha = (i / gs.trail.length) * 0.35;
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = 'rgba(160,200,240,0.9)';
+          ctx.beginPath(); ctx.moveTo(gs.trail[i-1].x - 5, gs.trail[i-1].y); ctx.lineTo(gs.trail[i].x - 5, gs.trail[i].y); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(gs.trail[i-1].x + 5, gs.trail[i-1].y); ctx.lineTo(gs.trail[i].x + 5, gs.trail[i].y); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
       }
 
       // Skier
