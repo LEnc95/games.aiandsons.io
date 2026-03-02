@@ -11,5 +11,6 @@ export const GAMES = [
   { slug:'dino',        name:'Dino Run',     emoji:'🦖', scoreHint:'distance',  url:'/dino' },
   { slug:'spaceinvaders', name:'Space Invaders', emoji:'👾', scoreHint:'waves', url:'/spaceinvaders' },
   { slug:'micro-mario', name:'Micro Mario',  emoji:'🍄', scoreHint:'coins',     url:'/mario' },
+  { slug:'ski',         name:'Retro Downhill Ski', emoji:'⛷️', scoreHint:'distance', url:'/ski' },
 ];
 

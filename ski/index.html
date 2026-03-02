@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Retro Downhill Ski</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(6px,1.5vh,12px); padding:clamp(8px,2vh,16px); padding-top:env(safe-area-inset-top, clamp(8px,2vh,16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px,2vh,16px)); }
+    #canvas-container { position:relative; width:100%; max-width:min(95vw,480px); max-height:min(78vh,720px); aspect-ratio:2/3; }
+    canvas { width:100%; height:100%; display:block; border:2px solid #192544; border-radius:12px; touch-action:none; }
+    .hud { text-align:center; width:100%; max-width:min(95vw,480px); }
+    .score-display { display:flex; justify-content:space-around; margin-bottom:clamp(6px,1vh,10px); font-size:clamp(14px,2.5vw,20px); }
+    .score-item { color:var(--fg); }
+    .score-label { color:var(--muted); font-size:0.7em; margin-right:6px; }
+    .hint { color:#b6c7e6; font-size:clamp(13px,2.5vw,17px); margin-top:clamp(4px,0.8vh,8px); min-height:1.5em; }
+    .buttons { display:flex; gap:clamp(6px,1.5vw,10px); justify-content:center; flex-wrap:wrap; margin-top:clamp(6px,1vh,10px); }
+    .btn { padding:clamp(10px,2vw,16px) clamp(16px,3.5vw,24px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(13px,2.5vw,17px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(70px,14vw,110px); min-height:44px; transition:all 0.2s; }
+    .btn:active:not(:disabled) { background:#3a4a7f; transform:scale(0.95); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn.primary { background:#5ad; border-color:#6be; }
+    .btn.primary:active { background:#4bc; }
+    .btn.opt { padding:clamp(8px,1.5vw,12px) clamp(12px,2.5vw,18px); min-width:clamp(60px,11vw,90px); font-size:clamp(11px,1.8vw,13px); }
+    .btn.opt.active { background:#5ad; border-color:#6be; }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <style>
+    .back-home {
+      position:fixed; top:calc(env(safe-area-inset-top, 12px)); left:calc(env(safe-area-inset-left, 12px)); z-index:9999;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 12px; border-radius:8px;
+      background:rgba(0,0,0,0.6); color:#fff; text-decoration:none;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      font-size:14px; line-height:1; font-weight:600;
+      backdrop-filter:saturate(150%) blur(6px);
+      box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    }
+    .back-home:hover { background:rgba(0,0,0,0.75); }
+    .back-home:focus { outline:2px solid #fff; outline-offset:2px; }
+  </style>
+
+  <div class="wrap">
+    <div id="canvas-container">
+      <canvas id="game" width="320" height="480"></canvas>
+    </div>
+    <div class="hud">
+      <div class="score-display">
+        <div class="score-item"><span class="score-label">Score:</span><span id="score">0</span></div>
+        <div class="score-item"><span class="score-label">Best:</span><span id="high-score">0</span></div>
+        <div class="score-item"><span class="score-label">Speed:</span><span id="speed-display">1.0x</span></div>
+      </div>
+      <div class="hint" id="hint">Tap/Arrow keys to steer. Avoid trees &amp; rocks!</div>
+      <div class="buttons">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+      </div>
+      <div class="buttons" id="skier-btns">
+        <button class="btn opt" data-skier="classic">🎿 Classic</button>
+        <button class="btn opt" data-skier="blue">❄️ Ice</button>
+        <button class="btn opt" data-skier="gold">⭐ Gold</button>
+      </div>
+      <div class="buttons" id="scene-btns">
+        <button class="btn opt" data-scene="alpine">🏔️ Alpine</button>
+        <button class="btn opt" data-scene="night">🌙 Night</button>
+        <button class="btn opt" data-scene="sunset">🌅 Sunset</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
+    window.addCoins = addCoinsFn;
+    rememberRecent('ski');
+
+    // Check which skier skins/scenes are unlocked from inventory
+    window.skiInventory = appState.inventory;
+  </script>
+
+  <script>
+    // ── Config ──────────────────────────────────────────────────────────────
+    const W = 320, H = 480;
+    const BASE_SPEED = 120;      // px/s scroll speed at start
+    const SPEED_RAMP = 0.06;     // speed multiplier increase per second
+    const OBSTACLE_INTERVAL_BASE = 1.1; // seconds between obstacle spawns at speed 1x
+    const COIN_INTERVAL = 1.8;
+    const SKIER_W = 22, SKIER_H = 28;
+    const STEER_SPEED = 190;     // px/s lateral movement
+    const TREE_SPAWN_PROBABILITY = 0.55; // chance an obstacle is a tree vs rock
+    const SCORE_PER_COIN = 20;   // score points needed per awarded coin
+
+    // Skier skins
+    const SKIERS = {
+      classic: { body: '#e74c3c', suit: '#c0392b', pants: '#2c3e50', label: 'Classic' },
+      blue:    { body: '#3498db', suit: '#2980b9', pants: '#1a252f', label: 'Ice' },
+      gold:    { body: '#f1c40f', suit: '#d4ac0d', pants: '#7d6608', label: 'Gold' },
+    };
+
+    // Scene themes
+    const SCENES = {
+      alpine:  {
+        sky: ['#c8e6f5', '#a8d5ed'],
+        snowColor: '#f0f8ff',
+        treeFill: '#2d6a4f',
+        treeDark: '#1b4332',
+        rockFill: '#7f8c8d',
+        trackLine: 'rgba(150,180,220,0.5)',
+        label: 'Alpine',
+      },
+      night:  {
+        sky: ['#0d1b2a', '#1b2838'],
+        snowColor: '#c8d8e8',
+        treeFill: '#1a4731',
+        treeDark: '#0d2b1d',
+        rockFill: '#5a6a7a',
+        trackLine: 'rgba(80,120,180,0.4)',
+        label: 'Night',
+      },
+      sunset: {
+        sky: ['#f4a261', '#e76f51'],
+        snowColor: '#ffe8d6',
+        treeFill: '#2d4a2d',
+        treeDark: '#1a2e1a',
+        rockFill: '#8b6b5c',
+        trackLine: 'rgba(200,140,100,0.5)',
+        label: 'Sunset',
+      },
+    };
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let lastT = 0;
+    let paused = false;
+    let gameOver = false;
+    let gameStarted = false;
+    let currentSkier = 'classic';
+    let currentScene = 'alpine';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    function resizeCanvas() {
+      const r = container.getBoundingClientRect();
+      const ca = W / H;
+      const ra = r.width / r.height;
+      if (ra > ca) {
+        canvas.style.width = 'auto';
+        canvas.style.height = '100%';
+      } else {
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
+      }
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+    // Game objects
+    let gs; // game state object
+
+    function initGame() {
+      gs = {
+        skier: { x: W / 2, y: H * 0.25, vx: 0 },
+        obstacles: [],
+        coins: [],
+        stars: Array.from({ length: 40 }, () => ({
+          x: Math.random() * W,
+          y: Math.random() * H * 0.5,
+          r: Math.random() * 1.5 + 0.5,
+        })),
+        scrollY: 0,
+        score: 0,
+        dist: 0,
+        speedMult: 1,
+        obstacleCd: OBSTACLE_INTERVAL_BASE,
+        coinCd: COIN_INTERVAL,
+        coinsEarned: 0,
+      };
+      gameOver = false;
+      gameStarted = false;
+      paused = false;
+      updateScoreUI();
+      updateStartBtn();
+      setHint('Tap left/right sides or use arrow keys to steer.');
+    }
+
+    // ── Obstacle / Coin spawning ──────────────────────────────────────────────
+    function spawnObstacle() {
+      const type = Math.random() < TREE_SPAWN_PROBABILITY ? 'tree' : 'rock';
+      const x = 24 + Math.random() * (W - 48);
+      gs.obstacles.push({ type, x, y: -30 });
+    }
+
+    function spawnCoin() {
+      const x = 20 + Math.random() * (W - 40);
+      gs.coins.push({ x, y: -16, collected: false });
+    }
+
+    // ── Drawing helpers ──────────────────────────────────────────────────────
+    function drawTree(x, y, scene) {
+      const s = SCENES[scene];
+      // trunk
+      ctx.fillStyle = '#5d3a1a';
+      ctx.fillRect(x - 3, y + 10, 6, 14);
+      // layers
+      ctx.fillStyle = s.treeFill;
+      ctx.beginPath(); ctx.moveTo(x, y - 22); ctx.lineTo(x - 14, y + 14); ctx.lineTo(x + 14, y + 14); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = s.treeDark;
+      ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x - 10, y + 6); ctx.lineTo(x + 10, y + 6); ctx.closePath(); ctx.fill();
+      // snow on top
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.beginPath(); ctx.moveTo(x, y - 22); ctx.lineTo(x - 5, y - 10); ctx.lineTo(x + 5, y - 10); ctx.closePath(); ctx.fill();
+    }
+
+    function drawRock(x, y, scene) {
+      const s = SCENES[scene];
+      ctx.fillStyle = s.rockFill;
+      ctx.beginPath();
+      ctx.moveTo(x - 14, y + 10);
+      ctx.lineTo(x - 10, y - 8);
+      ctx.lineTo(x + 2, y - 12);
+      ctx.lineTo(x + 14, y - 2);
+      ctx.lineTo(x + 12, y + 10);
+      ctx.closePath();
+      ctx.fill();
+      // snow cap
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(x - 6, y - 4);
+      ctx.lineTo(x + 2, y - 12);
+      ctx.lineTo(x + 10, y - 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawSkier(x, y, skin, vx) {
+      const sk = SKIERS[skin];
+      const lean = Math.max(-0.35, Math.min(0.35, vx / STEER_SPEED * 0.35));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(lean);
+
+      // skis
+      ctx.strokeStyle = '#2c3e50';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-10, 12); ctx.lineTo(12, 14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-8, 10); ctx.lineTo(14, 12); ctx.stroke();
+
+      // legs / pants
+      ctx.fillStyle = sk.pants;
+      ctx.fillRect(-6, 4, 5, 8);
+      ctx.fillRect(2, 4, 5, 8);
+
+      // body / jacket
+      ctx.fillStyle = sk.suit;
+      ctx.fillRect(-7, -6, 14, 12);
+
+      // head
+      ctx.fillStyle = sk.body;
+      ctx.beginPath();
+      ctx.arc(0, -11, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // goggles
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(-3, -11, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.ellipse(-3, -11, 1.5, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+
+      // poles
+      ctx.strokeStyle = '#aaa';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-14, 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(14, 10); ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawCoin(x, y) {
+      ctx.fillStyle = '#f1c40f';
+      ctx.strokeStyle = '#d4ac0d';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#f9e04b';
+      ctx.font = 'bold 8px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$', x, y);
+    }
+
+    function drawBackground(scene, scrollY) {
+      const s = SCENES[scene];
+
+      // Sky
+      const grad = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      grad.addColorStop(0, s.sky[0]);
+      grad.addColorStop(1, s.sky[1]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H * 0.45);
+
+      // Stars (night scene)
+      if (scene === 'night') {
+        ctx.fillStyle = '#ffffff';
+        for (const star of gs.stars) {
+          ctx.globalAlpha = 0.7 + 0.3 * Math.sin(Date.now() / 800 + star.x);
+          ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Mountains (parallax, slower)
+      const mOff = (scrollY * 0.12) % W;
+      ctx.fillStyle = scene === 'night' ? '#1e3a5f' : scene === 'sunset' ? '#c45432' : '#8ab4cf';
+      for (let i = -1; i <= 2; i++) {
+        const mx = i * W * 0.9 - mOff;
+        ctx.beginPath();
+        ctx.moveTo(mx, H * 0.45);
+        ctx.lineTo(mx + W * 0.18, H * 0.20);
+        ctx.lineTo(mx + W * 0.38, H * 0.32);
+        ctx.lineTo(mx + W * 0.55, H * 0.14);
+        ctx.lineTo(mx + W * 0.72, H * 0.28);
+        ctx.lineTo(mx + W * 0.90, H * 0.45);
+        ctx.closePath();
+        ctx.fill();
+
+        // snow caps
+        ctx.fillStyle = '#f0f8ff';
+        ctx.beginPath();
+        ctx.moveTo(mx + W * 0.55, H * 0.14);
+        ctx.lineTo(mx + W * 0.47, H * 0.22);
+        ctx.lineTo(mx + W * 0.63, H * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = scene === 'night' ? '#1e3a5f' : scene === 'sunset' ? '#c45432' : '#8ab4cf';
+      }
+
+      // Snow slope
+      ctx.fillStyle = s.snowColor;
+      ctx.fillRect(0, H * 0.43, W, H * 0.57);
+
+      // Ski track lines (perspective)
+      ctx.strokeStyle = s.trackLine;
+      ctx.lineWidth = 1.5;
+      const tOff = scrollY % 60;
+      for (let ty = H * 0.43 + tOff; ty < H; ty += 60) {
+        const frac = (ty - H * 0.43) / (H * 0.57);
+        const lx = W / 2 - 80 - frac * 60;
+        const rx = W / 2 + 80 + frac * 60;
+        ctx.beginPath(); ctx.moveTo(lx, ty); ctx.lineTo(rx, ty); ctx.stroke();
+      }
+
+      // Left/right tree borders
+      ctx.fillStyle = s.treeFill;
+      for (let i = 0; i < 3; i++) {
+        const ty = ((scrollY * 0.7 + i * 160) % (H + 60)) - 30;
+        drawTree(14, ty, scene);
+        drawTree(W - 14, ty, scene);
+      }
+    }
+
+    // ── Update ───────────────────────────────────────────────────────────────
+    function update(dt) {
+      if (!gameStarted || paused || gameOver) return;
+
+      gs.dist += dt;
+      gs.speedMult = 1 + gs.dist * SPEED_RAMP;
+      const speed = BASE_SPEED * gs.speedMult;
+
+      gs.scrollY += speed * dt;
+      gs.score = Math.floor(gs.dist * 10);
+
+      // Steer
+      gs.skier.x += gs.skier.vx * dt;
+      gs.skier.x = Math.max(SKIER_W / 2 + 4, Math.min(W - SKIER_W / 2 - 4, gs.skier.x));
+
+      // Spawn obstacles
+      gs.obstacleCd -= dt;
+      if (gs.obstacleCd <= 0) {
+        spawnObstacle();
+        gs.obstacleCd = (OBSTACLE_INTERVAL_BASE / gs.speedMult) * (0.8 + Math.random() * 0.4);
+      }
+
+      // Spawn coins
+      gs.coinCd -= dt;
+      if (gs.coinCd <= 0) {
+        spawnCoin();
+        gs.coinCd = COIN_INTERVAL * (0.7 + Math.random() * 0.6);
+      }
+
+      // Move obstacles
+      gs.obstacles = gs.obstacles.filter(o => {
+        o.y += speed * dt;
+        return o.y < H + 40;
+      });
+
+      // Move coins
+      gs.coins = gs.coins.filter(c => {
+        if (c.collected) return false;
+        c.y += speed * dt;
+        // Coin collection
+        const dx = gs.skier.x - c.x;
+        const dy = gs.skier.y - c.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 18) {
+          c.collected = true;
+          gs.coinsEarned++;
+          gs.score += 5;
+          return false;
+        }
+        return c.y < H + 20;
+      });
+
+      // Collision with obstacles
+      for (const o of gs.obstacles) {
+        const hw = o.type === 'tree' ? 12 : 13;
+        const hh = o.type === 'tree' ? 16 : 12;
+        const dx = Math.abs(gs.skier.x - o.x);
+        const dy = Math.abs(gs.skier.y - o.y);
+        if (dx < hw + 8 && dy < hh + 10) {
+          endGame();
+          return;
+        }
+      }
+
+      updateScoreUI();
+    }
+
+    // ── Draw ─────────────────────────────────────────────────────────────────
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      drawBackground(currentScene, gs.scrollY);
+
+      // Obstacles
+      for (const o of gs.obstacles) {
+        if (o.type === 'tree') drawTree(o.x, o.y, currentScene);
+        else drawRock(o.x, o.y, currentScene);
+      }
+
+      // Coins
+      for (const c of gs.coins) {
+        if (!c.collected) drawCoin(c.x, c.y);
+      }
+
+      // Skier
+      drawSkier(gs.skier.x, gs.skier.y, currentSkier, gs.skier.vx);
+
+      // Overlays
+      if (!gameStarted && !gameOver) {
+        drawOverlay('Press START to ski!');
+      }
+      if (gameOver) {
+        drawOverlay(`Game Over! Score: ${gs.score}`);
+      }
+      if (paused && gameStarted) {
+        drawOverlay('Paused');
+      }
+    }
+
+    function drawOverlay(msg) {
+      ctx.save();
+      ctx.globalAlpha = 0.82;
+      ctx.fillStyle = '#0b1020';
+      const tw = Math.min(W - 40, 260);
+      ctx.fillRect((W - tw) / 2, H / 2 - 30, tw, 60);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#2a3a5f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect((W - tw) / 2, H / 2 - 30, tw, 60);
+      ctx.fillStyle = '#e7f0ff';
+      ctx.font = '16px system-ui,Segoe UI,Roboto,Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(msg, W / 2, H / 2);
+      ctx.restore();
+    }
+
+    // ── Game flow ─────────────────────────────────────────────────────────────
+    function startGame() {
+      if (gameOver) { initGame(); return; }
+      if (!gameStarted) {
+        gameStarted = true; paused = false;
+        updateStartBtn(); setHint('');
+      } else if (paused) {
+        paused = false; updateStartBtn(); setHint('');
+      }
+    }
+
+    function pauseGame() {
+      if (gameStarted && !gameOver) {
+        paused = !paused;
+        updateStartBtn();
+        setHint(paused ? 'Paused.' : '');
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      gameStarted = false;
+      // Award coins
+      const earned = gs.coinsEarned + Math.floor(gs.score / SCORE_PER_COIN);
+      if (earned > 0 && typeof addCoins === 'function') addCoins(earned);
+      // High score
+      const prev = getHighScore();
+      if (gs.score > prev) setHighScore(gs.score);
+      updateScoreUI();
+      updateStartBtn();
+      setHint(`Game over! Earned ${earned} 🪙. Tap PLAY AGAIN.`);
+    }
+
+    function getHighScore() { return +(localStorage.getItem('ski-high-score') || 0); }
+    function setHighScore(s) { localStorage.setItem('ski-high-score', s); }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    const scoreEl = document.getElementById('score');
+    const highEl = document.getElementById('high-score');
+    const speedEl = document.getElementById('speed-display');
+    const hintEl = document.getElementById('hint');
+    const startBtn = document.getElementById('start-btn');
+
+    function updateScoreUI() {
+      scoreEl.textContent = gs ? gs.score : 0;
+      highEl.textContent = getHighScore();
+      if (gs) speedEl.textContent = gs.speedMult.toFixed(1) + 'x';
+    }
+
+    function setHint(msg) { hintEl.textContent = msg; }
+
+    function updateStartBtn() {
+      if (gameOver) { startBtn.textContent = 'PLAY AGAIN'; startBtn.disabled = false; }
+      else if (!gameStarted) { startBtn.textContent = 'START'; startBtn.disabled = false; }
+      else if (paused) { startBtn.textContent = 'RESUME'; startBtn.disabled = false; }
+      else { startBtn.textContent = 'START'; startBtn.disabled = true; }
+    }
+
+    // Map shop item IDs that unlock each skier/scene option
+    const SKIER_UNLOCK = { classic: null, blue: 'ski-ice-skier', gold: 'ski-gold-skier' };
+    const SCENE_UNLOCK = { alpine: null, night: 'ski-night-scene', sunset: 'ski-sunset-scene' };
+
+    function isUnlocked(itemId) {
+      if (!itemId) return true; // default options are always free
+      const inv = window.skiInventory;
+      return inv instanceof Set ? inv.has(itemId) : false;
+    }
+
+    function updateSkierBtns() {
+      document.querySelectorAll('[data-skier]').forEach(b => {
+        const sk = b.dataset.skier;
+        const locked = !isUnlocked(SKIER_UNLOCK[sk]);
+        b.classList.toggle('active', sk === currentSkier);
+        b.title = locked ? 'Buy from Shop to unlock' : '';
+        b.style.opacity = locked ? '0.45' : '';
+      });
+    }
+
+    function updateSceneBtns() {
+      document.querySelectorAll('[data-scene]').forEach(b => {
+        const sc = b.dataset.scene;
+        const locked = !isUnlocked(SCENE_UNLOCK[sc]);
+        b.classList.toggle('active', sc === currentScene);
+        b.title = locked ? 'Buy from Shop to unlock' : '';
+        b.style.opacity = locked ? '0.45' : '';
+      });
+    }
+
+    // ── Input ────────────────────────────────────────────────────────────────
+    const keys = {};
+    document.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (e.code === 'Space') { e.preventDefault(); startGame(); }
+      if (e.code === 'KeyP') pauseGame();
+      if (e.code === 'KeyR') initGame();
+    });
+    document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    // Touch steering — tap left half = steer left, right half = steer right
+    let touchSteering = 0;
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const tx = (e.touches[0].clientX - rect.left) * scaleX;
+      if (!gameStarted || gameOver) { startGame(); return; }
+      touchSteering = tx < W / 2 ? -1 : 1;
+    }, { passive: false });
+    canvas.addEventListener('touchend', e => { e.preventDefault(); touchSteering = 0; }, { passive: false });
+    canvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const tx = (e.touches[0].clientX - rect.left) * scaleX;
+      touchSteering = tx < W / 2 ? -1 : 1;
+    }, { passive: false });
+
+    canvas.addEventListener('click', e => {
+      if (!gameStarted || gameOver) { startGame(); return; }
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const tx = (e.clientX - rect.left) * scaleX;
+      gs.skier.vx = tx < W / 2 ? -STEER_SPEED : STEER_SPEED;
+      setTimeout(() => { gs.skier.vx = 0; }, 200);
+    });
+
+    startBtn.addEventListener('click', startGame);
+    document.getElementById('pause-btn').addEventListener('click', pauseGame);
+    document.getElementById('restart-btn').addEventListener('click', initGame);
+
+    document.querySelectorAll('[data-skier]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!isUnlocked(SKIER_UNLOCK[btn.dataset.skier])) {
+          setHint('🔒 Buy this skier in the Shop!');
+          return;
+        }
+        currentSkier = btn.dataset.skier;
+        updateSkierBtns();
+      });
+    });
+
+    document.querySelectorAll('[data-scene]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!isUnlocked(SCENE_UNLOCK[btn.dataset.scene])) {
+          setHint('🔒 Buy this scene in the Shop!');
+          return;
+        }
+        currentScene = btn.dataset.scene;
+        updateSceneBtns();
+      });
+    });
+
+    // Touch drag steering
+    document.addEventListener('touchmove', e => { if (e.target === canvas) e.preventDefault(); }, { passive: false });
+
+    // ── Main loop ─────────────────────────────────────────────────────────────
+    function loop(ts) {
+      const dt = Math.min(1 / 30, (ts - lastT) / 1000) || 0;
+      lastT = ts;
+
+      // Apply keyboard/touch steering
+      if (gs && gameStarted && !paused && !gameOver) {
+        let vx = 0;
+        if (keys['ArrowLeft'] || keys['KeyA']) vx = -STEER_SPEED;
+        if (keys['ArrowRight'] || keys['KeyD']) vx = STEER_SPEED;
+        if (touchSteering !== 0) vx = touchSteering * STEER_SPEED;
+        gs.skier.vx = vx;
+      }
+
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    initGame();
+    updateSkierBtns();
+    updateSceneBtns();
+    updateScoreUI();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
