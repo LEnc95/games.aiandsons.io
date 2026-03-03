@@ -12,7 +12,7 @@ export const GAMES = [
   { slug:'dino',        name:'Dino Run',     emoji:'🦖', scoreHint:'distance',  url:'/dino',         desc:'Endless runner with speed ramp and multipliers.' },
   { slug:'spaceinvaders', name:'Space Invaders', emoji:'👾', scoreHint:'waves', url:'/spaceinvaders', desc:'Classic shooter. Clear waves and dodge fire!' },
   { slug:'frogger',     name:'Frogger',      emoji:'🐸', scoreHint:'crossings', url:'/frogger',      desc:'Hop across traffic and rivers to reach safety.' },
+  { slug:'minigolf',    name:'Pocket Mini Golf', emoji:'⛳', scoreHint:'low score', url:'/minigolf',   desc:'Pull back and putt through hazards across 3 compact holes.' },
   { slug:'micro-mario', name:'Micro Mario',  emoji:'🍄', scoreHint:'coins',     url:'/mario',        desc:'Tiny platformer. Collect coins and reach the flag.' },
   { slug:'ski',         name:'Retro Downhill Ski', emoji:'⛷️', scoreHint:'distance', url:'/ski',    desc:'Dodge trees and rocks as you race down the mountain!' },
 ];
-
