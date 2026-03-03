@@ -253,7 +253,7 @@
   <div id="version" class="version-badge" aria-label="App version">v0.0.0</div>
   
   <script type="module">
-    import { state, save, rememberRecent } from './src/core/state.js';
+    import { state, save, rememberRecent, reloadCoins } from './src/core/state.js';
     import { GAMES } from './src/meta/games.js';
     import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
     window.maybeUnlock = maybeUnlock;
@@ -396,6 +396,16 @@
       save();
       updateUI();
     }
+
+    // Refresh coin count when page is restored from the Back-Forward Cache (BFCache).
+    // Without this, navigating back to the main page after earning coins in a game
+    // would show the stale (often zero) coin count from the original page load.
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) {
+        reloadCoins();
+        updateUI();
+      }
+    });
   </script>
 </body>
 </html>

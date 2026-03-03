@@ -136,6 +136,7 @@ export const save = () => {
   set('recent', state.recent.slice(0, 6));
 };
 
+export const reloadCoins = () => { state.coins = loadCoins(); };
 export const addCoins = (n) => { state.coins = Math.max(0, state.coins + n); save(); };
 export const spendCoins = (n) => { if (state.coins >= n) { state.coins -= n; save(); return true; } return false; };
 export const rememberRecent = (slug) => {
