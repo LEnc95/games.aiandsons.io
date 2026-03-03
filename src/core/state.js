@@ -2,6 +2,50 @@ import { get, set } from './storage.js';
 
 const DEFAULT_COSMETICS = { paddle: 'default', snake: 'default', marioShirt: 'red', memoryCardBack: 'default' };
 
+const loadProfile = () => {
+  const stored = get('profile', null);
+
+  if (!stored || typeof stored !== 'object') {
+    return { name: '', firstRun: true };
+  }
+
+  return {
+    name: typeof stored.name === 'string' ? stored.name : '',
+    firstRun: typeof stored.firstRun === 'boolean' ? stored.firstRun : true,
+  };
+};
+
+const loadCoins = () => {
+  const stored = get('coins', 0);
+  const parsed = Number(stored);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.floor(parsed));
+};
+
+const loadBadges = () => {
+  const stored = get('badges', []);
+  if (Array.isArray(stored)) {
+    return new Set(stored.filter((badge) => typeof badge === 'string' && badge.trim() !== ''));
+  }
+
+  // Backward compatibility: object map of { badgeId: true }
+  if (stored && typeof stored === 'object') {
+    return new Set(
+      Object.entries(stored)
+        .filter(([, owned]) => Boolean(owned))
+        .map(([badgeId]) => badgeId)
+    );
+  }
+
+  return new Set();
+};
+
+const loadRecent = () => {
+  const stored = get('recent', []);
+  if (!Array.isArray(stored)) return [];
+  return stored.filter((slug) => typeof slug === 'string' && slug.trim() !== '').slice(0, 6);
+};
+
 const loadEquippedCosmetics = () => {
   const stored = get('cosmetics', DEFAULT_COSMETICS);
   if (!stored || typeof stored !== 'object') return { ...DEFAULT_COSMETICS };
@@ -69,14 +113,13 @@ const cosmeticsOwned = loadOwnedCosmetics(cosmetics);
 const { inventory, needsResave: inventoryNeedsResave } = loadInventory();
 
 export const state = {
-  profile: get('profile', { name: '', firstRun: true }),
-  coins: get('coins', 0),
-  badges: new Set(get('badges', [])),
-  cosmetics: get('cosmetics', { paddle: 'default', snake: 'default', marioShirt: 'red', memoryCardBack: 'default' }),
+  profile: loadProfile(),
+  coins: loadCoins(),
+  badges: loadBadges(),
   inventory,
   cosmetics,
   cosmeticsOwned,
-  recent: get('recent', []), // array of slugs
+  recent: loadRecent(), // array of slugs
 };
 
 if (inventoryNeedsResave) {
