@@ -7,36 +7,93 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
-    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    :root {
+      --bg:#07101f;
+      --fg:#eef5ff;
+      --muted:#8fb0da;
+      --accent:#4fd1ff;
+      --card:#101f39;
+      --card-border:#2d466d;
+    }
     * { box-sizing: border-box; }
-    html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; }
-    .wrap { min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:16px; }
-    #canvas-wrap { width:min(95vw,560px); aspect-ratio:4/3; }
-    canvas { width:100%; height:100%; border:2px solid #192544; border-radius:14px; display:block; background:#162038; }
-    .hud { width:min(95vw,560px); }
-    .stats { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; font-size:clamp(14px,2.4vw,18px); }
-    .hint { color:var(--muted); text-align:center; min-height:1.4em; margin-top:8px; }
+    html,body {
+      height:100%; margin:0; overflow:hidden;
+      background:radial-gradient(circle at 20% 10%, #17325d 0%, #081426 55%, #050a14 100%);
+      color:var(--fg); font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+    .wrap {
+      min-height:100dvh; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:14px; padding:16px;
+    }
+    #canvas-wrap {
+      width:min(96vw,780px);
+      aspect-ratio:16/10;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 20px 50px rgba(2, 7, 20, 0.65), inset 0 0 0 2px rgba(95, 188, 255, 0.22);
+    }
+    canvas { width:100%; height:100%; display:block; }
+    .hud {
+      width:min(96vw,780px);
+      background:linear-gradient(180deg, rgba(11,25,47,0.92), rgba(8,19,36,0.92));
+      border:1px solid var(--card-border);
+      border-radius:16px;
+      padding:12px 14px;
+      box-shadow:0 10px 24px rgba(2, 7, 20, 0.35);
+    }
+    .stats { display:grid; grid-template-columns:repeat(4, minmax(110px, 1fr)); gap:8px; }
+    .stat {
+      background:rgba(125, 180, 255, 0.08);
+      border:1px solid rgba(125, 180, 255, 0.24);
+      border-radius:10px;
+      padding:8px;
+      text-align:center;
+      font-size:clamp(13px,1.9vw,15px);
+    }
+    .stat strong { display:block; margin-top:4px; font-size:clamp(18px,2.7vw,24px); }
+    .hint {
+      color:#c7dbfb; text-align:center; min-height:1.6em;
+      margin-top:10px; font-weight:600;
+    }
     .buttons { margin-top:10px; display:flex; gap:10px; justify-content:center; }
-    .btn { padding:11px 18px; border-radius:10px; border:2px solid #3a4a6f; background:#2a3a5f; color:var(--fg); font-weight:700; cursor:pointer; }
-    .btn.primary { background:#5ad; border-color:#6be; color:#0b1020; }
+    .btn {
+      padding:12px 20px; border-radius:11px; border:1px solid #4c6892;
+      background:linear-gradient(180deg,#38537c,#263d63);
+      color:var(--fg); font-weight:800; letter-spacing:0.02em; cursor:pointer;
+      transition:transform .1s ease, filter .2s ease;
+    }
+    .btn.primary {
+      background:linear-gradient(180deg,#74e7ff,#36bdf5);
+      border-color:#8ae8ff;
+      color:#06223a;
+    }
+    .btn:hover { filter:brightness(1.08); }
     .btn:active { transform:scale(0.97); }
-    .back-home { position:fixed; top:calc(env(safe-area-inset-top, 12px)); left:calc(env(safe-area-inset-left, 12px)); z-index:9999; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,0.6); color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
+    .back-home {
+      position:fixed; top:calc(env(safe-area-inset-top, 12px)); left:calc(env(safe-area-inset-left, 12px));
+      z-index:9999; padding:8px 12px; border-radius:9px; background:rgba(0,0,0,0.55);
+      color:#fff; text-decoration:none; font-weight:700; font-size:14px; backdrop-filter:blur(4px);
+    }
+    @media (max-width:650px){
+      .stats { grid-template-columns:repeat(2,minmax(120px,1fr)); }
+      #canvas-wrap { aspect-ratio:4/3; }
+    }
   </style>
 </head>
 <body>
   <a href="/" class="back-home">← Back</a>
   <div class="wrap">
-    <div id="canvas-wrap"><canvas id="game" width="560" height="420"></canvas></div>
+    <div id="canvas-wrap"><canvas id="game" width="960" height="600"></canvas></div>
     <div class="hud">
       <div class="stats">
-        <div>⚾ Homeruns: <strong id="hr">0</strong></div>
-        <div>🔥 Streak: <strong id="streak">0</strong></div>
-        <div>❌ Outs: <strong id="outs">0</strong>/10</div>
-        <div>🏆 Best: <strong id="best">0</strong></div>
+        <div class="stat">⚾ Homeruns<strong id="hr">0</strong></div>
+        <div class="stat">🔥 Streak<strong id="streak">0</strong></div>
+        <div class="stat">❌ Outs<strong id="outs">0/10</strong></div>
+        <div class="stat">🏆 Best<strong id="best">0</strong></div>
       </div>
-      <div class="hint" id="hint">Press START then tap/click/space to swing when the ball crosses the plate.</div>
+      <div class="hint" id="hint">Press START, then swing at the right moment to launch moonshots.</div>
       <div class="buttons">
-        <button class="btn primary" id="start">START</button>
+        <button class="btn primary" id="start">START DERBY</button>
         <button class="btn" id="swing">SWING</button>
       </div>
     </div>
@@ -61,57 +118,125 @@
     let running = false;
     let last = 0;
     let pitchCooldown = 0;
-    let ball = null;
+    let pitchBall = null;
+    let hitBall = null;
     let homeruns = 0;
     let outs = 0;
     let streak = 0;
     let coinsEarned = 0;
+    let particles = [];
 
-    const plateX = 410;
-    const sweetSpot = 20;
+    const plate = { x: 720, y: 445 };
+    const sweetSpot = 24;
 
     function resetGame() {
-      homeruns = 0; outs = 0; streak = 0; coinsEarned = 0;
-      ball = null; pitchCooldown = 0;
+      homeruns = 0;
+      outs = 0;
+      streak = 0;
+      coinsEarned = 0;
+      pitchBall = null;
+      hitBall = null;
+      particles = [];
+      pitchCooldown = 0.25;
       updateHud();
-      hint('Time your swing for the sweet spot!');
+      hint('Time your swing in the highlighted zone for max power.');
     }
 
     function updateHud() {
       hrEl.textContent = String(homeruns);
       streakEl.textContent = String(streak);
-      outsEl.textContent = String(outs);
+      outsEl.textContent = `${outs}/10`;
       bestEl.textContent = String(best);
     }
 
     function hint(msg) { hintEl.textContent = msg; }
 
     function spawnPitch() {
-      const speed = 210 + Math.random() * 70 + homeruns * 5;
-      ball = { x: 40, y: 270 + (Math.random() * 30 - 15), speed, swung:false };
+      const speed = 350 + Math.random() * 130 + homeruns * 8;
+      pitchBall = {
+        x: 90,
+        y: plate.y - 28 + (Math.random() * 20 - 10),
+        speed,
+        swung: false
+      };
     }
 
-    function swing() {
-      if (!running || !ball || ball.swung) return;
-      ball.swung = true;
-      const d = Math.abs(ball.x - plateX);
-      if (d <= sweetSpot) {
+    function addFireworks(x, y) {
+      for (let i = 0; i < 120; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 80 + Math.random() * 280;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * sp,
+          vy: Math.sin(a) * sp,
+          life: 1,
+          color: `hsl(${Math.random() * 80 + 10}, 100%, ${60 + Math.random() * 20}%)`,
+          size: 2 + Math.random() * 3,
+          gravity: 210 + Math.random() * 130
+        });
+      }
+    }
+
+    function createHit(d) {
+      const quality = Math.max(0, 1 - d / 52);
+      const lift = 260 + quality * 230 + Math.random() * 80;
+      const carry = 440 + quality * 460 + Math.random() * 120;
+      const homerun = quality > 0.68;
+      hitBall = {
+        x: plate.x - 8,
+        y: plate.y - 8,
+        vx: -carry,
+        vy: -lift,
+        gravity: 420,
+        trail: [],
+        alive: true,
+        outcome: homerun ? 'homerun' : 'flyout',
+        targetY: homerun ? 130 + Math.random() * 60 : 250 + Math.random() * 85,
+        targetX: homerun ? 70 + Math.random() * 120 : 180 + Math.random() * 140
+      };
+
+      if (homerun) {
         homeruns += 1;
         streak += 1;
         if (streak % 2 === 0) coinsEarned += 1;
-        hint('💥 HOME RUN! Perfect timing.');
-      } else if (d <= 45) {
-        streak = 0;
-        hint('🟡 Deep fly ball... caught at the wall.');
-        outs += 1;
+        hint('🚀 CRUSHED! That one is headed for the bleachers!');
       } else {
         streak = 0;
-        hint('❌ Swing and a miss.');
         outs += 1;
+        hint('🧤 Good contact, but it dies at the warning track.');
       }
-      ball = null;
-      pitchCooldown = 0.55;
       updateHud();
+      pitchBall = null;
+    }
+
+    function swing() {
+      if (!running || !pitchBall || pitchBall.swung || hitBall) return;
+      pitchBall.swung = true;
+      const d = Math.abs(pitchBall.x - plate.x);
+      if (d <= 52) {
+        createHit(d);
+      } else {
+        streak = 0;
+        outs += 1;
+        hint('❌ Swing and miss. Wait for the ball to enter the zone.');
+        pitchBall = null;
+        pitchCooldown = 0.55;
+        updateHud();
+        checkEnd();
+      }
+    }
+
+    function finalizeHit() {
+      if (!hitBall) return;
+      if (hitBall.outcome === 'homerun') {
+        addFireworks(hitBall.x, hitBall.y);
+        hint('💥 HOME RUN! Fireworks in the night sky!');
+      } else {
+        hint('🟡 Loud out to deep center field.');
+      }
+      hitBall = null;
+      pitchCooldown = 0.7;
       checkEnd();
     }
 
@@ -130,67 +255,186 @@
     }
 
     function drawField() {
-      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      g.addColorStop(0, '#1e2e4f');
-      g.addColorStop(1, '#0f172a');
-      ctx.fillStyle = g;
+      const sky = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.62);
+      sky.addColorStop(0, '#193d6f');
+      sky.addColorStop(0.48, '#244f87');
+      sky.addColorStop(1, '#1f334a');
+      ctx.fillStyle = sky;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#1f5f2f';
+      ctx.fillStyle = '#1b2f4f';
+      ctx.fillRect(0, 95, 26, 420);
+      ctx.fillRect(0, 95, 10, 420);
+      ctx.fillStyle = '#f2dd95';
+      ctx.fillRect(16, 95, 3, 420);
+      ctx.fillRect(2, 95, 3, 420);
+
+      ctx.fillStyle = '#2a5d31';
       ctx.beginPath();
-      ctx.moveTo(0, 360);
-      ctx.lineTo(560, 360);
-      ctx.lineTo(560, 420);
-      ctx.lineTo(0, 420);
+      ctx.moveTo(0, 290);
+      ctx.quadraticCurveTo(canvas.width * 0.52, 85, canvas.width, 290);
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#d8c08d';
+      ctx.fillStyle = '#37783f';
+      for (let i = 0; i < 10; i++) {
+        const stripeW = canvas.width / 10;
+        if (i % 2 === 0) ctx.fillRect(i * stripeW, 230, stripeW, canvas.height - 230);
+      }
+
+      ctx.strokeStyle = '#f9f2df';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(plate.x, plate.y);
+      ctx.lineTo(28, 265);
+      ctx.moveTo(plate.x, plate.y);
+      ctx.lineTo(28, 525);
+      ctx.stroke();
+
+      ctx.fillStyle = '#b57d4e';
+      ctx.beginPath();
+      ctx.moveTo(plate.x + 18, plate.y + 8);
+      ctx.lineTo(plate.x + 175, canvas.height);
+      ctx.lineTo(plate.x - 295, canvas.height);
+      ctx.lineTo(plate.x - 18, plate.y + 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#bf8854';
+      ctx.beginPath();
+      ctx.arc(620, 445, 85, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#a66f42';
+      ctx.beginPath();
+      ctx.arc(430, 445, 38, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8f8f8';
+      ctx.fillRect(422, 438, 16, 12);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(plateX, 330);
-      ctx.lineTo(540, 200);
-      ctx.moveTo(plateX, 330);
-      ctx.lineTo(540, 380);
+      ctx.arc(180, 395, 190, -0.63, 0.63);
       ctx.stroke();
 
-      ctx.fillStyle = '#f3f4f6';
+      ctx.fillStyle = '#f8f8f8';
       ctx.beginPath();
-      ctx.moveTo(plateX - 14, 330);
-      ctx.lineTo(plateX + 14, 330);
-      ctx.lineTo(plateX + 8, 346);
-      ctx.lineTo(plateX - 8, 346);
+      ctx.moveTo(plate.x - 16, plate.y);
+      ctx.lineTo(plate.x + 16, plate.y);
+      ctx.lineTo(plate.x + 10, plate.y + 20);
+      ctx.lineTo(plate.x - 10, plate.y + 20);
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = '#9ca3af';
-      ctx.fillRect(368, 250, 22, 80);
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(388, 286, 8, 46);
-    }
+      const bases = [
+        { x: 650, y: 392 },
+        { x: 580, y: 445 },
+        { x: 650, y: 498 }
+      ];
+      bases.forEach((b) => {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = '#fff8de';
+        ctx.fillRect(-9, -9, 18, 18);
+        ctx.restore();
+      });
 
-    function drawBall() {
-      if (!ball) return;
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = '#f5ebcd';
       ctx.beginPath();
-      ctx.arc(ball.x, ball.y, 9, 0, Math.PI * 2);
+      ctx.arc(620, 445, 38, Math.PI * 0.86, Math.PI * 1.14);
       ctx.fill();
-      ctx.strokeStyle = '#ef4444';
+
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fillRect(742, 338, 24, 105);
+      ctx.fillStyle = '#d8a262';
+      ctx.fillRect(732, 360, 10, 83);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(ball.x - 1, ball.y, 5, 0.7, 2.4);
+      ctx.arc(620, 445, 74, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(250, 213, 74, 0.22)';
+      ctx.fillRect(plate.x - sweetSpot, plate.y - 42, sweetSpot * 2, 82);
+      ctx.fillStyle = '#ffe27c';
+      ctx.font = '700 15px system-ui';
+      ctx.fillText('Sweet Spot', plate.x - 40, plate.y - 52);
+    }
+
+    function drawBallSprite(x, y, r = 9) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ea5454';
+      ctx.lineWidth = Math.max(1.8, r * 0.22);
+      ctx.beginPath();
+      ctx.arc(x - 1, y, r * 0.58, 0.8, 2.4);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(ball.x + 1, ball.y, 5, 3.8, 5.6);
+      ctx.arc(x + 1, y, r * 0.58, 3.9, 5.5);
       ctx.stroke();
     }
 
-    function drawTimingZone() {
-      ctx.fillStyle = 'rgba(250,204,21,0.22)';
-      ctx.fillRect(plateX - sweetSpot, 238, sweetSpot * 2, 82);
-      ctx.fillStyle = '#facc15';
-      ctx.font = 'bold 13px system-ui';
-      ctx.fillText('Sweet Spot', plateX - 34, 232);
+    function drawPitchBall() {
+      if (!pitchBall) return;
+      drawBallSprite(pitchBall.x, pitchBall.y, 9);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      for (let i = 1; i <= 4; i++) {
+        ctx.beginPath();
+        ctx.arc(pitchBall.x - i * 12, pitchBall.y, 10 - i * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function updateHitBall(dt) {
+      if (!hitBall) return;
+      hitBall.vy += hitBall.gravity * dt;
+      hitBall.x += hitBall.vx * dt;
+      hitBall.y += hitBall.vy * dt;
+      hitBall.trail.push({ x: hitBall.x, y: hitBall.y, life: 1 });
+      if (hitBall.trail.length > 22) hitBall.trail.shift();
+      for (const t of hitBall.trail) t.life -= dt * 2.6;
+      hitBall.trail = hitBall.trail.filter((t) => t.life > 0);
+
+      const reachedTarget = hitBall.x <= hitBall.targetX || hitBall.y >= hitBall.targetY;
+      if (reachedTarget || hitBall.y > canvas.height + 20) finalizeHit();
+    }
+
+    function drawHitBall() {
+      if (!hitBall) return;
+      for (const t of hitBall.trail) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, t.life * 0.55)})`;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, 6 * t.life, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawBallSprite(hitBall.x, hitBall.y, 10);
+    }
+
+    function updateParticles(dt) {
+      for (const p of particles) {
+        p.vy += p.gravity * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt * 0.95;
+      }
+      particles = particles.filter((p) => p.life > 0);
+    }
+
+    function drawParticles() {
+      for (const p of particles) {
+        ctx.fillStyle = p.color.replace('hsl', 'hsla').replace('%)', `%, ${Math.max(0, p.life)})`);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     function loop(ts) {
@@ -198,35 +442,39 @@
       last = ts;
 
       if (running) {
-        if (!ball) {
+        if (!pitchBall && !hitBall) {
           pitchCooldown -= dt;
           if (pitchCooldown <= 0) spawnPitch();
         }
 
-        if (ball) {
-          ball.x += ball.speed * dt;
-          if (ball.x > canvas.width + 30) {
+        if (pitchBall) {
+          pitchBall.x += pitchBall.speed * dt;
+          if (pitchBall.x > canvas.width + 30) {
             outs += 1;
             streak = 0;
-            hint('Strike looking! You did not swing.');
-            ball = null;
-            pitchCooldown = 0.5;
+            hint('Strike looking! Swing as it crosses the plate.');
+            pitchBall = null;
+            pitchCooldown = 0.55;
             updateHud();
             checkEnd();
           }
         }
+
+        updateHitBall(dt);
       }
 
+      updateParticles(dt);
       drawField();
-      drawTimingZone();
-      drawBall();
+      drawPitchBall();
+      drawHitBall();
+      drawParticles();
       requestAnimationFrame(loop);
     }
 
     document.getElementById('start').addEventListener('click', () => {
       resetGame();
       running = true;
-      hint('Derby started! Swing as the ball reaches the plate.');
+      hint('Derby started! Wait for the pitch and launch it.');
     });
     document.getElementById('swing').addEventListener('click', swing);
 
