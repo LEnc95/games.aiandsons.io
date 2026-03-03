@@ -28,6 +28,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - Frogger (`/frogger`)
 - Micro Mario (`/mario`)
 - Retro Downhill Ski (`/ski`)
+- Micro RC Racer (`/microrc`)
 
 ## Running locally
 

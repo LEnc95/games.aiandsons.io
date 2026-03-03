@@ -14,5 +14,6 @@ export const GAMES = [
   { slug:'frogger',     name:'Frogger',      emoji:'🐸', scoreHint:'crossings', url:'/frogger',      desc:'Hop across traffic and rivers to reach safety.' },
   { slug:'micro-mario', name:'Micro Mario',  emoji:'🍄', scoreHint:'coins',     url:'/mario',        desc:'Tiny platformer. Collect coins and reach the flag.' },
   { slug:'ski',         name:'Retro Downhill Ski', emoji:'⛷️', scoreHint:'distance', url:'/ski',    desc:'Dodge trees and rocks as you race down the mountain!' },
+  { slug:'micro-rc-racer', name:'Micro RC Racer', emoji:'🏎️', scoreHint:'best lap', url:'/microrc', desc:'Top-down RC dirt racing with tank steering and slippery drifts.' },
 ];
 
