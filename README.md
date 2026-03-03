@@ -26,6 +26,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - Dino Run (`/dino`)
 - Space Invaders (`/spaceinvaders`)
 - Frogger (`/frogger`)
+- Pocket Mini Golf (`/minigolf`)
 - Micro Mario (`/mario`)
 - Retro Downhill Ski (`/ski`)
 - Micro RC Racer (`/microrc`)
