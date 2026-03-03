@@ -1,6 +1,6 @@
 import { get, set } from './storage.js';
 
-const DEFAULT_COSMETICS = { paddle: 'default', snake: 'default', marioShirt: 'red' };
+const DEFAULT_COSMETICS = { paddle: 'default', snake: 'default', marioShirt: 'red', memoryCardBack: 'default' };
 
 const loadEquippedCosmetics = () => {
   const stored = get('cosmetics', DEFAULT_COSMETICS);
@@ -72,7 +72,7 @@ export const state = {
   profile: get('profile', { name: '', firstRun: true }),
   coins: get('coins', 0),
   badges: new Set(get('badges', [])),
-  cosmetics: get('cosmetics', { paddle: 'default', snake: 'default', marioShirt: 'red' }),
+  cosmetics: get('cosmetics', { paddle: 'default', snake: 'default', marioShirt: 'red', memoryCardBack: 'default' }),
   inventory,
   cosmetics,
   cosmeticsOwned,
@@ -99,4 +99,3 @@ export const rememberRecent = (slug) => {
   state.recent = [slug, ...state.recent.filter(s => s !== slug)].slice(0,6);
   save();
 };
-
