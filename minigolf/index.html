@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pocket Mini Golf</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #2c3e50;
+      margin: 0;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    #game-container {
+      background-color: #ecf0f1;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      position: relative;
+      max-width: 100%;
+    }
+
+    #ui-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    #back-link {
+      text-decoration: none;
+      color: #1b4f72;
+      font-weight: 700;
+    }
+
+    canvas {
+      background-color: #4caf50;
+      border: 6px solid #5d4037;
+      border-radius: 4px;
+      cursor: crosshair;
+      max-width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    #message-board {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px 40px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      display: none;
+      color: #333;
+      text-align: center;
+      width: min(320px, 80vw);
+      z-index: 1;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background-color: #c0392b;
+    }
+
+    .penalty-text {
+      position: absolute;
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 24px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+      top: 58px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="ui-bar">
+      <a id="back-link" href="/">← Home</a>
+      <span>Hole: <span id="hole-display">1</span></span>
+      <span>Strokes: <span id="strokes">0</span></span>
+    </div>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <div id="penalty-msg" class="penalty-text">+1 Penalty!</div>
+
+    <div id="message-board">
+      <h2 id="msg-title">Hole in One?! ⛳</h2>
+      <p id="msg-desc">Strokes: <span id="final-strokes">0</span></p>
+      <button id="next-btn" onclick="nextLevel()">Next Hole</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const strokeEl = document.getElementById('strokes');
+    const holeDisplayEl = document.getElementById('hole-display');
+    const messageBoard = document.getElementById('message-board');
+    const finalStrokesEl = document.getElementById('final-strokes');
+    const msgTitle = document.getElementById('msg-title');
+    const msgDesc = document.getElementById('msg-desc');
+    const nextBtn = document.getElementById('next-btn');
+    const penaltyMsg = document.getElementById('penalty-msg');
+
+    const levels = [
+      {
+        start: { x: 200, y: 450 },
+        hole: { x: 200, y: 80 },
+        walls: [],
+        terrain: [{ x: 100, y: 200, w: 200, h: 60, type: 'sand' }]
+      },
+      {
+        start: { x: 200, y: 450 },
+        hole: { x: 200, y: 80 },
+        walls: [{ x: 100, y: 250, w: 200, h: 20 }],
+        terrain: [
+          { x: 0, y: 250, w: 100, h: 80, type: 'water' },
+          { x: 300, y: 250, w: 100, h: 80, type: 'water' }
+        ]
+      },
+      {
+        start: { x: 200, y: 450 },
+        hole: { x: 200, y: 60 },
+        walls: [
+          { x: 0, y: 200, w: 150, h: 20 },
+          { x: 250, y: 200, w: 150, h: 20 },
+          { x: 130, y: 60, w: 20, h: 140 },
+          { x: 250, y: 60, w: 20, h: 140 }
+        ],
+        terrain: [
+          { x: 150, y: 220, w: 100, h: 50, type: 'sand' },
+          { x: 150, y: 120, w: 100, h: 40, type: 'water' }
+        ]
+      }
+    ];
+
+    let currentLevelIndex = 0;
+    let totalCourseStrokes = 0;
+    let strokes = 0;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+    let isMoving = false;
+    let isHoleComplete = false;
+    let lastShotPos = { x: 0, y: 0 };
+
+    let ball = { x: 0, y: 0, radius: 8, vx: 0, vy: 0 };
+    let hole = { x: 0, y: 0, radius: 12 };
+    let walls = [];
+    let terrain = [];
+    const baseFriction = 0.98;
+
+    function loadLevel(index) {
+      const levelData = levels[index];
+      ball.x = levelData.start.x;
+      ball.y = levelData.start.y;
+      ball.vx = 0;
+      ball.vy = 0;
+      lastShotPos = { x: ball.x, y: ball.y };
+
+      hole.x = levelData.hole.x;
+      hole.y = levelData.hole.y;
+
+      walls = levelData.walls || [];
+      terrain = levelData.terrain || [];
+
+      strokes = 0;
+      strokeEl.innerText = strokes;
+      holeDisplayEl.innerText = index + 1;
+      isHoleComplete = false;
+      messageBoard.style.display = 'none';
+    }
+
+    function drawCircle(x, y, radius, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawRect(x, y, w, h, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    function showPenalty() {
+      penaltyMsg.style.opacity = 1;
+      setTimeout(() => {
+        penaltyMsg.style.opacity = 0;
+      }, 1500);
+    }
+
+    function getPointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function startDrag(pos) {
+      if (isMoving || isHoleComplete) return;
+      const dist = Math.hypot(pos.x - ball.x, pos.y - ball.y);
+      if (dist < ball.radius * 3) {
+        isDragging = true;
+        dragStart = { x: pos.x, y: pos.y };
+        dragCurrent = { x: pos.x, y: pos.y };
+      }
+    }
+
+    function updateDrag(pos) {
+      if (!isDragging) return;
+      dragCurrent = { x: pos.x, y: pos.y };
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+
+      lastShotPos = { x: ball.x, y: ball.y };
+
+      strokes++;
+      strokeEl.innerText = strokes;
+
+      const dx = dragStart.x - dragCurrent.x;
+      const dy = dragStart.y - dragCurrent.y;
+
+      ball.vx = Math.min(Math.max(dx * 0.15, -15), 15);
+      ball.vy = Math.min(Math.max(dy * 0.15, -15), 15);
+      isMoving = true;
+    }
+
+    canvas.addEventListener('mousedown', (e) => startDrag(getPointerPosition(e)));
+    canvas.addEventListener('mousemove', (e) => updateDrag(getPointerPosition(e)));
+    canvas.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('mouseleave', endDrag);
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startDrag(getPointerPosition(e));
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      updateDrag(getPointerPosition(e));
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      endDrag();
+    }, { passive: false });
+
+    function updatePhysics() {
+      if (!isMoving) return;
+
+      let currentFriction = baseFriction;
+      let inWater = false;
+
+      for (let t of terrain) {
+        if (ball.x > t.x && ball.x < t.x + t.w && ball.y > t.y && ball.y < t.y + t.h) {
+          if (t.type === 'sand') {
+            currentFriction = 0.9;
+          } else if (t.type === 'water') {
+            inWater = true;
+          }
+        }
+      }
+
+      if (inWater) {
+        ball.x = lastShotPos.x;
+        ball.y = lastShotPos.y;
+        ball.vx = 0;
+        ball.vy = 0;
+        isMoving = false;
+        strokes++;
+        strokeEl.innerText = strokes;
+        showPenalty();
+        return;
+      }
+
+      ball.vx *= currentFriction;
+      ball.vy *= currentFriction;
+
+      if (Math.abs(ball.vx) < 0.1 && Math.abs(ball.vy) < 0.1) {
+        ball.vx = 0;
+        ball.vy = 0;
+        isMoving = false;
+      }
+
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      if (ball.x - ball.radius < 0) {
+        ball.x = ball.radius;
+        ball.vx *= -1;
+      }
+      if (ball.x + ball.radius > canvas.width) {
+        ball.x = canvas.width - ball.radius;
+        ball.vx *= -1;
+      }
+      if (ball.y - ball.radius < 0) {
+        ball.y = ball.radius;
+        ball.vy *= -1;
+      }
+      if (ball.y + ball.radius > canvas.height) {
+        ball.y = canvas.height - ball.radius;
+        ball.vy *= -1;
+      }
+
+      for (let wall of walls) {
+        if (
+          ball.x + ball.radius > wall.x &&
+          ball.x - ball.radius < wall.x + wall.w &&
+          ball.y + ball.radius > wall.y &&
+          ball.y - ball.radius < wall.y + wall.h
+        ) {
+          const overlapLeft = ball.x + ball.radius - wall.x;
+          const overlapRight = wall.x + wall.w - (ball.x - ball.radius);
+          const overlapTop = ball.y + ball.radius - wall.y;
+          const overlapBottom = wall.y + wall.h - (ball.y - ball.radius);
+
+          const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+          if (minOverlap === overlapLeft || minOverlap === overlapRight) {
+            ball.vx *= -1;
+            ball.x += minOverlap === overlapLeft ? -1 : 1;
+          } else {
+            ball.vy *= -1;
+            ball.y += minOverlap === overlapTop ? -1 : 1;
+          }
+        }
+      }
+
+      const distToHole = Math.hypot(ball.x - hole.x, ball.y - hole.y);
+      if (distToHole < hole.radius && Math.abs(ball.vx) < 4 && Math.abs(ball.vy) < 4) {
+        ball.vx = 0;
+        ball.vy = 0;
+        ball.x = hole.x;
+        ball.y = hole.y;
+        isMoving = false;
+        isHoleComplete = true;
+
+        totalCourseStrokes += strokes;
+
+        if (currentLevelIndex >= levels.length - 1) {
+          msgTitle.innerText = 'Course Complete! 🏆';
+          msgDesc.innerHTML = `Final Score: <b>${totalCourseStrokes}</b> strokes`;
+          nextBtn.innerText = 'Play Again';
+        } else {
+          msgTitle.innerText = strokes === 1 ? 'Hole in One! ⛳' : 'Nice Putt! 🏌️‍♂️';
+          finalStrokesEl.innerText = strokes;
+          msgDesc.innerHTML = `Strokes: <span id="final-strokes">${strokes}</span>`;
+          nextBtn.innerText = 'Next Hole';
+        }
+
+        messageBoard.style.display = 'block';
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let t of terrain) {
+        if (t.type === 'sand') {
+          drawRect(t.x, t.y, t.w, t.h, '#F4D03F');
+        } else if (t.type === 'water') {
+          drawRect(t.x, t.y, t.w, t.h, '#3498db');
+        }
+      }
+
+      drawCircle(hole.x, hole.y, hole.radius, '#111');
+      drawRect(hole.x - 1, hole.y - 25, 2, 25, '#fff');
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.moveTo(hole.x + 1, hole.y - 25);
+      ctx.lineTo(hole.x + 15, hole.y - 20);
+      ctx.lineTo(hole.x + 1, hole.y - 15);
+      ctx.fill();
+
+      for (let wall of walls) {
+        drawRect(wall.x, wall.y, wall.w, wall.h, '#795548');
+      }
+
+      if (isDragging) {
+        ctx.beginPath();
+        ctx.moveTo(ball.x, ball.y);
+        const dx = dragStart.x - dragCurrent.x;
+        const dy = dragStart.y - dragCurrent.y;
+        ctx.lineTo(ball.x + dx, ball.y + dy);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      drawCircle(ball.x, ball.y, ball.radius, '#fff');
+    }
+
+    function gameLoop() {
+      updatePhysics();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function nextLevel() {
+      currentLevelIndex++;
+      if (currentLevelIndex >= levels.length) {
+        currentLevelIndex = 0;
+        totalCourseStrokes = 0;
+      }
+      loadLevel(currentLevelIndex);
+    }
+
+    loadLevel(currentLevelIndex);
+    gameLoop();
+
+    window.nextLevel = nextLevel;
+  </script>
+</body>
+</html>
