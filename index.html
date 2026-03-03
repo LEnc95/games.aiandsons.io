@@ -70,6 +70,8 @@
     .modal input { width:100%; padding:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--fg); font-size:16px; margin-bottom:16px; }
     .modal button { padding:12px 24px; background:#5ad; border:none; border-radius:8px; color:#0b1020; font-size:16px; font-weight:600; cursor:pointer; width:100%; }
     .modal button:hover { background:#6be; }
+    .modal-cancel-btn { margin-top:8px; background:rgba(255,255,255,0.08) !important; color:var(--fg) !important; border:1px solid rgba(255,255,255,0.15) !important; }
+    .modal-cancel-btn:hover { background:rgba(255,255,255,0.14) !important; }
 
     /* Badges Modal */
     .badges-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px; max-height:60vh; overflow-y:auto; margin-top:16px; }
@@ -238,6 +240,7 @@
       <h2>Set Your Name</h2>
       <input type="text" id="profileName" placeholder="Enter your name" maxlength="30" />
       <button onclick="saveProfile()">Save</button>
+      <button onclick="closeProfile()" class="modal-cancel-btn">Cancel</button>
     </div>
   </div>
 
@@ -334,11 +337,20 @@
       }
     };
 
+    window.closeProfile = () => {
+      document.getElementById('profileModal').classList.remove('active');
+    };
+
     document.getElementById('profileBtn').onclick = () => {
       const modal = document.getElementById('profileModal');
       document.getElementById('profileName').value = state.profile.name || '';
       modal.classList.add('active');
+      document.getElementById('profileName').focus();
     };
+
+    document.getElementById('profileName').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); saveProfile(); }
+    });
 
     // Close modals on backdrop click
     document.getElementById('profileModal').onclick = (e) => {
