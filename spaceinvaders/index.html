@@ -71,11 +71,8 @@
     </div>
 
   <script type="module">
-    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
-    window.addCoins = addCoinsFn;
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
     rememberRecent('spaceinvaders');
-  </script>
-  <script>
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -88,6 +85,9 @@
   const touchControls = document.querySelector('.touch-controls');
   const controlButtons = touchControls ? Array.from(touchControls.querySelectorAll('.touch-btn')) : [];
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
+  const hasRainbowLaser = inventory.has('spaceinvaders-rainbow');
+  const hasOmegaCannon = inventory.has('spaceinvaders-omega');
 
   function resize() {
     canvas.width = Math.floor(window.innerWidth * DPR);
@@ -110,11 +110,11 @@
   function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
   class Player{
-    constructor(){ this.w=48; this.h=16; this.x=(canvas.width/DPR - this.w)/2; this.y=canvas.height/DPR - 80; this.speed=360; this.cooldown=260; }
+    constructor(){ this.w=48; this.h=16; this.x=(canvas.width/DPR - this.w)/2; this.y=canvas.height/DPR - 80; this.speed=360; this.cooldown=hasOmegaCannon ? 180 : 260; }
     update(dt){ const dir=(GAME.keys.left?-1:0)+(GAME.keys.right?1:0); this.x += dir*this.speed*dt; this.x = clamp(this.x, 8, canvas.width/DPR - this.w - 8); }
     draw(){ ctx.save(); ctx.fillStyle='#c6f1ff'; ctx.fillRect(this.x, this.y+this.h-6, this.w, 6); ctx.beginPath(); ctx.moveTo(this.x+this.w/2, this.y); ctx.lineTo(this.x+this.w, this.y+this.h-6); ctx.lineTo(this.x, this.y+this.h-6); ctx.closePath(); ctx.fill(); ctx.restore(); }
   }
-  class Bullet{ constructor(x,y,vy,friendly=true){ this.x=x; this.y=y; this.vy=vy; this.friendly=friendly; this.w=3; this.h=10;} update(dt){ this.y += this.vy*dt; } draw(){ ctx.save(); ctx.fillStyle=this.friendly?'#6ae0ff':'#ff8aa6'; ctx.fillRect(this.x,this.y,this.w,this.h); ctx.restore(); } }
+  class Bullet{ constructor(x,y,vy,friendly=true,fx={}){ this.x=x; this.y=y; this.vy=vy; this.friendly=friendly; this.rainbow=!!fx.rainbow; this.omega=!!fx.omega; this.w=(friendly && this.omega)?6:3; this.h=(friendly && this.omega)?16:10;} update(dt){ this.y += this.vy*dt; } draw(){ ctx.save(); if(this.friendly){ if(this.rainbow){ const g=ctx.createLinearGradient(this.x, this.y, this.x, this.y+this.h); g.addColorStop(0,'#ef4444'); g.addColorStop(0.25,'#f59e0b'); g.addColorStop(0.5,'#22c55e'); g.addColorStop(0.75,'#3b82f6'); g.addColorStop(1,'#a855f7'); ctx.fillStyle=g; } else if (this.omega){ ctx.fillStyle='#fbbf24'; } else { ctx.fillStyle='#6ae0ff'; } } else { ctx.fillStyle='#ff8aa6'; } ctx.fillRect(this.x,this.y,this.w,this.h); ctx.restore(); } }
   class Invader{ constructor(x,y,type=0){ this.x=x; this.y=y; this.w=32; this.h=20; this.type=type; this.alive=true; this.score=[40,20,10][type]||10; } draw(){ if(!this.alive) return; ctx.save(); ctx.fillStyle=['#ffd166','#06d6a0','#a7c5ff'][this.type]||'#a7c5ff'; const x=this.x,y=this.y,w=this.w,h=this.h; ctx.fillRect(x+2,y+4,w-4,h-8); ctx.fillRect(x+6,y,w-12,6); ctx.fillRect(x+4,y+h-6,w-8,6); ctx.fillStyle='#0b0f14'; ctx.fillRect(x+8,y+8,4,4); ctx.fillRect(x+w-12,y+8,4,4); ctx.restore(); } }
 
   function createWave(level=1){
@@ -201,7 +201,7 @@
   }
 
   function togglePause(){ if(GAME.state!=='playing' && GAME.state!=='paused') return; GAME.state = (GAME.state==='playing')?'paused':'playing'; }
-  function tryShoot(ts){ if(!GAME.player||!GAME.keys.shoot) return; if(ts - GAME.lastShotAt < GAME.player.cooldown) return; GAME.lastShotAt=ts; GAME.playerBullets.push(new Bullet(GAME.player.x + GAME.player.w/2 - 1.5, GAME.player.y - 10, -520, true)); }
+  function tryShoot(ts){ if(!GAME.player||!GAME.keys.shoot) return; if(ts - GAME.lastShotAt < GAME.player.cooldown) return; GAME.lastShotAt=ts; const bulletSpeed = hasOmegaCannon ? -660 : -520; const bulletX = GAME.player.x + GAME.player.w/2 - (hasOmegaCannon ? 3 : 1.5); GAME.playerBullets.push(new Bullet(bulletX, GAME.player.y - 10, bulletSpeed, true, { rainbow: hasRainbowLaser, omega: hasOmegaCannon })); }
   function enemyFire(ts){ if(ts - GAME.lastEnemyFire < GAME.enemyFireInterval) return; GAME.lastEnemyFire=ts; const alive=GAME.invaders.filter(i=>i.alive); if(!alive.length) return; const byCol=new Map(); for(const inv of alive){ const col=Math.round(inv.x/50); if(!byCol.has(col) || byCol.get(col).y<inv.y) byCol.set(col, inv); } const choices=Array.from(byCol.values()); const shooter=choices[randInt(0, choices.length-1)]; GAME.invaderBullets.push(new Bullet(shooter.x + shooter.w/2 - 1.5, shooter.y + shooter.h + 4, 240, false)); }
 
   let last=performance.now(); requestAnimationFrame(loop);
@@ -229,7 +229,7 @@
     finalScoreEl.textContent = `Score: ${GAME.score}`;
     // Award coins: Math.floor(score / 50)
     const coins = Math.floor((GAME.score || 0) / 50);
-    if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
+    if (coins > 0) addCoinsFn(coins);
     gameOverOverlay.style.display = 'grid';
     if (activePointerId !== null) {
       try { canvas.releasePointerCapture(activePointerId); } catch {}

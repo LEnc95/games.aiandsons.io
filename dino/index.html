@@ -58,12 +58,7 @@
   <script type="module">
     import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
     import { maybeUnlock } from '../src/prog/achievements.js';
-    window.addCoins = addCoinsFn;
-    window.maybeUnlock = maybeUnlock;
     rememberRecent('dino');
-    window.dinoInventory = appState.inventory;
-  </script>
-  <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     const container = document.getElementById('canvas-container');
@@ -101,7 +96,7 @@
 
     const DINO_TRAIL_ITEM_ID = 'dino-trail';
     const DINO_LIGHTNING_ITEM_ID = 'dino-lightning';
-    const inventory = window.dinoInventory instanceof Set ? window.dinoInventory : new Set();
+    const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
     const hasMeteorTrail = inventory.has(DINO_TRAIL_ITEM_ID);
     const hasLightningTrail = inventory.has(DINO_LIGHTNING_ITEM_ID);
 
@@ -205,11 +200,9 @@
           const newHigh = setHigh(Math.floor(state.score)); 
           // Award coins: Math.floor(distance / 50) where distance is state.score
           const coins = Math.floor(state.score / 50);
-          if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
+          if (coins > 0) addCoinsFn(coins);
           // Check achievements: dino-300 (300+ distance), first-run
-          if (typeof maybeUnlock === 'function') {
-            maybeUnlock({ anyPlay: true, dino: { dist: state.score } });
-          }
+          maybeUnlock({ anyPlay: true, dino: { dist: state.score } });
           updateHUD();
           hintEl.textContent = newHigh? `🎉 New High! ${Math.floor(state.score)}` : `Game Over! Score: ${Math.floor(state.score)}`;
           return;
@@ -297,4 +290,3 @@
   </script>
 </body>
 </html>
-

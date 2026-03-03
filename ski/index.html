@@ -76,14 +76,8 @@
 
   <script type="module">
     import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
-    window.addCoins = addCoinsFn;
     rememberRecent('ski');
 
-    // Check which skier skins/scenes are unlocked from inventory
-    window.skiInventory = appState.inventory;
-  </script>
-
-  <script>
     // ── Config ──────────────────────────────────────────────────────────────
     const W = 320, H = 480;
     const BASE_SPEED = 120;      // px/s scroll speed at start
@@ -195,12 +189,12 @@
     function spawnObstacle() {
       const type = Math.random() < TREE_SPAWN_PROBABILITY ? 'tree' : 'rock';
       const x = 24 + Math.random() * (W - 48);
-      gs.obstacles.push({ type, x, y: -30 });
+      gs.obstacles.push({ type, x, y: H + 30 });
     }
 
     function spawnCoin() {
       const x = 20 + Math.random() * (W - 40);
-      gs.coins.push({ x, y: -16, collected: false });
+      gs.coins.push({ x, y: H + 16, collected: false });
     }
 
     // ── Drawing helpers ──────────────────────────────────────────────────────
@@ -364,7 +358,7 @@
       // Horizontal depth lines (perspective cross-hatching)
       ctx.strokeStyle = s.trackLine;
       ctx.lineWidth = 1.5;
-      const tOff = scrollY % 60;
+      const tOff = ((-scrollY) % 60 + 60) % 60;
       for (let ty = SNOW_TOP + tOff; ty < H; ty += 60) {
         const frac = (ty - SNOW_TOP) / (H - SNOW_TOP);
         const lx = W / 2 - 70 - frac * 80;
@@ -375,7 +369,7 @@
       // Left/right tree borders
       ctx.fillStyle = s.treeFill;
       for (let i = 0; i < 3; i++) {
-        const ty = ((scrollY * 0.7 + i * 160) % (H + 60)) - 30;
+        const ty = (((-scrollY * 0.7 + i * 160) % (H + 60)) + (H + 60)) % (H + 60) - 30;
         drawTree(14, ty, scene);
         drawTree(W - 14, ty, scene);
       }
@@ -389,7 +383,7 @@
       gs.speedMult = 1 + gs.dist * SPEED_RAMP;
       const speed = BASE_SPEED * gs.speedMult;
 
-      gs.scrollY += speed * dt;
+      gs.scrollY -= speed * dt;
       gs.score = Math.floor(gs.dist * 10);
 
       // Steer
@@ -412,14 +406,14 @@
 
       // Move obstacles
       gs.obstacles = gs.obstacles.filter(o => {
-        o.y += speed * dt;
-        return o.y < H + 40;
+        o.y -= speed * dt;
+        return o.y > -40;
       });
 
       // Move coins
       gs.coins = gs.coins.filter(c => {
         if (c.collected) return false;
-        c.y += speed * dt;
+        c.y -= speed * dt;
         // Coin collection
         const dx = gs.skier.x - c.x;
         const dy = gs.skier.y - c.y;
@@ -429,7 +423,7 @@
           gs.score += 5;
           return false;
         }
-        return c.y < H + 20;
+        return c.y > -20;
       });
 
       // Collision with obstacles
@@ -542,7 +536,7 @@
       gameStarted = false;
       // Award coins
       const earned = gs.coinsEarned + Math.floor(gs.score / SCORE_PER_COIN);
-      if (earned > 0 && typeof addCoins === 'function') addCoins(earned);
+      if (earned > 0) addCoinsFn(earned);
       // High score
       const prev = getHighScore();
       if (gs.score > prev) setHighScore(gs.score);
@@ -582,7 +576,7 @@
 
     function isUnlocked(itemId) {
       if (!itemId) return true; // default options are always free
-      const inv = window.skiInventory;
+      const inv = appState.inventory instanceof Set ? appState.inventory : new Set();
       return inv instanceof Set ? inv.has(itemId) : false;
     }
 
