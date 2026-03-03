@@ -84,7 +84,7 @@ Primary automated check:
 - `node --test tests/shop-items.integration.test.mjs`
 
 What this test protects:
-- shop item IDs uniqueness,
+- uniqueness of shop item IDs,
 - cosmetic item → style-handler coverage,
 - inventory ID prefix → known game mapping.
 
