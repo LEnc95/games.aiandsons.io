@@ -88,6 +88,7 @@
     const STEER_SPEED = 190;     // px/s lateral movement
     const TREE_SPAWN_PROBABILITY = 0.55; // chance an obstacle is a tree vs rock
     const SCORE_PER_COIN = 20;   // score points needed per awarded coin
+    const COIN_PICKUP_RADIUS_SQ = 18 * 18;
 
     // Skier skins
     const SKIERS = {
@@ -134,6 +135,7 @@
     let gameStarted = false;
     let currentSkier = 'classic';
     let currentScene = 'alpine';
+    let currentTimeSec = 0;
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -157,6 +159,7 @@
 
     // Game objects
     let gs; // game state object
+    const sceneAssets = {};
 
     function initGame() {
       gs = {
@@ -168,6 +171,7 @@
           x: Math.random() * W,
           y: Math.random() * H * 0.28,
           r: Math.random() * 1.5 + 0.5,
+          tw: Math.random() * Math.PI * 2,
         })),
         scrollY: 0,
         score: 0,
@@ -183,6 +187,32 @@
       updateScoreUI();
       updateStartBtn();
       setHint('Tap left/right sides or use arrow keys to steer.');
+    }
+
+
+    function getSceneAssets(scene) {
+      if (sceneAssets[scene]) return sceneAssets[scene];
+
+      const s = SCENES[scene];
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, H * 0.30);
+      skyGradient.addColorStop(0, s.sky[0]);
+      skyGradient.addColorStop(1, s.sky[1]);
+
+      const speckleCanvas = document.createElement('canvas');
+      speckleCanvas.width = 32;
+      speckleCanvas.height = 32;
+      const sp = speckleCanvas.getContext('2d');
+      sp.fillStyle = 'rgba(255,255,255,0.2)';
+      const points = [
+        [2, 3], [11, 7], [23, 5], [28, 14],
+        [7, 17], [19, 19], [3, 26], [14, 29], [26, 25],
+      ];
+      for (const [x, y] of points) sp.fillRect(x, y, 1.6, 1.6);
+
+      const snowPattern = ctx.createPattern(speckleCanvas, 'repeat');
+      const assets = { skyGradient, snowPattern };
+      sceneAssets[scene] = assets;
+      return assets;
     }
 
     // ── Obstacle / Coin spawning ──────────────────────────────────────────────
@@ -250,7 +280,7 @@
     function drawSkier(x, y, skin, vx) {
       const sk = SKIERS[skin];
       const lean = Math.max(-0.35, Math.min(0.35, vx / STEER_SPEED * 0.35));
-      const t = performance.now() / 1000;
+      const t = currentTimeSec;
       const bob = Math.sin(t * 9) * 0.7;
       const skiTipLift = Math.max(0, Math.abs(lean) * 1.6);
       ctx.save();
@@ -362,17 +392,15 @@
       const s = SCENES[scene];
 
       // Sky — top 30 % of canvas
-      const grad = ctx.createLinearGradient(0, 0, 0, H * 0.30);
-      grad.addColorStop(0, s.sky[0]);
-      grad.addColorStop(1, s.sky[1]);
-      ctx.fillStyle = grad;
+      const assets = getSceneAssets(scene);
+      ctx.fillStyle = assets.skyGradient;
       ctx.fillRect(0, 0, W, H * 0.30);
 
       // Stars (night scene)
       if (scene === 'night') {
         ctx.fillStyle = '#ffffff';
         for (const star of gs.stars) {
-          ctx.globalAlpha = 0.7 + 0.3 * Math.sin(Date.now() / 800 + star.x);
+          ctx.globalAlpha = 0.7 + 0.3 * Math.sin(currentTimeSec * 1.25 + star.tw);
           ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2); ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -409,14 +437,13 @@
       ctx.fillStyle = s.snowColor;
       ctx.fillRect(0, SNOW_TOP, W, H - SNOW_TOP);
 
-      // subtle snow texture
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      const speckleOffset = ((-scrollY) % 24 + 24) % 24;
-      for (let sy = SNOW_TOP + speckleOffset; sy < H; sy += 24) {
-        for (let sx = (sy % 20); sx < W; sx += 26) {
-          ctx.fillRect(sx, sy, 1.6, 1.6);
-        }
-      }
+      // subtle snow texture (pattern fill is cheaper than per-frame nested loops)
+      const speckleOffset = ((-scrollY) % 32 + 32) % 32;
+      ctx.save();
+      ctx.translate(0, speckleOffset);
+      ctx.fillStyle = assets.snowPattern;
+      ctx.fillRect(0, SNOW_TOP - 32, W, H - SNOW_TOP + 32);
+      ctx.restore();
 
       // Perspective V-lines radiating from the vanishing point (horizon)
       const vx = W / 2, vy = SNOW_TOP;
@@ -494,7 +521,7 @@
         // Coin collection
         const dx = gs.skier.x - c.x;
         const dy = gs.skier.y - c.y;
-        if (Math.sqrt(dx * dx + dy * dy) < 18) {
+        if (dx * dx + dy * dy < COIN_PICKUP_RADIUS_SQ) {
           c.collected = true;
           gs.coinsEarned++;
           gs.score += 5;
@@ -748,6 +775,7 @@
     function loop(ts) {
       const dt = Math.min(1 / 30, (ts - lastT) / 1000) || 0;
       lastT = ts;
+      currentTimeSec = ts / 1000;
 
       // Apply keyboard/touch steering
       if (gs && gameStarted && !paused && !gameOver) {
