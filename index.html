@@ -15,7 +15,10 @@
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px clamp(16px,4vw,32px); background:rgba(12,20,46,0.6); backdrop-filter:blur(8px); border-bottom:1px solid rgba(90,173,221,0.2); flex-wrap:wrap; }
     .topbar-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
     .topbar-right { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .welcome-wrap { display:flex; flex-direction:column; gap:8px; min-width:0; }
     .welcome { font-size:clamp(14px,2vw,16px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-badges { display:flex; flex-wrap:wrap; gap:6px; }
+    .profile-badge { padding:4px 8px; border-radius:999px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); color:var(--fg); font-size:12px; font-weight:600; }
     .coin-display { display:flex; align-items:center; gap:6px; padding:8px 14px; background:rgba(90,173,221,0.15); border:1px solid rgba(90,173,221,0.3); border-radius:12px; font-weight:600; font-size:14px; }
     .topbar-btn { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; transition:all 0.2s; cursor:pointer; }
     .topbar-btn:hover { background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2); }
@@ -86,7 +89,10 @@
 <body>
   <div class="topbar">
     <div class="topbar-left">
-      <span class="welcome" id="welcome">Welcome!</span>
+      <div class="welcome-wrap">
+        <span class="welcome" id="welcome">Welcome!</span>
+        <div class="profile-badges" id="profileBadges"></div>
+      </div>
     </div>
     <div class="topbar-right">
       <div class="coin-display">
@@ -249,13 +255,14 @@
   <script type="module">
     import { state, save, rememberRecent } from './src/core/state.js';
     import { GAMES } from './src/meta/games.js';
-    import { listBadges, maybeUnlock } from './src/prog/achievements.js';
+    import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
     window.maybeUnlock = maybeUnlock;
 
     // Update UI
     function updateUI() {
       const welcomeEl = document.getElementById('welcome');
       const coinsEl = document.getElementById('coins');
+      const profileBadgesEl = document.getElementById('profileBadges');
       const recentSection = document.getElementById('recentSection');
       const recentGrid = document.getElementById('recentGrid');
       const gamesGrid = document.getElementById('gamesGrid');
@@ -263,6 +270,18 @@
       // Welcome & Coins
       welcomeEl.textContent = state.profile.name || 'Welcome! Click Profile to set your name';
       coinsEl.textContent = state.coins;
+
+      const ownedBadges = listOwnedBadges();
+      profileBadgesEl.innerHTML = '';
+      if (ownedBadges.length) {
+        ownedBadges.slice(0, 6).forEach((badge) => {
+          const chip = document.createElement('span');
+          chip.className = 'profile-badge';
+          chip.title = badge.name;
+          chip.textContent = `${badge.icon} ${badge.name}`;
+          profileBadgesEl.appendChild(chip);
+        });
+      }
 
       // Recently Played
       if (state.recent.length > 0) {
@@ -342,7 +361,7 @@
         const item = document.createElement('div');
         item.className = 'badge-item' + (badge.owned ? ' owned' : '');
         item.innerHTML = `
-          <h3>${badge.owned ? '✓' : '○'} ${badge.name}</h3>
+          <h3>${badge.owned ? '✓' : '○'} ${badge.icon} ${badge.name}</h3>
           <p>${badge.desc}</p>
         `;
         grid.appendChild(item);
