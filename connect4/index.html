@@ -63,8 +63,9 @@
   </div>
 
   <script type="module">
-    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
     window.addCoins = addCoinsFn;
+    window.hasConnect4DiamondDiscs = () => appState.inventory instanceof Set && appState.inventory.has('connect4-diamond');
     rememberRecent('connect4');
   </script>
   <script>
@@ -102,6 +103,7 @@
 
     function draw(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
+      const hasDiamondDiscs = typeof hasConnect4DiamondDiscs === 'function' && hasConnect4DiamondDiscs();
       const s = cellSize();
       const boardW = s*cfg.cols + cfg.gap*(cfg.cols-1);
       const boardH = s*cfg.rows + cfg.gap*(cfg.rows-1);
@@ -141,10 +143,36 @@
           const cx = x + s/2, cy = y + s/2, rr = s*0.38;
           ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI*2);
           const v = board[r][c];
-          if (v===1) ctx.fillStyle = '#fa4';
-          else if (v===2) ctx.fillStyle = '#5ad';
+          if (v===1) {
+            if (hasDiamondDiscs) {
+              const grad = ctx.createRadialGradient(cx - rr * 0.35, cy - rr * 0.35, rr * 0.2, cx, cy, rr);
+              grad.addColorStop(0, '#fff7ed');
+              grad.addColorStop(0.35, '#fdba74');
+              grad.addColorStop(1, '#c2410c');
+              ctx.fillStyle = grad;
+            } else {
+              ctx.fillStyle = '#fa4';
+            }
+          }
+          else if (v===2) {
+            if (hasDiamondDiscs) {
+              const grad = ctx.createRadialGradient(cx - rr * 0.35, cy - rr * 0.35, rr * 0.2, cx, cy, rr);
+              grad.addColorStop(0, '#eff6ff');
+              grad.addColorStop(0.35, '#93c5fd');
+              grad.addColorStop(1, '#1d4ed8');
+              ctx.fillStyle = grad;
+            } else {
+              ctx.fillStyle = '#5ad';
+            }
+          }
           else ctx.fillStyle = '#0b1020';
           ctx.fill();
+
+          if (hasDiamondDiscs && v !== 0) {
+            ctx.strokeStyle = v === 1 ? '#fed7aa' : '#bfdbfe';
+            ctx.lineWidth = Math.max(1.5, rr * 0.12);
+            ctx.stroke();
+          }
         }
       }
 
@@ -283,5 +311,4 @@
   </script>
 </body>
 </html>
-
 
