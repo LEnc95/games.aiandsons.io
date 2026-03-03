@@ -19,6 +19,7 @@ const GAME_FILE_BY_PREFIX = {
   spaceinvaders: 'spaceinvaders/index.html',
   frogger: 'frogger/index.html',
   ski: 'ski/index.html',
+  '2048': '2048/index.html',
 };
 
 function extractItems(shopHtml) {

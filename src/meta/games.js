@@ -1,4 +1,5 @@
 export const GAMES = [
+  { slug:'2048',        name:'2048',         emoji:'🔢', scoreHint:'best tile', url:'/2048',        desc:'Slide and merge matching tiles until you reach 2048.' },
   { slug:'pong',        name:'Pong',         emoji:'🏓', scoreHint:'returns',   url:'/pong',         desc:'Classic paddle game. Play against the computer!' },
   { slug:'snake',       name:'Snake',        emoji:'🐍', scoreHint:'length',    url:'/snake',        desc:'Eat food, grow longer, avoid walls and yourself.' },
   { slug:'tictactoe',   name:'Tic-Tac-Toe',  emoji:'⭕', scoreHint:'wins',      url:'/tictactoe',    desc:'Play vs AI or local 2‑player. Try to get 3 in a row!' },
