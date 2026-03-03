@@ -116,20 +116,35 @@
       started=false; paused=false; over=false; updateHUD(); hintEl.textContent='Tap/Click/Space to jump. Hold ↓ to duck.';
     }
 
+    function spawnTrailParticle({ burst = false } = {}){
+      if(!hasMeteorTrail && !hasLightningTrail) return;
+      const isLightning = hasLightningTrail;
+      const dinoW = state.dino.w * (state.dino.duck ? cfg.duckScale : 1);
+      const dinoH = state.dino.h * (state.dino.duck ? cfg.duckScale : 1);
+      state.trail.push({
+        x: state.dino.x + 2,
+        y: state.dino.y - dinoH * (0.2 + Math.random() * 0.6),
+        vx: -150 - Math.random() * (isLightning ? 250 : 130) - (burst ? 80 : 0),
+        vy: (Math.random() - 0.5) * (burst ? 120 : 60),
+        size: isLightning ? 3 + Math.random() * 4 : 2 + Math.random() * 3,
+        life: burst ? (isLightning ? 0.35 + Math.random() * 0.2 : 0.4 + Math.random() * 0.25) : (isLightning ? 0.22 + Math.random() * 0.12 : 0.28 + Math.random() * 0.15),
+        maxLife: isLightning ? 0.6 : 0.75,
+        stretch: burst ? 4 + Math.random() * 2 : 3 + Math.random() * 1.5,
+      });
+      if (state.trail.length > 120) state.trail.shift();
+    }
+
     function addTrailBurst(){
       if(!hasMeteorTrail && !hasLightningTrail) return;
-      const count = hasLightningTrail ? 16 : 10;
-      for(let i=0; i<count; i++){
-        state.trail.push({
-          x: state.dino.x - 2,
-          y: state.dino.y - 20 - Math.random()*18,
-          vx: -120 - Math.random() * (hasLightningTrail ? 200 : 120),
-          vy: (Math.random() - 0.5) * 80,
-          size: hasLightningTrail ? 3 + Math.random() * 5 : 2 + Math.random() * 4,
-          life: hasLightningTrail ? 0.45 + Math.random() * 0.25 : 0.5 + Math.random() * 0.35,
-          maxLife: hasLightningTrail ? 0.7 : 0.85,
-        });
-      }
+      const count = hasLightningTrail ? 12 : 8;
+      for(let i=0; i<count; i++) spawnTrailParticle({ burst: true });
+    }
+
+    function emitRunningTrail(dt){
+      if(!hasMeteorTrail && !hasLightningTrail) return;
+      const spawnRate = hasLightningTrail ? 70 : 50;
+      const particles = Math.max(1, Math.floor(spawnRate * dt));
+      for(let i=0; i<particles; i++) spawnTrailParticle();
     }
 
     function jump(){
@@ -167,6 +182,7 @@
 
       // dino physics
       state.dino.vy += cfg.gravity*dt; state.dino.y += state.dino.vy*dt; if(state.dino.y>GROUND_Y){ state.dino.y=GROUND_Y; state.dino.vy=0; }
+      emitRunningTrail(dt);
 
       // move obstacles
       for(const o of state.obs){
@@ -254,7 +270,7 @@
             gradient.addColorStop(0, '#22d3ee');
             gradient.addColorStop(1, '#a855f7');
             ctx.fillStyle = gradient;
-            ctx.fillRect(p.x, p.y, p.size * 4, Math.max(2, p.size * 0.9));
+            ctx.fillRect(p.x, p.y, p.size * p.stretch, Math.max(2, p.size * 0.9));
           }
         }
         ctx.globalAlpha = 1;
