@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Micro RC Racer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html, body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; }
+    .back-home {
+      position:fixed; top:calc(env(safe-area-inset-top, 12px)); left:calc(env(safe-area-inset-left, 12px)); z-index:999;
+      display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:8px;
+      background:rgba(0,0,0,0.6); color:#fff; text-decoration:none; font-size:14px; font-weight:600;
+      backdrop-filter:saturate(150%) blur(6px); box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    }
+    .wrap { height:100vh; display:grid; grid-template-rows:auto 1fr auto; gap:10px; padding:14px; }
+    .hud { display:flex; justify-content:center; gap:18px; flex-wrap:wrap; font-size:16px; }
+    .hud .label { color:var(--muted); margin-right:6px; }
+    #game { width:min(95vw,900px); height:min(72vh,640px); border:2px solid #192544; border-radius:12px; display:block; margin:0 auto; background:#40562d; }
+    .hint { text-align:center; color:#b6c7e6; font-size:14px; min-height:1.4em; }
+    .hint strong { color:#fff; }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <div class="wrap">
+    <div class="hud">
+      <div><span class="label">Lap:</span><span id="lap">0 / 3</span></div>
+      <div><span class="label">Time:</span><span id="time">0.0s</span></div>
+      <div><span class="label">Best:</span><span id="best">--</span></div>
+    </div>
+    <canvas id="game" width="900" height="640"></canvas>
+    <div class="hint" id="hint"><strong>Controls:</strong> ⬅️/➡️ steer, ⬆️ accelerate, R restart. Stay on the dirt and drift those corners!</div>
+  </div>
+
+  <script type="module">
+    import { rememberRecent } from '../src/core/state.js';
+    rememberRecent('micro-rc-racer');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const lapEl = document.getElementById('lap');
+    const timeEl = document.getElementById('time');
+    const bestEl = document.getElementById('best');
+    const hintEl = document.getElementById('hint');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const CENTER = { x: W / 2, y: H / 2 };
+    const OUTER_A = 360, OUTER_B = 230;
+    const INNER_A = 220, INNER_B = 110;
+    const TOTAL_LAPS = 3;
+    const BEST_KEY = 'game.micro-rc-racer.best';
+
+    const keys = { left:false, right:false, up:false };
+    let prevTs = performance.now();
+    let raceTime = 0;
+    let laps = 0;
+    let finished = false;
+    let prevTheta = 0;
+
+    const car = {
+      x: CENTER.x,
+      y: CENTER.y + (INNER_B + OUTER_B) / 2,
+      angle: -Math.PI / 2,
+      vx: 0,
+      vy: 0,
+      maxSpeed: 240,
+      accel: 360,
+      drag: 1.7,
+      turnSpeed: 2.8,
+      grip: 2.3,
+      offroadGrip: 0.95,
+    };
+
+    function loadBest() {
+      const v = Number(localStorage.getItem(BEST_KEY));
+      if (Number.isFinite(v) && v > 0) return v;
+      return null;
+    }
+
+    function updateBestDisplay() {
+      const best = loadBest();
+      bestEl.textContent = best ? `${best.toFixed(1)}s` : '--';
+    }
+
+    function resetRace() {
+      car.x = CENTER.x;
+      car.y = CENTER.y + (INNER_B + OUTER_B) / 2;
+      car.angle = -Math.PI / 2;
+      car.vx = 0;
+      car.vy = 0;
+      laps = 0;
+      raceTime = 0;
+      finished = false;
+      prevTheta = Math.atan2((car.y - CENTER.y) / ((INNER_B + OUTER_B) * 0.5), (car.x - CENTER.x) / ((INNER_A + OUTER_A) * 0.5));
+      lapEl.textContent = `${laps} / ${TOTAL_LAPS}`;
+      timeEl.textContent = '0.0s';
+      hintEl.innerHTML = '<strong>Controls:</strong> ⬅️/➡️ steer, ⬆️ accelerate, R restart. Stay on the dirt and drift those corners!';
+    }
+
+    function normTrack(x, y, a, b) {
+      const dx = x - CENTER.x;
+      const dy = y - CENTER.y;
+      return (dx * dx) / (a * a) + (dy * dy) / (b * b);
+    }
+
+    function onTrack(x, y) {
+      const outerN = normTrack(x, y, OUTER_A, OUTER_B);
+      const innerN = normTrack(x, y, INNER_A, INNER_B);
+      return outerN <= 1 && innerN >= 1;
+    }
+
+    function update(dt) {
+      if (finished) return;
+      raceTime += dt;
+
+      const speed = Math.hypot(car.vx, car.vy);
+      const steeringFactor = Math.min(1, speed / 80);
+      if (keys.left) car.angle -= car.turnSpeed * steeringFactor * dt;
+      if (keys.right) car.angle += car.turnSpeed * steeringFactor * dt;
+
+      if (keys.up) {
+        car.vx += Math.cos(car.angle) * car.accel * dt;
+        car.vy += Math.sin(car.angle) * car.accel * dt;
+      }
+
+      const max = car.maxSpeed;
+      const nowSpeed = Math.hypot(car.vx, car.vy);
+      if (nowSpeed > max) {
+        const scale = max / nowSpeed;
+        car.vx *= scale;
+        car.vy *= scale;
+      }
+
+      const track = onTrack(car.x, car.y);
+      const forwardX = Math.cos(car.angle);
+      const forwardY = Math.sin(car.angle);
+      const rightX = -forwardY;
+      const rightY = forwardX;
+
+      const vForward = car.vx * forwardX + car.vy * forwardY;
+      const vLateral = car.vx * rightX + car.vy * rightY;
+      const grip = track ? car.grip : car.offroadGrip;
+      const newLateral = vLateral * Math.max(0, 1 - grip * dt);
+
+      car.vx = vForward * forwardX + newLateral * rightX;
+      car.vy = vForward * forwardY + newLateral * rightY;
+
+      const drag = track ? car.drag : car.drag * 2.6;
+      car.vx *= Math.max(0, 1 - drag * dt);
+      car.vy *= Math.max(0, 1 - drag * dt);
+
+      car.x += car.vx * dt;
+      car.y += car.vy * dt;
+
+      if (!track) {
+        hintEl.textContent = 'You are in the grass — low grip! Ease off and re-enter the dirt.';
+      }
+
+      const aMid = (INNER_A + OUTER_A) * 0.5;
+      const bMid = (INNER_B + OUTER_B) * 0.5;
+      const theta = Math.atan2((car.y - CENTER.y) / bMid, (car.x - CENTER.x) / aMid);
+      const crossedStart = (prevTheta > Math.PI * 0.72 && theta < -Math.PI * 0.72);
+      const nearBottom = Math.abs(car.x - CENTER.x) < 55 && car.y > CENTER.y;
+
+      if (crossedStart && nearBottom && track) {
+        laps += 1;
+        lapEl.textContent = `${Math.min(laps, TOTAL_LAPS)} / ${TOTAL_LAPS}`;
+        hintEl.textContent = laps < TOTAL_LAPS ? `Nice drift! ${TOTAL_LAPS - laps} lap(s) to go.` : 'Race finished! Press R to run it back.';
+        if (laps >= TOTAL_LAPS) {
+          finished = true;
+          const best = loadBest();
+          if (!best || raceTime < best) {
+            localStorage.setItem(BEST_KEY, String(raceTime));
+            hintEl.textContent = `🏁 New best: ${raceTime.toFixed(1)}s! Press R to race again.`;
+            updateBestDisplay();
+          }
+        }
+      }
+      prevTheta = theta;
+
+      timeEl.textContent = `${raceTime.toFixed(1)}s`;
+    }
+
+    function drawTrack() {
+      ctx.fillStyle = '#2f4b28';
+      ctx.fillRect(0, 0, W, H);
+
+      // Outer dirt
+      ctx.fillStyle = '#8c6239';
+      ctx.beginPath();
+      ctx.ellipse(CENTER.x, CENTER.y, OUTER_A, OUTER_B, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner grass infield
+      ctx.fillStyle = '#3a6a2b';
+      ctx.beginPath();
+      ctx.ellipse(CENTER.x, CENTER.y, INNER_A, INNER_B, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ruts/texture
+      ctx.strokeStyle = 'rgba(70,45,20,0.35)';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 5; i += 1) {
+        ctx.beginPath();
+        ctx.ellipse(CENTER.x, CENTER.y, OUTER_A - 24 - i * 15, OUTER_B - 16 - i * 9, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Start/finish stripe at bottom-center
+      const sx = CENTER.x - 48;
+      const sy = CENTER.y + ((INNER_B + OUTER_B) * 0.5) - 12;
+      ctx.fillStyle = '#f0f2f8';
+      ctx.fillRect(sx, sy, 96, 24);
+      ctx.fillStyle = '#181818';
+      for (let i = 0; i < 8; i += 1) {
+        for (let j = 0; j < 2; j += 1) {
+          if ((i + j) % 2 === 0) ctx.fillRect(sx + i * 12, sy + j * 12, 12, 12);
+        }
+      }
+    }
+
+    function drawCar() {
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(car.angle);
+
+      const speed = Math.hypot(car.vx, car.vy);
+      const shake = Math.min(2, speed * 0.01);
+      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+
+      ctx.fillStyle = '#223247';
+      ctx.fillRect(-14, -8, 28, 16);
+      ctx.fillStyle = '#5ad';
+      ctx.fillRect(-11, -6, 22, 12);
+      ctx.fillStyle = '#7be7ff';
+      ctx.fillRect(1, -4, 8, 8);
+
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-16, -10, 6, 5);
+      ctx.fillRect(10, -10, 6, 5);
+      ctx.fillRect(-16, 5, 6, 5);
+      ctx.fillRect(10, 5, 6, 5);
+      ctx.restore();
+    }
+
+    function draw() {
+      drawTrack();
+      drawCar();
+    }
+
+    function frame(ts) {
+      const dt = Math.min(0.033, (ts - prevTs) / 1000);
+      prevTs = ts;
+      update(dt);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') keys.left = true;
+      if (e.key === 'ArrowRight') keys.right = true;
+      if (e.key === 'ArrowUp') keys.up = true;
+      if (e.key === 'r' || e.key === 'R') resetRace();
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp'].includes(e.key)) e.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') keys.left = false;
+      if (e.key === 'ArrowRight') keys.right = false;
+      if (e.key === 'ArrowUp') keys.up = false;
+    });
+
+    updateBestDisplay();
+    resetRace();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
