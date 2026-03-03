@@ -29,3 +29,14 @@ export const marioShirt = () => {
     default: return '#ef4444';
   }
 };
+
+export const memoryCardBackStyle = () => {
+  switch (state.cosmetics.memoryCardBack) {
+    case 'holo':
+      return 'holo';
+    case 'prismatic':
+      return 'prismatic';
+    default:
+      return 'default';
+  }
+};
