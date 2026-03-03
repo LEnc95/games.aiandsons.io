@@ -15,5 +15,6 @@ export const GAMES = [
   { slug:'minigolf',    name:'Pocket Mini Golf', emoji:'⛳', scoreHint:'low score', url:'/minigolf',   desc:'Pull back and putt through hazards across 3 compact holes.' },
   { slug:'micro-mario', name:'Micro Mario',  emoji:'🍄', scoreHint:'coins',     url:'/mario',        desc:'Tiny platformer. Collect coins and reach the flag.' },
   { slug:'ski',         name:'Retro Downhill Ski', emoji:'⛷️', scoreHint:'distance', url:'/ski',    desc:'Dodge trees and rocks as you race down the mountain!' },
+  { slug:'homerunderby', name:'Home Run Derby', emoji:'⚾', scoreHint:'homeruns', url:'/homerunderby/', desc:'Time your swing to crush home runs before you rack up 10 outs.' },
   { slug:'micro-rc-racer', name:'Micro RC Racer', emoji:'🏎️', scoreHint:'best lap', url:'/microrc', desc:'Top-down RC dirt racing with tank steering and slippery drifts.' },
 ];

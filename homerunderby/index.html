@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Home Run Derby</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; }
+    .wrap { min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:16px; }
+    #canvas-wrap { width:min(95vw,560px); aspect-ratio:4/3; }
+    canvas { width:100%; height:100%; border:2px solid #192544; border-radius:14px; display:block; background:#162038; }
+    .hud { width:min(95vw,560px); }
+    .stats { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; font-size:clamp(14px,2.4vw,18px); }
+    .hint { color:var(--muted); text-align:center; min-height:1.4em; margin-top:8px; }
+    .buttons { margin-top:10px; display:flex; gap:10px; justify-content:center; }
+    .btn { padding:11px 18px; border-radius:10px; border:2px solid #3a4a6f; background:#2a3a5f; color:var(--fg); font-weight:700; cursor:pointer; }
+    .btn.primary { background:#5ad; border-color:#6be; color:#0b1020; }
+    .btn:active { transform:scale(0.97); }
+    .back-home { position:fixed; top:calc(env(safe-area-inset-top, 12px)); left:calc(env(safe-area-inset-left, 12px)); z-index:9999; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,0.6); color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home">← Back</a>
+  <div class="wrap">
+    <div id="canvas-wrap"><canvas id="game" width="560" height="420"></canvas></div>
+    <div class="hud">
+      <div class="stats">
+        <div>⚾ Homeruns: <strong id="hr">0</strong></div>
+        <div>🔥 Streak: <strong id="streak">0</strong></div>
+        <div>❌ Outs: <strong id="outs">0</strong>/10</div>
+        <div>🏆 Best: <strong id="best">0</strong></div>
+      </div>
+      <div class="hint" id="hint">Press START then tap/click/space to swing when the ball crosses the plate.</div>
+      <div class="buttons">
+        <button class="btn primary" id="start">START</button>
+        <button class="btn" id="swing">SWING</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as appState } from '../src/core/state.js';
+    rememberRecent('homerunderby');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const hrEl = document.getElementById('hr');
+    const streakEl = document.getElementById('streak');
+    const outsEl = document.getElementById('outs');
+    const bestEl = document.getElementById('best');
+    const hintEl = document.getElementById('hint');
+
+    const bestKey = 'homerunderby_best';
+    let best = parseInt(localStorage.getItem(bestKey) || '0', 10);
+    bestEl.textContent = String(best);
+
+    let running = false;
+    let last = 0;
+    let pitchCooldown = 0;
+    let ball = null;
+    let homeruns = 0;
+    let outs = 0;
+    let streak = 0;
+    let coinsEarned = 0;
+
+    const plateX = 410;
+    const sweetSpot = 20;
+
+    function resetGame() {
+      homeruns = 0; outs = 0; streak = 0; coinsEarned = 0;
+      ball = null; pitchCooldown = 0;
+      updateHud();
+      hint('Time your swing for the sweet spot!');
+    }
+
+    function updateHud() {
+      hrEl.textContent = String(homeruns);
+      streakEl.textContent = String(streak);
+      outsEl.textContent = String(outs);
+      bestEl.textContent = String(best);
+    }
+
+    function hint(msg) { hintEl.textContent = msg; }
+
+    function spawnPitch() {
+      const speed = 210 + Math.random() * 70 + homeruns * 5;
+      ball = { x: 40, y: 270 + (Math.random() * 30 - 15), speed, swung:false };
+    }
+
+    function swing() {
+      if (!running || !ball || ball.swung) return;
+      ball.swung = true;
+      const d = Math.abs(ball.x - plateX);
+      if (d <= sweetSpot) {
+        homeruns += 1;
+        streak += 1;
+        if (streak % 2 === 0) coinsEarned += 1;
+        hint('💥 HOME RUN! Perfect timing.');
+      } else if (d <= 45) {
+        streak = 0;
+        hint('🟡 Deep fly ball... caught at the wall.');
+        outs += 1;
+      } else {
+        streak = 0;
+        hint('❌ Swing and a miss.');
+        outs += 1;
+      }
+      ball = null;
+      pitchCooldown = 0.55;
+      updateHud();
+      checkEnd();
+    }
+
+    function checkEnd() {
+      if (outs < 10) return;
+      running = false;
+      if (homeruns > best) {
+        best = homeruns;
+        localStorage.setItem(bestKey, String(best));
+      }
+      const bonus = Math.floor(homeruns / 3);
+      const payout = coinsEarned + bonus;
+      if (payout > 0) addCoins(payout);
+      hint(`Game over! ${homeruns} homeruns. +${payout} coins.`);
+      updateHud();
+    }
+
+    function drawField() {
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, '#1e2e4f');
+      g.addColorStop(1, '#0f172a');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#1f5f2f';
+      ctx.beginPath();
+      ctx.moveTo(0, 360);
+      ctx.lineTo(560, 360);
+      ctx.lineTo(560, 420);
+      ctx.lineTo(0, 420);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#d8c08d';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(plateX, 330);
+      ctx.lineTo(540, 200);
+      ctx.moveTo(plateX, 330);
+      ctx.lineTo(540, 380);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f3f4f6';
+      ctx.beginPath();
+      ctx.moveTo(plateX - 14, 330);
+      ctx.lineTo(plateX + 14, 330);
+      ctx.lineTo(plateX + 8, 346);
+      ctx.lineTo(plateX - 8, 346);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillRect(368, 250, 22, 80);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(388, 286, 8, 46);
+    }
+
+    function drawBall() {
+      if (!ball) return;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ball.x - 1, ball.y, 5, 0.7, 2.4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ball.x + 1, ball.y, 5, 3.8, 5.6);
+      ctx.stroke();
+    }
+
+    function drawTimingZone() {
+      ctx.fillStyle = 'rgba(250,204,21,0.22)';
+      ctx.fillRect(plateX - sweetSpot, 238, sweetSpot * 2, 82);
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 13px system-ui';
+      ctx.fillText('Sweet Spot', plateX - 34, 232);
+    }
+
+    function loop(ts) {
+      const dt = Math.min(0.033, (ts - last) / 1000 || 0);
+      last = ts;
+
+      if (running) {
+        if (!ball) {
+          pitchCooldown -= dt;
+          if (pitchCooldown <= 0) spawnPitch();
+        }
+
+        if (ball) {
+          ball.x += ball.speed * dt;
+          if (ball.x > canvas.width + 30) {
+            outs += 1;
+            streak = 0;
+            hint('Strike looking! You did not swing.');
+            ball = null;
+            pitchCooldown = 0.5;
+            updateHud();
+            checkEnd();
+          }
+        }
+      }
+
+      drawField();
+      drawTimingZone();
+      drawBall();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('start').addEventListener('click', () => {
+      resetGame();
+      running = true;
+      hint('Derby started! Swing as the ball reaches the plate.');
+    });
+    document.getElementById('swing').addEventListener('click', swing);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        swing();
+      }
+    });
+    canvas.addEventListener('pointerdown', swing);
+
+    if (appState?.playerName) hint(`Step up, ${appState.playerName}! Press START for your derby.`);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
