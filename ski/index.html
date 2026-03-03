@@ -200,11 +200,14 @@
     // ── Drawing helpers ──────────────────────────────────────────────────────
     function drawTree(x, y, scene) {
       const s = SCENES[scene];
+      const coneGrad = ctx.createLinearGradient(x, y - 22, x, y + 16);
+      coneGrad.addColorStop(0, s.treeFill);
+      coneGrad.addColorStop(1, s.treeDark);
       // trunk
       ctx.fillStyle = '#5d3a1a';
       ctx.fillRect(x - 3, y + 10, 6, 14);
       // layers
-      ctx.fillStyle = s.treeFill;
+      ctx.fillStyle = coneGrad;
       ctx.beginPath(); ctx.moveTo(x, y - 22); ctx.lineTo(x - 14, y + 14); ctx.lineTo(x + 14, y + 14); ctx.closePath(); ctx.fill();
       ctx.fillStyle = s.treeDark;
       ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x - 10, y + 6); ctx.lineTo(x + 10, y + 6); ctx.closePath(); ctx.fill();
@@ -215,7 +218,11 @@
 
     function drawRock(x, y, scene) {
       const s = SCENES[scene];
-      ctx.fillStyle = s.rockFill;
+      const rg = ctx.createLinearGradient(x - 14, y - 12, x + 14, y + 10);
+      rg.addColorStop(0, '#a6b1b2');
+      rg.addColorStop(0.45, s.rockFill);
+      rg.addColorStop(1, '#5f6a6b');
+      ctx.fillStyle = rg;
       ctx.beginPath();
       ctx.moveTo(x - 14, y + 10);
       ctx.lineTo(x - 10, y - 8);
@@ -232,21 +239,44 @@
       ctx.lineTo(x + 10, y - 2);
       ctx.closePath();
       ctx.fill();
+
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.16)';
+      ctx.beginPath();
+      ctx.ellipse(x + 3, y + 12, 12, 4, -0.2, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function drawSkier(x, y, skin, vx) {
       const sk = SKIERS[skin];
       const lean = Math.max(-0.35, Math.min(0.35, vx / STEER_SPEED * 0.35));
+      const t = performance.now() / 1000;
+      const bob = Math.sin(t * 9) * 0.7;
+      const skiTipLift = Math.max(0, Math.abs(lean) * 1.6);
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(x, y + bob);
       ctx.rotate(lean);
 
+      // contact shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(1, 16, 15, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
       // skis
-      ctx.strokeStyle = '#2c3e50';
-      ctx.lineWidth = 2.5;
+      const skiGrad = ctx.createLinearGradient(-12, 10, 14, 14);
+      skiGrad.addColorStop(0, '#2f415e');
+      skiGrad.addColorStop(1, '#5f7da8');
+      ctx.strokeStyle = skiGrad;
+      ctx.lineWidth = 3;
       ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(-10, 12); ctx.lineTo(12, 14); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-8, 10); ctx.lineTo(14, 12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-10, 13 - skiTipLift); ctx.quadraticCurveTo(0, 15, 12, 14 - skiTipLift); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-8, 10 - skiTipLift); ctx.quadraticCurveTo(3, 12, 14, 11 - skiTipLift); ctx.stroke();
+
+      // boots
+      ctx.fillStyle = '#1c273a';
+      ctx.fillRect(-7, 9, 6, 4);
+      ctx.fillRect(1, 9, 6, 4);
 
       // legs / pants
       ctx.fillStyle = sk.pants;
@@ -254,26 +284,51 @@
       ctx.fillRect(2, 4, 5, 8);
 
       // body / jacket
-      ctx.fillStyle = sk.suit;
+      const jacketGrad = ctx.createLinearGradient(-7, -8, 7, 8);
+      jacketGrad.addColorStop(0, sk.body);
+      jacketGrad.addColorStop(1, sk.suit);
+      ctx.fillStyle = jacketGrad;
       ctx.fillRect(-7, -6, 14, 12);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -5);
+      ctx.lineTo(0, 5);
+      ctx.stroke();
+
+      // scarf
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(-4, -7, 8, 3);
+      ctx.fillRect(3, -4, 5, 2);
 
       // head
-      ctx.fillStyle = sk.body;
+      ctx.fillStyle = '#f0c9a6';
       ctx.beginPath();
       ctx.arc(0, -11, 6, 0, Math.PI * 2);
       ctx.fill();
 
+      // helmet
+      ctx.fillStyle = sk.body;
+      ctx.beginPath();
+      ctx.arc(0, -13, 6.5, Math.PI, Math.PI * 2);
+      ctx.fill();
+
       // goggles
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.ellipse(-3, -11, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#222';
-      ctx.beginPath(); ctx.ellipse(-3, -11, 1.5, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(220,240,255,0.95)';
+      ctx.beginPath(); ctx.roundRect(-5.2, -13.4, 10.4, 4.8, 2.2); ctx.fill();
+      ctx.fillStyle = 'rgba(60,80,120,0.85)';
+      ctx.beginPath(); ctx.roundRect(-4.8, -13, 9.6, 3.9, 1.8); ctx.fill();
 
       // poles
-      ctx.strokeStyle = '#aaa';
+      ctx.strokeStyle = '#d9e2ec';
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-14, 10); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(14, 10); ctx.stroke();
+
+      // gloves
+      ctx.fillStyle = '#162033';
+      ctx.beginPath(); ctx.arc(-6, -0.5, 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(6, -0.5, 1.6, 0, Math.PI * 2); ctx.fill();
 
       ctx.restore();
     }
@@ -340,6 +395,15 @@
       const SNOW_TOP = H * 0.28;
       ctx.fillStyle = s.snowColor;
       ctx.fillRect(0, SNOW_TOP, W, H - SNOW_TOP);
+
+      // subtle snow texture
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      const speckleOffset = ((-scrollY) % 24 + 24) % 24;
+      for (let sy = SNOW_TOP + speckleOffset; sy < H; sy += 24) {
+        for (let sx = (sy % 20); sx < W; sx += 26) {
+          ctx.fillRect(sx, sy, 1.6, 1.6);
+        }
+      }
 
       // Perspective V-lines radiating from the vanishing point (horizon)
       const vx = W / 2, vy = SNOW_TOP;
