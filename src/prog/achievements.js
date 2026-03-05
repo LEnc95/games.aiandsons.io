@@ -10,6 +10,12 @@ const badgeDefs = [
   { id:'dino-1000', name:'Meteor Strider', icon:'☄️', desc:'Reach 1000+ distance in Dino Run', test: (ctx) => ctx.dino && ctx.dino.dist >= 1000 },
   { id:'frogger-10', name:'River Runner', icon:'🐸', desc:'Score 10+ points in Frogger', test: (ctx) => ctx.frogger && ctx.frogger.score >= 10 },
   { id:'ttt-triple', name:'Big Brain', icon:'🧠', desc:'Win 3 Tic-Tac-Toe games total', test: (ctx) => (ctx.tttWinsTotal ?? 0) >= 3 },
+  { id:'tetris-20-lines', name:'Stack Attack', icon:'🧱', desc:'Clear 20 lines in Tetris', test: (ctx) => ctx.tetris && ctx.tetris.lines >= 20 },
+  { id:'tetris-3000', name:'Tetris Titan', icon:'🌟', desc:'Reach 3000+ score in Tetris', test: (ctx) => ctx.tetris && ctx.tetris.score >= 3000 },
+  { id:'asteroids-wave-5', name:'Rock Hunter', icon:'☄️', desc:'Reach wave 5 in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.wave >= 5 },
+  { id:'asteroids-3000', name:'Deep Space Ace', icon:'🚀', desc:'Score 3000+ in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.score >= 3000 },
+  { id:'bomberman-level-4', name:'Fuse Master', icon:'💣', desc:'Reach level 4 in Bomberman Lite', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 4 },
+  { id:'bomberman-crates-40', name:'Demolition Expert', icon:'🧨', desc:'Destroy 40 crates in one Bomberman run', test: (ctx) => ctx.bomberman && ctx.bomberman.crates >= 40 },
 ];
 
 const rewardDefs = [
@@ -24,6 +30,12 @@ const rewardDefs = [
   { id: 'mario-galaxy', type: 'cosmetic', category: 'marioShirt', value: 'galaxy', name: 'Galaxy Shirt', test: (ctx) => ctx.dino && ctx.dino.dist >= 1500 },
   { id: 'frogger-lilypad', type: 'inventory', name: 'Lily Pad Trail', test: (ctx) => ctx.frogger && ctx.frogger.score >= 8 },
   { id: 'frogger-neon-rain', type: 'inventory', name: 'Neon Rain', test: (ctx) => ctx.frogger && ctx.frogger.score >= 15 },
+  { id: 'tetris-neon-grid', type: 'inventory', name: 'Neon Grid', test: (ctx) => ctx.tetris && ctx.tetris.lines >= 20 },
+  { id: 'tetris-aurora-stack', type: 'inventory', name: 'Aurora Stack', test: (ctx) => ctx.tetris && ctx.tetris.lines >= 45 },
+  { id: 'asteroids-plasma-laser', type: 'inventory', name: 'Plasma Laser', test: (ctx) => ctx.asteroids && ctx.asteroids.wave >= 4 },
+  { id: 'asteroids-nebula-drift', type: 'inventory', name: 'Nebula Drift', test: (ctx) => ctx.asteroids && ctx.asteroids.score >= 2500 },
+  { id: 'bomberman-ember-blast', type: 'inventory', name: 'Ember Blast', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 3 },
+  { id: 'bomberman-jade-maze', type: 'inventory', name: 'Jade Maze', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 5 },
 ];
 
 const addCosmeticOwnership = (reward) => {

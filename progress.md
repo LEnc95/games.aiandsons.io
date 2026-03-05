@@ -48,3 +48,77 @@
   - `output/web-game/pacman-polish-run2` via skill client: no runtime errors.
   - `output/web-game/pacman-polish-frightened-2.png` + state JSON check confirmed frightened mode still triggers with all ghosts entering frightened state.
   - Reviewed gameplay screenshots for layout and readability on desktop and mobile emulation.
+- New request (2026-03-05): Build three new games from concept shortlist (Tetris, Asteroids, Bomberman Lite).
+- Implemented new standalone game pages:
+  - `tetris/index.html`: classic falling-block gameplay with rotate/move/soft-drop/hard-drop, line clears, level speed ramp, desktop+touch controls, fullscreen (`F`), deterministic hooks (`window.advanceTime`, `window.render_game_to_text`).
+  - `asteroids/index.html`: vector ship controls (turn/thrust/fire), bullet and asteroid collisions with splitting, waves/lives/score, desktop+touch controls, fullscreen (`F`), deterministic hooks.
+  - `bomberman/index.html`: tile-grid movement, bombs + blast propagation, destructible crates, roaming enemies, exit/level progression, desktop+touch controls, fullscreen (`F`), deterministic hooks.
+- Added launcher metadata entries in `src/meta/games.js` for `/tetris`, `/asteroids`, and `/bomberman`.
+- Playwright validation runs via skill client:
+  - `output/web-game/tetris-run2`
+  - `output/web-game/asteroids-run1`
+  - `output/web-game/bomberman-run2`
+- Runtime issues fixed during validation:
+  - Tetris `ReferenceError` on initial state creation (random seed access before initialization) fixed in `tetris/index.html`.
+  - Bomberman life underflow during repeated hit checks fixed by clamping lives and guarding hit handling in `bomberman/index.html`.
+- Console/page errors after fixes: none emitted in final run directories above.
+- TODO for follow-up:
+  - Add longer deterministic action scripts that verify positive progression paths (Tetris line clear, Asteroids wave clear, Bomberman level clear/exit).
+  - Consider easing Bomberman early-level enemy pressure for younger players (slower initial enemy movement or longer spawn invulnerability).
+- Polish + integration pass completed for new games (Tetris, Asteroids, Bomberman Lite).
+- Shared progression updates:
+  - Rebuilt `src/prog/achievements.js` with new badges and reward unlock rules for:
+    - Tetris (`tetris-20-lines`, `tetris-3000`)
+    - Asteroids (`asteroids-wave-5`, `asteroids-3000`)
+    - Bomberman Lite (`bomberman-level-4`, `bomberman-crates-40`)
+  - Added auto-unlock reward items for those games (`tetris-*`, `asteroids-*`, `bomberman-*`).
+- Shop integration updates:
+  - Added new cosmetics-style inventory entries in `shop.html`:
+    - `tetris-neon-grid`, `tetris-aurora-stack`
+    - `asteroids-plasma-laser`, `asteroids-nebula-drift`
+    - `bomberman-ember-blast`, `bomberman-jade-maze`
+  - Updated `tests/shop-items.integration.test.mjs` prefix map to include `tetris`, `asteroids`, and `bomberman`.
+- Game polish + cosmetics wiring:
+  - `tetris/index.html`:
+    - Added enhanced visuals (aurora backdrop option, neon grid option, line-clear flash, particle sparks).
+    - Added achievement payload integration (`anyPlay` + `tetris` stats).
+    - Added cosmetics flags to `render_game_to_text`.
+  - `asteroids/index.html`:
+    - Added cosmetic-dependent visuals (plasma laser bullets, nebula background mode).
+    - Added combat screen-shake + stronger impact FX.
+    - Added achievement payload integration (`anyPlay` + `asteroids` stats).
+    - Added cosmetics flags to `render_game_to_text`.
+  - `bomberman/index.html`:
+    - Added cosmetic-dependent visuals (ember blast flames, jade maze palette).
+    - Added explosion/debris particles + screen-shake.
+    - Added `cratesDestroyed` tracking for badge integration.
+    - Added achievement payload integration (`anyPlay` + `bomberman` stats).
+    - Added cosmetics + crate stats to `render_game_to_text`.
+- Coin system status:
+  - All three games continue awarding coins during gameplay events and progression milestones.
+  - Shop purchases for new items use existing `spendCoins` path and persist via shared state.
+- Validation runs completed:
+  - Unit/integration: `node --test tests/shop-items.integration.test.mjs` (pass)
+  - Playwright skill client runs:
+    - `output/web-game/tetris-run3`
+    - `output/web-game/asteroids-run2`
+    - `output/web-game/bomberman-run3`
+  - Runtime error artifacts: none produced in final run directories above.
+- Follow-up TODO:
+  - Add deterministic scripted scenarios that explicitly validate each new cosmetic is reflected in screenshots (seeded localStorage pre-state + capture diff).
+- Pre-prod validation pass (2026-03-05, post-polish):
+  - Ran integration test suite: `node --test tests/shop-items.integration.test.mjs` (3/3 pass).
+  - Ran extended desktop Playwright smoke loops:
+    - `output/web-game/tetris-preprod`
+    - `output/web-game/asteroids-preprod`
+    - `output/web-game/bomberman-preprod`
+    - No `errors-*.json` produced in any of the above directories.
+  - Ran mobile interaction checks (390x844) with touch controls and state verification:
+    - `output/web-game/tetris-mobile-check.png`
+    - `output/web-game/asteroids-mobile-check.png`
+    - `output/web-game/bomberman-mobile-check.png`
+    - Confirmed score/lives/state changes via touch control inputs.
+  - Runtime persistence sanity check (namespaced storage `cadegames:v1`):
+    - Cleared storage, played Bomberman, verified `coins` increments and `badges` includes `first-run`.
+  - Runtime cosmetics wiring sanity check:
+    - Seeded inventory keys and verified `render_game_to_text().cosmetics` returns `true` flags for all 6 new cosmetics (Tetris/Asteroids/Bomberman).

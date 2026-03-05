@@ -20,6 +20,9 @@ const GAME_FILE_BY_PREFIX = {
   frogger: 'frogger/index.html',
   ski: 'ski/index.html',
   '2048': '2048/index.html',
+  tetris: 'tetris/index.html',
+  asteroids: 'asteroids/index.html',
+  bomberman: 'bomberman/index.html',
 };
 
 function extractItems(shopHtml) {

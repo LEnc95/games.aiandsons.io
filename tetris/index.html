@@ -1,0 +1,779 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tetris</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root {
+      --bg:#090f1d;
+      --panel:#131f37;
+      --panel-border:#2a3f66;
+      --fg:#eaf2ff;
+      --muted:#9cb2d8;
+      --accent:#6cd4ff;
+      --btn:#1f3359;
+      --btn-border:#365184;
+      --btn-active:#182a4a;
+    }
+    * { box-sizing:border-box; }
+    html,body {
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      background:radial-gradient(circle at 20% 10%, #152748 0%, #090f1d 58%, #060b14 100%);
+      color:var(--fg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      overflow:hidden;
+      touch-action:none;
+    }
+    .back-home {
+      position:fixed;
+      top:12px;
+      left:12px;
+      z-index:20;
+      padding:8px 12px;
+      border-radius:9px;
+      color:#fff;
+      text-decoration:none;
+      background:rgba(0,0,0,0.55);
+      font-weight:600;
+      font-size:14px;
+    }
+    .wrap {
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      padding:54px 12px 12px;
+    }
+    canvas {
+      width:min(92vw, 520px);
+      height:auto;
+      aspect-ratio:10/20;
+      border:2px solid #304a7c;
+      border-radius:12px;
+      background:linear-gradient(180deg,#0d1730 0%, #090f1d 100%);
+      display:block;
+    }
+    .hud {
+      width:min(92vw, 520px);
+      background:linear-gradient(180deg, rgba(19,31,55,0.95), rgba(12,21,40,0.95));
+      border:2px solid var(--panel-border);
+      border-radius:12px;
+      padding:10px;
+    }
+    .stats {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .stat {
+      border:1px solid rgba(255,255,255,0.14);
+      border-radius:8px;
+      background:rgba(255,255,255,0.05);
+      text-align:center;
+      padding:6px 4px;
+      min-height:44px;
+    }
+    .stat .label {
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:0.3px;
+      text-transform:uppercase;
+    }
+    .stat .value {
+      display:block;
+      font-size:19px;
+      font-weight:700;
+      line-height:1.1;
+    }
+    .hint {
+      color:#c9d9f5;
+      font-size:13px;
+      text-align:center;
+      min-height:1.2em;
+      margin-bottom:8px;
+    }
+    .buttons {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .btn {
+      min-width:90px;
+      min-height:40px;
+      border-radius:9px;
+      border:2px solid var(--btn-border);
+      background:var(--btn);
+      color:var(--fg);
+      font-weight:700;
+      font-size:13px;
+      cursor:pointer;
+    }
+    .btn:active { background:var(--btn-active); }
+    .btn.primary {
+      background:#f6d45b;
+      border-color:#ffe8a2;
+      color:#1c2231;
+    }
+    .mobile-controls {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:6px;
+    }
+    .ctrl {
+      min-height:42px;
+      border-radius:9px;
+      border:2px solid #3a5688;
+      background:#28406f;
+      color:#eaf2ff;
+      font-weight:700;
+      font-size:16px;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .ctrl:active { background:#1f345c; }
+    @media (max-width:620px) {
+      .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <canvas id="game" width="300" height="600" aria-label="Tetris game"></canvas>
+    <section class="hud">
+      <div class="stats">
+        <div class="stat"><span class="label">Score</span><span class="value" id="score">0</span></div>
+        <div class="stat"><span class="label">Lines</span><span class="value" id="lines">0</span></div>
+        <div class="stat"><span class="label">Level</span><span class="value" id="level">1</span></div>
+        <div class="stat"><span class="label">Best</span><span class="value" id="best">0</span></div>
+      </div>
+      <div class="hint" id="hint">Press Start. Move with arrows or touch buttons. F toggles fullscreen.</div>
+      <div class="buttons">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+      </div>
+      <div class="mobile-controls" aria-label="Touch controls">
+        <button class="ctrl" data-action="left" aria-label="Move left">&larr;</button>
+        <button class="ctrl" data-action="right" aria-label="Move right">&rarr;</button>
+        <button class="ctrl" data-action="rotate" aria-label="Rotate">&#8635;</button>
+        <button class="ctrl" data-action="drop" aria-label="Hard drop">DROP</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('tetris');
+
+    const COLS = 10;
+    const ROWS = 20;
+    const TILE = 30;
+    const hasInventory = profileState.inventory instanceof Set;
+    const COSMETICS = {
+      neonGrid: hasInventory && profileState.inventory.has('tetris-neon-grid'),
+      auroraStack: hasInventory && profileState.inventory.has('tetris-aurora-stack'),
+    };
+    const PIECES = {
+      I: { color: '#4de4ff', cells:[[-1,0],[0,0],[1,0],[2,0]] },
+      O: { color: '#ffd75a', cells:[[0,0],[1,0],[0,1],[1,1]] },
+      T: { color: '#c07bff', cells:[[-1,0],[0,0],[1,0],[0,1]] },
+      S: { color: '#78e869', cells:[[0,0],[1,0],[-1,1],[0,1]] },
+      Z: { color: '#ff6a7c', cells:[[-1,0],[0,0],[0,1],[1,1]] },
+      J: { color: '#6f8fff', cells:[[-1,0],[0,0],[1,0],[1,1]] },
+      L: { color: '#ffb05b', cells:[[-1,0],[0,0],[1,0],[-1,1]] },
+    };
+    const SCORE_TABLE = [0, 100, 300, 500, 800];
+    const BEST_KEY = 'tetris-best-score';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const linesEl = document.getElementById('lines');
+    const levelEl = document.getElementById('level');
+    const bestEl = document.getElementById('best');
+    const hintEl = document.getElementById('hint');
+
+    let rngSeed = (Date.now() >>> 0) || 123456789;
+
+    const state = {
+      mode: 'menu',
+      board: makeBoard(),
+      current: null,
+      nextType: randomType(),
+      score: 0,
+      lines: 0,
+      level: 1,
+      best: Number(localStorage.getItem(BEST_KEY) || '0'),
+      dropTimer: 0,
+      showGhost: true,
+      softDropHeld: false,
+      playedOnce: false,
+      coinsGiven: 0,
+      clearFlash: 0,
+      sparks: [],
+    };
+
+    let rafId = 0;
+    let lastTs = performance.now();
+    let steppingExternally = false;
+
+    function rand() {
+      rngSeed = (rngSeed * 1664525 + 1013904223) >>> 0;
+      return rngSeed / 4294967296;
+    }
+
+    function randomType() {
+      const keys = Object.keys(PIECES);
+      return keys[Math.floor(rand() * keys.length)];
+    }
+
+    function makeBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(''));
+    }
+
+    function dropInterval() {
+      return Math.max(0.08, 0.72 - (state.level - 1) * 0.055);
+    }
+
+    function clonePiece(piece) {
+      return {
+        type: piece.type,
+        x: piece.x,
+        y: piece.y,
+        rot: piece.rot,
+      };
+    }
+
+    function rotateCell(cell, rot) {
+      let [x, y] = cell;
+      for (let i = 0; i < ((rot % 4) + 4) % 4; i += 1) {
+        [x, y] = [-y, x];
+      }
+      return [x, y];
+    }
+
+    function pieceCells(piece) {
+      const def = PIECES[piece.type];
+      return def.cells.map((cell) => {
+        const [rx, ry] = rotateCell(cell, piece.rot);
+        return { x: piece.x + rx, y: piece.y + ry };
+      });
+    }
+
+    function isValid(piece) {
+      for (const cell of pieceCells(piece)) {
+        if (cell.x < 0 || cell.x >= COLS || cell.y >= ROWS) return false;
+        if (cell.y >= 0 && state.board[cell.y][cell.x]) return false;
+      }
+      return true;
+    }
+
+    function spawnPiece() {
+      state.current = {
+        type: state.nextType,
+        x: Math.floor(COLS / 2),
+        y: -1,
+        rot: 0,
+      };
+      state.nextType = randomType();
+      if (!isValid(state.current)) {
+        state.mode = 'game_over';
+        hintEl.textContent = `Game Over. Final score ${state.score}. Press Restart.`;
+        maybeAwardCoins();
+        emitUnlocks();
+      }
+    }
+
+    function tryMove(dx, dy) {
+      if (!state.current || state.mode !== 'playing') return false;
+      const next = clonePiece(state.current);
+      next.x += dx;
+      next.y += dy;
+      if (!isValid(next)) return false;
+      state.current = next;
+      return true;
+    }
+
+    function tryRotate(dir) {
+      if (!state.current || state.mode !== 'playing') return false;
+      const offsets = [0, -1, 1, -2, 2];
+      for (const offset of offsets) {
+        const next = clonePiece(state.current);
+        next.rot += dir;
+        next.x += offset;
+        if (isValid(next)) {
+          state.current = next;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function lockCurrentPiece() {
+      if (!state.current) return;
+      const color = PIECES[state.current.type].color;
+      for (const cell of pieceCells(state.current)) {
+        if (cell.y >= 0 && cell.y < ROWS) {
+          state.board[cell.y][cell.x] = color;
+        }
+      }
+      clearLines();
+      spawnPiece();
+    }
+
+    function clearLines() {
+      let cleared = 0;
+      const clearedRows = [];
+      for (let y = ROWS - 1; y >= 0; y -= 1) {
+        if (state.board[y].every((v) => Boolean(v))) {
+          clearedRows.push(y);
+          state.board.splice(y, 1);
+          state.board.unshift(Array(COLS).fill(''));
+          cleared += 1;
+          y += 1;
+        }
+      }
+      if (!cleared) return;
+
+      state.lines += cleared;
+      state.level = 1 + Math.floor(state.lines / 10);
+      state.score += SCORE_TABLE[cleared] * state.level;
+      state.best = Math.max(state.best, state.score);
+      localStorage.setItem(BEST_KEY, String(state.best));
+      bestEl.textContent = String(state.best);
+
+      const bonus = Math.max(1, Math.floor(cleared * state.level));
+      state.coinsGiven += bonus;
+      addCoins(bonus);
+      state.clearFlash = 0.28;
+      spawnSparks(clearedRows, 12 + cleared * 3, COSMETICS.auroraStack ? '#ffd4ff' : '#9fd8ff');
+      emitUnlocks();
+
+      if (state.lines >= 40 && !state.playedOnce) {
+        emitUnlocks();
+        state.playedOnce = true;
+      }
+    }
+
+    function hardDrop() {
+      if (!state.current || state.mode !== 'playing') return;
+      let cells = 0;
+      while (tryMove(0, 1)) {
+        cells += 1;
+      }
+      state.score += cells * 2;
+      const rows = [...new Set(pieceCells(state.current).map((cell) => Math.max(0, cell.y)))];
+      spawnSparks(rows, 3, COSMETICS.neonGrid ? '#63f3ff' : '#a7c6ff');
+      lockCurrentPiece();
+    }
+
+    function softDropStep() {
+      if (!state.current || state.mode !== 'playing') return;
+      if (!tryMove(0, 1)) {
+        lockCurrentPiece();
+      } else {
+        state.score += 1;
+      }
+    }
+
+    function maybeAwardCoins() {
+      if (state.score <= 0) return;
+      const gameOverBonus = Math.max(1, Math.floor(state.score / 500));
+      addCoins(gameOverBonus);
+      state.coinsGiven += gameOverBonus;
+    }
+
+    function emitUnlocks() {
+      maybeUnlock({
+        anyPlay: true,
+        tetris: {
+          score: state.score,
+          lines: state.lines,
+          level: state.level,
+        },
+      });
+    }
+
+    function spawnSparks(atRows, amountPerRow, color) {
+      for (const row of atRows) {
+        for (let i = 0; i < amountPerRow; i += 1) {
+          state.sparks.push({
+            x: rand() * canvas.width,
+            y: row * TILE + TILE * 0.5 + (rand() - 0.5) * 12,
+            vx: (rand() - 0.5) * 180,
+            vy: -30 - rand() * 120,
+            life: 0.35 + rand() * 0.35,
+            maxLife: 0.7,
+            color,
+          });
+        }
+      }
+    }
+
+    function restart() {
+      state.board = makeBoard();
+      state.current = null;
+      state.nextType = randomType();
+      state.score = 0;
+      state.lines = 0;
+      state.level = 1;
+      state.dropTimer = 0;
+      state.softDropHeld = false;
+      state.coinsGiven = 0;
+      state.clearFlash = 0;
+      state.sparks = [];
+      state.mode = 'menu';
+      hintEl.textContent = 'Press Start. Move with arrows or touch buttons. F toggles fullscreen.';
+      spawnPiece();
+      state.mode = 'menu';
+      updateHud();
+      render();
+    }
+
+    function startOrResume() {
+      if (state.mode === 'menu') {
+        state.mode = 'playing';
+        hintEl.textContent = 'Arrow keys: move, Up rotate, Space hard drop, P pause.';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hintEl.textContent = 'Resumed.';
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        hintEl.textContent = 'Paused.';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hintEl.textContent = 'Resumed.';
+      }
+    }
+
+    function update(dt) {
+      state.clearFlash = Math.max(0, state.clearFlash - dt);
+      for (let i = state.sparks.length - 1; i >= 0; i -= 1) {
+        const spark = state.sparks[i];
+        spark.life -= dt;
+        spark.x += spark.vx * dt;
+        spark.y += spark.vy * dt;
+        spark.vy += 280 * dt;
+        spark.vx *= 0.985;
+        if (spark.life <= 0) state.sparks.splice(i, 1);
+      }
+      if (state.mode !== 'playing') return;
+      state.dropTimer += dt;
+      const interval = state.softDropHeld ? Math.min(0.03, dropInterval() * 0.22) : dropInterval();
+      while (state.dropTimer >= interval) {
+        state.dropTimer -= interval;
+        if (!tryMove(0, 1)) {
+          lockCurrentPiece();
+          break;
+        }
+      }
+    }
+
+    function ghostPiece() {
+      if (!state.current) return null;
+      const ghost = clonePiece(state.current);
+      while (isValid({ ...ghost, y: ghost.y + 1 })) {
+        ghost.y += 1;
+      }
+      return ghost;
+    }
+
+    function drawBoardGrid() {
+      if (COSMETICS.auroraStack) {
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#111a3a');
+        g.addColorStop(0.4, '#101a35');
+        g.addColorStop(1, '#0a1022');
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = '#0a1224';
+      }
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (COSMETICS.auroraStack) {
+        const t = performance.now() * 0.00055;
+        ctx.globalAlpha = 0.22;
+        for (let i = 0; i < 4; i += 1) {
+          const y = (Math.sin(t + i * 1.6) * 0.5 + 0.5) * canvas.height;
+          const grad = ctx.createLinearGradient(0, y - 80, 0, y + 80);
+          grad.addColorStop(0, 'rgba(34,211,238,0)');
+          grad.addColorStop(0.5, i % 2 === 0 ? 'rgba(168,85,247,0.55)' : 'rgba(45,212,191,0.55)');
+          grad.addColorStop(1, 'rgba(34,211,238,0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, y - 80, canvas.width, 160);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      for (let y = 0; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          ctx.strokeStyle = COSMETICS.neonGrid ? 'rgba(114,227,255,0.24)' : 'rgba(149,178,226,0.12)';
+          ctx.strokeRect(x * TILE + 0.5, y * TILE + 0.5, TILE - 1, TILE - 1);
+        }
+      }
+    }
+
+    function drawCell(x, y, color, alpha = 1) {
+      if (y < 0) return;
+      const px = x * TILE;
+      const py = y * TILE;
+      ctx.globalAlpha = alpha;
+      if (COSMETICS.neonGrid || COSMETICS.auroraStack) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = color;
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.fillRect(px + 2, py + 2, TILE - 10, 5);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPiece(piece, alpha = 1) {
+      const color = PIECES[piece.type].color;
+      for (const cell of pieceCells(piece)) {
+        drawCell(cell.x, cell.y, color, alpha);
+      }
+    }
+
+    function drawOverlay() {
+      if (state.mode === 'playing') return;
+      ctx.fillStyle = 'rgba(4,8,16,0.55)';
+      ctx.fillRect(0, canvas.height * 0.35, canvas.width, canvas.height * 0.24);
+      ctx.fillStyle = '#f6f8ff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 30px system-ui,Segoe UI,Roboto,Arial';
+      const title = state.mode === 'menu' ? 'TETRIS' : state.mode === 'paused' ? 'PAUSED' : 'GAME OVER';
+      ctx.fillText(title, canvas.width / 2, canvas.height * 0.45);
+      ctx.font = '600 15px system-ui,Segoe UI,Roboto,Arial';
+      const subtitle = state.mode === 'game_over'
+        ? `Score ${state.score} | Press Restart`
+        : 'Press Start to play';
+      ctx.fillStyle = '#d2def7';
+      ctx.fillText(subtitle, canvas.width / 2, canvas.height * 0.53);
+    }
+
+    function drawSparks() {
+      for (const spark of state.sparks) {
+        const alpha = Math.max(0, Math.min(1, spark.life / spark.maxLife));
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = spark.color;
+        ctx.fillRect(spark.x, spark.y, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function render() {
+      drawBoardGrid();
+
+      for (let y = 0; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          const value = state.board[y][x];
+          if (value) drawCell(x, y, value);
+        }
+      }
+
+      if (state.current && state.showGhost && state.mode !== 'game_over') {
+        const ghost = ghostPiece();
+        if (ghost) drawPiece(ghost, 0.25);
+      }
+
+      if (state.current) {
+        drawPiece(state.current, state.mode === 'game_over' ? 0.4 : 1);
+      }
+
+      drawSparks();
+      if (state.clearFlash > 0) {
+        ctx.fillStyle = `rgba(210,241,255,${Math.min(0.42, state.clearFlash * 1.5)})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      drawOverlay();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(state.score);
+      linesEl.textContent = String(state.lines);
+      levelEl.textContent = String(state.level);
+      bestEl.textContent = String(state.best);
+    }
+
+    function stepSimulation(ms) {
+      const total = Math.max(0, Math.min(ms, 4000)) / 1000;
+      let remaining = total;
+      const step = 1 / 120;
+      while (remaining > 0) {
+        const dt = Math.min(step, remaining);
+        update(dt);
+        remaining -= dt;
+      }
+      updateHud();
+      render();
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const currentCells = state.current ? pieceCells(state.current).map((c) => ({ x: c.x, y: c.y })) : [];
+      const ghost = state.current ? ghostPiece() : null;
+      const ghostCells = ghost ? pieceCells(ghost).map((c) => ({ x: c.x, y: c.y })) : [];
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'tiles',
+          board_size: { cols: COLS, rows: ROWS },
+        },
+        mode: state.mode,
+        score: state.score,
+        lines: state.lines,
+        level: state.level,
+        best: state.best,
+        drop_interval_sec: Number(dropInterval().toFixed(3)),
+        cosmetics: {
+          neon_grid: COSMETICS.neonGrid,
+          aurora_stack: COSMETICS.auroraStack,
+        },
+        current_piece: state.current ? {
+          type: state.current.type,
+          rotation: ((state.current.rot % 4) + 4) % 4,
+          x: state.current.x,
+          y: state.current.y,
+          cells: currentCells,
+        } : null,
+        ghost_cells: ghostCells,
+        next_piece: state.nextType,
+        board: state.board.map((row) => row.map((v) => (v ? 1 : 0)).join('')),
+      };
+      return JSON.stringify(payload);
+    };
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function handleAction(action) {
+      if (action === 'left') tryMove(-1, 0);
+      else if (action === 'right') tryMove(1, 0);
+      else if (action === 'rotate') tryRotate(1);
+      else if (action === 'drop') hardDrop();
+      else if (action === 'soft_down') softDropStep();
+      updateHud();
+      render();
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const code = event.code;
+      if (code === 'ArrowLeft' || code === 'KeyA') {
+        event.preventDefault();
+        handleAction('left');
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        event.preventDefault();
+        handleAction('right');
+      } else if (code === 'ArrowUp' || code === 'KeyW' || code === 'KeyX') {
+        event.preventDefault();
+        handleAction('rotate');
+      } else if (code === 'ArrowDown' || code === 'KeyS') {
+        event.preventDefault();
+        state.softDropHeld = true;
+        handleAction('soft_down');
+      } else if (code === 'KeyZ') {
+        event.preventDefault();
+        tryRotate(-1);
+        updateHud();
+        render();
+      } else if (code === 'Space') {
+        event.preventDefault();
+        handleAction('drop');
+      } else if (code === 'Enter') {
+        event.preventDefault();
+        if (state.mode === 'game_over') restart();
+        else startOrResume();
+      } else if (code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+      } else if (code === 'KeyR') {
+        event.preventDefault();
+        restart();
+      } else if (code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    document.addEventListener('keyup', (event) => {
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        state.softDropHeld = false;
+      }
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      if (state.mode === 'game_over') restart();
+      startOrResume();
+    });
+    document.getElementById('pause-btn').addEventListener('click', togglePause);
+    document.getElementById('restart-btn').addEventListener('click', restart);
+
+    for (const btn of document.querySelectorAll('.ctrl')) {
+      const action = btn.dataset.action;
+      const trigger = (event) => {
+        event.preventDefault();
+        if (state.mode === 'menu') startOrResume();
+        handleAction(action);
+      };
+      btn.addEventListener('pointerdown', trigger, { passive:false });
+      btn.addEventListener('click', trigger, { passive:false });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') {
+        state.mode = 'paused';
+        hintEl.textContent = 'Paused.';
+      }
+    });
+
+    function loop(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        updateHud();
+        render();
+      }
+      rafId = requestAnimationFrame(loop);
+    }
+
+    restart();
+    updateHud();
+    render();
+    rafId = requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

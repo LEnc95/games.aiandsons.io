@@ -1,0 +1,913 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Bomberman Lite</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root {
+      --bg:#08140f;
+      --fg:#ecfff6;
+      --muted:#9dc7b5;
+      --panel:#12251d;
+      --panel-border:#315b4a;
+      --btn:#224437;
+      --btn-border:#3f705c;
+      --btn-active:#1a372c;
+    }
+    * { box-sizing:border-box; }
+    html,body {
+      margin:0;
+      width:100%;
+      height:100%;
+      background:radial-gradient(circle at 12% 12%, #1f4335 0%, #11281f 50%, #08140f 100%);
+      color:var(--fg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      overflow:hidden;
+      touch-action:none;
+    }
+    .back-home {
+      position:fixed;
+      top:12px;
+      left:12px;
+      z-index:20;
+      padding:8px 12px;
+      border-radius:9px;
+      color:#fff;
+      text-decoration:none;
+      background:rgba(0,0,0,0.56);
+      font-weight:600;
+      font-size:14px;
+    }
+    .wrap {
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      padding:54px 12px 12px;
+    }
+    canvas {
+      width:min(94vw, 620px);
+      height:auto;
+      aspect-ratio:13/11;
+      border:2px solid #3a725d;
+      border-radius:12px;
+      display:block;
+      background:#0f2018;
+    }
+    .hud {
+      width:min(94vw, 620px);
+      background:linear-gradient(180deg, rgba(18,37,29,0.95), rgba(11,25,19,0.95));
+      border:2px solid var(--panel-border);
+      border-radius:12px;
+      padding:10px;
+    }
+    .stats {
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .stat {
+      border:1px solid rgba(255,255,255,0.14);
+      border-radius:8px;
+      background:rgba(255,255,255,0.05);
+      text-align:center;
+      padding:6px 4px;
+      min-height:42px;
+    }
+    .stat .label {
+      display:block;
+      font-size:10px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:0.25px;
+    }
+    .stat .value {
+      display:block;
+      font-weight:700;
+      font-size:18px;
+    }
+    .hint {
+      text-align:center;
+      color:#d2f1e3;
+      font-size:13px;
+      min-height:1.2em;
+      margin-bottom:8px;
+    }
+    .buttons {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .btn {
+      min-width:88px;
+      min-height:40px;
+      border-radius:9px;
+      border:2px solid var(--btn-border);
+      background:var(--btn);
+      color:var(--fg);
+      font-weight:700;
+      font-size:13px;
+      cursor:pointer;
+    }
+    .btn:active { background:var(--btn-active); }
+    .btn.primary {
+      background:#7be4af;
+      border-color:#c1f8dc;
+      color:#10261b;
+    }
+    .mobile-controls {
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:6px;
+    }
+    .ctrl {
+      min-height:40px;
+      border-radius:9px;
+      border:2px solid #497f6a;
+      background:#2a5444;
+      color:#f1fff8;
+      font-size:15px;
+      font-weight:700;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .ctrl:active { background:#224739; }
+    @media (max-width:700px) {
+      .stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .mobile-controls { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .mobile-controls .spacer { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <canvas id="game" width="572" height="484" aria-label="Bomberman Lite game"></canvas>
+    <section class="hud">
+      <div class="stats">
+        <div class="stat"><span class="label">Score</span><span class="value" id="score">0</span></div>
+        <div class="stat"><span class="label">Level</span><span class="value" id="level">1</span></div>
+        <div class="stat"><span class="label">Lives</span><span class="value" id="lives">3</span></div>
+        <div class="stat"><span class="label">Enemies</span><span class="value" id="enemies">0</span></div>
+        <div class="stat"><span class="label">Bombs</span><span class="value" id="bombs">0</span></div>
+      </div>
+      <div class="hint" id="hint">Press Start. Move with arrows or touch, Space places bomb, F fullscreen.</div>
+      <div class="buttons">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+      </div>
+      <div class="mobile-controls" aria-label="Touch controls">
+        <button class="ctrl" data-action="left" aria-label="Move left">LEFT</button>
+        <button class="ctrl" data-action="up" aria-label="Move up">UP</button>
+        <button class="ctrl" data-action="right" aria-label="Move right">RIGHT</button>
+        <button class="ctrl" data-action="down" aria-label="Move down">DOWN</button>
+        <button class="ctrl" data-action="bomb" aria-label="Place bomb">BOMB</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('bomberman');
+
+    const COLS = 13;
+    const ROWS = 11;
+    const TILE = 44;
+    const BOMB_FUSE = 2.0;
+    const FLAME_TIME = 0.58;
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const hasInventory = profileState.inventory instanceof Set;
+    const COSMETICS = {
+      emberBlast: hasInventory && profileState.inventory.has('bomberman-ember-blast'),
+      jadeMaze: hasInventory && profileState.inventory.has('bomberman-jade-maze'),
+    };
+
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level');
+    const livesEl = document.getElementById('lives');
+    const enemiesEl = document.getElementById('enemies');
+    const bombsEl = document.getElementById('bombs');
+    const hintEl = document.getElementById('hint');
+
+    const state = {
+      mode: 'menu',
+      level: 1,
+      score: 0,
+      lives: 3,
+      grid: [],
+      player: null,
+      enemies: [],
+      bombs: [],
+      flames: [],
+      particles: [],
+      exit: { x: 0, y: 0, revealed: false },
+      moveCooldown: 0,
+      invulnerableTimer: 0,
+      levelClearTimer: 0,
+      shakeTime: 0,
+      shakeMagnitude: 0,
+      rngSeed: (Date.now() >>> 0) || 246813579,
+      coinsGiven: 0,
+      cratesDestroyed: 0,
+    };
+
+    let steppingExternally = false;
+    let lastTs = performance.now();
+
+    function rand() {
+      state.rngSeed = (state.rngSeed * 1664525 + 1013904223) >>> 0;
+      return state.rngSeed / 4294967296;
+    }
+
+    function emitUnlocks() {
+      maybeUnlock({
+        anyPlay: true,
+        bomberman: {
+          score: state.score,
+          level: state.level,
+          lives: state.lives,
+          crates: state.cratesDestroyed,
+        },
+      });
+    }
+
+    function triggerShake(magnitude, duration) {
+      state.shakeMagnitude = Math.max(state.shakeMagnitude, magnitude);
+      state.shakeTime = Math.max(state.shakeTime, duration);
+    }
+
+    function spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = rand() * Math.PI * 2;
+        const speed = 40 + rand() * 190;
+        state.particles.push({
+          x: x * TILE + TILE * 0.5,
+          y: y * TILE + TILE * 0.5,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.25 + rand() * 0.5,
+          maxLife: 0.8,
+          color,
+        });
+      }
+    }
+
+    function inBounds(x, y) {
+      return x >= 0 && y >= 0 && x < COLS && y < ROWS;
+    }
+
+    function makeLevelGrid(level) {
+      const grid = Array.from({ length: ROWS }, () => Array(COLS).fill('.'));
+      for (let y = 0; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          if (x === 0 || y === 0 || x === COLS - 1 || y === ROWS - 1) {
+            grid[y][x] = '#';
+          } else if (x % 2 === 0 && y % 2 === 0) {
+            grid[y][x] = '#';
+          }
+        }
+      }
+
+      const safe = new Set(['1,1', '1,2', '2,1']);
+      const crateChance = Math.min(0.72, 0.48 + (level - 1) * 0.045);
+      for (let y = 1; y < ROWS - 1; y += 1) {
+        for (let x = 1; x < COLS - 1; x += 1) {
+          if (grid[y][x] !== '.') continue;
+          if (safe.has(`${x},${y}`)) continue;
+          if (rand() < crateChance) grid[y][x] = 'c';
+        }
+      }
+
+      return grid;
+    }
+
+    function cellBlocked(x, y, ignorePlayer = false) {
+      if (!inBounds(x, y)) return true;
+      const tile = state.grid[y][x];
+      if (tile === '#' || tile === 'c') return true;
+      if (state.bombs.some((b) => b.x === x && b.y === y)) return true;
+      if (!ignorePlayer && state.player && state.player.x === x && state.player.y === y) return true;
+      return false;
+    }
+
+    function createEnemies(level) {
+      const enemies = [];
+      const target = Math.min(7, 2 + level);
+      let guard = 0;
+      while (enemies.length < target && guard < 500) {
+        guard += 1;
+        const x = 1 + Math.floor(rand() * (COLS - 2));
+        const y = 1 + Math.floor(rand() * (ROWS - 2));
+        if (state.grid[y][x] !== '.') continue;
+        if ((x === 1 && y === 1) || Math.abs(x - 1) + Math.abs(y - 1) <= 2) continue;
+        if (enemies.some((e) => e.x === x && e.y === y)) continue;
+        enemies.push({ x, y, moveTimer: 0.35 + rand() * 0.3, dir: { x: 0, y: 0 }, alive: true });
+      }
+      return enemies;
+    }
+
+    function placeExitUnderCrate() {
+      const crateCells = [];
+      for (let y = 1; y < ROWS - 1; y += 1) {
+        for (let x = 1; x < COLS - 1; x += 1) {
+          if (state.grid[y][x] === 'c') crateCells.push({ x, y });
+        }
+      }
+      const chosen = crateCells.length ? crateCells[Math.floor(rand() * crateCells.length)] : { x: COLS - 2, y: ROWS - 2 };
+      state.exit = { x: chosen.x, y: chosen.y, revealed: false };
+    }
+
+    function setupLevel(level) {
+      state.grid = makeLevelGrid(level);
+      state.player = { x: 1, y: 1, alive: true };
+      state.bombs = [];
+      state.flames = [];
+      state.particles = [];
+      state.enemies = createEnemies(level);
+      state.moveCooldown = 0;
+      state.invulnerableTimer = 1.1;
+      state.levelClearTimer = 0;
+      state.shakeTime = 0;
+      state.shakeMagnitude = 0;
+      placeExitUnderCrate();
+      hintEl.textContent = `Level ${level}. Clear enemies and reach the exit.`;
+    }
+
+    function restartRun() {
+      state.mode = 'menu';
+      state.level = 1;
+      state.score = 0;
+      state.lives = 3;
+      state.cratesDestroyed = 0;
+      setupLevel(1);
+      hintEl.textContent = 'Press Start. Move with arrows or touch, Space places bomb, F fullscreen.';
+      updateHud();
+      render();
+    }
+
+    function startOrResume() {
+      if (state.mode === 'menu') {
+        state.mode = 'playing';
+        emitUnlocks();
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hintEl.textContent = 'Resumed.';
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        hintEl.textContent = 'Paused.';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hintEl.textContent = 'Resumed.';
+      }
+    }
+
+    function tryMovePlayer(dx, dy) {
+      if (state.mode !== 'playing' || state.moveCooldown > 0 || !state.player.alive) return;
+      const nx = state.player.x + dx;
+      const ny = state.player.y + dy;
+      if (cellBlocked(nx, ny, true)) return;
+      state.player.x = nx;
+      state.player.y = ny;
+      state.moveCooldown = 0.08;
+    }
+
+    function placeBomb() {
+      if (state.mode !== 'playing' || !state.player.alive) return;
+      if (state.bombs.some((b) => b.x === state.player.x && b.y === state.player.y)) return;
+      state.bombs.push({ x: state.player.x, y: state.player.y, timer: BOMB_FUSE, radius: 2 + Math.floor((state.level - 1) / 3) });
+      state.moveCooldown = Math.max(state.moveCooldown, 0.03);
+    }
+
+    function markEnemyHits(hitCells) {
+      let kills = 0;
+      for (const enemy of state.enemies) {
+        if (!enemy.alive) continue;
+        if (hitCells.some((h) => h.x === enemy.x && h.y === enemy.y)) {
+          enemy.alive = false;
+          spawnParticles(enemy.x, enemy.y, '#ff98aa', 12);
+          kills += 1;
+        }
+      }
+      if (kills > 0) {
+        const gain = kills * 30;
+        state.score += gain;
+        addCoins(Math.max(1, kills));
+        state.coinsGiven += Math.max(1, kills);
+        emitUnlocks();
+      }
+    }
+
+    function markPlayerHit(hitCells) {
+      if (state.mode === 'game_over' || state.invulnerableTimer > 0 || !state.player.alive) return;
+      if (hitCells.some((h) => h.x === state.player.x && h.y === state.player.y)) {
+        spawnParticles(state.player.x, state.player.y, '#8bd8ff', 18);
+        triggerShake(8, 0.26);
+        state.lives = Math.max(0, state.lives - 1);
+        if (state.lives <= 0) {
+          state.mode = 'game_over';
+          hintEl.textContent = `Game over. Score ${state.score}. Press Restart.`;
+          emitUnlocks();
+          return;
+        }
+        state.player.x = 1;
+        state.player.y = 1;
+        state.invulnerableTimer = 1.5;
+        hintEl.textContent = `Life lost. ${state.lives} lives remaining.`;
+      }
+    }
+
+    function explodeBomb(index) {
+      const bomb = state.bombs[index];
+      if (!bomb) return;
+      state.bombs.splice(index, 1);
+
+      const hitCells = [{ x: bomb.x, y: bomb.y }];
+      const dirs = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: -1 },
+      ];
+
+      for (const dir of dirs) {
+        for (let step = 1; step <= bomb.radius; step += 1) {
+          const tx = bomb.x + dir.x * step;
+          const ty = bomb.y + dir.y * step;
+          if (!inBounds(tx, ty)) break;
+          const tile = state.grid[ty][tx];
+          if (tile === '#') break;
+          hitCells.push({ x: tx, y: ty });
+          if (tile === 'c') {
+            state.grid[ty][tx] = '.';
+            state.score += 8;
+            addCoins(1);
+            state.coinsGiven += 1;
+            state.cratesDestroyed += 1;
+            spawnParticles(tx, ty, '#d9b587', 10);
+            if (state.exit.x === tx && state.exit.y === ty) {
+              state.exit.revealed = true;
+            }
+            break;
+          }
+        }
+      }
+
+      state.flames.push(...hitCells.map((cell) => ({ x: cell.x, y: cell.y, timer: FLAME_TIME })));
+      triggerShake(COSMETICS.emberBlast ? 8 : 6, 0.18);
+      spawnParticles(bomb.x, bomb.y, COSMETICS.emberBlast ? '#ff7f5f' : '#ffd074', 14);
+      markEnemyHits(hitCells);
+      markPlayerHit(hitCells);
+      emitUnlocks();
+
+      for (let i = state.bombs.length - 1; i >= 0; i -= 1) {
+        const other = state.bombs[i];
+        if (hitCells.some((cell) => cell.x === other.x && cell.y === other.y)) {
+          explodeBomb(i);
+        }
+      }
+    }
+
+    function updateBombs(dt) {
+      for (let i = state.bombs.length - 1; i >= 0; i -= 1) {
+        state.bombs[i].timer -= dt;
+        if (state.bombs[i].timer <= 0) {
+          explodeBomb(i);
+        }
+      }
+    }
+
+    function updateFlames(dt) {
+      for (let i = state.flames.length - 1; i >= 0; i -= 1) {
+        state.flames[i].timer -= dt;
+        if (state.flames[i].timer <= 0) {
+          state.flames.splice(i, 1);
+        }
+      }
+      markEnemyHits(state.flames);
+      markPlayerHit(state.flames);
+    }
+
+    function updateEnemies(dt) {
+      const dirs = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: -1 },
+      ];
+
+      for (const enemy of state.enemies) {
+        if (!enemy.alive) continue;
+        enemy.moveTimer -= dt;
+        if (enemy.moveTimer > 0) continue;
+        enemy.moveTimer = 0.22 + rand() * 0.33;
+
+        const options = dirs.filter((dir) => {
+          const nx = enemy.x + dir.x;
+          const ny = enemy.y + dir.y;
+          if (cellBlocked(nx, ny, true)) return false;
+          return true;
+        });
+        if (!options.length) continue;
+
+        const towardPlayer = options
+          .slice()
+          .sort((a, b) => {
+            const da = Math.hypot(state.player.x - (enemy.x + a.x), state.player.y - (enemy.y + a.y));
+            const db = Math.hypot(state.player.x - (enemy.x + b.x), state.player.y - (enemy.y + b.y));
+            return da - db;
+          });
+
+        const dir = rand() < 0.6 ? towardPlayer[0] : options[Math.floor(rand() * options.length)];
+        enemy.x += dir.x;
+        enemy.y += dir.y;
+      }
+
+      if (state.invulnerableTimer <= 0) {
+        const collided = state.enemies.some((e) => e.alive && e.x === state.player.x && e.y === state.player.y);
+        if (collided) {
+          spawnParticles(state.player.x, state.player.y, '#8bd8ff', 16);
+          triggerShake(7, 0.22);
+          state.lives = Math.max(0, state.lives - 1);
+          if (state.lives <= 0) {
+            state.mode = 'game_over';
+            hintEl.textContent = `Game over. Score ${state.score}. Press Restart.`;
+            emitUnlocks();
+          } else {
+            state.player.x = 1;
+            state.player.y = 1;
+            state.invulnerableTimer = 1.5;
+            hintEl.textContent = `Enemy hit. ${state.lives} lives remaining.`;
+          }
+        }
+      }
+    }
+
+    function checkLevelClear(dt) {
+      if (state.mode !== 'playing') return;
+      const aliveEnemies = state.enemies.filter((e) => e.alive);
+      if (aliveEnemies.length === 0) {
+        state.exit.revealed = true;
+      }
+
+      if (state.exit.revealed && state.player.x === state.exit.x && state.player.y === state.exit.y) {
+        state.mode = 'level_clear';
+        state.levelClearTimer = 1.2;
+        const reward = 25 + state.level * 5;
+        state.score += reward;
+        const coins = Math.max(2, Math.floor(reward / 15));
+        addCoins(coins);
+        state.coinsGiven += coins;
+        hintEl.textContent = `Level ${state.level} clear!`;
+        emitUnlocks();
+      }
+
+      if (state.mode === 'level_clear') {
+        state.levelClearTimer -= dt;
+        if (state.levelClearTimer <= 0) {
+          state.level += 1;
+          state.mode = 'playing';
+          setupLevel(state.level);
+        }
+      }
+    }
+
+    function update(dt) {
+      if (state.mode === 'paused' || state.mode === 'menu' || state.mode === 'game_over') return;
+      state.moveCooldown = Math.max(0, state.moveCooldown - dt);
+      state.invulnerableTimer = Math.max(0, state.invulnerableTimer - dt);
+      state.shakeTime = Math.max(0, state.shakeTime - dt);
+      if (state.shakeTime <= 0) state.shakeMagnitude = 0;
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const p = state.particles[i];
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 200 * dt;
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+        if (p.life <= 0) state.particles.splice(i, 1);
+      }
+      updateBombs(dt);
+      updateFlames(dt);
+      updateEnemies(dt);
+      checkLevelClear(dt);
+    }
+
+    function drawTile(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+    }
+
+    function drawBoard() {
+      ctx.fillStyle = COSMETICS.jadeMaze ? '#0f2319' : '#0d1d16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          const tile = state.grid[y][x];
+          if (tile === '#') {
+            drawTile(x, y, COSMETICS.jadeMaze ? '#21593f' : '#335f4c');
+            ctx.fillStyle = COSMETICS.jadeMaze ? '#37a06d' : '#406f5a';
+            ctx.fillRect(x * TILE + 5, y * TILE + 5, TILE - 10, TILE - 10);
+          } else {
+            drawTile(x, y, COSMETICS.jadeMaze ? '#123227' : '#13261e');
+            if (tile === 'c') {
+              ctx.fillStyle = COSMETICS.jadeMaze ? '#1f8e63' : '#8a6742';
+              ctx.fillRect(x * TILE + 4, y * TILE + 4, TILE - 8, TILE - 8);
+              ctx.fillStyle = COSMETICS.jadeMaze ? '#f1c36d' : '#b38a5d';
+              ctx.fillRect(x * TILE + 10, y * TILE + 9, TILE - 20, TILE - 18);
+            }
+          }
+
+          if (state.exit.revealed && state.exit.x === x && state.exit.y === y) {
+            ctx.fillStyle = '#7ee8bc';
+            ctx.fillRect(x * TILE + 12, y * TILE + 12, TILE - 24, TILE - 24);
+          }
+
+          ctx.strokeStyle = 'rgba(152,205,183,0.10)';
+          ctx.strokeRect(x * TILE + 0.5, y * TILE + 0.5, TILE - 1, TILE - 1);
+        }
+      }
+    }
+
+    function drawBombs() {
+      for (const bomb of state.bombs) {
+        const cx = bomb.x * TILE + TILE / 2;
+        const cy = bomb.y * TILE + TILE / 2;
+        const pulse = 0.85 + 0.15 * Math.sin(performance.now() * 0.02);
+        ctx.fillStyle = COSMETICS.emberBlast ? '#3a2020' : '#26313a';
+        ctx.beginPath();
+        ctx.arc(cx, cy, TILE * 0.28 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = COSMETICS.emberBlast ? '#ff9f68' : '#f8d46d';
+        ctx.fillRect(cx - 3, cy - TILE * 0.34, 6, 10);
+      }
+    }
+
+    function drawFlames() {
+      for (const flame of state.flames) {
+        const alpha = Math.max(0, Math.min(1, flame.timer / FLAME_TIME));
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = COSMETICS.emberBlast ? '#ff9e52' : '#ffd074';
+        ctx.fillRect(flame.x * TILE + 4, flame.y * TILE + 4, TILE - 8, TILE - 8);
+        ctx.fillStyle = COSMETICS.emberBlast ? '#ff5d42' : '#ff8f5b';
+        ctx.fillRect(flame.x * TILE + 10, flame.y * TILE + 10, TILE - 20, TILE - 20);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 2.5, 2.5);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPlayer() {
+      if (!state.player.alive) return;
+      if (state.invulnerableTimer > 0 && Math.floor(performance.now() / 80) % 2 === 0) {
+        ctx.globalAlpha = 0.45;
+      }
+      const px = state.player.x * TILE + TILE / 2;
+      const py = state.player.y * TILE + TILE / 2;
+      ctx.fillStyle = '#6ad4ff';
+      ctx.beginPath();
+      ctx.arc(px, py, TILE * 0.27, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#d8f6ff';
+      ctx.beginPath();
+      ctx.arc(px - 5, py - 3, 3, 0, Math.PI * 2);
+      ctx.arc(px + 5, py - 3, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    function drawEnemies() {
+      for (const enemy of state.enemies) {
+        if (!enemy.alive) continue;
+        const ex = enemy.x * TILE + TILE / 2;
+        const ey = enemy.y * TILE + TILE / 2;
+        ctx.fillStyle = '#ff7a93';
+        ctx.beginPath();
+        ctx.arc(ex, ey, TILE * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff2f5';
+        ctx.fillRect(ex - 6, ey - 4, 4, 4);
+        ctx.fillRect(ex + 2, ey - 4, 4, 4);
+      }
+    }
+
+    function drawOverlay() {
+      if (state.mode === 'playing' || state.mode === 'level_clear') return;
+      ctx.fillStyle = 'rgba(7,16,12,0.58)';
+      ctx.fillRect(0, canvas.height * 0.34, canvas.width, canvas.height * 0.26);
+      ctx.fillStyle = '#eefef7';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 36px system-ui,Segoe UI,Roboto,Arial';
+      const title = state.mode === 'menu' ? 'BOMBERMAN LITE' : state.mode === 'paused' ? 'PAUSED' : 'GAME OVER';
+      ctx.fillText(title, canvas.width / 2, canvas.height * 0.45);
+      ctx.fillStyle = '#d1f3e4';
+      ctx.font = '600 16px system-ui,Segoe UI,Roboto,Arial';
+      const subtitle = state.mode === 'game_over' ? `Score ${state.score}. Press Restart.` : 'Press Start to play';
+      ctx.fillText(subtitle, canvas.width / 2, canvas.height * 0.54);
+    }
+
+    function render() {
+      const shakeScale = state.shakeTime > 0 ? (state.shakeTime / 0.25) : 0;
+      const shake = state.shakeMagnitude * Math.max(0, Math.min(1, shakeScale));
+      const shakeX = shake > 0 ? (Math.random() * 2 - 1) * shake : 0;
+      const shakeY = shake > 0 ? (Math.random() * 2 - 1) * shake : 0;
+      ctx.save();
+      ctx.translate(shakeX, shakeY);
+      drawBoard();
+      drawBombs();
+      drawFlames();
+      drawParticles();
+      drawEnemies();
+      drawPlayer();
+      ctx.restore();
+
+      if (state.mode === 'level_clear') {
+        ctx.fillStyle = 'rgba(8,20,15,0.55)';
+        ctx.fillRect(0, canvas.height * 0.39, canvas.width, canvas.height * 0.18);
+        ctx.fillStyle = '#ecfff6';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '700 32px system-ui,Segoe UI,Roboto,Arial';
+        ctx.fillText(`LEVEL ${state.level} CLEAR`, canvas.width / 2, canvas.height * 0.48);
+      }
+
+      drawOverlay();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(state.score);
+      levelEl.textContent = String(state.level);
+      livesEl.textContent = String(state.lives);
+      enemiesEl.textContent = String(state.enemies.filter((e) => e.alive).length);
+      bombsEl.textContent = String(state.bombs.length);
+    }
+
+    function stepSimulation(ms) {
+      const total = Math.max(0, Math.min(ms, 5000)) / 1000;
+      let remaining = total;
+      const step = 1 / 120;
+      while (remaining > 0) {
+        const dt = Math.min(step, remaining);
+        update(dt);
+        remaining -= dt;
+      }
+      updateHud();
+      render();
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'tiles',
+          board_size: { cols: COLS, rows: ROWS },
+        },
+        mode: state.mode,
+        score: state.score,
+        level: state.level,
+        lives: state.lives,
+        cosmetics: {
+          ember_blast: COSMETICS.emberBlast,
+          jade_maze: COSMETICS.jadeMaze,
+        },
+        crates_destroyed: state.cratesDestroyed,
+        move_cooldown: Number(state.moveCooldown.toFixed(3)),
+        invulnerable_timer: Number(state.invulnerableTimer.toFixed(3)),
+        player: state.player ? { x: state.player.x, y: state.player.y } : null,
+        enemies: state.enemies.filter((e) => e.alive).map((e) => ({ x: e.x, y: e.y, move_timer: Number(e.moveTimer.toFixed(2)) })),
+        bombs: state.bombs.map((b) => ({ x: b.x, y: b.y, timer: Number(b.timer.toFixed(2)), radius: b.radius })),
+        flames: state.flames.map((f) => ({ x: f.x, y: f.y, timer: Number(f.timer.toFixed(2)) })),
+        exit: { x: state.exit.x, y: state.exit.y, revealed: state.exit.revealed },
+        grid: state.grid.map((row, y) => row.map((tile, x) => {
+          if (tile === '#') return '#';
+          if (tile === 'c') return 'c';
+          if (state.exit.revealed && state.exit.x === x && state.exit.y === y) return 'E';
+          return '.';
+        }).join('')),
+      };
+      return JSON.stringify(payload);
+    };
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) canvas.requestFullscreen?.().catch(() => {});
+      else document.exitFullscreen?.().catch(() => {});
+    }
+
+    function handleAction(action) {
+      if (state.mode === 'menu') startOrResume();
+      if (action === 'left') tryMovePlayer(-1, 0);
+      else if (action === 'right') tryMovePlayer(1, 0);
+      else if (action === 'up') tryMovePlayer(0, -1);
+      else if (action === 'down') tryMovePlayer(0, 1);
+      else if (action === 'bomb') placeBomb();
+      updateHud();
+      render();
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const code = event.code;
+      if (code === 'ArrowLeft' || code === 'KeyA') {
+        event.preventDefault();
+        handleAction('left');
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        event.preventDefault();
+        handleAction('right');
+      } else if (code === 'ArrowUp' || code === 'KeyW') {
+        event.preventDefault();
+        handleAction('up');
+      } else if (code === 'ArrowDown' || code === 'KeyS') {
+        event.preventDefault();
+        handleAction('down');
+      } else if (code === 'Space') {
+        event.preventDefault();
+        handleAction('bomb');
+      } else if (code === 'Enter') {
+        event.preventDefault();
+        if (state.mode === 'game_over') restartRun();
+        else startOrResume();
+      } else if (code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+      } else if (code === 'KeyR') {
+        event.preventDefault();
+        restartRun();
+      } else if (code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      if (state.mode === 'game_over') restartRun();
+      startOrResume();
+    });
+    document.getElementById('pause-btn').addEventListener('click', togglePause);
+    document.getElementById('restart-btn').addEventListener('click', restartRun);
+
+    for (const btn of document.querySelectorAll('.ctrl')) {
+      const action = btn.dataset.action;
+      const trigger = (event) => {
+        event.preventDefault();
+        handleAction(action);
+      };
+      btn.addEventListener('pointerdown', trigger, { passive:false });
+      btn.addEventListener('click', trigger, { passive:false });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') {
+        state.mode = 'paused';
+        hintEl.textContent = 'Paused.';
+      }
+    });
+
+    function loop(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        updateHud();
+        render();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    restartRun();
+    updateHud();
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
