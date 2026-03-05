@@ -34,3 +34,17 @@
   - Added visual feedback polish: screen shake and floating score popups.
   - Added short respawn invulnerability window after life loss to reduce immediate chain deaths.
   - Extended `render_game_to_text` with `phase_timer` and `invulnerable_timer` for clearer external state.
+- Validation for polish pass:
+  - Skill Playwright loop run: `output/web-game/pacman-polish-run1` (4 iterations, movement + pause/resume, state snapshots, screenshot review).
+  - Frightened-mode regression check: `output/web-game/pacman-polish-frightened.png` plus state output confirmed all ghosts enter `frightened` and timer counts down.
+  - Mobile emulation check: `output/web-game/pacman-polish-mobile.png` with touch controls visible/usable and responsive HUD layout.
+  - Console/runtime errors observed: none.
+- Additional visible polish pass applied in `pacman/index.html`:
+  - Expanded HUD status row to include queued direction and combo multiplier.
+  - Added `M` keyboard shortcut for sound toggle.
+  - Added subtle post-process visuals (scanline + vignette overlay) for arcade feel.
+  - Added combo-aware HUD highlighting and extra `render_game_to_text` field (`combo_count`).
+- Regression tests after this pass:
+  - `output/web-game/pacman-polish-run2` via skill client: no runtime errors.
+  - `output/web-game/pacman-polish-frightened-2.png` + state JSON check confirmed frightened mode still triggers with all ghosts entering frightened state.
+  - Reviewed gameplay screenshots for layout and readability on desktop and mobile emulation.
