@@ -18,5 +18,6 @@ export const GAMES = [
   { slug:'homerunderby', name:'Home Run Derby', emoji:'⚾', scoreHint:'homeruns', url:'/homerunderby/', desc:'Time your swing to crush home runs before you rack up 10 outs.' },
   { slug:'micro-rc-racer', name:'Micro RC Racer', emoji:'🏎️', scoreHint:'best lap', url:'/microrc', desc:'Top-down RC dirt racing with tank steering and slippery drifts.' },
   { slug:'pacman',      name:'Pac-Man',      emoji:'??', scoreHint:'score',     url:'/pacman',       desc:'Eat pellets, outsmart ghosts, and clear multiple levels.' },
+  { slug:'pokemon',     name:'Pokemon',      emoji:'??', scoreHint:'badges',    url:'/pokemon',      desc:'Build your team, battle trainers, and collect badges.' },
 ];
 

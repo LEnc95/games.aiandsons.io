@@ -136,6 +136,71 @@
       margin:2px 0 8px;
     }
 
+    .status-row {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:6px;
+      margin-bottom:8px;
+    }
+
+    .chip {
+      min-height:34px;
+      border-radius:9px;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.05);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:4px 8px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:0.25px;
+      color:#dce7ff;
+    }
+
+    .chip strong {
+      color:#fff4b8;
+      margin-left:5px;
+      font-size:13px;
+    }
+
+    .chip.phase-scatter strong { color:#76bcff; }
+    .chip.phase-chase strong { color:#ff8f8f; }
+    .chip.phase-fright strong { color:#88a7ff; }
+
+    .chip.timer strong {
+      color:#c7d8ff;
+      min-width:44px;
+      display:inline-block;
+      text-align:right;
+    }
+
+    .btn.mini {
+      min-width:unset;
+      min-height:34px;
+      padding:6px 10px;
+      font-size:11px;
+      border-width:1px;
+      letter-spacing:0.3px;
+    }
+
+    .meter {
+      height:8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(255,255,255,0.08);
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+
+    .meter-fill {
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, #6f8df9 0%, #b9c8ff 100%);
+      transition:width 0.08s linear;
+    }
+
     .buttons {
       display:flex;
       gap:8px;
@@ -220,6 +285,9 @@
       .stats { gap:6px; }
       .stat { min-height:42px; }
       .btn { min-width:88px; }
+      .status-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .controls {
         grid-template-columns:repeat(3, 56px);
         grid-template-rows:repeat(3, 50px);
@@ -244,6 +312,14 @@
       </div>
 
       <div class="hint" id="hint">Press Start. Arrow keys/WASD or touch controls.</div>
+
+      <div class="status-row">
+        <div class="chip" id="pellets-chip">Pellets <strong id="pellets-left">0</strong></div>
+        <div class="chip phase-scatter" id="phase-chip">Phase <strong id="phase-text">SCATTER</strong></div>
+        <div class="chip timer" id="fright-chip">Power <strong id="fright-time">0.0s</strong></div>
+        <button class="btn mini" id="audio-btn" aria-label="Toggle sound">SOUND ON</button>
+      </div>
+      <div class="meter" aria-hidden="true"><div class="meter-fill" id="fright-fill"></div></div>
 
       <div class="buttons">
         <button class="btn primary" id="start-btn">START</button>
@@ -334,12 +410,19 @@
     const levelEl = document.getElementById('level');
     const livesEl = document.getElementById('lives');
     const hintEl = document.getElementById('hint');
+    const pelletsLeftEl = document.getElementById('pellets-left');
+    const phaseChipEl = document.getElementById('phase-chip');
+    const phaseTextEl = document.getElementById('phase-text');
+    const frightTimeEl = document.getElementById('fright-time');
+    const frightFillEl = document.getElementById('fright-fill');
+    const audioBtn = document.getElementById('audio-btn');
 
     const startBtn = document.getElementById('start-btn');
     const pauseBtn = document.getElementById('pause-btn');
     const restartBtn = document.getElementById('restart-btn');
     const controlButtons = document.querySelectorAll('.ctrl');
     const canvasContainer = document.getElementById('canvas-container');
+    const AUDIO_STORAGE_KEY = 'pacman-audio-enabled';
 
     const urlParams = new URLSearchParams(window.location.search);
     let rngSeed = parseInt(urlParams.get('seed') || '', 10);
@@ -350,6 +433,81 @@
     function rand() {
       rngSeed = (rngSeed * 1664525 + 1013904223) >>> 0;
       return rngSeed / 4294967296;
+    }
+
+    function ensureAudioContext() {
+      if (!state.audioEnabled) {
+        return null;
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        return null;
+      }
+      if (!state.audioContext) {
+        state.audioContext = new AudioCtx();
+      }
+      if (state.audioContext.state === 'suspended') {
+        state.audioContext.resume().catch(() => {});
+      }
+      return state.audioContext;
+    }
+
+    function playTone(frequency, duration, type, volume, endFrequency) {
+      const audio = ensureAudioContext();
+      if (!audio) {
+        return;
+      }
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(frequency, audio.currentTime);
+      if (typeof endFrequency === 'number') {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), audio.currentTime + duration);
+      }
+      gain.gain.setValueAtTime(0.0001, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume || 0.025), audio.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(audio.currentTime);
+      osc.stop(audio.currentTime + duration + 0.01);
+    }
+
+    function playSfx(name) {
+      if (!state.audioEnabled) {
+        return;
+      }
+      if (name === 'chomp') {
+        playTone(420, 0.045, 'square', 0.02, 300);
+      } else if (name === 'power') {
+        playTone(220, 0.14, 'triangle', 0.035, 460);
+      } else if (name === 'ghost') {
+        playTone(680, 0.1, 'square', 0.03, 300);
+        setTimeout(() => playTone(520, 0.08, 'square', 0.022, 230), 35);
+      } else if (name === 'fruit') {
+        playTone(540, 0.08, 'triangle', 0.03, 740);
+      } else if (name === 'life') {
+        playTone(140, 0.22, 'sawtooth', 0.03, 70);
+      } else if (name === 'level') {
+        playTone(500, 0.08, 'triangle', 0.028, 760);
+        setTimeout(() => playTone(700, 0.11, 'triangle', 0.026, 980), 70);
+      }
+    }
+
+    function syncAudioButton() {
+      audioBtn.textContent = state.audioEnabled ? 'SOUND ON' : 'SOUND OFF';
+      audioBtn.classList.toggle('primary', !state.audioEnabled);
+    }
+
+    function setAudioEnabled(enabled) {
+      state.audioEnabled = Boolean(enabled);
+      localStorage.setItem(AUDIO_STORAGE_KEY, state.audioEnabled ? 'on' : 'off');
+      syncAudioButton();
+      if (state.audioEnabled) {
+        ensureAudioContext();
+      } else if (state.audioContext && state.audioContext.state === 'running') {
+        state.audioContext.suspend().catch(() => {});
+      }
     }
 
     function getHighScore() {
@@ -392,7 +550,15 @@
       phaseIndex: 0,
       phaseTimer: PHASES[0].duration,
       frightenedTimer: 0,
+      frightenedTotalDuration: 0,
       ghostCombo: 0,
+      chompCooldown: 0,
+      invulnerableTimer: 0,
+      shakeTime: 0,
+      shakeMagnitude: 0,
+      popups: [],
+      audioEnabled: localStorage.getItem(AUDIO_STORAGE_KEY) !== 'off',
+      audioContext: null,
       pacman: {
         tileX: PACMAN_START.x,
         tileY: PACMAN_START.y,
@@ -496,7 +662,13 @@
       state.level = level;
       state.score = previousScore;
       state.frightenedTimer = 0;
+      state.frightenedTotalDuration = 0;
       state.ghostCombo = 0;
+      state.chompCooldown = 0;
+      state.invulnerableTimer = 0;
+      state.shakeTime = 0;
+      state.shakeMagnitude = 0;
+      state.popups = [];
       state.phaseIndex = 0;
       state.phase = PHASES[0].mode;
       state.phaseTimer = PHASES[0].duration;
@@ -581,6 +753,25 @@
       return dx * dx + dy * dy;
     }
 
+    function triggerShake(magnitude, duration) {
+      state.shakeMagnitude = Math.max(state.shakeMagnitude, magnitude);
+      state.shakeTime = Math.max(state.shakeTime, duration);
+    }
+
+    function spawnScorePopup(text, tileX, tileY, color) {
+      state.popups.push({
+        text: String(text),
+        x: (tileX + 0.5) * TILE_SIZE,
+        y: (tileY + 0.5) * TILE_SIZE,
+        life: 0.8,
+        maxLife: 0.8,
+        color: color || '#ffef8f',
+      });
+      if (state.popups.length > 10) {
+        state.popups.shift();
+      }
+    }
+
     function setHint(text) {
       hintEl.textContent = text;
     }
@@ -607,6 +798,30 @@
       highScoreEl.textContent = String(state.highScore);
       levelEl.textContent = String(state.level);
       livesEl.textContent = String(state.lives);
+      pelletsLeftEl.textContent = `${state.pelletsRemaining}/${state.totalPellets}`;
+
+      let phaseClass = 'phase-scatter';
+      let phaseText = 'SCATTER';
+      if (state.frightenedTimer > 0) {
+        phaseClass = 'phase-fright';
+        phaseText = 'FRIGHT';
+      } else if (state.phase === 'chase') {
+        phaseClass = 'phase-chase';
+        phaseText = 'CHASE';
+      }
+      phaseChipEl.classList.remove('phase-scatter', 'phase-chase', 'phase-fright');
+      phaseChipEl.classList.add(phaseClass);
+      phaseTextEl.textContent = phaseText;
+
+      if (state.frightenedTimer > 0) {
+        frightTimeEl.textContent = `${state.frightenedTimer.toFixed(1)}s`;
+      } else {
+        frightTimeEl.textContent = '0.0s';
+      }
+      const fill = state.frightenedTotalDuration > 0
+        ? Math.max(0, Math.min(1, state.frightenedTimer / state.frightenedTotalDuration))
+        : 0;
+      frightFillEl.style.width = `${(fill * 100).toFixed(1)}%`;
       refreshButtons();
     }
 
@@ -631,7 +846,7 @@
       } else if (mode === 'paused') {
         setHint('Paused. Press Resume, Space, or P.');
       } else if (mode === 'life_lost') {
-        setHint(`Life lost. ${state.lives} left.`);
+        setHint(`Life lost. ${state.lives} left. Brief shield active.`);
       } else if (mode === 'level_cleared') {
         setHint(`Level ${state.level} cleared.`);
       } else if (mode === 'game_over') {
@@ -704,7 +919,10 @@
     function triggerFrightened() {
       const levelConfig = getLevelConfig(state.level);
       state.frightenedTimer = levelConfig.frightenedDuration;
+      state.frightenedTotalDuration = levelConfig.frightenedDuration;
       state.ghostCombo = 0;
+      playSfx('power');
+      triggerShake(1.8, 0.16);
       for (const ghost of state.ghosts) {
         if (ghost.mode === 'normal') {
           ghost.mode = 'frightened';
@@ -743,22 +961,33 @@
         state.maze[tileY][tileX] = ' ';
         state.pelletsRemaining -= 1;
         addScore(10);
+        if (state.chompCooldown <= 0) {
+          playSfx('chomp');
+          state.chompCooldown = 0.045;
+        }
         maybeSpawnFruit();
       } else if (tile === 'o') {
         state.maze[tileY][tileX] = ' ';
         state.pelletsRemaining -= 1;
         addScore(50);
+        spawnScorePopup('50', tileX, tileY, '#fff6be');
         triggerFrightened();
         maybeSpawnFruit();
       }
 
       if (state.fruit.active && tileX === state.fruit.tileX && tileY === state.fruit.tileY) {
-        addScore(getLevelConfig(state.level).fruitValue);
+        const fruitValue = getLevelConfig(state.level).fruitValue;
+        addScore(fruitValue);
+        spawnScorePopup(String(fruitValue), tileX, tileY, '#ff94a0');
+        playSfx('fruit');
+        triggerShake(2.5, 0.17);
         state.fruit.active = false;
         state.fruit.timer = 0;
       }
 
       if (state.pelletsRemaining <= 0 && state.mode === 'playing') {
+        playSfx('level');
+        triggerShake(2.1, 0.2);
         setMode('level_cleared', 1.8);
       }
     }
@@ -956,6 +1185,8 @@
 
     function loseLife() {
       state.lives -= 1;
+      playSfx('life');
+      triggerShake(5, 0.28);
       if (state.lives <= 0) {
         if (!state.coinsAwarded) {
           state.lastEarnedCoins = Math.max(1, Math.floor(state.score / 900));
@@ -975,10 +1206,14 @@
       state.phaseIndex = 0;
       state.phase = PHASES[0].mode;
       state.phaseTimer = PHASES[0].duration;
+      state.invulnerableTimer = 1.1;
       setMode('life_lost', 1.2);
     }
 
     function handleCollisions() {
+      if (state.invulnerableTimer > 0) {
+        return;
+      }
       const pac = getPacmanPosition();
       for (const ghost of state.ghosts) {
         if (!ghost.released) {
@@ -994,6 +1229,9 @@
           const comboIndex = Math.min(state.ghostCombo, 3);
           const gain = 200 * (2 ** comboIndex);
           addScore(gain);
+          spawnScorePopup(String(gain), ghost.tileX, ghost.tileY, '#9dd3ff');
+          playSfx('ghost');
+          triggerShake(3.4, 0.22);
           state.ghostCombo += 1;
           ghost.mode = 'eyes';
           ghost.dir = reverseDir(ghost.dir);
@@ -1012,6 +1250,7 @@
       state.frightenedTimer -= dt;
       if (state.frightenedTimer <= 0) {
         state.frightenedTimer = 0;
+        state.frightenedTotalDuration = 0;
         state.ghostCombo = 0;
         for (const ghost of state.ghosts) {
           if (ghost.mode === 'frightened') {
@@ -1054,8 +1293,33 @@
       }
     }
 
+    function updateVisualFx(dt) {
+      if (state.chompCooldown > 0) {
+        state.chompCooldown = Math.max(0, state.chompCooldown - dt);
+      }
+      if (state.invulnerableTimer > 0) {
+        state.invulnerableTimer = Math.max(0, state.invulnerableTimer - dt);
+      }
+      if (state.shakeTime > 0) {
+        state.shakeTime = Math.max(0, state.shakeTime - dt);
+      }
+      if (state.shakeTime <= 0) {
+        state.shakeMagnitude = 0;
+      }
+
+      for (let i = state.popups.length - 1; i >= 0; i -= 1) {
+        const popup = state.popups[i];
+        popup.life -= dt;
+        popup.y -= dt * 34;
+        if (popup.life <= 0) {
+          state.popups.splice(i, 1);
+        }
+      }
+    }
+
     function updateGame(dt) {
       state.pacman.mouthTime += dt;
+      updateVisualFx(dt);
 
       if (state.mode === 'menu' || state.mode === 'paused' || state.mode === 'game_over') {
         return;
@@ -1180,12 +1444,16 @@
 
       const mouth = 0.22 + Math.abs(Math.sin(state.pacman.mouthTime * 15)) * 0.28;
 
+      if (state.invulnerableTimer > 0 && Math.floor(performance.now() / 80) % 2 === 0) {
+        ctx.globalAlpha = 0.42;
+      }
       ctx.fillStyle = '#ffe05b';
       ctx.beginPath();
       ctx.moveTo(px, py);
       ctx.arc(px, py, TILE_SIZE * 0.44, angle + mouth, angle - mouth, false);
       ctx.closePath();
       ctx.fill();
+      ctx.globalAlpha = 1;
     }
 
     function drawGhost(ghost) {
@@ -1296,14 +1564,35 @@
       }
     }
 
+    function drawPopups() {
+      for (const popup of state.popups) {
+        const alpha = Math.max(0, popup.life / popup.maxLife);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = popup.color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '700 16px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+        ctx.fillText(popup.text, popup.x, popup.y);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     function render() {
+      const shakePower = state.shakeTime > 0 ? state.shakeMagnitude * (state.shakeTime / 0.3) : 0;
+      const shakeX = shakePower > 0 ? (Math.random() * 2 - 1) * shakePower : 0;
+      const shakeY = shakePower > 0 ? (Math.random() * 2 - 1) * shakePower : 0;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(shakeX, shakeY);
       drawMaze();
       drawFruit();
       drawPacman();
       for (const ghost of state.ghosts) {
         drawGhost(ghost);
       }
+      drawPopups();
+      ctx.restore();
       drawOverlay();
     }
 
@@ -1341,7 +1630,9 @@
         pellets_remaining: state.pelletsRemaining,
         total_pellets: state.totalPellets,
         phase: state.phase,
+        phase_timer: Number(state.phaseTimer.toFixed(2)),
         frightened_timer: Number(state.frightenedTimer.toFixed(2)),
+        invulnerable_timer: Number(state.invulnerableTimer.toFixed(2)),
         pacman: {
           x: Number(pac.x.toFixed(3)),
           y: Number(pac.y.toFixed(3)),
@@ -1384,18 +1675,23 @@
       const code = event.code;
       if (code === 'ArrowUp' || code === 'KeyW') {
         event.preventDefault();
+        ensureAudioContext();
         queueDirection('up');
       } else if (code === 'ArrowDown' || code === 'KeyS') {
         event.preventDefault();
+        ensureAudioContext();
         queueDirection('down');
       } else if (code === 'ArrowLeft' || code === 'KeyA') {
         event.preventDefault();
+        ensureAudioContext();
         queueDirection('left');
       } else if (code === 'ArrowRight' || code === 'KeyD') {
         event.preventDefault();
+        ensureAudioContext();
         queueDirection('right');
       } else if (code === 'Space' || code === 'Enter') {
         event.preventDefault();
+        ensureAudioContext();
         if (state.mode === 'playing') {
           togglePause();
         } else {
@@ -1414,6 +1710,7 @@
     });
 
     startBtn.addEventListener('click', () => {
+      ensureAudioContext();
       if (state.mode === 'playing') {
         return;
       }
@@ -1431,6 +1728,7 @@
     for (const button of controlButtons) {
       const activate = (event) => {
         event.preventDefault();
+        ensureAudioContext();
         queueDirection(button.dataset.dir);
         if (state.mode === 'menu' || state.mode === 'game_over') {
           startOrResume();
@@ -1444,6 +1742,7 @@
     canvas.addEventListener('touchstart', (event) => {
       const touch = event.changedTouches[0];
       swipeStart = { x: touch.clientX, y: touch.clientY };
+      ensureAudioContext();
       if (state.mode === 'menu' || state.mode === 'game_over') {
         startOrResume();
       }
@@ -1476,6 +1775,10 @@
       swipeStart = null;
     }, { passive: false });
 
+    audioBtn.addEventListener('click', () => {
+      setAudioEnabled(!state.audioEnabled);
+    });
+
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && state.mode === 'playing') {
         setMode('paused');
@@ -1498,6 +1801,7 @@
 
     initLevel(1, false);
     setMode('menu');
+    syncAudioButton();
     updateHud();
     render();
     requestAnimationFrame(animationLoop);

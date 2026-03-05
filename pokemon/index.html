@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Pixel Monsters Adventure</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root { --bg:#111a2d; --fg:#eaf2ff; --muted:#9eb2d6; --panel:#15223d; --line:#334f7f; --accent:#f4cc58; }
+    * { box-sizing:border-box; }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; position:fixed; background:var(--bg); color:var(--fg); font-family:"Trebuchet MS","Segoe UI",sans-serif; touch-action:none; }
+    .back-home { position:fixed; top:10px; left:10px; z-index:9999; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,.58); color:#fff; text-decoration:none; font-weight:700; font-size:14px; border:1px solid rgba(255,255,255,.14); }
+    .wrap { min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:10px; padding-top:44px; }
+    #canvas-wrap { width:min(96vw,980px); aspect-ratio:3/2; max-height:min(70vh,680px); }
+    canvas { width:100%; height:100%; display:block; border-radius:12px; border:2px solid var(--line); background:#78c7ff; image-rendering:pixelated; }
+    .hud { width:min(96vw,980px); border:2px solid var(--line); border-radius:12px; background:linear-gradient(180deg,rgba(21,34,61,.96),rgba(11,17,31,.96)); padding:10px; display:grid; gap:8px; }
+    .status { display:flex; justify-content:space-between; gap:10px; font-size:14px; color:var(--muted); }
+    #quest { color:var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #party { color:#7fdf96; font-weight:700; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; }
+    button { border:2px solid #3b5889; border-radius:10px; background:#20385f; color:var(--fg); padding:10px 14px; min-height:42px; font-weight:700; cursor:pointer; }
+    button.primary { background:var(--accent); border-color:#ffe089; color:#221500; }
+    #pickers[hidden] { display:none; }
+    #pickers { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .ctrl { width:min(96vw,980px); display:grid; grid-template-columns:minmax(220px,1fr) minmax(140px,180px); gap:12px; }
+    .dpad { display:grid; grid-template-columns:repeat(3,minmax(56px,80px)); grid-template-rows:repeat(3,minmax(52px,72px)); gap:6px; justify-content:center; }
+    .pad { border:2px solid #38557f; border-radius:10px; background:#1f3357; font-size:20px; font-weight:800; min-height:52px; touch-action:none; }
+    .pad.on,.pad:active { background:#31507f; }
+    .up{grid-column:2;grid-row:1}.left{grid-column:1;grid-row:2}.right{grid-column:3;grid-row:2}.down{grid-column:2;grid-row:3}
+    .ab { display:grid; gap:8px; }
+    .ab button { border-radius:999px; font-size:17px; }
+    .ab #a { background:#b44a70; border-color:#7e4560; }
+    .ab #b { background:#3d728f; border-color:#3f6676; }
+    @media (max-width:820px){ .ctrl{ grid-template-columns:1fr; } #pickers{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back">Back</a>
+  <div class="wrap">
+    <div id="canvas-wrap"><canvas id="game" width="960" height="640"></canvas></div>
+    <div class="hud">
+      <div class="status"><div id="quest">Quest: Press START.</div><div id="party">Party: --</div></div>
+      <div class="row">
+        <button id="start-btn" class="primary">START</button>
+        <button id="restart-btn">RESTART</button>
+        <button id="fullscreen-btn">FULLSCREEN (F)</button>
+      </div>
+      <div id="pickers" hidden>
+        <button data-starter="Leaflet">Leaflet (Grass)</button>
+        <button data-starter="Pyrodon">Pyrodon (Fire)</button>
+        <button data-starter="Aquary">Aquary (Water)</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="dpad">
+        <button class="pad up" data-dir="up">U</button>
+        <button class="pad left" data-dir="left">L</button>
+        <button class="pad right" data-dir="right">R</button>
+        <button class="pad down" data-dir="down">D</button>
+      </div>
+      <div class="ab">
+        <button id="a">A</button>
+        <button id="b">B</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from "../src/core/state.js";
+    import { maybeUnlock } from "../src/prog/achievements.js";
+    window.addCoins = addCoinsFn;
+    window.maybeUnlock = maybeUnlock;
+    rememberRecent("pokemon");
+  </script>
+
+  <script>
+    const cvs = document.getElementById("game");
+    const ctx = cvs.getContext("2d");
+    const questEl = document.getElementById("quest");
+    const partyEl = document.getElementById("party");
+    const startBtn = document.getElementById("start-btn");
+    const restartBtn = document.getElementById("restart-btn");
+    const fsBtn = document.getElementById("fullscreen-btn");
+    const pickers = document.getElementById("pickers");
+
+    const TILE = 40;
+    const MAP = [
+      "########################",
+      "#....gggg....gggg.....#",
+      "#....gggg....gggg..m..#",
+      "#.................mmm.#",
+      "#...llll............m.#",
+      "#...l..l.....c..c.....#",
+      "#...l..l.....c..c.....#",
+      "#...llll.....cccc.....#",
+      "#..........R..........#",
+      "#....gggg.........G...#",
+      "#....gggg.............#",
+      "#.....................#",
+      "#............~~~~.....#",
+      "#............~~~~.....#",
+      "#............~~~~.....#",
+      "########################"
+    ];
+    const H = MAP.length, W = MAP[0].length;
+
+    const SPECIES = {
+      Leaflet: { hp: 34, atk: 10, def: 9, moves: ["Vine", "Tackle"] },
+      Pyrodon: { hp: 30, atk: 12, def: 8, moves: ["Ember", "Tackle"] },
+      Aquary: { hp: 36, atk: 9, def: 11, moves: ["Bubble", "Tackle"] },
+      Sproutle: { hp: 24, atk: 8, def: 8, moves: ["Vine", "Tackle"] },
+      Embercub: { hp: 22, atk: 9, def: 7, moves: ["Ember", "Tackle"] },
+      Voltkit: { hp: 28, atk: 10, def: 8, moves: ["Spark", "Tackle"] },
+      Dracowl: { hp: 38, atk: 12, def: 10, moves: ["Bite", "Spark"] }
+    };
+
+    const DIR = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+    const WILD = ["Sproutle","Embercub","Voltkit"];
+
+    let state = {};
+    reset();
+
+    function reset() {
+      state = {
+        mode: "title", quest: "Press START to choose a starter.", msg: "Welcome to Pixel Monsters Adventure.",
+        player: { x: 3, y: 11, rx: 3, ry: 11, tx: 3, ty: 11, t: 0, moving: false, facing: "down" },
+        keys: { up:false, down:false, left:false, right:false }, order: [],
+        party: [], reserve: [], bag: { balls: 6, potions: 2 }, badges: [],
+        flags: { starter:false, rival:false, gym:false },
+        npcs: {
+          professor: { x:3, y:11, seen:false },
+          rival: { x:11, y:8, down:false },
+          gym: { x:19, y:9, down:false }
+        },
+        battle: null, cool: 0, paused: false, elapsed: 0, seed: (Date.now() % 2147483647) || 1
+      };
+      startBtn.disabled = false; startBtn.textContent = "START";
+      pickers.hidden = true;
+      updateHud();
+    }
+
+    function rand() { state.seed = (state.seed * 48271) % 2147483647; return state.seed / 2147483647; }
+    function tile(x, y) { if (x < 0 || y < 0 || x >= W || y >= H) return "#"; return MAP[y][x]; }
+    function passable(ch) { return ch !== "#" && ch !== "l" && ch !== "~" && ch !== "m"; }
+    function mon(name, lv) { const b = SPECIES[name]; const hp = b.hp + lv * 4; return { name, lv, max: hp, hp, atk: b.atk + lv * 2, def: b.def + lv, moves: b.moves.slice() }; }
+    function lead() { return state.party[0] || null; }
+
+    function startPick() { if (state.mode === "title") { state.mode = "pick"; state.quest = "Pick your partner."; pickers.hidden = false; updateHud(); } }
+    function chooseStarter(name) { state.party = [mon(name, 5)]; state.flags.starter = true; state.mode = "overworld"; state.quest = "Defeat Rival, then challenge Gym Leader."; state.msg = name + ", I choose you."; pickers.hidden = true; startBtn.disabled = true; startBtn.textContent = "STARTED"; updateHud(); }
+    function npcAt(x, y) {
+      if (state.npcs.professor.x === x && state.npcs.professor.y === y) return "professor";
+      if (state.npcs.rival.x === x && state.npcs.rival.y === y) return "rival";
+      if (state.npcs.gym.x === x && state.npcs.gym.y === y) return "gym";
+      return null;
+    }
+
+    function moveStart(d) {
+      const v = DIR[d];
+      const nx = state.player.x + v[0], ny = state.player.y + v[1];
+      state.player.facing = d;
+      if (!passable(tile(nx, ny))) return;
+      if (npcAt(nx, ny)) return;
+      state.player.moving = true;
+      state.player.tx = nx; state.player.ty = ny; state.player.t = 0;
+    }
+
+    function stepOver(dt) {
+      if (state.cool > 0) state.cool = Math.max(0, state.cool - dt);
+      if (state.player.moving) {
+        state.player.t += dt * 5.5;
+        const a = Math.min(1, state.player.t);
+        state.player.rx = state.player.x + (state.player.tx - state.player.x) * a;
+        state.player.ry = state.player.y + (state.player.ty - state.player.y) * a;
+        if (state.player.t >= 1) {
+          state.player.x = state.player.tx; state.player.y = state.player.ty;
+          state.player.rx = state.player.x; state.player.ry = state.player.y;
+          state.player.moving = false;
+          if (tile(state.player.x, state.player.y) === "g" && state.cool <= 0 && rand() < 0.18) {
+            startBattle("wild", mon(WILD[(rand() * WILD.length) | 0], 3 + (rand() * 4) | 0));
+          }
+        }
+      } else {
+        for (let i = state.order.length - 1; i >= 0; i--) {
+          if (state.keys[state.order[i]]) { moveStart(state.order[i]); break; }
+        }
+      }
+    }
+
+    function msgLines(arr, next, cb) {
+      state.battle.phase = "msg";
+      state.battle.lines = arr.slice();
+      state.battle.line = state.battle.lines.shift() || "";
+      state.battle.next = next || "menu";
+      state.battle.cb = cb || null;
+    }
+
+    function startBattle(type, enemy) {
+      const l = lead(); if (!l) return;
+      state.mode = "battle"; state.cool = 1.2;
+      state.battle = {
+        type, enemy, menu: 0, phase: "msg", line: "", lines: [], next: "menu", cb: null,
+        canRun: type === "wild", canCatch: type === "wild"
+      };
+      msgLines([type === "wild" ? `A wild ${enemy.name} appeared.` : `${enemy.name} blocks your path.`], "menu");
+    }
+
+    function enemyTurn(log) {
+      const l = lead(), e = state.battle.enemy;
+      const d = Math.max(1, ((e.atk * (8 + (rand() * 6 | 0))) / Math.max(1, l.def)) | 0);
+      l.hp = Math.max(0, l.hp - d);
+      log.push(`${e.name} hits for ${d}.`);
+      if (l.hp <= 0) log.push(`${l.name} fainted.`);
+    }
+
+    function winBattle() {
+      const e = state.battle.enemy;
+      const l = lead();
+      const coins = state.battle.type === "wild" ? 1 + (e.lv >> 1) : 5 + e.lv;
+      if (typeof addCoins === "function") addCoins(coins);
+      if (state.battle.type !== "wild") {
+        if (state.battle.type === "rival") state.flags.rival = true;
+        if (state.battle.type === "gym") { state.flags.gym = true; if (!state.badges.includes("Circuit")) state.badges.push("Circuit"); }
+      }
+      if (typeof maybeUnlock === "function") maybeUnlock({ anyPlay: true, pokemon: { badges: state.badges.length, captures: state.reserve.length } });
+      msgLines([`${e.name} fainted.`, `${l.name} won.`, `You earned ${coins} coins.`], "done", () => {
+        state.mode = "overworld"; state.battle = null; state.quest = state.flags.gym ? "Champion path complete." : state.flags.rival ? "Challenge Gym Leader." : "Defeat Rival, then Gym Leader.";
+        updateHud();
+      });
+    }
+
+    function loseBattle() {
+      msgLines(["You blacked out.", "Returned to healing center."], "done", () => {
+        const l = lead(); if (l) l.hp = l.max;
+        state.player.x = 14; state.player.y = 7; state.player.rx = 14; state.player.ry = 7;
+        state.mode = "overworld"; state.battle = null; updateHud();
+      });
+    }
+
+    function battleAct() {
+      const b = state.battle, l = lead(), e = b.enemy;
+      const log = [];
+      if (b.menu === 0) {
+        const d = Math.max(1, ((l.atk * (8 + (rand() * 7 | 0))) / Math.max(1, e.def)) | 0);
+        e.hp = Math.max(0, e.hp - d); log.push(`${l.name} dealt ${d}.`);
+        if (e.hp <= 0) { msgLines(log, "done", winBattle); return; }
+        enemyTurn(log); if (l.hp <= 0) { msgLines(log, "done", loseBattle); return; }
+        msgLines(log, "menu"); return;
+      }
+      if (b.menu === 1) {
+        if (!b.canCatch) { msgLines(["Capture balls only work in wild battles."], "menu"); return; }
+        if (state.bag.balls <= 0) { msgLines(["No capture balls left."], "menu"); return; }
+        state.bag.balls -= 1;
+        const c = 0.2 + (1 - e.hp / e.max) * 0.65;
+        if (rand() < c) {
+          state.reserve.push({ name: e.name, lv: e.lv });
+          msgLines([`Captured ${e.name}.`], "done", () => { state.mode = "overworld"; state.battle = null; updateHud(); });
+          return;
+        }
+        log.push(`${e.name} broke free.`);
+        enemyTurn(log); if (l.hp <= 0) { msgLines(log, "done", loseBattle); return; }
+        msgLines(log, "menu"); return;
+      }
+      if (b.menu === 2) {
+        if (!b.canRun) { msgLines(["Cannot run from trainers."], "menu"); return; }
+        if (rand() < 0.6) { msgLines(["Escaped safely."], "done", () => { state.mode = "overworld"; state.battle = null; updateHud(); }); return; }
+        log.push("Could not escape."); enemyTurn(log);
+        if (l.hp <= 0) { msgLines(log, "done", loseBattle); return; }
+        msgLines(log, "menu");
+      }
+    }
+
+    function battleConfirm() {
+      const b = state.battle; if (!b) return;
+      if (b.phase === "msg") {
+        if (b.lines.length) { b.line = b.lines.shift(); return; }
+        if (b.cb) { const fn = b.cb; b.cb = null; fn(); return; }
+        if (state.battle) { b.phase = b.next; }
+        return;
+      }
+      if (b.phase === "menu") battleAct();
+    }
+
+    function interact() {
+      if (state.mode === "title") { startPick(); return; }
+      if (state.mode === "pick") { chooseStarter("Leaflet"); return; }
+      if (state.mode === "battle") { battleConfirm(); return; }
+      const v = DIR[state.player.facing], tx = state.player.x + v[0], ty = state.player.y + v[1];
+      const n = npcAt(tx, ty);
+      if (n === "professor") { state.msg = "Professor: Grass hides wild monsters."; state.npcs.professor.seen = true; return; }
+      if (n === "rival") {
+        if (state.npcs.rival.down) { state.msg = "Rival: Go face the gym now."; return; }
+        startBattle("rival", mon("Voltkit", 6));
+        state.npcs.rival.down = true;
+        return;
+      }
+      if (n === "gym") {
+        if (!state.flags.rival) { state.msg = "Gym Leader: Beat your rival first."; return; }
+        if (state.npcs.gym.down) { state.msg = "Gym Leader: You already earned this badge."; return; }
+        startBattle("gym", mon("Dracowl", 9));
+        state.npcs.gym.down = true;
+        return;
+      }
+      if (tile(tx, ty) === "c") { const l = lead(); if (l) l.hp = l.max; state.msg = "Healing center restored your party."; updateHud(); return; }
+      state.msg = "No interaction.";
+    }
+    function drawMap() {
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const ch = tile(x, y);
+        ctx.fillStyle = ch === "#" ? "#4f5a72" : ch === "g" ? "#67ba5c" : ch === "~" ? "#4e7fd4" : ch === "l" ? "#adc3e1" : ch === "m" ? "#b5d7ea" : ch === "c" ? "#f0bace" : "#d9c79a";
+        ctx.fillRect(x * TILE, y * TILE, TILE + 1, TILE + 1);
+        if (ch === "g") { ctx.fillStyle = "rgba(27,92,32,.35)"; ctx.fillRect(x * TILE + 7, y * TILE + 10, 3, 10); ctx.fillRect(x * TILE + 20, y * TILE + 18, 3, 10); }
+      }
+      drawNpc(state.npcs.professor, "#f4f4f4");
+      drawNpc(state.npcs.rival, state.npcs.rival.down ? "#86d998" : "#ffd06f");
+      drawNpc(state.npcs.gym, state.npcs.gym.down ? "#86d998" : "#bde3ff");
+      const p = state.player; const px = p.rx * TILE, py = p.ry * TILE;
+      ctx.fillStyle = "rgba(0,0,0,.24)"; ctx.beginPath(); ctx.ellipse(px + 20, py + 34, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#e53f3f"; ctx.fillRect(px + 11, py + 7, 18, 10);
+      ctx.fillStyle = "#fff"; ctx.fillRect(px + 11, py + 17, 18, 14);
+      if (state.msg) {
+        ctx.fillStyle = "rgba(6,10,22,.72)"; ctx.fillRect(14, cvs.height - 74, cvs.width - 28, 60);
+        ctx.strokeStyle = "#4a6494"; ctx.strokeRect(14, cvs.height - 74, cvs.width - 28, 60);
+        ctx.fillStyle = "#f2f7ff"; ctx.font = "20px Trebuchet MS"; ctx.fillText(state.msg, 24, cvs.height - 38);
+      }
+    }
+
+    function drawNpc(n, c) {
+      const x = n.x * TILE, y = n.y * TILE;
+      ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.beginPath(); ctx.ellipse(x + 20, y + 34, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = c; ctx.fillRect(x + 11, y + 8, 18, 24);
+    }
+
+    function drawTitle() {
+      ctx.fillStyle = "#1d3561"; ctx.fillRect(0, 0, cvs.width, cvs.height);
+      ctx.fillStyle = "#f8d56f"; ctx.font = "bold 56px Trebuchet MS"; ctx.textAlign = "center";
+      ctx.fillText("PIXEL MONSTERS", cvs.width / 2, 190);
+      ctx.fillStyle = "#fff"; ctx.font = "bold 36px Trebuchet MS"; ctx.fillText("ADVENTURE", cvs.width / 2, 242);
+      ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(cvs.width / 2 - 310, 300, 620, 220);
+      ctx.strokeStyle = "#6f8fc8"; ctx.strokeRect(cvs.width / 2 - 310, 300, 620, 220);
+      ctx.fillStyle = "#eef5ff"; ctx.font = "22px Trebuchet MS";
+      ctx.fillText("Move: WASD or Arrows | A: Space/Enter | B: Esc", cvs.width / 2, 355);
+      ctx.fillText("Battle: choose Attack, Ball, or Run", cvs.width / 2, 398);
+      ctx.fillText("Touch: D-pad and A/B buttons", cvs.width / 2, 441);
+      ctx.fillStyle = "#ffd978"; ctx.font = "bold 24px Trebuchet MS";
+      ctx.fillText(state.mode === "pick" ? "Choose your starter below" : "Press START", cvs.width / 2, 555);
+      ctx.textAlign = "left";
+    }
+
+    function drawBattle() {
+      const b = state.battle, l = lead(), e = b.enemy;
+      ctx.fillStyle = "#8ec7ff"; ctx.fillRect(0, 0, cvs.width, cvs.height * .62);
+      ctx.fillStyle = "#d6f2ff"; ctx.fillRect(0, cvs.height * .62, cvs.width, cvs.height * .38);
+      ctx.fillStyle = "#9dbf7f"; ctx.beginPath(); ctx.ellipse(725, 225, 150, 48, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(230, 430, 160, 52, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#222d41"; ctx.fillRect(680, 168, 90, 66); ctx.fillStyle = "#f7e06b"; ctx.fillRect(689, 177, 72, 22);
+      ctx.fillStyle = "#222d41"; ctx.fillRect(196, 358, 88, 72); ctx.fillStyle = "#e83f3f"; ctx.fillRect(204, 367, 72, 26);
+      hpBox(e.name, e.lv, e.hp, e.max, 560, 48, 320); hpBox(l.name, l.lv, l.hp, l.max, 54, 320, 360);
+      ctx.fillStyle = "#111a2c"; ctx.fillRect(14, cvs.height - 174, cvs.width - 28, 160); ctx.strokeStyle = "#4a6394"; ctx.lineWidth = 3; ctx.strokeRect(14, cvs.height - 174, cvs.width - 28, 160);
+      if (b.phase === "msg") {
+        ctx.fillStyle = "#eef4ff"; ctx.font = "22px Trebuchet MS"; ctx.fillText(b.line || "...", 32, cvs.height - 100);
+        ctx.fillStyle = "#ffd86d"; ctx.font = "18px Trebuchet MS"; ctx.fillText("Press A", cvs.width - 120, cvs.height - 28);
+      } else {
+        const opts = [`Attack`, `Ball (${state.bag.balls})`, b.canRun ? "Run" : "Run (blocked)"];
+        ctx.fillStyle = "#e9f0ff"; ctx.font = "20px Trebuchet MS"; ctx.fillText("Choose action:", 32, cvs.height - 136);
+        for (let i = 0; i < opts.length; i++) {
+          const y = cvs.height - 100 + i * 34;
+          if (i === b.menu) { ctx.fillStyle = "#ffd46a"; ctx.fillRect(26, y - 20, cvs.width - 52, 28); ctx.fillStyle = "#17120a"; }
+          else ctx.fillStyle = "#edf4ff";
+          ctx.fillText(opts[i], 34, y);
+        }
+      }
+    }
+
+    function hpBox(name, lv, hp, max, x, y, w) {
+      ctx.fillStyle = "rgba(17,26,44,.84)"; ctx.fillRect(x, y, w, 96); ctx.strokeStyle = "#435c8a"; ctx.strokeRect(x, y, w, 96);
+      ctx.fillStyle = "#f5f9ff"; ctx.font = "bold 24px Trebuchet MS"; ctx.fillText(name, x + 14, y + 30); ctx.font = "18px Trebuchet MS"; ctx.fillText("Lv " + lv, x + w - 70, y + 30);
+      const r = Math.max(0, Math.min(1, hp / Math.max(1, max))), bw = w - 30;
+      ctx.fillStyle = "#263146"; ctx.fillRect(x + 14, y + 46, bw, 16);
+      ctx.fillStyle = r > .5 ? "#6ee090" : r > .25 ? "#f3c75f" : "#ff7a70"; ctx.fillRect(x + 14, y + 46, bw * r, 16);
+      ctx.fillStyle = "#dfeaff"; ctx.font = "17px Trebuchet MS"; ctx.fillText(`${hp}/${max} HP`, x + 14, y + 82);
+    }
+
+    function updateHud() {
+      const l = lead();
+      partyEl.textContent = l ? `Party: ${l.name} Lv${l.lv} HP ${l.hp}/${l.max}` : "Party: --";
+      questEl.textContent = "Quest: " + state.quest;
+    }
+
+    function update(dt) {
+      state.elapsed += dt;
+      if (state.paused) return;
+      if (state.mode === "overworld") stepOver(dt);
+    }
+
+    function draw() {
+      if (state.mode === "title" || state.mode === "pick") drawTitle();
+      else if (state.mode === "battle") drawBattle();
+      else drawMap();
+    }
+
+    function keyDir(code) { return code === "ArrowUp" || code === "KeyW" ? "up" : code === "ArrowDown" || code === "KeyS" ? "down" : code === "ArrowLeft" || code === "KeyA" ? "left" : code === "ArrowRight" || code === "KeyD" ? "right" : null; }
+
+    function onDown(e) {
+      const d = keyDir(e.code);
+      if (d) { state.keys[d] = true; if (!state.order.includes(d)) state.order.push(d); if (state.mode === "battle") { state.battle.menu = (state.battle.menu + (d === "up" || d === "left" ? 2 : 1)) % 3; } e.preventDefault(); }
+      if (state.mode === "pick") {
+        if (e.code === "Digit1") chooseStarter("Leaflet");
+        if (e.code === "Digit2") chooseStarter("Pyrodon");
+        if (e.code === "Digit3") chooseStarter("Aquary");
+      }
+      if (e.code === "KeyF") { toggleFS(); e.preventDefault(); }
+      const confirm = e.code === "Enter" || e.code === "Space";
+      const back = e.code === "Escape" || e.code === "Backspace" || e.code === "KeyX";
+      if (confirm) { interact(); e.preventDefault(); }
+      if (back && state.mode === "overworld") { state.paused = !state.paused; state.msg = state.paused ? "Paused." : "Resumed."; }
+    }
+
+    function onUp(e) {
+      const d = keyDir(e.code);
+      if (!d) return;
+      state.keys[d] = false;
+      state.order = state.order.filter(k => k !== d);
+    }
+
+    function bindPad(btn, start, end) {
+      const off = () => { end(); btn.classList.remove("on"); };
+      btn.addEventListener("pointerdown", ev => { ev.preventDefault(); btn.setPointerCapture(ev.pointerId); btn.classList.add("on"); start(); });
+      btn.addEventListener("pointerup", off); btn.addEventListener("pointercancel", off); btn.addEventListener("pointerleave", off);
+    }
+
+    function bindTouch() {
+      document.querySelectorAll(".pad[data-dir]").forEach(b => {
+        const d = b.dataset.dir;
+        bindPad(b, () => { state.keys[d] = true; if (!state.order.includes(d)) state.order.push(d); if (state.mode === "battle") state.battle.menu = (state.battle.menu + (d === "up" || d === "left" ? 2 : 1)) % 3; }, () => { state.keys[d] = false; state.order = state.order.filter(k => k !== d); });
+      });
+      document.getElementById("a").addEventListener("click", e => { e.preventDefault(); interact(); });
+      document.getElementById("b").addEventListener("click", e => { e.preventDefault(); if (state.mode === "overworld") { state.paused = !state.paused; state.msg = state.paused ? "Paused." : "Resumed."; } });
+    }
+
+    function resize() { const w = document.getElementById("canvas-wrap").getBoundingClientRect(); const a = cvs.width / cvs.height; if (w.width / w.height > a) { cvs.style.height = "100%"; cvs.style.width = "auto"; } else { cvs.style.width = "100%"; cvs.style.height = "auto"; } }
+    async function toggleFS() { const box = document.getElementById("canvas-wrap"); if (!document.fullscreenElement) await box.requestFullscreen(); else await document.exitFullscreen(); resize(); }
+
+    function renderText() {
+      const l = lead();
+      return JSON.stringify({
+        coordinateSystem: "origin top-left; x right; y down; overworld in tile units",
+        mode: state.mode,
+        quest: state.quest,
+        msg: state.msg,
+        player: { x: +state.player.rx.toFixed(2), y: +state.player.ry.toFixed(2), tileX: state.player.x, tileY: state.player.y, facing: state.player.facing, moving: state.player.moving, tile: tile(state.player.x, state.player.y) },
+        party: l ? [{ name: l.name, lv: l.lv, hp: l.hp, max: l.max, moves: l.moves.slice() }] : [],
+        bag: { balls: state.bag.balls, potions: state.bag.potions },
+        badges: state.badges.slice(),
+        reserve: state.reserve.length,
+        npcs: { rivalDown: state.npcs.rival.down, gymDown: state.npcs.gym.down },
+        battle: state.battle ? { type: state.battle.type, phase: state.battle.phase, line: state.battle.line, menu: state.battle.menu, enemy: { name: state.battle.enemy.name, lv: state.battle.enemy.lv, hp: state.battle.enemy.hp, max: state.battle.enemy.max }, canRun: state.battle.canRun, canCatch: state.battle.canCatch } : null
+      });
+    }
+
+    let manualStepping = false;
+    function advance(ms) {
+      manualStepping = true;
+      const n = Math.max(1, Math.round(ms / (1000 / 60)));
+      for (let i = 0; i < n; i++) { update(1 / 60); draw(); }
+      manualStepping = false;
+    }
+
+    window.render_game_to_text = renderText;
+    window.advanceTime = advance;
+
+    startBtn.addEventListener("click", startPick);
+    restartBtn.addEventListener("click", () => { reset(); draw(); });
+    fsBtn.addEventListener("click", toggleFS);
+    pickers.querySelectorAll("button[data-starter]").forEach(b => b.addEventListener("click", () => chooseStarter(b.dataset.starter)));
+    document.addEventListener("keydown", onDown);
+    document.addEventListener("keyup", onUp);
+    window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", () => setTimeout(resize, 120));
+    document.addEventListener("fullscreenchange", resize);
+
+    bindTouch();
+    updateHud();
+    resize();
+    let last = 0;
+    (function loop(ts) {
+      if (!last) last = ts;
+      const dt = Math.min(0.05, Math.max(0.001, (ts - last) / 1000));
+      last = ts;
+      if (!manualStepping) {
+        update(dt);
+        draw();
+      }
+      requestAnimationFrame(loop);
+    })(0);
+  </script>
+</body>
+</html>
