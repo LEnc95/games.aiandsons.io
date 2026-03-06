@@ -726,3 +726,44 @@
   - `output/web-game/launch-readiness-e2e/summary.json`: `success: true`, all checks pass.
 - Next TODO:
   - Start CG-705 Stripe entitlement persistence + auth binding (durable webhook-backed entitlement store + authenticated customer linkage).
+- Continued request (2026-03-06): complete Sprint 7 CG-705 Stripe entitlement persistence + auth binding.
+- Added signed billing session endpoint and utilities:
+  - `api/auth/_session.js` (HMAC-signed `cade_session` cookie, 180-day TTL, secure-cookie support)
+  - `api/auth/session.js` (`GET` session bootstrap endpoint)
+- Added durable Stripe entitlement store abstraction:
+  - `api/stripe/_store.js`
+  - Uses `KV_REST_API_URL` + `KV_REST_API_TOKEN` when configured.
+  - Falls back to in-memory store for local/dev.
+  - Persists user billing profiles, customer->user mappings, and webhook idempotency markers.
+- Stripe endpoint hardening + binding updates:
+  - `api/stripe/config.js`: now ensures session context when Stripe is enabled.
+  - `api/stripe/create-checkout-session.js`: requires session context, binds checkout metadata to `appUserId`, persists pending customer/profile mapping.
+  - `api/stripe/create-portal-session.js`: requires session context and session-bound customer binding (no raw email-only customer lookup).
+  - `api/stripe/subscription-status.js`: session-bound durable entitlement sync; validates checkout session ownership before binding.
+  - `api/stripe/webhook.js`: persists entitlement lifecycle snapshots and marks processed event IDs for idempotency.
+  - `api/stripe/_shared.js`: added `summarizeEntitlementsFromProfile` helper.
+- Frontend durable-entitlement sync updates:
+  - `src/core/billing.js`:
+    - Added `ensureBillingSession()` (`/api/auth/session` bootstrap).
+    - Added `applyStripeEntitlementSnapshot()` and `syncEntitlementsWithBillingBackend()`.
+    - Stripe checkout/portal/status requests now bootstrap session context first.
+  - `shop.html`: imports billing sync helper and periodically refreshes durable entitlements in Stripe mode.
+  - `teacher/index.html`: imports billing sync helper and periodically refreshes durable entitlements in Stripe mode.
+  - `pricing.html`: relaxed billing-portal click flow to allow session-bound portal open without requiring local email input.
+- Tests + validation updates:
+  - Added `tests/stripe-store.integration.test.mjs` (store profile persistence, customer mapping, webhook marker checks).
+  - Extended `tests/billing.integration.test.mjs` with `applyStripeEntitlementSnapshot` coverage.
+  - Updated `package.json` `test:shop` script to include new Stripe store tests.
+- Docs/planning updates:
+  - `README.md`: added auth endpoint docs and env vars (`APP_SESSION_SECRET`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`) plus shop/teacher backend sync note.
+  - `SPRINT_BOARD.md`: marked CG-705 DONE and set CG-702 as next highest-value item.
+- Validation runs (all pass):
+  - `npm run test:shop`
+  - `npm run test:pricing-smoke:raw`
+  - `npm run test:metrics-smoke:raw`
+  - `npm run test:launch-readiness-smoke:raw`
+- Visual artifact review:
+  - Reviewed `output/web-game/pricing-checkout-e2e/pricing-active.png`.
+  - Reviewed `output/web-game/metrics-baseline-e2e/shop-metrics-flow.png`.
+- Next TODO suggestion:
+  - Start CG-702 by adding deterministic KPI export script + integration test + README command docs.

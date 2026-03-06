@@ -176,6 +176,25 @@ async function findCustomerByEmail(stripe, email) {
   return customers.data[0];
 }
 
+function summarizeEntitlementsFromProfile(profile) {
+  const safeProfile = profile && typeof profile === "object" ? profile : {};
+  const rawEntitlements = safeProfile.entitlements && typeof safeProfile.entitlements === "object"
+    ? safeProfile.entitlements
+    : {};
+  const subscriptions = Array.isArray(safeProfile.subscriptions) ? safeProfile.subscriptions : [];
+  const updatedAt = Number(safeProfile.updatedAt);
+
+  return {
+    entitlements: {
+      familyPremium: Boolean(rawEntitlements.familyPremium),
+      schoolLicense: Boolean(rawEntitlements.schoolLicense),
+    },
+    subscriptions,
+    activePlanId: typeof safeProfile.activePlanId === "string" ? safeProfile.activePlanId : "",
+    updatedAt: Number.isFinite(updatedAt) ? Math.max(0, Math.floor(updatedAt)) : 0,
+  };
+}
+
 function findPlanIdForPriceId(priceId, planPrices = getConfiguredPlanPrices()) {
   if (!priceId) return "";
   for (const [planId, configuredPriceId] of Object.entries(planPrices)) {
@@ -286,6 +305,7 @@ module.exports = {
   getPublicBillingConfig,
   findCustomerByEmail,
   listCustomerSubscriptions,
+  summarizeEntitlementsFromProfile,
   summarizeEntitlementsFromSubscriptions,
   forwardWebhookEvent,
 };

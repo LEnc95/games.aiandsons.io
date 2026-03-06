@@ -1,4 +1,4 @@
-const {
+﻿const {
   getStripeClient,
   getConfiguredPlanPrices,
   getRequestOrigin,
@@ -10,8 +10,13 @@ const {
   sendJson,
   sendError,
   getPublicBillingConfig,
-  findCustomerByEmail,
 } = require("./_shared");
+const { ensureSession } = require("../auth/_session");
+const {
+  getStripeBillingProfile,
+  saveStripeBillingProfile,
+  bindUserToStripeCustomer,
+} = require("./_store");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -28,6 +33,11 @@ module.exports = async function handler(req, res) {
     return sendError(res, 503, "Stripe billing is unavailable.", "stripe_unavailable");
   }
 
+  const session = ensureSession(req, res, { createIfMissing: true });
+  if (!session || !session.userId) {
+    return sendError(res, 401, "Authenticated billing session is required.", "auth_required");
+  }
+
   try {
     const body = await readJsonBody(req);
     const planId = normalizePlanId(body.planId);
@@ -42,7 +52,9 @@ module.exports = async function handler(req, res) {
       return sendError(res, 400, "A valid billing email is required.", "invalid_customer_email");
     }
 
-    let customer = await findCustomerByEmail(stripe, customerEmail);
+    const profile = await getStripeBillingProfile(session.userId);
+    const existingCustomerId = typeof profile.customerId === "string" ? profile.customerId.trim() : "";
+
     const baseOrigin = getRequestOrigin(req);
     const defaultSuccessPath = planId.startsWith("school-")
       ? "/school-license.html?checkout=success&session_id={CHECKOUT_SESSION_ID}"
@@ -63,11 +75,13 @@ module.exports = async function handler(req, res) {
       metadata: {
         app: "cade-games",
         planId,
+        appUserId: session.userId,
       },
       subscription_data: {
         metadata: {
           app: "cade-games",
           planId,
+          appUserId: session.userId,
         },
       },
     };
@@ -76,20 +90,40 @@ module.exports = async function handler(req, res) {
       params.automatic_tax = { enabled: true };
     }
 
-    if (customer && customer.id) {
-      params.customer = customer.id;
+    if (existingCustomerId) {
+      params.customer = existingCustomerId;
     } else {
       params.customer_email = customerEmail;
-      customer = null;
     }
 
-    const session = await stripe.checkout.sessions.create(params);
+    const checkoutSession = await stripe.checkout.sessions.create(params);
+    const sessionCustomerId = typeof checkoutSession.customer === "string"
+      ? checkoutSession.customer.trim()
+      : "";
+    const resolvedCustomerId = sessionCustomerId || existingCustomerId;
+
+    await saveStripeBillingProfile(session.userId, {
+      customerId: resolvedCustomerId,
+      customerEmail,
+      checkoutSessionId: checkoutSession.id,
+      lastSource: "checkout_session_created",
+    });
+
+    if (resolvedCustomerId) {
+      await bindUserToStripeCustomer({
+        userId: session.userId,
+        customerId: resolvedCustomerId,
+        customerEmail,
+      });
+    }
+
     return sendJson(res, 200, {
       ok: true,
       mode: "stripe",
-      id: session.id,
-      url: session.url,
-      customerId: customer ? customer.id : "",
+      id: checkoutSession.id,
+      url: checkoutSession.url,
+      customerId: resolvedCustomerId,
+      userId: session.userId,
       planId,
     });
   } catch (error) {

@@ -285,13 +285,14 @@ Nightly CI automation:
 
 ## Stripe billing setup (optional)
 
-Stripe integration is scaffolded with serverless endpoints under `api/stripe/*`.
+Stripe integration is scaffolded with serverless endpoints under `api/stripe/*` and signed app-session bootstrap under `api/auth/*`.
 
-- `GET /api/stripe/config` returns whether Stripe billing is enabled for the current deployment.
-- `POST /api/stripe/create-checkout-session` creates a Stripe Checkout subscription session.
-- `POST /api/stripe/create-portal-session` opens Stripe Customer Portal for subscription management.
-- `GET /api/stripe/subscription-status` returns entitlement snapshot for a checkout session or billing email.
-- `POST /api/stripe/webhook` validates webhook signatures and accepts subscription lifecycle events.
+- `GET /api/auth/session` creates/returns a signed app user session (`cade_session`) used for billing binding.
+- `GET /api/stripe/config` returns Stripe availability and bootstraps session context when billing is enabled.
+- `POST /api/stripe/create-checkout-session` creates a Stripe Checkout subscription session bound to the current app session user.
+- `POST /api/stripe/create-portal-session` opens Stripe Customer Portal for the session-bound customer.
+- `GET /api/stripe/subscription-status` returns durable entitlement snapshot for the current app session user.
+- `POST /api/stripe/webhook` validates webhook signatures and persists subscription lifecycle updates to durable billing records.
 
 Required environment variables (set in Vercel project settings):
 
@@ -299,6 +300,7 @@ Required environment variables (set in Vercel project settings):
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_FAMILY_MONTHLY`
 - `STRIPE_PRICE_FAMILY_ANNUAL`
+- `APP_SESSION_SECRET` (HMAC secret for signed session cookie)
 
 Optional environment variables:
 
@@ -308,11 +310,13 @@ Optional environment variables:
 - `STRIPE_AUTOMATIC_TAX_ENABLED` (`true` to enable Stripe automatic tax in Checkout sessions)
 - `APP_BASE_URL` (used for return URL origin when request-derived host is unavailable)
 - `STRIPE_WEBHOOK_FORWARD_URL` (optional internal endpoint to forward compact event metadata)
+- `KV_REST_API_URL` + `KV_REST_API_TOKEN` (recommended durable Stripe entitlement store; without these, endpoints fall back to process memory for local/dev)
 
 Frontend behavior:
 
 - `pricing.html` auto-detects Stripe availability from `/api/stripe/config`.
 - If Stripe is configured, pricing switches to secure Checkout + Customer Portal mode.
+- `shop.html` and `teacher/index.html` periodically sync entitlement state from `/api/stripe/subscription-status` when Stripe billing is enabled.
 - If Stripe is not configured, pricing keeps local demo checkout behavior so local QA remains deterministic.
 
 ## Notes for future updates

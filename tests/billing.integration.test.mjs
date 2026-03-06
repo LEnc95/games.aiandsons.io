@@ -5,6 +5,7 @@ import {
   DEFAULT_BILLING_CONFIG,
   normalizeBillingConfig,
   isStripeBillingEnabled,
+  applyStripeEntitlementSnapshot,
 } from "../src/core/billing.js";
 
 test("normalizeBillingConfig falls back to local mode for invalid payloads", () => {
@@ -49,4 +50,36 @@ test("isStripeBillingEnabled follows normalized config state", () => {
     enabled: true,
     supportedPlans: ["family-monthly"],
   }), true);
+});
+
+test("applyStripeEntitlementSnapshot maps stripe summary to local entitlement shape", () => {
+  const previousStorage = globalThis.localStorage;
+  const memory = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, String(value)),
+    removeItem: (key) => memory.delete(key),
+  };
+
+  try {
+    const next = applyStripeEntitlementSnapshot({
+      mode: "stripe",
+      entitlements: {
+        familyPremium: true,
+        schoolLicense: true,
+      },
+      activePlanId: "school-monthly",
+    });
+
+    assert.equal(next.familyPremium, true);
+    assert.equal(next.schoolLicense, true);
+    assert.equal(next.checkout.status, "active");
+    assert.equal(next.checkout.planId, "school-monthly");
+  } finally {
+    if (previousStorage) {
+      globalThis.localStorage = previousStorage;
+    } else {
+      delete globalThis.localStorage;
+    }
+  }
 });

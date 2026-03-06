@@ -1,4 +1,4 @@
-const {
+﻿const {
   getStripeClient,
   getRequestOrigin,
   normalizeEmail,
@@ -8,8 +8,13 @@ const {
   sendJson,
   sendError,
   getPublicBillingConfig,
-  findCustomerByEmail,
 } = require("./_shared");
+const { ensureSession } = require("../auth/_session");
+const {
+  getStripeBillingProfile,
+  bindUserToStripeCustomer,
+  saveStripeBillingProfile,
+} = require("./_store");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -29,34 +34,77 @@ module.exports = async function handler(req, res) {
     return sendError(res, 503, "Stripe billing is unavailable.", "stripe_unavailable");
   }
 
+  const session = ensureSession(req, res, { createIfMissing: true });
+  if (!session || !session.userId) {
+    return sendError(res, 401, "Authenticated billing session is required.", "auth_required");
+  }
+
   try {
     const body = await readJsonBody(req);
-    let customerId = typeof body.customerId === "string" ? body.customerId.trim() : "";
+    const profile = await getStripeBillingProfile(session.userId);
+
+    let customerId = typeof profile.customerId === "string" ? profile.customerId.trim() : "";
     const customerEmail = normalizeEmail(body.customerEmail);
 
+    const sessionId = typeof body.sessionId === "string" ? body.sessionId.trim() : "";
+    if (!customerId && sessionId) {
+      const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["customer"],
+      });
+      const metadataUserId = typeof checkoutSession?.metadata?.appUserId === "string"
+        ? checkoutSession.metadata.appUserId.trim()
+        : "";
+      if (metadataUserId && metadataUserId !== session.userId) {
+        return sendError(res, 403, "Checkout session does not belong to this user.", "session_user_mismatch");
+      }
+
+      const checkoutCustomerId = typeof checkoutSession.customer === "string"
+        ? checkoutSession.customer
+        : (typeof checkoutSession?.customer?.id === "string" ? checkoutSession.customer.id : "");
+      customerId = checkoutCustomerId || "";
+      if (customerId) {
+        const emailFromCustomer = typeof checkoutSession?.customer?.email === "string"
+          ? checkoutSession.customer.email
+          : "";
+        const emailFromSession = typeof checkoutSession?.customer_details?.email === "string"
+          ? checkoutSession.customer_details.email
+          : "";
+        await bindUserToStripeCustomer({
+          userId: session.userId,
+          customerId,
+          customerEmail: emailFromCustomer || emailFromSession || customerEmail,
+        });
+      }
+    }
+
     if (!customerId) {
-      if (!isLikelyEmail(customerEmail)) {
-        return sendError(res, 400, "A valid billing email is required.", "invalid_customer_email");
-      }
-      const customer = await findCustomerByEmail(stripe, customerEmail);
-      if (!customer || !customer.id) {
-        return sendError(res, 404, "No Stripe customer found for that email.", "customer_not_found");
-      }
-      customerId = customer.id;
+      return sendError(
+        res,
+        409,
+        "No Stripe customer is linked to this account yet. Complete checkout first.",
+        "customer_binding_missing",
+      );
     }
 
     const baseOrigin = getRequestOrigin(req);
     const returnUrl = sanitizeReturnUrl(body.returnUrl, baseOrigin, "/pricing.html");
-    const session = await stripe.billingPortal.sessions.create({
+    const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
+    });
+
+    await saveStripeBillingProfile(session.userId, {
+      customerId,
+      customerEmail: isLikelyEmail(customerEmail) ? customerEmail : profile.customerEmail,
+      lastSource: "portal_session_created",
     });
 
     return sendJson(res, 200, {
       ok: true,
       mode: "stripe",
-      url: session.url,
+      url: portalSession.url,
       customerId,
+      userId: session.userId,
     });
   } catch (error) {
     return sendError(

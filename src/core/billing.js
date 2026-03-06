@@ -1,4 +1,4 @@
-import { get, set } from "./storage.js";
+﻿import { get, set } from "./storage.js";
 import { ENTITLEMENT_KEYS, getEntitlements, setEntitlements } from "./entitlements.js";
 
 const BILLING_EMAIL_STORAGE_KEY = "billingEmail";
@@ -9,6 +9,7 @@ const KNOWN_PLAN_IDS = new Set([
   "school-annual",
 ]);
 const BILLING_CONFIG_CACHE_TTL_MS = 60_000;
+const BILLING_SESSION_CACHE_TTL_MS = 5 * 60_000;
 
 export const DEFAULT_BILLING_CONFIG = Object.freeze({
   provider: "local",
@@ -21,6 +22,8 @@ export const DEFAULT_BILLING_CONFIG = Object.freeze({
 
 let cachedBillingConfig = DEFAULT_BILLING_CONFIG;
 let billingConfigFetchedAt = 0;
+let cachedBillingSession = null;
+let billingSessionFetchedAt = 0;
 
 const normalizeEmail = (value) => {
   const email = String(value || "").trim().toLowerCase();
@@ -90,6 +93,40 @@ const parseApiResponse = async (response) => {
   throw new Error(message);
 };
 
+export const ensureBillingSession = async ({ force = false } = {}) => {
+  if (shouldSkipRemoteBillingProbe()) {
+    cachedBillingSession = null;
+    billingSessionFetchedAt = Date.now();
+    return null;
+  }
+
+  const now = Date.now();
+  if (!force && cachedBillingSession && (now - billingSessionFetchedAt) < BILLING_SESSION_CACHE_TTL_MS) {
+    return cachedBillingSession;
+  }
+
+  try {
+    const response = await fetch("/api/auth/session", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const payload = await parseApiResponse(response);
+    if (payload && payload.ok && typeof payload.userId === "string" && payload.userId.trim()) {
+      cachedBillingSession = {
+        userId: payload.userId.trim(),
+        expiresAt: Number(payload.expiresAt || 0),
+      };
+    } else {
+      cachedBillingSession = null;
+    }
+  } catch {
+    cachedBillingSession = null;
+  }
+
+  billingSessionFetchedAt = now;
+  return cachedBillingSession;
+};
+
 export const fetchBillingConfig = async ({ force = false } = {}) => {
   if (shouldSkipRemoteBillingProbe()) {
     cachedBillingConfig = DEFAULT_BILLING_CONFIG;
@@ -109,6 +146,9 @@ export const fetchBillingConfig = async ({ force = false } = {}) => {
     });
     const payload = await parseApiResponse(response);
     cachedBillingConfig = normalizeBillingConfig(payload);
+    if (cachedBillingConfig.enabled) {
+      await ensureBillingSession({ force });
+    }
   } catch {
     cachedBillingConfig = DEFAULT_BILLING_CONFIG;
   }
@@ -151,6 +191,7 @@ export const createStripeCheckoutSession = async ({
   successUrl,
   cancelUrl,
 } = {}) => {
+  await ensureBillingSession();
   const payload = {
     planId: typeof planId === "string" ? planId.trim() : "",
     customerEmail: normalizeEmail(customerEmail),
@@ -170,17 +211,25 @@ export const createStripeCheckoutSession = async ({
 export const createStripePortalSession = async ({
   customerEmail,
   returnUrl,
+  sessionId,
 } = {}) => {
+  await ensureBillingSession();
+  const normalizedEmail = normalizeEmail(customerEmail);
   const payload = {
-    customerEmail: normalizeEmail(customerEmail),
+    customerEmail: normalizedEmail,
     returnUrl: typeof returnUrl === "string" ? returnUrl : "",
+    sessionId: typeof sessionId === "string" ? sessionId.trim() : "",
   };
-  if (!isLikelyEmail(payload.customerEmail)) throw new Error("Enter the billing email for your subscription.");
+  if (payload.customerEmail && !isLikelyEmail(payload.customerEmail)) {
+    throw new Error("Enter the billing email for your subscription.");
+  }
   const response = await postJson("/api/stripe/create-portal-session", payload);
   if (!response || typeof response.url !== "string" || !response.url) {
     throw new Error("Billing portal did not return a redirect URL.");
   }
-  setBillingEmail(payload.customerEmail);
+  if (payload.customerEmail) {
+    setBillingEmail(payload.customerEmail);
+  }
   return response;
 };
 
@@ -188,6 +237,7 @@ export const fetchStripeSubscriptionStatus = async ({
   sessionId,
   customerEmail,
 } = {}) => {
+  await ensureBillingSession();
   const query = new URLSearchParams();
   if (typeof sessionId === "string" && sessionId.trim()) {
     query.set("sessionId", sessionId.trim());
@@ -197,7 +247,9 @@ export const fetchStripeSubscriptionStatus = async ({
     query.set("customerEmail", normalizedEmail);
   }
 
-  const response = await fetch(`/api/stripe/subscription-status?${query.toString()}`, {
+  const suffix = query.toString();
+  const endpoint = suffix ? `/api/stripe/subscription-status?${suffix}` : "/api/stripe/subscription-status";
+  const response = await fetch(endpoint, {
     method: "GET",
     headers: { Accept: "application/json" },
   });
@@ -210,13 +262,9 @@ export const fetchStripeSubscriptionStatus = async ({
   return payload;
 };
 
-export const syncLocalEntitlementsFromStripe = async ({
-  sessionId,
-  customerEmail,
-} = {}) => {
-  const snapshot = await fetchStripeSubscriptionStatus({ sessionId, customerEmail });
+export const applyStripeEntitlementSnapshot = (snapshot, { fallbackPlanId = "" } = {}) => {
   if (!snapshot || snapshot.mode !== "stripe") {
-    return { synced: false, snapshot };
+    return null;
   }
 
   const current = getEntitlements();
@@ -225,9 +273,11 @@ export const syncLocalEntitlementsFromStripe = async ({
     : { status: "idle", planId: "", token: "", startedAt: 0, completedAt: 0 };
   const familyPremium = Boolean(snapshot.entitlements?.familyPremium);
   const schoolLicense = Boolean(snapshot.entitlements?.schoolLicense);
-  const nextPlanId = typeof snapshot.activePlanId === "string" ? snapshot.activePlanId : checkout.planId;
+  const nextPlanId = typeof snapshot.activePlanId === "string" && snapshot.activePlanId
+    ? snapshot.activePlanId
+    : (fallbackPlanId || checkout.planId);
 
-  const next = setEntitlements({
+  return setEntitlements({
     ...current,
     [ENTITLEMENT_KEYS.FAMILY_PREMIUM]: familyPremium,
     [ENTITLEMENT_KEYS.SCHOOL_LICENSE]: schoolLicense,
@@ -239,6 +289,34 @@ export const syncLocalEntitlementsFromStripe = async ({
       completedAt: familyPremium ? Date.now() : 0,
     },
   });
+};
 
-  return { synced: true, snapshot, entitlements: next };
+export const syncLocalEntitlementsFromStripe = async ({
+  sessionId,
+  customerEmail,
+} = {}) => {
+  const snapshot = await fetchStripeSubscriptionStatus({ sessionId, customerEmail });
+  const entitlements = applyStripeEntitlementSnapshot(snapshot);
+  if (!entitlements) {
+    return { synced: false, snapshot };
+  }
+  return { synced: true, snapshot, entitlements };
+};
+
+export const syncEntitlementsWithBillingBackend = async ({
+  forceConfig = false,
+  sessionId,
+} = {}) => {
+  const config = await fetchBillingConfig({ force: forceConfig });
+  if (!isStripeBillingEnabled(config)) {
+    return { synced: false, mode: "local" };
+  }
+
+  const snapshot = await fetchStripeSubscriptionStatus({ sessionId });
+  const entitlements = applyStripeEntitlementSnapshot(snapshot);
+  if (!entitlements) {
+    return { synced: false, snapshot };
+  }
+
+  return { synced: true, snapshot, entitlements };
 };

@@ -515,6 +515,7 @@
       getEntitlements,
       hasEntitlement,
     } from "../src/core/entitlements.js";
+    import { syncEntitlementsWithBillingBackend } from "../src/core/billing.js";
     import { GAMES } from "../src/meta/games.js";
     import { ASSIGNMENT_BUNDLES, getAssignmentBundleById } from "../src/prog/assignments.js";
 
@@ -572,6 +573,23 @@
     let pendingMutation = null;
     let lastGeneratedReport = null;
     let lastReportExport = "";
+    let remoteEntitlementSyncInFlight = false;
+    let remoteEntitlementLastSyncedAt = 0;
+    const MIN_REMOTE_ENTITLEMENT_SYNC_MS = 60_000;
+
+    async function refreshRemoteEntitlements({ forceConfig = false } = {}) {
+      if (remoteEntitlementSyncInFlight) return false;
+      remoteEntitlementSyncInFlight = true;
+      try {
+        const result = await syncEntitlementsWithBillingBackend({ forceConfig });
+        remoteEntitlementLastSyncedAt = Date.now();
+        return Boolean(result && result.synced);
+      } catch {
+        return false;
+      } finally {
+        remoteEntitlementSyncInFlight = false;
+      }
+    }
 
     const hasSchoolLicense = () => {
       return hasEntitlement(ENTITLEMENT_KEYS.SCHOOL_LICENSE, getEntitlements());
@@ -1063,8 +1081,24 @@
 
     renderAssignmentOptions();
     loadFormFromState();
-    renderStatus();
-    setInterval(renderStatus, 1000);
+    refreshRemoteEntitlements({ forceConfig: true })
+      .catch(() => false)
+      .then(() => {
+        renderStatus();
+      });
+    setInterval(() => {
+      renderStatus();
+      if ((Date.now() - remoteEntitlementLastSyncedAt) >= MIN_REMOTE_ENTITLEMENT_SYNC_MS) {
+        refreshRemoteEntitlements().catch(() => false);
+      }
+    }, 1000);
+    window.addEventListener("pageshow", () => {
+      refreshRemoteEntitlements({ forceConfig: true })
+        .catch(() => false)
+        .then(() => {
+          renderStatus();
+        });
+    });
   </script>
 </body>
 </html>

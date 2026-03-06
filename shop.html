@@ -100,6 +100,7 @@
         isPremiumShopItem,
         isShopItemLockedByEntitlement,
       } from './src/core/entitlements.js';
+      import { syncEntitlementsWithBillingBackend } from './src/core/billing.js';
       import { trackKpiEvent } from './src/core/metrics.js';
 
       loadAndApplyAccessibility();
@@ -670,6 +671,22 @@
         .replaceAll("'", "&#39;");
       let shopSearchQuery = "";
       let selectedShopGame = "all";
+      let remoteEntitlementSyncInFlight = false;
+      let remoteEntitlementLastSyncedAt = 0;
+
+      async function refreshRemoteEntitlements({ forceConfig = false } = {}) {
+        if (remoteEntitlementSyncInFlight) return false;
+        remoteEntitlementSyncInFlight = true;
+        try {
+          const result = await syncEntitlementsWithBillingBackend({ forceConfig });
+          remoteEntitlementLastSyncedAt = Date.now();
+          return Boolean(result && result.synced);
+        } catch {
+          return false;
+        } finally {
+          remoteEntitlementSyncInFlight = false;
+        }
+      }
 
       const allShopGames = [...new Set(items
         .map((item) => typeof item.game === "string" ? item.game.trim() : "")
@@ -1041,7 +1058,12 @@
       });
 
       trackKpiEvent("shop_view", { itemCount: items.length });
-      updateUI();
+      const MIN_REMOTE_ENTITLEMENT_SYNC_MS = 60_000;
+      refreshRemoteEntitlements({ forceConfig: true })
+        .catch(() => false)
+        .then(() => {
+          updateUI();
+        });
       let previousLockState = isShopLocked();
       setInterval(() => {
         const lockState = isShopLocked();
@@ -1050,9 +1072,27 @@
           updateUI();
           return;
         }
+        if ((Date.now() - remoteEntitlementLastSyncedAt) >= MIN_REMOTE_ENTITLEMENT_SYNC_MS) {
+          refreshRemoteEntitlements()
+            .catch(() => false)
+            .then((synced) => {
+              if (synced) {
+                updateUI();
+              } else {
+                renderShopNotice();
+              }
+            });
+          return;
+        }
         renderShopNotice();
       }, 1000);
-      window.addEventListener("pageshow", () => updateUI());
+      window.addEventListener("pageshow", () => {
+        refreshRemoteEntitlements({ forceConfig: true })
+          .catch(() => false)
+          .then(() => {
+            updateUI();
+          });
+      });
   </script>
 </body>
 </html>

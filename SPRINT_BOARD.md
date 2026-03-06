@@ -216,7 +216,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Serverless endpoints exist for checkout session, portal session, webhook intake, and subscription-status sync.
   - Local demo checkout continues to work when Stripe env vars are not configured.
 
-### CG-705 Stripe Entitlement Persistence + Auth Binding (Status: TODO)
+### CG-705 Stripe Entitlement Persistence + Auth Binding (Status: DONE)
 - Description: Bind Stripe customers to authenticated app users and persist webhook-driven entitlement state in durable storage.
 - Acceptance criteria:
   - Webhook handler writes subscription lifecycle changes to durable entitlement records.
@@ -246,4 +246,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 6 closing item CG-603 is complete (aggregated launch-readiness smoke suite, local KPI metrics baseline, and release notes with risk/rollback plan).
 - Sprint 7 kickoff item CG-701 is complete (nightly launch-readiness CI workflow with artifact upload for all smoke surfaces).
 - Sprint 7 Stripe item CG-704 is complete (Stripe checkout/portal/webhook endpoint scaffolding with local checkout fallback).
-- Next highest-value work item is CG-705 Stripe entitlement persistence + auth binding.
+- Sprint 7 follow-up item CG-705 is complete (session-bound Stripe endpoints, durable user/customer entitlement records, and webhook persistence flow).
+- Next highest-value work item is CG-702 KPI dashboard export baseline.
