@@ -686,3 +686,43 @@
   - Aggregate summary verified at `output/web-game/launch-readiness-e2e/summary.json` with all checks passing and zero console errors.
 - Next TODO:
   - Start CG-702 KPI dashboard export baseline (deterministic local export script + test + README docs).
+- Continued sprint work (2026-03-06): completed CG-704 Stripe Billing Foundation.
+- Core implementation shipped:
+  - Added frontend Stripe billing integration helper `src/core/billing.js` with:
+    - billing config fetch + normalization (`/api/stripe/config`)
+    - Stripe checkout session creation helper (`/api/stripe/create-checkout-session`)
+    - Stripe customer portal helper (`/api/stripe/create-portal-session`)
+    - Stripe subscription status + local entitlement sync helper (`/api/stripe/subscription-status`)
+    - local billing email persistence helpers
+    - safe local fallback behavior on loopback hosts (no noisy 404 probe logs during deterministic smoke tests)
+  - Added Stripe serverless endpoint scaffold under `api/stripe/`:
+    - `_shared.js` common helpers
+    - `config.js`
+    - `create-checkout-session.js`
+    - `create-portal-session.js`
+    - `subscription-status.js`
+    - `webhook.js`
+  - Updated `pricing.html` for dual-mode checkout behavior:
+    - Auto-detects Stripe mode via `/api/stripe/config`.
+    - In Stripe mode: billing email input + secure checkout redirect + customer portal action + success/cancel return sync.
+    - In local mode: preserves existing deterministic demo intent flow (start/complete/clear).
+  - Added deterministic billing integration tests:
+    - `tests/billing.integration.test.mjs`
+    - Included in `npm run test:shop`.
+  - Added Stripe dependency to `package.json` (`stripe@^20.4.0`).
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: added CG-704 DONE and queued CG-705 (Stripe entitlement persistence + auth binding).
+  - `README.md`: added Stripe endpoint + environment variable setup and frontend mode behavior docs.
+- Validation run results after CG-704:
+  - `npm run test:shop` (pass).
+  - `npm run test:pricing-smoke:raw` against local server (pass).
+  - `npm run test:metrics-smoke:raw` against local server (pass).
+  - `npm run test:launch-readiness-smoke:raw` against local server (pass).
+  - Skill Playwright client visual smoke on `/pricing.html`:
+    - `output/web-game/pricing-stripe-skill-smoke/shot-0.png` reviewed.
+- Key artifact checks:
+  - `output/web-game/pricing-checkout-e2e/summary.json`: `success: true`, no console errors.
+  - `output/web-game/metrics-baseline-e2e/summary.json`: `success: true`, no console errors.
+  - `output/web-game/launch-readiness-e2e/summary.json`: `success: true`, all checks pass.
+- Next TODO:
+  - Start CG-705 Stripe entitlement persistence + auth binding (durable webhook-backed entitlement store + authenticated customer linkage).

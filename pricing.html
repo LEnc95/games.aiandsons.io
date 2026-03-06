@@ -29,6 +29,18 @@
     .checkout-panel { margin-top:20px; border:1px solid rgba(90,173,221,0.35); border-radius:14px; padding:16px; background:rgba(90,173,221,0.1); }
     .checkout-panel h3 { margin:0 0 8px 0; font-size:20px; }
     .checkout-panel p { margin:0 0 8px 0; color:#d7e8ff; font-size:14px; line-height:1.5; }
+    .billing-row { margin:8px 0 10px 0; display:grid; gap:6px; }
+    .billing-row label { font-size:13px; color:#c7daf7; font-weight:600; }
+    .billing-row input {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.1);
+      color:var(--fg);
+      font-size:14px;
+    }
+    .billing-row input::placeholder { color:#9db4d6; }
     .checkout-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
     .checkout-actions button { padding:10px 12px; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
     .primary { background:var(--accent); color:#081328; }
@@ -66,12 +78,17 @@
       <h3>Checkout</h3>
       <p id="checkoutStatus">Choose a plan to continue.</p>
       <p class="token" id="checkoutToken" style="display:none;"></p>
+      <div class="billing-row" id="billingEmailRow" style="display:none;">
+        <label for="billingEmailInput">Billing email</label>
+        <input id="billingEmailInput" type="email" autocomplete="email" placeholder="parent@example.com" />
+      </div>
       <div class="checkout-actions">
         <button id="startCheckoutBtn" class="primary" type="button">Start Checkout</button>
         <button id="completeCheckoutBtn" class="secondary" type="button">Complete Purchase</button>
         <button id="clearCheckoutBtn" class="secondary" type="button">Clear Pending</button>
+        <button id="manageBillingBtn" class="secondary" type="button" style="display:none;">Manage Subscription</button>
       </div>
-      <p class="note">
+      <p class="note" id="checkoutNote">
         Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.
       </p>
     </section>
@@ -88,6 +105,15 @@
       completeCheckoutIntent,
       clearCheckoutIntent,
     } from './src/core/entitlements.js';
+    import {
+      fetchBillingConfig,
+      isStripeBillingEnabled,
+      createStripeCheckoutSession,
+      createStripePortalSession,
+      syncLocalEntitlementsFromStripe,
+      getBillingEmail,
+      setBillingEmail,
+    } from './src/core/billing.js';
     import { trackKpiEvent } from './src/core/metrics.js';
 
     loadAndApplyAccessibility();
@@ -120,11 +146,36 @@
     const planGrid = document.getElementById('planGrid');
     const checkoutStatus = document.getElementById('checkoutStatus');
     const checkoutToken = document.getElementById('checkoutToken');
+    const checkoutNote = document.getElementById('checkoutNote');
+    const billingEmailRow = document.getElementById('billingEmailRow');
+    const billingEmailInput = document.getElementById('billingEmailInput');
     const startCheckoutBtn = document.getElementById('startCheckoutBtn');
     const completeCheckoutBtn = document.getElementById('completeCheckoutBtn');
     const clearCheckoutBtn = document.getElementById('clearCheckoutBtn');
+    const manageBillingBtn = document.getElementById('manageBillingBtn');
 
     let selectedPlanId = plans[0].id;
+    let billingConfig = null;
+    let checkoutBusy = false;
+
+    const isStripeMode = () => isStripeBillingEnabled(billingConfig);
+    const getSupportedPlans = () => new Set(Array.isArray(billingConfig?.supportedPlans) ? billingConfig.supportedPlans : []);
+
+    function setCheckoutBusy(nextBusy) {
+      checkoutBusy = Boolean(nextBusy);
+      if (checkoutBusy) {
+        startCheckoutBtn.disabled = true;
+        completeCheckoutBtn.disabled = true;
+        clearCheckoutBtn.disabled = true;
+        manageBillingBtn.disabled = true;
+      }
+    }
+
+    function updateBillingEmail() {
+      const saved = setBillingEmail(billingEmailInput.value);
+      billingEmailInput.value = saved;
+      return saved;
+    }
 
     function renderPlans() {
       planGrid.innerHTML = '';
@@ -156,6 +207,42 @@
       const checkout = getCheckoutState(entitlements);
       const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
       const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
+      const stripeMode = isStripeMode();
+
+      if (stripeMode) {
+        const supportedPlans = getSupportedPlans();
+        const selectedPlanSupported = supportedPlans.has(selectedPlanId);
+        startCheckoutBtn.textContent = 'Continue to Secure Checkout';
+        completeCheckoutBtn.style.display = 'none';
+        clearCheckoutBtn.style.display = 'none';
+        billingEmailRow.style.display = 'grid';
+        manageBillingBtn.style.display = 'inline-flex';
+        checkoutToken.style.display = 'none';
+        checkoutToken.textContent = '';
+        checkoutNote.textContent = 'Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.';
+
+        if (hasFamilyPremium) {
+          checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
+          manageBillingBtn.disabled = checkoutBusy;
+        } else if (!selectedPlanSupported) {
+          checkoutStatus.textContent = `Selected plan is not configured on this environment. Choose a supported plan or contact support.`;
+          manageBillingBtn.disabled = true;
+        } else {
+          checkoutStatus.textContent = `Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.`;
+          manageBillingBtn.disabled = checkoutBusy;
+        }
+
+        startCheckoutBtn.disabled = checkoutBusy || !selectedPlanId || !selectedPlanSupported;
+        return;
+      }
+
+      startCheckoutBtn.textContent = 'Start Checkout';
+      completeCheckoutBtn.style.display = 'inline-flex';
+      clearCheckoutBtn.style.display = 'inline-flex';
+      billingEmailRow.style.display = 'none';
+      manageBillingBtn.style.display = 'none';
+      manageBillingBtn.disabled = true;
+      checkoutNote.textContent = 'Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.';
 
       if (hasFamilyPremium) {
         checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
@@ -173,29 +260,128 @@
         checkoutToken.textContent = '';
       }
 
-      startCheckoutBtn.disabled = !selectedPlanId;
-      completeCheckoutBtn.disabled = checkout.status !== 'pending' || !checkout.token;
+      startCheckoutBtn.disabled = checkoutBusy || !selectedPlanId;
+      completeCheckoutBtn.disabled = checkoutBusy || checkout.status !== 'pending' || !checkout.token;
+      clearCheckoutBtn.disabled = checkoutBusy;
     }
 
-    startCheckoutBtn.addEventListener('click', () => {
+    async function syncStripeCheckoutFromUrl() {
+      if (!isStripeMode()) return;
+      const url = new URL(window.location.href);
+      const checkoutResult = url.searchParams.get('checkout');
+      const sessionId = url.searchParams.get('session_id');
+      if (!checkoutResult) return;
+
+      const billingEmail = getBillingEmail();
+      if (checkoutResult === 'success') {
+        try {
+          const syncResult = await syncLocalEntitlementsFromStripe({ sessionId, customerEmail: billingEmail });
+          if (syncResult?.synced) {
+            trackKpiEvent('checkout_completed', { planId: syncResult.snapshot?.activePlanId || selectedPlanId, billingProvider: 'stripe' });
+          }
+        } catch (error) {
+          checkoutStatus.textContent = `Checkout return detected, but subscription sync failed: ${error.message}`;
+        }
+      } else if (checkoutResult === 'canceled') {
+        checkoutStatus.textContent = 'Checkout canceled. You can try again at any time.';
+        trackKpiEvent('checkout_canceled', { planId: selectedPlanId, billingProvider: 'stripe' });
+      }
+
+      url.searchParams.delete('checkout');
+      url.searchParams.delete('session_id');
+      const nextSearch = url.searchParams.toString();
+      const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash || ''}`;
+      window.history.replaceState({}, '', nextUrl);
+    }
+
+    async function initializeBilling({ force = false } = {}) {
+      billingConfig = await fetchBillingConfig({ force });
+      const stripeMode = isStripeMode();
+      billingEmailInput.value = getBillingEmail();
+      if (stripeMode) {
+        await syncStripeCheckoutFromUrl();
+      }
+    }
+
+    startCheckoutBtn.addEventListener('click', async () => {
+      if (!selectedPlanId || checkoutBusy) return;
+      if (isStripeMode()) {
+        const billingEmail = updateBillingEmail();
+        if (!billingEmail) {
+          checkoutStatus.textContent = 'Enter your billing email to continue to secure checkout.';
+          billingEmailInput.focus();
+          return;
+        }
+
+        setCheckoutBusy(true);
+        renderCheckout();
+        try {
+          const session = await createStripeCheckoutSession({
+            planId: selectedPlanId,
+            customerEmail: billingEmail,
+            successUrl: `${window.location.origin}/pricing.html?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/pricing.html?checkout=canceled`,
+          });
+          trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'stripe' });
+          window.location.assign(session.url);
+          return;
+        } catch (error) {
+          checkoutStatus.textContent = `Secure checkout is unavailable right now: ${error.message}`;
+          setCheckoutBusy(false);
+          renderCheckout();
+          return;
+        }
+      }
+
       const result = createCheckoutIntent(selectedPlanId);
       if (!result) return;
-      trackKpiEvent('checkout_started', { planId: selectedPlanId });
+      trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'local' });
       renderCheckout();
     });
 
     completeCheckoutBtn.addEventListener('click', () => {
+      if (isStripeMode()) return;
       const checkout = getCheckoutState();
       if (!checkout.token) return;
       completeCheckoutIntent(checkout.token);
-      trackKpiEvent('checkout_completed', { planId: checkout.planId || selectedPlanId });
+      trackKpiEvent('checkout_completed', { planId: checkout.planId || selectedPlanId, billingProvider: 'local' });
       renderCheckout();
     });
 
     clearCheckoutBtn.addEventListener('click', () => {
+      if (isStripeMode()) return;
       clearCheckoutIntent();
-      trackKpiEvent('checkout_cleared', { planId: selectedPlanId });
+      trackKpiEvent('checkout_cleared', { planId: selectedPlanId, billingProvider: 'local' });
       renderCheckout();
+    });
+
+    manageBillingBtn.addEventListener('click', async () => {
+      if (!isStripeMode() || checkoutBusy) return;
+      const billingEmail = updateBillingEmail();
+      if (!billingEmail) {
+        checkoutStatus.textContent = 'Enter your billing email to open subscription management.';
+        billingEmailInput.focus();
+        return;
+      }
+
+      setCheckoutBusy(true);
+      renderCheckout();
+      try {
+        const portal = await createStripePortalSession({
+          customerEmail: billingEmail,
+          returnUrl: `${window.location.origin}/pricing.html`,
+        });
+        trackKpiEvent('billing_portal_opened', { billingProvider: 'stripe' });
+        window.location.assign(portal.url);
+      } catch (error) {
+        checkoutStatus.textContent = `Could not open billing management: ${error.message}`;
+        setCheckoutBusy(false);
+        renderCheckout();
+      }
+    });
+
+    billingEmailInput.addEventListener('change', () => {
+      updateBillingEmail();
     });
 
     window.render_game_to_text = () => {
@@ -204,6 +390,8 @@
       return JSON.stringify({
         view: 'pricing',
         selectedPlanId,
+        billingProvider: isStripeMode() ? 'stripe' : 'local',
+        stripeBillingEnabled: isStripeMode(),
         familyPremium: hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements),
         checkoutStatus: checkout.status,
         checkoutPlanId: checkout.planId,
@@ -221,8 +409,24 @@
 
     renderPlans();
     trackKpiEvent('pricing_view', { defaultPlanId: selectedPlanId });
-    renderCheckout();
-    window.addEventListener('pageshow', () => renderCheckout());
+    initializeBilling()
+      .then(() => {
+        renderCheckout();
+      })
+      .catch(() => {
+        renderCheckout();
+      });
+    window.addEventListener('pageshow', () => {
+      initializeBilling({ force: true })
+        .then(() => {
+          setCheckoutBusy(false);
+          renderCheckout();
+        })
+        .catch(() => {
+          setCheckoutBusy(false);
+          renderCheckout();
+        });
+    });
   </script>
 </body>
 </html>

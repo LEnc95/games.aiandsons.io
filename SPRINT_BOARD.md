@@ -209,6 +209,20 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Missing sections fail validation before release tag workflows continue.
   - Workflow links failures directly to expected checklist fields.
 
+### CG-704 Stripe Billing Foundation (Status: DONE)
+- Description: Add Stripe-backed checkout and subscription-management foundation while preserving local demo fallback.
+- Acceptance criteria:
+  - Pricing page supports Stripe Checkout and Stripe Customer Portal when configured.
+  - Serverless endpoints exist for checkout session, portal session, webhook intake, and subscription-status sync.
+  - Local demo checkout continues to work when Stripe env vars are not configured.
+
+### CG-705 Stripe Entitlement Persistence + Auth Binding (Status: TODO)
+- Description: Bind Stripe customers to authenticated app users and persist webhook-driven entitlement state in durable storage.
+- Acceptance criteria:
+  - Webhook handler writes subscription lifecycle changes to durable entitlement records.
+  - Checkout and portal endpoints require authenticated user context instead of raw email-only access.
+  - Shop/teacher feature gates read entitlement state from durable backend source.
+
 ## Risks and Dependencies
 - External payment/legal integration for premium and school licensing.
 - Policy review before enabling any remote tracking or ad stack.
@@ -231,4 +245,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 6 follow-up item CG-602 is complete (home role-based onboarding paths, skip/show persistence, and deterministic onboarding smoke coverage).
 - Sprint 6 closing item CG-603 is complete (aggregated launch-readiness smoke suite, local KPI metrics baseline, and release notes with risk/rollback plan).
 - Sprint 7 kickoff item CG-701 is complete (nightly launch-readiness CI workflow with artifact upload for all smoke surfaces).
-- Next highest-value work item is CG-702 KPI dashboard export baseline.
+- Sprint 7 Stripe item CG-704 is complete (Stripe checkout/portal/webhook endpoint scaffolding with local checkout fallback).
+- Next highest-value work item is CG-705 Stripe entitlement persistence + auth binding.

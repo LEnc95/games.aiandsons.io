@@ -283,6 +283,38 @@ Nightly CI automation:
 2. It runs `npm run test:shop` and `npm run test:launch-readiness-smoke`.
 3. It uploads all smoke summary/screenshot directories for launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
 
+## Stripe billing setup (optional)
+
+Stripe integration is scaffolded with serverless endpoints under `api/stripe/*`.
+
+- `GET /api/stripe/config` returns whether Stripe billing is enabled for the current deployment.
+- `POST /api/stripe/create-checkout-session` creates a Stripe Checkout subscription session.
+- `POST /api/stripe/create-portal-session` opens Stripe Customer Portal for subscription management.
+- `GET /api/stripe/subscription-status` returns entitlement snapshot for a checkout session or billing email.
+- `POST /api/stripe/webhook` validates webhook signatures and accepts subscription lifecycle events.
+
+Required environment variables (set in Vercel project settings):
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_FAMILY_MONTHLY`
+- `STRIPE_PRICE_FAMILY_ANNUAL`
+
+Optional environment variables:
+
+- `STRIPE_PRICE_SCHOOL_MONTHLY`
+- `STRIPE_PRICE_SCHOOL_ANNUAL`
+- `STRIPE_BILLING_PORTAL_ENABLED` (`true` by default, set `false` to disable portal endpoint)
+- `STRIPE_AUTOMATIC_TAX_ENABLED` (`true` to enable Stripe automatic tax in Checkout sessions)
+- `APP_BASE_URL` (used for return URL origin when request-derived host is unavailable)
+- `STRIPE_WEBHOOK_FORWARD_URL` (optional internal endpoint to forward compact event metadata)
+
+Frontend behavior:
+
+- `pricing.html` auto-detects Stripe availability from `/api/stripe/config`.
+- If Stripe is configured, pricing switches to secure Checkout + Customer Portal mode.
+- If Stripe is not configured, pricing keeps local demo checkout behavior so local QA remains deterministic.
+
 ## Notes for future updates
 
 - When adding a shop inventory item, ensure the prefix maps to a game file in `tests/shop-items.integration.test.mjs`.
