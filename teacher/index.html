@@ -186,6 +186,31 @@
       font-size: 14px;
     }
 
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .preset-btn {
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      padding: 10px 8px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .preset-btn.active {
+      border-color: rgba(90, 173, 221, 0.62);
+      background: rgba(90, 173, 221, 0.22);
+      color: #dff2ff;
+    }
+
     .help {
       color: var(--muted);
       font-size: 12px;
@@ -293,6 +318,9 @@
       .action-row {
         grid-template-columns: 1fr;
       }
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -357,6 +385,11 @@
       <p class="help">
         Select allowed games. If no games are selected, all games remain playable during class.
       </p>
+      <div class="preset-grid">
+        <button type="button" class="preset-btn" id="presetLogicBtn">Apply Logic</button>
+        <button type="button" class="preset-btn" id="presetReflexBtn">Apply Reflex</button>
+        <button type="button" class="preset-btn" id="presetStrategyBtn">Apply Strategy</button>
+      </div>
       <div id="gamesList" class="games-list"></div>
 
       <div class="action-row">
@@ -412,8 +445,27 @@
     const pinPromptText = document.getElementById("pinPromptText");
     const pinVerifyInput = document.getElementById("pinVerifyInput");
     const pinError = document.getElementById("pinError");
+    const presetButtons = {
+      logic: document.getElementById("presetLogicBtn"),
+      reflex: document.getElementById("presetReflexBtn"),
+      strategy: document.getElementById("presetStrategyBtn"),
+    };
 
     const sanitizePin = (value) => String(value || "").replace(/\D/g, "").slice(0, 8);
+    const CLASSROOM_PRESETS = {
+      logic: {
+        name: "Logic",
+        slugs: ["2048", "tictactoe", "connect4", "minesweeper", "memory"],
+      },
+      reflex: {
+        name: "Reflex",
+        slugs: ["pong", "flappy", "dino", "frogger", "spaceinvaders", "bomberman"],
+      },
+      strategy: {
+        name: "Strategy",
+        slugs: ["pacman", "pokemon", "tetris", "asteroids", "breakout", "minigolf"],
+      },
+    };
     let pendingMutation = null;
 
     function setNotice(message, type = "") {
@@ -433,12 +485,35 @@
       }
     }
 
+    function getCheckedWhitelist() {
+      return [...gamesList.querySelectorAll("input[data-game-slug]:checked")]
+        .map((input) => input.value)
+        .sort();
+    }
+
+    function matchesPreset(presetKey) {
+      const preset = CLASSROOM_PRESETS[presetKey];
+      if (!preset) return false;
+      const selected = getCheckedWhitelist();
+      const target = [...preset.slugs].sort();
+      if (selected.length !== target.length) return false;
+      return target.every((slug, index) => slug === selected[index]);
+    }
+
+    function renderPresetState() {
+      Object.entries(presetButtons).forEach(([key, button]) => {
+        if (!button) return;
+        button.classList.toggle("active", matchesPreset(key));
+      });
+    }
+
     function loadFormFromState() {
       enabledInput.checked = Boolean(state.classroom.enabled);
       pinInput.value = state.classroom.teacherPin || "";
       durationInput.value = String(state.classroom.session.durationMinutes || 30);
       shopLockInput.checked = state.classroom.shopDisabledDuringClass !== false;
       renderGamesList();
+      renderPresetState();
     }
 
     function readForm() {
@@ -502,9 +577,26 @@
     function applySettings(showMessage = true) {
       setClassroomConfig(readForm());
       renderStatus();
+      renderPresetState();
       if (showMessage) {
         setNotice("Classroom settings saved.", "ok");
       }
+    }
+
+    function applyPreset(presetKey) {
+      const preset = CLASSROOM_PRESETS[presetKey];
+      if (!preset) return;
+      runProtectedMutation(`apply the ${preset.name} preset`, () => {
+        const targets = new Set(preset.slugs);
+        const checkboxes = [...gamesList.querySelectorAll("input[data-game-slug]")];
+        for (const checkbox of checkboxes) {
+          checkbox.checked = targets.has(checkbox.value);
+        }
+        setClassroomConfig(readForm());
+        loadFormFromState();
+        renderStatus();
+        setNotice(`Applied ${preset.name} preset (${preset.slugs.length} games).`, "ok");
+      });
     }
 
     document.getElementById("saveBtn").addEventListener("click", () => {
@@ -567,6 +659,11 @@
       }
     });
 
+    presetButtons.logic.addEventListener("click", () => applyPreset("logic"));
+    presetButtons.reflex.addEventListener("click", () => applyPreset("reflex"));
+    presetButtons.strategy.addEventListener("click", () => applyPreset("strategy"));
+    gamesList.addEventListener("change", () => renderPresetState());
+
     window.render_game_to_text = () => JSON.stringify({
       view: "teacher-dashboard",
       classroomEnabled: Boolean(state.classroom.enabled),
@@ -574,6 +671,7 @@
       minutesRemaining: getClassroomMinutesRemaining(),
       shopLock: Boolean(state.classroom.shopDisabledDuringClass),
       whitelist: [...(state.classroom.gameWhitelist || [])],
+      activePreset: Object.keys(CLASSROOM_PRESETS).find((key) => matchesPreset(key)) || "",
       pinRequiredForActiveSessionChange: requiresPinForMutation(),
     });
 

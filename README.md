@@ -6,7 +6,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 
 - `index.html`: homepage hub with launcher cards, profile modal, badges modal, recent games, and version badge.
 - `shop.html`: in-app shop to spend coins on cosmetics and inventory unlocks.
-- `teacher/index.html`: classroom dashboard for whitelist/session controls with PIN-gated active-session mutations.
+- `teacher/index.html`: classroom dashboard for session controls, whitelist presets, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/prog/*`: achievements and cosmetics logic.
@@ -91,6 +91,7 @@ npm run test:classroom-smoke:raw
 
 1. Classroom lock/unlock behavior across home and shop pages.
 2. Teacher dashboard PIN enforcement for active-session settings changes and session end.
+3. Teacher one-click preset application and persisted whitelist updates.
 
 ## Notes for future updates
 

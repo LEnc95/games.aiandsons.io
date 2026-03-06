@@ -255,3 +255,28 @@
   - `npm run test:classroom-smoke` (pass)
   - `npm run test:shop` (pass)
   - Re-ran `web_game_playwright_client` teacher smoke; screenshot/state output refreshed in `output/web-game/teacher-dashboard-smoke`.
+- Continued request (2026-03-05): implement Sprint 2 CG-202 classroom presets.
+- Teacher dashboard updates in `teacher/index.html`:
+  - Added one-click preset controls: `Apply Logic`, `Apply Reflex`, `Apply Strategy`.
+  - Added preset mapping to valid game slugs:
+    - Logic: `2048`, `tictactoe`, `connect4`, `minesweeper`, `memory`
+    - Reflex: `pong`, `flappy`, `dino`, `frogger`, `spaceinvaders`, `bomberman`
+    - Strategy: `pacman`, `pokemon`, `tetris`, `asteroids`, `breakout`, `minigolf`
+  - Preset actions now persist immediately via `setClassroomConfig(readForm())`.
+  - Preset actions are PIN-gated when session is active and teacher PIN exists.
+  - Added active preset visual state highlight and `render_game_to_text().activePreset` output.
+- Smoke automation updates in `scripts/qa/classroom-mode-smoke.mjs`:
+  - Added `teacher_apply_logic_preset` check.
+  - Verifies one-click logic preset updates checkbox selections and persisted `classroom.gameWhitelist` state.
+  - Teacher state payload now includes `selectedGames` and `storedWhitelist` for explicit assertions.
+- Sprint/docs updates:
+  - `SPRINT_BOARD.md`: CG-202 marked DONE; next item moved to CG-203 timer UX.
+  - `README.md`: teacher dashboard description now includes presets; classroom smoke checklist now includes preset persistence coverage.
+- Validation:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass; summary `success: true`, zero console errors).
+  - `web_game_playwright_client` run against `/teacher/` (pass) with refreshed artifacts in `output/web-game/teacher-dashboard-smoke`.
+- Visual verification:
+  - Reviewed `output/web-game/classroom-e2e/teacher-pin-check.png` to confirm preset controls render and Logic preset selection appears correctly.
+- Follow-up TODO:
+  - Implement CG-203 countdown UX messaging across home/shop when sessions expire.

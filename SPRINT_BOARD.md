@@ -65,7 +65,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Teacher page displays active timer and current lock state.
   - PIN prompt is required before changing active session settings.
 
-### CG-202 Classroom Presets (Status: TODO)
+### CG-202 Classroom Presets (Status: DONE)
 - Description: Add reusable game preset packs (Logic, Reflex, Strategy).
 - Acceptance criteria:
   - Teacher can apply a preset in one click.
@@ -178,5 +178,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 ## Current Sprint Notes
 - Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
-- Sprint 2 kickoff is underway with CG-201 complete in `/teacher/index.html` and smoke coverage for teacher PIN enforcement.
-- Next highest-value work item is CG-202 classroom presets.
+- Sprint 2 has CG-201 and CG-202 complete in `/teacher/index.html`, including PIN-protected preset application.
+- Next highest-value work item is CG-203 classroom timer UX improvements.

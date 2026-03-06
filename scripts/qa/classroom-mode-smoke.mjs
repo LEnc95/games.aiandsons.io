@@ -129,6 +129,9 @@ async function getShopLockState(page) {
 async function getTeacherState(page) {
   return page.evaluate(() => {
     const read = (id) => document.getElementById(id)?.textContent?.trim() || "";
+    const selectedGames = [...document.querySelectorAll('#gamesList input[data-game-slug]:checked')]
+      .map((input) => input.value)
+      .sort();
     const classroomRaw = localStorage.getItem("cadegames:v1:classroom");
     let classroom = null;
     try {
@@ -136,6 +139,9 @@ async function getTeacherState(page) {
     } catch {
       classroom = null;
     }
+    const storedWhitelist = Array.isArray(classroom?.gameWhitelist)
+      ? [...classroom.gameWhitelist].sort()
+      : [];
     return {
       sessionPill: read("sessionPill"),
       minutesRemaining: read("minutesRemaining"),
@@ -144,6 +150,8 @@ async function getTeacherState(page) {
       notice: read("actionNotice"),
       storedDuration: Number(classroom?.session?.durationMinutes || 0),
       sessionActive: Boolean(classroom?.session?.active),
+      selectedGames,
+      storedWhitelist,
     };
   });
 }
@@ -215,6 +223,36 @@ async function main() {
     assert(teacherInitial.shopLockValue === "On", "Expected teacher dashboard to show shop lock on.");
     assert(teacherInitial.pinValue === "On", "Expected teacher dashboard to show PIN protection on.");
     summary.checks.push({ name: "teacher_active_state", pass: true, data: teacherInitial });
+
+    const logicPresetWhitelist = ["2048", "connect4", "memory", "minesweeper", "tictactoe"];
+    await page.click("#presetLogicBtn");
+    await waitForPinModal(page, true);
+    await page.fill("#pinVerifyInput", "1234");
+    await page.click("#pinConfirmBtn");
+    await waitForPinModal(page, false);
+    await page.waitForFunction((expected) => {
+      const classroomRaw = localStorage.getItem("cadegames:v1:classroom");
+      if (!classroomRaw) return false;
+      try {
+        const classroom = JSON.parse(classroomRaw);
+        const list = Array.isArray(classroom?.gameWhitelist)
+          ? [...classroom.gameWhitelist].sort()
+          : [];
+        return JSON.stringify(list) === JSON.stringify([...expected].sort());
+      } catch {
+        return false;
+      }
+    }, logicPresetWhitelist);
+    const teacherAfterPreset = await getTeacherState(page);
+    assert(
+      JSON.stringify(teacherAfterPreset.storedWhitelist) === JSON.stringify(logicPresetWhitelist),
+      "Expected logic preset whitelist to persist in stored classroom state."
+    );
+    assert(
+      JSON.stringify(teacherAfterPreset.selectedGames) === JSON.stringify(logicPresetWhitelist),
+      "Expected logic preset to update teacher checkbox selections."
+    );
+    summary.checks.push({ name: "teacher_apply_logic_preset", pass: true, data: teacherAfterPreset });
 
     await page.fill("#durationInput", "45");
     await page.click("#saveBtn");
