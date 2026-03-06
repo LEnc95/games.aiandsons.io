@@ -125,7 +125,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Locked premium items render explanatory messaging.
   - Feature gates are testable without network dependency.
 
-### CG-402 Family Pricing Page + Checkout Flow (Status: TODO)
+### CG-402 Family Pricing Page + Checkout Flow (Status: DONE)
 - Description: Build parent-friendly plans page and payment entry point.
 - Acceptance criteria:
   - Plans page includes monthly/annual options.
@@ -198,4 +198,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 3 follow-up item CG-302 is complete (weekly challenge state, rewards, launcher UI, and smoke coverage).
 - Sprint 3 closing item CG-303 is complete (teacher assignment bundles, home assignment banner, and local report completion logging).
 - Sprint 4 kickoff item CG-401 is complete (local entitlement gates, premium lock messaging, and deterministic tests/smoke coverage).
-- Next highest-value work item is CG-402 family pricing page and checkout flow.
+- Sprint 4 follow-up item CG-402 is complete (family plans page, local checkout intents, and checkout smoke coverage).
+- Next highest-value work item is CG-403 premium content pack 1.

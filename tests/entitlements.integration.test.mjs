@@ -22,6 +22,13 @@ test('normalizeEntitlements returns predictable boolean flags', () => {
     {
       familyPremium: true,
       schoolLicense: false,
+      checkout: {
+        status: 'idle',
+        planId: '',
+        token: '',
+        startedAt: 0,
+        completedAt: 0,
+      },
     },
   );
 });

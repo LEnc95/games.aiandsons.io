@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Family Plans - Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --good:#6be6ad; }
+    * { box-sizing:border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px clamp(16px,4vw,32px); border-bottom:1px solid rgba(90,173,221,0.2); background:rgba(12,20,46,0.6); backdrop-filter:blur(8px); }
+    .topbar h1 { margin:0; font-size:clamp(20px,3vw,28px); }
+    .links { display:flex; align-items:center; gap:10px; }
+    .link-btn { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; }
+    .wrap { max-width:1060px; margin:0 auto; padding:clamp(20px,4vw,34px) clamp(16px,4vw,32px) 48px; }
+    .hero { margin-bottom:18px; }
+    .hero h2 { margin:0 0 8px 0; font-size:clamp(24px,4vw,34px); }
+    .hero p { margin:0; color:var(--muted); font-size:16px; line-height:1.5; }
+    .plan-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin-top:18px; }
+    .plan-card { border:1px solid rgba(255,255,255,0.18); border-radius:14px; padding:16px; background:rgba(255,255,255,0.05); }
+    .plan-card.selected { border-color:rgba(90,173,221,0.7); box-shadow:0 0 0 1px rgba(90,173,221,0.4) inset; }
+    .plan-card h3 { margin:0 0 6px 0; font-size:20px; }
+    .price { margin:0 0 10px 0; font-size:22px; font-weight:700; }
+    .plan-meta { margin:0 0 14px 0; color:var(--muted); font-size:13px; line-height:1.45; }
+    .plan-features { margin:0; padding-left:18px; color:#d2e3ff; font-size:14px; line-height:1.5; }
+    .plan-features li { margin:0 0 4px 0; }
+    .select-btn { margin-top:14px; width:100%; padding:10px 12px; border:none; border-radius:10px; background:var(--accent); color:#081328; font-weight:700; cursor:pointer; }
+    .checkout-panel { margin-top:20px; border:1px solid rgba(90,173,221,0.35); border-radius:14px; padding:16px; background:rgba(90,173,221,0.1); }
+    .checkout-panel h3 { margin:0 0 8px 0; font-size:20px; }
+    .checkout-panel p { margin:0 0 8px 0; color:#d7e8ff; font-size:14px; line-height:1.5; }
+    .checkout-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .checkout-actions button { padding:10px 12px; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
+    .primary { background:var(--accent); color:#081328; }
+    .secondary { background:rgba(255,255,255,0.14); color:var(--fg); border:1px solid rgba(255,255,255,0.2); }
+    .success { color:var(--good); font-weight:700; }
+    .token { margin:6px 0 0 0; font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace; font-size:13px; color:#cde1ff; }
+    .note { margin-top:14px; color:#a8bfdc; font-size:12px; line-height:1.45; }
+    @media (max-width: 700px) {
+      .checkout-actions { flex-direction:column; }
+      .checkout-actions button { width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Family Plans</h1>
+    <div class="links">
+      <a class="link-btn" href="/">Home</a>
+      <a class="link-btn" href="/shop.html">Shop</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h2>Simple family pricing</h2>
+      <p>Choose a plan any time. No timers, no pressure prompts, and no gameplay lockouts for free users.</p>
+    </section>
+
+    <section class="plan-grid" id="planGrid"></section>
+
+    <section class="checkout-panel">
+      <h3>Checkout</h3>
+      <p id="checkoutStatus">Choose a plan to continue.</p>
+      <p class="token" id="checkoutToken" style="display:none;"></p>
+      <div class="checkout-actions">
+        <button id="startCheckoutBtn" class="primary" type="button">Start Checkout</button>
+        <button id="completeCheckoutBtn" class="secondary" type="button">Complete Purchase</button>
+        <button id="clearCheckoutBtn" class="secondary" type="button">Clear Pending</button>
+      </div>
+      <p class="note">
+        Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.
+      </p>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      ENTITLEMENT_KEYS,
+      getEntitlements,
+      hasEntitlement,
+      getCheckoutState,
+      createCheckoutIntent,
+      completeCheckoutIntent,
+      clearCheckoutIntent,
+    } from './src/core/entitlements.js';
+
+    const plans = [
+      {
+        id: 'family-monthly',
+        name: 'Family Monthly',
+        price: '$4.99 / month',
+        meta: 'Flexible month-to-month plan.',
+        features: [
+          'Access to Family Premium cosmetic packs',
+          'Premium challenge tracks when available',
+          'No ads and no manipulative upsells',
+        ],
+      },
+      {
+        id: 'family-annual',
+        name: 'Family Annual',
+        price: '$39.00 / year',
+        meta: 'Best value for long-term play.',
+        features: [
+          'Everything in Family Monthly',
+          'Lower yearly cost vs monthly billing',
+          'One purchase for the full school year',
+        ],
+      },
+    ];
+
+    const planGrid = document.getElementById('planGrid');
+    const checkoutStatus = document.getElementById('checkoutStatus');
+    const checkoutToken = document.getElementById('checkoutToken');
+    const startCheckoutBtn = document.getElementById('startCheckoutBtn');
+    const completeCheckoutBtn = document.getElementById('completeCheckoutBtn');
+    const clearCheckoutBtn = document.getElementById('clearCheckoutBtn');
+
+    let selectedPlanId = plans[0].id;
+
+    function renderPlans() {
+      planGrid.innerHTML = '';
+      for (const plan of plans) {
+        const card = document.createElement('article');
+        card.className = `plan-card${selectedPlanId === plan.id ? ' selected' : ''}`;
+        card.dataset.planId = plan.id;
+        const features = plan.features.map((feature) => `<li>${feature}</li>`).join('');
+        card.innerHTML = `
+          <h3>${plan.name}</h3>
+          <p class="price">${plan.price}</p>
+          <p class="plan-meta">${plan.meta}</p>
+          <ul class="plan-features">${features}</ul>
+          <button class="select-btn" type="button">Select ${plan.name}</button>
+        `;
+        const btn = card.querySelector('.select-btn');
+        btn.addEventListener('click', () => {
+          selectedPlanId = plan.id;
+          renderPlans();
+          renderCheckout();
+        });
+        planGrid.appendChild(card);
+      }
+    }
+
+    function renderCheckout() {
+      const entitlements = getEntitlements();
+      const checkout = getCheckoutState(entitlements);
+      const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
+      const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
+
+      if (hasFamilyPremium) {
+        checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
+      } else if (checkout.status === 'pending') {
+        checkoutStatus.textContent = `Checkout pending for ${checkout.planId}. Complete purchase to activate Family Premium.`;
+      } else {
+        checkoutStatus.textContent = `Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Start checkout to create a pending token.`;
+      }
+
+      if (checkout.token) {
+        checkoutToken.style.display = 'block';
+        checkoutToken.textContent = `Checkout token: ${checkout.token}`;
+      } else {
+        checkoutToken.style.display = 'none';
+        checkoutToken.textContent = '';
+      }
+
+      startCheckoutBtn.disabled = !selectedPlanId;
+      completeCheckoutBtn.disabled = checkout.status !== 'pending' || !checkout.token;
+    }
+
+    startCheckoutBtn.addEventListener('click', () => {
+      const result = createCheckoutIntent(selectedPlanId);
+      if (!result) return;
+      renderCheckout();
+    });
+
+    completeCheckoutBtn.addEventListener('click', () => {
+      const checkout = getCheckoutState();
+      if (!checkout.token) return;
+      completeCheckoutIntent(checkout.token);
+      renderCheckout();
+    });
+
+    clearCheckoutBtn.addEventListener('click', () => {
+      clearCheckoutIntent();
+      renderCheckout();
+    });
+
+    window.render_game_to_text = () => {
+      const entitlements = getEntitlements();
+      const checkout = getCheckoutState(entitlements);
+      return JSON.stringify({
+        view: 'pricing',
+        selectedPlanId,
+        familyPremium: hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements),
+        checkoutStatus: checkout.status,
+        checkoutPlanId: checkout.planId,
+        checkoutToken: checkout.token,
+      });
+    };
+
+    window.advanceTime = async (ms = 0) => {
+      const wait = Math.max(0, Number(ms) || 0);
+      if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+      renderCheckout();
+    };
+
+    renderPlans();
+    renderCheckout();
+    window.addEventListener('pageshow', () => renderCheckout());
+  </script>
+</body>
+</html>

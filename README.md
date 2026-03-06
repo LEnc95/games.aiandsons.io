@@ -6,6 +6,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 
 - `index.html`: homepage hub with launcher cards, search/filter controls, daily/weekly progression panels, coin-earning tags, profile modal, badges modal, recent games, and version badge.
 - `shop.html`: in-app shop with game-tagged items, text/game filtering, cosmetics/inventory unlocks, and premium entitlement gates.
+- `pricing.html`: family monthly/annual plans page with local checkout intent flow.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers and entitlement gate logic.
 - `src/meta/games.js`: game registry used by homepage UI.
@@ -105,6 +106,12 @@ Run the entitlements shop smoke test against a pre-started server at `http://127
 npm run test:entitlements-smoke:raw
 ```
 
+Run the pricing + checkout smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:pricing-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -156,6 +163,12 @@ npm run test:classroom-smoke:raw
 1. Free tier shop shows premium tags plus locked premium purchase controls.
 2. Enabling local `familyPremium` entitlement removes premium lock controls.
 3. Shop summary/notice reflects the current entitlement tier without network calls.
+
+`npm run test:pricing-smoke:raw` currently checks:
+
+1. Pricing page renders monthly and annual plan cards.
+2. Starting checkout creates a persisted pending checkout token and plan selection.
+3. Completing checkout activates local `familyPremium` entitlement and active status.
 
 ## Notes for future updates
 

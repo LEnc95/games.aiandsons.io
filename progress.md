@@ -441,3 +441,28 @@
 - Sprint board updated:
   - Marked `CG-401` as DONE.
   - Next sprint goal set to `CG-402 Family Pricing Page + Checkout Flow`.
+- Continued sprint work (2026-03-06): completed CG-402 Family Pricing Page + Checkout Flow.
+- Core implementation shipped:
+  - Added new `pricing.html` with clear monthly/annual family plan cards and non-manipulative copy.
+  - Added local checkout intent lifecycle in `src/core/entitlements.js`:
+    - `getCheckoutState()`
+    - `createCheckoutIntent(planId)`
+    - `completeCheckoutIntent(token)`
+    - `clearCheckoutIntent()`
+  - Added local checkout state fields under `entitlements.checkout` (`status`, `planId`, `token`, `startedAt`, `completedAt`).
+  - Added Plans navigation entry points from home (`index.html`) and shop (`shop.html`).
+  - Added deterministic pricing QA script:
+    - `scripts/qa/pricing-checkout-smoke.mjs`
+    - npm script `test:pricing-smoke:raw`
+- Validation run results after CG-402:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:discovery-smoke:raw` (pass).
+  - `npm run test:entitlements-smoke:raw` (pass).
+  - `npm run test:pricing-smoke:raw` (pass).
+  - `web_game_playwright_client` visual smoke on `/pricing.html` (`output/web-game/pricing-skill-smoke/shot-0.png`) reviewed.
+- Key artifact checks:
+  - `output/web-game/pricing-checkout-e2e/summary.json`: `success: true`, no console errors, pending checkout token persisted, completion activates `familyPremium`.
+- Sprint board updated:
+  - Marked `CG-402` as DONE.
+  - Next sprint goal set to `CG-403 Premium Content Pack 1`.
