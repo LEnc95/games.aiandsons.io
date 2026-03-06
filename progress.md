@@ -628,3 +628,38 @@
   - `output/web-game/onboarding-split-e2e/summary.json`: `success: true`, no console errors, role-path and skip/show persistence checks all pass.
 - Next TODO:
   - Start CG-603 launch QA + metrics baseline (cross-flow smoke aggregation + KPI event scaffolding).
+- Continued sprint work (2026-03-06): completed CG-603 Launch QA + Metrics Baseline.
+- Core implementation shipped:
+  - Added shared KPI metrics helper module `src/core/metrics.js`:
+    - Event tracking with bounded, sanitized local storage payloads (`trackKpiEvent`).
+    - Deterministic summary helpers for retention/conversion dashboards (`summarizeKpiEvents`, `buildKpiDashboardSnapshot`, `getKpiDashboardSnapshot`).
+    - Event history capping to avoid storage bloat.
+  - Wired KPI instrumentation into key launcher/shop/pricing flows:
+    - `index.html`: launcher view/search/filter, game launch clicks, onboarding role/skip/restore, premium CTA click.
+    - `shop.html`: shop view/search/filter, purchase attempt/success/blocked, equip/unequip actions.
+    - `pricing.html`: pricing view, plan selection, checkout start/complete/clear.
+  - Added deterministic metrics integration tests:
+    - `tests/metrics.integration.test.mjs`
+    - Included in `npm run test:shop`.
+- QA automation added:
+  - `scripts/qa/metrics-baseline-smoke.mjs`
+  - `scripts/qa/launch-readiness-smoke.mjs` (aggregate runner for launcher/shop discovery, classroom mode, entitlements, premium track, onboarding, and metrics baseline).
+  - npm scripts:
+    - `test:metrics-smoke:raw`
+    - `test:launch-readiness-smoke:raw`
+- Release readiness docs added:
+  - `RELEASE_NOTES.md` with launch scope, KPI baseline, explicit risk register, and rollback plan.
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-603 marked DONE (Sprint 6 now complete).
+  - `README.md`: metrics + launch-readiness smoke commands and coverage documented.
+- Validation run results after CG-603:
+  - `npm run test:shop` (pass, now includes metrics integration tests).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:metrics-smoke:raw` against local server (pass).
+  - `npm run test:launch-readiness-smoke:raw` against local server (pass).
+  - Skill Playwright client run on home (`output/web-game/home-launch-readiness-skill-smoke/shot-0.png`) reviewed; onboarding and launcher UI render correctly.
+- Key artifact checks:
+  - `output/web-game/metrics-baseline-e2e/summary.json`: `success: true`, no console errors, required KPI events + dashboard counters present.
+  - `output/web-game/launch-readiness-e2e/summary.json`: `success: true`, aggregate smoke checks all pass.
+- Next TODO:
+  - Build optional CI workflow that runs `test:launch-readiness-smoke:raw` nightly against preview builds for continuous launch health tracking.

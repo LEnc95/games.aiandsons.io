@@ -178,7 +178,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Each path lands on role-specific guidance and CTA.
   - Onboarding can be skipped without blocking gameplay.
 
-### CG-603 Launch QA + Metrics Baseline (Status: TODO)
+### CG-603 Launch QA + Metrics Baseline (Status: DONE)
 - Description: Finalize release candidate quality and KPI instrumentation.
 - Acceptance criteria:
   - Smoke checks pass for launcher, shop, classroom mode, and premium gating.
@@ -205,4 +205,4 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 5 closing item CG-503 is complete (release checklist + policy signoff gate + tag-blocking workflow).
 - Sprint 6 kickoff item CG-601 is complete (persisted accessibility settings, keyboard reachability improvements, and deterministic accessibility smoke coverage).
 - Sprint 6 follow-up item CG-602 is complete (home role-based onboarding paths, skip/show persistence, and deterministic onboarding smoke coverage).
-- Next highest-value work item is CG-603 launch QA + metrics baseline.
+- Sprint 6 closing item CG-603 is complete (aggregated launch-readiness smoke suite, local KPI metrics baseline, and release notes with risk/rollback plan).

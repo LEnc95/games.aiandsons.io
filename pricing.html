@@ -88,6 +88,7 @@
       completeCheckoutIntent,
       clearCheckoutIntent,
     } from './src/core/entitlements.js';
+    import { trackKpiEvent } from './src/core/metrics.js';
 
     loadAndApplyAccessibility();
 
@@ -142,6 +143,7 @@
         const btn = card.querySelector('.select-btn');
         btn.addEventListener('click', () => {
           selectedPlanId = plan.id;
+          trackKpiEvent('pricing_plan_selected', { planId: plan.id });
           renderPlans();
           renderCheckout();
         });
@@ -178,6 +180,7 @@
     startCheckoutBtn.addEventListener('click', () => {
       const result = createCheckoutIntent(selectedPlanId);
       if (!result) return;
+      trackKpiEvent('checkout_started', { planId: selectedPlanId });
       renderCheckout();
     });
 
@@ -185,11 +188,13 @@
       const checkout = getCheckoutState();
       if (!checkout.token) return;
       completeCheckoutIntent(checkout.token);
+      trackKpiEvent('checkout_completed', { planId: checkout.planId || selectedPlanId });
       renderCheckout();
     });
 
     clearCheckoutBtn.addEventListener('click', () => {
       clearCheckoutIntent();
+      trackKpiEvent('checkout_cleared', { planId: selectedPlanId });
       renderCheckout();
     });
 
@@ -215,6 +220,7 @@
     };
 
     renderPlans();
+    trackKpiEvent('pricing_view', { defaultPlanId: selectedPlanId });
     renderCheckout();
     window.addEventListener('pageshow', () => renderCheckout());
   </script>

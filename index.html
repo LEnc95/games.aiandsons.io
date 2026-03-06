@@ -451,9 +451,11 @@
     import { getEntitlements } from './src/core/entitlements.js';
     import { getPremiumChallengeTrack } from './src/prog/premium-challenges.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
+    import { trackKpiEvent } from './src/core/metrics.js';
     import { getOnboardingState, setOnboardingState, skipOnboarding, selectOnboardingRole } from './src/core/onboarding.js';
 
     loadAndApplyAccessibility();
+    trackKpiEvent('launcher_view', { gameCount: GAMES.length });
 
     window.maybeUnlock = maybeUnlock;
 
@@ -820,6 +822,7 @@
               event.preventDefault();
               return;
             }
+            trackKpiEvent('game_launch_clicked', { slug: game.slug, source: 'recent' });
             rememberRecent(game.slug);
           };
           recentGrid.appendChild(card);
@@ -878,6 +881,7 @@
             event.preventDefault();
             return;
           }
+          trackKpiEvent('game_launch_clicked', { slug: game.slug, source: 'grid' });
           rememberRecent(game.slug);
         };
         gamesGrid.appendChild(card);
@@ -951,25 +955,40 @@
     document.getElementById('classroomBtn').onclick = openClassroom;
     skipOnboardingBtn.addEventListener('click', () => {
       skipOnboarding();
+      trackKpiEvent('onboarding_skipped', {
+        selectedRole: getOnboardingState().selectedRole || 'none',
+      });
       updateUI();
     });
     showOnboardingBtn.addEventListener('click', () => {
       setOnboardingState({ skipped: false });
+      trackKpiEvent('onboarding_restored', {
+        selectedRole: getOnboardingState().selectedRole || 'none',
+      });
       updateUI();
     });
     parentPathLink.addEventListener('click', () => {
       selectOnboardingRole('parent');
+      trackKpiEvent('onboarding_role_selected', { role: 'parent' });
     });
     teacherPathLink.addEventListener('click', () => {
       selectOnboardingRole('teacher');
+      trackKpiEvent('onboarding_role_selected', { role: 'teacher' });
+    });
+    premiumTrackCtaEl.addEventListener('click', (event) => {
+      const ctaLink = event.target?.closest?.('a[href="/pricing.html"]');
+      if (!ctaLink) return;
+      trackKpiEvent('premium_upgrade_cta_clicked', { source: 'home_premium_track' });
     });
     gameSearchInputEl.addEventListener('input', () => {
       gameSearchQuery = normalizeText(gameSearchInputEl.value.trim());
+      trackKpiEvent('launcher_search_changed', { queryLength: gameSearchQuery.length });
       updateUI();
     });
     gameCoinFilterEl.addEventListener('change', () => {
       const value = gameCoinFilterEl.value;
       gameCoinFilter = value === 'coins' || value === 'no-coins' ? value : 'all';
+      trackKpiEvent('launcher_coin_filter_changed', { filter: gameCoinFilter });
       updateUI();
     });
     window.addEventListener('keydown', (event) => {

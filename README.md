@@ -10,11 +10,11 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `school-license.html`: school/district licensing page with local district-review request handoff flow.
 - `accessibility.html`: persisted accessibility control panel for color profile, larger UI, reduced motion, and contrast preferences.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, PIN-gated active-session mutations, and licensed aggregate report exports.
-- `src/core/*`: shared persistence/state helpers, entitlement gate logic, and accessibility preference helpers.
+- `src/core/*`: shared persistence/state helpers, entitlement gate logic, accessibility preference helpers, and local KPI metrics tracking.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/prog/*`: achievements, daily/weekly missions, premium challenge track, assignment bundles, and cosmetics logic.
 - `*/index.html` game folders: standalone game pages.
-- `tests/shop-items.integration.test.mjs` + `tests/entitlements.integration.test.mjs` + `tests/premium-challenges.integration.test.mjs`: integration checks for shop consistency, premium gating, and premium challenge progression logic.
+- `tests/shop-items.integration.test.mjs` + `tests/entitlements.integration.test.mjs` + `tests/premium-challenges.integration.test.mjs` + `tests/metrics.integration.test.mjs`: integration checks for shop consistency, premium gating, premium challenge progression logic, and KPI summary behavior.
 
 ## Current games
 
@@ -63,7 +63,7 @@ See `src/core/state.js` for load/normalize/persist details.
 Run the integration test:
 
 ```bash
-node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs tests/premium-challenges.integration.test.mjs
+node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs tests/premium-challenges.integration.test.mjs tests/metrics.integration.test.mjs
 ```
 
 Or via npm script:
@@ -150,6 +150,18 @@ Run the onboarding split smoke test against a pre-started server at `http://127.
 npm run test:onboarding-smoke:raw
 ```
 
+Run the KPI metrics baseline smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:metrics-smoke:raw
+```
+
+Run the launch-readiness aggregate smoke suite against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:launch-readiness-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -165,6 +177,7 @@ npm run test:classroom-smoke:raw
 5. Badge metadata uses real icon values (no placeholder corruption).
 6. Entitlement gate helpers correctly map premium IDs and lock/unlock behavior.
 7. Premium challenge track gating/progress logic is deterministic for free and entitled users.
+8. KPI metrics helpers sanitize and summarize retention/conversion events deterministically.
 
 `npm run test:classroom-smoke` currently checks:
 
@@ -244,6 +257,19 @@ npm run test:classroom-smoke:raw
 1. Home shows parent and teacher onboarding path cards on fresh state.
 2. Parent and teacher path clicks land on role-specific onboarding pages with expected CTAs.
 3. Skip/show onboarding state persists and skip mode does not block game-card availability.
+
+`npm run test:metrics-smoke:raw` currently checks:
+
+1. Launcher, pricing, and shop KPI events are recorded for core retention/conversion actions.
+2. Checkout and purchase conversion counters are present in the dashboard snapshot.
+3. Metrics flow executes with no console errors while preserving gameplay/shop behavior.
+
+`npm run test:launch-readiness-smoke:raw` currently checks:
+
+1. Launcher/shop discovery smoke passes.
+2. Classroom mode smoke passes.
+3. Entitlement and premium-track gating smokes pass.
+4. Onboarding split and KPI metrics baseline smokes pass.
 
 ## Notes for future updates
 
