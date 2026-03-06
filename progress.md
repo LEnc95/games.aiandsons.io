@@ -206,3 +206,17 @@
 - Validation:
   - `npm run test:shop` (pass)
   - `npm run test:classroom-smoke` (pass)
+- Artifact hygiene pass:
+  - Updated `.gitignore` to ignore `output/web-game/` generated QA artifacts.
+  - Removed `output/web-game` artifacts from git tracking via `git rm -r --cached output/web-game` so future smoke/test runs no longer appear as repo noise.
+- Post-change validation:
+  - `npm run test:shop` (pass)
+  - `npm run test:classroom-smoke` (pass)
+  - Classroom summary remains successful with no console errors.
+- Extended artifact cleanup to non-web-game outputs:
+  - Broadened ignore rule from `output/web-game/` to `output/` in `.gitignore`.
+  - Removed tracked Pokemon output artifacts from git index (`output/pokemon-actions-*.json`, `output/pokemon-run*/`).
+- Re-ran smoke validation post-cleanup:
+  - `npm run test:classroom-smoke` (pass).
+  - Summary remains success with zero console errors.
+- Current effect: generated files under `output/` still exist locally and are used for debugging/artifacts, but they no longer reappear as new git noise after each run.
