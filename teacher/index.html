@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Teacher Dashboard - Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root {
+      --bg: #071125;
+      --panel: #111e39;
+      --panel-soft: #0c1730;
+      --panel-border: #274272;
+      --text: #ecf4ff;
+      --muted: #9eb7dc;
+      --accent: #5ad;
+      --danger: #f77c90;
+      --ok: #5de2b1;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: radial-gradient(circle at 20% 0%, #13264d 0%, var(--bg) 55%, #040a17 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px clamp(16px, 4vw, 32px);
+      border-bottom: 1px solid rgba(90, 173, 221, 0.25);
+      background: rgba(8, 18, 38, 0.85);
+      backdrop-filter: blur(8px);
+      flex-wrap: wrap;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: clamp(20px, 3vw, 28px);
+    }
+
+    .topbar-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .link-btn {
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: clamp(20px, 4vw, 32px) clamp(16px, 4vw, 30px) 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px 0;
+      font-size: 20px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-card {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .status-card .label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .status-card .value {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .status-pill.active {
+      border-color: rgba(93, 226, 177, 0.55);
+      color: #b8ffe4;
+      background: rgba(93, 226, 177, 0.16);
+    }
+
+    .status-pill.inactive {
+      border-color: rgba(255, 255, 255, 0.24);
+      color: #d8e6ff;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .form-row label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .form-row input[type="text"],
+    .form-row input[type="number"] {
+      width: 100%;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 15px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .games-list {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .games-list label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 0 0 8px 0;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: #041028;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    button.danger {
+      background: rgba(247, 124, 144, 0.22);
+      color: #ffd6de;
+      border: 1px solid rgba(247, 124, 144, 0.42);
+    }
+
+    .notice {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .notice.ok {
+      color: #b8ffe4;
+    }
+
+    .notice.error {
+      color: #ffd5dc;
+    }
+
+    .pin-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(2, 7, 16, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+
+    .pin-modal.active {
+      display: flex;
+    }
+
+    .pin-card {
+      width: min(420px, 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #15294c 0%, #0d1a33 100%);
+      padding: 16px;
+    }
+
+    .pin-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+    }
+
+    .pin-card p {
+      margin: 0 0 10px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pin-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .pin-error {
+      min-height: 18px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #ffd5dc;
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+      .action-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Teacher Dashboard</h1>
+    <div class="topbar-links">
+      <a class="link-btn" href="/">Home</a>
+      <a class="link-btn" href="/shop.html">Shop</a>
+    </div>
+  </div>
+
+  <main class="shell">
+    <section class="panel">
+      <h2>Session Status</h2>
+      <div id="sessionPill" class="status-pill inactive">Session Inactive</div>
+      <div class="status-grid">
+        <article class="status-card">
+          <span class="label">Minutes Remaining</span>
+          <span class="value" id="minutesRemaining">0</span>
+        </article>
+        <article class="status-card">
+          <span class="label">Shop Lock</span>
+          <span class="value" id="shopLockValue">Off</span>
+        </article>
+        <article class="status-card">
+          <span class="label">Whitelist Count</span>
+          <span class="value" id="whitelistCount">0</span>
+        </article>
+        <article class="status-card">
+          <span class="label">PIN Protection</span>
+          <span class="value" id="pinValue">Off</span>
+        </article>
+      </div>
+      <p class="help" style="margin-top: 12px;">
+        Active sessions lock non-whitelisted game cards on home and may lock all shop actions.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Classroom Controls</h2>
+      <div class="check-row">
+        <input type="checkbox" id="enabledInput" />
+        <label for="enabledInput">Enable classroom mode</label>
+      </div>
+
+      <div class="form-row">
+        <label for="pinInput">Teacher PIN (digits only, up to 8)</label>
+        <input id="pinInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Optional PIN" />
+      </div>
+
+      <div class="form-row">
+        <label for="durationInput">Session duration (minutes)</label>
+        <input id="durationInput" type="number" min="5" max="180" step="5" />
+      </div>
+
+      <div class="check-row">
+        <input type="checkbox" id="shopLockInput" />
+        <label for="shopLockInput">Lock shop during active class sessions</label>
+      </div>
+
+      <p class="help">
+        Select allowed games. If no games are selected, all games remain playable during class.
+      </p>
+      <div id="gamesList" class="games-list"></div>
+
+      <div class="action-row">
+        <button type="button" id="saveBtn">Save Settings</button>
+        <button type="button" class="secondary" id="startBtn">Start Session</button>
+        <button type="button" class="danger" id="endBtn">End Session</button>
+      </div>
+
+      <div id="actionNotice" class="notice"></div>
+    </section>
+  </main>
+
+  <div id="pinModal" class="pin-modal">
+    <div class="pin-card">
+      <h3>PIN Required</h3>
+      <p id="pinPromptText">Enter teacher PIN to continue.</p>
+      <input id="pinVerifyInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Enter PIN" />
+      <div class="pin-actions">
+        <button type="button" id="pinConfirmBtn">Confirm</button>
+        <button type="button" class="secondary" id="pinCancelBtn">Cancel</button>
+      </div>
+      <div id="pinError" class="pin-error"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      state,
+      setClassroomConfig,
+      startClassroomSession,
+      endClassroomSession,
+      isClassroomSessionActive,
+      getClassroomMinutesRemaining,
+      hasTeacherPin,
+      verifyTeacherPin,
+    } from "../src/core/state.js";
+    import { GAMES } from "../src/meta/games.js";
+
+    const enabledInput = document.getElementById("enabledInput");
+    const pinInput = document.getElementById("pinInput");
+    const durationInput = document.getElementById("durationInput");
+    const shopLockInput = document.getElementById("shopLockInput");
+    const gamesList = document.getElementById("gamesList");
+
+    const sessionPill = document.getElementById("sessionPill");
+    const minutesRemaining = document.getElementById("minutesRemaining");
+    const shopLockValue = document.getElementById("shopLockValue");
+    const whitelistCount = document.getElementById("whitelistCount");
+    const pinValue = document.getElementById("pinValue");
+    const actionNotice = document.getElementById("actionNotice");
+
+    const pinModal = document.getElementById("pinModal");
+    const pinPromptText = document.getElementById("pinPromptText");
+    const pinVerifyInput = document.getElementById("pinVerifyInput");
+    const pinError = document.getElementById("pinError");
+
+    const sanitizePin = (value) => String(value || "").replace(/\D/g, "").slice(0, 8);
+    let pendingMutation = null;
+
+    function setNotice(message, type = "") {
+      actionNotice.textContent = message;
+      actionNotice.className = `notice${type ? ` ${type}` : ""}`;
+    }
+
+    function renderGamesList() {
+      const selected = new Set(state.classroom.gameWhitelist || []);
+      gamesList.innerHTML = "";
+      for (const game of GAMES) {
+        const row = document.createElement("label");
+        row.innerHTML = `<input type="checkbox" data-game-slug value="${game.slug}" /> ${game.name}`;
+        const input = row.querySelector("input");
+        input.checked = selected.has(game.slug);
+        gamesList.appendChild(row);
+      }
+    }
+
+    function loadFormFromState() {
+      enabledInput.checked = Boolean(state.classroom.enabled);
+      pinInput.value = state.classroom.teacherPin || "";
+      durationInput.value = String(state.classroom.session.durationMinutes || 30);
+      shopLockInput.checked = state.classroom.shopDisabledDuringClass !== false;
+      renderGamesList();
+    }
+
+    function readForm() {
+      const selectedSlugs = [...gamesList.querySelectorAll("input[data-game-slug]:checked")]
+        .map((input) => input.value);
+      return {
+        enabled: enabledInput.checked,
+        teacherPin: sanitizePin(pinInput.value),
+        shopDisabledDuringClass: shopLockInput.checked,
+        gameWhitelist: selectedSlugs,
+        session: {
+          durationMinutes: Number(durationInput.value),
+        },
+      };
+    }
+
+    function renderStatus() {
+      const active = isClassroomSessionActive();
+      const minutes = getClassroomMinutesRemaining();
+      minutesRemaining.textContent = String(minutes);
+      shopLockValue.textContent = state.classroom.shopDisabledDuringClass ? "On" : "Off";
+      whitelistCount.textContent = String((state.classroom.gameWhitelist || []).length);
+      pinValue.textContent = hasTeacherPin() ? "On" : "Off";
+      if (active) {
+        sessionPill.textContent = "Session Active";
+        sessionPill.className = "status-pill active";
+      } else {
+        sessionPill.textContent = "Session Inactive";
+        sessionPill.className = "status-pill inactive";
+      }
+    }
+
+    function requiresPinForMutation() {
+      return isClassroomSessionActive() && hasTeacherPin();
+    }
+
+    function closePinModal() {
+      pinModal.classList.remove("active");
+      pinVerifyInput.value = "";
+      pinError.textContent = "";
+      pendingMutation = null;
+    }
+
+    function openPinModal(contextLabel, callback) {
+      pendingMutation = callback;
+      pinPromptText.textContent = `Enter teacher PIN to ${contextLabel} while session is active.`;
+      pinVerifyInput.value = "";
+      pinError.textContent = "";
+      pinModal.classList.add("active");
+      pinVerifyInput.focus();
+    }
+
+    function runProtectedMutation(contextLabel, callback) {
+      if (!requiresPinForMutation()) {
+        callback();
+        return;
+      }
+      openPinModal(contextLabel, callback);
+    }
+
+    function applySettings(showMessage = true) {
+      setClassroomConfig(readForm());
+      renderStatus();
+      if (showMessage) {
+        setNotice("Classroom settings saved.", "ok");
+      }
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      runProtectedMutation("save settings", () => applySettings(true));
+    });
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      runProtectedMutation("start or restart the session", () => {
+        const data = readForm();
+        data.enabled = true;
+        setClassroomConfig(data);
+        startClassroomSession(data.session.durationMinutes);
+        loadFormFromState();
+        renderStatus();
+        setNotice("Classroom session started.", "ok");
+      });
+    });
+
+    document.getElementById("endBtn").addEventListener("click", () => {
+      runProtectedMutation("end the session", () => {
+        endClassroomSession();
+        renderStatus();
+        setNotice("Classroom session ended.", "ok");
+      });
+    });
+
+    pinInput.addEventListener("input", () => {
+      pinInput.value = sanitizePin(pinInput.value);
+    });
+    pinVerifyInput.addEventListener("input", () => {
+      pinVerifyInput.value = sanitizePin(pinVerifyInput.value);
+    });
+
+    document.getElementById("pinConfirmBtn").addEventListener("click", () => {
+      if (!pendingMutation) return;
+      if (!verifyTeacherPin(pinVerifyInput.value)) {
+        pinError.textContent = "Incorrect PIN. Try again.";
+        return;
+      }
+      const action = pendingMutation;
+      closePinModal();
+      action();
+    });
+
+    document.getElementById("pinCancelBtn").addEventListener("click", () => {
+      closePinModal();
+      setNotice("Action canceled.", "error");
+    });
+
+    pinModal.addEventListener("click", (event) => {
+      if (event.target === pinModal) {
+        closePinModal();
+      }
+    });
+
+    pinVerifyInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("pinConfirmBtn").click();
+      }
+    });
+
+    window.render_game_to_text = () => JSON.stringify({
+      view: "teacher-dashboard",
+      classroomEnabled: Boolean(state.classroom.enabled),
+      sessionActive: isClassroomSessionActive(),
+      minutesRemaining: getClassroomMinutesRemaining(),
+      shopLock: Boolean(state.classroom.shopDisabledDuringClass),
+      whitelist: [...(state.classroom.gameWhitelist || [])],
+      pinRequiredForActiveSessionChange: requiresPinForMutation(),
+    });
+
+    window.advanceTime = async (ms = 0) => {
+      const wait = Math.max(0, Number(ms) || 0);
+      if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+      renderStatus();
+    };
+
+    loadFormFromState();
+    renderStatus();
+    setInterval(renderStatus, 1000);
+  </script>
+</body>
+</html>

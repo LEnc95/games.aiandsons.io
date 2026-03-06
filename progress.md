@@ -220,3 +220,38 @@
   - `npm run test:classroom-smoke` (pass).
   - Summary remains success with zero console errors.
 - Current effect: generated files under `output/` still exist locally and are used for debugging/artifacts, but they no longer reappear as new git noise after each run.
+- Continued request (2026-03-05): implement Sprint 2 CG-201 teacher session view with PIN-gated active-session mutations.
+- Added shared classroom PIN helpers in `src/core/state.js`:
+  - `hasTeacherPin()`
+  - `verifyTeacherPin(pin)`
+- Added dedicated teacher dashboard page:
+  - `teacher/index.html`
+  - Supports classroom enable toggle, PIN/duration/shop lock controls, whitelist editing, start/end session actions.
+  - Displays active session status/timer + lock state summary cards.
+  - Requires PIN confirmation modal before mutating settings while a class session is active.
+  - Exposes deterministic hooks for QA (`window.render_game_to_text`, `window.advanceTime`).
+- Home launcher update:
+  - Added topbar Teacher link to `/teacher/` in `index.html`.
+- Extended deterministic classroom smoke automation (`scripts/qa/classroom-mode-smoke.mjs`):
+  - Added teacher-state assertions.
+  - Added wrong-PIN rejection check while session is active.
+  - Added correct-PIN save check while session is active.
+  - Added PIN-required end-session check from teacher dashboard.
+  - Added screenshot artifact: `output/web-game/classroom-e2e/teacher-pin-check.png`.
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-201 marked DONE; current sprint notes advanced to CG-202 as next item.
+  - `README.md`: documented teacher dashboard and expanded classroom smoke coverage.
+- Validation runs:
+  - `npm run test:shop` (pass, 3/3).
+  - `npm run test:classroom-smoke` (pass, summary success true, no console errors).
+  - `node C:/Users/Luke/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://127.0.0.1:4173/teacher/ --actions-file C:/Users/Luke/.codex/skills/develop-web-game/references/action_payloads.json --iterations 1 --pause-ms 250 --screenshot-dir output/web-game/teacher-dashboard-smoke` (pass).
+- Visual QA review:
+  - Reviewed `output/web-game/classroom-e2e/teacher-pin-check.png` and `output/web-game/teacher-dashboard-smoke/shot-0.png`; teacher layout, controls, and status rendering appear correct on desktop viewport.
+- Follow-up TODO:
+  - Implement CG-202 classroom preset packs (Logic/Reflex/Strategy) on teacher dashboard and add smoke checks for one-click preset application.
+- Follow-up hardening:
+  - Updated `teacher/index.html` so "Start Session" is also PIN-gated when a session is already active (prevents restart/reconfigure bypass without PIN).
+- Revalidation after hardening:
+  - `npm run test:classroom-smoke` (pass)
+  - `npm run test:shop` (pass)
+  - Re-ran `web_game_playwright_client` teacher smoke; screenshot/state output refreshed in `output/web-game/teacher-dashboard-smoke`.

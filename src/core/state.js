@@ -286,3 +286,13 @@ export const isGameLockedByClassroom = (slug, now = Date.now()) => {
   if (!Array.isArray(whitelist) || whitelist.length === 0) return false;
   return !whitelist.includes(slug);
 };
+
+export const hasTeacherPin = () => {
+  return typeof state.classroom.teacherPin === 'string' && state.classroom.teacherPin.length > 0;
+};
+
+export const verifyTeacherPin = (pin) => {
+  if (!hasTeacherPin()) return true;
+  const normalized = String(pin ?? '').replace(/\D/g, '').slice(0, 8);
+  return normalized === state.classroom.teacherPin;
+};

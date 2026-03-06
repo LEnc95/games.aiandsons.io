@@ -63,6 +63,15 @@ async function waitForClassroomModalClosed(page) {
   });
 }
 
+async function waitForPinModal(page, active) {
+  await page.waitForFunction((isActive) => {
+    const modal = document.getElementById("pinModal");
+    if (!modal) return false;
+    const currentlyActive = modal.classList.contains("active");
+    return isActive ? currentlyActive : !currentlyActive;
+  }, active);
+}
+
 async function configureClassroomAndSave(page) {
   await openClassroomModal(page);
   await page.check("#classroomEnabled");
@@ -82,12 +91,6 @@ async function configureClassroomAndSave(page) {
 async function startClassroomSessionFromModal(page) {
   await openClassroomModal(page);
   await page.locator("#classroomModal button", { hasText: "Start Session" }).click();
-  await waitForClassroomModalClosed(page);
-}
-
-async function endClassroomSessionFromModal(page) {
-  await openClassroomModal(page);
-  await page.locator("#classroomModal button", { hasText: "End Session" }).click();
   await waitForClassroomModalClosed(page);
 }
 
@@ -119,6 +122,28 @@ async function getShopLockState(page) {
       noticeText: notice?.textContent?.trim() || "",
       firstButtonText: firstButton?.textContent?.trim() || "",
       firstButtonDisabled: Boolean(firstButton?.disabled),
+    };
+  });
+}
+
+async function getTeacherState(page) {
+  return page.evaluate(() => {
+    const read = (id) => document.getElementById(id)?.textContent?.trim() || "";
+    const classroomRaw = localStorage.getItem("cadegames:v1:classroom");
+    let classroom = null;
+    try {
+      classroom = classroomRaw ? JSON.parse(classroomRaw) : null;
+    } catch {
+      classroom = null;
+    }
+    return {
+      sessionPill: read("sessionPill"),
+      minutesRemaining: read("minutesRemaining"),
+      shopLockValue: read("shopLockValue"),
+      pinValue: read("pinValue"),
+      notice: read("actionNotice"),
+      storedDuration: Number(classroom?.session?.durationMinutes || 0),
+      sessionActive: Boolean(classroom?.session?.active),
     };
   });
 }
@@ -182,10 +207,80 @@ async function main() {
     await page.screenshot({ path: shopLockedShot, fullPage: true });
     summary.screenshots.push(shopLockedShot);
 
-    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-    await endClassroomSessionFromModal(page);
-    summary.checks.push({ name: "home_modal_end_session", pass: true });
+    await page.goto(`${baseUrl}/teacher/`, { waitUntil: "networkidle" });
+    await page.waitForSelector("#saveBtn");
 
+    const teacherInitial = await getTeacherState(page);
+    assert(teacherInitial.sessionPill === "Session Active", "Expected active teacher session state.");
+    assert(teacherInitial.shopLockValue === "On", "Expected teacher dashboard to show shop lock on.");
+    assert(teacherInitial.pinValue === "On", "Expected teacher dashboard to show PIN protection on.");
+    summary.checks.push({ name: "teacher_active_state", pass: true, data: teacherInitial });
+
+    await page.fill("#durationInput", "45");
+    await page.click("#saveBtn");
+    await waitForPinModal(page, true);
+    await page.fill("#pinVerifyInput", "0000");
+    await page.click("#pinConfirmBtn");
+    await page.waitForFunction(() => {
+      const err = document.getElementById("pinError");
+      return (err?.textContent || "").includes("Incorrect PIN");
+    });
+    let teacherAfterBadPin = await getTeacherState(page);
+    assert(
+      teacherAfterBadPin.storedDuration === 30,
+      "Expected classroom duration unchanged after incorrect PIN attempt."
+    );
+    summary.checks.push({ name: "teacher_pin_rejects_wrong_pin", pass: true, data: teacherAfterBadPin });
+
+    await page.click("#pinCancelBtn");
+    await waitForPinModal(page, false);
+
+    await page.fill("#durationInput", "45");
+    await page.click("#saveBtn");
+    await waitForPinModal(page, true);
+    await page.fill("#pinVerifyInput", "1234");
+    await page.click("#pinConfirmBtn");
+    await waitForPinModal(page, false);
+    await page.waitForFunction(() => {
+      const classroomRaw = localStorage.getItem("cadegames:v1:classroom");
+      if (!classroomRaw) return false;
+      try {
+        const classroom = JSON.parse(classroomRaw);
+        return Number(classroom?.session?.durationMinutes) === 45;
+      } catch {
+        return false;
+      }
+    });
+    const teacherAfterGoodPin = await getTeacherState(page);
+    assert(
+      teacherAfterGoodPin.storedDuration === 45,
+      "Expected classroom duration saved after correct PIN entry."
+    );
+    summary.checks.push({ name: "teacher_pin_accepts_correct_pin", pass: true, data: teacherAfterGoodPin });
+
+    await page.click("#endBtn");
+    await waitForPinModal(page, true);
+    await page.fill("#pinVerifyInput", "1234");
+    await page.click("#pinConfirmBtn");
+    await waitForPinModal(page, false);
+    await page.waitForFunction(() => {
+      const classroomRaw = localStorage.getItem("cadegames:v1:classroom");
+      if (!classroomRaw) return false;
+      try {
+        const classroom = JSON.parse(classroomRaw);
+        return classroom?.session?.active === false;
+      } catch {
+        return false;
+      }
+    });
+    const teacherAfterEnd = await getTeacherState(page);
+    assert(!teacherAfterEnd.sessionActive, "Expected session inactive after teacher end action.");
+    summary.checks.push({ name: "teacher_pin_required_end_session", pass: true, data: teacherAfterEnd });
+    const teacherShot = path.join(OUTPUT_DIR, "teacher-pin-check.png");
+    await page.screenshot({ path: teacherShot, fullPage: true });
+    summary.screenshots.push(teacherShot);
+
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     const unlockedHome = await getHomeLockState(page);
     assert(!unlockedHome.bannerVisible, "Expected classroom banner hidden when session is inactive.");
     assert(!unlockedHome.card2048Locked, "Expected 2048 card unlocked when session is inactive.");

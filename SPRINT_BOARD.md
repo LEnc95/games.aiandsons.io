@@ -58,7 +58,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 ## Sprint 2 - Teacher Dashboard MVP
 
-### CG-201 Teacher Session View (Status: TODO)
+### CG-201 Teacher Session View (Status: DONE)
 - Description: Add dedicated `teacher/index.html` with class session controls.
 - Acceptance criteria:
   - Teacher page can start/end sessions and edit whitelist.
@@ -177,5 +177,6 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Classroom mode PIN is currently local-only and not hard security.
 
 ## Current Sprint Notes
-- This repository now contains Sprint 1 scaffolding for classroom mode and policy pages.
-- Next highest-value work item is CG-106 QA smoke automation and issue cleanup.
+- Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
+- Sprint 2 kickoff is underway with CG-201 complete in `/teacher/index.html` and smoke coverage for teacher PIN enforcement.
+- Next highest-value work item is CG-202 classroom presets.
