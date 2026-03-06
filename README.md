@@ -162,6 +162,12 @@ Run the launch-readiness aggregate smoke suite against a pre-started server at `
 npm run test:launch-readiness-smoke:raw
 ```
 
+Run the launch-readiness aggregate smoke suite with auto-started local server:
+
+```bash
+npm run test:launch-readiness-smoke
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -270,6 +276,12 @@ npm run test:classroom-smoke:raw
 2. Classroom mode smoke passes.
 3. Entitlement and premium-track gating smokes pass.
 4. Onboarding split and KPI metrics baseline smokes pass.
+
+Nightly CI automation:
+
+1. `.github/workflows/nightly-launch-readiness.yml` runs daily at `13:00 UTC` and on manual dispatch.
+2. It runs `npm run test:shop` and `npm run test:launch-readiness-smoke`.
+3. It uploads all smoke summary/screenshot directories for launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
 
 ## Notes for future updates
 

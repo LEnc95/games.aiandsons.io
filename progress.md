@@ -663,3 +663,26 @@
   - `output/web-game/launch-readiness-e2e/summary.json`: `success: true`, aggregate smoke checks all pass.
 - Next TODO:
   - Build optional CI workflow that runs `test:launch-readiness-smoke:raw` nightly against preview builds for continuous launch health tracking.
+- Continued sprint work (2026-03-06): started Sprint 7 and completed CG-701 Nightly Launch Readiness CI.
+- Core implementation shipped:
+  - Added local wrapper script `scripts/qa/run-launch-readiness-smoke.mjs` to auto-start/stop local HTTP server and execute aggregate launch readiness smoke runner.
+  - Added npm script `test:launch-readiness-smoke` (auto-server) while preserving `test:launch-readiness-smoke:raw` for pre-started servers.
+  - Added nightly CI workflow `.github/workflows/nightly-launch-readiness.yml`:
+    - Triggers daily (`13:00 UTC`) and on manual dispatch.
+    - Installs Node + dependencies + Playwright Chromium.
+    - Runs `npm run test:shop` and `npm run test:launch-readiness-smoke`.
+    - Uploads launch-readiness artifacts (aggregate summary + all constituent smoke output folders).
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`:
+    - Added Sprint 7 timeline and section.
+    - Marked CG-701 DONE.
+    - Added CG-702 (KPI dashboard export baseline) and CG-703 (release-tag checklist automation) as next TODO items.
+  - `README.md`:
+    - Added `npm run test:launch-readiness-smoke` command docs.
+    - Documented nightly CI behavior and artifact scope.
+- Validation run results after CG-701:
+  - `npm run test:shop` (pass).
+  - `npm run test:launch-readiness-smoke` (pass).
+  - Aggregate summary verified at `output/web-game/launch-readiness-e2e/summary.json` with all checks passing and zero console errors.
+- Next TODO:
+  - Start CG-702 KPI dashboard export baseline (deterministic local export script + test + README docs).

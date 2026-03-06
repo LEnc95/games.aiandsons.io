@@ -10,6 +10,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 4: Apr 20, 2026 to May 1, 2026
 - Sprint 5: May 4, 2026 to May 15, 2026
 - Sprint 6: May 18, 2026 to Jun 5, 2026
+- Sprint 7: Jun 8, 2026 to Jun 19, 2026
 
 ## Sprint 1 - Compliance + Classroom Foundation
 
@@ -185,6 +186,29 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - KPI events available for retention/conversion dashboards.
   - Release notes include risk register and rollback plan.
 
+## Sprint 7 - Operational Reliability
+
+### CG-701 Nightly Launch Readiness CI (Status: DONE)
+- Description: Run launch-readiness smoke coverage automatically each day and retain artifacts for triage.
+- Acceptance criteria:
+  - GitHub Actions workflow runs on daily schedule and manual dispatch.
+  - Workflow runs integration checks plus aggregate launch-readiness smoke suite.
+  - Artifacts for each smoke surface are uploaded even on failures.
+
+### CG-702 KPI Dashboard Export Baseline (Status: TODO)
+- Description: Provide a deterministic local export for KPI snapshots to support reporting and audits.
+- Acceptance criteria:
+  - CLI/script writes retention and conversion snapshot JSON from local metrics state.
+  - Export includes timestamp, rolling window days, and event count integrity fields.
+  - Export path is documented in README and covered by deterministic test.
+
+### CG-703 Release Tag Checklist Automation (Status: TODO)
+- Description: Add automated verification that release notes and launch-risk sections exist before tagging.
+- Acceptance criteria:
+  - Release automation checks `RELEASE_NOTES.md` for risk register and rollback sections.
+  - Missing sections fail validation before release tag workflows continue.
+  - Workflow links failures directly to expected checklist fields.
+
 ## Risks and Dependencies
 - External payment/legal integration for premium and school licensing.
 - Policy review before enabling any remote tracking or ad stack.
@@ -206,3 +230,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 6 kickoff item CG-601 is complete (persisted accessibility settings, keyboard reachability improvements, and deterministic accessibility smoke coverage).
 - Sprint 6 follow-up item CG-602 is complete (home role-based onboarding paths, skip/show persistence, and deterministic onboarding smoke coverage).
 - Sprint 6 closing item CG-603 is complete (aggregated launch-readiness smoke suite, local KPI metrics baseline, and release notes with risk/rollback plan).
+- Sprint 7 kickoff item CG-701 is complete (nightly launch-readiness CI workflow with artifact upload for all smoke surfaces).
+- Next highest-value work item is CG-702 KPI dashboard export baseline.

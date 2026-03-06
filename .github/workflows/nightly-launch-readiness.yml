@@ -1,0 +1,49 @@
+name: Nightly Launch Readiness
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  launch-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Integration Suite
+        run: npm run test:shop
+
+      - name: Run Launch Readiness Smoke Suite
+        run: npm run test:launch-readiness-smoke
+
+      - name: Upload Launch Readiness Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: launch-readiness-artifacts
+          path: |
+            output/web-game/launch-readiness-e2e
+            output/web-game/discovery-filter-e2e
+            output/web-game/classroom-e2e
+            output/web-game/entitlements-shop-e2e
+            output/web-game/premium-track-e2e
+            output/web-game/onboarding-split-e2e
+            output/web-game/metrics-baseline-e2e
