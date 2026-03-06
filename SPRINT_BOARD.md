@@ -171,7 +171,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Major launcher and shop interactions are keyboard reachable.
   - Visual contrast meets target baseline for core text elements.
 
-### CG-602 Parent/Teacher Onboarding Split (Status: TODO)
+### CG-602 Parent/Teacher Onboarding Split (Status: DONE)
 - Description: Add clear role-based onboarding from homepage.
 - Acceptance criteria:
   - Home offers "Parent" and "Teacher" paths.
@@ -204,4 +204,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 5 follow-up item CG-502 is complete (aggregate report generation, CSV export, print-to-PDF flow, and deterministic browser smoke coverage).
 - Sprint 5 closing item CG-503 is complete (release checklist + policy signoff gate + tag-blocking workflow).
 - Sprint 6 kickoff item CG-601 is complete (persisted accessibility settings, keyboard reachability improvements, and deterministic accessibility smoke coverage).
-- Next highest-value work item is CG-602 parent/teacher onboarding split.
+- Sprint 6 follow-up item CG-602 is complete (home role-based onboarding paths, skip/show persistence, and deterministic onboarding smoke coverage).
+- Next highest-value work item is CG-603 launch QA + metrics baseline.

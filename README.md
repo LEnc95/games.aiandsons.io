@@ -144,6 +144,12 @@ Run the accessibility pack smoke test against a pre-started server at `http://12
 npm run test:accessibility-smoke:raw
 ```
 
+Run the onboarding split smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:onboarding-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -232,6 +238,12 @@ npm run test:classroom-smoke:raw
 1. Accessibility settings persist from `accessibility.html` into local storage.
 2. Home and shop pages apply color profile, larger UI, reduced motion, and high contrast classes consistently.
 3. Keyboard discovery interactions work (`/` shortcuts, Tab reachability, skip-link/focus path).
+
+`npm run test:onboarding-smoke:raw` currently checks:
+
+1. Home shows parent and teacher onboarding path cards on fresh state.
+2. Parent and teacher path clicks land on role-specific onboarding pages with expected CTAs.
+3. Skip/show onboarding state persists and skip mode does not block game-card availability.
 
 ## Notes for future updates
 

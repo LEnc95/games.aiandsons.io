@@ -35,6 +35,19 @@
     .search-controls input,
     .search-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
     .search-count { grid-column:1 / -1; color:#b4ccf0; font-size:12px; text-align:left; }
+    .onboarding-section { border:1px solid rgba(255,255,255,0.16); border-radius:14px; padding:14px; margin-bottom:16px; background:rgba(255,255,255,0.05); }
+    .onboarding-section.hidden { display:none; }
+    .onboarding-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+    .onboarding-head h2 { margin:0; font-size:20px; }
+    .onboarding-subtitle { margin:0 0 10px 0; color:#bfd2ef; font-size:13px; line-height:1.45; }
+    .onboarding-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
+    .onboarding-card { border:1px solid rgba(255,255,255,0.18); border-radius:10px; padding:12px; text-decoration:none; color:var(--fg); background:rgba(255,255,255,0.05); }
+    .onboarding-card h3 { margin:0 0 6px 0; font-size:16px; }
+    .onboarding-card p { margin:0 0 8px 0; color:#c6d8f3; font-size:13px; line-height:1.4; }
+    .onboarding-cta { display:inline-flex; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid rgba(90,173,221,0.5); background:rgba(90,173,221,0.2); color:#dff0ff; }
+    .onboarding-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .onboarding-btn { padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:var(--fg); font-size:13px; font-weight:600; cursor:pointer; }
+    .onboarding-status { margin:8px 0 0 0; font-size:12px; color:#b7cdf0; }
 
     .missions-section { border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px; margin-bottom:18px; background:rgba(255,255,255,0.04); }
     .missions-section.weekly { border-color:rgba(106,167,255,0.42); background:rgba(78,129,215,0.09); }
@@ -176,6 +189,30 @@
       <h1>Cade's Games</h1>
       <p class="subtitle">Choose a game to play</p>
     </header>
+
+    <section id="onboardingSection" class="onboarding-section">
+      <div class="onboarding-head">
+        <h2>Start Here</h2>
+        <div class="onboarding-actions">
+          <button id="skipOnboardingBtn" class="onboarding-btn" type="button">Skip for now</button>
+          <button id="showOnboardingBtn" class="onboarding-btn" type="button" style="display:none;">Show onboarding</button>
+        </div>
+      </div>
+      <p id="onboardingSubtitle" class="onboarding-subtitle">Choose a role path for guided setup, or skip and jump straight into games.</p>
+      <div id="onboardingGrid" class="onboarding-grid">
+        <a class="onboarding-card" id="parentPathLink" href="/parent-onboarding.html">
+          <h3>Parent Path</h3>
+          <p>Kid-friendly setup, family plan options, and simple controls.</p>
+          <span class="onboarding-cta">Open Parent Guide</span>
+        </a>
+        <a class="onboarding-card" id="teacherPathLink" href="/teacher-onboarding.html">
+          <h3>Teacher Path</h3>
+          <p>Classroom controls, session flow, and school license onboarding.</p>
+          <span class="onboarding-cta">Open Teacher Guide</span>
+        </a>
+      </div>
+      <p id="onboardingStatus" class="onboarding-status" aria-live="polite"></p>
+    </section>
 
     <div id="classroomBanner" class="classroom-banner hidden"></div>
     <div id="assignmentBanner" class="assignment-banner hidden"></div>
@@ -414,6 +451,7 @@
     import { getEntitlements } from './src/core/entitlements.js';
     import { getPremiumChallengeTrack } from './src/prog/premium-challenges.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
+    import { getOnboardingState, setOnboardingState, skipOnboarding, selectOnboardingRole } from './src/core/onboarding.js';
 
     loadAndApplyAccessibility();
 
@@ -438,6 +476,14 @@
     const premiumTrackListEl = document.getElementById('premiumTrackList');
     const premiumTrackMetaEl = document.getElementById('premiumTrackMeta');
     const premiumTrackCtaEl = document.getElementById('premiumTrackCta');
+    const onboardingSectionEl = document.getElementById('onboardingSection');
+    const onboardingSubtitleEl = document.getElementById('onboardingSubtitle');
+    const onboardingGridEl = document.getElementById('onboardingGrid');
+    const onboardingStatusEl = document.getElementById('onboardingStatus');
+    const skipOnboardingBtn = document.getElementById('skipOnboardingBtn');
+    const showOnboardingBtn = document.getElementById('showOnboardingBtn');
+    const parentPathLink = document.getElementById('parentPathLink');
+    const teacherPathLink = document.getElementById('teacherPathLink');
 
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
@@ -447,10 +493,38 @@
       if (typeof weekKey !== 'string' || !weekKey) return '';
       return `Week of ${weekKey}`;
     };
+    const onboardingRoleLabel = (role) => {
+      if (role === 'parent') return 'Parent';
+      if (role === 'teacher') return 'Teacher';
+      return '';
+    };
 
     let lastClassroomSessionActive = isClassroomSessionActive();
     let gameSearchQuery = '';
     let gameCoinFilter = 'all';
+
+    function renderOnboarding() {
+      const onboarding = getOnboardingState();
+      const roleLabel = onboardingRoleLabel(onboarding.selectedRole);
+      const skipped = onboarding.skipped === true;
+
+      onboardingSectionEl.classList.remove('hidden');
+      onboardingGridEl.style.display = skipped ? 'none' : '';
+      onboardingSubtitleEl.style.display = skipped ? 'none' : '';
+      skipOnboardingBtn.style.display = skipped ? 'none' : 'inline-flex';
+      showOnboardingBtn.style.display = skipped ? 'inline-flex' : 'none';
+
+      if (skipped) {
+        onboardingStatusEl.textContent = roleLabel
+          ? `Onboarding hidden. Last selected path: ${roleLabel}.`
+          : 'Onboarding hidden. You can show it again any time.';
+        return;
+      }
+
+      onboardingStatusEl.textContent = roleLabel
+        ? `Last selected path: ${roleLabel}. You can switch paths at any time.`
+        : 'Tip: Parent path is best for at-home setup. Teacher path is best for classroom controls.';
+    }
 
     function renderClassroomHeader() {
       const active = isClassroomSessionActive();
@@ -718,6 +792,7 @@
       }
 
       renderClassroomHeader();
+      renderOnboarding();
       renderDailyMissions();
       renderWeeklyChallenges();
       renderAssignmentBanner();
@@ -874,6 +949,20 @@
     };
 
     document.getElementById('classroomBtn').onclick = openClassroom;
+    skipOnboardingBtn.addEventListener('click', () => {
+      skipOnboarding();
+      updateUI();
+    });
+    showOnboardingBtn.addEventListener('click', () => {
+      setOnboardingState({ skipped: false });
+      updateUI();
+    });
+    parentPathLink.addEventListener('click', () => {
+      selectOnboardingRole('parent');
+    });
+    teacherPathLink.addEventListener('click', () => {
+      selectOnboardingRole('teacher');
+    });
     gameSearchInputEl.addEventListener('input', () => {
       gameSearchQuery = normalizeText(gameSearchInputEl.value.trim());
       updateUI();

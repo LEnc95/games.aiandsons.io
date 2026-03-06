@@ -600,3 +600,31 @@
   - Reviewed accessibility settings page screenshot and smoke artifacts (`output/web-game/accessibility-pack-e2e/*`) to confirm UI rendering and persisted application.
 - Next TODO:
   - Start CG-602 parent/teacher onboarding split from home launcher.
+- Continued sprint work (2026-03-06): completed CG-602 Parent/Teacher Onboarding Split.
+- Core implementation shipped:
+  - Added onboarding persistence module `src/core/onboarding.js` with normalized local state helpers:
+    - `getOnboardingState`, `setOnboardingState`
+    - `skipOnboarding`, `selectOnboardingRole`
+  - Added role-specific onboarding pages:
+    - `parent-onboarding.html` (parent setup guidance + family plans/accessibility CTAs)
+    - `teacher-onboarding.html` (teacher dashboard/session/licensing guidance + CTAs)
+  - Completed home onboarding section behavior in `index.html`:
+    - Parent/Teacher path links now persist selected onboarding role.
+    - Skip/show controls now persist and restore onboarding visibility.
+    - Skip mode hides onboarding cards without blocking gameplay card availability.
+    - Onboarding status text reflects selected role and current onboarding visibility state.
+- QA automation added:
+  - `scripts/qa/onboarding-split-smoke.mjs`
+  - npm script `test:onboarding-smoke:raw`
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-602 marked DONE; next item advanced to CG-603 launch QA + metrics baseline.
+  - `README.md`: onboarding smoke command + coverage checklist documented.
+- Validation run results after CG-602:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:onboarding-smoke:raw` against local server (pass).
+  - Skill Playwright client run on home (`output/web-game/home-onboarding-skill-smoke/shot-0.png`) reviewed.
+- Key artifact checks:
+  - `output/web-game/onboarding-split-e2e/summary.json`: `success: true`, no console errors, role-path and skip/show persistence checks all pass.
+- Next TODO:
+  - Start CG-603 launch QA + metrics baseline (cross-flow smoke aggregation + KPI event scaffolding).
