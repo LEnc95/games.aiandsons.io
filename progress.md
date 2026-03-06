@@ -790,3 +790,20 @@
   - `npm run metrics:export -- --now 1772812800000`
 - Next TODO suggestion:
   - Implement CG-703 by automating release-tag checklist validation in CI/workflow guardrails.
+- Continued request (2026-03-06): complete Sprint 7 CG-703 release tag checklist automation.
+- Updated `scripts/release/policy-gate.mjs` to enforce release notes checklist sections for tag validation:
+  - Added required `RELEASE_NOTES.md` checks for:
+    - `## Risk Register` (expected field id: `risk_register`)
+    - `## Rollback Plan` (expected field id: `rollback_plan`)
+  - Failure messages now directly include missing field identifiers so workflow output links to expected checklist fields.
+  - Success output now reports `Release notes: <path>` alongside checklist/signoff paths.
+- Updated release workflow label:
+  - `.github/workflows/policy-release-gate.yml` step renamed to `Validate release checklist + release notes gate`.
+- Updated docs/planning:
+  - `README.md` policy-gate checklist now includes release-notes section validation.
+  - `SPRINT_BOARD.md` marked CG-703 DONE and notes Sprint 7 operational reliability scope complete.
+- Validation runs (all pass):
+  - `npm run test:policy-gate`
+  - `npm run test:shop`
+- Next TODO suggestion:
+  - Begin post-sprint backlog triage (e.g., Stripe production runbook, CG-705 webhook replay/admin tooling, or CG-706 if added).

@@ -257,7 +257,8 @@ npm run test:classroom-smoke:raw
 
 1. `RELEASE_CHECKLIST.md` references both `privacy.html` and `school-privacy.html`.
 2. `release/policy-signoff.json` contains explicit reviewer/date approval fields.
-3. Release-tag validation fails without required policy signoff or tracking/ad risk notes when applicable.
+3. `RELEASE_NOTES.md` includes both `## Risk Register` and `## Rollback Plan` sections.
+4. Release-tag validation fails without required policy signoff or tracking/ad risk notes when applicable.
 
 `npm run test:accessibility-smoke:raw` currently checks:
 

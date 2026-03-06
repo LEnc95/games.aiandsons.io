@@ -202,7 +202,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Export includes timestamp, rolling window days, and event count integrity fields.
   - Export path is documented in README and covered by deterministic test.
 
-### CG-703 Release Tag Checklist Automation (Status: TODO)
+### CG-703 Release Tag Checklist Automation (Status: DONE)
 - Description: Add automated verification that release notes and launch-risk sections exist before tagging.
 - Acceptance criteria:
   - Release automation checks `RELEASE_NOTES.md` for risk register and rollback sections.
@@ -248,4 +248,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 7 Stripe item CG-704 is complete (Stripe checkout/portal/webhook endpoint scaffolding with local checkout fallback).
 - Sprint 7 follow-up item CG-705 is complete (session-bound Stripe endpoints, durable user/customer entitlement records, and webhook persistence flow).
 - Sprint 7 KPI item CG-702 is complete (deterministic KPI export CLI, integrity metadata, and integration coverage).
-- Next highest-value work item is CG-703 release tag checklist automation.
+- Sprint 7 release item CG-703 is complete (`test:policy-gate` now validates `RELEASE_NOTES.md` required sections for risk register + rollback plan before tag workflows continue).
+- Sprint 7 operational reliability scope (CG-701 through CG-705, plus CG-702/CG-703 follow-ups) is complete.

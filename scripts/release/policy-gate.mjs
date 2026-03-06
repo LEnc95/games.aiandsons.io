@@ -2,11 +2,22 @@ import fs from "node:fs";
 import path from "node:path";
 
 const CHECKLIST_PATH = path.join(process.cwd(), "RELEASE_CHECKLIST.md");
+const RELEASE_NOTES_PATH = path.join(process.cwd(), "RELEASE_NOTES.md");
 const SIGNOFF_PATH = path.join(process.cwd(), "release", "policy-signoff.json");
 const PACKAGE_PATH = path.join(process.cwd(), "package.json");
 
 const TRACKING_DEP_PATTERN = /(analytics|segment|mixpanel|amplitude|gtag|pixel|adsense|admob|doubleclick|telemetry)/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const REQUIRED_RELEASE_NOTE_SECTIONS = Object.freeze([
+  {
+    id: "risk_register",
+    heading: "## Risk Register",
+  },
+  {
+    id: "rollback_plan",
+    heading: "## Rollback Plan",
+  },
+]);
 
 function fail(errors) {
   console.error("Policy release gate failed:");
@@ -43,6 +54,12 @@ function findTrackingDependencies() {
   return deps.filter((dep) => TRACKING_DEP_PATTERN.test(dep));
 }
 
+function hasHeading(documentText, heading) {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escaped}\\s*$`, "im");
+  return pattern.test(documentText);
+}
+
 function main() {
   const args = new Set(process.argv.slice(2));
   const requireApproval = args.has("--require-approval");
@@ -57,6 +74,19 @@ function main() {
     }
     if (!checklist.includes("school-privacy.html")) {
       errors.push("Release checklist must reference school-privacy.html.");
+    }
+  }
+
+  if (!fs.existsSync(RELEASE_NOTES_PATH)) {
+    errors.push(`Missing release notes file: ${RELEASE_NOTES_PATH}`);
+  } else {
+    const releaseNotes = fs.readFileSync(RELEASE_NOTES_PATH, "utf8");
+    for (const section of REQUIRED_RELEASE_NOTE_SECTIONS) {
+      if (!hasHeading(releaseNotes, section.heading)) {
+        errors.push(
+          `RELEASE_NOTES.md is missing required section "${section.heading}" (expected field: ${section.id}).`,
+        );
+      }
     }
   }
 
@@ -102,6 +132,7 @@ function main() {
 
   console.log("Policy release gate passed.");
   console.log(`Checklist: ${CHECKLIST_PATH}`);
+  console.log(`Release notes: ${RELEASE_NOTES_PATH}`);
   console.log(`Signoff: ${SIGNOFF_PATH}`);
   console.log(`Reviewed by: ${reviewedBy} on ${reviewedAt}`);
 }
