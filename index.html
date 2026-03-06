@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="./src/styles/accessibility.css">
   <style>
     :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
     * { box-sizing: border-box; }
@@ -145,6 +146,7 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#gamesGrid">Skip to game list</a>
   <div class="topbar">
     <div class="topbar-left">
       <div class="welcome-wrap">
@@ -161,6 +163,7 @@
       <a href="/shop.html" class="topbar-btn">Shop</a>
       <a href="/pricing.html" class="topbar-btn">Plans</a>
       <a href="/school-license.html" class="topbar-btn">School Plans</a>
+      <a href="/accessibility.html" class="topbar-btn">Accessibility</a>
       <a href="/teacher/" class="topbar-btn">Teacher</a>
       <button class="topbar-btn" id="classroomBtn">Classroom</button>
       <button class="topbar-btn" id="profileBtn">Profile</button>
@@ -183,7 +186,7 @@
         <option value="coins">Coin earning</option>
         <option value="no-coins">No coin rewards</option>
       </select>
-      <div id="gameSearchCount" class="search-count"></div>
+      <div id="gameSearchCount" class="search-count" aria-live="polite"></div>
     </div>
 
     <section class="missions-section" id="dailyMissionsSection">
@@ -216,7 +219,7 @@
       <div class="recent-grid" id="recentGrid"></div>
     </div>
     
-    <div class="games-grid" id="gamesGrid">
+    <div class="games-grid" id="gamesGrid" tabindex="-1">
       <!-- Static fallback (replaced by JS if modules load) -->
       <a href="/2048" class="game-card">
         <div class="game-icon">🔢</div>
@@ -410,6 +413,9 @@
     import { getAssignmentBundleById } from './src/prog/assignments.js';
     import { getEntitlements } from './src/core/entitlements.js';
     import { getPremiumChallengeTrack } from './src/prog/premium-challenges.js';
+    import { loadAndApplyAccessibility } from './src/core/accessibility.js';
+
+    loadAndApplyAccessibility();
 
     window.maybeUnlock = maybeUnlock;
 
@@ -876,6 +882,15 @@
       const value = gameCoinFilterEl.value;
       gameCoinFilter = value === 'coins' || value === 'no-coins' ? value : 'all';
       updateUI();
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key !== '/') return;
+      const target = event.target;
+      const tagName = target && target.tagName ? target.tagName.toUpperCase() : '';
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || target?.isContentEditable) return;
+      event.preventDefault();
+      gameSearchInputEl.focus();
+      gameSearchInputEl.select();
     });
     classroomPinEl.addEventListener('input', () => {
       classroomPinEl.value = sanitizePin(classroomPinEl.value);

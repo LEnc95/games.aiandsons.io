@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>Shop - Cade's Games</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="stylesheet" href="./src/styles/accessibility.css">
   <style>
     :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
     * { box-sizing: border-box; }
@@ -55,6 +56,7 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#shopGrid">Skip to shop items</a>
   <div class="topbar">
     <h1>🛒 Shop</h1>
     <div style="display:flex; align-items:center; gap:12px;">
@@ -64,6 +66,7 @@
       </div>
       <a href="/pricing.html" class="back-link">Plans</a>
       <a href="/school-license.html" class="back-link">School License</a>
+      <a href="/accessibility.html" class="back-link">Accessibility</a>
       <a href="/" class="back-link">← Back</a>
     </div>
   </div>
@@ -74,13 +77,14 @@
         <select id="shopGameFilter" aria-label="Filter shop by game">
           <option value="all">All games</option>
         </select>
-        <div id="shopFilterSummary" class="shop-filter-summary"></div>
+        <div id="shopFilterSummary" class="shop-filter-summary" aria-live="polite"></div>
       </div>
-      <div id="shopNotice" class="shop-notice hidden"></div>
-      <div class="shop-grid" id="shopGrid"></div>
+      <div id="shopNotice" class="shop-notice hidden" aria-live="polite"></div>
+      <div class="shop-grid" id="shopGrid" tabindex="-1"></div>
     </div>
 
   <script type="module">
+      import { loadAndApplyAccessibility } from './src/core/accessibility.js';
       import {
         state,
         save,
@@ -96,6 +100,8 @@
         isPremiumShopItem,
         isShopItemLockedByEntitlement,
       } from './src/core/entitlements.js';
+
+      loadAndApplyAccessibility();
 
       if (!(state.inventory instanceof Set)) {
         state.inventory = new Set(Array.isArray(state.inventory) ? state.inventory : []);
@@ -990,6 +996,15 @@
       shopSearchInput.addEventListener("input", () => {
         shopSearchQuery = normalizeText(shopSearchInput.value.trim());
         updateUI();
+      });
+      window.addEventListener("keydown", (event) => {
+        if (event.key !== "/") return;
+        const target = event.target;
+        const tagName = target && target.tagName ? target.tagName.toUpperCase() : "";
+        if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || target?.isContentEditable) return;
+        event.preventDefault();
+        shopSearchInput.focus();
+        shopSearchInput.select();
       });
       shopGameFilter.addEventListener("change", () => {
         selectedShopGame = shopGameFilter.value || "all";

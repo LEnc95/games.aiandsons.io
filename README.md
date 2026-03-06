@@ -8,8 +8,9 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `shop.html`: in-app shop with game-tagged items, text/game filtering, cosmetics/inventory unlocks, and premium entitlement gates.
 - `pricing.html`: family monthly/annual plans page with local checkout intent flow.
 - `school-license.html`: school/district licensing page with local district-review request handoff flow.
+- `accessibility.html`: persisted accessibility control panel for color profile, larger UI, reduced motion, and contrast preferences.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, PIN-gated active-session mutations, and licensed aggregate report exports.
-- `src/core/*`: shared persistence/state helpers and entitlement gate logic.
+- `src/core/*`: shared persistence/state helpers, entitlement gate logic, and accessibility preference helpers.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/prog/*`: achievements, daily/weekly missions, premium challenge track, assignment bundles, and cosmetics logic.
 - `*/index.html` game folders: standalone game pages.
@@ -62,7 +63,7 @@ See `src/core/state.js` for load/normalize/persist details.
 Run the integration test:
 
 ```bash
-node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs
+node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs tests/premium-challenges.integration.test.mjs
 ```
 
 Or via npm script:
@@ -135,6 +136,12 @@ Run the policy release gate check (required before release tags):
 
 ```bash
 npm run test:policy-gate
+```
+
+Run the accessibility pack smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:accessibility-smoke:raw
 ```
 
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
@@ -219,6 +226,12 @@ npm run test:classroom-smoke:raw
 1. `RELEASE_CHECKLIST.md` references both `privacy.html` and `school-privacy.html`.
 2. `release/policy-signoff.json` contains explicit reviewer/date approval fields.
 3. Release-tag validation fails without required policy signoff or tracking/ad risk notes when applicable.
+
+`npm run test:accessibility-smoke:raw` currently checks:
+
+1. Accessibility settings persist from `accessibility.html` into local storage.
+2. Home and shop pages apply color profile, larger UI, reduced motion, and high contrast classes consistently.
+3. Keyboard discovery interactions work (`/` shortcuts, Tab reachability, skip-link/focus path).
 
 ## Notes for future updates
 

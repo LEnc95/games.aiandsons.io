@@ -566,3 +566,37 @@
   - `npm run test:classroom-smoke` (pass).
 - Next TODO:
   - Begin CG-601 accessibility pack (persisted larger-UI/reduced-motion options and colorblind-friendly palette toggles).
+- Continued sprint work (2026-03-06): completed CG-601 Accessibility Pack.
+- Core implementation shipped:
+  - Added shared accessibility preference module `src/core/accessibility.js` with:
+    - `getAccessibilitySettings`, `setAccessibilitySettings`, `resetAccessibilitySettings`
+    - `normalizeAccessibilitySettings`, `applyAccessibilityToDocument`, `loadAndApplyAccessibility`
+  - Added shared accessibility stylesheet `src/styles/accessibility.css`:
+    - Colorblind profile variable mappings (`standard`, `protanopia`, `deuteranopia`, `tritanopia`)
+    - Larger UI and reduced-motion class behavior
+    - High-contrast class overrides for core text/border readability
+    - Global keyboard focus-visible ring and skip-link styling
+  - Added new settings page `accessibility.html`:
+    - Persisted controls for color profile, larger UI, reduced motion, and high contrast
+    - Live preview + save/reset actions and keyboard tips
+  - Applied persisted accessibility settings across core pages:
+    - `index.html`, `shop.html`, `pricing.html`, `school-license.html`, `teacher/index.html`, `privacy.html`, `school-privacy.html`
+  - Added keyboard reachability improvements:
+    - Home and shop slash shortcut (`/`) to focus search inputs
+    - Skip links and improved focus paths for major navigation/content targets
+    - `aria-live` announcements for filter count/notice regions
+- QA automation added:
+  - `scripts/qa/accessibility-pack-smoke.mjs`
+  - npm script `test:accessibility-smoke:raw`
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-601 marked DONE; next item advanced to CG-602.
+  - `README.md`: accessibility page + command/check coverage documented.
+- Validation run results after CG-601:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - Raw smoke suite all pass: discovery, missions, weekly, assignment, entitlements, pricing, premium-track, school-license, report, accessibility.
+  - Skill Playwright client run: `output/web-game/accessibility-page-skill-smoke/shot-0.png` reviewed.
+- Visual verification:
+  - Reviewed accessibility settings page screenshot and smoke artifacts (`output/web-game/accessibility-pack-e2e/*`) to confirm UI rendering and persisted application.
+- Next TODO:
+  - Start CG-602 parent/teacher onboarding split from home launcher.
