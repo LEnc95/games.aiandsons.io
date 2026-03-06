@@ -162,6 +162,12 @@ Export a deterministic KPI dashboard snapshot JSON from local metrics state:
 npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30
 ```
 
+Run a bulk Stripe reconcile/audit pass (requires admin token + target files):
+
+```bash
+npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true
+```
+
 Run the launch-readiness aggregate smoke suite against a pre-started server at `http://127.0.0.1:4173`:
 
 ```bash
@@ -191,6 +197,8 @@ npm run test:classroom-smoke:raw
 7. Premium challenge track gating/progress logic is deterministic for free and entitled users.
 8. KPI metrics helpers sanitize and summarize retention/conversion events deterministically.
 9. KPI export script emits deterministic snapshot metadata, rolling window fields, and event-count integrity checks.
+10. Stripe admin-token auth helper validates header/bearer token parsing and authorization outcomes.
+11. Stripe reconcile-audit helper functions parse target inputs and classify outcomes deterministically.
 
 `npm run test:classroom-smoke` currently checks:
 
@@ -301,6 +309,8 @@ Stripe integration is scaffolded with serverless endpoints under `api/stripe/*` 
 - `POST /api/stripe/create-portal-session` opens Stripe Customer Portal for the session-bound customer.
 - `GET /api/stripe/subscription-status` returns durable entitlement snapshot for the current app session user.
 - `POST /api/stripe/webhook` validates webhook signatures and persists subscription lifecycle updates to durable billing records.
+- `POST /api/stripe/admin/reconcile` (admin-token protected) reconciles durable entitlement state from live Stripe subscriptions for a specific user/customer.
+- `npm run stripe:reconcile-audit` runs bulk reconcile/audit over user/customer ID lists and writes summary JSON.
 
 Required environment variables (set in Vercel project settings):
 
@@ -309,6 +319,7 @@ Required environment variables (set in Vercel project settings):
 - `STRIPE_PRICE_FAMILY_MONTHLY`
 - `STRIPE_PRICE_FAMILY_ANNUAL`
 - `APP_SESSION_SECRET` (HMAC secret for signed session cookie)
+- `STRIPE_ADMIN_TOKEN` (required to use `/api/stripe/admin/reconcile`)
 
 Optional environment variables:
 
@@ -326,6 +337,16 @@ Frontend behavior:
 - If Stripe is configured, pricing switches to secure Checkout + Customer Portal mode.
 - `shop.html` and `teacher/index.html` periodically sync entitlement state from `/api/stripe/subscription-status` when Stripe billing is enabled.
 - If Stripe is not configured, pricing keeps local demo checkout behavior so local QA remains deterministic.
+- Incident response playbook: `STRIPE_INCIDENT_RUNBOOK.md`.
+
+Admin reconcile usage example:
+
+```bash
+curl -X POST https://<your-domain>/api/stripe/admin/reconcile \
+  -H "Content-Type: application/json" \
+  -H "x-admin-token: $STRIPE_ADMIN_TOKEN" \
+  -d '{"userId":"usr_example","dryRun":true}'
+```
 
 ## Notes for future updates
 

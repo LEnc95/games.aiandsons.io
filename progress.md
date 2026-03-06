@@ -807,3 +807,66 @@
   - `npm run test:shop`
 - Next TODO suggestion:
   - Begin post-sprint backlog triage (e.g., Stripe production runbook, CG-705 webhook replay/admin tooling, or CG-706 if added).
+- Continued request (2026-03-06): begin Sprint 8 production-hardening work.
+- Added Sprint 8 planning items in `SPRINT_BOARD.md`:
+  - CG-801 Stripe Admin Reconcile Endpoint (DONE)
+  - CG-802 Stripe Incident Runbook (TODO)
+  - CG-803 Stripe Replay + Audit Automation (TODO)
+- Implemented CG-801 admin reconcile tooling:
+  - Added `api/stripe/admin/_admin-auth.js`:
+    - Reads admin token from `x-admin-token` or Bearer auth header.
+    - Validates against `STRIPE_ADMIN_TOKEN` using timing-safe compare.
+  - Added `api/stripe/admin/reconcile.js`:
+    - `POST` only, admin-token protected.
+    - Supports target resolution via `userId` and/or `customerId`.
+    - Pulls live subscriptions from Stripe and computes entitlement summary.
+    - Supports `dryRun` mode for no-write audits.
+    - When not dry run and user is resolved, persists refreshed entitlements/subscriptions into durable Stripe store (`api/stripe/_store.js`) and binds customer mapping.
+- Docs updated:
+  - `README.md` Stripe section now includes admin reconcile endpoint + `STRIPE_ADMIN_TOKEN` requirement + curl example.
+  - `README.md` `test:shop` checklist now includes Stripe admin auth helper coverage.
+- Test coverage added:
+  - `tests/stripe-admin-auth.integration.test.mjs`.
+  - Included in `npm run test:shop` aggregate test script.
+- Validation runs (all pass):
+  - `node --check api/stripe/admin/_admin-auth.js`
+  - `node --check api/stripe/admin/reconcile.js`
+  - `npm run test:shop`
+- Next TODO suggestion:
+  - Implement CG-802 incident runbook documentation for webhook outage + reconcile recovery steps.
+- Continued request (2026-03-06): completed Sprint 8 follow-up items CG-802 and CG-803.
+- Added incident documentation:
+  - New `STRIPE_INCIDENT_RUNBOOK.md` with:
+    - detection signals
+    - containment checklist
+    - reconcile recovery procedure (dry-run + write examples)
+    - rollback checklist
+    - communication template and exit criteria
+- Added bulk replay/audit automation:
+  - New `scripts/stripe/reconcile-audit.mjs` CLI.
+  - Supports:
+    - `--base-url`, `--admin-token`
+    - `--user-ids-file`, `--customer-ids-file`
+    - `--dry-run`, `--timeout-ms`, `--output`
+  - Emits summary counts (`repaired`, `unchanged`, `unbound`, `failed`) and detailed per-target results.
+- Admin reconcile endpoint enhancement:
+  - `api/stripe/admin/reconcile.js` now includes `changed` classification in responses by comparing previous vs refreshed entitlement summary shape.
+- Added deterministic helper tests:
+  - `tests/stripe-reconcile-audit.integration.test.mjs` for argument parsing, target building, and result classification.
+- Tooling/docs updates:
+  - `package.json`:
+    - Added `stripe:reconcile-audit` script.
+    - Included `tests/stripe-reconcile-audit.integration.test.mjs` in `test:shop` suite.
+  - `README.md`:
+    - Added `stripe:reconcile-audit` usage command and Stripe section notes for the script.
+    - Added runbook reference and updated `test:shop` checklist coverage entries.
+  - `SPRINT_BOARD.md`:
+    - Marked CG-802 DONE and CG-803 DONE.
+    - Marked Sprint 8 scope complete.
+- Validation runs (all pass):
+  - `node --check api/stripe/admin/reconcile.js`
+  - `node --check scripts/stripe/reconcile-audit.mjs`
+  - `npm run test:shop`
+  - `npm run stripe:reconcile-audit -- --help`
+- Next TODO suggestion:
+  - Define Sprint 9 scope (e.g., district SSO/auth hardening, classroom report retention controls, Stripe admin UI).

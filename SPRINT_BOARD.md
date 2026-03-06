@@ -223,6 +223,29 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Checkout and portal endpoints require authenticated user context instead of raw email-only access.
   - Shop/teacher feature gates read entitlement state from durable backend source.
 
+## Sprint 8 - Stripe Production Hardening
+
+### CG-801 Stripe Admin Reconcile Endpoint (Status: DONE)
+- Description: Add admin-token-protected reconciliation endpoint to repair durable entitlement state from live Stripe subscriptions.
+- Acceptance criteria:
+  - `POST /api/stripe/admin/reconcile` supports `userId` and/or `customerId` targeting.
+  - Endpoint requires `STRIPE_ADMIN_TOKEN` and rejects unauthenticated calls.
+  - Reconcile path writes refreshed entitlements/subscriptions to durable store and supports `dryRun`.
+
+### CG-802 Stripe Incident Runbook (Status: DONE)
+- Description: Publish an operational runbook for webhook outages, replay strategy, and entitlement mismatch triage.
+- Acceptance criteria:
+  - Runbook documents detection, immediate containment, and recovery checklist.
+  - Runbook references reconcile endpoint usage and required env vars.
+  - Runbook includes rollback + communication template.
+
+### CG-803 Stripe Replay + Audit Automation (Status: DONE)
+- Description: Add scripted workflow for bulk reconcile/audit to validate account bindings after incidents.
+- Acceptance criteria:
+  - Script can process a list of customer IDs or user IDs.
+  - Script outputs summary counts for repaired, unchanged, and unbound records.
+  - Script is documented and included in release/ops validation checks.
+
 ## Risks and Dependencies
 - External payment/legal integration for premium and school licensing.
 - Policy review before enabling any remote tracking or ad stack.
@@ -250,3 +273,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 7 KPI item CG-702 is complete (deterministic KPI export CLI, integrity metadata, and integration coverage).
 - Sprint 7 release item CG-703 is complete (`test:policy-gate` now validates `RELEASE_NOTES.md` required sections for risk register + rollback plan before tag workflows continue).
 - Sprint 7 operational reliability scope (CG-701 through CG-705, plus CG-702/CG-703 follow-ups) is complete.
+- Sprint 8 kickoff item CG-801 is complete (admin-token-protected Stripe entitlement reconcile endpoint with dry-run and durable-store refresh support).
+- Sprint 8 follow-up item CG-802 is complete (`STRIPE_INCIDENT_RUNBOOK.md` added with outage detection, reconcile recovery, rollback, and comms template).
+- Sprint 8 closing item CG-803 is complete (`scripts/stripe/reconcile-audit.mjs` bulk reconcile/audit CLI with deterministic helper tests and summary output).
+- Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
