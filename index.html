@@ -48,6 +48,10 @@
     .mission-desc { margin:0 0 8px 0; color:#b8cdee; font-size:12px; line-height:1.35; }
     .mission-progress { margin:0; font-size:12px; color:#d8e8ff; }
     .mission-week { margin:0 0 5px 0; font-size:11px; color:#a6c9f2; text-transform:uppercase; letter-spacing:0.04em; }
+    .premium-section { border:1px solid rgba(244,191,97,0.45); border-radius:14px; padding:14px; margin-bottom:18px; background:rgba(244,191,97,0.08); }
+    .premium-cta { border:1px dashed rgba(244,191,97,0.6); border-radius:10px; padding:12px; font-size:13px; color:#ffe0a6; margin-bottom:10px; }
+    .premium-cta a { color:#ffe0a6; font-weight:700; }
+    .mission-reward { margin:0; font-size:11px; color:#ffe3a7; }
     
     .recent-section { margin-bottom:clamp(24px,4vh,32px); }
     .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0 0 16px 0; color:var(--fg); font-weight:600; }
@@ -195,6 +199,15 @@
         <span id="weeklyChallengesMeta" class="missions-meta"></span>
       </div>
       <div id="weeklyChallengesList" class="missions-list"></div>
+    </section>
+
+    <section class="premium-section" id="premiumTrackSection">
+      <div class="missions-head">
+        <h2>Premium Challenge Track</h2>
+        <span id="premiumTrackMeta" class="missions-meta"></span>
+      </div>
+      <div id="premiumTrackCta" class="premium-cta"></div>
+      <div id="premiumTrackList" class="missions-list"></div>
     </section>
 
     <div class="recent-section" id="recentSection" style="display:none;">
@@ -394,6 +407,8 @@
     import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
     import { getActiveDailyMissions, getActiveWeeklyChallenges } from './src/prog/missions.js';
     import { getAssignmentBundleById } from './src/prog/assignments.js';
+    import { getEntitlements } from './src/core/entitlements.js';
+    import { getPremiumChallengeTrack } from './src/prog/premium-challenges.js';
 
     window.maybeUnlock = maybeUnlock;
 
@@ -413,6 +428,9 @@
     const dailyMissionsMetaEl = document.getElementById('dailyMissionsMeta');
     const weeklyChallengesListEl = document.getElementById('weeklyChallengesList');
     const weeklyChallengesMetaEl = document.getElementById('weeklyChallengesMeta');
+    const premiumTrackListEl = document.getElementById('premiumTrackList');
+    const premiumTrackMetaEl = document.getElementById('premiumTrackMeta');
+    const premiumTrackCtaEl = document.getElementById('premiumTrackCta');
 
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
@@ -583,6 +601,41 @@
       assignmentBannerEl.textContent = `Class assignment: ${bundle.name}. Daily ${dailyCompleted}/${bundle.dailyRequired}, Weekly ${weeklyCompleted}/${bundle.weeklyRequired}.`;
     }
 
+    function renderPremiumTrack() {
+      const entitlements = getEntitlements();
+      const track = getPremiumChallengeTrack({
+        entitlements,
+        missions: state.missions,
+        classroom: state.classroom,
+      });
+
+      premiumTrackListEl.innerHTML = '';
+      if (!track.entitled) {
+        premiumTrackMetaEl.textContent = 'Locked';
+        premiumTrackCtaEl.style.display = 'block';
+        premiumTrackCtaEl.innerHTML = 'Family Premium unlocks extra challenge rewards. <a href="/pricing.html">View plans</a>.';
+        return;
+      }
+
+      premiumTrackMetaEl.textContent = `${track.completedCount}/${track.totalCount} completed`;
+      premiumTrackCtaEl.style.display = 'none';
+
+      for (const challenge of track.challenges) {
+        const card = document.createElement('article');
+        card.className = `mission-card${challenge.completed ? ' completed' : ''}`;
+        const statusText = challenge.completed
+          ? `Complete - ${challenge.rewardLabel}`
+          : `${challenge.progress}/${challenge.target} - ${challenge.rewardLabel}`;
+
+        card.innerHTML = `
+          <h3 class="mission-name">${challenge.name}</h3>
+          <p class="mission-desc">${challenge.desc}</p>
+          <p class="mission-progress">${statusText}</p>
+        `;
+        premiumTrackListEl.appendChild(card);
+      }
+    }
+
     function collectClassroomForm() {
       const selectedSlugs = [...classroomGamesEl.querySelectorAll('input[data-game-slug]:checked')]
         .map((input) => input.value);
@@ -661,6 +714,7 @@
       renderDailyMissions();
       renderWeeklyChallenges();
       renderAssignmentBanner();
+      renderPremiumTrack();
 
       if (state.recent.length > 0) {
         recentSection.style.display = 'block';

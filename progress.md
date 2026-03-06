@@ -466,3 +466,22 @@
 - Sprint board updated:
   - Marked `CG-402` as DONE.
   - Next sprint goal set to `CG-403 Premium Content Pack 1`.
+- Continued sprint work (2026-03-06): completed CG-403 Premium Content Pack 1.
+- Core implementation shipped:
+  - Added premium challenge model in `src/prog/premium-challenges.js` with deterministic challenge definitions and entitlement-aware track payload (`getPremiumChallengeTrack`).
+  - Added home premium panel in `index.html` (`Premium Challenge Track`) with locked-state CTA to `/pricing.html` for free users and challenge-card rendering for entitled users.
+  - Added deterministic premium track browser smoke script `scripts/qa/premium-track-smoke.mjs` and npm script `test:premium-track-smoke:raw`.
+  - Added integration coverage for premium track logic in `tests/premium-challenges.integration.test.mjs` and wired it into `npm run test:shop`.
+- Documentation/planning updates:
+  - `SPRINT_BOARD.md`: CG-403 marked DONE; next item advanced to CG-501 classroom license flow.
+  - `README.md`: added premium track smoke command and check-list coverage notes.
+- Validation run results after CG-403:
+  - `npm run test:shop` (pass, includes premium challenge integration tests).
+  - `npm run test:classroom-smoke` (pass).
+  - Raw smoke suite against local server all pass: discovery, missions, weekly, assignment, entitlements, pricing, premium-track.
+  - Skill client visual smoke run on home: `output/web-game/home-premium-track-skill-smoke/shot-0.png` reviewed.
+- Visual verification:
+  - Updated premium smoke to capture section-level screenshots for easier QA review.
+  - Reviewed `output/web-game/premium-track-e2e/premium-track-locked.png` and `premium-track-entitled.png`; locked CTA and entitled cards render correctly.
+- Next TODO:
+  - Start CG-501 classroom license flow (school-facing pricing/benefits page + local license state scaffold).

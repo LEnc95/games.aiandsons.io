@@ -132,7 +132,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Checkout flow creates entitlement token or pending state.
   - No dark patterns or manipulative upsells.
 
-### CG-403 Premium Content Pack 1 (Status: TODO)
+### CG-403 Premium Content Pack 1 (Status: DONE)
 - Description: Ship first premium cosmetics/challenge bundle.
 - Acceptance criteria:
   - At least one premium cosmetic set is gated correctly.
@@ -199,4 +199,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 3 closing item CG-303 is complete (teacher assignment bundles, home assignment banner, and local report completion logging).
 - Sprint 4 kickoff item CG-401 is complete (local entitlement gates, premium lock messaging, and deterministic tests/smoke coverage).
 - Sprint 4 follow-up item CG-402 is complete (family plans page, local checkout intents, and checkout smoke coverage).
-- Next highest-value work item is CG-403 premium content pack 1.
+- Sprint 4 content item CG-403 is complete (premium challenge track UI + free-tier CTA behavior + deterministic premium track smoke coverage).
+- Next highest-value work item is CG-501 classroom license flow.

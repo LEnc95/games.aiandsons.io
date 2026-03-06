@@ -10,9 +10,9 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers and entitlement gate logic.
 - `src/meta/games.js`: game registry used by homepage UI.
-- `src/prog/*`: achievements, daily missions, and cosmetics logic.
+- `src/prog/*`: achievements, daily/weekly missions, premium challenge track, assignment bundles, and cosmetics logic.
 - `*/index.html` game folders: standalone game pages.
-- `tests/shop-items.integration.test.mjs` + `tests/entitlements.integration.test.mjs`: integration checks for shop consistency and local premium gate behavior.
+- `tests/shop-items.integration.test.mjs` + `tests/entitlements.integration.test.mjs` + `tests/premium-challenges.integration.test.mjs`: integration checks for shop consistency, premium gating, and premium challenge progression logic.
 
 ## Current games
 
@@ -112,6 +112,12 @@ Run the pricing + checkout smoke test against a pre-started server at `http://12
 npm run test:pricing-smoke:raw
 ```
 
+Run the premium challenge track smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:premium-track-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -126,6 +132,7 @@ npm run test:classroom-smoke:raw
 4. Game metadata uses real emoji values (no placeholder corruption).
 5. Badge metadata uses real icon values (no placeholder corruption).
 6. Entitlement gate helpers correctly map premium IDs and lock/unlock behavior.
+7. Premium challenge track gating/progress logic is deterministic for free and entitled users.
 
 `npm run test:classroom-smoke` currently checks:
 
@@ -169,6 +176,12 @@ npm run test:classroom-smoke:raw
 1. Pricing page renders monthly and annual plan cards.
 2. Starting checkout creates a persisted pending checkout token and plan selection.
 3. Completing checkout activates local `familyPremium` entitlement and active status.
+
+`npm run test:premium-track-smoke:raw` currently checks:
+
+1. Free tier users see a locked premium challenge panel with upgrade CTA.
+2. Entitled users see active premium challenge cards with completion/progress metadata.
+3. Premium track rendering path executes with no console errors.
 
 ## Notes for future updates
 
