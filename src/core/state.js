@@ -13,6 +13,10 @@ const DEFAULT_CLASSROOM = {
   },
   report: {
     assignmentCompletions: [],
+    sessionStats: {
+      totalSessions: 0,
+      byGame: {},
+    },
   },
   session: {
     active: false,
@@ -87,6 +91,28 @@ const normalizeAssignmentCompletions = (value) => {
   return output;
 };
 
+const normalizeSessionStats = (value) => {
+  const raw = value && typeof value === 'object' ? value : {};
+  const rawByGame = raw.byGame && typeof raw.byGame === 'object' ? raw.byGame : {};
+  const byGame = {};
+  let sum = 0;
+  for (const [slug, count] of Object.entries(rawByGame)) {
+    if (typeof slug !== 'string') continue;
+    const normalizedSlug = slug.trim();
+    if (!normalizedSlug) continue;
+    const normalizedCount = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
+    if (normalizedCount <= 0) continue;
+    byGame[normalizedSlug] = normalizedCount;
+    sum += normalizedCount;
+  }
+  const totalRaw = Number.isFinite(raw.totalSessions) ? Math.max(0, Math.floor(raw.totalSessions)) : 0;
+  const totalSessions = Math.max(totalRaw, sum);
+  return {
+    totalSessions,
+    byGame,
+  };
+};
+
 const normalizeClassroom = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
   const rawSession = raw.session && typeof raw.session === 'object' ? raw.session : {};
@@ -100,6 +126,7 @@ const normalizeClassroom = (source) => {
     assignment: normalizeAssignment(raw.assignment),
     report: {
       assignmentCompletions: normalizeAssignmentCompletions(rawReport.assignmentCompletions),
+      sessionStats: normalizeSessionStats(rawReport.sessionStats),
     },
     session: {
       active: Boolean(rawSession.active),
@@ -336,8 +363,52 @@ export const reloadCoins = () => { state.coins = loadCoins(); };
 export const addCoins = (n) => { state.coins = Math.max(0, state.coins + n); save(); };
 export const spendCoins = (n) => { if (state.coins >= n) { state.coins -= n; save(); return true; } return false; };
 export const rememberRecent = (slug) => {
-  state.recent = [slug, ...state.recent.filter(s => s !== slug)].slice(0,6);
+  const normalizedSlug = typeof slug === 'string' ? slug.trim() : '';
+  if (!normalizedSlug) return;
+  state.recent = [normalizedSlug, ...state.recent.filter(s => s !== normalizedSlug)].slice(0,6);
+
+  const report = state.classroom.report || {};
+  const sessionStats = normalizeSessionStats(report.sessionStats);
+  const nextByGame = {
+    ...sessionStats.byGame,
+    [normalizedSlug]: (sessionStats.byGame[normalizedSlug] || 0) + 1,
+  };
+  state.classroom = normalizeClassroom({
+    ...state.classroom,
+    report: {
+      ...report,
+      sessionStats: {
+        totalSessions: sessionStats.totalSessions + 1,
+        byGame: nextByGame,
+      },
+    },
+  });
   save();
+};
+
+export const getClassroomReportSummary = () => {
+  const sessionStats = normalizeSessionStats(state.classroom.report?.sessionStats);
+  const assignmentCompletions = Array.isArray(state.classroom.report?.assignmentCompletions)
+    ? state.classroom.report.assignmentCompletions
+    : [];
+  const topGames = Object.entries(sessionStats.byGame)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([slug, sessions]) => ({ slug, sessions }));
+  const latestAssignmentCompletionAt = assignmentCompletions.reduce((max, entry) => {
+    const value = Number(entry?.completedAt) || 0;
+    return value > max ? value : max;
+  }, 0);
+
+  return {
+    generatedAt: Date.now(),
+    totalSessions: sessionStats.totalSessions,
+    uniqueGamesPlayed: Object.keys(sessionStats.byGame).length,
+    topGames,
+    assignmentCompletionCount: assignmentCompletions.length,
+    latestAssignmentCompletionAt,
+    activeAssignmentBundleId: state.classroom.assignment?.bundleId || '',
+  };
 };
 
 export const setClassroomConfig = (partial) => {

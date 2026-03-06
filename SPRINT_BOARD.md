@@ -148,7 +148,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - License state can unlock classroom admin features.
   - Purchase flow supports district review handoff.
 
-### CG-502 Report Generator (Status: TODO)
+### CG-502 Report Generator (Status: DONE)
 - Description: Add lightweight aggregate class report summaries.
 - Acceptance criteria:
   - Report includes total play sessions, top games, assignment completion.
@@ -201,4 +201,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 4 follow-up item CG-402 is complete (family plans page, local checkout intents, and checkout smoke coverage).
 - Sprint 4 content item CG-403 is complete (premium challenge track UI + free-tier CTA behavior + deterministic premium track smoke coverage).
 - Sprint 5 kickoff item CG-501 is complete (school license page, district review handoff flow, and teacher licensed-tool unlock behavior).
-- Next highest-value work item is CG-502 report generator.
+- Sprint 5 follow-up item CG-502 is complete (aggregate report generation, CSV export, print-to-PDF flow, and deterministic browser smoke coverage).
+- Next highest-value work item is CG-503 policy update gate.

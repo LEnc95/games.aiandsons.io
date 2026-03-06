@@ -8,7 +8,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `shop.html`: in-app shop with game-tagged items, text/game filtering, cosmetics/inventory unlocks, and premium entitlement gates.
 - `pricing.html`: family monthly/annual plans page with local checkout intent flow.
 - `school-license.html`: school/district licensing page with local district-review request handoff flow.
-- `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, and PIN-gated active-session mutations.
+- `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, PIN-gated active-session mutations, and licensed aggregate report exports.
 - `src/core/*`: shared persistence/state helpers and entitlement gate logic.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/prog/*`: achievements, daily/weekly missions, premium challenge track, assignment bundles, and cosmetics logic.
@@ -125,6 +125,12 @@ Run the school license flow smoke test against a pre-started server at `http://1
 npm run test:school-license-smoke:raw
 ```
 
+Run the report generator smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:report-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -195,6 +201,12 @@ npm run test:classroom-smoke:raw
 1. School license page renders clear plan cards and district review form.
 2. Submitting a request stores a pending review payload with request ID handoff data.
 3. Activating a request enables `schoolLicense` and unlocks licensed teacher snapshot tools.
+
+`npm run test:report-smoke:raw` currently checks:
+
+1. Teacher report tools unlock only when school license entitlement is active.
+2. Generated aggregate report includes total sessions, top games, and assignment completion counts.
+3. CSV export and print-to-PDF actions execute from the browser report tools path.
 
 ## Notes for future updates
 

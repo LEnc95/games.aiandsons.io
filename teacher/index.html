@@ -292,6 +292,14 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
+    .tool-label {
+      margin: 12px 0 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
     .pin-modal {
       position: fixed;
       inset: 0;
@@ -457,10 +465,18 @@
     <section class="panel">
       <h2>Licensed Admin Tools</h2>
       <p id="licenseGateHint" class="license-note"></p>
-      <div class="action-row">
+      <div class="action-row" style="margin-bottom: 8px;">
         <button type="button" class="secondary" id="snapshotBtn">Generate Class Snapshot</button>
       </div>
+      <div class="action-row">
+        <button type="button" class="secondary" id="reportBtn">Generate Report</button>
+        <button type="button" class="secondary" id="exportCsvBtn">Export CSV</button>
+        <button type="button" class="secondary" id="exportPdfBtn">Export PDF</button>
+      </div>
+      <p class="tool-label">Snapshot JSON</p>
       <pre id="snapshotPreview" class="snapshot">License-gated snapshot output will appear here.</pre>
+      <p class="tool-label">Aggregate Report</p>
+      <pre id="reportPreview" class="snapshot">Generate report to view totals, top games, and assignment completion metrics.</pre>
     </section>
   </main>
 
@@ -486,6 +502,7 @@
       endClassroomSession,
       isClassroomSessionActive,
       getClassroomMinutesRemaining,
+      getClassroomReportSummary,
       hasTeacherPin,
       verifyTeacherPin,
     } from "../src/core/state.js";
@@ -515,7 +532,11 @@
     const actionNotice = document.getElementById("actionNotice");
     const licenseGateHint = document.getElementById("licenseGateHint");
     const snapshotBtn = document.getElementById("snapshotBtn");
+    const reportBtn = document.getElementById("reportBtn");
+    const exportCsvBtn = document.getElementById("exportCsvBtn");
+    const exportPdfBtn = document.getElementById("exportPdfBtn");
     const snapshotPreview = document.getElementById("snapshotPreview");
+    const reportPreview = document.getElementById("reportPreview");
 
     const pinModal = document.getElementById("pinModal");
     const pinPromptText = document.getElementById("pinPromptText");
@@ -543,6 +564,8 @@
       },
     };
     let pendingMutation = null;
+    let lastGeneratedReport = null;
+    let lastReportExport = "";
 
     const hasSchoolLicense = () => {
       return hasEntitlement(ENTITLEMENT_KEYS.SCHOOL_LICENSE, getEntitlements());
@@ -658,11 +681,19 @@
     }
 
     function renderLicensedTools(licensed = hasSchoolLicense()) {
+      if (!licensed) {
+        lastGeneratedReport = null;
+        lastReportExport = "";
+      }
       snapshotBtn.disabled = !licensed;
+      reportBtn.disabled = !licensed;
+      exportCsvBtn.disabled = !licensed || !lastGeneratedReport;
+      exportPdfBtn.disabled = !licensed || !lastGeneratedReport;
       if (licensed) {
         licenseGateHint.innerHTML = "School license is active. Class snapshot generation is unlocked for district reporting prep.";
       } else {
         licenseGateHint.innerHTML = "Activate a school license to unlock admin snapshots. <a class=\"inline-link\" href=\"/school-license.html\">Open school license page</a>.";
+        reportPreview.textContent = "Generate report to view totals, top games, and assignment completion metrics.";
       }
     }
 
@@ -723,6 +754,7 @@
       const completionHistory = Array.isArray(state.classroom.report?.assignmentCompletions)
         ? state.classroom.report.assignmentCompletions
         : [];
+      const reportSummary = getClassroomReportSummary();
       return {
         generatedAt: new Date().toISOString(),
         classroomEnabled: Boolean(state.classroom.enabled),
@@ -734,8 +766,136 @@
         assignmentBundleId: state.classroom.assignment?.bundleId || "",
         assignmentCompletedAt: state.classroom.assignment?.completedAt || 0,
         assignmentReportCount: completionHistory.length,
+        sessionTotal: reportSummary.totalSessions,
+        topGames: reportSummary.topGames,
         schoolLicenseActive: hasSchoolLicense(),
       };
+    }
+
+    function buildAggregateReport() {
+      const summary = getClassroomReportSummary();
+      const topGames = summary.topGames.map((entry) => {
+        const game = GAMES.find((candidate) => candidate.slug === entry.slug);
+        return {
+          slug: entry.slug,
+          name: game ? game.name : entry.slug,
+          sessions: entry.sessions,
+        };
+      });
+      return {
+        generatedAt: new Date(summary.generatedAt).toISOString(),
+        totalPlaySessions: summary.totalSessions,
+        uniqueGamesPlayed: summary.uniqueGamesPlayed,
+        topGames,
+        assignmentCompletionCount: summary.assignmentCompletionCount,
+        activeAssignmentBundleId: summary.activeAssignmentBundleId,
+        latestAssignmentCompletionAt: summary.latestAssignmentCompletionAt
+          ? new Date(summary.latestAssignmentCompletionAt).toISOString()
+          : "",
+        privacyMode: "aggregate_only_no_student_personal_data",
+      };
+    }
+
+    function generateReport() {
+      lastGeneratedReport = buildAggregateReport();
+      reportPreview.textContent = JSON.stringify(lastGeneratedReport, null, 2);
+      renderLicensedTools();
+      return lastGeneratedReport;
+    }
+
+    function escapeCsv(value) {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) {
+        return `"${text.replace(/"/g, "\"\"")}"`;
+      }
+      return text;
+    }
+
+    function downloadTextFile(filename, content, mimeType = "text/plain;charset=utf-8") {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportReportCsv(report) {
+      const lines = [
+        ["metric", "value"],
+        ["generated_at", report.generatedAt],
+        ["total_play_sessions", report.totalPlaySessions],
+        ["unique_games_played", report.uniqueGamesPlayed],
+        ["assignment_completion_count", report.assignmentCompletionCount],
+        ["active_assignment_bundle_id", report.activeAssignmentBundleId],
+        ["latest_assignment_completion_at", report.latestAssignmentCompletionAt],
+        ["privacy_mode", report.privacyMode],
+      ];
+      report.topGames.forEach((entry, index) => {
+        const row = index + 1;
+        lines.push([`top_game_${row}_slug`, entry.slug]);
+        lines.push([`top_game_${row}_name`, entry.name]);
+        lines.push([`top_game_${row}_sessions`, entry.sessions]);
+      });
+      const csv = lines.map((row) => row.map((value) => escapeCsv(value)).join(",")).join("\n");
+      downloadTextFile("classroom-report.csv", csv, "text/csv;charset=utf-8");
+      lastReportExport = "csv";
+      renderLicensedTools();
+    }
+
+    function exportReportPdf(report) {
+      const rows = report.topGames.length
+        ? report.topGames.map((entry) => `<tr><td>${entry.name}</td><td>${entry.slug}</td><td>${entry.sessions}</td></tr>`).join("")
+        : `<tr><td colspan="3">No session data yet.</td></tr>`;
+      const html = `
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Classroom Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+    h1 { margin: 0 0 10px 0; }
+    p { margin: 0 0 6px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f7fb; }
+    .meta { margin-top: 16px; font-size: 12px; color: #444; }
+  </style>
+</head>
+<body>
+  <h1>Classroom Report</h1>
+  <p><strong>Generated:</strong> ${report.generatedAt}</p>
+  <p><strong>Total play sessions:</strong> ${report.totalPlaySessions}</p>
+  <p><strong>Unique games played:</strong> ${report.uniqueGamesPlayed}</p>
+  <p><strong>Assignment completions:</strong> ${report.assignmentCompletionCount}</p>
+  <p><strong>Active assignment:</strong> ${report.activeAssignmentBundleId || "None"}</p>
+  <table>
+    <thead>
+      <tr><th>Game</th><th>Slug</th><th>Sessions</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="meta">Privacy mode: ${report.privacyMode}</p>
+</body>
+</html>`;
+      const popup = window.open("", "_blank", "width=960,height=760");
+      if (popup) {
+        popup.document.open();
+        popup.document.write(html);
+        popup.document.close();
+        popup.focus();
+        setTimeout(() => {
+          popup.print();
+        }, 150);
+      } else {
+        downloadTextFile("classroom-report-print.html", html, "text/html;charset=utf-8");
+      }
+      lastReportExport = "pdf";
+      renderLicensedTools();
     }
 
     document.getElementById("assignBtn").addEventListener("click", () => {
@@ -786,6 +946,41 @@
       const snapshot = buildClassSnapshot();
       snapshotPreview.textContent = JSON.stringify(snapshot, null, 2);
       setNotice("Class snapshot generated.", "ok");
+      renderStatus();
+    });
+
+    reportBtn.addEventListener("click", () => {
+      if (!hasSchoolLicense()) {
+        setNotice("School license required for report generation.", "error");
+        renderStatus();
+        return;
+      }
+      const report = generateReport();
+      setNotice(`Report generated (${report.totalPlaySessions} sessions, ${report.assignmentCompletionCount} completions).`, "ok");
+      renderStatus();
+    });
+
+    exportCsvBtn.addEventListener("click", () => {
+      if (!hasSchoolLicense()) {
+        setNotice("School license required for CSV export.", "error");
+        renderStatus();
+        return;
+      }
+      const report = lastGeneratedReport || generateReport();
+      exportReportCsv(report);
+      setNotice("CSV export downloaded.", "ok");
+      renderStatus();
+    });
+
+    exportPdfBtn.addEventListener("click", () => {
+      if (!hasSchoolLicense()) {
+        setNotice("School license required for PDF export.", "error");
+        renderStatus();
+        return;
+      }
+      const report = lastGeneratedReport || generateReport();
+      exportReportPdf(report);
+      setNotice("PDF export opened (print dialog).", "ok");
       renderStatus();
     });
 
@@ -845,6 +1040,10 @@
         : 0,
       schoolLicenseActive: hasSchoolLicense(),
       snapshotReady: Boolean(snapshotPreview.textContent && snapshotPreview.textContent.includes("generatedAt")),
+      reportReady: Boolean(lastGeneratedReport),
+      reportTotalSessions: lastGeneratedReport?.totalPlaySessions || 0,
+      reportAssignmentCompletions: lastGeneratedReport?.assignmentCompletionCount || 0,
+      lastReportExport,
       pinRequiredForActiveSessionChange: requiresPinForMutation(),
     });
 

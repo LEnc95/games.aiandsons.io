@@ -520,3 +520,29 @@
   - Confirmed pending review messaging, request metadata display, and teacher licensed-tool unlock state render correctly.
 - Next TODO:
   - Start CG-502 report generator (aggregate class metrics + CSV/PDF export path from browser).
+- Continued sprint work (2026-03-06): completed CG-502 Report Generator.
+- Core implementation shipped:
+  - Extended classroom report persistence in `src/core/state.js`:
+    - Added normalized `classroom.report.sessionStats` (`totalSessions`, per-game counts).
+    - `rememberRecent(slug)` now increments aggregate session stats per game.
+    - Added `getClassroomReportSummary()` helper returning privacy-safe aggregate metrics (no student personal fields).
+  - Expanded licensed admin tools in `teacher/index.html`:
+    - Added `Generate Report`, `Export CSV`, and `Export PDF` actions behind school-license gate.
+    - Report output includes required aggregate metrics: total play sessions, top games, assignment completion totals.
+    - CSV export now downloads browser-generated report data.
+    - PDF flow now opens print-friendly report document for browser print-to-PDF export.
+  - Added deterministic browser QA for report flow:
+    - `scripts/qa/report-generator-smoke.mjs`
+    - npm script `test:report-smoke:raw`.
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-502 marked DONE; next item advanced to CG-503 policy update gate.
+  - `README.md`: report smoke command and coverage checklist documented.
+- Validation run results after CG-502:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - Raw smoke suite all pass: discovery, missions, weekly, assignment, entitlements, pricing, premium-track, school-license, report.
+  - Skill Playwright client run on teacher dashboard: `output/web-game/teacher-report-skill-smoke/shot-0.png` reviewed.
+- Visual verification:
+  - Reviewed `output/web-game/report-generator-e2e/teacher-report-generated.png` and teacher skill screenshot; report/export controls and aggregate report preview render correctly.
+- Next TODO:
+  - Start CG-503 policy update gate (release checklist enforcement for policy signoff on monetization/data changes).
