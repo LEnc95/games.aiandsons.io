@@ -195,7 +195,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Workflow runs integration checks plus aggregate launch-readiness smoke suite.
   - Artifacts for each smoke surface are uploaded even on failures.
 
-### CG-702 KPI Dashboard Export Baseline (Status: TODO)
+### CG-702 KPI Dashboard Export Baseline (Status: DONE)
 - Description: Provide a deterministic local export for KPI snapshots to support reporting and audits.
 - Acceptance criteria:
   - CLI/script writes retention and conversion snapshot JSON from local metrics state.
@@ -247,4 +247,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 7 kickoff item CG-701 is complete (nightly launch-readiness CI workflow with artifact upload for all smoke surfaces).
 - Sprint 7 Stripe item CG-704 is complete (Stripe checkout/portal/webhook endpoint scaffolding with local checkout fallback).
 - Sprint 7 follow-up item CG-705 is complete (session-bound Stripe endpoints, durable user/customer entitlement records, and webhook persistence flow).
-- Next highest-value work item is CG-702 KPI dashboard export baseline.
+- Sprint 7 KPI item CG-702 is complete (deterministic KPI export CLI, integrity metadata, and integration coverage).
+- Next highest-value work item is CG-703 release tag checklist automation.

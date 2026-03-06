@@ -767,3 +767,26 @@
   - Reviewed `output/web-game/metrics-baseline-e2e/shop-metrics-flow.png`.
 - Next TODO suggestion:
   - Start CG-702 by adding deterministic KPI export script + integration test + README command docs.
+- Continued request (2026-03-06): start and complete Sprint 7 CG-702 KPI dashboard export baseline.
+- Added deterministic KPI export CLI:
+  - `scripts/metrics/export-kpi-snapshot.mjs`
+  - Inputs: `--input`, `--output`, `--window-days`, `--now`
+  - Output includes:
+    - `generatedAt`
+    - rolling `windowDays`
+    - `integrity` block (`rawEventCount`, `normalizedEventCount`, `droppedEventCount`, `windowedEventCount`, `maxEventCapacity`)
+    - `snapshot` from existing retention/conversion KPI dashboard helpers.
+  - Handles missing input by emitting a valid zeroed snapshot with `source.sourceMissing: true`.
+- Added deterministic integration coverage:
+  - `tests/kpi-export.integration.test.mjs`
+  - Test 1 verifies deterministic snapshot content + event integrity fields from a fixed input fixture and fixed timestamp.
+  - Test 2 verifies missing-input behavior still emits a valid baseline export.
+- Package/docs/planning updates:
+  - `package.json`: added `metrics:export` script and included KPI export test in `test:shop` aggregate suite.
+  - `README.md`: documented KPI export command and added KPI export coverage to `test:shop` checklist.
+  - `SPRINT_BOARD.md`: marked CG-702 as DONE and advanced next highest-value item to CG-703.
+- Validation runs (all pass):
+  - `npm run test:shop`
+  - `npm run metrics:export -- --now 1772812800000`
+- Next TODO suggestion:
+  - Implement CG-703 by automating release-tag checklist validation in CI/workflow guardrails.

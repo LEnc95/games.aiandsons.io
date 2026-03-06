@@ -156,6 +156,12 @@ Run the KPI metrics baseline smoke test against a pre-started server at `http://
 npm run test:metrics-smoke:raw
 ```
 
+Export a deterministic KPI dashboard snapshot JSON from local metrics state:
+
+```bash
+npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30
+```
+
 Run the launch-readiness aggregate smoke suite against a pre-started server at `http://127.0.0.1:4173`:
 
 ```bash
@@ -184,6 +190,7 @@ npm run test:classroom-smoke:raw
 6. Entitlement gate helpers correctly map premium IDs and lock/unlock behavior.
 7. Premium challenge track gating/progress logic is deterministic for free and entitled users.
 8. KPI metrics helpers sanitize and summarize retention/conversion events deterministically.
+9. KPI export script emits deterministic snapshot metadata, rolling window fields, and event-count integrity checks.
 
 `npm run test:classroom-smoke` currently checks:
 
