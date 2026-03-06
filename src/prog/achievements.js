@@ -1,21 +1,24 @@
 import { state, save } from '../core/state.js';
+import { recordMissionProgress } from './missions.js';
 
 const badgeDefs = [
-  { id:'first-run', name:'First Steps', icon:'👣', desc:'Play any game once', test: (ctx) => ctx.anyPlay },
-  { id:'pong-pro', name:'Pong Pro', icon:'🏓', desc:'Win a Pong match by 3+ points', test: (ctx) => ctx.pong && ctx.pong.winMargin >= 3 },
-  { id:'pong-king', name:'King of Pong', icon:'👑', desc:'Win a Pong match by 5+ points', test: (ctx) => ctx.pong && ctx.pong.winMargin >= 5 },
-  { id:'snake-15', name:'Danger Snack', icon:'🐍', desc:'Reach length 15 in Snake', test: (ctx) => ctx.snake && ctx.snake.length >= 15 },
-  { id:'snake-25', name:'World Eater', icon:'🌌', desc:'Reach length 25 in Snake', test: (ctx) => ctx.snake && ctx.snake.length >= 25 },
-  { id:'dino-300', name:'Speedster', icon:'🦖', desc:'Reach 300+ distance in Dino Run', test: (ctx) => ctx.dino && ctx.dino.dist >= 300 },
-  { id:'dino-1000', name:'Meteor Strider', icon:'☄️', desc:'Reach 1000+ distance in Dino Run', test: (ctx) => ctx.dino && ctx.dino.dist >= 1000 },
-  { id:'frogger-10', name:'River Runner', icon:'🐸', desc:'Score 10+ points in Frogger', test: (ctx) => ctx.frogger && ctx.frogger.score >= 10 },
-  { id:'ttt-triple', name:'Big Brain', icon:'🧠', desc:'Win 3 Tic-Tac-Toe games total', test: (ctx) => (ctx.tttWinsTotal ?? 0) >= 3 },
-  { id:'tetris-20-lines', name:'Stack Attack', icon:'🧱', desc:'Clear 20 lines in Tetris', test: (ctx) => ctx.tetris && ctx.tetris.lines >= 20 },
-  { id:'tetris-3000', name:'Tetris Titan', icon:'🌟', desc:'Reach 3000+ score in Tetris', test: (ctx) => ctx.tetris && ctx.tetris.score >= 3000 },
-  { id:'asteroids-wave-5', name:'Rock Hunter', icon:'☄️', desc:'Reach wave 5 in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.wave >= 5 },
-  { id:'asteroids-3000', name:'Deep Space Ace', icon:'🚀', desc:'Score 3000+ in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.score >= 3000 },
-  { id:'bomberman-level-4', name:'Fuse Master', icon:'💣', desc:'Reach level 4 in Bomberman Lite', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 4 },
-  { id:'bomberman-crates-40', name:'Demolition Expert', icon:'🧨', desc:'Destroy 40 crates in one Bomberman run', test: (ctx) => ctx.bomberman && ctx.bomberman.crates >= 40 },
+  { id:'first-run', name:'First Steps', icon:'??', desc:'Play any game once', test: (ctx) => ctx.anyPlay },
+  { id:'pong-pro', name:'Pong Pro', icon:'??', desc:'Win a Pong match by 3+ points', test: (ctx) => ctx.pong && ctx.pong.winMargin >= 3 },
+  { id:'pong-king', name:'King of Pong', icon:'??', desc:'Win a Pong match by 5+ points', test: (ctx) => ctx.pong && ctx.pong.winMargin >= 5 },
+  { id:'snake-15', name:'Danger Snack', icon:'??', desc:'Reach length 15 in Snake', test: (ctx) => ctx.snake && ctx.snake.length >= 15 },
+  { id:'snake-25', name:'World Eater', icon:'??', desc:'Reach length 25 in Snake', test: (ctx) => ctx.snake && ctx.snake.length >= 25 },
+  { id:'dino-300', name:'Speedster', icon:'??', desc:'Reach 300+ distance in Dino Run', test: (ctx) => ctx.dino && ctx.dino.dist >= 300 },
+  { id:'dino-1000', name:'Meteor Strider', icon:'??', desc:'Reach 1000+ distance in Dino Run', test: (ctx) => ctx.dino && ctx.dino.dist >= 1000 },
+  { id:'frogger-10', name:'River Runner', icon:'??', desc:'Score 10+ points in Frogger', test: (ctx) => ctx.frogger && ctx.frogger.score >= 10 },
+  { id:'ttt-triple', name:'Big Brain', icon:'??', desc:'Win 3 Tic-Tac-Toe games total', test: (ctx) => (ctx.tttWinsTotal ?? 0) >= 3 },
+  { id:'tetris-20-lines', name:'Stack Attack', icon:'??', desc:'Clear 20 lines in Tetris', test: (ctx) => ctx.tetris && ctx.tetris.lines >= 20 },
+  { id:'tetris-3000', name:'Tetris Titan', icon:'??', desc:'Reach 3000+ score in Tetris', test: (ctx) => ctx.tetris && ctx.tetris.score >= 3000 },
+  { id:'asteroids-wave-5', name:'Rock Hunter', icon:'??', desc:'Reach wave 5 in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.wave >= 5 },
+  { id:'asteroids-3000', name:'Deep Space Ace', icon:'??', desc:'Score 3000+ in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.score >= 3000 },
+  { id:'bomberman-level-4', name:'Fuse Master', icon:'??', desc:'Reach level 4 in Bomberman Lite', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 4 },
+  { id:'bomberman-crates-40', name:'Demolition Expert', icon:'??', desc:'Destroy 40 crates in one Bomberman run', test: (ctx) => ctx.bomberman && ctx.bomberman.crates >= 40 },
+  { id:'daily-mission-complete', name:'Daily Starter', icon:'??', desc:'Complete any daily mission.', test: () => false },
+  { id:'daily-mission-sweep', name:'Mission Sweep', icon:'??', desc:'Complete all daily missions in one day.', test: () => false },
 ];
 
 const rewardDefs = [
@@ -55,6 +58,7 @@ const addInventoryOwnership = (reward) => {
 };
 
 export const maybeUnlock = (ctx) => {
+  const missionState = recordMissionProgress(ctx);
   const unlockedBadges = [];
   const unlockedRewards = [];
   let changed = false;
@@ -82,7 +86,7 @@ export const maybeUnlock = (ctx) => {
 
   if (changed) save();
 
-  return { badges: unlockedBadges, rewards: unlockedRewards };
+  return { badges: unlockedBadges, rewards: unlockedRewards, missions: missionState };
 };
 
 export const listBadges = () => badgeDefs.map((d) => ({ ...d, owned: state.badges.has(d.id) }));

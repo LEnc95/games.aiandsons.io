@@ -336,3 +336,22 @@
   - Reviewed discovery/filter screenshots and confirmed expected filtered states for home (non-coin filter) and shop (Tetris + aurora search).
 - Follow-up TODO:
   - Optional: add a combined wrapper script that auto-starts server for discovery smoke (parallel to `test:classroom-smoke`).
+- Continued sprint work (2026-03-05): completed CG-301 Daily Missions Framework implementation and validation pass.
+- Core implementation shipped:
+  - Added persistent mission state normalization/storage in `src/core/state.js` under `state.missions`.
+  - Added `src/prog/missions.js` with deterministic daily mission rotation, progress tracking, completion/reward payout, and mission badge unlock hooks.
+  - Integrated mission progress recording into `maybeUnlock(...)` in `src/prog/achievements.js` and added mission badge definitions.
+  - Added home UI mission panel in `index.html` with live completion/progress rendering.
+  - Added deterministic smoke script `scripts/qa/daily-missions-smoke.mjs` and npm script `test:missions-smoke:raw`.
+- Validation run results:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:discovery-smoke:raw` against local server (pass).
+  - `npm run test:missions-smoke:raw` against local server (pass).
+  - `web_game_playwright_client` run on home (`output/web-game/home-missions-skill-smoke`) with screenshot review completed.
+- Artifact checks:
+  - `output/web-game/daily-missions-e2e/summary.json`: `success: true`, no console errors, mission progress and rewards persisted.
+  - `output/web-game/discovery-filter-e2e/summary.json`: `success: true`, no console errors.
+- Sprint board updated:
+  - Marked `CG-301` as DONE.
+  - Next sprint goal set to `CG-302 Weekly Challenge Board`.

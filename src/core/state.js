@@ -13,6 +13,13 @@ const DEFAULT_CLASSROOM = {
     durationMinutes: 30,
   },
 };
+const DEFAULT_MISSIONS = {
+  dayKey: '',
+  activeIds: [],
+  progress: {},
+  completed: [],
+  rewarded: [],
+};
 
 const clampSessionDuration = (value) => {
   const n = Number(value);
@@ -176,10 +183,59 @@ const loadInventory = () => {
   return { inventory: new Set(normalized), needsResave };
 };
 
+const normalizeMissionIds = (value) => {
+  if (!Array.isArray(value)) return [];
+  const ids = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string') continue;
+    const id = entry.trim();
+    if (!id || ids.includes(id)) continue;
+    ids.push(id);
+  }
+  return ids;
+};
+
+const normalizeMissionProgress = (value) => {
+  if (!value || typeof value !== 'object') return {};
+  const progress = {};
+  for (const [id, raw] of Object.entries(value)) {
+    if (typeof id !== 'string' || !id.trim()) continue;
+    const n = Number(raw);
+    progress[id] = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  return progress;
+};
+
+const normalizeMissions = (source) => {
+  const raw = source && typeof source === 'object' ? source : {};
+  return {
+    dayKey: typeof raw.dayKey === 'string' ? raw.dayKey : '',
+    activeIds: normalizeMissionIds(raw.activeIds),
+    progress: normalizeMissionProgress(raw.progress),
+    completed: normalizeMissionIds(raw.completed),
+    rewarded: normalizeMissionIds(raw.rewarded),
+  };
+};
+
+const loadMissions = () => {
+  const stored = get('missions', null);
+  const normalized = normalizeMissions(stored || DEFAULT_MISSIONS);
+  let needsResave = false;
+
+  if (!stored || typeof stored !== 'object') {
+    needsResave = true;
+  } else if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
+    needsResave = true;
+  }
+
+  return { missions: normalized, needsResave };
+};
+
 const cosmetics = loadEquippedCosmetics();
 const cosmeticsOwned = loadOwnedCosmetics(cosmetics);
 const { inventory, needsResave: inventoryNeedsResave } = loadInventory();
 const { classroom, needsResave: classroomNeedsResave } = loadClassroom();
+const { missions, needsResave: missionsNeedsResave } = loadMissions();
 
 export const state = {
   profile: loadProfile(),
@@ -190,6 +246,7 @@ export const state = {
   cosmeticsOwned,
   recent: loadRecent(), // array of slugs
   classroom,
+  missions,
 };
 
 if (inventoryNeedsResave) {
@@ -197,6 +254,9 @@ if (inventoryNeedsResave) {
 }
 if (classroomNeedsResave) {
   set('classroom', state.classroom);
+}
+if (missionsNeedsResave) {
+  set('missions', state.missions);
 }
 
 export const save = () => {
@@ -208,6 +268,7 @@ export const save = () => {
   set('cosmeticsOwned', state.cosmeticsOwned);
   set('recent', state.recent.slice(0, 6));
   set('classroom', state.classroom);
+  set('missions', state.missions);
 };
 
 export const reloadCoins = () => { state.coins = loadCoins(); };

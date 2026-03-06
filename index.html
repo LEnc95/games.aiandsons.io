@@ -34,6 +34,17 @@
     .search-controls input,
     .search-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
     .search-count { grid-column:1 / -1; color:#b4ccf0; font-size:12px; text-align:left; }
+
+    .missions-section { border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px; margin-bottom:18px; background:rgba(255,255,255,0.04); }
+    .missions-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .missions-head h2 { margin:0; font-size:18px; }
+    .missions-meta { color:#b4ccf0; font-size:12px; font-weight:600; }
+    .missions-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
+    .mission-card { border:1px solid rgba(255,255,255,0.16); border-radius:10px; padding:10px; background:rgba(255,255,255,0.05); }
+    .mission-card.completed { border-color:rgba(107,230,173,0.6); background:rgba(85,205,145,0.14); }
+    .mission-name { margin:0 0 5px 0; font-size:14px; font-weight:700; }
+    .mission-desc { margin:0 0 8px 0; color:#b8cdee; font-size:12px; line-height:1.35; }
+    .mission-progress { margin:0; font-size:12px; color:#d8e8ff; }
     
     .recent-section { margin-bottom:clamp(24px,4vh,32px); }
     .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0 0 16px 0; color:var(--fg); font-weight:600; }
@@ -161,6 +172,14 @@
       </select>
       <div id="gameSearchCount" class="search-count"></div>
     </div>
+
+    <section class="missions-section" id="dailyMissionsSection">
+      <div class="missions-head">
+        <h2>Daily Missions</h2>
+        <span id="dailyMissionsMeta" class="missions-meta"></span>
+      </div>
+      <div id="dailyMissionsList" class="missions-list"></div>
+    </section>
 
     <div class="recent-section" id="recentSection" style="display:none;">
       <h2>Recently Played</h2>
@@ -357,6 +376,7 @@
     } from './src/core/state.js';
     import { GAMES } from './src/meta/games.js';
     import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
+    import { getActiveDailyMissions } from './src/prog/missions.js';
 
     window.maybeUnlock = maybeUnlock;
 
@@ -371,6 +391,8 @@
     const gameSearchInputEl = document.getElementById('gameSearchInput');
     const gameCoinFilterEl = document.getElementById('gameCoinFilter');
     const gameSearchCountEl = document.getElementById('gameSearchCount');
+    const dailyMissionsListEl = document.getElementById('dailyMissionsList');
+    const dailyMissionsMetaEl = document.getElementById('dailyMissionsMeta');
 
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
@@ -440,6 +462,36 @@
         const input = row.querySelector('input');
         input.checked = selected.has(game.slug);
         classroomGamesEl.appendChild(row);
+      }
+    }
+
+    function renderDailyMissions() {
+      const missions = getActiveDailyMissions();
+      if (!Array.isArray(missions) || missions.length === 0) {
+        dailyMissionsMetaEl.textContent = 'No missions available.';
+        dailyMissionsListEl.innerHTML = '<div class="games-empty">No daily missions are currently available.</div>';
+        return;
+      }
+
+      const completedCount = missions.filter((mission) => mission.completed).length;
+      dailyMissionsMetaEl.textContent = `${completedCount}/${missions.length} completed`;
+      dailyMissionsListEl.innerHTML = '';
+
+      for (const mission of missions) {
+        const card = document.createElement('article');
+        card.className = `mission-card${mission.completed ? ' completed' : ''}`;
+        card.dataset.missionId = mission.id;
+        const progress = Math.max(0, Math.min(mission.target, mission.progress || 0));
+        const statusText = mission.completed
+          ? `Complete · +${mission.rewardCoins} coins`
+          : `${progress}/${mission.target} · +${mission.rewardCoins} coins`;
+
+        card.innerHTML = `
+          <h3 class="mission-name">${mission.name}</h3>
+          <p class="mission-desc">${mission.desc}</p>
+          <p class="mission-progress">${statusText}</p>
+        `;
+        dailyMissionsListEl.appendChild(card);
       }
     }
 
@@ -518,6 +570,7 @@
       }
 
       renderClassroomHeader();
+      renderDailyMissions();
 
       if (state.recent.length > 0) {
         recentSection.style.display = 'block';

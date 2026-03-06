@@ -95,7 +95,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 ## Sprint 3 - Engagement + Assignment Layer
 
-### CG-301 Daily Missions Framework (Status: TODO)
+### CG-301 Daily Missions Framework (Status: DONE)
 - Description: Add mission definitions and completion tracking.
 - Acceptance criteria:
   - Mission definitions stored in `src/prog/missions.js`.
@@ -194,4 +194,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
 - Sprint 2 (CG-201 through CG-203) is complete with teacher controls, preset packs, and expiry UX behavior.
 - Added follow-up delivery items: CG-204 launcher search/coin tags and CG-205 shop tag filtering (both complete).
-- Next highest-value work item is CG-301 daily missions framework.
+- Sprint 3 kickoff item CG-301 is complete (daily missions state, rewards, and smoke coverage).
+- Next highest-value work item is CG-302 weekly challenge board.

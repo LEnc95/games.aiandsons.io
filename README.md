@@ -9,7 +9,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers.
 - `src/meta/games.js`: game registry used by homepage UI.
-- `src/prog/*`: achievements and cosmetics logic.
+- `src/prog/*`: achievements, daily missions, and cosmetics logic.
 - `*/index.html` game folders: standalone game pages.
 - `tests/shop-items.integration.test.mjs`: integration check that validates shop item consistency.
 
@@ -81,6 +81,12 @@ Run the discovery/search + shop filter smoke test against a pre-started server a
 npm run test:discovery-smoke:raw
 ```
 
+Run the daily missions smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:missions-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -105,6 +111,12 @@ npm run test:classroom-smoke:raw
 1. Home game search and non-coin filter behavior.
 2. Home game economy tag rendering.
 3. Shop filtering by game tag plus text search.
+
+`npm run test:missions-smoke:raw` currently checks:
+
+1. Daily mission panel renders active missions on home.
+2. Mission progress updates through `window.maybeUnlock(...)` and persists.
+3. Mission rewards increase coins and award mission badges with no console errors.
 
 ## Notes for future updates
 
