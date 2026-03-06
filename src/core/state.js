@@ -1,6 +1,74 @@
 import { get, set } from './storage.js';
 
 const DEFAULT_COSMETICS = { paddle: 'default', snake: 'default', marioShirt: 'red', memoryCardBack: 'default' };
+const DEFAULT_CLASSROOM = {
+  enabled: false,
+  teacherPin: '',
+  shopDisabledDuringClass: true,
+  gameWhitelist: [],
+  session: {
+    active: false,
+    startsAt: 0,
+    endsAt: 0,
+    durationMinutes: 30,
+  },
+};
+
+const clampSessionDuration = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return DEFAULT_CLASSROOM.session.durationMinutes;
+  return Math.min(180, Math.max(5, Math.floor(n)));
+};
+
+const normalizeWhitelist = (value) => {
+  if (!Array.isArray(value)) return [];
+  const normalized = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string') continue;
+    const slug = entry.trim();
+    if (!slug || normalized.includes(slug)) continue;
+    normalized.push(slug);
+  }
+  return normalized;
+};
+
+const normalizeClassroom = (source) => {
+  const raw = source && typeof source === 'object' ? source : {};
+  const rawSession = raw.session && typeof raw.session === 'object' ? raw.session : {};
+
+  return {
+    enabled: Boolean(raw.enabled),
+    teacherPin: typeof raw.teacherPin === 'string' ? raw.teacherPin.replace(/\D/g, '').slice(0, 8) : '',
+    shopDisabledDuringClass: raw.shopDisabledDuringClass !== false,
+    gameWhitelist: normalizeWhitelist(raw.gameWhitelist),
+    session: {
+      active: Boolean(rawSession.active),
+      startsAt: Number.isFinite(rawSession.startsAt) ? Math.max(0, Math.floor(rawSession.startsAt)) : 0,
+      endsAt: Number.isFinite(rawSession.endsAt) ? Math.max(0, Math.floor(rawSession.endsAt)) : 0,
+      durationMinutes: clampSessionDuration(rawSession.durationMinutes),
+    },
+  };
+};
+
+const loadClassroom = () => {
+  const stored = get('classroom', null);
+  const normalized = normalizeClassroom(stored);
+  let needsResave = false;
+
+  if (!stored || typeof stored !== 'object') {
+    needsResave = true;
+  } else if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
+    needsResave = true;
+  }
+
+  const session = normalized.session;
+  if (session.active && session.endsAt > 0 && session.endsAt <= Date.now()) {
+    session.active = false;
+    needsResave = true;
+  }
+
+  return { classroom: normalized, needsResave };
+};
 
 const loadProfile = () => {
   const stored = get('profile', null);
@@ -111,6 +179,7 @@ const loadInventory = () => {
 const cosmetics = loadEquippedCosmetics();
 const cosmeticsOwned = loadOwnedCosmetics(cosmetics);
 const { inventory, needsResave: inventoryNeedsResave } = loadInventory();
+const { classroom, needsResave: classroomNeedsResave } = loadClassroom();
 
 export const state = {
   profile: loadProfile(),
@@ -120,10 +189,14 @@ export const state = {
   cosmetics,
   cosmeticsOwned,
   recent: loadRecent(), // array of slugs
+  classroom,
 };
 
 if (inventoryNeedsResave) {
   set('inventory', [...state.inventory]);
+}
+if (classroomNeedsResave) {
+  set('classroom', state.classroom);
 }
 
 export const save = () => {
@@ -134,6 +207,7 @@ export const save = () => {
   set('inventory', [...state.inventory]);
   set('cosmeticsOwned', state.cosmeticsOwned);
   set('recent', state.recent.slice(0, 6));
+  set('classroom', state.classroom);
 };
 
 export const reloadCoins = () => { state.coins = loadCoins(); };
@@ -142,4 +216,73 @@ export const spendCoins = (n) => { if (state.coins >= n) { state.coins -= n; sav
 export const rememberRecent = (slug) => {
   state.recent = [slug, ...state.recent.filter(s => s !== slug)].slice(0,6);
   save();
+};
+
+export const setClassroomConfig = (partial) => {
+  if (!partial || typeof partial !== 'object') return;
+  const sessionPatch = partial.session && typeof partial.session === 'object' ? partial.session : {};
+  const merged = normalizeClassroom({
+    ...state.classroom,
+    ...partial,
+    session: {
+      ...state.classroom.session,
+      ...sessionPatch,
+    },
+  });
+  state.classroom = merged;
+  save();
+};
+
+export const startClassroomSession = (minutes = state.classroom.session.durationMinutes) => {
+  const durationMinutes = clampSessionDuration(minutes);
+  const startsAt = Date.now();
+  const endsAt = startsAt + (durationMinutes * 60_000);
+
+  state.classroom = normalizeClassroom({
+    ...state.classroom,
+    enabled: true,
+    session: {
+      ...state.classroom.session,
+      active: true,
+      startsAt,
+      endsAt,
+      durationMinutes,
+    },
+  });
+  save();
+};
+
+export const endClassroomSession = () => {
+  state.classroom = normalizeClassroom({
+    ...state.classroom,
+    session: {
+      ...state.classroom.session,
+      active: false,
+      endsAt: Date.now(),
+    },
+  });
+  save();
+};
+
+export const isClassroomSessionActive = (now = Date.now()) => {
+  const session = state.classroom.session;
+  const active = Boolean(state.classroom.enabled && session.active && session.endsAt > now);
+  if (!active && session.active && session.endsAt > 0 && session.endsAt <= now) {
+    state.classroom.session.active = false;
+    save();
+  }
+  return active;
+};
+
+export const getClassroomMinutesRemaining = (now = Date.now()) => {
+  if (!isClassroomSessionActive(now)) return 0;
+  return Math.max(0, Math.ceil((state.classroom.session.endsAt - now) / 60_000));
+};
+
+export const isGameLockedByClassroom = (slug, now = Date.now()) => {
+  if (typeof slug !== 'string' || !slug.trim()) return false;
+  if (!isClassroomSessionActive(now)) return false;
+  const whitelist = state.classroom.gameWhitelist;
+  if (!Array.isArray(whitelist) || whitelist.length === 0) return false;
+  return !whitelist.includes(slug);
 };

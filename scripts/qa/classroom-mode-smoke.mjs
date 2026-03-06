@@ -1,0 +1,222 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const OUTPUT_DIR = path.join(process.cwd(), "output", "web-game", "classroom-e2e");
+const SUMMARY_PATH = path.join(OUTPUT_DIR, "summary.json");
+
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
+
+async function loadPlaywright() {
+  try {
+    return await import("playwright");
+  } catch {
+    const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
+    const fallback = path.join(
+      codexHome,
+      "skills",
+      "develop-web-game",
+      "node_modules",
+      "playwright",
+      "index.mjs",
+    );
+    return import(pathToFileURL(fallback).href);
+  }
+}
+
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+async function resetState(page) {
+  await page.evaluate(() => {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("cadegames:v1:")) {
+        keys.push(key);
+      }
+    }
+    for (const key of keys) {
+      localStorage.removeItem(key);
+    }
+  });
+}
+
+async function openClassroomModal(page) {
+  await page.click("#classroomBtn");
+  await page.waitForFunction(() => {
+    const modal = document.getElementById("classroomModal");
+    return !!modal && modal.classList.contains("active");
+  });
+}
+
+async function waitForClassroomModalClosed(page) {
+  await page.waitForFunction(() => {
+    const modal = document.getElementById("classroomModal");
+    return !modal || !modal.classList.contains("active");
+  });
+}
+
+async function configureClassroomAndSave(page) {
+  await openClassroomModal(page);
+  await page.check("#classroomEnabled");
+  await page.fill("#classroomPin", "1234");
+  await page.fill("#classroomDuration", "30");
+  await page.check("#classroomShopLock");
+  await page.evaluate(() => {
+    const checkboxes = [...document.querySelectorAll('input[data-game-slug]')];
+    for (const checkbox of checkboxes) {
+      checkbox.checked = checkbox.value === "pong";
+    }
+  });
+  await page.locator("#classroomModal button", { hasText: "Save Settings" }).click();
+  await waitForClassroomModalClosed(page);
+}
+
+async function startClassroomSessionFromModal(page) {
+  await openClassroomModal(page);
+  await page.locator("#classroomModal button", { hasText: "Start Session" }).click();
+  await waitForClassroomModalClosed(page);
+}
+
+async function endClassroomSessionFromModal(page) {
+  await openClassroomModal(page);
+  await page.locator("#classroomModal button", { hasText: "End Session" }).click();
+  await waitForClassroomModalClosed(page);
+}
+
+async function getHomeLockState(page) {
+  return page.evaluate(() => {
+    const banner = document.getElementById("classroomBanner");
+    const card2048 = document.querySelector('a.game-card[href="#"] h2.game-title');
+    const pongCard = [...document.querySelectorAll(".game-card .game-title")]
+      .find((node) => node.textContent?.trim() === "Pong")
+      ?.closest(".game-card");
+    const lockCount = document.querySelectorAll(".game-card.locked").length;
+
+    return {
+      bannerVisible: !!banner && !banner.classList.contains("hidden"),
+      bannerText: banner?.textContent?.trim() || "",
+      card2048Locked: !!card2048 && card2048.textContent?.trim() === "2048",
+      pongLocked: !!pongCard?.classList.contains("locked"),
+      lockCount,
+    };
+  });
+}
+
+async function getShopLockState(page) {
+  return page.evaluate(() => {
+    const notice = document.getElementById("shopNotice");
+    const firstButton = document.querySelector(".shop-item .shop-item-btn");
+    return {
+      noticeVisible: !!notice && !notice.classList.contains("hidden"),
+      noticeText: notice?.textContent?.trim() || "",
+      firstButtonText: firstButton?.textContent?.trim() || "",
+      firstButtonDisabled: Boolean(firstButton?.disabled),
+    };
+  });
+}
+
+async function main() {
+  ensureDir(OUTPUT_DIR);
+  const baseUrl = process.argv[2] || "http://127.0.0.1:4173";
+  const { chromium } = await loadPlaywright();
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--use-gl=angle", "--use-angle=swiftshader"],
+  });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await context.newPage();
+
+  const consoleErrors = [];
+  page.on("pageerror", (err) => {
+    consoleErrors.push({ type: "pageerror", text: String(err) });
+  });
+  page.on("console", (msg) => {
+    if (msg.type() === "error") {
+      consoleErrors.push({ type: "console.error", text: msg.text() });
+    }
+  });
+
+  const summary = {
+    baseUrl,
+    checks: [],
+    screenshots: [],
+    consoleErrors: [],
+    success: false,
+  };
+
+  try {
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+    await resetState(page);
+    await page.reload({ waitUntil: "networkidle" });
+
+    await configureClassroomAndSave(page);
+    summary.checks.push({ name: "home_modal_save_settings", pass: true });
+
+    await startClassroomSessionFromModal(page);
+    summary.checks.push({ name: "home_modal_start_session", pass: true });
+
+    const lockedHome = await getHomeLockState(page);
+    assert(lockedHome.bannerVisible, "Expected classroom banner to be visible in active session.");
+    assert(lockedHome.card2048Locked, "Expected 2048 card to be locked while whitelist excludes it.");
+    assert(!lockedHome.pongLocked, "Expected Pong card to remain unlocked because it is whitelisted.");
+    summary.checks.push({ name: "home_locked_state", pass: true, data: lockedHome });
+    const homeLockedShot = path.join(OUTPUT_DIR, "home-locked.png");
+    await page.screenshot({ path: homeLockedShot, fullPage: true });
+    summary.screenshots.push(homeLockedShot);
+
+    await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
+    const lockedShop = await getShopLockState(page);
+    assert(lockedShop.noticeVisible, "Expected shop lock notice during active classroom session.");
+    assert(lockedShop.firstButtonText === "Locked during class", "Expected locked button label in shop.");
+    assert(lockedShop.firstButtonDisabled, "Expected first shop button disabled while class lock is active.");
+    summary.checks.push({ name: "shop_locked_state", pass: true, data: lockedShop });
+    const shopLockedShot = path.join(OUTPUT_DIR, "shop-locked.png");
+    await page.screenshot({ path: shopLockedShot, fullPage: true });
+    summary.screenshots.push(shopLockedShot);
+
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+    await endClassroomSessionFromModal(page);
+    summary.checks.push({ name: "home_modal_end_session", pass: true });
+
+    const unlockedHome = await getHomeLockState(page);
+    assert(!unlockedHome.bannerVisible, "Expected classroom banner hidden when session is inactive.");
+    assert(!unlockedHome.card2048Locked, "Expected 2048 card unlocked when session is inactive.");
+    summary.checks.push({ name: "home_unlocked_state", pass: true, data: unlockedHome });
+    const homeUnlockedShot = path.join(OUTPUT_DIR, "home-unlocked.png");
+    await page.screenshot({ path: homeUnlockedShot, fullPage: true });
+    summary.screenshots.push(homeUnlockedShot);
+
+    await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
+    const unlockedShop = await getShopLockState(page);
+    assert(!unlockedShop.noticeVisible, "Expected shop lock notice hidden after class session ends.");
+    assert(unlockedShop.firstButtonText !== "Locked during class", "Expected shop button label to return after unlock.");
+    summary.checks.push({ name: "shop_unlocked_state", pass: true, data: unlockedShop });
+    const shopUnlockedShot = path.join(OUTPUT_DIR, "shop-unlocked.png");
+    await page.screenshot({ path: shopUnlockedShot, fullPage: true });
+    summary.screenshots.push(shopUnlockedShot);
+
+    summary.consoleErrors = consoleErrors;
+    summary.success = consoleErrors.length === 0;
+    if (!summary.success) {
+      throw new Error("Console errors were captured during classroom smoke test.");
+    }
+  } finally {
+    fs.writeFileSync(SUMMARY_PATH, JSON.stringify(summary, null, 2));
+    await browser.close();
+  }
+
+  console.log(`Classroom smoke passed. Summary: ${SUMMARY_PATH}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

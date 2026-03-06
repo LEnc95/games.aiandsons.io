@@ -62,6 +62,24 @@ Run the integration test:
 node --test tests/shop-items.integration.test.mjs
 ```
 
+Or via npm script:
+
+```bash
+npm run test:shop
+```
+
+Run the classroom lock/unlock smoke test (auto-starts local server):
+
+```bash
+npm run test:classroom-smoke
+```
+
+If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
+
+```bash
+npm run test:classroom-smoke:raw
+```
+
 This test currently checks:
 
 1. Shop item IDs are unique.

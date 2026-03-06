@@ -18,6 +18,8 @@
     .back-link:hover { background:rgba(255,255,255,0.12); }
 
     .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:32px; }
+    .shop-notice { margin-top:16px; padding:12px 14px; border-radius:10px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); font-size:14px; font-weight:600; }
+    .shop-notice.hidden { display:none; }
     .shop-item { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:16px; transition:border-color 0.2s, box-shadow 0.2s, background 0.2s; }
     .shop-item.owned { border-color:var(--accent); background:rgba(90,173,221,0.1); }
     .shop-item.equipped { border-color:#8ad7ff; background:rgba(90,173,221,0.18); box-shadow:0 0 0 2px rgba(90,173,221,0.25); }
@@ -51,11 +53,12 @@
   </div>
 
     <div class="wrap">
+      <div id="shopNotice" class="shop-notice hidden"></div>
       <div class="shop-grid" id="shopGrid"></div>
     </div>
 
   <script type="module">
-      import { state, save, spendCoins } from './src/core/state.js';
+      import { state, save, spendCoins, isClassroomSessionActive } from './src/core/state.js';
 
       if (!(state.inventory instanceof Set)) {
         state.inventory = new Set(Array.isArray(state.inventory) ? state.inventory : []);
@@ -610,6 +613,22 @@
       ];
 
       const itemById = new Map(items.map(item => [item.id, item]));
+      const shopNotice = document.getElementById("shopNotice");
+
+      const isShopLocked = () => (
+        isClassroomSessionActive() && state.classroom && state.classroom.shopDisabledDuringClass
+      );
+
+      const renderShopNotice = () => {
+        if (!shopNotice) return;
+        if (isShopLocked()) {
+          shopNotice.classList.remove("hidden");
+          shopNotice.textContent = "Classroom session is active. Shop actions are locked until the session ends.";
+          return;
+        }
+        shopNotice.classList.add("hidden");
+        shopNotice.textContent = "";
+      };
 
       const getOwnedList = (category) => {
         const fallback = DEFAULT_COSMETICS[category];
@@ -637,6 +656,11 @@
       };
 
       function buyItem(id) {
+        if (isShopLocked()) {
+          updateUI();
+          return;
+        }
+
         const item = itemById.get(id);
         if (!item) return;
 
@@ -686,6 +710,11 @@
       }
 
       function equipItem(id) {
+        if (isShopLocked()) {
+          updateUI();
+          return;
+        }
+
         const item = itemById.get(id);
         if (!item || item.type !== "cosmetic") return;
 
@@ -699,6 +728,11 @@
       }
 
       function unequipItem(category) {
+        if (isShopLocked()) {
+          updateUI();
+          return;
+        }
+
         if (!(category in DEFAULT_COSMETICS)) return;
         const fallback = DEFAULT_COSMETICS[category];
         if (state.cosmetics[category] === fallback) return;
@@ -713,6 +747,8 @@
         const shopGrid = document.getElementById("shopGrid");
         if (!coinsEl || !shopGrid) return;
 
+        const shopLocked = isShopLocked();
+        renderShopNotice();
         coinsEl.textContent = state.coins;
 
         shopGrid.innerHTML = "";
@@ -742,6 +778,30 @@
           const button = card.querySelector(".shop-item-btn");
 
           if (!badge || !button) return;
+
+          if (shopLocked) {
+            if (isCosmetic) {
+              if (equipped) {
+                badge.textContent = "Equipped";
+                badge.classList.add("equipped");
+              } else if (owned) {
+                badge.textContent = "Owned";
+                badge.classList.add("owned");
+              } else {
+                badge.textContent = `${item.price} coins`;
+              }
+            } else if (owned) {
+              badge.textContent = "Owned";
+              badge.classList.add("owned");
+            } else {
+              badge.textContent = `${item.price} coins`;
+            }
+
+            button.textContent = "Locked during class";
+            button.disabled = true;
+            shopGrid.appendChild(card);
+            return;
+          }
 
           if (isCosmetic) {
             if (equipped) {
@@ -788,7 +848,8 @@
       }
 
       updateUI();
+      setInterval(updateUI, 15000);
+      window.addEventListener("pageshow", () => updateUI());
   </script>
 </body>
 </html>
-

@@ -1,0 +1,42 @@
+name: Classroom Smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Shop Integration Test
+        run: npm run test:shop
+
+      - name: Run Classroom Smoke Test
+        run: npm run test:classroom-smoke
+
+      - name: Upload Classroom Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: classroom-smoke-artifacts
+          path: |
+            output/web-game/classroom-e2e

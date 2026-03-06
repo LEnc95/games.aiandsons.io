@@ -122,3 +122,87 @@
     - Cleared storage, played Bomberman, verified `coins` increments and `badges` includes `first-run`.
   - Runtime cosmetics wiring sanity check:
     - Seeded inventory keys and verified `render_game_to_text().cosmetics` returns `true` flags for all 6 new cosmetics (Tetris/Asteroids/Bomberman).
+- New request (2026-03-05): produce a 90-day build plan and start Phase 1 implementation (classroom mode scaffolding + policy pages).
+- Added classroom-state scaffolding in `src/core/state.js`:
+  - New persisted `state.classroom` fields (`enabled`, `teacherPin`, `shopDisabledDuringClass`, `gameWhitelist`, `session`).
+  - Added helper APIs: `setClassroomConfig`, `startClassroomSession`, `endClassroomSession`, `isClassroomSessionActive`, `getClassroomMinutesRemaining`, `isGameLockedByClassroom`.
+  - Added load normalization and automatic session-expiration cleanup.
+- Updated home launcher `index.html`:
+  - Added Classroom button, status line, active-session banner, and classroom settings modal.
+  - Added game whitelist locking behavior during active classroom sessions.
+  - Added links to new policy pages and sprint board.
+  - Fixed static fallback markup issue by closing the Home Run Derby anchor before Micro RC Racer card.
+- Updated `shop.html`:
+  - Added classroom lock notice banner.
+  - Blocked buy/equip/unequip actions when an active class session has shop lock enabled.
+  - Added periodic UI refresh + pageshow refresh to reflect session changes.
+- Added policy pages:
+  - `privacy.html`
+  - `school-privacy.html`
+- Added planning artifact:
+  - `SPRINT_BOARD.md` with sprint-by-sprint ticket backlog and acceptance criteria.
+- Validation runs:
+  - `node --test tests/shop-items.integration.test.mjs` (pass: 3/3).
+  - Skill Playwright client smoke runs:
+    - `output/web-game/home-classroom-smoke`
+    - `output/web-game/shop-classroom-smoke`
+    - `output/web-game/home-classroom-modal` (modal launch visible after `#classroomBtn` click).
+  - No `errors-*.json` artifacts were emitted by those runs.
+- Known follow-up TODOs:
+  - Add deterministic automation scenario that starts a classroom session, then verifies locked-game cards and locked shop state end-to-end.
+  - Add PIN verification flow for sensitive classroom actions (currently local settings scaffold only).
+- Follow-up fix (same request): corrected an encoding regression introduced during edit flow, restoring all non-ASCII symbols in `index.html` and `shop.html`.
+- Final verification rerun after encoding fix:
+  - `node --test tests/shop-items.integration.test.mjs` (pass: 3/3).
+  - Skill Playwright smoke directories:
+    - `output/web-game/home-classroom-smoke-final`
+    - `output/web-game/shop-classroom-smoke-final`
+    - `output/web-game/home-classroom-modal-final`
+  - Reviewed final screenshots and confirmed classroom modal renders correctly.
+- Continued request (2026-03-05): implement CG-106 deterministic classroom QA smoke automation.
+- Added `scripts/qa/classroom-mode-smoke.mjs`:
+  - Loads Playwright from local dependency if available, otherwise falls back to the skill-installed Playwright module under `$CODEX_HOME/skills/develop-web-game/node_modules`.
+  - Seeds deterministic classroom state directly in localStorage.
+  - Verifies active-session locked state on home (banner visible, non-whitelisted card locked, whitelisted card unlocked).
+  - Verifies active-session locked state on shop (notice visible, buttons locked/disabled).
+  - Verifies inactive-session unlock state on home + shop.
+  - Captures screenshots and writes machine-readable summary JSON.
+- Ran deterministic smoke script:
+  - `node scripts/qa/classroom-mode-smoke.mjs http://127.0.0.1:4173`
+  - Result: pass with `success: true`, zero console errors.
+  - Artifacts: `output/web-game/classroom-e2e/{home-locked.png,shop-locked.png,home-unlocked.png,shop-unlocked.png,summary.json}`.
+- Updated planning/docs:
+  - `SPRINT_BOARD.md`: CG-106 status set to DONE with implementation note.
+  - `README.md`: added command to run classroom smoke test.
+- CG-106 smoke script enhancement:
+  - Updated `scripts/qa/classroom-mode-smoke.mjs` to drive actual Classroom modal controls (save settings, start session, end session) rather than only seeding localStorage.
+  - Added explicit checks in summary for `home_modal_save_settings`, `home_modal_start_session`, and `home_modal_end_session`.
+- Re-ran script after enhancement:
+  - `node scripts/qa/classroom-mode-smoke.mjs http://127.0.0.1:4173`
+  - Result: pass, `success: true`, zero console errors.
+- Added repo automation setup for classroom QA:
+  - New `package.json` with scripts:
+    - `test:shop`
+    - `test:classroom-smoke`
+    - `test:qa`
+  - Added `playwright` devDependency for CI/runtime parity.
+- Added GitHub Actions workflow:
+  - `.github/workflows/classroom-smoke.yml`
+  - Triggers on pull requests and workflow_dispatch.
+  - Installs dependencies, installs Playwright Chromium, runs `npm run test:shop`, then runs classroom smoke against local http server.
+  - Uploads smoke artifacts from `output/web-game/classroom-e2e` and server log.
+- Updated README with npm-script equivalents for QA commands.
+- Validation after adding npm/CI wiring:
+  - `npm run test:shop` (pass)
+  - `npm run test:classroom-smoke` with local server (pass)
+  - Summary still reports all checks passing and zero console errors.
+- CI/automation follow-up:
+  - Added `scripts/qa/run-classroom-smoke.mjs` wrapper to auto-start/stop local HTTP server and execute classroom smoke test.
+  - Updated `package.json` scripts:
+    - `test:classroom-smoke` now runs the wrapper (no manual server needed).
+    - Added `test:classroom-smoke:raw` for pre-started server use.
+  - Updated `.github/workflows/classroom-smoke.yml` to call `npm run test:classroom-smoke` directly.
+  - Updated README quality-check instructions to reflect auto-server behavior.
+- Validation:
+  - `npm run test:shop` (pass)
+  - `npm run test:classroom-smoke` (pass)
