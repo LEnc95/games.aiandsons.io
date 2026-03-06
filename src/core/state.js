@@ -6,6 +6,14 @@ const DEFAULT_CLASSROOM = {
   teacherPin: '',
   shopDisabledDuringClass: true,
   gameWhitelist: [],
+  assignment: {
+    bundleId: '',
+    assignedAt: 0,
+    completedAt: 0,
+  },
+  report: {
+    assignmentCompletions: [],
+  },
   session: {
     active: false,
     startsAt: 0,
@@ -46,15 +54,53 @@ const normalizeWhitelist = (value) => {
   return normalized;
 };
 
+const normalizeAssignment = (value) => {
+  const raw = value && typeof value === 'object' ? value : {};
+  const bundleId = typeof raw.bundleId === 'string' ? raw.bundleId.trim() : '';
+  const assignedAt = Number.isFinite(raw.assignedAt) ? Math.max(0, Math.floor(raw.assignedAt)) : 0;
+  const completedAt = Number.isFinite(raw.completedAt) ? Math.max(0, Math.floor(raw.completedAt)) : 0;
+  if (!bundleId) {
+    return { bundleId: '', assignedAt: 0, completedAt: 0 };
+  }
+  return {
+    bundleId,
+    assignedAt,
+    completedAt,
+  };
+};
+
+const normalizeAssignmentCompletions = (value) => {
+  if (!Array.isArray(value)) return [];
+  const output = [];
+  for (const item of value.slice(-100)) {
+    if (!item || typeof item !== 'object') continue;
+    const bundleId = typeof item.bundleId === 'string' ? item.bundleId.trim() : '';
+    if (!bundleId) continue;
+    output.push({
+      bundleId,
+      assignedAt: Number.isFinite(item.assignedAt) ? Math.max(0, Math.floor(item.assignedAt)) : 0,
+      completedAt: Number.isFinite(item.completedAt) ? Math.max(0, Math.floor(item.completedAt)) : 0,
+      dayKey: typeof item.dayKey === 'string' ? item.dayKey : '',
+      weekKey: typeof item.weekKey === 'string' ? item.weekKey : '',
+    });
+  }
+  return output;
+};
+
 const normalizeClassroom = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
   const rawSession = raw.session && typeof raw.session === 'object' ? raw.session : {};
+  const rawReport = raw.report && typeof raw.report === 'object' ? raw.report : {};
 
   return {
     enabled: Boolean(raw.enabled),
     teacherPin: typeof raw.teacherPin === 'string' ? raw.teacherPin.replace(/\D/g, '').slice(0, 8) : '',
     shopDisabledDuringClass: raw.shopDisabledDuringClass !== false,
     gameWhitelist: normalizeWhitelist(raw.gameWhitelist),
+    assignment: normalizeAssignment(raw.assignment),
+    report: {
+      assignmentCompletions: normalizeAssignmentCompletions(rawReport.assignmentCompletions),
+    },
     session: {
       active: Boolean(rawSession.active),
       startsAt: Number.isFinite(rawSession.startsAt) ? Math.max(0, Math.floor(rawSession.startsAt)) : 0,
@@ -307,6 +353,51 @@ export const setClassroomConfig = (partial) => {
   });
   state.classroom = merged;
   save();
+};
+
+export const setClassroomAssignment = (bundleId) => {
+  const normalizedId = typeof bundleId === 'string' ? bundleId.trim() : '';
+  const now = Date.now();
+  state.classroom = normalizeClassroom({
+    ...state.classroom,
+    assignment: {
+      bundleId: normalizedId,
+      assignedAt: normalizedId ? now : 0,
+      completedAt: 0,
+    },
+  });
+  save();
+};
+
+export const recordClassroomAssignmentCompletion = ({ bundleId, dayKey = '', weekKey = '', completedAt = Date.now() }) => {
+  const current = normalizeAssignment(state.classroom.assignment);
+  if (!current.bundleId || current.bundleId !== bundleId || current.completedAt > 0) return false;
+
+  const completionTime = Number.isFinite(completedAt) ? Math.max(0, Math.floor(completedAt)) : Date.now();
+  const reportEntries = Array.isArray(state.classroom.report?.assignmentCompletions)
+    ? state.classroom.report.assignmentCompletions
+    : [];
+  const nextEntries = [...reportEntries, {
+    bundleId: current.bundleId,
+    assignedAt: current.assignedAt,
+    completedAt: completionTime,
+    dayKey: typeof dayKey === 'string' ? dayKey : '',
+    weekKey: typeof weekKey === 'string' ? weekKey : '',
+  }].slice(-100);
+
+  state.classroom = normalizeClassroom({
+    ...state.classroom,
+    assignment: {
+      ...current,
+      completedAt: completionTime,
+    },
+    report: {
+      ...state.classroom.report,
+      assignmentCompletions: nextEntries,
+    },
+  });
+  save();
+  return true;
 };
 
 export const startClassroomSession = (minutes = state.classroom.session.durationMinutes) => {

@@ -6,7 +6,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 
 - `index.html`: homepage hub with launcher cards, search/filter controls, daily/weekly progression panels, coin-earning tags, profile modal, badges modal, recent games, and version badge.
 - `shop.html`: in-app shop with game-tagged items, text/game filtering, and cosmetics/inventory unlocks.
-- `teacher/index.html`: classroom dashboard for session controls, whitelist presets, and PIN-gated active-session mutations.
+- `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/prog/*`: achievements, daily missions, and cosmetics logic.
@@ -93,6 +93,12 @@ Run the weekly challenge smoke test against a pre-started server at `http://127.
 npm run test:weekly-smoke:raw
 ```
 
+Run the classroom assignment bundle smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:assignment-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -129,6 +135,12 @@ npm run test:classroom-smoke:raw
 1. Weekly challenge panel renders active weekly tasks on home.
 2. Weekly challenge progress updates through `window.maybeUnlock(...)` and persists.
 3. Weekly rewards and badges are awarded with clean console output.
+
+`npm run test:assignment-smoke:raw` currently checks:
+
+1. Teacher page can save a classroom assignment bundle in local classroom state.
+2. Home page shows the active assignment progress banner for students.
+3. Assignment completion writes completion timestamps and report entries to local classroom report data.
 
 ## Notes for future updates
 

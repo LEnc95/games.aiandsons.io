@@ -21,6 +21,7 @@ const badgeDefs = [
   { id:'daily-mission-sweep', name:'Mission Sweep', icon:'??', desc:'Complete all daily missions in one day.', test: () => false },
   { id:'weekly-challenge-complete', name:'Weekly Challenger', icon:'??', desc:'Complete any weekly challenge.', test: () => false },
   { id:'weekly-challenge-sweep', name:'Weekly Sweep', icon:'??', desc:'Complete all weekly challenges in one week.', test: () => false },
+  { id:'assignment-complete', name:'Assignment Ready', icon:'??', desc:'Complete an assigned classroom bundle.', test: () => false },
 ];
 
 const rewardDefs = [

@@ -379,3 +379,36 @@
 - Sprint board updated:
   - Marked `CG-302` as DONE.
   - Next sprint goal set to `CG-303 Classroom Assignment Bundle`.
+- Continued sprint work (2026-03-05): completed CG-303 Classroom Assignment Bundle.
+- Core implementation shipped:
+  - Added shared assignment bundle registry in `src/prog/assignments.js` (`starter-pack`, `focus-pack`, `sprint-pack`) with required daily/weekly counts.
+  - Extended classroom state schema in `src/core/state.js`:
+    - `classroom.assignment` (`bundleId`, `assignedAt`, `completedAt`)
+    - `classroom.report.assignmentCompletions[]`
+  - Added state APIs:
+    - `setClassroomAssignment(bundleId)`
+    - `recordClassroomAssignmentCompletion({...})`
+  - Updated mission progression in `src/prog/missions.js` to evaluate active assignment bundles, record completion, and persist report entries when required daily/weekly counts are met.
+  - Added assignment completion badge definition in `src/prog/achievements.js` (`assignment-complete`).
+  - Updated teacher dashboard (`teacher/index.html`):
+    - Assignment bundle selector + save action.
+    - Assignment/report status cards.
+    - Assignment data reflected in `render_game_to_text` output.
+  - Updated home launcher (`index.html`):
+    - Added student-facing assignment banner showing active progress or completion state.
+- QA automation added:
+  - `scripts/qa/assignment-bundle-smoke.mjs`
+  - npm script `test:assignment-smoke:raw`
+- Validation run results after CG-303:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:discovery-smoke:raw` (pass).
+  - `npm run test:missions-smoke:raw` (pass).
+  - `npm run test:weekly-smoke:raw` (pass).
+  - `npm run test:assignment-smoke:raw` (pass).
+  - `web_game_playwright_client` teacher visual smoke (`output/web-game/teacher-assignment-skill-smoke/shot-0.png`) reviewed.
+- Key artifact checks:
+  - `output/web-game/assignment-e2e/summary.json`: `success: true`, no console errors, assignment banner visible, completion timestamp persisted, report count incremented.
+- Sprint board updated:
+  - Marked `CG-303` as DONE.
+  - Next sprint goal set to `CG-401 Entitlements Core`.

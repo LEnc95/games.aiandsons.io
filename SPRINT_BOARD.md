@@ -109,7 +109,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Weekly board resets cleanly on schedule.
   - Challenge rewards do not break existing shop economy.
 
-### CG-303 Classroom Assignment Bundle (Status: TODO)
+### CG-303 Classroom Assignment Bundle (Status: DONE)
 - Description: Teacher can assign mission/challenge packs to class sessions.
 - Acceptance criteria:
   - Assignment selection is persisted in classroom state.
@@ -196,4 +196,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Added follow-up delivery items: CG-204 launcher search/coin tags and CG-205 shop tag filtering (both complete).
 - Sprint 3 kickoff item CG-301 is complete (daily missions state, rewards, and smoke coverage).
 - Sprint 3 follow-up item CG-302 is complete (weekly challenge state, rewards, launcher UI, and smoke coverage).
-- Next highest-value work item is CG-303 classroom assignment bundle.
+- Sprint 3 closing item CG-303 is complete (teacher assignment bundles, home assignment banner, and local report completion logging).
+- Next highest-value work item is CG-401 entitlements core.

@@ -149,7 +149,8 @@
     }
 
     .form-row input[type="text"],
-    .form-row input[type="number"] {
+    .form-row input[type="number"],
+    .form-row select {
       width: 100%;
       border-radius: 9px;
       border: 1px solid rgba(255, 255, 255, 0.16);
@@ -354,6 +355,14 @@
           <span class="label">PIN Protection</span>
           <span class="value" id="pinValue">Off</span>
         </article>
+        <article class="status-card">
+          <span class="label">Assignment</span>
+          <span class="value" id="assignmentValue">None</span>
+        </article>
+        <article class="status-card">
+          <span class="label">Report Entries</span>
+          <span class="value" id="reportCountValue">0</span>
+        </article>
       </div>
       <p class="help" style="margin-top: 12px;">
         Active sessions lock non-whitelisted game cards on home and may lock all shop actions.
@@ -390,6 +399,16 @@
         <button type="button" class="preset-btn" id="presetReflexBtn">Apply Reflex</button>
         <button type="button" class="preset-btn" id="presetStrategyBtn">Apply Strategy</button>
       </div>
+      <div class="form-row">
+        <label for="assignmentSelect">Assignment bundle</label>
+        <select id="assignmentSelect"></select>
+      </div>
+      <div class="action-row" style="margin-bottom: 10px;">
+        <button type="button" class="secondary" id="assignBtn">Save Assignment</button>
+      </div>
+      <p class="help">
+        Assignment progress is shown on home and completion is written to local classroom report history.
+      </p>
       <div id="gamesList" class="games-list"></div>
 
       <div class="action-row">
@@ -419,6 +438,7 @@
     import {
       state,
       setClassroomConfig,
+      setClassroomAssignment,
       startClassroomSession,
       endClassroomSession,
       isClassroomSessionActive,
@@ -427,11 +447,13 @@
       verifyTeacherPin,
     } from "../src/core/state.js";
     import { GAMES } from "../src/meta/games.js";
+    import { ASSIGNMENT_BUNDLES, getAssignmentBundleById } from "../src/prog/assignments.js";
 
     const enabledInput = document.getElementById("enabledInput");
     const pinInput = document.getElementById("pinInput");
     const durationInput = document.getElementById("durationInput");
     const shopLockInput = document.getElementById("shopLockInput");
+    const assignmentSelect = document.getElementById("assignmentSelect");
     const gamesList = document.getElementById("gamesList");
 
     const sessionPill = document.getElementById("sessionPill");
@@ -439,6 +461,8 @@
     const shopLockValue = document.getElementById("shopLockValue");
     const whitelistCount = document.getElementById("whitelistCount");
     const pinValue = document.getElementById("pinValue");
+    const assignmentValue = document.getElementById("assignmentValue");
+    const reportCountValue = document.getElementById("reportCountValue");
     const actionNotice = document.getElementById("actionNotice");
 
     const pinModal = document.getElementById("pinModal");
@@ -471,6 +495,21 @@
     function setNotice(message, type = "") {
       actionNotice.textContent = message;
       actionNotice.className = `notice${type ? ` ${type}` : ""}`;
+    }
+
+    function renderAssignmentOptions() {
+      assignmentSelect.innerHTML = "";
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "No active assignment";
+      assignmentSelect.appendChild(emptyOption);
+
+      for (const bundle of ASSIGNMENT_BUNDLES) {
+        const option = document.createElement("option");
+        option.value = bundle.id;
+        option.textContent = `${bundle.name} (${bundle.dailyRequired} daily / ${bundle.weeklyRequired} weekly)`;
+        assignmentSelect.appendChild(option);
+      }
     }
 
     function renderGamesList() {
@@ -512,6 +551,7 @@
       pinInput.value = state.classroom.teacherPin || "";
       durationInput.value = String(state.classroom.session.durationMinutes || 30);
       shopLockInput.checked = state.classroom.shopDisabledDuringClass !== false;
+      assignmentSelect.value = state.classroom.assignment?.bundleId || "";
       renderGamesList();
       renderPresetState();
     }
@@ -537,6 +577,18 @@
       shopLockValue.textContent = state.classroom.shopDisabledDuringClass ? "On" : "Off";
       whitelistCount.textContent = String((state.classroom.gameWhitelist || []).length);
       pinValue.textContent = hasTeacherPin() ? "On" : "Off";
+      const assignedBundle = getAssignmentBundleById(state.classroom.assignment?.bundleId || "");
+      if (!assignedBundle) {
+        assignmentValue.textContent = "None";
+      } else if (state.classroom.assignment?.completedAt > 0) {
+        assignmentValue.textContent = `${assignedBundle.name} (Done)`;
+      } else {
+        assignmentValue.textContent = `${assignedBundle.name} (Active)`;
+      }
+      const completionHistory = Array.isArray(state.classroom.report?.assignmentCompletions)
+        ? state.classroom.report.assignmentCompletions
+        : [];
+      reportCountValue.textContent = String(completionHistory.length);
       if (active) {
         sessionPill.textContent = "Session Active";
         sessionPill.className = "status-pill active";
@@ -598,6 +650,21 @@
         setNotice(`Applied ${preset.name} preset (${preset.slugs.length} games).`, "ok");
       });
     }
+
+    document.getElementById("assignBtn").addEventListener("click", () => {
+      runProtectedMutation("save assignment bundle", () => {
+        const bundleId = assignmentSelect.value || "";
+        setClassroomAssignment(bundleId);
+        loadFormFromState();
+        renderStatus();
+        if (!bundleId) {
+          setNotice("Assignment cleared.", "ok");
+          return;
+        }
+        const bundle = getAssignmentBundleById(bundleId);
+        setNotice(`Assignment set: ${bundle ? bundle.name : bundleId}.`, "ok");
+      });
+    });
 
     document.getElementById("saveBtn").addEventListener("click", () => {
       runProtectedMutation("save settings", () => applySettings(true));
@@ -672,6 +739,11 @@
       shopLock: Boolean(state.classroom.shopDisabledDuringClass),
       whitelist: [...(state.classroom.gameWhitelist || [])],
       activePreset: Object.keys(CLASSROOM_PRESETS).find((key) => matchesPreset(key)) || "",
+      assignmentBundleId: state.classroom.assignment?.bundleId || "",
+      assignmentCompletedAt: state.classroom.assignment?.completedAt || 0,
+      assignmentReportCount: Array.isArray(state.classroom.report?.assignmentCompletions)
+        ? state.classroom.report.assignmentCompletions.length
+        : 0,
       pinRequiredForActiveSessionChange: requiresPinForMutation(),
     });
 
@@ -683,6 +755,7 @@
       renderStatus();
     };
 
+    renderAssignmentOptions();
     loadFormFromState();
     renderStatus();
     setInterval(renderStatus, 1000);

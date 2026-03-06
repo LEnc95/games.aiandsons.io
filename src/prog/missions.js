@@ -1,4 +1,5 @@
-import { state, save } from '../core/state.js';
+import { state, save, recordClassroomAssignmentCompletion } from '../core/state.js';
+import { getAssignmentBundleById } from './assignments.js';
 
 const DAILY_MISSION_COUNT = 3;
 const WEEKLY_CHALLENGE_COUNT = 2;
@@ -403,6 +404,38 @@ export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
     changed = true;
   }
 
+  let assignmentProgress = null;
+  const assignment = state.classroom?.assignment;
+  const bundle = getAssignmentBundleById(assignment?.bundleId);
+  if (bundle) {
+    const dailyCompleted = Math.min(bundle.dailyRequired, state.missions.completed.length);
+    const weeklyCompleted = Math.min(bundle.weeklyRequired, state.missions.weekly.completed.length);
+    const isComplete = dailyCompleted >= bundle.dailyRequired && weeklyCompleted >= bundle.weeklyRequired;
+    assignmentProgress = {
+      bundleId: bundle.id,
+      dailyCompleted,
+      dailyRequired: bundle.dailyRequired,
+      weeklyCompleted,
+      weeklyRequired: bundle.weeklyRequired,
+      complete: isComplete,
+    };
+
+    if (isComplete && (!assignment.completedAt || assignment.completedAt <= 0)) {
+      const wasRecorded = recordClassroomAssignmentCompletion({
+        bundleId: bundle.id,
+        dayKey: state.missions.dayKey,
+        weekKey: state.missions.weekly.weekKey,
+        completedAt: timestamp,
+      });
+      if (wasRecorded) {
+        changed = true;
+        if (!state.badges.has('assignment-complete')) {
+          state.badges.add('assignment-complete');
+        }
+      }
+    }
+  }
+
   if (changed) {
     save();
   }
@@ -414,6 +447,7 @@ export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
     rewardsNow: daily.rewardsNow,
     weeklyCompletedNow: weekly.completedNow,
     weeklyRewardsNow: weekly.rewardsNow,
+    assignmentProgress,
     changed,
     missions: getActiveDailyMissions(timestamp),
     weeklyChallenges: getActiveWeeklyChallenges(timestamp),
