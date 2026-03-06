@@ -131,6 +131,12 @@ Run the report generator smoke test against a pre-started server at `http://127.
 npm run test:report-smoke:raw
 ```
 
+Run the policy release gate check (required before release tags):
+
+```bash
+npm run test:policy-gate
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -207,6 +213,12 @@ npm run test:classroom-smoke:raw
 1. Teacher report tools unlock only when school license entitlement is active.
 2. Generated aggregate report includes total sessions, top games, and assignment completion counts.
 3. CSV export and print-to-PDF actions execute from the browser report tools path.
+
+`npm run test:policy-gate` currently checks:
+
+1. `RELEASE_CHECKLIST.md` references both `privacy.html` and `school-privacy.html`.
+2. `release/policy-signoff.json` contains explicit reviewer/date approval fields.
+3. Release-tag validation fails without required policy signoff or tracking/ad risk notes when applicable.
 
 ## Notes for future updates
 

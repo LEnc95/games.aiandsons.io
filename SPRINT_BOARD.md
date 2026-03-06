@@ -155,7 +155,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Report excludes sensitive personal detail by default.
   - Report export supports PDF or CSV from browser.
 
-### CG-503 Policy Update Gate (Status: TODO)
+### CG-503 Policy Update Gate (Status: DONE)
 - Description: Add release checklist step requiring policy review for data/monetization changes.
 - Acceptance criteria:
   - Release checklist references `privacy.html` and `school-privacy.html`.
@@ -202,4 +202,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 4 content item CG-403 is complete (premium challenge track UI + free-tier CTA behavior + deterministic premium track smoke coverage).
 - Sprint 5 kickoff item CG-501 is complete (school license page, district review handoff flow, and teacher licensed-tool unlock behavior).
 - Sprint 5 follow-up item CG-502 is complete (aggregate report generation, CSV export, print-to-PDF flow, and deterministic browser smoke coverage).
-- Next highest-value work item is CG-503 policy update gate.
+- Sprint 5 closing item CG-503 is complete (release checklist + policy signoff gate + tag-blocking workflow).
+- Next highest-value work item is CG-601 accessibility pack.

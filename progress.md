@@ -546,3 +546,23 @@
   - Reviewed `output/web-game/report-generator-e2e/teacher-report-generated.png` and teacher skill screenshot; report/export controls and aggregate report preview render correctly.
 - Next TODO:
   - Start CG-503 policy update gate (release checklist enforcement for policy signoff on monetization/data changes).
+- Continued sprint work (2026-03-06): completed CG-503 Policy Update Gate.
+- Core implementation shipped:
+  - Added release checklist artifact `RELEASE_CHECKLIST.md` with explicit policy review steps and references to `privacy.html` + `school-privacy.html`.
+  - Added machine-readable policy signoff file `release/policy-signoff.json` for reviewer/date/approval metadata.
+  - Added release-gate script `scripts/release/policy-gate.mjs` that validates:
+    - checklist references to both policy pages,
+    - required signoff fields,
+    - release approval requirement,
+    - explicit tracking/ad risk signoff when tracking-style dependencies are detected.
+  - Added npm script `test:policy-gate`.
+  - Added CI workflow `.github/workflows/policy-release-gate.yml` that runs on release-tag pushes (`v*`, `release-*`) and fails on missing signoff.
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-503 marked DONE; next item advanced to CG-601 accessibility pack.
+  - `README.md`: documented `test:policy-gate` command and validation coverage.
+- Validation run results after CG-503:
+  - `npm run test:policy-gate` (pass).
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+- Next TODO:
+  - Begin CG-601 accessibility pack (persisted larger-UI/reduced-motion options and colorblind-friendly palette toggles).
