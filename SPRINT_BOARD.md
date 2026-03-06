@@ -79,6 +79,20 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Expired session surfaces a clear "class ended" state.
   - Lock restrictions are removed automatically at session end.
 
+### CG-204 Launcher Search + Coin Tags (Status: DONE)
+- Description: Add game discovery search and economy tagging on home launcher.
+- Acceptance criteria:
+  - Home includes game search input and coin-earning filter.
+  - Game cards clearly tag whether they earn coins.
+  - Empty search states are handled with user feedback.
+
+### CG-205 Shop Item Tags + Filtering (Status: DONE)
+- Description: Add game-tagged shop items and filter controls.
+- Acceptance criteria:
+  - Shop items display game tags.
+  - Shop supports filtering by game and text search.
+  - Filtered empty states are shown clearly.
+
 ## Sprint 3 - Engagement + Assignment Layer
 
 ### CG-301 Daily Missions Framework (Status: TODO)
@@ -179,4 +193,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 ## Current Sprint Notes
 - Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
 - Sprint 2 (CG-201 through CG-203) is complete with teacher controls, preset packs, and expiry UX behavior.
+- Added follow-up delivery items: CG-204 launcher search/coin tags and CG-205 shop tag filtering (both complete).
 - Next highest-value work item is CG-301 daily missions framework.

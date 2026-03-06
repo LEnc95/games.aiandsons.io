@@ -17,7 +17,11 @@
     .back-link { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; transition:all 0.2s; }
     .back-link:hover { background:rgba(255,255,255,0.12); }
 
-    .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:32px; }
+    .shop-controls { margin-top:10px; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.05); display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:10px; }
+    .shop-controls input,
+    .shop-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
+    .shop-filter-summary { grid-column:1 / -1; font-size:12px; color:#b4ccf0; }
+    .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:24px; }
     .shop-notice { margin-top:16px; padding:12px 14px; border-radius:10px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); font-size:14px; font-weight:600; }
     .shop-notice.hidden { display:none; }
     .shop-notice.ended { border-color:rgba(116,166,230,0.45); background:rgba(116,166,230,0.18); }
@@ -29,7 +33,9 @@
     .shop-item-price { padding:6px 12px; background:rgba(90,173,221,0.2); border-radius:8px; font-weight:600; font-size:14px; transition:background 0.2s, color 0.2s; }
     .shop-item-price.owned { background:rgba(90,173,221,0.25); color:var(--fg); }
     .shop-item-price.equipped { background:var(--accent); color:#0b1020; }
-    .shop-item-game { margin:0; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(138,160,195,0.8); }
+    .shop-item-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:-6px; }
+    .shop-item-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#d7e7ff; font-size:11px; font-weight:700; }
+    .shop-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; text-align:center; color:#b7cdf0; font-size:15px; }
     .shop-item-desc { color:var(--muted); font-size:14px; line-height:1.5; margin:0; }
     .shop-item-preview { padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; text-align:center; min-height:80px; display:flex; align-items:center; justify-content:center; }
     .shop-item-btn { padding:12px; background:var(--accent); border:none; border-radius:8px; color:#0b1020; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.2s; }
@@ -39,6 +45,9 @@
     .shop-item-btn.owned:hover:not(:disabled) { background:rgba(90,173,221,0.4); }
     .shop-item-btn.equipped { background:var(--accent); color:#0b1020; }
     .shop-item-btn.equipped:hover:not(:disabled) { background:#6be; }
+    @media (max-width: 700px) {
+      .shop-controls { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
@@ -54,6 +63,13 @@
   </div>
 
     <div class="wrap">
+      <div class="shop-controls">
+        <input id="shopSearchInput" type="search" placeholder="Search shop items" aria-label="Search shop items" />
+        <select id="shopGameFilter" aria-label="Filter shop by game">
+          <option value="all">All games</option>
+        </select>
+        <div id="shopFilterSummary" class="shop-filter-summary"></div>
+      </div>
       <div id="shopNotice" class="shop-notice hidden"></div>
       <div class="shop-grid" id="shopGrid"></div>
     </div>
@@ -622,6 +638,40 @@
 
       const itemById = new Map(items.map(item => [item.id, item]));
       const shopNotice = document.getElementById("shopNotice");
+      const shopSearchInput = document.getElementById("shopSearchInput");
+      const shopGameFilter = document.getElementById("shopGameFilter");
+      const shopFilterSummary = document.getElementById("shopFilterSummary");
+      const normalizeText = (value) => String(value || "").toLowerCase();
+      const escapeHtml = (value) => String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
+      let shopSearchQuery = "";
+      let selectedShopGame = "all";
+
+      const allShopGames = [...new Set(items
+        .map((item) => typeof item.game === "string" ? item.game.trim() : "")
+        .filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+
+      for (const gameName of allShopGames) {
+        const option = document.createElement("option");
+        option.value = gameName;
+        option.textContent = gameName;
+        shopGameFilter.appendChild(option);
+      }
+
+      const getFilteredItems = () => {
+        return items.filter((item) => {
+          const matchesGame = selectedShopGame === "all" || item.game === selectedShopGame;
+          if (!matchesGame) return false;
+          if (!shopSearchQuery) return true;
+          const haystack = normalizeText(`${item.name} ${item.desc || ""} ${item.game || ""} ${item.id}`);
+          return haystack.includes(shopSearchQuery);
+        });
+      };
 
       const isShopLocked = () => (
         isClassroomSessionActive() && state.classroom && state.classroom.shopDisabledDuringClass
@@ -768,11 +818,20 @@
         if (!coinsEl || !shopGrid) return;
 
         const shopLocked = isShopLocked();
+        const filteredItems = getFilteredItems();
         renderShopNotice();
         coinsEl.textContent = state.coins;
+        if (shopFilterSummary) {
+          shopFilterSummary.textContent = `Showing ${filteredItems.length} of ${items.length} items`;
+        }
 
         shopGrid.innerHTML = "";
-        items.forEach(item => {
+        if (!filteredItems.length) {
+          shopGrid.innerHTML = '<div class="shop-empty">No shop items match this search/filter yet.</div>';
+          return;
+        }
+
+        filteredItems.forEach(item => {
           const isCosmetic = item.type === "cosmetic";
           const owned = isCosmetic ? getOwnedList(item.category).includes(item.value) : state.inventory.has(item.id);
           const equipped = isCosmetic ? state.cosmetics[item.category] === item.value : false;
@@ -788,7 +847,7 @@
               <h3 class="shop-item-title">${item.name}</h3>
               <span class="shop-item-price"></span>
             </div>
-            ${item.game ? `<p class="shop-item-game">${item.game}</p>` : ""}
+            ${item.game ? `<div class="shop-item-tags"><span class="shop-item-tag">${escapeHtml(item.game)}</span></div>` : ""}
             <p class="shop-item-desc">${item.desc}</p>
             <div class="shop-item-preview">${item.preview}</div>
             <button class="shop-item-btn" type="button"></button>
@@ -866,6 +925,15 @@
           shopGrid.appendChild(card);
         });
       }
+
+      shopSearchInput.addEventListener("input", () => {
+        shopSearchQuery = normalizeText(shopSearchInput.value.trim());
+        updateUI();
+      });
+      shopGameFilter.addEventListener("change", () => {
+        selectedShopGame = shopGameFilter.value || "all";
+        updateUI();
+      });
 
       updateUI();
       let previousLockState = isShopLocked();

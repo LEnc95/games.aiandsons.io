@@ -307,3 +307,32 @@
   - Reviewed `output/web-game/classroom-e2e/home-expired.png` and `shop-expired.png`; both show clear ended-state messaging with unlocked controls.
 - Next TODO:
   - Begin CG-301 daily missions framework scaffolding (`src/prog/missions.js`) and launcher integration.
+- New request (2026-03-05): add game search/discovery, coin-earning tags, and shop game-tag filtering.
+- Metadata update:
+  - `src/meta/games.js` now includes `earnsCoins` per game.
+  - Current non-coin games explicitly tagged: `Pocket Mini Golf` and `Micro RC Racer`.
+- Home launcher updates (`index.html`):
+  - Added game search input.
+  - Added coin filter selector (`All games`, `Coin earning`, `No coin rewards`).
+  - Added game card and recent-card economy tags (`Earns coins` / `No coin rewards`).
+  - Added live result count and empty-state handling when no games match.
+- Shop updates (`shop.html`):
+  - Added item search input + per-game filter dropdown.
+  - Added visible game tags on each item card.
+  - Added live filter summary count and filtered empty-state handling.
+- Planning board update (`SPRINT_BOARD.md`):
+  - Added CG-204 (Launcher Search + Coin Tags) and CG-205 (Shop Item Tags + Filtering), both marked DONE per this delivery.
+- QA automation added:
+  - `scripts/qa/discovery-search-filter-smoke.mjs` with summary artifact at `output/web-game/discovery-filter-e2e/summary.json`.
+  - Added npm script: `test:discovery-smoke:raw`.
+- Validation:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:discovery-smoke:raw` with local server (pass, success true, no console errors).
+  - `web_game_playwright_client` smoke captures refreshed:
+    - `output/web-game/home-search-smoke/shot-0.png`
+    - `output/web-game/shop-filter-smoke/shot-0.png`
+- Visual verification:
+  - Reviewed discovery/filter screenshots and confirmed expected filtered states for home (non-coin filter) and shop (Tetris + aurora search).
+- Follow-up TODO:
+  - Optional: add a combined wrapper script that auto-starts server for discovery smoke (parallel to `test:classroom-smoke`).

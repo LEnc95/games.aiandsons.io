@@ -29,14 +29,22 @@
     header { text-align:center; margin-bottom:clamp(32px, 6vh, 48px); }
     h1 { font-size:clamp(32px, 6vw, 48px); margin:0 0 clamp(8px, 1.5vh, 12px) 0; color:var(--fg); font-weight:700; }
     .subtitle { font-size:clamp(14px, 2.5vw, 18px); color:var(--muted); margin:0; }
+
+    .search-controls { display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:10px; margin-bottom:16px; }
+    .search-controls input,
+    .search-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
+    .search-count { grid-column:1 / -1; color:#b4ccf0; font-size:12px; text-align:left; }
     
     .recent-section { margin-bottom:clamp(24px,4vh,32px); }
     .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0 0 16px 0; color:var(--fg); font-weight:600; }
     .recent-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
-    .recent-card { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; padding:20px; text-decoration:none; color:var(--fg); display:flex; align-items:center; gap:12px; transition:all 0.2s; }
+    .recent-card { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:12px; padding:20px; text-decoration:none; color:var(--fg); display:flex; align-items:flex-start; gap:12px; transition:all 0.2s; }
     .recent-card:hover { border-color:#2a3a5f; transform:translateY(-2px); }
     .recent-card.locked { opacity:0.5; pointer-events:none; }
     .recent-icon { font-size:32px; }
+    .recent-content { display:flex; flex-direction:column; gap:4px; }
+    .recent-title { font-weight:600; }
+    .recent-meta { font-size:12px; color:#9ec3f4; }
 
     .classroom-banner { margin-bottom:20px; padding:14px 16px; border-radius:12px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); font-size:14px; font-weight:600; }
     .classroom-banner.hidden { display:none; }
@@ -54,6 +62,11 @@
     
     .game-title { font-size:clamp(24px, 3.5vw, 32px); font-weight:600; margin:0 0 clamp(8px, 1vh, 12px) 0; text-align:center; }
     .game-desc { font-size:clamp(14px, 2vw, 16px); color:var(--muted); margin:0; text-align:center; line-height:1.5; flex-grow:1; }
+    .game-meta { display:flex; justify-content:center; margin:0 0 8px 0; }
+    .economy-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 9px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); font-size:12px; font-weight:700; }
+    .economy-tag.coin { color:#b9ffdf; border-color:rgba(107,230,173,0.55); background:rgba(85,205,145,0.18); }
+    .economy-tag.no-coin { color:#d3e4ff; border-color:rgba(166,189,234,0.48); background:rgba(133,154,198,0.2); }
+    .games-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; color:#b7cdf0; text-align:center; font-size:15px; }
     
     .game-link { margin-top:clamp(16px, 2vh, 20px); padding:clamp(12px, 2vw, 16px); background:#5ad; border:2px solid #6be; border-radius:12px; color:#0b1020; font-size:clamp(16px, 2.5vw, 18px); font-weight:600; text-align:center; transition:all 0.2s; }
     .game-card:hover .game-link { background:#6be; }
@@ -102,6 +115,7 @@
     .badge-item p { margin:0; font-size:14px; color:var(--muted); }
     
     @media (max-width: 768px) {
+      .search-controls { grid-template-columns:1fr; }
       .games-grid { grid-template-columns:1fr; }
       .game-card { min-height:clamp(180px, 20vh, 220px); }
       .topbar { flex-direction:column; align-items:stretch; }
@@ -138,6 +152,15 @@
     </header>
 
     <div id="classroomBanner" class="classroom-banner hidden"></div>
+    <div class="search-controls">
+      <input id="gameSearchInput" type="search" placeholder="Search games by name or description" aria-label="Search games" />
+      <select id="gameCoinFilter" aria-label="Filter by coin rewards">
+        <option value="all">All games</option>
+        <option value="coins">Coin earning</option>
+        <option value="no-coins">No coin rewards</option>
+      </select>
+      <div id="gameSearchCount" class="search-count"></div>
+    </div>
 
     <div class="recent-section" id="recentSection" style="display:none;">
       <h2>Recently Played</h2>
@@ -345,11 +368,18 @@
     const classroomPinEl = document.getElementById('classroomPin');
     const classroomDurationEl = document.getElementById('classroomDuration');
     const classroomShopLockEl = document.getElementById('classroomShopLock');
+    const gameSearchInputEl = document.getElementById('gameSearchInput');
+    const gameCoinFilterEl = document.getElementById('gameCoinFilter');
+    const gameSearchCountEl = document.getElementById('gameSearchCount');
 
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
+    const normalizeText = (value) => String(value || '').toLowerCase();
+    const economyLabel = (game) => game.earnsCoins === false ? 'No coin rewards' : 'Earns coins';
 
     let lastClassroomSessionActive = isClassroomSessionActive();
+    let gameSearchQuery = '';
+    let gameCoinFilter = 'all';
 
     function renderClassroomHeader() {
       const active = isClassroomSessionActive();
@@ -498,9 +528,13 @@
           const card = document.createElement('a');
           card.href = locked ? '#' : game.url;
           card.className = `recent-card${locked ? ' locked' : ''}`;
+          const label = economyLabel(game);
           card.innerHTML = `
             <span class="recent-icon">${game.emoji}</span>
-            <span>${locked ? `${game.name} (Locked)` : game.name}</span>
+            <span class="recent-content">
+              <span class="recent-title">${locked ? `${game.name} (Locked)` : game.name}</span>
+              <span class="recent-meta">${label}</span>
+            </span>
           `;
           card.onclick = (event) => {
             if (locked) {
@@ -516,7 +550,25 @@
       }
 
       gamesGrid.innerHTML = '';
-      GAMES.forEach((game) => {
+      const filteredGames = GAMES.filter((game) => {
+        const matchesCoinFilter = (
+          gameCoinFilter === 'all' ||
+          (gameCoinFilter === 'coins' && game.earnsCoins !== false) ||
+          (gameCoinFilter === 'no-coins' && game.earnsCoins === false)
+        );
+        if (!matchesCoinFilter) return false;
+        if (!gameSearchQuery) return true;
+        const haystack = normalizeText(`${game.name} ${game.slug} ${game.desc || ''} ${game.scoreHint || ''}`);
+        return haystack.includes(gameSearchQuery);
+      });
+
+      gameSearchCountEl.textContent = `Showing ${filteredGames.length} of ${GAMES.length} games`;
+      if (!filteredGames.length) {
+        gamesGrid.innerHTML = '<div class="games-empty">No games match this search/filter yet.</div>';
+        return;
+      }
+
+      filteredGames.forEach((game) => {
         const locked = isGameLockedByClassroom(game.slug);
         const card = document.createElement('a');
         card.href = locked ? '#' : game.url;
@@ -527,12 +579,16 @@
         }
 
         const actionLabel = locked ? 'Locked For Class' : `Play ${game.name} &rarr;`;
+        const earnsCoins = game.earnsCoins !== false;
+        const coinTagClass = earnsCoins ? 'coin' : 'no-coin';
+        const coinTagLabel = earnsCoins ? 'Earns coins' : 'No coin rewards';
         const desc = locked
           ? `${game.desc || `Play ${game.name}!`} Classroom session currently blocks this game.`
           : (game.desc || `Play ${game.name}!`);
 
         card.innerHTML = `
           <div class="game-icon">${game.emoji}</div>
+          <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span></div>
           <h2 class="game-title">${game.name}</h2>
           <p class="game-desc">${desc}</p>
           <div class="game-link">${actionLabel}</div>
@@ -614,6 +670,15 @@
     };
 
     document.getElementById('classroomBtn').onclick = openClassroom;
+    gameSearchInputEl.addEventListener('input', () => {
+      gameSearchQuery = normalizeText(gameSearchInputEl.value.trim());
+      updateUI();
+    });
+    gameCoinFilterEl.addEventListener('change', () => {
+      const value = gameCoinFilterEl.value;
+      gameCoinFilter = value === 'coins' || value === 'no-coins' ? value : 'all';
+      updateUI();
+    });
     classroomPinEl.addEventListener('input', () => {
       classroomPinEl.value = sanitizePin(classroomPinEl.value);
     });

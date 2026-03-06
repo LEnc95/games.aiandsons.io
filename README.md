@@ -4,8 +4,8 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 
 ## What this repository contains
 
-- `index.html`: homepage hub with launcher cards, profile modal, badges modal, recent games, and version badge.
-- `shop.html`: in-app shop to spend coins on cosmetics and inventory unlocks.
+- `index.html`: homepage hub with launcher cards, search/filter controls, coin-earning tags, profile modal, badges modal, recent games, and version badge.
+- `shop.html`: in-app shop with game-tagged items, text/game filtering, and cosmetics/inventory unlocks.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers.
 - `src/meta/games.js`: game registry used by homepage UI.
@@ -75,6 +75,12 @@ Run the classroom lock/unlock smoke test (auto-starts local server):
 npm run test:classroom-smoke
 ```
 
+Run the discovery/search + shop filter smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:discovery-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -93,6 +99,12 @@ npm run test:classroom-smoke:raw
 2. Teacher dashboard PIN enforcement for active-session settings changes and session end.
 3. Teacher one-click preset application and persisted whitelist updates.
 4. Auto-expired session behavior (class-ended messaging + automatic lock removal across home/shop).
+
+`npm run test:discovery-smoke:raw` currently checks:
+
+1. Home game search and non-coin filter behavior.
+2. Home game economy tag rendering.
+3. Shop filtering by game tag plus text search.
 
 ## Notes for future updates
 
