@@ -7,6 +7,7 @@ import { GAMES } from '../src/meta/games.js';
 const ROOT = process.cwd();
 const SHOP_PATH = path.join(ROOT, 'shop.html');
 const COSMETICS_PATH = path.join(ROOT, 'src/prog/cosmetics.js');
+const ACHIEVEMENTS_PATH = path.join(ROOT, 'src/prog/achievements.js');
 
 const GAME_FILE_BY_PREFIX = {
   tictactoe: 'tictactoe/index.html',
@@ -76,6 +77,7 @@ function gatherTextFiles(dir) {
 
 const shopHtml = fs.readFileSync(SHOP_PATH, 'utf8');
 const cosmeticsSource = fs.readFileSync(COSMETICS_PATH, 'utf8');
+const achievementsSource = fs.readFileSync(ACHIEVEMENTS_PATH, 'utf8');
 const allProjectTexts = new Map(
   gatherTextFiles(ROOT)
     .filter((file) => !file.endsWith('shop.html'))
@@ -144,5 +146,24 @@ test('game metadata includes real emoji values (no placeholder question marks)',
     placeholders,
     [],
     `Games with placeholder/corrupt emoji values: ${placeholders.join(', ')}`,
+  );
+});
+
+test('badge definitions include real icon values (no placeholder question marks)', () => {
+  const iconMatches = [...achievementsSource.matchAll(/icon:\s*'([^']*)'/g)].map((match) => match[1]);
+  assert.ok(iconMatches.length > 0, 'Could not find badge icon definitions in achievements metadata.');
+
+  const emptyIcons = iconMatches.filter((icon) => !icon.trim());
+  assert.deepEqual(
+    emptyIcons,
+    [],
+    'Badge definitions include empty icon values.',
+  );
+
+  const placeholders = iconMatches.filter((icon) => icon.includes('?') || icon.includes('\uFFFD'));
+  assert.deepEqual(
+    placeholders,
+    [],
+    `Badge definitions include placeholder/corrupt icon values: ${placeholders.join(', ')}`,
   );
 });
