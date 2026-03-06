@@ -279,6 +279,21 @@ export const getClassroomMinutesRemaining = (now = Date.now()) => {
   return Math.max(0, Math.ceil((state.classroom.session.endsAt - now) / 60_000));
 };
 
+export const getClassroomMinutesSinceEnd = (now = Date.now()) => {
+  const endsAt = Number(state.classroom.session.endsAt) || 0;
+  if (endsAt <= 0 || now <= endsAt) return 0;
+  return Math.max(0, Math.floor((now - endsAt) / 60_000));
+};
+
+export const wasClassroomSessionRecentlyEnded = (now = Date.now(), windowMinutes = 180) => {
+  if (!state.classroom.enabled) return false;
+  if (isClassroomSessionActive(now)) return false;
+  const endsAt = Number(state.classroom.session.endsAt) || 0;
+  if (endsAt <= 0 || now < endsAt) return false;
+  const windowMs = Math.max(1, Number(windowMinutes) || 1) * 60_000;
+  return (now - endsAt) <= windowMs;
+};
+
 export const isGameLockedByClassroom = (slug, now = Date.now()) => {
   if (typeof slug !== 'string' || !slug.trim()) return false;
   if (!isClassroomSessionActive(now)) return false;

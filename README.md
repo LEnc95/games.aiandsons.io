@@ -92,6 +92,7 @@ npm run test:classroom-smoke:raw
 1. Classroom lock/unlock behavior across home and shop pages.
 2. Teacher dashboard PIN enforcement for active-session settings changes and session end.
 3. Teacher one-click preset application and persisted whitelist updates.
+4. Auto-expired session behavior (class-ended messaging + automatic lock removal across home/shop).
 
 ## Notes for future updates
 

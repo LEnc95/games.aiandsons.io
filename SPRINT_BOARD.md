@@ -72,7 +72,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Presets map to existing game slugs and update whitelist.
   - Preset application persists in shared state.
 
-### CG-203 Classroom Timer UX (Status: TODO)
+### CG-203 Classroom Timer UX (Status: DONE)
 - Description: Improve countdown visibility and auto-end messaging.
 - Acceptance criteria:
   - Active countdown updates across home and shop.
@@ -178,5 +178,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 ## Current Sprint Notes
 - Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
-- Sprint 2 has CG-201 and CG-202 complete in `/teacher/index.html`, including PIN-protected preset application.
-- Next highest-value work item is CG-203 classroom timer UX improvements.
+- Sprint 2 (CG-201 through CG-203) is complete with teacher controls, preset packs, and expiry UX behavior.
+- Next highest-value work item is CG-301 daily missions framework.

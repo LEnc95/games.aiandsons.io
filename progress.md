@@ -280,3 +280,30 @@
   - Reviewed `output/web-game/classroom-e2e/teacher-pin-check.png` to confirm preset controls render and Logic preset selection appears correctly.
 - Follow-up TODO:
   - Implement CG-203 countdown UX messaging across home/shop when sessions expire.
+- Continued implementation (2026-03-05): completed Sprint 2 CG-203 classroom timer UX.
+- Shared classroom timing helpers added in `src/core/state.js`:
+  - `getClassroomMinutesSinceEnd(now)`
+  - `wasClassroomSessionRecentlyEnded(now, windowMinutes)`
+- Home UX updates in `index.html`:
+  - Added ended-session banner variant (`.classroom-banner.ended`).
+  - Active countdown/ended-state header refresh now runs every second.
+  - Inactive but recently ended sessions now show clear "session ended" messaging and unlocked-state text.
+- Shop UX updates in `shop.html`:
+  - Added ended-session notice variant (`.shop-notice.ended`).
+  - Shop now shows "session ended" unlock notice after expiry and removes lock state automatically.
+  - Replaced 15s full rerender loop with 1s lock-state monitor that rerenders only when lock flips and otherwise refreshes notice text.
+- Classroom smoke automation expanded (`scripts/qa/classroom-mode-smoke.mjs`):
+  - Added forced-expiry path (`forceSessionExpiration`) and reload normalization check.
+  - Added `teacher_auto_expire_state`, `home_expired_state`, and `shop_expired_state` assertions.
+  - Verifies expired sessions surface ended messaging and unlock restrictions without manual end.
+- Planning/docs updates:
+  - `SPRINT_BOARD.md`: CG-203 marked DONE; next backlog item advanced to CG-301.
+  - `README.md`: classroom smoke checklist includes auto-expiry/unlock coverage.
+- Validation:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass, `success: true`, zero console errors).
+  - `web_game_playwright_client` run on `/` with artifacts in `output/web-game/home-classroom-timer-check` (screenshot generated; no `state-0.json` expected because home does not expose `render_game_to_text`).
+- Visual verification:
+  - Reviewed `output/web-game/classroom-e2e/home-expired.png` and `shop-expired.png`; both show clear ended-state messaging with unlocked controls.
+- Next TODO:
+  - Begin CG-301 daily missions framework scaffolding (`src/prog/missions.js`) and launcher integration.

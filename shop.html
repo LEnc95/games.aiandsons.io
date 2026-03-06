@@ -20,6 +20,7 @@
     .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:32px; }
     .shop-notice { margin-top:16px; padding:12px 14px; border-radius:10px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); font-size:14px; font-weight:600; }
     .shop-notice.hidden { display:none; }
+    .shop-notice.ended { border-color:rgba(116,166,230,0.45); background:rgba(116,166,230,0.18); }
     .shop-item { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:16px; transition:border-color 0.2s, box-shadow 0.2s, background 0.2s; }
     .shop-item.owned { border-color:var(--accent); background:rgba(90,173,221,0.1); }
     .shop-item.equipped { border-color:#8ad7ff; background:rgba(90,173,221,0.18); box-shadow:0 0 0 2px rgba(90,173,221,0.25); }
@@ -58,7 +59,14 @@
     </div>
 
   <script type="module">
-      import { state, save, spendCoins, isClassroomSessionActive } from './src/core/state.js';
+      import {
+        state,
+        save,
+        spendCoins,
+        isClassroomSessionActive,
+        wasClassroomSessionRecentlyEnded,
+        getClassroomMinutesSinceEnd,
+      } from './src/core/state.js';
 
       if (!(state.inventory instanceof Set)) {
         state.inventory = new Set(Array.isArray(state.inventory) ? state.inventory : []);
@@ -618,12 +626,24 @@
       const isShopLocked = () => (
         isClassroomSessionActive() && state.classroom && state.classroom.shopDisabledDuringClass
       );
+      const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? "" : "s"}`;
 
       const renderShopNotice = () => {
         if (!shopNotice) return;
+        shopNotice.classList.remove("ended");
         if (isShopLocked()) {
           shopNotice.classList.remove("hidden");
           shopNotice.textContent = "Classroom session is active. Shop actions are locked until the session ends.";
+          return;
+        }
+        if (wasClassroomSessionRecentlyEnded()) {
+          const endedMinutes = getClassroomMinutesSinceEnd();
+          const endedMessage = endedMinutes <= 0
+            ? "Classroom session ended just now."
+            : `Classroom session ended ${formatMinutes(endedMinutes)} ago.`;
+          shopNotice.classList.remove("hidden");
+          shopNotice.classList.add("ended");
+          shopNotice.textContent = `${endedMessage} Shop actions are now unlocked.`;
           return;
         }
         shopNotice.classList.add("hidden");
@@ -848,7 +868,16 @@
       }
 
       updateUI();
-      setInterval(updateUI, 15000);
+      let previousLockState = isShopLocked();
+      setInterval(() => {
+        const lockState = isShopLocked();
+        if (lockState !== previousLockState) {
+          previousLockState = lockState;
+          updateUI();
+          return;
+        }
+        renderShopNotice();
+      }, 1000);
       window.addEventListener("pageshow", () => updateUI());
   </script>
 </body>

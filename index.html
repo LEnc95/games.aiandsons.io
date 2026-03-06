@@ -40,6 +40,7 @@
 
     .classroom-banner { margin-bottom:20px; padding:14px 16px; border-radius:12px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); font-size:14px; font-weight:600; }
     .classroom-banner.hidden { display:none; }
+    .classroom-banner.ended { border-color:rgba(116,166,230,0.45); background:rgba(116,166,230,0.18); }
     
     .games-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(clamp(280px, 30vw, 350px), 1fr)); gap:clamp(20px, 3vw, 32px); margin-top:clamp(24px, 4vh, 32px); }
     
@@ -328,6 +329,8 @@
       isClassroomSessionActive,
       isGameLockedByClassroom,
       getClassroomMinutesRemaining,
+      getClassroomMinutesSinceEnd,
+      wasClassroomSessionRecentlyEnded,
     } from './src/core/state.js';
     import { GAMES } from './src/meta/games.js';
     import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
@@ -351,6 +354,8 @@
     function renderClassroomHeader() {
       const active = isClassroomSessionActive();
       const configured = Boolean(state.classroom.enabled);
+      const endedRecently = wasClassroomSessionRecentlyEnded();
+      classroomBannerEl.classList.remove('ended');
       if (active) {
         const minutes = getClassroomMinutesRemaining();
         const message = `Classroom session active (${formatMinutes(minutes)} left)`;
@@ -358,6 +363,19 @@
         classroomStatusEl.textContent = message;
         classroomBannerEl.classList.remove('hidden');
         classroomBannerEl.textContent = `${message}. Shop controls may be locked and only whitelisted games are available.`;
+        return;
+      }
+
+      if (endedRecently) {
+        const endedMinutes = getClassroomMinutesSinceEnd();
+        const endedMessage = endedMinutes <= 0
+          ? 'Classroom session ended just now.'
+          : `Classroom session ended ${formatMinutes(endedMinutes)} ago.`;
+        classroomStatusEl.style.display = 'block';
+        classroomStatusEl.textContent = `${endedMessage} Restrictions are now off.`;
+        classroomBannerEl.classList.remove('hidden');
+        classroomBannerEl.classList.add('ended');
+        classroomBannerEl.textContent = `${endedMessage} All games and shop controls are now unlocked.`;
         return;
       }
 
@@ -631,10 +649,10 @@
       if (active !== lastClassroomSessionActive) {
         lastClassroomSessionActive = active;
         updateUI();
-      } else if (active || state.classroom.enabled) {
+      } else if (active || state.classroom.enabled || wasClassroomSessionRecentlyEnded()) {
         renderClassroomHeader();
       }
-    }, 15000);
+    }, 1000);
 
     window.addEventListener('pageshow', (e) => {
       if (e.persisted) {

@@ -156,6 +156,27 @@ async function getTeacherState(page) {
   });
 }
 
+async function forceSessionExpiration(page) {
+  await page.evaluate(() => {
+    const key = "cadegames:v1:classroom";
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    try {
+      const classroom = JSON.parse(raw);
+      if (!classroom || typeof classroom !== "object") return;
+      classroom.enabled = true;
+      classroom.session = classroom.session && typeof classroom.session === "object"
+        ? classroom.session
+        : {};
+      classroom.session.active = true;
+      classroom.session.endsAt = Date.now() - 5_000;
+      localStorage.setItem(key, JSON.stringify(classroom));
+    } catch {
+      // ignore parse errors in smoke helper
+    }
+  });
+}
+
 async function main() {
   ensureDir(OUTPUT_DIR);
   const baseUrl = process.argv[2] || "http://127.0.0.1:4173";
@@ -314,27 +335,61 @@ async function main() {
     const teacherAfterEnd = await getTeacherState(page);
     assert(!teacherAfterEnd.sessionActive, "Expected session inactive after teacher end action.");
     summary.checks.push({ name: "teacher_pin_required_end_session", pass: true, data: teacherAfterEnd });
+
+    await page.click("#startBtn");
+    await page.waitForFunction(() => {
+      const classroomRaw = localStorage.getItem("cadegames:v1:classroom");
+      if (!classroomRaw) return false;
+      try {
+        const classroom = JSON.parse(classroomRaw);
+        return classroom?.session?.active === true;
+      } catch {
+        return false;
+      }
+    });
+    await forceSessionExpiration(page);
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForSelector("#saveBtn");
+    const teacherAfterExpire = await getTeacherState(page);
+    assert(!teacherAfterExpire.sessionActive, "Expected session to auto-expire after endsAt is in the past.");
+    summary.checks.push({ name: "teacher_auto_expire_state", pass: true, data: teacherAfterExpire });
     const teacherShot = path.join(OUTPUT_DIR, "teacher-pin-check.png");
     await page.screenshot({ path: teacherShot, fullPage: true });
     summary.screenshots.push(teacherShot);
 
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-    const unlockedHome = await getHomeLockState(page);
-    assert(!unlockedHome.bannerVisible, "Expected classroom banner hidden when session is inactive.");
-    assert(!unlockedHome.card2048Locked, "Expected 2048 card unlocked when session is inactive.");
-    summary.checks.push({ name: "home_unlocked_state", pass: true, data: unlockedHome });
-    const homeUnlockedShot = path.join(OUTPUT_DIR, "home-unlocked.png");
-    await page.screenshot({ path: homeUnlockedShot, fullPage: true });
-    summary.screenshots.push(homeUnlockedShot);
+    await page.waitForFunction(() => {
+      const banner = document.getElementById("classroomBanner");
+      return !!banner && !banner.classList.contains("hidden");
+    });
+    const expiredHome = await getHomeLockState(page);
+    assert(expiredHome.bannerVisible, "Expected classroom ended banner to be visible after expiry.");
+    assert(
+      expiredHome.bannerText.toLowerCase().includes("ended"),
+      "Expected classroom ended messaging on home after session expiry."
+    );
+    assert(!expiredHome.card2048Locked, "Expected 2048 card unlocked when session expires.");
+    summary.checks.push({ name: "home_expired_state", pass: true, data: expiredHome });
+    const homeExpiredShot = path.join(OUTPUT_DIR, "home-expired.png");
+    await page.screenshot({ path: homeExpiredShot, fullPage: true });
+    summary.screenshots.push(homeExpiredShot);
 
     await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
-    const unlockedShop = await getShopLockState(page);
-    assert(!unlockedShop.noticeVisible, "Expected shop lock notice hidden after class session ends.");
-    assert(unlockedShop.firstButtonText !== "Locked during class", "Expected shop button label to return after unlock.");
-    summary.checks.push({ name: "shop_unlocked_state", pass: true, data: unlockedShop });
-    const shopUnlockedShot = path.join(OUTPUT_DIR, "shop-unlocked.png");
-    await page.screenshot({ path: shopUnlockedShot, fullPage: true });
-    summary.screenshots.push(shopUnlockedShot);
+    await page.waitForFunction(() => {
+      const notice = document.getElementById("shopNotice");
+      return !!notice && !notice.classList.contains("hidden");
+    });
+    const expiredShop = await getShopLockState(page);
+    assert(expiredShop.noticeVisible, "Expected session-ended shop notice after session expiry.");
+    assert(
+      expiredShop.noticeText.toLowerCase().includes("ended"),
+      "Expected shop notice to indicate classroom session ended."
+    );
+    assert(expiredShop.firstButtonText !== "Locked during class", "Expected shop actions unlocked after expiry.");
+    summary.checks.push({ name: "shop_expired_state", pass: true, data: expiredShop });
+    const shopExpiredShot = path.join(OUTPUT_DIR, "shop-expired.png");
+    await page.screenshot({ path: shopExpiredShot, fullPage: true });
+    summary.screenshots.push(shopExpiredShot);
 
     summary.consoleErrors = consoleErrors;
     summary.success = consoleErrors.length === 0;
