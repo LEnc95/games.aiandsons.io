@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { GAMES } from '../src/meta/games.js';
 
 const ROOT = process.cwd();
 const SHOP_PATH = path.join(ROOT, 'shop.html');
@@ -121,5 +122,27 @@ test('every inventory item has a known game-prefix mapping', () => {
     unknown,
     [],
     `Inventory shop items with unknown game prefixes: ${unknown.join(', ')}`,
+  );
+});
+
+test('game metadata includes real emoji values (no placeholder question marks)', () => {
+  const invalid = GAMES
+    .filter((game) => typeof game.emoji !== 'string' || game.emoji.trim().length === 0)
+    .map((game) => game.slug);
+
+  assert.deepEqual(
+    invalid,
+    [],
+    `Games with missing emoji values: ${invalid.join(', ')}`,
+  );
+
+  const placeholders = GAMES
+    .filter((game) => game.emoji.includes('?') || game.emoji.includes('\uFFFD'))
+    .map((game) => game.slug);
+
+  assert.deepEqual(
+    placeholders,
+    [],
+    `Games with placeholder/corrupt emoji values: ${placeholders.join(', ')}`,
   );
 });
