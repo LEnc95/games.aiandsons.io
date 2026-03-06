@@ -36,15 +36,18 @@
     .search-count { grid-column:1 / -1; color:#b4ccf0; font-size:12px; text-align:left; }
 
     .missions-section { border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px; margin-bottom:18px; background:rgba(255,255,255,0.04); }
+    .missions-section.weekly { border-color:rgba(106,167,255,0.42); background:rgba(78,129,215,0.09); }
     .missions-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
     .missions-head h2 { margin:0; font-size:18px; }
     .missions-meta { color:#b4ccf0; font-size:12px; font-weight:600; }
     .missions-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
     .mission-card { border:1px solid rgba(255,255,255,0.16); border-radius:10px; padding:10px; background:rgba(255,255,255,0.05); }
     .mission-card.completed { border-color:rgba(107,230,173,0.6); background:rgba(85,205,145,0.14); }
+    .missions-section.weekly .mission-card.completed { border-color:rgba(128,194,255,0.72); background:rgba(109,170,236,0.16); }
     .mission-name { margin:0 0 5px 0; font-size:14px; font-weight:700; }
     .mission-desc { margin:0 0 8px 0; color:#b8cdee; font-size:12px; line-height:1.35; }
     .mission-progress { margin:0; font-size:12px; color:#d8e8ff; }
+    .mission-week { margin:0 0 5px 0; font-size:11px; color:#a6c9f2; text-transform:uppercase; letter-spacing:0.04em; }
     
     .recent-section { margin-bottom:clamp(24px,4vh,32px); }
     .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0 0 16px 0; color:var(--fg); font-weight:600; }
@@ -179,6 +182,14 @@
         <span id="dailyMissionsMeta" class="missions-meta"></span>
       </div>
       <div id="dailyMissionsList" class="missions-list"></div>
+    </section>
+
+    <section class="missions-section weekly" id="weeklyChallengesSection">
+      <div class="missions-head">
+        <h2>Weekly Challenges</h2>
+        <span id="weeklyChallengesMeta" class="missions-meta"></span>
+      </div>
+      <div id="weeklyChallengesList" class="missions-list"></div>
     </section>
 
     <div class="recent-section" id="recentSection" style="display:none;">
@@ -376,7 +387,7 @@
     } from './src/core/state.js';
     import { GAMES } from './src/meta/games.js';
     import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
-    import { getActiveDailyMissions } from './src/prog/missions.js';
+    import { getActiveDailyMissions, getActiveWeeklyChallenges } from './src/prog/missions.js';
 
     window.maybeUnlock = maybeUnlock;
 
@@ -393,11 +404,17 @@
     const gameSearchCountEl = document.getElementById('gameSearchCount');
     const dailyMissionsListEl = document.getElementById('dailyMissionsList');
     const dailyMissionsMetaEl = document.getElementById('dailyMissionsMeta');
+    const weeklyChallengesListEl = document.getElementById('weeklyChallengesList');
+    const weeklyChallengesMetaEl = document.getElementById('weeklyChallengesMeta');
 
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
     const normalizeText = (value) => String(value || '').toLowerCase();
     const economyLabel = (game) => game.earnsCoins === false ? 'No coin rewards' : 'Earns coins';
+    const formatWeekLabel = (weekKey) => {
+      if (typeof weekKey !== 'string' || !weekKey) return '';
+      return `Week of ${weekKey}`;
+    };
 
     let lastClassroomSessionActive = isClassroomSessionActive();
     let gameSearchQuery = '';
@@ -483,8 +500,8 @@
         card.dataset.missionId = mission.id;
         const progress = Math.max(0, Math.min(mission.target, mission.progress || 0));
         const statusText = mission.completed
-          ? `Complete · +${mission.rewardCoins} coins`
-          : `${progress}/${mission.target} · +${mission.rewardCoins} coins`;
+          ? `Complete - +${mission.rewardCoins} coins`
+          : `${progress}/${mission.target} - +${mission.rewardCoins} coins`;
 
         card.innerHTML = `
           <h3 class="mission-name">${mission.name}</h3>
@@ -492,6 +509,40 @@
           <p class="mission-progress">${statusText}</p>
         `;
         dailyMissionsListEl.appendChild(card);
+      }
+    }
+
+    function renderWeeklyChallenges() {
+      const challenges = getActiveWeeklyChallenges();
+      if (!Array.isArray(challenges) || challenges.length === 0) {
+        weeklyChallengesMetaEl.textContent = 'No weekly challenges available.';
+        weeklyChallengesListEl.innerHTML = '<div class="games-empty">No weekly challenges are currently available.</div>';
+        return;
+      }
+
+      const completedCount = challenges.filter((challenge) => challenge.completed).length;
+      const weekLabel = formatWeekLabel(challenges[0]?.weekKey);
+      weeklyChallengesMetaEl.textContent = weekLabel
+        ? `${weekLabel} - ${completedCount}/${challenges.length} completed`
+        : `${completedCount}/${challenges.length} completed`;
+      weeklyChallengesListEl.innerHTML = '';
+
+      for (const challenge of challenges) {
+        const card = document.createElement('article');
+        card.className = `mission-card${challenge.completed ? ' completed' : ''}`;
+        card.dataset.challengeId = challenge.id;
+        const progress = Math.max(0, Math.min(challenge.target, challenge.progress || 0));
+        const statusText = challenge.completed
+          ? `Complete - +${challenge.rewardCoins} coins`
+          : `${progress}/${challenge.target} - +${challenge.rewardCoins} coins`;
+
+        card.innerHTML = `
+          <p class="mission-week">${formatWeekLabel(challenge.weekKey)}</p>
+          <h3 class="mission-name">${challenge.name}</h3>
+          <p class="mission-desc">${challenge.desc}</p>
+          <p class="mission-progress">${statusText}</p>
+        `;
+        weeklyChallengesListEl.appendChild(card);
       }
     }
 
@@ -571,6 +622,7 @@
 
       renderClassroomHeader();
       renderDailyMissions();
+      renderWeeklyChallenges();
 
       if (state.recent.length > 0) {
         recentSection.style.display = 'block';
@@ -781,3 +833,4 @@
   </script>
 </body>
 </html>
+

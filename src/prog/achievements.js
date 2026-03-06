@@ -19,6 +19,8 @@ const badgeDefs = [
   { id:'bomberman-crates-40', name:'Demolition Expert', icon:'??', desc:'Destroy 40 crates in one Bomberman run', test: (ctx) => ctx.bomberman && ctx.bomberman.crates >= 40 },
   { id:'daily-mission-complete', name:'Daily Starter', icon:'??', desc:'Complete any daily mission.', test: () => false },
   { id:'daily-mission-sweep', name:'Mission Sweep', icon:'??', desc:'Complete all daily missions in one day.', test: () => false },
+  { id:'weekly-challenge-complete', name:'Weekly Challenger', icon:'??', desc:'Complete any weekly challenge.', test: () => false },
+  { id:'weekly-challenge-sweep', name:'Weekly Sweep', icon:'??', desc:'Complete all weekly challenges in one week.', test: () => false },
 ];
 
 const rewardDefs = [

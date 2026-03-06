@@ -1,6 +1,7 @@
 import { state, save } from '../core/state.js';
 
 const DAILY_MISSION_COUNT = 3;
+const WEEKLY_CHALLENGE_COUNT = 2;
 
 const toLocalDayKey = (timestamp = Date.now()) => {
   const date = new Date(timestamp);
@@ -10,10 +11,47 @@ const toLocalDayKey = (timestamp = Date.now()) => {
   return `${y}-${m}-${d}`;
 };
 
+const toLocalWeekKey = (timestamp = Date.now()) => {
+  const date = new Date(timestamp);
+  const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = midnight.getDay();
+  const mondayOffset = (day + 6) % 7;
+  midnight.setDate(midnight.getDate() - mondayOffset);
+  return toLocalDayKey(midnight.getTime());
+};
+
 const clampProgress = (value, target) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(target, Math.floor(n)));
+};
+
+const addUnique = (list, value) => {
+  if (!Array.isArray(list)) return [value];
+  if (list.includes(value)) return list;
+  return [...list, value];
+};
+
+const hashString = (input) => {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
+const pickRotatingIds = (definitions, seedKey, count) => {
+  const ids = definitions.map((entry) => entry.id);
+  let seed = hashString(seedKey);
+
+  for (let i = ids.length - 1; i > 0; i -= 1) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const j = seed % (i + 1);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+
+  return ids.slice(0, Math.min(Math.max(1, count), ids.length));
 };
 
 const missionDefs = [
@@ -91,34 +129,129 @@ const missionDefs = [
   },
 ];
 
-const missionById = new Map(missionDefs.map((mission) => [mission.id, mission]));
+const weeklyDefs = [
+  {
+    id: 'weekly-snake-length-22',
+    name: 'Weekly Snake Master',
+    desc: 'Reach length 22 in Snake.',
+    target: 22,
+    rewardCoins: 14,
+    readProgress: (ctx) => ctx?.snake?.length ?? 0,
+  },
+  {
+    id: 'weekly-pong-margin-6',
+    name: 'Weekly Pong Ace',
+    desc: 'Win Pong by at least 6 points.',
+    target: 6,
+    rewardCoins: 14,
+    readProgress: (ctx) => ctx?.pong?.winMargin ?? 0,
+  },
+  {
+    id: 'weekly-tetris-lines-40',
+    name: 'Weekly Line Boss',
+    desc: 'Clear 40 lines in Tetris.',
+    target: 40,
+    rewardCoins: 18,
+    readProgress: (ctx) => ctx?.tetris?.lines ?? 0,
+  },
+  {
+    id: 'weekly-asteroids-wave-7',
+    name: 'Weekly Deep Space',
+    desc: 'Reach wave 7 in Asteroids.',
+    target: 7,
+    rewardCoins: 18,
+    readProgress: (ctx) => ctx?.asteroids?.wave ?? 0,
+  },
+  {
+    id: 'weekly-bomberman-level-5',
+    name: 'Weekly Blast Route',
+    desc: 'Reach level 5 in Bomberman Lite.',
+    target: 5,
+    rewardCoins: 17,
+    readProgress: (ctx) => ctx?.bomberman?.level ?? 0,
+  },
+  {
+    id: 'weekly-dino-distance-1800',
+    name: 'Weekly Dino Dash',
+    desc: 'Reach 1800 distance in Dino Run.',
+    target: 1800,
+    rewardCoins: 15,
+    readProgress: (ctx) => ctx?.dino?.dist ?? 0,
+  },
+  {
+    id: 'weekly-frogger-score-20',
+    name: 'Weekly River Captain',
+    desc: 'Score 20 in Frogger.',
+    target: 20,
+    rewardCoins: 14,
+    readProgress: (ctx) => ctx?.frogger?.score ?? 0,
+  },
+  {
+    id: 'weekly-pokemon-badges-2',
+    name: 'Weekly Gym Push',
+    desc: 'Earn 2 badges in Pokemon.',
+    target: 2,
+    rewardCoins: 20,
+    readProgress: (ctx) => ctx?.pokemon?.badges ?? 0,
+  },
+];
 
-const hashString = (input) => {
-  let hash = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+const missionById = new Map(missionDefs.map((entry) => [entry.id, entry]));
+const weeklyById = new Map(weeklyDefs.map((entry) => [entry.id, entry]));
+
+const ensureMissionContainers = () => {
+  if (!state.missions || typeof state.missions !== 'object') {
+    state.missions = {};
   }
-  return hash >>> 0;
-};
-
-const pickDailyMissionIds = (dayKey, count = DAILY_MISSION_COUNT) => {
-  const ids = missionDefs.map((mission) => mission.id);
-  let seed = hashString(dayKey || 'missions-default-seed');
-
-  for (let i = ids.length - 1; i > 0; i -= 1) {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    const j = seed % (i + 1);
-    [ids[i], ids[j]] = [ids[j], ids[i]];
+  if (!state.missions.progress || typeof state.missions.progress !== 'object') {
+    state.missions.progress = {};
+  }
+  if (!Array.isArray(state.missions.activeIds)) {
+    state.missions.activeIds = [];
+  }
+  if (!Array.isArray(state.missions.completed)) {
+    state.missions.completed = [];
+  }
+  if (!Array.isArray(state.missions.rewarded)) {
+    state.missions.rewarded = [];
+  }
+  if (!state.missions.weekly || typeof state.missions.weekly !== 'object') {
+    state.missions.weekly = {
+      weekKey: '',
+      activeIds: [],
+      progress: {},
+      completed: [],
+      rewarded: [],
+    };
   }
 
-  return ids.slice(0, Math.min(Math.max(1, count), ids.length));
+  const weekly = state.missions.weekly;
+  if (!weekly.progress || typeof weekly.progress !== 'object') {
+    weekly.progress = {};
+  }
+  if (!Array.isArray(weekly.activeIds)) {
+    weekly.activeIds = [];
+  }
+  if (!Array.isArray(weekly.completed)) {
+    weekly.completed = [];
+  }
+  if (!Array.isArray(weekly.rewarded)) {
+    weekly.rewarded = [];
+  }
 };
 
 const resetDailyMissions = (dayKey) => {
-  state.missions = {
-    dayKey,
-    activeIds: pickDailyMissionIds(dayKey),
+  state.missions.dayKey = dayKey;
+  state.missions.activeIds = pickRotatingIds(missionDefs, `daily:${dayKey}`, DAILY_MISSION_COUNT);
+  state.missions.progress = {};
+  state.missions.completed = [];
+  state.missions.rewarded = [];
+};
+
+const resetWeeklyChallenges = (weekKey) => {
+  state.missions.weekly = {
+    weekKey,
+    activeIds: pickRotatingIds(weeklyDefs, `weekly:${weekKey}`, WEEKLY_CHALLENGE_COUNT),
     progress: {},
     completed: [],
     rewarded: [],
@@ -126,95 +259,147 @@ const resetDailyMissions = (dayKey) => {
 };
 
 export const ensureDailyMissions = (timestamp = Date.now()) => {
+  ensureMissionContainers();
   const dayKey = toLocalDayKey(timestamp);
-  const current = state.missions || {};
-  const hasActiveIds = Array.isArray(current.activeIds) && current.activeIds.length > 0;
+  const hasActiveIds = state.missions.activeIds.length > 0;
 
-  if (current.dayKey === dayKey && hasActiveIds) return false;
+  if (state.missions.dayKey === dayKey && hasActiveIds) return false;
 
   resetDailyMissions(dayKey);
   save();
   return true;
 };
 
-export const getActiveDailyMissions = (timestamp = Date.now()) => {
-  ensureDailyMissions(timestamp);
-  const completedSet = new Set(state.missions.completed || []);
-  const rewardedSet = new Set(state.missions.rewarded || []);
-  const progressMap = state.missions.progress && typeof state.missions.progress === 'object'
-    ? state.missions.progress
-    : {};
+export const ensureWeeklyChallenges = (timestamp = Date.now()) => {
+  ensureMissionContainers();
+  const weekKey = toLocalWeekKey(timestamp);
+  const weekly = state.missions.weekly;
+  const hasActiveIds = weekly.activeIds.length > 0;
 
-  return (state.missions.activeIds || [])
-    .map((id) => missionById.get(id))
+  if (weekly.weekKey === weekKey && hasActiveIds) return false;
+
+  resetWeeklyChallenges(weekKey);
+  save();
+  return true;
+};
+
+const materializeEntries = (ids, byId, progressMap, completedIds, rewardedIds) => {
+  const completedSet = new Set(completedIds || []);
+  const rewardedSet = new Set(rewardedIds || []);
+  return (ids || [])
+    .map((id) => byId.get(id))
     .filter(Boolean)
-    .map((mission) => {
-      const progress = clampProgress(progressMap[mission.id] ?? 0, mission.target);
-      const completed = completedSet.has(mission.id) || progress >= mission.target;
-      const rewarded = rewardedSet.has(mission.id);
+    .map((entry) => {
+      const progress = clampProgress(progressMap?.[entry.id] ?? 0, entry.target);
+      const completed = completedSet.has(entry.id) || progress >= entry.target;
+      const rewarded = rewardedSet.has(entry.id);
       return {
-        id: mission.id,
-        name: mission.name,
-        desc: mission.desc,
-        target: mission.target,
+        id: entry.id,
+        name: entry.name,
+        desc: entry.desc,
+        target: entry.target,
         progress,
         completed,
         rewarded,
-        rewardCoins: mission.rewardCoins,
+        rewardCoins: entry.rewardCoins,
       };
     });
 };
 
-const addUnique = (list, value) => {
-  if (!Array.isArray(list)) return [value];
-  if (list.includes(value)) return list;
-  return [...list, value];
-};
-
-export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
-  ensureDailyMissions(timestamp);
-  const payload = ctx && typeof ctx === 'object' ? ctx : {};
-  const activeMissions = getActiveDailyMissions(timestamp);
+const applyProgress = (bucket, entries, byId, payload) => {
   const completedNow = [];
   const rewardsNow = [];
   let changed = false;
 
-  for (const mission of activeMissions) {
-    const def = missionById.get(mission.id);
+  for (const entry of entries) {
+    const def = byId.get(entry.id);
     if (!def) continue;
 
-    const previous = clampProgress(state.missions.progress?.[mission.id] ?? 0, mission.target);
-    const incoming = clampProgress(def.readProgress(payload), mission.target);
+    const previous = clampProgress(bucket.progress?.[entry.id] ?? 0, entry.target);
+    const incoming = clampProgress(def.readProgress(payload), entry.target);
     const next = Math.max(previous, incoming);
 
     if (next !== previous) {
-      state.missions.progress[mission.id] = next;
+      bucket.progress[entry.id] = next;
       changed = true;
     }
 
-    if (next >= mission.target && !state.missions.completed.includes(mission.id)) {
-      state.missions.completed = addUnique(state.missions.completed, mission.id);
-      completedNow.push(mission.id);
+    if (next >= entry.target && !bucket.completed.includes(entry.id)) {
+      bucket.completed = addUnique(bucket.completed, entry.id);
+      completedNow.push(entry.id);
       changed = true;
     }
 
-    if (state.missions.completed.includes(mission.id) && !state.missions.rewarded.includes(mission.id)) {
-      state.missions.rewarded = addUnique(state.missions.rewarded, mission.id);
-      state.coins = Math.max(0, state.coins + mission.rewardCoins);
-      rewardsNow.push({ id: mission.id, coins: mission.rewardCoins });
+    if (bucket.completed.includes(entry.id) && !bucket.rewarded.includes(entry.id)) {
+      bucket.rewarded = addUnique(bucket.rewarded, entry.id);
+      state.coins = Math.max(0, state.coins + entry.rewardCoins);
+      rewardsNow.push({ id: entry.id, coins: entry.rewardCoins });
       changed = true;
     }
   }
 
-  if (completedNow.length > 0 && !state.badges.has('daily-mission-complete')) {
+  return { changed, completedNow, rewardsNow };
+};
+
+export const getActiveDailyMissions = (timestamp = Date.now()) => {
+  ensureDailyMissions(timestamp);
+  return materializeEntries(
+    state.missions.activeIds,
+    missionById,
+    state.missions.progress,
+    state.missions.completed,
+    state.missions.rewarded
+  );
+};
+
+export const getActiveWeeklyChallenges = (timestamp = Date.now()) => {
+  ensureWeeklyChallenges(timestamp);
+  const weekly = state.missions.weekly;
+  const entries = materializeEntries(
+    weekly.activeIds,
+    weeklyById,
+    weekly.progress,
+    weekly.completed,
+    weekly.rewarded
+  );
+  return entries.map((entry) => ({ ...entry, weekKey: weekly.weekKey }));
+};
+
+export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
+  ensureDailyMissions(timestamp);
+  ensureWeeklyChallenges(timestamp);
+  ensureMissionContainers();
+
+  const payload = ctx && typeof ctx === 'object' ? ctx : {};
+  const dailyEntries = getActiveDailyMissions(timestamp);
+  const weeklyEntries = getActiveWeeklyChallenges(timestamp);
+
+  const daily = applyProgress(state.missions, dailyEntries, missionById, payload);
+  const weekly = applyProgress(state.missions.weekly, weeklyEntries, weeklyById, payload);
+  let changed = daily.changed || weekly.changed;
+
+  if (daily.completedNow.length > 0 && !state.badges.has('daily-mission-complete')) {
     state.badges.add('daily-mission-complete');
     changed = true;
   }
 
-  const allCompleted = state.missions.activeIds.length > 0
+  const allDailyCompleted = state.missions.activeIds.length > 0
     && state.missions.activeIds.every((id) => state.missions.completed.includes(id));
-  if (allCompleted && !state.badges.has('daily-mission-sweep')) {
+  if (allDailyCompleted && !state.badges.has('daily-mission-sweep')) {
     state.badges.add('daily-mission-sweep');
+    changed = true;
+  }
+
+  if (weekly.completedNow.length > 0 && !state.badges.has('weekly-challenge-complete')) {
+    state.badges.add('weekly-challenge-complete');
+    changed = true;
+  }
+
+  const weeklyBucket = state.missions.weekly;
+  const allWeeklyCompleted = weeklyBucket.activeIds.length > 0
+    && weeklyBucket.activeIds.every((id) => weeklyBucket.completed.includes(id));
+  if (allWeeklyCompleted && !state.badges.has('weekly-challenge-sweep')) {
+    state.badges.add('weekly-challenge-sweep');
     changed = true;
   }
 
@@ -224,10 +409,13 @@ export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
 
   return {
     dayKey: state.missions.dayKey,
-    completedNow,
-    rewardsNow,
+    weekKey: state.missions.weekly.weekKey,
+    completedNow: daily.completedNow,
+    rewardsNow: daily.rewardsNow,
+    weeklyCompletedNow: weekly.completedNow,
+    weeklyRewardsNow: weekly.rewardsNow,
     changed,
     missions: getActiveDailyMissions(timestamp),
+    weeklyChallenges: getActiveWeeklyChallenges(timestamp),
   };
 };
-

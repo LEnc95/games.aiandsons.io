@@ -102,7 +102,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Mission completion grants coins/badges through shared progression.
   - Mission state survives refresh and day boundaries.
 
-### CG-302 Weekly Challenge Board (Status: TODO)
+### CG-302 Weekly Challenge Board (Status: DONE)
 - Description: Add weekly challenge panel on home.
 - Acceptance criteria:
   - Users can view active weekly tasks and progress.
@@ -195,4 +195,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 2 (CG-201 through CG-203) is complete with teacher controls, preset packs, and expiry UX behavior.
 - Added follow-up delivery items: CG-204 launcher search/coin tags and CG-205 shop tag filtering (both complete).
 - Sprint 3 kickoff item CG-301 is complete (daily missions state, rewards, and smoke coverage).
-- Next highest-value work item is CG-302 weekly challenge board.
+- Sprint 3 follow-up item CG-302 is complete (weekly challenge state, rewards, launcher UI, and smoke coverage).
+- Next highest-value work item is CG-303 classroom assignment bundle.

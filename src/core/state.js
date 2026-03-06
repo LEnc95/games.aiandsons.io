@@ -19,6 +19,13 @@ const DEFAULT_MISSIONS = {
   progress: {},
   completed: [],
   rewarded: [],
+  weekly: {
+    weekKey: '',
+    activeIds: [],
+    progress: {},
+    completed: [],
+    rewarded: [],
+  },
 };
 
 const clampSessionDuration = (value) => {
@@ -208,12 +215,20 @@ const normalizeMissionProgress = (value) => {
 
 const normalizeMissions = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
+  const rawWeekly = raw.weekly && typeof raw.weekly === 'object' ? raw.weekly : {};
   return {
     dayKey: typeof raw.dayKey === 'string' ? raw.dayKey : '',
     activeIds: normalizeMissionIds(raw.activeIds),
     progress: normalizeMissionProgress(raw.progress),
     completed: normalizeMissionIds(raw.completed),
     rewarded: normalizeMissionIds(raw.rewarded),
+    weekly: {
+      weekKey: typeof rawWeekly.weekKey === 'string' ? rawWeekly.weekKey : '',
+      activeIds: normalizeMissionIds(rawWeekly.activeIds),
+      progress: normalizeMissionProgress(rawWeekly.progress),
+      completed: normalizeMissionIds(rawWeekly.completed),
+      rewarded: normalizeMissionIds(rawWeekly.rewarded),
+    },
   };
 };
 

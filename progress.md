@@ -355,3 +355,27 @@
 - Sprint board updated:
   - Marked `CG-301` as DONE.
   - Next sprint goal set to `CG-302 Weekly Challenge Board`.
+- Continued sprint work (2026-03-05): completed CG-302 Weekly Challenge Board.
+- Core implementation shipped:
+  - Extended mission persistence schema in `src/core/state.js` with `missions.weekly` (`weekKey`, `activeIds`, `progress`, `completed`, `rewarded`) and normalization/backfill.
+  - Reworked `src/prog/missions.js` to support both daily and weekly rotation/progress pipelines:
+    - New APIs: `ensureWeeklyChallenges(timestamp)` and `getActiveWeeklyChallenges(timestamp)`.
+    - Weekly reset key uses local Monday-start week key (`YYYY-MM-DD` of week start).
+    - Weekly completion/reward tracking now runs inside `recordMissionProgress(...)` with coin payouts and badge hooks.
+  - Added weekly badges in `src/prog/achievements.js`:
+    - `weekly-challenge-complete`
+    - `weekly-challenge-sweep`
+  - Added launcher Weekly Challenges panel in `index.html` with progress cards and week label metadata.
+  - Added deterministic weekly QA script `scripts/qa/weekly-challenges-smoke.mjs` and npm script `test:weekly-smoke:raw`.
+- Validation run results after CG-302:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:discovery-smoke:raw` against local server (pass).
+  - `npm run test:missions-smoke:raw` against local server (pass).
+  - `npm run test:weekly-smoke:raw` against local server (pass).
+  - `web_game_playwright_client` launcher visual smoke (output: `output/web-game/home-weekly-skill-smoke/shot-0.png`) reviewed; daily + weekly panels render correctly.
+- Key artifact checks:
+  - `output/web-game/weekly-challenges-e2e/summary.json`: `success: true`, no console errors, weekly completion persisted (`weekKey: 2026-03-02`).
+- Sprint board updated:
+  - Marked `CG-302` as DONE.
+  - Next sprint goal set to `CG-303 Classroom Assignment Bundle`.
