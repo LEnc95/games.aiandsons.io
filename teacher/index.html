@@ -263,6 +263,35 @@
       color: #ffd5dc;
     }
 
+    .license-note {
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .inline-link {
+      color: #d7ecff;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .snapshot {
+      margin: 10px 0 0 0;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      background: rgba(3, 9, 21, 0.58);
+      color: #d7e9ff;
+      padding: 10px;
+      min-height: 120px;
+      max-height: 220px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
     .pin-modal {
       position: fixed;
       inset: 0;
@@ -331,6 +360,7 @@
     <div class="topbar-links">
       <a class="link-btn" href="/">Home</a>
       <a class="link-btn" href="/shop.html">Shop</a>
+      <a class="link-btn" href="/school-license.html">School License</a>
     </div>
   </div>
 
@@ -362,6 +392,10 @@
         <article class="status-card">
           <span class="label">Report Entries</span>
           <span class="value" id="reportCountValue">0</span>
+        </article>
+        <article class="status-card">
+          <span class="label">School License</span>
+          <span class="value" id="licenseValue">Not active</span>
         </article>
       </div>
       <p class="help" style="margin-top: 12px;">
@@ -419,6 +453,15 @@
 
       <div id="actionNotice" class="notice"></div>
     </section>
+
+    <section class="panel">
+      <h2>Licensed Admin Tools</h2>
+      <p id="licenseGateHint" class="license-note"></p>
+      <div class="action-row">
+        <button type="button" class="secondary" id="snapshotBtn">Generate Class Snapshot</button>
+      </div>
+      <pre id="snapshotPreview" class="snapshot">License-gated snapshot output will appear here.</pre>
+    </section>
   </main>
 
   <div id="pinModal" class="pin-modal">
@@ -446,6 +489,11 @@
       hasTeacherPin,
       verifyTeacherPin,
     } from "../src/core/state.js";
+    import {
+      ENTITLEMENT_KEYS,
+      getEntitlements,
+      hasEntitlement,
+    } from "../src/core/entitlements.js";
     import { GAMES } from "../src/meta/games.js";
     import { ASSIGNMENT_BUNDLES, getAssignmentBundleById } from "../src/prog/assignments.js";
 
@@ -463,7 +511,11 @@
     const pinValue = document.getElementById("pinValue");
     const assignmentValue = document.getElementById("assignmentValue");
     const reportCountValue = document.getElementById("reportCountValue");
+    const licenseValue = document.getElementById("licenseValue");
     const actionNotice = document.getElementById("actionNotice");
+    const licenseGateHint = document.getElementById("licenseGateHint");
+    const snapshotBtn = document.getElementById("snapshotBtn");
+    const snapshotPreview = document.getElementById("snapshotPreview");
 
     const pinModal = document.getElementById("pinModal");
     const pinPromptText = document.getElementById("pinPromptText");
@@ -491,6 +543,10 @@
       },
     };
     let pendingMutation = null;
+
+    const hasSchoolLicense = () => {
+      return hasEntitlement(ENTITLEMENT_KEYS.SCHOOL_LICENSE, getEntitlements());
+    };
 
     function setNotice(message, type = "") {
       actionNotice.textContent = message;
@@ -573,10 +629,12 @@
     function renderStatus() {
       const active = isClassroomSessionActive();
       const minutes = getClassroomMinutesRemaining();
+      const licensed = hasSchoolLicense();
       minutesRemaining.textContent = String(minutes);
       shopLockValue.textContent = state.classroom.shopDisabledDuringClass ? "On" : "Off";
       whitelistCount.textContent = String((state.classroom.gameWhitelist || []).length);
       pinValue.textContent = hasTeacherPin() ? "On" : "Off";
+      licenseValue.textContent = licensed ? "Active" : "Not active";
       const assignedBundle = getAssignmentBundleById(state.classroom.assignment?.bundleId || "");
       if (!assignedBundle) {
         assignmentValue.textContent = "None";
@@ -595,6 +653,16 @@
       } else {
         sessionPill.textContent = "Session Inactive";
         sessionPill.className = "status-pill inactive";
+      }
+      renderLicensedTools(licensed);
+    }
+
+    function renderLicensedTools(licensed = hasSchoolLicense()) {
+      snapshotBtn.disabled = !licensed;
+      if (licensed) {
+        licenseGateHint.innerHTML = "School license is active. Class snapshot generation is unlocked for district reporting prep.";
+      } else {
+        licenseGateHint.innerHTML = "Activate a school license to unlock admin snapshots. <a class=\"inline-link\" href=\"/school-license.html\">Open school license page</a>.";
       }
     }
 
@@ -651,6 +719,25 @@
       });
     }
 
+    function buildClassSnapshot() {
+      const completionHistory = Array.isArray(state.classroom.report?.assignmentCompletions)
+        ? state.classroom.report.assignmentCompletions
+        : [];
+      return {
+        generatedAt: new Date().toISOString(),
+        classroomEnabled: Boolean(state.classroom.enabled),
+        sessionActive: isClassroomSessionActive(),
+        minutesRemaining: getClassroomMinutesRemaining(),
+        shopLock: Boolean(state.classroom.shopDisabledDuringClass),
+        whitelist: [...(state.classroom.gameWhitelist || [])],
+        activePreset: Object.keys(CLASSROOM_PRESETS).find((key) => matchesPreset(key)) || "",
+        assignmentBundleId: state.classroom.assignment?.bundleId || "",
+        assignmentCompletedAt: state.classroom.assignment?.completedAt || 0,
+        assignmentReportCount: completionHistory.length,
+        schoolLicenseActive: hasSchoolLicense(),
+      };
+    }
+
     document.getElementById("assignBtn").addEventListener("click", () => {
       runProtectedMutation("save assignment bundle", () => {
         const bundleId = assignmentSelect.value || "";
@@ -688,6 +775,18 @@
         renderStatus();
         setNotice("Classroom session ended.", "ok");
       });
+    });
+
+    snapshotBtn.addEventListener("click", () => {
+      if (!hasSchoolLicense()) {
+        setNotice("School license required for class snapshots.", "error");
+        renderStatus();
+        return;
+      }
+      const snapshot = buildClassSnapshot();
+      snapshotPreview.textContent = JSON.stringify(snapshot, null, 2);
+      setNotice("Class snapshot generated.", "ok");
+      renderStatus();
     });
 
     pinInput.addEventListener("input", () => {
@@ -744,6 +843,8 @@
       assignmentReportCount: Array.isArray(state.classroom.report?.assignmentCompletions)
         ? state.classroom.report.assignmentCompletions.length
         : 0,
+      schoolLicenseActive: hasSchoolLicense(),
+      snapshotReady: Boolean(snapshotPreview.textContent && snapshotPreview.textContent.includes("generatedAt")),
       pinRequiredForActiveSessionChange: requiresPinForMutation(),
     });
 

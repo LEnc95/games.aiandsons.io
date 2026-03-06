@@ -5,6 +5,8 @@ import {
   ENTITLEMENT_KEYS,
   DEFAULT_ENTITLEMENTS,
   normalizeEntitlements,
+  normalizeSchoolLicenseRequest,
+  SCHOOL_LICENSE_REQUEST_STATUSES,
   hasEntitlement,
   isPremiumShopItem,
   getRequiredEntitlementForShopItem,
@@ -57,4 +59,38 @@ test('hasEntitlement reads keys from normalized entitlement objects', () => {
   const entitlements = normalizeEntitlements({ familyPremium: true, schoolLicense: false });
   assert.equal(hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements), true);
   assert.equal(hasEntitlement(ENTITLEMENT_KEYS.SCHOOL_LICENSE, entitlements), false);
+});
+
+test('normalizeSchoolLicenseRequest enforces safe shape and valid statuses', () => {
+  const normalized = normalizeSchoolLicenseRequest({
+    status: 'pending_review',
+    requestId: 'sl_demo',
+    schoolName: 'Elm Street School',
+    districtEmail: 'ADMIN@DISTRICT.ORG',
+    seats: 42.7,
+  });
+
+  assert.deepEqual(
+    normalized,
+    {
+      status: 'pending_review',
+      requestId: 'sl_demo',
+      planId: '',
+      schoolName: 'Elm Street School',
+      districtEmail: 'admin@district.org',
+      seats: 42,
+      submittedAt: 0,
+      approvedAt: 0,
+    },
+  );
+});
+
+test('normalizeSchoolLicenseRequest falls back to idle for unknown statuses', () => {
+  const normalized = normalizeSchoolLicenseRequest({
+    status: 'unknown_state',
+    requestId: 'abc',
+  });
+
+  assert.equal(normalized.status, SCHOOL_LICENSE_REQUEST_STATUSES.IDLE);
+  assert.equal(normalized.requestId, 'abc');
 });

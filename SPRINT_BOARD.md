@@ -141,7 +141,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 ## Sprint 5 - School Monetization + Reporting
 
-### CG-501 Classroom License Flow (Status: TODO)
+### CG-501 Classroom License Flow (Status: DONE)
 - Description: Add school/teacher license purchase entry point.
 - Acceptance criteria:
   - Pricing and benefits are published in clear language.
@@ -200,4 +200,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 4 kickoff item CG-401 is complete (local entitlement gates, premium lock messaging, and deterministic tests/smoke coverage).
 - Sprint 4 follow-up item CG-402 is complete (family plans page, local checkout intents, and checkout smoke coverage).
 - Sprint 4 content item CG-403 is complete (premium challenge track UI + free-tier CTA behavior + deterministic premium track smoke coverage).
-- Next highest-value work item is CG-501 classroom license flow.
+- Sprint 5 kickoff item CG-501 is complete (school license page, district review handoff flow, and teacher licensed-tool unlock behavior).
+- Next highest-value work item is CG-502 report generator.

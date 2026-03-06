@@ -485,3 +485,38 @@
   - Reviewed `output/web-game/premium-track-e2e/premium-track-locked.png` and `premium-track-entitled.png`; locked CTA and entitled cards render correctly.
 - Next TODO:
   - Start CG-501 classroom license flow (school-facing pricing/benefits page + local license state scaffold).
+- Continued sprint work (2026-03-06): completed CG-501 Classroom License Flow.
+- Core implementation shipped:
+  - Added local school license request helpers in `src/core/entitlements.js`:
+    - `SCHOOL_LICENSE_REQUEST_STATUSES`
+    - `normalizeSchoolLicenseRequest`, `getSchoolLicenseRequest`
+    - `submitSchoolLicenseRequest`, `activateSchoolLicenseFromRequest`
+    - `clearSchoolLicenseRequest`, `deactivateSchoolLicense`
+  - Added new school licensing page `school-license.html`:
+    - Clear teacher/school plan cards and benefits copy.
+    - District review request form (school name, reviewer email, seats).
+    - Request handoff via generated `mailto:` draft containing request metadata + request ID.
+    - Local demo activation/deactivation controls for entitlement flow validation.
+  - Updated teacher dashboard `teacher/index.html`:
+    - Added School License status card.
+    - Added licensed admin tools panel with school-license-gated "Generate Class Snapshot" action.
+    - Snapshot output now provides structured classroom summary JSON only when school license entitlement is active.
+  - Navigation updates:
+    - Added School License links from home (`index.html`), shop (`shop.html`), pricing (`pricing.html`), and teacher topbar.
+  - Added deterministic browser smoke automation:
+    - `scripts/qa/school-license-smoke.mjs`
+    - npm script `test:school-license-smoke:raw`.
+- Tests/docs updates:
+  - Extended `tests/entitlements.integration.test.mjs` with school-license request normalization coverage.
+  - Updated `README.md` with school-license flow command/check coverage.
+  - Updated `SPRINT_BOARD.md`: CG-501 marked DONE; next item moved to CG-502 report generator.
+- Validation run results after CG-501:
+  - `npm run test:shop` (pass).
+  - `npm run test:classroom-smoke` (pass).
+  - Raw smoke suite all pass: discovery, missions, weekly, assignment, entitlements, pricing, premium-track, school-license.
+  - Skill Playwright client run: `output/web-game/school-license-skill-smoke/shot-0.png` reviewed.
+- Visual verification:
+  - Reviewed `output/web-game/school-license-e2e/school-license-pending.png` and `teacher-school-license-active.png`.
+  - Confirmed pending review messaging, request metadata display, and teacher licensed-tool unlock state render correctly.
+- Next TODO:
+  - Start CG-502 report generator (aggregate class metrics + CSV/PDF export path from browser).

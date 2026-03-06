@@ -17,6 +17,23 @@ export const DEFAULT_ENTITLEMENTS = Object.freeze({
   },
 });
 
+export const SCHOOL_LICENSE_REQUEST_STATUSES = Object.freeze({
+  IDLE: 'idle',
+  PENDING_REVIEW: 'pending_review',
+  ACTIVE: 'active',
+});
+
+export const DEFAULT_SCHOOL_LICENSE_REQUEST = Object.freeze({
+  status: SCHOOL_LICENSE_REQUEST_STATUSES.IDLE,
+  requestId: '',
+  planId: '',
+  schoolName: '',
+  districtEmail: '',
+  seats: 0,
+  submittedAt: 0,
+  approvedAt: 0,
+});
+
 const PREMIUM_SHOP_ITEM_ID_LIST = Object.freeze([
   'paddle-gold',
   'paddle-void',
@@ -33,6 +50,9 @@ const PREMIUM_SHOP_ITEM_ID_LIST = Object.freeze([
 ]);
 
 const PREMIUM_SHOP_ITEM_IDS = new Set(PREMIUM_SHOP_ITEM_ID_LIST);
+
+const SCHOOL_LICENSE_REQUEST_STORAGE_KEY = 'schoolLicenseRequest';
+const MAX_SCHOOL_LICENSE_SEATS = 100000;
 
 export const normalizeEntitlements = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
@@ -136,6 +156,122 @@ export const clearCheckoutIntent = () => {
       completedAt: 0,
     },
   });
+};
+
+const sanitizeText = (value, maxLength = 120) => {
+  return String(value || '').trim().slice(0, maxLength);
+};
+
+const normalizeSeatCount = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(MAX_SCHOOL_LICENSE_SEATS, Math.floor(numeric)));
+};
+
+const isLikelyEmail = (value) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+};
+
+const schoolRequestId = () => {
+  return randomToken().replace(/^co_/, 'sl_');
+};
+
+export const normalizeSchoolLicenseRequest = (source) => {
+  const raw = source && typeof source === 'object' ? source : {};
+  const rawStatus = typeof raw.status === 'string' ? raw.status.trim().toLowerCase() : SCHOOL_LICENSE_REQUEST_STATUSES.IDLE;
+  const status = Object.values(SCHOOL_LICENSE_REQUEST_STATUSES).includes(rawStatus)
+    ? rawStatus
+    : SCHOOL_LICENSE_REQUEST_STATUSES.IDLE;
+  return {
+    status,
+    requestId: sanitizeText(raw.requestId, 64),
+    planId: sanitizeText(raw.planId, 64),
+    schoolName: sanitizeText(raw.schoolName, 120),
+    districtEmail: sanitizeText(raw.districtEmail, 160).toLowerCase(),
+    seats: normalizeSeatCount(raw.seats),
+    submittedAt: Number.isFinite(raw.submittedAt) ? Math.max(0, Math.floor(raw.submittedAt)) : 0,
+    approvedAt: Number.isFinite(raw.approvedAt) ? Math.max(0, Math.floor(raw.approvedAt)) : 0,
+  };
+};
+
+export const getSchoolLicenseRequest = () => {
+  return normalizeSchoolLicenseRequest(get(SCHOOL_LICENSE_REQUEST_STORAGE_KEY, DEFAULT_SCHOOL_LICENSE_REQUEST));
+};
+
+const setSchoolLicenseRequest = (nextValue) => {
+  const normalized = normalizeSchoolLicenseRequest(nextValue);
+  set(SCHOOL_LICENSE_REQUEST_STORAGE_KEY, normalized);
+  return normalized;
+};
+
+export const submitSchoolLicenseRequest = ({ planId, schoolName, districtEmail, seats } = {}) => {
+  const nextPlanId = sanitizeText(planId, 64);
+  const nextSchoolName = sanitizeText(schoolName, 120);
+  const nextDistrictEmail = sanitizeText(districtEmail, 160).toLowerCase();
+  const nextSeats = normalizeSeatCount(seats);
+  if (!nextPlanId || !nextSchoolName || !isLikelyEmail(nextDistrictEmail) || nextSeats < 1) {
+    return null;
+  }
+
+  const request = setSchoolLicenseRequest({
+    status: SCHOOL_LICENSE_REQUEST_STATUSES.PENDING_REVIEW,
+    requestId: schoolRequestId(),
+    planId: nextPlanId,
+    schoolName: nextSchoolName,
+    districtEmail: nextDistrictEmail,
+    seats: nextSeats,
+    submittedAt: Date.now(),
+    approvedAt: 0,
+  });
+
+  setEntitlements({
+    ...getEntitlements(),
+    [ENTITLEMENT_KEYS.SCHOOL_LICENSE]: false,
+  });
+
+  return request;
+};
+
+export const activateSchoolLicenseFromRequest = (requestId) => {
+  const token = sanitizeText(requestId, 64);
+  if (!token) return null;
+  const current = getSchoolLicenseRequest();
+  if (
+    current.status !== SCHOOL_LICENSE_REQUEST_STATUSES.PENDING_REVIEW
+    || current.requestId !== token
+  ) {
+    return null;
+  }
+
+  const request = setSchoolLicenseRequest({
+    ...current,
+    status: SCHOOL_LICENSE_REQUEST_STATUSES.ACTIVE,
+    approvedAt: Date.now(),
+  });
+
+  const entitlements = setEntitlements({
+    ...getEntitlements(),
+    [ENTITLEMENT_KEYS.SCHOOL_LICENSE]: true,
+  });
+
+  return { request, entitlements };
+};
+
+export const clearSchoolLicenseRequest = () => {
+  const current = getSchoolLicenseRequest();
+  if (current.status === SCHOOL_LICENSE_REQUEST_STATUSES.ACTIVE) {
+    return current;
+  }
+  return setSchoolLicenseRequest(DEFAULT_SCHOOL_LICENSE_REQUEST);
+};
+
+export const deactivateSchoolLicense = () => {
+  const entitlements = setEntitlements({
+    ...getEntitlements(),
+    [ENTITLEMENT_KEYS.SCHOOL_LICENSE]: false,
+  });
+  const request = setSchoolLicenseRequest(DEFAULT_SCHOOL_LICENSE_REQUEST);
+  return { entitlements, request };
 };
 
 const toItemId = (itemOrId) => {

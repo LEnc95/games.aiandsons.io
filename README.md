@@ -7,6 +7,7 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `index.html`: homepage hub with launcher cards, search/filter controls, daily/weekly progression panels, coin-earning tags, profile modal, badges modal, recent games, and version badge.
 - `shop.html`: in-app shop with game-tagged items, text/game filtering, cosmetics/inventory unlocks, and premium entitlement gates.
 - `pricing.html`: family monthly/annual plans page with local checkout intent flow.
+- `school-license.html`: school/district licensing page with local district-review request handoff flow.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, and PIN-gated active-session mutations.
 - `src/core/*`: shared persistence/state helpers and entitlement gate logic.
 - `src/meta/games.js`: game registry used by homepage UI.
@@ -118,6 +119,12 @@ Run the premium challenge track smoke test against a pre-started server at `http
 npm run test:premium-track-smoke:raw
 ```
 
+Run the school license flow smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:school-license-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -182,6 +189,12 @@ npm run test:classroom-smoke:raw
 1. Free tier users see a locked premium challenge panel with upgrade CTA.
 2. Entitled users see active premium challenge cards with completion/progress metadata.
 3. Premium track rendering path executes with no console errors.
+
+`npm run test:school-license-smoke:raw` currently checks:
+
+1. School license page renders clear plan cards and district review form.
+2. Submitting a request stores a pending review payload with request ID handoff data.
+3. Activating a request enables `schoolLicense` and unlocks licensed teacher snapshot tools.
 
 ## Notes for future updates
 

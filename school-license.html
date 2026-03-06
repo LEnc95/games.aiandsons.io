@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>School License - Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root {
+      --bg: #071126;
+      --panel: #121f3e;
+      --panel-soft: #0d1833;
+      --border: rgba(104, 165, 223, 0.34);
+      --text: #e9f2ff;
+      --muted: #a0b9dc;
+      --accent: #63b6ff;
+      --warn: #ffd794;
+      --ok: #9cf0cb;
+      --danger: #ffc7d0;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: radial-gradient(circle at 18% 0%, #16325f 0%, var(--bg) 54%, #050a17 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px clamp(16px, 4vw, 32px);
+      border-bottom: 1px solid rgba(104, 165, 223, 0.28);
+      background: rgba(8, 18, 39, 0.84);
+      backdrop-filter: blur(8px);
+      flex-wrap: wrap;
+    }
+    .topbar h1 { margin: 0; font-size: clamp(20px, 3vw, 28px); }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .link-btn {
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .wrap {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: clamp(20px, 4vw, 34px) clamp(16px, 4vw, 30px) 48px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+      padding: 16px;
+    }
+    .hero h2 {
+      margin: 0 0 8px 0;
+      font-size: clamp(23px, 3.4vw, 34px);
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .benefits {
+      margin: 14px 0 0 0;
+      padding-left: 18px;
+      color: #d4e7ff;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .plan-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+    }
+    .plan-card {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .plan-card.selected {
+      border-color: rgba(99, 182, 255, 0.66);
+      box-shadow: inset 0 0 0 1px rgba(99, 182, 255, 0.3);
+    }
+    .plan-card h3 { margin: 0 0 6px 0; font-size: 18px; }
+    .plan-price { margin: 0 0 8px 0; font-size: 20px; font-weight: 700; }
+    .plan-desc { margin: 0 0 10px 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .plan-select {
+      width: 100%;
+      border: none;
+      border-radius: 9px;
+      padding: 9px 11px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #071126;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 11px; }
+    .form-row label { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .form-row input {
+      width: 100%;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 14px;
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .actions button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 11px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #071126;
+      background: var(--accent);
+    }
+    .actions button.secondary {
+      background: rgba(255, 255, 255, 0.16);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .actions button.warn {
+      background: rgba(255, 215, 148, 0.23);
+      color: #ffe8ba;
+      border: 1px solid rgba(255, 215, 148, 0.36);
+    }
+    .actions button.danger {
+      background: rgba(255, 128, 153, 0.24);
+      color: #ffd4de;
+      border: 1px solid rgba(255, 128, 153, 0.42);
+    }
+    .actions button:disabled {
+      opacity: 0.52;
+      cursor: not-allowed;
+    }
+    .status {
+      margin: 12px 0 0 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.05);
+      color: #d4e6ff;
+    }
+    .status.ok {
+      color: #d4ffe8;
+      border-color: rgba(156, 240, 203, 0.42);
+      background: rgba(156, 240, 203, 0.14);
+    }
+    .status.pending {
+      color: #ffe9c1;
+      border-color: rgba(255, 215, 148, 0.4);
+      background: rgba(255, 215, 148, 0.12);
+    }
+    .status.error {
+      color: #ffd8df;
+      border-color: rgba(255, 140, 165, 0.45);
+      background: rgba(255, 140, 165, 0.12);
+    }
+    .detail-list {
+      margin: 10px 0 0 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+      color: #cee2ff;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 92px;
+      white-space: pre-line;
+    }
+    .handoff-link {
+      margin-top: 10px;
+      display: inline-flex;
+      color: #ffebbf;
+      font-weight: 700;
+      text-decoration: underline;
+      font-size: 13px;
+    }
+    .handoff-link.disabled {
+      color: #b5c7e2;
+      pointer-events: none;
+      text-decoration: none;
+    }
+    .note {
+      margin: 12px 0 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    @media (max-width: 920px) {
+      .wrap { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>School License</h1>
+    <div class="links">
+      <a class="link-btn" href="/">Home</a>
+      <a class="link-btn" href="/teacher/">Teacher</a>
+      <a class="link-btn" href="/shop.html">Shop</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel hero">
+      <h2>School-safe licensing for teachers and districts</h2>
+      <p>
+        Plans are designed for classrooms first: no ad-targeting dependencies, clear student-data boundaries,
+        and review-ready pricing details for school procurement teams.
+      </p>
+      <ul class="benefits">
+        <li>Unlock licensed classroom admin tools and school-specific controls.</li>
+        <li>Generate district handoff drafts for approval workflows.</li>
+        <li>Keep student play available even if license review is still pending.</li>
+      </ul>
+      <div id="planGrid" class="plan-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>District Review Request</h2>
+      <div class="form-row">
+        <label for="schoolNameInput">School or district name</label>
+        <input id="schoolNameInput" type="text" placeholder="Example: Pine Hill District" maxlength="120" />
+      </div>
+      <div class="form-row">
+        <label for="districtEmailInput">District reviewer email</label>
+        <input id="districtEmailInput" type="email" placeholder="approvals@district.org" maxlength="160" />
+      </div>
+      <div class="form-row">
+        <label for="seatCountInput">Estimated seats</label>
+        <input id="seatCountInput" type="number" min="1" max="100000" step="1" value="120" />
+      </div>
+
+      <div class="actions">
+        <button id="submitRequestBtn" type="button">Submit Review Request</button>
+        <button id="approveRequestBtn" class="warn" type="button">Activate Demo License</button>
+        <button id="clearRequestBtn" class="secondary" type="button">Clear Pending Request</button>
+        <button id="deactivateBtn" class="danger" type="button">Deactivate License</button>
+      </div>
+
+      <p id="licenseStatus" class="status">No school license request yet.</p>
+      <div id="requestDetails" class="detail-list">Request details will appear here.</div>
+      <a id="handoffLink" class="handoff-link disabled" href="#">Open district handoff draft</a>
+      <p class="note">
+        This page uses local demo state only. In production, replace request submission with a secure backend and district approval workflow.
+      </p>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      ENTITLEMENT_KEYS,
+      SCHOOL_LICENSE_REQUEST_STATUSES,
+      getEntitlements,
+      hasEntitlement,
+      getSchoolLicenseRequest,
+      submitSchoolLicenseRequest,
+      activateSchoolLicenseFromRequest,
+      clearSchoolLicenseRequest,
+      deactivateSchoolLicense,
+    } from './src/core/entitlements.js';
+
+    const plans = [
+      {
+        id: 'teacher-classroom',
+        name: 'Teacher Classroom License',
+        price: '$29 / month',
+        desc: 'Single classroom coverage with school admin features and reporting readiness.',
+      },
+      {
+        id: 'school-site',
+        name: 'School Site License',
+        price: '$299 / year',
+        desc: 'Whole-school option with district review handoff support and renewal planning.',
+      },
+    ];
+
+    const planGrid = document.getElementById('planGrid');
+    const schoolNameInput = document.getElementById('schoolNameInput');
+    const districtEmailInput = document.getElementById('districtEmailInput');
+    const seatCountInput = document.getElementById('seatCountInput');
+    const submitRequestBtn = document.getElementById('submitRequestBtn');
+    const approveRequestBtn = document.getElementById('approveRequestBtn');
+    const clearRequestBtn = document.getElementById('clearRequestBtn');
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    const licenseStatus = document.getElementById('licenseStatus');
+    const requestDetails = document.getElementById('requestDetails');
+    const handoffLink = document.getElementById('handoffLink');
+
+    let selectedPlanId = plans[0].id;
+
+    const toPositiveSeats = (value) => {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 0;
+      return Math.max(0, Math.floor(numeric));
+    };
+
+    function getSelectedPlan() {
+      return plans.find((plan) => plan.id === selectedPlanId) || plans[0];
+    }
+
+    function buildHandoffHref(request, plan) {
+      if (!request || request.status !== SCHOOL_LICENSE_REQUEST_STATUSES.PENDING_REVIEW) {
+        return '#';
+      }
+      const subject = `[Cade Games] School License Review - ${request.schoolName}`;
+      const lines = [
+        'Hello district review team,',
+        '',
+        'Please review this school license request for Cade\'s Games.',
+        `Plan: ${plan.name} (${plan.price})`,
+        `School/District: ${request.schoolName}`,
+        `Requested seats: ${request.seats}`,
+        `Request ID: ${request.requestId}`,
+        `Submitted at: ${new Date(request.submittedAt).toLocaleString()}`,
+        '',
+        'Thanks.',
+      ];
+      return `mailto:${encodeURIComponent(request.districtEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+    }
+
+    function renderPlans() {
+      planGrid.innerHTML = '';
+      for (const plan of plans) {
+        const card = document.createElement('article');
+        card.className = `plan-card${selectedPlanId === plan.id ? ' selected' : ''}`;
+        card.innerHTML = `
+          <h3>${plan.name}</h3>
+          <p class="plan-price">${plan.price}</p>
+          <p class="plan-desc">${plan.desc}</p>
+          <button type="button" class="plan-select">Select plan</button>
+        `;
+        card.querySelector('.plan-select').addEventListener('click', () => {
+          selectedPlanId = plan.id;
+          renderPlans();
+          renderStatus();
+        });
+        planGrid.appendChild(card);
+      }
+    }
+
+    function renderStatus(message = '', type = '') {
+      const entitlements = getEntitlements();
+      const request = getSchoolLicenseRequest();
+      const schoolLicenseActive = hasEntitlement(ENTITLEMENT_KEYS.SCHOOL_LICENSE, entitlements);
+      const selectedPlan = getSelectedPlan();
+
+      if (message) {
+        licenseStatus.textContent = message;
+        licenseStatus.className = `status ${type}`.trim();
+      } else if (schoolLicenseActive) {
+        licenseStatus.textContent = 'School license is active. Licensed admin features are unlocked for teachers.';
+        licenseStatus.className = 'status ok';
+      } else if (request.status === SCHOOL_LICENSE_REQUEST_STATUSES.PENDING_REVIEW) {
+        licenseStatus.textContent = 'District review pending. Classroom gameplay remains available during review.';
+        licenseStatus.className = 'status pending';
+      } else {
+        licenseStatus.textContent = 'No school license request yet.';
+        licenseStatus.className = 'status';
+      }
+
+      if (request.status === SCHOOL_LICENSE_REQUEST_STATUSES.IDLE) {
+        requestDetails.textContent = 'Request details will appear here.';
+      } else {
+        const statusLabel = request.status === SCHOOL_LICENSE_REQUEST_STATUSES.ACTIVE ? 'Active' : 'Pending Review';
+        const lines = [
+          `Status: ${statusLabel}`,
+          `Plan: ${request.planId || selectedPlan.id}`,
+          `School: ${request.schoolName}`,
+          `District email: ${request.districtEmail}`,
+          `Seats: ${request.seats}`,
+          `Request ID: ${request.requestId || 'n/a'}`,
+          `Submitted: ${request.submittedAt ? new Date(request.submittedAt).toLocaleString() : 'n/a'}`,
+          `Approved: ${request.approvedAt ? new Date(request.approvedAt).toLocaleString() : 'n/a'}`,
+        ];
+        requestDetails.textContent = lines.join('\n');
+      }
+
+      const handoffReady = request.status === SCHOOL_LICENSE_REQUEST_STATUSES.PENDING_REVIEW && Boolean(request.requestId);
+      handoffLink.classList.toggle('disabled', !handoffReady);
+      handoffLink.href = handoffReady ? buildHandoffHref(request, selectedPlan) : '#';
+
+      approveRequestBtn.disabled = !handoffReady;
+      clearRequestBtn.disabled = !handoffReady;
+      deactivateBtn.disabled = !schoolLicenseActive;
+    }
+
+    submitRequestBtn.addEventListener('click', () => {
+      const nextSeats = toPositiveSeats(seatCountInput.value);
+      const request = submitSchoolLicenseRequest({
+        planId: selectedPlanId,
+        schoolName: schoolNameInput.value,
+        districtEmail: districtEmailInput.value,
+        seats: nextSeats,
+      });
+      if (!request) {
+        renderStatus('Add a school name, valid reviewer email, and at least 1 seat.', 'error');
+        return;
+      }
+      renderStatus('District review request submitted.', 'pending');
+    });
+
+    approveRequestBtn.addEventListener('click', () => {
+      const request = getSchoolLicenseRequest();
+      const result = activateSchoolLicenseFromRequest(request.requestId);
+      if (!result) {
+        renderStatus('Request activation failed. Submit a pending request first.', 'error');
+        return;
+      }
+      renderStatus('School license activated. Teacher admin tools are now unlocked.', 'ok');
+    });
+
+    clearRequestBtn.addEventListener('click', () => {
+      clearSchoolLicenseRequest();
+      renderStatus('Pending school license request cleared.', '');
+    });
+
+    deactivateBtn.addEventListener('click', () => {
+      deactivateSchoolLicense();
+      renderStatus('School license deactivated.', '');
+    });
+
+    window.render_game_to_text = () => {
+      const entitlements = getEntitlements();
+      const request = getSchoolLicenseRequest();
+      return JSON.stringify({
+        view: 'school-license',
+        selectedPlanId,
+        schoolLicense: hasEntitlement(ENTITLEMENT_KEYS.SCHOOL_LICENSE, entitlements),
+        requestStatus: request.status,
+        requestId: request.requestId,
+        requestSeats: request.seats,
+        handoffReady: request.status === SCHOOL_LICENSE_REQUEST_STATUSES.PENDING_REVIEW && Boolean(request.requestId),
+      });
+    };
+
+    window.advanceTime = async (ms = 0) => {
+      const wait = Math.max(0, Number(ms) || 0);
+      if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+      renderStatus();
+    };
+
+    renderPlans();
+    renderStatus();
+    window.addEventListener('pageshow', () => renderStatus());
+  </script>
+</body>
+</html>
