@@ -102,17 +102,27 @@ async function main() {
     await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
     await page.selectOption("#shopGameFilter", "Tetris");
     const shopTagState = await page.evaluate(() => {
-      const titles = [...document.querySelectorAll("#shopGrid .shop-item-title")]
-        .map((node) => (node.textContent || "").trim())
-        .filter(Boolean);
-      const tags = [...document.querySelectorAll("#shopGrid .shop-item-tag")]
-        .map((node) => (node.textContent || "").trim())
-        .filter(Boolean);
-      return { titles, tags };
+      const cards = [...document.querySelectorAll("#shopGrid .shop-item")].map((card) => ({
+        title: (card.querySelector(".shop-item-title")?.textContent || "").trim(),
+        tags: [...card.querySelectorAll(".shop-item-tag")]
+          .map((node) => (node.textContent || "").trim())
+          .filter(Boolean),
+      }));
+      return {
+        titles: cards.map((card) => card.title).filter(Boolean),
+        cards,
+      };
     });
     assert(shopTagState.titles.length > 0, "Expected at least one Tetris item after game filter.");
-    assert(shopTagState.tags.length > 0, "Expected tags to render for filtered shop items.");
-    assert(shopTagState.tags.every((tag) => tag === "Tetris"), "Expected all visible shop tags to be Tetris.");
+    assert(shopTagState.cards.every((card) => card.tags.length > 0), "Expected tags to render for filtered shop items.");
+    assert(
+      shopTagState.cards.every((card) => card.tags.includes("Tetris")),
+      "Expected each visible shop card to include a Tetris game tag.",
+    );
+    assert(
+      shopTagState.cards.every((card) => card.tags.every((tag) => tag === "Tetris" || tag === "Family Premium")),
+      "Expected filtered shop tags to be only Tetris and optional Family Premium tags.",
+    );
     summary.checks.push({ name: "shop_game_filter_tetris", pass: true, data: shopTagState });
 
     await page.fill("#shopSearchInput", "aurora");

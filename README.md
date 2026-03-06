@@ -5,13 +5,13 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 ## What this repository contains
 
 - `index.html`: homepage hub with launcher cards, search/filter controls, daily/weekly progression panels, coin-earning tags, profile modal, badges modal, recent games, and version badge.
-- `shop.html`: in-app shop with game-tagged items, text/game filtering, and cosmetics/inventory unlocks.
+- `shop.html`: in-app shop with game-tagged items, text/game filtering, cosmetics/inventory unlocks, and premium entitlement gates.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, and PIN-gated active-session mutations.
-- `src/core/*`: shared persistence/state helpers.
+- `src/core/*`: shared persistence/state helpers and entitlement gate logic.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/prog/*`: achievements, daily missions, and cosmetics logic.
 - `*/index.html` game folders: standalone game pages.
-- `tests/shop-items.integration.test.mjs`: integration check that validates shop item consistency.
+- `tests/shop-items.integration.test.mjs` + `tests/entitlements.integration.test.mjs`: integration checks for shop consistency and local premium gate behavior.
 
 ## Current games
 
@@ -60,7 +60,7 @@ See `src/core/state.js` for load/normalize/persist details.
 Run the integration test:
 
 ```bash
-node --test tests/shop-items.integration.test.mjs
+node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs
 ```
 
 Or via npm script:
@@ -99,6 +99,12 @@ Run the classroom assignment bundle smoke test against a pre-started server at `
 npm run test:assignment-smoke:raw
 ```
 
+Run the entitlements shop smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:entitlements-smoke:raw
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -110,6 +116,9 @@ npm run test:classroom-smoke:raw
 1. Shop item IDs are unique.
 2. Cosmetic shop entries have matching style handlers.
 3. Inventory shop entries use a known game prefix that maps to a real game file.
+4. Game metadata uses real emoji values (no placeholder corruption).
+5. Badge metadata uses real icon values (no placeholder corruption).
+6. Entitlement gate helpers correctly map premium IDs and lock/unlock behavior.
 
 `npm run test:classroom-smoke` currently checks:
 
@@ -141,6 +150,12 @@ npm run test:classroom-smoke:raw
 1. Teacher page can save a classroom assignment bundle in local classroom state.
 2. Home page shows the active assignment progress banner for students.
 3. Assignment completion writes completion timestamps and report entries to local classroom report data.
+
+`npm run test:entitlements-smoke:raw` currently checks:
+
+1. Free tier shop shows premium tags plus locked premium purchase controls.
+2. Enabling local `familyPremium` entitlement removes premium lock controls.
+3. Shop summary/notice reflects the current entitlement tier without network calls.
 
 ## Notes for future updates
 

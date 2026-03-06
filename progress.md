@@ -412,3 +412,32 @@
 - Sprint board updated:
   - Marked `CG-303` as DONE.
   - Next sprint goal set to `CG-401 Entitlements Core`.
+- Continued sprint work (2026-03-06): completed CG-401 Entitlements Core.
+- Core implementation shipped:
+  - Added `src/core/entitlements.js` with local, network-free gate helpers:
+    - `normalizeEntitlements`, `getEntitlements`, `setEntitlements`
+    - `hasEntitlement`
+    - `isPremiumShopItem`, `getRequiredEntitlementForShopItem`, `isShopItemLockedByEntitlement`
+  - Wired entitlement gating into `shop.html`:
+    - Premium-tag rendering on gated items.
+    - Explanatory premium lock messaging and disabled buy actions for non-entitled users.
+    - Purchase-path hard guard in `buyItem(...)` to block premium purchase attempts when entitlement is missing.
+    - Free-tier vs premium-tier summary/notice messaging in shop controls.
+  - Added deterministic entitlement tests:
+    - `tests/entitlements.integration.test.mjs`
+    - Updated `test:shop` npm script to run both shop + entitlement integration tests.
+  - Added deterministic browser QA for entitlement behavior:
+    - `scripts/qa/entitlements-shop-smoke.mjs`
+    - npm script `test:entitlements-smoke:raw`
+  - Updated existing discovery smoke assertions to accept dual shop tags (`Tetris` + optional `Family Premium`) per card.
+- Validation run results after CG-401:
+  - `npm run test:shop` (pass: 9 tests).
+  - `npm run test:classroom-smoke` (pass).
+  - `npm run test:discovery-smoke:raw` (pass).
+  - `npm run test:entitlements-smoke:raw` (pass).
+  - `web_game_playwright_client` visual smoke on `/shop.html` (`output/web-game/shop-entitlements-skill-smoke/shot-0.png`) reviewed.
+- Key artifact checks:
+  - `output/web-game/entitlements-shop-e2e/summary.json`: `success: true`, no console errors, premium lock controls shown for free tier and removed for premium tier.
+- Sprint board updated:
+  - Marked `CG-401` as DONE.
+  - Next sprint goal set to `CG-402 Family Pricing Page + Checkout Flow`.

@@ -28,6 +28,7 @@
     .shop-item { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:16px; transition:border-color 0.2s, box-shadow 0.2s, background 0.2s; }
     .shop-item.owned { border-color:var(--accent); background:rgba(90,173,221,0.1); }
     .shop-item.equipped { border-color:#8ad7ff; background:rgba(90,173,221,0.18); box-shadow:0 0 0 2px rgba(90,173,221,0.25); }
+    .shop-item.premium-locked { border-color:rgba(244, 191, 97, 0.6); background:linear-gradient(180deg,#1a1830 0%, #121120 100%); }
     .shop-item-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .shop-item-title { font-size:20px; font-weight:600; margin:0; }
     .shop-item-price { padding:6px 12px; background:rgba(90,173,221,0.2); border-radius:8px; font-weight:600; font-size:14px; transition:background 0.2s, color 0.2s; }
@@ -35,6 +36,7 @@
     .shop-item-price.equipped { background:var(--accent); color:#0b1020; }
     .shop-item-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:-6px; }
     .shop-item-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#d7e7ff; font-size:11px; font-weight:700; }
+    .shop-item-tag.premium { border-color:rgba(244, 191, 97, 0.62); background:rgba(244, 191, 97, 0.2); color:#ffe9be; }
     .shop-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; text-align:center; color:#b7cdf0; font-size:15px; }
     .shop-item-desc { color:var(--muted); font-size:14px; line-height:1.5; margin:0; }
     .shop-item-preview { padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; text-align:center; min-height:80px; display:flex; align-items:center; justify-content:center; }
@@ -45,6 +47,8 @@
     .shop-item-btn.owned:hover:not(:disabled) { background:rgba(90,173,221,0.4); }
     .shop-item-btn.equipped { background:var(--accent); color:#0b1020; }
     .shop-item-btn.equipped:hover:not(:disabled) { background:#6be; }
+    .shop-item-btn.premium-lock { background:rgba(244, 191, 97, 0.2); color:#ffe6b3; border:1px solid rgba(244, 191, 97, 0.4); }
+    .shop-item-note { margin:0; font-size:12px; color:#ffdca0; line-height:1.4; }
     @media (max-width: 700px) {
       .shop-controls { grid-template-columns:1fr; }
     }
@@ -83,6 +87,13 @@
         wasClassroomSessionRecentlyEnded,
         getClassroomMinutesSinceEnd,
       } from './src/core/state.js';
+      import {
+        ENTITLEMENT_KEYS,
+        getEntitlements,
+        hasEntitlement,
+        isPremiumShopItem,
+        isShopItemLockedByEntitlement,
+      } from './src/core/entitlements.js';
 
       if (!(state.inventory instanceof Set)) {
         state.inventory = new Set(Array.isArray(state.inventory) ? state.inventory : []);
@@ -681,6 +692,8 @@
       const renderShopNotice = () => {
         if (!shopNotice) return;
         shopNotice.classList.remove("ended");
+        const entitlements = getEntitlements();
+        const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
         if (isShopLocked()) {
           shopNotice.classList.remove("hidden");
           shopNotice.textContent = "Classroom session is active. Shop actions are locked until the session ends.";
@@ -694,6 +707,11 @@
           shopNotice.classList.remove("hidden");
           shopNotice.classList.add("ended");
           shopNotice.textContent = `${endedMessage} Shop actions are now unlocked.`;
+          return;
+        }
+        if (!hasFamilyPremium) {
+          shopNotice.classList.remove("hidden");
+          shopNotice.textContent = "Some shop items are Family Premium. Free users can still access all core gameplay.";
           return;
         }
         shopNotice.classList.add("hidden");
@@ -734,7 +752,15 @@
         const item = itemById.get(id);
         if (!item) return;
 
+        const entitlements = getEntitlements();
         const isCosmetic = item.type === "cosmetic";
+        const alreadyOwned = isCosmetic
+          ? getOwnedList(item.category).includes(item.value)
+          : state.inventory.has(item.id);
+        if (isShopItemLockedByEntitlement(item, entitlements) && !alreadyOwned) {
+          updateUI();
+          return;
+        }
 
         if (isCosmetic) {
           const ownedList = getOwnedList(item.category);
@@ -819,10 +845,24 @@
 
         const shopLocked = isShopLocked();
         const filteredItems = getFilteredItems();
+        const entitlements = getEntitlements();
+        const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
+        const premiumCount = filteredItems.filter((item) => isPremiumShopItem(item)).length;
+        const premiumLockedCount = filteredItems.filter((item) => {
+          const isCosmetic = item.type === "cosmetic";
+          const owned = isCosmetic
+            ? getOwnedList(item.category).includes(item.value)
+            : state.inventory.has(item.id);
+          return !owned && isShopItemLockedByEntitlement(item, entitlements);
+        }).length;
         renderShopNotice();
         coinsEl.textContent = state.coins;
         if (shopFilterSummary) {
-          shopFilterSummary.textContent = `Showing ${filteredItems.length} of ${items.length} items`;
+          const premiumText = premiumCount > 0
+            ? ` | ${premiumCount} premium${premiumLockedCount > 0 ? ` (${premiumLockedCount} locked)` : ""}`
+            : "";
+          const tierText = hasFamilyPremium ? "Family Premium active" : "Free tier";
+          shopFilterSummary.textContent = `Showing ${filteredItems.length} of ${items.length} items${premiumText} | ${tierText}`;
         }
 
         shopGrid.innerHTML = "";
@@ -836,18 +876,24 @@
           const owned = isCosmetic ? getOwnedList(item.category).includes(item.value) : state.inventory.has(item.id);
           const equipped = isCosmetic ? state.cosmetics[item.category] === item.value : false;
           const canAfford = state.coins >= item.price;
+          const premiumItem = isPremiumShopItem(item);
+          const premiumLocked = premiumItem && !owned && isShopItemLockedByEntitlement(item, entitlements);
 
           const card = document.createElement("div");
           card.className = "shop-item";
           if (owned) card.classList.add("owned");
           if (equipped) card.classList.add("equipped");
+          if (premiumLocked) card.classList.add("premium-locked");
 
           card.innerHTML = `
             <div class="shop-item-header">
               <h3 class="shop-item-title">${item.name}</h3>
               <span class="shop-item-price"></span>
             </div>
-            ${item.game ? `<div class="shop-item-tags"><span class="shop-item-tag">${escapeHtml(item.game)}</span></div>` : ""}
+            ${(item.game || premiumItem) ? `<div class="shop-item-tags">
+              ${item.game ? `<span class="shop-item-tag">${escapeHtml(item.game)}</span>` : ""}
+              ${premiumItem ? `<span class="shop-item-tag premium">Family Premium</span>` : ""}
+            </div>` : ""}
             <p class="shop-item-desc">${item.desc}</p>
             <div class="shop-item-preview">${item.preview}</div>
             <button class="shop-item-btn" type="button"></button>
@@ -878,6 +924,19 @@
 
             button.textContent = "Locked during class";
             button.disabled = true;
+            shopGrid.appendChild(card);
+            return;
+          }
+
+          if (premiumLocked) {
+            badge.textContent = "Premium";
+            button.textContent = "Family Premium required";
+            button.classList.add("premium-lock");
+            button.disabled = true;
+            const note = document.createElement("p");
+            note.className = "shop-item-note";
+            note.textContent = "Included with Family Premium. Free users can still play all core games.";
+            card.appendChild(note);
             shopGrid.appendChild(card);
             return;
           }

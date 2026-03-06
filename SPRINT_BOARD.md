@@ -118,7 +118,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 ## Sprint 4 - Family Premium + Payments
 
-### CG-401 Entitlements Core (Status: TODO)
+### CG-401 Entitlements Core (Status: DONE)
 - Description: Add entitlement flags for free vs premium content.
 - Acceptance criteria:
   - `src/core/entitlements.js` defines gate checks.
@@ -197,4 +197,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 3 kickoff item CG-301 is complete (daily missions state, rewards, and smoke coverage).
 - Sprint 3 follow-up item CG-302 is complete (weekly challenge state, rewards, launcher UI, and smoke coverage).
 - Sprint 3 closing item CG-303 is complete (teacher assignment bundles, home assignment banner, and local report completion logging).
-- Next highest-value work item is CG-401 entitlements core.
+- Sprint 4 kickoff item CG-401 is complete (local entitlement gates, premium lock messaging, and deterministic tests/smoke coverage).
+- Next highest-value work item is CG-402 family pricing page and checkout flow.
