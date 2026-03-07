@@ -10,6 +10,7 @@ export const GAMES = [
   { slug:'minesweeper',    name:'Minesweeper',         emoji:'\u{1F4A3}', scoreHint:'boards',     url:'/minesweeper',   desc:'Clear the board without detonating mines.', earnsCoins:true },
   { slug:'flappy',         name:'Flappy Bird',         emoji:'\u{1F426}', scoreHint:'distance',   url:'/flappy',        desc:'Tap to fly through pipes. Different skins and worlds.', earnsCoins:true },
   { slug:'dino',           name:'Dino Run',            emoji:'\u{1F996}', scoreHint:'distance',   url:'/dino',          desc:'Endless runner with speed ramp and multipliers.', earnsCoins:true },
+  { slug:'doodlejump',     name:'Doodle Jump',         emoji:'\u{1FA82}', scoreHint:'height',     url:'/doodlejump',    desc:'Hop between platforms, climb higher, and avoid falling off-screen.', earnsCoins:true },
   { slug:'spaceinvaders',  name:'Space Invaders',      emoji:'\u{1F47E}', scoreHint:'waves',      url:'/spaceinvaders', desc:'Classic shooter. Clear waves and dodge fire!', earnsCoins:true },
   { slug:'frogger',        name:'Frogger',             emoji:'\u{1F438}', scoreHint:'crossings',  url:'/frogger',       desc:'Hop across traffic and rivers to reach safety.', earnsCoins:true },
   { slug:'minigolf',       name:'Pocket Mini Golf',    emoji:'\u26F3',    scoreHint:'low score',  url:'/minigolf',      desc:'Pull back and putt through hazards across 3 compact holes.', earnsCoins:false },

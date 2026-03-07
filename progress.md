@@ -870,3 +870,37 @@
   - `npm run stripe:reconcile-audit -- --help`
 - Next TODO suggestion:
   - Define Sprint 9 scope (e.g., district SSO/auth hardening, classroom report retention controls, Stripe admin UI).
+- New request (2026-03-07): Add Doodle Jump to the website.
+- Implemented `doodlejump/index.html` as a standalone vertical platform-jumper with:
+  - desktop + touch movement controls,
+  - start/pause/restart flow,
+  - fullscreen toggle (`F`),
+  - deterministic hooks (`window.advanceTime`, `window.render_game_to_text`),
+  - score/high score tracking, platform variants (normal/moving/break), and coin + badge progression hooks on run end.
+- Integrated launcher + routing:
+  - Added `doodlejump` entry to `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added clean URL rewrites + cache header entry in `vercel.json` for `/doodlejump`.
+- Doodle Jump validation + fixes (2026-03-07):
+  - Playwright skill-client runs completed:
+    - `output/web-game/doodlejump-run1` (initial movement + lifecycle smoke; no runtime error artifacts)
+    - `output/web-game/doodlejump-run2` (extended climb path with mixed idle/left/right input; verified score progression and game-over flow)
+  - Artifact review:
+    - Reviewed screenshots from run2 (`shot-0.png`, `shot-1.png`, `shot-3.png`) to confirm active gameplay and end-state overlays.
+    - Reviewed text-state snapshots; run2 reached `score: 1767` with `mode: "game_over"` and best-score persistence.
+    - No `errors-*.json` emitted in final skill-client runs.
+  - Additional targeted controls smoke (headless Playwright):
+    - Verified movement, pause/resume, restart reset-to-menu, start flow, and fullscreen key path without console/page errors.
+    - Artifact: `output/web-game/doodlejump-controls-smoke.png`.
+- Follow-up TODO suggestion:
+  - Add Doodle Jump-specific achievements/rewards in `src/prog/achievements.js` once product criteria are defined (current build only reports generic `anyPlay` + doodle context payload).
+- Compatibility hardening for Doodle Jump:
+  - Replaced direct canvas `roundRect` dependency with an internal rounded-rectangle path helper for broader browser support.
+- Post-hardening revalidation:
+  - Skill client reruns: `output/web-game/doodlejump-run3` and `output/web-game/doodlejump-run4`.
+  - Final artifact set reviewed from run4 (`shot-0.png`, `shot-1.png`) confirms active gameplay plus end-state overlay.
+  - `render_game_to_text` in run4 shows expected playing/game-over transitions with score/best updates.
+  - No `errors-*.json` emitted in these reruns.
+- Final control regression check after compatibility update:
+  - Re-ran targeted controls smoke and confirmed mode transitions (`playing` → `paused` → `playing`), restart reset (`menu`, score `0`), and zero console/page errors.
+  - Artifact: `output/web-game/doodlejump-controls-smoke-2.png`.

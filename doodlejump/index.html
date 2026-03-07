@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Doodle Jump</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0a1633; --fg:#f2f7ff; --muted:#9cb4dd; --accent:#77e4b4; }
+    * { box-sizing:border-box; }
+    html, body {
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--fg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      touch-action:none;
+      position:fixed;
+      inset:0;
+    }
+    .back-home {
+      position:fixed;
+      top:calc(env(safe-area-inset-top, 12px));
+      left:calc(env(safe-area-inset-left, 12px));
+      z-index:20;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 12px;
+      border-radius:8px;
+      background:rgba(0,0,0,0.6);
+      color:#fff;
+      text-decoration:none;
+      font-size:14px;
+      line-height:1;
+      font-weight:600;
+      backdrop-filter:saturate(150%) blur(6px);
+      box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    }
+    .back-home:hover { background:rgba(0,0,0,0.75); }
+    .back-home:focus { outline:2px solid #fff; outline-offset:2px; }
+    .wrap {
+      width:100%;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:clamp(8px, 2vh, 14px);
+      padding:clamp(8px, 2vh, 16px);
+      padding-top:max(calc(env(safe-area-inset-top, 8px) + 40px), clamp(48px, 8vh, 60px));
+      padding-bottom:calc(env(safe-area-inset-bottom, 8px) + clamp(10px, 2vh, 18px));
+    }
+    #canvas-wrap {
+      width:100%;
+      max-width:min(95vw, 460px);
+      max-height:min(72vh, 720px);
+      aspect-ratio:21/32;
+      position:relative;
+    }
+    canvas {
+      width:100%;
+      height:100%;
+      display:block;
+      border:2px solid #213a6e;
+      border-radius:14px;
+      box-shadow:0 14px 30px rgba(0,0,0,0.32);
+      touch-action:none;
+    }
+    .hud {
+      width:100%;
+      max-width:min(95vw, 460px);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      text-align:center;
+      user-select:none;
+    }
+    .stats {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:clamp(13px, 2.4vw, 17px);
+      color:var(--fg);
+      background:rgba(9,19,46,0.75);
+      border:1px solid rgba(120,162,220,0.34);
+      border-radius:10px;
+      padding:9px 12px;
+    }
+    .stats span { color:var(--muted); margin-right:6px; font-size:0.8em; letter-spacing:0.02em; }
+    .hint {
+      min-height:1.4em;
+      color:#c8dafb;
+      font-size:clamp(12px, 2.1vw, 15px);
+    }
+    .buttons, .touch-row {
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .btn, .ctrl {
+      border:2px solid #35578d;
+      background:#244376;
+      color:var(--fg);
+      border-radius:11px;
+      font-weight:700;
+      cursor:pointer;
+      min-height:44px;
+      touch-action:manipulation;
+    }
+    .btn {
+      padding:11px 18px;
+      min-width:96px;
+      font-size:clamp(13px, 2.1vw, 16px);
+    }
+    .btn.primary {
+      background:#77e4b4;
+      color:#0b2731;
+      border-color:#8af0c3;
+    }
+    .btn:disabled {
+      opacity:0.55;
+      cursor:not-allowed;
+    }
+    .ctrl {
+      width:74px;
+      font-size:26px;
+      line-height:1;
+      padding:8px 0;
+      background:#1d335a;
+      border-color:#35578d;
+    }
+    .ctrl:active, .btn:active:not(:disabled) { transform:scale(0.96); }
+    @media (min-width: 900px) {
+      .touch-row { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <div class="wrap">
+    <div id="canvas-wrap">
+      <canvas id="game" width="420" height="640" aria-label="Doodle Jump game canvas"></canvas>
+    </div>
+    <div class="hud">
+      <div class="stats">
+        <div><span>Height</span><strong id="score">0</strong></div>
+        <div><span>Best</span><strong id="best">0</strong></div>
+        <div><span>Mode</span><strong id="mode">MENU</strong></div>
+      </div>
+      <div class="hint" id="hint">Move with Arrow keys or A/D. Press Enter or Start to begin.</div>
+      <div class="buttons">
+        <button id="start-btn" class="btn primary">START</button>
+        <button id="pause-btn" class="btn">PAUSE</button>
+        <button id="restart-btn" class="btn">RESTART</button>
+      </div>
+      <div class="touch-row">
+        <button class="ctrl" data-action="left" aria-label="Move left">◀</button>
+        <button class="ctrl" data-action="right" aria-label="Move right">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('doodlejump');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const modeEl = document.getElementById('mode');
+    const hintEl = document.getElementById('hint');
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const restartBtn = document.getElementById('restart-btn');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const PLATFORM_H = 14;
+    const PLAYER_W = 38;
+    const PLAYER_H = 42;
+    const GRAVITY = 1900;
+    const JUMP_V = -980;
+    const MOVE_ACCEL = 1900;
+    const MOVE_DRAG = 0.0008;
+    const MAX_SPEED = 330;
+
+    let steppingExternally = false;
+    let rafId = 0;
+    let lastTs = performance.now();
+
+    const state = {
+      mode: 'menu',
+      score: 0,
+      best: Number(localStorage.getItem('doodlejump-best') || 0),
+      cameraY: 0,
+      maxHeight: 0,
+      nextPlatformY: H - 70,
+      player: {
+        x: W * 0.5,
+        y: H - 108,
+        vx: 0,
+        vy: 0,
+        w: PLAYER_W,
+        h: PLAYER_H,
+      },
+      input: {
+        left: false,
+        right: false,
+      },
+      lastLanding: 'none',
+      platforms: [],
+      particles: [],
+    };
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(state.score);
+      bestEl.textContent = String(state.best);
+      modeEl.textContent = state.mode.replace('_', ' ').toUpperCase();
+    }
+
+    function setHint(text) {
+      hintEl.textContent = text;
+    }
+
+    function updateButtons() {
+      if (state.mode === 'playing') {
+        startBtn.textContent = 'RUNNING';
+        startBtn.disabled = true;
+      } else if (state.mode === 'paused') {
+        startBtn.textContent = 'RESUME';
+        startBtn.disabled = false;
+      } else if (state.mode === 'game_over') {
+        startBtn.textContent = 'PLAY AGAIN';
+        startBtn.disabled = false;
+      } else {
+        startBtn.textContent = 'START';
+        startBtn.disabled = false;
+      }
+      pauseBtn.disabled = state.mode === 'menu' || state.mode === 'game_over';
+    }
+
+    function newPlatform(y, forceType = null) {
+      const w = rand(72, 106);
+      const x = rand(10, W - w - 10);
+      let type = forceType;
+      if (!type) {
+        const roll = Math.random();
+        if (roll < 0.18) type = 'moving';
+        else if (roll < 0.31) type = 'break';
+        else type = 'normal';
+      }
+      const platform = {
+        x,
+        y,
+        w,
+        h: PLATFORM_H,
+        type,
+        vx: type === 'moving' ? (Math.random() < 0.5 ? -1 : 1) * rand(55, 95) : 0,
+        broken: false,
+        breakTimer: 0,
+      };
+      state.platforms.push(platform);
+    }
+
+    function resetRun() {
+      state.mode = 'menu';
+      state.score = 0;
+      state.cameraY = 0;
+      state.maxHeight = 0;
+      state.player.x = W * 0.5;
+      state.player.y = H - 108;
+      state.player.vx = 0;
+      state.player.vy = 0;
+      state.lastLanding = 'none';
+      state.platforms = [];
+      state.particles = [];
+      state.nextPlatformY = H - 52;
+
+      state.platforms.push({
+        x: W * 0.5 - 65,
+        y: H - 44,
+        w: 130,
+        h: PLATFORM_H,
+        type: 'normal',
+        vx: 0,
+        broken: false,
+        breakTimer: 0,
+      });
+
+      for (let i = 0; i < 14; i++) {
+        state.nextPlatformY -= rand(52, 84);
+        newPlatform(state.nextPlatformY, i < 2 ? 'normal' : null);
+      }
+
+      setHint('Move with Arrow keys or A/D. Press Enter or Start to begin.');
+      updateHud();
+      updateButtons();
+      render();
+    }
+
+    function startOrResume() {
+      if (state.mode === 'game_over') resetRun();
+      if (state.mode === 'menu' || state.mode === 'paused') {
+        state.mode = 'playing';
+        setHint('Climb as high as you can. P pauses, F fullscreen.');
+      }
+      updateButtons();
+      updateHud();
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setHint('Paused. Press Start or P to resume.');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        setHint('Climb as high as you can. P pauses, F fullscreen.');
+      }
+      updateButtons();
+      updateHud();
+    }
+
+    function spawnLandingBurst(x, y, strong = false) {
+      const count = strong ? 16 : 10;
+      for (let i = 0; i < count; i++) {
+        state.particles.push({
+          x,
+          y,
+          vx: rand(-130, 130),
+          vy: rand(-140, -20),
+          size: rand(2, strong ? 5 : 4),
+          life: strong ? rand(0.28, 0.52) : rand(0.2, 0.42),
+          color: strong ? '#ffb089' : '#9de7ff',
+        });
+      }
+    }
+
+    function finishRun() {
+      state.mode = 'game_over';
+      state.input.left = false;
+      state.input.right = false;
+      if (state.score > state.best) {
+        state.best = state.score;
+        localStorage.setItem('doodlejump-best', String(state.best));
+      }
+
+      const coinsEarned = Math.max(0, Math.min(60, Math.floor(state.score / 250)));
+      if (coinsEarned > 0) addCoinsFn(coinsEarned);
+      maybeUnlock({ anyPlay: true, doodlejump: { height: state.score } });
+      setHint(`Game over at ${state.score}. ${coinsEarned > 0 ? `+${coinsEarned} coins earned.` : 'Try for a bigger climb!'}`);
+      updateHud();
+      updateButtons();
+    }
+
+    function updateParticles(dt) {
+      for (const p of state.particles) {
+        p.vy += 650 * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+      }
+      state.particles = state.particles.filter((p) => p.life > 0);
+      if (state.particles.length > 150) state.particles.splice(0, state.particles.length - 150);
+    }
+
+    function updatePlatforms(dt) {
+      for (const p of state.platforms) {
+        if (p.type === 'moving' && !p.broken) {
+          p.x += p.vx * dt;
+          if (p.x < 6 || p.x + p.w > W - 6) {
+            p.vx *= -1;
+            p.x = clamp(p.x, 6, W - p.w - 6);
+          }
+        }
+        if (p.broken) p.breakTimer -= dt;
+      }
+
+      while (state.nextPlatformY > state.cameraY - 180) {
+        state.nextPlatformY -= rand(54, 92);
+        newPlatform(state.nextPlatformY);
+      }
+
+      const visibleBottom = state.cameraY + H + 120;
+      state.platforms = state.platforms.filter((p) => {
+        if (p.broken && p.breakTimer <= 0) return false;
+        return p.y < visibleBottom;
+      });
+    }
+
+    function updatePlayer(dt) {
+      const dir = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
+      if (dir !== 0) {
+        state.player.vx += dir * MOVE_ACCEL * dt;
+      } else {
+        state.player.vx *= Math.pow(MOVE_DRAG, dt);
+      }
+      state.player.vx = clamp(state.player.vx, -MAX_SPEED, MAX_SPEED);
+      state.player.x += state.player.vx * dt;
+      if (state.player.x < -state.player.w * 0.5) state.player.x = W + state.player.w * 0.5;
+      if (state.player.x > W + state.player.w * 0.5) state.player.x = -state.player.w * 0.5;
+
+      const prevY = state.player.y;
+      state.player.vy += GRAVITY * dt;
+      state.player.y += state.player.vy * dt;
+
+      if (state.player.vy > 0) {
+        const prevBottom = prevY + state.player.h * 0.5;
+        const nextBottom = state.player.y + state.player.h * 0.5;
+        for (const p of state.platforms) {
+          if (p.broken) continue;
+          const overlapX = state.player.x + state.player.w * 0.5 > p.x + 8 && state.player.x - state.player.w * 0.5 < p.x + p.w - 8;
+          if (!overlapX) continue;
+          if (prevBottom <= p.y && nextBottom >= p.y) {
+            if (p.type === 'break') {
+              p.broken = true;
+              p.breakTimer = 0.3;
+              spawnLandingBurst(state.player.x, p.y - 2, true);
+              state.lastLanding = 'break';
+            } else {
+              state.player.y = p.y - state.player.h * 0.5;
+              state.player.vy = JUMP_V;
+              if (p.type === 'moving') state.player.vx += p.vx * 0.15;
+              spawnLandingBurst(state.player.x, p.y, false);
+              state.lastLanding = p.type;
+            }
+            break;
+          }
+        }
+      }
+
+      const followLine = state.cameraY + H * 0.34;
+      if (state.player.y < followLine) {
+        const delta = followLine - state.player.y;
+        state.player.y += delta;
+        state.cameraY -= delta;
+        state.maxHeight = Math.max(state.maxHeight, -state.cameraY);
+        state.score = Math.floor(state.maxHeight);
+      }
+
+      if (state.player.y - state.player.h * 0.5 > state.cameraY + H + 72) {
+        finishRun();
+      }
+    }
+
+    function update(dt) {
+      updateParticles(dt);
+      if (state.mode !== 'playing') return;
+      updatePlatforms(dt);
+      updatePlayer(dt);
+      updateHud();
+    }
+
+    function drawBackdrop() {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#123873');
+      g.addColorStop(0.5, '#1a5a8f');
+      g.addColorStop(1, '#a8d6ff');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      const cloudScroll = ((state.cameraY * 0.22) % 140 + 140) % 140;
+      ctx.globalAlpha = 0.28;
+      for (let i = -1; i < 7; i++) {
+        const y = i * 110 + cloudScroll;
+        const x = 55 + Math.sin((i + state.cameraY * 0.003) * 1.7) * 40;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, Math.PI * 2);
+        ctx.arc(x + 28, y + 4, 16, 0, Math.PI * 2);
+        ctx.arc(x - 24, y + 6, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPlatforms() {
+      for (const p of state.platforms) {
+        const sy = p.y - state.cameraY;
+        if (sy < -30 || sy > H + 28) continue;
+
+        if (p.type === 'moving') {
+          ctx.fillStyle = '#71f2b7';
+        } else if (p.type === 'break') {
+          ctx.fillStyle = p.broken ? '#ff8d6d' : '#ffd18b';
+        } else {
+          ctx.fillStyle = '#8cff83';
+        }
+
+        if (p.type === 'break' && p.broken) {
+          const drop = (0.3 - p.breakTimer) * 70;
+          ctx.fillRect(p.x, sy + drop, p.w * 0.48, p.h);
+          ctx.fillRect(p.x + p.w * 0.52, sy + drop + 4, p.w * 0.48, p.h);
+        } else {
+          ctx.fillRect(p.x, sy, p.w, p.h);
+          ctx.fillStyle = 'rgba(0,0,0,0.2)';
+          ctx.fillRect(p.x, sy + p.h - 3, p.w, 3);
+        }
+      }
+    }
+
+    function roundedRectPath(x, y, w, h, r) {
+      const radius = Math.max(0, Math.min(r, Math.min(w, h) * 0.5));
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function drawPlayer() {
+      const px = state.player.x;
+      const py = state.player.y - state.cameraY;
+      ctx.fillStyle = '#ffe778';
+      roundedRectPath(px - state.player.w * 0.5, py - state.player.h * 0.5, state.player.w, state.player.h, 10);
+      ctx.fill();
+
+      ctx.fillStyle = '#1f2d4a';
+      const eyeY = py - 8;
+      ctx.beginPath();
+      ctx.arc(px - 7, eyeY, 2.4, 0, Math.PI * 2);
+      ctx.arc(px + 7, eyeY, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      const tilt = clamp(state.player.vx / MAX_SPEED, -1, 1);
+      const noseX = px + tilt * 10;
+      ctx.strokeStyle = '#1f2d4a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px - 8, py + 7);
+      ctx.quadraticCurveTo(px, py + 13, px + 8, py + 7);
+      ctx.stroke();
+
+      ctx.fillStyle = '#86d0ff';
+      ctx.beginPath();
+      ctx.arc(noseX, py + 3, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const sy = p.y - state.cameraY;
+        if (sy < -12 || sy > H + 12) continue;
+        const alpha = clamp(p.life / 0.6, 0, 1);
+        ctx.fillStyle = p.color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+        ctx.beginPath();
+        ctx.arc(p.x, sy, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawOverlay() {
+      if (state.mode === 'menu' || state.mode === 'paused' || state.mode === 'game_over') {
+        ctx.fillStyle = 'rgba(7,13,27,0.52)';
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      ctx.fillStyle = '#eef6ff';
+      ctx.textAlign = 'center';
+      if (state.mode === 'menu') {
+        ctx.font = '700 36px system-ui, sans-serif';
+        ctx.fillText('Doodle Jump', W * 0.5, H * 0.36);
+        ctx.font = '600 18px system-ui, sans-serif';
+        ctx.fillText('Climb endless platforms', W * 0.5, H * 0.43);
+        ctx.font = '500 14px system-ui, sans-serif';
+        ctx.fillText('Desktop: Arrow keys or A/D', W * 0.5, H * 0.5);
+        ctx.fillText('Mobile: hold ◀ ▶ controls', W * 0.5, H * 0.54);
+        ctx.fillText('Press F for fullscreen', W * 0.5, H * 0.58);
+      } else if (state.mode === 'paused') {
+        ctx.font = '700 40px system-ui, sans-serif';
+        ctx.fillText('PAUSED', W * 0.5, H * 0.44);
+      } else if (state.mode === 'game_over') {
+        ctx.font = '700 38px system-ui, sans-serif';
+        ctx.fillText('GAME OVER', W * 0.5, H * 0.42);
+        ctx.font = '600 18px system-ui, sans-serif';
+        ctx.fillText(`Height: ${state.score}`, W * 0.5, H * 0.49);
+        ctx.fillText(`Best: ${state.best}`, W * 0.5, H * 0.54);
+      }
+    }
+
+    function render() {
+      drawBackdrop();
+      drawPlatforms();
+      drawParticles();
+      drawPlayer();
+      drawOverlay();
+    }
+
+    function stepSimulation(ms) {
+      const total = Math.max(0, Math.min(ms, 4000)) / 1000;
+      let remaining = total;
+      const step = 1 / 120;
+      while (remaining > 0) {
+        const dt = Math.min(step, remaining);
+        update(dt);
+        remaining -= dt;
+      }
+      render();
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'pixels',
+          viewport: { width: W, height: H },
+          world_y_offset: Number(state.cameraY.toFixed(2)),
+        },
+        mode: state.mode,
+        score: state.score,
+        best: state.best,
+        player: {
+          x: Number(state.player.x.toFixed(2)),
+          y_screen: Number((state.player.y - state.cameraY).toFixed(2)),
+          y_world: Number(state.player.y.toFixed(2)),
+          vx: Number(state.player.vx.toFixed(2)),
+          vy: Number(state.player.vy.toFixed(2)),
+        },
+        input: {
+          left: state.input.left,
+          right: state.input.right,
+        },
+        last_landing: state.lastLanding,
+        platforms: state.platforms
+          .map((p) => ({
+            x: Number(p.x.toFixed(2)),
+            y_screen: Number((p.y - state.cameraY).toFixed(2)),
+            y_world: Number(p.y.toFixed(2)),
+            w: Number(p.w.toFixed(2)),
+            type: p.type,
+            broken: p.broken,
+            vx: Number(p.vx.toFixed(2)),
+          }))
+          .filter((p) => p.y_screen > -40 && p.y_screen < H + 40),
+      };
+      return JSON.stringify(payload);
+    };
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) canvas.requestFullscreen?.().catch(() => {});
+      else document.exitFullscreen?.().catch(() => {});
+    }
+
+    function setMoveInput(action, pressed) {
+      if (action === 'left') state.input.left = pressed;
+      if (action === 'right') state.input.right = pressed;
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const code = event.code;
+      if (code === 'ArrowLeft' || code === 'KeyA') {
+        event.preventDefault();
+        setMoveInput('left', true);
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        event.preventDefault();
+        setMoveInput('right', true);
+      } else if (code === 'Enter' || code === 'Space' || code === 'ArrowUp' || code === 'KeyW') {
+        event.preventDefault();
+        startOrResume();
+      } else if (code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+      } else if (code === 'KeyR') {
+        event.preventDefault();
+        resetRun();
+      } else if (code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    document.addEventListener('keyup', (event) => {
+      const code = event.code;
+      if (code === 'ArrowLeft' || code === 'KeyA') setMoveInput('left', false);
+      else if (code === 'ArrowRight' || code === 'KeyD') setMoveInput('right', false);
+    });
+
+    startBtn.addEventListener('click', startOrResume);
+    pauseBtn.addEventListener('click', togglePause);
+    restartBtn.addEventListener('click', resetRun);
+    canvas.addEventListener('pointerdown', () => {
+      if (state.mode === 'menu' || state.mode === 'paused') startOrResume();
+    });
+
+    for (const button of document.querySelectorAll('.ctrl')) {
+      const action = button.dataset.action;
+      const onDown = (event) => {
+        event.preventDefault();
+        startOrResume();
+        setMoveInput(action, true);
+      };
+      const onUp = (event) => {
+        event.preventDefault();
+        setMoveInput(action, false);
+      };
+      button.addEventListener('pointerdown', onDown, { passive:false });
+      button.addEventListener('pointerup', onUp, { passive:false });
+      button.addEventListener('pointercancel', onUp, { passive:false });
+      button.addEventListener('pointerleave', onUp, { passive:false });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') {
+        state.mode = 'paused';
+        setHint('Paused. Press Start or P to resume.');
+        updateButtons();
+        updateHud();
+      }
+    });
+
+    function frame(ts) {
+      const dt = clamp((ts - lastTs) / 1000, 0, 0.05);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        render();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    resetRun();
+    updateHud();
+    render();
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
