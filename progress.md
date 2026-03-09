@@ -904,3 +904,31 @@
 - Final control regression check after compatibility update:
   - Re-ran targeted controls smoke and confirmed mode transitions (`playing` → `paused` → `playing`), restart reset (`menu`, score `0`), and zero console/page errors.
   - Artifact: `output/web-game/doodlejump-controls-smoke-2.png`.
+- New request (2026-03-08): Create Hangman with two play modes (vs computer or custom friend-entered word).
+- Implemented new standalone game page: `hangman/index.html`.
+  - Added mode flow: menu -> computer round OR friend setup -> guessing round.
+  - Added friend setup with hidden word input + optional hint.
+  - Added canvas-rendered hangman scene, gallows/body progression, and round overlays.
+  - Added desktop/mobile controls: clickable letter keyboard, arrow-key letter cursor, Enter/Space confirm, fullscreen toggle (`F`).
+  - Added deterministic hooks for automation: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Added local win/loss/streak persistence and coin rewards on wins.
+- Integrated launcher/routing:
+  - Added Hangman entry to `src/meta/games.js`.
+  - Added static fallback game card in `index.html`.
+  - Added `/hangman` rewrites and cache header entry in `vercel.json`.
+- Next: run skill Playwright loop, inspect screenshots/state, and fix issues if found.
+- Hangman validation runs completed.
+  - Skill Playwright client run:
+    - `output/web-game/hangman-run1`
+    - Command used: `node C:/Users/Luke/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://127.0.0.1:4173/hangman --actions-file C:/Users/Luke/.codex/skills/develop-web-game/references/action_payloads.json --click-selector #computer-btn --iterations 4 --pause-ms 250 --screenshot-dir output/web-game/hangman-run1`
+    - Reviewed screenshots (`shot-0.png` through `shot-3.png`) and state files (`state-0.json` through `state-3.json`) confirming deterministic cursor/guess flow and hangman progression.
+    - No `errors-*.json` artifacts emitted.
+  - Manual browser interaction validation (Playwright MCP):
+    - Verified Friend Word setup path, hidden-word input, optional hint, and validation error for too-short secret (`"Secret word needs at least 2 letters."`).
+    - Verified full custom-word win flow (word: `CODE REVIEW`) and round-over transition with `New Friend Word` control.
+    - Verified `Change Mode` and `Vs Computer` flow, plus keyboard control path (`Arrow`, `Space`, `A`, `B`).
+    - Captured visual artifact: `output/web-game/hangman-friend-win.png`.
+  - Console findings:
+    - Only generic `favicon.ico` 404 from local static server; no runtime/script errors from game logic.
+- Follow-up TODO suggestion:
+  - Add Hangman-specific achievements/reward criteria in `src/prog/achievements.js` once product definitions are available.

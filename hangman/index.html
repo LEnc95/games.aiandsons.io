@@ -1,0 +1,1100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hangman</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root {
+      --bg: #081227;
+      --panel: #111f3b;
+      --panel-2: #162a4f;
+      --border: #345280;
+      --text: #edf5ff;
+      --muted: #a9bfdc;
+      --accent: #6ec6ff;
+      --good: #87e3b4;
+      --bad: #ff9f8f;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+      touch-action: none;
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      background: rgba(0, 0, 0, 0.58);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 700;
+      backdrop-filter: saturate(140%) blur(5px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .back-home:hover {
+      background: rgba(0, 0, 0, 0.72);
+    }
+    .back-home:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    .wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      padding-top: max(calc(env(safe-area-inset-top, 10px) + 42px), 54px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 8px);
+    }
+    .hud {
+      width: min(96vw, 980px);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(31, 52, 90, 0.75) 0%, rgba(20, 34, 62, 0.8) 100%);
+      padding: 8px 10px;
+      font-size: clamp(12px, 2vw, 14px);
+      color: var(--muted);
+      text-align: center;
+      min-height: 54px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+    .chip strong {
+      color: var(--text);
+      font-size: clamp(14px, 2.3vw, 17px);
+    }
+    #canvas-wrap {
+      width: min(96vw, 980px);
+      aspect-ratio: 15 / 8;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid #274777;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.36);
+      touch-action: none;
+      background: #0b1a35;
+    }
+    .status-line {
+      width: min(96vw, 980px);
+      min-height: 1.4em;
+      text-align: center;
+      color: #d5e5fa;
+      font-size: clamp(13px, 2.1vw, 16px);
+      font-weight: 600;
+    }
+    .panel {
+      width: min(96vw, 980px);
+      border: 1px solid #2a4a78;
+      background: linear-gradient(180deg, rgba(21, 38, 70, 0.88) 0%, rgba(15, 28, 54, 0.9) 100%);
+      border-radius: 12px;
+      padding: clamp(10px, 1.8vw, 14px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+    .menu-title {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(26px, 5vw, 40px);
+      letter-spacing: 0.04em;
+      color: #f4f9ff;
+    }
+    .menu-subtitle {
+      margin: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: clamp(13px, 2vw, 16px);
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn {
+      border: 2px solid #355a90;
+      background: #203b67;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: clamp(13px, 2vw, 16px);
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 124px;
+      touch-action: manipulation;
+    }
+    .btn:hover {
+      background: #2b4d83;
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn.primary {
+      background: #6ec6ff;
+      border-color: #86d2ff;
+      color: #052235;
+    }
+    .btn.primary:hover {
+      background: #81d0ff;
+    }
+    .btn.ghost {
+      background: #1a2f52;
+      border-color: #395f92;
+    }
+    .btn.mode-selected {
+      border-color: #8fd9ff;
+      box-shadow: 0 0 0 2px rgba(143, 217, 255, 0.22);
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .form-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    input[type="password"],
+    input[type="text"] {
+      flex: 1;
+      min-width: 220px;
+      min-height: 42px;
+      border-radius: 9px;
+      border: 1px solid #45679a;
+      background: #0f2242;
+      color: var(--text);
+      padding: 9px 11px;
+      font-size: 15px;
+    }
+    input[type="password"]::placeholder,
+    input[type="text"]::placeholder {
+      color: #8fa8cb;
+    }
+    .setup-error {
+      min-height: 1.2em;
+      color: var(--bad);
+      font-size: 13px;
+      margin: 0;
+      text-align: center;
+      font-weight: 700;
+    }
+    .small-note {
+      margin: 0;
+      text-align: center;
+      color: #9cb3d4;
+      font-size: 12px;
+    }
+    .word-mask {
+      margin: 0;
+      text-align: center;
+      letter-spacing: 0.12em;
+      line-height: 1.35;
+      font-size: clamp(20px, 4vw, 34px);
+      font-weight: 800;
+      color: #f7fbff;
+      min-height: 1.5em;
+      word-break: break-word;
+    }
+    .hint-line, .wrong-line {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(12px, 1.9vw, 15px);
+      color: #c8daf4;
+    }
+    .hint-line strong, .wrong-line strong {
+      color: #edf5ff;
+    }
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .letter-btn {
+      border: 1px solid #456a9f;
+      background: #153159;
+      color: #f0f7ff;
+      border-radius: 9px;
+      min-height: 40px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .letter-btn:hover {
+      background: #1f4275;
+    }
+    .letter-btn.selected {
+      border-color: #95deff;
+      box-shadow: 0 0 0 2px rgba(149, 222, 255, 0.25);
+    }
+    .letter-btn.hit {
+      border-color: #8de5ba;
+      background: #1d5e4a;
+      color: #ddfff0;
+    }
+    .letter-btn.miss {
+      border-color: #ffb0a4;
+      background: #65262a;
+      color: #ffe4de;
+    }
+    .letter-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.82;
+    }
+    @media (max-width: 850px) {
+      .hud {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      #canvas-wrap {
+        aspect-ratio: 11 / 9;
+      }
+      .keyboard {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 520px) {
+      .keyboard {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+      .btn {
+        min-width: 100px;
+        padding: 9px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home"><- Back</a>
+  <div class="wrap">
+    <section class="hud" aria-label="Game status">
+      <div class="chip">Mode<strong id="modeLabel">Menu</strong></div>
+      <div class="chip">Lives<strong id="livesLabel">6</strong></div>
+      <div class="chip">Wins / Losses<strong id="recordLabel">0 / 0</strong></div>
+      <div class="chip">Streak<strong id="streakLabel">0</strong></div>
+    </section>
+
+    <div id="canvas-wrap">
+      <canvas id="game" width="900" height="480" aria-label="Hangman game canvas"></canvas>
+    </div>
+
+    <div id="statusLine" class="status-line" aria-live="polite">Select a mode to begin.</div>
+
+    <section id="menuPanel" class="panel">
+      <h1 class="menu-title">Hangman</h1>
+      <p class="menu-subtitle">Play against the computer or enter your own word for a friend to solve.</p>
+      <div class="row">
+        <button id="computer-btn" class="btn primary mode-selected">Vs Computer</button>
+        <button id="friend-btn" class="btn ghost">Friend Word</button>
+      </div>
+      <p class="small-note">Keyboard: arrows move selection, Enter or Space guesses, F toggles fullscreen.</p>
+    </section>
+
+    <section id="setupPanel" class="panel hidden">
+      <h2 class="menu-title" style="font-size:clamp(22px,4vw,30px);">Friend Setup</h2>
+      <div class="form-field">
+        <label for="friendWordInput">Secret word or phrase</label>
+        <div class="form-row">
+          <input id="friendWordInput" type="password" autocomplete="off" maxlength="48" placeholder="Type a secret word">
+          <button id="toggleWordBtn" class="btn ghost" type="button" style="min-width:90px;">Show</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="friendHintInput">Hint (optional)</label>
+        <input id="friendHintInput" type="text" autocomplete="off" maxlength="80" placeholder="Example: Favorite animal">
+      </div>
+      <p id="setupError" class="setup-error"></p>
+      <div class="row">
+        <button id="start-btn" class="btn primary">Start Guessing</button>
+        <button id="cancelSetupBtn" class="btn ghost">Cancel</button>
+      </div>
+      <p class="small-note">Allowed characters: letters, spaces, apostrophes, and hyphens.</p>
+    </section>
+
+    <section id="playPanel" class="panel hidden">
+      <p id="wordMask" class="word-mask">_ _ _ _</p>
+      <p class="hint-line">Hint: <strong id="hintText">-</strong></p>
+      <p class="wrong-line">Wrong letters: <strong id="wrongLettersText">None</strong></p>
+      <div class="row">
+        <button id="nextRoundBtn" class="btn primary hidden">Next Round</button>
+        <button id="changeModeBtn" class="btn ghost">Change Mode</button>
+        <button id="fullscreenBtn" class="btn ghost">Fullscreen</button>
+      </div>
+      <div id="keyboard" class="keyboard" aria-label="Letter keyboard"></div>
+      <p class="small-note">Arrow keys move selection. Enter or Space confirms the selected letter.</p>
+    </section>
+  </div>
+
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('hangman');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const modeLabelEl = document.getElementById('modeLabel');
+    const livesLabelEl = document.getElementById('livesLabel');
+    const recordLabelEl = document.getElementById('recordLabel');
+    const streakLabelEl = document.getElementById('streakLabel');
+    const statusLineEl = document.getElementById('statusLine');
+    const menuPanelEl = document.getElementById('menuPanel');
+    const setupPanelEl = document.getElementById('setupPanel');
+    const playPanelEl = document.getElementById('playPanel');
+    const wordMaskEl = document.getElementById('wordMask');
+    const hintTextEl = document.getElementById('hintText');
+    const wrongLettersTextEl = document.getElementById('wrongLettersText');
+    const setupErrorEl = document.getElementById('setupError');
+    const keyboardEl = document.getElementById('keyboard');
+
+    const computerBtn = document.getElementById('computer-btn');
+    const friendBtn = document.getElementById('friend-btn');
+    const friendWordInput = document.getElementById('friendWordInput');
+    const friendHintInput = document.getElementById('friendHintInput');
+    const toggleWordBtn = document.getElementById('toggleWordBtn');
+    const setupStartBtn = document.getElementById('start-btn');
+    const cancelSetupBtn = document.getElementById('cancelSetupBtn');
+    const nextRoundBtn = document.getElementById('nextRoundBtn');
+    const changeModeBtn = document.getElementById('changeModeBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    const CANVAS_W = canvas.width;
+    const CANVAS_H = canvas.height;
+    const MAX_WRONG = 6;
+    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const HANGMAN_STATS_KEY = 'hangman-stats-v1';
+    const KEYBOARD_COLUMNS = 7;
+
+    const RAW_WORD_BANK = [
+      { word: 'JAVASCRIPT', hint: 'Language used in web pages' },
+      { word: 'ASTEROID', hint: 'Rock that travels in space' },
+      { word: 'BASKETBALL', hint: 'Sport with hoops and dribbling' },
+      { word: 'RAINBOW', hint: 'Color arc after rain' },
+      { word: 'TREASURE MAP', hint: 'Clue sheet for hidden loot' },
+      { word: 'MOUNTAIN BIKE', hint: 'Trail-ready two-wheel ride' },
+      { word: 'VOLCANO', hint: 'Mountain that erupts' },
+      { word: 'SNOWBOARD', hint: 'Winter board sport' },
+      { word: 'GALAXY', hint: 'Large system of stars' },
+      { word: 'DRAGONFLY', hint: 'Insect with transparent wings' },
+      { word: 'LIGHTHOUSE', hint: 'Tower that guides ships' },
+      { word: 'TIME TRAVEL', hint: 'Sci-fi way to visit another era' },
+      { word: 'PUMPKIN PIE', hint: 'Dessert often eaten in fall' },
+      { word: 'SANDCASTLE', hint: 'Beach building project' },
+      { word: 'TREASURE CHEST', hint: 'Pirate storage box' },
+      { word: 'FIREWORKS', hint: 'Colorful sky celebration' },
+      { word: 'SKATEBOARD', hint: 'Street sport on wheels' },
+      { word: 'BOOKWORM', hint: 'Nickname for a big reader' },
+      { word: 'COMPUTER LAB', hint: 'Room full of school devices' },
+      { word: 'NIGHT SKY', hint: 'Where stars and planets appear' },
+      { word: 'HOT CHOCOLATE', hint: 'Warm drink with cocoa' },
+      { word: 'STORM CLOUD', hint: 'Dark cloud with thunder' },
+      { word: 'ROLLER COASTER', hint: 'Fast amusement ride' },
+      { word: 'CAMPFIRE SONG', hint: 'Music around a fire' },
+      { word: 'PARACHUTE', hint: 'Used to slow a fall from sky' },
+      { word: 'SPEED BOAT', hint: 'Fast water vehicle' },
+      { word: 'POLAR BEAR', hint: 'Large white Arctic animal' },
+      { word: 'CHESS BOARD', hint: 'Grid used for a strategy game' },
+    ];
+
+    function isUpperLetter(char) {
+      const code = char.charCodeAt(0);
+      return code >= 65 && code <= 90;
+    }
+
+    function sanitizeWordOrPhrase(value) {
+      const upper = String(value || '').toUpperCase();
+      let output = '';
+      let previousWasSpace = false;
+      for (const char of upper) {
+        if (isUpperLetter(char)) {
+          output += char;
+          previousWasSpace = false;
+          continue;
+        }
+        if (char === ' ' || char === '\'' || char === '-') {
+          if (char === ' ') {
+            if (previousWasSpace) continue;
+            previousWasSpace = true;
+          } else {
+            previousWasSpace = false;
+          }
+          output += char;
+        }
+      }
+      output = output.trim();
+      let letterCount = 0;
+      for (const char of output) {
+        if (isUpperLetter(char)) letterCount += 1;
+      }
+      return letterCount >= 2 ? output : '';
+    }
+
+    function sanitizeHint(value) {
+      const trimmed = String(value || '').trim();
+      return trimmed.slice(0, 80);
+    }
+
+    const WORD_BANK = RAW_WORD_BANK
+      .map((entry) => ({
+        word: sanitizeWordOrPhrase(entry.word),
+        hint: sanitizeHint(entry.hint),
+      }))
+      .filter((entry) => entry.word);
+
+    function loadStats() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(HANGMAN_STATS_KEY) || '{}');
+        const wins = Number.isFinite(raw.wins) ? Math.max(0, Math.floor(raw.wins)) : 0;
+        const losses = Number.isFinite(raw.losses) ? Math.max(0, Math.floor(raw.losses)) : 0;
+        const streak = Number.isFinite(raw.streak) ? Math.max(0, Math.floor(raw.streak)) : 0;
+        const bestStreak = Number.isFinite(raw.bestStreak) ? Math.max(0, Math.floor(raw.bestStreak)) : 0;
+        const games = Number.isFinite(raw.games) ? Math.max(0, Math.floor(raw.games)) : wins + losses;
+        return { wins, losses, streak, bestStreak, games };
+      } catch {
+        return { wins: 0, losses: 0, streak: 0, bestStreak: 0, games: 0 };
+      }
+    }
+
+    function saveStats(stats) {
+      localStorage.setItem(HANGMAN_STATS_KEY, JSON.stringify(stats));
+    }
+
+    const state = {
+      screen: 'menu',
+      playMode: 'computer',
+      secretWord: '',
+      hint: '',
+      guessed: new Set(),
+      wrongLetters: [],
+      cursor: 0,
+      message: 'Select a mode to begin.',
+      stats: loadStats(),
+      roundResult: null,
+      clock: 0,
+      pulse: 0,
+      lastComputerWord: '',
+    };
+
+    function getModeLabel() {
+      if (state.screen === 'menu') return 'Menu';
+      if (state.screen === 'setup') return 'Friend Setup';
+      if (state.screen === 'playing') return state.playMode === 'computer' ? 'Vs Computer' : 'Friend Guess';
+      if (state.roundResult === 'win') return 'Round Won';
+      if (state.roundResult === 'lose') return 'Round Lost';
+      return 'Round Over';
+    }
+
+    function getLivesRemaining() {
+      return Math.max(0, MAX_WRONG - state.wrongLetters.length);
+    }
+
+    function uniqueLettersInWord() {
+      const set = new Set();
+      for (const char of state.secretWord) {
+        if (isUpperLetter(char)) set.add(char);
+      }
+      return [...set];
+    }
+
+    function getLettersLeft() {
+      const unique = uniqueLettersInWord();
+      let left = 0;
+      for (const letter of unique) {
+        if (!state.guessed.has(letter)) left += 1;
+      }
+      return left;
+    }
+
+    function createWordMask() {
+      if (!state.secretWord) return '';
+      const pieces = [];
+      for (const char of state.secretWord) {
+        if (isUpperLetter(char)) {
+          pieces.push(state.guessed.has(char) ? char : '_');
+        } else if (char === ' ') {
+          pieces.push('/');
+        } else {
+          pieces.push(char);
+        }
+      }
+      return pieces.join(' ');
+    }
+
+    function pickComputerWord() {
+      if (!WORD_BANK.length) {
+        return { word: 'HANGMAN', hint: 'Classic guessing game' };
+      }
+      for (let i = 0; i < 6; i += 1) {
+        const entry = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
+        if (entry.word !== state.lastComputerWord || WORD_BANK.length === 1) {
+          state.lastComputerWord = entry.word;
+          return entry;
+        }
+      }
+      const fallback = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
+      state.lastComputerWord = fallback.word;
+      return fallback;
+    }
+
+    function setMessage(text) {
+      state.message = text;
+      statusLineEl.textContent = text;
+    }
+
+    function resetRound(word, hint, mode) {
+      state.playMode = mode;
+      state.secretWord = word;
+      state.hint = sanitizeHint(hint) || 'No hint provided';
+      state.guessed = new Set();
+      state.wrongLetters = [];
+      state.cursor = 0;
+      state.roundResult = null;
+      state.screen = 'playing';
+      state.pulse = 0;
+      setMessage(mode === 'computer' ? 'Guess the word chosen by the computer.' : 'Friend mode: solve the custom word.');
+      setupErrorEl.textContent = '';
+      updateUI();
+      render();
+    }
+
+    function openMenu() {
+      state.screen = 'menu';
+      state.roundResult = null;
+      setMessage('Select a mode to begin.');
+      updateUI();
+      render();
+    }
+
+    function openFriendSetup() {
+      state.screen = 'setup';
+      state.playMode = 'friend';
+      setupErrorEl.textContent = '';
+      setMessage('Enter a secret word, then pass the device to your friend.');
+      updateUI();
+      render();
+      setTimeout(() => {
+        friendWordInput.focus();
+      }, 0);
+    }
+
+    function startComputerRound() {
+      const pick = pickComputerWord();
+      resetRound(pick.word, pick.hint, 'computer');
+    }
+
+    function startFriendRound() {
+      const cleanWord = sanitizeWordOrPhrase(friendWordInput.value);
+      if (!cleanWord) {
+        setupErrorEl.textContent = 'Secret word needs at least 2 letters.';
+        return;
+      }
+      const hint = sanitizeHint(friendHintInput.value) || 'Custom challenge';
+      friendWordInput.value = '';
+      friendHintInput.value = '';
+      friendWordInput.type = 'password';
+      toggleWordBtn.textContent = 'Show';
+      resetRound(cleanWord, hint, 'friend');
+    }
+
+    function finishRound(result) {
+      state.roundResult = result;
+      state.screen = 'round_over';
+      state.stats.games += 1;
+
+      if (result === 'win') {
+        state.stats.wins += 1;
+        state.stats.streak += 1;
+        if (state.stats.streak > state.stats.bestStreak) {
+          state.stats.bestStreak = state.stats.streak;
+        }
+        const coins = Math.max(2, (state.playMode === 'computer' ? 5 : 4) + getLivesRemaining() - 2);
+        addCoinsFn(coins);
+        setMessage(`Solved! +${coins} coins earned.`);
+      } else {
+        state.stats.losses += 1;
+        state.stats.streak = 0;
+        setMessage(`No guesses left. Word: ${state.secretWord}`);
+      }
+
+      saveStats(state.stats);
+      maybeUnlock({
+        anyPlay: true,
+        hangman: {
+          wins: state.stats.wins,
+          bestStreak: state.stats.bestStreak,
+        },
+      });
+      updateUI();
+      render();
+    }
+
+    function guessLetter(rawLetter) {
+      if (state.screen !== 'playing') return;
+      const letter = String(rawLetter || '').toUpperCase().slice(0, 1);
+      if (!isUpperLetter(letter)) return;
+      if (state.guessed.has(letter)) {
+        setMessage(`${letter} was already guessed.`);
+        updateUI();
+        render();
+        return;
+      }
+
+      state.guessed.add(letter);
+      if (state.secretWord.includes(letter)) {
+        state.pulse = 0.3;
+        setMessage(`Nice guess: ${letter}`);
+      } else {
+        state.wrongLetters.push(letter);
+        state.pulse = 0.55;
+        setMessage(`No ${letter} in this word.`);
+      }
+
+      if (getLettersLeft() === 0) {
+        finishRound('win');
+        return;
+      }
+      if (state.wrongLetters.length >= MAX_WRONG) {
+        finishRound('lose');
+        return;
+      }
+
+      updateUI();
+      render();
+    }
+
+    function moveCursor(horizontal, vertical) {
+      if (state.screen !== 'playing') return;
+      if (vertical !== 0) {
+        let next = state.cursor + vertical * KEYBOARD_COLUMNS;
+        while (next < 0) next += ALPHABET.length;
+        while (next >= ALPHABET.length) next -= ALPHABET.length;
+        state.cursor = next;
+      } else if (horizontal !== 0) {
+        state.cursor = (state.cursor + horizontal + ALPHABET.length) % ALPHABET.length;
+      }
+      updateKeyboard();
+      render();
+    }
+
+    function guessSelectedLetter() {
+      if (state.screen !== 'playing') return;
+      guessLetter(ALPHABET[state.cursor]);
+    }
+
+    function startNextRound() {
+      if (state.playMode === 'computer') startComputerRound();
+      else openFriendSetup();
+    }
+
+    function updateKeyboard() {
+      const buttons = keyboardEl.querySelectorAll('.letter-btn');
+      buttons.forEach((button) => {
+        const index = Number(button.dataset.index);
+        const letter = button.dataset.letter;
+        const guessed = state.guessed.has(letter);
+        button.disabled = guessed || state.screen !== 'playing';
+        button.classList.toggle('selected', state.screen === 'playing' && index === state.cursor);
+        button.classList.toggle('hit', guessed && state.secretWord.includes(letter));
+        button.classList.toggle('miss', guessed && !state.secretWord.includes(letter));
+      });
+    }
+
+    function updateUI() {
+      modeLabelEl.textContent = getModeLabel();
+      livesLabelEl.textContent = String(getLivesRemaining());
+      recordLabelEl.textContent = `${state.stats.wins} / ${state.stats.losses}`;
+      streakLabelEl.textContent = `${state.stats.streak} (best ${state.stats.bestStreak})`;
+
+      const showingMenu = state.screen === 'menu';
+      const showingSetup = state.screen === 'setup';
+      const showingPlay = state.screen === 'playing' || state.screen === 'round_over';
+
+      menuPanelEl.classList.toggle('hidden', !showingMenu);
+      setupPanelEl.classList.toggle('hidden', !showingSetup);
+      playPanelEl.classList.toggle('hidden', !showingPlay);
+
+      computerBtn.classList.toggle('mode-selected', state.playMode === 'computer');
+      friendBtn.classList.toggle('mode-selected', state.playMode === 'friend');
+
+      if (showingPlay) {
+        wordMaskEl.textContent = createWordMask();
+        hintTextEl.textContent = state.hint || '-';
+        wrongLettersTextEl.textContent = state.wrongLetters.length ? state.wrongLetters.join(', ') : 'None';
+        nextRoundBtn.classList.toggle('hidden', state.screen !== 'round_over');
+        nextRoundBtn.textContent = state.playMode === 'computer' ? 'Next Computer Word' : 'New Friend Word';
+      }
+
+      updateKeyboard();
+    }
+
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+      g.addColorStop(0, '#112a55');
+      g.addColorStop(0.58, '#0b1f40');
+      g.addColorStop(1, '#09152a');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+      ctx.strokeStyle = 'rgba(115, 168, 236, 0.22)';
+      ctx.lineWidth = 1;
+      for (let y = 36; y < CANVAS_H; y += 36) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(CANVAS_W, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawGallows() {
+      const baseX = 110;
+      const baseY = 410;
+      const topY = 82;
+      const beamX = 250;
+      const ropeY = 120;
+      const sway = state.roundResult === 'lose' ? Math.sin(state.clock * 3.2) * 3.2 : 0;
+
+      ctx.save();
+      ctx.translate(sway, 0);
+      ctx.strokeStyle = '#d8e7ff';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(baseX - 50, baseY);
+      ctx.lineTo(baseX + 140, baseY);
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(baseX, topY);
+      ctx.lineTo(beamX, topY);
+      ctx.lineTo(beamX, ropeY);
+      ctx.stroke();
+
+      const wrong = state.wrongLetters.length;
+      ctx.strokeStyle = '#ffe2de';
+      ctx.fillStyle = '#ffe2de';
+      ctx.lineWidth = 6;
+
+      if (wrong >= 1) {
+        ctx.beginPath();
+        ctx.arc(beamX, ropeY + 32, 26, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (wrong >= 2) {
+        ctx.beginPath();
+        ctx.moveTo(beamX, ropeY + 58);
+        ctx.lineTo(beamX, ropeY + 148);
+        ctx.stroke();
+      }
+      if (wrong >= 3) {
+        ctx.beginPath();
+        ctx.moveTo(beamX, ropeY + 88);
+        ctx.lineTo(beamX - 45, ropeY + 122);
+        ctx.stroke();
+      }
+      if (wrong >= 4) {
+        ctx.beginPath();
+        ctx.moveTo(beamX, ropeY + 88);
+        ctx.lineTo(beamX + 45, ropeY + 122);
+        ctx.stroke();
+      }
+      if (wrong >= 5) {
+        ctx.beginPath();
+        ctx.moveTo(beamX, ropeY + 148);
+        ctx.lineTo(beamX - 42, ropeY + 206);
+        ctx.stroke();
+      }
+      if (wrong >= 6) {
+        ctx.beginPath();
+        ctx.moveTo(beamX, ropeY + 148);
+        ctx.lineTo(beamX + 42, ropeY + 206);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawCanvasText() {
+      const mask = state.secretWord ? createWordMask() : '_ _ _ _ _';
+      const pulseAlpha = 0.26 + Math.min(0.34, state.pulse * 0.65);
+      ctx.fillStyle = `rgba(110, 198, 255, ${pulseAlpha.toFixed(3)})`;
+      ctx.fillRect(325, 70, 540, 285);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#eff6ff';
+      ctx.font = '700 24px "Trebuchet MS", sans-serif';
+      ctx.fillText('Hangman', 350, 110);
+
+      ctx.font = '600 18px "Trebuchet MS", sans-serif';
+      ctx.fillStyle = '#d5e6ff';
+      ctx.fillText(`Wrong guesses: ${state.wrongLetters.length}/${MAX_WRONG}`, 350, 145);
+      ctx.fillText(`Letters left: ${state.secretWord ? getLettersLeft() : 0}`, 350, 175);
+      ctx.fillText(`Hint: ${state.hint || '-'}`, 350, 205);
+      ctx.fillStyle = '#f8fcff';
+      ctx.font = '800 27px "Trebuchet MS", sans-serif';
+      const maxMask = mask.length > 34 ? `${mask.slice(0, 34)}...` : mask;
+      ctx.fillText(maxMask, 350, 260);
+
+      ctx.font = '600 15px "Trebuchet MS", sans-serif';
+      ctx.fillStyle = '#c8dbf7';
+      const wrongLabel = state.wrongLetters.length ? state.wrongLetters.join(', ') : 'none';
+      ctx.fillText(`Wrong letters: ${wrongLabel}`, 350, 298);
+      ctx.fillText('Keyboard: arrows move, Enter/Space guess', 350, 328);
+    }
+
+    function drawOverlayMessage() {
+      if (state.screen === 'menu' || state.screen === 'setup') {
+        ctx.fillStyle = 'rgba(10, 18, 36, 0.55)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f1f7ff';
+        ctx.font = '800 44px "Trebuchet MS", sans-serif';
+        ctx.fillText('HANGMAN', CANVAS_W * 0.5, 180);
+        ctx.font = '600 20px "Trebuchet MS", sans-serif';
+        ctx.fillText(state.screen === 'menu' ? 'Choose a mode below to start.' : 'Set a custom word for your friend.', CANVAS_W * 0.5, 220);
+      } else if (state.screen === 'round_over') {
+        ctx.fillStyle = 'rgba(7, 12, 25, 0.62)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f5fbff';
+        ctx.font = '800 42px "Trebuchet MS", sans-serif';
+        ctx.fillText(state.roundResult === 'win' ? 'YOU WIN' : 'ROUND LOST', CANVAS_W * 0.5, 176);
+        ctx.font = '700 22px "Trebuchet MS", sans-serif';
+        ctx.fillText(`Word: ${state.secretWord}`, CANVAS_W * 0.5, 226);
+        ctx.font = '600 17px "Trebuchet MS", sans-serif';
+        ctx.fillStyle = '#d3e5ff';
+        ctx.fillText('Use Next Round or press Enter/Space to continue.', CANVAS_W * 0.5, 266);
+      }
+    }
+
+    function render() {
+      drawBackground();
+      drawGallows();
+      drawCanvasText();
+      drawOverlayMessage();
+    }
+
+    function update(dt) {
+      state.clock += dt;
+      if (state.pulse > 0) state.pulse = Math.max(0, state.pulse - dt);
+    }
+
+    let steppingExternally = false;
+    let lastTimestamp = performance.now();
+
+    function frame(timestamp) {
+      const dt = Math.min(0.05, Math.max(0, (timestamp - lastTimestamp) / 1000));
+      lastTimestamp = timestamp;
+      if (!steppingExternally) {
+        update(dt);
+        render();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function handleKeyDown(event) {
+      const code = event.code;
+      const usesGameControl = [
+        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+        'Enter', 'Space', 'KeyA', 'KeyB', 'KeyC', 'KeyR', 'KeyF', 'Escape',
+      ].includes(code);
+      if (usesGameControl) event.preventDefault();
+
+      if (code === 'KeyF') {
+        toggleFullscreen();
+        return;
+      }
+      if (code === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+        return;
+      }
+
+      if (state.screen === 'setup') {
+        if (code === 'Enter') startFriendRound();
+        if (code === 'KeyR') openMenu();
+        return;
+      }
+
+      if (state.screen === 'menu') {
+        if (code === 'KeyC' || code === 'Enter') startComputerRound();
+        else if (code === 'KeyR') openFriendSetup();
+        return;
+      }
+
+      if (state.screen === 'playing') {
+        if (code === 'ArrowLeft') moveCursor(-1, 0);
+        else if (code === 'ArrowRight') moveCursor(1, 0);
+        else if (code === 'ArrowUp') moveCursor(0, -1);
+        else if (code === 'ArrowDown') moveCursor(0, 1);
+        else if (code === 'Enter' || code === 'Space') guessSelectedLetter();
+        else if (code === 'KeyA') guessLetter('A');
+        else if (code === 'KeyB') guessLetter('B');
+        else if (code === 'KeyR') openMenu();
+        return;
+      }
+
+      if (state.screen === 'round_over') {
+        if (code === 'Enter' || code === 'Space') startNextRound();
+        else if (code === 'KeyR') openMenu();
+      }
+    }
+
+    function buildKeyboard() {
+      keyboardEl.innerHTML = '';
+      ALPHABET.forEach((letter, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'letter-btn';
+        button.textContent = letter;
+        button.dataset.letter = letter;
+        button.dataset.index = String(index);
+        button.addEventListener('click', () => {
+          if (state.screen !== 'playing') return;
+          state.cursor = index;
+          guessLetter(letter);
+        });
+        keyboardEl.appendChild(button);
+      });
+    }
+
+    computerBtn.addEventListener('click', () => {
+      state.playMode = 'computer';
+      startComputerRound();
+    });
+    friendBtn.addEventListener('click', () => {
+      state.playMode = 'friend';
+      openFriendSetup();
+    });
+    toggleWordBtn.addEventListener('click', () => {
+      const showing = friendWordInput.type === 'text';
+      friendWordInput.type = showing ? 'password' : 'text';
+      toggleWordBtn.textContent = showing ? 'Show' : 'Hide';
+      friendWordInput.focus();
+    });
+    setupStartBtn.addEventListener('click', startFriendRound);
+    cancelSetupBtn.addEventListener('click', openMenu);
+    nextRoundBtn.addEventListener('click', startNextRound);
+    changeModeBtn.addEventListener('click', openMenu);
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    friendWordInput.addEventListener('input', () => {
+      setupErrorEl.textContent = '';
+    });
+    friendHintInput.addEventListener('input', () => {
+      setupErrorEl.textContent = '';
+    });
+
+    canvas.addEventListener('pointerdown', () => {
+      if (state.screen === 'menu') {
+        startComputerRound();
+      } else if (state.screen === 'playing') {
+        guessSelectedLetter();
+      } else if (state.screen === 'round_over') {
+        startNextRound();
+      }
+    });
+
+    document.addEventListener('keydown', handleKeyDown, { passive: false });
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      let remaining = Math.max(0, Math.min(Number(ms) || 0, 4000)) / 1000;
+      const step = 1 / 60;
+      while (remaining > 0) {
+        const dt = Math.min(step, remaining);
+        update(dt);
+        remaining -= dt;
+      }
+      render();
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const availableLetters = ALPHABET.filter((letter) => !state.guessed.has(letter));
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'pixels',
+          viewport: { width: CANVAS_W, height: CANVAS_H },
+        },
+        screen: state.screen,
+        play_mode: state.playMode,
+        message: state.message,
+        hint: state.hint || '',
+        lives_remaining: getLivesRemaining(),
+        wrong_limit: MAX_WRONG,
+        wrong_letters: [...state.wrongLetters],
+        guessed_letters: [...state.guessed].sort(),
+        selected_letter: ALPHABET[state.cursor],
+        word_mask: state.secretWord ? createWordMask() : '',
+        letters_left: state.secretWord ? getLettersLeft() : 0,
+        available_letters: availableLetters,
+        round_result: state.roundResult,
+        revealed_word: state.screen === 'round_over' ? state.secretWord : null,
+        stats: { ...state.stats },
+        controls: {
+          keyboard: 'Arrow keys move, Enter/Space guess, A/B quick guess, R menu, F fullscreen',
+          pointer: 'Tap letter buttons or canvas',
+        },
+      };
+      return JSON.stringify(payload);
+    };
+
+    buildKeyboard();
+    updateUI();
+    render();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
