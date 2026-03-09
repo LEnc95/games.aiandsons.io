@@ -952,3 +952,12 @@
 - Validation:
   - Skill client run: `output/web-game/hangman-wordpack-run1` (3 iterations, no `errors-*.json` artifacts).
   - State output confirms dynamic source loaded with `word_bank.size: 360` and `source: kid-safe-local-pack`.
+- Mobile usability fix (2026-03-08): ensured full Hangman keyboard is visible/playable on phone screens.
+- Updated responsive layout rules in `hangman/index.html`:
+  - Added dedicated mobile breakpoint (`max-width: 700px`) with scroll-friendly page behavior.
+  - Reduced vertical footprint of HUD/canvas/panels/buttons.
+  - Compacted keyboard spacing and letter button sizes.
+  - Hid non-essential gameplay helper note on mobile to preserve control space.
+- Validation:
+  - Playwright mobile viewport check at 390x844 while in active computer round.
+  - Screenshot artifact confirms full A-Z keyboard visible in viewport: `output/web-game/hangman-mobile-visible-keyboard.png`.
