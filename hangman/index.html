@@ -406,7 +406,10 @@
     const MAX_WRONG = 6;
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     const HANGMAN_STATS_KEY = 'hangman-stats-v1';
+    const HANGMAN_RECENT_WORDS_KEY = 'hangman-recent-words-v1';
     const KEYBOARD_COLUMNS = 7;
+    const MAX_RECENT_WORDS = 64;
+    const WORD_PACK_URL = '/assets/hangman/kid-friendly-words.json';
 
     const RAW_WORD_BANK = [
       { word: 'JAVASCRIPT', hint: 'Language used in web pages' },
@@ -477,12 +480,80 @@
       return trimmed.slice(0, 80);
     }
 
-    const WORD_BANK = RAW_WORD_BANK
-      .map((entry) => ({
-        word: sanitizeWordOrPhrase(entry.word),
-        hint: sanitizeHint(entry.hint),
-      }))
-      .filter((entry) => entry.word);
+    function normalizeWordEntries(entries) {
+      if (!Array.isArray(entries)) return [];
+      const normalized = [];
+      const seen = new Set();
+      for (const entry of entries) {
+        if (!entry || typeof entry !== 'object') continue;
+        const word = sanitizeWordOrPhrase(entry.word);
+        if (!word || seen.has(word)) continue;
+        const hint = sanitizeHint(entry.hint) || 'Kid-friendly word challenge';
+        normalized.push({ word, hint });
+        seen.add(word);
+      }
+      return normalized;
+    }
+
+    function shuffleInPlace(values) {
+      for (let i = values.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = values[i];
+        values[i] = values[j];
+        values[j] = temp;
+      }
+    }
+
+    function generateComboEntries(pack = {}) {
+      const generated = pack && typeof pack === 'object' ? pack : {};
+      const rawAdjectives = Array.isArray(generated.adjectives) ? generated.adjectives : [];
+      const rawNouns = Array.isArray(generated.nouns) ? generated.nouns : [];
+      const adjectives = rawAdjectives
+        .map((value) => sanitizeWordOrPhrase(value))
+        .filter((value) => value && !value.includes(' '));
+      const nouns = rawNouns
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') return null;
+          const word = sanitizeWordOrPhrase(entry.word);
+          if (!word || word.includes(' ')) return null;
+          const hint = sanitizeHint(entry.hint) || 'Kid-friendly word';
+          return { word, hint };
+        })
+        .filter(Boolean);
+
+      const combos = [];
+      for (const adjective of adjectives) {
+        for (const noun of nouns) {
+          combos.push({
+            word: `${adjective} ${noun.word}`,
+            hint: `${noun.hint}. Think adjective + noun.`,
+          });
+        }
+      }
+      shuffleInPlace(combos);
+      return combos.slice(0, 220);
+    }
+
+    function loadRecentWordHistory() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(HANGMAN_RECENT_WORDS_KEY) || '[]');
+        if (!Array.isArray(raw)) return [];
+        return raw
+          .map((value) => sanitizeWordOrPhrase(value))
+          .filter((value) => Boolean(value))
+          .slice(0, MAX_RECENT_WORDS);
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecentWordHistory(values) {
+      localStorage.setItem(HANGMAN_RECENT_WORDS_KEY, JSON.stringify(values.slice(0, MAX_RECENT_WORDS)));
+    }
+
+    let wordBank = normalizeWordEntries(RAW_WORD_BANK);
+    let wordBankSource = 'fallback';
+    let dynamicWordPackLoaded = false;
 
     function loadStats() {
       try {
@@ -516,6 +587,7 @@
       clock: 0,
       pulse: 0,
       lastComputerWord: '',
+      recentWords: loadRecentWordHistory(),
     };
 
     function getModeLabel() {
@@ -564,19 +636,50 @@
     }
 
     function pickComputerWord() {
-      if (!WORD_BANK.length) {
+      if (!wordBank.length) {
         return { word: 'HANGMAN', hint: 'Classic guessing game' };
       }
-      for (let i = 0; i < 6; i += 1) {
-        const entry = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
-        if (entry.word !== state.lastComputerWord || WORD_BANK.length === 1) {
+      const recentSet = new Set(state.recentWords);
+      let candidatePool = wordBank.filter((entry) => !recentSet.has(entry.word));
+      if (!candidatePool.length) candidatePool = [...wordBank];
+      shuffleInPlace(candidatePool);
+
+      for (const entry of candidatePool) {
+        if (entry.word !== state.lastComputerWord || candidatePool.length === 1) {
           state.lastComputerWord = entry.word;
+          state.recentWords = [entry.word, ...state.recentWords.filter((word) => word !== entry.word)]
+            .slice(0, MAX_RECENT_WORDS);
+          saveRecentWordHistory(state.recentWords);
           return entry;
         }
       }
-      const fallback = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
+      const fallback = candidatePool[0];
       state.lastComputerWord = fallback.word;
+      state.recentWords = [fallback.word, ...state.recentWords.filter((word) => word !== fallback.word)]
+        .slice(0, MAX_RECENT_WORDS);
+      saveRecentWordHistory(state.recentWords);
       return fallback;
+    }
+
+    async function loadDynamicWordPack() {
+      try {
+        const response = await fetch(WORD_PACK_URL, { cache: 'no-store' });
+        if (!response.ok) return;
+        const payload = await response.json();
+        const directEntries = normalizeWordEntries(payload?.words || []);
+        const comboEntries = generateComboEntries(payload?.generated || {});
+        const merged = normalizeWordEntries([...wordBank, ...directEntries, ...comboEntries]);
+        if (merged.length > 0) {
+          wordBank = merged;
+          wordBankSource = 'kid-safe-local-pack';
+          dynamicWordPackLoaded = true;
+          if (state.screen === 'menu') {
+            setMessage(`Select a mode to begin. Loaded ${wordBank.length} kid-friendly words.`);
+          }
+        }
+      } catch {
+        // Keep fallback words silently if local word pack fails to load.
+      }
     }
 
     function setMessage(text) {
@@ -1101,6 +1204,12 @@
         available_letters: availableLetters,
         round_result: state.roundResult,
         revealed_word: state.screen === 'round_over' ? state.secretWord : null,
+        word_bank: {
+          size: wordBank.length,
+          source: wordBankSource,
+          dynamic_loaded: dynamicWordPackLoaded,
+          recent_cache_size: state.recentWords.length,
+        },
         stats: { ...state.stats },
         controls: {
           keyboard: 'Arrow keys move, Enter/Space guess, A/B quick guess, R menu, F fullscreen',
@@ -1113,6 +1222,7 @@
     buildKeyboard();
     updateUI();
     render();
+    loadDynamicWordPack();
     requestAnimationFrame(frame);
   </script>
 </body>

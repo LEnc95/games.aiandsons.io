@@ -940,3 +940,15 @@
 - Validation after fix:
   - Skill client smoke rerun: `output/web-game/hangman-run2` (no `errors-*.json`).
   - Manual Playwright check confirms friend secret input accepts letters and spaces (example `abc xyz`) and Enter starts the round from focused input.
+- Hangman content expansion (2026-03-08): added a kid-friendly dynamic word-pack source.
+- Added new curated source file: `assets/hangman/kid-friendly-words.json`.
+  - Includes a large vetted word list plus adjective+noun combo pools.
+- Updated `hangman/index.html` computer-word sourcing:
+  - Added runtime fetch for local pack (`/assets/hangman/kid-friendly-words.json`) with safe fallback to in-file defaults.
+  - Added normalization/sanitization + dedupe pipeline for all loaded entries.
+  - Added generated combo expansion from curated adjective+noun pools for freshness.
+  - Added recent-word rotation cache (`hangman-recent-words-v1`) to reduce repeats across rounds.
+  - Extended `render_game_to_text` with `word_bank` diagnostics (`size`, `source`, `dynamic_loaded`, `recent_cache_size`).
+- Validation:
+  - Skill client run: `output/web-game/hangman-wordpack-run1` (3 iterations, no `errors-*.json` artifacts).
+  - State output confirms dynamic source loaded with `word_bank.size: 360` and `source: kid-safe-local-pack`.
