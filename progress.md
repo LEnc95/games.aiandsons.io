@@ -932,3 +932,11 @@
     - Only generic `favicon.ico` 404 from local static server; no runtime/script errors from game logic.
 - Follow-up TODO suggestion:
   - Add Hangman-specific achievements/reward criteria in `src/prog/achievements.js` once product definitions are available.
+- Bugfix (2026-03-08): Friend mode text input key handling was intercepting typed letters/spaces.
+- Root cause: `handleKeyDown` prevented default for gameplay hotkeys globally (including focused form fields in friend setup).
+- Fix applied in `hangman/index.html`:
+  - Added editable-target guard (`INPUT`, `TEXTAREA`, `SELECT`, `contenteditable`) before game hotkey handling.
+  - In setup screen, keep Enter-to-start behavior while allowing normal typing for all other keys.
+- Validation after fix:
+  - Skill client smoke rerun: `output/web-game/hangman-run2` (no `errors-*.json`).
+  - Manual Playwright check confirms friend secret input accepts letters and spaces (example `abc xyz`) and Enter starts the round from focused input.
