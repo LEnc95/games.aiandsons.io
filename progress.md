@@ -961,3 +961,46 @@
 - Validation:
   - Playwright mobile viewport check at 390x844 while in active computer round.
   - Screenshot artifact confirms full A-Z keyboard visible in viewport: `output/web-game/hangman-mobile-visible-keyboard.png`.
+- New request (2026-03-11): Create one new game and integrate it into the platform.
+- Implemented new standalone game page: `treasuremaze/index.html`.
+  - Gameplay: grid-based maze runner where the player collects gems, avoids guard enemies, and reaches an exit after clearing treasures.
+  - Added level progression, score/lives tracking, freeze-pulse ability (Space/B), guard chase logic, and persistent best score.
+  - Added desktop + mobile controls (WASD/arrow keys + touch directional buttons), pause/restart/start flow, and fullscreen toggle (`F` + button).
+  - Added deterministic automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Added platform hooks: `rememberRecent('treasuremaze')`, coin rewards on level clears via `addCoins`, and achievement checks via `maybeUnlock`.
+- Integrated launcher/routing metadata:
+  - Added `Treasure Maze` entry to `src/meta/games.js`.
+  - Added static fallback game card to `index.html`.
+  - Added `/treasuremaze` rewrite + cache header entries in `vercel.json`.
+- Validation completed with skill Playwright loop:
+  - `output/web-game/treasuremaze-run1` (baseline action payload with start click, screenshots + text-state snapshots, no runtime error artifacts).
+  - `output/web-game/treasuremaze-run2` (custom movement/freeze sequence, verified movement/collision/game-over transitions, no runtime error artifacts).
+  - Additional manual controls smoke screenshot: `output/web-game/treasuremaze-controls-smoke.png` (start/pause/resume/restart flow).
+  - Console findings: only expected local `favicon.ico` 404 from static server; no game-logic runtime errors.
+- Regression tests:
+  - `npm run test:shop` passed (34/34 tests).
+- Follow-up TODO suggestions:
+  - Add Treasure Maze-specific achievements/reward items in `src/prog/achievements.js` and `shop.html` if product wants progression unlocks tied to this game.
+  - Consider adding optional deterministic level seeds for scripted path-based regression tests that validate gem collection + exit clear in one run.
+- New request (2026-03-11): Add a racing game to the website.
+- Implemented new standalone racing game: `neonrally/index.html`.
+  - Added top-down oval race with player car physics, two AI opponents, lap progression (3 laps), live position ranking, countdown timer, and finish/time-up states.
+  - Added turbo system (manual boost + boost pads with cooldown), collision response against AI, off-track grip penalty, and persistent best-time tracking.
+  - Added desktop + mobile controls (WASD/arrow keys + touch controls), pause/restart/start flow, and fullscreen toggle (`F` + button).
+  - Added deterministic test hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Added platform hooks: `rememberRecent('neonrally')`, coin payouts via `addCoins`, and `maybeUnlock` progress calls.
+- Integrated launcher/routing metadata:
+  - Added `Neon Rally` entry to `src/meta/games.js`.
+  - Added static fallback card to `index.html`.
+  - Added `/neonrally` rewrite + cache header entries in `vercel.json`.
+- Validation completed with skill Playwright loop:
+  - `output/web-game/neonrally-run1` (default skill payload, start flow + AI/loop verification, no runtime error artifacts).
+  - `output/web-game/neonrally-run2` (custom movement/steering/boost script, verified player driving and boost interactions, no runtime error artifacts).
+  - `output/web-game/neonrally-run3` (post-balance rerun after AI pace tuning and angle normalization, no runtime error artifacts).
+  - Manual controls smoke screenshot: `output/web-game/neonrally-controls-smoke.png` (start/pause/resume/restart keyboard path + HUD layout).
+  - Console findings: only expected local `favicon.ico` 404 from static server; no game logic runtime errors.
+- Regression tests:
+  - `npm run test:shop` passed (34/34 tests).
+- Follow-up TODO suggestions:
+  - Add Neon Rally-specific achievements/reward items in `src/prog/achievements.js` and `shop.html` if product wants race-specific progression rewards.
+  - Consider optional difficulty presets (AI pace and timer length) for younger players.

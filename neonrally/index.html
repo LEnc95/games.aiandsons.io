@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Neon Rally</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root {
+      --bg-1: #061227;
+      --bg-2: #020912;
+      --panel: #122848;
+      --panel-border: #3e6da8;
+      --text: #eaf5ff;
+      --muted: #a8c3e5;
+      --accent: #7de4ff;
+      --good: #8df2bf;
+      --warn: #ffdc8f;
+      --btn: #245184;
+      --btn-border: #4773aa;
+      --btn-active: #1a3f68;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      background:
+        radial-gradient(120% 100% at 10% 15%, #16385f 0%, transparent 58%),
+        radial-gradient(120% 120% at 85% 82%, #15304f 0%, transparent 52%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 30;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.52);
+      backdrop-filter: blur(4px);
+    }
+    .back-home:hover {
+      background: rgba(0, 0, 0, 0.72);
+    }
+    .wrap {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 56px 10px 10px;
+      padding-top: max(calc(env(safe-area-inset-top, 10px) + 52px), 60px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    #canvasWrap {
+      width: min(96vw, 980px);
+      max-height: min(56dvh, 620px);
+      aspect-ratio: 16 / 9;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid #3d6da7;
+      background: #081629;
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.42);
+      touch-action: none;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border: 1px solid rgba(132, 184, 238, 0.44);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(18, 40, 72, 0.95), rgba(11, 26, 47, 0.92));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 7px;
+    }
+    .stat {
+      min-height: 54px;
+      border-radius: 10px;
+      border: 1px solid rgba(147, 187, 235, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      text-align: center;
+      padding: 4px;
+    }
+    .stat .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      line-height: 1;
+    }
+    .stat .value {
+      font-weight: 800;
+      font-size: clamp(16px, 2.6vw, 20px);
+      line-height: 1;
+    }
+    .status {
+      min-height: 1.2em;
+      text-align: center;
+      color: #d4e8ff;
+      font-weight: 600;
+      font-size: clamp(13px, 2.1vw, 15px);
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn {
+      min-height: 40px;
+      min-width: 96px;
+      border-radius: 9px;
+      border: 2px solid var(--btn-border);
+      background: var(--btn);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn:active { background: var(--btn-active); }
+    .btn.primary {
+      background: #8df2bf;
+      border-color: #b8f8d2;
+      color: #07211c;
+    }
+    .btn.warn {
+      background: #ffdc8f;
+      border-color: #ffe9ba;
+      color: #2a1d08;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      align-items: stretch;
+    }
+    .ctrl {
+      min-height: 42px;
+      border-radius: 9px;
+      border: 2px solid #476fa3;
+      background: #29517f;
+      color: #eef7ff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .ctrl:active,
+    .ctrl.active {
+      background: #1e4068;
+    }
+    .ctrl.wide { grid-column: span 2; }
+    .legend {
+      margin: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    @media (max-width: 860px) {
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #canvasWrap { max-height: min(46dvh, 420px); }
+      .legend { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <div id="canvasWrap">
+      <canvas id="game" width="960" height="540" aria-label="Neon Rally race track"></canvas>
+    </div>
+    <section class="hud">
+      <div class="stats">
+        <div class="stat"><span class="label">Lap</span><span class="value" id="lap">0 / 3</span></div>
+        <div class="stat"><span class="label">Position</span><span class="value" id="position">3 / 3</span></div>
+        <div class="stat"><span class="label">Speed</span><span class="value" id="speed">0</span></div>
+        <div class="stat"><span class="label">Time</span><span class="value" id="time">90.0</span></div>
+        <div class="stat"><span class="label">Boost</span><span class="value" id="boost">Ready</span></div>
+        <div class="stat"><span class="label">Best</span><span class="value" id="best">--</span></div>
+        <div class="stat"><span class="label">Coins</span><span class="value" id="coins">0</span></div>
+      </div>
+      <div class="status" id="statusLine">Finish 3 laps before time runs out.</div>
+      <div class="button-row">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+        <button class="btn" id="fullscreen-btn">FULLSCREEN</button>
+      </div>
+      <div class="controls" aria-label="Touch controls">
+        <button class="ctrl" data-hold="left" aria-label="Steer left">LEFT</button>
+        <button class="ctrl" data-hold="right" aria-label="Steer right">RIGHT</button>
+        <button class="ctrl" data-hold="throttle" aria-label="Accelerate">THROTTLE</button>
+        <button class="ctrl" data-hold="brake" aria-label="Brake">BRAKE</button>
+        <button class="ctrl wide warn" id="boost-btn" aria-label="Use turbo boost">TURBO BOOST</button>
+        <button class="ctrl wide" id="pause-touch-btn" aria-label="Pause or resume">PAUSE / RESUME</button>
+      </div>
+      <p class="legend">Keyboard: Arrows or WASD drive, Space/B boost, P pause, R restart, Enter start/resume, F fullscreen.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('neonrally');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const lapEl = document.getElementById('lap');
+    const positionEl = document.getElementById('position');
+    const speedEl = document.getElementById('speed');
+    const timeEl = document.getElementById('time');
+    const boostEl = document.getElementById('boost');
+    const bestEl = document.getElementById('best');
+    const coinsEl = document.getElementById('coins');
+    const statusLineEl = document.getElementById('statusLine');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const CX = W * 0.5;
+    const CY = H * 0.5;
+    const OUTER_A = 390;
+    const OUTER_B = 215;
+    const INNER_A = 245;
+    const INNER_B = 100;
+    const MID_A = (OUTER_A + INNER_A) * 0.5;
+    const MID_B = (OUTER_B + INNER_B) * 0.5;
+    const LAPS_TO_WIN = 3;
+    const TIME_LIMIT = 90;
+    const BEST_KEY = 'neonrally-best-time-v1';
+
+    const held = {
+      left: false,
+      right: false,
+      throttle: false,
+      brake: false,
+    };
+
+    const boostPads = [
+      { theta: Math.PI * 0.2, cooldown: 0 },
+      { theta: Math.PI * 0.86, cooldown: 0 },
+      { theta: Math.PI * 1.44, cooldown: 0 },
+      { theta: Math.PI * 1.86, cooldown: 0 },
+    ];
+
+    let rngSeed = (Date.now() >>> 0) || 123456789;
+    let lastTs = performance.now();
+    let steppingExternally = false;
+
+    const state = {
+      mode: 'menu',
+      raceTime: 0,
+      countdown: TIME_LIMIT,
+      lap: 0,
+      position: 3,
+      coinsEarned: 0,
+      message: 'Finish 3 laps before time runs out.',
+      player: {
+        x: CX,
+        y: CY + MID_B,
+        angle: -Math.PI * 0.5,
+        vx: 0,
+        vy: 0,
+        progress: 0,
+        prevTheta: Math.PI * 0.5,
+        boostActive: 0,
+        boostCooldown: 0,
+      },
+      aiCars: [],
+      particles: [],
+      bestTime: Number(localStorage.getItem(BEST_KEY) || 0) || 0,
+      playedOnce: false,
+      payoutDone: false,
+      finalTime: 0,
+    };
+
+    const START_THETA = Math.PI * 0.5;
+
+    function rand() {
+      rngSeed = (rngSeed * 1664525 + 1013904223) >>> 0;
+      return rngSeed / 4294967296;
+    }
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function normalizeAngleDiff(value) {
+      let out = value;
+      while (out > Math.PI) out -= Math.PI * 2;
+      while (out < -Math.PI) out += Math.PI * 2;
+      return out;
+    }
+
+    function thetaAt(x, y, a = MID_A, b = MID_B) {
+      return Math.atan2((y - CY) / b, (x - CX) / a);
+    }
+
+    function pointOnLane(theta, laneOffset = 0) {
+      const a = MID_A + laneOffset;
+      const b = MID_B + laneOffset * 0.55;
+      return {
+        x: CX + Math.cos(theta) * a,
+        y: CY + Math.sin(theta) * b,
+      };
+    }
+
+    function isOnTrack(x, y) {
+      const dx = x - CX;
+      const dy = y - CY;
+      const outer = (dx * dx) / (OUTER_A * OUTER_A) + (dy * dy) / (OUTER_B * OUTER_B);
+      const inner = (dx * dx) / (INNER_A * INNER_A) + (dy * dy) / (INNER_B * INNER_B);
+      return outer <= 1 && inner >= 1;
+    }
+
+    function updateBestDisplay() {
+      bestEl.textContent = state.bestTime > 0 ? `${state.bestTime.toFixed(1)}s` : '--';
+    }
+
+    function buildAiCars() {
+      state.aiCars = [
+        { id: 'bolt', lane: -18, speed: 0.44, color: '#ff7f88', progress: 0.2, lap: 0, x: 0, y: 0 },
+        { id: 'nova', lane: 22, speed: 0.42, color: '#8cc4ff', progress: 0.38, lap: 0, x: 0, y: 0 },
+      ];
+      for (const ai of state.aiCars) {
+        const theta = START_THETA - ai.progress;
+        const point = pointOnLane(theta, ai.lane);
+        ai.x = point.x;
+        ai.y = point.y;
+      }
+    }
+
+    function spawnParticles(x, y, color, count, speed = 90) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = rand() * Math.PI * 2;
+        const magnitude = speed * (0.35 + rand() * 0.8);
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * magnitude,
+          vy: Math.sin(angle) * magnitude,
+          life: 0.2 + rand() * 0.35,
+          maxLife: 0.2 + rand() * 0.35,
+          color,
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      if (!state.particles.length) return;
+      const next = [];
+      for (const p of state.particles) {
+        p.life -= dt;
+        if (p.life <= 0) continue;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        next.push(p);
+      }
+      state.particles = next;
+    }
+
+    function awardCoins(count) {
+      const amount = Math.max(0, Math.floor(count));
+      if (!amount) return;
+      if (typeof addCoins === 'function') addCoins(amount);
+      state.coinsEarned += amount;
+    }
+
+    function finishRace(won) {
+      if (state.payoutDone) return;
+      state.payoutDone = true;
+      state.finalTime = state.raceTime;
+      state.mode = won ? 'finished' : 'game_over';
+
+      const place = state.position;
+      const placementCoins = place === 1 ? 14 : place === 2 ? 9 : 5;
+      const timeBonus = won ? clamp(Math.floor((TIME_LIMIT - state.raceTime) / 8), 0, 5) : 0;
+      const payout = placementCoins + timeBonus;
+      awardCoins(payout);
+
+      if (won) {
+        if (state.bestTime === 0 || state.raceTime < state.bestTime) {
+          state.bestTime = state.raceTime;
+          localStorage.setItem(BEST_KEY, String(state.bestTime));
+          state.message = `New best! ${state.raceTime.toFixed(1)}s. +${payout} coins.`;
+        } else {
+          state.message = `Race complete in ${state.raceTime.toFixed(1)}s. +${payout} coins.`;
+        }
+      } else {
+        state.message = `Time up! Finished ${place}/3. +${payout} coins.`;
+      }
+
+      maybeUnlock({
+        anyPlay: true,
+        neonrally: {
+          place: place,
+          laps: state.lap,
+          time: Number(state.raceTime.toFixed(2)),
+          won,
+        },
+      });
+      updateBestDisplay();
+    }
+
+    function resetRace() {
+      state.mode = 'menu';
+      state.raceTime = 0;
+      state.countdown = TIME_LIMIT;
+      state.lap = 0;
+      state.position = 3;
+      state.coinsEarned = 0;
+      state.message = 'Finish 3 laps before time runs out.';
+      state.payoutDone = false;
+      state.finalTime = 0;
+      state.player.x = CX;
+      state.player.y = CY + MID_B;
+      state.player.angle = -Math.PI * 0.5;
+      state.player.vx = 0;
+      state.player.vy = 0;
+      state.player.progress = 0;
+      state.player.prevTheta = START_THETA;
+      state.player.boostActive = 0;
+      state.player.boostCooldown = 0;
+      state.particles = [];
+      for (const pad of boostPads) pad.cooldown = 0;
+      buildAiCars();
+    }
+
+    function activateBoost(source = 'manual') {
+      if (state.mode !== 'playing') return false;
+      if (source === 'manual' && state.player.boostCooldown > 0.02) return false;
+      state.player.boostActive = Math.max(state.player.boostActive, source === 'manual' ? 1.35 : 0.92);
+      if (source === 'manual') state.player.boostCooldown = 4.6;
+      spawnParticles(state.player.x, state.player.y, '#9de8ff', 15, 150);
+      state.message = source === 'manual' ? 'Turbo engaged!' : 'Boost pad hit!';
+      return true;
+    }
+
+    function updateAi(dt) {
+      for (const ai of state.aiCars) {
+        const pacePulse = Math.sin(state.raceTime * 0.7 + ai.lane * 0.05) * 0.035;
+        const catchup = state.player.progress > ai.progress ? 0.012 : -0.004;
+        ai.progress = Math.max(0, ai.progress + (ai.speed + pacePulse + catchup) * dt);
+        ai.lap = Math.floor(ai.progress / (Math.PI * 2));
+        const theta = START_THETA - ai.progress;
+        const point = pointOnLane(theta, ai.lane);
+        ai.x = point.x;
+        ai.y = point.y;
+      }
+    }
+
+    function updatePlayerProgress() {
+      const theta = thetaAt(state.player.x, state.player.y);
+      const diff = normalizeAngleDiff(theta - state.player.prevTheta);
+      state.player.progress = Math.max(0, state.player.progress - diff);
+      state.player.prevTheta = theta;
+      state.lap = Math.floor(state.player.progress / (Math.PI * 2));
+    }
+
+    function updatePosition() {
+      const racers = [
+        { id: 'player', progress: state.player.progress },
+        ...state.aiCars.map((ai) => ({ id: ai.id, progress: ai.progress })),
+      ];
+      racers.sort((a, b) => b.progress - a.progress);
+      const playerIndex = racers.findIndex((r) => r.id === 'player');
+      state.position = playerIndex >= 0 ? playerIndex + 1 : 3;
+    }
+
+    function collideAi() {
+      for (const ai of state.aiCars) {
+        const dx = state.player.x - ai.x;
+        const dy = state.player.y - ai.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq > 30 * 30) continue;
+        const dist = Math.sqrt(distSq) || 1;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        state.player.x += nx * 6;
+        state.player.y += ny * 6;
+        state.player.vx *= 0.72;
+        state.player.vy *= 0.72;
+        spawnParticles(state.player.x, state.player.y, '#ffb6b9', 8, 95);
+      }
+    }
+
+    function updateBoostPads(dt) {
+      for (const pad of boostPads) {
+        pad.cooldown = Math.max(0, pad.cooldown - dt);
+        const point = pointOnLane(pad.theta);
+        const dx = state.player.x - point.x;
+        const dy = state.player.y - point.y;
+        if (pad.cooldown <= 0 && dx * dx + dy * dy <= 22 * 22) {
+          pad.cooldown = 6.4;
+          activateBoost('pad');
+        }
+      }
+    }
+
+    function update(dt) {
+      updateParticles(dt);
+      if (state.mode !== 'playing') return;
+
+      state.raceTime += dt;
+      state.countdown = Math.max(0, TIME_LIMIT - state.raceTime);
+      state.player.boostActive = Math.max(0, state.player.boostActive - dt);
+      state.player.boostCooldown = Math.max(0, state.player.boostCooldown - dt);
+
+      const speed = Math.hypot(state.player.vx, state.player.vy);
+      const steerScale = Math.min(1, speed / 70);
+      if (held.left) state.player.angle -= 2.9 * steerScale * dt;
+      if (held.right) state.player.angle += 2.9 * steerScale * dt;
+      state.player.angle = normalizeAngleDiff(state.player.angle);
+
+      const dirX = Math.cos(state.player.angle);
+      const dirY = Math.sin(state.player.angle);
+      const sideX = -dirY;
+      const sideY = dirX;
+
+      const boostMult = state.player.boostActive > 0 ? 1.42 : 1;
+      if (held.throttle) {
+        state.player.vx += dirX * 390 * boostMult * dt;
+        state.player.vy += dirY * 390 * boostMult * dt;
+        if (state.player.boostActive > 0.04 && rand() < 0.42) {
+          spawnParticles(state.player.x - dirX * 12, state.player.y - dirY * 12, '#9de8ff', 1, 50);
+        }
+      }
+      if (held.brake) {
+        state.player.vx -= dirX * 245 * dt;
+        state.player.vy -= dirY * 245 * dt;
+      }
+
+      const currentSpeed = Math.hypot(state.player.vx, state.player.vy);
+      const maxSpeed = state.player.boostActive > 0 ? 355 : 300;
+      if (currentSpeed > maxSpeed) {
+        const scale = maxSpeed / currentSpeed;
+        state.player.vx *= scale;
+        state.player.vy *= scale;
+      }
+
+      const onTrack = isOnTrack(state.player.x, state.player.y);
+      const drag = onTrack ? 1.6 : 2.8;
+      const grip = onTrack ? 5.4 : 2.2;
+      const forwardVel = state.player.vx * dirX + state.player.vy * dirY;
+      const lateralVel = state.player.vx * sideX + state.player.vy * sideY;
+      const lateralAfter = lateralVel * Math.max(0, 1 - grip * dt);
+      state.player.vx = forwardVel * dirX + lateralAfter * sideX;
+      state.player.vy = forwardVel * dirY + lateralAfter * sideY;
+      state.player.vx *= Math.max(0, 1 - drag * dt);
+      state.player.vy *= Math.max(0, 1 - drag * dt);
+
+      state.player.x += state.player.vx * dt;
+      state.player.y += state.player.vy * dt;
+      state.player.x = clamp(state.player.x, 12, W - 12);
+      state.player.y = clamp(state.player.y, 12, H - 12);
+
+      if (!onTrack) {
+        state.message = 'Off track! Grip reduced in the grass.';
+      }
+
+      updateBoostPads(dt);
+      updatePlayerProgress();
+      updateAi(dt);
+      collideAi();
+      updatePosition();
+
+      if (state.lap >= LAPS_TO_WIN) {
+        finishRace(true);
+      } else if (state.countdown <= 0.001) {
+        finishRace(false);
+      }
+    }
+
+    function roundedRectPath(context, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.lineTo(x + w - radius, y);
+      context.quadraticCurveTo(x + w, y, x + w, y + radius);
+      context.lineTo(x + w, y + h - radius);
+      context.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      context.lineTo(x + radius, y + h);
+      context.quadraticCurveTo(x, y + h, x, y + h - radius);
+      context.lineTo(x, y + radius);
+      context.quadraticCurveTo(x, y, x + radius, y);
+      context.closePath();
+    }
+
+    function drawTrack() {
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0f2442');
+      bg.addColorStop(1, '#09152a');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = '#2f6e3c';
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, OUTER_A + 45, OUTER_B + 45, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#1a1f2c';
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, OUTER_A, OUTER_B, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#215532';
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, INNER_A, INNER_B, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(120, 220, 255, 0.48)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, OUTER_A, OUTER_B, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, INNER_A, INNER_B, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.44)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([13, 15]);
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, MID_A, MID_B, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const start = pointOnLane(START_THETA);
+      roundedRectPath(ctx, start.x - 54, start.y - 11, 108, 22, 6);
+      ctx.fillStyle = '#e8edf7';
+      ctx.fill();
+      ctx.fillStyle = '#121212';
+      const square = 13;
+      for (let row = 0; row < 2; row += 1) {
+        for (let col = 0; col < 8; col += 1) {
+          if ((row + col) % 2 !== 0) continue;
+          ctx.fillRect(start.x - 52 + col * square, start.y - 9 + row * square, square, square);
+        }
+      }
+    }
+
+    function drawBoostPads() {
+      for (const pad of boostPads) {
+        const point = pointOnLane(pad.theta);
+        const ready = pad.cooldown <= 0.01;
+        const pulse = 0.72 + Math.sin(state.raceTime * 7 + pad.theta) * 0.2;
+        ctx.save();
+        ctx.globalAlpha = ready ? pulse : 0.35;
+        ctx.fillStyle = ready ? '#88e9ff' : '#60718c';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = ready ? 'rgba(192,248,255,0.95)' : 'rgba(148,170,196,0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawCar(car, color, angleOverride = null) {
+      const speed = Math.hypot(car.vx || 0, car.vy || 0);
+      const angle = angleOverride ?? car.angle;
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(angle);
+      const shake = Math.min(1.8, speed * 0.007);
+      ctx.translate((rand() - 0.5) * shake, (rand() - 0.5) * shake);
+
+      ctx.fillStyle = '#1a2230';
+      roundedRectPath(ctx, -16, -10, 32, 20, 6);
+      ctx.fill();
+      ctx.fillStyle = color;
+      roundedRectPath(ctx, -12, -8, 24, 16, 5);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(232,248,255,0.85)';
+      roundedRectPath(ctx, 1, -5, 8, 10, 3);
+      ctx.fill();
+      ctx.fillStyle = '#0e121a';
+      ctx.fillRect(-17, -11, 6, 5);
+      ctx.fillRect(11, -11, 6, 5);
+      ctx.fillRect(-17, 6, 6, 5);
+      ctx.fillRect(11, 6, 6, 5);
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const alpha = clamp(p.life / p.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 3, 3);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawOverlay() {
+      if (state.mode === 'playing') return;
+      ctx.fillStyle = 'rgba(6, 12, 24, 0.58)';
+      ctx.fillRect(0, H * 0.35, W, H * 0.28);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#eef6ff';
+      ctx.font = '700 44px "Trebuchet MS", "Segoe UI", sans-serif';
+      let title = 'NEON RALLY';
+      if (state.mode === 'paused') title = 'PAUSED';
+      if (state.mode === 'finished') title = 'FINISH!';
+      if (state.mode === 'game_over') title = 'TIME UP';
+      ctx.fillText(title, W * 0.5, H * 0.47);
+      ctx.fillStyle = '#d6e8ff';
+      ctx.font = '600 20px "Trebuchet MS", "Segoe UI", sans-serif';
+      const subtitle = state.mode === 'menu'
+        ? 'Press Start to race'
+        : state.mode === 'paused'
+          ? 'Press Pause or Enter to resume'
+          : state.mode === 'finished'
+            ? `Placed ${state.position}/3 in ${state.finalTime.toFixed(1)}s`
+            : `Placed ${state.position}/3. Press Restart.`;
+      ctx.fillText(subtitle, W * 0.5, H * 0.56);
+    }
+
+    function render() {
+      drawTrack();
+      drawBoostPads();
+      for (const ai of state.aiCars) {
+        const aiAngle = START_THETA - ai.progress - Math.PI * 0.5;
+        drawCar(ai, ai.color, aiAngle);
+      }
+      drawCar(state.player, '#ffd66f');
+      drawParticles();
+      drawOverlay();
+    }
+
+    function updateHud() {
+      lapEl.textContent = `${Math.min(state.lap, LAPS_TO_WIN)} / ${LAPS_TO_WIN}`;
+      positionEl.textContent = `${state.position} / 3`;
+      const playerSpeed = Math.hypot(state.player.vx, state.player.vy);
+      speedEl.textContent = String(Math.round(playerSpeed));
+      timeEl.textContent = state.countdown.toFixed(1);
+      if (state.player.boostCooldown > 0.05) {
+        boostEl.textContent = `${state.player.boostCooldown.toFixed(1)}s`;
+      } else if (state.player.boostActive > 0.04) {
+        boostEl.textContent = 'Active';
+      } else {
+        boostEl.textContent = 'Ready';
+      }
+      coinsEl.textContent = String(state.coinsEarned);
+      statusLineEl.textContent = state.message;
+      updateBestDisplay();
+    }
+
+    function stepSimulation(ms) {
+      const total = clamp(ms, 0, 4000) / 1000;
+      let remain = total;
+      const frame = 1 / 120;
+      while (remain > 0) {
+        const dt = Math.min(frame, remain);
+        update(dt);
+        remain -= dt;
+      }
+      updateHud();
+      render();
+    }
+
+    function isEditableTarget(target) {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+
+    function startRaceIfNeeded() {
+      if (state.mode !== 'menu') return;
+      state.mode = 'playing';
+      state.message = 'Race started. Hit boost pads and hold the racing line.';
+      if (!state.playedOnce) {
+        state.playedOnce = true;
+        maybeUnlock({ anyPlay: true, neonrally: { place: 3, laps: 0, time: 0, won: false } });
+      }
+    }
+
+    function startOrResume() {
+      if (state.mode === 'menu') {
+        startRaceIfNeeded();
+        return;
+      }
+      if (state.mode === 'paused') {
+        state.mode = 'playing';
+        state.message = 'Back on track.';
+        return;
+      }
+      if (state.mode === 'finished' || state.mode === 'game_over') {
+        resetRace();
+        state.mode = 'playing';
+        state.message = 'New race started!';
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        state.message = 'Back on track.';
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'pixels',
+          canvas: { width: W, height: H },
+        },
+        mode: state.mode,
+        lap: state.lap,
+        laps_to_win: LAPS_TO_WIN,
+        position: state.position,
+        countdown_sec: Number(state.countdown.toFixed(2)),
+        race_time_sec: Number(state.raceTime.toFixed(2)),
+        player: {
+          x: Number(state.player.x.toFixed(2)),
+          y: Number(state.player.y.toFixed(2)),
+          angle: Number(state.player.angle.toFixed(3)),
+          speed: Number(Math.hypot(state.player.vx, state.player.vy).toFixed(2)),
+          progress: Number(state.player.progress.toFixed(3)),
+          boost_active_sec: Number(state.player.boostActive.toFixed(2)),
+          boost_cooldown_sec: Number(state.player.boostCooldown.toFixed(2)),
+          on_track: isOnTrack(state.player.x, state.player.y),
+        },
+        ai_cars: state.aiCars.map((ai) => ({
+          id: ai.id,
+          x: Number(ai.x.toFixed(2)),
+          y: Number(ai.y.toFixed(2)),
+          lap: ai.lap,
+          progress: Number(ai.progress.toFixed(3)),
+        })),
+        boost_pads: boostPads.map((pad) => {
+          const point = pointOnLane(pad.theta);
+          return {
+            x: Number(point.x.toFixed(2)),
+            y: Number(point.y.toFixed(2)),
+            cooldown_sec: Number(pad.cooldown.toFixed(2)),
+          };
+        }),
+      };
+      return JSON.stringify(payload);
+    };
+
+    document.addEventListener('keydown', (event) => {
+      if (isEditableTarget(event.target)) return;
+      const code = event.code;
+      if (code === 'ArrowLeft' || code === 'KeyA') {
+        event.preventDefault();
+        held.left = true;
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        event.preventDefault();
+        held.right = true;
+      } else if (code === 'ArrowUp' || code === 'KeyW') {
+        event.preventDefault();
+        held.throttle = true;
+      } else if (code === 'ArrowDown' || code === 'KeyS') {
+        event.preventDefault();
+        held.brake = true;
+      } else if (code === 'Space' || code === 'KeyB') {
+        event.preventDefault();
+        startRaceIfNeeded();
+        activateBoost('manual');
+      } else if (code === 'Enter') {
+        event.preventDefault();
+        startOrResume();
+      } else if (code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+      } else if (code === 'KeyR') {
+        event.preventDefault();
+        resetRace();
+      } else if (code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      } else if (code === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+      updateHud();
+      render();
+    });
+
+    document.addEventListener('keyup', (event) => {
+      const code = event.code;
+      if (code === 'ArrowLeft' || code === 'KeyA') held.left = false;
+      else if (code === 'ArrowRight' || code === 'KeyD') held.right = false;
+      else if (code === 'ArrowUp' || code === 'KeyW') held.throttle = false;
+      else if (code === 'ArrowDown' || code === 'KeyS') held.brake = false;
+    });
+
+    function setHeldKey(key, down) {
+      if (!(key in held)) return;
+      held[key] = down;
+    }
+
+    for (const btn of document.querySelectorAll('.ctrl[data-hold]')) {
+      const key = btn.dataset.hold;
+      const press = (event) => {
+        event.preventDefault();
+        startRaceIfNeeded();
+        setHeldKey(key, true);
+        btn.classList.add('active');
+      };
+      const release = (event) => {
+        event.preventDefault();
+        setHeldKey(key, false);
+        btn.classList.remove('active');
+      };
+      btn.addEventListener('pointerdown', press, { passive: false });
+      btn.addEventListener('pointerup', release, { passive: false });
+      btn.addEventListener('pointercancel', release, { passive: false });
+      btn.addEventListener('pointerleave', release, { passive: false });
+    }
+
+    document.getElementById('boost-btn').addEventListener('click', () => {
+      startRaceIfNeeded();
+      activateBoost('manual');
+      updateHud();
+      render();
+    });
+
+    document.getElementById('pause-touch-btn').addEventListener('click', () => {
+      if (state.mode === 'menu') startOrResume();
+      else togglePause();
+      updateHud();
+      render();
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      startOrResume();
+      updateHud();
+      render();
+    });
+
+    document.getElementById('pause-btn').addEventListener('click', () => {
+      togglePause();
+      updateHud();
+      render();
+    });
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      resetRace();
+      updateHud();
+      render();
+    });
+
+    document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      toggleFullscreen();
+    });
+
+    window.addEventListener('blur', () => {
+      for (const key of Object.keys(held)) held[key] = false;
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+      }
+      updateHud();
+      render();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+        updateHud();
+        render();
+      }
+    });
+
+    function loop(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        updateHud();
+        render();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    resetRace();
+    updateHud();
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Treasure Maze</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root {
+      --bg-1: #0a1a2f;
+      --bg-2: #040a16;
+      --panel: #112846;
+      --panel-border: #365a89;
+      --text: #eef7ff;
+      --muted: #a6c3e8;
+      --accent: #78d9ff;
+      --good: #8ef1bc;
+      --danger: #ff9e93;
+      --btn: #224775;
+      --btn-border: #3b679f;
+      --btn-active: #1a3860;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      background:
+        radial-gradient(120% 120% at 14% 8%, #17365f 0%, transparent 58%),
+        radial-gradient(110% 90% at 86% 88%, #133053 0%, transparent 50%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 30;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.52);
+      backdrop-filter: blur(4px);
+    }
+    .back-home:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .wrap {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 56px 10px 10px;
+      padding-top: max(calc(env(safe-area-inset-top, 10px) + 50px), 58px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    #canvasWrap {
+      width: min(95vw, 760px);
+      max-height: min(54dvh, 560px);
+      aspect-ratio: 17 / 13;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid #3c6da6;
+      background: #061120;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+      touch-action: none;
+    }
+    .hud {
+      width: min(95vw, 760px);
+      border: 1px solid rgba(132, 184, 238, 0.45);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(17, 40, 70, 0.94), rgba(11, 27, 48, 0.92));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 7px;
+    }
+    .stat {
+      min-height: 52px;
+      border-radius: 10px;
+      border: 1px solid rgba(147, 187, 235, 0.32);
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      text-align: center;
+      padding: 4px;
+    }
+    .stat .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      line-height: 1;
+    }
+    .stat .value {
+      font-weight: 800;
+      font-size: clamp(16px, 2.7vw, 20px);
+      line-height: 1;
+    }
+    .status {
+      min-height: 1.2em;
+      text-align: center;
+      color: #d6e8ff;
+      font-weight: 600;
+      font-size: clamp(13px, 2.1vw, 15px);
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn {
+      min-height: 40px;
+      min-width: 96px;
+      border-radius: 9px;
+      border: 2px solid var(--btn-border);
+      background: var(--btn);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn:active {
+      background: var(--btn-active);
+    }
+    .btn.primary {
+      background: #8ef1bc;
+      border-color: #b8f8d2;
+      color: #07211c;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      align-items: stretch;
+    }
+    .ctrl {
+      min-height: 42px;
+      border-radius: 9px;
+      border: 2px solid #476fa3;
+      background: #29517f;
+      color: #eef7ff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .ctrl:active,
+    .ctrl.active {
+      background: #1e4068;
+    }
+    .ctrl.wide {
+      grid-column: span 2;
+    }
+    .legend {
+      margin: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    @media (max-width: 760px) {
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      #canvasWrap {
+        max-height: min(48dvh, 440px);
+      }
+      .legend {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <div id="canvasWrap">
+      <canvas id="game" width="680" height="520" aria-label="Treasure Maze game board"></canvas>
+    </div>
+    <section class="hud">
+      <div class="stats">
+        <div class="stat"><span class="label">Score</span><span class="value" id="score">0</span></div>
+        <div class="stat"><span class="label">Level</span><span class="value" id="level">1</span></div>
+        <div class="stat"><span class="label">Lives</span><span class="value" id="lives">3</span></div>
+        <div class="stat"><span class="label">Best</span><span class="value" id="best">0</span></div>
+        <div class="stat"><span class="label">Gems</span><span class="value" id="gems">0</span></div>
+        <div class="stat"><span class="label">Freeze</span><span class="value" id="freeze">Ready</span></div>
+      </div>
+      <div class="status" id="statusLine">Collect every gem, then reach the exit door.</div>
+      <div class="button-row">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+        <button class="btn" id="fullscreen-btn">FULLSCREEN</button>
+      </div>
+      <div class="controls" aria-label="Touch controls">
+        <button class="ctrl" data-dir="up" aria-label="Move up">UP</button>
+        <button class="ctrl" data-dir="left" aria-label="Move left">LEFT</button>
+        <button class="ctrl" data-dir="down" aria-label="Move down">DOWN</button>
+        <button class="ctrl" data-dir="right" aria-label="Move right">RIGHT</button>
+        <button class="ctrl wide" id="freeze-btn" aria-label="Use freeze pulse">FREEZE PULSE</button>
+        <button class="ctrl wide" id="pause-touch-btn" aria-label="Pause or resume">PAUSE / RESUME</button>
+      </div>
+      <p class="legend">Keyboard: Arrows/WASD move, Space/B freeze pulse, P pause, R restart, Enter start/resume, F fullscreen.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('treasuremaze');
+
+    const COLS = 17;
+    const ROWS = 13;
+    const TILE = 40;
+    const BEST_KEY = 'treasuremaze-best-score-v1';
+    const PLAYER_INTERVAL = 0.12;
+
+    const DIRS = {
+      up: { x: 0, y: -1, key: 'up' },
+      down: { x: 0, y: 1, key: 'down' },
+      left: { x: -1, y: 0, key: 'left' },
+      right: { x: 1, y: 0, key: 'right' },
+    };
+    const DIR_ORDER = ['up', 'left', 'down', 'right'];
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level');
+    const livesEl = document.getElementById('lives');
+    const bestEl = document.getElementById('best');
+    const gemsEl = document.getElementById('gems');
+    const freezeEl = document.getElementById('freeze');
+    const statusLineEl = document.getElementById('statusLine');
+
+    const held = { up: false, down: false, left: false, right: false };
+
+    let rngSeed = (Date.now() >>> 0) || 123456789;
+    let playerAccum = 0;
+    let enemyAccum = 0;
+    let lastTs = performance.now();
+    let steppingExternally = false;
+    let preferredDir = 'right';
+
+    const state = {
+      mode: 'menu',
+      score: 0,
+      level: 1,
+      lives: 3,
+      best: Number(localStorage.getItem(BEST_KEY) || '0'),
+      message: 'Collect every gem, then reach the exit door.',
+      playedOnce: false,
+      coinsAwarded: 0,
+      totalTime: 0,
+      levelTime: 0,
+      hitInvuln: 0,
+      freeze: {
+        active: 0,
+        cooldown: 0,
+      },
+      maze: [],
+      start: { x: 1, y: 1 },
+      player: { x: 1, y: 1, dir: 'right' },
+      enemies: [],
+      exit: { x: 1, y: 1, open: false },
+      treasures: [],
+      treasureLookup: new Set(),
+      particles: [],
+      runStats: {
+        treasuresCollected: 0,
+        levelsCleared: 0,
+      },
+    };
+
+    function rand() {
+      rngSeed = (rngSeed * 1664525 + 1013904223) >>> 0;
+      return rngSeed / 4294967296;
+    }
+
+    function randomInt(maxExclusive) {
+      return Math.floor(rand() * maxExclusive);
+    }
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function keyFor(x, y) {
+      return `${x},${y}`;
+    }
+
+    function shuffleInPlace(list) {
+      for (let i = list.length - 1; i > 0; i -= 1) {
+        const j = randomInt(i + 1);
+        const tmp = list[i];
+        list[i] = list[j];
+        list[j] = tmp;
+      }
+      return list;
+    }
+
+    function enemyIntervalForLevel(level) {
+      return clamp(0.34 - (level - 1) * 0.02, 0.11, 0.34);
+    }
+
+    function isInside(x, y) {
+      return x >= 0 && y >= 0 && x < COLS && y < ROWS;
+    }
+
+    function isOpenCell(maze, x, y) {
+      return isInside(x, y) && maze[y][x] === 0;
+    }
+
+    function getOpenNeighbors(maze, x, y) {
+      const out = [];
+      for (const dir of Object.values(DIRS)) {
+        const nx = x + dir.x;
+        const ny = y + dir.y;
+        if (isOpenCell(maze, nx, ny)) out.push({ x: nx, y: ny });
+      }
+      return out;
+    }
+
+    function generateMaze(cols, rows) {
+      const maze = Array.from({ length: rows }, () => Array(cols).fill(1));
+      const stack = [{ x: 1, y: 1 }];
+      maze[1][1] = 0;
+
+      while (stack.length) {
+        const current = stack[stack.length - 1];
+        const options = [];
+        const jumps = [
+          { x: 0, y: -2 },
+          { x: 0, y: 2 },
+          { x: -2, y: 0 },
+          { x: 2, y: 0 },
+        ];
+
+        for (const jump of jumps) {
+          const nx = current.x + jump.x;
+          const ny = current.y + jump.y;
+          if (nx <= 0 || ny <= 0 || nx >= cols - 1 || ny >= rows - 1) continue;
+          if (maze[ny][nx] === 1) {
+            options.push({ x: nx, y: ny, wx: current.x + jump.x / 2, wy: current.y + jump.y / 2 });
+          }
+        }
+
+        if (!options.length) {
+          stack.pop();
+          continue;
+        }
+
+        const pick = options[randomInt(options.length)];
+        maze[pick.wy][pick.wx] = 0;
+        maze[pick.y][pick.x] = 0;
+        stack.push({ x: pick.x, y: pick.y });
+      }
+
+      const extraLoops = 6 + Math.floor(state.level * 1.2);
+      for (let i = 0; i < extraLoops; i += 1) {
+        const x = 1 + randomInt(cols - 2);
+        const y = 1 + randomInt(rows - 2);
+        if (maze[y][x] !== 1) continue;
+        const nearbyOpen = (
+          (isInside(x + 1, y) && maze[y][x + 1] === 0) ||
+          (isInside(x - 1, y) && maze[y][x - 1] === 0) ||
+          (isInside(x, y + 1) && maze[y + 1][x] === 0) ||
+          (isInside(x, y - 1) && maze[y - 1][x] === 0)
+        );
+        if (nearbyOpen) maze[y][x] = 0;
+      }
+
+      return maze;
+    }
+
+    function buildDistanceMap(maze, origin) {
+      const dist = Array.from({ length: ROWS }, () => Array(COLS).fill(Number.POSITIVE_INFINITY));
+      const queue = [];
+      if (!isOpenCell(maze, origin.x, origin.y)) return dist;
+      dist[origin.y][origin.x] = 0;
+      queue.push({ x: origin.x, y: origin.y });
+
+      for (let i = 0; i < queue.length; i += 1) {
+        const cell = queue[i];
+        const base = dist[cell.y][cell.x];
+        for (const next of getOpenNeighbors(maze, cell.x, cell.y)) {
+          if (dist[next.y][next.x] <= base + 1) continue;
+          dist[next.y][next.x] = base + 1;
+          queue.push(next);
+        }
+      }
+      return dist;
+    }
+
+    function allOpenCells(maze) {
+      const out = [];
+      for (let y = 1; y < ROWS - 1; y += 1) {
+        for (let x = 1; x < COLS - 1; x += 1) {
+          if (maze[y][x] === 0) out.push({ x, y });
+        }
+      }
+      return out;
+    }
+
+    function createLevel(level) {
+      const maze = generateMaze(COLS, ROWS);
+      const start = { x: 1, y: 1 };
+      if (!isOpenCell(maze, start.x, start.y)) maze[start.y][start.x] = 0;
+
+      const distance = buildDistanceMap(maze, start);
+      const openCells = allOpenCells(maze);
+
+      let farthest = { ...start, dist: 0 };
+      for (const cell of openCells) {
+        const d = distance[cell.y][cell.x];
+        if (Number.isFinite(d) && d > farthest.dist) farthest = { ...cell, dist: d };
+      }
+      const exit = { x: farthest.x, y: farthest.y, open: false };
+
+      const safePool = openCells.filter((cell) => {
+        if (cell.x === start.x && cell.y === start.y) return false;
+        if (cell.x === exit.x && cell.y === exit.y) return false;
+        const d = distance[cell.y][cell.x];
+        return Number.isFinite(d) && d >= 3;
+      });
+      shuffleInPlace(safePool);
+
+      const treasureCount = clamp(2 + level, 3, 10);
+      const enemyCount = clamp(1 + Math.floor((level - 1) / 2), 1, 5);
+
+      const treasures = [];
+      const taken = new Set([keyFor(start.x, start.y), keyFor(exit.x, exit.y)]);
+      for (const cell of safePool) {
+        if (treasures.length >= treasureCount) break;
+        const key = keyFor(cell.x, cell.y);
+        if (taken.has(key)) continue;
+        taken.add(key);
+        treasures.push({ x: cell.x, y: cell.y });
+      }
+
+      const enemies = [];
+      for (const cell of safePool) {
+        if (enemies.length >= enemyCount) break;
+        const key = keyFor(cell.x, cell.y);
+        if (taken.has(key)) continue;
+        if (distance[cell.y][cell.x] < 6) continue;
+        taken.add(key);
+        enemies.push({
+          id: enemies.length + 1,
+          x: cell.x,
+          y: cell.y,
+          wobble: rand() * Math.PI * 2,
+        });
+      }
+
+      if (!enemies.length) {
+        enemies.push({
+          id: 1,
+          x: exit.x,
+          y: exit.y,
+          wobble: rand() * Math.PI * 2,
+        });
+      }
+
+      return { maze, start, exit, treasures, enemies };
+    }
+
+    function syncTreasureLookup() {
+      state.treasureLookup = new Set(state.treasures.map((t) => keyFor(t.x, t.y)));
+    }
+
+    function applyLevel(level) {
+      const built = createLevel(level);
+      state.level = level;
+      state.maze = built.maze;
+      state.start = built.start;
+      state.player = { x: built.start.x, y: built.start.y, dir: 'right' };
+      state.exit = built.exit;
+      state.treasures = built.treasures;
+      state.enemies = built.enemies;
+      state.levelTime = 0;
+      state.hitInvuln = 0;
+      state.freeze.active = 0;
+      syncTreasureLookup();
+      playerAccum = 0;
+      enemyAccum = 0;
+    }
+
+    function awardCoins(count) {
+      const safeCount = Math.max(0, Math.floor(count));
+      if (!safeCount) return;
+      if (typeof addCoins === 'function') addCoins(safeCount);
+      state.coinsAwarded += safeCount;
+    }
+
+    function updateBest() {
+      if (state.score <= state.best) return;
+      state.best = state.score;
+      localStorage.setItem(BEST_KEY, String(state.best));
+    }
+
+    function spawnParticles(x, y, color, count, speed = 120) {
+      const centerX = (x + 0.5) * TILE;
+      const centerY = (y + 0.5) * TILE;
+      for (let i = 0; i < count; i += 1) {
+        const ang = rand() * Math.PI * 2;
+        const mag = speed * (0.3 + rand() * 0.7);
+        state.particles.push({
+          x: centerX,
+          y: centerY,
+          vx: Math.cos(ang) * mag,
+          vy: Math.sin(ang) * mag,
+          life: 0.2 + rand() * 0.45,
+          maxLife: 0.2 + rand() * 0.45,
+          color,
+        });
+      }
+    }
+
+    function collectTreasureIfPresent() {
+      const key = keyFor(state.player.x, state.player.y);
+      if (!state.treasureLookup.has(key)) return false;
+      state.treasureLookup.delete(key);
+      state.treasures = state.treasures.filter((t) => !(t.x === state.player.x && t.y === state.player.y));
+      const gain = 90 + state.level * 14;
+      state.score += gain;
+      state.runStats.treasuresCollected += 1;
+      state.message = `Gem found! +${gain} score.`;
+      spawnParticles(state.player.x, state.player.y, '#82d8ff', 18, 160);
+      if (!state.treasures.length) {
+        state.exit.open = true;
+        state.message = 'All gems collected! Reach the glowing exit.';
+      }
+      return true;
+    }
+
+    function checkEnemyCollision() {
+      if (state.mode !== 'playing' || state.hitInvuln > 0) return false;
+      const collided = state.enemies.some((enemy) => enemy.x === state.player.x && enemy.y === state.player.y);
+      if (!collided) return false;
+
+      state.lives -= 1;
+      state.hitInvuln = 1.2;
+      state.freeze.active = Math.max(state.freeze.active, 0.55);
+      spawnParticles(state.player.x, state.player.y, '#ff9e93', 20, 190);
+      if (state.lives <= 0) {
+        state.lives = 0;
+        updateBest();
+        maybeUnlock({
+          anyPlay: true,
+          treasuremaze: {
+            level: state.level,
+            score: state.score,
+            treasures: state.runStats.treasuresCollected,
+          },
+        });
+        state.mode = 'game_over';
+        state.message = `Game over at level ${state.level}. Press Restart.`;
+      } else {
+        state.player.x = state.start.x;
+        state.player.y = state.start.y;
+        state.player.dir = 'right';
+        state.message = `Caught by a guard! ${state.lives} lives left.`;
+      }
+      return true;
+    }
+
+    function clearLevel() {
+      state.runStats.levelsCleared += 1;
+      const timeBonus = Math.max(0, Math.round((65 - state.levelTime) * 4));
+      const levelBonus = 230 + state.level * 70 + timeBonus;
+      state.score += levelBonus;
+      const coins = clamp(1 + Math.floor(state.level / 2), 1, 6);
+      awardCoins(coins);
+      maybeUnlock({
+        anyPlay: true,
+        treasuremaze: {
+          level: state.level,
+          score: state.score,
+          treasures: state.runStats.treasuresCollected,
+        },
+      });
+      const completedLevel = state.level;
+      applyLevel(state.level + 1);
+      state.message = `Level ${completedLevel} clear! +${levelBonus} score, +${coins} coins.`;
+      spawnParticles(state.player.x, state.player.y, '#8ef1bc', 20, 170);
+    }
+
+    function tryMovePlayer(dirName) {
+      const dir = DIRS[dirName];
+      if (!dir || state.mode !== 'playing') return false;
+      const nx = state.player.x + dir.x;
+      const ny = state.player.y + dir.y;
+      state.player.dir = dirName;
+      if (!isOpenCell(state.maze, nx, ny)) return false;
+      state.player.x = nx;
+      state.player.y = ny;
+      collectTreasureIfPresent();
+      if (state.exit.open && state.player.x === state.exit.x && state.player.y === state.exit.y) {
+        clearLevel();
+        return true;
+      }
+      checkEnemyCollision();
+      return true;
+    }
+
+    function moveEnemies() {
+      if (state.mode !== 'playing' || state.freeze.active > 0) return;
+      const distance = buildDistanceMap(state.maze, state.player);
+      const occupied = new Set(state.enemies.map((enemy) => keyFor(enemy.x, enemy.y)));
+
+      for (const enemy of state.enemies) {
+        occupied.delete(keyFor(enemy.x, enemy.y));
+        const options = getOpenNeighbors(state.maze, enemy.x, enemy.y);
+        if (!options.length) {
+          occupied.add(keyFor(enemy.x, enemy.y));
+          continue;
+        }
+
+        options.sort((a, b) => {
+          const da = distance[a.y][a.x];
+          const db = distance[b.y][b.x];
+          if (da === db) return rand() < 0.5 ? -1 : 1;
+          return da - db;
+        });
+
+        let chosen = options.find((cell) => !occupied.has(keyFor(cell.x, cell.y)));
+        if (!chosen) chosen = options[0];
+
+        enemy.x = chosen.x;
+        enemy.y = chosen.y;
+        occupied.add(keyFor(enemy.x, enemy.y));
+      }
+    }
+
+    function activateFreezePulse() {
+      if (state.mode !== 'playing') return;
+      if (state.freeze.cooldown > 0.02) {
+        state.message = `Freeze recharging: ${state.freeze.cooldown.toFixed(1)}s`;
+        return;
+      }
+      state.freeze.active = 2.4;
+      state.freeze.cooldown = 7;
+      state.message = 'Freeze pulse active!';
+      spawnParticles(state.player.x, state.player.y, '#9ce6ff', 24, 210);
+    }
+
+    function chooseHeldDirection() {
+      if (held[preferredDir]) return preferredDir;
+      for (const dir of DIR_ORDER) {
+        if (held[dir]) {
+          preferredDir = dir;
+          return dir;
+        }
+      }
+      return null;
+    }
+
+    function setHeldDirection(dirName, isDown) {
+      if (!(dirName in held)) return;
+      held[dirName] = isDown;
+      if (isDown) preferredDir = dirName;
+    }
+
+    function resetHeldDirections() {
+      for (const dirName of Object.keys(held)) held[dirName] = false;
+    }
+
+    function startRunIfNeeded() {
+      if (state.mode !== 'menu') return;
+      state.mode = 'playing';
+      state.message = 'Collect every gem before the guards catch you.';
+      if (!state.playedOnce) {
+        state.playedOnce = true;
+        maybeUnlock({ anyPlay: true, treasuremaze: { level: 1, score: 0, treasures: 0 } });
+      }
+    }
+
+    function startOrResume() {
+      if (state.mode === 'game_over') {
+        restartRun();
+        state.mode = 'playing';
+        state.message = 'New run started. Good luck!';
+        return;
+      }
+      if (state.mode === 'menu') {
+        startRunIfNeeded();
+        return;
+      }
+      if (state.mode === 'paused') {
+        state.mode = 'playing';
+        state.message = 'Back in the maze.';
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        state.message = 'Back in the maze.';
+      }
+    }
+
+    function restartRun() {
+      state.score = 0;
+      state.level = 1;
+      state.lives = 3;
+      state.totalTime = 0;
+      state.levelTime = 0;
+      state.hitInvuln = 0;
+      state.freeze.active = 0;
+      state.freeze.cooldown = 0;
+      state.mode = 'menu';
+      state.message = 'Collect every gem, then reach the exit door.';
+      state.runStats.treasuresCollected = 0;
+      state.runStats.levelsCleared = 0;
+      state.particles = [];
+      resetHeldDirections();
+      applyLevel(1);
+    }
+
+    function updateParticles(dt) {
+      if (!state.particles.length) return;
+      const next = [];
+      for (const p of state.particles) {
+        p.life -= dt;
+        if (p.life <= 0) continue;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        next.push(p);
+      }
+      state.particles = next;
+    }
+
+    function update(dt) {
+      updateParticles(dt);
+      if (state.mode !== 'playing') return;
+
+      state.totalTime += dt;
+      state.levelTime += dt;
+      state.hitInvuln = Math.max(0, state.hitInvuln - dt);
+      state.freeze.active = Math.max(0, state.freeze.active - dt);
+      state.freeze.cooldown = Math.max(0, state.freeze.cooldown - dt);
+
+      playerAccum += dt;
+      while (playerAccum >= PLAYER_INTERVAL) {
+        playerAccum -= PLAYER_INTERVAL;
+        const dir = chooseHeldDirection();
+        if (dir) tryMovePlayer(dir);
+        if (state.mode !== 'playing') return;
+      }
+
+      enemyAccum += dt;
+      const enemyStep = enemyIntervalForLevel(state.level);
+      while (enemyAccum >= enemyStep) {
+        enemyAccum -= enemyStep;
+        moveEnemies();
+        if (checkEnemyCollision()) break;
+        if (state.mode !== 'playing') return;
+      }
+    }
+
+    function roundedRectPath(context, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.lineTo(x + w - radius, y);
+      context.quadraticCurveTo(x + w, y, x + w, y + radius);
+      context.lineTo(x + w, y + h - radius);
+      context.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      context.lineTo(x + radius, y + h);
+      context.quadraticCurveTo(x, y + h, x, y + h - radius);
+      context.lineTo(x, y + radius);
+      context.quadraticCurveTo(x, y, x + radius, y);
+      context.closePath();
+    }
+
+    function drawMaze() {
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0, '#10243f');
+      bg.addColorStop(1, '#081326');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          const px = x * TILE;
+          const py = y * TILE;
+          if (state.maze[y][x] === 1) {
+            ctx.fillStyle = '#26466f';
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            ctx.fillRect(px + 2, py + 2, TILE - 4, 4);
+            ctx.fillStyle = 'rgba(5,12,26,0.32)';
+            ctx.fillRect(px + 2, py + TILE - 6, TILE - 4, 4);
+          } else {
+            const shade = 16 + ((x * 11 + y * 7) % 12);
+            ctx.fillStyle = `rgb(${shade}, ${shade + 12}, ${shade + 26})`;
+            ctx.fillRect(px, py, TILE, TILE);
+          }
+        }
+      }
+    }
+
+    function drawExit() {
+      const px = state.exit.x * TILE;
+      const py = state.exit.y * TILE;
+      const pulse = 0.78 + Math.sin(state.totalTime * 6) * 0.18;
+      ctx.save();
+      ctx.globalAlpha = state.exit.open ? 1 : 0.6;
+      ctx.fillStyle = state.exit.open ? '#61f1a1' : '#3a536f';
+      roundedRectPath(ctx, px + 8, py + 6, TILE - 16, TILE - 12, 7);
+      ctx.fill();
+      ctx.fillStyle = state.exit.open ? `rgba(193,255,220,${pulse})` : 'rgba(188,206,232,0.5)';
+      ctx.fillRect(px + 15, py + 13, TILE - 30, TILE - 8);
+      ctx.restore();
+
+      if (state.exit.open) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(143,247,191,0.85)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + 2, py + 2, TILE - 4, TILE - 4);
+        ctx.restore();
+      }
+    }
+
+    function drawTreasures() {
+      for (const gem of state.treasures) {
+        const cx = (gem.x + 0.5) * TILE;
+        const cy = (gem.y + 0.5) * TILE;
+        const bob = Math.sin((state.totalTime * 4) + gem.x * 0.6 + gem.y * 0.5) * 2.4;
+        ctx.save();
+        ctx.translate(cx, cy + bob);
+        ctx.rotate(Math.PI * 0.25);
+        ctx.fillStyle = '#7edcff';
+        ctx.fillRect(-9, -9, 18, 18);
+        ctx.fillStyle = 'rgba(235,250,255,0.6)';
+        ctx.fillRect(-5, -9, 10, 5);
+        ctx.restore();
+      }
+    }
+
+    function drawPlayer() {
+      const px = (state.player.x + 0.5) * TILE;
+      const py = (state.player.y + 0.5) * TILE;
+      if (state.hitInvuln > 0 && Math.floor(state.hitInvuln * 16) % 2 === 0) return;
+      ctx.save();
+      ctx.fillStyle = '#ffd76e';
+      ctx.beginPath();
+      ctx.arc(px, py, TILE * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+
+      const eyeOffset = {
+        left: { x: -5, y: -3 },
+        right: { x: 5, y: -3 },
+        up: { x: 0, y: -6 },
+        down: { x: 0, y: 3 },
+      }[state.player.dir] || { x: 4, y: -2 };
+
+      ctx.fillStyle = '#2a2110';
+      ctx.beginPath();
+      ctx.arc(px + eyeOffset.x, py + eyeOffset.y, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.freeze.active > 0) {
+        ctx.strokeStyle = 'rgba(152, 230, 255, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, py, TILE * 0.38 + Math.sin(state.totalTime * 8) * 1.6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawEnemies() {
+      for (const enemy of state.enemies) {
+        const px = (enemy.x + 0.5) * TILE;
+        const py = (enemy.y + 0.5) * TILE + Math.sin(state.totalTime * 4 + enemy.wobble) * 1.8;
+        const frozen = state.freeze.active > 0;
+        ctx.save();
+        ctx.fillStyle = frozen ? '#7bb8ff' : '#ff7f86';
+        ctx.beginPath();
+        ctx.arc(px, py, TILE * 0.26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f9fdff';
+        ctx.beginPath();
+        ctx.arc(px - 4, py - 3, 4, 0, Math.PI * 2);
+        ctx.arc(px + 4, py - 3, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#10213a';
+        ctx.beginPath();
+        ctx.arc(px - 4, py - 3, 1.9, 0, Math.PI * 2);
+        ctx.arc(px + 4, py - 3, 1.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const alpha = clamp(p.life / p.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 3, 3);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawOverlay() {
+      if (state.mode === 'playing') return;
+      ctx.fillStyle = 'rgba(5, 11, 21, 0.56)';
+      ctx.fillRect(0, canvas.height * 0.33, canvas.width, canvas.height * 0.34);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f1f8ff';
+      ctx.font = '700 34px "Trebuchet MS", "Segoe UI", sans-serif';
+      let title = 'TREASURE MAZE';
+      if (state.mode === 'paused') title = 'PAUSED';
+      if (state.mode === 'game_over') title = 'GAME OVER';
+      ctx.fillText(title, canvas.width / 2, canvas.height * 0.45);
+
+      ctx.fillStyle = '#d0e2fa';
+      ctx.font = '600 16px "Trebuchet MS", "Segoe UI", sans-serif';
+      const subtitle = state.mode === 'game_over'
+        ? `Final score ${state.score} | Press Restart`
+        : state.mode === 'paused'
+          ? 'Press Pause again or Enter to continue'
+          : 'Press Start to begin';
+      ctx.fillText(subtitle, canvas.width / 2, canvas.height * 0.53);
+    }
+
+    function render() {
+      drawMaze();
+      drawExit();
+      drawTreasures();
+      drawEnemies();
+      drawPlayer();
+      drawParticles();
+      drawOverlay();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(state.score);
+      levelEl.textContent = String(state.level);
+      livesEl.textContent = String(state.lives);
+      bestEl.textContent = String(state.best);
+      gemsEl.textContent = `${state.treasures.length}`;
+      if (state.freeze.cooldown > 0.05) {
+        freezeEl.textContent = `${state.freeze.cooldown.toFixed(1)}s`;
+      } else if (state.freeze.active > 0.05) {
+        freezeEl.textContent = 'ACTIVE';
+      } else {
+        freezeEl.textContent = 'Ready';
+      }
+      statusLineEl.textContent = state.message;
+    }
+
+    function stepSimulation(ms) {
+      const total = clamp(ms, 0, 4000) / 1000;
+      let remain = total;
+      const frame = 1 / 120;
+      while (remain > 0) {
+        const dt = Math.min(frame, remain);
+        update(dt);
+        remain -= dt;
+      }
+      updateHud();
+      render();
+    }
+
+    function isEditableTarget(target) {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'tile',
+          grid: { cols: COLS, rows: ROWS },
+        },
+        mode: state.mode,
+        score: state.score,
+        level: state.level,
+        lives: state.lives,
+        best: state.best,
+        level_time_sec: Number(state.levelTime.toFixed(2)),
+        player: {
+          x: state.player.x,
+          y: state.player.y,
+          direction: state.player.dir,
+          invulnerable_sec: Number(state.hitInvuln.toFixed(2)),
+        },
+        enemies: state.enemies.map((enemy) => ({ x: enemy.x, y: enemy.y })),
+        treasures_remaining: state.treasures.length,
+        treasures: state.treasures.map((gem) => ({ x: gem.x, y: gem.y })),
+        exit: {
+          x: state.exit.x,
+          y: state.exit.y,
+          open: state.exit.open,
+        },
+        freeze: {
+          active_sec: Number(state.freeze.active.toFixed(2)),
+          cooldown_sec: Number(state.freeze.cooldown.toFixed(2)),
+        },
+        objective: state.exit.open ? 'Reach the exit door.' : 'Collect all gems first.',
+      };
+      return JSON.stringify(payload);
+    };
+
+    document.addEventListener('keydown', (event) => {
+      if (isEditableTarget(event.target)) return;
+      const code = event.code;
+      if (code === 'ArrowUp' || code === 'KeyW') {
+        event.preventDefault();
+        setHeldDirection('up', true);
+      } else if (code === 'ArrowDown' || code === 'KeyS') {
+        event.preventDefault();
+        setHeldDirection('down', true);
+      } else if (code === 'ArrowLeft' || code === 'KeyA') {
+        event.preventDefault();
+        setHeldDirection('left', true);
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        event.preventDefault();
+        setHeldDirection('right', true);
+      } else if (code === 'Space' || code === 'KeyB') {
+        event.preventDefault();
+        startRunIfNeeded();
+        activateFreezePulse();
+      } else if (code === 'Enter') {
+        event.preventDefault();
+        startOrResume();
+      } else if (code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+      } else if (code === 'KeyR') {
+        event.preventDefault();
+        restartRun();
+      } else if (code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      } else if (code === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+      updateHud();
+      render();
+    });
+
+    document.addEventListener('keyup', (event) => {
+      const code = event.code;
+      if (code === 'ArrowUp' || code === 'KeyW') {
+        setHeldDirection('up', false);
+      } else if (code === 'ArrowDown' || code === 'KeyS') {
+        setHeldDirection('down', false);
+      } else if (code === 'ArrowLeft' || code === 'KeyA') {
+        setHeldDirection('left', false);
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        setHeldDirection('right', false);
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      resetHeldDirections();
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+      }
+      updateHud();
+      render();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+        updateHud();
+        render();
+      }
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      startOrResume();
+      updateHud();
+      render();
+    });
+    document.getElementById('pause-btn').addEventListener('click', () => {
+      togglePause();
+      updateHud();
+      render();
+    });
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      restartRun();
+      updateHud();
+      render();
+    });
+    document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      toggleFullscreen();
+    });
+    document.getElementById('freeze-btn').addEventListener('click', () => {
+      startRunIfNeeded();
+      activateFreezePulse();
+      updateHud();
+      render();
+    });
+    document.getElementById('pause-touch-btn').addEventListener('click', () => {
+      if (state.mode === 'menu') {
+        startOrResume();
+      } else {
+        togglePause();
+      }
+      updateHud();
+      render();
+    });
+
+    for (const btn of document.querySelectorAll('.ctrl[data-dir]')) {
+      const dirName = btn.dataset.dir;
+      const press = (event) => {
+        event.preventDefault();
+        startRunIfNeeded();
+        setHeldDirection(dirName, true);
+        btn.classList.add('active');
+      };
+      const release = (event) => {
+        event.preventDefault();
+        setHeldDirection(dirName, false);
+        btn.classList.remove('active');
+      };
+      btn.addEventListener('pointerdown', press, { passive: false });
+      btn.addEventListener('pointerup', release, { passive: false });
+      btn.addEventListener('pointercancel', release, { passive: false });
+      btn.addEventListener('pointerleave', release, { passive: false });
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        startRunIfNeeded();
+        setHeldDirection(dirName, true);
+        playerAccum = PLAYER_INTERVAL;
+      }, { passive: false });
+    }
+
+    function loop(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        updateHud();
+        render();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', () => {
+      render();
+    });
+
+    restartRun();
+    updateHud();
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

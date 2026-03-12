@@ -19,9 +19,11 @@ export const GAMES = [
   { slug:'ski',            name:'Retro Downhill Ski',  emoji:'\u26F7\uFE0F', scoreHint:'distance', url:'/ski',         desc:'Dodge trees and rocks as you race down the mountain!', earnsCoins:true },
   { slug:'homerunderby',   name:'Home Run Derby',      emoji:'\u26BE',    scoreHint:'homeruns',   url:'/homerunderby/', desc:'Time your swing to crush home runs before you rack up 10 outs.', earnsCoins:true },
   { slug:'micro-rc-racer', name:'Micro RC Racer',      emoji:'\u{1F3CE}\uFE0F', scoreHint:'best lap', url:'/microrc',   desc:'Top-down RC dirt racing with tank steering and slippery drifts.', earnsCoins:false },
+  { slug:'neonrally',      name:'Neon Rally',          emoji:'\u{1F3C1}', scoreHint:'position',   url:'/neonrally',     desc:'Race AI rivals through neon turns, chain boosts, and finish 3 laps before time runs out.', earnsCoins:true },
   { slug:'pacman',         name:'Pac-Man',             emoji:'\u{1F7E1}', scoreHint:'score',      url:'/pacman',        desc:'Eat pellets, outsmart ghosts, and clear multiple levels.', earnsCoins:true },
   { slug:'pokemon',        name:'Pokemon',             emoji:'\u{1F9E2}', scoreHint:'badges',     url:'/pokemon',       desc:'Build your team, battle trainers, and collect badges.', earnsCoins:true },
   { slug:'tetris',         name:'Tetris',              emoji:'\u{1F9E9}', scoreHint:'lines',      url:'/tetris',        desc:'Rotate, stack, and clear lines as speed ramps up each level.', earnsCoins:true },
   { slug:'asteroids',      name:'Asteroids',           emoji:'\u2604\uFE0F', scoreHint:'waves',   url:'/asteroids',     desc:'Thrust, rotate, and blast drifting asteroids across endless waves.', earnsCoins:true },
   { slug:'bomberman',      name:'Bomberman Lite',      emoji:'\u{1F4A5}', scoreHint:'level',      url:'/bomberman',     desc:'Drop bombs, break crates, clear enemies, and escape each maze.', earnsCoins:true },
+  { slug:'treasuremaze',   name:'Treasure Maze',       emoji:'\u{1F48E}', scoreHint:'level',      url:'/treasuremaze',  desc:'Navigate twisting mazes, collect every gem, and escape the guards.', earnsCoins:true },
 ];
