@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Water Balloon Code Duel</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root { --bg:#113355; --panel:#102944; --line:#4f7ba8; --text:#eef6ff; --muted:#bed5ee; --btn:#245585; --btn2:#9becc4; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:linear-gradient(#8fd6ff,#dff5ff); font-family:"Trebuchet MS","Segoe UI",sans-serif; }
+    .back { position:fixed; top:12px; left:12px; z-index:20; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,.5); color:#fff; text-decoration:none; font-weight:700; }
+    .wrap { min-height:100dvh; display:flex; flex-direction:column; align-items:center; gap:8px; padding:50px 10px 10px; }
+    #canvasWrap { width:min(96vw,980px); aspect-ratio:16/9; max-height:min(50dvh,560px); }
+    canvas { width:100%; height:100%; display:block; border:2px solid #4f80b0; border-radius:12px; background:#cef0ff; box-shadow:0 12px 26px rgba(0,0,0,.25); }
+    .hud { width:min(96vw,980px); display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:6px; padding:8px; border:1px solid var(--line); border-radius:10px; background:linear-gradient(#173a60,#112941); color:var(--text); }
+    .chip { text-align:center; border:1px solid #3f6f9d; border-radius:8px; background:rgba(255,255,255,.05); padding:5px; min-height:46px; }
+    .chip .k { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.4px; display:block; }
+    .chip .v { font-weight:800; font-size:16px; }
+    .status { width:min(96vw,980px); text-align:center; font-weight:800; color:#143f66; min-height:1.2em; text-shadow:0 1px 0 #fff; }
+    .panel { width:min(96vw,980px); border:1px solid var(--line); border-radius:10px; background:linear-gradient(#173a60,#122d49); color:var(--text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+    .hidden { display:none; }
+    .title { margin:0; text-align:center; font-size:clamp(24px,4vw,36px); }
+    .sub { margin:0; text-align:center; color:var(--muted); font-size:14px; }
+    .row { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+    .btn { min-height:40px; min-width:104px; border-radius:8px; border:2px solid #507faf; background:var(--btn); color:var(--text); font-weight:800; cursor:pointer; }
+    .btn.primary { background:var(--btn2); color:#0a2a1f; border-color:#bff8db; }
+    textarea { width:100%; min-height:180px; resize:vertical; border-radius:8px; border:1px solid #5d8ebe; background:#0c2137; color:#e8f5ff; padding:10px; font:14px/1.4 "Consolas","Courier New",monospace; }
+    .code-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:8px; }
+    .ref { border:1px solid #486f96; border-radius:8px; background:rgba(0,0,0,.18); padding:8px; color:#d7e8fa; font-size:13px; }
+    .cmds { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:6px; }
+    .cmds button { min-height:32px; border-radius:6px; border:1px solid #5887b6; background:#21466f; color:#ecf7ff; font-weight:700; cursor:pointer; }
+    .summary { white-space:pre-wrap; border:1px solid #486f96; border-radius:8px; background:rgba(0,0,0,.18); padding:8px; font-size:13px; }
+    @media (max-width:860px){ .hud{grid-template-columns:repeat(4,minmax(0,1fr));} .code-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <div id="canvasWrap"><canvas id="game" width="960" height="540" aria-label="Water balloon duel arena"></canvas></div>
+    <section class="hud">
+      <div class="chip"><span class="k">Turn</span><span class="v" id="turnV">1</span></div>
+      <div class="chip"><span class="k">Phase</span><span class="v" id="phaseV">Menu</span></div>
+      <div class="chip"><span class="k">Wind</span><span class="v" id="windV">0</span></div>
+      <div class="chip"><span class="k">Step</span><span class="v" id="stepV">0/4</span></div>
+      <div class="chip"><span class="k">P1 HP</span><span class="v" id="p1hpV">7</span></div>
+      <div class="chip"><span class="k">P2 HP</span><span class="v" id="p2hpV">7</span></div>
+      <div class="chip"><span class="k">P1 EN</span><span class="v" id="p1enV">1</span></div>
+      <div class="chip"><span class="k">P2 EN</span><span class="v" id="p2enV">1</span></div>
+    </section>
+    <div class="status" id="statusLine">Code both players, then both scripts run at once.</div>
+
+    <section class="panel" id="menuPanel">
+      <h1 class="title">Water Balloon Code Duel</h1>
+      <p class="sub">Player 1 codes, pass device, Player 2 codes, then the turn resolves simultaneously.</p>
+      <div class="row">
+        <button class="btn primary" id="start-btn">Start Match</button>
+        <button class="btn" id="fsMenuBtn">Fullscreen</button>
+      </div>
+      <p class="sub">Keys: Space/Enter continue, Ctrl+Enter submit code, F fullscreen, R reset.</p>
+    </section>
+
+    <section class="panel hidden" id="codePanel">
+      <h2 class="title" id="codeTitle" style="font-size:clamp(21px,3.5vw,30px);">Player 1 Coding</h2>
+      <p class="sub" id="codeSub">Up to 4 commands, one per line.</p>
+      <div class="code-grid">
+        <textarea id="codeInput" spellcheck="false"></textarea>
+        <div class="ref">
+          Commands:<br>`move left`, `move right`, `charge`, `block`, `throw low`, `throw high`, `wait`.
+          <div class="cmds">
+            <button data-cmd="move left">move left</button><button data-cmd="move right">move right</button>
+            <button data-cmd="charge">charge</button><button data-cmd="block">block</button>
+            <button data-cmd="throw low">throw low</button><button data-cmd="throw high">throw high</button>
+            <button data-cmd="wait">wait</button><button data-cmd="dodge right">dodge right</button>
+          </div>
+        </div>
+      </div>
+      <div class="status" id="codeNotice"></div>
+      <div class="row">
+        <button class="btn primary" id="lockBtn">Lock Moves</button>
+        <button class="btn" id="resetTplBtn">Reset Template</button>
+        <button class="btn" id="fsCodeBtn">Fullscreen</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="passPanel">
+      <h2 class="title" style="font-size:clamp(22px,3.5vw,32px);">Pass Device</h2>
+      <p class="sub">Player 1 is done. Hand it to Player 2.</p>
+      <div class="row"><button class="btn primary" id="p2ReadyBtn">Player 2 Ready</button></div>
+    </section>
+
+    <section class="panel hidden" id="resultPanel">
+      <h2 class="title" style="font-size:clamp(22px,3.5vw,32px);">Turn Complete</h2>
+      <div class="summary" id="resultSummary"></div>
+      <div class="row">
+        <button class="btn primary" id="nextTurnBtn">Next Turn</button>
+        <button class="btn" id="fsResBtn">Fullscreen</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="overPanel">
+      <h2 class="title" id="winnerLine" style="font-size:clamp(22px,3.5vw,32px);">Match Over</h2>
+      <div class="summary" id="overSummary"></div>
+      <div class="row">
+        <button class="btn primary" id="restartBtn">Play Again</button>
+        <button class="btn" id="fsOverBtn">Fullscreen</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+    rememberRecent('waterballoon');
+
+    const el = (id) => document.getElementById(id), cv = el('game'), cx = cv.getContext('2d');
+    const W = cv.width, H = cv.height, GY = 420, LEFT = 110, RIGHT = 850, SLOTS = 4, STEP = 0.9, MAX_EN = 4;
+    const TEMPLATE = `charge\nthrow high\nblock\nthrow low`;
+    const LABEL = { wait:'Wait', move_left:'Move Left', move_right:'Move Right', dodge_right:'Dodge Right', dodge_left:'Dodge Left', charge:'Charge', block:'Block', throw_low:'Throw Low', throw_high:'Throw High' };
+    const PHASE = { menu:'Menu', code1:'P1 Coding', pass:'Pass', code2:'P2 Coding', resolve:'Resolving', result:'Turn End', over:'Game Over' };
+    let seed = (Date.now() >>> 0) || 7, stepping = false, lastTs = performance.now();
+    const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+    const mkP = (id, x, c) => ({ id, x, hp:7, en:1, block:false, act:'wait', acts:Array(SLOTS).fill('wait'), draft:TEMPLATE, color:c });
+    const st = { mode:'menu', turn:1, step:0, timer:0, wind:0, coder:1, p:[mkP(1,220,'#4c95ff'), mkP(2,740,'#ff7f72')], balloons:[], splashes:[], events:[], msg:'Code both players, then both scripts run at once.', winner:0, paid:false, coins:0, started:false, shake:0, clock:0 };
+
+    const syncHud = () => {
+      el('turnV').textContent = st.turn; el('phaseV').textContent = PHASE[st.mode]; el('windV').textContent = `${st.wind>0?'+':''}${st.wind}`;
+      el('stepV').textContent = `${Math.min(st.step + (st.mode==='resolve'?1:0), SLOTS)}/${SLOTS}`;
+      el('p1hpV').textContent = st.p[0].hp; el('p2hpV').textContent = st.p[1].hp; el('p1enV').textContent = st.p[0].en; el('p2enV').textContent = st.p[1].en;
+      el('statusLine').textContent = st.msg;
+    };
+    const setMsg = (m) => { st.msg = m; syncHud(); };
+    const show = (id, on) => el(id).classList.toggle('hidden', !on);
+    const setMode = (m) => { st.mode = m; show('menuPanel', m === 'menu'); show('codePanel', m === 'code1' || m === 'code2'); show('passPanel', m === 'pass'); show('resultPanel', m === 'result'); show('overPanel', m === 'over'); syncHud(); };
+
+    const wind = () => Math.round((rand() * 2 - 1) * 55);
+    const cmd = (raw) => {
+      const t = String(raw || '').toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!t || t === 'wait' || t === 'hold' || t === 'pass') return 'wait';
+      if (t === 'left' || t === 'move left') return 'move_left'; if (t === 'right' || t === 'move right') return 'move_right';
+      if (t === 'dodge right') return 'dodge_right'; if (t === 'dodge left') return 'dodge_left';
+      if (t === 'charge' || t === 'pump') return 'charge'; if (t === 'block' || t === 'shield' || t === 'guard') return 'block';
+      if (t === 'throw low' || t === 'low') return 'throw_low'; if (t === 'throw high' || t === 'high' || t === 'lob') return 'throw_high';
+      return null;
+    };
+    const parse = (txt) => { const acts = [], bad = []; for (const line of String(txt).replace(/\r/g,'').split(/\n|;/).map(s=>s.trim()).filter(Boolean)) { if (acts.length>=SLOTS) break; const a = cmd(line); a ? acts.push(a) : bad.push(line); } while (acts.length<SLOTS) acts.push('wait'); return { acts, bad }; };
+    const coderPanel = () => { const p = st.p[st.coder - 1]; el('codeTitle').textContent = `Player ${p.id} Coding`; el('codeSub').textContent = `Turn ${st.turn}. Up to ${SLOTS} commands.`; el('codeInput').value = p.draft; };
+
+    const resetTurn = () => { st.step = 0; st.timer = 0; st.events = []; st.balloons = []; st.splashes = []; st.shake = 0; st.p.forEach(p => { p.block = false; p.act = 'wait'; p.acts = Array(SLOTS).fill('wait'); }); };
+    const openCoder = (id) => { st.coder = id; setMode(id === 1 ? 'code1' : 'code2'); coderPanel(); };
+    const startMatch = () => { if (!st.started) { st.started = true; maybeUnlock({ anyPlay:true, waterballoon:{ started:true } }); } resetTurn(); st.wind = wind(); setMsg(`Turn ${st.turn}: Player 1, code your sequence.`); openCoder(1); };
+    const resetAll = () => { st.turn = 1; st.wind = 0; st.winner = 0; st.paid = false; st.coins = 0; st.p = [mkP(1,220,'#4c95ff'), mkP(2,740,'#ff7f72')]; resetTurn(); st.msg = 'Code both players, then both scripts run at once.'; setMode('menu'); render(); };
+
+    const move = (i, d) => { const p = st.p[i], o = st.p[i ? 0 : 1]; let nx = clamp(p.x + d, LEFT, RIGHT); nx = i === 0 ? Math.min(nx, o.x - 128) : Math.max(nx, o.x + 128); p.x = clamp(nx, LEFT, RIGHT); };
+    const spawn = (i, high) => { const p = st.p[i], dir = i === 0 ? 1 : -1, t = st.p[i ? 0 : 1]; st.balloons.push({ o:i, target:i?0:1, high, sx:p.x + dir * 32, tx:t.x, t:0, d:0.56, x:p.x, y:GY - 58 }); };
+    const useAct = (i, a) => {
+      const p = st.p[i];
+      if (a === 'move_left') move(i, -44); else if (a === 'move_right') move(i, 44); else if (a === 'dodge_right') move(i, 78); else if (a === 'dodge_left') move(i, -78);
+      else if (a === 'charge') p.en = Math.min(MAX_EN, p.en + 1); else if (a === 'block') p.block = true;
+      else if (a === 'throw_low' || a === 'throw_high') { if (p.en > 0) { p.en -= 1; spawn(i, a === 'throw_high'); } else st.events.push(`P${p.id} lacked energy.`); }
+    };
+    const applyStep = () => { if (st.step >= SLOTS) return; const a1 = st.p[0].acts[st.step], a2 = st.p[1].acts[st.step]; st.p[0].block = false; st.p[1].block = false; st.p[0].act = a1; st.p[1].act = a2; useAct(0, a1); useAct(1, a2); setMsg(`Turn ${st.turn}, step ${st.step + 1}: ${LABEL[a1]} vs ${LABEL[a2]}.`); };
+
+    const boom = (x,y,c) => st.splashes.push({ x,y,c,r:8,life:0.45,max:0.45 });
+    const updBalloons = (dt) => {
+      const next = [];
+      for (const b of st.balloons) {
+        b.t += dt; const s = clamp(b.t / b.d, 0, 1), arc = b.high ? 92 : 46; b.x = b.sx + (b.tx - b.sx) * s; b.y = GY - 58 - 4 * arc * s * (1 - s);
+        if (s >= 1) {
+          const t = st.p[b.target], hit = Math.abs(b.x - t.x) <= 30;
+          if (hit) { const dmg = t.block ? 0 : (b.high ? 2 : 1); if (dmg) { t.hp = Math.max(0, t.hp - dmg); st.events.push(`P${t.id} took ${dmg}.`); st.shake = 0.22; boom(b.x,b.y,'#59b8ff'); } else { st.events.push(`P${t.id} blocked.`); boom(b.x,b.y,'#a5ddff'); } }
+          else boom(b.x,b.y,'#8ecfff');
+        } else next.push(b);
+      }
+      st.balloons = next;
+    };
+    const updSplashes = (dt) => { st.splashes = st.splashes.map(s => ({ ...s, life:s.life - dt, r:s.r + 60 * dt })).filter(s => s.life > 0); };
+    const summary = () => { const e = st.events.slice(-5); return `P1 HP ${st.p[0].hp}, EN ${st.p[0].en}\nP2 HP ${st.p[1].hp}, EN ${st.p[1].en}\nEvents:\n${e.length ? e.join('\n') : 'No direct hits.'}`; };
+    const finishResolve = () => {
+      const p1 = st.p[0].hp <= 0, p2 = st.p[1].hp <= 0;
+      if (p1 || p2) {
+        st.winner = p1 && p2 ? 0 : (p1 ? 2 : 1); setMode('over');
+        el('winnerLine').textContent = st.winner ? `Player ${st.winner} Wins!` : 'Draw! Double Splash!';
+        if (!st.paid) { st.paid = true; st.coins = st.winner ? 10 + clamp(6 - st.turn, 0, 4) : 6; addCoins(st.coins); maybeUnlock({ anyPlay:true, waterballoon:{ winner:st.winner, turns:st.turn, payout:st.coins } }); }
+        el('overSummary').textContent = `${summary()}\nCoins earned: ${st.coins}`; setMsg(st.winner ? `Player ${st.winner} wins.` : 'Both got soaked.');
+      } else { setMode('result'); el('resultSummary').textContent = summary(); setMsg(`Turn ${st.turn} complete.`); }
+    };
+
+    const beginResolve = () => { setMode('resolve'); st.step = 0; st.timer = 0; st.events = []; st.balloons = []; st.splashes = []; applyStep(); };
+    const lockCode = () => {
+      if (!(st.mode === 'code1' || st.mode === 'code2')) return;
+      const p = st.p[st.coder - 1], { acts, bad } = parse(el('codeInput').value); p.acts = acts; p.draft = el('codeInput').value;
+      el('codeNotice').textContent = bad.length ? `Ignored: ${bad.slice(0,4).join(', ')}` : '';
+      if (st.coder === 1) { setMode('pass'); setMsg('Player 1 locked moves. Pass device to Player 2.'); }
+      else { setMsg('Player 2 locked moves. Resolving turn...'); beginResolve(); }
+    };
+    const nextTurn = () => { st.turn += 1; st.wind = wind(); resetTurn(); setMsg(`Turn ${st.turn}: Player 1, code your sequence.`); openCoder(1); };
+    const p2Ready = () => { setMsg(`Turn ${st.turn}: Player 2, code your sequence.`); openCoder(2); };
+
+    const drawScene = () => {
+      const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#a6ddff'); g.addColorStop(1,'#f4fcff'); cx.fillStyle = g; cx.fillRect(0,0,W,H);
+      cx.fillStyle = '#6ebf71'; cx.fillRect(0,GY,W,H-GY); cx.strokeStyle = 'rgba(27,64,96,.25)'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(W/2,GY-120); cx.lineTo(W/2,GY+8); cx.stroke();
+      cx.fillStyle = '#1d456d'; cx.font = '700 15px Trebuchet MS'; cx.textAlign = 'center'; cx.fillText(`Wind ${st.wind>0?'+':''}${st.wind}`, W/2, 24);
+      cx.strokeStyle = '#1f4f7a'; cx.lineWidth = 3; const sp = clamp(Math.abs(st.wind)*1.8,12,88), dir = st.wind >= 0 ? 1 : -1; cx.beginPath(); cx.moveTo(W/2 - sp*dir, 36); cx.lineTo(W/2 + sp*dir, 36); cx.stroke();
+    };
+    const drawPlayers = () => { st.p.forEach((p,idx) => { const y = GY - 36, f = idx === 0 ? 1 : -1, hp = clamp(p.hp/7,0,1); cx.fillStyle = '#20384e'; cx.fillRect(p.x-18,y+32,14,22); cx.fillRect(p.x+4,y+32,14,22); cx.fillStyle = p.color; cx.fillRect(p.x-24,y-6,48,42); cx.fillStyle='#f9d1b8'; cx.beginPath(); cx.arc(p.x,y-11,16,0,Math.PI*2); cx.fill(); if (p.block){ cx.strokeStyle='rgba(170,228,255,.9)'; cx.lineWidth=5; cx.beginPath(); cx.arc(p.x+f*24,y-4,26,f>0?-0.9:Math.PI-0.9,f>0?0.9:Math.PI+0.9); cx.stroke(); } cx.fillStyle='#15395f'; cx.font='700 14px Trebuchet MS'; cx.textAlign='center'; cx.fillText(`P${p.id}`,p.x,y-56); const w=88,x=p.x-w/2; cx.fillStyle='rgba(21,55,88,.45)'; cx.fillRect(x,y-48,w,8); cx.fillStyle=hp>.4?'#6ce2a4':'#ffab8e'; cx.fillRect(x,y-48,w*hp,8); cx.strokeStyle='rgba(21,55,88,.9)'; cx.strokeRect(x,y-48,w,8); cx.fillStyle='#1c4a74'; cx.font='700 12px Trebuchet MS'; cx.fillText(LABEL[p.act],p.x,y-30); }); };
+    const drawBalloons = () => { st.balloons.forEach((b) => { cx.fillStyle = b.o === 0 ? '#47a8ff' : '#ff8f82'; cx.beginPath(); cx.arc(b.x,b.y,9,0,Math.PI*2); cx.fill(); cx.fillStyle='rgba(255,255,255,.8)'; cx.beginPath(); cx.arc(b.x-3,b.y-3,3,0,Math.PI*2); cx.fill(); }); };
+    const drawSplashes = () => { st.splashes.forEach((s) => { cx.globalAlpha = clamp(s.life/s.max,0,1); cx.strokeStyle = s.c; cx.lineWidth = 3; cx.beginPath(); cx.arc(s.x,s.y,s.r,0,Math.PI*2); cx.stroke(); }); cx.globalAlpha = 1; };
+    const drawOverlay = () => { if (st.mode === 'resolve') return; cx.fillStyle = 'rgba(7,20,34,.2)'; cx.fillRect(0,0,W,H); cx.textAlign='center'; cx.fillStyle='#0f2f50'; cx.font='800 40px Trebuchet MS'; if (st.mode==='menu') { cx.fillText('WATER BALLOON CODE DUEL',W/2,110); cx.font='700 20px Trebuchet MS'; cx.fillText('Code, pass, resolve simultaneously.',W/2,146); } else if (st.mode==='pass') cx.fillText('PASS THE DEVICE',W/2,122); else if (st.mode==='result') cx.fillText(`TURN ${st.turn} COMPLETE`,W/2,114); else if (st.mode==='over') cx.fillText(st.winner ? `PLAYER ${st.winner} WINS` : 'DRAW',W/2,114); };
+    const render = () => { cx.save(); if (st.shake > 0) { const m = Math.min(4, st.shake * 12); cx.translate((rand() - .5) * m, (rand() - .5) * m); } drawScene(); drawPlayers(); drawBalloons(); drawSplashes(); drawOverlay(); cx.restore(); };
+
+    const update = (dt) => {
+      st.clock += dt; st.shake = Math.max(0, st.shake - dt * 2.4); updSplashes(dt);
+      if (st.mode !== 'resolve') return;
+      updBalloons(dt); st.timer += dt;
+      while (st.timer >= STEP) { st.timer -= STEP; st.step += 1; if (st.step < SLOTS) applyStep(); }
+      if (st.step >= SLOTS && st.balloons.length === 0) finishResolve();
+      syncHud();
+    };
+
+    const toggleFs = () => !document.fullscreenElement ? document.documentElement.requestFullscreen?.().catch(() => {}) : document.exitFullscreen?.().catch(() => {});
+    const primary = () => { if (st.mode === 'menu') startMatch(); else if (st.mode === 'code1' || st.mode === 'code2') lockCode(); else if (st.mode === 'pass') p2Ready(); else if (st.mode === 'result') nextTurn(); else if (st.mode === 'over') resetAll(); };
+    const editable = (t) => t && t instanceof HTMLElement && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.isContentEditable);
+
+    window.advanceTime = (ms) => { stepping = true; let r = clamp(Number(ms) || 0, 0, 4000) / 1000; while (r > 0) { const dt = Math.min(1/120, r); update(dt); r -= dt; } syncHud(); render(); stepping = false; };
+    window.render_game_to_text = () => JSON.stringify({
+      coordinate_system: { origin:'top-left', x_axis:'right', y_axis:'down', units:'pixels', canvas:{ width:W, height:H }, ground_y:GY },
+      mode: st.mode, turn: st.turn, step_index: st.step, step_timer_sec: Number(st.timer.toFixed(3)), wind: st.wind, message: st.msg, winner: st.winner,
+      players: st.p.map((p) => ({ id:p.id, x:Number(p.x.toFixed(2)), hp:p.hp, energy:p.en, blocking:p.block, current_action:p.act, queued_actions:[...p.acts], draft_program:p.draft })),
+      balloons: st.balloons.map((b) => ({ owner:b.o + 1, high:b.high, x:Number(b.x.toFixed(2)), y:Number(b.y.toFixed(2)), target:b.target + 1 })), turn_events: st.events.slice(-6),
+      controls: { flow:'P1 code -> pass -> P2 code -> resolve', shortcuts:'Space/Enter continue, Ctrl+Enter submit, F fullscreen, R reset' },
+    });
+
+    el('start-btn').addEventListener('click', startMatch); el('lockBtn').addEventListener('click', lockCode); el('p2ReadyBtn').addEventListener('click', p2Ready);
+    el('nextTurnBtn').addEventListener('click', nextTurn); el('restartBtn').addEventListener('click', resetAll); el('resetTplBtn').addEventListener('click', () => { el('codeInput').value = TEMPLATE; });
+    ['fsMenuBtn','fsCodeBtn','fsResBtn','fsOverBtn'].forEach((id) => el(id).addEventListener('click', toggleFs));
+    document.querySelectorAll('.cmds button[data-cmd]').forEach((b) => b.addEventListener('click', () => { const t = el('codeInput'); const c = b.dataset.cmd || ''; const i = t.selectionStart; t.value = `${t.value.slice(0,i)}${(i && t.value[i-1] !== '\n') ? '\n' : ''}${c}\n${t.value.slice(t.selectionEnd)}`; t.focus(); }));
+    el('codeInput').addEventListener('input', () => { if (st.mode === 'code1' || st.mode === 'code2') st.p[st.coder - 1].draft = el('codeInput').value; });
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyF') { e.preventDefault(); toggleFs(); return; }
+      if (e.code === 'Escape' && document.fullscreenElement) { e.preventDefault(); document.exitFullscreen?.().catch(() => {}); return; }
+      if (e.code === 'KeyR') { e.preventDefault(); resetAll(); return; }
+      if (editable(e.target)) { if ((e.code === 'Enter' || e.code === 'NumpadEnter') && e.ctrlKey) { e.preventDefault(); lockCode(); } return; }
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter') { e.preventDefault(); primary(); }
+    }, { passive:false });
+
+    function loop(ts) { const dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts; if (!stepping) { update(dt); syncHud(); render(); } requestAnimationFrame(loop); }
+    resetAll(); syncHud(); render(); requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

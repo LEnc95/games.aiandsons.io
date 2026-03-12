@@ -1004,3 +1004,26 @@
 - Follow-up TODO suggestions:
   - Add Neon Rally-specific achievements/reward items in `src/prog/achievements.js` and `shop.html` if product wants race-specific progression rewards.
   - Consider optional difficulty presets (AI pace and timer length) for younger players.
+- New request (2026-03-12): Create a turn-based 2-player water balloon fight where both players code their moves, pass the device, then run turns simultaneously.
+- Implemented new standalone game page: `waterballoon/index.html`.
+  - Added pass-and-play coding flow: `menu -> Player 1 coding -> pass device -> Player 2 coding -> simultaneous turn resolution -> turn summary / game over`.
+  - Added command parser + execution system (up to 4 commands/turn): `move left/right`, `charge`, `block`, `throw low/high`, `wait` (plus shorthand aliases).
+  - Added simultaneous projectile resolution with arc trajectories, block handling, damage, wind modifier per turn, energy economy, and HP-based win condition.
+  - Added desktop/mobile-friendly UI controls with keyboard shortcuts (`Space/Enter` continue, `Ctrl+Enter` submit, `F` fullscreen, `R` reset).
+  - Added deterministic hooks required by automation: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Added platform hooks: `rememberRecent('waterballoon')`, coin payout on match end (`addCoins`), and unlock check call via `maybeUnlock`.
+- Integrated launcher/routing metadata:
+  - Added `Water Balloon Code Duel` entry to `src/meta/games.js`.
+  - Added static fallback game card to `index.html`.
+  - Added `/waterballoon` rewrite + `/waterballoon/index.html` cache header entries in `vercel.json`.
+- Validation completed with develop-web-game skill loop:
+  - `output/web-game/waterballoon-run1` (initial baseline; discovered auto-focus issue that trapped script input in textarea).
+  - Applied fix: removed forced textarea auto-focus during coding phases so scripted keyboard progression can advance state reliably.
+  - `output/web-game/waterballoon-run2` and `output/web-game/waterballoon-run3` (post-fix runs; verified pass-device flow, resolving states, projectile visibility, turn completion, and subsequent turn restart path).
+  - No `errors-*.json` artifacts emitted in final skill-client runs.
+- Manual Playwright verification (interactive):
+  - Confirmed custom typed code for both players, pass-device handoff, simultaneous resolution outcomes, turn summary panel, and consistent `render_game_to_text` payload.
+  - Console findings limited to expected local `favicon.ico` 404 from static server; no game-logic runtime errors.
+- Follow-up TODO suggestions:
+  - Add optional per-match command history panel showing both players' submitted scripts side-by-side for classroom replay/discussion.
+  - Add game-specific achievements/reward items in `src/prog/achievements.js` + shop inventory if product wants progression tied to this mode.
