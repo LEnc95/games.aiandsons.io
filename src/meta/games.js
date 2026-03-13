@@ -27,4 +27,5 @@ export const GAMES = [
   { slug:'bomberman',      name:'Bomberman Lite',      emoji:'\u{1F4A5}', scoreHint:'level',      url:'/bomberman',     desc:'Drop bombs, break crates, clear enemies, and escape each maze.', earnsCoins:true },
   { slug:'treasuremaze',   name:'Treasure Maze',       emoji:'\u{1F48E}', scoreHint:'level',      url:'/treasuremaze',  desc:'Navigate twisting mazes, collect every gem, and escape the guards.', earnsCoins:true },
   { slug:'waterballoon',   name:'Water Balloon Code Duel', emoji:'\u{1F4A7}', scoreHint:'wins',   url:'/waterballoon',  desc:'Two players script moves, pass the device, and watch both turns resolve simultaneously.', earnsCoins:true },
+  { slug:'whackamole',     name:'Whack-a-Mole Blitz',  emoji:'\u{1F528}', scoreHint:'score',      url:'/whackamole',    desc:'Race the clock by smashing moles, chaining streaks, and avoiding bomb traps.', earnsCoins:true },
 ];

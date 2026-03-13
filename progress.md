@@ -1027,3 +1027,19 @@
 - Follow-up TODO suggestions:
   - Add optional per-match command history panel showing both players' submitted scripts side-by-side for classroom replay/discussion.
   - Add game-specific achievements/reward items in `src/prog/achievements.js` + shop inventory if product wants progression tied to this mode.
+- New request (2026-03-13): Add a brand-new game not already on site.
+- Implemented new standalone game page: `whackamole/index.html`.
+  - Gameplay: `Whack-a-Mole Blitz` with timed round, streak scoring, normal/gold/bomb mole types, and score penalties for misses/bombs.
+  - Added desktop + mobile controls: tap/click on canvas, numeric hole buttons (1-9), keyboard selectors (WASD/arrows), whack action (Space/Enter), pause/restart/start, and fullscreen toggle (`F`).
+  - Added deterministic hooks required by automation: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Added platform hooks: `rememberRecent('whackamole')`, coin rewards via `addCoins`, and progression ping via `maybeUnlock`.
+- Integrated launcher/routing metadata:
+  - Added `Whack-a-Mole Blitz` entry to `src/meta/games.js`.
+  - Added static fallback card to `index.html`.
+  - Added `/whackamole` rewrite + `/whackamole/index.html` cache-header entries in `vercel.json`.
+- Validation status:
+  - Playwright skill client command attempted but blocked in this environment (`browserType.launch: spawn EPERM`).
+  - Existing repo integration tests (`npm.cmd run test:shop`) also blocked by environment process restrictions (`spawn EPERM` across test files).
+  - Performed static verification of integration points (`rg`) confirming new route/card/metadata entries are present.
+- Follow-up TODO:
+  - Re-run Playwright skill validation and screenshot review in a non-EPERM environment to complete visual/runtime gameplay verification artifacts for `/whackamole`.
