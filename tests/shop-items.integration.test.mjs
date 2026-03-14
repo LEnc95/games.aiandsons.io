@@ -25,6 +25,7 @@ const GAME_FILE_BY_PREFIX = {
   tetris: 'tetris/index.html',
   asteroids: 'asteroids/index.html',
   bomberman: 'bomberman/index.html',
+  colorcatch: 'colorcatch/index.html',
 };
 
 function extractItems(shopHtml) {

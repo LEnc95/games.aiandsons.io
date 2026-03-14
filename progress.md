@@ -1092,3 +1092,15 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Verified integration points with `rg` and validated JSON syntax for `vercel.json`.
 - Follow-up TODO:
   - Re-run Playwright gameplay validation for `/boxquest` in an environment that permits Chromium process spawn.
+
+- Continuation run (2026-03-14): completed pending Box Quest validation in unrestricted environment.
+- Validation outcomes:
+  - `npm.cmd run test:shop` initially failed due existing prefix-map gap for Color Catch inventory IDs.
+  - Fixed `tests/shop-items.integration.test.mjs` by adding `colorcatch` to `GAME_FILE_BY_PREFIX`.
+  - Re-ran `npm.cmd run test:shop`: pass (34/34).
+  - Ran skill Playwright client successfully for `/boxquest` with local server orchestration.
+    - Artifacts: `output/web-game/boxquest-run2/{shot-0.png,shot-1.png,shot-2.png,state-0.json,state-1.json,state-2.json}`.
+    - `render_game_to_text` confirms active play state transitions (mode playing, move count increments, crate/player positions).
+    - No `errors-*.json` artifacts emitted.
+- Follow-up note:
+  - Skill client button map is limited (`up/down/left/right/enter/space/a/b`), so pause/restart/undo hotkeys were not script-driven in this run.
