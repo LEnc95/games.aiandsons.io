@@ -26,7 +26,9 @@ export const GAMES = [
   { slug:'asteroids',      name:'Asteroids',           emoji:'\u2604\uFE0F', scoreHint:'waves',   url:'/asteroids',     desc:'Thrust, rotate, and blast drifting asteroids across endless waves.', earnsCoins:true },
   { slug:'bomberman',      name:'Bomberman Lite',      emoji:'\u{1F4A5}', scoreHint:'level',      url:'/bomberman',     desc:'Drop bombs, break crates, clear enemies, and escape each maze.', earnsCoins:true },
   { slug:'treasuremaze',   name:'Treasure Maze',       emoji:'\u{1F48E}', scoreHint:'level',      url:'/treasuremaze',  desc:'Navigate twisting mazes, collect every gem, and escape the guards.', earnsCoins:true },
+  { slug:'boxquest',       name:'Box Quest',           emoji:'\u{1F4E6}', scoreHint:'moves',      url:'/boxquest',      desc:'Push crates onto glowing goal pads across multi-level puzzle rooms.', earnsCoins:true },
   { slug:'waterballoon',   name:'Water Balloon Code Duel', emoji:'\u{1F4A7}', scoreHint:'wins',   url:'/waterballoon',  desc:'Two players script moves, pass the device, and watch both turns resolve simultaneously.', earnsCoins:true },
   { slug:'whackamole',     name:'Whack-a-Mole Blitz',  emoji:'\u{1F528}', scoreHint:'score',      url:'/whackamole',    desc:'Race the clock by smashing moles, chaining streaks, and avoiding bomb traps.', earnsCoins:true },
   { slug:'colorcatch',     name:'Color Catch Arcade',  emoji:'\u{1F308}', scoreHint:'score',      url:'/colorcatch',    desc:'Match bucket colors to falling drops, chain combos, and survive all three stages.', earnsCoins:true },
 ];
+

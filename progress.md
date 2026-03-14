@@ -1,4 +1,4 @@
-﻿Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
+Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
 - Initialized Pac-Man implementation task.
 - Confirmed project structure uses per-game folders with `index.html` and shared metadata in `src/meta/games.js`.
@@ -1075,3 +1075,20 @@
   - Skill client run: `output/web-game/colorcatch-run2` (screenshots + state JSON), no runtime errors.
   - Shop validation via browser automation confirmed `Color Catch Arcade` filter option and both Color Catch items visible in grid.
   - Browser console error check for `/colorcatch`: 0 errors (only non-blocking apple-web-app meta warning).
+
+- New request (2026-03-14): add a game not currently on the site.
+- Implemented new standalone game page: `boxquest/index.html`.
+  - Gameplay: Sokoban-style crate-pushing puzzle across 3 handcrafted levels with level-clear transitions and final victory state.
+  - Added desktop + mobile controls (WASD/Arrows + touch D-pad), undo (`U`/button), pause/restart/start flow, and fullscreen toggle (`F`).
+  - Added deterministic hooks required by automation: `window.advanceTime(ms)` and `window.render_game_to_text()` with concise board-state payload.
+  - Added platform hooks: `rememberRecent('boxquest')`, coin payouts via `addCoins`, and progression pings via `maybeUnlock`.
+- Integrated launcher/routing metadata:
+  - Added `Box Quest` entry to `src/meta/games.js`.
+  - Added static fallback game card in `index.html`.
+  - Added `/boxquest` rewrite + `/boxquest/index.html` cache-header entries in `vercel.json`.
+- Validation status:
+  - `node .../web_game_playwright_client.js --url http://127.0.0.1:4173/boxquest ...` attempted but blocked by environment (`browserType.launch: spawn EPERM`).
+  - `npm.cmd run test:shop` attempted but blocked by environment (`spawn EPERM` across test files).
+  - Verified integration points with `rg` and validated JSON syntax for `vercel.json`.
+- Follow-up TODO:
+  - Re-run Playwright gameplay validation for `/boxquest` in an environment that permits Chromium process spawn.

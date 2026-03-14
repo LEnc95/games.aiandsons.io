@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Box Quest</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg1: #16263a;
+      --bg2: #0b1422;
+      --panel: #132136;
+      --panel-border: #3e5d86;
+      --text: #f0f7ff;
+      --muted: #b8cbe6;
+      --accent: #8ed3ff;
+      --good: #99efc0;
+      --warn: #ffd090;
+      --tile: #11233a;
+      --wall: #3f5f8a;
+      --floor: #1a2d45;
+      --goal: #83d2ff;
+      --crate: #d49b5a;
+      --crate-on-goal: #f0ca6d;
+      --player: #ff8ea3;
+      --player-shadow: #ffb6c6;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(120% 140% at 12% 10%, #27466d 0%, transparent 60%),
+        radial-gradient(120% 120% at 88% 90%, #233858 0%, transparent 56%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.42);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .wrap {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 58px 10px 10px;
+      padding-top: max(calc(env(safe-area-inset-top, 10px) + 52px), 60px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    #canvasWrap {
+      width: min(96vw, 920px);
+      max-height: min(56dvh, 620px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 16px;
+      border: 2px solid #5e83b4;
+      background: #0f1c2d;
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+      touch-action: none;
+    }
+    .hud {
+      width: min(96vw, 920px);
+      border-radius: 12px;
+      border: 1px solid rgba(138, 181, 235, 0.45);
+      background: linear-gradient(180deg, rgba(19, 33, 54, 0.94), rgba(11, 22, 37, 0.93));
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 7px;
+    }
+    .stat {
+      min-height: 52px;
+      border-radius: 10px;
+      border: 1px solid rgba(170, 205, 245, 0.3);
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      text-align: center;
+      padding: 4px;
+    }
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      line-height: 1;
+    }
+    .value {
+      font-size: clamp(16px, 2.5vw, 20px);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .status {
+      min-height: 1.2em;
+      text-align: center;
+      font-size: clamp(13px, 2.1vw, 15px);
+      font-weight: 600;
+      color: #d8e9ff;
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn {
+      min-height: 40px;
+      min-width: 102px;
+      border-radius: 9px;
+      border: 2px solid #6f97c9;
+      background: #365a87;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary {
+      background: var(--good);
+      border-color: #c6f8db;
+      color: #09291c;
+    }
+    .btn.warn {
+      background: var(--warn);
+      border-color: #ffe1b3;
+      color: #35240a;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      max-width: 460px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .ctrl {
+      min-height: 42px;
+      border-radius: 9px;
+      border: 2px solid #7ca3d3;
+      background: #426797;
+      color: #f2f8ff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .ctrl:active { background: #35547d; }
+    .ctrl.blank { visibility: hidden; pointer-events: none; }
+    .legend {
+      margin: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    @media (max-width: 760px) {
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #canvasWrap { max-height: min(46dvh, 430px); }
+      .legend { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <div id="canvasWrap">
+      <canvas id="game" width="960" height="600" aria-label="Box Quest puzzle board"></canvas>
+    </div>
+    <section class="hud">
+      <div class="stats">
+        <div class="stat"><span class="label">Level</span><span class="value" id="level">1</span></div>
+        <div class="stat"><span class="label">Moves</span><span class="value" id="moves">0</span></div>
+        <div class="stat"><span class="label">Best</span><span class="value" id="best">0</span></div>
+        <div class="stat"><span class="label">Crates</span><span class="value" id="crates">0/0</span></div>
+        <div class="stat"><span class="label">Coins</span><span class="value" id="coins">0</span></div>
+        <div class="stat"><span class="label">Mode</span><span class="value" id="mode">MENU</span></div>
+      </div>
+      <div class="status" id="statusLine">Push every crate onto glowing goal pads.</div>
+      <div class="button-row">
+        <button class="btn primary" id="start-btn">START</button>
+        <button class="btn" id="pause-btn">PAUSE</button>
+        <button class="btn" id="restart-btn">RESTART</button>
+        <button class="btn warn" id="undo-btn">UNDO</button>
+        <button class="btn" id="fullscreen-btn">FULLSCREEN</button>
+      </div>
+      <div class="controls" aria-label="Touch movement controls">
+        <button class="ctrl blank" tabindex="-1" aria-hidden="true">.</button>
+        <button class="ctrl" id="up-btn">UP</button>
+        <button class="ctrl blank" tabindex="-1" aria-hidden="true">.</button>
+        <button class="ctrl" id="left-btn">LEFT</button>
+        <button class="ctrl" id="down-btn">DOWN</button>
+        <button class="ctrl" id="right-btn">RIGHT</button>
+      </div>
+      <p class="legend">Keyboard: Arrows/WASD move, U undo, P pause, R restart, Enter start/advance, F fullscreen.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    rememberRecent('boxquest');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const levelEl = document.getElementById('level');
+    const movesEl = document.getElementById('moves');
+    const bestEl = document.getElementById('best');
+    const cratesEl = document.getElementById('crates');
+    const coinsEl = document.getElementById('coins');
+    const modeEl = document.getElementById('mode');
+    const statusEl = document.getElementById('statusLine');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const BEST_KEY = 'boxquest-best-moves-v1';
+
+    const LEVELS = [
+      [
+        '##########',
+        '#........#',
+        '#..G.....#',
+        '#..B.P...#',
+        '#..G.B...#',
+        '#........#',
+        '##########',
+      ],
+      [
+        '###########',
+        '#.....#...#',
+        '#.G.B.#...#',
+        '#...#...G.#',
+        '#.B.#.P...#',
+        '#.....#...#',
+        '###########',
+      ],
+      [
+        '############',
+        '#..G....#..#',
+        '#..B.B..#..#',
+        '#..##...#..#',
+        '#..G..P....#',
+        '#.....#....#',
+        '############',
+      ],
+    ];
+
+    const state = {
+      mode: 'menu',
+      levelIndex: 0,
+      board: [],
+      player: { x: 0, y: 0 },
+      goals: new Set(),
+      moves: 0,
+      bestMoves: Number(localStorage.getItem(BEST_KEY) || '0'),
+      cratesOnGoals: 0,
+      crateCount: 0,
+      completedLevels: 0,
+      coinsEarned: 0,
+      message: 'Push every crate onto glowing goal pads.',
+      runSettled: false,
+      history: [],
+      particles: [],
+      pulse: 0,
+      playedOnce: false,
+    };
+
+    let lastTs = performance.now();
+    let steppingExternally = false;
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function keyOf(x, y) {
+      return `${x},${y}`;
+    }
+
+    function parseLevel(levelIndex) {
+      const raw = LEVELS[levelIndex];
+      const board = raw.map((row) => row.split(''));
+      const goals = new Set();
+      let player = { x: 1, y: 1 };
+      let crateCount = 0;
+
+      for (let y = 0; y < board.length; y += 1) {
+        for (let x = 0; x < board[y].length; x += 1) {
+          const c = board[y][x];
+          if (c === 'P') {
+            player = { x, y };
+            board[y][x] = '.';
+          } else if (c === 'G') {
+            goals.add(keyOf(x, y));
+            board[y][x] = '.';
+          } else if (c === 'B') {
+            crateCount += 1;
+          }
+        }
+      }
+
+      state.levelIndex = levelIndex;
+      state.board = board;
+      state.player = player;
+      state.goals = goals;
+      state.moves = 0;
+      state.crateCount = crateCount;
+      state.cratesOnGoals = 0;
+      state.history = [];
+      recalcCratesOnGoals();
+      state.message = `Level ${levelIndex + 1}: Push every crate onto a goal.`;
+      state.runSettled = false;
+      state.particles = [];
+    }
+
+    function cloneSnapshot() {
+      return {
+        board: state.board.map((row) => row.slice()),
+        player: { x: state.player.x, y: state.player.y },
+        moves: state.moves,
+      };
+    }
+
+    function restoreSnapshot(snap) {
+      state.board = snap.board.map((row) => row.slice());
+      state.player = { x: snap.player.x, y: snap.player.y };
+      state.moves = snap.moves;
+      recalcCratesOnGoals();
+    }
+
+    function boardAt(x, y) {
+      if (y < 0 || y >= state.board.length) return '#';
+      if (x < 0 || x >= state.board[y].length) return '#';
+      return state.board[y][x];
+    }
+
+    function setBoardAt(x, y, val) {
+      if (y < 0 || y >= state.board.length) return;
+      if (x < 0 || x >= state.board[y].length) return;
+      state.board[y][x] = val;
+    }
+
+    function recalcCratesOnGoals() {
+      let onGoals = 0;
+      for (let y = 0; y < state.board.length; y += 1) {
+        for (let x = 0; x < state.board[y].length; x += 1) {
+          if (state.board[y][x] === 'B' && state.goals.has(keyOf(x, y))) {
+            onGoals += 1;
+          }
+        }
+      }
+      state.cratesOnGoals = onGoals;
+    }
+
+    function spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 60 + Math.random() * 120;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.22 + Math.random() * 0.35,
+          maxLife: 0.22 + Math.random() * 0.35,
+          color,
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      const next = [];
+      for (const p of state.particles) {
+        p.life -= dt;
+        if (p.life <= 0) continue;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        next.push(p);
+      }
+      state.particles = next;
+    }
+
+    function awardCoins(amount) {
+      const safe = Math.max(0, Math.floor(amount));
+      if (!safe) return;
+      if (typeof addCoins === 'function') addCoins(safe);
+      state.coinsEarned += safe;
+    }
+
+    function settleRunIfNeeded() {
+      if (state.runSettled) return;
+      const finalLevel = state.levelIndex === LEVELS.length - 1;
+      if (!finalLevel || state.cratesOnGoals !== state.crateCount) return;
+      state.runSettled = true;
+
+      const base = 4;
+      const efficiencyBonus = clamp(8 - Math.floor(state.moves / 8), 1, 8);
+      const coins = base + efficiencyBonus;
+      awardCoins(coins);
+
+      if (!state.bestMoves || state.moves < state.bestMoves) {
+        state.bestMoves = state.moves;
+        localStorage.setItem(BEST_KEY, String(state.bestMoves));
+      }
+
+      maybeUnlock({
+        anyPlay: true,
+        boxquest: {
+          level: state.levelIndex + 1,
+          moves: state.moves,
+          crates: state.crateCount,
+        },
+      });
+
+      state.mode = 'victory';
+      state.message = `Quest clear in ${state.moves} moves! +${coins} coins.`;
+    }
+
+    function startGame() {
+      parseLevel(0);
+      state.mode = 'playing';
+      state.completedLevels = 0;
+      state.coinsEarned = 0;
+      state.message = 'Level 1: Push every crate onto a goal.';
+      state.runSettled = false;
+      if (!state.playedOnce) {
+        state.playedOnce = true;
+        maybeUnlock({ anyPlay: true, boxquest: { level: 1, moves: 0, crates: state.crateCount } });
+      }
+    }
+
+    function restartLevel() {
+      parseLevel(state.levelIndex);
+      state.mode = 'playing';
+      state.message = `Level ${state.levelIndex + 1} restarted.`;
+    }
+
+    function nextLevel() {
+      if (state.levelIndex + 1 >= LEVELS.length) {
+        settleRunIfNeeded();
+        return;
+      }
+      parseLevel(state.levelIndex + 1);
+      state.mode = 'playing';
+      state.message = `Level ${state.levelIndex + 1}: Keep going.`;
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        state.message = `Level ${state.levelIndex + 1}: Keep pushing.`;
+      }
+    }
+
+    function tryMove(dx, dy) {
+      if (state.mode !== 'playing') return;
+      const nx = state.player.x + dx;
+      const ny = state.player.y + dy;
+      const target = boardAt(nx, ny);
+
+      if (target === '#') {
+        state.message = 'Wall blocks that path.';
+        return;
+      }
+
+      const snap = cloneSnapshot();
+
+      if (target === 'B') {
+        const bx = nx + dx;
+        const by = ny + dy;
+        const beyond = boardAt(bx, by);
+        if (beyond === '#' || beyond === 'B') {
+          state.message = 'Crate is blocked.';
+          return;
+        }
+        setBoardAt(bx, by, 'B');
+        setBoardAt(nx, ny, '.');
+      }
+
+      state.player.x = nx;
+      state.player.y = ny;
+      state.moves += 1;
+      state.history.push(snap);
+      if (state.history.length > 80) state.history.shift();
+
+      recalcCratesOnGoals();
+      if (state.cratesOnGoals === state.crateCount) {
+        spawnParticles(120 + Math.random() * (W - 240), 140 + Math.random() * (H - 280), '#b5ecff', 28);
+        if (state.levelIndex + 1 < LEVELS.length) {
+          state.mode = 'between';
+          state.completedLevels += 1;
+          const levelCoins = clamp(2 + Math.floor((state.crateCount * 8) / Math.max(state.moves, 1)), 2, 7);
+          awardCoins(levelCoins);
+          state.message = `Level ${state.levelIndex + 1} complete! +${levelCoins} coins. Press Start for next level.`;
+          maybeUnlock({
+            anyPlay: true,
+            boxquest: {
+              level: state.levelIndex + 1,
+              moves: state.moves,
+              crates: state.crateCount,
+            },
+          });
+        } else {
+          settleRunIfNeeded();
+        }
+      } else {
+        state.message = `Move ${state.moves}. Place all crates on goals.`;
+      }
+    }
+
+    function undoMove() {
+      if (state.mode !== 'playing') return;
+      const snap = state.history.pop();
+      if (!snap) {
+        state.message = 'Nothing to undo.';
+        return;
+      }
+      restoreSnapshot(snap);
+      state.message = 'Undid last move.';
+    }
+
+    function modeLabel() {
+      if (state.mode === 'menu') return 'MENU';
+      if (state.mode === 'playing') return 'PLAY';
+      if (state.mode === 'paused') return 'PAUSE';
+      if (state.mode === 'between') return 'CLEAR';
+      if (state.mode === 'victory') return 'WIN';
+      return state.mode.toUpperCase();
+    }
+
+    function drawBoard() {
+      const rows = state.board.length;
+      const cols = state.board.reduce((max, row) => Math.max(max, row.length), 0);
+      const pad = 56;
+      const tile = Math.floor(Math.min((W - pad * 2) / cols, (H - pad * 2) / rows));
+      const boardW = cols * tile;
+      const boardH = rows * tile;
+      const ox = Math.floor((W - boardW) / 2);
+      const oy = Math.floor((H - boardH) / 2);
+
+      ctx.save();
+      ctx.fillStyle = '#0b1626';
+      ctx.fillRect(0, 0, W, H);
+
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#102038');
+      grad.addColorStop(1, '#0b1626');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      for (let y = 0; y < rows; y += 1) {
+        for (let x = 0; x < cols; x += 1) {
+          const cell = boardAt(x, y);
+          const px = ox + x * tile;
+          const py = oy + y * tile;
+
+          ctx.fillStyle = 'rgba(255,255,255,0.05)';
+          ctx.fillRect(px, py, tile - 1, tile - 1);
+
+          if (cell === '#') {
+            ctx.fillStyle = 'rgba(69, 108, 157, 0.95)';
+            ctx.fillRect(px + 1, py + 1, tile - 2, tile - 2);
+            ctx.fillStyle = 'rgba(156, 193, 238, 0.28)';
+            ctx.fillRect(px + 5, py + 5, tile - 10, 8);
+            continue;
+          }
+
+          ctx.fillStyle = 'rgba(28, 45, 72, 0.95)';
+          ctx.fillRect(px + 1, py + 1, tile - 2, tile - 2);
+
+          if (state.goals.has(keyOf(x, y))) {
+            const glow = 0.4 + Math.sin(state.pulse * 4 + x * 0.6 + y * 0.7) * 0.2;
+            ctx.fillStyle = `rgba(131, 210, 255, ${clamp(glow, 0.2, 0.8)})`;
+            ctx.beginPath();
+            ctx.arc(px + tile * 0.5, py + tile * 0.5, tile * 0.22, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (cell === 'B') {
+            const onGoal = state.goals.has(keyOf(x, y));
+            ctx.fillStyle = onGoal ? 'rgba(240, 202, 109, 0.96)' : 'rgba(212, 155, 90, 0.96)';
+            ctx.fillRect(px + tile * 0.17, py + tile * 0.17, tile * 0.66, tile * 0.66);
+            ctx.strokeStyle = 'rgba(72, 44, 20, 0.75)';
+            ctx.lineWidth = Math.max(2, tile * 0.04);
+            ctx.strokeRect(px + tile * 0.17, py + tile * 0.17, tile * 0.66, tile * 0.66);
+            ctx.beginPath();
+            ctx.moveTo(px + tile * 0.17, py + tile * 0.17);
+            ctx.lineTo(px + tile * 0.83, py + tile * 0.83);
+            ctx.moveTo(px + tile * 0.83, py + tile * 0.17);
+            ctx.lineTo(px + tile * 0.17, py + tile * 0.83);
+            ctx.stroke();
+          }
+        }
+      }
+
+      const px = ox + state.player.x * tile + tile * 0.5;
+      const py = oy + state.player.y * tile + tile * 0.5;
+      ctx.fillStyle = 'rgba(255, 182, 198, 0.3)';
+      ctx.beginPath();
+      ctx.arc(px, py + tile * 0.12, tile * 0.26, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ff8ea3';
+      ctx.beginPath();
+      ctx.arc(px, py, tile * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffdbe3';
+      ctx.beginPath();
+      ctx.arc(px - tile * 0.08, py - tile * 0.05, tile * 0.04, 0, Math.PI * 2);
+      ctx.arc(px + tile * 0.08, py - tile * 0.05, tile * 0.04, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#1d1e2d';
+      ctx.fillRect(px - tile * 0.09, py + tile * 0.05, tile * 0.18, tile * 0.04);
+
+      for (const p of state.particles) {
+        const alpha = clamp(p.life / p.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 4, 4);
+      }
+      ctx.globalAlpha = 1;
+
+      if (state.mode !== 'playing') {
+        ctx.fillStyle = 'rgba(7, 14, 23, 0.55)';
+        ctx.fillRect(0, H * 0.34, W, H * 0.32);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#f0f7ff';
+        ctx.font = '700 44px "Trebuchet MS", "Segoe UI", sans-serif';
+        let title = 'BOX QUEST';
+        if (state.mode === 'paused') title = 'PAUSED';
+        if (state.mode === 'between') title = 'LEVEL CLEAR';
+        if (state.mode === 'victory') title = 'QUEST COMPLETE';
+        ctx.fillText(title, W * 0.5, H * 0.47);
+
+        ctx.fillStyle = '#d5e7ff';
+        ctx.font = '600 22px "Trebuchet MS", "Segoe UI", sans-serif';
+        let subtitle = 'Press Start to begin.';
+        if (state.mode === 'paused') subtitle = 'Press Pause or Start to resume.';
+        if (state.mode === 'between') subtitle = 'Press Start for the next level.';
+        if (state.mode === 'victory') subtitle = `Final moves: ${state.moves}. Press Start for a new run.`;
+        ctx.fillText(subtitle, W * 0.5, H * 0.56);
+      }
+
+      ctx.restore();
+    }
+
+    function updateHud() {
+      levelEl.textContent = String(state.levelIndex + 1);
+      movesEl.textContent = String(state.moves);
+      bestEl.textContent = state.bestMoves ? String(state.bestMoves) : '-';
+      cratesEl.textContent = `${state.cratesOnGoals}/${state.crateCount}`;
+      coinsEl.textContent = String(state.coinsEarned);
+      modeEl.textContent = modeLabel();
+      statusEl.textContent = state.message;
+    }
+
+    function update(dt) {
+      state.pulse += dt;
+      updateParticles(dt);
+    }
+
+    function stepSimulation(ms) {
+      const total = clamp(ms, 0, 4000) / 1000;
+      let remain = total;
+      const frame = 1 / 120;
+      while (remain > 0) {
+        const dt = Math.min(frame, remain);
+        update(dt);
+        remain -= dt;
+      }
+      updateHud();
+      drawBoard();
+    }
+
+    function isEditableTarget(target) {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function onStartAction() {
+      if (state.mode === 'menu' || state.mode === 'victory') {
+        startGame();
+      } else if (state.mode === 'paused') {
+        togglePause();
+      } else if (state.mode === 'between') {
+        nextLevel();
+      }
+      updateHud();
+      drawBoard();
+    }
+
+    function onDirection(dx, dy) {
+      tryMove(dx, dy);
+      updateHud();
+      drawBoard();
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const crates = [];
+      for (let y = 0; y < state.board.length; y += 1) {
+        for (let x = 0; x < state.board[y].length; x += 1) {
+          if (state.board[y][x] !== 'B') continue;
+          crates.push({ x, y, on_goal: state.goals.has(keyOf(x, y)) });
+        }
+      }
+
+      const goals = [];
+      for (const k of state.goals) {
+        const [x, y] = k.split(',').map(Number);
+        goals.push({ x, y });
+      }
+
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left tile',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'grid cells',
+          board: { width: state.board[0]?.length || 0, height: state.board.length },
+        },
+        mode: state.mode,
+        level: state.levelIndex + 1,
+        moves: state.moves,
+        crates_on_goals: state.cratesOnGoals,
+        crate_total: state.crateCount,
+        player: { x: state.player.x, y: state.player.y },
+        crates,
+        goals,
+        objective: 'Push all crates onto all goal tiles.',
+      };
+
+      return JSON.stringify(payload);
+    };
+
+    document.addEventListener('keydown', (event) => {
+      if (isEditableTarget(event.target)) return;
+
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        onDirection(0, -1);
+      } else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        event.preventDefault();
+        onDirection(0, 1);
+      } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        onDirection(-1, 0);
+      } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        onDirection(1, 0);
+      } else if (event.code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+        updateHud();
+        drawBoard();
+      } else if (event.code === 'KeyR') {
+        event.preventDefault();
+        restartLevel();
+        updateHud();
+        drawBoard();
+      } else if (event.code === 'KeyU') {
+        event.preventDefault();
+        undoMove();
+        updateHud();
+        drawBoard();
+      } else if (event.code === 'Enter' || event.code === 'Space') {
+        event.preventDefault();
+        onStartAction();
+      } else if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      } else if (event.code === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      onStartAction();
+    });
+    document.getElementById('pause-btn').addEventListener('click', () => {
+      togglePause();
+      updateHud();
+      drawBoard();
+    });
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      restartLevel();
+      updateHud();
+      drawBoard();
+    });
+    document.getElementById('undo-btn').addEventListener('click', () => {
+      undoMove();
+      updateHud();
+      drawBoard();
+    });
+    document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      toggleFullscreen();
+    });
+
+    document.getElementById('up-btn').addEventListener('click', () => onDirection(0, -1));
+    document.getElementById('down-btn').addEventListener('click', () => onDirection(0, 1));
+    document.getElementById('left-btn').addEventListener('click', () => onDirection(-1, 0));
+    document.getElementById('right-btn').addEventListener('click', () => onDirection(1, 0));
+
+    window.addEventListener('blur', () => {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+        updateHud();
+        drawBoard();
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') {
+        state.mode = 'paused';
+        state.message = 'Paused.';
+        updateHud();
+        drawBoard();
+      }
+    });
+
+    function loop(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        updateHud();
+        drawBoard();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    parseLevel(0);
+    state.mode = 'menu';
+    updateHud();
+    drawBoard();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
