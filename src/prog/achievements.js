@@ -17,6 +17,8 @@ const badgeDefs = [
   { id:'asteroids-3000', name:'Deep Space Ace', icon:'\u{1F680}', desc:'Score 3000+ in Asteroids', test: (ctx) => ctx.asteroids && ctx.asteroids.score >= 3000 },
   { id:'bomberman-level-4', name:'Fuse Master', icon:'\u{1F4A3}', desc:'Reach level 4 in Bomberman Lite', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 4 },
   { id:'bomberman-crates-40', name:'Demolition Expert', icon:'\u{1F4A5}', desc:'Destroy 40 crates in one Bomberman run', test: (ctx) => ctx.bomberman && ctx.bomberman.crates >= 40 },
+  { id:'colorcatch-stage-3', name:'Spectrum Climber', icon:'\u{1F308}', desc:'Reach stage 3 in Color Catch Arcade', test: (ctx) => ctx.colorcatch && ctx.colorcatch.stage >= 3 },
+  { id:'colorcatch-2200', name:'Prism Pro', icon:'\u{2728}', desc:'Score 2200+ in Color Catch Arcade', test: (ctx) => ctx.colorcatch && ctx.colorcatch.score >= 2200 },
   { id:'daily-mission-complete', name:'Daily Starter', icon:'\u{1F4C5}', desc:'Complete any daily mission.', test: () => false },
   { id:'daily-mission-sweep', name:'Mission Sweep', icon:'\u2705', desc:'Complete all daily missions in one day.', test: () => false },
   { id:'weekly-challenge-complete', name:'Weekly Challenger', icon:'\u{1F5D3}\uFE0F', desc:'Complete any weekly challenge.', test: () => false },
@@ -42,6 +44,8 @@ const rewardDefs = [
   { id: 'asteroids-nebula-drift', type: 'inventory', name: 'Nebula Drift', test: (ctx) => ctx.asteroids && ctx.asteroids.score >= 2500 },
   { id: 'bomberman-ember-blast', type: 'inventory', name: 'Ember Blast', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 3 },
   { id: 'bomberman-jade-maze', type: 'inventory', name: 'Jade Maze', test: (ctx) => ctx.bomberman && ctx.bomberman.level >= 5 },
+  { id: 'colorcatch-prism-trail', type: 'inventory', name: 'Prism Trail', test: (ctx) => ctx.colorcatch && ctx.colorcatch.score >= 1600 },
+  { id: 'colorcatch-celestial-sky', type: 'inventory', name: 'Celestial Sky', test: (ctx) => ctx.colorcatch && ctx.colorcatch.stage >= 3 },
 ];
 
 const addCosmeticOwnership = (reward) => {

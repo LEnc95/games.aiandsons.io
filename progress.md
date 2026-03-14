@@ -1043,3 +1043,35 @@
   - Performed static verification of integration points (`rg`) confirming new route/card/metadata entries are present.
 - Follow-up TODO:
   - Re-run Playwright skill validation and screenshot review in a non-EPERM environment to complete visual/runtime gameplay verification artifacts for `/whackamole`.
+- New request (2026-03-13): Add a brand-new simple but fully polished game to the site list (avoid MVP feel).
+- Implemented `colorcatch/index.html` as a complete standalone game: three-stage progression, matching-color catch mechanic, combo scoring, life system, special drops (star/heart/slow), pause/resume, restart/start flow, fullscreen toggle (`F`), keyboard + touch controls, and polished particle/message feedback.
+- Added deterministic automation hooks for skill compatibility:
+  - `window.advanceTime(ms)` for fixed-step simulation.
+  - `window.render_game_to_text()` with coordinate-system note + concise live gameplay payload.
+- Added launcher metadata in `src/meta/games.js`:
+  - slug `colorcatch`, route `/colorcatch`, score hint `score`, coin-earning enabled.
+- Validation artifacts:
+  - Skill client run: `output/web-game/colorcatch-run1` (shots + state JSON).
+  - Action payload used: `output/web-game/actions-colorcatch.json`.
+  - Mobile layout verification screenshot: `output/web-game/colorcatch-mobile-check.png`.
+- Manual interaction checks via Playwright MCP:
+  - Verified mode transitions menu -> playing -> paused -> playing -> gameover -> restart.
+  - Verified HUD state updates match interaction outcomes.
+  - Verified new game appears on home game list card grid.
+- Console/runtime status:
+  - No JavaScript runtime errors observed for `/colorcatch` and `/` during validation.
+  - Only standard Apple web app meta warning surfaced by browser tooling.
+- TODO suggestions for next agent:
+  - Add one deterministic scripted path that intentionally reaches stage-clear/victory state for regression confidence.
+  - Consider balancing pass for early-life loss pacing if younger players need a gentler default.
+- Follow-up requirement (2026-03-13): ensure new games are integrated into shop + missions/challenges + badges.
+- Completed Color Catch feature integration:
+  - `src/prog/achievements.js`: added Color Catch badges (`colorcatch-stage-3`, `colorcatch-2200`) and unlock rewards (`colorcatch-prism-trail`, `colorcatch-celestial-sky`).
+  - `src/prog/missions.js`: added daily missions (`colorcatch-score-1200`, `colorcatch-stage-2`) and weekly challenges (`weekly-colorcatch-score-2400`, `weekly-colorcatch-stage-3`).
+  - `shop.html`: added purchasable Color Catch inventory items (`Prism Trail`, `Celestial Sky`) under game tag `Color Catch Arcade`.
+  - `colorcatch/index.html`: upgraded to module script and integrated progression hooks with `maybeUnlock`, coin reward payout (`addCoins`) at run end, and `rememberRecent('colorcatch')` on run start/restart.
+  - `colorcatch/index.html`: wired shop cosmetic effects (`colorcatch-prism-trail`, `colorcatch-celestial-sky`) into gameplay visuals.
+- Verification after integration:
+  - Skill client run: `output/web-game/colorcatch-run2` (screenshots + state JSON), no runtime errors.
+  - Shop validation via browser automation confirmed `Color Catch Arcade` filter option and both Color Catch items visible in grid.
+  - Browser console error check for `/colorcatch`: 0 errors (only non-blocking apple-web-app meta warning).

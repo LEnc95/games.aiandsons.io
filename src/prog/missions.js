@@ -128,6 +128,22 @@ const missionDefs = [
     rewardCoins: 11,
     readProgress: (ctx) => ctx?.tetris?.score ?? 0,
   },
+  {
+    id: 'colorcatch-score-1200',
+    name: 'Color Chain',
+    desc: 'Reach 1200 score in Color Catch Arcade.',
+    target: 1200,
+    rewardCoins: 10,
+    readProgress: (ctx) => ctx?.colorcatch?.score ?? 0,
+  },
+  {
+    id: 'colorcatch-stage-2',
+    name: 'Stage Sprint',
+    desc: 'Reach stage 2 in Color Catch Arcade.',
+    target: 2,
+    rewardCoins: 9,
+    readProgress: (ctx) => ctx?.colorcatch?.stage ?? 0,
+  },
 ];
 
 const weeklyDefs = [
@@ -194,6 +210,22 @@ const weeklyDefs = [
     target: 2,
     rewardCoins: 20,
     readProgress: (ctx) => ctx?.pokemon?.badges ?? 0,
+  },
+  {
+    id: 'weekly-colorcatch-score-2400',
+    name: 'Weekly Spectrum Rush',
+    desc: 'Reach 2400 score in Color Catch Arcade.',
+    target: 2400,
+    rewardCoins: 18,
+    readProgress: (ctx) => ctx?.colorcatch?.score ?? 0,
+  },
+  {
+    id: 'weekly-colorcatch-stage-3',
+    name: 'Weekly Full Prism',
+    desc: 'Reach stage 3 in Color Catch Arcade.',
+    target: 3,
+    rewardCoins: 17,
+    readProgress: (ctx) => ctx?.colorcatch?.stage ?? 0,
   },
 ];
 
