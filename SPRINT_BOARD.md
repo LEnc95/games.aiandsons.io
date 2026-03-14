@@ -277,3 +277,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 8 follow-up item CG-802 is complete (`STRIPE_INCIDENT_RUNBOOK.md` added with outage detection, reconcile recovery, rollback, and comms template).
 - Sprint 8 closing item CG-803 is complete (`scripts/stripe/reconcile-audit.mjs` bulk reconcile/audit CLI with deterministic helper tests and summary output).
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
+- [nightly 2026-03-13] Tracked changes: 2 commit(s) - c593230 Add new game without emoji changes; 7fe8a6c Add favicon links across pages.
+- [nightly 2026-03-13] Key PR links: none merged for this date.

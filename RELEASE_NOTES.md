@@ -1,4 +1,13 @@
 # Release Notes - Sprint 6 Launch Candidate
+## Weekly Highlights (2026-03-07 to 2026-03-13)
+- Added Doodle Jump to launcher metadata and routing support.
+- Added Hangman with computer/friend modes, then shipped friend-input and mobile keyboard visibility fixes plus a kid-friendly dynamic word pack.
+- Added Treasure Maze and Neon Rally entries and updated launcher routing/index coverage.
+- Added Water Balloon Code Duel with metadata, index, and route wiring.
+- Added Whack-a-Mole Blitz and rolled out favicon links across core pages.
+
+## Key PR Links (2026-03-07 to 2026-03-13)
+- No merged pull requests found in repository history for this date window.
 
 ## Release Scope
 - Onboarding split from home launcher with dedicated parent and teacher onboarding pages.
@@ -47,4 +56,5 @@
 2. Re-run `npm run test:shop` and `npm run test:classroom-smoke` on the rollback commit.
 3. Deploy the rollback commit and verify home, shop, pricing, and teacher pages load without console errors.
 4. Keep policy gate and release checklist in place; do not tag release until launch-readiness smoke passes again.
+
 
