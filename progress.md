@@ -1104,3 +1104,22 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
     - No `errors-*.json` artifacts emitted.
 - Follow-up note:
   - Skill client button map is limited (`up/down/left/right/enter/space/a/b`), so pause/restart/undo hotkeys were not script-driven in this run.
+
+- New request (2026-03-16): Add a game not currently on the site.
+- Implemented new standalone game page: `orbitalrescue/index.html`.
+  - Gameplay: top-down space rescue mission with stranded pilot pickups, station deliveries, escalating debris hazards, wave progression, score/timer/shield systems, and victory/failure states.
+  - Added desktop + mobile controls (WASD/Arrows + touch D-pad), dash (`Space`/touch), pause/restart/start flow, and fullscreen toggle (`F` + button).
+  - Added deterministic hooks required by automation: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Added platform hooks: `rememberRecent('orbitalrescue')`, coin payout via `addCoins`, and progression ping via `maybeUnlock`.
+- Integrated launcher/routing metadata:
+  - Added `Orbital Rescue` entry to `src/meta/games.js`.
+  - Added static fallback game card in `index.html`.
+  - Added `/orbitalrescue` rewrite + `/orbitalrescue/index.html` cache-header entries in `vercel.json`.
+- Next: run skill Playwright loop and `npm run test:shop`, then record outcomes/artifacts.
+- Validation attempts:
+  - Playwright skill client run blocked in this sandbox because local bind/listen is denied (`listen EACCES 127.0.0.1:4173`), so gameplay screenshot/state artifacts for `/orbitalrescue` could not be produced here.
+  - `npm.cmd run test:shop` is blocked in this sandbox (`spawn EPERM` across Node integration tests).
+- Static integration verification:
+  - Confirmed `/orbitalrescue` references are present in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
+- Follow-up TODO:
+  - Re-run the skill Playwright loop and `npm run test:shop` in an environment that allows process spawn and local port binding.

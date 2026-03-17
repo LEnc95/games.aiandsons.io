@@ -1,0 +1,987 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Neon Pinball Rush</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg-top: #12325f;
+      --bg-bot: #070f1f;
+      --panel: rgba(7, 14, 30, 0.82);
+      --panel-border: rgba(154, 211, 255, 0.38);
+      --text: #eef8ff;
+      --muted: #bad9ef;
+      --btn: #2b5e88;
+      --btn-active: #3b79aa;
+      --btn-border: #95d4ff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(120% 100% at 15% 5%, #2f68b6 0%, transparent 64%),
+        radial-gradient(130% 140% at 85% 100%, #24447f 0%, transparent 66%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bot));
+    }
+    .back-link {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 10px));
+      left: calc(env(safe-area-inset-left, 10px));
+      z-index: 40;
+      text-decoration: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.26);
+      background: rgba(0,0,0,0.34);
+      backdrop-filter: blur(4px);
+    }
+    .layout {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 54px 10px 10px;
+      padding-top: max(calc(env(safe-area-inset-top, 10px) + 46px), 56px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    #canvasWrap {
+      width: min(96vw, 980px);
+      aspect-ratio: 16 / 10;
+      max-height: min(60dvh, 680px);
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 16px;
+      border: 2px solid rgba(150, 208, 255, 0.7);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #14274a, #0b1530);
+      touch-action: none;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .metric {
+      border: 1px solid rgba(182, 225, 255, 0.3);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      text-align: center;
+      padding: 4px;
+    }
+    .metric-label {
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      line-height: 1;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .metric-value {
+      font-size: 17px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+    .controls {
+      width: min(96vw, 980px);
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .btn {
+      min-height: 46px;
+      border: 1px solid var(--btn-border);
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--btn), #214a6d);
+      color: #f6fbff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    .btn:active,
+    .btn.active {
+      transform: translateY(1px);
+      background: linear-gradient(180deg, var(--btn-active), #2d6590);
+    }
+    .note {
+      width: min(96vw, 980px);
+      text-align: center;
+      color: #d5eaff;
+      font-size: 13px;
+    }
+    @media (max-width: 860px) {
+      .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #canvasWrap { max-height: min(52dvh, 520px); }
+    }
+    @media (max-width: 520px) {
+      .metric-value { font-size: 15px; }
+      .btn { min-height: 44px; font-size: 13px; }
+      .note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-link" href="/">Back Home</a>
+  <main class="layout">
+    <div id="canvasWrap">
+      <canvas id="game" width="960" height="600" aria-label="Neon Pinball Rush game canvas"></canvas>
+    </div>
+    <section class="hud" aria-live="polite">
+      <div class="metric"><span class="metric-label">Mode</span><span id="hudMode" class="metric-value">menu</span></div>
+      <div class="metric"><span class="metric-label">Score</span><span id="hudScore" class="metric-value">0</span></div>
+      <div class="metric"><span class="metric-label">Balls</span><span id="hudBalls" class="metric-value">3</span></div>
+      <div class="metric"><span class="metric-label">Multiplier</span><span id="hudMulti" class="metric-value">x1</span></div>
+      <div class="metric"><span class="metric-label">Combo</span><span id="hudCombo" class="metric-value">0</span></div>
+      <div class="metric"><span class="metric-label">Coins</span><span id="hudCoins" class="metric-value">0</span></div>
+    </section>
+    <section class="controls" aria-label="Pinball controls">
+      <button id="left-btn" class="btn">Left Flipper</button>
+      <button id="right-btn" class="btn">Right Flipper</button>
+      <button id="launch-btn" class="btn">Launch</button>
+      <button id="start-btn" class="btn">Start / Restart</button>
+      <button id="pause-btn" class="btn">Pause</button>
+      <button id="fullscreen-btn" class="btn">Fullscreen</button>
+    </section>
+    <div class="note">Keyboard: Left/A and Right/D for flippers, Space to launch, Enter to start, P pause, F fullscreen.</div>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudScore = document.getElementById('hudScore');
+    const hudBalls = document.getElementById('hudBalls');
+    const hudMulti = document.getElementById('hudMulti');
+    const hudCombo = document.getElementById('hudCombo');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const TABLE = { left: 104, right: 856, top: 60, bottom: 560 };
+    const DRAIN = { left: 372, right: 588 };
+    const SHOOTER = { left: 804, right: 846, top: 92, bottom: 540 };
+    const BALL_RADIUS = 10;
+    const GRAVITY = 1680;
+    const RESTITUTION = 0.88;
+
+    const BUMPERS = [
+      { x: 280, y: 180, r: 30, score: 60, color: '#ffe17a' },
+      { x: 480, y: 148, r: 28, score: 80, color: '#9fffb0' },
+      { x: 660, y: 190, r: 30, score: 60, color: '#8fd0ff' },
+      { x: 360, y: 292, r: 26, score: 110, color: '#ff9ac2' },
+      { x: 600, y: 302, r: 26, score: 110, color: '#c8a6ff' },
+    ];
+
+    const TARGETS = [
+      { x: 214, y: 126, w: 24, h: 56, score: 150, live: true },
+      { x: 478, y: 104, w: 24, h: 56, score: 200, live: true },
+      { x: 724, y: 128, w: 24, h: 56, score: 150, live: true },
+    ];
+
+    const leftFlipper = {
+      pivot: { x: 354, y: 518 },
+      length: 124,
+      radius: 11,
+      rest: Math.PI - 0.48,
+      active: Math.PI - 1.22,
+      angle: Math.PI - 0.48,
+      held: false,
+    };
+
+    const rightFlipper = {
+      pivot: { x: 606, y: 518 },
+      length: 124,
+      radius: 11,
+      rest: -2.66,
+      active: -1.92,
+      angle: -2.66,
+      held: false,
+    };
+
+    const state = {
+      mode: 'menu',
+      score: 0,
+      highScore: Number(localStorage.getItem('pinball-high-score-v1') || '0'),
+      balls: 3,
+      combo: 0,
+      multiplier: 1,
+      coinsEarned: 0,
+      launchCharge: 0,
+      launchHeld: false,
+      ball: { x: 824, y: 524, vx: 0, vy: 0, r: BALL_RADIUS, onShooter: true, active: true },
+      particles: [],
+      flash: 0,
+      message: 'Press Start to begin your run.',
+      messageTimer: 0,
+      readyForLaunch: true,
+      runSettled: false,
+      everPlayed: false,
+      pulse: 0,
+      targetRespawnTimer: 0,
+    };
+
+    let lastTs = performance.now();
+    let steppingExternally = false;
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function resetTargets() {
+      for (const t of TARGETS) t.live = true;
+      state.targetRespawnTimer = 0;
+    }
+
+    function setMessage(text, duration = 1.1) {
+      state.message = text;
+      state.messageTimer = duration;
+    }
+
+    function spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i += 1) {
+        const a = Math.random() * Math.PI * 2;
+        const speed = 60 + Math.random() * 240;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed,
+          life: 0.25 + Math.random() * 0.5,
+          maxLife: 0.25 + Math.random() * 0.5,
+          color,
+          size: 2 + Math.random() * 2.6,
+        });
+      }
+    }
+
+    function awardScore(amount, atX, atY, color = '#d7f3ff') {
+      const safe = Math.max(0, Math.floor(amount));
+      if (!safe) return;
+      state.score += safe * state.multiplier;
+      state.combo += 1;
+      if (state.combo % 5 === 0) {
+        state.multiplier = Math.min(6, state.multiplier + 1);
+        setMessage(`Multiplier up: x${state.multiplier}`, 0.8);
+      }
+      spawnParticles(atX, atY, color, 8 + Math.floor(safe / 40));
+      state.flash = 0.22;
+    }
+
+    function resetCombo() {
+      state.combo = 0;
+      state.multiplier = 1;
+    }
+
+    function ballResetToShooter() {
+      state.ball.x = 824;
+      state.ball.y = 524;
+      state.ball.vx = 0;
+      state.ball.vy = 0;
+      state.ball.onShooter = true;
+      state.readyForLaunch = true;
+      state.launchHeld = false;
+      state.launchCharge = 0;
+      setMessage('Ball ready. Hold Launch and release.', 1.1);
+    }
+
+    function startRun() {
+      state.mode = 'playing';
+      state.score = 0;
+      state.balls = 3;
+      state.combo = 0;
+      state.multiplier = 1;
+      state.coinsEarned = 0;
+      state.runSettled = false;
+      state.flash = 0;
+      state.particles = [];
+      resetTargets();
+      ballResetToShooter();
+      rememberRecent('pinball');
+      if (!state.everPlayed) {
+        state.everPlayed = true;
+        maybeUnlock({ anyPlay: true, pinball: { score: 0, ballsLeft: 3, multiplier: 1 } });
+      }
+    }
+
+    function settleRunIfNeeded() {
+      if (state.runSettled) return;
+      state.runSettled = true;
+
+      if (state.score > state.highScore) {
+        state.highScore = state.score;
+        localStorage.setItem('pinball-high-score-v1', String(state.highScore));
+      }
+
+      const runCoins = Math.max(1, Math.floor(state.score / 700));
+      if (typeof addCoins === 'function') addCoins(runCoins);
+      state.coinsEarned = runCoins;
+
+      maybeUnlock({
+        anyPlay: true,
+        pinball: {
+          score: state.score,
+          ballsLeft: state.balls,
+          multiplier: state.multiplier,
+        },
+      });
+
+      setMessage(`Run complete. +${runCoins} coins.`, 1.8);
+    }
+
+    function loseBall() {
+      state.balls -= 1;
+      resetCombo();
+      spawnParticles(state.ball.x, state.ball.y, '#ffd2d2', 24);
+      if (state.balls <= 0) {
+        state.balls = 0;
+        state.mode = 'gameover';
+        settleRunIfNeeded();
+        return;
+      }
+      ballResetToShooter();
+    }
+
+    function beginLaunchHold(active) {
+      if (state.mode !== 'playing' || !state.readyForLaunch) return;
+      state.launchHeld = active;
+      if (!active && state.ball.onShooter) {
+        const power = clamp(state.launchCharge, 0.16, 1);
+        state.ball.onShooter = false;
+        state.readyForLaunch = false;
+        state.ball.vx = -70 - power * 52;
+        state.ball.vy = -780 - power * 720;
+        state.launchCharge = 0;
+        setMessage('Launched!', 0.5);
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setMessage('Paused.', 0.6);
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        setMessage('Back in play.', 0.6);
+      }
+    }
+
+    function resolveBallCircleCollision(cx, cy, r, bounce = 1) {
+      const dx = state.ball.x - cx;
+      const dy = state.ball.y - cy;
+      const dist = Math.hypot(dx, dy);
+      const minDist = state.ball.r + r;
+      if (dist >= minDist || dist === 0) return false;
+
+      const nx = dx / dist;
+      const ny = dy / dist;
+      state.ball.x = cx + nx * minDist;
+      state.ball.y = cy + ny * minDist;
+
+      const rel = state.ball.vx * nx + state.ball.vy * ny;
+      if (rel < 0) {
+        state.ball.vx -= (1 + bounce) * rel * nx;
+        state.ball.vy -= (1 + bounce) * rel * ny;
+      }
+
+      return true;
+    }
+
+    function flipperEndpoint(flip) {
+      return {
+        x: flip.pivot.x + Math.cos(flip.angle) * flip.length,
+        y: flip.pivot.y + Math.sin(flip.angle) * flip.length,
+      };
+    }
+
+    function collideWithFlipper(flip) {
+      const end = flipperEndpoint(flip);
+      const ax = flip.pivot.x;
+      const ay = flip.pivot.y;
+      const bx = end.x;
+      const by = end.y;
+
+      const abx = bx - ax;
+      const aby = by - ay;
+      const apx = state.ball.x - ax;
+      const apy = state.ball.y - ay;
+      const ab2 = abx * abx + aby * aby;
+      const t = clamp((apx * abx + apy * aby) / Math.max(1, ab2), 0, 1);
+      const cx = ax + abx * t;
+      const cy = ay + aby * t;
+
+      const dx = state.ball.x - cx;
+      const dy = state.ball.y - cy;
+      const dist = Math.hypot(dx, dy);
+      const minDist = state.ball.r + flip.radius;
+      if (dist >= minDist || dist === 0) return false;
+
+      const nx = dx / dist;
+      const ny = dy / dist;
+      state.ball.x = cx + nx * minDist;
+      state.ball.y = cy + ny * minDist;
+
+      const incoming = state.ball.vx * nx + state.ball.vy * ny;
+      if (incoming < 0) {
+        state.ball.vx -= 1.85 * incoming * nx;
+        state.ball.vy -= 1.85 * incoming * ny;
+      }
+
+      if (flip.held) {
+        state.ball.vx += Math.cos(flip.angle) * 120;
+        state.ball.vy += Math.sin(flip.angle) * 120;
+        state.ball.vy -= 180;
+      }
+
+      return true;
+    }
+
+    function collideWithWalls() {
+      if (state.ball.onShooter) {
+        state.ball.x = clamp(state.ball.x, SHOOTER.left + state.ball.r, SHOOTER.right - state.ball.r);
+        state.ball.y = clamp(state.ball.y, SHOOTER.top + state.ball.r, SHOOTER.bottom - state.ball.r);
+        return;
+      }
+
+      if (state.ball.x - state.ball.r < TABLE.left) {
+        state.ball.x = TABLE.left + state.ball.r;
+        state.ball.vx = Math.abs(state.ball.vx) * RESTITUTION;
+      }
+      if (state.ball.x + state.ball.r > TABLE.right) {
+        state.ball.x = TABLE.right - state.ball.r;
+        state.ball.vx = -Math.abs(state.ball.vx) * RESTITUTION;
+      }
+      if (state.ball.y - state.ball.r < TABLE.top) {
+        state.ball.y = TABLE.top + state.ball.r;
+        state.ball.vy = Math.abs(state.ball.vy) * RESTITUTION;
+      }
+
+      if (state.ball.y + state.ball.r >= TABLE.bottom) {
+        const inDrain = state.ball.x > DRAIN.left && state.ball.x < DRAIN.right;
+        if (inDrain) {
+          loseBall();
+          return;
+        }
+        state.ball.y = TABLE.bottom - state.ball.r;
+        state.ball.vy = -Math.abs(state.ball.vy) * 0.82;
+      }
+
+      const laneCross = state.ball.x + state.ball.r > SHOOTER.left && state.ball.y > SHOOTER.top;
+      if (laneCross && !state.readyForLaunch) {
+        state.ball.x = SHOOTER.left - state.ball.r;
+        state.ball.vx = -Math.abs(state.ball.vx) * 0.9;
+      }
+    }
+
+    function updateFlippers(dt) {
+      const speed = 11.5;
+      leftFlipper.angle += (leftFlipper.held ? leftFlipper.active : leftFlipper.rest - leftFlipper.angle) * speed * dt;
+      rightFlipper.angle += (rightFlipper.held ? rightFlipper.active : rightFlipper.rest - rightFlipper.angle) * speed * dt;
+      leftFlipper.angle = clamp(leftFlipper.angle, leftFlipper.active, leftFlipper.rest);
+      rightFlipper.angle = clamp(rightFlipper.angle, rightFlipper.rest, rightFlipper.active);
+    }
+
+    function updateTargets(dt) {
+      let allDown = true;
+      for (const t of TARGETS) {
+        if (t.live) {
+          allDown = false;
+          const inside =
+            state.ball.x + state.ball.r > t.x &&
+            state.ball.x - state.ball.r < t.x + t.w &&
+            state.ball.y + state.ball.r > t.y &&
+            state.ball.y - state.ball.r < t.y + t.h;
+          if (!inside) continue;
+
+          t.live = false;
+          awardScore(t.score, t.x + t.w * 0.5, t.y + t.h * 0.5, '#ffe0a5');
+          state.ball.vy = Math.abs(state.ball.vy) * 0.62;
+          setMessage('Target hit!', 0.4);
+          allDown = false;
+        }
+      }
+
+      if (allDown) {
+        state.targetRespawnTimer += dt;
+        if (state.targetRespawnTimer > 2.2) {
+          resetTargets();
+          setMessage('Targets reset.', 0.4);
+        }
+      }
+    }
+
+    function updateBall(dt) {
+      if (state.ball.onShooter) {
+        if (state.launchHeld) {
+          state.launchCharge = clamp(state.launchCharge + dt * 0.9, 0, 1);
+          state.ball.y = SHOOTER.bottom - 18 - state.launchCharge * 62;
+        } else {
+          state.launchCharge = clamp(state.launchCharge - dt * 1.8, 0, 1);
+          state.ball.y += (524 - state.ball.y) * Math.min(1, dt * 10);
+        }
+        return;
+      }
+
+      state.ball.vy += GRAVITY * dt;
+      state.ball.x += state.ball.vx * dt;
+      state.ball.y += state.ball.vy * dt;
+
+      state.ball.vx *= Math.pow(0.998, dt * 60);
+      state.ball.vy *= Math.pow(0.9985, dt * 60);
+
+      collideWithWalls();
+
+      for (const b of BUMPERS) {
+        if (!resolveBallCircleCollision(b.x, b.y, b.r, 1.08)) continue;
+        awardScore(b.score, b.x, b.y, b.color);
+        state.ball.vx *= 1.02;
+        state.ball.vy *= 1.02;
+      }
+
+      if (collideWithFlipper(leftFlipper) || collideWithFlipper(rightFlipper)) {
+        awardScore(20, state.ball.x, state.ball.y, '#c5f2ff');
+      }
+
+      updateTargets(dt);
+    }
+
+    function updateParticles(dt) {
+      const next = [];
+      for (const p of state.particles) {
+        p.life -= dt;
+        if (p.life <= 0) continue;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        next.push(p);
+      }
+      state.particles = next;
+    }
+
+    function update(dt) {
+      state.pulse += dt;
+      if (state.flash > 0) state.flash = Math.max(0, state.flash - dt);
+      if (state.messageTimer > 0) state.messageTimer = Math.max(0, state.messageTimer - dt);
+      updateFlippers(dt);
+      updateParticles(dt);
+
+      if (state.mode !== 'playing') return;
+
+      updateBall(dt);
+
+      if (state.combo > 0 && Math.random() < dt * 0.7) {
+        state.combo = Math.max(0, state.combo - 1);
+        if (state.combo === 0) state.multiplier = 1;
+      }
+    }
+
+    function drawRoundedRect(x, y, w, h, r) {
+      const rr = Math.min(r, w * 0.5, h * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawTable() {
+      const glow = 0.2 + Math.sin(state.pulse * 2.2) * 0.1;
+
+      ctx.fillStyle = '#0a1225';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const bg = ctx.createLinearGradient(0, TABLE.top, 0, TABLE.bottom);
+      bg.addColorStop(0, '#172b54');
+      bg.addColorStop(1, '#0f1e3e');
+      ctx.fillStyle = bg;
+      drawRoundedRect(TABLE.left, TABLE.top, TABLE.right - TABLE.left, TABLE.bottom - TABLE.top, 28);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(156,214,255,${0.34 + glow})`;
+      ctx.lineWidth = 3;
+      drawRoundedRect(TABLE.left, TABLE.top, TABLE.right - TABLE.left, TABLE.bottom - TABLE.top, 28);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(150, 213, 255, 0.14)';
+      ctx.fillRect(SHOOTER.left, SHOOTER.top, SHOOTER.right - SHOOTER.left, SHOOTER.bottom - SHOOTER.top);
+      ctx.fillStyle = '#9dd8ff';
+      ctx.fillRect(SHOOTER.left, SHOOTER.bottom - 8, SHOOTER.right - SHOOTER.left, 4);
+
+      ctx.fillStyle = '#050b17';
+      ctx.fillRect(DRAIN.left, TABLE.bottom - 6, DRAIN.right - DRAIN.left, 22);
+      ctx.fillStyle = 'rgba(255,130,130,0.66)';
+      ctx.fillRect(DRAIN.left + 20, TABLE.bottom + 8, DRAIN.right - DRAIN.left - 40, 3);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      for (let i = 0; i < 7; i += 1) {
+        const y = TABLE.top + 34 + i * 62;
+        ctx.fillRect(TABLE.left + 18, y, TABLE.right - TABLE.left - 36, 1);
+      }
+    }
+
+    function drawTargets() {
+      for (const t of TARGETS) {
+        if (!t.live) continue;
+        ctx.fillStyle = '#ffd390';
+        drawRoundedRect(t.x, t.y, t.w, t.h, 8);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillRect(t.x + 4, t.y + 6, t.w - 8, 7);
+      }
+    }
+
+    function drawBumpers() {
+      for (const b of BUMPERS) {
+        ctx.save();
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath();
+        ctx.arc(b.x - b.r * 0.28, b.y - b.r * 0.25, b.r * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawFlipper(flip, color) {
+      const end = flipperEndpoint(flip);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = flip.radius * 2;
+      ctx.lineCap = 'round';
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(flip.pivot.x, flip.pivot.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawBall() {
+      if (!state.ball.active) return;
+      ctx.save();
+      ctx.shadowColor = '#bfe6ff';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = '#f5faff';
+      ctx.beginPath();
+      ctx.arc(state.ball.x, state.ball.y, state.ball.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(100,120,150,0.45)';
+      ctx.beginPath();
+      ctx.arc(state.ball.x - 3, state.ball.y - 3, state.ball.r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const alpha = clamp(p.life / p.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawOverlay() {
+      if (state.mode === 'playing') return;
+      ctx.fillStyle = 'rgba(4, 9, 18, 0.58)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(9, 17, 34, 0.88)';
+      drawRoundedRect(190, 188, 580, 226, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(180, 223, 255, 0.48)';
+      ctx.lineWidth = 2;
+      drawRoundedRect(190, 188, 580, 226, 16);
+      ctx.stroke();
+
+      let title = 'NEON PINBALL RUSH';
+      let sub = 'Press Start to begin.';
+      if (state.mode === 'paused') sub = 'Press Pause to continue.';
+      if (state.mode === 'gameover') {
+        title = 'RUN COMPLETE';
+        sub = `Final score ${state.score} | Best ${state.highScore}`;
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f4f9ff';
+      ctx.font = '700 42px "Trebuchet MS", sans-serif';
+      ctx.fillText(title, canvas.width * 0.5, 262);
+      ctx.fillStyle = '#d4e9ff';
+      ctx.font = '600 22px "Trebuchet MS", sans-serif';
+      ctx.fillText(sub, canvas.width * 0.5, 324);
+      ctx.fillStyle = '#b7d7ef';
+      ctx.font = '500 17px "Trebuchet MS", sans-serif';
+      ctx.fillText('Keep the ball alive, chain bumper hits, and grow your multiplier.', canvas.width * 0.5, 366);
+    }
+
+    function drawMessage() {
+      if (state.messageTimer <= 0 || !state.message) return;
+      ctx.fillStyle = 'rgba(8, 14, 28, 0.72)';
+      drawRoundedRect(268, 74, 424, 38, 10);
+      ctx.fill();
+      ctx.fillStyle = '#ecf7ff';
+      ctx.font = '600 17px "Trebuchet MS", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(state.message, canvas.width * 0.5, 93);
+    }
+
+    function render() {
+      drawTable();
+      drawTargets();
+      drawBumpers();
+      drawFlipper(leftFlipper, '#87d0ff');
+      drawFlipper(rightFlipper, '#87d0ff');
+      drawBall();
+      drawParticles();
+
+      if (state.launchHeld && state.readyForLaunch) {
+        const h = 72 * state.launchCharge;
+        ctx.fillStyle = 'rgba(165, 221, 255, 0.5)';
+        ctx.fillRect(SHOOTER.left + 10, SHOOTER.bottom - 8 - h, SHOOTER.right - SHOOTER.left - 20, h);
+      }
+
+      if (state.flash > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${state.flash * 0.25})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      drawMessage();
+      drawOverlay();
+
+      hudMode.textContent = state.mode;
+      hudScore.textContent = String(state.score);
+      hudBalls.textContent = String(state.balls);
+      hudMulti.textContent = `x${state.multiplier}`;
+      hudCombo.textContent = String(state.combo);
+      hudCoins.textContent = String(state.coinsEarned);
+    }
+
+    function stepSimulation(ms) {
+      const total = clamp(ms, 0, 4000) / 1000;
+      let remain = total;
+      const frame = 1 / 120;
+      while (remain > 0) {
+        const dt = Math.min(frame, remain);
+        update(dt);
+        remain -= dt;
+      }
+      render();
+    }
+
+    function isEditableTarget(target) {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function onKeyDown(event) {
+      if (isEditableTarget(event.target)) return;
+      const key = event.key.toLowerCase();
+
+      if (key === 'arrowleft' || key === 'a') {
+        event.preventDefault();
+        leftFlipper.held = true;
+      } else if (key === 'arrowright' || key === 'd') {
+        event.preventDefault();
+        rightFlipper.held = true;
+      } else if (key === ' ') {
+        event.preventDefault();
+        beginLaunchHold(true);
+      } else if (key === 'p') {
+        event.preventDefault();
+        togglePause();
+      } else if (key === 'enter') {
+        event.preventDefault();
+        if (state.mode === 'menu' || state.mode === 'gameover') startRun();
+      } else if (key === 'f') {
+        event.preventDefault();
+        toggleFullscreen();
+      } else if (key === 'escape' && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function onKeyUp(event) {
+      const key = event.key.toLowerCase();
+      if (key === 'arrowleft' || key === 'a') {
+        leftFlipper.held = false;
+      } else if (key === 'arrowright' || key === 'd') {
+        rightFlipper.held = false;
+      } else if (key === ' ') {
+        beginLaunchHold(false);
+      }
+    }
+
+    function bindHoldButton(id, setHeld, onRelease = null) {
+      const btn = document.getElementById(id);
+      const start = (event) => {
+        event.preventDefault();
+        setHeld(true);
+        btn.classList.add('active');
+      };
+      const end = (event) => {
+        if (event) event.preventDefault();
+        setHeld(false);
+        if (onRelease) onRelease();
+        btn.classList.remove('active');
+      };
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', end);
+      btn.addEventListener('pointercancel', end);
+      btn.addEventListener('pointerleave', end);
+    }
+
+    function loop(ts) {
+      const dt = Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if (!steppingExternally) {
+        update(dt);
+        render();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(Number(ms) || 0);
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        coordinate_system: {
+          origin: 'top-left of canvas',
+          x_axis: 'right',
+          y_axis: 'down',
+          units: 'pixels',
+          canvas: { width: canvas.width, height: canvas.height },
+          playfield: { ...TABLE },
+        },
+        mode: state.mode,
+        score: state.score,
+        high_score: state.highScore,
+        balls_remaining: state.balls,
+        combo: state.combo,
+        multiplier: state.multiplier,
+        launch: {
+          ready: state.readyForLaunch,
+          held: state.launchHeld,
+          charge: Number(state.launchCharge.toFixed(3)),
+        },
+        ball: {
+          x: Number(state.ball.x.toFixed(2)),
+          y: Number(state.ball.y.toFixed(2)),
+          vx: Number(state.ball.vx.toFixed(2)),
+          vy: Number(state.ball.vy.toFixed(2)),
+          r: state.ball.r,
+          on_shooter: state.ball.onShooter,
+        },
+        bumpers: BUMPERS.map((b) => ({ x: b.x, y: b.y, r: b.r, score: b.score })),
+        targets: TARGETS.map((t) => ({ x: t.x, y: t.y, live: t.live })),
+        flippers: {
+          left: { held: leftFlipper.held, angle: Number(leftFlipper.angle.toFixed(3)) },
+          right: { held: rightFlipper.held, angle: Number(rightFlipper.angle.toFixed(3)) },
+        },
+        objective: 'Keep the ball alive and score by hitting bumpers and targets.',
+      };
+      return JSON.stringify(payload);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    document.getElementById('start-btn').addEventListener('click', () => {
+      if (state.mode === 'menu' || state.mode === 'gameover') startRun();
+    });
+    document.getElementById('pause-btn').addEventListener('click', () => togglePause());
+    document.getElementById('fullscreen-btn').addEventListener('click', () => toggleFullscreen());
+
+    bindHoldButton('left-btn', (held) => {
+      leftFlipper.held = held;
+    });
+    bindHoldButton('right-btn', (held) => {
+      rightFlipper.held = held;
+    });
+    bindHoldButton(
+      'launch-btn',
+      (held) => {
+        beginLaunchHold(held);
+      },
+      () => {
+        beginLaunchHold(false);
+      }
+    );
+
+    window.addEventListener('blur', () => {
+      leftFlipper.held = false;
+      rightFlipper.held = false;
+      beginLaunchHold(false);
+      if (state.mode === 'playing') state.mode = 'paused';
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.mode === 'playing') state.mode = 'paused';
+    });
+
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

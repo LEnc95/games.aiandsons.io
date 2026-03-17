@@ -1,0 +1,910 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Orbital Rescue</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <style>
+    :root {
+      --bg0: #040914;
+      --bg1: #0c1832;
+      --panel: rgba(10, 18, 40, 0.82);
+      --line: rgba(147, 201, 255, 0.34);
+      --text: #e8f3ff;
+      --muted: #a8bfda;
+      --accent: #52d4ff;
+      --good: #7df5b3;
+      --warn: #ffd166;
+      --bad: #ff6b86;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 15% 10%, #18366a 0%, var(--bg0) 45%, #02050c 100%);
+      color: var(--text);
+      overflow: hidden;
+      touch-action: none;
+    }
+    #app {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      padding: 12px;
+    }
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+    .chip b {
+      display: block;
+      font-size: 18px;
+      color: #f6fbff;
+      letter-spacing: 0.02em;
+      margin-top: 2px;
+    }
+    .chip.shield b { color: var(--good); }
+    .chip.dash b { color: var(--accent); }
+    .chip.mode b { color: var(--warn); }
+    #canvasWrap {
+      position: relative;
+      min-height: 0;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #050c1c 0%, #02050d 100%);
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      image-rendering: auto;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 620px;
+      background: rgba(7, 14, 32, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 4vw, 36px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .btnRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(19, 36, 75, 0.9);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: translateY(1px); }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: end;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      align-self: center;
+      text-align: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 56px);
+      grid-template-rows: repeat(2, 52px);
+      gap: 6px;
+      justify-content: start;
+    }
+    .dpad button,
+    .actions button {
+      width: 56px;
+      height: 52px;
+      padding: 0;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      background: rgba(17, 31, 63, 0.9);
+    }
+    .actions {
+      display: flex;
+      justify-content: end;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .wide { width: auto !important; padding: 0 12px !important; }
+    .small {
+      font-size: 11px;
+      color: #c3d8f0;
+      text-align: center;
+      margin-top: 4px;
+    }
+    @media (max-width: 900px) {
+      #app { padding: 8px; gap: 8px; }
+      .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+      .dpad { justify-content: center; margin: 0 auto; }
+      .actions { justify-content: center; }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <section class="hud">
+      <div class="chip">Score<b id="scoreVal">0</b></div>
+      <div class="chip">Rescues<b id="rescuesVal">0</b></div>
+      <div class="chip">Wave<b id="waveVal">1</b></div>
+      <div class="chip shield">Shields<b id="shieldVal">3</b></div>
+      <div class="chip dash">Dash<b id="dashVal">Ready</b></div>
+      <div class="chip mode">Mode<b id="modeVal">Menu</b></div>
+    </section>
+
+    <div id="canvasWrap">
+      <canvas id="game" width="960" height="540" aria-label="Orbital Rescue playfield"></canvas>
+
+      <div id="menuOverlay" class="overlay show">
+        <div class="panel">
+          <h1>Orbital Rescue</h1>
+          <p>Pilot the rescue ship, collect stranded pilots, and deliver them to the space station. Avoid debris fields and survive the full timer.</p>
+          <p>Desktop: WASD/Arrows move, Space dash, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use D-pad and Dash button.</p>
+          <div class="btnRow">
+            <button id="startBtn">Start Mission</button>
+            <button id="fullscreenBtn">Fullscreen (F)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pauseOverlay" class="overlay">
+        <div class="panel">
+          <h1>Paused</h1>
+          <p>Mission paused. Press P or use Resume to continue.</p>
+          <div class="btnRow">
+            <button id="resumeBtn">Resume</button>
+            <button id="restartBtn">Restart</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="endOverlay" class="overlay">
+        <div class="panel">
+          <h1 id="endTitle">Mission Complete</h1>
+          <p id="endSummary"></p>
+          <div class="btnRow">
+            <button id="playAgainBtn">Play Again</button>
+            <button id="backMenuBtn">Back To Menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="controls">
+      <div>
+        <div class="dpad">
+          <button data-touch="up" style="grid-column:2;grid-row:1;">^</button>
+          <button data-touch="left" style="grid-column:1;grid-row:2;">&lt;</button>
+          <button data-touch="down" style="grid-column:2;grid-row:2;">v</button>
+          <button data-touch="right" style="grid-column:3;grid-row:2;">&gt;</button>
+        </div>
+        <div class="small">Touch movement</div>
+      </div>
+
+      <div class="hint">Collect pilots -> dock at station -> score grows each wave.</div>
+
+      <div>
+        <div class="actions">
+          <button data-touch="dash" class="wide">Dash</button>
+          <button id="pauseBtn" class="wide">Pause</button>
+          <button id="restartBtn2" class="wide">Restart</button>
+        </div>
+        <div class="small">Pause: P | Restart: R</div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const ui = {
+      score: document.getElementById('scoreVal'),
+      rescues: document.getElementById('rescuesVal'),
+      wave: document.getElementById('waveVal'),
+      shield: document.getElementById('shieldVal'),
+      dash: document.getElementById('dashVal'),
+      mode: document.getElementById('modeVal'),
+      menu: document.getElementById('menuOverlay'),
+      pause: document.getElementById('pauseOverlay'),
+      end: document.getElementById('endOverlay'),
+      endTitle: document.getElementById('endTitle'),
+      endSummary: document.getElementById('endSummary'),
+      startBtn: document.getElementById('startBtn'),
+      fullscreenBtn: document.getElementById('fullscreenBtn'),
+      resumeBtn: document.getElementById('resumeBtn'),
+      restartBtn: document.getElementById('restartBtn'),
+      restartBtn2: document.getElementById('restartBtn2'),
+      playAgainBtn: document.getElementById('playAgainBtn'),
+      backMenuBtn: document.getElementById('backMenuBtn'),
+      pauseBtn: document.getElementById('pauseBtn'),
+    };
+
+    const WORLD_W = canvas.width;
+    const WORLD_H = canvas.height;
+    const CENTER = { x: WORLD_W * 0.5, y: WORLD_H * 0.5 };
+    const STATION_RADIUS = 64;
+    const MAX_TIME = 90;
+
+    const keys = { up:false, down:false, left:false, right:false };
+    let dashPressed = false;
+    let controlledStep = false;
+    let lastStamp = performance.now();
+
+    const state = {
+      mode: 'menu',
+      time: MAX_TIME,
+      score: 0,
+      rescues: 0,
+      wave: 1,
+      shields: 3,
+      best: Number(localStorage.getItem('orbitalrescue:best') || '0') || 0,
+      coinsAwarded: false,
+      player: {
+        x: WORLD_W * 0.2,
+        y: WORLD_H * 0.6,
+        vx: 0,
+        vy: 0,
+        r: 14,
+        speed: 250,
+        drag: 0.9,
+        invuln: 0,
+        dashCd: 0,
+      },
+      pilots: [],
+      debris: [],
+      stars: [],
+      pulses: [],
+      msgs: [],
+      nextPilotIn: 0,
+      nextDebrisIn: 0,
+      waveProgress: 0,
+    };
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function resetSession(toMenu = false) {
+      state.mode = toMenu ? 'menu' : 'playing';
+      state.time = MAX_TIME;
+      state.score = 0;
+      state.rescues = 0;
+      state.wave = 1;
+      state.shields = 3;
+      state.coinsAwarded = false;
+      state.player.x = WORLD_W * 0.2;
+      state.player.y = WORLD_H * 0.6;
+      state.player.vx = 0;
+      state.player.vy = 0;
+      state.player.invuln = 0;
+      state.player.dashCd = 0;
+      state.pilots = [];
+      state.debris = [];
+      state.pulses = [];
+      state.msgs = [];
+      state.waveProgress = 0;
+      state.nextPilotIn = 0.4;
+      state.nextDebrisIn = 0.6;
+      ensureStars();
+      if (!toMenu) {
+        rememberRecent('orbitalrescue');
+        spawnPilot();
+      }
+      setOverlay();
+      updateHud();
+      render();
+    }
+
+    function ensureStars() {
+      if (state.stars.length) return;
+      for (let i = 0; i < 120; i++) {
+        state.stars.push({ x: rand(0, WORLD_W), y: rand(0, WORLD_H), z: rand(0.2, 1.0) });
+      }
+    }
+
+    function randomEdgePoint() {
+      const side = Math.floor(Math.random() * 4);
+      if (side === 0) return { x: rand(0, WORLD_W), y: -24 };
+      if (side === 1) return { x: WORLD_W + 24, y: rand(0, WORLD_H) };
+      if (side === 2) return { x: rand(0, WORLD_W), y: WORLD_H + 24 };
+      return { x: -24, y: rand(0, WORLD_H) };
+    }
+
+    function spawnPilot() {
+      const p = randomEdgePoint();
+      state.pilots.push({ x: p.x, y: p.y, r: 11, carried: false, blink: rand(0, Math.PI * 2) });
+    }
+
+    function spawnDebris() {
+      const p = randomEdgePoint();
+      const angle = Math.atan2(CENTER.y - p.y, CENTER.x - p.x) + rand(-0.65, 0.65);
+      const speed = rand(90 + state.wave * 8, 150 + state.wave * 10);
+      state.debris.push({
+        x: p.x,
+        y: p.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        r: rand(9, 17),
+        spin: rand(-5, 5),
+        rot: rand(0, Math.PI * 2),
+      });
+    }
+
+    function pushMsg(text, color = '#d9eeff') {
+      state.msgs.push({ text, color, life: 1.2, x: state.player.x, y: state.player.y - 20 });
+    }
+
+    function toggleFullscreen() {
+      const holder = document.documentElement;
+      if (!document.fullscreenElement) {
+        holder.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function setOverlay() {
+      ui.menu.classList.toggle('show', state.mode === 'menu');
+      ui.pause.classList.toggle('show', state.mode === 'paused');
+      ui.end.classList.toggle('show', state.mode === 'victory' || state.mode === 'defeat');
+      if (state.mode === 'victory' || state.mode === 'defeat') {
+        ui.endTitle.textContent = state.mode === 'victory' ? 'Mission Complete' : 'Mission Failed';
+        ui.endSummary.textContent = `Rescues: ${state.rescues} | Score: ${state.score} | Best: ${state.best}`;
+      }
+    }
+
+    function updateHud() {
+      ui.score.textContent = String(Math.round(state.score));
+      ui.rescues.textContent = String(state.rescues);
+      ui.wave.textContent = String(state.wave);
+      ui.shield.textContent = String(Math.max(0, state.shields));
+      ui.dash.textContent = state.player.dashCd <= 0 ? 'Ready' : `${state.player.dashCd.toFixed(1)}s`;
+      ui.mode.textContent = state.mode;
+    }
+
+    function clampPlayer() {
+      state.player.x = Math.max(state.player.r, Math.min(WORLD_W - state.player.r, state.player.x));
+      state.player.y = Math.max(state.player.r, Math.min(WORLD_H - state.player.r, state.player.y));
+    }
+
+    function dist(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function hitCircle(a, ar, b, br) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return dx * dx + dy * dy <= (ar + br) * (ar + br);
+    }
+
+    function setMode(next) {
+      state.mode = next;
+      setOverlay();
+      updateHud();
+    }
+
+    function awardEndCoinsAndProgress(victory) {
+      if (state.coinsAwarded) return;
+      state.coinsAwarded = true;
+      const base = Math.floor(state.rescues * 4 + state.score / 240);
+      const bonus = victory ? 12 : 0;
+      const total = Math.max(0, base + bonus);
+      if (total > 0) {
+        addCoins(total);
+      }
+      maybeUnlock({
+        anyPlay: true,
+        orbitalrescue: {
+          rescues: state.rescues,
+          score: Math.round(state.score),
+          wave: state.wave,
+          victory: Boolean(victory),
+        },
+      });
+      try {
+        const prev = Number(profileState.stats.orbitalrescueBestScore || 0);
+        if (state.score > prev) {
+          profileState.stats.orbitalrescueBestScore = Math.round(state.score);
+        }
+      } catch {}
+    }
+
+    function damagePlayer() {
+      if (state.player.invuln > 0) return;
+      state.shields -= 1;
+      state.player.invuln = 1.4;
+      pushMsg('Shield hit!', '#ff95af');
+      if (state.shields <= 0) {
+        state.best = Math.max(state.best, Math.round(state.score));
+        localStorage.setItem('orbitalrescue:best', String(state.best));
+        awardEndCoinsAndProgress(false);
+        setMode('defeat');
+      }
+    }
+
+    function updatePlaying(dt) {
+      state.time -= dt;
+      if (state.time <= 0) {
+        state.time = 0;
+        state.best = Math.max(state.best, Math.round(state.score));
+        localStorage.setItem('orbitalrescue:best', String(state.best));
+        awardEndCoinsAndProgress(true);
+        setMode('victory');
+        return;
+      }
+
+      const ax = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+      const ay = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+      const len = Math.hypot(ax, ay) || 1;
+      const thrust = state.player.speed * (1 + state.wave * 0.06);
+      state.player.vx += (ax / len) * thrust * dt;
+      state.player.vy += (ay / len) * thrust * dt;
+
+      if (dashPressed && state.player.dashCd <= 0) {
+        const dirX = ax !== 0 || ay !== 0 ? ax / len : 1;
+        const dirY = ax !== 0 || ay !== 0 ? ay / len : 0;
+        state.player.vx += dirX * 260;
+        state.player.vy += dirY * 260;
+        state.player.dashCd = 2.2;
+        state.pulses.push({ x: state.player.x, y: state.player.y, life: 0.35, r: 8 });
+        pushMsg('Dash!', '#82e7ff');
+      }
+      dashPressed = false;
+
+      state.player.vx *= Math.pow(state.player.drag, dt * 60);
+      state.player.vy *= Math.pow(state.player.drag, dt * 60);
+
+      state.player.x += state.player.vx * dt;
+      state.player.y += state.player.vy * dt;
+      clampPlayer();
+
+      state.player.invuln = Math.max(0, state.player.invuln - dt);
+      state.player.dashCd = Math.max(0, state.player.dashCd - dt);
+
+      state.nextPilotIn -= dt;
+      state.nextDebrisIn -= dt;
+
+      if (state.nextPilotIn <= 0 && state.pilots.length < 4) {
+        state.nextPilotIn = Math.max(0.6, 2.1 - state.wave * 0.08);
+        spawnPilot();
+      }
+      if (state.nextDebrisIn <= 0) {
+        state.nextDebrisIn = Math.max(0.35, 1.2 - state.wave * 0.05);
+        spawnDebris();
+      }
+
+      for (const pilot of state.pilots) {
+        pilot.blink += dt * 4;
+      }
+
+      let rescuedThisFrame = 0;
+      for (let i = state.pilots.length - 1; i >= 0; i--) {
+        const pilot = state.pilots[i];
+        if (!pilot.carried && hitCircle(state.player, state.player.r, pilot, pilot.r + 2)) {
+          pilot.carried = true;
+          pushMsg('Pilot secured', '#8cffc5');
+        }
+        if (pilot.carried) {
+          const dx = state.player.x - pilot.x;
+          const dy = state.player.y - pilot.y;
+          pilot.x += dx * Math.min(1, dt * 8);
+          pilot.y += dy * Math.min(1, dt * 8);
+          if (dist(pilot, CENTER) <= STATION_RADIUS - 6) {
+            state.pilots.splice(i, 1);
+            rescuedThisFrame += 1;
+          }
+        }
+      }
+      if (rescuedThisFrame > 0) {
+        state.rescues += rescuedThisFrame;
+        state.waveProgress += rescuedThisFrame;
+        const gain = rescuedThisFrame * (45 + state.wave * 8);
+        state.score += gain;
+        pushMsg(`+${gain} rescue`, '#96ffc4');
+      }
+
+      for (let i = state.debris.length - 1; i >= 0; i--) {
+        const d = state.debris[i];
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+        d.rot += d.spin * dt;
+        if (d.x < -40 || d.x > WORLD_W + 40 || d.y < -40 || d.y > WORLD_H + 40) {
+          state.debris.splice(i, 1);
+          continue;
+        }
+        if (hitCircle(state.player, state.player.r, d, d.r)) {
+          state.debris.splice(i, 1);
+          damagePlayer();
+          continue;
+        }
+      }
+
+      if (state.waveProgress >= 6 + state.wave * 2) {
+        state.wave += 1;
+        state.waveProgress = 0;
+        state.score += 90;
+        pushMsg(`Wave ${state.wave}`, '#ffe08f');
+      }
+
+      for (let i = state.msgs.length - 1; i >= 0; i--) {
+        const m = state.msgs[i];
+        m.life -= dt;
+        m.y -= dt * 24;
+        if (m.life <= 0) state.msgs.splice(i, 1);
+      }
+      for (let i = state.pulses.length - 1; i >= 0; i--) {
+        const p = state.pulses[i];
+        p.life -= dt;
+        p.r += dt * 220;
+        if (p.life <= 0) state.pulses.splice(i, 1);
+      }
+
+      state.score += dt * (state.wave * 0.8);
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+      const step = Math.min(1 / 24, Math.max(0, dt));
+      updatePlaying(step);
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+
+      const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+      g.addColorStop(0, '#081127');
+      g.addColorStop(1, '#03060e');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+      for (const s of state.stars) {
+        ctx.fillStyle = `rgba(180,220,255,${0.35 + s.z * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 0.8 + s.z * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = 'rgba(92, 176, 255, 0.16)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        const r = STATION_RADIUS + i * 42;
+        ctx.beginPath();
+        ctx.arc(CENTER.x, CENTER.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawStation() {
+      ctx.save();
+      ctx.translate(CENTER.x, CENTER.y);
+
+      const pulse = 0.5 + Math.sin(performance.now() * 0.003) * 0.5;
+      ctx.fillStyle = `rgba(114,236,255,${0.22 + pulse * 0.14})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, STATION_RADIUS + 8 + pulse * 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#123560';
+      ctx.beginPath();
+      ctx.arc(0, 0, STATION_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#70d6ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, STATION_RADIUS - 12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#89f1ff';
+      ctx.fillRect(-5, -22, 10, 44);
+      ctx.fillRect(-22, -5, 44, 10);
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(state.player.x, state.player.y);
+
+      const a = Math.atan2(state.player.vy || 0.01, state.player.vx || 1);
+      ctx.rotate(a);
+
+      if (state.player.invuln > 0) {
+        ctx.strokeStyle = 'rgba(255,150,175,0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, state.player.r + 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#6bd8ff';
+      ctx.beginPath();
+      ctx.moveTo(18, 0);
+      ctx.lineTo(-12, -10);
+      ctx.lineTo(-8, 0);
+      ctx.lineTo(-12, 10);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#e9fbff';
+      ctx.beginPath();
+      ctx.arc(2, 0, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.mode === 'playing' && (keys.left || keys.right || keys.up || keys.down)) {
+        ctx.fillStyle = 'rgba(255,201,108,0.85)';
+        ctx.beginPath();
+        ctx.moveTo(-12, -6);
+        ctx.lineTo(-20 - Math.random() * 6, 0);
+        ctx.lineTo(-12, 6);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawPilots() {
+      for (const p of state.pilots) {
+        const blink = 0.45 + Math.sin(p.blink) * 0.55;
+        ctx.fillStyle = p.carried ? '#8effc7' : '#ffe08a';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `rgba(255,255,255,${0.35 + blink * 0.55})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r + 4 + blink * 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawDebris() {
+      ctx.strokeStyle = '#a5b8d9';
+      ctx.fillStyle = '#2e3f62';
+      for (const d of state.debris) {
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.rot);
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const ang = (i / 6) * Math.PI * 2;
+          const rr = d.r * (0.72 + (i % 2 ? 0.3 : 0.06));
+          const xx = Math.cos(ang) * rr;
+          const yy = Math.sin(ang) * rr;
+          if (i === 0) ctx.moveTo(xx, yy);
+          else ctx.lineTo(xx, yy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawEffects() {
+      for (const p of state.pulses) {
+        ctx.strokeStyle = `rgba(100,235,255,${Math.max(0, p.life * 1.8)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.font = 'bold 18px Trebuchet MS';
+      ctx.textAlign = 'center';
+      for (const m of state.msgs) {
+        ctx.globalAlpha = Math.max(0, Math.min(1, m.life));
+        ctx.fillStyle = m.color;
+        ctx.fillText(m.text, m.x, m.y);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTimerBar() {
+      const pad = 16;
+      const w = WORLD_W - pad * 2;
+      const h = 12;
+      const ratio = Math.max(0, Math.min(1, state.time / MAX_TIME));
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      ctx.fillRect(pad, WORLD_H - 22, w, h);
+      ctx.fillStyle = ratio > 0.35 ? '#7de3ff' : '#ff9a8f';
+      ctx.fillRect(pad, WORLD_H - 22, w * ratio, h);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.strokeRect(pad, WORLD_H - 22, w, h);
+    }
+
+    function render() {
+      drawBackground();
+      drawStation();
+      drawPilots();
+      drawDebris();
+      drawPlayer();
+      drawEffects();
+      drawTimerBar();
+    }
+
+    function stepFrame(now) {
+      const rawDt = (now - lastStamp) / 1000;
+      lastStamp = now;
+      if (!controlledStep) {
+        update(rawDt);
+        render();
+      }
+      requestAnimationFrame(stepFrame);
+    }
+
+    function handleKeyState(code, isDown) {
+      if (code === 'ArrowUp' || code === 'KeyW') keys.up = isDown;
+      if (code === 'ArrowDown' || code === 'KeyS') keys.down = isDown;
+      if (code === 'ArrowLeft' || code === 'KeyA') keys.left = isDown;
+      if (code === 'ArrowRight' || code === 'KeyD') keys.right = isDown;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      handleKeyState(event.code, true);
+      if (event.code === 'Space') {
+        event.preventDefault();
+        dashPressed = true;
+      }
+      if (event.code === 'KeyP') {
+        if (state.mode === 'playing') setMode('paused');
+        else if (state.mode === 'paused') setMode('playing');
+      }
+      if (event.code === 'KeyR') {
+        resetSession(false);
+      }
+      if (event.code === 'KeyF') {
+        toggleFullscreen();
+      }
+      if (event.code === 'Enter' && state.mode === 'menu') {
+        resetSession(false);
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      handleKeyState(event.code, false);
+    });
+
+    function bindTouchControl(button, onDown, onUp) {
+      button.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        onDown();
+      });
+      button.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        onUp();
+      });
+      button.addEventListener('pointercancel', onUp);
+      button.addEventListener('pointerleave', onUp);
+    }
+
+    document.querySelectorAll('[data-touch]').forEach((button) => {
+      const type = button.getAttribute('data-touch');
+      if (type === 'up') bindTouchControl(button, () => { keys.up = true; }, () => { keys.up = false; });
+      if (type === 'down') bindTouchControl(button, () => { keys.down = true; }, () => { keys.down = false; });
+      if (type === 'left') bindTouchControl(button, () => { keys.left = true; }, () => { keys.left = false; });
+      if (type === 'right') bindTouchControl(button, () => { keys.right = true; }, () => { keys.right = false; });
+      if (type === 'dash') bindTouchControl(button, () => { dashPressed = true; }, () => {});
+    });
+
+    ui.startBtn.addEventListener('click', () => resetSession(false));
+    ui.resumeBtn.addEventListener('click', () => setMode('playing'));
+    ui.pauseBtn.addEventListener('click', () => {
+      if (state.mode === 'playing') setMode('paused');
+      else if (state.mode === 'paused') setMode('playing');
+    });
+    ui.restartBtn.addEventListener('click', () => resetSession(false));
+    ui.restartBtn2.addEventListener('click', () => resetSession(false));
+    ui.playAgainBtn.addEventListener('click', () => resetSession(false));
+    ui.backMenuBtn.addEventListener('click', () => resetSession(true));
+    ui.fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      controlledStep = true;
+      const dt = 1 / 60;
+      const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+      for (let i = 0; i < steps; i++) update(dt);
+      render();
+      controlledStep = false;
+      updateHud();
+      setOverlay();
+      return true;
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'orbitalrescue',
+        coordinate_system: 'origin_top_left_x_right_y_down',
+        mode: state.mode,
+        timer_s: Number(state.time.toFixed(2)),
+        score: Math.round(state.score),
+        rescues: state.rescues,
+        wave: state.wave,
+        shields: state.shields,
+        dash_cooldown_s: Number(state.player.dashCd.toFixed(2)),
+        player: {
+          x: Number(state.player.x.toFixed(1)),
+          y: Number(state.player.y.toFixed(1)),
+          vx: Number(state.player.vx.toFixed(1)),
+          vy: Number(state.player.vy.toFixed(1)),
+          invulnerable_s: Number(state.player.invuln.toFixed(2)),
+        },
+        station: { x: CENTER.x, y: CENTER.y, radius: STATION_RADIUS },
+        pilots: state.pilots.map((p) => ({ x: Number(p.x.toFixed(1)), y: Number(p.y.toFixed(1)), carried: p.carried })),
+        debris: state.debris.slice(0, 12).map((d) => ({ x: Number(d.x.toFixed(1)), y: Number(d.y.toFixed(1)), r: Number(d.r.toFixed(1)) })),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetSession(true);
+    requestAnimationFrame(stepFrame);
+  </script>
+</body>
+</html>
