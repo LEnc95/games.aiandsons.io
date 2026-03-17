@@ -1137,3 +1137,11 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Runtime errors: no `errors-*.json` artifacts produced.
 - Visual/state check:
   - Reviewed gameplay screenshots and state snapshots; confirmed start flow, launched-ball gameplay state, flipper movement, and non-zero scoring.
+
+## 2026-03-17 Back Button Audit
+- New request: make sure every game page has a back button to return to the site home.
+- Audited all per-game `index.html` files and found one gap: `orbitalrescue/index.html` was missing the site-level back link used by the rest of the arcade pages.
+- Added the standard fixed `.back-home` link to `orbitalrescue/index.html` with safe-area offsets, hover/focus states, and high z-index so it remains accessible over gameplay overlays.
+- Verification:
+  - Ran a Playwright browser sweep across all 33 game routes from `src/meta/games.js` and confirmed each page exposes a visible back/home control pointing to `/`.
+  - Manually verified `http://127.0.0.1:4173/orbitalrescue` shows the new button and that clicking it returns to the arcade homepage.
