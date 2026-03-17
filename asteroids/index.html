@@ -159,7 +159,7 @@
         <div class="stat"><span class="label">Best</span><span class="value" id="best">0</span></div>
         <div class="stat"><span class="label">Asteroids</span><span class="value" id="rocks-left">0</span></div>
       </div>
-      <div class="hint" id="hint">Press Start. Arrows/WASD move, Space shoots, F fullscreen.</div>
+      <div class="hint" id="hint">Press Start. Arrows/WASD move, Space shoots, touch controls fly and fire, F fullscreen.</div>
       <div class="buttons">
         <button class="btn primary" id="start-btn">START</button>
         <button class="btn" id="pause-btn">PAUSE</button>
@@ -309,6 +309,18 @@
       hintEl.textContent = `Wave ${wave} started.`;
     }
 
+    function defaultHint() {
+      return 'Press Start. Arrows/WASD move, Space shoots, touch controls fly and fire, F fullscreen.';
+    }
+
+    function resetInputs() {
+      state.input.left = false;
+      state.input.right = false;
+      state.input.thrust = false;
+      state.input.fire = false;
+      document.querySelectorAll('.ctrl.is-pressed').forEach((button) => button.classList.remove('is-pressed'));
+    }
+
     function resetRun() {
       state.mode = 'menu';
       state.score = 0;
@@ -324,11 +336,8 @@
       state.shakeTime = 0;
       state.shakeMagnitude = 0;
       state.coinsGiven = 0;
-      state.input.left = false;
-      state.input.right = false;
-      state.input.thrust = false;
-      state.input.fire = false;
-      hintEl.textContent = 'Press Start. Arrows/WASD move, Space shoots, F fullscreen.';
+      resetInputs();
+      hintEl.textContent = defaultHint();
       updateHud();
       render();
     }
@@ -746,6 +755,41 @@
       else if (action === 'fire') state.input.fire = pressed;
     }
 
+    function bindControlButton(button) {
+      const action = button.dataset.action;
+      let activePointerId = null;
+
+      const onDown = (event) => {
+        event.preventDefault();
+        if (state.mode === 'menu') startRun();
+        activePointerId = event.pointerId ?? 0;
+        button.classList.add('is-pressed');
+        setInput(action, true);
+        if (action === 'fire') fireBullet();
+        if (event.pointerId != null) {
+          try {
+            button.setPointerCapture?.(event.pointerId);
+          } catch {}
+        }
+      };
+
+      const onUp = (event) => {
+        event.preventDefault();
+        if (activePointerId !== null && event?.pointerId != null && event.pointerId !== activePointerId) return;
+        activePointerId = null;
+        button.classList.remove('is-pressed');
+        setInput(action, false);
+      };
+
+      button.addEventListener('pointerdown', onDown, { passive:false });
+      button.addEventListener('pointerup', onUp, { passive:false });
+      button.addEventListener('pointercancel', onUp, { passive:false });
+      button.addEventListener('lostpointercapture', onUp, { passive:false });
+      button.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') onUp(event);
+      }, { passive:false });
+    }
+
     document.addEventListener('keydown', (event) => {
       const code = event.code;
       if (code === 'ArrowLeft' || code === 'KeyA') {
@@ -792,30 +836,12 @@
     document.getElementById('pause-btn').addEventListener('click', togglePause);
     document.getElementById('restart-btn').addEventListener('click', resetRun);
 
-    for (const button of document.querySelectorAll('.ctrl')) {
-      const action = button.dataset.action;
-      const onDown = (event) => {
-        event.preventDefault();
-        if (state.mode === 'menu') startRun();
-        setInput(action, true);
-        if (action === 'fire') fireBullet();
-      };
-      const onUp = (event) => {
-        event.preventDefault();
-        setInput(action, false);
-      };
-      button.addEventListener('pointerdown', onDown, { passive:false });
-      button.addEventListener('pointerup', onUp, { passive:false });
-      button.addEventListener('pointercancel', onUp, { passive:false });
-      button.addEventListener('click', (event) => {
-        if (action === 'fire') {
-          event.preventDefault();
-          fireBullet();
-        }
-      }, { passive:false });
-    }
+    for (const button of document.querySelectorAll('.ctrl')) bindControlButton(button);
+
+    window.addEventListener('blur', resetInputs);
 
     document.addEventListener('visibilitychange', () => {
+      if (document.hidden) resetInputs();
       if (document.hidden && state.mode === 'playing') {
         state.mode = 'paused';
         hintEl.textContent = 'Paused.';

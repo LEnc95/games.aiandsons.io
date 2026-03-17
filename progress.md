@@ -1162,3 +1162,14 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Reviewed gameplay screenshots and state snapshots; confirmed the car moves, turns, and continues rendering correctly after the touch-control changes.
   - Captured a narrow-layout full-page screenshot at `output/web-game/microrc-touch-mobile-full.png`; verified the touch dock is visible with `Left`, `Go`, `Right`, and `Reset` controls.
   - Verified the touch path in-browser with synthetic pointer events; `render_game_to_text()` confirmed the car drove on-track under the new control inputs.
+
+## 2026-03-17 Asteroids iPad Follow-up
+- New report: Asteroids was said not to work on iPad.
+- Working theory from code audit:
+  - The touch buttons existed, but they did not capture pointers or clear reliably on blur/visibility changes.
+  - That can leave turn/thrust/fire in a stuck or flaky state on iPad if a finger drifts off a button or Safari interrupts the gesture.
+- Implemented in `asteroids/index.html`:
+  - Added a shared `resetInputs()` path for touch + keyboard state cleanup.
+  - Replaced the inline touch-button handlers with a captured pointer binding that handles `pointerdown`, `pointerup`, `pointercancel`, `lostpointercapture`, and mouse `pointerleave`.
+  - Updated the hint copy so touch controls are explicitly called out in the UI.
+- Next: rerun Asteroids browser validation and confirm the touch path behaves correctly.
