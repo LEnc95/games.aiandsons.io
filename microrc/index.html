@@ -24,6 +24,38 @@
     #game { width:min(95vw,900px); height:min(72vh,640px); border:2px solid #192544; border-radius:12px; display:block; margin:0 auto; background:#40562d; }
     .hint { text-align:center; color:#b6c7e6; font-size:14px; min-height:1.4em; }
     .hint strong { color:#fff; }
+    .touch-controls { display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; margin:0 auto; padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 4px); }
+    .touch-controls[hidden] { display:none !important; }
+    .touch-pad { display:grid; grid-template-columns:repeat(3, minmax(64px, 82px)); gap:10px; }
+    .touch-btn {
+      min-height:64px; min-width:64px; border-radius:18px; border:2px solid #31496f;
+      background:linear-gradient(180deg, rgba(45, 70, 108, 0.96) 0%, rgba(21, 36, 58, 0.96) 100%);
+      color:#f4fbff; font-size:19px; font-weight:800; line-height:1; user-select:none; -webkit-user-select:none;
+      touch-action:none; cursor:pointer; box-shadow:0 10px 24px rgba(0, 0, 0, 0.28); transition:transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+    .touch-btn.is-pressed,
+    .touch-btn:active {
+      transform:translateY(1px) scale(0.97);
+      background:linear-gradient(180deg, rgba(93, 153, 221, 0.98) 0%, rgba(39, 83, 138, 0.98) 100%);
+      box-shadow:0 6px 16px rgba(0, 0, 0, 0.22);
+    }
+    .touch-btn.accelerate {
+      background:linear-gradient(180deg, rgba(81, 170, 132, 0.98) 0%, rgba(31, 91, 58, 0.98) 100%);
+      border-color:#5baa82;
+    }
+    .touch-btn.restart {
+      min-width:112px; padding:0 18px; font-size:16px; letter-spacing:0.08em; text-transform:uppercase;
+    }
+    .touch-copy { width:100%; text-align:center; color:#9db8dc; font-size:13px; }
+    @media (min-width: 961px) {
+      body:not(.touch-device) .touch-controls { display:none; }
+    }
+    @media (max-width: 760px) {
+      .wrap { padding:14px 12px; }
+      #game { height:min(60vh, 470px); }
+      .touch-pad { grid-template-columns:repeat(3, minmax(60px, 1fr)); width:min(100%, 280px); }
+      .touch-btn { min-height:60px; font-size:17px; }
+    }
   </style>
 </head>
 <body>
@@ -35,7 +67,16 @@
       <div><span class="label">Best:</span><span id="best">--</span></div>
     </div>
     <canvas id="game" width="900" height="640"></canvas>
-    <div class="hint" id="hint"><strong>Controls:</strong> ⬅️/➡️ steer, ⬆️ accelerate, R restart. Stay on the dirt and drift those corners!</div>
+    <div class="hint" id="hint"><strong>Controls:</strong> Arrow keys steer and accelerate, or use the touch buttons on iPhone and iPad. R restarts.</div>
+    <div class="touch-controls" id="touch-controls" hidden aria-label="Touch controls">
+      <div class="touch-pad" role="group" aria-label="Driving controls">
+        <button class="touch-btn steer" type="button" data-control="left" aria-label="Steer left">Left</button>
+        <button class="touch-btn accelerate" type="button" data-control="up" aria-label="Accelerate">Go</button>
+        <button class="touch-btn steer" type="button" data-control="right" aria-label="Steer right">Right</button>
+      </div>
+      <button class="touch-btn restart" type="button" id="restart-btn" aria-label="Restart race">Reset</button>
+      <div class="touch-copy">Hold a steering button and the throttle together to drift the corners.</div>
+    </div>
   </div>
 
   <script type="module">
@@ -48,6 +89,7 @@
     const timeEl = document.getElementById('time');
     const bestEl = document.getElementById('best');
     const hintEl = document.getElementById('hint');
+    const touchControlsEl = document.getElementById('touch-controls');
 
     const W = canvas.width;
     const H = canvas.height;
@@ -56,6 +98,7 @@
     const INNER_A = 220, INNER_B = 110;
     const TOTAL_LAPS = 3;
     const BEST_KEY = 'game.micro-rc-racer.best';
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
 
     const keys = { left:false, right:false, up:false };
     let prevTs = performance.now();
@@ -63,6 +106,7 @@
     let laps = 0;
     let finished = false;
     let prevTheta = 0;
+    let steppingExternally = false;
 
     const car = {
       x: CENTER.x,
@@ -89,7 +133,19 @@
       bestEl.textContent = best ? `${best.toFixed(1)}s` : '--';
     }
 
+    function defaultHint() {
+      return '<strong>Controls:</strong> Arrow keys steer and accelerate, or use the touch buttons on iPhone and iPad. R restarts.';
+    }
+
+    function resetInputs() {
+      keys.left = false;
+      keys.right = false;
+      keys.up = false;
+      document.querySelectorAll('.touch-btn.is-pressed').forEach((button) => button.classList.remove('is-pressed'));
+    }
+
     function resetRace() {
+      resetInputs();
       car.x = CENTER.x;
       car.y = CENTER.y + (INNER_B + OUTER_B) / 2;
       car.angle = -Math.PI / 2;
@@ -101,7 +157,7 @@
       prevTheta = Math.atan2((car.y - CENTER.y) / ((INNER_B + OUTER_B) * 0.5), (car.x - CENTER.x) / ((INNER_A + OUTER_A) * 0.5));
       lapEl.textContent = `${laps} / ${TOTAL_LAPS}`;
       timeEl.textContent = '0.0s';
-      hintEl.innerHTML = '<strong>Controls:</strong> ⬅️/➡️ steer, ⬆️ accelerate, R restart. Stay on the dirt and drift those corners!';
+      hintEl.innerHTML = defaultHint();
     }
 
     function normTrack(x, y, a, b) {
@@ -255,11 +311,55 @@
       drawCar();
     }
 
+    function bindTouchButton(button) {
+      const control = button.dataset.control;
+      let activePointerId = null;
+
+      const release = (event) => {
+        if (control === 'restart') return;
+        if (activePointerId !== null && event?.pointerId != null && event.pointerId !== activePointerId) return;
+        activePointerId = null;
+        button.classList.remove('is-pressed');
+        keys[control] = false;
+      };
+
+      const press = (event) => {
+        event.preventDefault();
+        if (control === 'restart') {
+          resetRace();
+          return;
+        }
+        activePointerId = event.pointerId ?? 0;
+        button.classList.add('is-pressed');
+        keys[control] = true;
+        if (event.pointerId != null) {
+          try {
+            button.setPointerCapture?.(event.pointerId);
+          } catch {}
+        }
+      };
+
+      button.addEventListener('pointerdown', press, { passive: false });
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('lostpointercapture', release);
+      button.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') release(event);
+      });
+    }
+
+    function syncTouchControls() {
+      document.body.classList.toggle('touch-device', isTouchDevice);
+      touchControlsEl.hidden = !(isTouchDevice || window.innerWidth <= 960);
+    }
+
     function frame(ts) {
       const dt = Math.min(0.033, (ts - prevTs) / 1000);
       prevTs = ts;
-      update(dt);
-      draw();
+      if (!steppingExternally) {
+        update(dt);
+        draw();
+      }
       requestAnimationFrame(frame);
     }
 
@@ -275,6 +375,62 @@
       if (e.key === 'ArrowLeft') keys.left = false;
       if (e.key === 'ArrowRight') keys.right = false;
       if (e.key === 'ArrowUp') keys.up = false;
+    });
+
+    window.addEventListener('blur', resetInputs);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) resetInputs();
+    });
+    window.addEventListener('resize', syncTouchControls);
+
+    document.querySelectorAll('.touch-btn[data-control]').forEach(bindTouchButton);
+    document.getElementById('restart-btn').addEventListener('click', resetRace);
+    syncTouchControls();
+    hintEl.innerHTML = defaultHint();
+
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      let remaining = Math.max(0, Math.min(4000, Number(ms) || 0)) / 1000;
+      while (remaining > 0) {
+        const dt = Math.min(1 / 120, remaining);
+        update(dt);
+        remaining -= dt;
+      }
+      draw();
+      steppingExternally = false;
+    };
+
+    window.render_game_to_text = () => JSON.stringify({
+      coordinate_system: {
+        origin: 'top-left of the canvas',
+        x_axis: 'right',
+        y_axis: 'down',
+        units: 'pixels',
+        canvas: { width: W, height: H },
+      },
+      mode: finished ? 'finished' : 'racing',
+      laps_completed: laps,
+      laps_target: TOTAL_LAPS,
+      race_time_sec: Number(raceTime.toFixed(2)),
+      best_time_sec: loadBest(),
+      hint: hintEl.textContent,
+      player: {
+        x: Number(car.x.toFixed(2)),
+        y: Number(car.y.toFixed(2)),
+        angle_rad: Number(car.angle.toFixed(3)),
+        speed_px_per_sec: Number(Math.hypot(car.vx, car.vy).toFixed(2)),
+        on_track: onTrack(car.x, car.y),
+      },
+      inputs: {
+        left: keys.left,
+        right: keys.right,
+        accelerate: keys.up,
+      },
+      track: {
+        center: CENTER,
+        outer: { a: OUTER_A, b: OUTER_B },
+        inner: { a: INNER_A, b: INNER_B },
+      },
     });
 
     updateBestDisplay();

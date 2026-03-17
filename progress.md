@@ -1145,3 +1145,20 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Verification:
   - Ran a Playwright browser sweep across all 33 game routes from `src/meta/games.js` and confirmed each page exposes a visible back/home control pointing to `/`.
   - Manually verified `http://127.0.0.1:4173/orbitalrescue` shows the new button and that clicking it returns to the arcade homepage.
+
+## 2026-03-17 iOS/iPad Controls Audit
+- New request: make sure all games have controls to support iOS and iPad players.
+- Audit findings:
+  - Reviewed all per-game `index.html` files for keyboard, click, pointer, and touch input paths.
+  - Found one true gap: `microrc/index.html` was keyboard-only, while the other game pages already exposed tap, click, pointer, or touch controls.
+- Implemented in `microrc/index.html`:
+  - Added a touch control dock for left/right steering, throttle, and restart.
+  - Wired touch input into the same `keys` state used by keyboard control so throttle + steering can be held together.
+  - Added deterministic hooks (`window.advanceTime`, `window.render_game_to_text`) to support browser validation of the new control path.
+  - Added input reset handling for blur/visibility changes so Safari interruption does not leave controls stuck on.
+- Validation:
+  - Ran the skill Playwright client against `http://127.0.0.1:4174/microrc/` after starting a repo-local static server on port `4174`.
+  - Artifacts: `output/web-game/microrc-touch-run3/{shot-0..3.png,state-0..3.json}` with no `errors-*.json` emitted in the final run.
+  - Reviewed gameplay screenshots and state snapshots; confirmed the car moves, turns, and continues rendering correctly after the touch-control changes.
+  - Captured a narrow-layout full-page screenshot at `output/web-game/microrc-touch-mobile-full.png`; verified the touch dock is visible with `Left`, `Go`, `Right`, and `Reset` controls.
+  - Verified the touch path in-browser with synthetic pointer events; `render_game_to_text()` confirmed the car drove on-track under the new control inputs.
