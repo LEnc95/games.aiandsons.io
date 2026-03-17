@@ -1123,3 +1123,17 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Confirmed `/orbitalrescue` references are present in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
 - Follow-up TODO:
   - Re-run the skill Playwright loop and `npm run test:shop` in an environment that allows process spawn and local port binding.
+
+## 2026-03-17 Pinball Integration Run
+- User had already committed a new standalone game implementation at `pinball/index.html` (`Neon Pinball Rush`), but it was not yet wired into platform discovery/routing.
+- Integrated Pinball into platform surfaces:
+  - Added `pinball` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/pinball` + `/pinball/` rewrites and `/pinball/index.html` cache header entry in `vercel.json`.
+- Validation completed:
+  - `npm run test:shop` passed (34/34).
+  - `node C:/Users/Luke/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://127.0.0.1:4173/pinball ... --iterations 4` passed with local `python -m http.server` orchestration.
+  - Artifacts: `output/web-game/pinball-run1/{shot-0..3.png,state-0..3.json}`.
+  - Runtime errors: no `errors-*.json` artifacts produced.
+- Visual/state check:
+  - Reviewed gameplay screenshots and state snapshots; confirmed start flow, launched-ball gameplay state, flipper movement, and non-zero scoring.

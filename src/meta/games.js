@@ -31,5 +31,6 @@ export const GAMES = [
   { slug:'whackamole',     name:'Whack-a-Mole Blitz',  emoji:'\u{1F528}', scoreHint:'score',      url:'/whackamole',    desc:'Race the clock by smashing moles, chaining streaks, and avoiding bomb traps.', earnsCoins:true },
   { slug:'colorcatch',     name:'Color Catch Arcade',  emoji:'\u{1F308}', scoreHint:'score',      url:'/colorcatch',    desc:'Match bucket colors to falling drops, chain combos, and survive all three stages.', earnsCoins:true },
   { slug:'orbitalrescue',  name:'Orbital Rescue',      emoji:'\u{1F6F8}', scoreHint:'rescues',    url:'/orbitalrescue', desc:'Pilot a rescue craft, recover stranded pilots, and survive escalating debris waves.', earnsCoins:true },
+  { slug:'pinball',        name:'Neon Pinball Rush',   emoji:'\u{1F3B0}', scoreHint:'score',      url:'/pinball',       desc:'Launch, flip, and chain bumper combos in a neon table run before your balls run out.', earnsCoins:true },
 ];
 
