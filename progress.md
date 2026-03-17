@@ -1172,4 +1172,9 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Added a shared `resetInputs()` path for touch + keyboard state cleanup.
   - Replaced the inline touch-button handlers with a captured pointer binding that handles `pointerdown`, `pointerup`, `pointercancel`, `lostpointercapture`, and mouse `pointerleave`.
   - Updated the hint copy so touch controls are explicitly called out in the UI.
-- Next: rerun Asteroids browser validation and confirm the touch path behaves correctly.
+- Validation:
+  - Ran the skill Playwright client against `http://127.0.0.1:4175/asteroids/` with `#start-btn` auto-clicked.
+  - Artifacts: `output/web-game/asteroids-ipad-run2/{shot-0..3.png,state-0..3.json}` with no `errors-*.json` emitted.
+  - Reviewed gameplay screenshot/state output; confirmed active play, asteroid destruction, score increase, and ship movement after the touch-handler changes.
+  - Captured a full-page iPad-sized screenshot at `output/web-game/asteroids-ipad-full.png`; verified the on-screen controls are visible.
+  - Verified the touch path in-browser with synthetic pointer events; `render_game_to_text()` confirmed movement + firing under the button controls and that no control remained stuck (`pressedCount: 0` after release).
