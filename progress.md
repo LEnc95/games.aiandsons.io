@@ -1178,3 +1178,24 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Reviewed gameplay screenshot/state output; confirmed active play, asteroid destruction, score increase, and ship movement after the touch-handler changes.
   - Captured a full-page iPad-sized screenshot at `output/web-game/asteroids-ipad-full.png`; verified the on-screen controls are visible.
   - Verified the touch path in-browser with synthetic pointer events; `render_game_to_text()` confirmed movement + firing under the button controls and that no control remained stuck (`pressedCount: 0` after release).
+
+## 2026-03-17 Pinball Rebuild
+- New request: the existing pinball table "didn't work" and needed a full redo.
+- Rebuilt `pinball/index.html` from the ground up:
+  - Swapped the minimal wide table for a portrait playfield with a richer ruleset and clearer shot geometry.
+  - Added top-lane skill shots, a 3-bank drop target set, side boost/save targets, spinner, ramp path, Vortex saucer, lock progression, jackpot logic, Nova Frenzy, and triple multiball.
+  - Kept platform hooks intact: `rememberRecent('pinball')`, coin payout via `addCoins`, and `maybeUnlock` payloads for play/run stats.
+  - Added stronger HUD/status surfaces and hardened mobile/desktop flipper + launch controls with pointer capture, blur reset, pause, restart, and fullscreen support.
+  - Preserved deterministic automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Validation:
+  - Skill client baseline after rebuild: `output/web-game/pinball-rebuild-run1` (render/runtime smoke, no `errors-*.json` emitted).
+  - Stronger scripted gameplay path: `output/web-game/pinball-rebuild-run3` using `output/web-game/pinball-actions-strong.json`.
+  - Reviewed screenshots + state JSON from run 3 and confirmed the ball now reaches upper-table features:
+    - Ramp registered in `mission_progress`
+    - Top lane A lit
+    - Drop target bank partially completed
+    - Ball flow returns toward lower playfield instead of stalling immediately after launch
+  - Runtime errors observed: none.
+- Follow-up TODO ideas if another agent continues polishing:
+  - Add a deterministic multiball-focused action script that explicitly verifies a full two-lock sequence and jackpot collection in one automated run.
+  - Consider trimming the `FLIP` score award if product wants the score economy to weight feature shots even more heavily than control contacts.
