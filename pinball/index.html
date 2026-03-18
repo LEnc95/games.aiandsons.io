@@ -1357,6 +1357,81 @@
       spawnFloater(ball.x, ball.y - 14, "NUDGE", "#9ce5ff");
     }
 
+    function resolveSideWallTrap(ball, dt) {
+      const inShooterLane =
+        ball.x > WORLD.shooterLeft - 6 &&
+        ball.y > WORLD.shooterTop - 12 &&
+        ball.y < WORLD.shooterBottom + 12;
+
+      let trap = null;
+      if (ball.x < 132 && ball.y > 170 && ball.y < 1334) {
+        trap = "left-wall";
+      } else if (ball.x > 768 && ball.y > 170 && ball.y < 1334 && !inShooterLane) {
+        trap = "right-wall";
+      }
+
+      if (!trap) {
+        ball.memory.sideTrapKey = null;
+        ball.memory.sideTrapTime = 0;
+        return;
+      }
+
+      if (ball.memory.sideTrapKey !== trap) {
+        ball.memory.sideTrapKey = trap;
+        ball.memory.sideTrapTime = 0;
+        ball.memory.sideTrapSampleX = ball.x;
+        ball.memory.sideTrapSampleY = ball.y;
+        return;
+      }
+
+      const sampleX = ball.memory.sideTrapSampleX ?? ball.x;
+      const sampleY = ball.memory.sideTrapSampleY ?? ball.y;
+      const movedDistance = Math.hypot(ball.x - sampleX, ball.y - sampleY);
+      const speed = Math.hypot(ball.vx, ball.vy);
+
+      if (movedDistance > 24 || speed > 240) {
+        ball.memory.sideTrapTime = 0;
+        ball.memory.sideTrapSampleX = ball.x;
+        ball.memory.sideTrapSampleY = ball.y;
+        return;
+      }
+
+      ball.memory.sideTrapTime = (ball.memory.sideTrapTime || 0) + dt;
+      if (ball.memory.sideTrapTime < 0.3 || recentHit(ball, `side-${trap}`, 0.75)) {
+        return;
+      }
+
+      stampHit(ball, `side-${trap}`);
+      ball.memory.sideTrapTime = 0;
+      ball.memory.sideTrapSampleX = ball.x;
+      ball.memory.sideTrapSampleY = ball.y;
+
+      if (trap === "left-wall") {
+        ball.x = Math.max(ball.x, 142);
+        ball.vx = Math.max(ball.vx, 360);
+        if (ball.y > 1100) {
+          ball.vy = Math.min(ball.vy, -620);
+        } else if (ball.y < 320) {
+          ball.vy = Math.max(ball.vy, 320);
+        } else {
+          ball.vy = Math.min(ball.vy, -120);
+        }
+      } else {
+        ball.x = Math.min(ball.x, 758);
+        ball.vx = Math.min(ball.vx, -360);
+        if (ball.y > 1100) {
+          ball.vy = Math.min(ball.vy, -620);
+        } else if (ball.y < 320) {
+          ball.vy = Math.max(ball.vy, 320);
+        } else {
+          ball.vy = Math.min(ball.vy, -120);
+        }
+      }
+
+      spawnParticles(ball.x, ball.y, "#9ce5ff", 12, 40, 160);
+      spawnFloater(ball.x, ball.y - 16, "KICKOUT", "#9ce5ff");
+    }
+
     function updateBallPhysics(ball, dt) {
       const steps = Math.max(1, Math.ceil(dt / (1 / 240)));
       const step = dt / steps;
@@ -1482,6 +1557,7 @@
           return;
         }
 
+        resolveSideWallTrap(ball, step);
         resolveCornerTrap(ball, step);
 
         if (ball.x > WORLD.shooterLeft && ball.y > WORLD.shooterTop && !ball.heldInLauncher && ball.x + ball.r > WORLD.shooterLeft && ball.y < 1188) {
