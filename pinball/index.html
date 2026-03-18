@@ -462,9 +462,9 @@
     ];
 
     const TOP_LANES = [
-      { id: "A", x: 206, y: 138, w: 112, h: 40 },
-      { id: "B", x: 394, y: 126, w: 112, h: 40 },
-      { id: "C", x: 582, y: 138, w: 112, h: 40 },
+      { id: "A", x: 188, y: 128, w: 138, h: 54 },
+      { id: "B", x: 381, y: 118, w: 138, h: 54 },
+      { id: "C", x: 574, y: 128, w: 138, h: 54 },
     ];
 
     const DROP_TARGETS = [
@@ -653,6 +653,7 @@
         spinnerCooldown: 0,
         slingCooldown: 0,
         skillOpen: true,
+        rampReady: false,
         ...overrides,
       };
     }
@@ -850,7 +851,6 @@
     }
 
     function registerMajorShot(shotName, x, y, scoreValue, color, label) {
-      if (state.skillShotActive && shotName !== "lane") state.skillShotActive = false;
       advanceCombo(shotName, x, y);
       lightMission(shotName);
       lightJackpot(shotName);
@@ -961,9 +961,10 @@
       if (!ball) return;
       const strength = clamp(ball.launchCharge, 0.2, 1);
       ball.heldInLauncher = false;
-      ball.vx = -180 - strength * 120;
-      ball.vy = -1420 - strength * 1080;
+      ball.vx = -118 - strength * 74;
+      ball.vy = -1540 - strength * 1180;
       ball.launchCharge = 0;
+      ball.rampReady = false;
       state.launchStrength = strength;
       state.skillShotActive = true;
       state.skillShotTimer = 8;
@@ -992,6 +993,24 @@
         state.skillShotActive = false;
       }
       if (state.laneLights.every(Boolean)) completeLaneSet();
+    }
+
+    function maybeHandleUpperArchSkillLane(ball) {
+      if (!state.skillShotActive || ball.memory.skillLaneAttempted) return;
+      if (ball.y >= 300) return;
+      let bestIndex = -1;
+      let bestDistance = Infinity;
+      TOP_LANES.forEach((lane, laneIndex) => {
+        const centerX = lane.x + lane.w * 0.5;
+        const distance = Math.abs(ball.x - centerX);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = laneIndex;
+        }
+      });
+      if (bestIndex === -1 || bestDistance > 120) return;
+      ball.memory.skillLaneAttempted = true;
+      handleLaneHit(ball, bestIndex);
     }
 
     function handleDropTargetHit(ball, index) {
@@ -1037,6 +1056,7 @@
     function beginRampRide(ball) {
       if (ball.path || recentHit(ball, "ramp-entry", 1.1)) return;
       stampHit(ball, "ramp-entry");
+      ball.rampReady = false;
       registerMajorShot("ramp", 622, 656, 18000, "#79d6ff", "COMET RAMP");
       ball.path = {
         elapsed: 0,
@@ -1162,8 +1182,11 @@
       if (result.remove) {
         state.activeBalls = state.activeBalls.filter((activeBall) => activeBall.id !== ball.id);
       } else {
-        ball.vx = -200;
-        ball.vy = 520;
+        ball.x = SAUCER.x - 54;
+        ball.y = SAUCER.y + 54;
+        ball.vx = -320;
+        ball.vy = 760;
+        stampHit(ball, "saucer-lockout");
       }
     }
 
@@ -1318,6 +1341,12 @@
         ball.x += ball.vx * step;
         ball.y += ball.vy * step;
 
+        if (ball.y > 900) {
+          ball.rampReady = true;
+        }
+
+        maybeHandleUpperArchSkillLane(ball);
+
         OUTER_SEGMENTS.forEach((segment) => collideBallSegment(ball, segment));
         POSTS.forEach((post) => collideBallCircle(ball, post.x, post.y, post.r, 0.9));
 
@@ -1381,17 +1410,19 @@
         handleOrbits(ball);
 
         if (
+          ball.rampReady &&
           ball.x > RAMP.x &&
           ball.x < RAMP.x + RAMP.w &&
           ball.y > RAMP.y &&
           ball.y < RAMP.y + RAMP.h &&
-          ball.vy < -220
+          ball.vy < -220 &&
+          ball.vx > 40
         ) {
           beginRampRide(ball);
           return;
         }
 
-        if (Math.hypot(ball.x - SAUCER.x, ball.y - SAUCER.y) < SAUCER.r + ball.r + 1 && !ball.capture && !recentHit(ball, "saucer-lockout", 0.35)) {
+        if (Math.hypot(ball.x - SAUCER.x, ball.y - SAUCER.y) < SAUCER.r + ball.r + 1 && !ball.capture && !recentHit(ball, "saucer-lockout", 0.9)) {
           stampHit(ball, "saucer-lockout");
           beginSaucerCapture(ball);
           return;

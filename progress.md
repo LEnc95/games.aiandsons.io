@@ -1199,3 +1199,26 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Follow-up TODO ideas if another agent continues polishing:
   - Add a deterministic multiball-focused action script that explicitly verifies a full two-lock sequence and jackpot collection in one automated run.
   - Consider trimming the `FLIP` score award if product wants the score economy to weight feature shots even more heavily than control contacts.
+
+## 2026-03-17 Pinball Rebuild Follow-up Fixes
+- New user feedback: the rebuilt table still had multiple gameplay problems.
+- Concrete issues reproduced and fixed in `pinball/index.html`:
+  - Plunges were auto-feeding the ramp before the player had a fair lane shot.
+    - Fixed by gating ramp entry behind a `rampReady` flag that only unlocks after the ball has entered the lower playfield.
+  - Skill shots were too hard to collect because the upper-lane path was overly strict.
+    - Fixed by widening lane sensors and adding a forgiving upper-arch lane capture for plunges.
+  - The Vortex saucer could fall into a recapture loop that looked like the ball was frozen while score kept climbing.
+    - Fixed by ejecting the ball farther from the saucer with a longer saucer lockout after release.
+  - Return lanes still felt sticky in spots.
+    - Improved by adding better downhill feed along sloped wall segments and retuning plunge velocity to be more vertical and less forced-right-ramp.
+- Follow-up validation:
+  - Custom deterministic browser diagnostics using the skill Playwright runtime confirmed:
+    - Plunge no longer auto-routes to the ramp.
+    - Skill shot lane C can now light from a clean plunge.
+    - Saucer captures eject back into active play instead of looping in place.
+  - Skill client reruns:
+    - `output/web-game/pinball-rebuild-run5`
+    - `output/web-game/pinball-rebuild-run6`
+  - Final reviewed run: `pinball-rebuild-run6`
+    - Active ball remained in normal play (`captured: false`, `on_ramp: false`) in final state.
+    - Lane C lit, jackpot boost applied, target progress visible, and no `errors-*.json` artifacts emitted.
