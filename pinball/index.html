@@ -1357,6 +1357,72 @@
       spawnFloater(ball.x, ball.y - 14, "NUDGE", "#9ce5ff");
     }
 
+    function resolveLowerLaneTrap(ball, dt) {
+      const inShooterLane =
+        ball.x > WORLD.shooterLeft - 6 &&
+        ball.y > WORLD.shooterTop - 12 &&
+        ball.y < WORLD.shooterBottom + 12;
+
+      let trap = null;
+      if (ball.x < 182 && ball.y > 1120 && ball.y < 1352) {
+        trap = "left-lower";
+      } else if (ball.x > 718 && ball.y > 1120 && ball.y < 1352 && !inShooterLane) {
+        trap = "right-lower";
+      }
+
+      if (!trap) {
+        ball.memory.lowerTrapKey = null;
+        ball.memory.lowerTrapTime = 0;
+        return;
+      }
+
+      if (ball.memory.lowerTrapKey !== trap) {
+        ball.memory.lowerTrapKey = trap;
+        ball.memory.lowerTrapTime = 0;
+        ball.memory.lowerTrapSampleX = ball.x;
+        ball.memory.lowerTrapSampleY = ball.y;
+        return;
+      }
+
+      const sampleX = ball.memory.lowerTrapSampleX ?? ball.x;
+      const sampleY = ball.memory.lowerTrapSampleY ?? ball.y;
+      const movedDistance = Math.hypot(ball.x - sampleX, ball.y - sampleY);
+      const speed = Math.hypot(ball.vx, ball.vy);
+      const escapingToCenter = trap === "left-lower" ? ball.vx > 180 : ball.vx < -180;
+
+      if (escapingToCenter || movedDistance > 20 || speed > 260) {
+        ball.memory.lowerTrapTime = 0;
+        ball.memory.lowerTrapSampleX = ball.x;
+        ball.memory.lowerTrapSampleY = ball.y;
+        return;
+      }
+
+      ball.memory.lowerTrapTime = (ball.memory.lowerTrapTime || 0) + dt;
+      if (ball.memory.lowerTrapTime < 0.18 || recentHit(ball, `lower-${trap}`, 0.9)) {
+        return;
+      }
+
+      stampHit(ball, `lower-${trap}`);
+      ball.memory.lowerTrapTime = 0;
+      ball.memory.lowerTrapSampleX = ball.x;
+      ball.memory.lowerTrapSampleY = ball.y;
+
+      if (trap === "left-lower") {
+        ball.x = 194;
+        ball.y = clamp(ball.y - 18, 1188, 1276);
+        ball.vx = Math.max(ball.vx, 420);
+        ball.vy = Math.min(ball.vy, -620);
+      } else {
+        ball.x = 706;
+        ball.y = clamp(ball.y - 18, 1188, 1276);
+        ball.vx = Math.min(ball.vx, -420);
+        ball.vy = Math.min(ball.vy, -620);
+      }
+
+      spawnParticles(ball.x, ball.y, "#ffd78a", 16, 60, 200);
+      spawnFloater(ball.x, ball.y - 18, "FEED", "#ffd78a");
+    }
+
     function resolveSideWallTrap(ball, dt) {
       const inShooterLane =
         ball.x > WORLD.shooterLeft - 6 &&
@@ -1364,9 +1430,9 @@
         ball.y < WORLD.shooterBottom + 12;
 
       let trap = null;
-      if (ball.x < 132 && ball.y > 170 && ball.y < 1334) {
+      if (ball.x < 140 && ball.y > 170 && ball.y < 1350) {
         trap = "left-wall";
-      } else if (ball.x > 768 && ball.y > 170 && ball.y < 1334 && !inShooterLane) {
+      } else if (ball.x > 760 && ball.y > 170 && ball.y < 1350 && !inShooterLane) {
         trap = "right-wall";
       }
 
@@ -1389,7 +1455,7 @@
       const movedDistance = Math.hypot(ball.x - sampleX, ball.y - sampleY);
       const speed = Math.hypot(ball.vx, ball.vy);
 
-      if (movedDistance > 24 || speed > 240) {
+      if (movedDistance > 20 || speed > 220) {
         ball.memory.sideTrapTime = 0;
         ball.memory.sideTrapSampleX = ball.x;
         ball.memory.sideTrapSampleY = ball.y;
@@ -1397,7 +1463,7 @@
       }
 
       ball.memory.sideTrapTime = (ball.memory.sideTrapTime || 0) + dt;
-      if (ball.memory.sideTrapTime < 0.3 || recentHit(ball, `side-${trap}`, 0.75)) {
+      if (ball.memory.sideTrapTime < 0.22 || recentHit(ball, `side-${trap}`, 0.75)) {
         return;
       }
 
@@ -1407,24 +1473,24 @@
       ball.memory.sideTrapSampleY = ball.y;
 
       if (trap === "left-wall") {
-        ball.x = Math.max(ball.x, 142);
-        ball.vx = Math.max(ball.vx, 360);
+        ball.x = Math.max(ball.x, 152);
+        ball.vx = Math.max(ball.vx, 420);
         if (ball.y > 1100) {
-          ball.vy = Math.min(ball.vy, -620);
+          ball.vy = Math.min(ball.vy, -700);
         } else if (ball.y < 320) {
           ball.vy = Math.max(ball.vy, 320);
         } else {
-          ball.vy = Math.min(ball.vy, -120);
+          ball.vy = Math.min(ball.vy, -180);
         }
       } else {
-        ball.x = Math.min(ball.x, 758);
-        ball.vx = Math.min(ball.vx, -360);
+        ball.x = Math.min(ball.x, 748);
+        ball.vx = Math.min(ball.vx, -420);
         if (ball.y > 1100) {
-          ball.vy = Math.min(ball.vy, -620);
+          ball.vy = Math.min(ball.vy, -700);
         } else if (ball.y < 320) {
           ball.vy = Math.max(ball.vy, 320);
         } else {
-          ball.vy = Math.min(ball.vy, -120);
+          ball.vy = Math.min(ball.vy, -180);
         }
       }
 
@@ -1557,6 +1623,7 @@
           return;
         }
 
+        resolveLowerLaneTrap(ball, step);
         resolveSideWallTrap(ball, step);
         resolveCornerTrap(ball, step);
 
