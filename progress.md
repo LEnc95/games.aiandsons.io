@@ -1222,3 +1222,19 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Final reviewed run: `pinball-rebuild-run6`
     - Active ball remained in normal play (`captured: false`, `on_ramp: false`) in final state.
     - Lane C lit, jackpot boost applied, target progress visible, and no `errors-*.json` artifacts emitted.
+
+## 2026-03-17 Pinball Geometry + Corner Follow-up
+- Additional user feedback: ball still got stuck in corners and the left flipper felt backwards.
+- Fixed lower-table geometry in `pinball/index.html`:
+  - Reworked both flipper pivots/angles so they rest and swing like standard pinball flippers instead of the left flipper rotating the wrong way.
+  - Generalized flipper angle clamping so either direction of travel is valid.
+  - Added explicit corner-trap detection and a short anti-stall nudge for top/bottom corner pockets when the ball slows below escape speed.
+- Validation:
+  - Custom Playwright screenshot/state checks:
+    - `output/web-game/pinball-left-check.png`
+    - `output/web-game/pinball-right-check.png`
+    - Confirmed left flipper held angle is now `-0.34` and right flipper held angle is `3.482`, matching the intended swing directions.
+  - Skill client rerun after flipper/corner changes:
+    - `output/web-game/pinball-rebuild-run7`
+    - Reviewed screenshots show corrected flipper geometry on-table during active play.
+    - Final state confirms normal gameplay (`captured: false`) with ramp/lane progress and no `errors-*.json` artifacts.

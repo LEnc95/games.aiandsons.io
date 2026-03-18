@@ -511,25 +511,25 @@
 
     const flippers = {
       left: {
-        pivotX: 332,
-        pivotY: 1240,
-        length: 156,
+        pivotX: 248,
+        pivotY: 1246,
+        length: 158,
         radius: 17,
-        rest: Math.PI - 0.48,
-        active: Math.PI - 1.2,
-        angle: Math.PI - 0.48,
+        rest: 0.42,
+        active: -0.34,
+        angle: 0.42,
         held: false,
         angularVelocity: 0,
         color: "#7be1ff",
       },
       right: {
-        pivotX: 568,
-        pivotY: 1240,
-        length: 156,
+        pivotX: 652,
+        pivotY: 1246,
+        length: 158,
         radius: 17,
-        rest: -2.66,
-        active: -1.94,
-        angle: -2.66,
+        rest: Math.PI - 0.42,
+        active: Math.PI + 0.34,
+        angle: Math.PI - 0.42,
         held: false,
         angularVelocity: 0,
         color: "#7be1ff",
@@ -1280,6 +1280,9 @@
         const target = flipper.held && state.mode === "playing" ? flipper.active : flipper.rest;
         const previous = flipper.angle;
         flipper.angle += (target - flipper.angle) * Math.min(1, dt * 20);
+        const lower = Math.min(flipper.rest, flipper.active);
+        const upper = Math.max(flipper.rest, flipper.active);
+        flipper.angle = clamp(flipper.angle, lower, upper);
         flipper.angularVelocity = (flipper.angle - previous) / Math.max(dt, 0.0001);
       }
     }
@@ -1301,6 +1304,57 @@
         floater.y -= 38 * dt;
         return true;
       });
+    }
+
+    function resolveCornerTrap(ball, dt) {
+      const speed = Math.hypot(ball.vx, ball.vy);
+      let trap = null;
+
+      if (ball.x < 128 && ball.y < 228) {
+        trap = "top-left";
+      } else if (ball.x > 772 && ball.y < 228) {
+        trap = "top-right";
+      } else if (ball.x < 124 && ball.y > 1190) {
+        trap = "bottom-left";
+      } else if (ball.x > 776 && ball.y > 1190) {
+        trap = "bottom-right";
+      }
+
+      if (!trap || speed > 165) {
+        ball.memory.cornerTrapTime = 0;
+        ball.memory.cornerTrapKey = null;
+        return;
+      }
+
+      if (ball.memory.cornerTrapKey !== trap) {
+        ball.memory.cornerTrapKey = trap;
+        ball.memory.cornerTrapTime = 0;
+      }
+
+      ball.memory.cornerTrapTime = (ball.memory.cornerTrapTime || 0) + dt;
+      if (ball.memory.cornerTrapTime < 0.22 || recentHit(ball, `corner-${trap}`, 0.7)) {
+        return;
+      }
+
+      stampHit(ball, `corner-${trap}`);
+      ball.memory.cornerTrapTime = 0;
+
+      if (trap === "top-left") {
+        ball.vx = Math.max(ball.vx, 240);
+        ball.vy = Math.max(ball.vy, 260);
+      } else if (trap === "top-right") {
+        ball.vx = Math.min(ball.vx, -240);
+        ball.vy = Math.max(ball.vy, 260);
+      } else if (trap === "bottom-left") {
+        ball.vx = Math.max(ball.vx, 280);
+        ball.vy = Math.min(ball.vy, -420);
+      } else if (trap === "bottom-right") {
+        ball.vx = Math.min(ball.vx, -280);
+        ball.vy = Math.min(ball.vy, -420);
+      }
+
+      spawnParticles(ball.x, ball.y, "#9ce5ff", 10, 40, 140);
+      spawnFloater(ball.x, ball.y - 14, "NUDGE", "#9ce5ff");
     }
 
     function updateBallPhysics(ball, dt) {
@@ -1427,6 +1481,8 @@
           beginSaucerCapture(ball);
           return;
         }
+
+        resolveCornerTrap(ball, step);
 
         if (ball.x > WORLD.shooterLeft && ball.y > WORLD.shooterTop && !ball.heldInLauncher && ball.x + ball.r > WORLD.shooterLeft && ball.y < 1188) {
           ball.x = WORLD.shooterLeft - ball.r;
