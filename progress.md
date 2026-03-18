@@ -1238,3 +1238,61 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
     - `output/web-game/pinball-rebuild-run7`
     - Reviewed screenshots show corrected flipper geometry on-table during active play.
     - Final state confirms normal gameplay (`captured: false`) with ramp/lane progress and no `errors-*.json` artifacts.
+
+## 2026-03-17 Pinball Lower Corner Rescue
+- Additional user feedback: the ball could still hard-freeze in the bottom-left or bottom-right wall pockets, especially low on the table.
+- Added a stronger lower-lane anti-stall path in `pinball/index.html`:
+  - New `resolveLowerLaneTrap` watchdog detects a genuine low-motion stall in the lower side lanes and re-feeds the ball back into live play with a clear inward/upward escape vector instead of a tiny wall nudge.
+  - Tightened `resolveSideWallTrap` so side-wall stalls are detected sooner, across a slightly wider wall band, with a stronger kick back toward the center.
+  - Hooked the lower-lane rescue ahead of the existing wall/corner rescue logic so the bottom pockets get the most direct fix first.
+- Validation:
+  - Skill client reruns after the lower-corner rescue patch:
+    - `output/web-game/pinball-rebuild-run10`
+    - `output/web-game/pinball-rebuild-run11`
+  - Added a one-ball endurance script to avoid relaunch noise while checking long lower-table flow:
+    - `output/web-game/pinball-actions-endurance.json`
+    - `output/web-game/pinball-endurance-run1`
+    - `output/web-game/pinball-endurance-run2`
+  - Fresh reruns emitted no `errors-*.json` artifacts in those directories.
+
+## 2026-03-17 Pinball Overhaul
+- Implemented a broader table overhaul in `pinball/index.html` aimed at feel, reliability, rule clarity, and polish without changing the route or platform hooks.
+- Core changes:
+  - Added grouped tuning/config near the top of the file for launch, physics, flippers, slings, timers, scoring, and rescue zones.
+  - Reworked lower-table geometry to widen the lower returns and soften the wall/post pinch points.
+  - Replaced the older corner/side/lower trap helpers with a zone-driven rescue system keyed off internal ball-zone classification (`shooter`, `upper`, `mid`, `lower-left`, `lower-right`, `drain`).
+  - Rebalanced scoring away from passive contacts and toward lanes, targets, ramp/orbit/spinner shots, locks, jackpots, and end-of-ball bonus.
+  - Added dynamic objective + mode messaging, clearer HUD/control labels, rotating attract tips, persisted sound toggle, and lightweight WebAudio SFX.
+  - Expanded `window.render_game_to_text()` with `launcher_ready`, `current_objective`, `active_mode_summary`, `rescue_count`, and per-ball `ball_zone`.
+- New validation assets:
+  - General overhaul smoke: `output/web-game/pinball-overhaul-run1`
+  - Skill-shot payloads: `output/web-game/pinball-actions-skillshot.json`, `output/web-game/pinball-overhaul-skillshot`, `output/web-game/pinball-overhaul-skillshot2`, `output/web-game/pinball-overhaul-skillshot3`, `output/web-game/pinball-overhaul-skillshot4`, `output/web-game/pinball-overhaul-skillshot5`
+  - Lower-lane stress: `output/web-game/pinball-actions-lower-stress.json`, `output/web-game/pinball-overhaul-lower`, `output/web-game/pinball-overhaul-lower2`
+  - Multiball-oriented burst: `output/web-game/pinball-actions-multiball.json`, `output/web-game/pinball-overhaul-multiball`
+  - Mobile/on-screen-controls smoke: `output/web-game/pinball-actions-mobile-smoke.json`, `output/web-game/pinball-mobile-smoke.mjs`, `output/web-game/pinball-mobile-smoke-run1`
+- Validation results:
+  - No `errors-*.json` artifacts were emitted in the final overhaul run directories above.
+  - Lower-lane stress states showed `rescue_count` incrementing while the game recovered into a new live/shooter state instead of hard-freezing.
+  - Mobile smoke full-page screenshot confirmed the on-screen controls, status/objective panel, and sound button render cleanly in a narrow layout.
+- Remaining follow-up:
+  - The dedicated skill-shot automation payload is still not reliably threading a top lane in headless automation after the overhaul, even though the rest of the table loop is stable. If another agent continues, the next high-value task is to tune the plunge lane/top-lane geometry until one of the skill-shot payloads deterministically lights A/B/C in automation.
+
+## 2026-03-18 Lights Out Implementation (in progress)
+- Added new standalone game page: `lightsout/index.html` (Lights Out Lab).
+  - Gameplay: cross-neighbor tile toggling puzzle with 3 escalating levels, move limits, and run win/loss flow.
+  - Controls: desktop keyboard (WASD/Arrows + Space/Enter/P/R/F), direct tap/click board input, and on-screen mobile controls.
+  - Platform hooks: `rememberRecent('lightsout')`, coin payout via `addCoins`, progression ping via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Integrated route/discovery wiring:
+  - Added `lightsout` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/lightsout` rewrites and `/lightsout/index.html` cache header in `vercel.json`.
+- Next: run `npm run test:shop` and Playwright skill client validation for `/lightsout`.
+- Validation results (this run):
+  - `Get-Content vercel.json | ConvertFrom-Json` parse check: pass.
+  - `npm.cmd run test:shop`: blocked in this sandbox (`spawn EPERM` while Node test runner launches child processes).
+  - Skill Playwright client run for `/lightsout`: blocked in this sandbox (`browserType.launch: spawn EPERM` for Chromium).
+- Integration verification:
+  - Confirmed `lightsout` references in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop in an environment that allows child-process spawn and Chromium launch.

@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lights Out Lab</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg0: #071425;
+      --bg1: #0f2440;
+      --bg2: #17335a;
+      --panel: rgba(7, 16, 30, 0.82);
+      --line: rgba(154, 206, 255, 0.34);
+      --text: #ecf5ff;
+      --muted: #b2c8e3;
+      --on: #7de3ff;
+      --off: #233b58;
+      --cursor: #ffe07a;
+      --good: #7ef0b6;
+      --warn: #ffd27d;
+      --bad: #ff8b9f;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(140% 100% at 8% 10%, #234a7c 0%, transparent 58%),
+        radial-gradient(100% 120% at 92% 92%, #1d3c69 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 52%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 30;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(5, 10, 18, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 58px 12px 12px;
+      padding-top: max(calc(env(safe-area-inset-top, 10px) + 48px), 60px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    #canvasWrap {
+      width: min(96vw, 980px);
+      max-height: min(58dvh, 700px);
+      aspect-ratio: 16 / 9;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(150, 202, 252, 0.62);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+      background: linear-gradient(180deg, #11284a 0%, #0a1730 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 160ms ease;
+      padding: 16px;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 620px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 4vw, 36px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.44;
+      font-size: clamp(13px, 2.1vw, 15px);
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 56, 95, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: translateY(1px); }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      min-height: 50px;
+      border-radius: 9px;
+      border: 1px solid rgba(176, 220, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: end;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-rows: repeat(2, 48px);
+      gap: 6px;
+      justify-content: start;
+    }
+    .dpad button,
+    .actions button {
+      width: 58px;
+      height: 48px;
+      padding: 0;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .actions {
+      display: flex;
+      justify-content: end;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .wide {
+      width: auto !important;
+      padding: 0 12px !important;
+    }
+    .hint {
+      color: #cbddf7;
+      font-size: 12px;
+      text-align: center;
+      align-self: center;
+      line-height: 1.3;
+    }
+    @media (max-width: 880px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+      .dpad { justify-content: center; margin: 0 auto; }
+      .actions { justify-content: center; }
+    }
+    @media (max-width: 540px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+  <main class="app">
+    <div id="canvasWrap">
+      <canvas id="game" width="960" height="540" aria-label="Lights Out Lab board"></canvas>
+
+      <div id="menuOverlay" class="overlay show">
+        <div class="panel">
+          <h1>Lights Out Lab</h1>
+          <p>Toggle tiles to turn the whole board dark. Each press flips the tile plus its up/down/left/right neighbors.</p>
+          <p>Desktop: Arrows or WASD move cursor, Space/Enter toggles tile, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap tiles directly or use the on-screen controls.</p>
+          <div class="row">
+            <button id="start-btn">Start Puzzle Run</button>
+            <button id="fullscreenBtn">Fullscreen (F)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pauseOverlay" class="overlay">
+        <div class="panel">
+          <h1>Paused</h1>
+          <p>Take a break, then resume to continue solving.</p>
+          <div class="row">
+            <button id="resumeBtn">Resume</button>
+            <button id="restartBtn">Restart Run</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="endOverlay" class="overlay">
+        <div class="panel">
+          <h1 id="endTitle">Run Complete</h1>
+          <p id="endSummary"></p>
+          <div class="row">
+            <button id="playAgainBtn">Play Again</button>
+            <button id="menuBtn">Back To Menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Level</span><b id="hudLevel">1</b></div>
+      <div class="chip"><span>Board</span><b id="hudBoard">5x5</b></div>
+      <div class="chip warn"><span>Moves Left</span><b id="hudMovesLeft">0</b></div>
+      <div class="chip"><span>Lights On</span><b id="hudLightsOn">0</b></div>
+      <div class="chip good"><span>Solved</span><b id="hudSolved">0</b></div>
+      <div class="chip bad"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls">
+      <div class="dpad">
+        <button data-touch="up" style="grid-column:2;grid-row:1;">^</button>
+        <button data-touch="left" style="grid-column:1;grid-row:2;">&lt;</button>
+        <button data-touch="down" style="grid-column:2;grid-row:2;">v</button>
+        <button data-touch="right" style="grid-column:3;grid-row:2;">&gt;</button>
+      </div>
+
+      <div class="hint">Goal: all tiles off. Toggle affects cross-neighbors.</div>
+
+      <div class="actions">
+        <button data-touch="toggle" class="wide">Toggle</button>
+        <button id="pauseBtn" class="wide">Pause</button>
+        <button id="restartBtn2" class="wide">Restart</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const ui = {
+      mode: document.getElementById('hudMode'),
+      level: document.getElementById('hudLevel'),
+      board: document.getElementById('hudBoard'),
+      movesLeft: document.getElementById('hudMovesLeft'),
+      lightsOn: document.getElementById('hudLightsOn'),
+      solved: document.getElementById('hudSolved'),
+      coins: document.getElementById('hudCoins'),
+      menu: document.getElementById('menuOverlay'),
+      pause: document.getElementById('pauseOverlay'),
+      end: document.getElementById('endOverlay'),
+      endTitle: document.getElementById('endTitle'),
+      endSummary: document.getElementById('endSummary'),
+    };
+
+    const levelSpecs = [
+      { size: 4, moveLimit: 11, scramble: 7 },
+      { size: 5, moveLimit: 17, scramble: 13 },
+      { size: 6, moveLimit: 25, scramble: 20 },
+    ];
+
+    const state = {
+      mode: 'menu',
+      level: 1,
+      boardSize: 4,
+      grid: [],
+      movesLimit: 11,
+      movesUsed: 0,
+      solvedLevels: 0,
+      totalCoinsEarned: 0,
+      cursor: { x: 0, y: 0 },
+      pointerCell: null,
+      profileCoins: Number(profileState?.coins || 0),
+      statusText: 'Start a puzzle run.',
+      wonRun: false,
+      finishedAt: 0,
+    };
+
+    const pressed = {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      toggle: false,
+    };
+
+    let lastFrame = performance.now();
+    let controlledStep = false;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function randInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function buildGrid(size) {
+      return Array.from({ length: size }, () => Array.from({ length: size }, () => 0));
+    }
+
+    function countLightsOn() {
+      let total = 0;
+      for (let y = 0; y < state.boardSize; y += 1) {
+        for (let x = 0; x < state.boardSize; x += 1) {
+          total += state.grid[y][x] ? 1 : 0;
+        }
+      }
+      return total;
+    }
+
+    function toggleCell(cx, cy) {
+      const dirs = [
+        [0, 0],
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ];
+      for (const [dx, dy] of dirs) {
+        const x = cx + dx;
+        const y = cy + dy;
+        if (x < 0 || y < 0 || x >= state.boardSize || y >= state.boardSize) continue;
+        state.grid[y][x] = state.grid[y][x] ? 0 : 1;
+      }
+    }
+
+    function scrambleBoard(amount) {
+      for (let i = 0; i < amount; i += 1) {
+        toggleCell(randInt(state.boardSize), randInt(state.boardSize));
+      }
+      if (countLightsOn() === 0) {
+        toggleCell(randInt(state.boardSize), randInt(state.boardSize));
+      }
+    }
+
+    function loadLevel(levelNumber) {
+      const spec = levelSpecs[clamp(levelNumber - 1, 0, levelSpecs.length - 1)];
+      state.level = levelNumber;
+      state.boardSize = spec.size;
+      state.movesLimit = spec.moveLimit;
+      state.movesUsed = 0;
+      state.cursor.x = Math.floor(spec.size / 2);
+      state.cursor.y = Math.floor(spec.size / 2);
+      state.pointerCell = null;
+      state.grid = buildGrid(spec.size);
+      scrambleBoard(spec.scramble);
+      state.statusText = `Level ${state.level}: clear all lights in ${state.movesLimit} moves.`;
+    }
+
+    function runCoins() {
+      const levelBonus = state.solvedLevels * 6;
+      const clearBonus = state.wonRun ? 20 : 0;
+      return Math.max(0, levelBonus + clearBonus);
+    }
+
+    function payoutAndReport() {
+      const coins = runCoins();
+      state.totalCoinsEarned = coins;
+      if (coins > 0 && typeof addCoins === 'function') {
+        addCoins(coins);
+      }
+      state.profileCoins = Number(profileState?.coins || state.profileCoins + coins);
+      if (typeof maybeUnlock === 'function') {
+        maybeUnlock({
+          anyPlay: true,
+          lightsout: {
+            level: state.level,
+            solved: state.solvedLevels,
+            wonRun: state.wonRun,
+            movesUsed: state.movesUsed,
+            coins,
+          },
+        });
+      }
+    }
+
+    function startRun() {
+      state.mode = 'playing';
+      state.solvedLevels = 0;
+      state.wonRun = false;
+      state.finishedAt = 0;
+      loadLevel(1);
+      if (typeof rememberRecent === 'function') {
+        rememberRecent('lightsout');
+      }
+      if (typeof maybeUnlock === 'function') {
+        maybeUnlock({ anyPlay: true, lightsout: { level: 1, solved: 0, movesUsed: 0 } });
+      }
+      setOverlay();
+      updateHud();
+    }
+
+    function finishRun(victory) {
+      state.mode = 'ended';
+      state.wonRun = Boolean(victory);
+      state.finishedAt = Date.now();
+      payoutAndReport();
+
+      if (state.wonRun) {
+        ui.endTitle.textContent = 'Run Complete';
+        ui.endSummary.textContent = `Great solve. Cleared ${state.solvedLevels} levels and earned ${state.totalCoinsEarned} coins.`;
+      } else {
+        ui.endTitle.textContent = 'Out Of Moves';
+        ui.endSummary.textContent = `You cleared ${state.solvedLevels} levels. Earned ${state.totalCoinsEarned} coins from progress.`;
+      }
+
+      setOverlay();
+      updateHud();
+    }
+
+    function setOverlay() {
+      ui.menu.classList.toggle('show', state.mode === 'menu');
+      ui.pause.classList.toggle('show', state.mode === 'paused');
+      ui.end.classList.toggle('show', state.mode === 'ended');
+    }
+
+    function nextLevelOrWin() {
+      state.solvedLevels += 1;
+      if (state.level >= levelSpecs.length) {
+        finishRun(true);
+        return;
+      }
+      loadLevel(state.level + 1);
+      updateHud();
+    }
+
+    function boardRect() {
+      const width = canvas.width;
+      const height = canvas.height;
+      const boardPixels = Math.floor(Math.min(width * 0.78, height * 0.78));
+      const cell = Math.floor(boardPixels / state.boardSize);
+      const size = cell * state.boardSize;
+      const x = Math.floor((width - size) * 0.5);
+      const y = Math.floor((height - size) * 0.5);
+      return { x, y, size, cell };
+    }
+
+    function moveCursor(dx, dy) {
+      state.cursor.x = clamp(state.cursor.x + dx, 0, state.boardSize - 1);
+      state.cursor.y = clamp(state.cursor.y + dy, 0, state.boardSize - 1);
+    }
+
+    function applyToggle() {
+      if (state.mode !== 'playing') return;
+      const x = clamp(state.cursor.x, 0, state.boardSize - 1);
+      const y = clamp(state.cursor.y, 0, state.boardSize - 1);
+      toggleCell(x, y);
+      state.movesUsed += 1;
+
+      const lights = countLightsOn();
+      if (lights === 0) {
+        nextLevelOrWin();
+        return;
+      }
+
+      if (state.movesUsed >= state.movesLimit) {
+        finishRun(false);
+        return;
+      }
+
+      updateHud();
+    }
+
+    function updateHud() {
+      const lightsOn = countLightsOn();
+      const modeLabel = state.mode === 'menu'
+        ? 'MENU'
+        : state.mode === 'playing'
+          ? 'PLAY'
+          : state.mode === 'paused'
+            ? 'PAUSE'
+            : state.wonRun ? 'WIN' : 'LOSS';
+
+      ui.mode.textContent = modeLabel;
+      ui.level.textContent = String(state.level);
+      ui.board.textContent = `${state.boardSize}x${state.boardSize}`;
+      ui.movesLeft.textContent = String(Math.max(0, state.movesLimit - state.movesUsed));
+      ui.lightsOn.textContent = String(lightsOn);
+      ui.solved.textContent = String(state.solvedLevels);
+      ui.coins.textContent = String(Number(profileState?.coins || state.profileCoins));
+    }
+
+    function draw() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#15345f');
+      grad.addColorStop(1, '#091326');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      const board = boardRect();
+      const lightsOn = countLightsOn();
+
+      ctx.fillStyle = 'rgba(6, 12, 24, 0.45)';
+      ctx.fillRect(board.x - 18, board.y - 18, board.size + 36, board.size + 36);
+
+      for (let y = 0; y < state.boardSize; y += 1) {
+        for (let x = 0; x < state.boardSize; x += 1) {
+          const px = board.x + x * board.cell;
+          const py = board.y + y * board.cell;
+          const on = state.grid[y][x] === 1;
+
+          ctx.fillStyle = on ? 'rgba(125, 227, 255, 0.96)' : 'rgba(35, 59, 88, 0.95)';
+          ctx.fillRect(px + 2, py + 2, board.cell - 4, board.cell - 4);
+
+          if (on) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(px + 7, py + 7, board.cell - 14, Math.max(3, board.cell * 0.24));
+          }
+        }
+      }
+
+      const cx = board.x + state.cursor.x * board.cell;
+      const cy = board.y + state.cursor.y * board.cell;
+      ctx.strokeStyle = '#ffe07a';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(cx + 2, cy + 2, board.cell - 4, board.cell - 4);
+
+      if (state.pointerCell) {
+        const px = board.x + state.pointerCell.x * board.cell;
+        const py = board.y + state.pointerCell.y * board.cell;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + 6, py + 6, board.cell - 12, board.cell - 12);
+      }
+
+      ctx.fillStyle = '#e6f2ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Lights Out Lab', 26, 36);
+
+      ctx.font = '600 16px Trebuchet MS';
+      ctx.fillStyle = '#b8d5f3';
+      ctx.fillText(state.statusText, 26, 62);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#d8ebff';
+      ctx.fillText(`Lights On: ${lightsOn}`, w - 24, 34);
+      ctx.fillText(`Moves Left: ${Math.max(0, state.movesLimit - state.movesUsed)}`, w - 24, 56);
+
+      if (state.mode === 'paused') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    function onKeyChange(event, isDown) {
+      const key = event.key.toLowerCase();
+      if (key === 'arrowup' || key === 'w') pressed.up = isDown;
+      if (key === 'arrowdown' || key === 's') pressed.down = isDown;
+      if (key === 'arrowleft' || key === 'a') pressed.left = isDown;
+      if (key === 'arrowright' || key === 'd') pressed.right = isDown;
+      if (key === ' ' || key === 'enter') pressed.toggle = isDown;
+
+      if (!isDown) return;
+
+      if (key === 'p') {
+        if (state.mode === 'playing') {
+          state.mode = 'paused';
+        } else if (state.mode === 'paused') {
+          state.mode = 'playing';
+        }
+        setOverlay();
+        updateHud();
+      }
+
+      if (key === 'r') {
+        startRun();
+      }
+
+      if (key === 'f') {
+        toggleFullscreen();
+      }
+    }
+
+    function updateInput() {
+      if (state.mode !== 'playing') return;
+      const dx = (pressed.right ? 1 : 0) - (pressed.left ? 1 : 0);
+      const dy = (pressed.down ? 1 : 0) - (pressed.up ? 1 : 0);
+      if (dx !== 0 || dy !== 0) {
+        moveCursor(dx, dy);
+      }
+      if (pressed.toggle) {
+        pressed.toggle = false;
+        applyToggle();
+      }
+    }
+
+    function toCell(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+      const px = (clientX - rect.left) * sx;
+      const py = (clientY - rect.top) * sy;
+      const board = boardRect();
+      const localX = px - board.x;
+      const localY = py - board.y;
+
+      if (localX < 0 || localY < 0 || localX >= board.size || localY >= board.size) {
+        return null;
+      }
+
+      return {
+        x: clamp(Math.floor(localX / board.cell), 0, state.boardSize - 1),
+        y: clamp(Math.floor(localY / board.cell), 0, state.boardSize - 1),
+      };
+    }
+
+    canvas.addEventListener('pointerdown', (event) => {
+      const cell = toCell(event.clientX, event.clientY);
+      if (!cell) return;
+      state.pointerCell = cell;
+      state.cursor.x = cell.x;
+      state.cursor.y = cell.y;
+      if (state.mode === 'playing') {
+        applyToggle();
+      }
+      draw();
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      const cell = toCell(event.clientX, event.clientY);
+      state.pointerCell = cell;
+      if (cell) {
+        state.cursor.x = cell.x;
+        state.cursor.y = cell.y;
+      }
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      state.pointerCell = null;
+    });
+
+    function bindHoldButton(button, key) {
+      if (!button) return;
+      const clear = () => {
+        pressed[key] = false;
+      };
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        button.setPointerCapture?.(event.pointerId);
+        if (key === 'toggle') {
+          applyToggle();
+        } else {
+          pressed[key] = true;
+        }
+      });
+      button.addEventListener('pointerup', clear);
+      button.addEventListener('pointercancel', clear);
+      button.addEventListener('lostpointercapture', clear);
+      button.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') clear();
+      });
+    }
+
+    document.querySelectorAll('[data-touch]').forEach((button) => {
+      bindHoldButton(button, button.getAttribute('data-touch'));
+    });
+
+    function clearInputs() {
+      pressed.up = false;
+      pressed.down = false;
+      pressed.left = false;
+      pressed.right = false;
+      pressed.toggle = false;
+      state.pointerCell = null;
+    }
+
+    document.addEventListener('keydown', (event) => onKeyChange(event, true));
+    document.addEventListener('keyup', (event) => onKeyChange(event, false));
+    window.addEventListener('blur', clearInputs);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearInputs();
+    });
+
+    const startBtn = document.getElementById('start-btn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const restartBtn2 = document.getElementById('restartBtn2');
+    const menuBtn = document.getElementById('menuBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    startBtn.addEventListener('click', startRun);
+    resumeBtn.addEventListener('click', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'playing';
+        setOverlay();
+        updateHud();
+      }
+    });
+    restartBtn.addEventListener('click', startRun);
+    restartBtn2.addEventListener('click', startRun);
+    playAgainBtn.addEventListener('click', startRun);
+    menuBtn.addEventListener('click', () => {
+      state.mode = 'menu';
+      state.statusText = 'Start a puzzle run.';
+      setOverlay();
+      updateHud();
+    });
+    pauseBtn.addEventListener('click', () => {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+      }
+      setOverlay();
+      updateHud();
+    });
+
+    function toggleFullscreen() {
+      const root = document.documentElement;
+      if (!document.fullscreenElement) {
+        root.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+      updateInput();
+
+      const lights = countLightsOn();
+      const movesLeft = Math.max(0, state.movesLimit - state.movesUsed);
+      state.statusText = `Level ${state.level} | ${lights} lights on | ${movesLeft} moves left`;
+
+      if (dt > 0.2) {
+        clearInputs();
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      lastFrame = now;
+      if (!controlledStep) {
+        update(dt);
+        updateHud();
+        draw();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function stepByMs(ms) {
+      const step = 1000 / 60;
+      const loops = Math.max(1, Math.round(ms / step));
+      controlledStep = true;
+      for (let i = 0; i < loops; i += 1) {
+        update(1 / 60);
+      }
+      updateHud();
+      draw();
+      controlledStep = false;
+    }
+
+    window.advanceTime = (ms) => {
+      stepByMs(Number(ms) || 0);
+    };
+
+    window.render_game_to_text = () => {
+      const lights = [];
+      for (let y = 0; y < state.boardSize; y += 1) {
+        for (let x = 0; x < state.boardSize; x += 1) {
+          if (state.grid[y][x]) {
+            lights.push({ x, y });
+          }
+        }
+      }
+      return JSON.stringify({
+        game: 'lightsout',
+        mode: state.mode,
+        coordinate_system: 'grid origin at top-left; x increases right, y increases down',
+        level: state.level,
+        board_size: state.boardSize,
+        moves_used: state.movesUsed,
+        moves_left: Math.max(0, state.movesLimit - state.movesUsed),
+        cursor: { x: state.cursor.x, y: state.cursor.y },
+        lights_on_count: lights.length,
+        lights_on: lights,
+        solved_levels: state.solvedLevels,
+        run_won: state.wonRun,
+        profile_coins: Number(profileState?.coins || state.profileCoins),
+      });
+    };
+
+    loadLevel(1);
+    updateHud();
+    setOverlay();
+    draw();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

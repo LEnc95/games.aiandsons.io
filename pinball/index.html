@@ -208,7 +208,16 @@
       color: #e7f7ff;
       font-size: 15px;
       line-height: 1.5;
-      min-height: 4.5em;
+      min-height: 3.2em;
+    }
+
+    .objective-line {
+      margin: 10px 0 0;
+      color: #ffd78a;
+      font-size: 13px;
+      line-height: 1.5;
+      letter-spacing: 0.03em;
+      min-height: 3em;
     }
 
     .pill-row {
@@ -327,13 +336,14 @@
           <div class="metric"><span class="metric-label">Best</span><span id="hudBest" class="metric-value">0</span></div>
           <div class="metric"><span class="metric-label">Balls</span><span id="hudBalls" class="metric-value">3</span></div>
           <div class="metric"><span class="metric-label">Multiplier</span><span id="hudMult" class="metric-value">x1</span></div>
-          <div class="metric"><span class="metric-label">Mission</span><span id="hudMission" class="metric-value">0 / 4</span></div>
+          <div class="metric"><span class="metric-label">Progress</span><span id="hudMission" class="metric-value">0 / 3</span></div>
           <div class="metric"><span class="metric-label">Locks</span><span id="hudLocks" class="metric-value">0 / 2</span></div>
         </section>
 
         <section class="status-card">
           <h2 class="section-title">Status</h2>
           <p id="statusLine" class="status-line">Press Start, plunge the ball, and aim for the top lanes to open your multiplier.</p>
+          <p id="objectiveLine" class="objective-line">Objective: Shoot the lit skill shot lanes, then finish the N-E-O bank to light the lock.</p>
           <div class="pill-row">
             <span id="pillMode" class="pill">menu</span>
             <span id="pillSaver" class="pill">Saver 0.0s</span>
@@ -349,6 +359,7 @@
             <button id="launchBtn" class="btn emphasis">Launch</button>
             <button id="startBtn" class="btn">Start / Restart</button>
             <button id="pauseBtn" class="btn">Pause</button>
+            <button id="soundBtn" class="btn">Sound On</button>
             <button id="fullscreenBtn" class="btn">Fullscreen</button>
           </div>
         </section>
@@ -361,7 +372,7 @@
             <li>Orbit, ramp, spinner, and target-bank shots charge Nova Frenzy for doubled scoring.</li>
             <li>During multiball, light jackpot shots and collect them at the Vortex saucer.</li>
           </ul>
-          <p class="footer-note">Keyboard: Left/A and Right/D flip, Space launches, Enter starts, P pauses, F toggles fullscreen.</p>
+          <p class="footer-note">Keyboard: Left/A and Right/D flip, Space launches, Enter starts, P pauses, M toggles sound, F toggles fullscreen.</p>
         </section>
       </aside>
     </section>
@@ -381,9 +392,17 @@
     const hudMission = document.getElementById("hudMission");
     const hudLocks = document.getElementById("hudLocks");
     const statusLine = document.getElementById("statusLine");
+    const objectiveLine = document.getElementById("objectiveLine");
     const pillMode = document.getElementById("pillMode");
     const pillSaver = document.getElementById("pillSaver");
     const pillJackpot = document.getElementById("pillJackpot");
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+    const launchBtn = document.getElementById("launchBtn");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const soundBtn = document.getElementById("soundBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
 
     const WORLD = {
       width: 900,
@@ -401,10 +420,175 @@
     };
 
     const TAU = Math.PI * 2;
-    const BALL_RADIUS = 13;
-    const GRAVITY = 2250;
-    const MAX_SPEED = 2200;
-    const BOUNCE_WALL = 0.88;
+    const TUNING = {
+      physics: {
+        ballRadius: 13,
+        gravity: 2250,
+        maxSpeed: 2180,
+        wallBounce: 0.86,
+        wallDragX: 0.99945,
+        wallDragY: 0.99965,
+        slopeAccel: 32,
+        stepHz: 240,
+      },
+      launch: {
+        minCharge: 0.18,
+        chargeRate: 0.9,
+        idleChargeFloor: 0.18,
+        idleDecayRate: 1.3,
+        baseVx: -102,
+        chargeVx: -68,
+        baseVy: -1840,
+        chargeVy: -1560,
+        graceSeconds: 1.15,
+      },
+      flippers: {
+        response: 23,
+        bounce: 0.95,
+        swingImpulse: 0.34,
+        liftBoost: 5.2,
+        liveCatchDamping: 0.9,
+      },
+      slings: {
+        cooldown: 0.16,
+        leftImpulseX: -190,
+        rightImpulseX: 190,
+        impulseY: -980,
+      },
+      timers: {
+        ballSaveStart: 14,
+        replayBallSave: 10,
+        savedBallMinimum: 4,
+        skillShotSeconds: 8,
+        comboWindow: 3.5,
+        frenzySeconds: 14,
+      },
+      scoring: {
+        lane: 4500,
+        skillBase: 72000,
+        skillBonus: 68000,
+        laneSet: 14000,
+        dropTarget: 7000,
+        boost: 3500,
+        spinnerPerSpin: 1400,
+        ramp: 22000,
+        orbit: 18500,
+        vortex: 26000,
+        lock: 70000,
+        multiballStart: 150000,
+        jackpotBase: 350000,
+        jackpotStep: 50000,
+        superBase: 1200000,
+        superStep: 180000,
+        bumperOuter: 1800,
+        bumperCenter: 2200,
+        sling: 500,
+        comboBase: 1200,
+        comboStep: 700,
+        jackpotBoost: 18000,
+        lockRelight: 26000,
+        endBonusMultiplier: 9000,
+        endBonusBank: 14000,
+        endBonusJackpot: 30000,
+      },
+    };
+
+    const BALL_RADIUS = TUNING.physics.ballRadius;
+    const GRAVITY = TUNING.physics.gravity;
+    const MAX_SPEED = TUNING.physics.maxSpeed;
+    const BOUNCE_WALL = TUNING.physics.wallBounce;
+    const ATTRACT_TIPS = [
+      "Hold launch for a taller plunge, then clip a lit top lane for the skill shot.",
+      "Finish all three top lanes to grow your multiplier and extend the save timer.",
+      "Complete the N-E-O bank to light the Vortex lock and trap a ball in the saucer.",
+      "During multiball, hit orbit, ramp, and bank shots to light jackpots at the Vortex.",
+    ];
+    const RESCUE_ZONES = [
+      {
+        key: "left-lower-pocket",
+        label: "FEED",
+        color: "#ffd78a",
+        allowedZones: ["lower-left"],
+        xMin: 84,
+        xMax: 210,
+        yMin: 1110,
+        yMax: 1352,
+        maxSpeed: 260,
+        maxTravel: 22,
+        minTime: 0.18,
+        cooldown: 0.95,
+      },
+      {
+        key: "right-lower-pocket",
+        label: "FEED",
+        color: "#ffd78a",
+        allowedZones: ["lower-right"],
+        xMin: 690,
+        xMax: 816,
+        yMin: 1110,
+        yMax: 1352,
+        maxSpeed: 260,
+        maxTravel: 22,
+        minTime: 0.18,
+        cooldown: 0.95,
+      },
+      {
+        key: "top-left-corner",
+        label: "NUDGE",
+        color: "#9ce5ff",
+        allowedZones: ["upper"],
+        xMin: 84,
+        xMax: 138,
+        yMin: 88,
+        yMax: 232,
+        maxSpeed: 175,
+        maxTravel: 20,
+        minTime: 0.2,
+        cooldown: 0.8,
+      },
+      {
+        key: "top-right-corner",
+        label: "NUDGE",
+        color: "#9ce5ff",
+        allowedZones: ["upper"],
+        xMin: 762,
+        xMax: 816,
+        yMin: 88,
+        yMax: 232,
+        maxSpeed: 175,
+        maxTravel: 20,
+        minTime: 0.2,
+        cooldown: 0.8,
+      },
+      {
+        key: "left-wall",
+        label: "KICKOUT",
+        color: "#9ce5ff",
+        allowedZones: ["upper", "mid", "lower-left"],
+        xMin: 86,
+        xMax: 148,
+        yMin: 172,
+        yMax: 1322,
+        maxSpeed: 225,
+        maxTravel: 20,
+        minTime: 0.24,
+        cooldown: 0.8,
+      },
+      {
+        key: "right-wall",
+        label: "KICKOUT",
+        color: "#9ce5ff",
+        allowedZones: ["upper", "mid", "lower-right"],
+        xMin: 756,
+        xMax: 816,
+        yMin: 172,
+        yMax: 1322,
+        maxSpeed: 225,
+        maxTravel: 20,
+        minTime: 0.24,
+        cooldown: 0.8,
+      },
+    ];
 
     const STARS = Array.from({ length: 72 }, (_, index) => ({
       x: ((index * 127.137) % 1) * WORLD.width,
@@ -414,21 +598,21 @@
     }));
 
     const OUTER_SEGMENTS = [
-      { x1: 122, y1: 1344, x2: 94, y2: 1214 },
-      { x1: 94, y1: 1214, x2: 94, y2: 138 },
+      { x1: 126, y1: 1344, x2: 108, y2: 1252 },
+      { x1: 108, y1: 1252, x2: 108, y2: 138 },
       { x1: 94, y1: 138, x2: 162, y2: 92 },
       { x1: 162, y1: 92, x2: 718, y2: 92 },
       { x1: 718, y1: 92, x2: 746, y2: 122 },
       { x1: 746, y1: 122, x2: 746, y2: 1188 },
       { x1: 810, y1: 122, x2: 810, y2: 1322 },
-      { x1: 810, y1: 1322, x2: 756, y2: 1360 },
-      { x1: 756, y1: 1360, x2: 608, y2: 1360 },
-      { x1: 292, y1: 1360, x2: 144, y2: 1360 },
-      { x1: 144, y1: 1360, x2: 102, y2: 1324 },
-      { x1: 228, y1: 1036, x2: 148, y2: 1328 },
-      { x1: 314, y1: 1296, x2: 238, y2: 1028 },
-      { x1: 672, y1: 1036, x2: 752, y2: 1328 },
-      { x1: 586, y1: 1296, x2: 662, y2: 1028 },
+      { x1: 810, y1: 1322, x2: 774, y2: 1354 },
+      { x1: 774, y1: 1354, x2: 614, y2: 1360 },
+      { x1: 286, y1: 1360, x2: 126, y2: 1354 },
+      { x1: 126, y1: 1354, x2: 92, y2: 1320 },
+      { x1: 240, y1: 1028, x2: 168, y2: 1312 },
+      { x1: 320, y1: 1288, x2: 254, y2: 1018 },
+      { x1: 660, y1: 1028, x2: 732, y2: 1312 },
+      { x1: 580, y1: 1288, x2: 646, y2: 1018 },
       { x1: 746, y1: 1188, x2: 720, y2: 1238 },
       { x1: 180, y1: 344, x2: 164, y2: 544 },
       { x1: 720, y1: 344, x2: 736, y2: 544 },
@@ -439,10 +623,10 @@
     ];
 
     const POSTS = [
-      { x: 142, y: 1296, r: 18, glow: "#79d6ff" },
-      { x: 756, y: 1296, r: 18, glow: "#79d6ff" },
-      { x: 236, y: 1038, r: 16, glow: "#ffd88f" },
-      { x: 664, y: 1038, r: 16, glow: "#ffd88f" },
+      { x: 160, y: 1282, r: 17, glow: "#79d6ff" },
+      { x: 740, y: 1282, r: 17, glow: "#79d6ff" },
+      { x: 248, y: 1026, r: 15, glow: "#ffd88f" },
+      { x: 652, y: 1026, r: 15, glow: "#ffd88f" },
       { x: 376, y: 980, r: 18, glow: "#ff9dc4" },
       { x: 524, y: 980, r: 18, glow: "#ff9dc4" },
       { x: 226, y: 176, r: 13, glow: "#8df3cb" },
@@ -456,9 +640,9 @@
     ];
 
     const BUMPERS = [
-      { x: 306, y: 332, r: 46, score: 3000, color: "#ffd77f" },
-      { x: 450, y: 252, r: 40, score: 3500, color: "#8af8cf" },
-      { x: 594, y: 332, r: 46, score: 3000, color: "#79d6ff" },
+      { x: 306, y: 332, r: 46, score: TUNING.scoring.bumperOuter, color: "#ffd77f" },
+      { x: 450, y: 252, r: 40, score: TUNING.scoring.bumperCenter, color: "#8af8cf" },
+      { x: 594, y: 332, r: 46, score: TUNING.scoring.bumperOuter, color: "#79d6ff" },
     ];
 
     const TOP_LANES = [
@@ -486,24 +670,24 @@
       {
         name: "left",
         points: [
-          { x: 238, y: 1054 },
-          { x: 360, y: 974 },
-          { x: 390, y: 1048 },
+          { x: 246, y: 1052 },
+          { x: 358, y: 984 },
+          { x: 388, y: 1046 },
         ],
-        impulseX: -220,
-        impulseY: -1080,
+        impulseX: TUNING.slings.leftImpulseX,
+        impulseY: TUNING.slings.impulseY,
         color: "#ff9dc4",
         flash: 0,
       },
       {
         name: "right",
         points: [
-          { x: 662, y: 1054 },
-          { x: 540, y: 974 },
-          { x: 510, y: 1048 },
+          { x: 654, y: 1052 },
+          { x: 542, y: 984 },
+          { x: 512, y: 1046 },
         ],
-        impulseX: 220,
-        impulseY: -1080,
+        impulseX: TUNING.slings.rightImpulseX,
+        impulseY: TUNING.slings.impulseY,
         color: "#ff9dc4",
         flash: 0,
       },
@@ -512,8 +696,8 @@
     const flippers = {
       left: {
         pivotX: 248,
-        pivotY: 1246,
-        length: 158,
+        pivotY: 1244,
+        length: 160,
         radius: 17,
         rest: 0.42,
         active: -0.34,
@@ -524,8 +708,8 @@
       },
       right: {
         pivotX: 652,
-        pivotY: 1246,
-        length: 158,
+        pivotY: 1244,
+        length: 160,
         radius: 17,
         rest: Math.PI - 0.42,
         active: Math.PI + 0.34,
@@ -558,13 +742,17 @@
       laneLights: [false, false, false],
       dropTargetUp: [true, true, true],
       missionShots: new Set(),
+      bankCompletions: 0,
+      skillShotsCollected: 0,
       frenzyTimer: 0,
       lockLit: false,
+      rescueCount: 0,
+      lastRescueZone: "",
       multiball: {
         active: false,
         lockedBalls: 0,
-        jackpotValue: 250000,
-        superValue: 900000,
+        jackpotValue: TUNING.scoring.jackpotBase,
+        superValue: TUNING.scoring.superBase,
         jackpotLights: {
           orbit: false,
           ramp: false,
@@ -581,6 +769,13 @@
       bestCombo: 0,
       multiballStarts: 0,
       jackpotCollected: 0,
+    };
+
+    const audioState = {
+      enabled: localStorage.getItem("pinball-sfx-enabled") !== "0",
+      ctx: null,
+      master: null,
+      lastFlipperAt: 0,
     };
 
     let steppingExternally = false;
@@ -636,6 +831,184 @@
       });
     }
 
+    function ensureAudio() {
+      if (!audioState.enabled) return null;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!audioState.ctx) {
+        audioState.ctx = new AudioCtx();
+        audioState.master = audioState.ctx.createGain();
+        audioState.master.gain.value = 0.08;
+        audioState.master.connect(audioState.ctx.destination);
+      }
+      if (audioState.ctx.state === "suspended") {
+        audioState.ctx.resume().catch(() => {});
+      }
+      return audioState.ctx;
+    }
+
+    function playToneSequence(sequence) {
+      const ctx = ensureAudio();
+      if (!ctx || !audioState.master) return;
+      const now = ctx.currentTime;
+      sequence.forEach((tone) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = now + (tone.delay || 0);
+        const duration = tone.duration || 0.08;
+        osc.type = tone.type || "triangle";
+        osc.frequency.setValueAtTime(tone.freq, start);
+        if (tone.toFreq) osc.frequency.exponentialRampToValueAtTime(tone.toFreq, start + duration);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(tone.gain || 0.025, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain);
+        gain.connect(audioState.master);
+        osc.start(start);
+        osc.stop(start + duration + 0.02);
+      });
+    }
+
+    function playSound(name) {
+      if (!audioState.enabled) return;
+      if (name === "launch") {
+        playToneSequence([{ freq: 220, toFreq: 560, duration: 0.16, gain: 0.03, type: "sawtooth" }]);
+      } else if (name === "flipper") {
+        if (state.time - audioState.lastFlipperAt < 0.03) return;
+        audioState.lastFlipperAt = state.time;
+        playToneSequence([{ freq: 380, toFreq: 280, duration: 0.045, gain: 0.018, type: "square" }]);
+      } else if (name === "sling") {
+        playToneSequence([{ freq: 430, toFreq: 250, duration: 0.08, gain: 0.024, type: "square" }]);
+      } else if (name === "bumper") {
+        playToneSequence([{ freq: 540, toFreq: 700, duration: 0.09, gain: 0.02 }]);
+      } else if (name === "target") {
+        playToneSequence([{ freq: 300, toFreq: 360, duration: 0.065, gain: 0.018, type: "square" }]);
+      } else if (name === "lane") {
+        playToneSequence([{ freq: 660, toFreq: 840, duration: 0.07, gain: 0.018 }]);
+      } else if (name === "lock") {
+        playToneSequence([
+          { freq: 260, duration: 0.08, gain: 0.022, type: "sawtooth" },
+          { freq: 390, delay: 0.06, duration: 0.11, gain: 0.026, type: "triangle" },
+        ]);
+      } else if (name === "jackpot") {
+        playToneSequence([
+          { freq: 440, duration: 0.09, gain: 0.024 },
+          { freq: 660, delay: 0.05, duration: 0.1, gain: 0.028 },
+          { freq: 880, delay: 0.11, duration: 0.13, gain: 0.03 },
+        ]);
+      } else if (name === "multiball") {
+        playToneSequence([
+          { freq: 220, duration: 0.08, gain: 0.022, type: "sawtooth" },
+          { freq: 330, delay: 0.05, duration: 0.1, gain: 0.026, type: "sawtooth" },
+          { freq: 494, delay: 0.1, duration: 0.16, gain: 0.03, type: "triangle" },
+        ]);
+      } else if (name === "drain") {
+        playToneSequence([{ freq: 240, toFreq: 120, duration: 0.18, gain: 0.026, type: "sawtooth" }]);
+      } else if (name === "rescue") {
+        playToneSequence([{ freq: 520, toFreq: 740, duration: 0.09, gain: 0.02 }]);
+      }
+    }
+
+    function setSoundEnabled(enabled) {
+      audioState.enabled = enabled;
+      localStorage.setItem("pinball-sfx-enabled", enabled ? "1" : "0");
+      if (!enabled && audioState.master) {
+        audioState.master.gain.cancelScheduledValues(0);
+        audioState.master.gain.value = 0.0001;
+      } else if (enabled && audioState.master) {
+        audioState.master.gain.value = 0.08;
+      }
+    }
+
+    function toggleSound() {
+      setSoundEnabled(!audioState.enabled);
+      setStatus(audioState.enabled ? "Sound enabled." : "Sound muted.", 0.9);
+    }
+
+    function isBallInShooterLane(ball) {
+      return (
+        ball.x > WORLD.shooterLeft - ball.r - 4 &&
+        ball.x < WORLD.shooterRight + ball.r + 4 &&
+        ball.y > WORLD.shooterTop - 14 &&
+        ball.y < WORLD.shooterBottom + 14
+      );
+    }
+
+    function getBallZone(ball) {
+      if (ball.heldInLauncher || isBallInShooterLane(ball)) return "shooter";
+      if (ball.y > 1326 && ball.x > WORLD.drainLeft - 34 && ball.x < WORLD.drainRight + 34) return "drain";
+      if (ball.y < 320) return "upper";
+      if (ball.y > 1050) return ball.x < WORLD.width * 0.5 ? "lower-left" : "lower-right";
+      return "mid";
+    }
+
+    function getJackpotLightCount() {
+      return Number(state.multiball.jackpotLights.orbit) + Number(state.multiball.jackpotLights.ramp) + Number(state.multiball.jackpotLights.targets);
+    }
+
+    function getDropCount() {
+      return state.dropTargetUp.filter((isUp) => !isUp).length;
+    }
+
+    function getLaneCount() {
+      return state.laneLights.filter(Boolean).length;
+    }
+
+    function getCurrentObjective() {
+      if (state.mode === "menu") return "Shoot the lit top lanes to score the skill shot, then finish the N-E-O bank to light the Vortex lock.";
+      if (state.mode === "paused") return "Resume to keep building toward the Vortex lock and multiball.";
+      if (state.mode === "gameover") return "Restart and chase a cleaner lock-to-jackpot run.";
+      if (state.multiball.active) {
+        return getJackpotLightCount() > 0
+          ? "Shoot the glowing Vortex to cash the lit jackpot."
+          : "Hit orbit, ramp, and the bank to light jackpots before returning to the Vortex.";
+      }
+      if (state.skillShotActive) return "Send the plunge through a lit top lane for the skill shot before settling into the bank.";
+      if (state.lockLit) return "Shoot the glowing Vortex saucer to lock the ball.";
+      if (getDropCount() > 0 || state.bankCompletions > 0) return "Complete the N-E-O bank to light or relight the Vortex lock.";
+      if (getLaneCount() < TOP_LANES.length) return "Complete the top lanes to grow your multiplier and extend the save timer.";
+      return "Build the bank, light the lock, and start multiball.";
+    }
+
+    function getActiveModeSummary() {
+      if (state.mode !== "playing") return state.mode.toUpperCase();
+      if (state.multiball.active) return "MULTIBALL";
+      if (state.lockLit) return "LOCK READY";
+      if (state.skillShotActive) return "SKILL SHOT";
+      return "LIVE PLAY";
+    }
+
+    function getMissionReadout() {
+      if (state.multiball.active) return `${getJackpotLightCount()} / 3`;
+      if (state.skillShotActive) return "SKILL";
+      if (state.lockLit) return "LOCK";
+      if (getDropCount() > 0 || state.bankCompletions > 0) return `${getDropCount()} / 3`;
+      return `${getLaneCount()} / 3`;
+    }
+
+    function getJackpotPillText() {
+      if (state.multiball.active) {
+        return getJackpotLightCount() > 0
+          ? `Collect ${formatScore(state.multiball.jackpotValue)}`
+          : "Light 3 jackpots";
+      }
+      return state.lockLit ? "Vortex Lock Lit" : `Jackpot ${formatScore(state.multiball.jackpotValue)}`;
+    }
+
+    function updateControlLabels() {
+      startBtn.textContent = state.mode === "playing" ? "Restart Run" : "Start Run";
+      pauseBtn.textContent = state.mode === "paused" ? "Resume" : "Pause";
+      launchBtn.textContent = getLauncherBall() ? (state.launchHeld ? "Charging..." : "Launch") : "Ball Live";
+      soundBtn.textContent = audioState.enabled ? "Sound On" : "Sound Off";
+    }
+
+    function setFlipperHeld(which, held) {
+      const flipper = flippers[which];
+      if (!flipper || flipper.held === held) return;
+      flipper.held = held;
+      if (held) playSound("flipper");
+    }
+
     function makeBall(overrides = {}) {
       return {
         id: state.nextBallId++,
@@ -683,14 +1056,15 @@
         y: autoLaunch ? 1242 : 1268,
         vx: velocity ? velocity.x : 0,
         vy: velocity ? velocity.y : 0,
-        launchCharge: autoLaunch ? 0 : 0.22,
+        launchCharge: autoLaunch ? 0 : TUNING.launch.minCharge,
+        launchGrace: fromLock ? 0 : TUNING.launch.graceSeconds,
         skillOpen: !fromLock,
       });
 
       state.activeBalls.push(ball);
       state.ballSaver = Math.max(state.ballSaver, saverTime);
       state.skillShotActive = !fromLock;
-      state.skillShotTimer = !fromLock ? 8 : 0;
+      state.skillShotTimer = !fromLock ? TUNING.timers.skillShotSeconds : 0;
       state.launchStrength = 0;
       return ball;
     }
@@ -700,9 +1074,11 @@
       const withFrenzy = options.ignoreFrenzy || state.frenzyTimer <= 0 ? 1 : 2;
       const total = Math.round(baseValue * withMultiplier * withFrenzy);
       state.score += total;
-      spawnParticles(x, y, color, 8 + Math.floor(Math.min(18, total / 3500)), 70, 310);
-      spawnFloater(x, y, label ? `${label} ${formatScore(total)}` : `+${formatScore(total)}`, color);
-      triggerFlash(options.flash || 0.1, options.shake || 4);
+      spawnParticles(x, y, color, 6 + Math.floor(Math.min(18, total / 6000)), 70, 280);
+      if (label || total >= 1200) {
+        spawnFloater(x, y, label ? `${label} ${formatScore(total)}` : `+${formatScore(total)}`, color);
+      }
+      triggerFlash(options.flash || 0.08, options.shake || 3);
       return total;
     }
 
@@ -767,8 +1143,8 @@
       const tangentY = aby / tangentLength;
       const gravityAlongSlope = Math.max(0, tangentY);
       if (gravityAlongSlope > 0.08) {
-        ball.vx += tangentX * gravityAlongSlope * 26;
-        ball.vy += tangentY * gravityAlongSlope * 26;
+        ball.vx += tangentX * gravityAlongSlope * TUNING.physics.slopeAccel;
+        ball.vy += tangentY * gravityAlongSlope * TUNING.physics.slopeAccel;
       }
       return true;
     }
@@ -799,14 +1175,18 @@
       ball.y = py + ny * minDistance;
       const speedIntoNormal = ball.vx * nx + ball.vy * ny;
       if (speedIntoNormal < 0) {
-        ball.vx -= (1 + 0.96) * speedIntoNormal * nx;
-        ball.vy -= (1 + 0.96) * speedIntoNormal * ny;
+        ball.vx -= (1 + TUNING.flippers.bounce) * speedIntoNormal * nx;
+        ball.vy -= (1 + TUNING.flippers.bounce) * speedIntoNormal * ny;
       }
       const tangentX = -ny;
       const tangentY = nx;
-      const swingImpulse = flipper.angularVelocity * flipper.length * 0.36;
+      const swingImpulse = flipper.angularVelocity * flipper.length * TUNING.flippers.swingImpulse;
       ball.vx += tangentX * swingImpulse;
-      ball.vy += tangentY * swingImpulse - Math.abs(flipper.angularVelocity) * 6;
+      ball.vy += tangentY * swingImpulse - Math.abs(flipper.angularVelocity) * TUNING.flippers.liftBoost;
+      if (flipper.held && Math.abs(flipper.angularVelocity) < 1.2 && ball.y > 1040) {
+        ball.vx *= TUNING.flippers.liveCatchDamping;
+        ball.vy = Math.min(ball.vy * TUNING.flippers.liveCatchDamping, 140);
+      }
       return true;
     }
 
@@ -816,10 +1196,11 @@
         state.missionShots.add(shotName);
         if (state.missionShots.size >= 4) {
           state.missionShots.clear();
-          state.frenzyTimer = 18;
+          state.frenzyTimer = TUNING.timers.frenzySeconds;
           state.ballSaver = Math.max(state.ballSaver, 6);
-          awardPoints(45000, 450, 612, "#ffd78a", "NOVA FRENZY", { ignoreMultiplier: true, flash: 0.22, shake: 10 });
-          setStatus("Nova Frenzy lit. All scoring is doubled for 18 seconds.", 2.5);
+          awardPoints(42000, 450, 612, "#ffd78a", "STAR CHARGE", { ignoreMultiplier: true, flash: 0.18, shake: 8 });
+          setStatus(`Nova Frenzy lit. All scoring is doubled for ${TUNING.timers.frenzySeconds.toFixed(0)} seconds.`, 2.5);
+          playSound("jackpot");
         }
       }
     }
@@ -828,13 +1209,13 @@
       if (!shotName) return;
       const previous = state.comboTimer > 0 ? state.comboCount : 0;
       state.comboCount = previous > 0 ? state.comboCount + 1 : 1;
-      state.comboTimer = 4;
+      state.comboTimer = TUNING.timers.comboWindow;
       state.bestCombo = Math.max(state.bestCombo, state.comboCount);
       if (state.comboCount >= 2) {
-        awardPoints(1400 + state.comboCount * 800, x, y, "#f8d1ff", `COMBO x${state.comboCount}`, {
+        awardPoints(TUNING.scoring.comboBase + state.comboCount * TUNING.scoring.comboStep, x, y, "#f8d1ff", `COMBO x${state.comboCount}`, {
           ignoreMultiplier: true,
           ignoreFrenzy: true,
-          flash: 0.08,
+          flash: 0.06,
           shake: 3,
         });
       }
@@ -845,9 +1226,10 @@
       const key = shotName === "spinner" ? "targets" : shotName;
       if (!["orbit", "ramp", "targets"].includes(key) || state.multiball.jackpotLights[key]) return;
       state.multiball.jackpotLights[key] = true;
-      state.multiball.jackpotValue += 45000;
-      state.multiball.superValue += 120000;
+      state.multiball.jackpotValue += TUNING.scoring.jackpotBoost;
+      state.multiball.superValue += TUNING.scoring.jackpotBoost * 3;
       setStatus(`${shotName.toUpperCase()} lit a jackpot. Shoot the Vortex to collect.`, 1.4);
+      playSound("target");
     }
 
     function registerMajorShot(shotName, x, y, scoreValue, color, label) {
@@ -861,13 +1243,29 @@
       resetLaneLights();
       state.multiplier = Math.min(6, state.multiplier + 1);
       state.ballSaver = Math.max(state.ballSaver, 6);
-      awardPoints(18000, 450, 170, "#8af8cf", `MULTIPLIER x${state.multiplier}`, {
+      awardPoints(TUNING.scoring.laneSet, 450, 170, "#8af8cf", `MULTIPLIER x${state.multiplier}`, {
         ignoreMultiplier: true,
         ignoreFrenzy: true,
         flash: 0.16,
         shake: 7,
       });
       setStatus(`Constellation complete. Multiplier is now x${state.multiplier}.`, 2);
+      playSound("lane");
+    }
+
+    function awardEndOfBallBonus() {
+      const bonus =
+        Math.max(0, state.multiplier - 1) * TUNING.scoring.endBonusMultiplier +
+        state.bankCompletions * TUNING.scoring.endBonusBank +
+        state.jackpotCollected * TUNING.scoring.endBonusJackpot;
+      if (bonus <= 0) return 0;
+      awardPoints(bonus, 450, 1160, "#ffd78a", "END BONUS", {
+        ignoreMultiplier: true,
+        ignoreFrenzy: true,
+        flash: 0.18,
+        shake: 8,
+      });
+      return bonus;
     }
 
     function settleRunIfNeeded() {
@@ -878,7 +1276,7 @@
       state.bestScore = best;
       localStorage.setItem("pinball-high-score-v2", String(best));
 
-      const earned = Math.max(1, Math.min(60, Math.floor(state.score / 180000)));
+      const earned = Math.max(1, Math.min(60, Math.floor(state.score / 150000)));
       state.coinsEarned = earned;
       if (typeof addCoins === "function") addCoins(earned);
 
@@ -903,6 +1301,7 @@
       settleRunIfNeeded();
       spawnParticles(450, 820, "#ffd78a", 42, 80, 360);
       triggerFlash(0.26, 12);
+      playSound("drain");
     }
 
     function startRun() {
@@ -912,7 +1311,7 @@
       state.multiplier = 1;
       state.comboCount = 0;
       state.comboTimer = 0;
-      state.ballSaver = 12;
+      state.ballSaver = TUNING.timers.ballSaveStart;
       state.highValueMessage = "Skill shot the top lanes to open your multiplier.";
       state.messageTimer = 2.4;
       state.flash = 0;
@@ -920,14 +1319,18 @@
       state.launchHeld = false;
       state.launchStrength = 0;
       state.skillShotActive = true;
-      state.skillShotTimer = 8;
+      state.skillShotTimer = TUNING.timers.skillShotSeconds;
       state.frenzyTimer = 0;
       state.missionShots.clear();
+      state.bankCompletions = 0;
+      state.skillShotsCollected = 0;
       state.lockLit = false;
+      state.rescueCount = 0;
+      state.lastRescueZone = "";
       state.multiball.active = false;
       state.multiball.lockedBalls = 0;
-      state.multiball.jackpotValue = 250000;
-      state.multiball.superValue = 900000;
+      state.multiball.jackpotValue = TUNING.scoring.jackpotBase;
+      state.multiball.superValue = TUNING.scoring.superBase;
       clearJackpotLights();
       resetLaneLights();
       resetDropTargets();
@@ -940,7 +1343,7 @@
       state.multiballStarts = 0;
       state.jackpotCollected = 0;
       rememberRecent("pinball");
-      serveBall({ saverTime: 12 });
+      serveBall({ saverTime: TUNING.timers.ballSaveStart });
       if (!state.everPlayed) {
         state.everPlayed = true;
         maybeUnlock({
@@ -959,38 +1362,43 @@
     function launchHeldBall() {
       const ball = getLauncherBall();
       if (!ball) return;
-      const strength = clamp(ball.launchCharge, 0.2, 1);
+      const strength = clamp(ball.launchCharge, TUNING.launch.minCharge, 1);
       ball.heldInLauncher = false;
-      ball.vx = -118 - strength * 74;
-      ball.vy = -1540 - strength * 1180;
+      ball.vx = TUNING.launch.baseVx + strength * TUNING.launch.chargeVx;
+      ball.vy = TUNING.launch.baseVy + strength * TUNING.launch.chargeVy;
       ball.launchCharge = 0;
+      ball.launchGrace = TUNING.launch.graceSeconds;
       ball.rampReady = false;
       state.launchStrength = strength;
       state.skillShotActive = true;
-      state.skillShotTimer = 8;
+      state.skillShotTimer = TUNING.timers.skillShotSeconds;
       setStatus("Ball launched. Aim for the top lanes while the skill shot is lit.", 1.4);
+      playSound("launch");
     }
 
     function handleLaneHit(ball, laneIndex) {
       if (recentHit(ball, `lane-${laneIndex}`, 0.7)) return;
       stampHit(ball, `lane-${laneIndex}`);
       state.laneLights[laneIndex] = true;
-      awardPoints(5000, TOP_LANES[laneIndex].x + TOP_LANES[laneIndex].w * 0.5, 166, "#8af8cf", TOP_LANES[laneIndex].id, {
+      awardPoints(TUNING.scoring.lane, TOP_LANES[laneIndex].x + TOP_LANES[laneIndex].w * 0.5, 166, "#8af8cf", TOP_LANES[laneIndex].id, {
         ignoreMultiplier: true,
         ignoreFrenzy: true,
-        flash: 0.08,
+        flash: 0.06,
         shake: 3,
       });
+      playSound("lane");
       if (state.skillShotActive && state.skillShotTimer > 0) {
-        const value = 60000 + Math.round(state.launchStrength * 70000);
+        const value = TUNING.scoring.skillBase + Math.round(state.launchStrength * TUNING.scoring.skillBonus);
         awardPoints(value, 450, 208, "#ffd78a", "SKILL SHOT", {
           ignoreMultiplier: true,
           ignoreFrenzy: true,
           flash: 0.18,
           shake: 8,
         });
+        state.skillShotsCollected += 1;
         setStatus("Perfect plunge. Skill shot collected.", 1.8);
         state.skillShotActive = false;
+        playSound("jackpot");
       }
       if (state.laneLights.every(Boolean)) completeLaneSet();
     }
@@ -1008,7 +1416,7 @@
           bestIndex = laneIndex;
         }
       });
-      if (bestIndex === -1 || bestDistance > 120) return;
+      if (bestIndex === -1 || bestDistance > 132) return;
       ball.memory.skillLaneAttempted = true;
       handleLaneHit(ball, bestIndex);
     }
@@ -1019,19 +1427,22 @@
       state.dropTargetUp[index] = false;
       ball.vy = Math.abs(ball.vy) * 0.58 + 180;
       ball.vx *= 0.85;
-      awardPoints(7500, DROP_TARGETS[index].x + DROP_TARGETS[index].w * 0.5, DROP_TARGETS[index].y + 12, "#ffb2cd", "TARGET", {
+      awardPoints(TUNING.scoring.dropTarget, DROP_TARGETS[index].x + DROP_TARGETS[index].w * 0.5, DROP_TARGETS[index].y + 12, "#ffb2cd", "TARGET", {
         flash: 0.12,
         shake: 5,
       });
+      playSound("target");
       if (state.dropTargetUp.every((isUp) => !isUp)) {
+        state.bankCompletions += 1;
         if (state.multiball.active) {
-          registerMajorShot("targets", 450, 506, 30000, "#ffb2cd", "BANK COMPLETE");
+          registerMajorShot("targets", 450, 506, TUNING.scoring.lockRelight, "#ffb2cd", "BANK COMPLETE");
           state.multiball.jackpotLights.targets = true;
           setStatus("Target bank complete. Vortex jackpot is stronger.", 1.6);
         } else {
-          registerMajorShot("targets", 450, 506, 24000, "#ffb2cd", "LOCK LIT");
+          registerMajorShot("targets", 450, 506, TUNING.scoring.lockRelight, "#ffb2cd", "LOCK LIT");
           state.lockLit = true;
           setStatus("Vortex lock lit. Shoot the glowing saucer.", 1.7);
+          playSound("lock");
         }
       }
     }
@@ -1040,15 +1451,16 @@
       if (recentHit(ball, `boost-${index}`, 0.25)) return;
       stampHit(ball, `boost-${index}`);
       ball.vy = Math.abs(ball.vy) * 0.7 + 130;
-      awardPoints(6500, target.x + target.w * 0.5, target.y + 16, target.color, target.label, {
+      awardPoints(TUNING.scoring.boost, target.x + target.w * 0.5, target.y + 16, target.color, target.label, {
         flash: 0.08,
         shake: 3,
       });
+      playSound("target");
       if (index === 0) {
-        state.ballSaver = Math.max(state.ballSaver, 5);
+        state.ballSaver = Math.max(state.ballSaver, 7);
         setStatus("Ball saver refreshed.", 1.1);
       } else {
-        state.multiball.jackpotValue += 25000;
+        state.multiball.jackpotValue += TUNING.scoring.jackpotBoost;
         setStatus("Jackpot value boosted.", 1.1);
       }
     }
@@ -1057,7 +1469,7 @@
       if (ball.path || recentHit(ball, "ramp-entry", 1.1)) return;
       stampHit(ball, "ramp-entry");
       ball.rampReady = false;
-      registerMajorShot("ramp", 622, 656, 18000, "#79d6ff", "COMET RAMP");
+      registerMajorShot("ramp", 622, 656, TUNING.scoring.ramp, "#79d6ff", "COMET RAMP");
       ball.path = {
         elapsed: 0,
         duration: 0.92,
@@ -1071,6 +1483,7 @@
         endY: 210,
       };
       triggerFlash(0.18, 8);
+      playSound("target");
     }
 
     function beginSaucerCapture(ball) {
@@ -1099,11 +1512,12 @@
               flash: 0.24,
               shake: 12,
             });
-            state.multiball.jackpotValue = 250000 + state.jackpotCollected * 50000;
-            state.multiball.superValue = 900000 + state.jackpotCollected * 150000;
+            state.multiball.jackpotValue = TUNING.scoring.jackpotBase + state.jackpotCollected * TUNING.scoring.jackpotStep;
+            state.multiball.superValue = TUNING.scoring.superBase + state.jackpotCollected * TUNING.scoring.superStep;
             clearJackpotLights();
             resetDropTargets();
             setStatus(allLit ? "Super Jackpot collected." : "Jackpot collected. Relight the shot inserts.", 1.8);
+            playSound("jackpot");
             return { eject: true };
           }
 
@@ -1116,11 +1530,11 @@
               state.multiball.active = true;
               state.multiballStarts += 1;
               state.multiball.lockedBalls = 0;
-              state.multiball.jackpotValue = 320000;
-              state.multiball.superValue = 1100000;
+              state.multiball.jackpotValue = TUNING.scoring.jackpotBase;
+              state.multiball.superValue = TUNING.scoring.superBase;
               clearJackpotLights();
               serveBall({
-                saverTime: 12,
+                saverTime: TUNING.timers.ballSaveStart,
                 autoLaunch: true,
                 velocity: { x: -70, y: -1220 },
                 fromLock: true,
@@ -1143,28 +1557,31 @@
                   skillOpen: false,
                 })
               );
-              awardPoints(120000, SAUCER.x, SAUCER.y, "#ffd78a", "TRIPLE MULTIBALL", {
+              awardPoints(TUNING.scoring.multiballStart, SAUCER.x, SAUCER.y, "#ffd78a", "TRIPLE MULTIBALL", {
                 ignoreMultiplier: true,
                 ignoreFrenzy: true,
                 flash: 0.28,
                 shake: 14,
               });
               setStatus("Triple multiball started. Light shots, then shoot the Vortex for jackpots.", 2.8);
+              playSound("multiball");
               return { remove: true };
             }
 
-            serveBall({ saverTime: 10, autoLaunch: false, fromLock: true });
-            awardPoints(45000, SAUCER.x, SAUCER.y, "#c6a0ff", "BALL LOCKED", {
+            serveBall({ saverTime: TUNING.timers.replayBallSave, autoLaunch: false, fromLock: true });
+            awardPoints(TUNING.scoring.lock, SAUCER.x, SAUCER.y, "#c6a0ff", "BALL LOCKED", {
               ignoreMultiplier: true,
               ignoreFrenzy: true,
               flash: 0.18,
               shake: 8,
             });
             setStatus("Ball locked. Shoot the targets again to light the next lock.", 2.1);
+            playSound("lock");
             return { remove: true };
           }
 
-          registerMajorShot("vortex", SAUCER.x, SAUCER.y, 22000, "#c6a0ff", "VORTEX");
+          registerMajorShot("vortex", SAUCER.x, SAUCER.y, TUNING.scoring.vortex, "#c6a0ff", "VORTEX");
+          playSound("target");
           return { eject: true };
         },
       };
@@ -1219,7 +1636,8 @@
       if (!withinX || !withinY || ball.spinnerCooldown > 0) return;
       const spins = clamp(Math.round(Math.abs(ball.vx) / 130), 1, 5);
       ball.spinnerCooldown = 0.26;
-      registerMajorShot("spinner", SPINNER.x, (SPINNER.y1 + SPINNER.y2) * 0.5, spins * 1600, "#f5c7ff", `SPINNER x${spins}`);
+      registerMajorShot("spinner", SPINNER.x, (SPINNER.y1 + SPINNER.y2) * 0.5, spins * TUNING.scoring.spinnerPerSpin, "#f5c7ff", `SPINNER x${spins}`);
+      playSound("target");
     }
 
     function handleOrbits(ball) {
@@ -1227,14 +1645,14 @@
       if (ball.memory.leftOrbitArmed && ball.y < 128 && !recentHit(ball, "left-orbit", 1.2)) {
         stampHit(ball, "left-orbit");
         ball.memory.leftOrbitArmed = false;
-        registerMajorShot("orbit", 126, 138, 17000, "#79d6ff", "LEFT ORBIT");
+        registerMajorShot("orbit", 126, 138, TUNING.scoring.orbit, "#79d6ff", "LEFT ORBIT");
       }
 
       if (ball.x > 700 && ball.y < 930 && ball.vy < -40 && !ball.heldInLauncher) ball.memory.rightOrbitArmed = true;
       if (ball.memory.rightOrbitArmed && ball.y < 128 && !recentHit(ball, "right-orbit", 1.2)) {
         stampHit(ball, "right-orbit");
         ball.memory.rightOrbitArmed = false;
-        registerMajorShot("orbit", 774, 138, 17000, "#79d6ff", "RIGHT ORBIT");
+        registerMajorShot("orbit", 774, 138, TUNING.scoring.orbit, "#79d6ff", "RIGHT ORBIT");
       }
     }
 
@@ -1249,14 +1667,17 @@
 
       if (state.ballSaver > 0) {
         setStatus("Ball saved. Stay alive and keep the combo rolling.", 1.6);
-        serveBall({ saverTime: Math.max(4, state.ballSaver * 0.5) });
+        serveBall({ saverTime: Math.max(TUNING.timers.savedBallMinimum, state.ballSaver * 0.5) });
+        playSound("rescue");
         return;
       }
 
+      awardEndOfBallBonus();
       if (state.ballStock > 1) {
         state.ballStock -= 1;
-        serveBall({ saverTime: 10 });
+        serveBall({ saverTime: TUNING.timers.replayBallSave });
         setStatus(`Ball ${4 - state.ballStock} complete. Ball ${state.ballStock} is ready.`, 1.8);
+        playSound("drain");
         return;
       }
 
@@ -1267,9 +1688,9 @@
     function updateLauncherBall(ball, dt) {
       ball.x = 778;
       if (state.launchHeld) {
-        ball.launchCharge = clamp(ball.launchCharge + dt * 0.92, 0, 1);
+        ball.launchCharge = clamp(ball.launchCharge + dt * TUNING.launch.chargeRate, 0, 1);
       } else {
-        ball.launchCharge = clamp(ball.launchCharge - dt * 1.8, 0.32, 1);
+        ball.launchCharge = clamp(ball.launchCharge - dt * TUNING.launch.idleDecayRate, TUNING.launch.idleChargeFloor, 1);
       }
       ball.y = WORLD.shooterBottom - 56 - ball.launchCharge * 90;
       ball.trail.length = 0;
@@ -1279,7 +1700,7 @@
       for (const flipper of Object.values(flippers)) {
         const target = flipper.held && state.mode === "playing" ? flipper.active : flipper.rest;
         const previous = flipper.angle;
-        flipper.angle += (target - flipper.angle) * Math.min(1, dt * 20);
+        flipper.angle += (target - flipper.angle) * Math.min(1, dt * TUNING.flippers.response);
         const lower = Math.min(flipper.rest, flipper.active);
         const upper = Math.max(flipper.rest, flipper.active);
         flipper.angle = clamp(flipper.angle, lower, upper);
@@ -1306,200 +1727,101 @@
       });
     }
 
-    function resolveCornerTrap(ball, dt) {
-      const speed = Math.hypot(ball.vx, ball.vy);
-      let trap = null;
-
-      if (ball.x < 128 && ball.y < 228) {
-        trap = "top-left";
-      } else if (ball.x > 772 && ball.y < 228) {
-        trap = "top-right";
-      } else if (ball.x < 124 && ball.y > 1190) {
-        trap = "bottom-left";
-      } else if (ball.x > 776 && ball.y > 1190) {
-        trap = "bottom-right";
-      }
-
-      if (!trap || speed > 165) {
-        ball.memory.cornerTrapTime = 0;
-        ball.memory.cornerTrapKey = null;
-        return;
-      }
-
-      if (ball.memory.cornerTrapKey !== trap) {
-        ball.memory.cornerTrapKey = trap;
-        ball.memory.cornerTrapTime = 0;
-      }
-
-      ball.memory.cornerTrapTime = (ball.memory.cornerTrapTime || 0) + dt;
-      if (ball.memory.cornerTrapTime < 0.22 || recentHit(ball, `corner-${trap}`, 0.7)) {
-        return;
-      }
-
-      stampHit(ball, `corner-${trap}`);
-      ball.memory.cornerTrapTime = 0;
-
-      if (trap === "top-left") {
-        ball.vx = Math.max(ball.vx, 240);
-        ball.vy = Math.max(ball.vy, 260);
-      } else if (trap === "top-right") {
-        ball.vx = Math.min(ball.vx, -240);
-        ball.vy = Math.max(ball.vy, 260);
-      } else if (trap === "bottom-left") {
+    function applyRescueZone(ball, zone) {
+      if (zone.key === "left-lower-pocket") {
+        ball.x = 208;
+        ball.y = clamp(ball.y - 20, 1180, 1274);
+        ball.vx = Math.max(ball.vx, 480);
+        ball.vy = Math.min(ball.vy, -700);
+      } else if (zone.key === "right-lower-pocket") {
+        ball.x = 692;
+        ball.y = clamp(ball.y - 20, 1180, 1274);
+        ball.vx = Math.min(ball.vx, -480);
+        ball.vy = Math.min(ball.vy, -700);
+      } else if (zone.key === "top-left-corner") {
         ball.vx = Math.max(ball.vx, 280);
-        ball.vy = Math.min(ball.vy, -420);
-      } else if (trap === "bottom-right") {
+        ball.vy = Math.max(ball.vy, 320);
+      } else if (zone.key === "top-right-corner") {
         ball.vx = Math.min(ball.vx, -280);
-        ball.vy = Math.min(ball.vy, -420);
+        ball.vy = Math.max(ball.vy, 320);
+      } else if (zone.key === "left-wall") {
+        ball.x = Math.max(ball.x, 156);
+        ball.vx = Math.max(ball.vx, 430);
+        ball.vy = ball.y < 320 ? Math.max(ball.vy, 340) : ball.y > 1100 ? Math.min(ball.vy, -720) : Math.min(ball.vy, -220);
+      } else if (zone.key === "right-wall") {
+        ball.x = Math.min(ball.x, 744);
+        ball.vx = Math.min(ball.vx, -430);
+        ball.vy = ball.y < 320 ? Math.max(ball.vy, 340) : ball.y > 1100 ? Math.min(ball.vy, -720) : Math.min(ball.vy, -220);
       }
-
-      spawnParticles(ball.x, ball.y, "#9ce5ff", 10, 40, 140);
-      spawnFloater(ball.x, ball.y - 14, "NUDGE", "#9ce5ff");
+      state.rescueCount += 1;
+      state.lastRescueZone = zone.key;
+      spawnParticles(ball.x, ball.y, zone.color, zone.key.includes("pocket") ? 16 : 12, 40, 180);
+      spawnFloater(ball.x, ball.y - 16, zone.label, zone.color);
+      playSound("rescue");
     }
 
-    function resolveLowerLaneTrap(ball, dt) {
-      const inShooterLane =
-        ball.x > WORLD.shooterLeft - 6 &&
-        ball.y > WORLD.shooterTop - 12 &&
-        ball.y < WORLD.shooterBottom + 12;
-
-      let trap = null;
-      if (ball.x < 182 && ball.y > 1120 && ball.y < 1352) {
-        trap = "left-lower";
-      } else if (ball.x > 718 && ball.y > 1120 && ball.y < 1352 && !inShooterLane) {
-        trap = "right-lower";
-      }
-
-      if (!trap) {
-        ball.memory.lowerTrapKey = null;
-        ball.memory.lowerTrapTime = 0;
+    function resolveRescueZones(ball, dt) {
+      const ballZone = getBallZone(ball);
+      if (ballZone === "shooter" || ballZone === "drain") {
+        ball.memory.rescueKey = null;
+        ball.memory.rescueTime = 0;
         return;
       }
 
-      if (ball.memory.lowerTrapKey !== trap) {
-        ball.memory.lowerTrapKey = trap;
-        ball.memory.lowerTrapTime = 0;
-        ball.memory.lowerTrapSampleX = ball.x;
-        ball.memory.lowerTrapSampleY = ball.y;
+      const zone = RESCUE_ZONES.find((entry) => {
+        return (
+          entry.allowedZones.includes(ballZone) &&
+          ball.x >= entry.xMin &&
+          ball.x <= entry.xMax &&
+          ball.y >= entry.yMin &&
+          ball.y <= entry.yMax
+        );
+      });
+
+      if (!zone) {
+        ball.memory.rescueKey = null;
+        ball.memory.rescueTime = 0;
         return;
       }
 
-      const sampleX = ball.memory.lowerTrapSampleX ?? ball.x;
-      const sampleY = ball.memory.lowerTrapSampleY ?? ball.y;
+      if (ball.memory.rescueKey !== zone.key) {
+        ball.memory.rescueKey = zone.key;
+        ball.memory.rescueTime = 0;
+        ball.memory.rescueSampleX = ball.x;
+        ball.memory.rescueSampleY = ball.y;
+        return;
+      }
+
+      const sampleX = ball.memory.rescueSampleX ?? ball.x;
+      const sampleY = ball.memory.rescueSampleY ?? ball.y;
       const movedDistance = Math.hypot(ball.x - sampleX, ball.y - sampleY);
       const speed = Math.hypot(ball.vx, ball.vy);
-      const escapingToCenter = trap === "left-lower" ? ball.vx > 180 : ball.vx < -180;
+      const escaping =
+        (zone.key.includes("left") && ball.vx > 180) ||
+        (zone.key.includes("right") && ball.vx < -180) ||
+        (zone.key.includes("top") && ball.vy > 220);
 
-      if (escapingToCenter || movedDistance > 20 || speed > 260) {
-        ball.memory.lowerTrapTime = 0;
-        ball.memory.lowerTrapSampleX = ball.x;
-        ball.memory.lowerTrapSampleY = ball.y;
+      if (escaping || movedDistance > zone.maxTravel || speed > zone.maxSpeed) {
+        ball.memory.rescueTime = 0;
+        ball.memory.rescueSampleX = ball.x;
+        ball.memory.rescueSampleY = ball.y;
         return;
       }
 
-      ball.memory.lowerTrapTime = (ball.memory.lowerTrapTime || 0) + dt;
-      if (ball.memory.lowerTrapTime < 0.18 || recentHit(ball, `lower-${trap}`, 0.9)) {
+      ball.memory.rescueTime = (ball.memory.rescueTime || 0) + dt;
+      if (ball.memory.rescueTime < zone.minTime || recentHit(ball, `rescue-${zone.key}`, zone.cooldown)) {
         return;
       }
 
-      stampHit(ball, `lower-${trap}`);
-      ball.memory.lowerTrapTime = 0;
-      ball.memory.lowerTrapSampleX = ball.x;
-      ball.memory.lowerTrapSampleY = ball.y;
-
-      if (trap === "left-lower") {
-        ball.x = 194;
-        ball.y = clamp(ball.y - 18, 1188, 1276);
-        ball.vx = Math.max(ball.vx, 420);
-        ball.vy = Math.min(ball.vy, -620);
-      } else {
-        ball.x = 706;
-        ball.y = clamp(ball.y - 18, 1188, 1276);
-        ball.vx = Math.min(ball.vx, -420);
-        ball.vy = Math.min(ball.vy, -620);
-      }
-
-      spawnParticles(ball.x, ball.y, "#ffd78a", 16, 60, 200);
-      spawnFloater(ball.x, ball.y - 18, "FEED", "#ffd78a");
-    }
-
-    function resolveSideWallTrap(ball, dt) {
-      const inShooterLane =
-        ball.x > WORLD.shooterLeft - 6 &&
-        ball.y > WORLD.shooterTop - 12 &&
-        ball.y < WORLD.shooterBottom + 12;
-
-      let trap = null;
-      if (ball.x < 140 && ball.y > 170 && ball.y < 1350) {
-        trap = "left-wall";
-      } else if (ball.x > 760 && ball.y > 170 && ball.y < 1350 && !inShooterLane) {
-        trap = "right-wall";
-      }
-
-      if (!trap) {
-        ball.memory.sideTrapKey = null;
-        ball.memory.sideTrapTime = 0;
-        return;
-      }
-
-      if (ball.memory.sideTrapKey !== trap) {
-        ball.memory.sideTrapKey = trap;
-        ball.memory.sideTrapTime = 0;
-        ball.memory.sideTrapSampleX = ball.x;
-        ball.memory.sideTrapSampleY = ball.y;
-        return;
-      }
-
-      const sampleX = ball.memory.sideTrapSampleX ?? ball.x;
-      const sampleY = ball.memory.sideTrapSampleY ?? ball.y;
-      const movedDistance = Math.hypot(ball.x - sampleX, ball.y - sampleY);
-      const speed = Math.hypot(ball.vx, ball.vy);
-
-      if (movedDistance > 20 || speed > 220) {
-        ball.memory.sideTrapTime = 0;
-        ball.memory.sideTrapSampleX = ball.x;
-        ball.memory.sideTrapSampleY = ball.y;
-        return;
-      }
-
-      ball.memory.sideTrapTime = (ball.memory.sideTrapTime || 0) + dt;
-      if (ball.memory.sideTrapTime < 0.22 || recentHit(ball, `side-${trap}`, 0.75)) {
-        return;
-      }
-
-      stampHit(ball, `side-${trap}`);
-      ball.memory.sideTrapTime = 0;
-      ball.memory.sideTrapSampleX = ball.x;
-      ball.memory.sideTrapSampleY = ball.y;
-
-      if (trap === "left-wall") {
-        ball.x = Math.max(ball.x, 152);
-        ball.vx = Math.max(ball.vx, 420);
-        if (ball.y > 1100) {
-          ball.vy = Math.min(ball.vy, -700);
-        } else if (ball.y < 320) {
-          ball.vy = Math.max(ball.vy, 320);
-        } else {
-          ball.vy = Math.min(ball.vy, -180);
-        }
-      } else {
-        ball.x = Math.min(ball.x, 748);
-        ball.vx = Math.min(ball.vx, -420);
-        if (ball.y > 1100) {
-          ball.vy = Math.min(ball.vy, -700);
-        } else if (ball.y < 320) {
-          ball.vy = Math.max(ball.vy, 320);
-        } else {
-          ball.vy = Math.min(ball.vy, -180);
-        }
-      }
-
-      spawnParticles(ball.x, ball.y, "#9ce5ff", 12, 40, 160);
-      spawnFloater(ball.x, ball.y - 16, "KICKOUT", "#9ce5ff");
+      stampHit(ball, `rescue-${zone.key}`);
+      ball.memory.rescueTime = 0;
+      ball.memory.rescueSampleX = ball.x;
+      ball.memory.rescueSampleY = ball.y;
+      applyRescueZone(ball, zone);
     }
 
     function updateBallPhysics(ball, dt) {
-      const steps = Math.max(1, Math.ceil(dt / (1 / 240)));
+      const steps = Math.max(1, Math.ceil(dt / (1 / TUNING.physics.stepHz)));
       const step = dt / steps;
 
       for (let index = 0; index < steps; index += 1) {
@@ -1524,8 +1846,8 @@
         }
 
         ball.vy += GRAVITY * step;
-        ball.vx *= Math.pow(0.9994, step * 60);
-        ball.vy *= Math.pow(0.9996, step * 60);
+        ball.vx *= Math.pow(TUNING.physics.wallDragX, step * 60);
+        ball.vy *= Math.pow(TUNING.physics.wallDragY, step * 60);
         const speed = Math.hypot(ball.vx, ball.vy);
         if (speed > MAX_SPEED) {
           const scale = MAX_SPEED / speed;
@@ -1535,6 +1857,14 @@
 
         ball.x += ball.vx * step;
         ball.y += ball.vy * step;
+        ball.launchGrace = Math.max(0, (ball.launchGrace || 0) - step);
+
+        if (ball.launchGrace > 0 && ball.y < 340) {
+          ball.vx = clamp(ball.vx, -360, 240);
+          if (ball.y < 190) {
+            ball.vx *= 0.98;
+          }
+        }
 
         if (ball.y > 900) {
           ball.rampReady = true;
@@ -1554,24 +1884,26 @@
           ball.vx += (dx / length) * 120;
           ball.vy += (dy / length) * 120 - 160;
           awardPoints(bumper.score, bumper.x, bumper.y, bumper.color, "BUMPER", { flash: 0.14, shake: 6 });
+          playSound("bumper");
         });
 
-        if (collideBallFlipper(ball, flippers.left)) awardPoints(900, ball.x, ball.y, "#9ce5ff", "FLIP", { flash: 0.06, shake: 2 });
-        if (collideBallFlipper(ball, flippers.right)) awardPoints(900, ball.x, ball.y, "#9ce5ff", "FLIP", { flash: 0.06, shake: 2 });
+        collideBallFlipper(ball, flippers.left);
+        collideBallFlipper(ball, flippers.right);
 
         SLINGS.forEach((sling, slingIndex) => {
           if (ball.slingCooldown > 0) return;
           if (!pointInTriangle(ball.x, ball.y, sling.points[0], sling.points[1], sling.points[2])) return;
-          ball.slingCooldown = 0.18;
+          ball.slingCooldown = TUNING.slings.cooldown;
           sling.flash = 0.2;
           ball.vx += sling.impulseX;
           ball.vy += sling.impulseY;
-          awardPoints(1500, sling.points[1].x, sling.points[1].y + 20, sling.color, slingIndex === 0 ? "LEFT SLING" : "RIGHT SLING", {
+          awardPoints(TUNING.scoring.sling, sling.points[1].x, sling.points[1].y + 20, sling.color, slingIndex === 0 ? "LEFT SLING" : "RIGHT SLING", {
             ignoreMultiplier: true,
             ignoreFrenzy: true,
-            flash: 0.12,
-            shake: 5,
+            flash: 0.08,
+            shake: 3,
           });
+          playSound("sling");
         });
 
         TOP_LANES.forEach((lane, laneIndex) => {
@@ -1623,9 +1955,7 @@
           return;
         }
 
-        resolveLowerLaneTrap(ball, step);
-        resolveSideWallTrap(ball, step);
-        resolveCornerTrap(ball, step);
+        resolveRescueZones(ball, step);
 
         if (ball.x > WORLD.shooterLeft && ball.y > WORLD.shooterTop && !ball.heldInLauncher && ball.x + ball.r > WORLD.shooterLeft && ball.y < 1188) {
           ball.x = WORLD.shooterLeft - ball.r;
@@ -1830,14 +2160,15 @@
     function drawTopLanes() {
       TOP_LANES.forEach((lane, index) => {
         const lit = state.laneLights[index];
-        ctx.fillStyle = lit ? "rgba(138, 248, 207, 0.36)" : "rgba(118, 217, 255, 0.08)";
+        const skillLit = state.skillShotActive && state.skillShotTimer > 0 && !lit;
+        ctx.fillStyle = lit ? "rgba(138, 248, 207, 0.36)" : skillLit ? "rgba(255, 215, 138, 0.22)" : "rgba(118, 217, 255, 0.08)";
         drawRoundedRect(lane.x, lane.y, lane.w, lane.h, 14);
         ctx.fill();
-        ctx.strokeStyle = lit ? "rgba(138, 248, 207, 0.88)" : "rgba(118, 217, 255, 0.22)";
+        ctx.strokeStyle = lit ? "rgba(138, 248, 207, 0.88)" : skillLit ? "rgba(255, 215, 138, 0.84)" : "rgba(118, 217, 255, 0.22)";
         ctx.lineWidth = 2;
         drawRoundedRect(lane.x, lane.y, lane.w, lane.h, 14);
         ctx.stroke();
-        ctx.fillStyle = lit ? "#f7fff9" : "#b7d9ef";
+        ctx.fillStyle = lit ? "#f7fff9" : skillLit ? "#fff6de" : "#b7d9ef";
         ctx.font = "700 22px 'Trebuchet MS', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -1846,6 +2177,15 @@
     }
 
     function drawTargets() {
+      const bankReady = state.lockLit && !state.multiball.active;
+      if (bankReady) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(198, 160, 255, 0.7)";
+        ctx.lineWidth = 3;
+        drawRoundedRect(300, 440, 300, 146, 28);
+        ctx.stroke();
+        ctx.restore();
+      }
       DROP_TARGETS.forEach((target, index) => {
         if (!state.dropTargetUp[index]) return;
         ctx.fillStyle = "rgba(255, 168, 196, 0.92)";
@@ -1891,7 +2231,7 @@
       ctx.fillRect(-26, -5, 52, 10);
       ctx.restore();
 
-      const saucerGlow = state.lockLit || state.multiball.active ? "rgba(198, 160, 255, 0.85)" : "rgba(118, 217, 255, 0.45)";
+      const saucerGlow = state.lockLit || state.multiball.active ? "rgba(198, 160, 255, 0.92)" : "rgba(118, 217, 255, 0.45)";
       ctx.save();
       ctx.shadowColor = saucerGlow;
       ctx.shadowBlur = 24;
@@ -2116,6 +2456,7 @@
         heading = "RUN COMPLETE";
         subline = `Final score ${formatScore(state.score)} | Best ${formatScore(state.bestScore)}`;
       }
+      const attractTip = ATTRACT_TIPS[Math.floor(state.pulse * 0.45) % ATTRACT_TIPS.length];
 
       ctx.fillStyle = "#f4fbff";
       ctx.font = "800 54px Impact, 'Avenir Next Condensed', sans-serif";
@@ -2129,7 +2470,7 @@
 
       ctx.fillStyle = "#b8d7ec";
       ctx.font = "600 22px 'Trebuchet MS', sans-serif";
-      ctx.fillText("Shoot lanes. Complete the bank. Lock two balls. Explode into jackpots.", 450, 694);
+      ctx.fillText("Skill shot. Lanes. Bank. Lock. Multiball. Jackpot.", 450, 694);
 
       ctx.fillStyle = "#ffd78a";
       ctx.font = "800 22px 'Trebuchet MS', sans-serif";
@@ -2138,6 +2479,12 @@
       ctx.fillStyle = "#9cc9e6";
       ctx.font = "600 18px 'Trebuchet MS', sans-serif";
       ctx.fillText("Left/A and Right/D flip. Space launches. P pauses. F fullscreen.", 450, 818);
+
+      if (state.mode === "menu") {
+        ctx.fillStyle = "#dff6ff";
+        ctx.font = "600 18px 'Trebuchet MS', sans-serif";
+        ctx.fillText(attractTip, 450, 736);
+      }
     }
 
     function renderHud() {
@@ -2145,16 +2492,14 @@
       hudBest.textContent = formatScore(state.bestScore);
       hudBalls.textContent = String(state.ballStock);
       hudMult.textContent = `x${state.multiplier}${state.frenzyTimer > 0 ? " F" : ""}`;
-      hudMission.textContent = state.frenzyTimer > 0 ? `${state.frenzyTimer.toFixed(1)}s` : `${state.missionShots.size} / 4`;
-      hudLocks.textContent = state.multiball.active ? "MB RUNNING" : `${state.multiball.lockedBalls} / 2`;
+      hudMission.textContent = state.frenzyTimer > 0 ? `${state.frenzyTimer.toFixed(1)}s` : getMissionReadout();
+      hudLocks.textContent = state.multiball.active ? `${state.activeBalls.length} BALLS` : `${state.multiball.lockedBalls} / 2`;
       statusLine.textContent = state.highValueMessage;
-      pillMode.textContent = state.mode;
+      objectiveLine.textContent = `Objective: ${getCurrentObjective()}`;
+      pillMode.textContent = getActiveModeSummary();
       pillSaver.textContent = `Saver ${state.ballSaver.toFixed(1)}s`;
-      pillJackpot.textContent = state.multiball.active
-        ? `Jackpot ${formatScore(state.multiball.jackpotValue)}`
-        : state.lockLit
-          ? "Vortex Lock Lit"
-          : `Jackpot ${formatScore(state.multiball.jackpotValue)}`;
+      pillJackpot.textContent = getJackpotPillText();
+      updateControlLabels();
     }
 
     function render() {
@@ -2202,8 +2547,8 @@
     }
 
     function resetInputs() {
-      flippers.left.held = false;
-      flippers.right.held = false;
+      setFlipperHeld("left", false);
+      setFlipperHeld("right", false);
       state.launchHeld = false;
     }
 
@@ -2238,13 +2583,13 @@
 
       if (key === "arrowleft" || key === "a") {
         event.preventDefault();
-        flippers.left.held = true;
+        setFlipperHeld("left", true);
         return;
       }
 
       if (key === "arrowright" || key === "d") {
         event.preventDefault();
-        flippers.right.held = true;
+        setFlipperHeld("right", true);
         return;
       }
 
@@ -2276,6 +2621,12 @@
         return;
       }
 
+      if (key === "m") {
+        event.preventDefault();
+        toggleSound();
+        return;
+      }
+
       if (key === "escape" && document.fullscreenElement) {
         document.exitFullscreen?.().catch(() => {});
       }
@@ -2284,11 +2635,11 @@
     function handleKeyUp(event) {
       const key = event.key.toLowerCase();
       if (key === "arrowleft" || key === "a") {
-        flippers.left.held = false;
+        setFlipperHeld("left", false);
         return;
       }
       if (key === "arrowright" || key === "d") {
-        flippers.right.held = false;
+        setFlipperHeld("right", false);
         return;
       }
       if (key === " ") {
@@ -2371,6 +2722,10 @@
         multiplier: state.multiplier,
         combo: state.comboCount,
         ball_saver_seconds: Number(state.ballSaver.toFixed(2)),
+        launcher_ready: Boolean(getLauncherBall()),
+        current_objective: getCurrentObjective(),
+        active_mode_summary: getActiveModeSummary(),
+        rescue_count: state.rescueCount,
         skill_shot_active: state.skillShotActive,
         frenzy_seconds: Number(state.frenzyTimer.toFixed(2)),
         locks: {
@@ -2405,11 +2760,12 @@
           y: Number(ball.y.toFixed(1)),
           vx: Number(ball.vx.toFixed(1)),
           vy: Number(ball.vy.toFixed(1)),
+          ball_zone: getBallZone(ball),
           held_in_launcher: ball.heldInLauncher,
           captured: Boolean(ball.capture),
           on_ramp: Boolean(ball.path),
         })),
-        objective: "Light lanes for multiplier, complete the target bank for locks, start multiball, then cash jackpots at the Vortex.",
+        objective: "Skill shot the top lanes, complete the bank, lock balls at the Vortex, then cash jackpots in multiball.",
       };
       return JSON.stringify(payload);
     };
@@ -2428,14 +2784,14 @@
     });
 
     bindHoldButton("leftBtn", () => {
-      flippers.left.held = true;
+      setFlipperHeld("left", true);
     }, () => {
-      flippers.left.held = false;
+      setFlipperHeld("left", false);
     });
     bindHoldButton("rightBtn", () => {
-      flippers.right.held = true;
+      setFlipperHeld("right", true);
     }, () => {
-      flippers.right.held = false;
+      setFlipperHeld("right", false);
     });
     bindHoldButton("launchBtn", () => {
       if (state.mode === "menu" || state.mode === "gameover") startRun();
@@ -2445,13 +2801,16 @@
       launchHeldBall();
     });
 
-    document.getElementById("startBtn").addEventListener("click", () => {
+    startBtn.addEventListener("click", () => {
       startRun();
     });
-    document.getElementById("pauseBtn").addEventListener("click", () => {
+    pauseBtn.addEventListener("click", () => {
       togglePause();
     });
-    document.getElementById("fullscreenBtn").addEventListener("click", () => {
+    soundBtn.addEventListener("click", () => {
+      toggleSound();
+    });
+    fullscreenBtn.addEventListener("click", () => {
       toggleFullscreen();
     });
 
