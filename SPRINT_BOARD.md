@@ -279,3 +279,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
 - [nightly 2026-03-13] Tracked changes: 2 commit(s) - c593230 Add new game without emoji changes; 7fe8a6c Add favicon links across pages.
 - [nightly 2026-03-13] Key PR links: none merged for this date.
+- [nightly 2026-03-17] Tracked changes: 7 commit(s) - 6ebcaa8 Rebuild pinball experience; 6194e50 Confirm Asteroids touch controls; 1416c79 Add asteroid touch hint; e57a85d Add back button to games; a30d3e8 Add new game and fix coin; af62a8c Integrate Neon Pinball Rush; c43c7c2 Add new game to site.
+- [nightly 2026-03-17] Key PR links: none merged for this date.
