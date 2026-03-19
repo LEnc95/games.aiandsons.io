@@ -1296,3 +1296,21 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Confirmed `lightsout` references in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
 - Follow-up TODO:
   - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop in an environment that allows child-process spawn and Chromium launch.
+- New request (2026-03-19): add a game not currently on the site.
+- Implemented new standalone game page: `skywire/index.html` (Skywire Sprint).
+  - Gameplay: lane-switching hover bike runner with obstacle dodge, pickups, dash ability, escalating speed, win/loss states, and score/distance progression.
+  - Controls: desktop (A/D or arrows + Space/P/R/F) and mobile touch controls (left/right/dash/pause/restart).
+  - Platform hooks: `rememberRecent('skywire')`, coin payout via `addCoins`, progression pings via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated route/discovery wiring:
+  - Added `skywire` metadata entry in `src/meta/games.js`.
+  - Added `/skywire` rewrites and `/skywire/index.html` cache header in `vercel.json`.
+- Next: run `npm run test:shop` and Playwright skill-client validation for `/skywire`.
+- Validation results (this run):
+  - `npm.cmd run test:shop`: blocked in this sandbox (`spawn EPERM` while Node test runner launches child processes).
+  - Skill Playwright client run for `/skywire`: blocked in this sandbox (`browserType.launch: spawn EPERM` for Chromium).
+- Integration verification:
+  - Confirmed `skywire` references in `src/meta/games.js` and `vercel.json` via `rg`.
+  - Verified `vercel.json` parses successfully with `ConvertFrom-Json`.
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop in an environment that allows child-process spawn and Chromium launch.
