@@ -1314,3 +1314,22 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Verified `vercel.json` parses successfully with `ConvertFrom-Json`.
 - Follow-up TODO:
   - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop in an environment that allows child-process spawn and Chromium launch.
+
+## 2026-03-20 Starfield Dodger Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `starfielddodger/index.html` (Starfield Dodger).
+  - Gameplay: five-lane dodge-and-collect runner with meteor hazards, star pickups, shield health, dash ability, timed mission win/loss flow, scoring, and persistent best score.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (left/right/dash plus pause/restart/fullscreen buttons).
+  - Platform hooks: `rememberRecent('starfielddodger')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `starfielddodger` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/starfielddodger` rewrites and `/starfielddodger/index.html` cache header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "starfielddodger" ...` integration check: pass (references found in game page, metadata, homepage, and vercel config).
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - `$WEB_GAME_CLIENT` Playwright run for `/starfielddodger`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and Playwright gameplay validation for `/starfielddodger` in an environment that allows Chromium/process spawn.

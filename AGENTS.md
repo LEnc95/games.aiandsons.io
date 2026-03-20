@@ -12,6 +12,7 @@ Operational command reference for contributors and automations in this repositor
 - Run release policy gate: `npm run test:policy-gate`
 
 ## Raw Smoke Commands (require pre-started server at http://127.0.0.1:4173)
+- Classroom mode: `npm run test:classroom-smoke:raw`
 - Discovery/search + shop filter: `npm run test:discovery-smoke:raw`
 - Daily missions: `npm run test:missions-smoke:raw`
 - Weekly challenges: `npm run test:weekly-smoke:raw`
@@ -31,4 +32,4 @@ Operational command reference for contributors and automations in this repositor
 - Stripe reconcile/audit pass: `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
 
 ## TODO
-- Confirm a single canonical local server command that binds to `127.0.0.1:4173` for all `*:raw` smoke runs.
+- Confirm whether `python -m http.server 4173` is the canonical local server command and if an explicit `127.0.0.1` bind is required for all `*:raw` smoke runs.
