@@ -273,7 +273,7 @@
   </div>
 
   <script type="module">
-    import { addCoins, getCoins } from '/src/core/storage.js';
+    import { get, set } from '/src/core/storage.js';
     import { maybeUnlock } from '/src/prog/achievements.js';
 
     const canvas = document.getElementById('game');
@@ -301,6 +301,7 @@
     const SHIP_Y = 612;
     const BASE_SCROLL = 280;
     const STAR_CHANCE = 0.3;
+    const COIN_KEY = 'coins';
 
     const state = {
       mode: 'menu',
@@ -329,6 +330,16 @@
 
     let rafId = 0;
     let previousTime = performance.now();
+
+    function getCoins() {
+      return Number(get(COIN_KEY, 0) || 0);
+    }
+
+    function addCoins(amount) {
+      const coins = Math.max(0, getCoins() + Math.max(0, Math.floor(amount)));
+      set(COIN_KEY, coins);
+      return coins;
+    }
 
     function laneToX(lane) {
       const laneWidth = canvas.width / LANE_COUNT;

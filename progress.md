@@ -1333,3 +1333,12 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - `$WEB_GAME_CLIENT` Playwright run for `/starfielddodger`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:shop` and Playwright gameplay validation for `/starfielddodger` in an environment that allows Chromium/process spawn.
+
+## 2026-03-20 Starfield Dodger Startup Fix
+- User report: game page loaded but gameplay script never started.
+- Root cause: `starfielddodger/index.html` imported `addCoins` and `getCoins` from `/src/core/storage.js`, but that module only exports `get`, `set`, and `del`.
+- Fix applied:
+  - Switched import to `get`/`set`.
+  - Added local coin helpers in the game file: `getCoins()` + `addCoins(amount)` backed by namespaced storage key `coins`.
+- Result: module import mismatch removed; startup blocker resolved at source.
+- Validation note: full headless runtime smoke is not available in this environment right now because local Playwright package is not installed in `node_modules`.

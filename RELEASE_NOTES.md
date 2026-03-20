@@ -1,12 +1,12 @@
 # Release Notes - Sprint 6 Launch Candidate
-## Weekly Highlights (2026-03-07 to 2026-03-13)
-- Added Doodle Jump to launcher metadata and routing support.
-- Added Hangman with computer/friend modes, then shipped friend-input and mobile keyboard visibility fixes plus a kid-friendly dynamic word pack.
-- Added Treasure Maze and Neon Rally entries and updated launcher routing/index coverage.
-- Added Water Balloon Code Duel with metadata, index, and route wiring.
-- Added Whack-a-Mole Blitz and rolled out favicon links across core pages.
+## Weekly Highlights (2026-03-14 to 2026-03-20)
+- Added multiple game integrations to launcher metadata and routing, including `orbitalrescue`, `pinball`, `lightsout`, `skywire`, and `starfielddodger`.
+- Rebuilt and stabilized `pinball/index.html` with follow-up fixes for skill lane behavior and corner/side-wall trap states.
+- Added Asteroids touch UX support by introducing an in-game touch hint and validating touch controls.
+- Added shared back-navigation support in game pages via `microrc/index.html`.
+- Updated release tracking artifacts, including this release notes log and sprint progress documentation.
 
-## Key PR Links (2026-03-07 to 2026-03-13)
+## Key PR Links (2026-03-14 to 2026-03-20)
 - No merged pull requests found in repository history for this date window.
 
 ## Release Scope
