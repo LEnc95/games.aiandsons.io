@@ -1342,3 +1342,22 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Added local coin helpers in the game file: `getCoins()` + `addCoins(amount)` backed by namespaced storage key `coins`.
 - Result: module import mismatch removed; startup blocker resolved at source.
 - Validation note: full headless runtime smoke is not available in this environment right now because local Playwright package is not installed in `node_modules`.
+
+## 2026-03-21 Reaction Grid Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `reactiongrid/index.html` (Reaction Grid).
+  - Gameplay: 8-direction shield defense where incoming bolts converge on the core; player rotates shield to block and uses a cooldown pulse blast to clear close threats.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (left/right/pulse plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('reactiongrid')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `reactiongrid` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/reactiongrid` rewrites and `/reactiongrid/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "reactiongrid" ...` integration check: pass (references found in game page, metadata, homepage, and vercel config).
+  - `Get-Content vercel.json -Raw | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - `$WEB_GAME_CLIENT` Playwright run for `/reactiongrid`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and Playwright gameplay validation for `/reactiongrid` in an environment that allows Chromium/process spawn.

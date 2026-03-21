@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Reaction Grid</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg0: #070d1d;
+      --bg1: #112448;
+      --panel: rgba(8, 18, 34, 0.86);
+      --line: rgba(142, 204, 255, 0.34);
+      --text: #ecf6ff;
+      --muted: #afcae8;
+      --good: #95f7c3;
+      --warn: #ffd690;
+      --bad: #ff9fb1;
+      --pulse: #7cdcff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(120% 84% at 14% 8%, #295394 0%, transparent 58%),
+        radial-gradient(86% 80% at 84% 88%, #1a3667 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.44);
+      backdrop-filter: blur(4px);
+    }
+    .back-home:hover { background: rgba(0, 0, 0, 0.62); }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(62dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(146, 201, 255, 0.6);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #142d59 0%, #091733 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 640px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 95, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    button:hover { filter: brightness(1.08); }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(173, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .chip.pulse b { color: var(--pulse); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 82px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Reaction Grid game board"></canvas>
+
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Reaction Grid</h1>
+          <p>Rotate your shield to block incoming bolts from eight directions. Survive 80 seconds to clear the grid.</p>
+          <p>Desktop: Left/Right or A/D rotate, Space pulse blast, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use Left and Right to rotate, Pulse to clear nearby threats.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Defense</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Time</span><b id="hudTime">80.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Blocks</span><b id="hudBlocks">0</b></div>
+      <div class="chip"><span>Leaks</span><b id="hudLeaks">0</b></div>
+      <div class="chip bad"><span>Health</span><b id="hudHealth">5</b></div>
+      <div class="chip pulse"><span>Pulse</span><b id="hudPulse">READY</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">L</button>
+        <button type="button" id="btnRight">R</button>
+      </div>
+      <div class="hint">Perfect blocks score extra. Pulse has cooldown but destroys close bolts in any direction.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPulse" class="wide">Pulse</button>
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
+    const overlayFsBtn = document.getElementById('overlayFsBtn');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    const btnPulse = document.getElementById('btnPulse');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudBlocks = document.getElementById('hudBlocks');
+    const hudLeaks = document.getElementById('hudLeaks');
+    const hudHealth = document.getElementById('hudHealth');
+    const hudPulse = document.getElementById('hudPulse');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const TOTAL_TIME = 80;
+    const DIRECTION_COUNT = 8;
+    const CENTER = { x: canvas.width * 0.5, y: canvas.height * 0.52 };
+    const OUTER_RADIUS = 340;
+    const HIT_RADIUS = 88;
+    const BOLT_BASE_SPEED = 180;
+
+    const state = {
+      mode: 'menu',
+      timeLeft: TOTAL_TIME,
+      score: 0,
+      blocks: 0,
+      leaks: 0,
+      health: 5,
+      shieldDir: 0,
+      shieldTurnCooldown: 0,
+      pulseCooldown: 0,
+      pulseFlash: 0,
+      spawnTimer: 0.7,
+      bolts: [],
+      sparks: [],
+      runCoinsEarned: 0,
+      result: 'none',
+      hasRemembered: false,
+      flashRed: 0,
+    };
+
+    const input = {
+      left: false,
+      right: false,
+    };
+
+    let rafId = 0;
+    let previousTime = performance.now();
+    let controlledStep = false;
+
+    function dirAngle(dir) {
+      return -Math.PI / 2 + (dir * Math.PI * 2) / DIRECTION_COUNT;
+    }
+
+    function wrapDir(dir) {
+      const mod = ((dir % DIRECTION_COUNT) + DIRECTION_COUNT) % DIRECTION_COUNT;
+      return mod;
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Defense') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: Left/Right or A/D rotate, Space pulse, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function hideOverlay() {
+      overlayEl.classList.remove('show');
+    }
+
+    function spawnBolt() {
+      const dir = Math.floor(Math.random() * DIRECTION_COUNT);
+      const angle = dirAngle(dir);
+      const x = CENTER.x + Math.cos(angle) * OUTER_RADIUS;
+      const y = CENTER.y + Math.sin(angle) * OUTER_RADIUS;
+      const speed = BOLT_BASE_SPEED + Math.random() * 120 + (TOTAL_TIME - state.timeLeft) * 2.2;
+      state.bolts.push({
+        dir,
+        angle,
+        x,
+        y,
+        dist: OUTER_RADIUS,
+        speed,
+        radius: 13,
+      });
+    }
+
+    function addSpark(x, y, color, count = 9) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 50 + Math.random() * 180;
+        state.sparks.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          age: 0,
+          life: 0.32 + Math.random() * 0.25,
+        });
+      }
+    }
+
+    function rewardRun(result) {
+      const timeBonus = Math.floor((TOTAL_TIME - state.timeLeft) / 8);
+      const scoreBonus = Math.floor(state.score / 45);
+      const finishBonus = result === 'win' ? 8 : 0;
+      const coins = Math.max(2, timeBonus + scoreBonus + finishBonus);
+      state.runCoinsEarned = coins;
+      try {
+        addCoins(coins);
+      } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          reactiongrid: {
+            score: state.score,
+            blocks: state.blocks,
+            leaks: state.leaks,
+            result,
+            time_survived: Number((TOTAL_TIME - state.timeLeft).toFixed(2)),
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      setModeOverlay(
+        result === 'win' ? 'Grid Stabilized' : 'Grid Breached',
+        result === 'win'
+          ? `You held the line for ${TOTAL_TIME}s. Score ${state.score}, coins earned ${state.runCoinsEarned}.`
+          : `Too many leaks reached core control. Score ${state.score}, coins earned ${state.runCoinsEarned}.`,
+        'Play Again'
+      );
+      updateHud();
+    }
+
+    function startRun() {
+      state.mode = 'playing';
+      state.timeLeft = TOTAL_TIME;
+      state.score = 0;
+      state.blocks = 0;
+      state.leaks = 0;
+      state.health = 5;
+      state.shieldDir = 0;
+      state.shieldTurnCooldown = 0;
+      state.pulseCooldown = 0;
+      state.pulseFlash = 0;
+      state.spawnTimer = 0.7;
+      state.bolts = [];
+      state.sparks = [];
+      state.runCoinsEarned = 0;
+      state.result = 'none';
+      state.flashRed = 0;
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('reactiongrid'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, reactiongrid: { score: 0, result: 'started' } }); } catch {}
+      hideOverlay();
+      updateHud();
+    }
+
+    function tryRotate(delta) {
+      if (state.mode !== 'playing') return;
+      if (state.shieldTurnCooldown > 0) return;
+      state.shieldDir = wrapDir(state.shieldDir + delta);
+      state.shieldTurnCooldown = 0.08;
+    }
+
+    function tryPulse() {
+      if (state.mode !== 'playing') return;
+      if (state.pulseCooldown > 0) return;
+      state.pulseCooldown = 4.2;
+      state.pulseFlash = 0.28;
+      let removed = 0;
+      for (let i = state.bolts.length - 1; i >= 0; i -= 1) {
+        if (state.bolts[i].dist < 170) {
+          removed += 1;
+          addSpark(state.bolts[i].x, state.bolts[i].y, '#7de1ff', 8);
+          state.bolts.splice(i, 1);
+        }
+      }
+      if (removed > 0) {
+        state.score += removed * 12;
+      }
+    }
+
+    function isBlocked(dir) {
+      const diff = Math.min(
+        Math.abs(dir - state.shieldDir),
+        DIRECTION_COUNT - Math.abs(dir - state.shieldDir)
+      );
+      return diff <= 0;
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'System hold engaged. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hideOverlay();
+      }
+      updateHud();
+    }
+
+    function resetInputs() {
+      input.left = false;
+      input.right = false;
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      if (input.left) tryRotate(-1);
+      if (input.right) tryRotate(1);
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.shieldTurnCooldown = Math.max(0, state.shieldTurnCooldown - dt);
+      state.pulseCooldown = Math.max(0, state.pulseCooldown - dt);
+      state.pulseFlash = Math.max(0, state.pulseFlash - dt);
+      state.flashRed = Math.max(0, state.flashRed - dt);
+
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnBolt();
+        const elapsed = TOTAL_TIME - state.timeLeft;
+        state.spawnTimer = Math.max(0.23, 0.85 - elapsed * 0.005 + Math.random() * 0.16);
+      }
+
+      for (let i = state.bolts.length - 1; i >= 0; i -= 1) {
+        const bolt = state.bolts[i];
+        bolt.dist -= bolt.speed * dt;
+        bolt.x = CENTER.x + Math.cos(bolt.angle) * bolt.dist;
+        bolt.y = CENTER.y + Math.sin(bolt.angle) * bolt.dist;
+
+        if (bolt.dist > HIT_RADIUS) continue;
+
+        if (isBlocked(bolt.dir)) {
+          state.blocks += 1;
+          state.score += 16;
+          addSpark(bolt.x, bolt.y, '#9bf7c6', 8);
+        } else {
+          state.leaks += 1;
+          state.health -= 1;
+          state.flashRed = 0.22;
+          state.score = Math.max(0, state.score - 10);
+          addSpark(CENTER.x, CENTER.y, '#ff9aae', 13);
+          if (state.health <= 0) {
+            state.bolts.splice(i, 1);
+            finishRun('loss');
+            return;
+          }
+        }
+        state.bolts.splice(i, 1);
+      }
+
+      for (let i = state.sparks.length - 1; i >= 0; i -= 1) {
+        const p = state.sparks[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          state.sparks.splice(i, 1);
+          continue;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 120 * dt;
+      }
+
+      state.score += Math.floor(dt * 4.5);
+      if (state.timeLeft <= 0) {
+        finishRun('win');
+      }
+    }
+
+    function drawBackdrop() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#15366d');
+      grad.addColorStop(0.5, '#0e2145');
+      grad.addColorStop(1, '#081229');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const rings = [110, 170, 230, 290, 350];
+      for (let i = 0; i < rings.length; i += 1) {
+        ctx.strokeStyle = `rgba(128, 188, 255, ${0.12 + i * 0.03})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(CENTER.x, CENTER.y, rings[i], 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      for (let d = 0; d < DIRECTION_COUNT; d += 1) {
+        const angle = dirAngle(d);
+        const ex = CENTER.x + Math.cos(angle) * OUTER_RADIUS;
+        const ey = CENTER.y + Math.sin(angle) * OUTER_RADIUS;
+        ctx.strokeStyle = 'rgba(146, 202, 255, 0.18)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(CENTER.x, CENTER.y);
+        ctx.lineTo(ex, ey);
+        ctx.stroke();
+      }
+
+      if (state.flashRed > 0) {
+        ctx.fillStyle = `rgba(255, 66, 96, ${state.flashRed * 0.55})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function drawShield() {
+      const angle = dirAngle(state.shieldDir);
+      const span = Math.PI / 8;
+      ctx.strokeStyle = '#8fe8ff';
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.arc(CENTER.x, CENTER.y, HIT_RADIUS + 10, angle - span, angle + span);
+      ctx.stroke();
+
+      ctx.fillStyle = '#dff6ff';
+      ctx.beginPath();
+      ctx.arc(CENTER.x, CENTER.y, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#4ecfff';
+      ctx.beginPath();
+      ctx.arc(CENTER.x, CENTER.y, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.pulseFlash > 0) {
+        const alpha = state.pulseFlash / 0.28;
+        ctx.strokeStyle = `rgba(134, 226, 255, ${0.45 * alpha})`;
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(CENTER.x, CENTER.y, 160 + (1 - alpha) * 80, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawBolts() {
+      for (const bolt of state.bolts) {
+        ctx.fillStyle = '#ff839f';
+        ctx.beginPath();
+        ctx.arc(bolt.x, bolt.y, bolt.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffd4de';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bolt.x, bolt.y);
+        ctx.lineTo(CENTER.x + (bolt.x - CENTER.x) * 0.84, CENTER.y + (bolt.y - CENTER.y) * 0.84);
+        ctx.stroke();
+      }
+
+      for (const p of state.sparks) {
+        const alpha = Math.max(0, 1 - p.age / p.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(8, 18, 36, 0.7)';
+      ctx.fillRect(14, 12, 400, 60);
+      ctx.strokeStyle = 'rgba(139, 203, 255, 0.46)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 400, 60);
+
+      ctx.fillStyle = '#f0f8ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Reaction Grid', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c4daf6';
+      const pulse = state.pulseCooldown > 0 ? `${state.pulseCooldown.toFixed(1)}s` : 'READY';
+      ctx.fillText(`Shield ${state.shieldDir + 1}/8 | Pulse ${pulse}`, 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      drawBackdrop();
+      drawBolts();
+      drawShield();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudBlocks.textContent = String(state.blocks);
+      hudLeaks.textContent = String(state.leaks);
+      hudHealth.textContent = String(Math.max(0, state.health));
+      hudPulse.textContent = state.pulseCooldown > 0 ? `${state.pulseCooldown.toFixed(1)}s` : 'READY';
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+      hudHealth.parentElement.classList.toggle('warn', state.health === 2);
+      hudHealth.parentElement.classList.toggle('bad', state.health <= 1);
+      hudHealth.parentElement.classList.toggle('good', state.health >= 4);
+      hudPulse.parentElement.classList.toggle('warn', state.pulseCooldown > 0);
+      hudPulse.parentElement.classList.toggle('good', state.pulseCooldown <= 0);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function onKeyChange(code, down) {
+      if (code === 'ArrowLeft' || code === 'KeyA') input.left = down;
+      if (code === 'ArrowRight' || code === 'KeyD') input.right = down;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'Space') {
+        event.preventDefault();
+        tryPulse();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+      onKeyChange(event.code, true);
+    });
+
+    window.addEventListener('keyup', (event) => {
+      onKeyChange(event.code, false);
+    });
+
+    window.addEventListener('blur', resetInputs);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) resetInputs();
+    });
+
+    function bindHold(button, onDown, onUp) {
+      let pointerId = null;
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        pointerId = event.pointerId;
+        button.setPointerCapture?.(pointerId);
+        onDown();
+      });
+      button.addEventListener('pointerup', () => {
+        pointerId = null;
+        onUp();
+      });
+      button.addEventListener('pointercancel', () => {
+        pointerId = null;
+        onUp();
+      });
+      button.addEventListener('lostpointercapture', () => {
+        if (pointerId !== null) {
+          pointerId = null;
+          onUp();
+        }
+      });
+      button.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse' && pointerId !== null) {
+          pointerId = null;
+          onUp();
+        }
+      });
+    }
+
+    bindHold(btnLeft, () => {
+      input.left = true;
+      tryRotate(-1);
+    }, () => { input.left = false; });
+
+    bindHold(btnRight, () => {
+      input.right = true;
+      tryRotate(1);
+    }, () => { input.right = false; });
+
+    btnPulse.addEventListener('click', () => tryPulse());
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    startBtn.addEventListener('click', () => startRun());
+    overlayFsBtn.addEventListener('click', () => toggleFullscreen());
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'reactiongrid',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left, +x right, +y down, center target at (600,390), shield direction index 0 starts up and increments clockwise',
+        objective: {
+          survive_seconds: TOTAL_TIME,
+          time_left: Number(state.timeLeft.toFixed(2)),
+        },
+        player: {
+          health: state.health,
+          shield_dir: state.shieldDir,
+          pulse_cooldown_s: Number(state.pulseCooldown.toFixed(2)),
+        },
+        score: state.score,
+        blocks: state.blocks,
+        leaks: state.leaks,
+        bolts_visible: state.bolts.slice(0, 12).map((bolt) => ({
+          dir: bolt.dir,
+          x: Number(bolt.x.toFixed(1)),
+          y: Number(bolt.y.toFixed(1)),
+          distance_to_center: Number(bolt.dist.toFixed(1)),
+          speed: Number(bolt.speed.toFixed(1)),
+        })),
+        coins: Number(profileState?.coins || 0),
+        result: state.result,
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+</body>
+</html>
