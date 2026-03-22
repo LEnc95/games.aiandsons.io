@@ -204,6 +204,8 @@ function normalizeStoredSubmission(source) {
     duplicateOf: normalizeSingleLine(raw.duplicateOf, 80),
     agentBriefPreparedAt: normalizeInteger(raw.agentBriefPreparedAt, { min: 0, fallback: 0 }),
     lastSyncError: normalizeMultiline(raw.lastSyncError, 500),
+    lastSlackAlertAt: normalizeInteger(raw.lastSlackAlertAt, { min: 0, fallback: 0 }),
+    lastSlackAlertKey: normalizeSingleLine(raw.lastSlackAlertKey, 240),
   };
 }
 

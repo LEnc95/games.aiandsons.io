@@ -39,19 +39,23 @@ test("buildSlackPayload includes workflow metadata and run link", () => {
     workflowName: "Nightly Launch Readiness",
     status: "failure",
     runUrl: "https://github.com/org/repo/actions/runs/123",
+    artifactsUrl: "https://github.com/org/repo/actions/runs/123/artifacts",
     repository: "LEnc95/games.aiandsons.io",
     branch: "main",
     sha: "1234567890abcdef",
     actor: "LEnc95",
     eventName: "workflow_dispatch",
     runNumber: "20",
+    provisionSummary: "0 labels created, 38 already present, 0 warnings.",
   });
 
   assert.equal(typeof payload.text, "string");
   assert.equal(payload.text.includes("Nightly Launch Readiness failed"), true);
   assert.equal(Array.isArray(payload.blocks), true);
   assert.equal(payload.blocks[1].fields.some((field) => field.text.includes("LEnc95/games.aiandsons.io")), true);
-  assert.equal(payload.blocks[2].elements[0].url, "https://github.com/org/repo/actions/runs/123");
+  assert.equal(payload.blocks[2].text.text.includes("Provisioning Summary"), true);
+  assert.equal(payload.blocks[3].elements[0].url, "https://github.com/org/repo/actions/runs/123");
+  assert.equal(payload.blocks[3].elements[1].url, "https://github.com/org/repo/actions/runs/123/artifacts");
 });
 
 test("sendSlackNotification posts JSON payload to the provided webhook", async () => {
@@ -114,6 +118,8 @@ test("runSlackNotificationFromEnv sends failures through global fetch", async (t
     WORKFLOW_NAME: "Daily Feedback Provisioning",
     WORKFLOW_STATUS: "failure",
     WORKFLOW_RUN_URL: "https://github.com/org/repo/actions/runs/456",
+    WORKFLOW_ARTIFACTS_URL: "https://github.com/org/repo/actions/runs/456/artifacts",
+    WORKFLOW_PROVISION_SUMMARY: "1 label created, 0 warnings, 1 baseline created.",
     GITHUB_REPOSITORY: "LEnc95/games.aiandsons.io",
     GITHUB_REF_NAME: "main",
     GITHUB_SHA: "abcdef1234567890",
@@ -128,4 +134,6 @@ test("runSlackNotificationFromEnv sends failures through global fetch", async (t
   assert.equal(request.url, "https://hooks.slack.test/services/abc");
   const payload = JSON.parse(request.options.body);
   assert.equal(payload.text.includes("Daily Feedback Provisioning failed"), true);
+  assert.equal(payload.blocks[2].text.text.includes("1 label created"), true);
+  assert.equal(payload.blocks[3].elements[1].url, "https://github.com/org/repo/actions/runs/456/artifacts");
 });

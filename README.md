@@ -371,6 +371,7 @@ Slack automation notifications:
 2. Add the GitHub Actions secret `SLACK_CI_WEBHOOK_URL` with a Slack Incoming Webhook for your ops channel.
 3. Notifications default to failures/cancellations only, which keeps the channel useful instead of noisy.
 4. If you also want green runs posted, add the GitHub repository variable `SLACK_NOTIFY_SUCCESS=true`.
+5. Production feedback sync failures can alert the same channel from the app runtime when Vercel has `SLACK_FEEDBACK_WEBHOOK_URL` set. You can also mirror the same value into `SLACK_CI_WEBHOOK_URL` server-side if you want one shared alert channel.
 
 ## Daily Game Ship Checklist
 
@@ -396,6 +397,7 @@ Slack automation notifications:
 - If `LINEAR_PROJECT_ID` is configured, new games can get their baseline issue provisioned automatically before the first player report lands.
 - If the API key cannot create labels, baseline issue creation still works best-effort, but new per-game labels may need a one-time manual seed or a stronger key.
 - GitHub workflow alerts can also be sent to Slack with `SLACK_CI_WEBHOOK_URL`.
+- Production feedback sync failures can alert Slack too when `SLACK_FEEDBACK_WEBHOOK_URL` is set in the app environment.
 
 ## Stripe billing setup (optional)
 

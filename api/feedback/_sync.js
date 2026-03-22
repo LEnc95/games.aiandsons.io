@@ -1,4 +1,5 @@
 const { isLinearConfigured, createFeedbackIssue, createIssueComment } = require("./_linear");
+const { sendFeedbackFailureAlert } = require("./_slack");
 const { updateFeedbackSubmission } = require("./_store");
 
 async function ensureFeedbackSubmissionSynced(submission, { failureStatus = "failed" } = {}) {
@@ -22,10 +23,18 @@ async function ensureFeedbackSubmissionSynced(submission, { failureStatus = "fai
       lastSyncError: "",
     });
   } catch (error) {
-    return updateFeedbackSubmission(submission.id, {
+    const updated = await updateFeedbackSubmission(submission.id, {
       syncStatus: failureStatus,
       lastSyncError: String(error && error.message ? error.message : error).slice(0, 500),
     });
+    try {
+      await sendFeedbackFailureAlert(updated, {
+        eventType: "feedback_linear_sync_failed",
+      });
+    } catch {
+      // Best effort only; feedback submission handling should not fail because Slack alerting is unavailable.
+    }
+    return updated;
   }
 }
 

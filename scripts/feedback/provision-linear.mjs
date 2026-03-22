@@ -27,6 +27,27 @@ function formatBaselineSummary(result) {
   return `Baselines: ${createdCount} created, ${existingCount} already present, ${errorCount} warnings.`;
 }
 
+export function summarizeProvisionResult(result, config = {}) {
+  const createdLabels = Array.isArray(result?.createdLabels) ? result.createdLabels.length : 0;
+  const labelWarnings = Array.isArray(result?.labelErrors) ? result.labelErrors.length : 0;
+  const baselineResults = Array.isArray(result?.baselineResults) ? result.baselineResults : [];
+  const baselinesCreated = baselineResults.filter((entry) => entry.created).length;
+  const baselinesExisting = baselineResults.filter((entry) => entry.issue && !entry.created).length;
+  const baselineWarnings = baselineResults.filter((entry) => entry.error).length;
+  const baselineSummary = config?.projectId
+    ? `${baselinesCreated} baselines created, ${baselinesExisting} already present, ${baselineWarnings} warnings`
+    : "baseline provisioning skipped";
+
+  return {
+    labelsCreated: createdLabels,
+    labelWarnings,
+    baselinesCreated,
+    baselinesExisting,
+    baselineWarnings,
+    text: `${createdLabels} labels created, ${labelWarnings} label warnings, ${baselineSummary}.`,
+  };
+}
+
 export async function runFeedbackLinearProvision({
   silentWhenNotConfigured = false,
 } = {}) {
@@ -71,6 +92,7 @@ export async function runFeedbackLinearProvision({
     skipped: false,
     config,
     result,
+    summary: summarizeProvisionResult(result, config),
   };
 }
 

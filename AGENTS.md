@@ -41,6 +41,7 @@ Operational command reference for contributors and automations in this repositor
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
 - Slack notifications for those workflows use the `SLACK_CI_WEBHOOK_URL` Actions secret and notify on failures by default.
+- Production feedback sync failures can post to Slack from the deployed app when `SLACK_FEEDBACK_WEBHOOK_URL` is set in Vercel.
 
 ## Daily Game Checklist
 - Add the game route and update `src/meta/games.js`

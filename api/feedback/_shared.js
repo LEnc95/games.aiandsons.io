@@ -546,6 +546,8 @@ function createFeedbackSubmissionRecord(payload, {
     duplicateOf: "",
     agentBriefPreparedAt: 0,
     lastSyncError: "",
+    lastSlackAlertAt: 0,
+    lastSlackAlertKey: "",
   };
 }
 

@@ -31,6 +31,7 @@ const originalEnv = {
   LINEAR_PROJECT_ID: process.env.LINEAR_PROJECT_ID,
   APP_SESSION_SECRET: process.env.APP_SESSION_SECRET,
   APP_BASE_URL: process.env.APP_BASE_URL,
+  SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
 };
 const originalFetch = global.fetch;
 let lastLinearIssueCreateInput = null;
@@ -246,6 +247,7 @@ test.beforeEach(() => {
   process.env.LINEAR_PROJECT_ID = "";
   process.env.APP_SESSION_SECRET = "feedback_test_secret";
   process.env.APP_BASE_URL = "https://games.aiandsons.test";
+  delete process.env.SLACK_FEEDBACK_WEBHOOK_URL;
   global.fetch = originalFetch;
   lastLinearIssueCreateInput = null;
   lastLinearIssueUpdateInput = null;
@@ -401,6 +403,45 @@ test("feedback submit falls back to pending sync when Linear issue creation fail
   assert.equal(saved.linearIssueIdentifier, "");
 });
 
+test("feedback submit sends a Slack ops alert when Linear sync fails", async () => {
+  process.env.LINEAR_API_KEY = "linear_token";
+  process.env.LINEAR_TEAM_ID = "team_123";
+  process.env.SLACK_FEEDBACK_WEBHOOK_URL = "https://hooks.slack.test/services/feedback";
+
+  const slackRequests = [];
+  global.fetch = async (url, options = {}) => {
+    if (String(url).includes("hooks.slack.test")) {
+      slackRequests.push({ url, options });
+      return {
+        ok: true,
+        async text() {
+          return "ok";
+        },
+      };
+    }
+    throw new Error("linear_down");
+  };
+
+  const { json } = await invoke(submitHandler, {
+    method: "POST",
+    url: "/api/feedback/submit",
+    body: {
+      gameSlug: "pong",
+      kind: "bug",
+      summary: "Slack failure report",
+      details: "This report should send an ops alert.",
+    },
+  });
+
+  const saved = await getFeedbackSubmission(json.submissionId);
+  assert.equal(saved.syncStatus, "pending");
+  assert.equal(saved.lastSlackAlertAt > 0, true);
+  assert.equal(slackRequests.length, 1);
+  const payload = JSON.parse(slackRequests[0].options.body);
+  assert.equal(payload.text.includes("Feedback Linear Sync Failed"), true);
+  assert.equal(payload.blocks[3].elements[0].url, "https://games.aiandsons.test/ops/feedback/index.html");
+});
+
 test("feedback submit parents new issues under the matching game baseline when available", async () => {
   process.env.LINEAR_API_KEY = "linear_token";
   process.env.LINEAR_TEAM_ID = "team_123";
@@ -551,6 +592,8 @@ test("feedback admin prepare-agent-task returns markdown and updates triage stat
     duplicateOf: "",
     agentBriefPreparedAt: 0,
     lastSyncError: "",
+    lastSlackAlertAt: 0,
+    lastSlackAlertKey: "",
   });
 
   const listed = await invoke(listHandler, {

@@ -127,6 +127,7 @@ Manual smoke checklist after edits:
 - Nightly CI can also run `npm run feedback:provision-linear` when `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optional `LINEAR_PROJECT_ID` are configured as repository secrets.
 - `.github/workflows/daily-feedback-provisioning.yml` exists as the lightweight daily backfill path for missing Linear labels and baseline issues.
 - GitHub workflow alerts can be forwarded to Slack with the `SLACK_CI_WEBHOOK_URL` Actions secret; success notifications remain opt-in through `SLACK_NOTIFY_SUCCESS=true`.
+- Production feedback sync failures can also alert Slack when the runtime environment exposes `SLACK_FEEDBACK_WEBHOOK_URL`.
 - On loopback hosts, the browser feedback client intentionally falls back to stub mode unless `?feedbackApiProbe=1` is present.
 
 ## 8) Known pitfalls to avoid

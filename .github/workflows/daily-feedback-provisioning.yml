@@ -32,11 +32,30 @@ jobs:
         run: npm run feedback:check-daily
 
       - name: Provision Linear Feedback Resources
+        id: provision
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           LINEAR_TEAM_ID: ${{ secrets.LINEAR_TEAM_ID }}
           LINEAR_PROJECT_ID: ${{ secrets.LINEAR_PROJECT_ID }}
-        run: npm run feedback:provision-linear
+        shell: bash
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          import { runFeedbackLinearProvision } from "./scripts/feedback/provision-linear.mjs";
+
+          const outcome = await runFeedbackLinearProvision();
+          const summary = outcome.summary || {};
+          if (process.env.GITHUB_OUTPUT) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, [
+              `summary_text=${String(summary.text || "").replace(/[\r\n]+/g, " ")}`,
+              `labels_created=${summary.labelsCreated ?? 0}`,
+              `label_warnings=${summary.labelWarnings ?? 0}`,
+              `baselines_created=${summary.baselinesCreated ?? 0}`,
+              `baselines_existing=${summary.baselinesExisting ?? 0}`,
+              `baseline_warnings=${summary.baselineWarnings ?? 0}`,
+            ].join("\n") + "\n");
+          }
+          EOF
 
       - name: Notify Slack
         if: always()
@@ -47,6 +66,7 @@ jobs:
           WORKFLOW_NAME: Daily Feedback Provisioning
           WORKFLOW_STATUS: ${{ job.status }}
           WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WORKFLOW_PROVISION_SUMMARY: ${{ steps.provision.outputs.summary_text }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}

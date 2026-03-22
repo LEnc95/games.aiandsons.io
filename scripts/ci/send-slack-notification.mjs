@@ -56,12 +56,14 @@ export function buildSlackPayload({
   workflowName = "",
   status = "",
   runUrl = "",
+  artifactsUrl = "",
   repository = "",
   branch = "",
   sha = "",
   actor = "",
   eventName = "",
   runNumber = "",
+  provisionSummary = "",
 } = {}) {
   const normalizedStatus = normalizeStatus(status);
   const meta = getStatusMeta(normalizedStatus);
@@ -69,11 +71,37 @@ export function buildSlackPayload({
   const repo = normalizeString(repository, 160) || "unknown repository";
   const ref = normalizeString(branch, 120) || "unknown branch";
   const runLink = normalizeString(runUrl, 2000);
+  const artifactsLink = normalizeString(artifactsUrl, 2000);
   const actorName = normalizeString(actor, 120) || "unknown actor";
   const eventLabel = normalizeString(eventName, 80) || "unknown event";
   const shaShort = shortSha(sha) || "unknown";
   const runLabel = normalizeString(runNumber, 32) || "n/a";
+  const normalizedProvisionSummary = normalizeString(provisionSummary, 240);
   const summaryLine = `${meta.emoji} ${workflow} ${meta.summary} in ${repo} on ${ref}.`;
+  const actionElements = [];
+
+  if (runLink) {
+    actionElements.push({
+      type: "button",
+      text: {
+        type: "plain_text",
+        text: "Open Workflow Run",
+        emoji: true,
+      },
+      url: runLink,
+    });
+  }
+  if (artifactsLink) {
+    actionElements.push({
+      type: "button",
+      text: {
+        type: "plain_text",
+        text: "Open Artifacts",
+        emoji: true,
+      },
+      url: artifactsLink,
+    });
+  }
 
   return {
     text: `${summaryLine}${runLink ? ` ${runLink}` : ""}`,
@@ -114,20 +142,19 @@ export function buildSlackPayload({
           },
         ],
       },
-      ...(runLink
+      ...(normalizedProvisionSummary
+        ? [{
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*Provisioning Summary*\n${normalizedProvisionSummary}`,
+          },
+        }]
+        : []),
+      ...(actionElements.length > 0
         ? [{
           type: "actions",
-          elements: [
-            {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Open Workflow Run",
-                emoji: true,
-              },
-              url: runLink,
-            },
-          ],
+          elements: actionElements,
         }]
         : []),
       {
@@ -189,12 +216,14 @@ export async function runSlackNotificationFromEnv(env = process.env) {
     workflowName: env.WORKFLOW_NAME || env.GITHUB_WORKFLOW || "",
     status,
     runUrl: env.WORKFLOW_RUN_URL || "",
+    artifactsUrl: env.WORKFLOW_ARTIFACTS_URL || "",
     repository: env.GITHUB_REPOSITORY || "",
     branch: env.GITHUB_REF_NAME || "",
     sha: env.GITHUB_SHA || "",
     actor: env.GITHUB_ACTOR || "",
     eventName: env.GITHUB_EVENT_NAME || "",
     runNumber: env.GITHUB_RUN_NUMBER || "",
+    provisionSummary: env.WORKFLOW_PROVISION_SUMMARY || "",
   });
 
   const responseText = await sendSlackNotification(payload, { webhookUrl });
