@@ -10,6 +10,7 @@ You are working in **Cade's Games**, a static web arcade that ships as plain HTM
   - many standalone game pages under `<game>/index.html`.
 - Shared progression (coins, badges, cosmetics, inventory, recent games, profile) is persisted in `localStorage` through `src/core/*`.
 - Deployment is static (Vercel rewrites/headers in `vercel.json`).
+- Feedback collection uses a shared in-game widget (`src/feedback/*`), serverless APIs under `api/feedback/*`, and an internal review surface at `ops/feedback/index.html`.
 
 ## 2) Core architecture (read this first before editing)
 
@@ -19,14 +20,19 @@ You are working in **Cade's Games**, a static web arcade that ships as plain HTM
   - Defines an inline `items` catalog with cosmetic + inventory unlocks.
   - Purchases consume shared coins and mutate shared ownership state.
 - **Shared state/storage:**
-  - `src/core/storage.js` → namespaced `localStorage` get/set/remove helpers.
-  - `src/core/state.js` → canonical state object, migration/normalization, persistence API (`save`, `addCoins`, `spendCoins`, `rememberRecent`).
-  - `src/core/sfx.js` → optional audio with graceful fallback.
+  - `src/core/storage.js` -> namespaced `localStorage` get/set/remove helpers.
+  - `src/core/state.js` -> canonical state object, migration/normalization, persistence API (`save`, `addCoins`, `spendCoins`, `rememberRecent`).
+  - `src/core/sfx.js` -> optional audio with graceful fallback.
 - **Progression logic:**
-  - `src/prog/achievements.js` → badge/reward definitions and unlock evaluation (`maybeUnlock`).
-  - `src/prog/cosmetics.js` → runtime style mapping helpers (paddle/snake/mario/memory card back).
-- **Game metadata registry:**
+  - `src/prog/achievements.js` -> badge/reward definitions and unlock evaluation (`maybeUnlock`).
+  - `src/prog/cosmetics.js` -> runtime style mapping helpers (paddle/snake/mario/memory card back).
+- **Game and feedback metadata registry:**
   - `src/meta/games.js` is the central launcher list (slug, name, emoji, route, description).
+  - `src/meta/feedback.js` derives feedback coverage, Linear labels, and per-game baseline issue metadata from the game registry.
+- **Feedback flow:**
+  - `src/feedback/client.js` -> browser-side submission/admin client with loopback stub mode.
+  - `src/feedback/embed.js` -> reusable fixed-position widget mounted into each game page.
+  - `api/feedback/*` -> public submission endpoint, protected admin endpoints, KV-backed store, and Linear sync helpers.
 
 ## 3) Game catalog and route model
 
@@ -38,6 +44,7 @@ Games currently present in the repo include:
 Important nuance:
 - `src/meta/games.js` is the homepage source of truth for listed cards.
 - Some game folders may exist without being wired into all progression systems.
+- `src/meta/feedback.js` should stay aligned with the game registry through `npm run feedback:sync-linear`.
 
 ## 4) Progression and data model details
 
@@ -46,7 +53,7 @@ State keys (under namespaced localStorage) include:
 - `coins`: integer
 - `badges`: array persisted, loaded as `Set`
 - `cosmetics`: equipped selections by category
-- `cosmeticsOwned`: category → list of owned values
+- `cosmeticsOwned`: category -> list of owned values
 - `inventory`: persisted as array, loaded as `Set` with backward-compat normalization
 - `recent`: recent game slugs (capped to 6)
 
@@ -63,15 +70,23 @@ Agent guidance when adding/modifying progression:
 ### Add a new game
 1. Create `<slug>/index.html` (self-contained game page).
 2. Add entry to `src/meta/games.js`.
-3. Add rewrites for `/<slug>` and `/<slug>/` in `vercel.json`.
-4. Add no-cache header override for the new game HTML in `vercel.json`.
-5. If shop inventory should reference this game prefix, update test mapping in `tests/shop-items.integration.test.mjs`.
+3. Mount the shared feedback widget with `mountGameFeedback({ gameSlug, gameName })`.
+4. Run `npm run feedback:sync-linear` so feedback labels/baseline issues stay aligned.
+5. Add rewrites for `/<slug>` and `/<slug>/` in `vercel.json`.
+6. Add no-cache header override for the new game HTML in `vercel.json`.
+7. If shop inventory should reference this game prefix, update test mapping in `tests/shop-items.integration.test.mjs`.
 
 ### Add a new shop item
 1. Add item object in `shop.html` `items` array.
 2. For cosmetic items, ensure `src/prog/cosmetics.js` supports its `value`.
 3. For inventory items, use an `id` prefix that maps to a known game in `tests/shop-items.integration.test.mjs`.
 4. Run shop integration tests.
+
+### Add or update feedback flow
+1. Keep `src/feedback/*` and `api/feedback/*` behavior aligned.
+2. If feedback metadata changes, regenerate `linear/labels.md` and `linear/game-issues.csv` with `npm run feedback:sync-linear`.
+3. Verify `ops/feedback/index.html` still loads, filters, retries sync, and prepares agent briefs.
+4. Run `npm run test:feedback` and `npm run test:feedback-smoke:raw` when the feedback surface changes.
 
 ### Add a new achievement/reward
 1. Add a definition in `src/prog/achievements.js`.
@@ -80,31 +95,39 @@ Agent guidance when adding/modifying progression:
 
 ## 6) Testing and validation expectations
 
-Primary automated check:
-- `node --test tests/shop-items.integration.test.mjs`
+Primary automated checks:
+- `npm run test:shop`
+- `npm run test:feedback`
 
-What this test protects:
+What these tests protect:
 - uniqueness of shop item IDs,
-- cosmetic item → style-handler coverage,
-- inventory ID prefix → known game mapping.
+- cosmetic item -> style-handler coverage,
+- inventory ID prefix -> known game mapping,
+- feedback widget coverage across every game,
+- feedback API/admin workflow determinism.
 
 Manual smoke checklist after edits:
 - homepage loads and cards navigate,
 - shop purchase flow updates coins/ownership,
 - modified game route loads from clean URL,
-- progression persists after refresh.
+- progression persists after refresh,
+- feedback submit works from the impacted game,
+- `ops/feedback/index.html` can see and prepare the related report when applicable.
 
 ## 7) Deployment notes
 
 - App is static; local run can be any static server (`python3 -m http.server 8080`).
 - `version.json` stores displayed version badge value for homepage.
 - `vercel.json` controls rewrites and cache/security headers.
+- Feedback API deployment expects `FEEDBACK_ADMIN_TOKEN`, `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optionally `LINEAR_PROJECT_ID` plus `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+- On loopback hosts, the browser feedback client intentionally falls back to stub mode unless `?feedbackApiProbe=1` is present.
 
 ## 8) Known pitfalls to avoid
 
 - Forgetting route rewrites in `vercel.json` after adding a game.
 - Adding cosmetic shop items without updating `src/prog/cosmetics.js` switch cases.
 - Using new inventory prefixes without updating test mapping.
+- Adding a game without mounting the shared feedback widget or regenerating feedback seed files.
 - Updating only UI text but not progression/state logic (or vice versa).
 
 ## 9) Practical coding style in this repo
@@ -118,5 +141,4 @@ Manual smoke checklist after edits:
 
 Use this instruction block when assigning a task to another coding agent:
 
-> You are modifying the Cade's Games static arcade repo. Before coding, inspect `index.html`, `shop.html`, `src/core/*`, `src/prog/*`, `src/meta/games.js`, and `vercel.json` for impacted flows. Keep changes minimal and consistent with existing vanilla HTML/CSS/JS patterns. If you add/rename game routes, update rewrites and cache headers in `vercel.json`. If you add shop cosmetics, also update `src/prog/cosmetics.js`. If you add shop inventory prefixes, ensure `tests/shop-items.integration.test.mjs` maps them to real game files. Run `node --test tests/shop-items.integration.test.mjs` before finishing. Summarize what changed, why, and any follow-up risks.
-
+> You are modifying the Cade's Games static arcade repo. Before coding, inspect `index.html`, `shop.html`, `src/core/*`, `src/prog/*`, `src/meta/games.js`, `src/meta/feedback.js`, `src/feedback/*`, `api/feedback/*`, and `vercel.json` for impacted flows. Keep changes minimal and consistent with existing vanilla HTML/CSS/JS patterns. If you add/rename game routes, update rewrites and cache headers in `vercel.json`. If you add a game, mount the shared feedback widget and run `npm run feedback:sync-linear`. If you add shop cosmetics, also update `src/prog/cosmetics.js`. If you add shop inventory prefixes, ensure `tests/shop-items.integration.test.mjs` maps them to real game files. Run `npm run test:shop` and `npm run test:feedback` before finishing. Summarize what changed, why, and any follow-up risks.

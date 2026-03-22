@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Feedback Inbox - Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <style>
+    :root {
+      --bg: #071125;
+      --panel: #111e39;
+      --panel-soft: #0c1730;
+      --panel-border: #274272;
+      --text: #ecf4ff;
+      --muted: #9eb7dc;
+      --accent: #78d4ff;
+      --ok: #71ebb7;
+      --warn: #ffc976;
+      --danger: #ff9fb0;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: radial-gradient(circle at 20% 0%, #13264d 0%, var(--bg) 55%, #040a17 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 16px clamp(16px, 4vw, 30px);
+      background: rgba(8, 18, 38, 0.84);
+      border-bottom: 1px solid rgba(120, 212, 255, 0.22);
+      backdrop-filter: blur(8px);
+    }
+    .topbar h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); }
+    .topbar a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .shell {
+      width: min(1320px, 100%);
+      margin: 0 auto;
+      padding: clamp(16px, 3vw, 28px);
+      display: grid;
+      gap: 16px;
+    }
+    .controls,
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+      padding: 16px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.18);
+    }
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      padding: 10px 12px;
+      font: 500 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    button {
+      min-height: 40px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #7dd7ff 0%, #7bf0cb 100%);
+      color: #071120;
+    }
+    button.danger {
+      border-color: rgba(255,159,176,0.3);
+      color: #ffd5dd;
+    }
+    .status-line {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .status-line.ok { color: var(--ok); }
+    .status-line.error { color: var(--danger); }
+    .status-line.warn { color: var(--warn); }
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      gap: 16px;
+    }
+    .panel h2 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+    }
+    .submission-list {
+      display: grid;
+      gap: 10px;
+      max-height: 70dvh;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .submission-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+    }
+    .submission-card.active {
+      border-color: rgba(120,212,255,0.65);
+      background: rgba(120,212,255,0.12);
+    }
+    .submission-card h3 {
+      margin: 0 0 6px 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+    .meta-row,
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .meta-row {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge.sync-synced { color: #bdf7d8; border-color: rgba(113,235,183,0.5); }
+    .badge.sync-pending { color: #ffe1a8; border-color: rgba(255,201,118,0.5); }
+    .badge.sync-failed { color: #ffc1cd; border-color: rgba(255,159,176,0.5); }
+    .badge.triage-agent-ready { color: #bff1ff; border-color: rgba(120,212,255,0.5); }
+    .detail-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .detail-block {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      padding: 12px;
+    }
+    .detail-block h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .detail-block pre,
+    .detail-block textarea {
+      margin: 0;
+      width: 100%;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.18);
+      color: var(--text);
+      padding: 10px;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .detail-block textarea {
+      min-height: 220px;
+      resize: vertical;
+    }
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 12px 0;
+    }
+    .link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .link-row a {
+      color: #bfe7ff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    @media (max-width: 1100px) {
+      .controls-grid,
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>Feedback Inbox</h1>
+      <div class="status-line" id="modeNotice"></div>
+    </div>
+    <a href="/">Back Home</a>
+  </div>
+
+  <main class="shell">
+    <section class="controls">
+      <div class="controls-grid">
+        <div class="field">
+          <label for="adminTokenInput">Admin Token</label>
+          <input id="adminTokenInput" type="password" placeholder="Required for live feedback admin APIs" />
+        </div>
+        <div class="field">
+          <label for="gameFilter">Game</label>
+          <select id="gameFilter"></select>
+        </div>
+        <div class="field">
+          <label for="triageFilter">Triage</label>
+          <select id="triageFilter">
+            <option value="">All triage states</option>
+            <option value="new">New</option>
+            <option value="triaged">Triaged</option>
+            <option value="agent-ready">Agent ready</option>
+            <option value="duplicate">Duplicate</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="syncFilter">Linear Sync</label>
+          <select id="syncFilter">
+            <option value="">All sync states</option>
+            <option value="pending">Pending</option>
+            <option value="synced">Synced</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="detailTriageSelect">Detail Triage</label>
+          <select id="detailTriageSelect">
+            <option value="new">New</option>
+            <option value="triaged">Triaged</option>
+            <option value="agent-ready">Agent ready</option>
+            <option value="duplicate">Duplicate</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="detailSeveritySelect">Severity</label>
+          <select id="detailSeveritySelect">
+            <option value="">Not set</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="saveTokenBtn">Save Token</button>
+        <button id="clearTokenBtn">Clear Token</button>
+        <button id="refreshBtn" class="primary">Refresh Inbox</button>
+        <button id="saveDetailBtn">Save Detail Status</button>
+        <button id="retrySyncBtn">Retry Linear Sync</button>
+        <button id="prepareAgentBtn" class="primary">Prepare Agent Brief</button>
+        <button id="copyBriefBtn">Copy Agent Brief</button>
+      </div>
+      <div class="status-line" id="statusLine" aria-live="polite"></div>
+    </section>
+
+    <section class="main-grid">
+      <section class="panel">
+        <h2>Submissions</h2>
+        <div class="submission-list" id="submissionList"></div>
+      </section>
+      <section class="panel">
+        <h2>Submission Detail</h2>
+        <div class="detail-grid" id="detailPane">
+          <div class="empty">Select a feedback report to review its details.</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    import { FEEDBACK_GAMES } from "../../src/meta/feedback.js";
+    import {
+      clearStoredFeedbackAdminToken,
+      getStoredFeedbackAdminToken,
+      listFeedbackReports,
+      prepareAgentTask,
+      setStoredFeedbackAdminToken,
+      shouldUseFeedbackStubMode,
+      updateFeedbackReport,
+    } from "../../src/feedback/client.js";
+
+    const state = {
+      adminToken: getStoredFeedbackAdminToken(),
+      submissions: [],
+      selectedId: "",
+      agentTaskMarkdown: "",
+      filters: {
+        game: "",
+        triageStatus: "",
+        syncStatus: "",
+      },
+    };
+
+    const modeNotice = document.getElementById("modeNotice");
+    const statusLine = document.getElementById("statusLine");
+    const adminTokenInput = document.getElementById("adminTokenInput");
+    const gameFilter = document.getElementById("gameFilter");
+    const triageFilter = document.getElementById("triageFilter");
+    const syncFilter = document.getElementById("syncFilter");
+    const detailTriageSelect = document.getElementById("detailTriageSelect");
+    const detailSeveritySelect = document.getElementById("detailSeveritySelect");
+    const submissionList = document.getElementById("submissionList");
+    const detailPane = document.getElementById("detailPane");
+    const copyBriefBtn = document.getElementById("copyBriefBtn");
+
+    adminTokenInput.value = state.adminToken;
+    modeNotice.textContent = shouldUseFeedbackStubMode()
+      ? "Loopback stub mode is active for local smoke testing."
+      : "Live admin mode uses protected feedback APIs.";
+
+    function setStatus(message, tone = "") {
+      statusLine.textContent = message;
+      statusLine.className = `status-line${tone ? ` ${tone}` : ""}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function getSelectedSubmission() {
+      return state.submissions.find((entry) => entry.id === state.selectedId) || null;
+    }
+
+    function renderGameFilter() {
+      const options = [
+        '<option value="">All games</option>',
+        ...FEEDBACK_GAMES.map((game) => `<option value="${game.slug}">${escapeHtml(game.name)}</option>`),
+      ];
+      gameFilter.innerHTML = options.join("");
+      gameFilter.value = state.filters.game;
+    }
+
+    function renderSubmissionList() {
+      if (!state.submissions.length) {
+        submissionList.innerHTML = '<div class="empty">No feedback reports match the current filters.</div>';
+        return;
+      }
+
+      submissionList.innerHTML = state.submissions.map((submission) => {
+        const isActive = submission.id === state.selectedId;
+        const submittedAt = submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : "Unknown";
+        return `
+          <article class="submission-card${isActive ? " active" : ""}" data-id="${escapeHtml(submission.id)}">
+            <div class="meta-row">
+              <span>${escapeHtml(submission.gameName)}</span>
+              <span>${escapeHtml(submittedAt)}</span>
+            </div>
+            <h3>${escapeHtml(submission.summary)}</h3>
+            <div class="badge-row">
+              <span class="badge">${escapeHtml(submission.kind)}</span>
+              <span class="badge sync-${escapeHtml(submission.syncStatus)}">${escapeHtml(submission.syncStatus)}</span>
+              <span class="badge triage-${escapeHtml(submission.triageStatus)}">${escapeHtml(submission.triageStatus)}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      submissionList.querySelectorAll(".submission-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          state.selectedId = card.dataset.id || "";
+          renderSubmissionList();
+          renderDetailPane();
+        });
+      });
+    }
+
+    function renderDetailPane() {
+      const submission = getSelectedSubmission();
+      if (!submission) {
+        detailPane.innerHTML = '<div class="empty">Select a feedback report to review its details.</div>';
+        return;
+      }
+
+      detailTriageSelect.value = submission.triageStatus || "new";
+      detailSeveritySelect.value = submission.severity || "";
+
+      const linearLink = submission.linearIssueIdentifier
+        ? `<a href="${escapeHtml(submission.linearIssueUrl || `https://linear.app/issue/${submission.linearIssueIdentifier}`)}" target="_blank" rel="noreferrer noopener">${escapeHtml(submission.linearIssueIdentifier)}</a>`
+        : "Not synced yet";
+
+      detailPane.innerHTML = `
+        <div class="detail-block">
+          <h3>Summary</h3>
+          <div class="meta-row">
+            <span>${escapeHtml(submission.gameName)} (${escapeHtml(submission.gameSlug)})</span>
+            <span>${escapeHtml(submission.sessionUserId || "unknown session")}</span>
+            <span>${escapeHtml(submission.route || "")}</span>
+          </div>
+          <div class="badge-row">
+            <span class="badge">${escapeHtml(submission.kind)}</span>
+            <span class="badge sync-${escapeHtml(submission.syncStatus)}">${escapeHtml(submission.syncStatus)}</span>
+            <span class="badge triage-${escapeHtml(submission.triageStatus)}">${escapeHtml(submission.triageStatus)}</span>
+            ${submission.severity ? `<span class="badge">${escapeHtml(submission.severity)}</span>` : ""}
+          </div>
+        </div>
+        <div class="detail-block">
+          <h3>Player Details</h3>
+          <pre>${escapeHtml(submission.details || "")}</pre>
+        </div>
+        <div class="detail-block">
+          <h3>Repro Steps</h3>
+          <pre>${escapeHtml(submission.reproSteps || "No repro steps provided.")}</pre>
+        </div>
+        <div class="detail-block">
+          <h3>Reporter</h3>
+          <div class="meta-row">
+            <span>Name: ${escapeHtml(submission.displayName || "anonymous")}</span>
+            <span>Email: ${escapeHtml(submission.contactEmail || "not provided")}</span>
+          </div>
+          <div class="meta-row">
+            <span>Linear: ${linearLink}</span>
+            <span>Duplicate of: ${escapeHtml(submission.duplicateOf || "none")}</span>
+          </div>
+        </div>
+        <div class="detail-block">
+          <h3>Diagnostics</h3>
+          <pre>${escapeHtml(JSON.stringify({
+            pageUrl: submission.pageUrl,
+            referrer: submission.referrer,
+            viewport: submission.viewport,
+            userAgent: submission.userAgent,
+            pageContext: submission.pageContext,
+            lastSyncError: submission.lastSyncError,
+          }, null, 2))}</pre>
+        </div>
+        <div class="detail-block">
+          <h3>Agent Brief</h3>
+          <textarea id="agentTaskOutput" placeholder="Prepare an agent brief to populate this panel.">${escapeHtml(state.agentTaskMarkdown || "")}</textarea>
+        </div>
+      `;
+    }
+
+    async function refreshList() {
+      setStatus("Loading feedback inbox...");
+      try {
+        const result = await listFeedbackReports({
+          adminToken: state.adminToken,
+          filters: state.filters,
+        });
+        state.submissions = Array.isArray(result.submissions) ? result.submissions : [];
+        if (!state.selectedId || !state.submissions.some((entry) => entry.id === state.selectedId)) {
+          state.selectedId = state.submissions[0]?.id || "";
+        }
+        renderSubmissionList();
+        renderDetailPane();
+        setStatus(`Loaded ${state.submissions.length} feedback report${state.submissions.length === 1 ? "" : "s"}.`, "ok");
+      } catch (error) {
+        setStatus(String(error && error.message ? error.message : error), "error");
+      }
+    }
+
+    async function saveSelectedSubmission({ retrySync = false } = {}) {
+      const submission = getSelectedSubmission();
+      if (!submission) {
+        setStatus("Select a submission before updating detail state.", "warn");
+        return;
+      }
+      try {
+        const result = await updateFeedbackReport({
+          adminToken: state.adminToken,
+          submissionId: submission.id,
+          triageStatus: detailTriageSelect.value,
+          severity: detailSeveritySelect.value,
+          retrySync,
+        });
+        const next = result.submission;
+        state.submissions = state.submissions.map((entry) => entry.id === next.id ? next : entry);
+        renderSubmissionList();
+        renderDetailPane();
+        setStatus(retrySync ? "Linear sync retried for selected submission." : "Submission detail state saved.", "ok");
+      } catch (error) {
+        setStatus(String(error && error.message ? error.message : error), "error");
+      }
+    }
+
+    async function prepareSelectedAgentTask() {
+      const submission = getSelectedSubmission();
+      if (!submission) {
+        setStatus("Select a submission before preparing an agent brief.", "warn");
+        return;
+      }
+      try {
+        const result = await prepareAgentTask({
+          adminToken: state.adminToken,
+          submissionId: submission.id,
+        });
+        state.agentTaskMarkdown = result.agentTaskMarkdown || "";
+        await refreshList();
+        const output = document.getElementById("agentTaskOutput");
+        if (output) output.value = state.agentTaskMarkdown;
+        setStatus(`Agent brief prepared${result.commentPosted ? " and posted to Linear" : ""}.`, "ok");
+      } catch (error) {
+        setStatus(String(error && error.message ? error.message : error), "error");
+      }
+    }
+
+    document.getElementById("saveTokenBtn").addEventListener("click", () => {
+      state.adminToken = adminTokenInput.value.trim();
+      setStoredFeedbackAdminToken(state.adminToken);
+      setStatus(state.adminToken ? "Admin token saved for this session." : "Admin token cleared.", "ok");
+    });
+
+    document.getElementById("clearTokenBtn").addEventListener("click", () => {
+      state.adminToken = "";
+      adminTokenInput.value = "";
+      clearStoredFeedbackAdminToken();
+      setStatus("Admin token cleared.", "ok");
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", refreshList);
+    document.getElementById("saveDetailBtn").addEventListener("click", () => saveSelectedSubmission({ retrySync: false }));
+    document.getElementById("retrySyncBtn").addEventListener("click", () => saveSelectedSubmission({ retrySync: true }));
+    document.getElementById("prepareAgentBtn").addEventListener("click", prepareSelectedAgentTask);
+    copyBriefBtn.addEventListener("click", async () => {
+      const output = document.getElementById("agentTaskOutput");
+      const text = output?.value || state.agentTaskMarkdown;
+      if (!text) {
+        setStatus("Prepare an agent brief before copying it.", "warn");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("Agent brief copied to clipboard.", "ok");
+      } catch {
+        setStatus("Clipboard copy failed in this browser context.", "error");
+      }
+    });
+
+    gameFilter.addEventListener("change", () => {
+      state.filters.game = gameFilter.value;
+      refreshList();
+    });
+    triageFilter.addEventListener("change", () => {
+      state.filters.triageStatus = triageFilter.value;
+      refreshList();
+    });
+    syncFilter.addEventListener("change", () => {
+      state.filters.syncStatus = syncFilter.value;
+      refreshList();
+    });
+
+    renderGameFilter();
+    refreshList();
+  </script>
+</body>
+</html>

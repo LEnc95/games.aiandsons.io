@@ -10,8 +10,12 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `school-license.html`: school/district licensing page with local district-review request handoff flow.
 - `accessibility.html`: persisted accessibility control panel for color profile, larger UI, reduced motion, and contrast preferences.
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, PIN-gated active-session mutations, and licensed aggregate report exports.
+- `ops/feedback/index.html`: protected feedback inbox for reviewing reports, retrying Linear sync, and preparing agent-ready fix briefs.
+- `src/feedback/*`: shared game feedback widget, browser client, and loopback stub mode for local smoke coverage.
+- `api/feedback/*`: serverless feedback submission/admin APIs backed by KV or in-memory fallback plus Linear sync.
 - `src/core/*`: shared persistence/state helpers, entitlement gate logic, accessibility preference helpers, and local KPI metrics tracking.
 - `src/meta/games.js`: game registry used by homepage UI.
+- `src/meta/feedback.js`: feedback and Linear metadata derived from the game registry.
 - `src/prog/*`: achievements, daily/weekly missions, premium challenge track, assignment bundles, and cosmetics logic.
 - `*/index.html` game folders: standalone game pages.
 - `tests/shop-items.integration.test.mjs` + `tests/entitlements.integration.test.mjs` + `tests/premium-challenges.integration.test.mjs` + `tests/metrics.integration.test.mjs`: integration checks for shop consistency, premium gating, premium challenge progression logic, and KPI summary behavior.
@@ -72,6 +76,12 @@ Or via npm script:
 npm run test:shop
 ```
 
+Run the feedback integration test suite:
+
+```bash
+npm run test:feedback
+```
+
 Run the classroom lock/unlock smoke test (auto-starts local server):
 
 ```bash
@@ -82,6 +92,12 @@ Run the discovery/search + shop filter smoke test against a pre-started server a
 
 ```bash
 npm run test:discovery-smoke:raw
+```
+
+Run the feedback widget + inbox smoke test against a pre-started server at `http://127.0.0.1:4173`:
+
+```bash
+npm run test:feedback-smoke:raw
 ```
 
 Run the daily missions smoke test against a pre-started server at `http://127.0.0.1:4173`:
@@ -168,6 +184,12 @@ Run a bulk Stripe reconcile/audit pass (requires admin token + target files):
 npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true
 ```
 
+Regenerate the Linear feedback seed files from the game registry:
+
+```bash
+npm run feedback:sync-linear
+```
+
 Run the launch-readiness aggregate smoke suite against a pre-started server at `http://127.0.0.1:4173`:
 
 ```bash
@@ -199,6 +221,14 @@ npm run test:classroom-smoke:raw
 9. KPI export script emits deterministic snapshot metadata, rolling window fields, and event-count integrity checks.
 10. Stripe admin-token auth helper validates header/bearer token parsing and authorization outcomes.
 11. Stripe reconcile-audit helper functions parse target inputs and classify outcomes deterministically.
+
+`npm run test:feedback` currently checks:
+
+1. Feedback admin-token auth helper validates header/bearer token parsing and authorization outcomes.
+2. Every game listed in `src/meta/feedback.js` mounts the shared feedback widget.
+3. Linear label and baseline-issue seed files stay aligned with feedback metadata.
+4. Public feedback submit normalizes payloads, captures sessions, and enforces rate limiting.
+5. Linear sync retry/admin agent-brief flows behave deterministically with stubbed GraphQL responses.
 
 `npm run test:classroom-smoke` currently checks:
 
@@ -286,18 +316,33 @@ npm run test:classroom-smoke:raw
 2. Checkout and purchase conversion counters are present in the dashboard snapshot.
 3. Metrics flow executes with no console errors while preserving gameplay/shop behavior.
 
+`npm run test:feedback-smoke:raw` currently checks:
+
+1. The shared feedback launcher is reachable on representative desktop and mobile game pages.
+2. A feedback submission succeeds in loopback stub mode from a game page with no console errors.
+3. The ops inbox lists the new report and can generate an agent handoff brief end-to-end.
+
 `npm run test:launch-readiness-smoke:raw` currently checks:
 
-1. Launcher/shop discovery smoke passes.
-2. Classroom mode smoke passes.
-3. Entitlement and premium-track gating smokes pass.
-4. Onboarding split and KPI metrics baseline smokes pass.
+1. Feedback widget/inbox smoke passes.
+2. Launcher/shop discovery smoke passes.
+3. Classroom mode smoke passes.
+4. Entitlement and premium-track gating smokes pass.
+5. Onboarding split and KPI metrics baseline smokes pass.
 
 Nightly CI automation:
 
 1. `.github/workflows/nightly-launch-readiness.yml` runs daily at `13:00 UTC` and on manual dispatch.
-2. It runs `npm run test:shop` and `npm run test:launch-readiness-smoke`.
-3. It uploads all smoke summary/screenshot directories for launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
+2. It runs `npm run test:shop`, `npm run test:feedback`, and `npm run test:launch-readiness-smoke`.
+3. It uploads all smoke summary/screenshot directories for feedback, launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
+
+## Feedback workflow
+
+- Players can submit bugs, ideas, and general feedback from the shared widget mounted inside each game page.
+- `POST /api/feedback/submit` stores the raw submission first, then attempts to open a Linear issue using `LINEAR_API_KEY` + `LINEAR_TEAM_ID`.
+- Admin review happens in `ops/feedback/index.html`, which uses the protected `/api/feedback/admin/*` endpoints.
+- On local loopback hosts (`localhost` / `127.0.0.1`), the feedback client falls back to local stub storage unless `?feedbackApiProbe=1` is present. This keeps raw smoke coverage deterministic under a plain static server.
+- `linear/labels.md` and `linear/game-issues.csv` are generated from `src/meta/feedback.js`; regenerate them with `npm run feedback:sync-linear` after game-catalog changes.
 
 ## Stripe billing setup (optional)
 

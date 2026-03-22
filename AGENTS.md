@@ -6,6 +6,7 @@ Operational command reference for contributors and automations in this repositor
 ## Core Workflows
 - Install dependencies: `npm install`
 - Run integration tests: `npm run test:shop`
+- Run feedback integration tests: `npm run test:feedback`
 - Run combined QA gate: `npm run test:qa`
 - Run classroom smoke (auto-starts server): `npm run test:classroom-smoke`
 - Run launch-readiness smoke (auto-starts server): `npm run test:launch-readiness-smoke`
@@ -13,6 +14,7 @@ Operational command reference for contributors and automations in this repositor
 
 ## Raw Smoke Commands (require pre-started server at http://127.0.0.1:4173)
 - Classroom mode: `npm run test:classroom-smoke:raw`
+- Feedback widget + inbox: `npm run test:feedback-smoke:raw`
 - Discovery/search + shop filter: `npm run test:discovery-smoke:raw`
 - Daily missions: `npm run test:missions-smoke:raw`
 - Weekly challenges: `npm run test:weekly-smoke:raw`
@@ -30,6 +32,7 @@ Operational command reference for contributors and automations in this repositor
 ## Data and Audit Commands
 - Export KPI snapshot: `npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30`
 - Stripe reconcile/audit pass: `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
+- Regenerate Linear feedback seed files: `npm run feedback:sync-linear`
 
 ## TODO
 - Confirm whether `python -m http.server 4173` is the canonical local server command and if an explicit `127.0.0.1` bind is required for all `*:raw` smoke runs.
