@@ -74,10 +74,17 @@ async function main() {
     await desktopPage.fill("#cadeFeedbackSummary", "Arcade feedback smoke");
     await desktopPage.fill("#cadeFeedbackDetails", "Testing the shared feedback flow from the Pong page.");
     await desktopPage.fill("#cadeFeedbackRepro", "Open the feedback widget and submit this form.");
+    await desktopPage.setInputFiles("#cadeFeedbackAttachmentInput", {
+      name: "feedback-note.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("feedback smoke attachment", "utf8"),
+    });
     await desktopPage.click("#cadeFeedbackSubmitBtn");
     await desktopPage.waitForFunction(() => {
       const status = document.getElementById("cadeFeedbackStatus");
-      return !!status && status.textContent.includes("Feedback sent");
+      if (!status) return false;
+      const text = String(status.textContent || "");
+      return text.includes("Feedback sent") || text.includes("Feedback saved");
     });
     summary.checks.push({ name: "desktop_submit", pass: true });
     const pongShot = path.join(OUTPUT_DIR, "pong-feedback.png");
@@ -99,11 +106,16 @@ async function main() {
       return !!list && list.textContent.includes("Arcade feedback smoke");
     });
     summary.checks.push({ name: "ops_list_shows_submission", pass: true });
+    await desktopPage.waitForFunction(() => {
+      const pane = document.getElementById("detailPane");
+      return !!pane && pane.textContent.includes("feedback-note.txt");
+    });
+    summary.checks.push({ name: "ops_shows_attachment", pass: true });
 
     await desktopPage.click("#prepareAgentBtn");
     await desktopPage.waitForFunction(() => {
       const output = document.getElementById("agentTaskOutput");
-      return !!output && output.value.includes("# Agent Handoff Brief");
+      return !!output && output.value.includes("# Agent Handoff Brief") && output.value.includes("feedback-note.txt");
     });
     summary.checks.push({ name: "ops_prepare_agent_brief", pass: true });
     const opsShot = path.join(OUTPUT_DIR, "ops-feedback-inbox.png");

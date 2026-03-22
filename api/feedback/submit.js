@@ -1,6 +1,8 @@
 const { ensureSession } = require("../auth/_session");
 const {
+  buildFeedbackAttachmentUrl,
   createFeedbackSubmissionRecord,
+  getRequestOrigin,
   getRequestIp,
   normalizeFeedbackPayload,
   readJsonBody,
@@ -9,6 +11,7 @@ const {
 } = require("./_shared");
 const {
   enforceFeedbackRateLimit,
+  saveFeedbackAttachments,
   saveFeedbackSubmission,
 } = require("./_store");
 const { ensureFeedbackSubmissionSynced } = require("./_sync");
@@ -46,12 +49,46 @@ module.exports = async function handler(req, res) {
       return sendError(res, 400, normalized.error, normalized.code);
     }
 
-    const submission = await saveFeedbackSubmission(
-      createFeedbackSubmissionRecord(normalized.value, {
-        sessionUserId: session?.userId || "",
-        requestIp,
+    const requestOrigin = getRequestOrigin(req);
+    const attachmentPayloads = Array.isArray(normalized.value.attachments)
+      ? normalized.value.attachments
+      : [];
+    const attachmentMetas = attachmentPayloads.map((attachment) => ({
+      id: attachment.id,
+      name: attachment.name,
+      contentType: attachment.contentType,
+      size: attachment.size,
+      previewKind: attachment.previewKind,
+      previewText: attachment.previewText,
+      url: buildFeedbackAttachmentUrl({
+        attachmentId: attachment.id,
+        origin: requestOrigin,
       }),
-    );
+    }));
+
+    const submissionRecord = createFeedbackSubmissionRecord({
+      ...normalized.value,
+      attachments: attachmentMetas,
+    }, {
+      sessionUserId: session?.userId || "",
+      requestIp,
+    });
+
+    if (attachmentPayloads.length > 0) {
+      await saveFeedbackAttachments(attachmentPayloads.map((attachment) => ({
+        id: attachment.id,
+        submissionId: submissionRecord.id,
+        name: attachment.name,
+        contentType: attachment.contentType,
+        size: attachment.size,
+        previewKind: attachment.previewKind,
+        previewText: attachment.previewText,
+        base64Data: attachment.base64Data,
+        createdAt: submissionRecord.submittedAt,
+      })));
+    }
+
+    const submission = await saveFeedbackSubmission(submissionRecord);
 
     const synced = await ensureFeedbackSubmissionSynced(submission, { failureStatus: "pending" });
 
@@ -59,6 +96,11 @@ module.exports = async function handler(req, res) {
       ok: true,
       submissionId: synced.id,
       linearIssueIdentifier: synced.linearIssueIdentifier || "",
+      linearIssueUrl: synced.linearIssueUrl || "",
+      linearParentIssueIdentifier: synced.linearParentIssueIdentifier || "",
+      linearParentIssueTitle: synced.linearParentIssueTitle || "",
+      linearParentIssueUrl: synced.linearParentIssueUrl || "",
+      attachments: Array.isArray(synced.attachments) ? synced.attachments : [],
       syncStatus: synced.syncStatus,
       sessionUserId: synced.sessionUserId || "",
     });

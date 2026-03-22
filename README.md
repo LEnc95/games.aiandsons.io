@@ -82,6 +82,12 @@ Run the feedback integration test suite:
 npm run test:feedback
 ```
 
+Run only the strict daily feedback metadata guard:
+
+```bash
+npm run feedback:check-daily
+```
+
 Run the classroom lock/unlock smoke test (auto-starts local server):
 
 ```bash
@@ -190,6 +196,18 @@ Regenerate the Linear feedback seed files from the game registry:
 npm run feedback:sync-linear
 ```
 
+Regenerate only the local seed files without touching live Linear:
+
+```bash
+npm run feedback:sync-linear:files
+```
+
+Provision missing Linear labels and baseline issues directly:
+
+```bash
+npm run feedback:provision-linear
+```
+
 Run the launch-readiness aggregate smoke suite against a pre-started server at `http://127.0.0.1:4173`:
 
 ```bash
@@ -225,10 +243,11 @@ npm run test:classroom-smoke:raw
 `npm run test:feedback` currently checks:
 
 1. Feedback admin-token auth helper validates header/bearer token parsing and authorization outcomes.
-2. Every game listed in `src/meta/feedback.js` mounts the shared feedback widget.
-3. Linear label and baseline-issue seed files stay aligned with feedback metadata.
-4. Public feedback submit normalizes payloads, captures sessions, and enforces rate limiting.
-5. Linear sync retry/admin agent-brief flows behave deterministically with stubbed GraphQL responses.
+2. `linear/labels.md` and `linear/game-issues.csv` are not stale relative to `src/meta/feedback.js`.
+3. Every game listed in `src/meta/feedback.js` mounts the shared feedback widget.
+4. Linear label and baseline-issue seed files stay aligned with feedback metadata.
+5. Public feedback submit normalizes payloads, captures sessions, stores attachments, and enforces rate limiting.
+6. Linear sync retry/admin agent-brief flows behave deterministically with stubbed GraphQL responses.
 
 `npm run test:classroom-smoke` currently checks:
 
@@ -334,15 +353,22 @@ Nightly CI automation:
 
 1. `.github/workflows/nightly-launch-readiness.yml` runs daily at `13:00 UTC` and on manual dispatch.
 2. It runs `npm run test:shop`, `npm run test:feedback`, and `npm run test:launch-readiness-smoke`.
-3. It uploads all smoke summary/screenshot directories for feedback, launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
+3. When `LINEAR_API_KEY` + `LINEAR_TEAM_ID` repository secrets are present, it also runs `npm run feedback:provision-linear` to backfill missing labels/baselines for newly added games.
+4. It uploads all smoke summary/screenshot directories for feedback, launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
 
 ## Feedback workflow
 
 - Players can submit bugs, ideas, and general feedback from the shared widget mounted inside each game page.
 - `POST /api/feedback/submit` stores the raw submission first, then attempts to open a Linear issue using `LINEAR_API_KEY` + `LINEAR_TEAM_ID`.
+- Submissions can include up to two lightweight attachments in v1. Text files are previewed in the inbox; image and PDF uploads are linked from both the ops inbox and the Linear issue body.
 - Admin review happens in `ops/feedback/index.html`, which uses the protected `/api/feedback/admin/*` endpoints.
 - On local loopback hosts (`localhost` / `127.0.0.1`), the feedback client falls back to local stub storage unless `?feedbackApiProbe=1` is present. This keeps raw smoke coverage deterministic under a plain static server.
-- `linear/labels.md` and `linear/game-issues.csv` are generated from `src/meta/feedback.js`; regenerate them with `npm run feedback:sync-linear` after game-catalog changes.
+- `linear/labels.md` and `linear/game-issues.csv` are generated from `src/meta/feedback.js`.
+- `npm run feedback:check-daily` fails fast when those generated Linear seed artifacts drift from the game registry. That guard also runs automatically inside `npm run test:feedback`.
+- `npm run feedback:sync-linear` now regenerates those files and, when `LINEAR_API_KEY` + `LINEAR_TEAM_ID` are present, also provisions missing Linear labels and baseline issues automatically.
+- `npm run feedback:provision-linear` runs the live provisioning step directly.
+- If `LINEAR_PROJECT_ID` is configured, new games can get their baseline issue provisioned automatically before the first player report lands.
+- If the API key cannot create labels, baseline issue creation still works best-effort, but new per-game labels may need a one-time manual seed or a stronger key.
 
 ## Stripe billing setup (optional)
 
@@ -396,5 +422,5 @@ curl -X POST https://<your-domain>/api/stripe/admin/reconcile \
 ## Notes for future updates
 
 - When adding a shop inventory item, ensure the prefix maps to a game file in `tests/shop-items.integration.test.mjs`.
-- When adding a new game, update both `src/meta/games.js` and homepage/static links.
+- When adding a new game, update `src/meta/games.js`, mount the feedback widget, run `npm run feedback:sync-linear`, and let `npm run test:feedback` confirm the seed artifacts stayed current.
 - Bump `version.json` before release if user-visible behavior changed.

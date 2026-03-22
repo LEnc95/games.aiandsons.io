@@ -95,6 +95,26 @@ function injectStyles() {
       min-height: 110px;
       resize: vertical;
     }
+    .cade-feedback-file-copy {
+      font-size: 12px;
+      color: #bdd0ee;
+      line-height: 1.5;
+    }
+    .cade-feedback-file-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .cade-feedback-file-list li {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      font-size: 12px;
+      color: #d7e6ff;
+    }
     .cade-feedback-inline {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -165,6 +185,26 @@ function resolveExtraContext() {
   return {};
 }
 
+function formatAttachmentSize(size) {
+  const bytes = Math.max(0, Number(size) || 0);
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  if (bytes >= 1024) {
+    return `${Math.max(1, Math.round(bytes / 102.4) / 10)} KB`;
+  }
+  return `${bytes} B`;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error(`Could not read ${file?.name || "attachment"}.`));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   if (!gameSlug || !gameName || document.getElementById(ROOT_ID)) return;
   injectStyles();
@@ -210,6 +250,12 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
               <input id="cadeFeedbackEmail" name="contactEmail" type="email" maxlength="160" placeholder="you@example.com" />
             </div>
           </div>
+          <div class="cade-feedback-field">
+            <label for="cadeFeedbackAttachmentInput">Attachments (Optional)</label>
+            <input id="cadeFeedbackAttachmentInput" name="attachments" type="file" accept="image/png,image/jpeg,image/webp,image/gif,text/plain,application/json,application/pdf,.txt,.log,.json,.pdf" multiple />
+            <div class="cade-feedback-file-copy">Add up to 2 files. Screenshots, logs, JSON, and PDFs work best. Keep each file under 900 KB.</div>
+            <ul class="cade-feedback-file-list" id="cadeFeedbackFileList"></ul>
+          </div>
           <div class="cade-feedback-status" id="cadeFeedbackStatus" aria-live="polite"></div>
           <div class="cade-feedback-actions">
             <button type="button" class="cade-feedback-btn" id="cadeFeedbackCancelBtn">Cancel</button>
@@ -227,11 +273,34 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   const cancelBtn = document.getElementById("cadeFeedbackCancelBtn");
   const submitBtn = document.getElementById("cadeFeedbackSubmitBtn");
   const summaryInput = document.getElementById("cadeFeedbackSummary");
+  const attachmentInput = document.getElementById("cadeFeedbackAttachmentInput");
+  const fileList = document.getElementById("cadeFeedbackFileList");
   const statusEl = document.getElementById("cadeFeedbackStatus");
 
   function setStatus(message, tone = "") {
     statusEl.textContent = message;
     statusEl.className = `cade-feedback-status${tone ? ` ${tone}` : ""}`;
+  }
+
+  function buildSuccessMessage(response = {}) {
+    const issueIdentifier = String(response.linearIssueIdentifier || "").trim();
+    const baselineLabel = String(
+      response.linearParentIssueIdentifier
+      || response.linearParentIssueTitle
+      || "",
+    ).trim();
+
+    if (response.syncStatus === "synced" && issueIdentifier) {
+      return baselineLabel
+        ? `Feedback sent. Linear issue ${issueIdentifier} is linked under ${baselineLabel}.`
+        : `Feedback sent. Linear issue ${issueIdentifier} is ready for triage.`;
+    }
+
+    if (response.syncStatus === "pending") {
+      return `Feedback saved. Linear sync is pending. Reference: ${response.submissionId}`;
+    }
+
+    return `Feedback sent. Reference: ${response.submissionId}`;
   }
 
   function openModal() {
@@ -247,6 +316,18 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     openBtn.focus();
   }
 
+  function renderSelectedFiles() {
+    const files = Array.from(attachmentInput?.files || []);
+    if (!fileList) return;
+    if (!files.length) {
+      fileList.innerHTML = "";
+      return;
+    }
+    fileList.innerHTML = files.map((file) => `
+      <li>${file.name} (${formatAttachmentSize(file.size)})</li>
+    `).join("");
+  }
+
   openBtn.addEventListener("click", openModal);
   cancelBtn.addEventListener("click", closeModal);
   backdrop.addEventListener("click", (event) => {
@@ -257,6 +338,7 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
       closeModal();
     }
   });
+  attachmentInput?.addEventListener("change", renderSelectedFiles);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -267,6 +349,14 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     try {
       const formData = new FormData(form);
       const extraContext = await Promise.resolve(resolveExtraContext());
+      const attachments = await Promise.all(
+        Array.from(attachmentInput?.files || []).map(async (file) => ({
+          name: file.name,
+          contentType: file.type || "application/octet-stream",
+          size: Number(file.size || 0),
+          dataUrl: await readFileAsDataUrl(file),
+        })),
+      );
       const response = await submitFeedback({
         gameSlug,
         gameName,
@@ -276,12 +366,14 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
         reproSteps: formData.get("reproSteps"),
         displayName: formData.get("displayName"),
         contactEmail: formData.get("contactEmail"),
+        attachments,
         pageContext: {
           extraContext,
         },
       });
-      setStatus(`Feedback sent. Reference: ${response.submissionId}`, "success");
+      setStatus(buildSuccessMessage(response), "success");
       form.reset();
+      renderSelectedFiles();
       setTimeout(() => {
         if (backdrop.classList.contains("active")) closeModal();
       }, 900);

@@ -207,6 +207,20 @@
       letter-spacing: 0.04em;
       color: var(--muted);
     }
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .detail-copy {
+      margin: 0 0 10px 0;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .detail-copy.ok { color: var(--ok); }
+    .detail-copy.warn { color: var(--warn); }
+    .detail-copy.error { color: var(--danger); }
     .detail-block pre,
     .detail-block textarea {
       margin: 0;
@@ -223,6 +237,31 @@
     .detail-block textarea {
       min-height: 220px;
       resize: vertical;
+    }
+    .attachment-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .attachment-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .attachment-card img {
+      width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .attachment-card a {
+      color: #bfe7ff;
+      font-weight: 700;
+      text-decoration: none;
     }
     .empty {
       color: var(--muted);
@@ -389,8 +428,82 @@
         .replace(/"/g, "&quot;");
     }
 
+    function formatAttachmentSize(size) {
+      const bytes = Math.max(0, Number(size) || 0);
+      if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      if (bytes >= 1024) return `${Math.max(1, Math.round(bytes / 102.4) / 10)} KB`;
+      return `${bytes} B`;
+    }
+
     function getSelectedSubmission() {
       return state.submissions.find((entry) => entry.id === state.selectedId) || null;
+    }
+
+    function buildLinearHref(identifier, explicitUrl = "") {
+      const normalizedUrl = String(explicitUrl || "").trim();
+      if (normalizedUrl) return normalizedUrl;
+      const normalizedIdentifier = String(identifier || "").trim();
+      return normalizedIdentifier ? `https://linear.app/issue/${normalizedIdentifier}` : "";
+    }
+
+    function renderLinearLink(label, identifier, explicitUrl = "") {
+      const text = String(label || identifier || "").trim();
+      const href = buildLinearHref(identifier, explicitUrl);
+      if (!text || !href) return "Not linked";
+      return `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer noopener">${escapeHtml(text)}</a>`;
+    }
+
+    function buildLinearLinksClipboardText(submission) {
+      const lines = [];
+      const issueUrl = buildLinearHref(submission.linearIssueIdentifier, submission.linearIssueUrl);
+      const baselineUrl = buildLinearHref(submission.linearParentIssueIdentifier, submission.linearParentIssueUrl);
+      if (issueUrl) {
+        lines.push(`Issue: ${submission.linearIssueIdentifier || "Linear issue"} - ${issueUrl}`);
+      }
+      if (baselineUrl) {
+        lines.push(`Baseline: ${submission.linearParentIssueIdentifier || submission.linearParentIssueTitle || "Baseline"} - ${baselineUrl}`);
+      }
+      return lines.join("\n");
+    }
+
+    function buildCodexLaunchCommand(markdown = "") {
+      const trimmed = String(markdown || "").trim();
+      if (!trimmed) return "";
+      return `@'\n${trimmed.replace(/'@/g, "' @")}\n'@ | codex`;
+    }
+
+    async function copyTextToClipboard(text, successMessage) {
+      if (!text) {
+        setStatus("There is nothing to copy yet.", "warn");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(successMessage, "ok");
+      } catch {
+        setStatus("Clipboard copy failed in this browser context.", "error");
+      }
+    }
+
+    function describeSyncState(submission) {
+      if (submission.syncStatus === "synced") {
+        return {
+          tone: "ok",
+          message: submission.linearIssueIdentifier
+            ? `Synced to Linear as ${submission.linearIssueIdentifier}.`
+            : "Synced to Linear.",
+        };
+      }
+      if (submission.syncStatus === "failed") {
+        return {
+          tone: "error",
+          message: "Stored locally, but Linear sync failed and needs attention.",
+        };
+      }
+      return {
+        tone: "warn",
+        message: "Stored locally. Linear sync is still pending.",
+      };
     }
 
     function renderGameFilter() {
@@ -416,6 +529,8 @@
             <div class="meta-row">
               <span>${escapeHtml(submission.gameName)}</span>
               <span>${escapeHtml(submittedAt)}</span>
+              ${submission.linearIssueIdentifier ? `<span>${escapeHtml(submission.linearIssueIdentifier)}</span>` : ""}
+              ${submission.attachments?.length ? `<span>${escapeHtml(`${submission.attachments.length} attachment${submission.attachments.length === 1 ? "" : "s"}`)}</span>` : ""}
             </div>
             <h3>${escapeHtml(submission.summary)}</h3>
             <div class="badge-row">
@@ -446,9 +561,51 @@
       detailTriageSelect.value = submission.triageStatus || "new";
       detailSeveritySelect.value = submission.severity || "";
 
-      const linearLink = submission.linearIssueIdentifier
-        ? `<a href="${escapeHtml(submission.linearIssueUrl || `https://linear.app/issue/${submission.linearIssueIdentifier}`)}" target="_blank" rel="noreferrer noopener">${escapeHtml(submission.linearIssueIdentifier)}</a>`
-        : "Not synced yet";
+      const linearLink = renderLinearLink(
+        submission.linearIssueIdentifier,
+        submission.linearIssueIdentifier,
+        submission.linearIssueUrl,
+      );
+      const baselineLabel = submission.linearParentIssueIdentifier || submission.linearParentIssueTitle;
+      const baselineLink = renderLinearLink(
+        baselineLabel,
+        submission.linearParentIssueIdentifier,
+        submission.linearParentIssueUrl,
+      );
+      const issueHref = buildLinearHref(submission.linearIssueIdentifier, submission.linearIssueUrl);
+      const baselineHref = buildLinearHref(submission.linearParentIssueIdentifier, submission.linearParentIssueUrl);
+      const syncState = describeSyncState(submission);
+      const agentPreparedAt = submission.agentBriefPreparedAt
+        ? new Date(submission.agentBriefPreparedAt).toLocaleString()
+        : "";
+      const attachments = Array.isArray(submission.attachments) ? submission.attachments : [];
+      const attachmentsMarkup = attachments.length
+        ? `
+        <div class="detail-block">
+          <h3>Attachments</h3>
+          <div class="attachment-grid">
+            ${attachments.map((attachment) => `
+              <div class="attachment-card">
+                <div class="meta-row">
+                  <span>${escapeHtml(attachment.name || "Attachment")}</span>
+                  <span>${escapeHtml(attachment.contentType || "file")}</span>
+                  <span>${escapeHtml(formatAttachmentSize(attachment.size))}</span>
+                </div>
+                ${attachment.previewKind === "image" && attachment.url
+                  ? `<img src="${escapeHtml(attachment.url)}" alt="${escapeHtml(attachment.name || "Feedback attachment")}" loading="lazy" />`
+                  : ""}
+                ${attachment.previewKind === "text" && attachment.previewText
+                  ? `<pre>${escapeHtml(attachment.previewText)}</pre>`
+                  : ""}
+                <div class="link-row">
+                  <a href="${escapeHtml(attachment.url || "#")}" target="_blank" rel="noreferrer noopener"${attachment.url ? "" : " aria-disabled=\"true\""}>Open Attachment</a>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+        `
+        : "";
 
       detailPane.innerHTML = `
         <div class="detail-block">
@@ -466,6 +623,21 @@
           </div>
         </div>
         <div class="detail-block">
+          <h3>Linear Tracking</h3>
+          <p class="detail-copy ${escapeHtml(syncState.tone)}">${escapeHtml(syncState.message)}</p>
+          <div class="link-row">
+            <span>Issue: ${linearLink}</span>
+            <span>Baseline: ${baselineLink}</span>
+            <span>Duplicate of: ${escapeHtml(submission.duplicateOf || "none")}</span>
+          </div>
+          <div class="detail-actions">
+            <button type="button" data-feedback-action="open-linear-issue" ${issueHref ? "" : "disabled"}>Open Issue</button>
+            <button type="button" data-feedback-action="open-linear-baseline" ${baselineHref ? "" : "disabled"}>Open Baseline</button>
+            <button type="button" data-feedback-action="copy-linear-links" ${(issueHref || baselineHref) ? "" : "disabled"}>Copy Linear Links</button>
+          </div>
+          ${agentPreparedAt ? `<div class="meta-row"><span>Agent brief prepared: ${escapeHtml(agentPreparedAt)}</span></div>` : ""}
+        </div>
+        <div class="detail-block">
           <h3>Player Details</h3>
           <pre>${escapeHtml(submission.details || "")}</pre>
         </div>
@@ -479,11 +651,14 @@
             <span>Name: ${escapeHtml(submission.displayName || "anonymous")}</span>
             <span>Email: ${escapeHtml(submission.contactEmail || "not provided")}</span>
           </div>
-          <div class="meta-row">
-            <span>Linear: ${linearLink}</span>
-            <span>Duplicate of: ${escapeHtml(submission.duplicateOf || "none")}</span>
-          </div>
         </div>
+        ${attachmentsMarkup}
+        ${submission.lastSyncError ? `
+        <div class="detail-block">
+          <h3>Last Sync Error</h3>
+          <pre>${escapeHtml(submission.lastSyncError)}</pre>
+        </div>
+        ` : ""}
         <div class="detail-block">
           <h3>Diagnostics</h3>
           <pre>${escapeHtml(JSON.stringify({
@@ -492,12 +667,17 @@
             viewport: submission.viewport,
             userAgent: submission.userAgent,
             pageContext: submission.pageContext,
-            lastSyncError: submission.lastSyncError,
+            linearIssueIdentifier: submission.linearIssueIdentifier,
+            linearParentIssueIdentifier: submission.linearParentIssueIdentifier,
           }, null, 2))}</pre>
         </div>
         <div class="detail-block">
           <h3>Agent Brief</h3>
           <textarea id="agentTaskOutput" placeholder="Prepare an agent brief to populate this panel.">${escapeHtml(state.agentTaskMarkdown || "")}</textarea>
+          <div class="detail-actions">
+            <button type="button" data-feedback-action="copy-agent-launch-prompt" ${state.agentTaskMarkdown ? "" : "disabled"}>Copy Launch Prompt</button>
+            <button type="button" data-feedback-action="copy-codex-command" ${state.agentTaskMarkdown ? "" : "disabled"}>Copy Codex Command</button>
+          </div>
         </div>
       `;
     }
@@ -515,7 +695,12 @@
         }
         renderSubmissionList();
         renderDetailPane();
-        setStatus(`Loaded ${state.submissions.length} feedback report${state.submissions.length === 1 ? "" : "s"}.`, "ok");
+        const pendingCount = state.submissions.filter((entry) => entry.syncStatus !== "synced").length;
+        const syncSuffix = pendingCount ? ` ${pendingCount} need Linear attention.` : "";
+        setStatus(
+          `Loaded ${state.submissions.length} feedback report${state.submissions.length === 1 ? "" : "s"}.${syncSuffix}`,
+          pendingCount ? "warn" : "ok",
+        );
       } catch (error) {
         setStatus(String(error && error.message ? error.message : error), "error");
       }
@@ -590,11 +775,58 @@
         setStatus("Prepare an agent brief before copying it.", "warn");
         return;
       }
-      try {
-        await navigator.clipboard.writeText(text);
-        setStatus("Agent brief copied to clipboard.", "ok");
-      } catch {
-        setStatus("Clipboard copy failed in this browser context.", "error");
+      await copyTextToClipboard(text, "Agent brief copied to clipboard.");
+    });
+    detailPane.addEventListener("click", async (event) => {
+      const actionEl = event.target.closest("[data-feedback-action]");
+      if (!actionEl) return;
+
+      const submission = getSelectedSubmission();
+      if (!submission) {
+        setStatus("Select a submission first.", "warn");
+        return;
+      }
+
+      const issueHref = buildLinearHref(submission.linearIssueIdentifier, submission.linearIssueUrl);
+      const baselineHref = buildLinearHref(submission.linearParentIssueIdentifier, submission.linearParentIssueUrl);
+      const output = document.getElementById("agentTaskOutput");
+      const launchPrompt = output?.value || state.agentTaskMarkdown || "";
+
+      switch (actionEl.dataset.feedbackAction) {
+        case "open-linear-issue":
+          if (!issueHref) {
+            setStatus("This submission does not have a Linear issue yet.", "warn");
+            return;
+          }
+          window.open(issueHref, "_blank", "noopener,noreferrer");
+          return;
+        case "open-linear-baseline":
+          if (!baselineHref) {
+            setStatus("This submission is not linked to a baseline issue yet.", "warn");
+            return;
+          }
+          window.open(baselineHref, "_blank", "noopener,noreferrer");
+          return;
+        case "copy-linear-links":
+          await copyTextToClipboard(
+            buildLinearLinksClipboardText(submission),
+            "Linear links copied to clipboard.",
+          );
+          return;
+        case "copy-agent-launch-prompt":
+          await copyTextToClipboard(
+            launchPrompt,
+            "Agent launch prompt copied to clipboard.",
+          );
+          return;
+        case "copy-codex-command":
+          await copyTextToClipboard(
+            buildCodexLaunchCommand(launchPrompt),
+            "Codex launch command copied to clipboard.",
+          );
+          return;
+        default:
+          return;
       }
     });
 

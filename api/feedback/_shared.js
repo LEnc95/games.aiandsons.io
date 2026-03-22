@@ -7,6 +7,19 @@ const FEEDBACK_KIND_VALUES = new Set(["bug", "feature", "general"]);
 const FEEDBACK_TRIAGE_STATUS_VALUES = new Set(["new", "triaged", "agent-ready", "duplicate", "closed"]);
 const FEEDBACK_SYNC_STATUS_VALUES = new Set(["synced", "pending", "failed"]);
 const FEEDBACK_SEVERITY_VALUES = new Set(["low", "medium", "high", "critical"]);
+const FEEDBACK_ATTACHMENT_MAX_COUNT = 2;
+const FEEDBACK_ATTACHMENT_MAX_BYTES = 900 * 1024;
+const FEEDBACK_ATTACHMENT_TOTAL_MAX_BYTES = 1400 * 1024;
+const FEEDBACK_ATTACHMENT_PREVIEW_TEXT_LIMIT = 1200;
+const FEEDBACK_ATTACHMENT_ALLOWED_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "text/plain",
+  "application/json",
+  "application/pdf",
+]);
 
 let feedbackMetaPromise = null;
 let agentProjectPromptCache = null;
@@ -29,6 +42,17 @@ function normalizeMultiline(value, maxLength = 4000) {
     .replace(/\r\n?/g, "\n")
     .trim()
     .slice(0, maxLength);
+}
+
+function normalizeFileName(value, maxLength = 120) {
+  const base = String(value || "")
+    .replace(/^.*[\\/]/, "")
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/[<>:"|?*]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+  return base || "";
 }
 
 function normalizeBoolean(value) {
@@ -70,6 +94,213 @@ function normalizeSyncStatus(value) {
 function normalizeSeverity(value) {
   const normalized = normalizeSingleLine(value, 24).toLowerCase();
   return FEEDBACK_SEVERITY_VALUES.has(normalized) ? normalized : "";
+}
+
+function normalizeAttachmentContentType(value) {
+  return normalizeSingleLine(String(value || "").toLowerCase(), 80);
+}
+
+function inferAttachmentPreviewKind(contentType = "") {
+  const normalized = normalizeAttachmentContentType(contentType);
+  if (normalized.startsWith("image/")) return "image";
+  if (normalized === "text/plain" || normalized === "application/json") return "text";
+  if (normalized === "application/pdf") return "document";
+  return "file";
+}
+
+function parseDataUrl(value) {
+  const match = String(value || "").match(/^data:([^;,]+);base64,([a-z0-9+/=\s]+)$/i);
+  if (!match) return null;
+  return {
+    contentType: normalizeAttachmentContentType(match[1]),
+    base64Data: String(match[2] || "").replace(/\s+/g, ""),
+  };
+}
+
+function formatFileSize(size) {
+  const bytes = normalizeInteger(size, { min: 0, max: Number.MAX_SAFE_INTEGER, fallback: 0 });
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  if (bytes >= 1024) {
+    return `${Math.max(1, Math.round(bytes / 102.4) / 10)} KB`;
+  }
+  return `${bytes} B`;
+}
+
+function getFeedbackAttachmentSecret() {
+  const configured = typeof process.env.FEEDBACK_ATTACHMENT_SECRET === "string"
+    ? process.env.FEEDBACK_ATTACHMENT_SECRET.trim()
+    : "";
+  if (configured) return configured;
+
+  const appSessionSecret = typeof process.env.APP_SESSION_SECRET === "string"
+    ? process.env.APP_SESSION_SECRET.trim()
+    : "";
+  if (appSessionSecret) return appSessionSecret;
+
+  return "cade-games-feedback-attachment-secret";
+}
+
+function createFeedbackAttachmentId() {
+  if (typeof crypto.randomUUID === "function") {
+    return `fba_${crypto.randomUUID().replace(/-/g, "")}`;
+  }
+  return `fba_${crypto.randomBytes(16).toString("hex")}`;
+}
+
+function signFeedbackAttachmentId(attachmentId) {
+  const normalizedId = normalizeSingleLine(attachmentId, 80);
+  if (!normalizedId) return "";
+  return crypto
+    .createHmac("sha256", getFeedbackAttachmentSecret())
+    .update(normalizedId)
+    .digest("hex");
+}
+
+function verifyFeedbackAttachmentSignature(attachmentId, signature) {
+  const expected = signFeedbackAttachmentId(attachmentId);
+  const provided = normalizeSingleLine(signature, 128);
+  if (!expected || !provided) return false;
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(provided);
+  if (expectedBuffer.length !== providedBuffer.length) return false;
+  return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
+function getRequestOrigin(req) {
+  const appBaseUrl = typeof process.env.APP_BASE_URL === "string"
+    ? process.env.APP_BASE_URL.trim().replace(/\/+$/, "")
+    : "";
+
+  const forwardedProto = normalizeSingleLine(req?.headers?.["x-forwarded-proto"], 32);
+  const forwardedHost = normalizeSingleLine(req?.headers?.["x-forwarded-host"], 200);
+  const host = forwardedHost || normalizeSingleLine(req?.headers?.host, 200);
+  if (host) {
+    const protocol = forwardedProto || "https";
+    return `${protocol}://${host}`;
+  }
+
+  return appBaseUrl || "http://localhost";
+}
+
+function buildFeedbackAttachmentUrl({ attachmentId = "", origin = "" } = {}) {
+  const normalizedId = normalizeSingleLine(attachmentId, 80);
+  const normalizedOrigin = String(origin || "").trim().replace(/\/+$/, "");
+  const signature = signFeedbackAttachmentId(normalizedId);
+  if (!normalizedId || !normalizedOrigin || !signature) return "";
+  return `${normalizedOrigin}/api/feedback/attachment?id=${encodeURIComponent(normalizedId)}&sig=${encodeURIComponent(signature)}`;
+}
+
+function normalizeFeedbackAttachmentMeta(source) {
+  const raw = toPlainObject(source);
+  const id = normalizeSingleLine(raw.id, 80) || createFeedbackAttachmentId();
+  const name = normalizeFileName(raw.name, 120);
+  const contentType = normalizeAttachmentContentType(raw.contentType);
+  const size = normalizeInteger(raw.size, {
+    min: 0,
+    max: FEEDBACK_ATTACHMENT_MAX_BYTES,
+    fallback: 0,
+  });
+  const previewKind = inferAttachmentPreviewKind(contentType);
+  const previewText = previewKind === "text"
+    ? normalizeMultiline(raw.previewText, FEEDBACK_ATTACHMENT_PREVIEW_TEXT_LIMIT)
+    : "";
+  const url = normalizeSingleLine(raw.url, 512);
+  return {
+    id,
+    name,
+    contentType,
+    size,
+    previewKind,
+    previewText,
+    url,
+  };
+}
+
+function normalizeFeedbackAttachments(value) {
+  if (value == null) return { ok: true, value: [] };
+  if (!Array.isArray(value)) {
+    return { ok: false, error: "Attachments must be an array.", code: "invalid_attachments" };
+  }
+
+  if (value.length > FEEDBACK_ATTACHMENT_MAX_COUNT) {
+    return {
+      ok: false,
+      error: `Please attach no more than ${FEEDBACK_ATTACHMENT_MAX_COUNT} files per report.`,
+      code: "too_many_attachments",
+    };
+  }
+
+  const normalized = [];
+  let totalBytes = 0;
+
+  for (const entry of value) {
+    const raw = toPlainObject(entry);
+    const name = normalizeFileName(raw.name, 120);
+    const parsedDataUrl = parseDataUrl(raw.dataUrl || raw.dataURL || "");
+    const contentType = normalizeAttachmentContentType(raw.contentType || parsedDataUrl?.contentType);
+    if (!name || !parsedDataUrl || !contentType) {
+      return {
+        ok: false,
+        error: "Each attachment must include a name, content type, and base64 data URL.",
+        code: "invalid_attachment_payload",
+      };
+    }
+    if (!FEEDBACK_ATTACHMENT_ALLOWED_TYPES.has(contentType)) {
+      return {
+        ok: false,
+        error: `Unsupported attachment type: ${contentType}.`,
+        code: "unsupported_attachment_type",
+      };
+    }
+
+    let buffer = null;
+    try {
+      buffer = Buffer.from(parsedDataUrl.base64Data, "base64");
+    } catch {
+      buffer = null;
+    }
+    if (!buffer || !buffer.length) {
+      return {
+        ok: false,
+        error: "Attachment data could not be decoded.",
+        code: "invalid_attachment_data",
+      };
+    }
+
+    const size = buffer.length;
+    if (size > FEEDBACK_ATTACHMENT_MAX_BYTES) {
+      return {
+        ok: false,
+        error: `Attachments must be ${formatFileSize(FEEDBACK_ATTACHMENT_MAX_BYTES)} or smaller.`,
+        code: "attachment_too_large",
+      };
+    }
+    totalBytes += size;
+    if (totalBytes > FEEDBACK_ATTACHMENT_TOTAL_MAX_BYTES) {
+      return {
+        ok: false,
+        error: `Total attachment size must stay under ${formatFileSize(FEEDBACK_ATTACHMENT_TOTAL_MAX_BYTES)}.`,
+        code: "attachments_too_large",
+      };
+    }
+
+    const previewKind = inferAttachmentPreviewKind(contentType);
+    normalized.push({
+      id: createFeedbackAttachmentId(),
+      name,
+      contentType,
+      size,
+      previewKind,
+      previewText: previewKind === "text"
+        ? normalizeMultiline(buffer.toString("utf8"), FEEDBACK_ATTACHMENT_PREVIEW_TEXT_LIMIT)
+        : "",
+      base64Data: buffer.toString("base64"),
+    });
+  }
+
+  return { ok: true, value: normalized };
 }
 
 function sanitizeJsonValue(value, depth = 0) {
@@ -225,6 +456,7 @@ async function normalizeFeedbackPayload(body, { requestUserAgent = "" } = {}) {
   const reproSteps = normalizeMultiline(raw.reproSteps, 2500);
   const displayName = normalizeSingleLine(raw.displayName, 80);
   const contactEmail = normalizeEmail(raw.contactEmail);
+  const attachments = normalizeFeedbackAttachments(raw.attachments);
   const pageContext = normalizePageContext(raw.pageContext);
   const knownGame = await getFeedbackGameBySlug(gameSlug);
 
@@ -239,6 +471,9 @@ async function normalizeFeedbackPayload(body, { requestUserAgent = "" } = {}) {
   }
   if (!details) {
     return { ok: false, error: "Feedback details are required.", code: "missing_details" };
+  }
+  if (!attachments.ok) {
+    return attachments;
   }
 
   const route = normalizeSingleLine(pageContext.route || knownGame.route, 240) || knownGame.route;
@@ -265,6 +500,7 @@ async function normalizeFeedbackPayload(body, { requestUserAgent = "" } = {}) {
       userAgent,
       viewport,
       pageContext,
+      attachments: attachments.value,
     },
   };
 }
@@ -294,9 +530,16 @@ function createFeedbackSubmissionRecord(payload, {
     pageUrl: payload.pageUrl,
     referrer: payload.referrer,
     pageContext: payload.pageContext,
+    attachments: Array.isArray(payload.attachments)
+      ? payload.attachments.map((entry) => normalizeFeedbackAttachmentMeta(entry))
+      : [],
     linearIssueId: "",
     linearIssueIdentifier: "",
     linearIssueUrl: "",
+    linearParentIssueId: "",
+    linearParentIssueIdentifier: "",
+    linearParentIssueTitle: "",
+    linearParentIssueUrl: "",
     syncStatus: "pending",
     triageStatus: "new",
     severity: "",
@@ -314,6 +557,11 @@ function getFeedbackLinearLabelNames(submission) {
     names.push("kind/feature");
   }
   return [...new Set(names)];
+}
+
+function buildFeedbackBaselineIssueTitle(gameOrSubmission = {}) {
+  const gameName = normalizeSingleLine(gameOrSubmission.gameName || gameOrSubmission.name, 120);
+  return gameName ? `${gameName}: Issue tracking baseline` : "";
 }
 
 function buildFeedbackIssueTitle(submission) {
@@ -343,6 +591,16 @@ function buildFeedbackIssueDescription(submission) {
     lines.push("## Repro Steps", "", submission.reproSteps, "");
   }
 
+  if (Array.isArray(submission.attachments) && submission.attachments.length > 0) {
+    lines.push("## Attachments", "");
+    for (const attachment of submission.attachments) {
+      const name = attachment.name || attachment.id || "Attachment";
+      const link = attachment.url ? `[${name}](${attachment.url})` : name;
+      lines.push(`- ${link} (${attachment.contentType || "file"}, ${formatFileSize(attachment.size)})`);
+    }
+    lines.push("");
+  }
+
   lines.push(
     "## Diagnostics",
     "",
@@ -363,11 +621,15 @@ function buildFeedbackIssueDescription(submission) {
 }
 
 function buildAgentTaskMarkdown(submission, agentProjectPrompt = "") {
+  const baselineLabel = submission.linearParentIssueIdentifier
+    || submission.linearParentIssueTitle
+    || "not linked";
   const lines = [
     "# Agent Handoff Brief",
     "",
     `- Submission ID: ${submission.id}`,
     `- Linear issue: ${submission.linearIssueIdentifier || "not yet synced"}`,
+    `- Baseline issue: ${baselineLabel}`,
     `- Game: ${submission.gameName} (${submission.gameSlug})`,
     `- Kind: ${submission.kind}`,
     `- Severity: ${submission.severity || "not set"}`,
@@ -386,6 +648,17 @@ function buildAgentTaskMarkdown(submission, agentProjectPrompt = "") {
 
   if (submission.reproSteps) {
     lines.push("### Repro Steps", submission.reproSteps, "");
+  }
+
+  if (Array.isArray(submission.attachments) && submission.attachments.length > 0) {
+    lines.push("### Attachments", "");
+    for (const attachment of submission.attachments) {
+      const name = attachment.name || attachment.id || "Attachment";
+      const url = attachment.url || "";
+      const suffix = url ? ` - ${url}` : "";
+      lines.push(`- ${name} (${attachment.contentType || "file"}, ${formatFileSize(attachment.size)})${suffix}`);
+    }
+    lines.push("");
   }
 
   lines.push(
@@ -434,9 +707,18 @@ module.exports = {
   FEEDBACK_TRIAGE_STATUS_VALUES,
   FEEDBACK_SYNC_STATUS_VALUES,
   FEEDBACK_SEVERITY_VALUES,
+  FEEDBACK_ATTACHMENT_ALLOWED_TYPES,
+  FEEDBACK_ATTACHMENT_MAX_BYTES,
+  FEEDBACK_ATTACHMENT_MAX_COUNT,
+  FEEDBACK_ATTACHMENT_PREVIEW_TEXT_LIMIT,
+  FEEDBACK_ATTACHMENT_TOTAL_MAX_BYTES,
   createFeedbackSubmissionId,
+  createFeedbackAttachmentId,
   createFeedbackSubmissionRecord,
+  buildFeedbackAttachmentUrl,
   normalizeBoolean,
+  normalizeFeedbackAttachmentMeta,
+  normalizeFeedbackAttachments,
   normalizeEmail,
   normalizeFeedbackPayload,
   normalizeInteger,
@@ -448,10 +730,14 @@ module.exports = {
   normalizeSyncStatus,
   normalizeTriageStatus,
   normalizeViewport,
+  formatFileSize,
+  getRequestOrigin,
   readAgentProjectPrompt,
   readJsonBody,
+  signFeedbackAttachmentId,
   getFeedbackGameBySlug,
   getKnownFeedbackGames,
+  buildFeedbackBaselineIssueTitle,
   getFeedbackLinearLabelNames,
   getQuery,
   getRequestIp,
@@ -461,4 +747,5 @@ module.exports = {
   sendError,
   sendJson,
   toPlainObject,
+  verifyFeedbackAttachmentSignature,
 };

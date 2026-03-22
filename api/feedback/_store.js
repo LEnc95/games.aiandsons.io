@@ -12,7 +12,9 @@ const memoryState = (() => {
 })();
 
 const {
+  createFeedbackAttachmentId,
   createFeedbackSubmissionId,
+  normalizeFeedbackAttachmentMeta,
   normalizeEmail,
   normalizeInteger,
   normalizeKind,
@@ -125,6 +127,10 @@ function getSubmissionIndexKey() {
   return `${KEY_PREFIX}:submission:index`;
 }
 
+function getAttachmentKey(id) {
+  return `${KEY_PREFIX}:attachment:${id}`;
+}
+
 function getRateLimitKey(bucketId) {
   return `${KEY_PREFIX}:ratelimit:${bucketId}`;
 }
@@ -180,15 +186,40 @@ function normalizeStoredSubmission(source) {
     pageUrl: normalizeSingleLine(raw.pageUrl, 512),
     referrer: normalizeSingleLine(raw.referrer, 512),
     pageContext: normalizePageContext(raw.pageContext),
+    attachments: Array.isArray(raw.attachments)
+      ? raw.attachments
+        .map((entry) => normalizeFeedbackAttachmentMeta(entry))
+        .filter((entry) => entry.id && entry.name && entry.contentType)
+      : [],
     linearIssueId: normalizeSingleLine(raw.linearIssueId, 80),
     linearIssueIdentifier: normalizeSingleLine(raw.linearIssueIdentifier, 80),
     linearIssueUrl: normalizeSingleLine(raw.linearIssueUrl, 240),
+    linearParentIssueId: normalizeSingleLine(raw.linearParentIssueId, 80),
+    linearParentIssueIdentifier: normalizeSingleLine(raw.linearParentIssueIdentifier, 80),
+    linearParentIssueTitle: normalizeSingleLine(raw.linearParentIssueTitle, 200),
+    linearParentIssueUrl: normalizeSingleLine(raw.linearParentIssueUrl, 240),
     syncStatus: normalizeSyncStatus(raw.syncStatus),
     triageStatus: normalizeTriageStatus(raw.triageStatus),
     severity: normalizeSeverity(raw.severity),
     duplicateOf: normalizeSingleLine(raw.duplicateOf, 80),
     agentBriefPreparedAt: normalizeInteger(raw.agentBriefPreparedAt, { min: 0, fallback: 0 }),
     lastSyncError: normalizeMultiline(raw.lastSyncError, 500),
+  };
+}
+
+function normalizeStoredAttachment(source) {
+  const raw = toPlainObject(source);
+  const id = normalizeSingleLine(raw.id, 80) || createFeedbackAttachmentId();
+  return {
+    id,
+    submissionId: normalizeSingleLine(raw.submissionId, 80),
+    name: normalizeSingleLine(raw.name, 120),
+    contentType: normalizeSingleLine(raw.contentType, 80),
+    size: normalizeInteger(raw.size, { min: 0, max: 5 * 1024 * 1024, fallback: 0 }),
+    previewKind: normalizeSingleLine(raw.previewKind, 24),
+    previewText: normalizeMultiline(raw.previewText, 1200),
+    base64Data: normalizeSingleLine(raw.base64Data, 2_000_000),
+    createdAt: normalizeInteger(raw.createdAt, { min: 0, fallback: Date.now() }),
   };
 }
 
@@ -213,6 +244,29 @@ async function saveFeedbackSubmission(submission) {
   await saveSubmissionIndex(index);
 
   return normalized;
+}
+
+async function saveFeedbackAttachment(attachment) {
+  const normalized = normalizeStoredAttachment(attachment);
+  await setStoredValue(getAttachmentKey(normalized.id), JSON.stringify(normalized));
+  return normalized;
+}
+
+async function saveFeedbackAttachments(attachments = []) {
+  const items = Array.isArray(attachments) ? attachments : [];
+  return Promise.all(items.map((attachment) => saveFeedbackAttachment(attachment)));
+}
+
+async function getFeedbackAttachment(attachmentId) {
+  const normalizedId = normalizeSingleLine(attachmentId, 80);
+  if (!normalizedId) return null;
+  const raw = await getStoredValue(getAttachmentKey(normalizedId));
+  if (!raw) return null;
+  try {
+    return normalizeStoredAttachment(JSON.parse(raw));
+  } catch {
+    return null;
+  }
 }
 
 async function updateFeedbackSubmission(submissionId, patch) {
@@ -280,9 +334,13 @@ function __resetFeedbackStoreForTests() {
 
 module.exports = {
   enforceFeedbackRateLimit,
+  getFeedbackAttachment,
   getFeedbackSubmission,
   listFeedbackSubmissions,
+  normalizeStoredAttachment,
   normalizeStoredSubmission,
+  saveFeedbackAttachment,
+  saveFeedbackAttachments,
   saveFeedbackSubmission,
   updateFeedbackSubmission,
   __resetFeedbackStoreForTests,

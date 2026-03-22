@@ -67,4 +67,7 @@ test("ops feedback inbox page exists with agent handoff controls", () => {
   assert.equal(source.includes("Feedback Inbox"), true);
   assert.equal(source.includes("Prepare Agent Brief"), true);
   assert.equal(source.includes("Retry Linear Sync"), true);
+  assert.equal(source.includes("Copy Codex Command"), true);
+  assert.equal(source.includes("Open Baseline"), true);
+  assert.equal(source.includes("Attachments"), true);
 });

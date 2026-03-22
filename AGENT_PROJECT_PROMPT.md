@@ -45,6 +45,8 @@ Important nuance:
 - `src/meta/games.js` is the homepage source of truth for listed cards.
 - Some game folders may exist without being wired into all progression systems.
 - `src/meta/feedback.js` should stay aligned with the game registry through `npm run feedback:sync-linear`.
+- When `LINEAR_API_KEY` + `LINEAR_TEAM_ID` are present, `npm run feedback:sync-linear` also provisions missing Linear labels and baseline issues; `npm run feedback:sync-linear:files` keeps it local-only.
+- `npm run feedback:check-daily` is the strict guard that fails when generated Linear seed artifacts drift from repo metadata, and it already runs inside `npm run test:feedback`.
 
 ## 4) Progression and data model details
 
@@ -71,10 +73,11 @@ Agent guidance when adding/modifying progression:
 1. Create `<slug>/index.html` (self-contained game page).
 2. Add entry to `src/meta/games.js`.
 3. Mount the shared feedback widget with `mountGameFeedback({ gameSlug, gameName })`.
-4. Run `npm run feedback:sync-linear` so feedback labels/baseline issues stay aligned.
-5. Add rewrites for `/<slug>` and `/<slug>/` in `vercel.json`.
-6. Add no-cache header override for the new game HTML in `vercel.json`.
-7. If shop inventory should reference this game prefix, update test mapping in `tests/shop-items.integration.test.mjs`.
+4. Run `npm run feedback:sync-linear` so feedback labels/baseline issues stay aligned and live Linear provisioning runs when env vars are configured.
+5. Run `npm run test:feedback` so the strict seed-artifact guard and widget coverage checks fail early if anything drifted.
+6. Add rewrites for `/<slug>` and `/<slug>/` in `vercel.json`.
+7. Add no-cache header override for the new game HTML in `vercel.json`.
+8. If shop inventory should reference this game prefix, update test mapping in `tests/shop-items.integration.test.mjs`.
 
 ### Add a new shop item
 1. Add item object in `shop.html` `items` array.
@@ -84,8 +87,8 @@ Agent guidance when adding/modifying progression:
 
 ### Add or update feedback flow
 1. Keep `src/feedback/*` and `api/feedback/*` behavior aligned.
-2. If feedback metadata changes, regenerate `linear/labels.md` and `linear/game-issues.csv` with `npm run feedback:sync-linear`.
-3. Verify `ops/feedback/index.html` still loads, filters, retries sync, and prepares agent briefs.
+2. If feedback metadata changes, regenerate `linear/labels.md` and `linear/game-issues.csv` with `npm run feedback:sync-linear` or `npm run feedback:sync-linear:files`.
+3. Verify `ops/feedback/index.html` still loads, filters, retries sync, previews attachments, and prepares agent briefs.
 4. Run `npm run test:feedback` and `npm run test:feedback-smoke:raw` when the feedback surface changes.
 
 ### Add a new achievement/reward
@@ -120,6 +123,8 @@ Manual smoke checklist after edits:
 - `version.json` stores displayed version badge value for homepage.
 - `vercel.json` controls rewrites and cache/security headers.
 - Feedback API deployment expects `FEEDBACK_ADMIN_TOKEN`, `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optionally `LINEAR_PROJECT_ID` plus `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+- Automatic baseline provisioning only needs issue-creation access, but automatic label creation may require label-management permission for the configured team/workspace.
+- Nightly CI can also run `npm run feedback:provision-linear` when `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optional `LINEAR_PROJECT_ID` are configured as repository secrets.
 - On loopback hosts, the browser feedback client intentionally falls back to stub mode unless `?feedbackApiProbe=1` is present.
 
 ## 8) Known pitfalls to avoid
@@ -127,7 +132,7 @@ Manual smoke checklist after edits:
 - Forgetting route rewrites in `vercel.json` after adding a game.
 - Adding cosmetic shop items without updating `src/prog/cosmetics.js` switch cases.
 - Using new inventory prefixes without updating test mapping.
-- Adding a game without mounting the shared feedback widget or regenerating feedback seed files.
+- Adding a game without mounting the shared feedback widget, running `npm run feedback:sync-linear`, or checking `npm run test:feedback`.
 - Updating only UI text but not progression/state logic (or vice versa).
 
 ## 9) Practical coding style in this repo
@@ -141,4 +146,4 @@ Manual smoke checklist after edits:
 
 Use this instruction block when assigning a task to another coding agent:
 
-> You are modifying the Cade's Games static arcade repo. Before coding, inspect `index.html`, `shop.html`, `src/core/*`, `src/prog/*`, `src/meta/games.js`, `src/meta/feedback.js`, `src/feedback/*`, `api/feedback/*`, and `vercel.json` for impacted flows. Keep changes minimal and consistent with existing vanilla HTML/CSS/JS patterns. If you add/rename game routes, update rewrites and cache headers in `vercel.json`. If you add a game, mount the shared feedback widget and run `npm run feedback:sync-linear`. If you add shop cosmetics, also update `src/prog/cosmetics.js`. If you add shop inventory prefixes, ensure `tests/shop-items.integration.test.mjs` maps them to real game files. Run `npm run test:shop` and `npm run test:feedback` before finishing. Summarize what changed, why, and any follow-up risks.
+> You are modifying the Cade's Games static arcade repo. Before coding, inspect `index.html`, `shop.html`, `src/core/*`, `src/prog/*`, `src/meta/games.js`, `src/meta/feedback.js`, `src/feedback/*`, `api/feedback/*`, and `vercel.json` for impacted flows. Keep changes minimal and consistent with existing vanilla HTML/CSS/JS patterns. If you add/rename game routes, update rewrites and cache headers in `vercel.json`. If you add a game, mount the shared feedback widget, run `npm run feedback:sync-linear`, and then run `npm run test:feedback` so stale seed artifacts are caught. If you add shop cosmetics, also update `src/prog/cosmetics.js`. If you add shop inventory prefixes, ensure `tests/shop-items.integration.test.mjs` maps them to real game files. Run `npm run test:shop` and `npm run test:feedback` before finishing. Summarize what changed, why, and any follow-up risks. Call out if live Linear provisioning was skipped because env vars or label-management permissions were unavailable.

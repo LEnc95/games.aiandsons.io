@@ -15,6 +15,10 @@ async function ensureFeedbackSubmissionSynced(submission, { failureStatus = "fai
       linearIssueId: issue.id,
       linearIssueIdentifier: issue.identifier,
       linearIssueUrl: issue.url,
+      linearParentIssueId: issue.parentId,
+      linearParentIssueIdentifier: issue.parentIdentifier,
+      linearParentIssueTitle: issue.parentTitle,
+      linearParentIssueUrl: issue.parentUrl,
       lastSyncError: "",
     });
   } catch (error) {

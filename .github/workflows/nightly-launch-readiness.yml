@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install Dependencies
         run: npm install
@@ -31,6 +30,17 @@ jobs:
       - name: Run Integration Suite
         run: npm run test:shop
 
+      - name: Run Feedback Suite
+        run: npm run test:feedback
+
+      - name: Provision Linear Feedback Resources
+        if: ${{ secrets.LINEAR_API_KEY != '' && secrets.LINEAR_TEAM_ID != '' }}
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          LINEAR_TEAM_ID: ${{ secrets.LINEAR_TEAM_ID }}
+          LINEAR_PROJECT_ID: ${{ secrets.LINEAR_PROJECT_ID }}
+        run: npm run feedback:provision-linear
+
       - name: Run Launch Readiness Smoke Suite
         run: npm run test:launch-readiness-smoke
 
@@ -40,6 +50,7 @@ jobs:
         with:
           name: launch-readiness-artifacts
           path: |
+            output/web-game/feedback-e2e
             output/web-game/launch-readiness-e2e
             output/web-game/discovery-filter-e2e
             output/web-game/classroom-e2e

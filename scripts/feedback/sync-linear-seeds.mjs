@@ -8,6 +8,7 @@ import {
   FEEDBACK_GAME_LABELS,
   FEEDBACK_GAMES,
 } from "../../src/meta/feedback.js";
+import { runFeedbackLinearProvision } from "./provision-linear.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +23,7 @@ function csvEscape(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-function buildLabelsMarkdown() {
+export function buildLabelsMarkdown() {
   const lines = [
     "# Recommended Labels",
     "",
@@ -40,7 +41,7 @@ function buildLabelsMarkdown() {
   return lines.join("\n");
 }
 
-function buildIssueDescription(game) {
+export function buildIssueDescription(game) {
   return [
     `Create issue tracking baseline for ${game.name}.`,
     "Define bug, feature, and feedback workflow and keep future work linked here.",
@@ -48,7 +49,7 @@ function buildIssueDescription(game) {
   ].join(" ");
 }
 
-function buildIssuesCsv() {
+export function buildIssuesCsv() {
   const rows = [
     ["Title", "Description", "Labels", "Priority", "Project"],
     ...FEEDBACK_GAMES.map((game) => [
@@ -65,13 +66,30 @@ function buildIssuesCsv() {
     .join("\n");
 }
 
-function main() {
+export async function main() {
+  const skipLiveProvision = process.argv.includes("--skip-live");
   fs.mkdirSync(linearDir, { recursive: true });
   fs.writeFileSync(labelsPath, buildLabelsMarkdown());
   fs.writeFileSync(issuesPath, buildIssuesCsv());
 
   console.log(`Updated ${path.relative(repoRoot, labelsPath)} with ${FEEDBACK_ALL_LABELS.length} labels.`);
   console.log(`Updated ${path.relative(repoRoot, issuesPath)} with ${FEEDBACK_GAMES.length} baseline issues.`);
+
+  if (skipLiveProvision) {
+    console.log("Skipped live Linear provisioning because --skip-live was provided.");
+    return;
+  }
+
+  await runFeedbackLinearProvision({ silentWhenNotConfigured: false });
 }
 
-main();
+const isDirectRun = process.argv[1]
+  ? path.resolve(process.argv[1]) === __filename
+  : false;
+
+if (isDirectRun) {
+  main().catch((error) => {
+    console.error(String(error?.stack || error?.message || error));
+    process.exitCode = 1;
+  });
+}

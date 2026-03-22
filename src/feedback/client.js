@@ -33,6 +33,57 @@ function normalizeString(value, maxLength = 4000) {
     .slice(0, maxLength);
 }
 
+function normalizeAttachmentName(value) {
+  return normalizeString(value, 120)
+    .replace(/^.*[\\/]/, "")
+    .replace(/[<>:"|?*]+/g, "-");
+}
+
+function normalizeAttachmentContentType(value) {
+  return normalizeString(String(value || "").toLowerCase(), 80);
+}
+
+function inferAttachmentPreviewKind(contentType = "") {
+  const normalized = normalizeAttachmentContentType(contentType);
+  if (normalized.startsWith("image/")) return "image";
+  if (normalized === "text/plain" || normalized === "application/json") return "text";
+  if (normalized === "application/pdf") return "document";
+  return "file";
+}
+
+function buildAttachmentPreviewText(contentType, dataUrl) {
+  const previewKind = inferAttachmentPreviewKind(contentType);
+  if (previewKind !== "text") return "";
+  const match = String(dataUrl || "").match(/^data:[^;,]+;base64,([a-z0-9+/=\s]+)$/i);
+  if (!match) return "";
+  try {
+    const decoded = atob(String(match[1] || "").replace(/\s+/g, ""));
+    return normalizeString(decoded, 1200);
+  } catch {
+    return "";
+  }
+}
+
+function normalizeAttachmentPayloads(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      const raw = entry && typeof entry === "object" ? entry : {};
+      const name = normalizeAttachmentName(raw.name);
+      const contentType = normalizeAttachmentContentType(raw.contentType);
+      const dataUrl = normalizeString(raw.dataUrl, 2_000_000);
+      const size = Number(raw.size) > 0 ? Math.floor(Number(raw.size)) : 0;
+      if (!name || !contentType || !dataUrl) return null;
+      return {
+        name,
+        contentType,
+        size,
+        dataUrl,
+      };
+    })
+    .filter(Boolean);
+}
+
 function getStorage() {
   try {
     return window.localStorage;
@@ -71,12 +122,31 @@ function makeStubLinearIdentifier(submissionId) {
   return `LOCAL-${suffix}`;
 }
 
+function makeStubBaselineIdentifier(gameSlug) {
+  const suffix = normalizeString(gameSlug, 40)
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toUpperCase() || "GAME";
+  return `LOCAL-${suffix}-BASE`;
+}
+
+function buildStubLinearUrl(identifier) {
+  const normalized = normalizeString(identifier, 80);
+  return normalized ? `https://linear.app/issue/${normalized}` : "";
+}
+
+function buildStubBaselineTitle(gameName, gameSlug) {
+  const label = normalizeString(gameName, 120) || normalizeString(gameSlug, 80) || "Game";
+  return `${label}: Issue tracking baseline`;
+}
+
 function buildStubAgentTaskMarkdown(submission) {
   return [
     "# Agent Handoff Brief",
     "",
     `- Submission ID: ${submission.id}`,
     `- Linear issue: ${submission.linearIssueIdentifier || "LOCAL"}`,
+    `- Baseline issue: ${submission.linearParentIssueIdentifier || submission.linearParentIssueTitle || "LOCAL-BASE"}`,
     `- Game: ${submission.gameName} (${submission.gameSlug})`,
     `- Kind: ${submission.kind}`,
     `- Route: ${submission.route}`,
@@ -88,6 +158,9 @@ function buildStubAgentTaskMarkdown(submission) {
     submission.details,
     "",
     submission.reproSteps ? `## Repro Steps\n${submission.reproSteps}\n` : "",
+    Array.isArray(submission.attachments) && submission.attachments.length
+      ? `## Attachments\n${submission.attachments.map((entry) => `- ${entry.name} (${entry.contentType})${entry.url ? ` - ${entry.url}` : ""}`).join("\n")}\n`
+      : "",
     "## Diagnostics",
     "```json",
     JSON.stringify({
@@ -181,9 +254,22 @@ function createStubSubmission(payload) {
     pageUrl: normalizeString(payload.pageContext?.pageUrl || location.href, 512),
     referrer: normalizeString(payload.pageContext?.referrer || document.referrer, 512),
     pageContext: payload.pageContext || {},
+    attachments: normalizeAttachmentPayloads(payload.attachments).map((attachment, index) => ({
+      id: `stub_att_${submittedAt}_${index}`,
+      name: attachment.name,
+      contentType: attachment.contentType,
+      size: attachment.size,
+      previewKind: inferAttachmentPreviewKind(attachment.contentType),
+      previewText: buildAttachmentPreviewText(attachment.contentType, attachment.dataUrl),
+      url: attachment.dataUrl,
+    })),
     linearIssueId: "",
     linearIssueIdentifier: "",
     linearIssueUrl: "",
+    linearParentIssueId: "",
+    linearParentIssueIdentifier: "",
+    linearParentIssueTitle: "",
+    linearParentIssueUrl: "",
     syncStatus: "pending",
     triageStatus: "new",
     severity: "",
@@ -233,6 +319,7 @@ export async function submitFeedback(payload = {}) {
     displayName: normalizeString(payload.displayName, 80),
     contactEmail: normalizeString(payload.contactEmail, 160),
     pageContext: buildFeedbackPageContext(payload.pageContext),
+    attachments: normalizeAttachmentPayloads(payload.attachments),
   };
 
   if (!shouldUseFeedbackStubMode()) {
@@ -251,6 +338,11 @@ export async function submitFeedback(payload = {}) {
     ok: true,
     submissionId: submission.id,
     linearIssueIdentifier: submission.linearIssueIdentifier,
+    linearIssueUrl: submission.linearIssueUrl,
+    linearParentIssueIdentifier: submission.linearParentIssueIdentifier,
+    linearParentIssueTitle: submission.linearParentIssueTitle,
+    linearParentIssueUrl: submission.linearParentIssueUrl,
+    attachments: submission.attachments,
     syncStatus: submission.syncStatus,
     sessionUserId: submission.sessionUserId,
   };
@@ -299,9 +391,16 @@ export async function updateFeedbackReport({
   });
 
   if (retrySync && submission.syncStatus !== "synced") {
+    const linearIssueIdentifier = makeStubLinearIdentifier(submissionId);
+    const linearParentIssueIdentifier = makeStubBaselineIdentifier(submission.gameSlug);
     submission = updateStubSubmission(submissionId, {
       syncStatus: "synced",
-      linearIssueIdentifier: makeStubLinearIdentifier(submissionId),
+      linearIssueIdentifier,
+      linearIssueUrl: buildStubLinearUrl(linearIssueIdentifier),
+      linearParentIssueId: `stub_parent_${normalizeString(submission.gameSlug, 40) || "game"}`,
+      linearParentIssueIdentifier,
+      linearParentIssueTitle: buildStubBaselineTitle(submission.gameName, submission.gameSlug),
+      linearParentIssueUrl: buildStubLinearUrl(linearParentIssueIdentifier),
       lastSyncError: "",
     });
   }
@@ -324,9 +423,16 @@ export async function prepareAgentTask({ adminToken = "", submissionId = "" } = 
   let submission = readStubSubmissions().find((entry) => entry.id === submissionId);
   if (!submission) throw new Error("Feedback submission not found.");
   if (!submission.linearIssueIdentifier) {
+    const linearIssueIdentifier = makeStubLinearIdentifier(submissionId);
+    const linearParentIssueIdentifier = makeStubBaselineIdentifier(submission.gameSlug);
     submission = updateStubSubmission(submissionId, {
       syncStatus: "synced",
-      linearIssueIdentifier: makeStubLinearIdentifier(submissionId),
+      linearIssueIdentifier,
+      linearIssueUrl: buildStubLinearUrl(linearIssueIdentifier),
+      linearParentIssueId: `stub_parent_${normalizeString(submission.gameSlug, 40) || "game"}`,
+      linearParentIssueIdentifier,
+      linearParentIssueTitle: buildStubBaselineTitle(submission.gameName, submission.gameSlug),
+      linearParentIssueUrl: buildStubLinearUrl(linearParentIssueIdentifier),
       lastSyncError: "",
     });
   }
