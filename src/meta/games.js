@@ -35,6 +35,7 @@ export const GAMES = [
   { slug:'pinball',        name:'Neon Pinball Rush',   emoji:'\u{1F3B0}', scoreHint:'score',      url:'/pinball',       desc:'Launch, flip, and chain bumper combos in a neon table run before your balls run out.', earnsCoins:true },
   { slug:'skywire',        name:'Skywire Sprint',      emoji:'\u{1F6F9}', scoreHint:'distance',   url:'/skywire',       desc:'Swap lanes, dodge drone traffic, and dash through hazards to finish a high-speed skyway run.', earnsCoins:true },
   { slug:'starfielddodger', name:'Starfield Dodger',   emoji:'\u{1F680}', scoreHint:'score',      url:'/starfielddodger', desc:'Slide across lanes, dodge meteor storms, and collect stars to survive the jump run.', earnsCoins:true },
+  { slug:'simonsays',      name:'Simon Says Spectrum', emoji:'\u{1F3A8}', scoreHint:'round',      url:'/simonsays',     desc:'Memorize flashing color sequences, repeat them perfectly, and survive as patterns get longer.', earnsCoins:true },
   { slug:'reactiongrid',   name:'Reaction Grid',       emoji:'\u{1F4F6}', scoreHint:'blocks',     url:'/reactiongrid',  desc:'Rotate your shield, block incoming bolts, and survive the full reactor defense cycle.', earnsCoins:true },
 ];
 

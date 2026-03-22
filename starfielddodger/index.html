@@ -323,11 +323,6 @@
       sparkle: [],
     };
 
-    const input = {
-      left: false,
-      right: false,
-    };
-
     let rafId = 0;
     let previousTime = performance.now();
 
@@ -490,9 +485,6 @@
       state.laneX += (laneTargetX - state.laneX) * Math.min(1, dt * drift);
       state.lane = Math.round((state.laneX - canvas.width / (LANE_COUNT * 2)) / (canvas.width / LANE_COUNT));
       state.lane = Math.max(0, Math.min(LANE_COUNT - 1, state.lane));
-
-      if (input.left) moveLanes(-1);
-      if (input.right) moveLanes(1);
 
       if (state.dashTimer > 0) state.dashTimer = Math.max(0, state.dashTimer - dt);
       if (state.dashCooldown > 0) state.dashCooldown = Math.max(0, state.dashCooldown - dt);
@@ -740,8 +732,6 @@
     }
 
     function resetButtons() {
-      input.left = false;
-      input.right = false;
       btnLeft.dataset.active = '0';
       btnRight.dataset.active = '0';
     }
@@ -812,13 +802,16 @@
       updateHud();
     }
 
-    function onKeyChange(code, down) {
-      if (code === 'ArrowLeft' || code === 'KeyA') input.left = down;
-      if (code === 'ArrowRight' || code === 'KeyD') input.right = down;
-    }
-
     window.addEventListener('keydown', (event) => {
       if (event.repeat) return;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        moveLanes(-1);
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        moveLanes(1);
+      }
       if (event.code === 'Space') {
         event.preventDefault();
         tryDash();
@@ -835,11 +828,6 @@
         event.preventDefault();
         toggleFullscreen();
       }
-      onKeyChange(event.code, true);
-    });
-
-    window.addEventListener('keyup', (event) => {
-      onKeyChange(event.code, false);
     });
 
     window.addEventListener('blur', () => {
@@ -853,20 +841,16 @@
     });
 
     bindHold(btnLeft, () => {
-      input.left = true;
       btnLeft.dataset.active = '1';
       moveLanes(-1);
     }, () => {
-      input.left = false;
       btnLeft.dataset.active = '0';
     });
 
     bindHold(btnRight, () => {
-      input.right = true;
       btnRight.dataset.active = '1';
       moveLanes(1);
     }, () => {
-      input.right = false;
       btnRight.dataset.active = '0';
     });
 

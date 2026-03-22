@@ -1361,3 +1361,19 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - `$WEB_GAME_CLIENT` Playwright run for `/reactiongrid`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:shop` and Playwright gameplay validation for `/reactiongrid` in an environment that allows Chromium/process spawn.
+
+## 2026-03-21 Starfield Dodger Lane-Step Fix
+- User report: left/right input moved the ship all the way to edge instead of exactly one lane.
+- Root cause: update loop reapplied `moveLanes()` every frame while directional input remained true.
+- Fix in `starfielddodger/index.html`:
+  - Removed frame-by-frame directional movement logic.
+  - Switched keyboard lane movement to discrete single-step actions on keydown (`ArrowLeft/KeyA`, `ArrowRight/KeyD`) with repeat suppression.
+  - Kept touch controls as discrete one-step moves on pointerdown.
+  - Removed now-unused input state + keyup tracking helpers.
+- Expected behavior now: each press/tap shifts exactly one lane.
+- New request (2026-03-22): Add a brand-new game not already on the site.
+- Implemented `simonsays/index.html` (Simon Says Spectrum): sequence-memory gameplay with escalating rounds, score/lives, menu/pause/game-over flow, desktop + touch controls, fullscreen toggle (`F`), deterministic hooks (`window.advanceTime`, `window.render_game_to_text`).
+- Registered the new game in `src/meta/games.js` with slug `simonsays` so it appears in launcher/discovery.
+- Fixed pause/resume behavior so resuming from pause returns to the correct mode (`showing` vs `input`) without skipping sequence playback.
+- Validation status: attempted required Playwright loop via skill client and built-in Playwright tooling, but browser launch/network constraints in this sandbox blocked full automated run (`spawn EPERM`, local loopback/file URL restrictions).
+- Follow-up TODO: run `$WEB_GAME_CLIENT` on a host with browser launch + localhost access and review screenshots/state artifacts for full end-to-end verification.
