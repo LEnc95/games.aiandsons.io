@@ -32,6 +32,28 @@ func TestSanitizeChat(t *testing.T) {
 	}
 }
 
+func TestResolveQuickChatOption(t *testing.T) {
+	byID, ok := resolveQuickChatOption(ChatSendPayload{OptionID: "hello"})
+	if !ok {
+		t.Fatal("expected quick chat option to resolve by id")
+	}
+	if byID.Text != "Hello everyone!" {
+		t.Fatalf("expected hello phrase, got %q", byID.Text)
+	}
+
+	byQuery, ok := resolveQuickChatOption(ChatSendPayload{Text: "could you help me please"})
+	if !ok {
+		t.Fatal("expected quick chat option to resolve by query")
+	}
+	if byQuery.ID != "need-help" {
+		t.Fatalf("expected need-help option, got %q", byQuery.ID)
+	}
+
+	if _, ok := resolveQuickChatOption(ChatSendPayload{Text: "zzzz unmatched phrase"}); ok {
+		t.Fatal("expected unmatched query to fail quick chat resolution")
+	}
+}
+
 func TestSanitizePlayerName(t *testing.T) {
 	got := sanitizePlayerName("   Captain    Waddles   ")
 	if got != "Captain Waddles" {
@@ -47,6 +69,15 @@ func TestSanitizePlayerName(t *testing.T) {
 	got = sanitizePlayerName(longInput)
 	if len([]rune(got)) != maxPlayerNameRunes {
 		t.Fatalf("expected name to be clamped to %d runes, got %d", maxPlayerNameRunes, len([]rune(got)))
+	}
+}
+
+func TestSanitizeEmote(t *testing.T) {
+	if got := sanitizeEmote("  WaVe "); got != "wave" {
+		t.Fatalf("expected wave emote, got %q", got)
+	}
+	if got := sanitizeEmote("unknown"); got != "" {
+		t.Fatalf("expected unknown emote to sanitize to empty string, got %q", got)
 	}
 }
 
@@ -67,14 +98,24 @@ func TestCopyWorldMapCopiesPortals(t *testing.T) {
 		Portals: []Portal{
 			{ID: "a", Label: "To B", X: 30, Y: 40, Width: 50, Height: 60, ToRoom: "b"},
 		},
+		NPCs: []NPC{
+			{ID: "npc-1", Name: "Guide", X: 100, Y: 110, Radius: 40},
+		},
 	}
 	out := copyWorldMap(src)
 	if len(out.Portals) != 1 {
 		t.Fatalf("expected portal copy length 1, got %d", len(out.Portals))
 	}
+	if len(out.NPCs) != 1 {
+		t.Fatalf("expected NPC copy length 1, got %d", len(out.NPCs))
+	}
 	src.Portals[0].ToRoom = "changed"
 	if out.Portals[0].ToRoom != "b" {
 		t.Fatalf("expected copied portal to remain unchanged, got %q", out.Portals[0].ToRoom)
+	}
+	src.NPCs[0].Name = "Changed"
+	if out.NPCs[0].Name != "Guide" {
+		t.Fatalf("expected copied NPC to remain unchanged, got %q", out.NPCs[0].Name)
 	}
 }
 
@@ -101,6 +142,160 @@ func TestCanJoinRoomFromPortal(t *testing.T) {
 	}
 }
 
+func TestStarterProgressRewards(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	server.mu.Lock()
+	state := server.clients[client.id]
+	if state == nil {
+		server.mu.Unlock()
+		t.Fatal("expected client state to exist")
+	}
+	if state.coins != 0 {
+		server.mu.Unlock()
+		t.Fatalf("expected initial coins 0, got %d", state.coins)
+	}
+	state.hasNamed = true
+	state.hasChatted = true
+	state.hasEmoted = true
+	state.visitedRooms["plaza"] = true
+	state.visitedRooms["snow-forts"] = true
+	changed := server.recomputeProgressLocked(state)
+	coins := state.coins
+	completedCount := len(state.completedObjectives)
+	server.mu.Unlock()
+
+	if !changed {
+		t.Fatal("expected progress recompute to report changes")
+	}
+	if coins != 115 {
+		t.Fatalf("expected total starter rewards 115, got %d", coins)
+	}
+	if completedCount != 5 {
+		t.Fatalf("expected 5 completed starter objectives, got %d", completedCount)
+	}
+}
+
+func TestResetProgress(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	server.mu.Lock()
+	state := server.clients[client.id]
+	state.hasNamed = true
+	state.hasChatted = true
+	state.hasEmoted = true
+	state.visitedRooms["plaza"] = true
+	state.visitedRooms["snow-forts"] = true
+	server.recomputeProgressLocked(state)
+	server.mu.Unlock()
+
+	if ok := server.resetProgress(client.id); !ok {
+		t.Fatal("expected resetProgress to return true")
+	}
+
+	server.mu.RLock()
+	defer server.mu.RUnlock()
+	state = server.clients[client.id]
+	if state == nil {
+		t.Fatal("expected client state to remain after reset")
+	}
+	if state.coins != 0 {
+		t.Fatalf("expected reset coins to be 0, got %d", state.coins)
+	}
+	if len(state.completedObjectives) != 0 {
+		t.Fatalf("expected objectives to reset, got %d completed", len(state.completedObjectives))
+	}
+	if state.hasNamed || state.hasChatted || state.hasEmoted {
+		t.Fatal("expected starter activity flags to be reset")
+	}
+	if !state.visitedRooms[state.roomID] {
+		t.Fatalf("expected current room %q to stay visited after reset", state.roomID)
+	}
+}
+
+func TestCollectiblePickupAwardsCoins(t *testing.T) {
+	server := newServer()
+	client, _, roomID := server.addClient(nil)
+
+	server.mu.Lock()
+	room := server.rooms[roomID]
+	if room == nil {
+		server.mu.Unlock()
+		t.Fatalf("expected room %q", roomID)
+	}
+	room.Collectible = &Collectible{
+		ID:     "test-collect",
+		Label:  "Coin Puff",
+		Kind:   "coin",
+		X:      200,
+		Y:      200,
+		Radius: collectibleRadius,
+		Value:  9,
+	}
+	player := room.Players[client.id]
+	player.X = 200
+	player.Y = 200
+	player.TargetX = 200
+	player.TargetY = 200
+	before := server.clients[client.id].coins
+	server.mu.Unlock()
+
+	batch := server.stepAndCollectSnapshots(simulationDelta, time.Now().UnixMilli())
+	if len(batch.collectibleEvents) != 1 {
+		t.Fatalf("expected one collectible event, got %d", len(batch.collectibleEvents))
+	}
+	if len(batch.progressClientIDs) != 1 || batch.progressClientIDs[0] != client.id {
+		t.Fatalf("expected progress update for %q, got %#v", client.id, batch.progressClientIDs)
+	}
+
+	server.mu.RLock()
+	defer server.mu.RUnlock()
+	room = server.rooms[roomID]
+	if room.Collectible != nil {
+		t.Fatal("expected collectible to be removed after pickup")
+	}
+	after := server.clients[client.id].coins
+	if after-before != 9 {
+		t.Fatalf("expected +9 coins from collectible, got %d -> %d", before, after)
+	}
+}
+
+func TestNPCHintDispatchesWhenNearGreeter(t *testing.T) {
+	server := newServer()
+	client, _, roomID := server.addClient(nil)
+	if roomID != defaultRoomID {
+		t.Fatalf("expected default room %q, got %q", defaultRoomID, roomID)
+	}
+
+	server.mu.Lock()
+	room := server.rooms[roomID]
+	player := room.Players[client.id]
+	if player == nil {
+		server.mu.Unlock()
+		t.Fatal("expected player to exist")
+	}
+	player.X = 598
+	player.Y = 176
+	player.TargetX = 598
+	player.TargetY = 176
+	server.mu.Unlock()
+
+	batch := server.stepAndCollectSnapshots(simulationDelta, time.Now().UnixMilli())
+	if len(batch.hints) == 0 {
+		t.Fatal("expected at least one NPC hint dispatch")
+	}
+	first := batch.hints[0]
+	if first.clientID != client.id {
+		t.Fatalf("expected hint for %q, got %q", client.id, first.clientID)
+	}
+	text, _ := first.payload["text"].(string)
+	if !strings.Contains(text, "Set your penguin name") {
+		t.Fatalf("expected set-name guidance text, got %q", text)
+	}
+}
+
 func TestConsumeCooldown(t *testing.T) {
 	now := time.Now()
 	last := time.Time{}
@@ -120,7 +315,7 @@ func TestSetPlayerName(t *testing.T) {
 	server := newServer()
 	client, _, _ := server.addClient(nil)
 
-	roomID, name, changed := server.setPlayerName(client.id, "  Snow   Hero ")
+	roomID, name, changed, progressChanged := server.setPlayerName(client.id, "  Snow   Hero ")
 	if roomID != defaultRoomID {
 		t.Fatalf("expected room %q, got %q", defaultRoomID, roomID)
 	}
@@ -129,6 +324,9 @@ func TestSetPlayerName(t *testing.T) {
 	}
 	if !changed {
 		t.Fatal("expected name change to be reported")
+	}
+	if !progressChanged {
+		t.Fatal("expected starter progress to change when name is set")
 	}
 
 	server.mu.RLock()
@@ -143,7 +341,7 @@ func TestSetPlayerName(t *testing.T) {
 		t.Fatalf("expected player record to be updated, got %q", player.Name)
 	}
 
-	_, _, changed = server.setPlayerName(client.id, "Snow Hero")
+	_, _, changed, _ = server.setPlayerName(client.id, "Snow Hero")
 	if changed {
 		t.Fatal("expected unchanged name to report changed=false")
 	}
@@ -259,7 +457,7 @@ func TestRenameBroadcastAndChatName(t *testing.T) {
 		t.Fatalf("expected renamed name Captain Waddles, got %v", renamed["name"])
 	}
 
-	sendEvent(c1, "chat:send", map[string]any{"text": "  hello   room  "})
+	sendEvent(c1, "chat:send", map[string]any{"optionId": "hello", "text": "  hello   room  "})
 	chat := readEvent(c2, "chat:message", 2*time.Second)
 	if chat["id"] != selfID {
 		t.Fatalf("expected chat id %q, got %v", selfID, chat["id"])
@@ -267,7 +465,10 @@ func TestRenameBroadcastAndChatName(t *testing.T) {
 	if chat["name"] != "Captain Waddles" {
 		t.Fatalf("expected chat name Captain Waddles, got %v", chat["name"])
 	}
-	if chat["text"] != "hello room" {
-		t.Fatalf("expected chat text to be normalized, got %v", chat["text"])
+	if chat["text"] != "Hello everyone!" {
+		t.Fatalf("expected chat text to be from quick chat preset, got %v", chat["text"])
+	}
+	if chat["optionId"] != "hello" {
+		t.Fatalf("expected optionId hello, got %v", chat["optionId"])
 	}
 }

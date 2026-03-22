@@ -9,6 +9,8 @@
       { x: 560, y: 100, width: 160, height: 140 },
       { x: 820, y: 320, width: 190, height: 180 },
     ],
+    portals: [],
+    npcs: [],
   };
 
   const DEFAULT_ROOMS = [{ id: "town", name: "Town" }];
@@ -19,6 +21,23 @@
   const PORTAL_FILL = 0x0f3a54;
   const PORTAL_OUTLINE = 0xbde8ff;
   const PORTAL_ALPHA = 0.5;
+  const NPC_BODY = 0xa8572f;
+  const NPC_RING = 0xfff0db;
+  const COLLECTIBLE_FILL = 0xfedb55;
+  const COLLECTIBLE_RING = 0x8b6508;
+  const EMOTE_DURATION_MS = 1800;
+  const EMOTE_LABELS = {
+    wave: "wave",
+    dance: "dance",
+    cheer: "cheer",
+    laugh: "laugh",
+    snowball: "snowball",
+  };
+  const NAMEPLATE_BASE_Y = -PLAYER_RADIUS - 10;
+  const NAMEPLATE_STACK_STEP = 14;
+  const NAMEPLATE_CLUSTER_X = 86;
+  const NAMEPLATE_CLUSTER_Y = 54;
+  const MOVE_MARKER_HIDE_DISTANCE = 18;
   const ROOM_THEMES = {
     town: {
       sky: 0xd5efff,
@@ -56,9 +75,15 @@
   const nameInputEl = document.getElementById("name-input");
   const nameSaveEl = document.getElementById("name-save");
   const rosterEl = document.getElementById("player-roster");
+  const coinCountEl = document.getElementById("coin-count");
+  const questListEl = document.getElementById("quest-list");
+  const qaResetEl = document.getElementById("qa-reset-progress");
+  const emoteButtons = Array.from(document.querySelectorAll(".emote-btn[data-emote]"));
+  const toastStackEl = document.getElementById("toast-stack");
   const chatLogEl = document.getElementById("chat-log");
   const chatFormEl = document.getElementById("chat-form");
   const chatInputEl = document.getElementById("chat-input");
+  const chatSuggestionsEl = document.getElementById("chat-suggestions");
 
   const state = {
     connected: false,
@@ -69,13 +94,33 @@
     pendingPortalAt: 0,
     rooms: DEFAULT_ROOMS.slice(),
     world: DEFAULT_WORLD,
+    collectibles: [],
     players: new Map(),
+    progress: {
+      coins: 0,
+      objectives: [],
+      completedCount: 0,
+      totalCount: 0,
+    },
+    chatOptions: [],
+    chatSuggestions: [],
+    selectedChatOptionId: "",
     chatTail: [],
   };
 
   let ws = null;
   let reconnectTimer = null;
   let worldScene = null;
+  let audioCtx = null;
+
+  function seededPhaseFromString(value) {
+    const text = String(value || "");
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) {
+      hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+    }
+    return ((hash % 360) * Math.PI) / 180;
+  }
 
   function normalizeRoomId(raw) {
     if (typeof raw !== "string") {
@@ -108,6 +153,159 @@
   function roomNameById(roomId) {
     const match = state.rooms.find((room) => room.id === roomId);
     return match ? match.name : roomId;
+  }
+
+  function normalizeChatQuery(raw) {
+    if (typeof raw !== "string") {
+      return "";
+    }
+    return raw
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  function normalizeChatOption(option) {
+    if (!option || typeof option !== "object") {
+      return null;
+    }
+    const id = normalizeRoomId(option.id || "");
+    const text = typeof option.text === "string" ? option.text.trim() : "";
+    if (!id || !text) {
+      return null;
+    }
+    const tags = Array.isArray(option.tags)
+      ? option.tags.map((tag) => normalizeChatQuery(String(tag || ""))).filter(Boolean)
+      : [];
+    return { id, text, tags };
+  }
+
+  function scoreQuickChatOption(option, query) {
+    if (!option || !query) {
+      return 0;
+    }
+    const normalizedText = normalizeChatQuery(option.text);
+    if (!normalizedText) {
+      return 0;
+    }
+    if (query === normalizedText || query === option.id) {
+      return 1200;
+    }
+    if (normalizedText.includes(query)) {
+      return 900 - (normalizedText.length - query.length);
+    }
+    const tokens = query.split(" ").filter(Boolean);
+    if (tokens.length === 0) {
+      return 0;
+    }
+    const haystack = `${normalizedText} ${option.tags.join(" ")}`;
+    let matched = 0;
+    for (const token of tokens) {
+      if (haystack.includes(token)) {
+        matched += 1;
+      }
+    }
+    if (matched === 0) {
+      return 0;
+    }
+    return matched * 120 - (tokens.length - matched) * 45;
+  }
+
+  function findQuickChatMatches(query, limit = 6) {
+    const normalizedQuery = normalizeChatQuery(query);
+    const options = state.chatOptions || [];
+    if (!normalizedQuery) {
+      return options.slice(0, limit);
+    }
+    const scored = [];
+    for (const option of options) {
+      const score = scoreQuickChatOption(option, normalizedQuery);
+      if (score <= 0) {
+        continue;
+      }
+      scored.push({ option, score });
+    }
+    scored.sort((a, b) => {
+      if (a.score === b.score) {
+        return a.option.text.length - b.option.text.length;
+      }
+      return b.score - a.score;
+    });
+    return scored.slice(0, limit).map((entry) => entry.option);
+  }
+
+  function chooseQuickChatOption(option, focusInput) {
+    if (!option) {
+      return;
+    }
+    state.selectedChatOptionId = option.id;
+    chatInputEl.value = option.text;
+    state.chatSuggestions = findQuickChatMatches(option.text, 6);
+    renderQuickChatSuggestions();
+    if (focusInput) {
+      chatInputEl.focus();
+    }
+  }
+
+  function setStatus(text, statusState) {
+    statusEl.textContent = text;
+    statusEl.dataset.state = statusState;
+  }
+
+  function renderQuickChatSuggestions() {
+    if (!chatSuggestionsEl) {
+      return;
+    }
+    chatSuggestionsEl.innerHTML = "";
+    if (!Array.isArray(state.chatSuggestions) || state.chatSuggestions.length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "No quick chat matches. Try another keyword.";
+      chatSuggestionsEl.appendChild(li);
+      return;
+    }
+    for (const option of state.chatSuggestions) {
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = option.text;
+      button.dataset.optionId = option.id;
+      button.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+      button.addEventListener("click", () => {
+        chooseQuickChatOption(option, true);
+      });
+      li.appendChild(button);
+      chatSuggestionsEl.appendChild(li);
+    }
+  }
+
+  function refreshQuickChatSuggestions() {
+    const query = chatInputEl.value || "";
+    state.selectedChatOptionId = "";
+    state.chatSuggestions = findQuickChatMatches(query, 6);
+    renderQuickChatSuggestions();
+  }
+
+  function resolveOutgoingQuickChat() {
+    if (!Array.isArray(state.chatOptions) || state.chatOptions.length === 0) {
+      return null;
+    }
+    const selectedID = normalizeRoomId(state.selectedChatOptionId || "");
+    if (selectedID) {
+      const selected = state.chatOptions.find((option) => option.id === selectedID);
+      if (selected) {
+        return selected;
+      }
+    }
+
+    const query = chatInputEl.value || "";
+    const matches = findQuickChatMatches(query, 1);
+    if (matches.length === 0) {
+      return null;
+    }
+    return matches[0];
   }
 
   function pointInRect(x, y, rect) {
@@ -189,10 +387,10 @@
 
   function refreshStatus() {
     if (!state.connected) {
-      statusEl.textContent = "Disconnected";
+      setStatus("Disconnected", "disconnected");
       return;
     }
-    statusEl.textContent = `Connected - ${roomNameById(state.roomId)}`;
+    setStatus(`Connected - ${roomNameById(state.roomId)}`, "connected");
   }
 
   function displayName(playerLike) {
@@ -212,6 +410,12 @@
     const connected = state.connected;
     nameInputEl.disabled = !connected;
     nameSaveEl.disabled = !connected;
+    if (qaResetEl) {
+      qaResetEl.disabled = !connected;
+    }
+    for (const button of emoteButtons) {
+      button.disabled = !connected;
+    }
   }
 
   function syncNameInputFromSelf() {
@@ -250,6 +454,104 @@
     const count = state.players.size;
     playerCountEl.textContent = `${count} player${count === 1 ? "" : "s"}`;
     updateRoster();
+  }
+
+  function playRewardChime() {
+    try {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) {
+          return;
+        }
+        audioCtx = new Ctx();
+      }
+      const now = audioCtx.currentTime;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+
+      const osc = audioCtx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(622.25, now);
+      osc.frequency.exponentialRampToValueAtTime(830.61, now + 0.18);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.26);
+    } catch {
+      // Audio is optional.
+    }
+  }
+
+  function pushToast(message) {
+    if (!toastStackEl || !message) {
+      return;
+    }
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+    toastStackEl.appendChild(toast);
+    window.setTimeout(() => {
+      toast.remove();
+    }, 2600);
+  }
+
+  function renderQuestPanel() {
+    const progress = state.progress || { coins: 0, objectives: [] };
+    const coins = Number(progress.coins) || 0;
+    coinCountEl.textContent = `${coins} coin${coins === 1 ? "" : "s"}`;
+
+    questListEl.innerHTML = "";
+    const objectives = Array.isArray(progress.objectives) ? progress.objectives : [];
+    for (const objective of objectives) {
+      const li = document.createElement("li");
+      if (objective.completed) {
+        li.classList.add("completed");
+      }
+      const label = document.createElement("span");
+      label.textContent = objective.label || objective.id || "Task";
+      const reward = document.createElement("span");
+      reward.textContent = `+${Number(objective.reward) || 0}`;
+      li.appendChild(label);
+      li.appendChild(reward);
+      questListEl.appendChild(li);
+    }
+  }
+
+  function handleProgress(payload) {
+    if (!payload || typeof payload !== "object") {
+      return;
+    }
+    const previousObjectives = new Map(
+      (state.progress.objectives || []).map((objective) => [objective.id, Boolean(objective.completed)])
+    );
+    const previousCoins = Number(state.progress.coins) || 0;
+
+    state.progress = {
+      coins: Number(payload.coins) || 0,
+      objectives: Array.isArray(payload.objectives) ? payload.objectives : [],
+      completedCount: Number(payload.completedCount) || 0,
+      totalCount: Number(payload.totalCount) || 0,
+    };
+    renderQuestPanel();
+
+    const completedNow = [];
+    for (const objective of state.progress.objectives) {
+      const wasDone = previousObjectives.get(objective.id) || false;
+      if (!wasDone && objective.completed) {
+        completedNow.push(objective);
+      }
+    }
+    if (completedNow.length > 0) {
+      for (const objective of completedNow) {
+        pushToast(`Task Complete: ${objective.label} (+${objective.reward})`);
+      }
+      playRewardChime();
+    } else if ((Number(state.progress.coins) || 0) > previousCoins) {
+      pushToast(`Coins increased to ${state.progress.coins}.`);
+    }
   }
 
   function updateRoomSelect() {
@@ -316,6 +618,8 @@
       color: serverPlayer.color || "#ffffff",
       renderX: prev ? prev.renderX : Number(serverPlayer.x) || 0,
       renderY: prev ? prev.renderY : Number(serverPlayer.y) || 0,
+      emote: prev ? prev.emote : "",
+      emoteUntil: prev ? prev.emoteUntil : 0,
     };
     state.players.set(next.id, next);
   }
@@ -329,12 +633,23 @@
     state.pendingPortalAt = 0;
     syncRoomQuery(state.roomId);
     state.world = payload.map || DEFAULT_WORLD;
+    state.collectibles = Array.isArray(payload.collectibles) ? payload.collectibles : [];
 
     if (Array.isArray(payload.rooms) && payload.rooms.length > 0) {
       state.rooms = payload.rooms
         .filter((room) => room && typeof room.id === "string")
         .map((room) => ({ id: normalizeRoomId(room.id), name: room.name || room.id }));
     }
+    if (Array.isArray(payload.chatOptions) && payload.chatOptions.length > 0) {
+      state.chatOptions = payload.chatOptions
+        .map(normalizeChatOption)
+        .filter(Boolean);
+    }
+    if (!Array.isArray(state.chatOptions) || state.chatOptions.length === 0) {
+      state.chatOptions = [];
+    }
+    state.chatSuggestions = findQuickChatMatches(chatInputEl.value || "", 6);
+    renderQuickChatSuggestions();
 
     if (!state.preferredRoomId || !state.rooms.some((room) => room.id === state.preferredRoomId)) {
       setPreferredRoom(state.roomId);
@@ -343,6 +658,7 @@
     state.players.clear();
     const players = Array.isArray(payload.players) ? payload.players : [];
     players.forEach(normalizePlayer);
+    handleProgress(payload.progress || {});
     updatePlayerCount();
     syncNameInputFromSelf();
     updateRoomSelect();
@@ -362,6 +678,7 @@
     }
 
     const incoming = Array.isArray(payload.players) ? payload.players : [];
+    state.collectibles = Array.isArray(payload.collectibles) ? payload.collectibles : [];
     const seenIds = new Set();
     for (const player of incoming) {
       seenIds.add(player.id);
@@ -407,6 +724,47 @@
       existing.name = payload.name.trim();
       updatePlayerCount();
       syncNameInputFromSelf();
+    }
+  }
+
+  function handlePlayerEmote(payload) {
+    if (!payload || !payload.id || typeof payload.emote !== "string") {
+      return;
+    }
+    const player = state.players.get(payload.id);
+    if (!player) {
+      return;
+    }
+    const emote = normalizeRoomId(payload.emote);
+    if (!emote) {
+      return;
+    }
+    player.emote = emote;
+    player.emoteUntil = Date.now() + EMOTE_DURATION_MS;
+    const who = payload.name && payload.name !== payload.id ? `${payload.name}` : payload.id;
+    appendChat("emote", `${who} used ${EMOTE_LABELS[emote] || emote}`);
+  }
+
+  function handleNPCHint(payload) {
+    if (!payload || typeof payload.text !== "string" || !payload.text.trim()) {
+      return;
+    }
+    const who = typeof payload.name === "string" && payload.name.trim() ? payload.name.trim() : "Guide";
+    appendChat(`${who} (guide)`, payload.text.trim());
+    pushToast(payload.text.trim());
+  }
+
+  function handleCollectibleCollected(payload) {
+    if (!payload || !payload.id) {
+      return;
+    }
+    const value = Number(payload.value) || 0;
+    const byId = payload.byId || "unknown";
+    const byName = typeof payload.byName === "string" && payload.byName.trim() ? payload.byName.trim() : byId;
+    appendChat("event", `${byName} collected a coin puff (+${value}).`);
+    if (byId === state.selfId) {
+      pushToast(`Collected coin puff (+${value})`);
+      playRewardChime();
     }
   }
 
@@ -458,6 +816,18 @@
       case "player:renamed":
         handlePlayerRenamed(envelope.payload || {});
         break;
+      case "player:emote":
+        handlePlayerEmote(envelope.payload || {});
+        break;
+      case "player:progress":
+        handleProgress(envelope.payload || {});
+        break;
+      case "npc:hint":
+        handleNPCHint(envelope.payload || {});
+        break;
+      case "collectible:collected":
+        handleCollectibleCollected(envelope.payload || {});
+        break;
       case "chat:message":
         handleChatMessage(envelope.payload || {});
         break;
@@ -474,6 +844,7 @@
       return;
     }
 
+    setStatus("Connecting...", "disconnected");
     ws = new WebSocket(wsUrl());
 
     ws.addEventListener("open", () => {
@@ -502,7 +873,7 @@
     });
 
     ws.addEventListener("error", () => {
-      statusEl.textContent = "Connection error";
+      setStatus("Connection error", "error");
     });
   }
 
@@ -510,7 +881,9 @@
     constructor() {
       super("WorldScene");
       this.worldGraphics = null;
+      this.interactionGraphics = null;
       this.playerSprites = new Map();
+      this.collectibleSprites = new Map();
       this.moveMarker = null;
       this.portalLabels = [];
     }
@@ -518,6 +891,7 @@
     create() {
       worldScene = this;
       this.worldGraphics = this.add.graphics();
+      this.interactionGraphics = this.add.graphics();
       this.moveMarker = this.add.circle(0, 0, 6, 0xffffff, 0.9).setVisible(false);
       const canvas = this.game && this.game.canvas;
       if (canvas) {
@@ -632,6 +1006,7 @@
       const world = state.world || DEFAULT_WORLD;
       const theme = themeForRoom(state.roomId);
       this.worldGraphics.clear();
+      this.interactionGraphics.clear();
       for (const label of this.portalLabels) {
         label.destroy();
       }
@@ -665,6 +1040,25 @@
         }
       }
 
+      for (const npc of world.npcs || []) {
+        const x = Number(npc.x) || 0;
+        const y = Number(npc.y) || 0;
+        const radius = Math.max(18, Number(npc.radius) || 26);
+        this.worldGraphics.fillStyle(NPC_BODY, 1);
+        this.worldGraphics.fillCircle(x, y, 16);
+        this.worldGraphics.lineStyle(3, NPC_RING, 0.92);
+        this.worldGraphics.strokeCircle(x, y, radius);
+        const label = this.add.text(x, y - radius - 6, npc.name || "Guide", {
+          fontFamily: "\"Sora\", \"Trebuchet MS\", sans-serif",
+          fontSize: "12px",
+          color: "#fff7e8",
+          backgroundColor: "rgba(72,35,16,0.72)",
+          padding: { left: 5, right: 5, top: 2, bottom: 2 },
+        }).setOrigin(0.5, 1);
+        label.setStroke("#2f1407", 2);
+        this.portalLabels.push(label);
+      }
+
       for (const rect of world.blocked || []) {
         this.worldGraphics.fillStyle(theme.obstacleFill, 0.95);
         this.worldGraphics.fillRect(rect.x, rect.y, rect.width, rect.height);
@@ -681,12 +1075,13 @@
         const labelX = portal.x + portal.width / 2;
         const labelY = portal.y + portal.height / 2;
         const labelNode = this.add.text(labelX, labelY, label, {
-          fontFamily: "monospace",
-          fontSize: "13px",
-          color: "#e6f8ff",
-          backgroundColor: "rgba(8,35,52,0.55)",
-          padding: { left: 4, right: 4, top: 2, bottom: 2 },
+          fontFamily: "\"Sora\", \"Trebuchet MS\", sans-serif",
+          fontSize: "12px",
+          color: "#e9faff",
+          backgroundColor: "rgba(8,35,52,0.62)",
+          padding: { left: 5, right: 5, top: 2, bottom: 2 },
         }).setOrigin(0.5, 0.5);
+        labelNode.setStroke("#052032", 2);
         this.portalLabels.push(labelNode);
       }
     }
@@ -699,20 +1094,33 @@
 
       const colorInt = Phaser.Display.Color.HexStringToColor(player.color).color;
       const body = this.add.circle(0, 0, PLAYER_RADIUS, colorInt, 1);
-      const borderColor = player.id === state.selfId ? 0xffffff : 0x0b2435;
-      body.setStrokeStyle(2, borderColor, 1);
+      const isSelf = player.id === state.selfId;
+      const borderColor = isSelf ? 0xf8fbff : 0x0b2435;
+      body.setStrokeStyle(isSelf ? 3 : 2, borderColor, 1);
 
-      const label = this.add.text(0, -PLAYER_RADIUS - 10, displayName(player), {
-        fontFamily: "monospace",
-        fontSize: "11px",
-        color: "#0b2536",
-        backgroundColor: "rgba(255,255,255,0.65)",
-        padding: { left: 3, right: 3, top: 1, bottom: 1 },
+      const label = this.add.text(0, NAMEPLATE_BASE_Y, displayName(player), {
+        fontFamily: "\"Sora\", \"Trebuchet MS\", sans-serif",
+        fontSize: isSelf ? "12px" : "11px",
+        color: isSelf ? "#fffae4" : "#f2fbff",
+        backgroundColor: isSelf ? "rgba(8,41,67,0.84)" : "rgba(16,55,79,0.75)",
+        padding: { left: 5, right: 5, top: 2, bottom: 2 },
       });
       label.setOrigin(0.5, 1);
+      label.setStroke("#0b2435", 2);
+      label.setShadow(0, 1, "rgba(0,0,0,0.34)", 2, true, true);
 
-      const container = this.add.container(player.renderX, player.renderY, [body, label]);
-      const sprite = { container, body, label };
+      const emote = this.add.text(0, NAMEPLATE_BASE_Y - 18, "", {
+        fontFamily: "\"Sora\", \"Trebuchet MS\", sans-serif",
+        fontSize: "11px",
+        color: "#fef9c3",
+        backgroundColor: "rgba(13,37,54,0.72)",
+        padding: { left: 4, right: 4, top: 1, bottom: 1 },
+      });
+      emote.setOrigin(0.5, 1);
+      emote.setStroke("#05131d", 2);
+
+      const container = this.add.container(player.renderX, player.renderY, [body, emote, label]);
+      const sprite = { container, body, label, emote };
       this.playerSprites.set(player.id, sprite);
       return sprite;
     }
@@ -730,10 +1138,196 @@
       }
     }
 
-    stepInterpolation(deltaMs) {
+    resolveNameplateOverlaps() {
+      const entries = [];
+      for (const player of state.players.values()) {
+        const sprite = this.playerSprites.get(player.id);
+        if (!sprite) {
+          continue;
+        }
+        entries.push({
+          id: player.id,
+          x: sprite.container.x,
+          y: sprite.container.y,
+          sprite,
+        });
+      }
+
+      entries.sort((a, b) => {
+        if (a.y === b.y) {
+          if (a.x === b.x) {
+            return a.id.localeCompare(b.id);
+          }
+          return a.x - b.x;
+        }
+        return a.y - b.y;
+      });
+
+      const occupied = [];
+      for (const entry of entries) {
+        let lane = 0;
+        while (
+          occupied.some(
+            (other) =>
+              other.lane === lane &&
+              Math.abs(other.x - entry.x) < NAMEPLATE_CLUSTER_X &&
+              Math.abs(other.y - entry.y) < NAMEPLATE_CLUSTER_Y
+          )
+        ) {
+          lane += 1;
+        }
+        occupied.push({ x: entry.x, y: entry.y, lane });
+        const labelY = NAMEPLATE_BASE_Y - lane * NAMEPLATE_STACK_STEP;
+        entry.sprite.label.y = labelY;
+        entry.sprite.emote.y = labelY - 18;
+      }
+    }
+
+    syncCollectiblesFromState() {
+      const liveCollectibles = Array.isArray(state.collectibles) ? state.collectibles : [];
+      const liveIds = new Set(liveCollectibles.map((collectible) => collectible.id));
+
+      for (const [id, sprite] of this.collectibleSprites.entries()) {
+        if (!liveIds.has(id)) {
+          sprite.container.destroy(true);
+          this.collectibleSprites.delete(id);
+        }
+      }
+
+      for (const collectible of liveCollectibles) {
+        if (!collectible || !collectible.id) {
+          continue;
+        }
+        const x = Number(collectible.x) || 0;
+        const y = Number(collectible.y) || 0;
+        const radius = Math.max(6, Number(collectible.radius) || 10);
+        const label = collectible.label || "Coin Puff";
+
+        let sprite = this.collectibleSprites.get(collectible.id);
+        if (!sprite) {
+          const halo = this.add.circle(0, 0, radius + 7, COLLECTIBLE_FILL, 0.24);
+          halo.setStrokeStyle(2, COLLECTIBLE_RING, 0.58);
+          const body = this.add.circle(0, 0, radius, COLLECTIBLE_FILL, 0.98);
+          body.setStrokeStyle(2, COLLECTIBLE_RING, 1);
+          const text = this.add.text(0, -radius - 8, label, {
+            fontFamily: "\"Sora\", \"Trebuchet MS\", sans-serif",
+            fontSize: "11px",
+            color: "#473108",
+            backgroundColor: "rgba(255,244,200,0.85)",
+            padding: { left: 3, right: 3, top: 1, bottom: 1 },
+          }).setOrigin(0.5, 1);
+          text.setStroke("#2f2102", 2);
+          const container = this.add.container(x, y, [halo, body, text]);
+          sprite = {
+            container,
+            halo,
+            body,
+            text,
+            baseX: x,
+            baseY: y,
+            radius,
+            phase: seededPhaseFromString(collectible.id),
+          };
+          this.collectibleSprites.set(collectible.id, sprite);
+        } else {
+          sprite.baseX = x;
+          sprite.baseY = y;
+          sprite.radius = radius;
+          sprite.body.setRadius(radius);
+          sprite.text.setText(label);
+        }
+        if (!Number.isFinite(sprite.baseX)) {
+          sprite.baseX = x;
+        }
+        if (!Number.isFinite(sprite.baseY)) {
+          sprite.baseY = y;
+        }
+      }
+    }
+
+    animateCollectibles(timeMs) {
+      const t = (Number(timeMs) || Date.now()) / 1000;
+      for (const sprite of this.collectibleSprites.values()) {
+        const bob = Math.sin(t * 2.8 + sprite.phase) * 3.1;
+        const pulse = 0.16 + 0.12 * (1 + Math.sin(t * 4.3 + sprite.phase));
+        const haloRadius = sprite.radius + 7 + Math.sin(t * 3.4 + sprite.phase) * 1.5;
+        sprite.halo.setRadius(haloRadius);
+        sprite.halo.setAlpha(pulse);
+        sprite.container.setPosition(sprite.baseX, sprite.baseY + bob);
+      }
+    }
+
+    drawInteractionAffordances(timeMs) {
+      if (!this.interactionGraphics) {
+        return;
+      }
+      const world = state.world || DEFAULT_WORLD;
+      const portals = Array.isArray(world.portals) ? world.portals : [];
+      const npcs = Array.isArray(world.npcs) ? world.npcs : [];
+      const phase = (Number(timeMs) || Date.now()) * 0.0045;
+      const self = state.selfId ? state.players.get(state.selfId) : null;
+      const selfX = self ? self.renderX : null;
+      const selfY = self ? self.renderY : null;
+
+      this.interactionGraphics.clear();
+
+      portals.forEach((portal, index) => {
+        const pulse = 0.5 + 0.5 * Math.sin(phase * 1.4 + index * 0.8);
+        const selfInside = Number.isFinite(selfX) && Number.isFinite(selfY) && pointInRect(selfX, selfY, portal);
+        const glowAlpha = selfInside ? 0.32 + pulse * 0.2 : 0.14 + pulse * 0.12;
+        const strokeAlpha = selfInside ? 0.95 : 0.72;
+        const inset = selfInside ? 2 : 4;
+
+        this.interactionGraphics.fillStyle(0x5ce0ff, glowAlpha);
+        this.interactionGraphics.fillRoundedRect(
+          portal.x + inset,
+          portal.y + inset,
+          Math.max(4, portal.width - inset * 2),
+          Math.max(4, portal.height - inset * 2),
+          9
+        );
+        this.interactionGraphics.lineStyle(selfInside ? 3 : 2, 0xeefcff, strokeAlpha);
+        this.interactionGraphics.strokeRoundedRect(
+          portal.x + inset,
+          portal.y + inset,
+          Math.max(4, portal.width - inset * 2),
+          Math.max(4, portal.height - inset * 2),
+          9
+        );
+
+        const centerX = portal.x + portal.width / 2;
+        const centerY = portal.y + portal.height / 2;
+        const chevronW = Math.min(18, Math.max(10, portal.width * 0.12));
+        const chevronH = Math.min(9, Math.max(5, portal.height * 0.15));
+        const drift = Math.sin(phase * 2.3 + index) * 3;
+        const chevronY = centerY + portal.height * 0.18 + drift;
+
+        this.interactionGraphics.lineStyle(3, 0xf2feff, 0.82);
+        this.interactionGraphics.beginPath();
+        this.interactionGraphics.moveTo(centerX - chevronW, chevronY - chevronH);
+        this.interactionGraphics.lineTo(centerX, chevronY + chevronH);
+        this.interactionGraphics.lineTo(centerX + chevronW, chevronY - chevronH);
+        this.interactionGraphics.strokePath();
+      });
+
+      npcs.forEach((npc, index) => {
+        const x = Number(npc.x) || 0;
+        const y = Number(npc.y) || 0;
+        const radius = Math.max(18, Number(npc.radius) || 26);
+        const pulseRadius = radius + 4 + Math.sin(phase * 1.6 + index * 0.7) * 2.2;
+        const alpha = 0.35 + 0.2 * (0.5 + 0.5 * Math.sin(phase * 1.8 + index));
+        this.interactionGraphics.lineStyle(2, 0xfff1d2, alpha);
+        this.interactionGraphics.strokeCircle(x, y, pulseRadius);
+      });
+    }
+
+    stepInterpolation(deltaMs, timeMs) {
       const delta = Math.max(0, deltaMs || 16.7);
       const factorBase = Math.min(1, (delta / 1000) * 10);
+      const frameTime = Number(timeMs) || Date.now();
 
+      this.syncCollectiblesFromState();
+      this.animateCollectibles(frameTime);
       this.syncSpritesFromState();
       for (const player of state.players.values()) {
         const sprite = this.ensureSprite(player);
@@ -745,12 +1339,40 @@
         if (sprite.label.text !== labelText) {
           sprite.label.setText(labelText);
         }
+        const showEmote = Date.now() < (player.emoteUntil || 0);
+        const emoteText = showEmote ? `[${EMOTE_LABELS[player.emote] || player.emote || ""}]` : "";
+        if (sprite.emote.text !== emoteText) {
+          sprite.emote.setText(emoteText);
+        }
         sprite.container.setPosition(player.renderX, player.renderY);
+      }
+
+      this.resolveNameplateOverlaps();
+      this.drawInteractionAffordances(frameTime);
+
+      if (this.moveMarker && this.moveMarker.visible) {
+        const pulse = Math.sin(frameTime * 0.012);
+        this.moveMarker.setFillStyle(0xffffff, 0.62 + pulse * 0.22);
+        this.moveMarker.setRadius(6 + pulse * 1.5);
+        if (state.selfId) {
+          const self = state.players.get(state.selfId);
+          if (self) {
+            const distanceToMarker = Phaser.Math.Distance.Between(
+              self.renderX,
+              self.renderY,
+              this.moveMarker.x,
+              this.moveMarker.y
+            );
+            if (distanceToMarker <= MOVE_MARKER_HIDE_DISTANCE) {
+              this.moveMarker.setVisible(false);
+            }
+          }
+        }
       }
     }
 
-    update(_time, delta) {
-      this.stepInterpolation(delta);
+    update(time, delta) {
+      this.stepInterpolation(delta, time);
     }
   }
 
@@ -786,15 +1408,70 @@
     sendEvent("player:setName", { name: normalized });
   });
 
-  chatFormEl.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const text = chatInputEl.value.trim();
-    if (!text) {
+  if (qaResetEl) {
+    qaResetEl.addEventListener("click", () => {
+      sendEvent("qa:resetProgress", {});
+      pushToast("Progress reset requested.");
+    });
+  }
+
+  for (const button of emoteButtons) {
+    button.addEventListener("click", () => {
+      const emote = normalizeRoomId(button.dataset.emote || "");
+      if (!emote) {
+        return;
+      }
+      sendEvent("player:emote", { emote });
+    });
+  }
+
+  const emoteHotkeys = ["wave", "dance", "cheer", "laugh", "snowball"];
+  window.addEventListener("keydown", (event) => {
+    const key = String(event.key || "");
+    if (!/^[1-5]$/.test(key)) {
       return;
     }
-    sendEvent("chat:send", { text });
+    if (document.activeElement === chatInputEl || document.activeElement === nameInputEl) {
+      return;
+    }
+    const index = Number(key) - 1;
+    const emote = emoteHotkeys[index];
+    if (!emote) {
+      return;
+    }
+    sendEvent("player:emote", { emote });
+  });
+
+  chatFormEl.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = chatInputEl.value.trim();
+    if (!query) {
+      return;
+    }
+    const chosen = resolveOutgoingQuickChat();
+    if (!chosen) {
+      appendChat("system", "Quick chat only: choose one of the suggested phrases.");
+      pushToast("Pick a quick chat suggestion first.");
+      refreshQuickChatSuggestions();
+      return;
+    }
+    sendEvent("chat:send", { optionId: chosen.id, text: query });
     chatInputEl.value = "";
+    state.selectedChatOptionId = "";
+    state.chatSuggestions = findQuickChatMatches("", 6);
+    renderQuickChatSuggestions();
     chatInputEl.focus();
+  });
+
+  chatInputEl.addEventListener("input", () => {
+    refreshQuickChatSuggestions();
+  });
+
+  chatInputEl.addEventListener("focus", () => {
+    if (!chatInputEl.value.trim()) {
+      state.chatSuggestions = findQuickChatMatches("", 6);
+      renderQuickChatSuggestions();
+    }
   });
 
   window.render_game_to_text = function renderGameToText() {
@@ -806,6 +1483,7 @@
       targetX: Number(player.targetX.toFixed(2)),
       targetY: Number(player.targetY.toFixed(2)),
       color: player.color,
+      emote: Date.now() < (player.emoteUntil || 0) ? player.emote : "",
       isSelf: player.id === state.selfId,
     }));
 
@@ -821,12 +1499,23 @@
         height: state.world.height,
         blocked: state.world.blocked,
         portals: state.world.portals || [],
+        npcs: state.world.npcs || [],
       },
+      collectibles: state.collectibles || [],
       players,
       roster: Array.from(state.players.values()).map((player) => ({
         id: player.id,
         name: displayName(player),
       })),
+      progress: state.progress,
+      quick_chat: {
+        options_count: state.chatOptions.length,
+        selected_option_id: state.selectedChatOptionId || "",
+        suggestions: state.chatSuggestions.map((option) => ({
+          id: option.id,
+          text: option.text,
+        })),
+      },
       chat_tail: state.chatTail,
     });
   };
@@ -849,6 +1538,8 @@
     game,
   };
 
+  renderQuestPanel();
+  renderQuickChatSuggestions();
   updateIdentityControls();
   connectSocket();
 })();

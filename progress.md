@@ -1515,3 +1515,129 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
     - state-0: still in `town` while moving toward portal,
     - state-1: transitions to `plaza` after entering portal,
     - no `errors-*.json` emitted.
+- Continuation (2026-03-22, sprint planning + immediate execution):
+  - Added 3-week sprint roadmap file: `clubpenguin-world/SPRINT_TASK_LIST.md`.
+  - Sprint 1 execution started immediately and implemented today:
+    - Starter objective system with rewards (set name, chat once, visit plaza, visit snow-forts, use emote).
+    - Coins/progress payload from server and objective tracker UI in client.
+    - Emote actions + room broadcast (`player:emote`) with cooldown and chat feed reflection.
+  - Server progression architecture updates (`clubpenguin-world/main.go`):
+    - `Client` now tracks coins, objective completion, and starter progression flags.
+    - Added `sendProgress` + progress payload helpers and objective recompute logic.
+    - Added emote sanitization/allowlist and `player:emote` handler.
+    - `world:init` now includes `progress` payload.
+  - Client feature updates (`clubpenguin-world/public/index.html`, `public/client.js`):
+    - Added Starter Tasks panel, coin count UI, and emote buttons.
+    - Added handlers for `player:progress` and `player:emote`.
+    - Added floating per-player emote labels and progress state in `render_game_to_text`.
+  - Tests expanded in `clubpenguin-world/main_test.go`:
+    - `TestSanitizeEmote`
+    - `TestStarterProgressRewards`
+    - updated `TestSetPlayerName` assertions for progress mutation.
+- Validation after sprint execution pass:
+  - `go test ./...` passed.
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - Direct Playwright workflow validated full starter loop:
+    - name update + chat + emote + town->plaza->snow-forts portal traversal.
+    - final progress reached 5/5 objectives and 115 coins.
+  - Skill run artifact `output/web-game/clubpenguin-world-sprint1-run1` produced snapshots with no `errors-*.json`.
+- Continuation (2026-03-22, immediate UX polish from sprint backlog):
+  - Added objective-complete toasts + reward chime in `clubpenguin-world/public/client.js`.
+  - Added toast overlay container and styles in `clubpenguin-world/public/index.html`.
+  - Added emote hotkeys (`1-5`) to trigger wave/dance/cheer/laugh/snowball quickly when not typing.
+  - Updated controls hint text for emote hotkeys.
+- Validation after UX polish:
+  - `go test ./...` passed.
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - Headless Playwright flow validated no runtime errors while completing name/chat/emote actions and receiving objective progress updates.
+
+## 2026-03-22 Club Penguin Sprint 1 Completion Pass (NPC + QA Reset + Collectibles)
+- Continued the Go + Phaser prototype and completed remaining Sprint 1 core-playability tasks.
+- Server (`clubpenguin-world/main.go`) updates:
+  - Added `NPC` support in map payload (`world.map.npcs`) and Town greeter NPC (`Rory`).
+  - Added guided hint flow stages (`guide:set-name`, `guide:chat`, `guide:visit-plaza`, `guide:visit-snow-forts`, `guide:emote`, `guide:complete`) delivered via new `npc:hint` event when player enters NPC interaction range.
+  - Added server-authoritative per-room collectible loop:
+    - one active collectible (`Coin Puff`) per room,
+    - overlap pickup in simulation step,
+    - coin rewards by room,
+    - respawn timer,
+    - snapshot support (`world:snapshot.collectibles`) and broadcast event `collectible:collected`.
+  - Added QA reset endpoint over WS: inbound `qa:resetProgress` resets starter flags, objective completion set, coins, and hint stage memory.
+  - `world:init` now includes `collectibles`.
+- Client (`clubpenguin-world/public/client.js`, `public/index.html`) updates:
+  - Added NPC rendering ring/label in world for `map.npcs`.
+  - Added collectible rendering and state handling.
+  - Added handlers for `npc:hint` and `collectible:collected` (chat feed + toast/chime for self collect).
+  - Added `Reset Tasks (QA)` button wired to `qa:resetProgress`.
+  - Extended `render_game_to_text` with `world.npcs` and `collectibles`.
+- Test updates (`clubpenguin-world/main_test.go`):
+  - Extended world-map copy test to include deep-copy validation for NPCs.
+  - Added `TestResetProgress`.
+  - Added `TestCollectiblePickupAwardsCoins`.
+- Validation:
+  - `go test ./...` in `clubpenguin-world`: pass.
+  - `node --check clubpenguin-world/public/client.js`: pass.
+  - Playwright skill client run:
+    - `output/web-game/clubpenguin-world-sprint1-next` (no `errors-*.json`, collectibles visible in screenshots/state).
+    - Additional run `output/web-game/clubpenguin-world-npc-check` (no `errors-*.json`).
+- Sprint board update:
+  - Marked remaining Sprint 1 tasks complete in `clubpenguin-world/SPRINT_TASK_LIST.md`.
+- Additional coverage added post-pass:
+  - `TestNPCHintDispatchesWhenNearGreeter` validates server emits guided hint text when player enters Town greeter radius.
+  - Re-ran `gofmt -w main.go main_test.go` and `go test ./...` (pass, cached).
+- New request (2026-03-22): Restrict chat to preconfigured phrases with searchable quick-chat UX.
+- Implemented server-authoritative quick chat in `clubpenguin-world/main.go`:
+  - Added `QuickChatOption` catalog + search tags.
+  - Added `chatOptions` in `world:init` payload.
+  - Updated `chat:send` to accept `optionId`/`text` and resolve to approved presets only.
+  - Rejected unmatched free-text with warning notice.
+  - `chat:message` now includes `optionId` and canonical preset `text`.
+- Implemented client searchable picker in `clubpenguin-world/public/index.html` + `public/client.js`:
+  - Added quick-chat suggestion list UI beneath chat input.
+  - Input now searches server-provided options and narrows suggestions.
+  - Submit sends matched preset (`optionId`) instead of arbitrary message text.
+  - If no match exists, send is blocked and user gets local/system guidance.
+  - Added quick-chat state to `render_game_to_text` for automated checks.
+- Tests:
+  - Added `TestResolveQuickChatOption` in `main_test.go`.
+  - Updated websocket chat integration assertion to verify preset phrase + `optionId`.
+- Validation:
+  - `gofmt -w main.go main_test.go`.
+  - `go test ./...` passed.
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - Skill Playwright run: `output/web-game/clubpenguin-world-quickchat-run` (no `errors-*.json`).
+  - Interactive Playwright verification:
+    - typing `hello room` narrowed suggestions to `Hello everyone!` and sent canonical preset text.
+    - typing unmatched `banana quantum` produced no suggestions and send was blocked.
+- Continuation (2026-03-22, production-design foundation follow-up):
+  - Completed remaining UI wiring after shell redesign in `clubpenguin-world/public/client.js`:
+    - Added explicit status state helper (`connected` / `disconnected` / `error`) and updated WebSocket lifecycle hooks.
+    - Added quick-chat empty result state in suggestion list (`No quick chat matches. Try another keyword.`).
+  - Completed style/system fixes in `clubpenguin-world/public/index.html`:
+    - Added missing `--accent` token used by focused inputs.
+    - Added status-chip state styles for disconnected and error conditions.
+  - Updated planning board `clubpenguin-world/SPRINT_TASK_LIST.md`:
+    - Added a dedicated 3-week `Production Design Overhaul Track`.
+    - Logged today kickoff tasks as started/completed.
+- Validation for design follow-up:
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - `go test ./...` passed in `clubpenguin-world`.
+  - Skill Playwright run: `clubpenguin-world/output/web-game/design-overhaul-run1` (state + screenshots, no `errors-*.json`).
+  - Full-page UI inspection screenshot captured: `clubpenguin-world/output/web-game/design-overhaul-run1/full-ui.png`.
+  - Manual quick-chat search smoke via Playwright MCP confirmed empty-state rendering for unmatched query (`banana quantum`).
+- Continuation (2026-03-22, production-design affordances pass):
+  - Implemented Week 1 visual/gameplay clarity items in `clubpenguin-world/public/client.js`:
+    - Added overlap-aware nameplate stacking (`resolveNameplateOverlaps`) so nearby avatars keep readable labels.
+    - Upgraded avatar label styling for contrast and readability (stroke, shadow, self-highlight).
+    - Added animated interaction affordances (`drawInteractionAffordances`) for portals and NPC interaction zones.
+    - Added collectible ambient animation (`animateCollectibles`) with bob + pulse halo.
+    - Added move-marker pulse/hide behavior when destination is reached.
+  - Updated guidance copy in `clubpenguin-world/public/index.html` controls line to explain pulsing interaction cues.
+  - Updated `clubpenguin-world/SPRINT_TASK_LIST.md`:
+    - Marked Week 1 tasks complete for nameplate readability and interaction affordances.
+    - Added execution-log bullets for this pass.
+- Validation for affordances pass:
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - `go test ./...` passed in `clubpenguin-world`.
+  - Playwright skill run: `clubpenguin-world/output/web-game/design-overhaul-run2` (screenshots + state JSON, no `errors-*.json`).
+  - Additional targeted capture: `clubpenguin-world/output/web-game/design-overhaul-overlap-check` (no `errors-*.json`).

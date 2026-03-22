@@ -31,5 +31,17 @@ Operational command reference for contributors and automations in this repositor
 - Export KPI snapshot: `npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30`
 - Stripe reconcile/audit pass: `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
 
+## Subagents
+- Subagent prompts live in `subagents/*.agent.md`.
+- Use one subagent per disjoint write scope to avoid merge conflicts.
+- Recommended split for `clubpenguin-world/`:
+  - `subagents/clubpenguin-server.agent.md` owns `clubpenguin-world/main.go` + `clubpenguin-world/main_test.go`
+  - `subagents/clubpenguin-client.agent.md` owns `clubpenguin-world/public/index.html` + `clubpenguin-world/public/client.js`
+  - `subagents/clubpenguin-qa.agent.md` owns validation scripts/artifacts and docs updates (`progress.md`, sprint notes)
+- Always include a short handoff with:
+  - changed files
+  - tests run
+  - known risks/follow-ups
+
 ## TODO
 - Confirm whether `python -m http.server 4173` is the canonical local server command and if an explicit `127.0.0.1` bind is required for all `*:raw` smoke runs.

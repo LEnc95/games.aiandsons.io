@@ -24,12 +24,16 @@ const (
 	simulationDelta     = 1.0 / simulationTickHz
 	avatarRadius        = 14.0
 	defaultPlayerSpeed  = 220.0
+	collectibleRadius   = 11.0
 	maxPlayerNameRunes  = 28
 	maxChatLengthRunes  = 180
 	maxIncomingMessage  = 4096
 	targetCooldown      = 40 * time.Millisecond
 	chatCooldown        = 700 * time.Millisecond
+	emoteCooldown       = 500 * time.Millisecond
 	noticeCooldown      = 2 * time.Second
+	npcHintCooldown     = 1500 * time.Millisecond
+	collectibleRespawn  = 7 * time.Second
 	wsWriteTimeout      = 5 * time.Second
 	wsPongTimeout       = 60 * time.Second
 	wsPingInterval      = (wsPongTimeout * 9) / 10
@@ -63,6 +67,9 @@ var (
 					{ID: "town-plaza", Label: "To Plaza", X: 1020, Y: 28, Width: 154, Height: 74, ToRoom: "plaza"},
 					{ID: "town-snow", Label: "To Snow Forts", X: 28, Y: 28, Width: 176, Height: 74, ToRoom: "snow-forts"},
 				},
+				NPCs: []NPC{
+					{ID: "town-greeter", Name: "Rory", X: 598, Y: 176, Radius: 58},
+				},
 			},
 			SpawnPoints: []Point{
 				{X: 120, Y: 120},
@@ -71,6 +78,12 @@ var (
 				{X: 1080, Y: 600},
 				{X: 600, Y: 140},
 				{X: 600, Y: 580},
+			},
+			CollectibleSpawns: []Point{
+				{X: 232, Y: 165},
+				{X: 730, Y: 560},
+				{X: 1040, Y: 220},
+				{X: 165, Y: 555},
 			},
 		},
 		{
@@ -94,6 +107,12 @@ var (
 				{X: 600, Y: 620},
 				{X: 1100, Y: 360},
 				{X: 600, Y: 100},
+			},
+			CollectibleSpawns: []Point{
+				{X: 142, Y: 580},
+				{X: 458, Y: 110},
+				{X: 764, Y: 570},
+				{X: 1035, Y: 510},
 			},
 		},
 		{
@@ -119,6 +138,12 @@ var (
 				{X: 1060, Y: 590},
 				{X: 600, Y: 360},
 			},
+			CollectibleSpawns: []Point{
+				{X: 156, Y: 520},
+				{X: 424, Y: 102},
+				{X: 736, Y: 584},
+				{X: 1022, Y: 502},
+			},
 		},
 	}
 
@@ -132,6 +157,46 @@ var (
 		"#f97316",
 		"#22c55e",
 	}
+
+	starterObjectives = []ObjectiveDef{
+		{ID: "starter:set-name", Label: "Set your penguin name", Reward: 15},
+		{ID: "starter:chat-once", Label: "Send your first chat message", Reward: 20},
+		{ID: "starter:visit-plaza", Label: "Visit Plaza", Reward: 30},
+		{ID: "starter:visit-snow-forts", Label: "Visit Snow Forts", Reward: 30},
+		{ID: "starter:emote-once", Label: "Use an emote", Reward: 20},
+	}
+
+	allowedEmotes = map[string]string{
+		"wave":     "wave",
+		"dance":    "dance",
+		"cheer":    "cheer",
+		"laugh":    "laugh",
+		"snowball": "snowball",
+	}
+
+	quickChatOptions = []QuickChatOption{
+		{ID: "hello", Text: "Hello everyone!", Tags: []string{"hi", "hey", "hello"}},
+		{ID: "need-help", Text: "Can someone help me?", Tags: []string{"help", "assist"}},
+		{ID: "follow-me", Text: "Follow me!", Tags: []string{"follow", "come"}},
+		{ID: "thanks", Text: "Thanks!", Tags: []string{"ty", "thank you"}},
+		{ID: "sorry", Text: "Sorry!", Tags: []string{"apologies"}},
+		{ID: "great-job", Text: "Great job!", Tags: []string{"nice", "good"}},
+		{ID: "wait-here", Text: "Wait here.", Tags: []string{"wait", "hold"}},
+		{ID: "yes", Text: "Yes.", Tags: []string{"yeah", "yep"}},
+		{ID: "no", Text: "No.", Tags: []string{"nope"}},
+		{ID: "brb", Text: "Be right back.", Tags: []string{"brb", "back"}},
+		{ID: "go-plaza", Text: "Let's go to Plaza.", Tags: []string{"plaza", "portal"}},
+		{ID: "go-snow-forts", Text: "Let's go to Snow Forts.", Tags: []string{"snow", "forts", "portal"}},
+		{ID: "go-town", Text: "Let's go to Town.", Tags: []string{"town", "portal"}},
+		{ID: "wanna-emote", Text: "Want to emote?", Tags: []string{"emote", "dance", "wave"}},
+		{ID: "nice-outfit", Text: "Nice outfit!", Tags: []string{"style", "look"}},
+		{ID: "good-game", Text: "Good game!", Tags: []string{"gg", "game"}},
+		{ID: "ready-to-play", Text: "Ready to play?", Tags: []string{"ready", "start"}},
+		{ID: "meet-portal", Text: "Meet me at the portal.", Tags: []string{"meet", "portal"}},
+		{ID: "collecting-coins", Text: "I'm collecting coin puffs.", Tags: []string{"coin", "collect"}},
+	}
+
+	quickChatByID = buildQuickChatMap(quickChatOptions)
 )
 
 type Point struct {
@@ -156,11 +221,30 @@ type Portal struct {
 	ToRoom string  `json:"toRoom"`
 }
 
+type NPC struct {
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Radius float64 `json:"radius"`
+}
+
+type Collectible struct {
+	ID     string  `json:"id"`
+	Label  string  `json:"label"`
+	Kind   string  `json:"kind"`
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Radius float64 `json:"radius"`
+	Value  int     `json:"value"`
+}
+
 type WorldMap struct {
 	Width   float64  `json:"width"`
 	Height  float64  `json:"height"`
 	Blocked []Rect   `json:"blocked"`
 	Portals []Portal `json:"portals"`
+	NPCs    []NPC    `json:"npcs"`
 }
 
 type Player struct {
@@ -180,18 +264,43 @@ type RoomInfo struct {
 }
 
 type Room struct {
-	ID          string
-	Name        string
-	World       WorldMap
-	SpawnPoints []Point
-	Players     map[string]*Player
+	ID                string
+	Name              string
+	World             WorldMap
+	SpawnPoints       []Point
+	CollectibleSpawns []Point
+	Players           map[string]*Player
+	Collectible       *Collectible
+	collectibleCursor int
+	collectibleSeq    int
+	nextCollectibleAt time.Time
 }
 
 type RoomTemplate struct {
-	ID          string
-	Name        string
-	World       WorldMap
-	SpawnPoints []Point
+	ID                string
+	Name              string
+	World             WorldMap
+	SpawnPoints       []Point
+	CollectibleSpawns []Point
+}
+
+type ObjectiveDef struct {
+	ID     string
+	Label  string
+	Reward int
+}
+
+type ObjectiveState struct {
+	ID        string `json:"id"`
+	Label     string `json:"label"`
+	Reward    int    `json:"reward"`
+	Completed bool   `json:"completed"`
+}
+
+type QuickChatOption struct {
+	ID   string   `json:"id"`
+	Text string   `json:"text"`
+	Tags []string `json:"tags,omitempty"`
 }
 
 type InboundEnvelope struct {
@@ -210,7 +319,12 @@ type SetTargetPayload struct {
 }
 
 type ChatSendPayload struct {
-	Text string `json:"text"`
+	OptionID string `json:"optionId"`
+	Text     string `json:"text"`
+}
+
+type EmoteSendPayload struct {
+	Emote string `json:"emote"`
 }
 
 type SetNamePayload struct {
@@ -222,22 +336,50 @@ type RoomJoinPayload struct {
 }
 
 type Client struct {
-	id           string
-	name         string
-	roomID       string
-	color        string
-	conn         *websocket.Conn
-	send         chan []byte
-	server       *Server
-	lastTargetAt time.Time
-	lastChatAt   time.Time
-	lastNoticeAt time.Time
+	id                  string
+	name                string
+	roomID              string
+	color               string
+	conn                *websocket.Conn
+	send                chan []byte
+	server              *Server
+	coins               int
+	hasNamed            bool
+	hasChatted          bool
+	hasEmoted           bool
+	visitedRooms        map[string]bool
+	completedObjectives map[string]bool
+	seenHintStages      map[string]bool
+	lastTargetAt        time.Time
+	lastChatAt          time.Time
+	lastEmoteAt         time.Time
+	lastNoticeAt        time.Time
+	lastHintAt          time.Time
 }
 
 type roomSnapshot struct {
-	roomID string
-	timeMs int64
-	items  []Player
+	roomID       string
+	timeMs       int64
+	items        []Player
+	collectibles []Collectible
+}
+
+type npcHintDispatch struct {
+	clientID string
+	payload  map[string]any
+}
+
+type collectibleDispatch struct {
+	roomID      string
+	collectorID string
+	payload     map[string]any
+}
+
+type simulationBatch struct {
+	snapshots         []roomSnapshot
+	hints             []npcHintDispatch
+	collectibleEvents []collectibleDispatch
+	progressClientIDs []string
 }
 
 type Server struct {
@@ -257,11 +399,13 @@ func newServer() *Server {
 
 	for _, tmpl := range roomTemplates {
 		room := &Room{
-			ID:          tmpl.ID,
-			Name:        tmpl.Name,
-			World:       copyWorldMap(tmpl.World),
-			SpawnPoints: copyPoints(tmpl.SpawnPoints),
-			Players:     make(map[string]*Player),
+			ID:                tmpl.ID,
+			Name:              tmpl.Name,
+			World:             copyWorldMap(tmpl.World),
+			SpawnPoints:       copyPoints(tmpl.SpawnPoints),
+			CollectibleSpawns: copyPoints(tmpl.CollectibleSpawns),
+			Players:           make(map[string]*Player),
+			nextCollectibleAt: time.Now(),
 		}
 		s.rooms[room.ID] = room
 		s.roomOrder = append(s.roomOrder, room.ID)
@@ -275,9 +419,11 @@ func copyWorldMap(src WorldMap) WorldMap {
 		Height:  src.Height,
 		Blocked: make([]Rect, len(src.Blocked)),
 		Portals: make([]Portal, len(src.Portals)),
+		NPCs:    make([]NPC, len(src.NPCs)),
 	}
 	copy(out.Blocked, src.Blocked)
 	copy(out.Portals, src.Portals)
+	copy(out.NPCs, src.NPCs)
 	return out
 }
 
@@ -317,6 +463,391 @@ func sanitizePlayerName(raw string) string {
 	return strings.TrimSpace(string(runes))
 }
 
+func sanitizeEmote(raw string) string {
+	normalized := normalizeRoomID(raw)
+	if emote, ok := allowedEmotes[normalized]; ok {
+		return emote
+	}
+	return ""
+}
+
+func buildQuickChatMap(options []QuickChatOption) map[string]QuickChatOption {
+	out := make(map[string]QuickChatOption, len(options))
+	for _, option := range options {
+		id := normalizeRoomID(option.ID)
+		if id == "" || strings.TrimSpace(option.Text) == "" {
+			continue
+		}
+		normalized := QuickChatOption{
+			ID:   id,
+			Text: sanitizeChat(option.Text),
+			Tags: make([]string, 0, len(option.Tags)),
+		}
+		for _, tag := range option.Tags {
+			tagClean := strings.ToLower(sanitizeChat(tag))
+			if tagClean != "" {
+				normalized.Tags = append(normalized.Tags, tagClean)
+			}
+		}
+		out[id] = normalized
+	}
+	return out
+}
+
+func quickChatCatalog() []QuickChatOption {
+	catalog := make([]QuickChatOption, 0, len(quickChatOptions))
+	for _, option := range quickChatOptions {
+		id := normalizeRoomID(option.ID)
+		normalized, ok := quickChatByID[id]
+		if !ok {
+			continue
+		}
+		catalog = append(catalog, normalized)
+	}
+	return catalog
+}
+
+func normalizeChatQuery(raw string) string {
+	return strings.ToLower(sanitizeChat(raw))
+}
+
+func quickChatScore(option QuickChatOption, query string) int {
+	if query == "" {
+		return 0
+	}
+	text := normalizeChatQuery(option.Text)
+	if text == "" {
+		return 0
+	}
+	if query == text || query == normalizeRoomID(option.ID) {
+		return 1200
+	}
+	if strings.Contains(text, query) {
+		return 900 - (len(text) - len(query))
+	}
+
+	fields := strings.Fields(query)
+	if len(fields) == 0 {
+		return 0
+	}
+	searchSpace := text + " " + strings.Join(option.Tags, " ")
+	matches := 0
+	for _, field := range fields {
+		if strings.Contains(searchSpace, field) {
+			matches++
+		}
+	}
+	if matches == 0 {
+		return 0
+	}
+	return matches*120 - (len(fields)-matches)*45
+}
+
+func resolveQuickChatOption(payload ChatSendPayload) (QuickChatOption, bool) {
+	optionID := normalizeRoomID(payload.OptionID)
+	if optionID != "" {
+		if option, ok := quickChatByID[optionID]; ok {
+			return option, true
+		}
+	}
+
+	query := normalizeChatQuery(payload.Text)
+	if query == "" {
+		return QuickChatOption{}, false
+	}
+
+	best := QuickChatOption{}
+	bestScore := 0
+	for _, option := range quickChatOptions {
+		candidate, ok := quickChatByID[normalizeRoomID(option.ID)]
+		if !ok {
+			continue
+		}
+		score := quickChatScore(candidate, query)
+		if score > bestScore || (score == bestScore && bestScore > 0 && len(candidate.Text) < len(best.Text)) {
+			bestScore = score
+			best = candidate
+		}
+	}
+	if bestScore <= 0 {
+		return QuickChatOption{}, false
+	}
+	return best, true
+}
+
+func (s *Server) objectiveCompletedLocked(client *Client, objectiveID string) bool {
+	switch objectiveID {
+	case "starter:set-name":
+		return client.hasNamed
+	case "starter:chat-once":
+		return client.hasChatted
+	case "starter:visit-plaza":
+		return client.visitedRooms["plaza"]
+	case "starter:visit-snow-forts":
+		return client.visitedRooms["snow-forts"]
+	case "starter:emote-once":
+		return client.hasEmoted
+	default:
+		return false
+	}
+}
+
+func (s *Server) recomputeProgressLocked(client *Client) bool {
+	changed := false
+	for _, objective := range starterObjectives {
+		if client.completedObjectives[objective.ID] {
+			continue
+		}
+		if !s.objectiveCompletedLocked(client, objective.ID) {
+			continue
+		}
+		client.completedObjectives[objective.ID] = true
+		client.coins += objective.Reward
+		changed = true
+	}
+	return changed
+}
+
+func (s *Server) progressPayloadLocked(client *Client) map[string]any {
+	objectives := make([]ObjectiveState, 0, len(starterObjectives))
+	completedCount := 0
+	for _, objective := range starterObjectives {
+		completed := client.completedObjectives[objective.ID]
+		if completed {
+			completedCount++
+		}
+		objectives = append(objectives, ObjectiveState{
+			ID:        objective.ID,
+			Label:     objective.Label,
+			Reward:    objective.Reward,
+			Completed: completed,
+		})
+	}
+
+	return map[string]any{
+		"coins":          client.coins,
+		"objectives":     objectives,
+		"completedCount": completedCount,
+		"totalCount":     len(starterObjectives),
+	}
+}
+
+func (s *Server) sendProgress(clientID string) {
+	s.mu.RLock()
+	client := s.clients[clientID]
+	if client == nil {
+		s.mu.RUnlock()
+		return
+	}
+	payload := s.progressPayloadLocked(client)
+	s.mu.RUnlock()
+	s.sendToClient(clientID, "player:progress", payload)
+}
+
+func collectibleValueForRoom(roomID string) int {
+	switch normalizeRoomID(roomID) {
+	case "plaza":
+		return 8
+	case "snow-forts":
+		return 10
+	default:
+		return 6
+	}
+}
+
+func (s *Server) collectiblesSnapshotLocked(room *Room) []Collectible {
+	if room == nil || room.Collectible == nil {
+		return []Collectible{}
+	}
+	return []Collectible{*room.Collectible}
+}
+
+func (s *Server) resetProgress(clientID string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	client := s.clients[clientID]
+	if client == nil {
+		return false
+	}
+
+	client.coins = 0
+	client.hasNamed = false
+	client.hasChatted = false
+	client.hasEmoted = false
+	client.completedObjectives = make(map[string]bool)
+	client.seenHintStages = make(map[string]bool)
+	client.lastHintAt = time.Time{}
+	client.visitedRooms = map[string]bool{}
+	if client.roomID != "" {
+		client.visitedRooms[client.roomID] = true
+	}
+	_ = s.recomputeProgressLocked(client)
+	return true
+}
+
+func (s *Server) guideHintStageLocked(client *Client) (string, string) {
+	if client == nil {
+		return "", ""
+	}
+	if !client.hasNamed {
+		return "guide:set-name", "Rory: Welcome! Set your penguin name in the right panel first."
+	}
+	if !client.hasChatted {
+		return "guide:chat", "Rory: Great name. Send one chat message to greet the room."
+	}
+	if !client.visitedRooms["plaza"] {
+		return "guide:visit-plaza", "Rory: Walk into the glowing 'To Plaza' portal pad to visit Plaza."
+	}
+	if !client.visitedRooms["snow-forts"] {
+		return "guide:visit-snow-forts", "Rory: Nice. Next, step into a portal and reach Snow Forts."
+	}
+	if !client.hasEmoted {
+		return "guide:emote", "Rory: Finish the tour by using an emote button (or keys 1-5)."
+	}
+	return "guide:complete", "Rory: Tour complete. Keep collecting floating coins in each room."
+}
+
+func sortedRoomPlayerIDs(room *Room) []string {
+	playerIDs := make([]string, 0, len(room.Players))
+	for playerID := range room.Players {
+		playerIDs = append(playerIDs, playerID)
+	}
+	sort.Strings(playerIDs)
+	return playerIDs
+}
+
+func (s *Server) processNPCHintsLocked(room *Room, now time.Time) []npcHintDispatch {
+	if room == nil || len(room.World.NPCs) == 0 || len(room.Players) == 0 {
+		return nil
+	}
+
+	playerIDs := sortedRoomPlayerIDs(room)
+	hints := make([]npcHintDispatch, 0, len(playerIDs))
+	for _, playerID := range playerIDs {
+		player := room.Players[playerID]
+		client := s.clients[playerID]
+		if player == nil || client == nil {
+			continue
+		}
+		for _, npc := range room.World.NPCs {
+			if math.Hypot(player.X-npc.X, player.Y-npc.Y) > npc.Radius+avatarRadius {
+				continue
+			}
+			stageID, text := s.guideHintStageLocked(client)
+			if stageID == "" || text == "" || client.seenHintStages[stageID] {
+				continue
+			}
+			if !consumeCooldown(now, &client.lastHintAt, npcHintCooldown) {
+				continue
+			}
+			client.seenHintStages[stageID] = true
+			hints = append(hints, npcHintDispatch{
+				clientID: playerID,
+				payload: map[string]any{
+					"id":   npc.ID,
+					"name": npc.Name,
+					"text": text,
+					"ts":   now.UnixMilli(),
+				},
+			})
+			break
+		}
+	}
+	return hints
+}
+
+func (s *Server) spawnCollectibleLocked(room *Room, now time.Time) {
+	if room == nil || len(room.CollectibleSpawns) == 0 {
+		return
+	}
+
+	for i := 0; i < len(room.CollectibleSpawns); i++ {
+		idx := room.collectibleCursor % len(room.CollectibleSpawns)
+		room.collectibleCursor++
+		spawn := room.CollectibleSpawns[idx]
+		x, y := s.clampToWorld(room, spawn.X, spawn.Y)
+		if !s.isWalkable(room, x, y) {
+			continue
+		}
+		room.collectibleSeq++
+		room.Collectible = &Collectible{
+			ID:     fmt.Sprintf("%s-collect-%d", room.ID, room.collectibleSeq),
+			Label:  "Coin Puff",
+			Kind:   "coin",
+			X:      x,
+			Y:      y,
+			Radius: collectibleRadius,
+			Value:  collectibleValueForRoom(room.ID),
+		}
+		room.nextCollectibleAt = time.Time{}
+		return
+	}
+
+	// No valid spawn in this pass; retry later.
+	room.nextCollectibleAt = now.Add(collectibleRespawn)
+}
+
+func (s *Server) processCollectibleLocked(room *Room, now time.Time) (*collectibleDispatch, string) {
+	if room == nil {
+		return nil, ""
+	}
+	if room.Collectible == nil {
+		if room.nextCollectibleAt.IsZero() || !now.Before(room.nextCollectibleAt) {
+			s.spawnCollectibleLocked(room, now)
+		}
+		return nil, ""
+	}
+
+	playerIDs := sortedRoomPlayerIDs(room)
+	collectorID := ""
+	for _, playerID := range playerIDs {
+		player := room.Players[playerID]
+		if player == nil {
+			continue
+		}
+		if math.Hypot(player.X-room.Collectible.X, player.Y-room.Collectible.Y) <= avatarRadius+room.Collectible.Radius {
+			collectorID = playerID
+			break
+		}
+	}
+	if collectorID == "" {
+		return nil, ""
+	}
+
+	collectorName := collectorID
+	if player := room.Players[collectorID]; player != nil && strings.TrimSpace(player.Name) != "" {
+		collectorName = player.Name
+	}
+
+	value := room.Collectible.Value
+	if value < 1 {
+		value = 1
+	}
+	if client := s.clients[collectorID]; client != nil {
+		client.coins += value
+	}
+
+	collectedID := room.Collectible.ID
+	room.Collectible = nil
+	room.nextCollectibleAt = now.Add(collectibleRespawn)
+
+	dispatch := &collectibleDispatch{
+		roomID:      room.ID,
+		collectorID: collectorID,
+		payload: map[string]any{
+			"id":          collectedID,
+			"roomId":      room.ID,
+			"byId":        collectorID,
+			"byName":      collectorName,
+			"value":       value,
+			"nextSpawnMs": room.nextCollectibleAt.UnixMilli(),
+			"ts":          now.UnixMilli(),
+		},
+	}
+	return dispatch, collectorID
+}
+
 func (s *Server) addClient(conn *websocket.Conn) (*Client, Player, string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -326,14 +857,18 @@ func (s *Server) addClient(conn *websocket.Conn) (*Client, Player, string) {
 	name := defaultPlayerName(id)
 
 	client := &Client{
-		id:     id,
-		name:   name,
-		roomID: defaultRoomID,
-		color:  color,
-		conn:   conn,
-		send:   make(chan []byte, 64),
-		server: s,
+		id:                  id,
+		name:                name,
+		roomID:              defaultRoomID,
+		color:               color,
+		conn:                conn,
+		send:                make(chan []byte, 64),
+		server:              s,
+		visitedRooms:        make(map[string]bool),
+		completedObjectives: make(map[string]bool),
+		seenHintStages:      make(map[string]bool),
 	}
+	client.visitedRooms[defaultRoomID] = true
 	s.clients[id] = client
 
 	room := s.rooms[defaultRoomID]
@@ -352,6 +887,7 @@ func (s *Server) addClient(conn *websocket.Conn) (*Client, Player, string) {
 		Color:   color,
 	}
 	room.Players[id] = player
+	s.recomputeProgressLocked(client)
 
 	return client, *player, room.ID
 }
@@ -413,11 +949,14 @@ func (s *Server) sendWorldInit(clientID string) {
 	}
 
 	payload := map[string]any{
-		"selfId":  clientID,
-		"roomId":  room.ID,
-		"rooms":   s.roomInfosLocked(),
-		"map":     copyWorldMap(room.World),
-		"players": s.playersSnapshotLocked(room),
+		"selfId":       clientID,
+		"roomId":       room.ID,
+		"rooms":        s.roomInfosLocked(),
+		"map":          copyWorldMap(room.World),
+		"players":      s.playersSnapshotLocked(room),
+		"collectibles": s.collectiblesSnapshotLocked(room),
+		"chatOptions":  quickChatCatalog(),
+		"progress":     s.progressPayloadLocked(client),
 	}
 	s.mu.RUnlock()
 	s.sendToClient(clientID, "world:init", payload)
@@ -605,13 +1144,18 @@ func (s *Server) joinRoom(clientID string, requestedRoomID string) {
 	}
 	targetRoom.Players[clientID] = player
 	client.roomID = targetRoomID
+	client.visitedRooms[targetRoomID] = true
+	s.recomputeProgressLocked(client)
 
 	initPayload := map[string]any{
-		"selfId":  clientID,
-		"roomId":  targetRoom.ID,
-		"rooms":   s.roomInfosLocked(),
-		"map":     copyWorldMap(targetRoom.World),
-		"players": s.playersSnapshotLocked(targetRoom),
+		"selfId":       clientID,
+		"roomId":       targetRoom.ID,
+		"rooms":        s.roomInfosLocked(),
+		"map":          copyWorldMap(targetRoom.World),
+		"players":      s.playersSnapshotLocked(targetRoom),
+		"collectibles": s.collectiblesSnapshotLocked(targetRoom),
+		"chatOptions":  quickChatCatalog(),
+		"progress":     s.progressPayloadLocked(client),
 	}
 	joinedPlayer := *player
 	s.mu.Unlock()
@@ -623,10 +1167,10 @@ func (s *Server) joinRoom(clientID string, requestedRoomID string) {
 	s.broadcastToRoom("player:joined", map[string]any{"player": joinedPlayer}, targetRoomID, clientID)
 }
 
-func (s *Server) setPlayerName(clientID string, requestedName string) (string, string, bool) {
+func (s *Server) setPlayerName(clientID string, requestedName string) (string, string, bool, bool) {
 	cleanName := sanitizePlayerName(requestedName)
 	if cleanName == "" {
-		return "", "", false
+		return "", "", false, false
 	}
 
 	s.mu.Lock()
@@ -634,24 +1178,27 @@ func (s *Server) setPlayerName(clientID string, requestedName string) (string, s
 
 	client := s.clients[clientID]
 	if client == nil {
-		return "", "", false
+		return "", "", false, false
 	}
 	room := s.rooms[client.roomID]
 	if room == nil {
-		return "", "", false
+		return "", "", false, false
 	}
 	player := room.Players[clientID]
 	if player == nil {
-		return "", "", false
+		return "", "", false, false
 	}
 
-	if player.Name == cleanName {
-		return client.roomID, cleanName, false
+	nameChanged := false
+	if player.Name != cleanName {
+		client.name = cleanName
+		player.Name = cleanName
+		nameChanged = true
 	}
 
-	client.name = cleanName
-	player.Name = cleanName
-	return client.roomID, cleanName, true
+	client.hasNamed = true
+	progressChanged := s.recomputeProgressLocked(client)
+	return client.roomID, cleanName, nameChanged, progressChanged
 }
 
 func (s *Server) setTarget(clientID string, targetX float64, targetY float64) {
@@ -770,39 +1317,65 @@ func (s *Server) runSimulationLoop(stop <-chan struct{}) {
 		case <-stop:
 			return
 		case <-ticker.C:
-			snapshots := s.stepAndCollectSnapshots(simulationDelta, time.Now().UnixMilli())
-			for _, snap := range snapshots {
+			batch := s.stepAndCollectSnapshots(simulationDelta, time.Now().UnixMilli())
+			for _, snap := range batch.snapshots {
 				s.broadcastToRoom("world:snapshot", map[string]any{
-					"roomId":     snap.roomID,
-					"serverTime": snap.timeMs,
-					"players":    snap.items,
+					"roomId":       snap.roomID,
+					"serverTime":   snap.timeMs,
+					"players":      snap.items,
+					"collectibles": snap.collectibles,
 				}, snap.roomID, "")
+			}
+			for _, hint := range batch.hints {
+				s.sendToClient(hint.clientID, "npc:hint", hint.payload)
+			}
+			for _, event := range batch.collectibleEvents {
+				s.broadcastToRoom("collectible:collected", event.payload, event.roomID, "")
+			}
+			for _, clientID := range batch.progressClientIDs {
+				s.sendProgress(clientID)
 			}
 		}
 	}
 }
 
-func (s *Server) stepAndCollectSnapshots(dt float64, nowMs int64) []roomSnapshot {
+func (s *Server) stepAndCollectSnapshots(dt float64, nowMs int64) simulationBatch {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	snapshots := make([]roomSnapshot, 0, len(s.roomOrder))
+	now := time.UnixMilli(nowMs)
+	batch := simulationBatch{
+		snapshots:         make([]roomSnapshot, 0, len(s.roomOrder)),
+		hints:             make([]npcHintDispatch, 0, 4),
+		collectibleEvents: make([]collectibleDispatch, 0, 2),
+		progressClientIDs: make([]string, 0, 2),
+	}
+	progressSet := make(map[string]bool)
 	for _, roomID := range s.roomOrder {
 		room := s.rooms[roomID]
 		if room == nil {
 			continue
 		}
-		s.simulateRoomLocked(room, dt)
-		snapshots = append(snapshots, roomSnapshot{
-			roomID: roomID,
-			timeMs: nowMs,
-			items:  s.playersSnapshotLocked(room),
+		hints, collectibleEvent, progressClientID := s.simulateRoomLocked(room, dt, now)
+		batch.hints = append(batch.hints, hints...)
+		if collectibleEvent != nil {
+			batch.collectibleEvents = append(batch.collectibleEvents, *collectibleEvent)
+		}
+		if progressClientID != "" && !progressSet[progressClientID] {
+			progressSet[progressClientID] = true
+			batch.progressClientIDs = append(batch.progressClientIDs, progressClientID)
+		}
+		batch.snapshots = append(batch.snapshots, roomSnapshot{
+			roomID:       roomID,
+			timeMs:       nowMs,
+			items:        s.playersSnapshotLocked(room),
+			collectibles: s.collectiblesSnapshotLocked(room),
 		})
 	}
-	return snapshots
+	return batch
 }
 
-func (s *Server) simulateRoomLocked(room *Room, dt float64) {
+func (s *Server) simulateRoomLocked(room *Room, dt float64, now time.Time) ([]npcHintDispatch, *collectibleDispatch, string) {
 	for _, player := range room.Players {
 		dx := player.TargetX - player.X
 		dy := player.TargetY - player.Y
@@ -843,6 +1416,10 @@ func (s *Server) simulateRoomLocked(room *Room, dt float64) {
 		player.X = resolvedX
 		player.Y = resolvedY
 	}
+
+	hints := s.processNPCHintsLocked(room, now)
+	collectibleEvent, progressClientID := s.processCollectibleLocked(room, now)
+	return hints, collectibleEvent, progressClientID
 }
 
 func sanitizeChat(raw string) string {
@@ -907,8 +1484,9 @@ func (c *Client) readPump() {
 			if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
 				continue
 			}
-			text := sanitizeChat(payload.Text)
-			if text == "" {
+			selectedOption, ok := resolveQuickChatOption(payload)
+			if !ok {
+				c.sendNotice("warn", "Quick chat only: pick one of the suggested phrases.")
 				continue
 			}
 			if !consumeCooldown(time.Now(), &c.lastChatAt, chatCooldown) {
@@ -931,11 +1509,67 @@ func (c *Client) readPump() {
 			c.server.mu.RUnlock()
 			if roomID != "" {
 				c.server.broadcastToRoom("chat:message", map[string]any{
-					"id":   c.id,
-					"name": senderName,
-					"text": text,
-					"ts":   time.Now().UnixMilli(),
+					"id":       c.id,
+					"name":     senderName,
+					"text":     selectedOption.Text,
+					"optionId": selectedOption.ID,
+					"ts":       time.Now().UnixMilli(),
 				}, roomID, "")
+			}
+			progressChanged := false
+			c.server.mu.Lock()
+			if client := c.server.clients[c.id]; client != nil {
+				client.hasChatted = true
+				progressChanged = c.server.recomputeProgressLocked(client)
+			}
+			c.server.mu.Unlock()
+			if progressChanged {
+				c.server.sendProgress(c.id)
+			}
+
+		case "player:emote":
+			var payload EmoteSendPayload
+			if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
+				continue
+			}
+			emote := sanitizeEmote(payload.Emote)
+			if emote == "" {
+				c.sendNotice("warn", "Unknown emote.")
+				continue
+			}
+			if !consumeCooldown(time.Now(), &c.lastEmoteAt, emoteCooldown) {
+				c.sendNotice("warn", "You're emoting too fast.")
+				continue
+			}
+
+			roomID := ""
+			senderName := c.name
+			progressChanged := false
+
+			c.server.mu.Lock()
+			if client := c.server.clients[c.id]; client != nil {
+				roomID = client.roomID
+				senderName = client.name
+				if room := c.server.rooms[roomID]; room != nil {
+					if player := room.Players[c.id]; player != nil && player.Name != "" {
+						senderName = player.Name
+					}
+				}
+				client.hasEmoted = true
+				progressChanged = c.server.recomputeProgressLocked(client)
+			}
+			c.server.mu.Unlock()
+
+			if roomID != "" {
+				c.server.broadcastToRoom("player:emote", map[string]any{
+					"id":    c.id,
+					"name":  senderName,
+					"emote": emote,
+					"ts":    time.Now().UnixMilli(),
+				}, roomID, "")
+			}
+			if progressChanged {
+				c.server.sendProgress(c.id)
 			}
 
 		case "player:setName":
@@ -943,7 +1577,7 @@ func (c *Client) readPump() {
 			if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
 				continue
 			}
-			roomID, nextName, changed := c.server.setPlayerName(c.id, payload.Name)
+			roomID, nextName, changed, progressChanged := c.server.setPlayerName(c.id, payload.Name)
 			if nextName == "" {
 				c.sendNotice("warn", "Name cannot be empty.")
 				continue
@@ -954,6 +1588,16 @@ func (c *Client) readPump() {
 					"name": nextName,
 				}, roomID, "")
 			}
+			if progressChanged {
+				c.server.sendProgress(c.id)
+			}
+
+		case "qa:resetProgress":
+			if !c.server.resetProgress(c.id) {
+				continue
+			}
+			c.server.sendProgress(c.id)
+			c.sendNotice("notice", "Starter progress reset.")
 
 		case "room:join":
 			var payload RoomJoinPayload
