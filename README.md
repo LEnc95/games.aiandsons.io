@@ -1,5 +1,8 @@
 # Cade's Games
 
+[![Nightly Launch Readiness](https://github.com/LEnc95/games.aiandsons.io/actions/workflows/nightly-launch-readiness.yml/badge.svg)](https://github.com/LEnc95/games.aiandsons.io/actions/workflows/nightly-launch-readiness.yml)
+[![Daily Feedback Provisioning](https://github.com/LEnc95/games.aiandsons.io/actions/workflows/daily-feedback-provisioning.yml/badge.svg)](https://github.com/LEnc95/games.aiandsons.io/actions/workflows/daily-feedback-provisioning.yml)
+
 A static browser arcade site with a homepage launcher, coin/profile progression, achievements, and a shop for cosmetics/inventory unlocks.
 
 ## What this repository contains
@@ -355,6 +358,12 @@ Nightly CI automation:
 2. It runs `npm run test:shop`, `npm run test:feedback`, and `npm run test:launch-readiness-smoke`.
 3. When `LINEAR_API_KEY` + `LINEAR_TEAM_ID` repository secrets are present, it also runs `npm run feedback:provision-linear` to backfill missing labels/baselines for newly added games.
 4. It uploads all smoke summary/screenshot directories for feedback, launcher, classroom, entitlements, premium, onboarding, and metrics baselines.
+
+Daily Linear provisioning automation:
+
+1. `.github/workflows/daily-feedback-provisioning.yml` runs daily at `12:30 UTC` and on manual dispatch.
+2. It runs `npm run feedback:check-daily` before provisioning, so stale feedback metadata artifacts fail fast.
+3. It then runs `npm run feedback:provision-linear` with the repository secrets to create any missing labels or per-game baseline issues even if no player has submitted feedback yet.
 
 ## Feedback workflow
 

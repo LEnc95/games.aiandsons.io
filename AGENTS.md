@@ -37,5 +37,9 @@ Operational command reference for contributors and automations in this repositor
 - Regenerate only the local Linear seed artifacts: `npm run feedback:sync-linear:files`
 - Live-provision missing Linear labels and baseline issues: `npm run feedback:provision-linear`
 
+## GitHub Automations
+- Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
+- Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
+
 ## TODO
 - Confirm whether `python -m http.server 4173` is the canonical local server command and if an explicit `127.0.0.1` bind is required for all `*:raw` smoke runs.

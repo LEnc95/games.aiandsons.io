@@ -125,6 +125,7 @@ Manual smoke checklist after edits:
 - Feedback API deployment expects `FEEDBACK_ADMIN_TOKEN`, `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optionally `LINEAR_PROJECT_ID` plus `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
 - Automatic baseline provisioning only needs issue-creation access, but automatic label creation may require label-management permission for the configured team/workspace.
 - Nightly CI can also run `npm run feedback:provision-linear` when `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optional `LINEAR_PROJECT_ID` are configured as repository secrets.
+- `.github/workflows/daily-feedback-provisioning.yml` exists as the lightweight daily backfill path for missing Linear labels and baseline issues.
 - On loopback hosts, the browser feedback client intentionally falls back to stub mode unless `?feedbackApiProbe=1` is present.
 
 ## 8) Known pitfalls to avoid
