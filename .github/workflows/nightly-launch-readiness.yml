@@ -57,3 +57,20 @@ jobs:
             output/web-game/premium-track-e2e
             output/web-game/onboarding-split-e2e
             output/web-game/metrics-baseline-e2e
+
+      - name: Notify Slack
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CI_WEBHOOK_URL }}
+          SLACK_NOTIFY_ON_SUCCESS: ${{ vars.SLACK_NOTIFY_SUCCESS }}
+          WORKFLOW_NAME: Nightly Launch Readiness
+          WORKFLOW_STATUS: ${{ job.status }}
+          WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: node scripts/ci/send-slack-notification.mjs

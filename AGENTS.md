@@ -40,6 +40,15 @@ Operational command reference for contributors and automations in this repositor
 ## GitHub Automations
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
+- Slack notifications for those workflows use the `SLACK_CI_WEBHOOK_URL` Actions secret and notify on failures by default.
+
+## Daily Game Checklist
+- Add the game route and update `src/meta/games.js`
+- Mount `mountGameFeedback({ gameSlug, gameName })`
+- Run `npm run feedback:sync-linear`
+- Run `npm run test:feedback`
+- Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
+- Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
 
 ## TODO
 - Confirm whether `python -m http.server 4173` is the canonical local server command and if an explicit `127.0.0.1` bind is required for all `*:raw` smoke runs.

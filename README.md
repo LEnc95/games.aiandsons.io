@@ -365,6 +365,23 @@ Daily Linear provisioning automation:
 2. It runs `npm run feedback:check-daily` before provisioning, so stale feedback metadata artifacts fail fast.
 3. It then runs `npm run feedback:provision-linear` with the repository secrets to create any missing labels or per-game baseline issues even if no player has submitted feedback yet.
 
+Slack automation notifications:
+
+1. Both GitHub workflows post to Slack through `scripts/ci/send-slack-notification.mjs`.
+2. Add the GitHub Actions secret `SLACK_CI_WEBHOOK_URL` with a Slack Incoming Webhook for your ops channel.
+3. Notifications default to failures/cancellations only, which keeps the channel useful instead of noisy.
+4. If you also want green runs posted, add the GitHub repository variable `SLACK_NOTIFY_SUCCESS=true`.
+
+## Daily Game Ship Checklist
+
+1. Add the new game page and register it in `src/meta/games.js`.
+2. Mount `mountGameFeedback({ gameSlug, gameName })` on the new game route.
+3. Run `npm run feedback:sync-linear`.
+4. Run `npm run test:feedback`.
+5. If the gameplay shell or feedback surface changed, run `npm run test:feedback-smoke:raw`.
+6. Confirm the game baseline issue exists in Linear, or let the daily provisioning workflow backfill it.
+7. Watch the Slack CI channel for any failed `Nightly Launch Readiness` or `Daily Feedback Provisioning` alerts after the merge.
+
 ## Feedback workflow
 
 - Players can submit bugs, ideas, and general feedback from the shared widget mounted inside each game page.
@@ -378,6 +395,7 @@ Daily Linear provisioning automation:
 - `npm run feedback:provision-linear` runs the live provisioning step directly.
 - If `LINEAR_PROJECT_ID` is configured, new games can get their baseline issue provisioned automatically before the first player report lands.
 - If the API key cannot create labels, baseline issue creation still works best-effort, but new per-game labels may need a one-time manual seed or a stronger key.
+- GitHub workflow alerts can also be sent to Slack with `SLACK_CI_WEBHOOK_URL`.
 
 ## Stripe billing setup (optional)
 
