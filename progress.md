@@ -1377,3 +1377,141 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Fixed pause/resume behavior so resuming from pause returns to the correct mode (`showing` vs `input`) without skipping sequence playback.
 - Validation status: attempted required Playwright loop via skill client and built-in Playwright tooling, but browser launch/network constraints in this sandbox blocked full automated run (`spawn EPERM`, local loopback/file URL restrictions).
 - Follow-up TODO: run `$WEB_GAME_CLIENT` on a host with browser launch + localhost access and review screenshots/state artifacts for full end-to-end verification.
+
+- New request (2026-03-22): build Club Penguin-style multiplayer prototype with Go backend (instead of Node).
+- Implemented isolated subproject `clubpenguin-world/` with:
+  - `go.mod` using `github.com/gorilla/websocket`
+  - `main.go` authoritative server (`net/http` + WebSocket), fixed 20Hz simulation, join/leave broadcast, clamped movement targets, blocked-zone collisions, sanitized chat broadcast, and room-scaling architecture note.
+  - `public/index.html` with canvas container + chat panel.
+  - `public/client.js` Phaser client using unified event envelope (`{type,payload}`), click-to-move, interpolation smoothing, and chat UI.
+  - `public/vendor/phaser.min.js` (committed local vendor build) and local `public/favicon.ico` to avoid browser 404 noise.
+- Validation:
+  - `go build ./...` passed in `clubpenguin-world`.
+  - Playwright skill loop run: `output/web-game/clubpenguin-world-run3` (screenshots + `state-*.json`) confirms movement snapshots and rendering.
+  - Fixed issues found during validation: WebGL black capture in headless runs (forced Phaser Canvas renderer) and favicon 404 console error (added local favicon).
+- TODO for next iteration:
+  - Add explicit room join flow (`room:join`) and split hub into RoomManager + per-room state loops.
+  - Add rate limiting for chat and movement packets.
+  - Add automated multi-client integration test to assert join/leave + cross-client movement + chat ordering.
+- Additional multi-client protocol smoke:
+  - Started Go server and connected two native WebSocket clients (`ws://127.0.0.1:8081/ws`) via Node.
+  - Verified `player:joined`, `chat:message`, and `player:left` are observed by the first client when the second client connects/chats/disconnects.
+- Continuation (2026-03-22): implemented multi-room runtime support for `clubpenguin-world`.
+- Server refactor in `clubpenguin-world/main.go`:
+  - Replaced single-world hub with room-aware server state.
+  - Added built-in rooms: `town`, `plaza`, `snow-forts`, each with independent map obstacles/spawn points/player lists.
+  - Added client event `room:join` and server-side room transfer flow preserving player identity/color.
+  - Scoped broadcasts by room for `world:snapshot`, `player:joined`, `player:left`, and `chat:message`.
+  - Extended `world:init` payload with `roomId` and `rooms` metadata.
+- Client/UI updates:
+  - Added room picker in `clubpenguin-world/public/index.html` header.
+  - Updated `clubpenguin-world/public/client.js` to track room state, send `room:join`, refresh room options from server metadata, and ignore snapshots from non-active rooms.
+  - Extended `render_game_to_text` output with `roomId` and room list.
+- Validation:
+  - `go test ./...` passes in `clubpenguin-world`.
+  - WebSocket multi-client isolation smoke (custom Node script) confirmed:
+    - room join from town -> plaza,
+    - `player:left` observed in old room,
+    - chat does not leak across rooms.
+  - Playwright skill loop run: `output/web-game/clubpenguin-world-room-run1` with screenshots and state JSON confirming room metadata and movement still work.
+- Continuation (2026-03-22, themed rooms pass):
+  - Replaced `clubpenguin-world/public/client.js` to add room-specific visual themes and clean status text encoding.
+  - Added visual theme palettes by room (`town`, `plaza`, `snow-forts`) and per-room decorative background rendering.
+  - Added preferred-room persistence via `localStorage` (`clubpenguin-world-preferred-room`).
+  - Added deep-link room targeting via URL query param (`/?room=plaza`, `/?room=snow-forts`).
+  - Added auto-follow logic so client joins preferred room after reconnect/initial default-room init.
+  - Added room-entry system message in chat when room changes.
+- Validation after themed pass:
+  - `go test ./...` passed.
+  - JS syntax check passed for `public/client.js`.
+  - Multi-client WebSocket isolation smoke passed (room join + no cross-room chat leakage).
+  - Playwright screenshot runs captured for all room themes:
+    - `output/web-game/clubpenguin-world-theme-town/shot-0.png`
+    - `output/web-game/clubpenguin-world-theme-plaza/shot-0.png`
+    - `output/web-game/clubpenguin-world-theme-snow-forts/shot-0.png`
+  - No `errors-*.json` emitted in themed screenshot runs.
+- Continuation (2026-03-22, server hardening pass):
+  - Added server-side cooldown throttles in `clubpenguin-world/main.go`:
+    - `player:setTarget` cooldown (`targetCooldown`) to dampen movement spam.
+    - `chat:send` cooldown (`chatCooldown`) to prevent chat flood.
+    - throttled per-client notices (`noticeCooldown`).
+  - Added `system:notice` outbound event for client-facing warnings (e.g., chat cooldown, invalid room).
+  - Added room-existence validation before join; invalid room requests now return a notice instead of silent ignore.
+  - Added reusable helper `consumeCooldown` and unit tests in `clubpenguin-world/main_test.go`.
+  - Added URL sync for active room (`?room=<id>`) in client and handler for `system:notice` in chat panel.
+- Validation after hardening pass:
+  - `go test ./...` passed (including new tests).
+  - JS syntax check passed for `public/client.js`.
+  - Multi-client room isolation smoke still passes.
+  - Chat rate-limit smoke passes (2 accepted chats + cooldown notice as expected).
+  - Invalid-room join smoke passes (notice returned).
+  - Playwright skill run artifacts: `output/web-game/clubpenguin-world-rate-limit-run1` (screenshots + state JSON, no errors JSON emitted).
+- Continuation (2026-03-22, player identity pass):
+  - Added server-authoritative player naming in `clubpenguin-world/main.go`.
+    - `Player` now includes `name`.
+    - Added inbound `player:setName` payload handling with `sanitizePlayerName` (trim/whitespace normalize/max rune clamp).
+    - Name is persisted across room transfers and included in snapshots/init payloads.
+    - Added immediate room broadcast event `player:renamed`.
+    - Chat payloads now include sender `name` in addition to `id`.
+  - Added client identity/roster wiring in `clubpenguin-world/public/client.js`:
+    - wired `#name-form` submit -> `player:setName`.
+    - synced self name input from authoritative player state.
+    - roster (`#player-roster`) now renders current room players and highlights self.
+    - avatar labels render player names instead of raw ids.
+    - chat metadata prefers `name (id)` for readability.
+    - `render_game_to_text` now includes player `name` and room roster snapshot.
+  - Added tests in `clubpenguin-world/main_test.go`:
+    - `TestSanitizePlayerName`
+    - `TestSetPlayerName`
+    - `TestRenameBroadcastAndChatName` (two websocket clients via `httptest`, verifies rename broadcast + chat name propagation).
+- Validation after identity pass:
+  - `go test ./...` passed in `clubpenguin-world` (includes new websocket integration coverage).
+  - Attempted Playwright browser smoke, but launch failed in this environment due Chrome persistent-session conflict; no code changes required.
+- Continuation (2026-03-22, movement reliability fix):
+  - Investigated user report that click movement appeared non-functional.
+  - Root cause identified in server movement UX: clicks inside blocked rectangles were treated as invalid and hard-reset to current position, resulting in no movement.
+  - Updated authoritative target resolution in `clubpenguin-world/main.go`:
+    - Added `resolveTargetLocked(room, player, targetX, targetY)`.
+    - Behavior now projects blocked clicks onto the farthest reachable walkable point along the click ray from current position.
+    - `setTarget` now uses resolved walkable target instead of no-op fallback.
+  - Added regression test `TestSetTargetBlockedClickResolvesToWalkablePoint` in `clubpenguin-world/main_test.go`.
+- Validation after movement fix:
+  - `go test ./...` passed.
+  - Native WS probe confirmed blocked click `(360,300)` now resolves to walkable target `(305.6,259.2)` and snapshots show movement progression.
+  - Playwright skill loop rerun (`output/web-game/clubpenguin-world-move-debug4`) confirms state updates toward resolved target with no new console errors.
+- Continuation (2026-03-22, portal travel + click hit-area fix):
+  - Added map portal definitions to `clubpenguin-world/main.go`:
+    - New `Portal` type and `WorldMap.portals` payload.
+    - Portal zones configured per room (`town`, `plaza`, `snow-forts`) with destination room IDs.
+    - Updated `copyWorldMap` to deep-copy portals.
+  - Client updates in `clubpenguin-world/public/client.js`:
+    - Renders visible portal pads + labels in-world.
+    - Clicking a portal sends `room:join` and updates preferred room.
+    - Added robust pointer mapping helpers for scaled canvas (`pointerClientPosition`, `pointerToWorld`, `portalAtPointer`).
+  - Layout/canvas fix in `clubpenguin-world/public/index.html`:
+    - Prevented grid overflow clipping by using `minmax(0, 1fr)` and `min-width: 0` on the canvas column.
+    - Forced canvas to scale to container (`#game-container canvas { width: 100% !important; height: 100% !important; }`).
+    - This removes the hidden-right-side click dead zone that caused movement/portal misses.
+  - Added test `TestCopyWorldMapCopiesPortals` in `clubpenguin-world/main_test.go`.
+- Validation after portal + layout pass:
+  - `go test ./...` passed.
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - Playwright skill run `output/web-game/clubpenguin-world-portal-run5` shows successful portal transition (`town -> plaza`) with expected chat notices and no `errors-*.json`.
+  - Playwright skill run `output/web-game/clubpenguin-world-move-debug6` confirms movement from right-side spawn remains functional after scaling/click changes.
+- Continuation (2026-03-22, portal-entry gating per user request):
+  - Updated portal travel behavior so clicking a portal no longer teleports instantly.
+    - Portal click now only sets movement target toward portal coordinates.
+    - Transition event (`room:join`) is triggered only when authoritative self position is inside a portal zone.
+  - Added server-side enforcement in `clubpenguin-world/main.go`:
+    - New `canJoinRoomFromPortal(clientID, targetRoomID)` guard.
+    - `room:join` is rejected with notice unless player is physically inside a matching portal rectangle.
+  - Added unit test `TestCanJoinRoomFromPortal` in `clubpenguin-world/main_test.go`.
+  - Removed automatic preferred-room join-on-init behavior in client to avoid invalid pre-portal room hops.
+- Validation after portal-entry gating:
+  - `go test ./...` passed.
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - WS probe confirmed out-of-portal `room:join` is rejected with `system:notice` (`Walk into the portal zone to travel.`).
+  - Playwright skill run `output/web-game/clubpenguin-world-enter-portal-run4` confirms sequence:
+    - state-0: still in `town` while moving toward portal,
+    - state-1: transitions to `plaza` after entering portal,
+    - no `errors-*.json` emitted.

@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Club Penguin World Prototype</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e8f6ff;
+      --panel: #ffffff;
+      --line: #b8d7ea;
+      --text: #12334a;
+      --muted: #5b7e95;
+      --accent: #0ea5e9;
+      --blocked: #76889a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #f3fbff, var(--bg) 45%, #d5ebf8);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .layout {
+      width: min(1200px, 100%);
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 14px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(15, 68, 95, 0.08);
+      overflow: hidden;
+    }
+    .canvas-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f4fbff);
+      font-size: 14px;
+    }
+    .title {
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .room-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    #room-select {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 12px;
+      color: var(--text);
+      background: #fff;
+      max-width: 140px;
+    }
+    #status {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    #game-container {
+      width: 100%;
+      min-height: 460px;
+      aspect-ratio: 5 / 3;
+      background: #d6edf8;
+      overflow: hidden;
+      min-width: 0;
+    }
+    #game-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .controls {
+      padding: 10px 14px 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .chat-panel {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      min-height: 0;
+    }
+    .identity {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+      background: #fafdff;
+    }
+    #name-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+    #name-input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      background: #fff;
+    }
+    #name-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+    }
+    #name-save {
+      border: 0;
+      border-radius: 8px;
+      background: #0b7db0;
+      color: #fff;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #player-roster {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 4px;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    #player-roster li {
+      font-size: 12px;
+      color: var(--text);
+      padding: 4px 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f5fbff;
+      line-height: 1.2;
+    }
+    #chat-log {
+      list-style: none;
+      margin: 0;
+      padding: 10px 12px;
+      overflow-y: auto;
+      max-height: 520px;
+      min-height: 320px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+    #chat-log li {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: #f8fcff;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    #chat-log .meta {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+    #chat-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: #f7fcff;
+    }
+    #chat-input {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+    #chat-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+    }
+    #chat-submit {
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      #chat-log {
+        max-height: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="panel canvas-panel">
+      <header class="panel-header">
+        <span class="title">Club Penguin World Prototype</span>
+        <div class="header-controls">
+          <label class="room-label" for="room-select">Room</label>
+          <select id="room-select" aria-label="Select room" disabled>
+            <option value="town">Town</option>
+          </select>
+          <span id="status">Connecting...</span>
+        </div>
+      </header>
+      <div id="game-container" aria-label="2D world canvas"></div>
+      <div class="controls">
+        Click or tap to move. Click glowing portal pads to travel between rooms. Gray areas are blocked boundaries.
+      </div>
+    </section>
+
+    <aside class="panel chat-panel">
+      <header class="panel-header">
+        <span class="title">Global Chat</span>
+        <span id="player-count">0 players</span>
+      </header>
+      <div class="identity">
+        <form id="name-form">
+          <input id="name-input" name="name-input" type="text" maxlength="28" placeholder="Set your penguin name" autocomplete="off" />
+          <button id="name-save" type="submit">Update</button>
+        </form>
+        <ul id="player-roster" aria-label="Players in this room"></ul>
+      </div>
+      <ul id="chat-log" aria-live="polite"></ul>
+      <form id="chat-form">
+        <input id="chat-input" name="chat-input" type="text" maxlength="220" placeholder="Say hi..." autocomplete="off" />
+        <button id="chat-submit" type="submit">Send</button>
+      </form>
+    </aside>
+  </main>
+
+  <script src="/vendor/phaser.min.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>
