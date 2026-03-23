@@ -1,6 +1,6 @@
 const { getFirestore, isFirebaseAdminConfigured } = require("../_firebase-admin");
 
-const KEY_PREFIX = "cade_games:stripe:v1";
+const KEY_PREFIX = "cade_games:stripe:v2";
 const WEBHOOK_EVENT_TTL_SECONDS = 60 * 60 * 24 * 60;
 const FIRESTORE_PROFILES_COLLECTION = "stripeBillingProfiles";
 const FIRESTORE_CUSTOMERS_COLLECTION = "stripeCustomerUsers";
@@ -28,20 +28,82 @@ function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase().slice(0, 160);
 }
 
+function normalizeText(value, maxLength = 160) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function normalizeTimestampSeconds(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function normalizeTimestampMillis(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function normalizeBoolean(value) {
+  return value === true;
+}
+
+function normalizeCount(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function normalizeNotificationPrefs(source) {
+  const raw = source && typeof source === "object" ? source : {};
+  return {
+    billingEmail: raw.billingEmail !== false,
+    productEmail: raw.productEmail !== false,
+    familyInvites: raw.familyInvites !== false,
+  };
+}
+
 function normalizeSubscriptions(source) {
   if (!Array.isArray(source)) return [];
   const out = [];
   for (const entry of source) {
     if (!entry || typeof entry !== "object") continue;
-    const id = typeof entry.id === "string" ? entry.id : "";
-    const status = typeof entry.status === "string" ? entry.status : "";
-    const currentPeriodEnd = Number.isFinite(entry.currentPeriodEnd)
-      ? Math.max(0, Math.floor(entry.currentPeriodEnd))
-      : 0;
-    const plans = Array.isArray(entry.plans)
-      ? entry.plans.filter((plan) => typeof plan === "string" && plan.trim())
+    const id = normalizeText(entry.id, 120);
+    const status = normalizeText(entry.status, 80);
+    const currentPeriodStart = normalizeTimestampSeconds(entry.currentPeriodStart);
+    const currentPeriodEnd = normalizeTimestampSeconds(entry.currentPeriodEnd);
+    const cancelAtPeriodEnd = Boolean(entry.cancelAtPeriodEnd);
+    const cancelAt = normalizeTimestampSeconds(entry.cancelAt);
+    const canceledAt = normalizeTimestampSeconds(entry.canceledAt);
+    const trialEnd = normalizeTimestampSeconds(entry.trialEnd);
+    const latestInvoiceId = normalizeText(entry.latestInvoiceId, 120);
+    const latestInvoiceStatus = normalizeText(entry.latestInvoiceStatus, 80);
+    const collectionMethod = normalizeText(entry.collectionMethod, 80);
+    const billingInterval = normalizeText(entry.billingInterval, 40);
+    const graceUntil = normalizeTimestampMillis(entry.graceUntil);
+    const entitled = Boolean(entry.entitled);
+    const priceIds = Array.isArray(entry.priceIds)
+      ? entry.priceIds.map((value) => normalizeText(value, 120)).filter(Boolean)
       : [];
-    out.push({ id, status, currentPeriodEnd, plans });
+    const plans = Array.isArray(entry.plans)
+      ? entry.plans.map((plan) => normalizeText(plan, 80)).filter(Boolean)
+      : [];
+
+    out.push({
+      id,
+      status,
+      currentPeriodStart,
+      currentPeriodEnd,
+      cancelAtPeriodEnd,
+      cancelAt,
+      canceledAt,
+      trialEnd,
+      latestInvoiceId,
+      latestInvoiceStatus,
+      collectionMethod,
+      priceIds,
+      plans,
+      billingInterval,
+      graceUntil,
+      entitled,
+    });
   }
   return out;
 }
@@ -56,8 +118,30 @@ function createDefaultBillingProfile(userId = "") {
       schoolLicense: false,
     },
     activePlanId: "",
+    subscriptionId: "",
+    subscriptionStatus: "",
+    priceId: "",
+    billingInterval: "",
     subscriptions: [],
+    currentPeriodStart: 0,
+    currentPeriodEnd: 0,
+    cancelAtPeriodEnd: false,
+    cancelAt: 0,
+    canceledAt: 0,
+    trialEnd: 0,
+    latestInvoiceId: "",
+    latestInvoiceStatus: "",
+    lastPaymentFailureAt: 0,
+    graceUntil: 0,
     checkoutSessionId: "",
+    familyAccountId: "",
+    seatLimit: 0,
+    seatCount: 0,
+    notificationPrefs: {
+      billingEmail: true,
+      productEmail: true,
+      familyInvites: true,
+    },
     updatedAt: 0,
     lastSource: "",
   };
@@ -79,11 +163,29 @@ function normalizeBillingProfile(source, fallbackUserId = "") {
       familyPremium: Boolean(entitlements.familyPremium),
       schoolLicense: Boolean(entitlements.schoolLicense),
     },
-    activePlanId: typeof raw.activePlanId === "string" ? raw.activePlanId.trim() : "",
+    activePlanId: normalizeText(raw.activePlanId, 80),
+    subscriptionId: normalizeText(raw.subscriptionId, 120),
+    subscriptionStatus: normalizeText(raw.subscriptionStatus, 80),
+    priceId: normalizeText(raw.priceId, 120),
+    billingInterval: normalizeText(raw.billingInterval, 40),
     subscriptions: normalizeSubscriptions(raw.subscriptions),
-    checkoutSessionId: typeof raw.checkoutSessionId === "string" ? raw.checkoutSessionId.trim() : "",
+    currentPeriodStart: normalizeTimestampSeconds(raw.currentPeriodStart),
+    currentPeriodEnd: normalizeTimestampSeconds(raw.currentPeriodEnd),
+    cancelAtPeriodEnd: Boolean(raw.cancelAtPeriodEnd),
+    cancelAt: normalizeTimestampSeconds(raw.cancelAt),
+    canceledAt: normalizeTimestampSeconds(raw.canceledAt),
+    trialEnd: normalizeTimestampSeconds(raw.trialEnd),
+    latestInvoiceId: normalizeText(raw.latestInvoiceId, 120),
+    latestInvoiceStatus: normalizeText(raw.latestInvoiceStatus, 80),
+    lastPaymentFailureAt: normalizeTimestampMillis(raw.lastPaymentFailureAt),
+    graceUntil: normalizeTimestampMillis(raw.graceUntil),
+    checkoutSessionId: normalizeText(raw.checkoutSessionId, 120),
+    familyAccountId: normalizeText(raw.familyAccountId, 120),
+    seatLimit: normalizeCount(raw.seatLimit),
+    seatCount: normalizeCount(raw.seatCount),
+    notificationPrefs: normalizeNotificationPrefs(raw.notificationPrefs),
     updatedAt: Number.isFinite(updatedAt) ? Math.max(0, Math.floor(updatedAt)) : 0,
-    lastSource: typeof raw.lastSource === "string" ? raw.lastSource.trim().slice(0, 80) : "",
+    lastSource: normalizeText(raw.lastSource, 80),
   };
 }
 
@@ -224,6 +326,10 @@ async function saveStripeBillingProfileToFirestore(userId, patch) {
     {
       ...existing,
       ...(patch && typeof patch === "object" ? patch : {}),
+      notificationPrefs: {
+        ...existing.notificationPrefs,
+        ...((patch && patch.notificationPrefs && typeof patch.notificationPrefs === "object") ? patch.notificationPrefs : {}),
+      },
       userId: normalizedUserId,
       updatedAt: Date.now(),
     },
@@ -303,6 +409,10 @@ async function saveStripeBillingProfile(userId, patch) {
     {
       ...existing,
       ...(patch && typeof patch === "object" ? patch : {}),
+      notificationPrefs: {
+        ...existing.notificationPrefs,
+        ...((patch && patch.notificationPrefs && typeof patch.notificationPrefs === "object") ? patch.notificationPrefs : {}),
+      },
       userId: normalizedUserId,
       updatedAt: Date.now(),
     },

@@ -9,7 +9,8 @@ const PLAN_PRICE_ENV_MAP = Object.freeze({
 });
 const FAMILY_PLAN_IDS = new Set(["family-monthly", "family-annual"]);
 const SCHOOL_PLAN_IDS = new Set(["school-monthly", "school-annual"]);
-const ENTITLED_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
+const ENTITLED_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+const DEFAULT_PAST_DUE_GRACE_DAYS = 7;
 
 let cachedStripeClient = null;
 
@@ -35,11 +36,8 @@ function getConfiguredPlanPrices() {
   return configured;
 }
 
-function hasConfiguredFamilyPlan(planPrices = getConfiguredPlanPrices()) {
-  for (const planId of Object.keys(planPrices)) {
-    if (FAMILY_PLAN_IDS.has(planId)) return true;
-  }
-  return false;
+function hasConfiguredSupportedPlan(planPrices = getConfiguredPlanPrices()) {
+  return Object.keys(planPrices).length > 0;
 }
 
 function getRequestOrigin(req) {
@@ -91,6 +89,16 @@ function normalizeEmail(value) {
 
 function isLikelyEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
+}
+
+function normalizeUnixTimestampSeconds(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function normalizeUnixTimestampMillis(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }
 
 async function readRawBody(req) {
@@ -151,7 +159,7 @@ function sendError(res, statusCode, message, code = "stripe_error", details = nu
 function getPublicBillingConfig(req) {
   const stripe = getStripeClient();
   const planPrices = getConfiguredPlanPrices();
-  const enabled = Boolean(stripe) && hasConfiguredFamilyPlan(planPrices);
+  const enabled = Boolean(stripe) && hasConfiguredSupportedPlan(planPrices);
   const mode = !enabled
     ? "local"
     : (String(process.env.STRIPE_SECRET_KEY || "").trim().startsWith("sk_live_") ? "live" : "test");
@@ -191,6 +199,23 @@ function summarizeEntitlementsFromProfile(profile) {
     },
     subscriptions,
     activePlanId: typeof safeProfile.activePlanId === "string" ? safeProfile.activePlanId : "",
+    subscriptionId: typeof safeProfile.subscriptionId === "string" ? safeProfile.subscriptionId : "",
+    subscriptionStatus: typeof safeProfile.subscriptionStatus === "string" ? safeProfile.subscriptionStatus : "",
+    priceId: typeof safeProfile.priceId === "string" ? safeProfile.priceId : "",
+    billingInterval: typeof safeProfile.billingInterval === "string" ? safeProfile.billingInterval : "",
+    currentPeriodStart: normalizeUnixTimestampSeconds(safeProfile.currentPeriodStart),
+    currentPeriodEnd: normalizeUnixTimestampSeconds(safeProfile.currentPeriodEnd),
+    cancelAtPeriodEnd: Boolean(safeProfile.cancelAtPeriodEnd),
+    cancelAt: normalizeUnixTimestampSeconds(safeProfile.cancelAt),
+    canceledAt: normalizeUnixTimestampSeconds(safeProfile.canceledAt),
+    trialEnd: normalizeUnixTimestampSeconds(safeProfile.trialEnd),
+    latestInvoiceId: typeof safeProfile.latestInvoiceId === "string" ? safeProfile.latestInvoiceId : "",
+    latestInvoiceStatus: typeof safeProfile.latestInvoiceStatus === "string" ? safeProfile.latestInvoiceStatus : "",
+    lastPaymentFailureAt: normalizeUnixTimestampMillis(safeProfile.lastPaymentFailureAt),
+    graceUntil: normalizeUnixTimestampMillis(safeProfile.graceUntil),
+    seatLimit: Number.isFinite(Number(safeProfile.seatLimit)) ? Math.max(0, Math.floor(Number(safeProfile.seatLimit))) : 0,
+    seatCount: Number.isFinite(Number(safeProfile.seatCount)) ? Math.max(0, Math.floor(Number(safeProfile.seatCount))) : 0,
+    familyAccountId: typeof safeProfile.familyAccountId === "string" ? safeProfile.familyAccountId : "",
     updatedAt: Number.isFinite(updatedAt) ? Math.max(0, Math.floor(updatedAt)) : 0,
   };
 }
@@ -203,25 +228,141 @@ function findPlanIdForPriceId(priceId, planPrices = getConfiguredPlanPrices()) {
   return "";
 }
 
-function summarizeEntitlementsFromSubscriptions(subscriptions, planPrices = getConfiguredPlanPrices()) {
+function getPastDueGracePeriodMs() {
+  const configuredDays = Number(process.env.STRIPE_PAST_DUE_GRACE_DAYS || DEFAULT_PAST_DUE_GRACE_DAYS);
+  const safeDays = Number.isFinite(configuredDays) && configuredDays >= 0
+    ? Math.floor(configuredDays)
+    : DEFAULT_PAST_DUE_GRACE_DAYS;
+  return safeDays * 24 * 60 * 60 * 1000;
+}
+
+function readPriceInterval(price) {
+  const interval = typeof price?.recurring?.interval === "string"
+    ? price.recurring.interval.trim().toLowerCase()
+    : "";
+  return interval || "";
+}
+
+function readLatestInvoiceSummary(subscription) {
+  const invoice = subscription?.latest_invoice;
+  if (typeof invoice === "string") {
+    return {
+      latestInvoiceId: invoice.trim(),
+      latestInvoiceStatus: "",
+    };
+  }
+
+  return {
+    latestInvoiceId: typeof invoice?.id === "string" ? invoice.id.trim() : "",
+    latestInvoiceStatus: typeof invoice?.status === "string" ? invoice.status.trim() : "",
+  };
+}
+
+function deriveGraceUntil({
+  subscriptionStatus = "",
+  currentPeriodEnd = 0,
+  existingGraceUntil = 0,
+  paymentFailureAt = 0,
+  now = Date.now(),
+} = {}) {
+  if (subscriptionStatus !== "past_due") return 0;
+
+  const normalizedExisting = normalizeUnixTimestampMillis(existingGraceUntil);
+  if (normalizedExisting > now) return normalizedExisting;
+
+  const normalizedFailureAt = normalizeUnixTimestampMillis(paymentFailureAt);
+  if (normalizedFailureAt > 0) {
+    return normalizedFailureAt + getPastDueGracePeriodMs();
+  }
+
+  const normalizedPeriodEndSeconds = normalizeUnixTimestampSeconds(currentPeriodEnd);
+  if (normalizedPeriodEndSeconds > 0) {
+    return (normalizedPeriodEndSeconds * 1000) + getPastDueGracePeriodMs();
+  }
+
+  return now + getPastDueGracePeriodMs();
+}
+
+function isSubscriptionEntitled(subscriptionStatus, graceUntil = 0, now = Date.now()) {
+  if (ENTITLED_SUBSCRIPTION_STATUSES.has(subscriptionStatus)) {
+    return true;
+  }
+  return subscriptionStatus === "past_due" && normalizeUnixTimestampMillis(graceUntil) > now;
+}
+
+function getSubscriptionStatusRank(status) {
+  switch (status) {
+    case "active":
+      return 7;
+    case "trialing":
+      return 6;
+    case "past_due":
+      return 5;
+    case "incomplete":
+      return 4;
+    case "unpaid":
+      return 3;
+    case "paused":
+      return 2;
+    case "canceled":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function summarizeEntitlementsFromSubscriptions(
+  subscriptions,
+  planPrices = getConfiguredPlanPrices(),
+  options = {},
+) {
   const list = Array.isArray(subscriptions) ? subscriptions : [];
+  const now = Date.now();
+  const existingGraceUntil = normalizeUnixTimestampMillis(options.graceUntil);
+  const lastPaymentFailureAt = normalizeUnixTimestampMillis(options.lastPaymentFailureAt);
   let familyPremium = false;
   let schoolLicense = false;
   let activePlanId = "";
+  let primarySubscription = null;
 
   const normalizedSubscriptions = [];
   for (const subscription of list) {
     const subscriptionStatus = typeof subscription?.status === "string" ? subscription.status : "";
-    const entitled = ENTITLED_SUBSCRIPTION_STATUSES.has(subscriptionStatus);
     const lineItems = Array.isArray(subscription?.items?.data) ? subscription.items.data : [];
+    const currentPeriodStart = normalizeUnixTimestampSeconds(subscription?.current_period_start);
+    const currentPeriodEnd = normalizeUnixTimestampSeconds(subscription?.current_period_end);
+    const cancelAtPeriodEnd = Boolean(subscription?.cancel_at_period_end);
+    const cancelAt = normalizeUnixTimestampSeconds(subscription?.cancel_at);
+    const canceledAt = normalizeUnixTimestampSeconds(subscription?.canceled_at);
+    const trialEnd = normalizeUnixTimestampSeconds(subscription?.trial_end);
+    const { latestInvoiceId, latestInvoiceStatus } = readLatestInvoiceSummary(subscription);
 
     const plans = [];
+    const priceIds = [];
+    let billingInterval = "";
     for (const item of lineItems) {
       const priceId = typeof item?.price?.id === "string" ? item.price.id : "";
+      if (priceId) {
+        priceIds.push(priceId);
+      }
+      if (!billingInterval) {
+        billingInterval = readPriceInterval(item?.price);
+      }
       const planId = findPlanIdForPriceId(priceId, planPrices);
       if (!planId) continue;
       plans.push(planId);
+    }
 
+    const graceUntil = deriveGraceUntil({
+      subscriptionStatus,
+      currentPeriodEnd,
+      existingGraceUntil,
+      paymentFailureAt: lastPaymentFailureAt,
+      now,
+    });
+    const entitled = isSubscriptionEntitled(subscriptionStatus, graceUntil, now);
+
+    for (const planId of plans) {
       if (entitled && FAMILY_PLAN_IDS.has(planId)) {
         familyPremium = true;
         if (!activePlanId) activePlanId = planId;
@@ -232,12 +373,42 @@ function summarizeEntitlementsFromSubscriptions(subscriptions, planPrices = getC
       }
     }
 
-    normalizedSubscriptions.push({
+    const normalizedSubscription = {
       id: typeof subscription?.id === "string" ? subscription.id : "",
       status: subscriptionStatus,
-      currentPeriodEnd: Number(subscription?.current_period_end || 0),
+      currentPeriodStart,
+      currentPeriodEnd,
+      cancelAtPeriodEnd,
+      cancelAt,
+      canceledAt,
+      trialEnd,
+      latestInvoiceId,
+      latestInvoiceStatus,
+      collectionMethod: typeof subscription?.collection_method === "string"
+        ? subscription.collection_method.trim()
+        : "",
+      priceIds,
       plans,
-    });
+      billingInterval,
+      graceUntil,
+      entitled,
+    };
+    normalizedSubscriptions.push(normalizedSubscription);
+
+    if (!primarySubscription) {
+      primarySubscription = normalizedSubscription;
+      continue;
+    }
+
+    const currentRank = getSubscriptionStatusRank(normalizedSubscription.status);
+    const previousRank = getSubscriptionStatusRank(primarySubscription.status);
+    if (currentRank > previousRank) {
+      primarySubscription = normalizedSubscription;
+      continue;
+    }
+    if (currentRank === previousRank && normalizedSubscription.currentPeriodEnd > primarySubscription.currentPeriodEnd) {
+      primarySubscription = normalizedSubscription;
+    }
   }
 
   return {
@@ -247,6 +418,28 @@ function summarizeEntitlementsFromSubscriptions(subscriptions, planPrices = getC
     },
     subscriptions: normalizedSubscriptions,
     activePlanId,
+    subscriptionId: typeof primarySubscription?.id === "string" ? primarySubscription.id : "",
+    subscriptionStatus: typeof primarySubscription?.status === "string" ? primarySubscription.status : "",
+    priceId: Array.isArray(primarySubscription?.priceIds) && primarySubscription.priceIds.length > 0
+      ? primarySubscription.priceIds[0]
+      : "",
+    billingInterval: typeof primarySubscription?.billingInterval === "string"
+      ? primarySubscription.billingInterval
+      : "",
+    currentPeriodStart: Number(primarySubscription?.currentPeriodStart || 0),
+    currentPeriodEnd: Number(primarySubscription?.currentPeriodEnd || 0),
+    cancelAtPeriodEnd: Boolean(primarySubscription?.cancelAtPeriodEnd),
+    cancelAt: Number(primarySubscription?.cancelAt || 0),
+    canceledAt: Number(primarySubscription?.canceledAt || 0),
+    trialEnd: Number(primarySubscription?.trialEnd || 0),
+    latestInvoiceId: typeof primarySubscription?.latestInvoiceId === "string"
+      ? primarySubscription.latestInvoiceId
+      : "",
+    latestInvoiceStatus: typeof primarySubscription?.latestInvoiceStatus === "string"
+      ? primarySubscription.latestInvoiceStatus
+      : "",
+    graceUntil: Number(primarySubscription?.graceUntil || 0),
+    lastPaymentFailureAt,
     updatedAt: Date.now(),
   };
 }
@@ -258,7 +451,7 @@ async function listCustomerSubscriptions(stripe, customerId) {
     customer: normalizedCustomerId,
     status: "all",
     limit: 25,
-    expand: ["data.items.data.price"],
+    expand: ["data.items.data.price", "data.latest_invoice"],
   });
   return Array.isArray(response?.data) ? response.data : [];
 }
@@ -305,6 +498,8 @@ module.exports = {
   getPublicBillingConfig,
   findCustomerByEmail,
   listCustomerSubscriptions,
+  getPastDueGracePeriodMs,
+  isSubscriptionEntitled,
   summarizeEntitlementsFromProfile,
   summarizeEntitlementsFromSubscriptions,
   forwardWebhookEvent,

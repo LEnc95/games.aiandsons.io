@@ -61,8 +61,30 @@ test("createDefaultBillingProfile returns safe baseline", () => {
       schoolLicense: false,
     },
     activePlanId: "",
+    subscriptionId: "",
+    subscriptionStatus: "",
+    priceId: "",
+    billingInterval: "",
     subscriptions: [],
+    currentPeriodStart: 0,
+    currentPeriodEnd: 0,
+    cancelAtPeriodEnd: false,
+    cancelAt: 0,
+    canceledAt: 0,
+    trialEnd: 0,
+    latestInvoiceId: "",
+    latestInvoiceStatus: "",
+    lastPaymentFailureAt: 0,
+    graceUntil: 0,
     checkoutSessionId: "",
+    familyAccountId: "",
+    seatLimit: 0,
+    seatCount: 0,
+    notificationPrefs: {
+      billingEmail: true,
+      productEmail: true,
+      familyInvites: true,
+    },
     updatedAt: 0,
     lastSource: "",
   });
@@ -77,14 +99,34 @@ test("saveStripeBillingProfile persists normalized shape and customer mapping", 
       schoolLicense: false,
     },
     activePlanId: "family-monthly",
+    subscriptionId: "sub_demo",
+    subscriptionStatus: "active",
+    priceId: "price_family_monthly",
+    billingInterval: "month",
     subscriptions: [
       {
         id: "sub_demo",
         status: "active",
+        currentPeriodStart: 1200.2,
         currentPeriodEnd: 1234.9,
+        cancelAtPeriodEnd: 1,
+        latestInvoiceId: "in_123",
+        latestInvoiceStatus: "paid",
+        priceIds: ["price_family_monthly"],
         plans: ["family-monthly"],
+        entitled: true,
       },
     ],
+    currentPeriodStart: 1200.2,
+    currentPeriodEnd: 1234.9,
+    cancelAtPeriodEnd: true,
+    latestInvoiceId: "in_123",
+    latestInvoiceStatus: "paid",
+    seatLimit: 5.9,
+    seatCount: 2.4,
+    notificationPrefs: {
+      productEmail: false,
+    },
   });
 
   assert.equal(saved.userId, "usr_demo");
@@ -92,11 +134,25 @@ test("saveStripeBillingProfile persists normalized shape and customer mapping", 
   assert.equal(saved.customerEmail, "parent@example.com");
   assert.equal(saved.entitlements.familyPremium, true);
   assert.equal(saved.activePlanId, "family-monthly");
+  assert.equal(saved.subscriptionId, "sub_demo");
+  assert.equal(saved.subscriptionStatus, "active");
+  assert.equal(saved.priceId, "price_family_monthly");
+  assert.equal(saved.billingInterval, "month");
   assert.equal(saved.subscriptions.length, 1);
+  assert.equal(saved.subscriptions[0].currentPeriodStart, 1200);
+  assert.equal(saved.subscriptions[0].currentPeriodEnd, 1234);
+  assert.equal(saved.subscriptions[0].cancelAtPeriodEnd, true);
+  assert.equal(saved.subscriptions[0].latestInvoiceId, "in_123");
+  assert.equal(saved.subscriptions[0].entitled, true);
+  assert.equal(saved.seatLimit, 5);
+  assert.equal(saved.seatCount, 2);
+  assert.equal(saved.notificationPrefs.billingEmail, true);
+  assert.equal(saved.notificationPrefs.productEmail, false);
   assert.ok(saved.updatedAt > 0);
 
   const loaded = await getStripeBillingProfile("usr_demo");
   assert.equal(loaded.customerId, "cus_abc123");
+  assert.equal(loaded.latestInvoiceStatus, "paid");
 
   const mappedUserId = await getUserIdForStripeCustomer("cus_abc123");
   assert.equal(mappedUserId, "usr_demo");

@@ -273,6 +273,7 @@ export const applyStripeEntitlementSnapshot = (snapshot, { fallbackPlanId = "" }
     : { status: "idle", planId: "", token: "", startedAt: 0, completedAt: 0 };
   const familyPremium = Boolean(snapshot.entitlements?.familyPremium);
   const schoolLicense = Boolean(snapshot.entitlements?.schoolLicense);
+  const hasPaidAccess = familyPremium || schoolLicense;
   const nextPlanId = typeof snapshot.activePlanId === "string" && snapshot.activePlanId
     ? snapshot.activePlanId
     : (fallbackPlanId || checkout.planId);
@@ -282,11 +283,11 @@ export const applyStripeEntitlementSnapshot = (snapshot, { fallbackPlanId = "" }
     [ENTITLEMENT_KEYS.FAMILY_PREMIUM]: familyPremium,
     [ENTITLEMENT_KEYS.SCHOOL_LICENSE]: schoolLicense,
     checkout: {
-      status: familyPremium ? "active" : "idle",
-      planId: familyPremium ? nextPlanId : "",
+      status: hasPaidAccess ? "active" : "idle",
+      planId: hasPaidAccess ? nextPlanId : "",
       token: "",
-      startedAt: familyPremium ? (checkout.startedAt || Date.now()) : 0,
-      completedAt: familyPremium ? Date.now() : 0,
+      startedAt: hasPaidAccess ? (checkout.startedAt || Date.now()) : 0,
+      completedAt: hasPaidAccess ? Date.now() : 0,
     },
   });
 };

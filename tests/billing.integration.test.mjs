@@ -83,3 +83,35 @@ test("applyStripeEntitlementSnapshot maps stripe summary to local entitlement sh
     }
   }
 });
+
+test("applyStripeEntitlementSnapshot treats school subscriptions as active checkout access", () => {
+  const previousStorage = globalThis.localStorage;
+  const memory = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, String(value)),
+    removeItem: (key) => memory.delete(key),
+  };
+
+  try {
+    const next = applyStripeEntitlementSnapshot({
+      mode: "stripe",
+      entitlements: {
+        familyPremium: false,
+        schoolLicense: true,
+      },
+      activePlanId: "school-annual",
+    });
+
+    assert.equal(next.familyPremium, false);
+    assert.equal(next.schoolLicense, true);
+    assert.equal(next.checkout.status, "active");
+    assert.equal(next.checkout.planId, "school-annual");
+  } finally {
+    if (previousStorage) {
+      globalThis.localStorage = previousStorage;
+    } else {
+      delete globalThis.localStorage;
+    }
+  }
+});

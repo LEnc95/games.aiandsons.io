@@ -26,6 +26,10 @@ const originalEnv = {
   NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_FIREBASE_CONFIG: process.env.NEXT_PUBLIC_FIREBASE_CONFIG,
+  FIREBASE_WEB_CONFIG_JSON: process.env.FIREBASE_WEB_CONFIG_JSON,
+  FIREBASE_WEB_CONFIG_JSON_BASE64: process.env.FIREBASE_WEB_CONFIG_JSON_BASE64,
+  FIREBASE_CONFIG: process.env.FIREBASE_CONFIG,
   GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
 };
 
@@ -103,6 +107,10 @@ test.beforeEach(() => {
   delete process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
   delete process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
   delete process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  delete process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
+  delete process.env.FIREBASE_WEB_CONFIG_JSON;
+  delete process.env.FIREBASE_WEB_CONFIG_JSON_BASE64;
+  delete process.env.FIREBASE_CONFIG;
   delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
   __resetFirebaseAdminForTests();
 });
@@ -182,4 +190,29 @@ test("firebase config endpoint supports common public env names with minimal aut
   assert.equal(json.config.projectId, "demo-project");
   assert.equal(json.config.apiKey, "demo-api-key");
   assert.equal(json.config.authDomain, "demo-project.firebaseapp.com");
+});
+
+test("firebase config endpoint supports full Firebase web-config JSON env", async () => {
+  process.env.NEXT_PUBLIC_FIREBASE_CONFIG = JSON.stringify({
+    apiKey: "json-api-key",
+    authDomain: "games-aiandsons-io.firebaseapp.com",
+    projectId: "games-aiandsons-io",
+    storageBucket: "games-aiandsons-io.firebasestorage.app",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef",
+  });
+  __resetFirebaseAdminForTests();
+
+  const { res, json } = await invoke(authHandler, {
+    method: "GET",
+    url: "/api/auth/firebase-config",
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(json.ok, true);
+  assert.equal(json.enabled, true);
+  assert.equal(json.config.projectId, "games-aiandsons-io");
+  assert.equal(json.config.apiKey, "json-api-key");
+  assert.equal(json.config.authDomain, "games-aiandsons-io.firebaseapp.com");
+  assert.equal(json.config.storageBucket, "games-aiandsons-io.firebasestorage.app");
 });

@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Gravity Switch</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg0: #0a1331;
+      --bg1: #182b5f;
+      --panel: rgba(7, 15, 36, 0.86);
+      --line: rgba(170, 209, 255, 0.34);
+      --text: #eef4ff;
+      --muted: #b6c8ec;
+      --good: #8bf5ca;
+      --warn: #ffd79f;
+      --bad: #ff9db2;
+      --pulse: #97c9ff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(110% 80% at 10% 6%, #3757a8 0%, transparent 58%),
+        radial-gradient(80% 70% at 88% 96%, #1a3672 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(148, 194, 255, 0.62);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #1a2f66 0%, #091733 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 640px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 95, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(173, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .chip.pulse b { color: var(--pulse); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Gravity Switch game board"></canvas>
+
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Gravity Switch</h1>
+          <p>Flip gravity to ride floor or ceiling, dodge hazards, and collect stars for 90 seconds.</p>
+          <p>Desktop: Space/Up/W flip, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap Flip to switch lanes and avoid incoming barriers.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Time</span><b id="hudTime">90.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Stars</span><b id="hudStars">0</b></div>
+      <div class="chip"><span>Distance</span><b id="hudDistance">0m</b></div>
+      <div class="chip bad"><span>Shield</span><b id="hudShield">3</b></div>
+      <div class="chip pulse"><span>Gravity</span><b id="hudGravity">FLOOR</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnFlip" class="wide">Flip</button>
+      </div>
+      <div class="hint">Flip early to keep a smooth path. Chain star pickups to increase your score multiplier.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
+    const overlayFsBtn = document.getElementById('overlayFsBtn');
+    const btnFlip = document.getElementById('btnFlip');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudStars = document.getElementById('hudStars');
+    const hudDistance = document.getElementById('hudDistance');
+    const hudShield = document.getElementById('hudShield');
+    const hudGravity = document.getElementById('hudGravity');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const TOTAL_TIME = 90;
+    const FLOOR_Y = canvas.height * 0.78;
+    const CEILING_Y = canvas.height * 0.22;
+    const TRACK_LEFT = 120;
+    const TRACK_RIGHT = canvas.width - 80;
+
+    const state = {
+      mode: 'menu',
+      timeLeft: TOTAL_TIME,
+      player: {
+        x: TRACK_LEFT + 120,
+        y: FLOOR_Y,
+        radius: 24,
+        gravityMode: 'floor',
+        transition: 1,
+      },
+      obstacles: [],
+      stars: [],
+      particles: [],
+      score: 0,
+      starsCollected: 0,
+      distance: 0,
+      shield: 3,
+      baseSpeed: 320,
+      spawnTimer: 0.85,
+      starTimer: 1.4,
+      result: 'none',
+      runCoinsEarned: 0,
+      streak: 0,
+      streakTimer: 0,
+      flashRed: 0,
+      hasRemembered: false,
+    };
+
+    let rafId = 0;
+    let previousTime = performance.now();
+    let controlledStep = false;
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: Space/Up/W flip, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function hideOverlay() {
+      overlayEl.classList.remove('show');
+    }
+
+    function resetRunState() {
+      state.timeLeft = TOTAL_TIME;
+      state.player.x = TRACK_LEFT + 120;
+      state.player.y = FLOOR_Y;
+      state.player.gravityMode = 'floor';
+      state.player.transition = 1;
+      state.obstacles = [];
+      state.stars = [];
+      state.particles = [];
+      state.score = 0;
+      state.starsCollected = 0;
+      state.distance = 0;
+      state.shield = 3;
+      state.baseSpeed = 320;
+      state.spawnTimer = 0.85;
+      state.starTimer = 1.4;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.streak = 0;
+      state.streakTimer = 0;
+      state.flashRed = 0;
+    }
+
+    function startRun() {
+      state.mode = 'playing';
+      resetRunState();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('gravityswitch'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, gravityswitch: { score: 0, result: 'started' } }); } catch {}
+      hideOverlay();
+      updateHud();
+    }
+
+    function spawnObstacle() {
+      const lane = Math.random() < 0.5 ? 'floor' : 'ceiling';
+      const y = lane === 'floor' ? FLOOR_Y : CEILING_Y;
+      const width = 42 + Math.random() * 58;
+      const height = 52;
+      state.obstacles.push({
+        lane,
+        x: canvas.width + width,
+        y,
+        width,
+        height,
+      });
+    }
+
+    function spawnStar() {
+      const lane = Math.random() < 0.5 ? 'floor' : 'ceiling';
+      const y = lane === 'floor' ? FLOOR_Y - 56 : CEILING_Y + 56;
+      state.stars.push({
+        lane,
+        x: canvas.width + 40,
+        y,
+        radius: 14,
+      });
+    }
+
+    function addParticles(x, y, color, count = 8) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 40 + Math.random() * 180;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.26 + Math.random() * 0.35,
+          color,
+        });
+      }
+    }
+
+    function flipGravity() {
+      if (state.mode !== 'playing') return;
+      state.player.gravityMode = state.player.gravityMode === 'floor' ? 'ceiling' : 'floor';
+      state.player.transition = 0;
+      addParticles(state.player.x, state.player.y, '#95c4ff', 5);
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 55);
+      const distanceBonus = Math.floor(state.distance / 120);
+      const finishBonus = result === 'win' ? 8 : 0;
+      const coins = Math.max(2, scoreBonus + distanceBonus + finishBonus);
+      state.runCoinsEarned = coins;
+      try {
+        addCoins(coins);
+      } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          gravityswitch: {
+            score: state.score,
+            stars: state.starsCollected,
+            distance: Number(state.distance.toFixed(1)),
+            shield: state.shield,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      setModeOverlay(
+        result === 'win' ? 'Run Complete' : 'Hull Breached',
+        result === 'win'
+          ? `Great pacing. Score ${state.score}, stars ${state.starsCollected}, coins earned ${state.runCoinsEarned}.`
+          : `You ran out of shield charges. Score ${state.score}, stars ${state.starsCollected}, coins earned ${state.runCoinsEarned}.`,
+        'Play Again'
+      );
+      updateHud();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Gravity core on standby.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hideOverlay();
+      }
+      updateHud();
+    }
+
+    function circleRectHit(cx, cy, cr, rx, ry, rw, rh) {
+      const nx = Math.max(rx, Math.min(cx, rx + rw));
+      const ny = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - nx;
+      const dy = cy - ny;
+      return (dx * dx + dy * dy) <= cr * cr;
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.baseSpeed = Math.min(620, state.baseSpeed + dt * 3.8);
+      state.distance += (state.baseSpeed * dt) / 12;
+      state.score += Math.floor(dt * 5);
+      state.streakTimer = Math.max(0, state.streakTimer - dt);
+      state.flashRed = Math.max(0, state.flashRed - dt);
+
+      const targetY = state.player.gravityMode === 'floor' ? FLOOR_Y : CEILING_Y;
+      state.player.transition = Math.min(1, state.player.transition + dt * 5.4);
+      state.player.y += (targetY - state.player.y) * Math.min(1, dt * 12);
+
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnObstacle();
+        state.spawnTimer = Math.max(0.4, 1.05 - (TOTAL_TIME - state.timeLeft) * 0.007 + Math.random() * 0.24);
+      }
+
+      state.starTimer -= dt;
+      if (state.starTimer <= 0) {
+        spawnStar();
+        state.starTimer = 0.65 + Math.random() * 0.95;
+      }
+
+      const speed = state.baseSpeed;
+      for (let i = state.obstacles.length - 1; i >= 0; i -= 1) {
+        const obstacle = state.obstacles[i];
+        obstacle.x -= speed * dt;
+        if (obstacle.x + obstacle.width < TRACK_LEFT - 80) {
+          state.obstacles.splice(i, 1);
+          continue;
+        }
+        const obstacleTop = obstacle.y - obstacle.height * 0.5;
+        const playerY = state.player.y;
+        const playerX = state.player.x;
+        if (circleRectHit(playerX, playerY, state.player.radius, obstacle.x, obstacleTop, obstacle.width, obstacle.height)) {
+          state.obstacles.splice(i, 1);
+          state.shield -= 1;
+          state.streak = 0;
+          state.streakTimer = 0;
+          state.flashRed = 0.24;
+          addParticles(playerX + 12, playerY, '#ff99ac', 12);
+          if (state.shield <= 0) {
+            finishRun('loss');
+            return;
+          }
+        }
+      }
+
+      for (let i = state.stars.length - 1; i >= 0; i -= 1) {
+        const star = state.stars[i];
+        star.x -= speed * dt;
+        if (star.x + star.radius < TRACK_LEFT - 80) {
+          state.stars.splice(i, 1);
+          state.streak = 0;
+          continue;
+        }
+        const dx = state.player.x - star.x;
+        const dy = state.player.y - star.y;
+        if (Math.hypot(dx, dy) <= state.player.radius + star.radius) {
+          state.stars.splice(i, 1);
+          state.starsCollected += 1;
+          state.streak = Math.min(8, state.streak + 1);
+          state.streakTimer = 2;
+          state.score += 24 + state.streak * 8;
+          addParticles(star.x, star.y, '#9fffe2', 10);
+        }
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const p = state.particles[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 90 * dt;
+      }
+
+      if (state.timeLeft <= 0) {
+        finishRun('win');
+      }
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#1a3775');
+      grad.addColorStop(0.5, '#0f2450');
+      grad.addColorStop(1, '#08142e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 24; i += 1) {
+        const t = (i * 67.3) % canvas.width;
+        const y = 60 + ((i * 83.7) % (canvas.height - 120));
+        ctx.fillStyle = 'rgba(196, 225, 255, 0.32)';
+        ctx.fillRect((t + state.distance * 1.8) % canvas.width, y, 3, 3);
+      }
+
+      ctx.strokeStyle = 'rgba(134, 184, 255, 0.5)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(TRACK_LEFT, FLOOR_Y + 30);
+      ctx.lineTo(TRACK_RIGHT, FLOOR_Y + 30);
+      ctx.moveTo(TRACK_LEFT, CEILING_Y - 30);
+      ctx.lineTo(TRACK_RIGHT, CEILING_Y - 30);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(173, 211, 255, 0.15)';
+      ctx.fillRect(TRACK_LEFT - 2, CEILING_Y, TRACK_RIGHT - TRACK_LEFT + 4, FLOOR_Y - CEILING_Y);
+
+      if (state.flashRed > 0) {
+        ctx.fillStyle = `rgba(255, 82, 106, ${state.flashRed * 0.5})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(state.player.x, state.player.y);
+      const tilt = state.player.gravityMode === 'floor' ? 0.18 : -0.18;
+      ctx.rotate(tilt);
+
+      ctx.fillStyle = '#e6f4ff';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 30, 21, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#78b7ff';
+      ctx.beginPath();
+      ctx.arc(8, -1, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#91ffe2';
+      ctx.beginPath();
+      ctx.ellipse(-20, 0, 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawObstacles() {
+      for (const obstacle of state.obstacles) {
+        const top = obstacle.y - obstacle.height * 0.5;
+        ctx.fillStyle = '#ff9eb2';
+        ctx.fillRect(obstacle.x, top, obstacle.width, obstacle.height);
+        ctx.fillStyle = '#ffe0e7';
+        ctx.fillRect(obstacle.x + 6, top + 8, obstacle.width - 12, 9);
+      }
+
+      for (const star of state.stars) {
+        const pulse = 0.84 + Math.sin((state.distance * 0.08 + star.x) * 0.05) * 0.18;
+        ctx.save();
+        ctx.translate(star.x, star.y);
+        ctx.scale(pulse, pulse);
+        ctx.fillStyle = '#9dffdb';
+        ctx.beginPath();
+        for (let i = 0; i < 5; i += 1) {
+          const angle = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+          const x = Math.cos(angle) * 14;
+          const y = Math.sin(angle) * 14;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+          const angle2 = angle + Math.PI / 5;
+          ctx.lineTo(Math.cos(angle2) * 6, Math.sin(angle2) * 6);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (const p of state.particles) {
+        const alpha = Math.max(0, 1 - p.age / p.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 16, 33, 0.68)';
+      ctx.fillRect(14, 12, 460, 62);
+      ctx.strokeStyle = 'rgba(144, 200, 255, 0.46)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 460, 62);
+      ctx.fillStyle = '#f0f8ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Gravity Switch', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c5dcfb';
+      const streakLabel = state.streak > 1 && state.streakTimer > 0 ? `x${state.streak}` : 'x1';
+      ctx.fillText(`Shield ${Math.max(0, state.shield)} | Streak ${streakLabel}`, 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      drawBackground();
+      drawObstacles();
+      drawPlayer();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudStars.textContent = String(state.starsCollected);
+      hudDistance.textContent = `${Math.floor(state.distance)}m`;
+      hudShield.textContent = String(Math.max(0, state.shield));
+      hudGravity.textContent = state.player.gravityMode === 'floor' ? 'FLOOR' : 'CEILING';
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+      hudShield.parentElement.classList.toggle('warn', state.shield === 1);
+      hudShield.parentElement.classList.toggle('bad', state.shield <= 0);
+      hudShield.parentElement.classList.toggle('good', state.shield >= 2);
+      hudGravity.parentElement.classList.toggle('warn', state.player.gravityMode === 'ceiling');
+      hudGravity.parentElement.classList.toggle('good', state.player.gravityMode === 'floor');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        flipGravity();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    btnFlip.addEventListener('click', () => flipGravity());
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    startBtn.addEventListener('click', () => startRun());
+    overlayFsBtn.addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'gravityswitch',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left, +x right, +y down; player mostly fixed near x=240 while hazards move left',
+        objective: {
+          survive_seconds: TOTAL_TIME,
+          time_left: Number(state.timeLeft.toFixed(2)),
+        },
+        player: {
+          x: Number(state.player.x.toFixed(1)),
+          y: Number(state.player.y.toFixed(1)),
+          radius: state.player.radius,
+          gravity: state.player.gravityMode,
+          shield: state.shield,
+        },
+        score: state.score,
+        distance_m: Number(state.distance.toFixed(1)),
+        stars_collected: state.starsCollected,
+        streak: state.streak,
+        obstacles_visible: state.obstacles.slice(0, 10).map((obstacle) => ({
+          lane: obstacle.lane,
+          x: Number(obstacle.x.toFixed(1)),
+          y: Number(obstacle.y.toFixed(1)),
+          width: Number(obstacle.width.toFixed(1)),
+          height: obstacle.height,
+        })),
+        stars_visible: state.stars.slice(0, 10).map((star) => ({
+          lane: star.lane,
+          x: Number(star.x.toFixed(1)),
+          y: Number(star.y.toFixed(1)),
+          radius: star.radius,
+        })),
+        coins: Number(profileState?.coins || 0),
+        result: state.result,
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'gravityswitch', gameName: 'Gravity Switch' });
+  </script>
+</body>
+</html>

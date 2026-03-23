@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 let cachedServiceAccount = undefined;
 let cachedApp = null;
 let firestoreConfigured = false;
+let cachedWebConfig = undefined;
 
 function readFirstConfiguredEnv(keys, maxLength = 400) {
   for (const key of keys) {
@@ -28,6 +29,83 @@ function parseJsonString(value) {
   } catch {
     return null;
   }
+}
+
+function tryParseBase64Json(value) {
+  const encoded = typeof value === "string" ? value.trim() : "";
+  if (!encoded) return null;
+  try {
+    return parseJsonString(Buffer.from(encoded, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function getFirebaseWebConfigObject() {
+  if (cachedWebConfig !== undefined) {
+    return cachedWebConfig;
+  }
+
+  const base64EnvKeys = [
+    "FIREBASE_WEB_CONFIG_JSON_BASE64",
+    "NEXT_PUBLIC_FIREBASE_CONFIG_BASE64",
+    "VITE_FIREBASE_CONFIG_BASE64",
+  ];
+  for (const key of base64EnvKeys) {
+    const parsed = tryParseBase64Json(process.env[key]);
+    if (parsed && typeof parsed === "object") {
+      cachedWebConfig = parsed;
+      return cachedWebConfig;
+    }
+  }
+
+  const jsonEnvKeys = [
+    "FIREBASE_WEB_CONFIG_JSON",
+    "FIREBASE_WEB_CONFIG",
+    "NEXT_PUBLIC_FIREBASE_CONFIG",
+    "VITE_FIREBASE_CONFIG",
+    "FIREBASE_CONFIG",
+  ];
+  for (const key of jsonEnvKeys) {
+    const raw = typeof process.env[key] === "string" ? process.env[key].trim() : "";
+    if (!raw || !raw.includes("{")) continue;
+    const parsed = parseJsonString(raw);
+    if (parsed && typeof parsed === "object") {
+      cachedWebConfig = parsed;
+      return cachedWebConfig;
+    }
+  }
+
+  cachedWebConfig = null;
+  return cachedWebConfig;
+}
+
+function readConfigValue(config, keys, maxLength = 200) {
+  const source = config && typeof config === "object" ? config : {};
+  for (const key of keys) {
+    const value = normalizeSingleLine(source[key], maxLength);
+    if (value) {
+      return value;
+    }
+  }
+  return "";
+}
+
+function deriveProjectIdFromAuthDomain(authDomain) {
+  const normalized = normalizeSingleLine(authDomain, 200).toLowerCase();
+  if (!normalized.endsWith(".firebaseapp.com")) return "";
+  return normalized.slice(0, normalized.length - ".firebaseapp.com".length);
+}
+
+function deriveProjectIdFromStorageBucket(bucketName) {
+  const normalized = normalizeSingleLine(bucketName, 240).toLowerCase();
+  if (normalized.endsWith(".appspot.com")) {
+    return normalized.slice(0, normalized.length - ".appspot.com".length);
+  }
+  if (normalized.endsWith(".firebasestorage.app")) {
+    return normalized.slice(0, normalized.length - ".firebasestorage.app".length);
+  }
+  return "";
 }
 
 function getFirebaseServiceAccount() {
@@ -78,6 +156,7 @@ function getFirebaseServiceAccount() {
 }
 
 function getFirebaseProjectId() {
+  const webConfig = getFirebaseWebConfigObject();
   const explicit = readFirstConfiguredEnv([
     "FIREBASE_PROJECT_ID",
     "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
@@ -85,11 +164,22 @@ function getFirebaseProjectId() {
     "VITE_FIREBASE_PROJECT_ID",
   ], 120);
   if (explicit) return explicit;
+  const projectIdFromConfig = readConfigValue(webConfig, ["projectId", "project_id"], 120);
+  if (projectIdFromConfig) return projectIdFromConfig;
+  const projectIdFromAuthDomain = deriveProjectIdFromAuthDomain(
+    readConfigValue(webConfig, ["authDomain", "auth_domain"], 200),
+  );
+  if (projectIdFromAuthDomain) return projectIdFromAuthDomain;
+  const projectIdFromBucket = deriveProjectIdFromStorageBucket(
+    readConfigValue(webConfig, ["storageBucket", "storage_bucket"], 240),
+  );
+  if (projectIdFromBucket) return projectIdFromBucket;
   const serviceAccount = getFirebaseServiceAccount();
   return normalizeSingleLine(serviceAccount?.project_id, 120);
 }
 
 function getFirebaseStorageBucketName() {
+  const webConfig = getFirebaseWebConfigObject();
   const explicit = readFirstConfiguredEnv([
     "FIREBASE_STORAGE_BUCKET",
     "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
@@ -97,11 +187,14 @@ function getFirebaseStorageBucketName() {
     "VITE_FIREBASE_STORAGE_BUCKET",
   ], 240);
   if (explicit) return explicit;
+  const storageBucketFromConfig = readConfigValue(webConfig, ["storageBucket", "storage_bucket"], 240);
+  if (storageBucketFromConfig) return storageBucketFromConfig;
   const serviceAccount = getFirebaseServiceAccount();
   return normalizeSingleLine(serviceAccount?.storage_bucket || serviceAccount?.storageBucket, 240);
 }
 
 function getFirebasePublicConfig() {
+  const webConfig = getFirebaseWebConfigObject();
   const projectId = getFirebaseProjectId();
   const apiKey = readFirstConfiguredEnv([
     "FIREBASE_WEB_API_KEY",
@@ -110,25 +203,25 @@ function getFirebasePublicConfig() {
     "NEXT_PUBLIC_FIREBASE_WEB_API_KEY",
     "FIREBASE_PUBLIC_API_KEY",
     "VITE_FIREBASE_API_KEY",
-  ], 200);
+  ], 200) || readConfigValue(webConfig, ["apiKey", "api_key"], 200);
   const authDomain = readFirstConfiguredEnv([
     "FIREBASE_AUTH_DOMAIN",
     "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
     "FIREBASE_PUBLIC_AUTH_DOMAIN",
     "VITE_FIREBASE_AUTH_DOMAIN",
-  ], 200) || (projectId ? `${projectId}.firebaseapp.com` : "");
+  ], 200) || readConfigValue(webConfig, ["authDomain", "auth_domain"], 200) || (projectId ? `${projectId}.firebaseapp.com` : "");
   const appId = readFirstConfiguredEnv([
     "FIREBASE_APP_ID",
     "NEXT_PUBLIC_FIREBASE_APP_ID",
     "FIREBASE_PUBLIC_APP_ID",
     "VITE_FIREBASE_APP_ID",
-  ], 200);
+  ], 200) || readConfigValue(webConfig, ["appId", "app_id"], 200);
   const messagingSenderId = readFirstConfiguredEnv([
     "FIREBASE_MESSAGING_SENDER_ID",
     "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
     "FIREBASE_PUBLIC_MESSAGING_SENDER_ID",
     "VITE_FIREBASE_MESSAGING_SENDER_ID",
-  ], 80);
+  ], 80) || readConfigValue(webConfig, ["messagingSenderId", "messaging_sender_id"], 80);
   const storageBucket = getFirebaseStorageBucketName();
   const enabled = Boolean(projectId && apiKey && authDomain);
 
@@ -203,6 +296,7 @@ function __resetFirebaseAdminForTests() {
   cachedServiceAccount = undefined;
   cachedApp = null;
   firestoreConfigured = false;
+  cachedWebConfig = undefined;
 }
 
 module.exports = {

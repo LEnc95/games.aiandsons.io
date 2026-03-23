@@ -1377,3 +1377,23 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Fixed pause/resume behavior so resuming from pause returns to the correct mode (`showing` vs `input`) without skipping sequence playback.
 - Validation status: attempted required Playwright loop via skill client and built-in Playwright tooling, but browser launch/network constraints in this sandbox blocked full automated run (`spawn EPERM`, local loopback/file URL restrictions).
 - Follow-up TODO: run `$WEB_GAME_CLIENT` on a host with browser launch + localhost access and review screenshots/state artifacts for full end-to-end verification.
+## 2026-03-23 Gravity Switch Implementation (in progress)
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `gravityswitch/index.html` (Gravity Switch).
+  - Gameplay: 90-second gravity-flip runner with floor/ceiling lane switching, barrier dodging, star collection combos, shield hits, win/loss states, and score/distance progression.
+  - Controls: desktop keyboard (Space/Up/W + P/R/F) and mobile/touch controls (Flip/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('gravityswitch')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `gravityswitch` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/gravityswitch` rewrites and `/gravityswitch/index.html` cache-header entry in `vercel.json`.
+- Next: run validation commands (`npm run test:shop`, Playwright skill-client loop) and record outcomes.
+- Validation results (this run):
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked in this sandbox (`spawn EPERM` in Node test runner).
+  - Skill Playwright client attempt for `/gravityswitch` via `web_game_playwright_client.js`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Integration verification:
+  - Confirmed `gravityswitch` references in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop for `/gravityswitch` in an environment that allows process spawn + Chromium launch.
