@@ -4,6 +4,16 @@ let cachedServiceAccount = undefined;
 let cachedApp = null;
 let firestoreConfigured = false;
 
+function readFirstConfiguredEnv(keys, maxLength = 400) {
+  for (const key of keys) {
+    const value = normalizeSingleLine(process.env[key], maxLength);
+    if (value) {
+      return value;
+    }
+  }
+  return "";
+}
+
 function normalizeSingleLine(value, maxLength = 400) {
   return String(value || "")
     .replace(/[\r\n\t]+/g, " ")
@@ -68,14 +78,24 @@ function getFirebaseServiceAccount() {
 }
 
 function getFirebaseProjectId() {
-  const explicit = normalizeSingleLine(process.env.FIREBASE_PROJECT_ID, 120);
+  const explicit = readFirstConfiguredEnv([
+    "FIREBASE_PROJECT_ID",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+    "FIREBASE_PUBLIC_PROJECT_ID",
+    "VITE_FIREBASE_PROJECT_ID",
+  ], 120);
   if (explicit) return explicit;
   const serviceAccount = getFirebaseServiceAccount();
   return normalizeSingleLine(serviceAccount?.project_id, 120);
 }
 
 function getFirebaseStorageBucketName() {
-  const explicit = normalizeSingleLine(process.env.FIREBASE_STORAGE_BUCKET, 240);
+  const explicit = readFirstConfiguredEnv([
+    "FIREBASE_STORAGE_BUCKET",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+    "FIREBASE_PUBLIC_STORAGE_BUCKET",
+    "VITE_FIREBASE_STORAGE_BUCKET",
+  ], 240);
   if (explicit) return explicit;
   const serviceAccount = getFirebaseServiceAccount();
   return normalizeSingleLine(serviceAccount?.storage_bucket || serviceAccount?.storageBucket, 240);
@@ -83,12 +103,34 @@ function getFirebaseStorageBucketName() {
 
 function getFirebasePublicConfig() {
   const projectId = getFirebaseProjectId();
-  const apiKey = normalizeSingleLine(process.env.FIREBASE_WEB_API_KEY || process.env.FIREBASE_API_KEY, 200);
-  const authDomain = normalizeSingleLine(process.env.FIREBASE_AUTH_DOMAIN, 200);
-  const appId = normalizeSingleLine(process.env.FIREBASE_APP_ID, 200);
-  const messagingSenderId = normalizeSingleLine(process.env.FIREBASE_MESSAGING_SENDER_ID, 80);
+  const apiKey = readFirstConfiguredEnv([
+    "FIREBASE_WEB_API_KEY",
+    "FIREBASE_API_KEY",
+    "NEXT_PUBLIC_FIREBASE_API_KEY",
+    "NEXT_PUBLIC_FIREBASE_WEB_API_KEY",
+    "FIREBASE_PUBLIC_API_KEY",
+    "VITE_FIREBASE_API_KEY",
+  ], 200);
+  const authDomain = readFirstConfiguredEnv([
+    "FIREBASE_AUTH_DOMAIN",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+    "FIREBASE_PUBLIC_AUTH_DOMAIN",
+    "VITE_FIREBASE_AUTH_DOMAIN",
+  ], 200) || (projectId ? `${projectId}.firebaseapp.com` : "");
+  const appId = readFirstConfiguredEnv([
+    "FIREBASE_APP_ID",
+    "NEXT_PUBLIC_FIREBASE_APP_ID",
+    "FIREBASE_PUBLIC_APP_ID",
+    "VITE_FIREBASE_APP_ID",
+  ], 200);
+  const messagingSenderId = readFirstConfiguredEnv([
+    "FIREBASE_MESSAGING_SENDER_ID",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+    "FIREBASE_PUBLIC_MESSAGING_SENDER_ID",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID",
+  ], 80);
   const storageBucket = getFirebaseStorageBucketName();
-  const enabled = Boolean(projectId && apiKey && authDomain && appId);
+  const enabled = Boolean(projectId && apiKey && authDomain);
 
   return {
     enabled,

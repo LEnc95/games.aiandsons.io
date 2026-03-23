@@ -3,6 +3,7 @@ const FIREBASE_WEB_SDK_VERSION = "12.11.0";
 let firebaseConfigPromise = null;
 let firebaseSdkPromise = null;
 let firebaseAuthPromise = null;
+let redirectResultPromise = null;
 let cachedSession = null;
 let cachedSessionFetchedAt = 0;
 const SESSION_CACHE_TTL_MS = 60_000;
@@ -62,6 +63,34 @@ function emitSession(session) {
       // Ignore listener errors to keep auth updates resilient.
     }
   }
+}
+
+function isProbablyMobileBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /android|iphone|ipad|ipod|mobile/i.test(String(navigator.userAgent || ""));
+}
+
+function shouldUseRedirectFallback(error) {
+  const code = typeof error?.code === "string" ? error.code : "";
+  return (
+    code === "auth/popup-blocked" ||
+    code === "auth/cancelled-popup-request" ||
+    code === "auth/operation-not-supported-in-this-environment"
+  );
+}
+
+function describeSignInError(error) {
+  const code = typeof error?.code === "string" ? error.code : "";
+  if (code === "auth/popup-closed-by-user") {
+    return "Google sign-in was closed before it finished.";
+  }
+  if (code === "auth/unauthorized-domain") {
+    return "This site domain is not authorized for Firebase Google sign-in yet.";
+  }
+  if (code === "auth/network-request-failed") {
+    return "Google sign-in could not reach Firebase. Check your connection and try again.";
+  }
+  return String(error?.message || error || "Google sign-in failed.");
 }
 
 async function parseResponse(response) {
@@ -131,6 +160,34 @@ async function ensureFirebaseAuth() {
   return firebaseAuthPromise;
 }
 
+async function finalizeRedirectSignIn() {
+  if (redirectResultPromise) {
+    return redirectResultPromise;
+  }
+
+  redirectResultPromise = (async () => {
+    try {
+      const { sdk, auth } = await ensureFirebaseAuth();
+      const result = await sdk.getRedirectResult(auth);
+      if (!result?.user) {
+        return null;
+      }
+      const idToken = await result.user.getIdToken();
+      const payload = await postJson("/api/auth/google-login", { idToken });
+      const session = normalizeSessionPayload(payload);
+      emitSession(session);
+      return session;
+    } catch (error) {
+      if (String(error?.message || "").includes("not configured yet")) {
+        return null;
+      }
+      throw error;
+    }
+  })();
+
+  return redirectResultPromise;
+}
+
 export async function fetchAuthSession({ force = false } = {}) {
   if (shouldSkipAuthApiProbe()) {
     const session = normalizeSessionPayload(LOOPBACK_AUTH_SESSION);
@@ -141,6 +198,11 @@ export async function fetchAuthSession({ force = false } = {}) {
   const now = Date.now();
   if (!force && cachedSession && (now - cachedSessionFetchedAt) < SESSION_CACHE_TTL_MS) {
     return cachedSession;
+  }
+
+  const redirectedSession = await finalizeRedirectSignIn().catch(() => null);
+  if (redirectedSession) {
+    return redirectedSession;
   }
 
   const response = await fetch("/api/auth/session", {
@@ -177,12 +239,26 @@ export async function signInWithGoogle() {
   provider.addScope("email");
   provider.addScope("profile");
   provider.setCustomParameters({ prompt: "select_account" });
-  const result = await sdk.signInWithPopup(auth, provider);
-  const idToken = await result.user.getIdToken();
-  const payload = await postJson("/api/auth/google-login", { idToken });
-  const session = normalizeSessionPayload(payload);
-  emitSession(session);
-  return session;
+
+  try {
+    if (isProbablyMobileBrowser()) {
+      await sdk.signInWithRedirect(auth, provider);
+      return cachedSession || normalizeSessionPayload({ ok: true, pendingRedirect: true });
+    }
+
+    const result = await sdk.signInWithPopup(auth, provider);
+    const idToken = await result.user.getIdToken();
+    const payload = await postJson("/api/auth/google-login", { idToken });
+    const session = normalizeSessionPayload(payload);
+    emitSession(session);
+    return session;
+  } catch (error) {
+    if (shouldUseRedirectFallback(error)) {
+      await sdk.signInWithRedirect(auth, provider);
+      return cachedSession || normalizeSessionPayload({ ok: true, pendingRedirect: true });
+    }
+    throw new Error(describeSignInError(error));
+  }
 }
 
 export async function signOutFromApp() {
