@@ -97,6 +97,7 @@
   </main>
 
   <script type="module">
+    import { getCachedAuthSession } from './src/auth/client.js';
     import { mountAccountWidget } from './src/auth/embed.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
     import {
@@ -176,9 +177,18 @@
     }
 
     function updateBillingEmail() {
-      const saved = setBillingEmail(billingEmailInput.value);
-      billingEmailInput.value = saved;
-      return saved;
+      let email = billingEmailInput.value.trim();
+      if (!email) {
+        const session = getCachedAuthSession();
+        if (session && session.email) {
+          email = session.email;
+          billingEmailInput.value = email;
+        }
+      }
+      if (email) {
+        setBillingEmail(email);
+      }
+      return email;
     }
 
     function renderPlans() {
@@ -362,6 +372,11 @@
     manageBillingBtn.addEventListener('click', async () => {
       if (!isStripeMode() || checkoutBusy) return;
       const billingEmail = updateBillingEmail();
+      if (!billingEmail) {
+        checkoutStatus.textContent = 'Enter your billing email to manage your subscription.';
+        billingEmailInput.focus();
+        return;
+      }
 
       setCheckoutBusy(true);
       renderCheckout();

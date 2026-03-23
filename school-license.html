@@ -261,6 +261,7 @@
   </main>
 
   <script type="module">
+    import { getCachedAuthSession } from './src/auth/client.js';
     import { mountAccountWidget } from './src/auth/embed.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
     import { ENTITLEMENT_KEYS, getEntitlements, hasEntitlement } from './src/core/entitlements.js';
@@ -318,7 +319,14 @@
     }
 
     function updateBillingEmail() {
-      const saved = setBillingEmail(billingEmailInput?.value || '');
+      let email = billingEmailInput?.value || '';
+      if (!email) {
+        const session = getCachedAuthSession();
+        if (session && session.email) {
+          email = session.email;
+        }
+      }
+      const saved = setBillingEmail(email);
       if (billingEmailInput) billingEmailInput.value = saved;
       return saved;
     }
@@ -468,6 +476,12 @@
       manageBillingBtn.addEventListener('click', async () => {
         if (!isStripeMode() || checkoutBusy) return;
         const billingEmail = updateBillingEmail();
+        if (!billingEmail) {
+          licenseStatus.textContent = 'Enter your billing email to manage your subscription.';
+          licenseStatus.className = 'status error';
+          if (billingEmailInput) billingEmailInput.focus();
+          return;
+        }
 
         setCheckoutBusy(true);
         renderCheckout();
