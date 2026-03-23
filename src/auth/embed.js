@@ -5,6 +5,12 @@ import {
   signInWithGoogle,
   signOutFromApp,
 } from "./client.js";
+import {
+  acceptFamilyInvite,
+  fetchFamilyBillingSummary,
+  removeFamilyMember,
+  sendFamilyInvite,
+} from "../core/billing.js";
 
 const STYLE_ID = "cadeAuthStyles";
 const INLINE_SECTION_ID = "cadeAccountInlineSection";
@@ -159,6 +165,102 @@ function injectStyles() {
       border-top: 1px solid rgba(255,255,255,0.1);
       padding-top: 14px;
     }
+    .cade-family-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: grid;
+      gap: 12px;
+    }
+    .cade-family-panel h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #f8fbff;
+    }
+    .cade-family-copy {
+      margin: 0;
+      color: #bdd0ee;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .cade-family-list {
+      display: grid;
+      gap: 10px;
+    }
+    .cade-family-card {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      display: grid;
+      gap: 6px;
+    }
+    .cade-family-card strong {
+      font-size: 13px;
+      color: #f8fbff;
+    }
+    .cade-family-card span {
+      color: #bdd0ee;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .cade-family-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(103,203,255,0.14);
+      color: #9ce7ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .cade-family-form {
+      display: grid;
+      gap: 10px;
+    }
+    .cade-family-input {
+      width: 100%;
+      min-height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #eef5ff;
+      padding: 10px 12px;
+      font: 500 13px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    .cade-family-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cade-family-btn {
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #eef5ff;
+      font: 700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      cursor: pointer;
+    }
+    .cade-family-btn.danger {
+      color: #ffd7df;
+      border-color: rgba(255, 140, 165, 0.28);
+      background: rgba(255, 140, 165, 0.08);
+    }
+    .cade-family-btn:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
+    .cade-family-empty {
+      margin: 0;
+      color: #9fb4d3;
+      font-size: 12px;
+      line-height: 1.5;
+    }
     @media (max-width: 680px) {
       .cade-account-actions {
         flex-direction: column;
@@ -167,6 +269,12 @@ function injectStyles() {
       .cade-account-btn.close {
         width: 100%;
         margin-left: 0;
+      }
+      .cade-family-actions {
+        flex-direction: column;
+      }
+      .cade-family-btn {
+        width: 100%;
       }
     }
   `;
@@ -208,6 +316,80 @@ function createAccountPanel({ inline = false, includeClose = false } = {}) {
   };
 }
 
+function createFamilySection() {
+  const root = document.createElement("section");
+  root.className = "cade-family-panel";
+  root.innerHTML = `
+    <div>
+      <h3>Family Sharing</h3>
+      <p class="cade-family-copy">Manage who is covered by your family plan and accept family invites after signing in.</p>
+    </div>
+    <p class="cade-account-status">Loading family details...</p>
+    <div class="cade-family-form" hidden>
+      <input class="cade-family-input" type="email" placeholder="familymember@example.com" inputmode="email" autocomplete="email" />
+      <div class="cade-family-actions">
+        <button type="button" class="cade-family-btn">Send invite</button>
+        <button type="button" class="cade-family-btn" hidden>Accept invite</button>
+      </div>
+    </div>
+    <div class="cade-family-list" hidden></div>
+    <div class="cade-family-list" hidden></div>
+    <div class="cade-family-list" hidden></div>
+  `;
+
+  const lists = root.querySelectorAll(".cade-family-list");
+  return {
+    root,
+    statusEl: root.querySelector(".cade-account-status"),
+    formEl: root.querySelector(".cade-family-form"),
+    emailInput: root.querySelector(".cade-family-input"),
+    inviteBtn: root.querySelector(".cade-family-btn"),
+    acceptBtn: root.querySelectorAll(".cade-family-btn")[1],
+    summaryListEl: lists[0],
+    membersListEl: lists[1],
+    invitesListEl: lists[2],
+  };
+}
+
+function getFamilyInviteTokenFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    return (params.get("familyInviteToken") || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function clearFamilyInviteTokenFromUrl() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("familyInviteToken");
+    window.history.replaceState({}, "", url.toString());
+  } catch {
+    // Ignore history update failures.
+  }
+}
+
+function createFamilyCard(title, lines = [], badge = "") {
+  const card = document.createElement("article");
+  card.className = "cade-family-card";
+  if (badge) {
+    const badgeEl = document.createElement("span");
+    badgeEl.className = "cade-family-badge";
+    badgeEl.textContent = badge;
+    card.appendChild(badgeEl);
+  }
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+  card.appendChild(strong);
+  for (const line of lines) {
+    const span = document.createElement("span");
+    span.textContent = line;
+    card.appendChild(span);
+  }
+  return card;
+}
+
 function classifyStatus(session, firebaseConfig, pendingMessage = "") {
   if (pendingMessage) {
     return { tone: "", message: pendingMessage };
@@ -228,9 +410,15 @@ function classifyStatus(session, firebaseConfig, pendingMessage = "") {
   }
 
   if (firebaseConfig && firebaseConfig.enabled === false) {
+    const missingFields = Array.isArray(firebaseConfig.missingFields)
+      ? firebaseConfig.missingFields.filter((field) => typeof field === "string" && field.trim())
+      : [];
+    const missingHint = missingFields.length > 0
+      ? ` Missing public Firebase fields: ${missingFields.join(", ")}.`
+      : "";
     return {
       tone: "error",
-      message: "Google sign-in is not enabled on this deployment yet. The Firebase web config endpoint is still incomplete.",
+      message: `Google sign-in is not enabled on this deployment yet. The Firebase web config endpoint is still incomplete.${missingHint}`,
     };
   }
 
@@ -389,9 +577,188 @@ export function mountAccountWidget() {
   }
 
   const panel = mounted.panel;
+  const familySection = createFamilySection();
+  panel.root.appendChild(familySection.root);
   const triggerEl = mounted.triggerEl;
   let currentSession = null;
   let firebaseConfig = null;
+  let familyState = null;
+  let inviteToken = getFamilyInviteTokenFromUrl();
+
+  function setFamilyStatus(message, tone = "") {
+    familySection.statusEl.textContent = message;
+    familySection.statusEl.classList.toggle("warning", tone === "warning");
+    familySection.statusEl.classList.toggle("error", tone === "error");
+  }
+
+  function toggleFamilyLoading(loading) {
+    familySection.inviteBtn.disabled = loading;
+    familySection.acceptBtn.disabled = loading;
+    familySection.emailInput.disabled = loading;
+  }
+
+  function renderMemberCards(summary) {
+    familySection.membersListEl.innerHTML = "";
+    const family = summary?.family;
+    const members = Array.isArray(family?.members) ? family.members : [];
+    familySection.membersListEl.hidden = members.length === 0;
+    for (const member of members) {
+      const card = document.createElement("article");
+      card.className = "cade-family-card";
+      const badge = document.createElement("span");
+      badge.className = "cade-family-badge";
+      badge.textContent = member.role === "owner" ? "Owner" : "Member";
+      card.appendChild(badge);
+      const title = document.createElement("strong");
+      title.textContent = member.displayName || member.email || member.userId;
+      card.appendChild(title);
+      const email = document.createElement("span");
+      email.textContent = member.email || member.userId;
+      card.appendChild(email);
+      if (member.role !== "owner" && summary.family.ownerUserId === currentSession?.userId) {
+        const actions = document.createElement("div");
+        actions.className = "cade-family-actions";
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "cade-family-btn danger";
+        removeBtn.textContent = "Remove member";
+        removeBtn.addEventListener("click", async () => {
+          toggleFamilyLoading(true);
+          try {
+            setFamilyStatus("Removing family member...");
+            familyState = await removeFamilyMember({ memberUserId: member.userId });
+            renderFamilySection();
+          } catch (error) {
+            setFamilyStatus(String(error?.message || error || "Could not remove family member."), "error");
+          } finally {
+            toggleFamilyLoading(false);
+          }
+        });
+        actions.appendChild(removeBtn);
+        card.appendChild(actions);
+      }
+      familySection.membersListEl.appendChild(card);
+    }
+  }
+
+  function renderInviteCards(summary) {
+    familySection.invitesListEl.innerHTML = "";
+    const invites = Array.isArray(summary?.family?.invites) ? summary.family.invites : [];
+    const pendingInvites = invites.filter((invite) => invite.status === "pending");
+    familySection.invitesListEl.hidden = pendingInvites.length === 0;
+    for (const invite of pendingInvites) {
+      const lines = [
+        `Expires ${new Date(invite.expiresAt || 0).toLocaleDateString() || "soon"}`,
+        invite.inviteUrl ? `Invite link ready for sharing from email or by copy.` : "Invite email pending.",
+      ];
+      const card = createFamilyCard(invite.email, lines, "Invite");
+      familySection.invitesListEl.appendChild(card);
+    }
+  }
+
+  function renderFamilySummaryCards(summary) {
+    familySection.summaryListEl.innerHTML = "";
+    const family = summary?.family;
+    if (!family) {
+      familySection.summaryListEl.hidden = true;
+      return;
+    }
+    const seatUsage = `${family.seatCount}/${family.seatLimit} seats used`;
+    familySection.summaryListEl.appendChild(createFamilyCard(
+      family.status === "active" ? "Family plan active" : "Family plan inactive",
+      [
+        family.planId ? `Plan: ${family.planId}` : "No active family billing plan",
+        seatUsage,
+      ],
+      family.status === "active" ? "Active" : "Paused",
+    ));
+    const deliveries = Array.isArray(family.recentEmailDeliveries) ? family.recentEmailDeliveries : [];
+    if (deliveries.length > 0) {
+      const latest = deliveries[0];
+      familySection.summaryListEl.appendChild(createFamilyCard(
+        "Latest family email",
+        [
+          `${latest.subject || latest.templateKey} -> ${latest.to}`,
+          `Status: ${latest.status}`,
+        ],
+        "Email",
+      ));
+    }
+    familySection.summaryListEl.hidden = false;
+  }
+
+  function renderFamilySection() {
+    const session = currentSession;
+    const summary = familyState;
+    const authenticated = Boolean(session?.isAuthenticated);
+    const family = summary?.family || null;
+    const isOwner = authenticated && family && family.ownerUserId === session?.userId;
+
+    familySection.formEl.hidden = true;
+    familySection.summaryListEl.hidden = true;
+    familySection.membersListEl.hidden = true;
+    familySection.invitesListEl.hidden = true;
+    familySection.acceptBtn.hidden = !inviteToken;
+
+    if (!authenticated) {
+      setFamilyStatus(inviteToken
+        ? "Sign in with Google to accept this family invite."
+        : "Sign in with Google to manage family sharing or accept invites.");
+      return;
+    }
+
+    if (!summary) {
+      setFamilyStatus("Loading family details...");
+      return;
+    }
+
+    renderFamilySummaryCards(summary);
+    renderMemberCards(summary);
+    renderInviteCards(summary);
+
+    if (family) {
+      if (family.status === "active" && isOwner) {
+        setFamilyStatus(`You are sharing ${family.planId || "your family plan"} with ${family.seatCount} of ${family.seatLimit} seats filled.`);
+        familySection.formEl.hidden = false;
+      } else if (family.ownerUserId === session?.userId) {
+        setFamilyStatus("Your family account is set up, but the family subscription is not active right now.", "warning");
+      } else {
+        const ownerName = family.ownerDisplayName || family.ownerEmail || "your organizer";
+        setFamilyStatus(`You're currently covered by ${ownerName}'s family plan.`);
+      }
+    } else {
+      setFamilyStatus("Activate a family plan on the plans page to invite up to four more family members.");
+    }
+
+    if (inviteToken) {
+      familySection.formEl.hidden = false;
+      familySection.acceptBtn.hidden = false;
+      if (!family || family.ownerUserId !== session?.userId) {
+        setFamilyStatus("Family invite ready. Accept it below to join the shared plan.");
+      }
+    }
+  }
+
+  async function refreshFamilySummary({ pendingMessage = "" } = {}) {
+    if (!currentSession?.isAuthenticated) {
+      familyState = null;
+      renderFamilySection();
+      return;
+    }
+    toggleFamilyLoading(true);
+    if (pendingMessage) {
+      setFamilyStatus(pendingMessage);
+    }
+    try {
+      familyState = await fetchFamilyBillingSummary();
+      renderFamilySection();
+    } catch (error) {
+      familyState = null;
+      setFamilyStatus(String(error?.message || error || "Could not load family details."), "error");
+    } finally {
+      toggleFamilyLoading(false);
+    }
+  }
 
   function render(session, pendingMessage = "") {
     currentSession = session;
@@ -401,6 +768,7 @@ export function mountAccountWidget() {
         ? `Account: ${getPreferredLabel(session).slice(0, 18)}`
         : "Account";
     }
+    renderFamilySection();
   }
 
   panel.primaryBtn.addEventListener("click", async () => {
@@ -419,6 +787,7 @@ export function mountAccountWidget() {
         ? await fetchAuthSession({ force: true })
         : await signInWithGoogle();
       render(session);
+      await refreshFamilySummary();
     } catch (error) {
       render(currentSession, String(error?.message || error || "Google sign-in failed."));
       panel.statusEl.classList.add("error");
@@ -434,6 +803,7 @@ export function mountAccountWidget() {
     try {
       render(currentSession, "Signing out...");
       const session = await signOutFromApp();
+      familyState = null;
       render(session);
     } catch (error) {
       render(currentSession, String(error?.message || error || "Could not sign out."));
@@ -444,7 +814,41 @@ export function mountAccountWidget() {
     }
   });
 
-  onAuthSessionChanged((session) => render(session));
+  familySection.inviteBtn.addEventListener("click", async () => {
+    toggleFamilyLoading(true);
+    try {
+      setFamilyStatus("Sending family invite...");
+      familyState = await sendFamilyInvite({ email: familySection.emailInput.value });
+      familySection.emailInput.value = "";
+      renderFamilySection();
+    } catch (error) {
+      setFamilyStatus(String(error?.message || error || "Could not send the family invite."), "error");
+    } finally {
+      toggleFamilyLoading(false);
+    }
+  });
+
+  familySection.acceptBtn.addEventListener("click", async () => {
+    toggleFamilyLoading(true);
+    try {
+      setFamilyStatus("Accepting family invite...");
+      familyState = await acceptFamilyInvite({ token: inviteToken });
+      clearFamilyInviteTokenFromUrl();
+      inviteToken = "";
+      renderFamilySection();
+    } catch (error) {
+      setFamilyStatus(String(error?.message || error || "Could not accept the family invite."), "error");
+    } finally {
+      toggleFamilyLoading(false);
+    }
+  });
+
+  onAuthSessionChanged((session) => {
+    render(session);
+    if (session?.isAuthenticated) {
+      refreshFamilySummary();
+    }
+  });
 
   Promise.all([
     getFirebaseWebConfig().catch(() => ({ enabled: false })),
@@ -452,6 +856,10 @@ export function mountAccountWidget() {
   ]).then(([config, session]) => {
     firebaseConfig = config;
     render(session);
+    if (session?.isAuthenticated) {
+      return refreshFamilySummary();
+    }
+    return null;
   }).catch((error) => {
     firebaseConfig = { enabled: false };
     render(currentSession, String(error?.message || error || "Account unavailable."));

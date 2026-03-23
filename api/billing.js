@@ -4,6 +4,10 @@ const {
   handleConfig,
   handleCreateCheckoutSession,
   handleCreatePortalSession,
+  handleFamilyAcceptInvite,
+  handleFamilyInvite,
+  handleFamilyRemoveMember,
+  handleFamilySummary,
   handleSubscriptionStatus,
   handleWebhook,
 } = require("./stripe/_handlers");
@@ -36,6 +40,14 @@ module.exports = async function handler(req, res) {
       return handleCreateCheckoutSession(req, res);
     case "create-portal-session":
       return handleCreatePortalSession(req, res);
+    case "family-summary":
+      return handleFamilySummary(req, res);
+    case "family-invite":
+      return handleFamilyInvite(req, res);
+    case "family-accept-invite":
+      return handleFamilyAcceptInvite(req, res);
+    case "family-remove-member":
+      return handleFamilyRemoveMember(req, res);
     case "subscription-status":
       return handleSubscriptionStatus(req, res);
     case "webhook":

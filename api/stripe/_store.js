@@ -135,6 +135,8 @@ function createDefaultBillingProfile(userId = "") {
     graceUntil: 0,
     checkoutSessionId: "",
     familyAccountId: "",
+    familyRole: "",
+    familyOwnerUserId: "",
     seatLimit: 0,
     seatCount: 0,
     notificationPrefs: {
@@ -181,6 +183,8 @@ function normalizeBillingProfile(source, fallbackUserId = "") {
     graceUntil: normalizeTimestampMillis(raw.graceUntil),
     checkoutSessionId: normalizeText(raw.checkoutSessionId, 120),
     familyAccountId: normalizeText(raw.familyAccountId, 120),
+    familyRole: normalizeText(raw.familyRole, 40),
+    familyOwnerUserId: normalizeText(raw.familyOwnerUserId, 160),
     seatLimit: normalizeCount(raw.seatLimit),
     seatCount: normalizeCount(raw.seatCount),
     notificationPrefs: normalizeNotificationPrefs(raw.notificationPrefs),

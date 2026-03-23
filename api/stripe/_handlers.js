@@ -27,7 +27,25 @@ const {
   hasProcessedStripeWebhookEvent,
   markStripeWebhookEventProcessed,
 } = require("./_store");
+const {
+  FAMILY_INVITE_TTL_MS,
+  getDefaultFamilySeatLimit,
+  getFamilyAccountForUser,
+  ensureFamilyAccountForOwner,
+  listFamilyInvitesForAccount,
+  createFamilyInvite,
+  getFamilyInviteByToken,
+  acceptFamilyInvite,
+  removeFamilyMember,
+  listEmailDeliveriesForFamilyAccount,
+  saveFamilyInvite,
+  saveFamilyAccount,
+} = require("./_family-store");
 const { isAdminAuthorized } = require("./admin/_admin-auth");
+const {
+  sendFamilyInviteEmail,
+  sendFamilyInviteAcceptedEmail,
+} = require("../_email");
 
 const HANDLED_EVENT_TYPES = new Set([
   "checkout.session.completed",
@@ -145,8 +163,194 @@ function buildBillingSnapshotPatch(summary, existingProfile, overrides = {}) {
     seatLimit: Number(safeProfile.seatLimit || 0),
     seatCount: Number(safeProfile.seatCount || 0),
     familyAccountId: typeof safeProfile.familyAccountId === "string" ? safeProfile.familyAccountId : "",
+    familyRole: typeof safeProfile.familyRole === "string" ? safeProfile.familyRole : "",
+    familyOwnerUserId: typeof safeProfile.familyOwnerUserId === "string" ? safeProfile.familyOwnerUserId : "",
     notificationPrefs: safeProfile.notificationPrefs,
     ...overrides,
+  };
+}
+
+function getDisplayNameFromSession(session) {
+  if (session && typeof session.displayName === "string" && session.displayName.trim()) {
+    return session.displayName.trim();
+  }
+  if (session && typeof session.email === "string" && session.email.includes("@")) {
+    return session.email.split("@")[0];
+  }
+  return "";
+}
+
+function getFamilyAccessContext(profile) {
+  const safeProfile = profile && typeof profile === "object" ? profile : {};
+  const entitlements = safeProfile.entitlements && typeof safeProfile.entitlements === "object"
+    ? safeProfile.entitlements
+    : {};
+  const planId = typeof safeProfile.activePlanId === "string" ? safeProfile.activePlanId : "";
+  const familyPremium = Boolean(entitlements.familyPremium);
+  const eligiblePlan = planId.startsWith("family-");
+  return {
+    entitled: familyPremium && eligiblePlan,
+    planId: eligiblePlan ? planId : "",
+    seatLimit: getDefaultFamilySeatLimit(),
+  };
+}
+
+function requireAuthenticatedSession(req, res) {
+  const session = ensureSession(req, res, { createIfMissing: true });
+  if (!session || !session.userId || !session.isAuthenticated) {
+    sendError(res, 401, "Google sign-in is required for family management.", "auth_required");
+    return null;
+  }
+  return session;
+}
+
+async function clearFamilyAccessForUser(userId) {
+  const existingProfile = await getStripeBillingProfile(userId);
+  const entitlements = existingProfile.entitlements && typeof existingProfile.entitlements === "object"
+    ? existingProfile.entitlements
+    : {};
+  const nextActivePlanId = entitlements.schoolLicense
+    ? existingProfile.activePlanId
+    : (existingProfile.customerId ? existingProfile.activePlanId : "");
+
+  return saveStripeBillingProfile(userId, {
+    entitlements: {
+      familyPremium: false,
+      schoolLicense: Boolean(entitlements.schoolLicense),
+    },
+    activePlanId: nextActivePlanId && !nextActivePlanId.startsWith("family-") ? nextActivePlanId : "",
+    familyAccountId: "",
+    familyRole: "",
+    familyOwnerUserId: "",
+    seatLimit: 0,
+    seatCount: 0,
+    lastSource: "family_access_cleared",
+  });
+}
+
+async function syncFamilyMemberProfiles(account, ownerProfile) {
+  if (!account || !account.id || !account.ownerUserId) {
+    return null;
+  }
+
+  const familyAccess = getFamilyAccessContext(ownerProfile);
+  const members = Array.isArray(account.members) ? account.members : [];
+  const syncedMembers = [];
+  for (const member of members) {
+    const existing = await getStripeBillingProfile(member.userId);
+    const currentEntitlements = existing.entitlements && typeof existing.entitlements === "object"
+      ? existing.entitlements
+      : {};
+    const isOwner = member.userId === account.ownerUserId;
+    const familyPremium = isOwner
+      ? Boolean(ownerProfile?.entitlements?.familyPremium)
+      : familyAccess.entitled;
+    const nextActivePlanId = familyPremium
+      ? (familyAccess.planId || existing.activePlanId || "")
+      : (currentEntitlements.schoolLicense && existing.activePlanId && !existing.activePlanId.startsWith("family-")
+        ? existing.activePlanId
+        : "");
+
+    const saved = await saveStripeBillingProfile(member.userId, {
+      entitlements: {
+        familyPremium,
+        schoolLicense: Boolean(currentEntitlements.schoolLicense),
+      },
+      activePlanId: nextActivePlanId,
+      familyAccountId: account.id,
+      familyRole: isOwner ? "owner" : "member",
+      familyOwnerUserId: account.ownerUserId,
+      seatLimit: account.seatLimit,
+      seatCount: account.members.length,
+      lastSource: isOwner ? "family_owner_sync" : "family_member_sync",
+    });
+    syncedMembers.push(saved);
+  }
+
+  return syncedMembers;
+}
+
+async function provisionFamilyAccountForProfile({ userId, profile, session }) {
+  const familyAccess = getFamilyAccessContext(profile);
+  let account = await getFamilyAccountForUser(userId);
+
+  if (familyAccess.entitled) {
+    if (account && account.ownerUserId && account.ownerUserId !== userId) {
+      return account;
+    }
+    account = await ensureFamilyAccountForOwner({
+      ownerUserId: userId,
+      ownerEmail: session?.email || profile.customerEmail || account?.ownerEmail || "",
+      ownerDisplayName: getDisplayNameFromSession(session) || account?.ownerDisplayName || "",
+      planId: familyAccess.planId,
+      status: "active",
+      seatLimit: familyAccess.seatLimit,
+    });
+    await syncFamilyMemberProfiles(account, profile);
+    return account;
+  }
+
+  if (!account || account.ownerUserId !== userId) {
+    return account;
+  }
+
+  const inactiveAccount = await saveFamilyAccount(account.id, {
+    status: "inactive",
+    planId: "",
+  });
+
+  const nonOwnerMembers = inactiveAccount.members.filter((member) => member.userId !== inactiveAccount.ownerUserId);
+  for (const member of nonOwnerMembers) {
+    await clearFamilyAccessForUser(member.userId);
+  }
+  await saveStripeBillingProfile(userId, {
+    familyAccountId: inactiveAccount.id,
+    familyRole: "owner",
+    familyOwnerUserId: inactiveAccount.ownerUserId,
+    seatLimit: inactiveAccount.seatLimit,
+    seatCount: inactiveAccount.members.length,
+    lastSource: "family_owner_sync",
+  });
+  return inactiveAccount;
+}
+
+async function buildFamilySummary(session) {
+  const profile = await getStripeBillingProfile(session.userId);
+  const account = await provisionFamilyAccountForProfile({
+    userId: session.userId,
+    profile,
+    session,
+  }) || await getFamilyAccountForUser(session.userId);
+  const emailDeliveries = account ? await listEmailDeliveriesForFamilyAccount(account.id) : [];
+  const invites = account && account.ownerUserId === session.userId
+    ? await listFamilyInvitesForAccount(account.id)
+    : [];
+
+  return {
+    profile,
+    account,
+    invites,
+    emailDeliveries,
+    payload: {
+      ok: true,
+      userId: session.userId,
+      isAuthenticated: true,
+      billing: summarizeEntitlementsFromProfile(profile),
+      family: account ? {
+        id: account.id,
+        ownerUserId: account.ownerUserId,
+        ownerEmail: account.ownerEmail,
+        ownerDisplayName: account.ownerDisplayName,
+        status: account.status,
+        planId: account.planId,
+        seatLimit: account.seatLimit,
+        seatCount: account.members.length,
+        seatsRemaining: Math.max(0, account.seatLimit - account.members.length),
+        members: account.members,
+        invites,
+        recentEmailDeliveries: emailDeliveries.slice(0, 5),
+      } : null,
+    },
   };
 }
 
@@ -218,11 +422,12 @@ async function syncCustomerBillingProfile({ stripe, userId, customerId, customer
     customerEmail: customerEmail || profile.customerEmail,
     lastSource: source,
   }));
+  await provisionFamilyAccountForProfile({ userId, profile: savedProfile });
 
   return {
     subscriptions,
-    summary: summarizeEntitlementsFromProfile(savedProfile),
-    profile: savedProfile,
+    summary: summarizeEntitlementsFromProfile(await getStripeBillingProfile(userId)),
+    profile: await getStripeBillingProfile(userId),
   };
 }
 
@@ -270,6 +475,217 @@ async function processHandledEvent(stripe, event) {
     customerBound: true,
     summary: sync.summary,
   };
+}
+
+async function handleFamilySummary(req, res) {
+  if (req.method !== "GET") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = requireAuthenticatedSession(req, res);
+  if (!session) return;
+
+  try {
+    const summary = await buildFamilySummary(session);
+    return sendJson(res, 200, summary.payload);
+  } catch (error) {
+    return sendError(res, 500, "Could not load family account summary.", "family_summary_failed", {
+      message: String(error?.message || error),
+    });
+  }
+}
+
+async function handleFamilyInvite(req, res) {
+  if (req.method !== "POST") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = requireAuthenticatedSession(req, res);
+  if (!session) return;
+
+  try {
+    const profile = await getStripeBillingProfile(session.userId);
+    const familyAccess = getFamilyAccessContext(profile);
+    if (!familyAccess.entitled) {
+      return sendError(res, 403, "An active family subscription is required before inviting members.", "family_plan_required");
+    }
+
+    const account = await provisionFamilyAccountForProfile({
+      userId: session.userId,
+      profile,
+      session,
+    });
+    if (!account || account.ownerUserId !== session.userId) {
+      return sendError(res, 403, "Only the family account owner can invite members.", "family_owner_required");
+    }
+
+    const body = await readJsonBody(req);
+    const inviteEmail = normalizeEmail(body.email);
+    if (!isLikelyEmail(inviteEmail)) {
+      return sendError(res, 400, "A valid email address is required for family invites.", "invalid_invite_email");
+    }
+    if (inviteEmail === normalizeEmail(session.email)) {
+      return sendError(res, 400, "Use a different email address for invited family members.", "invite_self_not_allowed");
+    }
+
+    const existingMember = account.members.find((member) => normalizeEmail(member.email) === inviteEmail);
+    if (existingMember) {
+      return sendError(res, 409, "That email is already part of this family account.", "family_member_exists");
+    }
+
+    const invites = await listFamilyInvitesForAccount(account.id);
+    const activePendingInvite = invites.find((invite) => (
+      invite.status === "pending" &&
+      invite.email === inviteEmail &&
+      invite.expiresAt > Date.now()
+    ));
+    if (!activePendingInvite && (account.members.length + invites.filter((invite) => invite.status === "pending" && invite.expiresAt > Date.now()).length) >= account.seatLimit) {
+      return sendError(res, 409, "All family seats are currently used or reserved by pending invites.", "family_no_available_seats");
+    }
+
+    const baseOrigin = getRequestOrigin(req);
+    const invite = activePendingInvite || await createFamilyInvite({
+      familyAccountId: account.id,
+      createdByUserId: session.userId,
+      email: inviteEmail,
+      baseOrigin,
+    });
+
+    const emailResult = await sendFamilyInviteEmail({
+      to: inviteEmail,
+      inviteUrl: invite.inviteUrl,
+      inviterName: getDisplayNameFromSession(session),
+      familyPlanLabel: account.planId || "Family plan",
+      expiresAt: invite.expiresAt || (Date.now() + FAMILY_INVITE_TTL_MS),
+      familyAccountId: account.id,
+      inviteId: invite.id,
+    });
+
+    if (emailResult?.delivery?.id) {
+      await saveFamilyInvite(invite.id, {
+        lastEmailDeliveryId: emailResult.delivery.id,
+      });
+    }
+
+    const refreshed = await buildFamilySummary(session);
+    return sendJson(res, 200, {
+      ok: true,
+      invite,
+      email: emailResult,
+      ...refreshed.payload,
+    });
+  } catch (error) {
+    return sendError(res, 500, "Could not create family invite.", "family_invite_failed", {
+      message: String(error?.message || error),
+    });
+  }
+}
+
+async function handleFamilyAcceptInvite(req, res) {
+  if (req.method !== "POST") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = requireAuthenticatedSession(req, res);
+  if (!session) return;
+
+  try {
+    const body = await readJsonBody(req);
+    const token = normalizeId(body.token);
+    if (!token) {
+      return sendError(res, 400, "Invite token is required.", "family_invite_token_required");
+    }
+
+    const invite = await getFamilyInviteByToken(token);
+    if (!invite) {
+      return sendError(res, 404, "That family invite could not be found.", "family_invite_not_found");
+    }
+
+    const accepted = await acceptFamilyInvite({
+      token,
+      claimedByUserId: session.userId,
+      claimedByEmail: session.email,
+      claimedByDisplayName: getDisplayNameFromSession(session),
+    });
+    const ownerProfile = await getStripeBillingProfile(accepted.account.ownerUserId);
+    await syncFamilyMemberProfiles(accepted.account, ownerProfile);
+    if (accepted.account.ownerEmail) {
+      await sendFamilyInviteAcceptedEmail({
+        to: accepted.account.ownerEmail,
+        memberName: getDisplayNameFromSession(session) || session.email,
+        familyAccountId: accepted.account.id,
+      });
+    }
+
+    const summary = await buildFamilySummary(session);
+    return sendJson(res, 200, {
+      ok: true,
+      invite: accepted.invite,
+      alreadyAccepted: Boolean(accepted.alreadyAccepted),
+      ...summary.payload,
+    });
+  } catch (error) {
+    const code = String(error?.message || error);
+    const mapped = {
+      family_invite_email_mismatch: { status: 403, message: "Sign in with the same email address that received the invite." },
+      family_invite_expired: { status: 410, message: "That family invite has expired." },
+      family_no_available_seats: { status: 409, message: "This family plan has no seats available right now." },
+      family_invite_not_pending: { status: 409, message: "That family invite can no longer be accepted." },
+      family_account_not_found: { status: 404, message: "The family account linked to this invite no longer exists." },
+    }[code];
+    if (mapped) {
+      return sendError(res, mapped.status, mapped.message, code);
+    }
+    return sendError(res, 500, "Could not accept family invite.", "family_accept_failed", {
+      message: code,
+    });
+  }
+}
+
+async function handleFamilyRemoveMember(req, res) {
+  if (req.method !== "POST") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = requireAuthenticatedSession(req, res);
+  if (!session) return;
+
+  try {
+    const summary = await buildFamilySummary(session);
+    const account = summary.account;
+    if (!account || account.ownerUserId !== session.userId) {
+      return sendError(res, 403, "Only the family account owner can remove members.", "family_owner_required");
+    }
+
+    const body = await readJsonBody(req);
+    const memberUserId = normalizeId(body.memberUserId);
+    if (!memberUserId) {
+      return sendError(res, 400, "Member userId is required.", "family_member_required");
+    }
+
+    const nextAccount = await removeFamilyMember({
+      familyAccountId: account.id,
+      memberUserId,
+    });
+    await clearFamilyAccessForUser(memberUserId);
+    const ownerProfile = await getStripeBillingProfile(session.userId);
+    await syncFamilyMemberProfiles(nextAccount, ownerProfile);
+
+    const refreshed = await buildFamilySummary(session);
+    return sendJson(res, 200, {
+      ok: true,
+      removedUserId: memberUserId,
+      ...refreshed.payload,
+    });
+  } catch (error) {
+    const code = String(error?.message || error);
+    if (code === "family_member_remove_invalid") {
+      return sendError(res, 400, "That member cannot be removed from the family account.", code);
+    }
+    return sendError(res, 500, "Could not remove family member.", "family_remove_failed", {
+      message: code,
+    });
+  }
 }
 
 async function handleConfig(req, res) {
@@ -842,6 +1258,10 @@ module.exports = {
   handleConfig,
   handleCreateCheckoutSession,
   handleCreatePortalSession,
+  handleFamilyAcceptInvite,
+  handleFamilyInvite,
+  handleFamilyRemoveMember,
+  handleFamilySummary,
   handleSubscriptionStatus,
   handleWebhook,
 };

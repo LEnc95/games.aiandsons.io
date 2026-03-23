@@ -78,6 +78,8 @@ test("createDefaultBillingProfile returns safe baseline", () => {
     graceUntil: 0,
     checkoutSessionId: "",
     familyAccountId: "",
+    familyRole: "",
+    familyOwnerUserId: "",
     seatLimit: 0,
     seatCount: 0,
     notificationPrefs: {

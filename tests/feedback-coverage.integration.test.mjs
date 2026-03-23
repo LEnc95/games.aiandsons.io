@@ -21,8 +21,11 @@ test("every feedback game page mounts the shared feedback widget", () => {
     const filePath = path.join(ROOT, game.filePath);
     assert.ok(fs.existsSync(filePath), `Expected game file for feedback coverage: ${game.filePath}`);
     const source = fs.readFileSync(filePath, "utf8");
-    const slugPattern = `mountGameFeedback({ gameSlug: \"${game.slug}\"`;
-    if (!source.includes(slugPattern)) {
+    const slugPattern = new RegExp(
+      `mountGameFeedback\\(\\{\\s*gameSlug:\\s*["']${game.slug}["']`,
+      "m",
+    );
+    if (!slugPattern.test(source)) {
       missing.push(game.filePath);
     }
   }

@@ -53,5 +53,6 @@
 - game/starfielddodger
 - game/simonsays
 - game/reactiongrid
+- game/gravityswitch
 
 Generated from `src/meta/feedback.js`.

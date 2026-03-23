@@ -166,6 +166,8 @@ test("firebase config endpoint reports disabled when public config is missing", 
   assert.equal(res.statusCode, 200);
   assert.equal(json.ok, true);
   assert.equal(json.enabled, false);
+  assert.equal(json.source, "env-vars");
+  assert.deepEqual(json.missingFields, ["projectId", "apiKey", "authDomain"]);
   assert.equal(json.config, null);
 });
 
@@ -187,6 +189,8 @@ test("firebase config endpoint supports common public env names with minimal aut
   assert.equal(res.statusCode, 200);
   assert.equal(json.ok, true);
   assert.equal(json.enabled, true);
+  assert.equal(json.source, "env-vars");
+  assert.deepEqual(json.missingFields, []);
   assert.equal(json.config.projectId, "demo-project");
   assert.equal(json.config.apiKey, "demo-api-key");
   assert.equal(json.config.authDomain, "demo-project.firebaseapp.com");
@@ -211,6 +215,8 @@ test("firebase config endpoint supports full Firebase web-config JSON env", asyn
   assert.equal(res.statusCode, 200);
   assert.equal(json.ok, true);
   assert.equal(json.enabled, true);
+  assert.equal(json.source, "web-config-json");
+  assert.deepEqual(json.missingFields, []);
   assert.equal(json.config.projectId, "games-aiandsons-io");
   assert.equal(json.config.apiKey, "json-api-key");
   assert.equal(json.config.authDomain, "games-aiandsons-io.firebaseapp.com");

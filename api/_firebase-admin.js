@@ -223,10 +223,16 @@ function getFirebasePublicConfig() {
     "VITE_FIREBASE_MESSAGING_SENDER_ID",
   ], 80) || readConfigValue(webConfig, ["messagingSenderId", "messaging_sender_id"], 80);
   const storageBucket = getFirebaseStorageBucketName();
+  const missingFields = [];
+  if (!projectId) missingFields.push("projectId");
+  if (!apiKey) missingFields.push("apiKey");
+  if (!authDomain) missingFields.push("authDomain");
   const enabled = Boolean(projectId && apiKey && authDomain);
 
   return {
     enabled,
+    source: webConfig ? "web-config-json" : "env-vars",
+    missingFields,
     projectId,
     apiKey,
     authDomain,

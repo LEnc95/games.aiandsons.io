@@ -32,6 +32,8 @@ async function handleFirebaseConfig(req, res) {
   return sendJson(res, 200, {
     ok: true,
     enabled: Boolean(config.enabled),
+    source: config.source || "",
+    missingFields: Array.isArray(config.missingFields) ? config.missingFields : [],
     config: config.enabled ? config : null,
   });
 }

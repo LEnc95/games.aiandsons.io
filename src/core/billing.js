@@ -321,3 +321,39 @@ export const syncEntitlementsWithBillingBackend = async ({
 
   return { synced: true, snapshot, entitlements };
 };
+
+export const fetchFamilyBillingSummary = async () => {
+  await ensureBillingSession();
+  const response = await fetch("/api/stripe/family-summary", {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  return parseApiResponse(response);
+};
+
+export const sendFamilyInvite = async ({ email } = {}) => {
+  await ensureBillingSession();
+  const normalizedEmail = normalizeEmail(email);
+  if (!isLikelyEmail(normalizedEmail)) {
+    throw new Error("Enter a valid email address before sending a family invite.");
+  }
+  return postJson("/api/stripe/family-invite", { email: normalizedEmail });
+};
+
+export const acceptFamilyInvite = async ({ token } = {}) => {
+  await ensureBillingSession();
+  const normalizedToken = typeof token === "string" ? token.trim() : "";
+  if (!normalizedToken) {
+    throw new Error("Family invite token is missing.");
+  }
+  return postJson("/api/stripe/family-accept-invite", { token: normalizedToken });
+};
+
+export const removeFamilyMember = async ({ memberUserId } = {}) => {
+  await ensureBillingSession();
+  const normalizedMemberUserId = typeof memberUserId === "string" ? memberUserId.trim() : "";
+  if (!normalizedMemberUserId) {
+    throw new Error("Choose a valid family member before removing them.");
+  }
+  return postJson("/api/stripe/family-remove-member", { memberUserId: normalizedMemberUserId });
+};
