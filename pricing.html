@@ -79,15 +79,20 @@
     <section class="checkout-panel">
       <h3>Checkout</h3>
       <p id="checkoutStatus">Choose a plan to continue.</p>
+      <p class="token" id="checkoutToken" style="display:none;"></p>
       <div class="billing-row" id="billingEmailRow" style="display:none;">
         <label for="billingEmailInput">Billing email</label>
         <input id="billingEmailInput" type="email" autocomplete="email" placeholder="parent@example.com" />
       </div>
       <div class="checkout-actions">
         <button id="startCheckoutBtn" class="primary" type="button">Start Checkout</button>
+        <button id="completeCheckoutBtn" class="secondary" type="button" style="display:none;">Complete Purchase</button>
+        <button id="clearCheckoutBtn" class="secondary" type="button" style="display:none;">Clear Pending</button>
         <button id="manageBillingBtn" class="secondary" type="button" style="display:none;">Manage Subscription</button>
       </div>
-      <p class="note" id="checkoutNote">Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.</p>
+      <p class="note" id="checkoutNote">
+        Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.
+      </p>
     </section>
   </main>
 
@@ -98,6 +103,10 @@
       ENTITLEMENT_KEYS,
       getEntitlements,
       hasEntitlement,
+      getCheckoutState,
+      createCheckoutIntent,
+      completeCheckoutIntent,
+      clearCheckoutIntent,
     } from './src/core/entitlements.js';
     import {
       fetchBillingConfig,
@@ -140,10 +149,13 @@
 
     const planGrid = document.getElementById('planGrid');
     const checkoutStatus = document.getElementById('checkoutStatus');
+    const checkoutToken = document.getElementById('checkoutToken');
     const checkoutNote = document.getElementById('checkoutNote');
     const billingEmailRow = document.getElementById('billingEmailRow');
     const billingEmailInput = document.getElementById('billingEmailInput');
     const startCheckoutBtn = document.getElementById('startCheckoutBtn');
+    const completeCheckoutBtn = document.getElementById('completeCheckoutBtn');
+    const clearCheckoutBtn = document.getElementById('clearCheckoutBtn');
     const manageBillingBtn = document.getElementById('manageBillingBtn');
 
     let selectedPlanId = plans[0].id;
@@ -157,6 +169,8 @@
       checkoutBusy = Boolean(nextBusy);
       if (checkoutBusy) {
         startCheckoutBtn.disabled = true;
+        completeCheckoutBtn.disabled = true;
+        clearCheckoutBtn.disabled = true;
         manageBillingBtn.disabled = true;
       }
     }
@@ -171,16 +185,16 @@
       planGrid.innerHTML = '';
       for (const plan of plans) {
         const card = document.createElement('article');
-        card.className = \`plan-card${selectedPlanId === plan.id ? ' selected' : ''}\`;
+        card.className = `plan-card${selectedPlanId === plan.id ? ' selected' : ''}`;
         card.dataset.planId = plan.id;
-        const features = plan.features.map((feature) => \`<li>${feature}</li>\`).join('');
-        card.innerHTML = \`
+        const features = plan.features.map((feature) => `<li>${feature}</li>`).join('');
+        card.innerHTML = `
           <h3>${plan.name}</h3>
           <p class="price">${plan.price}</p>
           <p class="plan-meta">${plan.meta}</p>
           <ul class="plan-features">${features}</ul>
           <button class="select-btn" type="button">Select ${plan.name}</button>
-        \`;
+        `;
         const btn = card.querySelector('.select-btn');
         btn.addEventListener('click', () => {
           selectedPlanId = plan.id;
@@ -194,6 +208,7 @@
 
     function renderCheckout() {
       const entitlements = getEntitlements();
+      const checkout = getCheckoutState(entitlements);
       const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
       const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
       const stripeMode = isStripeMode();
@@ -202,18 +217,22 @@
         const supportedPlans = getSupportedPlans();
         const selectedPlanSupported = supportedPlans.has(selectedPlanId);
         startCheckoutBtn.textContent = 'Continue to Secure Checkout';
+        completeCheckoutBtn.style.display = 'none';
+        clearCheckoutBtn.style.display = 'none';
         billingEmailRow.style.display = 'grid';
         manageBillingBtn.style.display = 'inline-flex';
+        checkoutToken.style.display = 'none';
+        checkoutToken.textContent = '';
         checkoutNote.textContent = 'Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.';
 
         if (hasFamilyPremium) {
-          checkoutStatus.innerHTML = \`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\`;
+          checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
           manageBillingBtn.disabled = checkoutBusy;
         } else if (!selectedPlanSupported) {
-          checkoutStatus.textContent = \`Selected plan is not configured on this environment. Choose a supported plan or contact support.\`;
+          checkoutStatus.textContent = `Selected plan is not configured on this environment. Choose a supported plan or contact support.`;
           manageBillingBtn.disabled = true;
         } else {
-          checkoutStatus.textContent = \`Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.\`;
+          checkoutStatus.textContent = `Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.`;
           manageBillingBtn.disabled = checkoutBusy;
         }
 
@@ -221,18 +240,33 @@
         return;
       }
 
-      startCheckoutBtn.textContent = 'Billing Unavailable';
+      startCheckoutBtn.textContent = 'Start Checkout';
+      completeCheckoutBtn.style.display = 'inline-flex';
+      clearCheckoutBtn.style.display = 'inline-flex';
       billingEmailRow.style.display = 'none';
       manageBillingBtn.style.display = 'none';
       manageBillingBtn.disabled = true;
-      checkoutNote.textContent = 'Billing is not configured for this environment. Stripe provider is required.';
+      checkoutNote.textContent = 'Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.';
 
       if (hasFamilyPremium) {
-        checkoutStatus.innerHTML = \`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\`;
+        checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
+      } else if (checkout.status === 'pending') {
+        checkoutStatus.textContent = `Checkout pending for ${checkout.planId}. Complete purchase to activate Family Premium.`;
       } else {
-        checkoutStatus.textContent = 'Provider connection failed.';
+        checkoutStatus.textContent = `Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Start checkout to create a pending token.`;
       }
-      startCheckoutBtn.disabled = true;
+
+      if (checkout.token) {
+        checkoutToken.style.display = 'block';
+        checkoutToken.textContent = `Checkout token: ${checkout.token}`;
+      } else {
+        checkoutToken.style.display = 'none';
+        checkoutToken.textContent = '';
+      }
+
+      startCheckoutBtn.disabled = checkoutBusy || !selectedPlanId;
+      completeCheckoutBtn.disabled = checkoutBusy || checkout.status !== 'pending' || !checkout.token;
+      clearCheckoutBtn.disabled = checkoutBusy;
     }
 
     async function syncStripeCheckoutFromUrl() {
@@ -250,7 +284,7 @@
             trackKpiEvent('checkout_completed', { planId: syncResult.snapshot?.activePlanId || selectedPlanId, billingProvider: 'stripe' });
           }
         } catch (error) {
-          checkoutStatus.textContent = \`Checkout return detected, but subscription sync failed: ${error.message}\`;
+          checkoutStatus.textContent = `Checkout return detected, but subscription sync failed: ${error.message}`;
         }
       } else if (checkoutResult === 'canceled') {
         checkoutStatus.textContent = 'Checkout canceled. You can try again at any time.';
@@ -260,7 +294,7 @@
       url.searchParams.delete('checkout');
       url.searchParams.delete('session_id');
       const nextSearch = url.searchParams.toString();
-      const nextUrl = \`${url.pathname}${nextSearch ? \`?${nextSearch}\` : ''}${url.hash || ''}\`;
+      const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash || ''}`;
       window.history.replaceState({}, '', nextUrl);
     }
 
@@ -274,33 +308,55 @@
     }
 
     startCheckoutBtn.addEventListener('click', async () => {
-      if (!selectedPlanId || checkoutBusy || !isStripeMode()) return;
-      
-      const billingEmail = updateBillingEmail();
-      if (!billingEmail) {
-        checkoutStatus.textContent = 'Enter your billing email to continue to secure checkout.';
-        billingEmailInput.focus();
-        return;
+      if (!selectedPlanId || checkoutBusy) return;
+      if (isStripeMode()) {
+        const billingEmail = updateBillingEmail();
+        if (!billingEmail) {
+          checkoutStatus.textContent = 'Enter your billing email to continue to secure checkout.';
+          billingEmailInput.focus();
+          return;
+        }
+
+        setCheckoutBusy(true);
+        renderCheckout();
+        try {
+          const session = await createStripeCheckoutSession({
+            planId: selectedPlanId,
+            customerEmail: billingEmail,
+            successUrl: `${window.location.origin}/pricing.html?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/pricing.html?checkout=canceled`,
+          });
+          trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'stripe' });
+          window.location.assign(session.url);
+          return;
+        } catch (error) {
+          checkoutStatus.textContent = `Secure checkout is unavailable right now: ${error.message}`;
+          setCheckoutBusy(false);
+          renderCheckout();
+          return;
+        }
       }
 
-      setCheckoutBusy(true);
+      const result = createCheckoutIntent(selectedPlanId);
+      if (!result) return;
+      trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'local' });
       renderCheckout();
-      try {
-        const session = await createStripeCheckoutSession({
-          planId: selectedPlanId,
-          customerEmail: billingEmail,
-          successUrl: \`${window.location.origin}/pricing.html?checkout=success&session_id={CHECKOUT_SESSION_ID}\`,
-          cancelUrl: \`${window.location.origin}/pricing.html?checkout=canceled\`,
-        });
-        trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'stripe' });
-        window.location.assign(session.url);
-        return;
-      } catch (error) {
-        checkoutStatus.textContent = \`Secure checkout is unavailable right now: ${error.message}\`;
-        setCheckoutBusy(false);
-        renderCheckout();
-        return;
-      }
+    });
+
+    completeCheckoutBtn.addEventListener('click', () => {
+      if (isStripeMode()) return;
+      const checkout = getCheckoutState();
+      if (!checkout.token) return;
+      completeCheckoutIntent(checkout.token);
+      trackKpiEvent('checkout_completed', { planId: checkout.planId || selectedPlanId, billingProvider: 'local' });
+      renderCheckout();
+    });
+
+    clearCheckoutBtn.addEventListener('click', () => {
+      if (isStripeMode()) return;
+      clearCheckoutIntent();
+      trackKpiEvent('checkout_cleared', { planId: selectedPlanId, billingProvider: 'local' });
+      renderCheckout();
     });
 
     manageBillingBtn.addEventListener('click', async () => {
@@ -312,12 +368,12 @@
       try {
         const portal = await createStripePortalSession({
           customerEmail: billingEmail,
-          returnUrl: \`${window.location.origin}/pricing.html\`,
+          returnUrl: `${window.location.origin}/pricing.html`,
         });
         trackKpiEvent('billing_portal_opened', { billingProvider: 'stripe' });
         window.location.assign(portal.url);
       } catch (error) {
-        checkoutStatus.textContent = \`Could not open billing management: ${error.message}\`;
+        checkoutStatus.textContent = `Could not open billing management: ${error.message}`;
         setCheckoutBusy(false);
         renderCheckout();
       }
@@ -329,12 +385,16 @@
 
     window.render_game_to_text = () => {
       const entitlements = getEntitlements();
+      const checkout = getCheckoutState(entitlements);
       return JSON.stringify({
         view: 'pricing',
         selectedPlanId,
         billingProvider: isStripeMode() ? 'stripe' : 'local',
         stripeBillingEnabled: isStripeMode(),
         familyPremium: hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements),
+        checkoutStatus: checkout.status,
+        checkoutPlanId: checkout.planId,
+        checkoutToken: checkout.token,
       });
     };
 
