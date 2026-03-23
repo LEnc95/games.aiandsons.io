@@ -97,7 +97,7 @@
   </main>
 
   <script type="module">
-    import { getCachedAuthSession } from './src/auth/client.js';
+    import { getCachedAuthSession, onAuthSessionChanged, signInWithGoogle } from './src/auth/client.js';
     import { mountAccountWidget } from './src/auth/embed.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
     import {
@@ -122,6 +122,13 @@
 
     loadAndApplyAccessibility();
     mountAccountWidget();
+
+    onAuthSessionChanged((session) => {
+      if (session?.isAuthenticated && session?.email && billingEmailInput) {
+        billingEmailInput.value = session.email;
+        setBillingEmail(session.email);
+      }
+    });
 
     const plans = [
       {
@@ -319,6 +326,18 @@
 
     startCheckoutBtn.addEventListener('click', async () => {
       if (!selectedPlanId || checkoutBusy) return;
+
+      const session = getCachedAuthSession();
+      if (!session?.isAuthenticated && !session?.stubbed) {
+        checkoutStatus.textContent = 'Please sign in with Google to continue secure checkout.';
+        try {
+          await signInWithGoogle();
+        } catch (error) {
+          checkoutStatus.textContent = `Sign in required: ${error.message}`;
+        }
+        return;
+      }
+
       if (isStripeMode()) {
         const billingEmail = updateBillingEmail();
         if (!billingEmail) {
@@ -371,6 +390,18 @@
 
     manageBillingBtn.addEventListener('click', async () => {
       if (!isStripeMode() || checkoutBusy) return;
+
+      const session = getCachedAuthSession();
+      if (!session?.isAuthenticated && !session?.stubbed) {
+        checkoutStatus.textContent = 'Please sign in with Google to manage your subscription.';
+        try {
+          await signInWithGoogle();
+        } catch (error) {
+          checkoutStatus.textContent = `Sign in required: ${error.message}`;
+        }
+        return;
+      }
+
       const billingEmail = updateBillingEmail();
       if (!billingEmail) {
         checkoutStatus.textContent = 'Enter your billing email to manage your subscription.';

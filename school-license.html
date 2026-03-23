@@ -261,7 +261,7 @@
   </main>
 
   <script type="module">
-    import { getCachedAuthSession } from './src/auth/client.js';
+    import { getCachedAuthSession, onAuthSessionChanged, signInWithGoogle } from './src/auth/client.js';
     import { mountAccountWidget } from './src/auth/embed.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
     import { ENTITLEMENT_KEYS, getEntitlements, hasEntitlement } from './src/core/entitlements.js';
@@ -278,6 +278,13 @@
 
     loadAndApplyAccessibility();
     mountAccountWidget();
+
+    onAuthSessionChanged((session) => {
+      if (session?.isAuthenticated && session?.email && billingEmailInput) {
+        billingEmailInput.value = session.email;
+        setBillingEmail(session.email);
+      }
+    });
 
     const plans = [
       {
@@ -442,6 +449,19 @@
     if (startCheckoutBtn) {
       startCheckoutBtn.addEventListener('click', async () => {
         if (!selectedPlanId || checkoutBusy || !isStripeMode()) return;
+
+        const session = getCachedAuthSession();
+        if (!session?.isAuthenticated && !session?.stubbed) {
+          licenseStatus.textContent = 'Please sign in with Google to continue secure checkout.';
+          licenseStatus.className = 'status error';
+          try {
+            await signInWithGoogle();
+          } catch (error) {
+            licenseStatus.textContent = `Sign in required: ${error.message}`;
+          }
+          return;
+        }
+
         const billingEmail = updateBillingEmail();
         if (!billingEmail) {
           licenseStatus.textContent = 'Enter your billing email to continue to secure checkout.';
@@ -475,6 +495,19 @@
     if (manageBillingBtn) {
       manageBillingBtn.addEventListener('click', async () => {
         if (!isStripeMode() || checkoutBusy) return;
+
+        const session = getCachedAuthSession();
+        if (!session?.isAuthenticated && !session?.stubbed) {
+          licenseStatus.textContent = 'Please sign in with Google to manage your subscription.';
+          licenseStatus.className = 'status error';
+          try {
+            await signInWithGoogle();
+          } catch (error) {
+            licenseStatus.textContent = `Sign in required: ${error.message}`;
+          }
+          return;
+        }
+
         const billingEmail = updateBillingEmail();
         if (!billingEmail) {
           licenseStatus.textContent = 'Enter your billing email to manage your subscription.';
