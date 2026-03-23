@@ -1,4 +1,4 @@
-﻿import { get, set } from "./storage.js";
+import { get, set } from "./storage.js";
 import { ENTITLEMENT_KEYS, getEntitlements, setEntitlements } from "./entitlements.js";
 
 const BILLING_EMAIL_STORAGE_KEY = "billingEmail";
@@ -45,21 +45,6 @@ const normalizeSupportedPlans = (plans) => {
   return normalized;
 };
 
-const shouldSkipRemoteBillingProbe = () => {
-  if (typeof location === "undefined") return false;
-  const host = String(location.hostname || "").toLowerCase();
-  const isLoopback = host === "localhost" || host === "127.0.0.1";
-  if (!isLoopback) return false;
-
-  try {
-    const params = new URLSearchParams(location.search || "");
-    const forceProbe = params.get("stripeApiProbe");
-    return forceProbe !== "1";
-  } catch {
-    return true;
-  }
-};
-
 export const normalizeBillingConfig = (source) => {
   const raw = source && typeof source === "object" ? source : {};
   const providerRaw = typeof raw.provider === "string" ? raw.provider.trim().toLowerCase() : "local";
@@ -94,12 +79,6 @@ const parseApiResponse = async (response) => {
 };
 
 export const ensureBillingSession = async ({ force = false } = {}) => {
-  if (shouldSkipRemoteBillingProbe()) {
-    cachedBillingSession = null;
-    billingSessionFetchedAt = Date.now();
-    return null;
-  }
-
   const now = Date.now();
   if (!force && cachedBillingSession && (now - billingSessionFetchedAt) < BILLING_SESSION_CACHE_TTL_MS) {
     return cachedBillingSession;
@@ -128,12 +107,6 @@ export const ensureBillingSession = async ({ force = false } = {}) => {
 };
 
 export const fetchBillingConfig = async ({ force = false } = {}) => {
-  if (shouldSkipRemoteBillingProbe()) {
-    cachedBillingConfig = DEFAULT_BILLING_CONFIG;
-    billingConfigFetchedAt = Date.now();
-    return cachedBillingConfig;
-  }
-
   const now = Date.now();
   if (!force && (now - billingConfigFetchedAt) < BILLING_CONFIG_CACHE_TTL_MS) {
     return cachedBillingConfig;

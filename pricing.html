@@ -86,13 +86,9 @@
       </div>
       <div class="checkout-actions">
         <button id="startCheckoutBtn" class="primary" type="button">Start Checkout</button>
-        <button id="completeCheckoutBtn" class="secondary" type="button">Complete Purchase</button>
-        <button id="clearCheckoutBtn" class="secondary" type="button">Clear Pending</button>
         <button id="manageBillingBtn" class="secondary" type="button" style="display:none;">Manage Subscription</button>
       </div>
-      <p class="note" id="checkoutNote">
-        Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.
-      </p>
+      <p class="note" id="checkoutNote">Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.</p>
     </section>
   </main>
 
@@ -103,10 +99,6 @@
       ENTITLEMENT_KEYS,
       getEntitlements,
       hasEntitlement,
-      getCheckoutState,
-      createCheckoutIntent,
-      completeCheckoutIntent,
-      clearCheckoutIntent,
     } from './src/core/entitlements.js';
     import {
       fetchBillingConfig,
@@ -208,7 +200,7 @@
 
     function renderCheckout() {
       const entitlements = getEntitlements();
-      const checkout = getCheckoutState(entitlements);
+      
       const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
       const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
       const stripeMode = isStripeMode();
@@ -240,33 +232,7 @@
         return;
       }
 
-      startCheckoutBtn.textContent = 'Start Checkout';
-      completeCheckoutBtn.style.display = 'inline-flex';
-      clearCheckoutBtn.style.display = 'inline-flex';
-      billingEmailRow.style.display = 'none';
-      manageBillingBtn.style.display = 'none';
-      manageBillingBtn.disabled = true;
-      checkoutNote.textContent = 'Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.';
-
-      if (hasFamilyPremium) {
-        checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
-      } else if (checkout.status === 'pending') {
-        checkoutStatus.textContent = `Checkout pending for ${checkout.planId}. Complete purchase to activate Family Premium.`;
-      } else {
-        checkoutStatus.textContent = `Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Start checkout to create a pending token.`;
-      }
-
-      if (checkout.token) {
-        checkoutToken.style.display = 'block';
-        checkoutToken.textContent = `Checkout token: ${checkout.token}`;
-      } else {
-        checkoutToken.style.display = 'none';
-        checkoutToken.textContent = '';
-      }
-
-      startCheckoutBtn.disabled = checkoutBusy || !selectedPlanId;
-      completeCheckoutBtn.disabled = checkoutBusy || checkout.status !== 'pending' || !checkout.token;
-      clearCheckoutBtn.disabled = checkoutBusy;
+      
     }
 
     async function syncStripeCheckoutFromUrl() {
@@ -337,27 +303,9 @@
         }
       }
 
-      const result = createCheckoutIntent(selectedPlanId);
-      if (!result) return;
-      trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'local' });
-      renderCheckout();
-    });
+      });
 
-    completeCheckoutBtn.addEventListener('click', () => {
-      if (isStripeMode()) return;
-      const checkout = getCheckoutState();
-      if (!checkout.token) return;
-      completeCheckoutIntent(checkout.token);
-      trackKpiEvent('checkout_completed', { planId: checkout.planId || selectedPlanId, billingProvider: 'local' });
-      renderCheckout();
-    });
-
-    clearCheckoutBtn.addEventListener('click', () => {
-      if (isStripeMode()) return;
-      clearCheckoutIntent();
-      trackKpiEvent('checkout_cleared', { planId: selectedPlanId, billingProvider: 'local' });
-      renderCheckout();
-    });
+    
 
     manageBillingBtn.addEventListener('click', async () => {
       if (!isStripeMode() || checkoutBusy) return;
@@ -392,9 +340,7 @@
         billingProvider: isStripeMode() ? 'stripe' : 'local',
         stripeBillingEnabled: isStripeMode(),
         familyPremium: hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements),
-        checkoutStatus: checkout.status,
-        checkoutPlanId: checkout.planId,
-        checkoutToken: checkout.token,
+        
       });
     };
 
