@@ -453,6 +453,113 @@ async function getUserIdForStripeCustomer(customerId) {
   return normalizeUserId(value);
 }
 
+async function findStripeBillingProfiles({
+  userId = "",
+  customerId = "",
+  customerEmail = "",
+  limit = 10,
+} = {}) {
+  const normalizedUserId = normalizeUserId(userId);
+  const normalizedCustomerId = normalizeCustomerId(customerId);
+  const normalizedCustomerEmail = normalizeEmail(customerEmail);
+  const normalizedLimit = Math.max(1, Math.min(50, Number(limit || 10) || 10));
+
+  if (normalizedUserId) {
+    const profile = await getStripeBillingProfile(normalizedUserId);
+    return profile && profile.userId ? [profile] : [];
+  }
+
+  if (normalizedCustomerId) {
+    const matchedUserId = await getUserIdForStripeCustomer(normalizedCustomerId);
+    if (!matchedUserId) return [];
+    const profile = await getStripeBillingProfile(matchedUserId);
+    return profile && profile.userId ? [profile] : [];
+  }
+
+  if (!normalizedCustomerEmail) {
+    return [];
+  }
+
+  if (isFirestoreStripeStoreEnabled()) {
+    const snapshot = await getStripeCollections().profiles
+      .where("customerEmail", "==", normalizedCustomerEmail)
+      .limit(normalizedLimit)
+      .get();
+    return snapshot.docs
+      .map((doc) => normalizeBillingProfile(doc.data(), doc.id))
+      .filter((profile) => profile.userId);
+  }
+
+  const matches = [];
+  for (const [key, value] of memoryState.values.entries()) {
+    if (!String(key).startsWith(`${KEY_PREFIX}:user:`)) continue;
+    try {
+      const parsed = normalizeBillingProfile(JSON.parse(String(value || "")));
+      if (parsed.customerEmail === normalizedCustomerEmail && parsed.userId) {
+        matches.push(parsed);
+      }
+    } catch {
+      // Ignore invalid cached values.
+    }
+  }
+
+  return matches.slice(0, normalizedLimit);
+}
+
+function shouldIncludeListedProfile(profile, {
+  withCustomerOnly = false,
+  activeOnly = false,
+} = {}) {
+  const safeProfile = profile && typeof profile === "object" ? profile : null;
+  if (!safeProfile || !safeProfile.userId) return false;
+  if (withCustomerOnly && !safeProfile.customerId) return false;
+  if (!activeOnly) return true;
+  return Boolean(
+    safeProfile.customerId &&
+    (
+      safeProfile.subscriptionId ||
+      safeProfile.activePlanId ||
+      safeProfile.entitlements?.familyPremium ||
+      safeProfile.entitlements?.schoolLicense
+    )
+  );
+}
+
+async function listStripeBillingProfiles({
+  limit = 200,
+  withCustomerOnly = false,
+  activeOnly = false,
+} = {}) {
+  const normalizedLimit = Math.max(1, Math.min(500, Number(limit || 200) || 200));
+
+  if (isFirestoreStripeStoreEnabled()) {
+    const snapshot = await getStripeCollections().profiles
+      .orderBy("updatedAt", "desc")
+      .limit(normalizedLimit * 2)
+      .get();
+    const profiles = snapshot.docs
+      .map((doc) => normalizeBillingProfile(doc.data(), doc.id))
+      .filter((profile) => shouldIncludeListedProfile(profile, { withCustomerOnly, activeOnly }));
+    return profiles.slice(0, normalizedLimit);
+  }
+
+  const profiles = [];
+  for (const [key, value] of memoryState.values.entries()) {
+    if (!String(key).startsWith(`${KEY_PREFIX}:user:`)) continue;
+    try {
+      const parsed = normalizeBillingProfile(JSON.parse(String(value || "")));
+      if (shouldIncludeListedProfile(parsed, { withCustomerOnly, activeOnly })) {
+        profiles.push(parsed);
+      }
+    } catch {
+      // Ignore invalid cached values.
+    }
+  }
+
+  profiles.sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0));
+  return profiles.slice(0, normalizedLimit);
+}
+
 async function hasProcessedStripeWebhookEvent(eventId) {
   const normalizedEventId = typeof eventId === "string" ? eventId.trim() : "";
   if (!normalizedEventId) return false;
@@ -494,6 +601,8 @@ module.exports = {
   saveStripeBillingProfile,
   bindUserToStripeCustomer,
   getUserIdForStripeCustomer,
+  findStripeBillingProfiles,
+  listStripeBillingProfiles,
   hasProcessedStripeWebhookEvent,
   markStripeWebhookEventProcessed,
   __resetStripeStoreForTests,

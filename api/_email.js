@@ -32,6 +32,12 @@ async function sendEmail({
   templateKey,
   familyAccountId = "",
   inviteId = "",
+  userId = "",
+  customerId = "",
+  subscriptionId = "",
+  invoiceId = "",
+  eventId = "",
+  dedupeKey = "",
 } = {}) {
   const normalizedTo = normalizeEmail(to);
   const normalizedSubject = normalizeText(subject, 200);
@@ -40,6 +46,12 @@ async function sendEmail({
     templateKey,
     familyAccountId,
     inviteId,
+    userId,
+    customerId,
+    subscriptionId,
+    invoiceId,
+    eventId,
+    dedupeKey,
     to: normalizedTo,
     subject: normalizedSubject,
     status: config.enabled ? "pending" : "skipped",
@@ -113,7 +125,11 @@ async function sendEmail({
 }
 
 function formatDateTime(timestamp) {
-  const date = new Date(Number(timestamp || 0));
+  const numeric = Number(timestamp || 0);
+  const normalized = Number.isFinite(numeric) && numeric > 0 && numeric < 1e12
+    ? numeric * 1000
+    : numeric;
+  const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleString("en-US", {
     month: "short",
@@ -122,6 +138,22 @@ function formatDateTime(timestamp) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function describePlanLabel(planId) {
+  const normalized = normalizeText(planId, 80).toLowerCase();
+  switch (normalized) {
+    case "family-monthly":
+      return "Family Monthly";
+    case "family-annual":
+      return "Family Annual";
+    case "school-monthly":
+      return "School Monthly";
+    case "school-annual":
+      return "School Annual";
+    default:
+      return normalizeText(planId, 80) || "Ai and Sons plan";
+  }
 }
 
 async function sendFamilyInviteEmail({
@@ -189,9 +221,199 @@ async function sendFamilyInviteAcceptedEmail({
   });
 }
 
+async function sendFamilyMemberRemovedEmail({
+  to,
+  memberName,
+  familyAccountId,
+  userId = "",
+} = {}) {
+  const safeMemberName = normalizeText(memberName, 160) || "Family member";
+  const subject = `Your Ai and Sons family access has changed`;
+  const text = `${safeMemberName}, your access through the shared Ai and Sons family plan has been removed. You can still sign in and start your own plan anytime.`;
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
+      <h2 style="margin:0 0 12px;">Family access updated</h2>
+      <p style="margin:0;">${safeMemberName}, your access through the shared Ai and Sons family plan has been removed. You can still sign in and start your own plan anytime.</p>
+    </div>
+  `;
+  return sendEmail({
+    to,
+    subject,
+    text,
+    html,
+    templateKey: "family-member-removed",
+    familyAccountId,
+    userId,
+  });
+}
+
+async function sendBillingPaymentFailedEmail({
+  to,
+  planId,
+  graceUntil,
+  familyAccountId = "",
+  userId = "",
+  customerId = "",
+  subscriptionId = "",
+  invoiceId = "",
+  eventId = "",
+} = {}) {
+  const planLabel = describePlanLabel(planId);
+  const graceLabel = formatDateTime(graceUntil) || "soon";
+  const subject = `Action needed for your Ai and Sons ${planLabel}`;
+  const text = [
+    `We couldn't process your latest payment for ${planLabel}.`,
+    "",
+    `Your access is currently in a grace window until ${graceLabel}.`,
+    "Please update your billing details in the customer portal to avoid an interruption.",
+  ].join("\n");
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
+      <h2 style="margin:0 0 12px;">Payment issue detected</h2>
+      <p style="margin:0 0 12px;">We couldn't process your latest payment for <strong>${planLabel}</strong>.</p>
+      <p style="margin:0 0 12px;">Your access is currently in a grace window until <strong>${graceLabel}</strong>.</p>
+      <p style="margin:0;">Please update your billing details in the customer portal to avoid an interruption.</p>
+    </div>
+  `;
+  return sendEmail({
+    to,
+    subject,
+    text,
+    html,
+    templateKey: "billing-payment-failed",
+    familyAccountId,
+    userId,
+    customerId,
+    subscriptionId,
+    invoiceId,
+    eventId,
+    dedupeKey: eventId || invoiceId,
+  });
+}
+
+async function sendBillingPaymentConfirmedEmail({
+  to,
+  planId,
+  currentPeriodEnd,
+  familyAccountId = "",
+  userId = "",
+  customerId = "",
+  subscriptionId = "",
+  invoiceId = "",
+  eventId = "",
+} = {}) {
+  const planLabel = describePlanLabel(planId);
+  const renewalLabel = formatDateTime(currentPeriodEnd) || "your next billing cycle";
+  const subject = `Your Ai and Sons ${planLabel} payment is confirmed`;
+  const text = [
+    `Your latest payment for ${planLabel} was confirmed.`,
+    "",
+    `Your access is active through ${renewalLabel}.`,
+  ].join("\n");
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
+      <h2 style="margin:0 0 12px;">Payment confirmed</h2>
+      <p style="margin:0 0 12px;">Your latest payment for <strong>${planLabel}</strong> was confirmed.</p>
+      <p style="margin:0;">Your access is active through <strong>${renewalLabel}</strong>.</p>
+    </div>
+  `;
+  return sendEmail({
+    to,
+    subject,
+    text,
+    html,
+    templateKey: "billing-payment-confirmed",
+    familyAccountId,
+    userId,
+    customerId,
+    subscriptionId,
+    invoiceId,
+    eventId,
+    dedupeKey: eventId || invoiceId,
+  });
+}
+
+async function sendBillingCancellationScheduledEmail({
+  to,
+  planId,
+  currentPeriodEnd,
+  familyAccountId = "",
+  userId = "",
+  customerId = "",
+  subscriptionId = "",
+  eventId = "",
+} = {}) {
+  const planLabel = describePlanLabel(planId);
+  const endLabel = formatDateTime(currentPeriodEnd) || "the end of your current billing period";
+  const subject = `Your Ai and Sons ${planLabel} will end at period close`;
+  const text = [
+    `Your ${planLabel} is set to cancel at the end of the current billing period.`,
+    "",
+    `Access remains active through ${endLabel}.`,
+  ].join("\n");
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
+      <h2 style="margin:0 0 12px;">Cancellation scheduled</h2>
+      <p style="margin:0 0 12px;">Your <strong>${planLabel}</strong> is set to cancel at the end of the current billing period.</p>
+      <p style="margin:0;">Access remains active through <strong>${endLabel}</strong>.</p>
+    </div>
+  `;
+  return sendEmail({
+    to,
+    subject,
+    text,
+    html,
+    templateKey: "billing-cancel-scheduled",
+    familyAccountId,
+    userId,
+    customerId,
+    subscriptionId,
+    eventId,
+    dedupeKey: eventId || subscriptionId,
+  });
+}
+
+async function sendBillingSubscriptionEndedEmail({
+  to,
+  planId,
+  familyAccountId = "",
+  userId = "",
+  customerId = "",
+  subscriptionId = "",
+  eventId = "",
+} = {}) {
+  const planLabel = describePlanLabel(planId);
+  const subject = `Your Ai and Sons ${planLabel} has ended`;
+  const text = `Your ${planLabel} has ended. You can sign in any time to restart a plan when you're ready.`;
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
+      <h2 style="margin:0 0 12px;">Subscription ended</h2>
+      <p style="margin:0;">Your <strong>${planLabel}</strong> has ended. You can sign in any time to restart a plan when you're ready.</p>
+    </div>
+  `;
+  return sendEmail({
+    to,
+    subject,
+    text,
+    html,
+    templateKey: "billing-subscription-ended",
+    familyAccountId,
+    userId,
+    customerId,
+    subscriptionId,
+    eventId,
+    dedupeKey: eventId || subscriptionId,
+  });
+}
+
 module.exports = {
   getEmailConfig,
   sendEmail,
+  sendBillingCancellationScheduledEmail,
+  sendBillingPaymentConfirmedEmail,
+  sendBillingPaymentFailedEmail,
+  sendBillingSubscriptionEndedEmail,
   sendFamilyInviteEmail,
   sendFamilyInviteAcceptedEmail,
+  sendFamilyMemberRemovedEmail,
 };

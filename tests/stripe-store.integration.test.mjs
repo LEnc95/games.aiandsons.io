@@ -11,6 +11,7 @@ const {
   saveStripeBillingProfile,
   bindUserToStripeCustomer,
   getUserIdForStripeCustomer,
+  listStripeBillingProfiles,
   hasProcessedStripeWebhookEvent,
   markStripeWebhookEventProcessed,
 } = require("../api/stripe/_store.js");
@@ -173,6 +174,36 @@ test("bindUserToStripeCustomer updates profile and customer lookup", async () =>
 
   const mappedUserId = await getUserIdForStripeCustomer("cus_bind");
   assert.equal(mappedUserId, "usr_bind");
+});
+
+test("listStripeBillingProfiles can focus on active customer-backed profiles", async () => {
+  await saveStripeBillingProfile("usr_active", {
+    customerId: "cus_active",
+    customerEmail: "active@example.com",
+    entitlements: {
+      familyPremium: true,
+      schoolLicense: false,
+    },
+    activePlanId: "family-monthly",
+    subscriptionId: "sub_active",
+    subscriptionStatus: "active",
+  });
+  await saveStripeBillingProfile("usr_customer_only", {
+    customerId: "cus_only",
+    customerEmail: "customer@example.com",
+  });
+  await saveStripeBillingProfile("usr_guest", {
+    customerEmail: "guest@example.com",
+  });
+
+  const withCustomersOnly = await listStripeBillingProfiles({ withCustomerOnly: true });
+  assert.deepEqual(
+    withCustomersOnly.map((profile) => profile.userId).sort(),
+    ["usr_active", "usr_customer_only"],
+  );
+
+  const activeOnly = await listStripeBillingProfiles({ withCustomerOnly: true, activeOnly: true });
+  assert.deepEqual(activeOnly.map((profile) => profile.userId), ["usr_active"]);
 });
 
 test("webhook processed markers can be set and queried", async () => {

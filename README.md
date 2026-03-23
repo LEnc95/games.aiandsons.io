@@ -373,6 +373,13 @@ Daily Linear provisioning automation:
 2. It runs `npm run feedback:check-daily` before provisioning, so stale feedback metadata artifacts fail fast.
 3. It then runs `npm run feedback:provision-linear` with the repository secrets to create any missing labels or per-game baseline issues even if no player has submitted feedback yet.
 
+Nightly billing reconcile automation:
+
+1. `.github/workflows/nightly-billing-reconcile.yml` runs daily at `11:45 UTC` and on manual dispatch.
+2. It runs `npm run stripe:nightly-reconcile -- --base-url https://games.aiandsons.io --dry-run false` and uploads `output/stripe/nightly-reconcile-summary.json` as an artifact.
+3. The script enumerates customer-backed billing profiles from Firestore, then calls the protected Stripe admin reconcile route for each one so subscription drift is repaired without maintaining a manual target list.
+4. Add GitHub repository secrets `STRIPE_ADMIN_TOKEN` plus either `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` so the workflow can both enumerate profiles and authorize the reconcile calls.
+
 Slack automation notifications:
 
 1. Both GitHub workflows post to Slack through `scripts/ci/send-slack-notification.mjs`.

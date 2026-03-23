@@ -7,10 +7,16 @@ import {
 } from "./client.js";
 import {
   acceptFamilyInvite,
+  createStripePortalSession,
+  fetchBillingConfig,
   fetchFamilyBillingSummary,
+  isStripeBillingEnabled,
   removeFamilyMember,
+  resendFamilyInvite,
+  revokeFamilyInvite,
   sendFamilyInvite,
 } from "../core/billing.js";
+import { buildBillingOverviewModel } from "./view-models.js";
 
 const STYLE_ID = "cadeAuthStyles";
 const INLINE_SECTION_ID = "cadeAccountInlineSection";
@@ -55,7 +61,7 @@ function injectStyles() {
       display: flex;
     }
     .cade-account-modal {
-      width: min(420px, 100%);
+      width: min(520px, 100%);
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.12);
       background: linear-gradient(180deg, rgba(12,20,46,0.96) 0%, rgba(7,12,28,0.98) 100%);
@@ -165,6 +171,7 @@ function injectStyles() {
       border-top: 1px solid rgba(255,255,255,0.1);
       padding-top: 14px;
     }
+    .cade-billing-panel,
     .cade-family-panel {
       margin-top: 14px;
       padding-top: 14px;
@@ -172,20 +179,47 @@ function injectStyles() {
       display: grid;
       gap: 12px;
     }
+    .cade-billing-panel h3,
     .cade-family-panel h3 {
       margin: 0;
       font-size: 16px;
       color: #f8fbff;
     }
+    .cade-billing-copy,
     .cade-family-copy {
       margin: 0;
       color: #bdd0ee;
       font-size: 13px;
       line-height: 1.5;
     }
+    .cade-billing-list,
     .cade-family-list {
       display: grid;
       gap: 10px;
+    }
+    .cade-billing-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cade-billing-btn {
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #eef5ff;
+      font: 700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      cursor: pointer;
+    }
+    .cade-billing-btn.primary {
+      background: linear-gradient(135deg, #67cbff 0%, #8bf4da 100%);
+      border-color: rgba(255,255,255,0.24);
+      color: #061423;
+    }
+    .cade-billing-btn:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
     }
     .cade-family-card {
       padding: 12px;
@@ -270,10 +304,12 @@ function injectStyles() {
         width: 100%;
         margin-left: 0;
       }
+      .cade-billing-actions,
       .cade-family-actions {
         flex-direction: column;
       }
-      .cade-family-btn {
+      .cade-family-btn,
+      .cade-billing-btn {
         width: 100%;
       }
     }
@@ -313,6 +349,32 @@ function createAccountPanel({ inline = false, includeClose = false } = {}) {
     primaryBtn: root.querySelector(".cade-account-btn.primary"),
     secondaryBtn: root.querySelector(".cade-account-btn.secondary"),
     closeBtn: root.querySelector(".cade-account-btn.close"),
+  };
+}
+
+function createBillingSection() {
+  const root = document.createElement("section");
+  root.className = "cade-billing-panel";
+  root.innerHTML = `
+    <div>
+      <h3>Billing</h3>
+      <p class="cade-billing-copy">See your current plan, renewal timing, and billing health in one place.</p>
+    </div>
+    <p class="cade-account-status">Loading billing details...</p>
+    <div class="cade-billing-list" hidden></div>
+    <div class="cade-billing-actions">
+      <button type="button" class="cade-billing-btn primary">Manage billing</button>
+      <button type="button" class="cade-billing-btn">View plans</button>
+    </div>
+  `;
+
+  const buttons = root.querySelectorAll(".cade-billing-btn");
+  return {
+    root,
+    statusEl: root.querySelector(".cade-account-status"),
+    cardsEl: root.querySelector(".cade-billing-list"),
+    manageBtn: buttons[0],
+    plansBtn: buttons[1],
   };
 }
 
@@ -370,6 +432,64 @@ function clearFamilyInviteTokenFromUrl() {
   }
 }
 
+function formatFamilyDate(timestamp) {
+  const date = new Date(Number(timestamp || 0));
+  if (Number.isNaN(date.getTime())) return "soon";
+  return date.toLocaleDateString();
+}
+
+function formatFamilyDateTime(timestamp) {
+  const date = new Date(Number(timestamp || 0));
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString();
+}
+
+function describeInviteDelivery(invite) {
+  const delivery = invite?.lastEmailDelivery;
+  if (!delivery) {
+    return invite?.inviteUrl
+      ? "Invite link is ready to share."
+      : "Invite email is still pending.";
+  }
+  if (delivery.status === "sent") {
+    return `Email sent to ${invite.email}.`;
+  }
+  if (delivery.status === "failed") {
+    return delivery.error
+      ? `Email failed: ${delivery.error}`
+      : "Email delivery failed. You can resend it.";
+  }
+  if (delivery.status === "skipped") {
+    return "Email sending is not configured yet, but the invite link is ready.";
+  }
+  return "Invite email is still sending.";
+}
+
+async function copyTextToClipboard(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    throw new Error("Invite link is missing.");
+  }
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "readonly");
+  textarea.style.position = "absolute";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  if (!copied) {
+    throw new Error("Could not copy the invite link.");
+  }
+}
+
 function createFamilyCard(title, lines = [], badge = "") {
   const card = document.createElement("article");
   card.className = "cade-family-card";
@@ -388,6 +508,15 @@ function createFamilyCard(title, lines = [], badge = "") {
     card.appendChild(span);
   }
   return card;
+}
+
+function renderBillingCards(section, model) {
+  section.cardsEl.innerHTML = "";
+  const cards = Array.isArray(model?.cards) ? model.cards : [];
+  section.cardsEl.hidden = cards.length === 0;
+  for (const card of cards) {
+    section.cardsEl.appendChild(createFamilyCard(card.title, card.lines, card.badge));
+  }
 }
 
 function classifyStatus(session, firebaseConfig, pendingMessage = "") {
@@ -577,11 +706,14 @@ export function mountAccountWidget() {
   }
 
   const panel = mounted.panel;
+  const billingSection = createBillingSection();
   const familySection = createFamilySection();
+  panel.root.appendChild(billingSection.root);
   panel.root.appendChild(familySection.root);
   const triggerEl = mounted.triggerEl;
   let currentSession = null;
   let firebaseConfig = null;
+  let billingConfig = null;
   let familyState = null;
   let inviteToken = getFamilyInviteTokenFromUrl();
 
@@ -591,10 +723,53 @@ export function mountAccountWidget() {
     familySection.statusEl.classList.toggle("error", tone === "error");
   }
 
+  function setBillingStatus(message, tone = "") {
+    billingSection.statusEl.textContent = message;
+    billingSection.statusEl.classList.toggle("warning", tone === "warning");
+    billingSection.statusEl.classList.toggle("error", tone === "error");
+  }
+
   function toggleFamilyLoading(loading) {
     familySection.inviteBtn.disabled = loading;
     familySection.acceptBtn.disabled = loading;
     familySection.emailInput.disabled = loading;
+  }
+
+  function toggleBillingLoading(loading) {
+    billingSection.manageBtn.disabled = loading;
+    billingSection.plansBtn.disabled = loading;
+  }
+
+  function renderBillingSection() {
+    const session = currentSession;
+    const authenticated = Boolean(session?.isAuthenticated);
+    const stripeEnabled = isStripeBillingEnabled(billingConfig);
+    const billing = familyState?.billing || null;
+    const model = buildBillingOverviewModel({
+      billing,
+      billingEnabled: stripeEnabled,
+    });
+
+    renderBillingCards(billingSection, model);
+    billingSection.manageBtn.hidden = !model.canManageBilling;
+    billingSection.manageBtn.disabled = !model.canManageBilling;
+    billingSection.plansBtn.disabled = false;
+
+    if (!authenticated) {
+      billingSection.cardsEl.hidden = true;
+      setBillingStatus("Sign in with Google to see your subscription status and manage billing.");
+      return;
+    }
+
+    if (!familyState) {
+      billingSection.cardsEl.hidden = true;
+      setBillingStatus(stripeEnabled ? "Loading billing details..." : model.statusMessage, model.tone);
+      billingSection.manageBtn.hidden = !stripeEnabled;
+      billingSection.manageBtn.disabled = !stripeEnabled;
+      return;
+    }
+
+    setBillingStatus(model.statusMessage, model.tone);
   }
 
   function renderMemberCards(summary) {
@@ -645,13 +820,84 @@ export function mountAccountWidget() {
     familySection.invitesListEl.innerHTML = "";
     const invites = Array.isArray(summary?.family?.invites) ? summary.family.invites : [];
     const pendingInvites = invites.filter((invite) => invite.status === "pending");
+    const isOwner = summary?.family?.ownerUserId === currentSession?.userId;
     familySection.invitesListEl.hidden = pendingInvites.length === 0;
     for (const invite of pendingInvites) {
+      const delivery = invite.lastEmailDelivery;
       const lines = [
-        `Expires ${new Date(invite.expiresAt || 0).toLocaleDateString() || "soon"}`,
-        invite.inviteUrl ? `Invite link ready for sharing from email or by copy.` : "Invite email pending.",
+        `Expires ${formatFamilyDate(invite.expiresAt)}`,
+        describeInviteDelivery(invite),
       ];
-      const card = createFamilyCard(invite.email, lines, "Invite");
+      if (delivery?.updatedAt) {
+        lines.push(`Last email update: ${formatFamilyDateTime(delivery.updatedAt)}`);
+      }
+      const badge = delivery?.status === "failed"
+        ? "Needs attention"
+        : (delivery?.status === "sent" ? "Sent" : "Pending");
+      const card = createFamilyCard(invite.email, lines, badge);
+      if (isOwner) {
+        const actions = document.createElement("div");
+        actions.className = "cade-family-actions";
+        if (invite.inviteUrl) {
+          const copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "cade-family-btn";
+          copyBtn.textContent = "Copy link";
+          copyBtn.addEventListener("click", async () => {
+            copyBtn.disabled = true;
+            try {
+              await copyTextToClipboard(invite.inviteUrl);
+              setFamilyStatus(`Invite link copied for ${invite.email}.`);
+            } catch (error) {
+              setFamilyStatus(String(error?.message || error || "Could not copy the invite link."), "error");
+            } finally {
+              copyBtn.disabled = false;
+            }
+          });
+          actions.appendChild(copyBtn);
+        }
+
+        const resendBtn = document.createElement("button");
+        resendBtn.type = "button";
+        resendBtn.className = "cade-family-btn";
+        resendBtn.textContent = "Resend";
+        resendBtn.addEventListener("click", async () => {
+          resendBtn.disabled = true;
+          toggleFamilyLoading(true);
+          try {
+            setFamilyStatus(`Resending invite to ${invite.email}...`);
+            familyState = await resendFamilyInvite({ inviteId: invite.id });
+            renderFamilySection();
+          } catch (error) {
+            setFamilyStatus(String(error?.message || error || "Could not resend the family invite."), "error");
+          } finally {
+            toggleFamilyLoading(false);
+            resendBtn.disabled = false;
+          }
+        });
+        actions.appendChild(resendBtn);
+
+        const revokeBtn = document.createElement("button");
+        revokeBtn.type = "button";
+        revokeBtn.className = "cade-family-btn danger";
+        revokeBtn.textContent = "Revoke";
+        revokeBtn.addEventListener("click", async () => {
+          revokeBtn.disabled = true;
+          toggleFamilyLoading(true);
+          try {
+            setFamilyStatus(`Revoking invite for ${invite.email}...`);
+            familyState = await revokeFamilyInvite({ inviteId: invite.id });
+            renderFamilySection();
+          } catch (error) {
+            setFamilyStatus(String(error?.message || error || "Could not revoke the family invite."), "error");
+          } finally {
+            toggleFamilyLoading(false);
+            revokeBtn.disabled = false;
+          }
+        });
+        actions.appendChild(revokeBtn);
+        card.appendChild(actions);
+      }
       familySection.invitesListEl.appendChild(card);
     }
   }
@@ -663,12 +909,15 @@ export function mountAccountWidget() {
       familySection.summaryListEl.hidden = true;
       return;
     }
-    const seatUsage = `${family.seatCount}/${family.seatLimit} seats used`;
+    const reservedSeatCount = Number(family.reservedSeatCount || family.seatCount || 0);
+    const pendingInviteCount = Number(family.pendingInviteCount || 0);
+    const seatUsage = `${reservedSeatCount}/${family.seatLimit} seats reserved`;
     familySection.summaryListEl.appendChild(createFamilyCard(
       family.status === "active" ? "Family plan active" : "Family plan inactive",
       [
         family.planId ? `Plan: ${family.planId}` : "No active family billing plan",
         seatUsage,
+        `${family.seatCount} member${family.seatCount === 1 ? "" : "s"} active, ${pendingInviteCount} pending invite${pendingInviteCount === 1 ? "" : "s"}`,
       ],
       family.status === "active" ? "Active" : "Paused",
     ));
@@ -698,6 +947,8 @@ export function mountAccountWidget() {
     familySection.summaryListEl.hidden = true;
     familySection.membersListEl.hidden = true;
     familySection.invitesListEl.hidden = true;
+    familySection.inviteBtn.hidden = true;
+    familySection.emailInput.hidden = false;
     familySection.acceptBtn.hidden = !inviteToken;
 
     if (!authenticated) {
@@ -718,8 +969,9 @@ export function mountAccountWidget() {
 
     if (family) {
       if (family.status === "active" && isOwner) {
-        setFamilyStatus(`You are sharing ${family.planId || "your family plan"} with ${family.seatCount} of ${family.seatLimit} seats filled.`);
+        setFamilyStatus(`You are sharing ${family.planId || "your family plan"} with ${family.seatCount} active members and ${family.pendingInviteCount || 0} pending invites. ${family.reservedSeatCount || family.seatCount}/${family.seatLimit} seats are reserved.`);
         familySection.formEl.hidden = false;
+        familySection.inviteBtn.hidden = false;
       } else if (family.ownerUserId === session?.userId) {
         setFamilyStatus("Your family account is set up, but the family subscription is not active right now.", "warning");
       } else {
@@ -733,6 +985,10 @@ export function mountAccountWidget() {
     if (inviteToken) {
       familySection.formEl.hidden = false;
       familySection.acceptBtn.hidden = false;
+      if (!isOwner) {
+        familySection.inviteBtn.hidden = true;
+        familySection.emailInput.hidden = true;
+      }
       if (!family || family.ownerUserId !== session?.userId) {
         setFamilyStatus("Family invite ready. Accept it below to join the shared plan.");
       }
@@ -742,21 +998,27 @@ export function mountAccountWidget() {
   async function refreshFamilySummary({ pendingMessage = "" } = {}) {
     if (!currentSession?.isAuthenticated) {
       familyState = null;
+      renderBillingSection();
       renderFamilySection();
       return;
     }
     toggleFamilyLoading(true);
+    toggleBillingLoading(true);
     if (pendingMessage) {
       setFamilyStatus(pendingMessage);
     }
     try {
       familyState = await fetchFamilyBillingSummary();
+      renderBillingSection();
       renderFamilySection();
     } catch (error) {
       familyState = null;
+      renderBillingSection();
+      setBillingStatus(String(error?.message || error || "Could not load billing details."), "error");
       setFamilyStatus(String(error?.message || error || "Could not load family details."), "error");
     } finally {
       toggleFamilyLoading(false);
+      toggleBillingLoading(false);
     }
   }
 
@@ -768,6 +1030,7 @@ export function mountAccountWidget() {
         ? `Account: ${getPreferredLabel(session).slice(0, 18)}`
         : "Account";
     }
+    renderBillingSection();
     renderFamilySection();
   }
 
@@ -776,13 +1039,17 @@ export function mountAccountWidget() {
     panel.secondaryBtn.disabled = true;
     try {
       if (!currentSession?.isAuthenticated && firebaseConfig && firebaseConfig.enabled === false) {
-        firebaseConfig = await getFirebaseWebConfig().catch(() => firebaseConfig);
+        [firebaseConfig, billingConfig] = await Promise.all([
+          getFirebaseWebConfig().catch(() => firebaseConfig),
+          fetchBillingConfig({ force: true }).catch(() => billingConfig),
+        ]);
         const session = await fetchAuthSession({ force: true });
         render(session);
         return;
       }
 
       render(currentSession, currentSession?.isAuthenticated ? "Refreshing account..." : "Opening Google sign-in...");
+      billingConfig = await fetchBillingConfig({ force: true }).catch(() => billingConfig);
       const session = currentSession?.isAuthenticated
         ? await fetchAuthSession({ force: true })
         : await signInWithGoogle();
@@ -812,6 +1079,28 @@ export function mountAccountWidget() {
       panel.primaryBtn.disabled = false;
       panel.secondaryBtn.disabled = false;
     }
+  });
+
+  billingSection.manageBtn.addEventListener("click", async () => {
+    if (!isStripeBillingEnabled(billingConfig)) return;
+    toggleBillingLoading(true);
+    try {
+      setBillingStatus("Opening Stripe billing portal...");
+      const billingEmail = familyState?.billing?.customerEmail || currentSession?.email || "";
+      const portal = await createStripePortalSession({
+        customerEmail: billingEmail,
+        returnUrl: window.location.href,
+      });
+      window.location.assign(portal.url);
+    } catch (error) {
+      setBillingStatus(String(error?.message || error || "Could not open billing management."), "error");
+    } finally {
+      toggleBillingLoading(false);
+    }
+  });
+
+  billingSection.plansBtn.addEventListener("click", () => {
+    window.location.assign("/pricing.html");
   });
 
   familySection.inviteBtn.addEventListener("click", async () => {
@@ -852,9 +1141,11 @@ export function mountAccountWidget() {
 
   Promise.all([
     getFirebaseWebConfig().catch(() => ({ enabled: false })),
+    fetchBillingConfig().catch(() => null),
     fetchAuthSession(),
-  ]).then(([config, session]) => {
+  ]).then(([config, nextBillingConfig, session]) => {
     firebaseConfig = config;
+    billingConfig = nextBillingConfig;
     render(session);
     if (session?.isAuthenticated) {
       return refreshFamilySummary();

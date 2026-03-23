@@ -9,6 +9,7 @@ const { createAuthenticatedSession } = require("../api/auth/_session.js");
 const { __resetFirebaseAdminForTests } = require("../api/_firebase-admin.js");
 const { __resetStripeStoreForTests, saveStripeBillingProfile, getStripeBillingProfile } = require("../api/stripe/_store.js");
 const { __resetFamilyStoreForTests } = require("../api/stripe/_family-store.js");
+const originalFetch = global.fetch;
 
 const originalEnv = {
   APP_SESSION_SECRET: process.env.APP_SESSION_SECRET,
@@ -105,6 +106,7 @@ test.beforeEach(() => {
   delete process.env.FIREBASE_CLIENT_EMAIL;
   delete process.env.FIREBASE_PRIVATE_KEY;
   delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  global.fetch = originalFetch;
   __resetFirebaseAdminForTests();
   __resetStripeStoreForTests();
   __resetFamilyStoreForTests();
@@ -112,6 +114,7 @@ test.beforeEach(() => {
 
 test.after(() => {
   restoreEnv();
+  global.fetch = originalFetch;
   __resetFirebaseAdminForTests();
   __resetStripeStoreForTests();
   __resetFamilyStoreForTests();
@@ -214,4 +217,72 @@ test("family invite, accept, and remove flow updates billing access", async () =
   assert.equal(clearedProfile.entitlements.familyPremium, false);
   assert.equal(clearedProfile.familyAccountId, "");
   assert.equal(clearedProfile.familyRole, "");
+});
+
+test("family owners can resend and revoke pending invites while seat counts stay accurate", async () => {
+  await saveStripeBillingProfile("usr_owner", {
+    entitlements: { familyPremium: true, schoolLicense: false },
+    activePlanId: "family-monthly",
+  });
+
+  const ownerCookie = buildAuthCookie({
+    userId: "usr_owner",
+    email: "parent@example.com",
+    displayName: "Parent",
+  });
+
+  const inviteResponse = await invoke({
+    method: "POST",
+    url: "/api/stripe/family-invite",
+    headers: { cookie: ownerCookie },
+    body: { email: "sibling@example.com" },
+  });
+
+  assert.equal(inviteResponse.res.statusCode, 200);
+  assert.equal(inviteResponse.json.invite.status, "pending");
+  assert.equal(inviteResponse.json.family.pendingInviteCount, 1);
+  assert.equal(inviteResponse.json.family.reservedSeatCount, 2);
+
+  process.env.RESEND_API_KEY = "re_test";
+  process.env.EMAIL_FROM = "Ai and Sons <hello@aiandsons.io>";
+  global.fetch = async (url, options = {}) => {
+    assert.equal(url, "https://api.resend.com/emails");
+    assert.equal(options.method, "POST");
+    return {
+      ok: true,
+      json: async () => ({ id: "re_mail_123" }),
+    };
+  };
+
+  const resendResponse = await invoke({
+    method: "POST",
+    url: "/api/stripe/family-resend-invite",
+    headers: { cookie: ownerCookie },
+    body: { inviteId: inviteResponse.json.invite.id },
+  });
+
+  assert.equal(resendResponse.res.statusCode, 200);
+  assert.equal(resendResponse.json.ok, true);
+  assert.equal(resendResponse.json.email.delivery.status, "sent");
+  assert.equal(resendResponse.json.family.pendingInviteCount, 1);
+  assert.equal(resendResponse.json.family.reservedSeatCount, 2);
+  assert.equal(resendResponse.json.invite.lastEmailDelivery.status, "sent");
+
+  const revokeResponse = await invoke({
+    method: "POST",
+    url: "/api/stripe/family-revoke-invite",
+    headers: { cookie: ownerCookie },
+    body: { inviteId: inviteResponse.json.invite.id },
+  });
+
+  assert.equal(revokeResponse.res.statusCode, 200);
+  assert.equal(revokeResponse.json.ok, true);
+  assert.equal(revokeResponse.json.revokedInviteId, inviteResponse.json.invite.id);
+  assert.equal(revokeResponse.json.family.pendingInviteCount, 0);
+  assert.equal(revokeResponse.json.family.reservedSeatCount, 1);
+  assert.equal(revokeResponse.json.family.seatsRemaining, 4);
+  assert.equal(
+    revokeResponse.json.family.invites.find((invite) => invite.id === inviteResponse.json.invite.id)?.status,
+    "revoked",
+  );
 });

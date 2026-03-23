@@ -166,6 +166,12 @@ function normalizeEmailDelivery(source) {
     templateKey: normalizeText(raw.templateKey, 80),
     familyAccountId: normalizeText(raw.familyAccountId, 120),
     inviteId: normalizeText(raw.inviteId, 120),
+    userId: normalizeText(raw.userId, 160),
+    customerId: normalizeText(raw.customerId, 120),
+    subscriptionId: normalizeText(raw.subscriptionId, 120),
+    invoiceId: normalizeText(raw.invoiceId, 120),
+    eventId: normalizeText(raw.eventId, 120),
+    dedupeKey: normalizeText(raw.dedupeKey, 200),
     to: normalizeEmail(raw.to),
     subject: normalizeText(raw.subject, 200),
     status: normalizeText(raw.status, 40) || "pending",
@@ -509,21 +515,53 @@ async function updateEmailDeliveryRecord(id, patch = {}) {
 }
 
 async function listEmailDeliveriesForFamilyAccount(familyAccountId) {
+  return listEmailDeliveries({ familyAccountId });
+}
+
+async function listEmailDeliveries({
+  familyAccountId = "",
+  userId = "",
+  customerId = "",
+  invoiceId = "",
+  limit = 25,
+} = {}) {
   const normalizedAccountId = normalizeText(familyAccountId, 120);
-  if (!normalizedAccountId) return [];
+  const normalizedUserId = normalizeText(userId, 160);
+  const normalizedCustomerId = normalizeText(customerId, 120);
+  const normalizedInvoiceId = normalizeText(invoiceId, 120);
+  const normalizedLimit = Math.max(1, Math.min(100, Number(limit || 25) || 25));
+
   let deliveries = [];
   if (isFirestoreFamilyStoreEnabled()) {
-    const snapshot = await getFamilyCollections().emails
-      .where("familyAccountId", "==", normalizedAccountId)
-      .limit(25)
-      .get();
-    deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+    const collection = getFamilyCollections().emails;
+    if (normalizedAccountId) {
+      const snapshot = await collection.where("familyAccountId", "==", normalizedAccountId).limit(normalizedLimit).get();
+      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+    } else if (normalizedUserId) {
+      const snapshot = await collection.where("userId", "==", normalizedUserId).limit(normalizedLimit).get();
+      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+    } else if (normalizedCustomerId) {
+      const snapshot = await collection.where("customerId", "==", normalizedCustomerId).limit(normalizedLimit).get();
+      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+    } else if (normalizedInvoiceId) {
+      const snapshot = await collection.where("invoiceId", "==", normalizedInvoiceId).limit(normalizedLimit).get();
+      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+    }
   } else {
     deliveries = [...memoryState.emails.values()]
       .map((entry) => normalizeEmailDelivery(entry))
-      .filter((entry) => entry.familyAccountId === normalizedAccountId);
+      .filter((entry) => {
+        if (normalizedAccountId && entry.familyAccountId !== normalizedAccountId) return false;
+        if (normalizedUserId && entry.userId !== normalizedUserId) return false;
+        if (normalizedCustomerId && entry.customerId !== normalizedCustomerId) return false;
+        if (normalizedInvoiceId && entry.invoiceId !== normalizedInvoiceId) return false;
+        return normalizedAccountId || normalizedUserId || normalizedCustomerId || normalizedInvoiceId;
+      });
   }
-  return deliveries.sort((left, right) => right.createdAt - left.createdAt);
+
+  return deliveries
+    .sort((left, right) => right.createdAt - left.createdAt)
+    .slice(0, normalizedLimit);
 }
 
 function __resetFamilyStoreForTests() {
@@ -551,6 +589,7 @@ module.exports = {
   removeFamilyMember,
   createEmailDeliveryRecord,
   updateEmailDeliveryRecord,
+  listEmailDeliveries,
   listEmailDeliveriesForFamilyAccount,
   __resetFamilyStoreForTests,
 };

@@ -357,3 +357,21 @@ export const removeFamilyMember = async ({ memberUserId } = {}) => {
   }
   return postJson("/api/stripe/family-remove-member", { memberUserId: normalizedMemberUserId });
 };
+
+export const resendFamilyInvite = async ({ inviteId } = {}) => {
+  await ensureBillingSession();
+  const normalizedInviteId = typeof inviteId === "string" ? inviteId.trim() : "";
+  if (!normalizedInviteId) {
+    throw new Error("Choose a valid family invite before resending it.");
+  }
+  return postJson("/api/stripe/family-resend-invite", { inviteId: normalizedInviteId });
+};
+
+export const revokeFamilyInvite = async ({ inviteId } = {}) => {
+  await ensureBillingSession();
+  const normalizedInviteId = typeof inviteId === "string" ? inviteId.trim() : "";
+  if (!normalizedInviteId) {
+    throw new Error("Choose a valid family invite before revoking it.");
+  }
+  return postJson("/api/stripe/family-revoke-invite", { inviteId: normalizedInviteId });
+};

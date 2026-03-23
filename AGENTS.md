@@ -32,6 +32,7 @@ Operational command reference for contributors and automations in this repositor
 ## Data and Audit Commands
 - Export KPI snapshot: `npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30`
 - Stripe reconcile/audit pass: `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
+- Stripe nightly reconcile sweep: `npm run stripe:nightly-reconcile -- --base-url https://<your-domain> --dry-run false`
 - Deploy tracked Firebase rules: `npm run firebase:deploy:rules`
 - Run the strict daily feedback metadata guard: `npm run feedback:check-daily`
 - Regenerate Linear feedback seed files and live-provision Linear when envs are present: `npm run feedback:sync-linear`
@@ -41,8 +42,10 @@ Operational command reference for contributors and automations in this repositor
 ## GitHub Automations
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
+- Nightly billing drift reconcile: `.github/workflows/nightly-billing-reconcile.yml`
 - Slack notifications for those workflows use the `SLACK_CI_WEBHOOK_URL` Actions secret and notify on failures by default.
 - Production feedback sync failures can post to Slack from the deployed app when `SLACK_FEEDBACK_WEBHOOK_URL` is set in Vercel.
+- Billing reconcile additionally needs GitHub repository secrets `STRIPE_ADMIN_TOKEN` and either `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` so it can enumerate customer-backed billing profiles from Firestore before calling the admin reconcile route.
 
 ## Firebase Backend
 - Firebase project: `games-aiandsons-io`

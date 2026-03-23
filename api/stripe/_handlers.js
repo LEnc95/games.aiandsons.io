@@ -24,12 +24,14 @@ const {
   bindUserToStripeCustomer,
   saveStripeBillingProfile,
   getUserIdForStripeCustomer,
+  findStripeBillingProfiles,
   hasProcessedStripeWebhookEvent,
   markStripeWebhookEventProcessed,
 } = require("./_store");
 const {
   FAMILY_INVITE_TTL_MS,
   getDefaultFamilySeatLimit,
+  getFamilyAccount,
   getFamilyAccountForUser,
   ensureFamilyAccountForOwner,
   listFamilyInvitesForAccount,
@@ -37,14 +39,20 @@ const {
   getFamilyInviteByToken,
   acceptFamilyInvite,
   removeFamilyMember,
+  listEmailDeliveries,
   listEmailDeliveriesForFamilyAccount,
   saveFamilyInvite,
   saveFamilyAccount,
 } = require("./_family-store");
 const { isAdminAuthorized } = require("./admin/_admin-auth");
 const {
+  sendBillingCancellationScheduledEmail,
+  sendBillingPaymentConfirmedEmail,
+  sendBillingPaymentFailedEmail,
+  sendBillingSubscriptionEndedEmail,
   sendFamilyInviteEmail,
   sendFamilyInviteAcceptedEmail,
+  sendFamilyMemberRemovedEmail,
 } = require("../_email");
 
 const HANDLED_EVENT_TYPES = new Set([
@@ -195,6 +203,38 @@ function getFamilyAccessContext(profile) {
   };
 }
 
+function isInvitePending(invite, now = Date.now()) {
+  return invite && invite.status === "pending" && Number(invite.expiresAt || 0) > now;
+}
+
+async function reconcileFamilyInvitesForAccount(accountId) {
+  const invites = await listFamilyInvitesForAccount(accountId);
+  const now = Date.now();
+  const out = [];
+  for (const invite of invites) {
+    if (invite.status === "pending" && Number(invite.expiresAt || 0) > 0 && Number(invite.expiresAt) <= now) {
+      const expired = await saveFamilyInvite(invite.id, { status: "expired" });
+      out.push(expired);
+    } else {
+      out.push(invite);
+    }
+  }
+  return out;
+}
+
+function countReservedFamilySeats(account, invites) {
+  const family = account && typeof account === "object" ? account : { members: [], seatLimit: 0 };
+  const memberCount = Array.isArray(family.members) ? family.members.length : 0;
+  const pendingInviteCount = Array.isArray(invites)
+    ? invites.filter((invite) => isInvitePending(invite)).length
+    : 0;
+  return {
+    memberCount,
+    pendingInviteCount,
+    reservedSeatCount: memberCount + pendingInviteCount,
+  };
+}
+
 function requireAuthenticatedSession(req, res) {
   const session = ensureSession(req, res, { createIfMissing: true });
   if (!session || !session.userId || !session.isAuthenticated) {
@@ -323,19 +363,29 @@ async function buildFamilySummary(session) {
   }) || await getFamilyAccountForUser(session.userId);
   const emailDeliveries = account ? await listEmailDeliveriesForFamilyAccount(account.id) : [];
   const invites = account && account.ownerUserId === session.userId
-    ? await listFamilyInvitesForAccount(account.id)
+    ? await reconcileFamilyInvitesForAccount(account.id)
     : [];
+  const deliveriesById = new Map(emailDeliveries.map((delivery) => [delivery.id, delivery]));
+  const invitesWithDelivery = invites.map((invite) => ({
+    ...invite,
+    lastEmailDelivery: invite.lastEmailDeliveryId ? (deliveriesById.get(invite.lastEmailDeliveryId) || null) : null,
+    copyable: Boolean(invite.inviteUrl),
+  }));
+  const seatCounts = countReservedFamilySeats(account, invitesWithDelivery);
 
   return {
     profile,
     account,
-    invites,
+    invites: invitesWithDelivery,
     emailDeliveries,
     payload: {
       ok: true,
       userId: session.userId,
       isAuthenticated: true,
-      billing: summarizeEntitlementsFromProfile(profile),
+      billing: {
+        ...summarizeEntitlementsFromProfile(profile),
+        customerEmail: profile.customerEmail || "",
+      },
       family: account ? {
         id: account.id,
         ownerUserId: account.ownerUserId,
@@ -345,12 +395,157 @@ async function buildFamilySummary(session) {
         planId: account.planId,
         seatLimit: account.seatLimit,
         seatCount: account.members.length,
-        seatsRemaining: Math.max(0, account.seatLimit - account.members.length),
+        pendingInviteCount: seatCounts.pendingInviteCount,
+        reservedSeatCount: seatCounts.reservedSeatCount,
+        seatsRemaining: Math.max(0, account.seatLimit - seatCounts.reservedSeatCount),
         members: account.members,
-        invites,
+        invites: invitesWithDelivery,
         recentEmailDeliveries: emailDeliveries.slice(0, 5),
       } : null,
     },
+  };
+}
+
+async function deliverFamilyInviteEmail({ invite, account, session }) {
+  const emailResult = await sendFamilyInviteEmail({
+    to: invite.email,
+    inviteUrl: invite.inviteUrl,
+    inviterName: getDisplayNameFromSession(session),
+    familyPlanLabel: account.planId || "Family plan",
+    expiresAt: invite.expiresAt || (Date.now() + FAMILY_INVITE_TTL_MS),
+    familyAccountId: account.id,
+    inviteId: invite.id,
+  });
+
+  if (emailResult?.delivery?.id) {
+    const updatedInvite = await saveFamilyInvite(invite.id, {
+      lastEmailDeliveryId: emailResult.delivery.id,
+    });
+    return {
+      invite: updatedInvite,
+      emailResult,
+    };
+  }
+
+  return {
+    invite,
+    emailResult,
+  };
+}
+
+function canSendBillingEmail(profile, preferenceKey = "billingEmail") {
+  const prefs = profile && typeof profile.notificationPrefs === "object"
+    ? profile.notificationPrefs
+    : {};
+  return prefs[preferenceKey] !== false;
+}
+
+function mergeDeliveryLists(...lists) {
+  const seen = new Set();
+  const out = [];
+  for (const list of lists) {
+    for (const delivery of Array.isArray(list) ? list : []) {
+      if (!delivery || !delivery.id || seen.has(delivery.id)) continue;
+      seen.add(delivery.id);
+      out.push(delivery);
+    }
+  }
+  return out.sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
+}
+
+async function maybeSendBillingLifecycleEmails({
+  event,
+  previousProfile,
+  nextProfile,
+  userId = "",
+  customerId = "",
+} = {}) {
+  const safePrevious = previousProfile && typeof previousProfile === "object" ? previousProfile : {};
+  const safeNext = nextProfile && typeof nextProfile === "object" ? nextProfile : {};
+  const recipient = normalizeEmail(safeNext.customerEmail || safePrevious.customerEmail);
+  if (!recipient || !canSendBillingEmail(safeNext, "billingEmail")) {
+    return [];
+  }
+
+  const shared = {
+    to: recipient,
+    planId: safeNext.activePlanId || safePrevious.activePlanId || "",
+    familyAccountId: safeNext.familyAccountId || safePrevious.familyAccountId || "",
+    userId: userId || safeNext.userId || safePrevious.userId || "",
+    customerId: customerId || safeNext.customerId || safePrevious.customerId || "",
+    subscriptionId: safeNext.subscriptionId || safePrevious.subscriptionId || "",
+    invoiceId: safeNext.latestInvoiceId || safePrevious.latestInvoiceId || "",
+    eventId: normalizeId(event?.id),
+  };
+
+  switch (event?.type) {
+    case "invoice.payment_failed":
+      if (safeNext.subscriptionStatus === "past_due" || Number(safeNext.graceUntil || 0) > Date.now()) {
+        return [await sendBillingPaymentFailedEmail({
+          ...shared,
+          graceUntil: safeNext.graceUntil || safePrevious.graceUntil || 0,
+        })];
+      }
+      return [];
+    case "invoice.paid":
+      return [await sendBillingPaymentConfirmedEmail({
+        ...shared,
+        currentPeriodEnd: safeNext.currentPeriodEnd || safePrevious.currentPeriodEnd || 0,
+      })];
+    case "customer.subscription.updated":
+      if (!Boolean(safePrevious.cancelAtPeriodEnd) && Boolean(safeNext.cancelAtPeriodEnd)) {
+        return [await sendBillingCancellationScheduledEmail({
+          ...shared,
+          currentPeriodEnd: safeNext.currentPeriodEnd || safePrevious.currentPeriodEnd || 0,
+        })];
+      }
+      return [];
+    case "customer.subscription.deleted":
+      return [await sendBillingSubscriptionEndedEmail(shared)];
+    default:
+      return [];
+  }
+}
+
+async function buildBillingAdminRecord(profile) {
+  const safeProfile = profile && typeof profile === "object" ? profile : null;
+  if (!safeProfile || !safeProfile.userId) return null;
+
+  const familyAccount = safeProfile.familyAccountId
+    ? await getFamilyAccount(safeProfile.familyAccountId)
+    : await getFamilyAccountForUser(safeProfile.userId);
+  const invites = familyAccount ? await reconcileFamilyInvitesForAccount(familyAccount.id) : [];
+  const userDeliveries = await listEmailDeliveries({
+    userId: safeProfile.userId,
+    limit: 25,
+  });
+  const customerDeliveries = safeProfile.customerId
+    ? await listEmailDeliveries({ customerId: safeProfile.customerId, limit: 25 })
+    : [];
+  const familyDeliveries = familyAccount
+    ? await listEmailDeliveries({ familyAccountId: familyAccount.id, limit: 25 })
+    : [];
+  const emailDeliveries = mergeDeliveryLists(userDeliveries, customerDeliveries, familyDeliveries);
+
+  return {
+    userId: safeProfile.userId,
+    billing: summarizeEntitlementsFromProfile(safeProfile),
+    profile: safeProfile,
+    family: familyAccount ? {
+      id: familyAccount.id,
+      ownerUserId: familyAccount.ownerUserId,
+      ownerEmail: familyAccount.ownerEmail,
+      ownerDisplayName: familyAccount.ownerDisplayName,
+      status: familyAccount.status,
+      planId: familyAccount.planId,
+      seatLimit: familyAccount.seatLimit,
+      seatCount: familyAccount.seatCount,
+      pendingInviteCount: familyAccount.pendingInviteCount,
+      members: familyAccount.members,
+      invites,
+      recentEmailDeliveries: emailDeliveries.slice(0, 10),
+    } : null,
+    emailDeliveries,
   };
 }
 
@@ -469,6 +664,14 @@ async function processHandledEvent(stripe, event) {
     event,
   });
 
+  await maybeSendBillingLifecycleEmails({
+    event,
+    previousProfile: existingProfile,
+    nextProfile: sync.profile,
+    userId,
+    customerId,
+  });
+
   return {
     customerId,
     userId,
@@ -533,13 +736,13 @@ async function handleFamilyInvite(req, res) {
       return sendError(res, 409, "That email is already part of this family account.", "family_member_exists");
     }
 
-    const invites = await listFamilyInvitesForAccount(account.id);
+    const invites = await reconcileFamilyInvitesForAccount(account.id);
     const activePendingInvite = invites.find((invite) => (
-      invite.status === "pending" &&
-      invite.email === inviteEmail &&
-      invite.expiresAt > Date.now()
+      isInvitePending(invite) &&
+      invite.email === inviteEmail
     ));
-    if (!activePendingInvite && (account.members.length + invites.filter((invite) => invite.status === "pending" && invite.expiresAt > Date.now()).length) >= account.seatLimit) {
+    const seatCounts = countReservedFamilySeats(account, invites);
+    if (!activePendingInvite && seatCounts.reservedSeatCount >= account.seatLimit) {
       return sendError(res, 409, "All family seats are currently used or reserved by pending invites.", "family_no_available_seats");
     }
 
@@ -551,26 +754,14 @@ async function handleFamilyInvite(req, res) {
       baseOrigin,
     });
 
-    const emailResult = await sendFamilyInviteEmail({
-      to: inviteEmail,
-      inviteUrl: invite.inviteUrl,
-      inviterName: getDisplayNameFromSession(session),
-      familyPlanLabel: account.planId || "Family plan",
-      expiresAt: invite.expiresAt || (Date.now() + FAMILY_INVITE_TTL_MS),
-      familyAccountId: account.id,
-      inviteId: invite.id,
-    });
-
-    if (emailResult?.delivery?.id) {
-      await saveFamilyInvite(invite.id, {
-        lastEmailDeliveryId: emailResult.delivery.id,
-      });
-    }
+    const delivery = await deliverFamilyInviteEmail({ invite, account, session });
+    const updatedInvite = delivery.invite;
+    const emailResult = delivery.emailResult;
 
     const refreshed = await buildFamilySummary(session);
     return sendJson(res, 200, {
       ok: true,
-      invite,
+      invite: refreshed.invites?.find((entry) => entry.id === updatedInvite.id) || updatedInvite,
       email: emailResult,
       ...refreshed.payload,
     });
@@ -663,13 +854,25 @@ async function handleFamilyRemoveMember(req, res) {
       return sendError(res, 400, "Member userId is required.", "family_member_required");
     }
 
+    const removedMember = Array.isArray(account.members)
+      ? account.members.find((member) => member.userId === memberUserId)
+      : null;
+
     const nextAccount = await removeFamilyMember({
       familyAccountId: account.id,
       memberUserId,
     });
-    await clearFamilyAccessForUser(memberUserId);
+    const removedProfile = await clearFamilyAccessForUser(memberUserId);
     const ownerProfile = await getStripeBillingProfile(session.userId);
     await syncFamilyMemberProfiles(nextAccount, ownerProfile);
+    if (removedMember?.email && canSendBillingEmail(removedProfile, "productEmail")) {
+      await sendFamilyMemberRemovedEmail({
+        to: removedMember.email,
+        memberName: removedMember.displayName || removedMember.email || removedMember.userId,
+        familyAccountId: account.id,
+        userId: memberUserId,
+      });
+    }
 
     const refreshed = await buildFamilySummary(session);
     return sendJson(res, 200, {
@@ -684,6 +887,196 @@ async function handleFamilyRemoveMember(req, res) {
     }
     return sendError(res, 500, "Could not remove family member.", "family_remove_failed", {
       message: code,
+    });
+  }
+}
+
+async function handleAdminLookup(req, res) {
+  if (req.method !== "GET") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const auth = isAdminAuthorized(req);
+  if (!auth.ok) {
+    const status = auth.reason === "admin_token_not_configured" ? 503 : 401;
+    const message = auth.reason === "admin_token_missing"
+      ? "Admin token is required."
+      : auth.reason === "admin_token_not_configured"
+        ? "Stripe admin token is not configured."
+        : "Admin token is invalid.";
+    return sendError(res, status, message, auth.reason);
+  }
+
+  try {
+    const query = getQuery(req);
+    const lookup = {
+      userId: normalizeId(query.userId),
+      customerId: normalizeId(query.customerId),
+      customerEmail: normalizeEmail(query.customerEmail),
+      familyAccountId: normalizeId(query.familyAccountId),
+    };
+
+    if (!lookup.userId && !lookup.customerId && !lookup.customerEmail && !lookup.familyAccountId) {
+      return sendError(res, 400, "Provide a userId, customerId, customerEmail, or familyAccountId.", "billing_lookup_query_required");
+    }
+
+    const profiles = [];
+    const seenUserIds = new Set();
+    const addProfile = (profile) => {
+      if (!profile || !profile.userId || seenUserIds.has(profile.userId)) return;
+      seenUserIds.add(profile.userId);
+      profiles.push(profile);
+    };
+
+    for (const profile of await findStripeBillingProfiles({
+      userId: lookup.userId,
+      customerId: lookup.customerId,
+      customerEmail: lookup.customerEmail,
+      limit: 10,
+    })) {
+      addProfile(profile);
+    }
+
+    let lookedUpFamilyAccount = null;
+    if (lookup.familyAccountId) {
+      lookedUpFamilyAccount = await getFamilyAccount(lookup.familyAccountId);
+      if (!lookedUpFamilyAccount) {
+        return sendError(res, 404, "That family account could not be found.", "family_account_not_found");
+      }
+      const memberUserIds = new Set([
+        lookedUpFamilyAccount.ownerUserId,
+        ...((Array.isArray(lookedUpFamilyAccount.members) ? lookedUpFamilyAccount.members : []).map((member) => member.userId)),
+      ]);
+      for (const memberUserId of memberUserIds) {
+        if (!memberUserId) continue;
+        addProfile(await getStripeBillingProfile(memberUserId));
+      }
+    }
+
+    const matches = [];
+    for (const profile of profiles) {
+      const record = await buildBillingAdminRecord(profile);
+      if (record) matches.push(record);
+    }
+
+    const familyAccount = lookedUpFamilyAccount ? {
+      id: lookedUpFamilyAccount.id,
+      ownerUserId: lookedUpFamilyAccount.ownerUserId,
+      ownerEmail: lookedUpFamilyAccount.ownerEmail,
+      ownerDisplayName: lookedUpFamilyAccount.ownerDisplayName,
+      status: lookedUpFamilyAccount.status,
+      planId: lookedUpFamilyAccount.planId,
+      seatLimit: lookedUpFamilyAccount.seatLimit,
+      seatCount: lookedUpFamilyAccount.seatCount,
+      pendingInviteCount: lookedUpFamilyAccount.pendingInviteCount,
+      members: lookedUpFamilyAccount.members,
+      invites: await reconcileFamilyInvitesForAccount(lookedUpFamilyAccount.id),
+      recentEmailDeliveries: await listEmailDeliveries({ familyAccountId: lookedUpFamilyAccount.id, limit: 25 }),
+    } : null;
+
+    return sendJson(res, 200, {
+      ok: true,
+      query: lookup,
+      resultCount: matches.length,
+      matches,
+      familyAccount,
+    });
+  } catch (error) {
+    return sendError(res, 500, "Billing lookup failed.", "billing_lookup_failed", {
+      message: String(error?.message || error),
+    });
+  }
+}
+
+async function handleFamilyResendInvite(req, res) {
+  if (req.method !== "POST") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = requireAuthenticatedSession(req, res);
+  if (!session) return;
+
+  try {
+    const summary = await buildFamilySummary(session);
+    const account = summary.account;
+    if (!account || account.ownerUserId !== session.userId) {
+      return sendError(res, 403, "Only the family account owner can resend invites.", "family_owner_required");
+    }
+
+    const body = await readJsonBody(req);
+    const inviteId = normalizeId(body.inviteId);
+    if (!inviteId) {
+      return sendError(res, 400, "Invite id is required.", "family_invite_id_required");
+    }
+
+    const invite = await getFamilyInviteByToken(inviteId);
+    if (!invite || invite.familyAccountId !== account.id) {
+      return sendError(res, 404, "That family invite could not be found.", "family_invite_not_found");
+    }
+    if (invite.status !== "pending") {
+      return sendError(res, 409, "Only pending invites can be resent.", "family_invite_not_pending");
+    }
+    if (!isInvitePending(invite)) {
+      await saveFamilyInvite(invite.id, { status: "expired" });
+      return sendError(res, 410, "That family invite has expired. Create a fresh invite instead.", "family_invite_expired");
+    }
+
+    const delivery = await deliverFamilyInviteEmail({ invite, account, session });
+    const refreshed = await buildFamilySummary(session);
+    return sendJson(res, 200, {
+      ok: true,
+      invite: refreshed.invites?.find((entry) => entry.id === invite.id) || delivery.invite,
+      email: delivery.emailResult,
+      ...refreshed.payload,
+    });
+  } catch (error) {
+    return sendError(res, 500, "Could not resend the family invite.", "family_resend_failed", {
+      message: String(error?.message || error),
+    });
+  }
+}
+
+async function handleFamilyRevokeInvite(req, res) {
+  if (req.method !== "POST") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = requireAuthenticatedSession(req, res);
+  if (!session) return;
+
+  try {
+    const summary = await buildFamilySummary(session);
+    const account = summary.account;
+    if (!account || account.ownerUserId !== session.userId) {
+      return sendError(res, 403, "Only the family account owner can revoke invites.", "family_owner_required");
+    }
+
+    const body = await readJsonBody(req);
+    const inviteId = normalizeId(body.inviteId);
+    if (!inviteId) {
+      return sendError(res, 400, "Invite id is required.", "family_invite_id_required");
+    }
+
+    const invite = await getFamilyInviteByToken(inviteId);
+    if (!invite || invite.familyAccountId !== account.id) {
+      return sendError(res, 404, "That family invite could not be found.", "family_invite_not_found");
+    }
+    if (invite.status !== "pending") {
+      return sendError(res, 409, "Only pending invites can be revoked.", "family_invite_not_pending");
+    }
+
+    await saveFamilyInvite(invite.id, {
+      status: "revoked",
+    });
+    const refreshed = await buildFamilySummary(session);
+    return sendJson(res, 200, {
+      ok: true,
+      revokedInviteId: invite.id,
+      ...refreshed.payload,
+    });
+  } catch (error) {
+    return sendError(res, 500, "Could not revoke the family invite.", "family_revoke_failed", {
+      message: String(error?.message || error),
     });
   }
 }
@@ -1254,6 +1647,7 @@ async function handleAdminReconcile(req, res) {
 }
 
 module.exports = {
+  handleAdminLookup,
   handleAdminReconcile,
   handleConfig,
   handleCreateCheckoutSession,
@@ -1261,6 +1655,8 @@ module.exports = {
   handleFamilyAcceptInvite,
   handleFamilyInvite,
   handleFamilyRemoveMember,
+  handleFamilyResendInvite,
+  handleFamilyRevokeInvite,
   handleFamilySummary,
   handleSubscriptionStatus,
   handleWebhook,
