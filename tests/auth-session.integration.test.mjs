@@ -5,9 +5,7 @@ import { Readable } from "node:stream";
 
 const require = createRequire(import.meta.url);
 const { __resetFirebaseAdminForTests } = require("../api/_firebase-admin.js");
-const sessionHandler = require("../api/auth/session.js");
-const logoutHandler = require("../api/auth/logout.js");
-const firebaseConfigHandler = require("../api/auth/firebase-config.js");
+const authHandler = require("../api/auth.js");
 
 const originalEnv = {
   APP_SESSION_SECRET: process.env.APP_SESSION_SECRET,
@@ -103,7 +101,7 @@ test.after(() => {
 });
 
 test("auth session bootstraps an anonymous signed session", async () => {
-  const { res, json } = await invoke(sessionHandler, {
+  const { res, json } = await invoke(authHandler, {
     method: "GET",
     url: "/api/auth/session",
   });
@@ -117,13 +115,13 @@ test("auth session bootstraps an anonymous signed session", async () => {
 });
 
 test("logout rotates back to a fresh anonymous session", async () => {
-  const first = await invoke(sessionHandler, {
+  const first = await invoke(authHandler, {
     method: "GET",
     url: "/api/auth/session",
   });
   const firstCookie = String(first.res.getHeader("set-cookie") || "").split(";")[0];
 
-  const second = await invoke(logoutHandler, {
+  const second = await invoke(authHandler, {
     method: "POST",
     url: "/api/auth/logout",
     headers: {
@@ -140,7 +138,7 @@ test("logout rotates back to a fresh anonymous session", async () => {
 });
 
 test("firebase config endpoint reports disabled when public config is missing", async () => {
-  const { res, json } = await invoke(firebaseConfigHandler, {
+  const { res, json } = await invoke(authHandler, {
     method: "GET",
     url: "/api/auth/firebase-config",
   });

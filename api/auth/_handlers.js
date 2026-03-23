@@ -1,9 +1,42 @@
-const { getFirebaseAuth, isFirebaseAdminConfigured } = require("../_firebase-admin");
-const { createAuthenticatedSession } = require("./_session");
+const { getFirebaseAuth, getFirebasePublicConfig, isFirebaseAdminConfigured } = require("../_firebase-admin");
+const { clearSession, createAuthenticatedSession, createSession, ensureSession } = require("./_session");
 const { upsertAuthenticatedUser } = require("./_user-store");
 const { readJsonBody, sendError, sendJson } = require("../feedback/_shared");
 
-module.exports = async function handler(req, res) {
+async function handleSession(req, res) {
+  if (req.method !== "GET") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const session = ensureSession(req, res, { createIfMissing: true });
+  return sendJson(res, 200, {
+    ok: true,
+    userId: session.userId,
+    expiresAt: session.expiresAt,
+    authType: session.authType || "anonymous",
+    firebaseUid: session.firebaseUid || "",
+    email: session.email || "",
+    displayName: session.displayName || "",
+    photoURL: session.photoURL || "",
+    isAuthenticated: Boolean(session.isAuthenticated),
+    isNew: Boolean(session.isNew),
+  });
+}
+
+async function handleFirebaseConfig(req, res) {
+  if (req.method !== "GET") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  const config = getFirebasePublicConfig();
+  return sendJson(res, 200, {
+    ok: true,
+    enabled: Boolean(config.enabled),
+    config: config.enabled ? config : null,
+  });
+}
+
+async function handleGoogleLogin(req, res) {
   if (req.method !== "POST") {
     return sendError(res, 405, "Method not allowed.", "method_not_allowed");
   }
@@ -54,4 +87,28 @@ module.exports = async function handler(req, res) {
       message: String(error?.message || error),
     });
   }
+}
+
+async function handleLogout(req, res) {
+  if (req.method !== "POST") {
+    return sendError(res, 405, "Method not allowed.", "method_not_allowed");
+  }
+
+  clearSession(req, res);
+  const session = createSession(req, res);
+
+  return sendJson(res, 200, {
+    ok: true,
+    userId: session.userId,
+    authType: session.authType || "anonymous",
+    isAuthenticated: Boolean(session.isAuthenticated),
+    expiresAt: session.expiresAt,
+  });
+}
+
+module.exports = {
+  handleFirebaseConfig,
+  handleGoogleLogin,
+  handleLogout,
+  handleSession,
 };
