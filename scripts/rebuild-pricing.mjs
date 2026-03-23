@@ -1,4 +1,6 @@
-<!doctype html>
+import fs from "node:fs";
+
+const htmlContent = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -171,16 +173,16 @@
       planGrid.innerHTML = '';
       for (const plan of plans) {
         const card = document.createElement('article');
-        card.className = \`plan-card${selectedPlanId === plan.id ? ' selected' : ''}\`;
+        card.className = \\\`plan-card\${selectedPlanId === plan.id ? ' selected' : ''}\\\`;
         card.dataset.planId = plan.id;
-        const features = plan.features.map((feature) => \`<li>${feature}</li>\`).join('');
-        card.innerHTML = \`
-          <h3>${plan.name}</h3>
-          <p class="price">${plan.price}</p>
-          <p class="plan-meta">${plan.meta}</p>
-          <ul class="plan-features">${features}</ul>
-          <button class="select-btn" type="button">Select ${plan.name}</button>
-        \`;
+        const features = plan.features.map((feature) => \\\`<li>\${feature}</li>\\\`).join('');
+        card.innerHTML = \\\`
+          <h3>\${plan.name}</h3>
+          <p class="price">\${plan.price}</p>
+          <p class="plan-meta">\${plan.meta}</p>
+          <ul class="plan-features">\${features}</ul>
+          <button class="select-btn" type="button">Select \${plan.name}</button>
+        \\\`;
         const btn = card.querySelector('.select-btn');
         btn.addEventListener('click', () => {
           selectedPlanId = plan.id;
@@ -207,13 +209,13 @@
         checkoutNote.textContent = 'Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.';
 
         if (hasFamilyPremium) {
-          checkoutStatus.innerHTML = \`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\`;
+          checkoutStatus.innerHTML = \\\`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\\\`;
           manageBillingBtn.disabled = checkoutBusy;
         } else if (!selectedPlanSupported) {
-          checkoutStatus.textContent = \`Selected plan is not configured on this environment. Choose a supported plan or contact support.\`;
+          checkoutStatus.textContent = \\\`Selected plan is not configured on this environment. Choose a supported plan or contact support.\\\`;
           manageBillingBtn.disabled = true;
         } else {
-          checkoutStatus.textContent = \`Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.\`;
+          checkoutStatus.textContent = \\\`Selected plan: \${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.\\\`;
           manageBillingBtn.disabled = checkoutBusy;
         }
 
@@ -228,7 +230,7 @@
       checkoutNote.textContent = 'Billing is not configured for this environment. Stripe provider is required.';
 
       if (hasFamilyPremium) {
-        checkoutStatus.innerHTML = \`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\`;
+        checkoutStatus.innerHTML = \\\`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\\\`;
       } else {
         checkoutStatus.textContent = 'Provider connection failed.';
       }
@@ -250,7 +252,7 @@
             trackKpiEvent('checkout_completed', { planId: syncResult.snapshot?.activePlanId || selectedPlanId, billingProvider: 'stripe' });
           }
         } catch (error) {
-          checkoutStatus.textContent = \`Checkout return detected, but subscription sync failed: ${error.message}\`;
+          checkoutStatus.textContent = \\\`Checkout return detected, but subscription sync failed: \${error.message}\\\`;
         }
       } else if (checkoutResult === 'canceled') {
         checkoutStatus.textContent = 'Checkout canceled. You can try again at any time.';
@@ -260,7 +262,7 @@
       url.searchParams.delete('checkout');
       url.searchParams.delete('session_id');
       const nextSearch = url.searchParams.toString();
-      const nextUrl = \`${url.pathname}${nextSearch ? \`?${nextSearch}\` : ''}${url.hash || ''}\`;
+      const nextUrl = \\\`\${url.pathname}\${nextSearch ? \\\`?\${nextSearch}\\\` : ''}\${url.hash || ''}\\\`;
       window.history.replaceState({}, '', nextUrl);
     }
 
@@ -289,14 +291,14 @@
         const session = await createStripeCheckoutSession({
           planId: selectedPlanId,
           customerEmail: billingEmail,
-          successUrl: \`${window.location.origin}/pricing.html?checkout=success&session_id={CHECKOUT_SESSION_ID}\`,
-          cancelUrl: \`${window.location.origin}/pricing.html?checkout=canceled\`,
+          successUrl: \\\`\${window.location.origin}/pricing.html?checkout=success&session_id={CHECKOUT_SESSION_ID}\\\`,
+          cancelUrl: \\\`\${window.location.origin}/pricing.html?checkout=canceled\\\`,
         });
         trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'stripe' });
         window.location.assign(session.url);
         return;
       } catch (error) {
-        checkoutStatus.textContent = \`Secure checkout is unavailable right now: ${error.message}\`;
+        checkoutStatus.textContent = \\\`Secure checkout is unavailable right now: \${error.message}\\\`;
         setCheckoutBusy(false);
         renderCheckout();
         return;
@@ -312,12 +314,12 @@
       try {
         const portal = await createStripePortalSession({
           customerEmail: billingEmail,
-          returnUrl: \`${window.location.origin}/pricing.html\`,
+          returnUrl: \\\`\${window.location.origin}/pricing.html\\\`,
         });
         trackKpiEvent('billing_portal_opened', { billingProvider: 'stripe' });
         window.location.assign(portal.url);
       } catch (error) {
-        checkoutStatus.textContent = \`Could not open billing management: ${error.message}\`;
+        checkoutStatus.textContent = \\\`Could not open billing management: \${error.message}\\\`;
         setCheckoutBusy(false);
         renderCheckout();
       }
@@ -368,4 +370,6 @@
     });
   </script>
 </body>
-</html>
+</html>`;
+
+fs.writeFileSync("C:/Users/Luke/Documents/GitHub/games.aiandsons.io/pricing.html", htmlContent, { encoding: "utf8" });
