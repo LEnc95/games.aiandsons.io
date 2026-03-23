@@ -15,6 +15,12 @@ module.exports = async function handler(req, res) {
     ok: true,
     userId: session.userId,
     expiresAt: session.expiresAt,
+    authType: session.authType || "anonymous",
+    firebaseUid: session.firebaseUid || "",
+    email: session.email || "",
+    displayName: session.displayName || "",
+    photoURL: session.photoURL || "",
+    isAuthenticated: Boolean(session.isAuthenticated),
     isNew: Boolean(session.isNew),
   }));
 };

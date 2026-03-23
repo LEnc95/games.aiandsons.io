@@ -15,7 +15,9 @@ A static browser arcade site with a homepage launcher, coin/profile progression,
 - `teacher/index.html`: classroom dashboard for session controls, whitelist presets, assignment bundles, PIN-gated active-session mutations, and licensed aggregate report exports.
 - `ops/feedback/index.html`: protected feedback inbox for reviewing reports, retrying Linear sync, and preparing agent-ready fix briefs.
 - `src/feedback/*`: shared game feedback widget, browser client, and loopback stub mode for local smoke coverage.
-- `api/feedback/*`: serverless feedback submission/admin APIs backed by KV or in-memory fallback plus Linear sync.
+- `src/auth/*`: Firebase-backed Google account client helpers and the shared floating account widget.
+- `api/auth/*`: signed app-session bootstrap, Firebase config exposure, Google login exchange, and logout endpoints.
+- `api/feedback/*`: serverless feedback submission/admin APIs backed by Firebase Firestore + Firebase Storage when configured, with KV/memory fallback for local and legacy paths.
 - `src/core/*`: shared persistence/state helpers, entitlement gate logic, accessibility preference helpers, and local KPI metrics tracking.
 - `src/meta/games.js`: game registry used by homepage UI.
 - `src/meta/feedback.js`: feedback and Linear metadata derived from the game registry.
@@ -223,6 +225,12 @@ Run the launch-readiness aggregate smoke suite with auto-started local server:
 npm run test:launch-readiness-smoke
 ```
 
+Deploy the Firebase rules tracked in this repo:
+
+```bash
+npm run firebase:deploy:rules
+```
+
 If you already have a local server running at `http://127.0.0.1:4173`, run the raw script directly:
 
 ```bash
@@ -386,8 +394,9 @@ Slack automation notifications:
 ## Feedback workflow
 
 - Players can submit bugs, ideas, and general feedback from the shared widget mounted inside each game page.
-- `POST /api/feedback/submit` stores the raw submission first, then attempts to open a Linear issue using `LINEAR_API_KEY` + `LINEAR_TEAM_ID`.
+- `POST /api/feedback/submit` stores the raw submission first in Firebase Firestore when the backend has Firebase admin credentials, then attempts to open a Linear issue using `LINEAR_API_KEY` + `LINEAR_TEAM_ID`.
 - Submissions can include up to two lightweight attachments in v1. Text files are previewed in the inbox; image and PDF uploads are linked from both the ops inbox and the Linear issue body.
+- Attachment binaries are written to Firebase Storage when `FIREBASE_STORAGE_BUCKET` is configured. The repo currently uses the project bucket `games-aiandsons-io-storage`.
 - Admin review happens in `ops/feedback/index.html`, which uses the protected `/api/feedback/admin/*` endpoints.
 - On local loopback hosts (`localhost` / `127.0.0.1`), the feedback client falls back to local stub storage unless `?feedbackApiProbe=1` is present. This keeps raw smoke coverage deterministic under a plain static server.
 - `linear/labels.md` and `linear/game-issues.csv` are generated from `src/meta/feedback.js`.
@@ -398,6 +407,65 @@ Slack automation notifications:
 - If the API key cannot create labels, baseline issue creation still works best-effort, but new per-game labels may need a one-time manual seed or a stronger key.
 - GitHub workflow alerts can also be sent to Slack with `SLACK_CI_WEBHOOK_URL`.
 - Production feedback sync failures can alert Slack too when `SLACK_FEEDBACK_WEBHOOK_URL` is set in the app environment.
+
+## Firebase backend and auth
+
+Firebase is now the preferred durable backend for feedback storage, attachment storage, authenticated app accounts, and Stripe billing profiles.
+
+Firebase resources already provisioned for this repo:
+
+- Firebase project: `games-aiandsons-io`
+- Web app: `games.aiandsons.io`
+- Firestore database: `(default)` in `nam5`
+- Backend storage bucket: `games-aiandsons-io-storage`
+
+Tracked Firebase config files:
+
+- `.firebaserc`
+- `firebase.json`
+- `firestore.rules`
+- `firestore.indexes.json`
+- `storage.rules`
+
+Required server-side environment variables for Vercel:
+
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `FIREBASE_STORAGE_BUCKET`
+- `FEEDBACK_ADMIN_TOKEN`
+
+Required public Firebase web config environment variables for Vercel:
+
+- `FIREBASE_WEB_API_KEY`
+- `FIREBASE_AUTH_DOMAIN`
+- `FIREBASE_APP_ID`
+- `FIREBASE_MESSAGING_SENDER_ID`
+
+Optional alternative credential format:
+
+- `FIREBASE_SERVICE_ACCOUNT_JSON`
+- `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64`
+
+What Firebase now backs in the app:
+
+- `api/auth/google-login` verifies Firebase ID tokens and exchanges them for the app's signed `cade_session` cookie.
+- `api/feedback/*` persists submissions, admin triage state, rate-limit buckets, and attachment metadata in Firestore.
+- `api/feedback/attachment` streams signed attachment downloads from Firebase Storage.
+- `api/stripe/*` persists billing profiles, customer bindings, and webhook dedupe markers in Firestore.
+
+Google sign-in still needs one console/provider step before production login works:
+
+1. Enable Google as an auth provider for the Firebase project.
+2. Add `games.aiandsons.io` and your Vercel preview domain(s) as authorized domains.
+3. If your Firebase project requires an explicit Google OAuth web client, add its client ID/secret to the provider configuration.
+
+Local backend smoke setup:
+
+1. Set `GOOGLE_APPLICATION_CREDENTIALS` to a Firebase Admin service-account JSON file.
+2. Set `FIREBASE_PROJECT_ID=games-aiandsons-io`.
+3. Set `FIREBASE_STORAGE_BUCKET=games-aiandsons-io-storage`.
+4. Run `npm run test:feedback` and `npm run test:shop`.
 
 ## Stripe billing setup (optional)
 
@@ -420,6 +488,10 @@ Required environment variables (set in Vercel project settings):
 - `STRIPE_PRICE_FAMILY_ANNUAL`
 - `APP_SESSION_SECRET` (HMAC secret for signed session cookie)
 - `STRIPE_ADMIN_TOKEN` (required to use `/api/stripe/admin/reconcile`)
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `FIREBASE_STORAGE_BUCKET`
 
 Optional environment variables:
 
@@ -429,7 +501,7 @@ Optional environment variables:
 - `STRIPE_AUTOMATIC_TAX_ENABLED` (`true` to enable Stripe automatic tax in Checkout sessions)
 - `APP_BASE_URL` (used for return URL origin when request-derived host is unavailable)
 - `STRIPE_WEBHOOK_FORWARD_URL` (optional internal endpoint to forward compact event metadata)
-- `KV_REST_API_URL` + `KV_REST_API_TOKEN` (recommended durable Stripe entitlement store; without these, endpoints fall back to process memory for local/dev)
+- `KV_REST_API_URL` + `KV_REST_API_TOKEN` (legacy fallback store; Firebase is preferred for durable billing state now)
 
 Frontend behavior:
 

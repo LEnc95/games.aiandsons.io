@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const { __resetFirebaseAdminForTests } = require("../api/_firebase-admin.js");
 const {
   FEEDBACK_ALERT_COOLDOWN_MS,
   buildFeedbackFailureAlertKey,
@@ -25,6 +26,12 @@ const originalEnv = {
   APP_BASE_URL: process.env.APP_BASE_URL,
   SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
   SLACK_CI_WEBHOOK_URL: process.env.SLACK_CI_WEBHOOK_URL,
+  FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64,
+  FIREBASE_SERVICE_ACCOUNT_JSON: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
+  GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
 };
 
 function restoreEnv() {
@@ -61,11 +68,19 @@ test.beforeEach(() => {
   process.env.APP_BASE_URL = "https://games.aiandsons.test";
   delete process.env.SLACK_FEEDBACK_WEBHOOK_URL;
   delete process.env.SLACK_CI_WEBHOOK_URL;
+  delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64;
+  delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  delete process.env.FIREBASE_PROJECT_ID;
+  delete process.env.FIREBASE_CLIENT_EMAIL;
+  delete process.env.FIREBASE_PRIVATE_KEY;
+  delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  __resetFirebaseAdminForTests();
   __resetFeedbackStoreForTests();
 });
 
 test.after(() => {
   restoreEnv();
+  __resetFirebaseAdminForTests();
   __resetFeedbackStoreForTests();
 });
 

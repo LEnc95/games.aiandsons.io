@@ -510,12 +510,19 @@ function createFeedbackSubmissionRecord(payload, {
   requestIp = "",
 } = {}) {
   const now = Date.now();
+  const authType = normalizeSingleLine(payload.authType, 24).toLowerCase() === "google"
+    ? "google"
+    : "anonymous";
   return {
     id: createFeedbackSubmissionId(),
     submittedAt: now,
     updatedAt: now,
     sessionUserId: normalizeSingleLine(sessionUserId, 120),
     requestIp: normalizeSingleLine(requestIp, 160),
+    authType,
+    firebaseUid: normalizeSingleLine(payload.firebaseUid, 160),
+    sessionEmail: normalizeEmail(payload.sessionEmail),
+    sessionDisplayName: normalizeSingleLine(payload.sessionDisplayName, 160),
     gameSlug: payload.gameSlug,
     gameName: payload.gameName,
     route: payload.route,
@@ -579,6 +586,8 @@ function buildFeedbackIssueDescription(submission) {
     `- Kind: ${submission.kind}`,
     `- Route: ${submission.route}`,
     `- Session user: ${submission.sessionUserId || "unknown"}`,
+    `- Auth type: ${submission.authType || "anonymous"}`,
+    `- Signed-in account: ${submission.sessionEmail || submission.sessionDisplayName || "guest session"}`,
     `- Reporter: ${submission.displayName || "anonymous"}`,
     `- Contact email: ${submission.contactEmail || "not provided"}`,
     `- Submitted at: ${new Date(submission.submittedAt).toISOString()}`,

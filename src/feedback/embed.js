@@ -1,4 +1,10 @@
 import { submitFeedback } from "./client.js";
+import {
+  fetchAuthSession,
+  onAuthSessionChanged,
+  signInWithGoogle,
+  signOutFromApp,
+} from "../auth/client.js";
 
 const ROOT_ID = "cadeFeedbackRoot";
 const STYLE_ID = "cadeFeedbackStyles";
@@ -127,6 +133,34 @@ function injectStyles() {
       gap: 10px;
       margin-top: 4px;
     }
+    .cade-feedback-account {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+    }
+    .cade-feedback-account-copy {
+      display: grid;
+      gap: 4px;
+    }
+    .cade-feedback-account-copy strong {
+      font-size: 13px;
+      color: #eef5ff;
+    }
+    .cade-feedback-account-copy span {
+      font-size: 12px;
+      color: #bdd0ee;
+    }
+    .cade-feedback-account-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
     .cade-feedback-btn {
       min-height: 42px;
       padding: 11px 16px;
@@ -220,6 +254,16 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
         <h2 id="cadeFeedbackTitle">Share feedback for ${gameName}</h2>
         <p>Tell us about bugs, rough spots, or ideas while the details are still fresh.</p>
         <form class="cade-feedback-form" id="cadeFeedbackForm">
+          <div class="cade-feedback-account" id="cadeFeedbackAccount">
+            <div class="cade-feedback-account-copy">
+              <strong id="cadeFeedbackAccountTitle">Checking account...</strong>
+              <span id="cadeFeedbackAccountSubtitle">Sign in with Google if you want your reports tied to your arcade account.</span>
+            </div>
+            <div class="cade-feedback-account-actions">
+              <button type="button" class="cade-feedback-btn primary" id="cadeFeedbackSignInBtn">Sign in with Google</button>
+              <button type="button" class="cade-feedback-btn" id="cadeFeedbackSignOutBtn" hidden>Sign out</button>
+            </div>
+          </div>
           <div class="cade-feedback-field">
             <label for="cadeFeedbackKind">Feedback Type</label>
             <select id="cadeFeedbackKind" name="kind" required>
@@ -273,9 +317,17 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   const cancelBtn = document.getElementById("cadeFeedbackCancelBtn");
   const submitBtn = document.getElementById("cadeFeedbackSubmitBtn");
   const summaryInput = document.getElementById("cadeFeedbackSummary");
+  const displayNameInput = document.getElementById("cadeFeedbackName");
+  const emailInput = document.getElementById("cadeFeedbackEmail");
   const attachmentInput = document.getElementById("cadeFeedbackAttachmentInput");
   const fileList = document.getElementById("cadeFeedbackFileList");
   const statusEl = document.getElementById("cadeFeedbackStatus");
+  const accountTitleEl = document.getElementById("cadeFeedbackAccountTitle");
+  const accountSubtitleEl = document.getElementById("cadeFeedbackAccountSubtitle");
+  const signInBtn = document.getElementById("cadeFeedbackSignInBtn");
+  const signOutBtn = document.getElementById("cadeFeedbackSignOutBtn");
+
+  let currentSession = null;
 
   function setStatus(message, tone = "") {
     statusEl.textContent = message;
@@ -301,6 +353,34 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     }
 
     return `Feedback sent. Reference: ${response.submissionId}`;
+  }
+
+  function renderAccountState(session) {
+    currentSession = session;
+    const isAuthenticated = Boolean(session?.isAuthenticated);
+    const isStubbed = Boolean(session?.stubbed);
+    if (isAuthenticated) {
+      accountTitleEl.textContent = session.displayName || session.email || "Google account connected";
+      accountSubtitleEl.textContent = session.email || "Reports from this browser will be tied to your account session.";
+      signInBtn.textContent = "Refresh session";
+      signInBtn.disabled = false;
+      signOutBtn.hidden = false;
+      if (displayNameInput && !displayNameInput.value && session.displayName) {
+        displayNameInput.value = session.displayName;
+      }
+      if (emailInput && !emailInput.value && session.email) {
+        emailInput.value = session.email;
+      }
+      return;
+    }
+
+    accountTitleEl.textContent = isStubbed ? "Local static mode" : "Guest session";
+    accountSubtitleEl.textContent = isStubbed
+      ? "Auth APIs are muted on localhost. Add ?authApiProbe=1 to test the live Google sign-in flow."
+      : "Sign in with Google if you want your reports tied to your arcade account.";
+    signInBtn.textContent = isStubbed ? "Local mode" : "Sign in with Google";
+    signInBtn.disabled = isStubbed;
+    signOutBtn.hidden = true;
   }
 
   function openModal() {
@@ -339,6 +419,43 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     }
   });
   attachmentInput?.addEventListener("change", renderSelectedFiles);
+  signInBtn?.addEventListener("click", async () => {
+    signInBtn.disabled = true;
+    signOutBtn.disabled = true;
+    setStatus("Opening Google sign-in...");
+    try {
+      const session = currentSession?.isAuthenticated
+        ? await fetchAuthSession({ force: true })
+        : await signInWithGoogle();
+      renderAccountState(session);
+      setStatus(session?.isAuthenticated ? "Google account connected." : "Session refreshed.", "success");
+    } catch (error) {
+      setStatus(String(error && error.message ? error.message : error), "error");
+    } finally {
+      signInBtn.disabled = false;
+      signOutBtn.disabled = false;
+    }
+  });
+  signOutBtn?.addEventListener("click", async () => {
+    signInBtn.disabled = true;
+    signOutBtn.disabled = true;
+    setStatus("Signing out...");
+    try {
+      const session = await signOutFromApp();
+      renderAccountState(session);
+      setStatus("Signed out. Reports from this browser will use the guest session.", "success");
+    } catch (error) {
+      setStatus(String(error && error.message ? error.message : error), "error");
+    } finally {
+      signInBtn.disabled = false;
+      signOutBtn.disabled = false;
+    }
+  });
+
+  onAuthSessionChanged(renderAccountState);
+  fetchAuthSession().then(renderAccountState).catch(() => {
+    renderAccountState(null);
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();

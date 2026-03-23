@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const { __resetFirebaseAdminForTests } = require("../api/_firebase-admin.js");
 const {
   __resetStripeStoreForTests,
   createDefaultBillingProfile,
@@ -16,16 +17,36 @@ const {
 
 const originalKvUrl = process.env.KV_REST_API_URL;
 const originalKvToken = process.env.KV_REST_API_TOKEN;
+const originalFirebaseEnv = {
+  FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64,
+  FIREBASE_SERVICE_ACCOUNT_JSON: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
+  GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+};
 
 test.beforeEach(() => {
   process.env.KV_REST_API_URL = "";
   process.env.KV_REST_API_TOKEN = "";
+  delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64;
+  delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  delete process.env.FIREBASE_PROJECT_ID;
+  delete process.env.FIREBASE_CLIENT_EMAIL;
+  delete process.env.FIREBASE_PRIVATE_KEY;
+  delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  __resetFirebaseAdminForTests();
   __resetStripeStoreForTests();
 });
 
 test.after(() => {
   process.env.KV_REST_API_URL = originalKvUrl;
   process.env.KV_REST_API_TOKEN = originalKvToken;
+  for (const [key, value] of Object.entries(originalFirebaseEnv)) {
+    if (typeof value === "string") process.env[key] = value;
+    else delete process.env[key];
+  }
+  __resetFirebaseAdminForTests();
   __resetStripeStoreForTests();
 });
 

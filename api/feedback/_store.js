@@ -1,5 +1,14 @@
+const {
+  getFirestore,
+  getFirebaseStorageBucket,
+  isFirebaseAdminConfigured,
+} = require("../_firebase-admin");
+
 const KEY_PREFIX = "cade_games:feedback:v1";
 const FEEDBACK_INDEX_LIMIT = 500;
+const FIRESTORE_SUBMISSIONS_COLLECTION = "feedbackSubmissions";
+const FIRESTORE_ATTACHMENTS_COLLECTION = "feedbackAttachments";
+const FIRESTORE_RATE_LIMITS_COLLECTION = "feedbackRateLimits";
 
 const memoryState = (() => {
   if (!globalThis.__cadeFeedbackMemoryStore) {
@@ -40,6 +49,33 @@ function getKvConfig() {
     token,
     enabled: Boolean(baseUrl && token),
   };
+}
+
+function isFirestoreStoreEnabled() {
+  return isFirebaseAdminConfigured();
+}
+
+function getFeedbackCollections() {
+  const firestore = getFirestore();
+  return {
+    submissions: firestore.collection(FIRESTORE_SUBMISSIONS_COLLECTION),
+    attachments: firestore.collection(FIRESTORE_ATTACHMENTS_COLLECTION),
+    rateLimits: firestore.collection(FIRESTORE_RATE_LIMITS_COLLECTION),
+  };
+}
+
+function encodeFirestoreDocId(value) {
+  return encodeURIComponent(normalizeSingleLine(value, 240));
+}
+
+function buildAttachmentStoragePath(attachment) {
+  const normalizedSubmissionId = normalizeSingleLine(attachment.submissionId, 80) || "unbound";
+  const normalizedAttachmentId = normalizeSingleLine(attachment.id, 80) || createFeedbackAttachmentId();
+  const safeName = normalizeSingleLine(String(attachment.name || "attachment")
+    .replace(/^.*[\\/]/, "")
+    .replace(/[^a-z0-9._-]+/gi, "-")
+    .replace(/^-+|-+$/g, ""), 120) || "attachment";
+  return `feedback/attachments/${normalizedSubmissionId}/${normalizedAttachmentId}-${safeName}`;
 }
 
 async function runKvCommand(command, ...args) {
@@ -165,6 +201,9 @@ function normalizeStoredSubmission(source) {
   const id = normalizeSingleLine(raw.id, 80) || createFeedbackSubmissionId();
   const submittedAt = normalizeInteger(raw.submittedAt, { min: 0, fallback: Date.now() });
   const updatedAt = normalizeInteger(raw.updatedAt, { min: 0, fallback: submittedAt });
+  const authType = normalizeSingleLine(raw.authType, 24).toLowerCase() === "google"
+    ? "google"
+    : "anonymous";
 
   return {
     id,
@@ -172,6 +211,10 @@ function normalizeStoredSubmission(source) {
     updatedAt,
     sessionUserId: normalizeSingleLine(raw.sessionUserId, 120),
     requestIp: normalizeSingleLine(raw.requestIp, 160),
+    authType,
+    firebaseUid: normalizeSingleLine(raw.firebaseUid, 160),
+    sessionEmail: normalizeEmail(raw.sessionEmail),
+    sessionDisplayName: normalizeSingleLine(raw.sessionDisplayName, 160),
     gameSlug: normalizeSingleLine(raw.gameSlug, 80),
     gameName: normalizeSingleLine(raw.gameName, 120),
     route: normalizeSingleLine(raw.route, 240),
@@ -221,11 +264,137 @@ function normalizeStoredAttachment(source) {
     previewKind: normalizeSingleLine(raw.previewKind, 24),
     previewText: normalizeMultiline(raw.previewText, 1200),
     base64Data: normalizeSingleLine(raw.base64Data, 2_000_000),
+    storagePath: normalizeSingleLine(raw.storagePath, 512),
+    storageBucket: normalizeSingleLine(raw.storageBucket, 240),
     createdAt: normalizeInteger(raw.createdAt, { min: 0, fallback: Date.now() }),
   };
 }
 
+async function getFeedbackSubmissionFromFirestore(submissionId) {
+  const normalizedId = normalizeSingleLine(submissionId, 80);
+  if (!normalizedId) return null;
+  const snapshot = await getFeedbackCollections().submissions.doc(normalizedId).get();
+  if (!snapshot.exists) return null;
+  return normalizeStoredSubmission(snapshot.data());
+}
+
+async function saveFeedbackSubmissionToFirestore(submission) {
+  const normalized = normalizeStoredSubmission(submission);
+  await getFeedbackCollections().submissions.doc(normalized.id).set(normalized, { merge: true });
+  return normalized;
+}
+
+async function listFeedbackSubmissionsFromFirestore(filters = {}) {
+  const gameSlug = normalizeSingleLine(filters.gameSlug || filters.game, 80);
+  const triageStatus = normalizeSingleLine(filters.triageStatus, 24).toLowerCase();
+  const syncStatus = normalizeSingleLine(filters.syncStatus, 24).toLowerCase();
+  const limit = normalizeInteger(filters.limit, { min: 1, max: FEEDBACK_INDEX_LIMIT, fallback: 200 });
+  const queryLimit = (gameSlug || triageStatus || syncStatus) ? FEEDBACK_INDEX_LIMIT : limit;
+  const snapshot = await getFeedbackCollections()
+    .submissions
+    .orderBy("submittedAt", "desc")
+    .limit(queryLimit)
+    .get();
+
+  const items = snapshot.docs.map((doc) => normalizeStoredSubmission(doc.data()));
+  return items
+    .filter((item) => !gameSlug || item.gameSlug === gameSlug)
+    .filter((item) => !triageStatus || item.triageStatus === triageStatus)
+    .filter((item) => !syncStatus || item.syncStatus === syncStatus)
+    .slice(0, limit);
+}
+
+async function saveFeedbackAttachmentToFirestore(attachment) {
+  const normalized = normalizeStoredAttachment(attachment);
+  const buffer = normalized.base64Data
+    ? Buffer.from(normalized.base64Data, "base64")
+    : Buffer.alloc(0);
+  const bucket = getFirebaseStorageBucket();
+  const storagePath = normalized.storagePath || buildAttachmentStoragePath(normalized);
+  const file = bucket.file(storagePath);
+
+  await file.save(buffer, {
+    resumable: false,
+    validation: false,
+    metadata: {
+      contentType: normalized.contentType || "application/octet-stream",
+      cacheControl: "private, max-age=3600",
+      metadata: {
+        attachmentId: normalized.id,
+        submissionId: normalized.submissionId || "",
+      },
+    },
+  });
+
+  const stored = normalizeStoredAttachment({
+    ...normalized,
+    base64Data: "",
+    storagePath,
+    storageBucket: bucket.name || "",
+  });
+
+  await getFeedbackCollections().attachments.doc(stored.id).set(stored, { merge: true });
+  return stored;
+}
+
+async function getFeedbackAttachmentFromFirestore(attachmentId) {
+  const normalizedId = normalizeSingleLine(attachmentId, 80);
+  if (!normalizedId) return null;
+  const snapshot = await getFeedbackCollections().attachments.doc(normalizedId).get();
+  if (!snapshot.exists) return null;
+  return normalizeStoredAttachment(snapshot.data());
+}
+
+async function getFeedbackAttachmentContentFromFirestore(attachmentId) {
+  const attachment = await getFeedbackAttachmentFromFirestore(attachmentId);
+  if (!attachment) return null;
+
+  if (attachment.storagePath) {
+    const bucket = getFirebaseStorageBucket();
+    const [buffer] = await bucket.file(attachment.storagePath).download();
+    return { attachment, buffer };
+  }
+
+  if (!attachment.base64Data) {
+    return { attachment, buffer: null };
+  }
+
+  return {
+    attachment,
+    buffer: Buffer.from(attachment.base64Data, "base64"),
+  };
+}
+
+async function incrementFirestoreRateLimit(bucketId, windowMs) {
+  const normalizedBucketId = normalizeSingleLine(bucketId, 240);
+  if (!normalizedBucketId) return 0;
+  const now = Date.now();
+  const docId = encodeFirestoreDocId(normalizedBucketId);
+  const ref = getFeedbackCollections().rateLimits.doc(docId);
+  const firestore = getFirestore();
+
+  return firestore.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    const data = snapshot.exists ? toPlainObject(snapshot.data()) : {};
+    const existingExpiresAt = normalizeInteger(data.expiresAt, { min: 0, fallback: 0 });
+    const activeWindow = existingExpiresAt > now;
+    const count = normalizeInteger(activeWindow ? data.count : 0, { min: 0, fallback: 0 }) + 1;
+    const expiresAt = activeWindow ? existingExpiresAt : (now + windowMs);
+    transaction.set(ref, {
+      bucketId: normalizedBucketId,
+      count,
+      expiresAt,
+      updatedAt: now,
+    }, { merge: true });
+    return count;
+  });
+}
+
 async function getFeedbackSubmission(submissionId) {
+  if (isFirestoreStoreEnabled()) {
+    return getFeedbackSubmissionFromFirestore(submissionId);
+  }
+
   const normalizedId = normalizeSingleLine(submissionId, 80);
   if (!normalizedId) return null;
   const raw = await getStoredValue(getSubmissionKey(normalizedId));
@@ -239,6 +408,11 @@ async function getFeedbackSubmission(submissionId) {
 
 async function saveFeedbackSubmission(submission) {
   const normalized = normalizeStoredSubmission(submission);
+
+  if (isFirestoreStoreEnabled()) {
+    return saveFeedbackSubmissionToFirestore(normalized);
+  }
+
   await setStoredValue(getSubmissionKey(normalized.id), JSON.stringify(normalized));
 
   const index = await getSubmissionIndex();
@@ -250,6 +424,11 @@ async function saveFeedbackSubmission(submission) {
 
 async function saveFeedbackAttachment(attachment) {
   const normalized = normalizeStoredAttachment(attachment);
+
+  if (isFirestoreStoreEnabled()) {
+    return saveFeedbackAttachmentToFirestore(normalized);
+  }
+
   await setStoredValue(getAttachmentKey(normalized.id), JSON.stringify(normalized));
   return normalized;
 }
@@ -260,6 +439,10 @@ async function saveFeedbackAttachments(attachments = []) {
 }
 
 async function getFeedbackAttachment(attachmentId) {
+  if (isFirestoreStoreEnabled()) {
+    return getFeedbackAttachmentFromFirestore(attachmentId);
+  }
+
   const normalizedId = normalizeSingleLine(attachmentId, 80);
   if (!normalizedId) return null;
   const raw = await getStoredValue(getAttachmentKey(normalizedId));
@@ -269,6 +452,22 @@ async function getFeedbackAttachment(attachmentId) {
   } catch {
     return null;
   }
+}
+
+async function getFeedbackAttachmentContent(attachmentId) {
+  if (isFirestoreStoreEnabled()) {
+    return getFeedbackAttachmentContentFromFirestore(attachmentId);
+  }
+
+  const attachment = await getFeedbackAttachment(attachmentId);
+  if (!attachment || !attachment.base64Data) {
+    return null;
+  }
+
+  return {
+    attachment,
+    buffer: Buffer.from(attachment.base64Data, "base64"),
+  };
 }
 
 async function updateFeedbackSubmission(submissionId, patch) {
@@ -284,6 +483,10 @@ async function updateFeedbackSubmission(submissionId, patch) {
 }
 
 async function listFeedbackSubmissions(filters = {}) {
+  if (isFirestoreStoreEnabled()) {
+    return listFeedbackSubmissionsFromFirestore(filters);
+  }
+
   const gameSlug = normalizeSingleLine(filters.gameSlug || filters.game, 80);
   const triageStatus = normalizeSingleLine(filters.triageStatus, 24).toLowerCase();
   const syncStatus = normalizeSingleLine(filters.syncStatus, 24).toLowerCase();
@@ -314,6 +517,19 @@ async function enforceFeedbackRateLimit({
     return { blocked: false, retryAfterSeconds: Math.ceil(windowMs / 1000), remaining: maxRequests };
   }
 
+  if (isFirestoreStoreEnabled()) {
+    let highestCount = 0;
+    for (const bucket of buckets) {
+      const currentCount = await incrementFirestoreRateLimit(bucket, windowMs);
+      highestCount = Math.max(highestCount, currentCount);
+    }
+    return {
+      blocked: highestCount > maxRequests,
+      retryAfterSeconds: Math.ceil(windowMs / 1000),
+      remaining: Math.max(0, maxRequests - highestCount),
+    };
+  }
+
   let highestCount = 0;
   for (const bucket of buckets) {
     const key = getRateLimitKey(bucket);
@@ -337,6 +553,7 @@ function __resetFeedbackStoreForTests() {
 module.exports = {
   enforceFeedbackRateLimit,
   getFeedbackAttachment,
+  getFeedbackAttachmentContent,
   getFeedbackSubmission,
   listFeedbackSubmissions,
   normalizeStoredAttachment,

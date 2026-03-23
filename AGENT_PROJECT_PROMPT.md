@@ -11,6 +11,7 @@ You are working in **Cade's Games**, a static web arcade that ships as plain HTM
 - Shared progression (coins, badges, cosmetics, inventory, recent games, profile) is persisted in `localStorage` through `src/core/*`.
 - Deployment is static (Vercel rewrites/headers in `vercel.json`).
 - Feedback collection uses a shared in-game widget (`src/feedback/*`), serverless APIs under `api/feedback/*`, and an internal review surface at `ops/feedback/index.html`.
+- Authenticated accounts use Firebase Auth on the client plus the repo's signed session cookie exchange under `api/auth/*`.
 
 ## 2) Core architecture (read this first before editing)
 
@@ -32,7 +33,11 @@ You are working in **Cade's Games**, a static web arcade that ships as plain HTM
 - **Feedback flow:**
   - `src/feedback/client.js` -> browser-side submission/admin client with loopback stub mode.
   - `src/feedback/embed.js` -> reusable fixed-position widget mounted into each game page.
-  - `api/feedback/*` -> public submission endpoint, protected admin endpoints, KV-backed store, and Linear sync helpers.
+  - `api/feedback/*` -> public submission endpoint, protected admin endpoints, Firestore/Storage-backed persistence when Firebase is configured, and Linear sync helpers.
+- **Account/auth flow:**
+  - `src/auth/client.js` -> Firebase web config fetch, Google popup sign-in, and signed app-session refresh helpers.
+  - `src/auth/embed.js` -> floating account widget for homepage and commerce pages.
+  - `api/auth/*` -> session bootstrap, Firebase config exposure, Google login exchange, and logout.
 
 ## 3) Game catalog and route model
 
@@ -123,6 +128,8 @@ Manual smoke checklist after edits:
 - `version.json` stores displayed version badge value for homepage.
 - `vercel.json` controls rewrites and cache/security headers.
 - Feedback API deployment expects `FEEDBACK_ADMIN_TOKEN`, `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optionally `LINEAR_PROJECT_ID` plus `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+- Firebase-backed deployment expects `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_WEB_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_APP_ID`, and `FIREBASE_MESSAGING_SENDER_ID`.
+- Google sign-in still requires the Google provider + authorized domains to be configured in Firebase/Identity Platform for the project `games-aiandsons-io`.
 - Automatic baseline provisioning only needs issue-creation access, but automatic label creation may require label-management permission for the configured team/workspace.
 - Nightly CI can also run `npm run feedback:provision-linear` when `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optional `LINEAR_PROJECT_ID` are configured as repository secrets.
 - `.github/workflows/daily-feedback-provisioning.yml` exists as the lightweight daily backfill path for missing Linear labels and baseline issues.

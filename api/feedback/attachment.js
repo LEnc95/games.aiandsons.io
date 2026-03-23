@@ -1,4 +1,4 @@
-const { getFeedbackAttachment } = require("./_store");
+const { getFeedbackAttachmentContent } = require("./_store");
 const {
   getQuery,
   normalizeSingleLine,
@@ -23,8 +23,10 @@ module.exports = async function handler(req, res) {
       return sendError(res, 403, "Attachment signature is invalid.", "invalid_attachment_signature");
     }
 
-    const attachment = await getFeedbackAttachment(attachmentId);
-    if (!attachment || !attachment.base64Data) {
+    const content = await getFeedbackAttachmentContent(attachmentId);
+    const attachment = content?.attachment || null;
+    const buffer = Buffer.isBuffer(content?.buffer) ? content.buffer : null;
+    if (!attachment || !buffer) {
       return sendError(res, 404, "Attachment not found.", "attachment_not_found");
     }
 
@@ -32,7 +34,6 @@ module.exports = async function handler(req, res) {
       .replace(/["\r\n]+/g, " ")
       .trim();
     const contentType = attachment.contentType || "application/octet-stream";
-    const buffer = Buffer.from(attachment.base64Data, "base64");
     const disposition = /^(image\/|text\/|application\/pdf$)/.test(contentType)
       ? "inline"
       : "attachment";

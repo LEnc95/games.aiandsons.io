@@ -1,5 +1,10 @@
-﻿const KEY_PREFIX = "cade_games:stripe:v1";
+const { getFirestore, isFirebaseAdminConfigured } = require("../_firebase-admin");
+
+const KEY_PREFIX = "cade_games:stripe:v1";
 const WEBHOOK_EVENT_TTL_SECONDS = 60 * 60 * 24 * 60;
+const FIRESTORE_PROFILES_COLLECTION = "stripeBillingProfiles";
+const FIRESTORE_CUSTOMERS_COLLECTION = "stripeCustomerUsers";
+const FIRESTORE_EVENTS_COLLECTION = "stripeWebhookEvents";
 
 const memoryState = (() => {
   if (!globalThis.__cadeStripeMemoryStore) {
@@ -96,6 +101,19 @@ function getKvConfig() {
   };
 }
 
+function isFirestoreStripeStoreEnabled() {
+  return isFirebaseAdminConfigured();
+}
+
+function getStripeCollections() {
+  const firestore = getFirestore();
+  return {
+    profiles: firestore.collection(FIRESTORE_PROFILES_COLLECTION),
+    customers: firestore.collection(FIRESTORE_CUSTOMERS_COLLECTION),
+    events: firestore.collection(FIRESTORE_EVENTS_COLLECTION),
+  };
+}
+
 async function runKvCommand(command, ...args) {
   const kv = getKvConfig();
   if (!kv.enabled) {
@@ -185,10 +203,80 @@ function getWebhookEventKey(eventId) {
   return `${KEY_PREFIX}:event:${eventId}`;
 }
 
+async function getStripeBillingProfileFromFirestore(userId) {
+  const normalizedUserId = normalizeUserId(userId);
+  const fallback = createDefaultBillingProfile(normalizedUserId);
+  if (!normalizedUserId) return fallback;
+
+  const snapshot = await getStripeCollections().profiles.doc(normalizedUserId).get();
+  if (!snapshot.exists) return fallback;
+  return normalizeBillingProfile(snapshot.data(), normalizedUserId);
+}
+
+async function saveStripeBillingProfileToFirestore(userId, patch) {
+  const normalizedUserId = normalizeUserId(userId);
+  if (!normalizedUserId) {
+    return createDefaultBillingProfile("");
+  }
+
+  const existing = await getStripeBillingProfileFromFirestore(normalizedUserId);
+  const next = normalizeBillingProfile(
+    {
+      ...existing,
+      ...(patch && typeof patch === "object" ? patch : {}),
+      userId: normalizedUserId,
+      updatedAt: Date.now(),
+    },
+    normalizedUserId,
+  );
+
+  await getStripeCollections().profiles.doc(normalizedUserId).set(next, { merge: true });
+  if (next.customerId) {
+    await getStripeCollections().customers.doc(next.customerId).set({
+      customerId: next.customerId,
+      userId: normalizedUserId,
+      customerEmail: next.customerEmail,
+      updatedAt: next.updatedAt,
+    }, { merge: true });
+  }
+  return next;
+}
+
+async function getUserIdForStripeCustomerFromFirestore(customerId) {
+  const normalizedCustomerId = normalizeCustomerId(customerId);
+  if (!normalizedCustomerId) return "";
+  const snapshot = await getStripeCollections().customers.doc(normalizedCustomerId).get();
+  if (!snapshot.exists) return "";
+  return normalizeUserId(snapshot.data()?.userId);
+}
+
+async function hasProcessedStripeWebhookEventFromFirestore(eventId) {
+  const normalizedEventId = typeof eventId === "string" ? eventId.trim() : "";
+  if (!normalizedEventId) return false;
+  const snapshot = await getStripeCollections().events.doc(normalizedEventId).get();
+  if (!snapshot.exists) return false;
+  const expiresAt = Number(snapshot.data()?.expiresAt || 0);
+  return !expiresAt || expiresAt > Date.now();
+}
+
+async function markStripeWebhookEventProcessedInFirestore(eventId) {
+  const normalizedEventId = typeof eventId === "string" ? eventId.trim() : "";
+  if (!normalizedEventId) return;
+  await getStripeCollections().events.doc(normalizedEventId).set({
+    eventId: normalizedEventId,
+    processedAt: Date.now(),
+    expiresAt: Date.now() + (WEBHOOK_EVENT_TTL_SECONDS * 1000),
+  }, { merge: true });
+}
+
 async function getStripeBillingProfile(userId) {
   const normalizedUserId = normalizeUserId(userId);
   const fallback = createDefaultBillingProfile(normalizedUserId);
   if (!normalizedUserId) return fallback;
+
+  if (isFirestoreStripeStoreEnabled()) {
+    return getStripeBillingProfileFromFirestore(normalizedUserId);
+  }
 
   const raw = await getStoredValue(getUserProfileKey(normalizedUserId));
   if (!raw) return fallback;
@@ -204,6 +292,10 @@ async function saveStripeBillingProfile(userId, patch) {
   const normalizedUserId = normalizeUserId(userId);
   if (!normalizedUserId) {
     return createDefaultBillingProfile("");
+  }
+
+  if (isFirestoreStripeStoreEnabled()) {
+    return saveStripeBillingProfileToFirestore(normalizedUserId, patch);
   }
 
   const existing = await getStripeBillingProfile(normalizedUserId);
@@ -238,6 +330,11 @@ async function bindUserToStripeCustomer({ userId, customerId, customerEmail = ""
 async function getUserIdForStripeCustomer(customerId) {
   const normalizedCustomerId = normalizeCustomerId(customerId);
   if (!normalizedCustomerId) return "";
+
+  if (isFirestoreStripeStoreEnabled()) {
+    return getUserIdForStripeCustomerFromFirestore(normalizedCustomerId);
+  }
+
   const value = await getStoredValue(getCustomerUserKey(normalizedCustomerId));
   return normalizeUserId(value);
 }
@@ -245,6 +342,11 @@ async function getUserIdForStripeCustomer(customerId) {
 async function hasProcessedStripeWebhookEvent(eventId) {
   const normalizedEventId = typeof eventId === "string" ? eventId.trim() : "";
   if (!normalizedEventId) return false;
+
+  if (isFirestoreStripeStoreEnabled()) {
+    return hasProcessedStripeWebhookEventFromFirestore(normalizedEventId);
+  }
+
   const value = await getStoredValue(getWebhookEventKey(normalizedEventId));
   return Boolean(value);
 }
@@ -252,6 +354,12 @@ async function hasProcessedStripeWebhookEvent(eventId) {
 async function markStripeWebhookEventProcessed(eventId) {
   const normalizedEventId = typeof eventId === "string" ? eventId.trim() : "";
   if (!normalizedEventId) return;
+
+  if (isFirestoreStripeStoreEnabled()) {
+    await markStripeWebhookEventProcessedInFirestore(normalizedEventId);
+    return;
+  }
+
   await setStoredValueWithExpiry(
     getWebhookEventKey(normalizedEventId),
     JSON.stringify({ processedAt: Date.now() }),

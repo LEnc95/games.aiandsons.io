@@ -32,6 +32,7 @@ Operational command reference for contributors and automations in this repositor
 ## Data and Audit Commands
 - Export KPI snapshot: `npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30`
 - Stripe reconcile/audit pass: `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
+- Deploy tracked Firebase rules: `npm run firebase:deploy:rules`
 - Run the strict daily feedback metadata guard: `npm run feedback:check-daily`
 - Regenerate Linear feedback seed files and live-provision Linear when envs are present: `npm run feedback:sync-linear`
 - Regenerate only the local Linear seed artifacts: `npm run feedback:sync-linear:files`
@@ -42,6 +43,15 @@ Operational command reference for contributors and automations in this repositor
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
 - Slack notifications for those workflows use the `SLACK_CI_WEBHOOK_URL` Actions secret and notify on failures by default.
 - Production feedback sync failures can post to Slack from the deployed app when `SLACK_FEEDBACK_WEBHOOK_URL` is set in Vercel.
+
+## Firebase Backend
+- Firebase project: `games-aiandsons-io`
+- Firestore database: `(default)` in `nam5`
+- Backend attachment bucket: `games-aiandsons-io-storage`
+- Public account flow uses Firebase Auth + Google sign-in, but the app still exchanges that for the repo's signed `cade_session` cookie via `api/auth/google-login`
+- Durable feedback and Stripe state now prefer Firestore/Storage over KV or process memory
+- Required Vercel envs for the Firebase backend: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_WEB_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`
+- Google sign-in still requires the Firebase/Auth provider setup and authorized domains in the Firebase or Google Cloud console
 
 ## Daily Game Checklist
 - Add the game route and update `src/meta/games.js`

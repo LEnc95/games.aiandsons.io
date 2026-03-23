@@ -69,6 +69,10 @@ module.exports = async function handler(req, res) {
     const submissionRecord = createFeedbackSubmissionRecord({
       ...normalized.value,
       attachments: attachmentMetas,
+      authType: session?.authType || "anonymous",
+      firebaseUid: session?.firebaseUid || "",
+      sessionEmail: session?.email || "",
+      sessionDisplayName: session?.displayName || "",
     }, {
       sessionUserId: session?.userId || "",
       requestIp,
