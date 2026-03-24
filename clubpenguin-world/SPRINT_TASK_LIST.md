@@ -17,6 +17,9 @@ Goal: move from movement/chat prototype to a playable social world with short-se
 - [x] Add configurable multiplayer endpoint UI (`?ws=` + reconnect flow) for Vercel preview friend-testing.
 - [x] Add one-click invite sharing (`Copy Invite`) with room/server URL persistence.
 - [x] Add containerized Go backend deployment path (`Dockerfile` + preview wiring guide).
+- [x] Add backend deploy hardening (`/healthz` endpoint + `WS_ALLOWED_ORIGINS` allowlist).
+- [x] Add in-app backend status indicator using `/healthz` checks.
+- [x] Add runtime hardening (`MAX_CLIENTS` capacity guard, request logging, graceful shutdown).
 - [ ] Build reusable component CSS patterns for buttons/inputs/chips/lists.
 - [ ] Add accessibility pass (focus rings, contrast checks, reduced-motion support).
 - [ ] Add empty/loading/error states for all side-panel modules.
@@ -85,6 +88,9 @@ Make the world feel social and worth returning to.
 - [x] Added animated interaction affordances for portals, NPCs, and collectibles.
 - [x] Added multiplayer endpoint selector UI and `?ws=` share-link support for preview deployments.
 - [x] Added `Copy Invite` action and deployment docs for hosted WebSocket backend.
+- [x] Added backend health endpoint and WebSocket origin allowlist configuration.
+- [x] Added client-side backend status pill (checking/healthy/error) for deploy verification.
+- [x] Added server runtime hardening with graceful shutdown, request logs, and per-instance client cap.
 - [x] Implemented server-authoritative starter objectives with coin rewards.
 - [x] Implemented objective UI and coin tracker.
 - [x] Implemented emote actions (`wave`, `dance`, `cheer`, `laugh`, `snowball`) with room broadcast.

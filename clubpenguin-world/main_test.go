@@ -88,6 +88,108 @@ func TestNormalizeRoomID(t *testing.T) {
 	}
 }
 
+func TestBuildWSOriginChecker(t *testing.T) {
+	checker := buildWSOriginChecker("https://preview.example.com,127.0.0.1:4173")
+
+	reqAllowedOrigin := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqAllowedOrigin.Header.Set("Origin", "https://preview.example.com")
+	if !checker(reqAllowedOrigin) {
+		t.Fatal("expected exact origin to be allowed")
+	}
+
+	reqAllowedHost := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqAllowedHost.Header.Set("Origin", "http://127.0.0.1:4173")
+	if !checker(reqAllowedHost) {
+		t.Fatal("expected host allowlist entry to allow matching origin")
+	}
+
+	reqDenied := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqDenied.Header.Set("Origin", "https://evil.example.com")
+	if checker(reqDenied) {
+		t.Fatal("expected unlisted origin to be denied")
+	}
+
+	reqNoOrigin := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	if !checker(reqNoOrigin) {
+		t.Fatal("expected requests without Origin header to be allowed")
+	}
+
+	allowAll := buildWSOriginChecker("*")
+	reqAny := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqAny.Header.Set("Origin", "https://anything.example.com")
+	if !allowAll(reqAny) {
+		t.Fatal("expected wildcard allowlist to permit all origins")
+	}
+}
+
+func TestGetMaxClients(t *testing.T) {
+	t.Setenv(maxClientsEnv, "")
+	if got := getMaxClients(); got != defaultMaxClients {
+		t.Fatalf("expected default max clients %d, got %d", defaultMaxClients, got)
+	}
+
+	t.Setenv(maxClientsEnv, "512")
+	if got := getMaxClients(); got != 512 {
+		t.Fatalf("expected max clients 512, got %d", got)
+	}
+
+	t.Setenv(maxClientsEnv, "0")
+	if got := getMaxClients(); got != defaultMaxClients {
+		t.Fatalf("expected fallback max clients %d for non-positive value, got %d", defaultMaxClients, got)
+	}
+
+	t.Setenv(maxClientsEnv, "bad-value")
+	if got := getMaxClients(); got != defaultMaxClients {
+		t.Fatalf("expected fallback max clients %d for invalid value, got %d", defaultMaxClients, got)
+	}
+}
+
+func TestHandleHealth(t *testing.T) {
+	server := newServer()
+	_, _, _ = server.addClient(nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	rec := httptest.NewRecorder()
+	server.handleHealth(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if acao := rec.Header().Get("Access-Control-Allow-Origin"); acao != "*" {
+		t.Fatalf("expected health endpoint CORS wildcard, got %q", acao)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.Contains(ct, "application/json") {
+		t.Fatalf("expected JSON content type, got %q", ct)
+	}
+
+	var payload healthPayload
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("expected valid JSON payload, got error: %v", err)
+	}
+	if payload.Status != "ok" {
+		t.Fatalf("expected status ok, got %q", payload.Status)
+	}
+	if payload.TotalRooms != len(roomTemplates) {
+		t.Fatalf("expected %d rooms, got %d", len(roomTemplates), payload.TotalRooms)
+	}
+	if payload.TotalPlayer != 1 {
+		t.Fatalf("expected 1 connected player, got %d", payload.TotalPlayer)
+	}
+	if payload.ActiveUsers != 1 {
+		t.Fatalf("expected 1 active client, got %d", payload.ActiveUsers)
+	}
+	if payload.MaxUsers != defaultMaxClients {
+		t.Fatalf("expected max clients %d, got %d", defaultMaxClients, payload.MaxUsers)
+	}
+
+	badReq := httptest.NewRequest(http.MethodPost, "/healthz", nil)
+	badRec := httptest.NewRecorder()
+	server.handleHealth(badRec, badReq)
+	if badRec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected status %d for invalid method, got %d", http.StatusMethodNotAllowed, badRec.Code)
+	}
+}
+
 func TestCopyWorldMapCopiesPortals(t *testing.T) {
 	src := WorldMap{
 		Width:  1200,
@@ -139,6 +241,19 @@ func TestCanJoinRoomFromPortal(t *testing.T) {
 	}
 	if server.canJoinRoomFromPortal(client.id, "snow-forts") {
 		t.Fatal("expected join to snow-forts to be blocked from plaza portal zone")
+	}
+}
+
+func TestAddClientRespectsMaxClients(t *testing.T) {
+	server := newServerWithMaxClients(1)
+	first, _, _ := server.addClient(nil)
+	if first == nil {
+		t.Fatal("expected first client to be accepted")
+	}
+
+	second, _, _ := server.addClient(nil)
+	if second != nil {
+		t.Fatal("expected second client to be rejected at max capacity")
 	}
 }
 

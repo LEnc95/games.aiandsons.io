@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -40,14 +45,22 @@ const (
 	defaultReadTimeout  = 10 * time.Second
 	defaultWriteTimeout = 10 * time.Second
 	defaultIdleTimeout  = 120 * time.Second
+	shutdownTimeout     = 15 * time.Second
+	wsAllowedOriginsEnv = "WS_ALLOWED_ORIGINS"
+	maxClientsEnv       = "MAX_CLIENTS"
+	defaultMaxClients   = 300
 )
 
 var (
+	wsOriginAllowed = func(_ *http.Request) bool {
+		return true
+	}
+
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  2048,
 		WriteBufferSize: 2048,
-		CheckOrigin: func(_ *http.Request) bool {
-			return true
+		CheckOrigin: func(r *http.Request) bool {
+			return wsOriginAllowed(r)
 		},
 	}
 
@@ -382,19 +395,48 @@ type simulationBatch struct {
 	progressClientIDs []string
 }
 
+type roomHealth struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Players int    `json:"players"`
+}
+
+type healthPayload struct {
+	Status      string       `json:"status"`
+	ServerTime  int64        `json:"serverTime"`
+	UptimeSec   int64        `json:"uptimeSec"`
+	TotalRooms  int          `json:"totalRooms"`
+	TotalPlayer int          `json:"totalPlayers"`
+	ActiveUsers int          `json:"activeClients"`
+	MaxUsers    int          `json:"maxClients"`
+	Rooms       []roomHealth `json:"rooms"`
+}
+
 type Server struct {
-	mu        sync.RWMutex
-	clients   map[string]*Client
-	rooms     map[string]*Room
-	roomOrder []string
-	nextID    atomic.Uint64
+	mu         sync.RWMutex
+	clients    map[string]*Client
+	rooms      map[string]*Room
+	roomOrder  []string
+	startedAt  time.Time
+	maxClients int
+	nextID     atomic.Uint64
 }
 
 func newServer() *Server {
+	return newServerWithMaxClients(defaultMaxClients)
+}
+
+func newServerWithMaxClients(maxClients int) *Server {
+	if maxClients < 1 {
+		maxClients = defaultMaxClients
+	}
+
 	s := &Server{
-		clients:   make(map[string]*Client),
-		rooms:     make(map[string]*Room),
-		roomOrder: make([]string, 0, len(roomTemplates)),
+		clients:    make(map[string]*Client),
+		rooms:      make(map[string]*Room),
+		roomOrder:  make([]string, 0, len(roomTemplates)),
+		startedAt:  time.Now().UTC(),
+		maxClients: maxClients,
 	}
 
 	for _, tmpl := range roomTemplates {
@@ -411,6 +453,62 @@ func newServer() *Server {
 		s.roomOrder = append(s.roomOrder, room.ID)
 	}
 	return s
+}
+
+func (s *Server) healthSnapshot(serverTime int64) healthPayload {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	rooms := make([]roomHealth, 0, len(s.roomOrder))
+	totalPlayers := 0
+	for _, roomID := range s.roomOrder {
+		room := s.rooms[roomID]
+		if room == nil {
+			continue
+		}
+		playerCount := len(room.Players)
+		totalPlayers += playerCount
+		rooms = append(rooms, roomHealth{
+			ID:      room.ID,
+			Name:    room.Name,
+			Players: playerCount,
+		})
+	}
+
+	uptimeSec := int64(0)
+	if !s.startedAt.IsZero() {
+		uptimeSec = int64(time.Since(s.startedAt).Seconds())
+		if uptimeSec < 0 {
+			uptimeSec = 0
+		}
+	}
+
+	return healthPayload{
+		Status:      "ok",
+		ServerTime:  serverTime,
+		UptimeSec:   uptimeSec,
+		TotalRooms:  len(rooms),
+		TotalPlayer: totalPlayers,
+		ActiveUsers: len(s.clients),
+		MaxUsers:    s.maxClients,
+		Rooms:       rooms,
+	}
+}
+
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	payload := s.healthSnapshot(time.Now().UnixMilli())
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Vary", "Origin")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(payload)
 }
 
 func copyWorldMap(src WorldMap) WorldMap {
@@ -852,6 +950,10 @@ func (s *Server) addClient(conn *websocket.Conn) (*Client, Player, string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.maxClients > 0 && len(s.clients) >= s.maxClients {
+		return nil, Player{}, ""
+	}
+
 	id := s.newPlayerID()
 	color := playerColors[(int(s.nextID.Load())-1)%len(playerColors)]
 	name := defaultPlayerName(id)
@@ -1057,6 +1159,34 @@ func (s *Server) roomExists(roomID string) bool {
 	defer s.mu.RUnlock()
 	_, ok := s.rooms[roomID]
 	return ok
+}
+
+func (s *Server) atCapacity() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.maxClients < 1 {
+		return false
+	}
+	return len(s.clients) >= s.maxClients
+}
+
+func (s *Server) closeAllConnections(reason string) {
+	s.mu.RLock()
+	clients := make([]*Client, 0, len(s.clients))
+	for _, client := range s.clients {
+		clients = append(clients, client)
+	}
+	s.mu.RUnlock()
+
+	closeMessage := websocket.FormatCloseMessage(websocket.CloseGoingAway, reason)
+	deadline := time.Now().Add(wsWriteTimeout)
+	for _, client := range clients {
+		if client == nil || client.conn == nil {
+			continue
+		}
+		_ = client.conn.WriteControl(websocket.CloseMessage, closeMessage, deadline)
+		_ = client.conn.Close()
+	}
 }
 
 func pointInPortal(x float64, y float64, portal Portal) bool {
@@ -1649,6 +1779,11 @@ func (c *Client) writePump() {
 }
 
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if s.atCapacity() {
+		http.Error(w, "server is at capacity", http.StatusServiceUnavailable)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("websocket upgrade failed: %v", err)
@@ -1656,11 +1791,196 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client, player, roomID := s.addClient(conn)
+	if client == nil {
+		_ = conn.WriteControl(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "server is at capacity"),
+			time.Now().Add(wsWriteTimeout),
+		)
+		_ = conn.Close()
+		return
+	}
+
 	s.sendWorldInit(client.id)
 	s.broadcastToRoom("player:joined", map[string]any{"player": player}, roomID, client.id)
 
 	go client.writePump()
 	client.readPump()
+}
+
+func normalizeOriginToken(raw string) (full string, host string, ok bool) {
+	candidate := strings.TrimSpace(raw)
+	if candidate == "" {
+		return "", "", false
+	}
+
+	if !strings.Contains(candidate, "://") {
+		host = strings.ToLower(strings.Trim(candidate, "/"))
+		if host == "" {
+			return "", "", false
+		}
+		return "", host, true
+	}
+
+	parsed, err := url.Parse(candidate)
+	if err != nil || parsed.Host == "" {
+		return "", "", false
+	}
+
+	scheme := strings.ToLower(parsed.Scheme)
+	switch scheme {
+	case "ws":
+		scheme = "http"
+	case "wss":
+		scheme = "https"
+	}
+	if scheme != "http" && scheme != "https" {
+		return "", "", false
+	}
+	host = strings.ToLower(parsed.Host)
+	return scheme + "://" + host, host, true
+}
+
+func buildWSOriginChecker(raw string) func(*http.Request) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return func(_ *http.Request) bool { return true }
+	}
+
+	allowedFull := make(map[string]struct{})
+	allowedHost := make(map[string]struct{})
+	allowAll := false
+
+	for _, token := range strings.Split(trimmed, ",") {
+		token = strings.TrimSpace(token)
+		if token == "" {
+			continue
+		}
+		if token == "*" {
+			allowAll = true
+			break
+		}
+		full, host, ok := normalizeOriginToken(token)
+		if !ok {
+			continue
+		}
+		if full != "" {
+			allowedFull[full] = struct{}{}
+		}
+		if host != "" {
+			allowedHost[host] = struct{}{}
+		}
+	}
+
+	if allowAll {
+		return func(_ *http.Request) bool { return true }
+	}
+
+	return func(r *http.Request) bool {
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin == "" {
+			// Non-browser clients may omit Origin.
+			return true
+		}
+		full, host, ok := normalizeOriginToken(origin)
+		if !ok {
+			return false
+		}
+		if _, allowed := allowedFull[full]; allowed {
+			return true
+		}
+		if _, allowed := allowedHost[host]; allowed {
+			return true
+		}
+		return false
+	}
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	status int
+	bytes  int
+}
+
+func (w *loggingResponseWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *loggingResponseWriter) Write(data []byte) (int, error) {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	n, err := w.ResponseWriter.Write(data)
+	w.bytes += n
+	return n, err
+}
+
+func requestRemoteHost(r *http.Request) string {
+	if r == nil {
+		return ""
+	}
+
+	forwarded := strings.TrimSpace(r.Header.Get("X-Forwarded-For"))
+	if forwarded != "" {
+		parts := strings.Split(forwarded, ",")
+		if len(parts) > 0 {
+			host := strings.TrimSpace(parts[0])
+			if host != "" {
+				return host
+			}
+		}
+	}
+
+	realIP := strings.TrimSpace(r.Header.Get("X-Real-IP"))
+	if realIP != "" {
+		return realIP
+	}
+
+	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
+	if err == nil && host != "" {
+		return host
+	}
+	return strings.TrimSpace(r.RemoteAddr)
+}
+
+func withRequestLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		remoteHost := requestRemoteHost(r)
+		path := r.URL.Path
+
+		// WebSocket upgrades need the original writer type.
+		if strings.HasPrefix(path, "/ws") {
+			next.ServeHTTP(w, r)
+			log.Printf(
+				"http method=%s path=%s status=%s duration_ms=%d remote=%s user_agent=%q",
+				r.Method,
+				path,
+				"upgrade_or_close",
+				time.Since(started).Milliseconds(),
+				remoteHost,
+				r.UserAgent(),
+			)
+			return
+		}
+
+		recorder := &loggingResponseWriter{ResponseWriter: w}
+		next.ServeHTTP(recorder, r)
+		if recorder.status == 0 {
+			recorder.status = http.StatusOK
+		}
+		log.Printf(
+			"http method=%s path=%s status=%d bytes=%d duration_ms=%d remote=%s user_agent=%q",
+			r.Method,
+			path,
+			recorder.status,
+			recorder.bytes,
+			time.Since(started).Milliseconds(),
+			remoteHost,
+			r.UserAgent(),
+		)
+	})
 }
 
 func getPort() string {
@@ -1674,17 +1994,39 @@ func getPort() string {
 	return port
 }
 
+func getMaxClients() int {
+	raw := strings.TrimSpace(os.Getenv(maxClientsEnv))
+	if raw == "" {
+		return defaultMaxClients
+	}
+	parsed, err := strconv.Atoi(raw)
+	if err != nil || parsed < 1 {
+		return defaultMaxClients
+	}
+	return parsed
+}
+
 func main() {
 	// Room note:
 	// This prototype already runs independent per-room state loops under one process.
 	// To scale horizontally, keep sticky sessions and add Redis pub/sub for room fanout.
-	serverState := newServer()
+	wsOriginAllowed = buildWSOriginChecker(os.Getenv(wsAllowedOriginsEnv))
+	maxClients := getMaxClients()
+
+	serverState := newServerWithMaxClients(maxClients)
 	stopSimulation := make(chan struct{})
-	defer close(stopSimulation)
+	var stopSimulationOnce sync.Once
+	stopSimulationLoop := func() {
+		stopSimulationOnce.Do(func() {
+			close(stopSimulation)
+		})
+	}
+	defer stopSimulationLoop()
 	go serverState.runSimulationLoop(stopSimulation)
 
 	fileServer := http.FileServer(http.Dir("./public"))
 	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", serverState.handleHealth)
 	mux.HandleFunc("/ws", serverState.handleWebSocket)
 	mux.Handle("/vendor/", http.StripPrefix("/vendor/", http.FileServer(http.Dir("./public/vendor"))))
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1697,14 +2039,44 @@ func main() {
 
 	server := &http.Server{
 		Addr:         ":" + getPort(),
-		Handler:      mux,
+		Handler:      withRequestLogging(mux),
 		ReadTimeout:  defaultReadTimeout,
 		WriteTimeout: defaultWriteTimeout,
 		IdleTimeout:  defaultIdleTimeout,
 	}
 
+	log.Printf("%s=%q", wsAllowedOriginsEnv, strings.TrimSpace(os.Getenv(wsAllowedOriginsEnv)))
+	log.Printf("%s=%d", maxClientsEnv, maxClients)
 	log.Printf("clubpenguin-world server listening on http://127.0.0.1%s", server.Addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server failed: %v", err)
+	serverErrCh := make(chan error, 1)
+	go func() {
+		serverErrCh <- server.ListenAndServe()
+	}()
+
+	signalCtx, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignals()
+
+	select {
+	case err := <-serverErrCh:
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server failed: %v", err)
+		}
+		return
+	case <-signalCtx.Done():
+		log.Printf("shutdown signal received: %v", signalCtx.Err())
+	}
+
+	stopSimulationLoop()
+	serverState.closeAllConnections("server shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("graceful shutdown failed: %v", err)
+		_ = server.Close()
+	}
+
+	if err := <-serverErrCh; err != nil && err != http.ErrServerClosed {
+		log.Printf("server exit error: %v", err)
 	}
 }

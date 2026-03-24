@@ -80,6 +80,7 @@
   const serverSaveEl = document.getElementById("server-save");
   const serverResetEl = document.getElementById("server-reset");
   const serverCopyEl = document.getElementById("server-copy");
+  const backendStatusEl = document.getElementById("backend-status");
   const rosterEl = document.getElementById("player-roster");
   const coinCountEl = document.getElementById("coin-count");
   const questListEl = document.getElementById("quest-list");
@@ -100,6 +101,10 @@
     pendingPortalAt: 0,
     wsEndpoint: "",
     activeWsUrl: "",
+    backendHealth: {
+      state: "checking",
+      text: "Backend: checking...",
+    },
     rooms: DEFAULT_ROOMS.slice(),
     world: DEFAULT_WORLD,
     collectibles: [],
@@ -119,6 +124,8 @@
   let ws = null;
   let reconnectTimer = null;
   let suppressNextCloseReconnect = false;
+  let backendHealthTimer = null;
+  let backendHealthSeq = 0;
   let worldScene = null;
   let audioCtx = null;
 
@@ -331,6 +338,102 @@
   function setStatus(text, statusState) {
     statusEl.textContent = text;
     statusEl.dataset.state = statusState;
+  }
+
+  function setBackendStatus(text, statusState) {
+    state.backendHealth = {
+      state: statusState,
+      text,
+    };
+    if (!backendStatusEl) {
+      return;
+    }
+    backendStatusEl.textContent = text;
+    backendStatusEl.dataset.state = statusState;
+  }
+
+  function healthUrlForEndpoint(endpoint) {
+    if (!endpoint) {
+      return `${window.location.origin}/healthz`;
+    }
+    let parsed = null;
+    try {
+      parsed = new URL(endpoint);
+    } catch {
+      return "";
+    }
+    if (parsed.protocol === "ws:") {
+      parsed.protocol = "http:";
+    } else if (parsed.protocol === "wss:") {
+      parsed.protocol = "https:";
+    }
+    if (!parsed.pathname || parsed.pathname === "/") {
+      parsed.pathname = "/healthz";
+    } else if (/\/ws$/i.test(parsed.pathname)) {
+      parsed.pathname = parsed.pathname.replace(/\/ws$/i, "/healthz");
+    } else if (!/\/healthz$/i.test(parsed.pathname)) {
+      parsed.pathname = "/healthz";
+    }
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  }
+
+  function stopBackendHealthMonitor() {
+    if (backendHealthTimer) {
+      window.clearInterval(backendHealthTimer);
+      backendHealthTimer = null;
+    }
+  }
+
+  async function checkBackendHealth() {
+    const seq = ++backendHealthSeq;
+    const target = healthUrlForEndpoint(state.activeWsUrl || currentWsUrl());
+    if (!target) {
+      setBackendStatus("Backend: unknown endpoint", "warn");
+      return;
+    }
+    setBackendStatus("Backend: checking...", "checking");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 3800);
+    try {
+      const response = await fetch(target, {
+        method: "GET",
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (seq !== backendHealthSeq) {
+        return;
+      }
+      if (!response.ok) {
+        setBackendStatus(`Backend: HTTP ${response.status}`, "warn");
+        return;
+      }
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+      const players = payload && Number.isFinite(payload.totalPlayers) ? payload.totalPlayers : null;
+      const suffix = players === null ? "" : ` (${players} online)`;
+      setBackendStatus(`Backend: healthy${suffix}`, "ok");
+    } catch {
+      if (seq !== backendHealthSeq) {
+        return;
+      }
+      setBackendStatus("Backend: unreachable", "error");
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  function startBackendHealthMonitor() {
+    stopBackendHealthMonitor();
+    void checkBackendHealth();
+    backendHealthTimer = window.setInterval(() => {
+      void checkBackendHealth();
+    }, 30000);
   }
 
   function renderQuickChatSuggestions() {
@@ -1021,6 +1124,7 @@
     const endpoint = currentWsUrl();
     state.activeWsUrl = endpoint;
     setStatus("Connecting...", "disconnected");
+    setBackendStatus("Backend: checking socket...", "checking");
     const socket = new WebSocket(endpoint);
     ws = socket;
 
@@ -1033,6 +1137,7 @@
       updateRoomSelect();
       updateIdentityControls();
       appendChat("system", `Connected to world server (${wsLabel(endpoint)}).`);
+      startBackendHealthMonitor();
     });
 
     socket.addEventListener("message", (event) => {
@@ -1046,6 +1151,7 @@
       if (socket !== ws) {
         return;
       }
+      stopBackendHealthMonitor();
       state.connected = false;
       refreshStatus();
       updateRoomSelect();
@@ -1053,8 +1159,10 @@
       ws = null;
       if (suppressNextCloseReconnect) {
         suppressNextCloseReconnect = false;
+        setBackendStatus("Backend: switching connection...", "checking");
         return;
       }
+      setBackendStatus("Backend: socket disconnected", "warn");
       if (!reconnectTimer) {
         reconnectTimer = window.setTimeout(() => {
           reconnectTimer = null;
@@ -1068,10 +1176,12 @@
         return;
       }
       setStatus("Connection error", "error");
+      setBackendStatus("Backend: socket error", "error");
     });
   }
 
   function forceReconnectSocket() {
+    stopBackendHealthMonitor();
     if (reconnectTimer) {
       window.clearTimeout(reconnectTimer);
       reconnectTimer = null;
@@ -1089,6 +1199,7 @@
     refreshStatus();
     updateRoomSelect();
     updateIdentityControls();
+    setBackendStatus("Backend: reconnecting...", "checking");
     connectSocket();
   }
 
@@ -1097,6 +1208,7 @@
     if (!trimmed) {
       setPreferredWsEndpoint("");
       appendChat("system", "Switched to default same-origin world server (/ws).");
+      setBackendStatus("Backend: switching...", "checking");
       forceReconnectSocket();
       return true;
     }
@@ -1108,6 +1220,7 @@
     }
     setPreferredWsEndpoint(normalized);
     appendChat("system", `Switching server to ${wsLabel(normalized)}...`);
+    setBackendStatus("Backend: switching...", "checking");
     forceReconnectSocket();
     return true;
   }
@@ -1700,6 +1813,10 @@
     sendEvent("player:emote", { emote });
   });
 
+  window.addEventListener("beforeunload", () => {
+    stopBackendHealthMonitor();
+  });
+
   chatFormEl.addEventListener("submit", (event) => {
     event.preventDefault();
     const query = chatInputEl.value.trim();
@@ -1750,6 +1867,7 @@
       ws_endpoint: state.wsEndpoint || "",
       active_ws_url: state.activeWsUrl || currentWsUrl(),
       invite_url: buildInviteUrl(),
+      backend_health: state.backendHealth,
       coordinate_system: "origin: top-left, +x: right, +y: down, units: pixels",
       selfId: state.selfId,
       roomId: state.roomId,
@@ -1800,6 +1918,7 @@
   };
 
   setPreferredWsEndpoint(state.wsEndpoint || "");
+  setBackendStatus("Backend: checking...", "checking");
   renderQuestPanel();
   renderQuickChatSuggestions();
   updateIdentityControls();

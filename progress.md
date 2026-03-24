@@ -1678,3 +1678,55 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
     - confirmed `Copy Invite` button renders and works,
     - toast + chat confirmation appears (`Invite link copied to clipboard.`),
     - full-page screenshot captured: `clubpenguin-world/output/web-game/invite-flow-run1/full-ui-invite.png`.
+- Continuation (2026-03-24, backend hardening pass):
+  - Hardened Go backend in `clubpenguin-world/main.go`:
+    - Added `/healthz` JSON endpoint with room/player summary and uptime metadata.
+    - Added env-driven WebSocket origin allowlist via `WS_ALLOWED_ORIGINS`.
+    - Upgrader `CheckOrigin` now uses parsed allowlist checker (supports exact origins, host entries, and wildcard `*`).
+  - Updated deploy guide `clubpenguin-world/DEPLOY.md`:
+    - health check path now `/healthz`.
+    - documented `WS_ALLOWED_ORIGINS` usage and example value.
+  - Extended tests in `clubpenguin-world/main_test.go`:
+    - `TestBuildWSOriginChecker`
+    - `TestHandleHealth`
+  - Updated sprint tracker (`clubpenguin-world/SPRINT_TASK_LIST.md`) to mark backend hardening task complete.
+- Validation for backend hardening pass:
+  - `gofmt -w main.go main_test.go` applied.
+  - `go test ./...` passed.
+  - Playwright skill smoke run: `clubpenguin-world/output/web-game/backend-hardening-run1` (no `errors-*.json`).
+- Continuation (2026-03-24, backend status indicator pass):
+  - Added in-app backend status pill to multiplayer panel (`public/index.html` + `public/client.js`).
+  - Client now derives health URL from active websocket endpoint and polls `/healthz`:
+    - states: `checking`, `ok`, `warn`, `error`.
+    - updates on connect/reconnect/switch and every 30s while connected.
+  - Added client state export fields for observability:
+    - `backend_health` in `render_game_to_text`.
+  - Added CORS header on `/healthz` in backend (`Access-Control-Allow-Origin: *`) so cross-origin frontend previews can read health checks.
+  - Updated sprint tracker to mark backend status indicator completed.
+- Validation for backend status pass:
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - `gofmt -w main.go main_test.go` applied.
+  - `go test ./...` passed.
+  - Runtime health endpoint check returned `200` with JSON payload via `http://127.0.0.1:8081/healthz`.
+  - Playwright skill run `output/web-game/backend-status-run2` passed with no `errors-*.json`; state shows `backend_health.state = ok`.
+  - Playwright MCP full-page screenshot confirms visible green status pill:
+    - `output/web-game/backend-status-run2/full-ui-backend-status.png`.
+- Continuation (2026-03-24, runtime hardening completion pass):
+  - Completed production backend runtime hardening in `clubpenguin-world/main.go`:
+    - Added graceful shutdown handling for `SIGTERM` / `SIGINT` with bounded shutdown timeout.
+    - Added HTTP request logging middleware (method, path, status, bytes, duration, remote host, user-agent).
+    - Added env-configured capacity control via `MAX_CLIENTS` with websocket admission guard.
+    - Added shutdown-time websocket close broadcast to connected clients.
+    - Extended `/healthz` payload with `activeClients` and `maxClients`.
+  - Added tests in `clubpenguin-world/main_test.go`:
+    - `TestGetMaxClients`
+    - `TestAddClientRespectsMaxClients`
+    - updated `TestHandleHealth` assertions for client capacity fields.
+  - Updated docs/tracking:
+    - `clubpenguin-world/DEPLOY.md` now documents `MAX_CLIENTS` and runtime ops notes.
+    - `clubpenguin-world/SPRINT_TASK_LIST.md` marks runtime hardening task complete.
+    - `clubpenguin-world/Dockerfile` now sets runtime env defaults and container `HEALTHCHECK` using `/healthz`.
+- Validation for runtime hardening pass:
+  - `gofmt -w main.go main_test.go` applied.
+  - `go test ./...` passed.
+  - `go build ./...` passed.
