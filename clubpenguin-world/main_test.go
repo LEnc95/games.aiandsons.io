@@ -1,0 +1,589 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"strings"
+	"testing"
+	"time"
+
+	"net"
+	"net/http"
+	"net/http/httptest"
+
+	"github.com/gorilla/websocket"
+)
+
+func TestSanitizeChat(t *testing.T) {
+	got := sanitizeChat("   hello    world   ")
+	if got != "hello world" {
+		t.Fatalf("expected normalized whitespace, got %q", got)
+	}
+
+	got = sanitizeChat("   ")
+	if got != "" {
+		t.Fatalf("expected empty chat to sanitize to empty string, got %q", got)
+	}
+
+	longInput := strings.Repeat("x", maxChatLengthRunes+25)
+	got = sanitizeChat(longInput)
+	if len([]rune(got)) != maxChatLengthRunes {
+		t.Fatalf("expected chat to be clamped to %d runes, got %d", maxChatLengthRunes, len([]rune(got)))
+	}
+}
+
+func TestResolveQuickChatOption(t *testing.T) {
+	byID, ok := resolveQuickChatOption(ChatSendPayload{OptionID: "hello"})
+	if !ok {
+		t.Fatal("expected quick chat option to resolve by id")
+	}
+	if byID.Text != "Hello everyone!" {
+		t.Fatalf("expected hello phrase, got %q", byID.Text)
+	}
+
+	byQuery, ok := resolveQuickChatOption(ChatSendPayload{Text: "could you help me please"})
+	if !ok {
+		t.Fatal("expected quick chat option to resolve by query")
+	}
+	if byQuery.ID != "need-help" {
+		t.Fatalf("expected need-help option, got %q", byQuery.ID)
+	}
+
+	if _, ok := resolveQuickChatOption(ChatSendPayload{Text: "zzzz unmatched phrase"}); ok {
+		t.Fatal("expected unmatched query to fail quick chat resolution")
+	}
+}
+
+func TestSanitizePlayerName(t *testing.T) {
+	got := sanitizePlayerName("   Captain    Waddles   ")
+	if got != "Captain Waddles" {
+		t.Fatalf("expected normalized player name, got %q", got)
+	}
+
+	got = sanitizePlayerName("   ")
+	if got != "" {
+		t.Fatalf("expected empty name to sanitize to empty string, got %q", got)
+	}
+
+	longInput := strings.Repeat("a", maxPlayerNameRunes+12)
+	got = sanitizePlayerName(longInput)
+	if len([]rune(got)) != maxPlayerNameRunes {
+		t.Fatalf("expected name to be clamped to %d runes, got %d", maxPlayerNameRunes, len([]rune(got)))
+	}
+}
+
+func TestSanitizeEmote(t *testing.T) {
+	if got := sanitizeEmote("  WaVe "); got != "wave" {
+		t.Fatalf("expected wave emote, got %q", got)
+	}
+	if got := sanitizeEmote("unknown"); got != "" {
+		t.Fatalf("expected unknown emote to sanitize to empty string, got %q", got)
+	}
+}
+
+func TestNormalizeRoomID(t *testing.T) {
+	got := normalizeRoomID("  Snow Forts ")
+	if got != "snow-forts" {
+		t.Fatalf("expected room id to normalize to snow-forts, got %q", got)
+	}
+}
+
+func TestBuildWSOriginChecker(t *testing.T) {
+	checker := buildWSOriginChecker("https://preview.example.com,127.0.0.1:4173")
+
+	reqAllowedOrigin := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqAllowedOrigin.Header.Set("Origin", "https://preview.example.com")
+	if !checker(reqAllowedOrigin) {
+		t.Fatal("expected exact origin to be allowed")
+	}
+
+	reqAllowedHost := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqAllowedHost.Header.Set("Origin", "http://127.0.0.1:4173")
+	if !checker(reqAllowedHost) {
+		t.Fatal("expected host allowlist entry to allow matching origin")
+	}
+
+	reqDenied := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqDenied.Header.Set("Origin", "https://evil.example.com")
+	if checker(reqDenied) {
+		t.Fatal("expected unlisted origin to be denied")
+	}
+
+	reqNoOrigin := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	if !checker(reqNoOrigin) {
+		t.Fatal("expected requests without Origin header to be allowed")
+	}
+
+	allowAll := buildWSOriginChecker("*")
+	reqAny := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	reqAny.Header.Set("Origin", "https://anything.example.com")
+	if !allowAll(reqAny) {
+		t.Fatal("expected wildcard allowlist to permit all origins")
+	}
+}
+
+func TestGetMaxClients(t *testing.T) {
+	t.Setenv(maxClientsEnv, "")
+	if got := getMaxClients(); got != defaultMaxClients {
+		t.Fatalf("expected default max clients %d, got %d", defaultMaxClients, got)
+	}
+
+	t.Setenv(maxClientsEnv, "512")
+	if got := getMaxClients(); got != 512 {
+		t.Fatalf("expected max clients 512, got %d", got)
+	}
+
+	t.Setenv(maxClientsEnv, "0")
+	if got := getMaxClients(); got != defaultMaxClients {
+		t.Fatalf("expected fallback max clients %d for non-positive value, got %d", defaultMaxClients, got)
+	}
+
+	t.Setenv(maxClientsEnv, "bad-value")
+	if got := getMaxClients(); got != defaultMaxClients {
+		t.Fatalf("expected fallback max clients %d for invalid value, got %d", defaultMaxClients, got)
+	}
+}
+
+func TestHandleHealth(t *testing.T) {
+	server := newServer()
+	_, _, _ = server.addClient(nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	rec := httptest.NewRecorder()
+	server.handleHealth(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if acao := rec.Header().Get("Access-Control-Allow-Origin"); acao != "*" {
+		t.Fatalf("expected health endpoint CORS wildcard, got %q", acao)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.Contains(ct, "application/json") {
+		t.Fatalf("expected JSON content type, got %q", ct)
+	}
+
+	var payload healthPayload
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("expected valid JSON payload, got error: %v", err)
+	}
+	if payload.Status != "ok" {
+		t.Fatalf("expected status ok, got %q", payload.Status)
+	}
+	if payload.TotalRooms != len(roomTemplates) {
+		t.Fatalf("expected %d rooms, got %d", len(roomTemplates), payload.TotalRooms)
+	}
+	if payload.TotalPlayer != 1 {
+		t.Fatalf("expected 1 connected player, got %d", payload.TotalPlayer)
+	}
+	if payload.ActiveUsers != 1 {
+		t.Fatalf("expected 1 active client, got %d", payload.ActiveUsers)
+	}
+	if payload.MaxUsers != defaultMaxClients {
+		t.Fatalf("expected max clients %d, got %d", defaultMaxClients, payload.MaxUsers)
+	}
+
+	badReq := httptest.NewRequest(http.MethodPost, "/healthz", nil)
+	badRec := httptest.NewRecorder()
+	server.handleHealth(badRec, badReq)
+	if badRec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected status %d for invalid method, got %d", http.StatusMethodNotAllowed, badRec.Code)
+	}
+}
+
+func TestCopyWorldMapCopiesPortals(t *testing.T) {
+	src := WorldMap{
+		Width:  1200,
+		Height: 720,
+		Blocked: []Rect{
+			{X: 10, Y: 10, Width: 20, Height: 20},
+		},
+		Portals: []Portal{
+			{ID: "a", Label: "To B", X: 30, Y: 40, Width: 50, Height: 60, ToRoom: "b"},
+		},
+		NPCs: []NPC{
+			{ID: "npc-1", Name: "Guide", X: 100, Y: 110, Radius: 40},
+		},
+	}
+	out := copyWorldMap(src)
+	if len(out.Portals) != 1 {
+		t.Fatalf("expected portal copy length 1, got %d", len(out.Portals))
+	}
+	if len(out.NPCs) != 1 {
+		t.Fatalf("expected NPC copy length 1, got %d", len(out.NPCs))
+	}
+	src.Portals[0].ToRoom = "changed"
+	if out.Portals[0].ToRoom != "b" {
+		t.Fatalf("expected copied portal to remain unchanged, got %q", out.Portals[0].ToRoom)
+	}
+	src.NPCs[0].Name = "Changed"
+	if out.NPCs[0].Name != "Guide" {
+		t.Fatalf("expected copied NPC to remain unchanged, got %q", out.NPCs[0].Name)
+	}
+}
+
+func TestCanJoinRoomFromPortal(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	if server.canJoinRoomFromPortal(client.id, "plaza") {
+		t.Fatal("expected join to plaza to be blocked when not inside plaza portal")
+	}
+
+	server.mu.Lock()
+	room := server.rooms[defaultRoomID]
+	player := room.Players[client.id]
+	player.X = 1040
+	player.Y = 60
+	server.mu.Unlock()
+
+	if !server.canJoinRoomFromPortal(client.id, "plaza") {
+		t.Fatal("expected join to plaza to be allowed when player is inside plaza portal")
+	}
+	if server.canJoinRoomFromPortal(client.id, "snow-forts") {
+		t.Fatal("expected join to snow-forts to be blocked from plaza portal zone")
+	}
+}
+
+func TestAddClientRespectsMaxClients(t *testing.T) {
+	server := newServerWithMaxClients(1)
+	first, _, _ := server.addClient(nil)
+	if first == nil {
+		t.Fatal("expected first client to be accepted")
+	}
+
+	second, _, _ := server.addClient(nil)
+	if second != nil {
+		t.Fatal("expected second client to be rejected at max capacity")
+	}
+}
+
+func TestStarterProgressRewards(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	server.mu.Lock()
+	state := server.clients[client.id]
+	if state == nil {
+		server.mu.Unlock()
+		t.Fatal("expected client state to exist")
+	}
+	if state.coins != 0 {
+		server.mu.Unlock()
+		t.Fatalf("expected initial coins 0, got %d", state.coins)
+	}
+	state.hasNamed = true
+	state.hasChatted = true
+	state.hasEmoted = true
+	state.visitedRooms["plaza"] = true
+	state.visitedRooms["snow-forts"] = true
+	changed := server.recomputeProgressLocked(state)
+	coins := state.coins
+	completedCount := len(state.completedObjectives)
+	server.mu.Unlock()
+
+	if !changed {
+		t.Fatal("expected progress recompute to report changes")
+	}
+	if coins != 115 {
+		t.Fatalf("expected total starter rewards 115, got %d", coins)
+	}
+	if completedCount != 5 {
+		t.Fatalf("expected 5 completed starter objectives, got %d", completedCount)
+	}
+}
+
+func TestResetProgress(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	server.mu.Lock()
+	state := server.clients[client.id]
+	state.hasNamed = true
+	state.hasChatted = true
+	state.hasEmoted = true
+	state.visitedRooms["plaza"] = true
+	state.visitedRooms["snow-forts"] = true
+	server.recomputeProgressLocked(state)
+	server.mu.Unlock()
+
+	if ok := server.resetProgress(client.id); !ok {
+		t.Fatal("expected resetProgress to return true")
+	}
+
+	server.mu.RLock()
+	defer server.mu.RUnlock()
+	state = server.clients[client.id]
+	if state == nil {
+		t.Fatal("expected client state to remain after reset")
+	}
+	if state.coins != 0 {
+		t.Fatalf("expected reset coins to be 0, got %d", state.coins)
+	}
+	if len(state.completedObjectives) != 0 {
+		t.Fatalf("expected objectives to reset, got %d completed", len(state.completedObjectives))
+	}
+	if state.hasNamed || state.hasChatted || state.hasEmoted {
+		t.Fatal("expected starter activity flags to be reset")
+	}
+	if !state.visitedRooms[state.roomID] {
+		t.Fatalf("expected current room %q to stay visited after reset", state.roomID)
+	}
+}
+
+func TestCollectiblePickupAwardsCoins(t *testing.T) {
+	server := newServer()
+	client, _, roomID := server.addClient(nil)
+
+	server.mu.Lock()
+	room := server.rooms[roomID]
+	if room == nil {
+		server.mu.Unlock()
+		t.Fatalf("expected room %q", roomID)
+	}
+	room.Collectible = &Collectible{
+		ID:     "test-collect",
+		Label:  "Coin Puff",
+		Kind:   "coin",
+		X:      200,
+		Y:      200,
+		Radius: collectibleRadius,
+		Value:  9,
+	}
+	player := room.Players[client.id]
+	player.X = 200
+	player.Y = 200
+	player.TargetX = 200
+	player.TargetY = 200
+	before := server.clients[client.id].coins
+	server.mu.Unlock()
+
+	batch := server.stepAndCollectSnapshots(simulationDelta, time.Now().UnixMilli())
+	if len(batch.collectibleEvents) != 1 {
+		t.Fatalf("expected one collectible event, got %d", len(batch.collectibleEvents))
+	}
+	if len(batch.progressClientIDs) != 1 || batch.progressClientIDs[0] != client.id {
+		t.Fatalf("expected progress update for %q, got %#v", client.id, batch.progressClientIDs)
+	}
+
+	server.mu.RLock()
+	defer server.mu.RUnlock()
+	room = server.rooms[roomID]
+	if room.Collectible != nil {
+		t.Fatal("expected collectible to be removed after pickup")
+	}
+	after := server.clients[client.id].coins
+	if after-before != 9 {
+		t.Fatalf("expected +9 coins from collectible, got %d -> %d", before, after)
+	}
+}
+
+func TestNPCHintDispatchesWhenNearGreeter(t *testing.T) {
+	server := newServer()
+	client, _, roomID := server.addClient(nil)
+	if roomID != defaultRoomID {
+		t.Fatalf("expected default room %q, got %q", defaultRoomID, roomID)
+	}
+
+	server.mu.Lock()
+	room := server.rooms[roomID]
+	player := room.Players[client.id]
+	if player == nil {
+		server.mu.Unlock()
+		t.Fatal("expected player to exist")
+	}
+	player.X = 598
+	player.Y = 176
+	player.TargetX = 598
+	player.TargetY = 176
+	server.mu.Unlock()
+
+	batch := server.stepAndCollectSnapshots(simulationDelta, time.Now().UnixMilli())
+	if len(batch.hints) == 0 {
+		t.Fatal("expected at least one NPC hint dispatch")
+	}
+	first := batch.hints[0]
+	if first.clientID != client.id {
+		t.Fatalf("expected hint for %q, got %q", client.id, first.clientID)
+	}
+	text, _ := first.payload["text"].(string)
+	if !strings.Contains(text, "Set your penguin name") {
+		t.Fatalf("expected set-name guidance text, got %q", text)
+	}
+}
+
+func TestConsumeCooldown(t *testing.T) {
+	now := time.Now()
+	last := time.Time{}
+
+	if !consumeCooldown(now, &last, 500*time.Millisecond) {
+		t.Fatal("expected first call to pass cooldown")
+	}
+	if consumeCooldown(now.Add(100*time.Millisecond), &last, 500*time.Millisecond) {
+		t.Fatal("expected second call inside cooldown to be blocked")
+	}
+	if !consumeCooldown(now.Add(700*time.Millisecond), &last, 500*time.Millisecond) {
+		t.Fatal("expected call after cooldown to pass")
+	}
+}
+
+func TestSetPlayerName(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	roomID, name, changed, progressChanged := server.setPlayerName(client.id, "  Snow   Hero ")
+	if roomID != defaultRoomID {
+		t.Fatalf("expected room %q, got %q", defaultRoomID, roomID)
+	}
+	if name != "Snow Hero" {
+		t.Fatalf("expected sanitized name Snow Hero, got %q", name)
+	}
+	if !changed {
+		t.Fatal("expected name change to be reported")
+	}
+	if !progressChanged {
+		t.Fatal("expected starter progress to change when name is set")
+	}
+
+	server.mu.RLock()
+	room := server.rooms[defaultRoomID]
+	player := room.Players[client.id]
+	server.mu.RUnlock()
+
+	if player == nil {
+		t.Fatal("expected player to exist after rename")
+	}
+	if player.Name != "Snow Hero" {
+		t.Fatalf("expected player record to be updated, got %q", player.Name)
+	}
+
+	_, _, changed, _ = server.setPlayerName(client.id, "Snow Hero")
+	if changed {
+		t.Fatal("expected unchanged name to report changed=false")
+	}
+}
+
+func TestSetTargetBlockedClickResolvesToWalkablePoint(t *testing.T) {
+	server := newServer()
+	client, _, _ := server.addClient(nil)
+
+	server.mu.RLock()
+	room := server.rooms[defaultRoomID]
+	player := room.Players[client.id]
+	if room == nil || player == nil {
+		server.mu.RUnlock()
+		t.Fatal("expected default room/player to exist")
+	}
+	startX := player.X
+	startY := player.Y
+	server.mu.RUnlock()
+
+	// This point is inside a blocked rectangle in town.
+	server.setTarget(client.id, 360, 300)
+
+	server.mu.RLock()
+	room = server.rooms[defaultRoomID]
+	player = room.Players[client.id]
+	targetX := player.TargetX
+	targetY := player.TargetY
+	server.mu.RUnlock()
+
+	if targetX == startX && targetY == startY {
+		t.Fatal("expected blocked click to resolve to a reachable target, got no-op target")
+	}
+	if !server.isWalkable(room, targetX, targetY) {
+		t.Fatalf("expected resolved target to be walkable, got (%f,%f)", targetX, targetY)
+	}
+}
+
+func TestRenameBroadcastAndChatName(t *testing.T) {
+	serverState := newServer()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", serverState.handleWebSocket)
+	testServer := httptest.NewServer(mux)
+	defer testServer.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws"
+
+	dial := func() *websocket.Conn {
+		conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+		if err != nil {
+			t.Fatalf("failed to dial websocket: %v", err)
+		}
+		return conn
+	}
+
+	readEvent := func(conn *websocket.Conn, eventType string, timeout time.Duration) map[string]any {
+		deadline := time.Now().Add(timeout)
+		for time.Now().Before(deadline) {
+			_ = conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				var netErr net.Error
+				if ok := errors.As(err, &netErr); ok && netErr.Timeout() {
+					continue
+				}
+				t.Fatalf("failed reading websocket event %q: %v", eventType, err)
+			}
+
+			var envelope struct {
+				Type    string         `json:"type"`
+				Payload map[string]any `json:"payload"`
+			}
+			if err := json.Unmarshal(msg, &envelope); err != nil {
+				continue
+			}
+			if envelope.Type == eventType {
+				return envelope.Payload
+			}
+		}
+		t.Fatalf("timed out waiting for event %q", eventType)
+		return nil
+	}
+
+	sendEvent := func(conn *websocket.Conn, eventType string, payload map[string]any) {
+		err := conn.WriteJSON(map[string]any{
+			"type":    eventType,
+			"payload": payload,
+		})
+		if err != nil {
+			t.Fatalf("failed writing websocket event %q: %v", eventType, err)
+		}
+	}
+
+	c1 := dial()
+	defer c1.Close()
+	init1 := readEvent(c1, "world:init", 2*time.Second)
+	selfID, _ := init1["selfId"].(string)
+	if selfID == "" {
+		t.Fatal("expected first client to receive selfId")
+	}
+
+	c2 := dial()
+	defer c2.Close()
+	_ = readEvent(c2, "world:init", 2*time.Second)
+	_ = readEvent(c1, "player:joined", 2*time.Second)
+
+	sendEvent(c1, "player:setName", map[string]any{"name": "Captain Waddles"})
+	renamed := readEvent(c2, "player:renamed", 2*time.Second)
+	if renamed["id"] != selfID {
+		t.Fatalf("expected renamed id %q, got %v", selfID, renamed["id"])
+	}
+	if renamed["name"] != "Captain Waddles" {
+		t.Fatalf("expected renamed name Captain Waddles, got %v", renamed["name"])
+	}
+
+	sendEvent(c1, "chat:send", map[string]any{"optionId": "hello", "text": "  hello   room  "})
+	chat := readEvent(c2, "chat:message", 2*time.Second)
+	if chat["id"] != selfID {
+		t.Fatalf("expected chat id %q, got %v", selfID, chat["id"])
+	}
+	if chat["name"] != "Captain Waddles" {
+		t.Fatalf("expected chat name Captain Waddles, got %v", chat["name"])
+	}
+	if chat["text"] != "Hello everyone!" {
+		t.Fatalf("expected chat text to be from quick chat preset, got %v", chat["text"])
+	}
+	if chat["optionId"] != "hello" {
+		t.Fatalf("expected optionId hello, got %v", chat["optionId"])
+	}
+}
