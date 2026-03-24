@@ -1730,3 +1730,24 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - `gofmt -w main.go main_test.go` applied.
   - `go test ./...` passed.
   - `go build ./...` passed.
+- Continuation (2026-03-24, accessibility + UX resilience pass):
+  - Updated `clubpenguin-world/public/index.html`:
+    - added persistent Accessibility toggle UI (`Reduce motion`).
+    - added room-transition overlay element in the game canvas container.
+    - added focus-visible styling and reduced-motion CSS handling.
+    - added shared empty-state list styles for roster/quests/chat.
+  - Updated `clubpenguin-world/public/client.js`:
+    - added persistent reduced-motion preference (`clubpenguin-world-reduce-motion`) with body data-attribute sync.
+    - added lightweight room transition animation trigger on room entry.
+    - added loading/empty state logic for roster, starter tasks, quick-chat suggestions, and chat log bootstrap.
+    - added chat input/send gating until quick-chat catalog is ready.
+    - reduced motion mode now disables or flattens pulsing animations for collectibles, portal affordances, NPC rings, and move marker.
+    - extended `render_game_to_text` with `reduce_motion`, `progress_loaded`, quick-chat load flag, and room-transition state.
+- Validation for accessibility + UX resilience pass:
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - `go test ./...` passed in `clubpenguin-world`.
+  - Playwright skill run: `clubpenguin-world/output/web-game/clubpenguin-ui-pass3` (shots + state, no `errors-*.json`).
+  - Playwright MCP verification:
+    - confirmed new `Reduce motion` control is rendered and toggleable.
+    - confirmed `render_game_to_text().reduce_motion` flips to `true` when enabled.
+    - captured full UI screenshot: `clubpenguin-world/output/web-game/clubpenguin-ui-pass3/full-ui.png`.

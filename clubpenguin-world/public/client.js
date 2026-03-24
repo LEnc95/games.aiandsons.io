@@ -16,6 +16,7 @@
   const DEFAULT_ROOMS = [{ id: "town", name: "Town" }];
   const ROOM_PREF_KEY = "clubpenguin-world-preferred-room";
   const WS_PREF_KEY = "clubpenguin-world-ws-endpoint";
+  const MOTION_PREF_KEY = "clubpenguin-world-reduce-motion";
   const PLAYER_RADIUS = 14;
   const REMOTE_LERP = 0.18;
   const SELF_LERP = 0.26;
@@ -39,6 +40,7 @@
   const NAMEPLATE_CLUSTER_X = 86;
   const NAMEPLATE_CLUSTER_Y = 54;
   const MOVE_MARKER_HIDE_DISTANCE = 18;
+  const ROOM_TRANSITION_MS = 560;
   const ROOM_THEMES = {
     town: {
       sky: 0xd5efff,
@@ -81,6 +83,7 @@
   const serverResetEl = document.getElementById("server-reset");
   const serverCopyEl = document.getElementById("server-copy");
   const backendStatusEl = document.getElementById("backend-status");
+  const reduceMotionToggleEl = document.getElementById("reduce-motion-toggle");
   const rosterEl = document.getElementById("player-roster");
   const coinCountEl = document.getElementById("coin-count");
   const questListEl = document.getElementById("quest-list");
@@ -90,7 +93,9 @@
   const chatLogEl = document.getElementById("chat-log");
   const chatFormEl = document.getElementById("chat-form");
   const chatInputEl = document.getElementById("chat-input");
+  const chatSubmitEl = document.getElementById("chat-submit");
   const chatSuggestionsEl = document.getElementById("chat-suggestions");
+  const roomTransitionEl = document.getElementById("room-transition");
 
   const state = {
     connected: false,
@@ -105,6 +110,7 @@
       state: "checking",
       text: "Backend: checking...",
     },
+    reduceMotion: false,
     rooms: DEFAULT_ROOMS.slice(),
     world: DEFAULT_WORLD,
     collectibles: [],
@@ -115,7 +121,9 @@
       completedCount: 0,
       totalCount: 0,
     },
+    progressLoaded: false,
     chatOptions: [],
+    chatCatalogLoaded: false,
     chatSuggestions: [],
     selectedChatOptionId: "",
     chatTail: [],
@@ -128,6 +136,7 @@
   let backendHealthSeq = 0;
   let worldScene = null;
   let audioCtx = null;
+  let roomTransitionTimer = null;
 
   function seededPhaseFromString(value) {
     const text = String(value || "");
@@ -209,11 +218,51 @@
     }
   }
 
+  function readStoredReducedMotion(rawValue) {
+    const value = String(rawValue || "").trim().toLowerCase();
+    if (value === "1" || value === "true" || value === "yes" || value === "on") {
+      return true;
+    }
+    if (value === "0" || value === "false" || value === "no" || value === "off") {
+      return false;
+    }
+    return null;
+  }
+
+  function applyReducedMotion(enabled, persist) {
+    state.reduceMotion = Boolean(enabled);
+    document.body.dataset.reducedMotion = state.reduceMotion ? "true" : "false";
+    if (reduceMotionToggleEl) {
+      reduceMotionToggleEl.checked = state.reduceMotion;
+    }
+    if (!persist) {
+      return;
+    }
+    try {
+      window.localStorage.setItem(MOTION_PREF_KEY, state.reduceMotion ? "1" : "0");
+    } catch {
+      // Ignore storage availability issues.
+    }
+  }
+
+  const systemPrefersReducedMotion = Boolean(
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+  applyReducedMotion(systemPrefersReducedMotion, false);
+
   try {
     const preferred = normalizeRoomId(window.localStorage.getItem(ROOM_PREF_KEY) || "");
     if (preferred) {
       state.preferredRoomId = preferred;
       state.roomId = preferred;
+    }
+  } catch {
+    // Ignore storage availability issues.
+  }
+  try {
+    const storedMotion = readStoredReducedMotion(window.localStorage.getItem(MOTION_PREF_KEY));
+    if (storedMotion !== null) {
+      applyReducedMotion(storedMotion, false);
     }
   } catch {
     // Ignore storage availability issues.
@@ -441,11 +490,19 @@
       return;
     }
     chatSuggestionsEl.innerHTML = "";
+
+    if (!state.chatCatalogLoaded) {
+      chatSuggestionsEl.appendChild(createEmptyListItem("Loading quick chat phrases..."));
+      return;
+    }
+
+    if (!Array.isArray(state.chatOptions) || state.chatOptions.length === 0) {
+      chatSuggestionsEl.appendChild(createEmptyListItem("Quick chat is temporarily unavailable."));
+      return;
+    }
+
     if (!Array.isArray(state.chatSuggestions) || state.chatSuggestions.length === 0) {
-      const li = document.createElement("li");
-      li.className = "empty";
-      li.textContent = "No quick chat matches. Try another keyword.";
-      chatSuggestionsEl.appendChild(li);
+      chatSuggestionsEl.appendChild(createEmptyListItem("No quick chat matches. Try another keyword."));
       return;
     }
     for (const option of state.chatSuggestions) {
@@ -466,6 +523,10 @@
   }
 
   function refreshQuickChatSuggestions() {
+    if (!state.chatCatalogLoaded) {
+      renderQuickChatSuggestions();
+      return;
+    }
     const query = chatInputEl.value || "";
     state.selectedChatOptionId = "";
     state.chatSuggestions = findQuickChatMatches(query, 6);
@@ -662,6 +723,32 @@
     pushToast("Clipboard blocked. Link was added to chat.");
   }
 
+  function createEmptyListItem(text) {
+    const li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = text;
+    return li;
+  }
+
+  function flashRoomTransition(label) {
+    if (!roomTransitionEl || !label) {
+      return;
+    }
+    roomTransitionEl.textContent = label;
+    roomTransitionEl.classList.remove("active");
+    // Restart animation for repeated room changes.
+    void roomTransitionEl.offsetWidth;
+    roomTransitionEl.classList.add("active");
+    if (roomTransitionTimer) {
+      window.clearTimeout(roomTransitionTimer);
+      roomTransitionTimer = null;
+    }
+    roomTransitionTimer = window.setTimeout(() => {
+      roomTransitionEl.classList.remove("active");
+      roomTransitionTimer = null;
+    }, state.reduceMotion ? 380 : ROOM_TRANSITION_MS);
+  }
+
   function refreshStatus() {
     if (!state.connected) {
       setStatus("Disconnected", "disconnected");
@@ -693,6 +780,26 @@
     for (const button of emoteButtons) {
       button.disabled = !connected;
     }
+
+    const chatCatalogReady = state.chatCatalogLoaded;
+    const chatHasOptions = Array.isArray(state.chatOptions) && state.chatOptions.length > 0;
+    const canTypeChat = connected && chatCatalogReady;
+    const canSendChat = canTypeChat && chatHasOptions;
+
+    chatInputEl.disabled = !canTypeChat;
+    if (chatSubmitEl) {
+      chatSubmitEl.disabled = !canSendChat;
+    }
+
+    if (!connected) {
+      chatInputEl.placeholder = "Connect to search quick chat...";
+    } else if (!chatCatalogReady) {
+      chatInputEl.placeholder = "Loading quick chat...";
+    } else if (!chatHasOptions) {
+      chatInputEl.placeholder = "Quick chat unavailable";
+    } else {
+      chatInputEl.placeholder = "Type to search quick chat...";
+    }
   }
 
   function syncNameInputFromSelf() {
@@ -718,6 +825,13 @@
     });
 
     rosterEl.innerHTML = "";
+    if (players.length === 0) {
+      rosterEl.appendChild(
+        createEmptyListItem(state.connected ? "No penguins in this room yet." : "Connect to see room roster.")
+      );
+      return;
+    }
+
     for (const player of players) {
       const li = document.createElement("li");
       const selfMark = player.id === state.selfId ? " (you)" : "";
@@ -781,7 +895,17 @@
     coinCountEl.textContent = `${coins} coin${coins === 1 ? "" : "s"}`;
 
     questListEl.innerHTML = "";
+    if (!state.progressLoaded) {
+      questListEl.appendChild(createEmptyListItem("Loading starter tasks..."));
+      return;
+    }
+
     const objectives = Array.isArray(progress.objectives) ? progress.objectives : [];
+    if (objectives.length === 0) {
+      questListEl.appendChild(createEmptyListItem("No starter tasks available."));
+      return;
+    }
+
     for (const objective of objectives) {
       const li = document.createElement("li");
       if (objective.completed) {
@@ -812,6 +936,7 @@
       completedCount: Number(payload.completedCount) || 0,
       totalCount: Number(payload.totalCount) || 0,
     };
+    state.progressLoaded = true;
     renderQuestPanel();
 
     const completedNow = [];
@@ -853,7 +978,19 @@
     roomSelectEl.disabled = !state.connected || rooms.length === 0;
   }
 
+  function renderChatEmptyState(text) {
+    chatLogEl.innerHTML = "";
+    chatLogEl.appendChild(createEmptyListItem(text));
+  }
+
   function appendChat(metaText, messageText) {
+    if (chatLogEl.children.length === 1) {
+      const onlyChild = chatLogEl.children[0];
+      if (onlyChild && onlyChild.classList.contains("empty")) {
+        chatLogEl.innerHTML = "";
+      }
+    }
+
     const li = document.createElement("li");
 
     const meta = document.createElement("div");
@@ -925,8 +1062,10 @@
     if (!Array.isArray(state.chatOptions) || state.chatOptions.length === 0) {
       state.chatOptions = [];
     }
+    state.chatCatalogLoaded = true;
     state.chatSuggestions = findQuickChatMatches(chatInputEl.value || "", 6);
     renderQuickChatSuggestions();
+    updateIdentityControls();
 
     if (!state.preferredRoomId || !state.rooms.some((room) => room.id === state.preferredRoomId)) {
       setPreferredRoom(state.roomId);
@@ -946,6 +1085,7 @@
 
     if (previousRoom && previousRoom !== state.roomId && state.connected) {
       appendChat("system", `Entered ${roomNameById(state.roomId)}.`);
+      flashRoomTransition(`Now entering ${roomNameById(state.roomId)}`);
     }
   }
 
@@ -1123,8 +1263,18 @@
 
     const endpoint = currentWsUrl();
     state.activeWsUrl = endpoint;
+    state.progressLoaded = false;
+    state.chatCatalogLoaded = false;
+    state.chatOptions = [];
+    state.chatSuggestions = [];
     setStatus("Connecting...", "disconnected");
     setBackendStatus("Backend: checking socket...", "checking");
+    renderQuestPanel();
+    renderQuickChatSuggestions();
+    updateIdentityControls();
+    if (chatLogEl.children.length === 0) {
+      renderChatEmptyState("Connecting to world server...");
+    }
     const socket = new WebSocket(endpoint);
     ws = socket;
 
@@ -1163,6 +1313,9 @@
         return;
       }
       setBackendStatus("Backend: socket disconnected", "warn");
+      if (chatLogEl.children.length === 0) {
+        renderChatEmptyState("Connection lost. Reconnecting...");
+      }
       if (!reconnectTimer) {
         reconnectTimer = window.setTimeout(() => {
           reconnectTimer = null;
@@ -1196,8 +1349,14 @@
       ws = null;
     }
     state.connected = false;
+    state.progressLoaded = false;
+    state.chatCatalogLoaded = false;
+    state.chatOptions = [];
+    state.chatSuggestions = [];
     refreshStatus();
     updateRoomSelect();
+    renderQuestPanel();
+    renderQuickChatSuggestions();
     updateIdentityControls();
     setBackendStatus("Backend: reconnecting...", "checking");
     connectSocket();
@@ -1596,6 +1755,13 @@
     animateCollectibles(timeMs) {
       const t = (Number(timeMs) || Date.now()) / 1000;
       for (const sprite of this.collectibleSprites.values()) {
+        if (state.reduceMotion) {
+          sprite.halo.setRadius(sprite.radius + 7);
+          sprite.halo.setAlpha(0.28);
+          sprite.container.setPosition(sprite.baseX, sprite.baseY);
+          continue;
+        }
+
         const bob = Math.sin(t * 2.8 + sprite.phase) * 3.1;
         const pulse = 0.16 + 0.12 * (1 + Math.sin(t * 4.3 + sprite.phase));
         const haloRadius = sprite.radius + 7 + Math.sin(t * 3.4 + sprite.phase) * 1.5;
@@ -1612,7 +1778,7 @@
       const world = state.world || DEFAULT_WORLD;
       const portals = Array.isArray(world.portals) ? world.portals : [];
       const npcs = Array.isArray(world.npcs) ? world.npcs : [];
-      const phase = (Number(timeMs) || Date.now()) * 0.0045;
+      const phase = state.reduceMotion ? 0 : (Number(timeMs) || Date.now()) * 0.0045;
       const self = state.selfId ? state.players.get(state.selfId) : null;
       const selfX = self ? self.renderX : null;
       const selfY = self ? self.renderY : null;
@@ -1620,7 +1786,7 @@
       this.interactionGraphics.clear();
 
       portals.forEach((portal, index) => {
-        const pulse = 0.5 + 0.5 * Math.sin(phase * 1.4 + index * 0.8);
+        const pulse = state.reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(phase * 1.4 + index * 0.8);
         const selfInside = Number.isFinite(selfX) && Number.isFinite(selfY) && pointInRect(selfX, selfY, portal);
         const glowAlpha = selfInside ? 0.32 + pulse * 0.2 : 0.14 + pulse * 0.12;
         const strokeAlpha = selfInside ? 0.95 : 0.72;
@@ -1647,7 +1813,7 @@
         const centerY = portal.y + portal.height / 2;
         const chevronW = Math.min(18, Math.max(10, portal.width * 0.12));
         const chevronH = Math.min(9, Math.max(5, portal.height * 0.15));
-        const drift = Math.sin(phase * 2.3 + index) * 3;
+        const drift = state.reduceMotion ? 0 : Math.sin(phase * 2.3 + index) * 3;
         const chevronY = centerY + portal.height * 0.18 + drift;
 
         this.interactionGraphics.lineStyle(3, 0xf2feff, 0.82);
@@ -1662,8 +1828,8 @@
         const x = Number(npc.x) || 0;
         const y = Number(npc.y) || 0;
         const radius = Math.max(18, Number(npc.radius) || 26);
-        const pulseRadius = radius + 4 + Math.sin(phase * 1.6 + index * 0.7) * 2.2;
-        const alpha = 0.35 + 0.2 * (0.5 + 0.5 * Math.sin(phase * 1.8 + index));
+        const pulseRadius = state.reduceMotion ? radius + 4 : radius + 4 + Math.sin(phase * 1.6 + index * 0.7) * 2.2;
+        const alpha = state.reduceMotion ? 0.45 : 0.35 + 0.2 * (0.5 + 0.5 * Math.sin(phase * 1.8 + index));
         this.interactionGraphics.lineStyle(2, 0xfff1d2, alpha);
         this.interactionGraphics.strokeCircle(x, y, pulseRadius);
       });
@@ -1699,7 +1865,7 @@
       this.drawInteractionAffordances(frameTime);
 
       if (this.moveMarker && this.moveMarker.visible) {
-        const pulse = Math.sin(frameTime * 0.012);
+        const pulse = state.reduceMotion ? 0 : Math.sin(frameTime * 0.012);
         this.moveMarker.setFillStyle(0xffffff, 0.62 + pulse * 0.22);
         this.moveMarker.setRadius(6 + pulse * 1.5);
         if (state.selfId) {
@@ -1779,6 +1945,12 @@
     });
   }
 
+  if (reduceMotionToggleEl) {
+    reduceMotionToggleEl.addEventListener("change", () => {
+      applyReducedMotion(Boolean(reduceMotionToggleEl.checked), true);
+    });
+  }
+
   if (qaResetEl) {
     qaResetEl.addEventListener("click", () => {
       sendEvent("qa:resetProgress", {});
@@ -1819,6 +1991,14 @@
 
   chatFormEl.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (!state.chatCatalogLoaded) {
+      appendChat("system", "Quick chat is still loading.");
+      return;
+    }
+    if (!Array.isArray(state.chatOptions) || state.chatOptions.length === 0) {
+      appendChat("system", "Quick chat is unavailable right now.");
+      return;
+    }
     const query = chatInputEl.value.trim();
     if (!query) {
       return;
@@ -1843,6 +2023,10 @@
   });
 
   chatInputEl.addEventListener("focus", () => {
+    if (!state.chatCatalogLoaded) {
+      renderQuickChatSuggestions();
+      return;
+    }
     if (!chatInputEl.value.trim()) {
       state.chatSuggestions = findQuickChatMatches("", 6);
       renderQuickChatSuggestions();
@@ -1868,6 +2052,8 @@
       active_ws_url: state.activeWsUrl || currentWsUrl(),
       invite_url: buildInviteUrl(),
       backend_health: state.backendHealth,
+      reduce_motion: state.reduceMotion,
+      room_transition_active: Boolean(roomTransitionEl && roomTransitionEl.classList.contains("active")),
       coordinate_system: "origin: top-left, +x: right, +y: down, units: pixels",
       selfId: state.selfId,
       roomId: state.roomId,
@@ -1886,8 +2072,10 @@
         id: player.id,
         name: displayName(player),
       })),
+      progress_loaded: state.progressLoaded,
       progress: state.progress,
       quick_chat: {
+        loaded: state.chatCatalogLoaded,
         options_count: state.chatOptions.length,
         selected_option_id: state.selectedChatOptionId || "",
         suggestions: state.chatSuggestions.map((option) => ({
@@ -1919,6 +2107,8 @@
 
   setPreferredWsEndpoint(state.wsEndpoint || "");
   setBackendStatus("Backend: checking...", "checking");
+  renderChatEmptyState("Connect to start chatting.");
+  updatePlayerCount();
   renderQuestPanel();
   renderQuickChatSuggestions();
   updateIdentityControls();
