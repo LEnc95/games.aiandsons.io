@@ -343,7 +343,7 @@
       rng: makeRng(1),
     };
 
-    const input = { left: false, right: false, dash: false };
+    const input = { move: 0, dash: false };
     let controlledStep = false;
     let lastFrame = performance.now();
 
@@ -507,16 +507,20 @@
       clearClosestObstacle();
     }
 
+    function queueLaneMove(direction) {
+      if (direction !== -1 && direction !== 1) return;
+      if (input.move === 0) input.move = direction;
+    }
+
     function handleInput() {
       if (state.mode !== 'playing') return;
-      if (state.laneCooldown > 0) return;
-      if (input.left && state.playerLane > 0) {
-        state.playerLane -= 1;
-        state.laneCooldown = laneSwapCooldown;
-      } else if (input.right && state.playerLane < lanesX.length - 1) {
-        state.playerLane += 1;
-        state.laneCooldown = laneSwapCooldown;
-      }
+      if (state.laneCooldown > 0 || input.move === 0) return;
+
+      const nextLane = Math.max(0, Math.min(lanesX.length - 1, state.playerLane + input.move));
+      input.move = 0;
+      if (nextLane === state.playerLane) return;
+      state.playerLane = nextLane;
+      state.laneCooldown = laneSwapCooldown;
     }
 
     function intersectsPlayer(o) {
@@ -547,8 +551,7 @@
       if (state.mode !== 'playing') return;
 
       if (dt > 0.2) {
-        input.left = false;
-        input.right = false;
+        input.move = 0;
       }
 
       state.laneCooldown = Math.max(0, state.laneCooldown - dt);
@@ -781,15 +784,14 @@
     }
 
     function clearInputs() {
-      input.left = false;
-      input.right = false;
+      input.move = 0;
       input.dash = false;
     }
 
     function onKey(event, down) {
       const key = event.key.toLowerCase();
-      if (key === 'arrowleft' || key === 'a') input.left = down;
-      if (key === 'arrowright' || key === 'd') input.right = down;
+      if (down && !event.repeat && (key === 'arrowleft' || key === 'a')) queueLaneMove(-1);
+      if (down && !event.repeat && (key === 'arrowright' || key === 'd')) queueLaneMove(1);
       if (down && (key === ' ' || key === 'enter')) input.dash = true;
       if (!down) return;
 
@@ -817,13 +819,14 @@
     function bindTouchButton(button, key) {
       if (!button) return;
       const clear = () => {
-        if (key === 'left' || key === 'right') input[key] = false;
+        if (key === 'left' || key === 'right') input.move = 0;
       };
       button.addEventListener('pointerdown', (event) => {
         event.preventDefault();
         button.setPointerCapture?.(event.pointerId);
         if (key === 'dash') input.dash = true;
-        else input[key] = true;
+        else if (key === 'left') queueLaneMove(-1);
+        else if (key === 'right') queueLaneMove(1);
       });
       button.addEventListener('pointerup', clear);
       button.addEventListener('pointercancel', clear);
