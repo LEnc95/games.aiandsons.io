@@ -291,12 +291,47 @@
         ctx.globalAlpha = 1;
       }
 
-      ctx.fillStyle = '#e7f0ff';
       const w = state.dino.w * (state.dino.duck? cfg.duckScale: 1);
       const h = state.dino.h * (state.dino.duck? cfg.duckScale: 1);
-      ctx.fillRect(state.dino.x, state.dino.y - h, w, h);
-      // eye
-      ctx.fillStyle = '#0b1020'; ctx.fillRect(state.dino.x + w - 10, state.dino.y - h + 10, 4, 4);
+      const x = state.dino.x;
+      const y = state.dino.y;
+      const stride = Math.max(1, Math.floor(state.spd / 260));
+      const legLift = started && !over && state.dino.y >= GROUND_Y - 0.5 ? ((Math.floor(performance.now() / 75) % 2) * stride) : 0;
+
+      // tail
+      ctx.fillStyle = '#b9c7dd';
+      ctx.fillRect(x - w * 0.22, y - h * 0.45, w * 0.24, h * 0.16);
+      ctx.fillRect(x - w * 0.12, y - h * 0.58, w * 0.16, h * 0.12);
+
+      // body
+      ctx.fillStyle = '#e7f0ff';
+      ctx.fillRect(x, y - h * 0.6, w * 0.74, h * 0.6);
+
+      // chest + neck
+      ctx.fillRect(x + w * 0.54, y - h * 0.78, w * 0.16, h * 0.22);
+      ctx.fillRect(x + w * 0.64, y - h * 0.95, w * 0.28, h * 0.24);
+
+      // snout + mouth
+      ctx.fillRect(x + w * 0.88, y - h * 0.86, w * 0.16, h * 0.14);
+      ctx.fillStyle = '#c4d2e8';
+      ctx.fillRect(x + w * 0.92, y - h * 0.79, w * 0.12, h * 0.05);
+
+      // legs
+      const legHeight = h * 0.34;
+      const duckOffset = state.dino.duck ? h * 0.12 : 0;
+      ctx.fillStyle = '#e7f0ff';
+      ctx.fillRect(x + w * 0.2, y - legHeight + legLift + duckOffset, w * 0.12, legHeight - legLift);
+      ctx.fillRect(x + w * 0.46, y - legHeight + (stride - legLift) + duckOffset, w * 0.12, legHeight - (stride - legLift));
+
+      // feet
+      ctx.fillRect(x + w * 0.14, y - 6 + duckOffset, w * 0.22, 6);
+      ctx.fillRect(x + w * 0.4, y - 6 + duckOffset, w * 0.22, 6);
+
+      // eye + pupil
+      ctx.fillStyle = '#0b1020';
+      ctx.fillRect(x + w * 0.84, y - h * 0.89, w * 0.07, h * 0.07);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + w * 0.87, y - h * 0.87, w * 0.02, h * 0.02);
 
       // overlays
       if(over){
