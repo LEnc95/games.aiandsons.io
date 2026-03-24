@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Orb Burst - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg0: #061323;
+      --bg1: #102746;
+      --panel: rgba(9, 20, 39, 0.84);
+      --line: rgba(154, 214, 255, 0.34);
+      --text: #edf6ff;
+      --muted: #bfd6ee;
+      --good: #9cf7cf;
+      --warn: #ffe3ad;
+      --bad: #ffadb7;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(95% 75% at 15% 8%, #2d5da0 0%, transparent 62%),
+        radial-gradient(78% 62% at 82% 96%, #1a3a6c 0%, transparent 64%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(146, 203, 255, 0.6);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #19386b 0%, #0b1d3b 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 640px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 95, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(173, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+
+  <meta name="description" content="Strafe, blast descending orbs, chain combo streaks, and survive a 75-second arena run.">
+  <meta property="og:title" content="Orb Burst - Play on Cade's Games">
+  <meta property="og:description" content="Strafe, blast descending orbs, chain combo streaks, and survive a 75-second arena run.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/orbburst">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Orb Burst - Play on Cade's Games">
+  <meta name="twitter:description" content="Strafe, blast descending orbs, chain combo streaks, and survive a 75-second arena run.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/orbburst">
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Orb Burst game board"></canvas>
+
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Orb Burst</h1>
+          <p>Move your blaster, pop descending orbs, and keep the arena clear until time runs out.</p>
+          <p>Desktop: A/D or arrows move, Space shoot, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: hold Left/Right to strafe and tap Fire to keep pressure on incoming waves.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Time</span><b id="hudTime">75.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Combo</span><b id="hudCombo">x1</b></div>
+      <div class="chip"><span>Lives</span><b id="hudLives">4</b></div>
+      <div class="chip warn"><span>Heat</span><b id="hudHeat">0%</b></div>
+      <div class="chip"><span>Wave</span><b id="hudWave">1</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft" class="wide">Left</button>
+        <button type="button" id="btnRight" class="wide">Right</button>
+      </div>
+      <div class="hint">Destroy high-value orbs to build combo. If heat maxes out, your cannon jams briefly.</div>
+      <div class="touch-group">
+        <button type="button" id="btnFire" class="wide">Fire</button>
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    const btnFire = document.getElementById('btnFire');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCombo = document.getElementById('hudCombo');
+    const hudLives = document.getElementById('hudLives');
+    const hudHeat = document.getElementById('hudHeat');
+    const hudWave = document.getElementById('hudWave');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const TOTAL_TIME = 75;
+
+    const input = {
+      left: false,
+      right: false,
+      firing: false,
+    };
+
+    const state = {
+      mode: 'menu',
+      timeLeft: TOTAL_TIME,
+      score: 0,
+      combo: 1,
+      comboTimer: 0,
+      lives: 4,
+      wave: 1,
+      heat: 0,
+      jamTimer: 0,
+      spawnTimer: 0.7,
+      shotCooldown: 0,
+      enemies: [],
+      shots: [],
+      particles: [],
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      player: {
+        x: canvas.width * 0.5,
+        y: canvas.height - 84,
+        radius: 27,
+        speed: 520,
+      },
+    };
+
+    let rafId = 0;
+    let previousTime = performance.now();
+    let controlledStep = false;
+
+    function resetRunState() {
+      state.mode = 'playing';
+      state.timeLeft = TOTAL_TIME;
+      state.score = 0;
+      state.combo = 1;
+      state.comboTimer = 0;
+      state.lives = 4;
+      state.wave = 1;
+      state.heat = 0;
+      state.jamTimer = 0;
+      state.spawnTimer = 0.7;
+      state.shotCooldown = 0;
+      state.enemies = [];
+      state.shots = [];
+      state.particles = [];
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.player.x = canvas.width * 0.5;
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: A/D or arrows move, Space shoot, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRunState();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('orbburst'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, orbburst: { score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+    }
+
+    function fireShot() {
+      if (state.mode !== 'playing') return;
+      if (state.shotCooldown > 0 || state.jamTimer > 0) return;
+      state.shots.push({
+        x: state.player.x,
+        y: state.player.y - 18,
+        vy: -760,
+        radius: 6,
+      });
+      state.shotCooldown = 0.12;
+      state.heat = Math.min(100, state.heat + 8);
+    }
+
+    function spawnEnemy() {
+      const t = 1 - state.timeLeft / TOTAL_TIME;
+      const speed = 90 + t * 130 + Math.random() * 55;
+      const hpRoll = Math.random();
+      const hp = hpRoll < 0.12 ? 3 : hpRoll < 0.4 ? 2 : 1;
+      const radius = hp === 1 ? 17 : hp === 2 ? 21 : 25;
+      state.enemies.push({
+        x: 70 + Math.random() * (canvas.width - 140),
+        y: -40,
+        vy: speed,
+        vx: (Math.random() - 0.5) * 52,
+        hp,
+        maxHp: hp,
+        radius,
+      });
+    }
+
+    function addParticles(x, y, color, count = 8) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 190;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.24 + Math.random() * 0.34,
+          age: 0,
+          color,
+        });
+      }
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 170);
+      const waveBonus = state.wave;
+      const surviveBonus = result === 'win' ? 10 : 0;
+      const coins = Math.max(2, scoreBonus + waveBonus + surviveBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          orbburst: {
+            score: state.score,
+            wave: state.wave,
+            lives: state.lives,
+            combo: state.combo,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      setModeOverlay(
+        result === 'win' ? 'Arena Cleared' : 'Blaster Down',
+        result === 'win'
+          ? `Survived all waves. Score ${state.score}, coins earned ${state.runCoinsEarned}.`
+          : `You ran out of lives. Score ${state.score}, coins earned ${state.runCoinsEarned}.`,
+        'Play Again'
+      );
+      updateHud();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Weapons cooling. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.shotCooldown = Math.max(0, state.shotCooldown - dt);
+      state.comboTimer = Math.max(0, state.comboTimer - dt);
+      state.jamTimer = Math.max(0, state.jamTimer - dt);
+
+      if (state.comboTimer <= 0) state.combo = 1;
+
+      if (state.heat > 0) {
+        const cooling = state.jamTimer > 0 ? 18 : 22;
+        state.heat = Math.max(0, state.heat - cooling * dt);
+      }
+      if (state.heat >= 100 && state.jamTimer <= 0) {
+        state.jamTimer = 1.2;
+        state.heat = 78;
+      }
+
+      const moveDir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      state.player.x += moveDir * state.player.speed * dt;
+      state.player.x = Math.max(52, Math.min(canvas.width - 52, state.player.x));
+
+      if (input.firing) fireShot();
+
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnEnemy();
+        const t = 1 - state.timeLeft / TOTAL_TIME;
+        state.wave = 1 + Math.floor(t * 6);
+        state.spawnTimer = Math.max(0.22, 0.86 - t * 0.46 + Math.random() * 0.18);
+      }
+
+      for (let i = state.shots.length - 1; i >= 0; i -= 1) {
+        const shot = state.shots[i];
+        shot.y += shot.vy * dt;
+        if (shot.y < -14) {
+          state.shots.splice(i, 1);
+        }
+      }
+
+      for (let i = state.enemies.length - 1; i >= 0; i -= 1) {
+        const enemy = state.enemies[i];
+        enemy.y += enemy.vy * dt;
+        enemy.x += enemy.vx * dt;
+        if (enemy.x < enemy.radius || enemy.x > canvas.width - enemy.radius) {
+          enemy.vx *= -1;
+          enemy.x = Math.max(enemy.radius, Math.min(canvas.width - enemy.radius, enemy.x));
+        }
+
+        let destroyed = false;
+        for (let j = state.shots.length - 1; j >= 0; j -= 1) {
+          const shot = state.shots[j];
+          const dx = shot.x - enemy.x;
+          const dy = shot.y - enemy.y;
+          if ((dx * dx + dy * dy) <= (shot.radius + enemy.radius) ** 2) {
+            state.shots.splice(j, 1);
+            enemy.hp -= 1;
+            addParticles(shot.x, shot.y, '#a5dcff', 4);
+            if (enemy.hp <= 0) {
+              destroyed = true;
+              state.enemies.splice(i, 1);
+              state.combo = Math.min(8, state.combo + 1);
+              state.comboTimer = 2.4;
+              const gained = 24 * enemy.maxHp * state.combo;
+              state.score += gained;
+              addParticles(enemy.x, enemy.y, enemy.maxHp > 1 ? '#ffd59d' : '#9fffe6', 12);
+            }
+            break;
+          }
+        }
+
+        if (destroyed) continue;
+
+        const dxP = state.player.x - enemy.x;
+        const dyP = state.player.y - enemy.y;
+        if ((dxP * dxP + dyP * dyP) <= (state.player.radius + enemy.radius - 4) ** 2) {
+          state.enemies.splice(i, 1);
+          state.lives -= 1;
+          state.combo = 1;
+          state.comboTimer = 0;
+          addParticles(state.player.x, state.player.y - 10, '#ff9cb4', 16);
+          if (state.lives <= 0) {
+            finishRun('loss');
+            return;
+          }
+          continue;
+        }
+
+        if (enemy.y - enemy.radius > canvas.height + 20) {
+          state.enemies.splice(i, 1);
+          state.lives -= 1;
+          state.combo = 1;
+          state.comboTimer = 0;
+          if (state.lives <= 0) {
+            finishRun('loss');
+            return;
+          }
+        }
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const p = state.particles[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 120 * dt;
+      }
+
+      if (state.timeLeft <= 0) finishRun('win');
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#1b3873');
+      grad.addColorStop(0.55, '#122a56');
+      grad.addColorStop(1, '#081632');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 34; i += 1) {
+        const x = (i * 139 + state.score * 0.3) % canvas.width;
+        const y = (i * 59 + state.timeLeft * 13) % canvas.height;
+        ctx.fillStyle = 'rgba(190, 221, 255, 0.27)';
+        ctx.fillRect(x, y, 3, 3);
+      }
+
+      ctx.strokeStyle = 'rgba(129, 190, 255, 0.25)';
+      ctx.lineWidth = 1;
+      for (let y = 96; y < canvas.height; y += 86) {
+        ctx.beginPath();
+        ctx.moveTo(28, y);
+        ctx.lineTo(canvas.width - 28, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer() {
+      const p = state.player;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+
+      ctx.fillStyle = '#eaf7ff';
+      ctx.beginPath();
+      ctx.moveTo(0, -34);
+      ctx.lineTo(28, 20);
+      ctx.lineTo(-28, 20);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = state.jamTimer > 0 ? '#ffb3be' : '#89d5ff';
+      ctx.beginPath();
+      ctx.arc(0, -4, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#9fffe1';
+      ctx.beginPath();
+      ctx.ellipse(0, 23, 16, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawShots() {
+      ctx.fillStyle = '#a6e6ff';
+      for (const shot of state.shots) {
+        ctx.beginPath();
+        ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawEnemies() {
+      for (const enemy of state.enemies) {
+        if (enemy.maxHp === 1) {
+          ctx.fillStyle = '#9cf7d2';
+        } else if (enemy.maxHp === 2) {
+          ctx.fillStyle = '#ffd39f';
+        } else {
+          ctx.fillStyle = '#ffb0bc';
+        }
+
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.42)';
+        ctx.beginPath();
+        ctx.arc(enemy.x - enemy.radius * 0.28, enemy.y - enemy.radius * 0.3, enemy.radius * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (enemy.hp < enemy.maxHp) {
+          ctx.fillStyle = 'rgba(8,16,29,0.5)';
+          ctx.fillRect(enemy.x - enemy.radius, enemy.y + enemy.radius + 7, enemy.radius * 2, 5);
+          ctx.fillStyle = '#8ee6ff';
+          ctx.fillRect(enemy.x - enemy.radius, enemy.y + enemy.radius + 7, enemy.radius * 2 * (enemy.hp / enemy.maxHp), 5);
+        }
+      }
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const alpha = Math.max(0, 1 - p.age / p.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 16, 33, 0.66)';
+      ctx.fillRect(14, 12, 420, 62);
+      ctx.strokeStyle = 'rgba(144, 200, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 420, 62);
+      ctx.fillStyle = '#f0f8ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Orb Burst', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c5dcfb';
+      const jamLabel = state.jamTimer > 0 ? `Jam ${(state.jamTimer).toFixed(1)}s` : 'Ready';
+      ctx.fillText(`Wave ${state.wave} | ${jamLabel}`, 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      drawBackground();
+      drawShots();
+      drawEnemies();
+      drawParticles();
+      drawPlayer();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudCombo.textContent = `x${state.combo}`;
+      hudLives.textContent = String(Math.max(0, state.lives));
+      hudHeat.textContent = `${Math.round(state.heat)}%`;
+      hudWave.textContent = String(state.wave);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudLives.parentElement.classList.toggle('warn', state.lives === 2);
+      hudLives.parentElement.classList.toggle('bad', state.lives <= 1);
+      hudLives.parentElement.classList.toggle('good', state.lives >= 3);
+      hudHeat.parentElement.classList.toggle('bad', state.jamTimer > 0 || state.heat >= 85);
+      hudHeat.parentElement.classList.toggle('warn', state.jamTimer <= 0 && state.heat >= 55 && state.heat < 85);
+      hudHeat.parentElement.classList.toggle('good', state.heat < 55);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function setHoldButton(button, key) {
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        input[key] = true;
+      });
+      const clear = (event) => {
+        if (event) event.preventDefault();
+        input[key] = false;
+      };
+      button.addEventListener('pointerup', clear);
+      button.addEventListener('pointercancel', clear);
+      button.addEventListener('pointerleave', clear);
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        input.left = true;
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        input.right = true;
+      }
+      if (event.code === 'Space') {
+        event.preventDefault();
+        input.firing = true;
+        fireShot();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') input.left = false;
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') input.right = false;
+      if (event.code === 'Space') input.firing = false;
+    });
+
+    window.addEventListener('blur', () => {
+      input.left = false;
+      input.right = false;
+      input.firing = false;
+    });
+
+    setHoldButton(btnLeft, 'left');
+    setHoldButton(btnRight, 'right');
+    setHoldButton(btnFire, 'firing');
+
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'orbburst',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left, +x right, +y down; player moves horizontally near bottom lane',
+        objective: {
+          survive_seconds: TOTAL_TIME,
+          time_left: Number(state.timeLeft.toFixed(2)),
+        },
+        player: {
+          x: Number(state.player.x.toFixed(1)),
+          y: Number(state.player.y.toFixed(1)),
+          radius: state.player.radius,
+          lives: state.lives,
+          heat_pct: Math.round(state.heat),
+          jam_timer: Number(state.jamTimer.toFixed(2)),
+        },
+        score: state.score,
+        combo: state.combo,
+        wave: state.wave,
+        shots_visible: state.shots.slice(0, 10).map((shot) => ({
+          x: Number(shot.x.toFixed(1)),
+          y: Number(shot.y.toFixed(1)),
+          vy: Number(shot.vy.toFixed(1)),
+        })),
+        enemies_visible: state.enemies.slice(0, 12).map((enemy) => ({
+          x: Number(enemy.x.toFixed(1)),
+          y: Number(enemy.y.toFixed(1)),
+          vx: Number(enemy.vx.toFixed(1)),
+          vy: Number(enemy.vy.toFixed(1)),
+          hp: enemy.hp,
+          maxHp: enemy.maxHp,
+          radius: enemy.radius,
+        })),
+        coins: Number(profileState?.coins || 0),
+        result: state.result,
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'orbburst', gameName: 'Orb Burst' });
+  </script>
+</body>
+</html>

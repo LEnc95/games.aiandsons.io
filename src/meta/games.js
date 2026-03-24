@@ -38,5 +38,6 @@ export const GAMES = [
   { slug:'simonsays',      name:'Simon Says Spectrum', emoji:'\u{1F3A8}', scoreHint:'round',      url:'/simonsays',     desc:'Memorize flashing color sequences, repeat them perfectly, and survive as patterns get longer.', earnsCoins:true },
   { slug:'reactiongrid',   name:'Reaction Grid',       emoji:'\u{1F4F6}', scoreHint:'blocks',     url:'/reactiongrid',  desc:'Rotate your shield, block incoming bolts, and survive the full reactor defense cycle.', earnsCoins:true },
   { slug:'gravityswitch',  name:'Gravity Switch',      emoji:'\u{1F9F2}', scoreHint:'distance',   url:'/gravityswitch', desc:'Flip between floor and ceiling lanes, dodge barriers, and chain star pickups through a 90-second run.', earnsCoins:true },
+  { slug:'orbburst',       name:'Orb Burst',           emoji:'\u{1F52E}', scoreHint:'score',      url:'/orbburst',      desc:'Strafe, blast descending orbs, chain combo streaks, and survive a 75-second arena run.', earnsCoins:true },
 ];
 

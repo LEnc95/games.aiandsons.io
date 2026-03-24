@@ -1397,3 +1397,23 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Confirmed `gravityswitch` references in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
 - Follow-up TODO:
   - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop for `/gravityswitch` in an environment that allows process spawn + Chromium launch.
+
+## 2026-03-24 Orb Burst Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `orbburst/index.html` (Orb Burst).
+  - Gameplay: top-down survival shooter with horizontal movement, manual fire, descending multi-HP orbs, combo scoring, heat/jam mechanic, timer-based win/loss, and coin payout.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (hold Left/Right/Fire plus pause/restart/fullscreen buttons).
+  - Platform hooks: `rememberRecent('orbburst')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `orbburst` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/orbburst` rewrites and `/orbburst/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "orbburst" ...` integration check: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Playwright prerequisite check: `npx.cmd --version` pass (`10.9.3`); `npx --version` blocked by local PowerShell execution policy.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - Skill Playwright client run for `/orbburst`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and `$WEB_GAME_CLIENT` for `/orbburst` in an environment that allows Chromium/process spawn.
