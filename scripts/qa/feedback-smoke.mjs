@@ -68,10 +68,11 @@ async function main() {
   recordConsole("mobile", mobilePage);
 
   try {
+    const submissionSummary = `Arcade feedback smoke ${Date.now()}`;
     await desktopPage.goto(`${baseUrl}/pong/index.html`, { waitUntil: "networkidle" });
     await desktopPage.waitForSelector("#cadeFeedbackOpenBtn");
     await desktopPage.click("#cadeFeedbackOpenBtn");
-    await desktopPage.fill("#cadeFeedbackSummary", "Arcade feedback smoke");
+    await desktopPage.fill("#cadeFeedbackSummary", submissionSummary);
     await desktopPage.fill("#cadeFeedbackDetails", "Testing the shared feedback flow from the Pong page.");
     await desktopPage.fill("#cadeFeedbackRepro", "Open the feedback widget and submit this form.");
     await desktopPage.setInputFiles("#cadeFeedbackAttachmentInput", {
@@ -104,12 +105,15 @@ async function main() {
     await desktopPage.waitForFunction(() => {
       const list = document.getElementById("submissionList");
       return !!list && list.textContent.includes("Arcade feedback smoke");
-    });
+    }, { timeout: 20_000 });
     summary.checks.push({ name: "ops_list_shows_submission", pass: true });
-    await desktopPage.waitForFunction(() => {
+    await desktopPage.locator(".submission-card", { hasText: submissionSummary }).first().click();
+    await desktopPage.waitForFunction((summaryText) => {
       const pane = document.getElementById("detailPane");
-      return !!pane && pane.textContent.includes("feedback-note.txt");
-    });
+      return !!pane
+        && pane.textContent.includes("feedback-note.txt")
+        && pane.textContent.includes(summaryText);
+    }, submissionSummary, { timeout: 20_000 });
     summary.checks.push({ name: "ops_shows_attachment", pass: true });
 
     await desktopPage.click("#prepareAgentBtn");
