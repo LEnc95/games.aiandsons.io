@@ -15,6 +15,7 @@
 
   const DEFAULT_ROOMS = [{ id: "town", name: "Town" }];
   const ROOM_PREF_KEY = "clubpenguin-world-preferred-room";
+  const WS_PREF_KEY = "clubpenguin-world-ws-endpoint";
   const PLAYER_RADIUS = 14;
   const REMOTE_LERP = 0.18;
   const SELF_LERP = 0.26;
@@ -74,6 +75,11 @@
   const nameFormEl = document.getElementById("name-form");
   const nameInputEl = document.getElementById("name-input");
   const nameSaveEl = document.getElementById("name-save");
+  const serverFormEl = document.getElementById("server-form");
+  const serverInputEl = document.getElementById("server-input");
+  const serverSaveEl = document.getElementById("server-save");
+  const serverResetEl = document.getElementById("server-reset");
+  const serverCopyEl = document.getElementById("server-copy");
   const rosterEl = document.getElementById("player-roster");
   const coinCountEl = document.getElementById("coin-count");
   const questListEl = document.getElementById("quest-list");
@@ -92,6 +98,8 @@
     preferredRoomId: "town",
     pendingPortalRoomId: null,
     pendingPortalAt: 0,
+    wsEndpoint: "",
+    activeWsUrl: "",
     rooms: DEFAULT_ROOMS.slice(),
     world: DEFAULT_WORLD,
     collectibles: [],
@@ -110,6 +118,7 @@
 
   let ws = null;
   let reconnectTimer = null;
+  let suppressNextCloseReconnect = false;
   let worldScene = null;
   let audioCtx = null;
 
@@ -129,6 +138,70 @@
     return raw.trim().toLowerCase().replace(/\s+/g, "-");
   }
 
+  function normalizeWsEndpoint(raw) {
+    if (typeof raw !== "string") {
+      return "";
+    }
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return "";
+    }
+
+    let candidate = trimmed;
+    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(candidate)) {
+      const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+      candidate = `${protocol}${candidate}`;
+    }
+
+    let parsed = null;
+    try {
+      parsed = new URL(candidate);
+    } catch {
+      return "";
+    }
+
+    if (parsed.protocol === "http:") {
+      parsed.protocol = "ws:";
+    } else if (parsed.protocol === "https:") {
+      parsed.protocol = "wss:";
+    }
+    if (parsed.protocol !== "ws:" && parsed.protocol !== "wss:") {
+      return "";
+    }
+    if (!parsed.host) {
+      return "";
+    }
+    if (!parsed.pathname || parsed.pathname === "/") {
+      parsed.pathname = "/ws";
+    }
+    if (parsed.pathname.length > 1 && parsed.pathname.endsWith("/")) {
+      parsed.pathname = parsed.pathname.replace(/\/+$/, "");
+    }
+    parsed.hash = "";
+    return parsed.toString();
+  }
+
+  function defaultWsUrl() {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.host}/ws`;
+  }
+
+  function currentWsUrl() {
+    return state.wsEndpoint || defaultWsUrl();
+  }
+
+  function wsLabel(url) {
+    if (typeof url !== "string" || !url.trim()) {
+      return "default /ws";
+    }
+    try {
+      const parsed = new URL(url);
+      return `${parsed.host}${parsed.pathname}`;
+    } catch {
+      return url;
+    }
+  }
+
   try {
     const preferred = normalizeRoomId(window.localStorage.getItem(ROOM_PREF_KEY) || "");
     if (preferred) {
@@ -138,16 +211,24 @@
   } catch {
     // Ignore storage availability issues.
   }
+  try {
+    const preferredWs = normalizeWsEndpoint(window.localStorage.getItem(WS_PREF_KEY) || "");
+    if (preferredWs) {
+      state.wsEndpoint = preferredWs;
+    }
+  } catch {
+    // Ignore storage availability issues.
+  }
 
-  const roomFromUrl = normalizeRoomId(new URLSearchParams(window.location.search).get("room") || "");
+  const searchParams = new URLSearchParams(window.location.search);
+  const roomFromUrl = normalizeRoomId(searchParams.get("room") || "");
   if (roomFromUrl) {
     state.preferredRoomId = roomFromUrl;
     state.roomId = roomFromUrl;
   }
-
-  function wsUrl() {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${window.location.host}/ws`;
+  const wsFromUrl = normalizeWsEndpoint(searchParams.get("ws") || "");
+  if (wsFromUrl) {
+    state.wsEndpoint = wsFromUrl;
   }
 
   function roomNameById(roomId) {
@@ -371,6 +452,24 @@
     }
   }
 
+  function setPreferredWsEndpoint(endpoint) {
+    const normalized = normalizeWsEndpoint(endpoint);
+    state.wsEndpoint = normalized;
+    try {
+      if (normalized) {
+        window.localStorage.setItem(WS_PREF_KEY, normalized);
+      } else {
+        window.localStorage.removeItem(WS_PREF_KEY);
+      }
+    } catch {
+      // Ignore storage availability issues.
+    }
+    syncWsQuery(normalized);
+    if (serverInputEl && document.activeElement !== serverInputEl) {
+      serverInputEl.value = normalized;
+    }
+  }
+
   function syncRoomQuery(roomId) {
     try {
       const url = new URL(window.location.href);
@@ -383,6 +482,81 @@
     } catch {
       // Ignore URL update issues.
     }
+  }
+
+  function syncWsQuery(endpoint) {
+    try {
+      const url = new URL(window.location.href);
+      if (endpoint) {
+        url.searchParams.set("ws", endpoint);
+      } else {
+        url.searchParams.delete("ws");
+      }
+      window.history.replaceState(null, "", url.toString());
+    } catch {
+      // Ignore URL update issues.
+    }
+  }
+
+  function buildInviteUrl() {
+    try {
+      const url = new URL(window.location.href);
+      if (state.roomId) {
+        url.searchParams.set("room", state.roomId);
+      } else {
+        url.searchParams.delete("room");
+      }
+      const endpoint = state.wsEndpoint || "";
+      if (endpoint) {
+        url.searchParams.set("ws", endpoint);
+      } else {
+        url.searchParams.delete("ws");
+      }
+      url.hash = "";
+      return url.toString();
+    } catch {
+      return window.location.href;
+    }
+  }
+
+  async function writeTextToClipboard(text) {
+    if (!text) {
+      return false;
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Fallback below.
+      }
+    }
+    try {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.setAttribute("readonly", "");
+      el.style.position = "fixed";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      el.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(el);
+      return Boolean(copied);
+    } catch {
+      return false;
+    }
+  }
+
+  async function copyInviteLink() {
+    const inviteUrl = buildInviteUrl();
+    const copied = await writeTextToClipboard(inviteUrl);
+    if (copied) {
+      pushToast("Invite link copied.");
+      appendChat("system", "Invite link copied to clipboard.");
+      return;
+    }
+    appendChat("system", `Invite link: ${inviteUrl}`);
+    pushToast("Clipboard blocked. Link was added to chat.");
   }
 
   function refreshStatus() {
@@ -844,26 +1018,43 @@
       return;
     }
 
+    const endpoint = currentWsUrl();
+    state.activeWsUrl = endpoint;
     setStatus("Connecting...", "disconnected");
-    ws = new WebSocket(wsUrl());
+    const socket = new WebSocket(endpoint);
+    ws = socket;
 
-    ws.addEventListener("open", () => {
+    socket.addEventListener("open", () => {
+      if (socket !== ws) {
+        return;
+      }
       state.connected = true;
       refreshStatus();
       updateRoomSelect();
       updateIdentityControls();
-      appendChat("system", "Connected to world server.");
+      appendChat("system", `Connected to world server (${wsLabel(endpoint)}).`);
     });
 
-    ws.addEventListener("message", (event) => {
+    socket.addEventListener("message", (event) => {
+      if (socket !== ws) {
+        return;
+      }
       handleMessage(event.data);
     });
 
-    ws.addEventListener("close", () => {
+    socket.addEventListener("close", () => {
+      if (socket !== ws) {
+        return;
+      }
       state.connected = false;
       refreshStatus();
       updateRoomSelect();
       updateIdentityControls();
+      ws = null;
+      if (suppressNextCloseReconnect) {
+        suppressNextCloseReconnect = false;
+        return;
+      }
       if (!reconnectTimer) {
         reconnectTimer = window.setTimeout(() => {
           reconnectTimer = null;
@@ -872,9 +1063,53 @@
       }
     });
 
-    ws.addEventListener("error", () => {
+    socket.addEventListener("error", () => {
+      if (socket !== ws) {
+        return;
+      }
       setStatus("Connection error", "error");
     });
+  }
+
+  function forceReconnectSocket() {
+    if (reconnectTimer) {
+      window.clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      suppressNextCloseReconnect = true;
+      try {
+        ws.close(1000, "reconnect");
+      } catch {
+        // Ignore close failures.
+      }
+      ws = null;
+    }
+    state.connected = false;
+    refreshStatus();
+    updateRoomSelect();
+    updateIdentityControls();
+    connectSocket();
+  }
+
+  function switchServerEndpoint(rawInput) {
+    const trimmed = typeof rawInput === "string" ? rawInput.trim() : "";
+    if (!trimmed) {
+      setPreferredWsEndpoint("");
+      appendChat("system", "Switched to default same-origin world server (/ws).");
+      forceReconnectSocket();
+      return true;
+    }
+    const normalized = normalizeWsEndpoint(trimmed);
+    if (!normalized) {
+      appendChat("system", "Invalid server endpoint. Use ws:// or wss:// URL.");
+      pushToast("Invalid server endpoint.");
+      return false;
+    }
+    setPreferredWsEndpoint(normalized);
+    appendChat("system", `Switching server to ${wsLabel(normalized)}...`);
+    forceReconnectSocket();
+    return true;
   }
 
   class WorldScene extends Phaser.Scene {
@@ -1408,6 +1643,29 @@
     sendEvent("player:setName", { name: normalized });
   });
 
+  if (serverFormEl) {
+    serverFormEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = serverInputEl ? serverInputEl.value : "";
+      switchServerEndpoint(value);
+    });
+  }
+
+  if (serverResetEl) {
+    serverResetEl.addEventListener("click", () => {
+      if (serverInputEl) {
+        serverInputEl.value = "";
+      }
+      switchServerEndpoint("");
+    });
+  }
+
+  if (serverCopyEl) {
+    serverCopyEl.addEventListener("click", async () => {
+      await copyInviteLink();
+    });
+  }
+
   if (qaResetEl) {
     qaResetEl.addEventListener("click", () => {
       sendEvent("qa:resetProgress", {});
@@ -1489,6 +1747,9 @@
 
     return JSON.stringify({
       mode: state.connected ? "connected" : "connecting",
+      ws_endpoint: state.wsEndpoint || "",
+      active_ws_url: state.activeWsUrl || currentWsUrl(),
+      invite_url: buildInviteUrl(),
       coordinate_system: "origin: top-left, +x: right, +y: down, units: pixels",
       selfId: state.selfId,
       roomId: state.roomId,
@@ -1538,6 +1799,7 @@
     game,
   };
 
+  setPreferredWsEndpoint(state.wsEndpoint || "");
   renderQuestPanel();
   renderQuickChatSuggestions();
   updateIdentityControls();

@@ -14,6 +14,9 @@ Goal: move from movement/chat prototype to a playable social world with short-se
 - [x] Add interaction affordance pass for portals, NPCs, and collectibles.
 
 ### Week 2 - Productized UI Systems
+- [x] Add configurable multiplayer endpoint UI (`?ws=` + reconnect flow) for Vercel preview friend-testing.
+- [x] Add one-click invite sharing (`Copy Invite`) with room/server URL persistence.
+- [x] Add containerized Go backend deployment path (`Dockerfile` + preview wiring guide).
 - [ ] Build reusable component CSS patterns for buttons/inputs/chips/lists.
 - [ ] Add accessibility pass (focus rings, contrast checks, reduced-motion support).
 - [ ] Add empty/loading/error states for all side-panel modules.
@@ -80,6 +83,8 @@ Make the world feel social and worth returning to.
 - [x] Added explicit status-state visuals and quick-chat no-match empty state.
 - [x] Improved avatar readability with stronger nameplates and overlap-aware label stacking.
 - [x] Added animated interaction affordances for portals, NPCs, and collectibles.
+- [x] Added multiplayer endpoint selector UI and `?ws=` share-link support for preview deployments.
+- [x] Added `Copy Invite` action and deployment docs for hosted WebSocket backend.
 - [x] Implemented server-authoritative starter objectives with coin rewards.
 - [x] Implemented objective UI and coin tracker.
 - [x] Implemented emote actions (`wave`, `dance`, `cheer`, `laugh`, `snowball`) with room broadcast.

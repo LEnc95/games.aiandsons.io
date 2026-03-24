@@ -1641,3 +1641,40 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - `go test ./...` passed in `clubpenguin-world`.
   - Playwright skill run: `clubpenguin-world/output/web-game/design-overhaul-run2` (screenshots + state JSON, no `errors-*.json`).
   - Additional targeted capture: `clubpenguin-world/output/web-game/design-overhaul-overlap-check` (no `errors-*.json`).
+- Continuation (2026-03-24, multiplayer preview readiness pass):
+  - Implemented configurable WebSocket endpoint support in `clubpenguin-world/public/client.js`:
+    - Added persisted custom endpoint setting (`clubpenguin-world-ws-endpoint`) and query-param support (`?ws=wss://...`).
+    - Added endpoint normalization for `ws://` / `wss://` and `http(s)` conversion.
+    - Added explicit server switching flow with forced reconnect and stale-socket guard handling.
+    - Added endpoint details to connection system message and to `render_game_to_text` (`ws_endpoint`, `active_ws_url`).
+  - Added sidebar server controls in `clubpenguin-world/public/index.html`:
+    - `Multiplayer Server` input + `Connect` + `Default` buttons.
+    - Helper copy for friend-share links using `?ws=`.
+  - Updated sprint tracker `clubpenguin-world/SPRINT_TASK_LIST.md` with completed endpoint-config task.
+- Validation for endpoint pass:
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - `go test ./...` passed in `clubpenguin-world`.
+  - Playwright skill run: `clubpenguin-world/output/web-game/endpoint-config-run1` (no `errors-*.json`).
+  - Playwright MCP manual verification:
+    - confirmed `Multiplayer Server` UI renders,
+    - confirmed switch to custom endpoint updates URL with `ws=...` and enters reconnect state,
+    - confirmed `Default` resets to same-origin `/ws` and reconnects cleanly.
+    - one expected browser console error observed only during intentional invalid host (`ws://banana/ws`) connectivity check.
+- Continuation (2026-03-24, invite + deploy-helper pass):
+  - Added in-game invite sharing UX in `clubpenguin-world/public/index.html` + `public/client.js`:
+    - new `Copy Invite` control in Multiplayer Server section.
+    - invite URL builder includes current `room` and optional custom `ws` endpoint.
+    - clipboard copy with fallback path (posts link to chat if clipboard unavailable).
+    - added `invite_url` field to `render_game_to_text` output.
+  - Added backend deployment helper assets:
+    - `clubpenguin-world/Dockerfile` for containerized Go websocket server deploy.
+    - `clubpenguin-world/DEPLOY.md` documenting Vercel preview + hosted backend wiring and share URL patterns.
+  - Updated sprint tracker (`clubpenguin-world/SPRINT_TASK_LIST.md`) to mark copy-invite + container deploy path as completed Week 2 items.
+- Validation for invite/deploy pass:
+  - `node --check clubpenguin-world/public/client.js` passed.
+  - `go test ./...` passed in `clubpenguin-world`.
+  - Playwright skill run: `clubpenguin-world/output/web-game/invite-flow-run1` (no `errors-*.json`).
+  - Playwright MCP manual check:
+    - confirmed `Copy Invite` button renders and works,
+    - toast + chat confirmation appears (`Invite link copied to clipboard.`),
+    - full-page screenshot captured: `clubpenguin-world/output/web-game/invite-flow-run1/full-ui-invite.png`.
