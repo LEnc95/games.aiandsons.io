@@ -106,6 +106,8 @@
     pendingPortalAt: 0,
     wsEndpoint: "",
     activeWsUrl: "",
+    awaitingManualEndpoint: false,
+    backendHintShown: false,
     backendHealth: {
       state: "checking",
       text: "Backend: checking...",
@@ -1276,13 +1278,16 @@
       renderChatEmptyState("Connecting to world server...");
     }
     const socket = new WebSocket(endpoint);
+    let opened = false;
     ws = socket;
 
     socket.addEventListener("open", () => {
       if (socket !== ws) {
         return;
       }
+      opened = true;
       state.connected = true;
+      state.awaitingManualEndpoint = false;
       refreshStatus();
       updateRoomSelect();
       updateIdentityControls();
@@ -1312,6 +1317,23 @@
         setBackendStatus("Backend: switching connection...", "checking");
         return;
       }
+
+      if (!opened && !state.wsEndpoint) {
+        state.awaitingManualEndpoint = true;
+        setStatus("Backend endpoint required", "error");
+        setBackendStatus("Backend: no WebSocket server at same origin /ws", "error");
+        updateIdentityControls();
+        if (!state.backendHintShown) {
+          state.backendHintShown = true;
+          appendChat(
+            "system",
+            "No multiplayer backend was found at this site. Set a server URL (wss://.../ws) in Multiplayer Server, then click Connect."
+          );
+          pushToast("Set backend URL in Multiplayer Server.");
+        }
+        return;
+      }
+
       setBackendStatus("Backend: socket disconnected", "warn");
       if (chatLogEl.children.length === 0) {
         renderChatEmptyState("Connection lost. Reconnecting...");
@@ -1349,6 +1371,7 @@
       ws = null;
     }
     state.connected = false;
+    state.awaitingManualEndpoint = false;
     state.progressLoaded = false;
     state.chatCatalogLoaded = false;
     state.chatOptions = [];
@@ -2052,6 +2075,7 @@
       active_ws_url: state.activeWsUrl || currentWsUrl(),
       invite_url: buildInviteUrl(),
       backend_health: state.backendHealth,
+      awaiting_manual_endpoint: state.awaitingManualEndpoint,
       reduce_motion: state.reduceMotion,
       room_transition_active: Boolean(roomTransitionEl && roomTransitionEl.classList.contains("active")),
       coordinate_system: "origin: top-left, +x: right, +y: down, units: pixels",
