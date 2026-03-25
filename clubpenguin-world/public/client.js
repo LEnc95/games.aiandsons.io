@@ -202,7 +202,7 @@
   function defaultWsUrl() {
     const host = window.location.hostname;
     if (host.includes("vercel.app") || host.includes("aiandsons.io")) {
-      return "wss://clubpenguin-world-680601300351.us-central1.run.app/ws";
+      return "wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws";
     }
     return "ws://127.0.0.1:8081/ws";
   }
