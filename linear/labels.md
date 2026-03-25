@@ -15,6 +15,7 @@
 
 ## Per-Game Labels
 
+- game/clubpenguin-world
 - game/2048
 - game/pong
 - game/snake
@@ -54,5 +55,6 @@
 - game/simonsays
 - game/reactiongrid
 - game/gravityswitch
+- game/orbburst
 
 Generated from `src/meta/feedback.js`.

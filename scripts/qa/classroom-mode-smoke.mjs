@@ -97,7 +97,9 @@ async function startClassroomSessionFromModal(page) {
 async function getHomeLockState(page) {
   return page.evaluate(() => {
     const banner = document.getElementById("classroomBanner");
-    const card2048 = document.querySelector('a.game-card[href="#"] h2.game-title');
+    const card2048Node = [...document.querySelectorAll(".game-card .game-title")]
+      .find((node) => node.textContent?.trim() === "2048")
+      ?.closest(".game-card");
     const pongCard = [...document.querySelectorAll(".game-card .game-title")]
       .find((node) => node.textContent?.trim() === "Pong")
       ?.closest(".game-card");
@@ -106,7 +108,7 @@ async function getHomeLockState(page) {
     return {
       bannerVisible: !!banner && !banner.classList.contains("hidden"),
       bannerText: banner?.textContent?.trim() || "",
-      card2048Locked: !!card2048 && card2048.textContent?.trim() === "2048",
+      card2048Locked: !!card2048Node?.classList.contains("locked") && card2048Node.getAttribute("href") === "#",
       pongLocked: !!pongCard?.classList.contains("locked"),
       lockCount,
     };
