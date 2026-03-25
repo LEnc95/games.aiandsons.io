@@ -1332,19 +1332,24 @@
       }
 
       if (!opened && !state.wsEndpoint) {
-        state.awaitingManualEndpoint = true;
-        setStatus("Backend endpoint required", "error");
-        setBackendStatus("Backend: no WebSocket server at same origin /ws", "error");
-        updateIdentityControls();
-        if (!state.backendHintShown) {
-          state.backendHintShown = true;
-          appendChat(
-            "system",
-            "No multiplayer backend was found at this site. Set a server URL (wss://.../ws) in Multiplayer Server, then click Connect."
-          );
-          pushToast("Set backend URL in Multiplayer Server.");
+        const urlToTry = currentWsUrl();
+        // If we are using the local fallback and it fails immediately, give up and prompt the user.
+        // But if it's the production/preview URL, keep retrying because Cloud Run may be cold starting.
+        if (urlToTry.includes("127.0.0.1") || urlToTry.includes("localhost")) {
+          state.awaitingManualEndpoint = true;
+          setStatus("Backend endpoint required", "error");
+          setBackendStatus("Backend: no WebSocket server at same origin /ws", "error");
+          updateIdentityControls();
+          if (!state.backendHintShown) {
+            state.backendHintShown = true;
+            appendChat(
+              "system",
+              "No multiplayer backend was found at this site. Set a server URL (wss://.../ws) in Multiplayer Server, then click Connect."
+            );
+            pushToast("Set backend URL in Multiplayer Server.");
+          }
+          return;
         }
-        return;
       }
 
       setBackendStatus("Backend: socket disconnected", "warn");
