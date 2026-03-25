@@ -200,8 +200,11 @@
   }
 
   function defaultWsUrl() {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${window.location.host}/ws`;
+    const host = window.location.hostname;
+    if (host.includes("vercel.app") || host.includes("aiandsons.io")) {
+      return "wss://clubpenguin-world-680601300351.us-central1.run.app/ws";
+    }
+    return "ws://127.0.0.1:8081/ws";
   }
 
   function currentWsUrl() {
@@ -1277,11 +1280,21 @@
     if (chatLogEl.children.length === 0) {
       renderChatEmptyState("Connecting to world server...");
     }
+
+    const connectTimeout = window.setTimeout(() => {
+      if (!state.connected && ws && ws.readyState !== WebSocket.OPEN) {
+        setStatus("stuck on Connecting...", "error");
+        setBackendStatus("Backend: connection taking too long", "error");
+        pushToast("Ensure backend is reachable.");
+      }
+    }, 5000);
+
     const socket = new WebSocket(endpoint);
     let opened = false;
     ws = socket;
 
     socket.addEventListener("open", () => {
+      window.clearTimeout(connectTimeout);
       if (socket !== ws) {
         return;
       }
@@ -1347,6 +1360,7 @@
     });
 
     socket.addEventListener("error", () => {
+      window.clearTimeout(connectTimeout);
       if (socket !== ws) {
         return;
       }
