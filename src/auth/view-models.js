@@ -45,6 +45,7 @@ export function formatBillingDate(value) {
       month: "short",
       day: "numeric",
       year: "numeric",
+      timeZone: "UTC",
     }).format(new Date(timestamp));
   } catch {
     return "";

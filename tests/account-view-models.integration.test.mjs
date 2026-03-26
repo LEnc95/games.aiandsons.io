@@ -13,7 +13,7 @@ test("describeBillingPlan maps known plan ids to friendly labels", () => {
 });
 
 test("formatBillingDate accepts Stripe seconds timestamps", () => {
-  assert.equal(formatBillingDate(1772236800), "Feb 27, 2026");
+  assert.equal(formatBillingDate(1772236800), "Feb 28, 2026");
 });
 
 test("buildBillingOverviewModel summarizes active renewal state", () => {
@@ -36,7 +36,7 @@ test("buildBillingOverviewModel summarizes active renewal state", () => {
   assert.equal(model.tone, "");
   assert.equal(model.canManageBilling, true);
   assert.match(model.statusMessage, /Family Monthly/);
-  assert.match(model.statusMessage, /Feb 27, 2026/);
+  assert.match(model.statusMessage, /Feb 28, 2026/);
   assert.equal(model.cards[0]?.title, "Family Monthly");
 });
 
@@ -60,7 +60,7 @@ test("buildBillingOverviewModel summarizes grace-period billing issues", () => {
   assert.equal(model.tone, "warning");
   assert.equal(model.canManageBilling, true);
   assert.match(model.statusMessage, /payment issue/i);
-  assert.match(model.statusMessage, /Feb 28, 2026/);
+  assert.match(model.statusMessage, /Mar 1, 2026/);
   assert.equal(model.cards.at(-1)?.title, "Billing health");
 });
 

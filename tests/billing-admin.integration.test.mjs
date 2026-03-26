@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { Readable } from "node:stream";
 import fs from "node:fs";
+import path from "node:path";
 
 const require = createRequire(import.meta.url);
 const billingHandler = require("../api/billing.js");
@@ -163,5 +164,5 @@ test("billing admin lookup requires a lookup query", async () => {
 });
 
 test("billing ops page exists", () => {
-  assert.equal(fs.existsSync("C:/Users/Luke/Documents/GitHub/games.aiandsons.io/ops/billing/index.html"), true);
+  assert.equal(fs.existsSync(path.join(process.cwd(), "ops/billing/index.html")), true);
 });
