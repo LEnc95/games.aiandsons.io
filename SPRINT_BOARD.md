@@ -279,3 +279,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
 - [nightly 2026-03-13] Tracked changes: 2 commit(s) - c593230 Add new game without emoji changes; 7fe8a6c Add favicon links across pages.
 - [nightly 2026-03-13] Key PR links: none merged for this date.
+- [nightly 2026-03-25] Tracked changes: 6 commit(s) - 286ba07 fix(clubpenguin): use fully-qualified absolute paths for scripts; 80ccaf9 fix(clubpenguin): add vercel rewrites and cache-bust headers for club penguin world; c714bba fix(clubpenguin): use relative script paths so assets load from subdirectory on Vercel; 933f71c fix(clubpenguin): add cache buster to client.js to force production update; bad3165 fix(clubpenguin): use correct cloud run hash for ws url; 86ce6bc fix(clubpenguin): prevent socket reconnect abort on cold start.
+- [nightly 2026-03-25] Key PR links: none merged for this date.
