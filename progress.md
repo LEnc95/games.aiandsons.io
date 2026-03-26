@@ -1417,3 +1417,36 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Skill Playwright client run for `/orbburst`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:shop` and `$WEB_GAME_CLIENT` for `/orbburst` in an environment that allows Chromium/process spawn.
+
+## 2026-03-25 Laser Maze Dash Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `lasermaze/index.html` (Laser Maze Dash).
+  - Gameplay: dodge moving laser gates with variable safe gaps, collect in-gap energy cores for bonus score, use cooldown dash for burst movement and temporary invulnerability, survive a 70-second run.
+  - Controls: desktop keyboard (WASD/Arrows + Space/P/R/F) and mobile/touch controls (Up/Left/Down/Right + Dash/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('lasermaze')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'lasermaze', gameName: 'Laser Maze Dash' })`.
+- Integrated launcher/routing wiring:
+  - Added `lasermaze` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/lasermaze` rewrites and `/lasermaze/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "lasermaze" ...` integration check: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - `$WEB_GAME_CLIENT` Playwright run for `/lasermaze`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and `$WEB_GAME_CLIENT` gameplay validation for `/lasermaze` in an environment that allows Chromium/process spawn.
+- New request (2026-03-26): add a brand-new game not already in the catalog.
+- Implemented new standalone game page: `moonlander/index.html` (Moon Lander Patrol).
+  - Gameplay: low-gravity landing mission across 3 sectors with fuel, hull, landing-speed thresholds, boost, pause/restart/fullscreen, desktop + touch controls.
+  - Platform hooks: `rememberRecent('moonlander')`, coin rewards via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'moonlander', gameName: 'Moon Lander Patrol' })`.
+- Added metadata entry in `src/meta/games.js` and fallback homepage card in `index.html`.
+- Added `/moonlander` rewrites and `/moonlander/index.html` cache-header entry in `vercel.json`.
+- Verification run (2026-03-26):
+  - `npm.cmd run feedback:check-daily` initially failed due stale Linear artifacts, so I ran `npm.cmd run feedback:sync-linear:files` (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - Re-ran `npm.cmd run test:feedback`: daily guard passed, but node test subprocesses failed in this sandbox with `spawn EPERM`.
+  - Ran skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/moonlander`; blocked by Chromium launch `browserType.launch: spawn EPERM` in this environment.
+- Follow-up needed in a less restricted environment: rerun `npm run test:feedback` and the Playwright validation loop for `/moonlander`.

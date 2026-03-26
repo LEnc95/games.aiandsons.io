@@ -40,5 +40,7 @@ export const GAMES = [
   { slug:'reactiongrid',   name:'Reaction Grid',       emoji:'\u{1F4F6}', scoreHint:'blocks',     url:'/reactiongrid',  desc:'Rotate your shield, block incoming bolts, and survive the full reactor defense cycle.', earnsCoins:true },
   { slug:'gravityswitch',  name:'Gravity Switch',      emoji:'\u{1F9F2}', scoreHint:'distance',   url:'/gravityswitch', desc:'Flip between floor and ceiling lanes, dodge barriers, and chain star pickups through a 90-second run.', earnsCoins:true },
   { slug:'orbburst',       name:'Orb Burst',           emoji:'\u{1F52E}', scoreHint:'score',      url:'/orbburst',      desc:'Strafe, blast descending orbs, chain combo streaks, and survive a 75-second arena run.', earnsCoins:true },
+  { slug:'lasermaze',      name:'Laser Maze Dash',     emoji:'\u{1F52B}', scoreHint:'score',      url:'/lasermaze',     desc:'Thread through shifting laser gates, collect glowing cores, and survive a full-speed 70-second maze run.', earnsCoins:true },
+  { slug:'moonlander',     name:'Moon Lander Patrol',  emoji:'\u{1F6F0}\uFE0F', scoreHint:'sector', url:'/moonlander',  desc:'Balance thrusters, conserve fuel, and complete safe landings across three moon sectors.', earnsCoins:true },
 ];
 

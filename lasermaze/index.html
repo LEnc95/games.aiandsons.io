@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Laser Maze Dash - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg0: #04091a;
+      --bg1: #0f1c3b;
+      --panel: rgba(11, 20, 44, 0.84);
+      --line: rgba(133, 202, 255, 0.35);
+      --text: #ecf6ff;
+      --muted: #c4d8ef;
+      --good: #96ffd4;
+      --warn: #ffe1a0;
+      --bad: #ffadbb;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(90% 70% at 16% 10%, #1e4b8a 0%, transparent 62%),
+        radial-gradient(82% 66% at 88% 100%, #172e5b 0%, transparent 64%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(146, 203, 255, 0.6);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #152a56 0%, #0b1630 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 95, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(173, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+
+  <meta name="description" content="Thread your runner through laser gates, collect cores, and survive a 70-second maze dash.">
+  <meta property="og:title" content="Laser Maze Dash - Play on Cade's Games">
+  <meta property="og:description" content="Thread your runner through laser gates, collect cores, and survive a 70-second maze dash.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/lasermaze">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Laser Maze Dash - Play on Cade's Games">
+  <meta name="twitter:description" content="Thread your runner through laser gates, collect cores, and survive a 70-second maze dash.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/lasermaze">
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Laser Maze Dash game board"></canvas>
+
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Laser Maze Dash</h1>
+          <p>Dodge laser walls, collect energy cores in the safe lane, and survive the full run timer.</p>
+          <p>Desktop: Arrow keys or WASD move, Space dash, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: hold direction buttons to steer and tap Dash to break tight gate patterns.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Time</span><b id="hudTime">70.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Cores</span><b id="hudCores">0</b></div>
+      <div class="chip"><span>Shields</span><b id="hudShields">3</b></div>
+      <div class="chip warn"><span>Dash</span><b id="hudDash">Ready</b></div>
+      <div class="chip"><span>Speed</span><b id="hudSpeed">1.0x</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnUp">Up</button>
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnDown">Down</button>
+        <button type="button" id="btnRight">Right</button>
+      </div>
+      <div class="hint">Touch the glowing core inside each gap for bonus score. Dashing grants brief invulnerability.</div>
+      <div class="touch-group">
+        <button type="button" id="btnDash" class="wide">Dash</button>
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const btnUp = document.getElementById('btnUp');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnDown = document.getElementById('btnDown');
+    const btnRight = document.getElementById('btnRight');
+    const btnDash = document.getElementById('btnDash');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCores = document.getElementById('hudCores');
+    const hudShields = document.getElementById('hudShields');
+    const hudDash = document.getElementById('hudDash');
+    const hudSpeed = document.getElementById('hudSpeed');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const TOTAL_TIME = 70;
+
+    const input = {
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+    };
+
+    const state = {
+      mode: 'menu',
+      timeLeft: TOTAL_TIME,
+      score: 0,
+      cores: 0,
+      shields: 3,
+      speedMul: 1,
+      dashCooldown: 0,
+      dashTimer: 0,
+      spawnTimer: 0.7,
+      gates: [],
+      particles: [],
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      player: {
+        x: 220,
+        y: canvas.height * 0.5,
+        radius: 20,
+        speed: 420,
+      },
+    };
+
+    let rafId = 0;
+    let previousTime = performance.now();
+    let controlledStep = false;
+
+    function resetRunState() {
+      state.mode = 'playing';
+      state.timeLeft = TOTAL_TIME;
+      state.score = 0;
+      state.cores = 0;
+      state.shields = 3;
+      state.speedMul = 1;
+      state.dashCooldown = 0;
+      state.dashTimer = 0;
+      state.spawnTimer = 0.7;
+      state.gates = [];
+      state.particles = [];
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.player.x = 220;
+      state.player.y = canvas.height * 0.5;
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: Arrow keys or WASD move, Space dash, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRunState();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('lasermaze'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, lasermaze: { score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+    }
+
+    function spawnGate() {
+      const t = 1 - state.timeLeft / TOTAL_TIME;
+      const speed = 280 + t * 180;
+      const gapHeight = Math.max(130, 210 - t * 48);
+      const gapY = 86 + Math.random() * (canvas.height - 172 - gapHeight);
+      const coreInGap = Math.random() < 0.72;
+      state.gates.push({
+        x: canvas.width + 130,
+        width: 58,
+        speed,
+        gapY,
+        gapHeight,
+        coreInGap,
+        coreCollected: false,
+      });
+    }
+
+    function addParticles(x, y, color, count = 9) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 200;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.18 + Math.random() * 0.35,
+          age: 0,
+          color,
+        });
+      }
+    }
+
+    function useDash() {
+      if (state.mode !== 'playing') return;
+      if (state.dashCooldown > 0) return;
+      state.dashTimer = 0.28;
+      state.dashCooldown = 1.6;
+      addParticles(state.player.x, state.player.y, '#a7ecff', 16);
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 180);
+      const coreBonus = state.cores * 2;
+      const surviveBonus = result === 'win' ? 12 : 0;
+      const coins = Math.max(2, scoreBonus + coreBonus + surviveBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          lasermaze: {
+            score: state.score,
+            cores: state.cores,
+            shields: state.shields,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      setModeOverlay(
+        result === 'win' ? 'Maze Completed' : 'Runner Down',
+        result === 'win'
+          ? `You cleared the maze. Score ${state.score}, cores ${state.cores}, coins ${state.runCoinsEarned}.`
+          : `Shield collapsed. Score ${state.score}, cores ${state.cores}, coins ${state.runCoinsEarned}.`,
+        'Play Again'
+      );
+      updateHud();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Laser lanes held in place.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function rectCircleHit(rect, cx, cy, r) {
+      const nearestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+      const nearestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+      const dx = cx - nearestX;
+      const dy = cy - nearestY;
+      return (dx * dx + dy * dy) <= r * r;
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.dashCooldown = Math.max(0, state.dashCooldown - dt);
+      state.dashTimer = Math.max(0, state.dashTimer - dt);
+      state.speedMul = 1 + (1 - state.timeLeft / TOTAL_TIME) * 0.9;
+
+      const moveX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      const moveY = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+      const dashBoost = state.dashTimer > 0 ? 1.85 : 1;
+      state.player.x += moveX * state.player.speed * dashBoost * dt;
+      state.player.y += moveY * state.player.speed * dashBoost * dt;
+      state.player.x = Math.max(64, Math.min(canvas.width - 64, state.player.x));
+      state.player.y = Math.max(64, Math.min(canvas.height - 64, state.player.y));
+
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnGate();
+        state.spawnTimer = Math.max(0.26, 0.75 - (1 - state.timeLeft / TOTAL_TIME) * 0.33 + Math.random() * 0.12);
+      }
+
+      for (let i = state.gates.length - 1; i >= 0; i -= 1) {
+        const gate = state.gates[i];
+        gate.x -= gate.speed * state.speedMul * dt;
+
+        const topRect = { x: gate.x, y: 0, w: gate.width, h: gate.gapY };
+        const bottomRect = {
+          x: gate.x,
+          y: gate.gapY + gate.gapHeight,
+          w: gate.width,
+          h: canvas.height - (gate.gapY + gate.gapHeight),
+        };
+
+        if (rectCircleHit(topRect, state.player.x, state.player.y, state.player.radius) ||
+            rectCircleHit(bottomRect, state.player.x, state.player.y, state.player.radius)) {
+          if (state.dashTimer <= 0) {
+            state.shields -= 1;
+            addParticles(state.player.x, state.player.y, '#ffadb8', 15);
+          } else {
+            state.score += 18;
+            addParticles(state.player.x, state.player.y, '#9cf4ff', 8);
+          }
+          state.gates.splice(i, 1);
+          if (state.shields <= 0) {
+            finishRun('loss');
+            return;
+          }
+          continue;
+        }
+
+        if (gate.coreInGap && !gate.coreCollected) {
+          const coreX = gate.x + gate.width * 0.5;
+          const coreY = gate.gapY + gate.gapHeight * 0.5;
+          const dx = state.player.x - coreX;
+          const dy = state.player.y - coreY;
+          if ((dx * dx + dy * dy) <= (state.player.radius + 11) * (state.player.radius + 11)) {
+            gate.coreCollected = true;
+            state.cores += 1;
+            state.score += 70;
+            addParticles(coreX, coreY, '#8fffd9', 12);
+          }
+        }
+
+        if (gate.x + gate.width < -80) {
+          if (!gate.coreInGap || gate.coreCollected) {
+            state.score += 14;
+          }
+          state.gates.splice(i, 1);
+        }
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const p = state.particles[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 120 * dt;
+      }
+
+      if (state.timeLeft <= 0) finishRun('win');
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#17356f');
+      grad.addColorStop(0.6, '#10254f');
+      grad.addColorStop(1, '#08162f');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(135, 196, 255, 0.24)';
+      ctx.lineWidth = 1;
+      for (let x = -80; x < canvas.width + 160; x += 90) {
+        const jitter = ((x + state.score * 0.7) % 90);
+        ctx.beginPath();
+        ctx.moveTo(x - jitter, 0);
+        ctx.lineTo(x + 210 - jitter, canvas.height);
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer() {
+      const p = state.player;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+
+      ctx.fillStyle = state.dashTimer > 0 ? '#b3f4ff' : '#eaf7ff';
+      ctx.beginPath();
+      ctx.moveTo(28, 0);
+      ctx.lineTo(-18, -16);
+      ctx.lineTo(-10, 0);
+      ctx.lineTo(-18, 16);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#72cbff';
+      ctx.beginPath();
+      ctx.arc(-2, 0, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.dashTimer > 0) {
+        ctx.strokeStyle = 'rgba(163, 242, 255, 0.74)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 30, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawGates() {
+      for (const gate of state.gates) {
+        ctx.fillStyle = 'rgba(255, 98, 120, 0.72)';
+        ctx.fillRect(gate.x, 0, gate.width, gate.gapY);
+        ctx.fillRect(gate.x, gate.gapY + gate.gapHeight, gate.width, canvas.height - (gate.gapY + gate.gapHeight));
+
+        ctx.strokeStyle = 'rgba(255, 190, 204, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(gate.x + 1, 0, gate.width - 2, gate.gapY);
+        ctx.strokeRect(gate.x + 1, gate.gapY + gate.gapHeight, gate.width - 2, canvas.height - (gate.gapY + gate.gapHeight));
+
+        if (gate.coreInGap && !gate.coreCollected) {
+          const coreX = gate.x + gate.width * 0.5;
+          const coreY = gate.gapY + gate.gapHeight * 0.5;
+          ctx.fillStyle = '#8cffdc';
+          ctx.beginPath();
+          ctx.arc(coreX, coreY, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(236, 255, 248, 0.95)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const alpha = Math.max(0, 1 - p.age / p.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 16, 33, 0.66)';
+      ctx.fillRect(14, 12, 470, 62);
+      ctx.strokeStyle = 'rgba(144, 200, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 470, 62);
+      ctx.fillStyle = '#f0f8ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Laser Maze Dash', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c5dcfb';
+      const dashLabel = state.dashCooldown > 0 ? `Dash ${(state.dashCooldown).toFixed(1)}s` : 'Dash Ready';
+      ctx.fillText(`Cores ${state.cores} | ${dashLabel}`, 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      drawBackground();
+      drawGates();
+      drawParticles();
+      drawPlayer();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudCores.textContent = String(state.cores);
+      hudShields.textContent = String(Math.max(0, state.shields));
+      hudDash.textContent = state.dashCooldown > 0 ? `${state.dashCooldown.toFixed(1)}s` : 'Ready';
+      hudSpeed.textContent = `${state.speedMul.toFixed(1)}x`;
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudShields.parentElement.classList.toggle('warn', state.shields === 2);
+      hudShields.parentElement.classList.toggle('bad', state.shields <= 1);
+      hudShields.parentElement.classList.toggle('good', state.shields >= 3);
+      hudDash.parentElement.classList.toggle('bad', state.dashCooldown > 1.1);
+      hudDash.parentElement.classList.toggle('warn', state.dashCooldown > 0 && state.dashCooldown <= 1.1);
+      hudDash.parentElement.classList.toggle('good', state.dashCooldown <= 0);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function setHoldButton(button, key) {
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        input[key] = true;
+      });
+      const clear = (event) => {
+        if (event) event.preventDefault();
+        input[key] = false;
+      };
+      button.addEventListener('pointerup', clear);
+      button.addEventListener('pointercancel', clear);
+      button.addEventListener('pointerleave', clear);
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        input.left = true;
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        input.right = true;
+      }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        input.up = true;
+      }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        event.preventDefault();
+        input.down = true;
+      }
+      if (event.code === 'Space') {
+        event.preventDefault();
+        useDash();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') input.left = false;
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') input.right = false;
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') input.up = false;
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') input.down = false;
+    });
+
+    window.addEventListener('blur', () => {
+      input.left = false;
+      input.right = false;
+      input.up = false;
+      input.down = false;
+    });
+
+    setHoldButton(btnUp, 'up');
+    setHoldButton(btnLeft, 'left');
+    setHoldButton(btnDown, 'down');
+    setHoldButton(btnRight, 'right');
+
+    btnDash.addEventListener('click', () => useDash());
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'lasermaze',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left, +x right, +y down; player ship moves in full field',
+        objective: {
+          survive_seconds: TOTAL_TIME,
+          time_left: Number(state.timeLeft.toFixed(2)),
+        },
+        player: {
+          x: Number(state.player.x.toFixed(1)),
+          y: Number(state.player.y.toFixed(1)),
+          radius: state.player.radius,
+          shields: state.shields,
+          dash_timer: Number(state.dashTimer.toFixed(2)),
+          dash_cooldown: Number(state.dashCooldown.toFixed(2)),
+        },
+        score: state.score,
+        cores: state.cores,
+        speed_multiplier: Number(state.speedMul.toFixed(2)),
+        gates_visible: state.gates.slice(0, 10).map((gate) => ({
+          x: Number(gate.x.toFixed(1)),
+          width: gate.width,
+          gap_y: Number(gate.gapY.toFixed(1)),
+          gap_height: Number(gate.gapHeight.toFixed(1)),
+          speed: Number(gate.speed.toFixed(1)),
+          core_in_gap: gate.coreInGap,
+          core_collected: gate.coreCollected,
+        })),
+        coins: Number(profileState?.coins || 0),
+        result: state.result,
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'lasermaze', gameName: 'Laser Maze Dash' });
+  </script>
+</body>
+</html>

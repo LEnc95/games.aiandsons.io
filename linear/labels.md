@@ -56,5 +56,7 @@
 - game/reactiongrid
 - game/gravityswitch
 - game/orbburst
+- game/lasermaze
+- game/moonlander
 
 Generated from `src/meta/feedback.js`.
