@@ -279,3 +279,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
 - [nightly 2026-03-13] Tracked changes: 2 commit(s) - c593230 Add new game without emoji changes; 7fe8a6c Add favicon links across pages.
 - [nightly 2026-03-13] Key PR links: none merged for this date.
+- [nightly 2026-03-24] Tracked changes: 3 commit(s) - bc27ed7 Merge pull request #48 from LEnc95/codex/clubpenguin-main-integration; 5db2d5e Integrate Club Penguin world and homepage launcher link; 437d559 Add Orb Burst game and wire route metadata.
+- [nightly 2026-03-24] Key PR links: [#48](https://github.com/LEnc95/games.aiandsons.io/pull/48).
