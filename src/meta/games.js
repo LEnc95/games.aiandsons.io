@@ -42,5 +42,6 @@ export const GAMES = [
   { slug:'orbburst',       name:'Orb Burst',           emoji:'\u{1F52E}', scoreHint:'score',      url:'/orbburst',      desc:'Strafe, blast descending orbs, chain combo streaks, and survive a 75-second arena run.', earnsCoins:true },
   { slug:'lasermaze',      name:'Laser Maze Dash',     emoji:'\u{1F52B}', scoreHint:'score',      url:'/lasermaze',     desc:'Thread through shifting laser gates, collect glowing cores, and survive a full-speed 70-second maze run.', earnsCoins:true },
   { slug:'moonlander',     name:'Moon Lander Patrol',  emoji:'\u{1F6F0}\uFE0F', scoreHint:'sector', url:'/moonlander',  desc:'Balance thrusters, conserve fuel, and complete safe landings across three moon sectors.', earnsCoins:true },
+  { slug:'cometcourier',   name:'Comet Courier',       emoji:'\u{1F6F8}', scoreHint:'cargo',      url:'/cometcourier',  desc:'Hop across comet lanes, collect cargo pods, and dash through meteor traffic to finish the delivery run.', earnsCoins:true },
 ];
 

@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Comet Courier - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Dash through comet lanes, collect cargo pods, and deliver before time runs out.">
+  <meta property="og:title" content="Comet Courier - Play on Cade's Games">
+  <meta property="og:description" content="Dash through comet lanes, collect cargo pods, and deliver before time runs out.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/cometcourier">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Comet Courier - Play on Cade's Games">
+  <meta name="twitter:description" content="Dash through comet lanes, collect cargo pods, and deliver before time runs out.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/cometcourier">
+  <style>
+    :root {
+      --bg0: #050612;
+      --bg1: #101b36;
+      --panel: rgba(8, 14, 30, 0.84);
+      --line: rgba(152, 199, 255, 0.36);
+      --text: #edf4ff;
+      --muted: #bdd4f3;
+      --good: #9ef7d0;
+      --warn: #ffd38b;
+      --bad: #ff9eb3;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(95% 78% at 12% 0%, #15305d 0%, transparent 62%),
+        radial-gradient(80% 66% at 87% 100%, #0f2348 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.35);
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 700px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(136, 197, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0,0,0,0.52);
+      background: linear-gradient(180deg, #0d1d3f 0%, #081124 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 640px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(27, 53, 94, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(170, 222, 255, 0.3);
+      background: rgba(255,255,255,0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #c8dbf4;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Comet Courier game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Comet Courier</h1>
+          <p>Deliver cargo through meteor lanes. Collect pods, avoid impacts, and survive the full run timer.</p>
+          <p>Desktop: A/D or arrows to move lanes, Space dash, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap Left/Right to switch lanes, Dash for invulnerable burst movement.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Lane</span><b id="hudLane">3/5</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Cargo</span><b id="hudCargo">0</b></div>
+      <div class="chip"><span>Hull</span><b id="hudHull">3</b></div>
+      <div class="chip warn"><span>Dash</span><b id="hudDash">Ready</b></div>
+      <div class="chip"><span>Time</span><b id="hudTime">70.0s</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnRight">Right</button>
+      </div>
+      <div class="hint">Catch cyan cargo pods for bonus score. Meteor hits remove hull unless dash is active.</div>
+      <div class="touch-group">
+        <button type="button" id="btnDash" class="wide">Dash</button>
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudLane = document.getElementById('hudLane');
+    const hudScore = document.getElementById('hudScore');
+    const hudCargo = document.getElementById('hudCargo');
+    const hudHull = document.getElementById('hudHull');
+    const hudDash = document.getElementById('hudDash');
+    const hudTime = document.getElementById('hudTime');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    const btnDash = document.getElementById('btnDash');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const LANE_COUNT = 5;
+    const RUN_SECONDS = 70;
+
+    const state = {
+      mode: 'menu',
+      lane: 2,
+      score: 0,
+      hull: 3,
+      cargo: 0,
+      timeLeft: RUN_SECONDS,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      stars: [],
+      hazards: [],
+      pods: [],
+      particles: [],
+      spawnTimer: 0,
+      podTimer: 1.2,
+      speed: 220,
+      dashCooldown: 0,
+      dashActive: 0,
+      shake: 0,
+      player: {
+        x: 0,
+        y: 620,
+        radius: 22,
+      },
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function laneX(index) {
+      const left = 180;
+      const right = canvas.width - 180;
+      const span = right - left;
+      return left + (span * index) / (LANE_COUNT - 1);
+    }
+
+    function resetPlayer() {
+      state.lane = 2;
+      state.player.x = laneX(state.lane);
+      state.player.y = 620;
+    }
+
+    function seedStars() {
+      state.stars = [];
+      for (let i = 0; i < 120; i += 1) {
+        state.stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          z: 0.4 + Math.random() * 1.1,
+        });
+      }
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.score = 0;
+      state.hull = 3;
+      state.cargo = 0;
+      state.timeLeft = RUN_SECONDS;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.hazards = [];
+      state.pods = [];
+      state.particles = [];
+      state.spawnTimer = 0;
+      state.podTimer = 1.2;
+      state.speed = 220;
+      state.dashCooldown = 0;
+      state.dashActive = 0;
+      state.shake = 0;
+      resetPlayer();
+      seedStars();
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: A/D or arrows to move lanes, Space dash, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('cometcourier'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, cometcourier: { score: 0, cargo: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+    }
+
+    function addParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i += 1) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 34 + Math.random() * 170;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          age: 0,
+          life: 0.2 + Math.random() * 0.35,
+          color,
+        });
+      }
+    }
+
+    function spawnHazard() {
+      const lane = Math.floor(Math.random() * LANE_COUNT);
+      const radius = 16 + Math.random() * 12;
+      const speed = state.speed + 40 + Math.random() * 110;
+      state.hazards.push({
+        lane,
+        x: laneX(lane),
+        y: -50,
+        radius,
+        speed,
+      });
+    }
+
+    function spawnPod() {
+      const lane = Math.floor(Math.random() * LANE_COUNT);
+      state.pods.push({
+        lane,
+        x: laneX(lane),
+        y: -32,
+        radius: 14,
+        speed: state.speed * 0.9,
+      });
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 140);
+      const cargoBonus = state.cargo * 2;
+      const clearBonus = result === 'win' ? 12 : 0;
+      const coins = Math.max(2, scoreBonus + cargoBonus + clearBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          cometcourier: {
+            score: state.score,
+            cargo: state.cargo,
+            hull: state.hull,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      setModeOverlay(
+        result === 'win' ? 'Delivery Complete' : 'Hull Breach',
+        result === 'win'
+          ? `Run complete. Score ${state.score}, cargo ${state.cargo}, coins ${state.runCoinsEarned}.`
+          : `Courier down. Score ${state.score}, cargo ${state.cargo}, coins ${state.runCoinsEarned}.`,
+        'Run Again'
+      );
+      updateHud();
+    }
+
+    function moveLane(delta) {
+      if (state.mode !== 'playing') return;
+      const nextLane = Math.max(0, Math.min(LANE_COUNT - 1, state.lane + delta));
+      if (nextLane === state.lane) return;
+      state.lane = nextLane;
+      state.player.x = laneX(state.lane);
+      addParticles(state.player.x, state.player.y + 4, '#8ed2ff', 6);
+    }
+
+    function triggerDash() {
+      if (state.mode !== 'playing') return;
+      if (state.dashCooldown > 0 || state.dashActive > 0) return;
+      state.dashActive = 0.85;
+      state.dashCooldown = 3.6;
+      addParticles(state.player.x, state.player.y, '#a5ffdf', 16);
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Cargo run paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function hitHazard(hazardIndex) {
+      state.hazards.splice(hazardIndex, 1);
+      if (state.dashActive > 0) {
+        state.score += 20;
+        addParticles(state.player.x, state.player.y, '#98ffd9', 12);
+        return;
+      }
+      state.hull -= 1;
+      state.shake = 0.38;
+      addParticles(state.player.x, state.player.y, '#ff99aa', 18);
+      if (state.hull <= 0) {
+        finishRun('loss');
+      }
+    }
+
+    function collectPod(podIndex) {
+      const pod = state.pods[podIndex];
+      if (!pod) return;
+      state.pods.splice(podIndex, 1);
+      state.cargo += 1;
+      state.score += 120;
+      addParticles(pod.x, pod.y, '#81f8ff', 12);
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      if (state.timeLeft <= 0) {
+        finishRun('win');
+        return;
+      }
+
+      state.speed = Math.min(440, state.speed + dt * 2.6);
+      state.spawnTimer -= dt;
+      state.podTimer -= dt;
+      state.dashCooldown = Math.max(0, state.dashCooldown - dt);
+      state.dashActive = Math.max(0, state.dashActive - dt);
+      state.shake = Math.max(0, state.shake - dt);
+
+      if (state.spawnTimer <= 0) {
+        spawnHazard();
+        const hazardRate = 0.58 - Math.min(0.26, (RUN_SECONDS - state.timeLeft) * 0.0032);
+        state.spawnTimer = Math.max(0.22, hazardRate);
+      }
+      if (state.podTimer <= 0) {
+        spawnPod();
+        state.podTimer = 1.15 + Math.random() * 1.0;
+      }
+
+      for (const star of state.stars) {
+        star.y += (40 + state.speed * 0.25) * star.z * dt;
+        if (star.y > canvas.height + 6) {
+          star.y = -6;
+          star.x = Math.random() * canvas.width;
+        }
+      }
+
+      for (let i = state.hazards.length - 1; i >= 0; i -= 1) {
+        const hazard = state.hazards[i];
+        hazard.y += hazard.speed * dt;
+        if (hazard.y > canvas.height + 60) {
+          state.hazards.splice(i, 1);
+          state.score += 8;
+          continue;
+        }
+        const dx = hazard.x - state.player.x;
+        const dy = hazard.y - state.player.y;
+        const hit = dx * dx + dy * dy <= (hazard.radius + state.player.radius) ** 2;
+        if (hit) {
+          hitHazard(i);
+        }
+      }
+
+      for (let i = state.pods.length - 1; i >= 0; i -= 1) {
+        const pod = state.pods[i];
+        pod.y += pod.speed * dt;
+        if (pod.y > canvas.height + 40) {
+          state.pods.splice(i, 1);
+          continue;
+        }
+        const dx = pod.x - state.player.x;
+        const dy = pod.y - state.player.y;
+        const hit = dx * dx + dy * dy <= (pod.radius + state.player.radius) ** 2;
+        if (hit) collectPod(i);
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 80 * dt;
+      }
+
+      state.score += Math.floor(dt * 14) + (state.dashActive > 0 ? 1 : 0);
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#12264a');
+      grad.addColorStop(1, '#0a1328');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (const star of state.stars) {
+        const alpha = Math.min(1, 0.35 + star.z * 0.5);
+        ctx.fillStyle = `rgba(211, 234, 255, ${alpha})`;
+        const size = star.z > 1.1 ? 2.5 : 1.5;
+        ctx.fillRect(star.x, star.y, size, size);
+      }
+
+      ctx.strokeStyle = 'rgba(134, 182, 235, 0.2)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < LANE_COUNT; i += 1) {
+        const x = laneX(i);
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+    }
+
+    function drawHazards() {
+      for (const hazard of state.hazards) {
+        const pulse = 0.85 + Math.sin((hazard.y + performance.now() * 0.2) * 0.04) * 0.15;
+        ctx.fillStyle = 'rgba(255, 147, 159, 0.95)';
+        ctx.beginPath();
+        ctx.arc(hazard.x, hazard.y, hazard.radius * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 220, 226, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPods() {
+      for (const pod of state.pods) {
+        ctx.fillStyle = '#86fbff';
+        ctx.beginPath();
+        ctx.arc(pod.x, pod.y, pod.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(210, 255, 255, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      if (state.shake > 0) {
+        ctx.translate((Math.random() - 0.5) * 6 * state.shake, (Math.random() - 0.5) * 6 * state.shake);
+      }
+      ctx.translate(state.player.x, state.player.y);
+
+      if (state.dashActive > 0) {
+        const aura = 28 + Math.sin(performance.now() * 0.03) * 4;
+        ctx.fillStyle = 'rgba(140, 255, 222, 0.35)';
+        ctx.beginPath();
+        ctx.arc(0, 0, aura, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#e8f6ff';
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.lineTo(18, 14);
+      ctx.lineTo(0, 8);
+      ctx.lineTo(-18, 14);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#83ceff';
+      ctx.fillRect(-10, 14, 20, 8);
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 580, 62);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 580, 62);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Comet Courier', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText(`Lane ${state.lane + 1}/${LANE_COUNT} | Hull ${state.hull} | Cargo ${state.cargo}`, 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      drawBackground();
+      drawPods();
+      drawHazards();
+      drawParticles();
+      drawPlayer();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudLane.textContent = `${state.lane + 1}/${LANE_COUNT}`;
+      hudScore.textContent = String(state.score);
+      hudCargo.textContent = String(state.cargo);
+      hudHull.textContent = String(Math.max(0, state.hull));
+      hudDash.textContent = state.dashActive > 0 ? 'Active' : (state.dashCooldown > 0 ? `${state.dashCooldown.toFixed(1)}s` : 'Ready');
+      hudTime.textContent = `${state.timeLeft.toFixed(1)}s`;
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudHull.parentElement.classList.toggle('good', state.hull >= 3);
+      hudHull.parentElement.classList.toggle('warn', state.hull === 2);
+      hudHull.parentElement.classList.toggle('bad', state.hull <= 1);
+
+      hudDash.parentElement.classList.toggle('good', state.dashActive > 0 || state.dashCooldown <= 0.01);
+      hudDash.parentElement.classList.toggle('warn', state.dashCooldown > 0.01 && state.dashCooldown < 1.6);
+      hudDash.parentElement.classList.toggle('bad', state.dashCooldown >= 1.6 && state.dashActive <= 0.01);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 30);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 30 && state.timeLeft >= 12);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 12);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if ((event.code === 'ArrowLeft' || event.code === 'KeyA') && !event.repeat) {
+        event.preventDefault();
+        moveLane(-1);
+      }
+      if ((event.code === 'ArrowRight' || event.code === 'KeyD') && !event.repeat) {
+        event.preventDefault();
+        moveLane(1);
+      }
+      if (event.code === 'Space' && !event.repeat) {
+        event.preventDefault();
+        triggerDash();
+      }
+      if (event.code === 'KeyP' && !event.repeat) {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR' && !event.repeat) {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF' && !event.repeat) {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    btnLeft.addEventListener('click', () => moveLane(-1));
+    btnRight.addEventListener('click', () => moveLane(1));
+    btnDash.addEventListener('click', () => triggerDash());
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'cometcourier',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left, +x right, +y down; hazards and pods move toward +y',
+        objective: {
+          survive_seconds: RUN_SECONDS,
+          collect_cargo: true,
+          avoid_hazard_hits: true,
+        },
+        player: {
+          lane: state.lane,
+          x: Number(state.player.x.toFixed(1)),
+          y: Number(state.player.y.toFixed(1)),
+          radius: state.player.radius,
+          dash_active: Number(state.dashActive.toFixed(2)),
+          dash_cooldown: Number(state.dashCooldown.toFixed(2)),
+        },
+        lanes: Array.from({ length: LANE_COUNT }, (_, i) => ({ lane: i, x: Number(laneX(i).toFixed(1)) })),
+        hazards: state.hazards.slice(0, 8).map((hazard) => ({
+          lane: hazard.lane,
+          x: Number(hazard.x.toFixed(1)),
+          y: Number(hazard.y.toFixed(1)),
+          radius: Number(hazard.radius.toFixed(1)),
+          speed: Number(hazard.speed.toFixed(1)),
+        })),
+        pods: state.pods.slice(0, 6).map((pod) => ({
+          lane: pod.lane,
+          x: Number(pod.x.toFixed(1)),
+          y: Number(pod.y.toFixed(1)),
+          radius: Number(pod.radius.toFixed(1)),
+          speed: Number(pod.speed.toFixed(1)),
+        })),
+        resources: {
+          hull: state.hull,
+          time_left: Number(state.timeLeft.toFixed(2)),
+          cargo: state.cargo,
+        },
+        score: state.score,
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetPlayer();
+    seedStars();
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'cometcourier', gameName: 'Comet Courier' });
+  </script>
+</body>
+</html>

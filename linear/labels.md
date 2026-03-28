@@ -58,5 +58,6 @@
 - game/orbburst
 - game/lasermaze
 - game/moonlander
+- game/cometcourier
 
 Generated from `src/meta/feedback.js`.

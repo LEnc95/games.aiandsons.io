@@ -1450,3 +1450,24 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Re-ran `npm.cmd run test:feedback`: daily guard passed, but node test subprocesses failed in this sandbox with `spawn EPERM`.
   - Ran skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/moonlander`; blocked by Chromium launch `browserType.launch: spawn EPERM` in this environment.
 - Follow-up needed in a less restricted environment: rerun `npm run test:feedback` and the Playwright validation loop for `/moonlander`.
+
+## 2026-03-28 Comet Courier Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `cometcourier/index.html` (Comet Courier).
+  - Gameplay: five-lane courier run with discrete lane switching, meteor hazards, collectible cargo pods, cooldown-based dash invulnerability, score/hull/timer win-loss flow, and coin rewards.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (Left/Right/Dash/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('cometcourier')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'cometcourier', gameName: 'Comet Courier' })`.
+- Integrated launcher/routing wiring:
+  - Added `cometcourier` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/cometcourier` rewrites and `/cometcourier/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "cometcourier" ...` integration check: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (also refreshed `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner child process spawn).
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` on `/cometcourier`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/cometcourier` in an environment that allows Chromium/process spawn.
