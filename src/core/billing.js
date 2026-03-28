@@ -79,6 +79,13 @@ const parseApiResponse = async (response) => {
 };
 
 export const ensureBillingSession = async ({ force = false } = {}) => {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) {
+    cachedBillingSession = null;
+    billingSessionFetchedAt = Date.now();
+    return null;
+  }
+
   const now = Date.now();
   if (!force && cachedBillingSession && (now - billingSessionFetchedAt) < BILLING_SESSION_CACHE_TTL_MS) {
     return cachedBillingSession;
@@ -107,6 +114,13 @@ export const ensureBillingSession = async ({ force = false } = {}) => {
 };
 
 export const fetchBillingConfig = async ({ force = false } = {}) => {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) {
+    cachedBillingConfig = DEFAULT_BILLING_CONFIG;
+    billingConfigFetchedAt = Date.now();
+    return cachedBillingConfig;
+  }
+
   const now = Date.now();
   if (!force && (now - billingConfigFetchedAt) < BILLING_CONFIG_CACHE_TTL_MS) {
     return cachedBillingConfig;
@@ -210,6 +224,11 @@ export const fetchStripeSubscriptionStatus = async ({
   sessionId,
   customerEmail,
 } = {}) => {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) {
+    return { mode: "local", entitlements: {}, activePlanId: "" };
+  }
+
   await ensureBillingSession();
   const query = new URLSearchParams();
   if (typeof sessionId === "string" && sessionId.trim()) {

@@ -40,9 +40,11 @@ Operational command reference for contributors and automations in this repositor
 - Live-provision missing Linear labels and baseline issues: `npm run feedback:provision-linear`
 
 ## GitHub Automations
+- PR classroom smoke gate: `.github/workflows/classroom-smoke.yml`
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
 - Nightly billing drift reconcile: `.github/workflows/nightly-billing-reconcile.yml`
+- Tagged release policy gate: `.github/workflows/policy-release-gate.yml`
 - Slack notifications for those workflows use the `SLACK_CI_WEBHOOK_URL` Actions secret and notify on failures by default.
 - Production feedback sync failures can post to Slack from the deployed app when `SLACK_FEEDBACK_WEBHOOK_URL` is set in Vercel.
 - Billing reconcile additionally needs GitHub repository secrets `STRIPE_ADMIN_TOKEN` and either `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` so it can enumerate customer-backed billing profiles from Firestore before calling the admin reconcile route.

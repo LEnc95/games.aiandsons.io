@@ -107,7 +107,9 @@ async function main() {
       return !!list && list.textContent.includes("Arcade feedback smoke");
     }, { timeout: 20_000 });
     summary.checks.push({ name: "ops_list_shows_submission", pass: true });
+
     await desktopPage.locator(".submission-card", { hasText: submissionSummary }).first().click();
+
     await desktopPage.waitForFunction((summaryText) => {
       const pane = document.getElementById("detailPane");
       return !!pane
