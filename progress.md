@@ -1471,3 +1471,26 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Skill-required Playwright loop via `$WEB_GAME_CLIENT` on `/cometcourier`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/cometcourier` in an environment that allows Chromium/process spawn.
+
+## 2026-03-29 Rift Drifter Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: iftdrifter/index.html (Rift Drifter).
+  - Gameplay: six-lane drift runner with hazard dodge + collectible flux cores, cooldown dash invulnerability, score/timer win-loss loop, and coin rewards.
+  - Controls: desktop (A/D or arrows + Space/P/R/F) and mobile touch controls (Left/Right/Dash/Pause/Restart/FS).
+  - Platform hooks: ememberRecent('riftdrifter'), coin payout via ddCoins, achievement payload via maybeUnlock.
+  - Automation hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state.
+  - Feedback integration: mountGameFeedback({ gameSlug: 'riftdrifter', gameName: 'Rift Drifter' }).
+- Integrated launcher/routing wiring:
+  - Added iftdrifter metadata entry in src/meta/games.js.
+  - Added fallback homepage card in index.html.
+  - Added /riftdrifter rewrites and /riftdrifter/index.html cache-header entry in ercel.json.
+- Validation results:
+  - 
+pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
+  - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
+  - 
+pm.cmd run test:feedback: blocked by sandbox process policy (spawn EPERM in Node test runner child process spawn).
+  - $WEB_GAME_CLIENT Playwright run for /riftdrifter: blocked in this sandbox (rowserType.launch: spawn EPERM).
+- Follow-up TODO:
+  - Re-run 
+pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter in an environment that allows Chromium/process spawn.

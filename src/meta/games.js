@@ -43,5 +43,6 @@ export const GAMES = [
   { slug:'lasermaze',      name:'Laser Maze Dash',     emoji:'\u{1F52B}', scoreHint:'score',      url:'/lasermaze',     desc:'Thread through shifting laser gates, collect glowing cores, and survive a full-speed 70-second maze run.', earnsCoins:true },
   { slug:'moonlander',     name:'Moon Lander Patrol',  emoji:'\u{1F6F0}\uFE0F', scoreHint:'sector', url:'/moonlander',  desc:'Balance thrusters, conserve fuel, and complete safe landings across three moon sectors.', earnsCoins:true },
   { slug:'cometcourier',   name:'Comet Courier',       emoji:'\u{1F6F8}', scoreHint:'cargo',      url:'/cometcourier',  desc:'Hop across comet lanes, collect cargo pods, and dash through meteor traffic to finish the delivery run.', earnsCoins:true },
+  { slug:'riftdrifter',    name:'Rift Drifter',        emoji:'\u{1F30C}', scoreHint:'flux',       url:'/riftdrifter',   desc:'Surf unstable lanes, harvest flux cores, and dodge collapse nodes through a full 75-second drift.', earnsCoins:true },
 ];
 

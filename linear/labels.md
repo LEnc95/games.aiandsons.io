@@ -59,5 +59,6 @@
 - game/lasermaze
 - game/moonlander
 - game/cometcourier
+- game/riftdrifter
 
 Generated from `src/meta/feedback.js`.
