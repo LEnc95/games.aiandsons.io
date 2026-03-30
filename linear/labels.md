@@ -60,5 +60,6 @@
 - game/moonlander
 - game/cometcourier
 - game/riftdrifter
+- game/circuitpath
 
 Generated from `src/meta/feedback.js`.

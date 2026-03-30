@@ -44,5 +44,6 @@ export const GAMES = [
   { slug:'moonlander',     name:'Moon Lander Patrol',  emoji:'\u{1F6F0}\uFE0F', scoreHint:'sector', url:'/moonlander',  desc:'Balance thrusters, conserve fuel, and complete safe landings across three moon sectors.', earnsCoins:true },
   { slug:'cometcourier',   name:'Comet Courier',       emoji:'\u{1F6F8}', scoreHint:'cargo',      url:'/cometcourier',  desc:'Hop across comet lanes, collect cargo pods, and dash through meteor traffic to finish the delivery run.', earnsCoins:true },
   { slug:'riftdrifter',    name:'Rift Drifter',        emoji:'\u{1F30C}', scoreHint:'flux',       url:'/riftdrifter',   desc:'Surf unstable lanes, harvest flux cores, and dodge collapse nodes through a full 75-second drift.', earnsCoins:true },
+  { slug:'circuitpath',    name:'Circuit Path',        emoji:'\u{1F5A7}', scoreHint:'nodes',      url:'/circuitpath',   desc:'Collect data nodes, dodge sentry sweeps, and route your bot to the uplink before time runs out.', earnsCoins:true },
 ];
 

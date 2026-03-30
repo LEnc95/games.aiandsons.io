@@ -1494,3 +1494,25 @@ pm.cmd run test:feedback: blocked by sandbox process policy (spawn EPERM in Node
 - Follow-up TODO:
   - Re-run 
 pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter in an environment that allows Chromium/process spawn.
+
+## 2026-03-30 Circuit Path Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `circuitpath/index.html` (Circuit Path).
+  - Gameplay: tile-based route puzzle where players collect 5 data nodes, dodge horizontal sentry sweeps, and reach the uplink before timeout.
+  - Controls: desktop keyboard (WASD/Arrows + P/R/F) and mobile touch controls (Up/Left/Down/Right plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('circuitpath')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with explicit coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'circuitpath', gameName: 'Circuit Path' })`.
+- Integrated launcher/routing wiring:
+  - Added `circuitpath` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/circuitpath` rewrites and `/circuitpath/index.html` cache-header entry in `vercel.json`.
+- Next: run validation checks (`vercel.json` parse, integration grep, feedback tests, and skill Playwright loop) and record outcomes.
+- Validation results (this run):
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `rg -n "circuitpath" src/meta/games.js index.html vercel.json circuitpath/index.html`: pass (references found in all required files).
+  - `npm.cmd run feedback:sync-linear:files`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: `feedback:check-daily` passed, but integration tests failed to execute in this sandbox with `spawn EPERM`.
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/circuitpath`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright validation loop for `/circuitpath` in an environment that allows child-process + Chromium launch.
