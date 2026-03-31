@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Signal Stack - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Route matching signal packets, build combo streaks, and keep your uplink stable through a full shift.">
+  <meta property="og:title" content="Signal Stack - Play on Cade's Games">
+  <meta property="og:description" content="Route matching signal packets, build combo streaks, and keep your uplink stable through a full shift.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/signalstack">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Signal Stack - Play on Cade's Games">
+  <meta name="twitter:description" content="Route matching signal packets, build combo streaks, and keep your uplink stable through a full shift.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/signalstack">
+  <style>
+    :root {
+      --bg0: #040711;
+      --bg1: #112244;
+      --panel: rgba(8, 15, 34, 0.88);
+      --line: rgba(138, 203, 255, 0.42);
+      --text: #eef6ff;
+      --muted: #c4d8f7;
+      --good: #9bf8d3;
+      --warn: #ffd18d;
+      --bad: #ff98ae;
+      --c0: #71e1ff;
+      --c1: #ff8ede;
+      --c2: #ffd072;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(90% 70% at 8% 0%, #1d3870 0%, transparent 60%),
+        radial-gradient(80% 70% at 100% 100%, #11264d 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #0f2144 0%, #050d22 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 680px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(23, 48, 88, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 96px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Signal Stack game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Signal Stack</h1>
+          <p>Slide across channels and cycle your decoder color to catch matching packets. Mismatches damage your uplink.</p>
+          <p>Desktop: Left/Right or A/D move, Up/W/Space cycles decoder, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use lane buttons + color swap. Keep combo streaks alive for extra score before time runs out.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Shift</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Lane</span><b id="hudLane">1</b></div>
+      <div class="chip"><span>Decoder</span><b id="hudColor">CYAN</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Combo</span><b id="hudCombo">0</b></div>
+      <div class="chip"><span>Shield</span><b id="hudShield">3</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">75.0s</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnRight">Right</button>
+        <button type="button" id="btnCycle">Swap</button>
+      </div>
+      <div class="hint">Catch same-color packets in your lane. Wrong color or missed packets reduce shield.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudLane = document.getElementById('hudLane');
+    const hudColor = document.getElementById('hudColor');
+    const hudScore = document.getElementById('hudScore');
+    const hudCombo = document.getElementById('hudCombo');
+    const hudShield = document.getElementById('hudShield');
+    const hudTime = document.getElementById('hudTime');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const COLORS = [
+      { id: 0, name: 'CYAN', fill: '#71e1ff' },
+      { id: 1, name: 'MAGENTA', fill: '#ff8ede' },
+      { id: 2, name: 'AMBER', fill: '#ffd072' },
+    ];
+
+    const GAME_SECONDS = 75;
+    const LANES = 5;
+    const FIELD = { x: 200, y: 80, w: 800, h: 570 };
+
+    const state = {
+      mode: 'menu',
+      lane: Math.floor(LANES / 2),
+      decoder: 0,
+      score: 0,
+      combo: 0,
+      shield: 3,
+      timeLeft: GAME_SECONDS,
+      packets: [],
+      particles: [],
+      spawnCooldown: 0,
+      speed: 210,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+    };
+
+    let controlledStep = false;
+    let previousTime = performance.now();
+    let rafId = 0;
+
+    function laneWidth() {
+      return FIELD.w / LANES;
+    }
+
+    function laneCenterX(index) {
+      return FIELD.x + laneWidth() * (index + 0.5);
+    }
+
+    function packetRadius() {
+      return Math.max(14, laneWidth() * 0.16);
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.lane = Math.floor(LANES / 2);
+      state.decoder = 0;
+      state.score = 0;
+      state.combo = 0;
+      state.shield = 3;
+      state.timeLeft = GAME_SECONDS;
+      state.packets = [];
+      state.particles = [];
+      state.spawnCooldown = 0.35;
+      state.speed = 210;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+    }
+
+    function showOverlay(title, detail, buttonLabel = 'Start Shift') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${detail}</p>
+          <p>Desktop: Left/Right or A/D move, Up/W/Space cycles decoder, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('signalstack'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, signalstack: { score: 0, combo: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+    }
+
+    function cycleDecoder() {
+      if (state.mode !== 'playing') return;
+      state.decoder = (state.decoder + 1) % COLORS.length;
+    }
+
+    function moveLane(delta) {
+      if (state.mode !== 'playing') return;
+      state.lane = Math.max(0, Math.min(LANES - 1, state.lane + delta));
+    }
+
+    function spawnPacket() {
+      const lane = Math.floor(Math.random() * LANES);
+      const colorId = Math.floor(Math.random() * COLORS.length);
+      state.packets.push({
+        lane,
+        colorId,
+        y: FIELD.y - packetRadius() - Math.random() * 28,
+        vy: state.speed + Math.random() * 65,
+      });
+    }
+
+    function burst(x, y, color, count = 10) {
+      for (let i = 0; i < count; i += 1) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 40 + Math.random() * 140;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          age: 0,
+          life: 0.2 + Math.random() * 0.3,
+          color,
+        });
+      }
+    }
+
+    function applyMissPenalty() {
+      state.combo = 0;
+      state.shield -= 1;
+      if (state.shield <= 0) {
+        finishRun('loss');
+      }
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 130);
+      const comboBonus = state.combo;
+      const clearBonus = result === 'win' ? 16 : 0;
+      const coins = Math.max(2, scoreBonus + comboBonus + clearBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          signalstack: {
+            score: state.score,
+            combo: state.combo,
+            shield: state.shield,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      const message = result === 'win'
+        ? `Shift complete. Score ${state.score}, max combo locked in, +${state.runCoinsEarned} coins.`
+        : `Uplink collapsed. Score ${state.score}, +${state.runCoinsEarned} coins for the attempt.`;
+      showOverlay(result === 'win' ? 'Signal Stable' : 'Signal Lost', message, 'Run Again');
+      updateHud();
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        showOverlay('Paused', 'Decoder frozen. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.speed = Math.min(340, state.speed + dt * 8);
+
+      state.spawnCooldown -= dt;
+      if (state.spawnCooldown <= 0) {
+        spawnPacket();
+        const pressure = 1 - state.timeLeft / GAME_SECONDS;
+        state.spawnCooldown = Math.max(0.18, 0.62 - pressure * 0.34 - Math.min(0.18, state.combo * 0.01));
+      }
+
+      const catchY = FIELD.y + FIELD.h - 28;
+      const radius = packetRadius();
+      for (let i = state.packets.length - 1; i >= 0; i -= 1) {
+        const packet = state.packets[i];
+        packet.y += packet.vy * dt;
+
+        if (packet.y >= catchY - radius && packet.y <= catchY + radius && packet.lane === state.lane) {
+          const x = laneCenterX(packet.lane);
+          const matched = packet.colorId === state.decoder;
+          burst(x, catchY, COLORS[packet.colorId].fill, matched ? 12 : 16);
+          state.packets.splice(i, 1);
+          if (matched) {
+            state.combo += 1;
+            state.score += 65 + state.combo * 8;
+          } else {
+            applyMissPenalty();
+          }
+          continue;
+        }
+
+        if (packet.y > FIELD.y + FIELD.h + radius) {
+          state.packets.splice(i, 1);
+          applyMissPenalty();
+          continue;
+        }
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const p = state.particles[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 120 * dt;
+      }
+
+      if (state.timeLeft <= 0) {
+        finishRun('win');
+      }
+    }
+
+    function drawField() {
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0, '#142a51');
+      bg.addColorStop(1, '#050c20');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(13, 28, 58, 0.88)';
+      ctx.fillRect(FIELD.x, FIELD.y, FIELD.w, FIELD.h);
+      ctx.strokeStyle = 'rgba(145, 206, 255, 0.42)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(FIELD.x, FIELD.y, FIELD.w, FIELD.h);
+
+      for (let i = 1; i < LANES; i += 1) {
+        const x = FIELD.x + i * laneWidth();
+        ctx.strokeStyle = 'rgba(128, 180, 241, 0.24)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, FIELD.y);
+        ctx.lineTo(x, FIELD.y + FIELD.h);
+        ctx.stroke();
+      }
+
+      const catchY = FIELD.y + FIELD.h - 28;
+      ctx.strokeStyle = 'rgba(166, 226, 255, 0.36)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(FIELD.x, catchY);
+      ctx.lineTo(FIELD.x + FIELD.w, catchY);
+      ctx.stroke();
+    }
+
+    function drawPackets() {
+      const r = packetRadius();
+      for (const packet of state.packets) {
+        const color = COLORS[packet.colorId].fill;
+        const x = laneCenterX(packet.lane);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, packet.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer() {
+      const x = laneCenterX(state.lane);
+      const y = FIELD.y + FIELD.h - 28;
+      const color = COLORS[state.decoder].fill;
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 26);
+      ctx.lineTo(x - 34, y + 24);
+      ctx.lineTo(x + 34, y + 24);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(245, 250, 255, 0.92)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.beginPath();
+      ctx.arc(x, y + 2, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        const alpha = Math.max(0, 1 - p.age / p.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 14, 28, 0.66)';
+      ctx.fillRect(14, 12, 600, 62);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 600, 62);
+
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Signal Stack', 28, 39);
+
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Catch same-color packets in your lane. Swap decoder color before impact.', 28, 60);
+    }
+
+    function drawPauseShade() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.52);
+    }
+
+    function draw() {
+      drawField();
+      drawPackets();
+      drawPlayer();
+      drawParticles();
+      drawTopLabel();
+      drawPauseShade();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudLane.textContent = String(state.lane + 1);
+      hudColor.textContent = COLORS[state.decoder].name;
+      hudScore.textContent = String(state.score);
+      hudCombo.textContent = String(state.combo);
+      hudShield.textContent = String(Math.max(0, state.shield));
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudShield.parentElement.classList.toggle('good', state.shield >= 3);
+      hudShield.parentElement.classList.toggle('warn', state.shield === 2);
+      hudShield.parentElement.classList.toggle('bad', state.shield <= 1);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 30);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 30 && state.timeLeft >= 10);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 10);
+
+      hudCombo.parentElement.classList.toggle('good', state.combo >= 5);
+      hudCombo.parentElement.classList.toggle('warn', state.combo > 0 && state.combo < 5);
+      hudCombo.parentElement.classList.toggle('bad', state.combo === 0 && state.mode === 'playing');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function handleMoveLeft() {
+      moveLane(-1);
+      updateHud();
+    }
+
+    function handleMoveRight() {
+      moveLane(1);
+      updateHud();
+    }
+
+    function handleCycle() {
+      cycleDecoder();
+      updateHud();
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        handleMoveLeft();
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        handleMoveRight();
+      }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW' || event.code === 'Space') {
+        event.preventDefault();
+        handleCycle();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        togglePause();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+    document.getElementById('btnLeft').addEventListener('click', handleMoveLeft);
+    document.getElementById('btnRight').addEventListener('click', handleMoveRight);
+    document.getElementById('btnCycle').addEventListener('click', handleCycle);
+    document.getElementById('btnPause').addEventListener('click', togglePause);
+    document.getElementById('btnRestart').addEventListener('click', startRun);
+    document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'signalstack',
+        mode: state.mode,
+        coordinate_system: 'playfield origin at top-left of lane area; x right, y down; lanes are 0..4 left-to-right',
+        objective: {
+          survive_seconds: GAME_SECONDS,
+          catch_rule: 'packet lane must match player lane and packet color must match decoder color',
+        },
+        player: {
+          lane: state.lane,
+          decoder_color: COLORS[state.decoder].name,
+          shield: state.shield,
+        },
+        resources: {
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+          combo: state.combo,
+        },
+        packets: state.packets.slice(0, 12).map((packet) => ({
+          lane: packet.lane,
+          y: Number(packet.y.toFixed(1)),
+          color: COLORS[packet.colorId].name,
+          vy: Number(packet.vy.toFixed(1)),
+        })),
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'signalstack', gameName: 'Signal Stack' });
+  </script>
+</body>
+</html>
