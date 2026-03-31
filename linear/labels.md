@@ -61,5 +61,6 @@
 - game/cometcourier
 - game/riftdrifter
 - game/circuitpath
+- game/signalstack
 
 Generated from `src/meta/feedback.js`.

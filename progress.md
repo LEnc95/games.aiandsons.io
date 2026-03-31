@@ -1516,3 +1516,24 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
   - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/circuitpath`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright validation loop for `/circuitpath` in an environment that allows child-process + Chromium launch.
+
+## 2026-03-31 Signal Stack Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `signalstack/index.html` (Signal Stack).
+  - Gameplay: five-lane packet-routing challenge with color-matching catches, combo scoring, shield penalties for misses/mismatches, and a 75-second win/loss run loop.
+  - Controls: desktop keyboard (A/D or arrows + W/Up/Space + P/R/F) and mobile touch controls (Left/Right/Swap/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('signalstack')`, coin rewards via `addCoins`, progression payload via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'signalstack', gameName: 'Signal Stack' })`.
+- Integrated launcher/routing wiring:
+  - Added `signalstack` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/signalstack` rewrites and `/signalstack/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "signalstack" signalstack/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear:files`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed to execute in this sandbox (`spawn EPERM`).
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` on `/signalstack`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright validation loop for `/signalstack` in an environment that allows child-process + Chromium launch.

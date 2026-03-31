@@ -45,5 +45,6 @@ export const GAMES = [
   { slug:'cometcourier',   name:'Comet Courier',       emoji:'\u{1F6F8}', scoreHint:'cargo',      url:'/cometcourier',  desc:'Hop across comet lanes, collect cargo pods, and dash through meteor traffic to finish the delivery run.', earnsCoins:true },
   { slug:'riftdrifter',    name:'Rift Drifter',        emoji:'\u{1F30C}', scoreHint:'flux',       url:'/riftdrifter',   desc:'Surf unstable lanes, harvest flux cores, and dodge collapse nodes through a full 75-second drift.', earnsCoins:true },
   { slug:'circuitpath',    name:'Circuit Path',        emoji:'\u{1F5A7}', scoreHint:'nodes',      url:'/circuitpath',   desc:'Collect data nodes, dodge sentry sweeps, and route your bot to the uplink before time runs out.', earnsCoins:true },
+  { slug:'signalstack',    name:'Signal Stack',        emoji:'\u{1F4E1}', scoreHint:'combo',      url:'/signalstack',   desc:'Swap channels, match packet colors, and keep your uplink stable for a full decoding shift.', earnsCoins:true },
 ];
 
