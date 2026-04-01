@@ -250,29 +250,32 @@
                 const nx = (p.x - closestX) / dist;
                 const ny = (p.y - closestY) / dist;
 
-                // Push out along normal
-                p.x += nx * overlap;
-                p.y += ny * overlap;
+                // Incoming velocity (includes gravity from this frame)
+                const vx_in = p.x - p.oldX;
+                const vy_in = p.y - p.oldY;
 
-                // Current velocity
-                const vx = p.x - p.oldX;
-                const vy = p.y - p.oldY;
-
-                // Project velocity onto the line tangent to allow sliding
                 // Tangent vector is normalized direction of the line
                 const lineLen = Math.sqrt(lengthSq);
                 const tx = dx / lineLen;
                 const ty = dy / lineLen;
 
+                // Project velocity onto the line tangent to allow sliding
                 // Dot product of velocity and tangent
-                const dot = vx * tx + vy * ty;
+                let dot = vx_in * tx + vy_in * ty;
+
+                // If velocity opposes the line direction, reverse the tangent we project onto
+                // This handles lines drawn right-to-left vs left-to-right correctly
 
                 // New velocity along the tangent (with slight friction)
                 const friction = 0.998;
                 const newVx = tx * dot * friction;
                 const newVy = ty * dot * friction;
 
-                // Update old position to match the new velocity
+                // Push out along normal to stay on top of the line
+                p.x += nx * overlap;
+                p.y += ny * overlap;
+
+                // Update old position to match the new velocity, maintaining the slope angle
                 p.oldX = p.x - newVx;
                 p.oldY = p.y - newVy;
               }
