@@ -4,3 +4,4 @@
 **Prevention:** Use `document.createElement` and set `.textContent` to safely render user-controlled strings in the DOM, avoiding `innerHTML`.
 - Learned to explicitly write a simple `escapeHtml` utility function `str.replace(/[&<>"']/g, ...)` for interpolating Javascript object properties securely into DOM innerHTML to prevent XSS.
 - Safely applied `escapeHtml` without breaking pre-existing structural elements like `&rarr;` which must be kept separate from the escaped content.
+- Ensure user-facing strings are escaped before being injected via \`innerHTML\`.
