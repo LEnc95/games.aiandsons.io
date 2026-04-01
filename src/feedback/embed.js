@@ -399,13 +399,20 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   function renderSelectedFiles() {
     const files = Array.from(attachmentInput?.files || []);
     if (!fileList) return;
+
+    // Clear the list before appending
+    fileList.innerHTML = "";
     if (!files.length) {
-      fileList.innerHTML = "";
       return;
     }
-    fileList.innerHTML = files.map((file) => `
-      <li>${file.name} (${formatAttachmentSize(file.size)})</li>
-    `).join("");
+
+    // Security enhancement: Use textContent instead of innerHTML to prevent XSS
+    // from malicious file names containing HTML/JS tags
+    for (const file of files) {
+      const li = document.createElement("li");
+      li.textContent = `${file.name} (${formatAttachmentSize(file.size)})`;
+      fileList.appendChild(li);
+    }
   }
 
   openBtn.addEventListener("click", openModal);
