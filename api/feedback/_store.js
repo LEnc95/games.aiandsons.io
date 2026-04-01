@@ -518,11 +518,10 @@ async function enforceFeedbackRateLimit({
   }
 
   if (isFirestoreStoreEnabled()) {
-    let highestCount = 0;
-    for (const bucket of buckets) {
-      const currentCount = await incrementFirestoreRateLimit(bucket, windowMs);
-      highestCount = Math.max(highestCount, currentCount);
-    }
+    const counts = await Promise.all(
+      buckets.map((bucket) => incrementFirestoreRateLimit(bucket, windowMs))
+    );
+    const highestCount = Math.max(0, ...counts);
     return {
       blocked: highestCount > maxRequests,
       retryAfterSeconds: Math.ceil(windowMs / 1000),
@@ -530,13 +529,15 @@ async function enforceFeedbackRateLimit({
     };
   }
 
-  let highestCount = 0;
-  for (const bucket of buckets) {
-    const key = getRateLimitKey(bucket);
-    const currentCount = Number(await getStoredValue(key) || 0) + 1;
-    highestCount = Math.max(highestCount, currentCount);
-    await setStoredValueWithExpiry(key, String(currentCount), Math.ceil(windowMs / 1000));
-  }
+  const counts = await Promise.all(
+    buckets.map(async (bucket) => {
+      const key = getRateLimitKey(bucket);
+      const currentCount = Number((await getStoredValue(key)) || 0) + 1;
+      await setStoredValueWithExpiry(key, String(currentCount), Math.ceil(windowMs / 1000));
+      return currentCount;
+    })
+  );
+  const highestCount = Math.max(0, ...counts);
 
   return {
     blocked: highestCount > maxRequests,
