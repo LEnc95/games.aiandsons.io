@@ -46,5 +46,6 @@ export const GAMES = [
   { slug:'riftdrifter',    name:'Rift Drifter',        emoji:'\u{1F30C}', scoreHint:'flux',       url:'/riftdrifter',   desc:'Surf unstable lanes, harvest flux cores, and dodge collapse nodes through a full 75-second drift.', earnsCoins:true },
   { slug:'circuitpath',    name:'Circuit Path',        emoji:'\u{1F5A7}', scoreHint:'nodes',      url:'/circuitpath',   desc:'Collect data nodes, dodge sentry sweeps, and route your bot to the uplink before time runs out.', earnsCoins:true },
   { slug:'signalstack',    name:'Signal Stack',        emoji:'\u{1F4E1}', scoreHint:'combo',      url:'/signalstack',   desc:'Swap channels, match packet colors, and keep your uplink stable for a full decoding shift.', earnsCoins:true },
+  { slug:'linerider',      name:'Line Rider',          emoji:'\u270F\uFE0F', scoreHint:'distance', url:'/linerider',   desc:'Draw lines to create a track for the sled to ride on.', earnsCoins:true },
 ];
 
