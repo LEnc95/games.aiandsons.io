@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Line Rider - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    * { box-sizing: border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
+
+    #canvas-container { position:relative; width:100%; max-width:min(95vw, 900px); max-height:min(80vh, 700px); aspect-ratio:3/2; }
+    canvas { width:100%; height:100%; display:block; background:#e7f0ff; border:2px solid #192544; border-radius:12px; cursor:crosshair; }
+
+    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 900px); }
+    .score-display { display:flex; justify-content:space-around; margin-bottom:clamp(8px, 1.5vh, 12px); font-size:clamp(14px, 2.5vw, 20px); }
+    .score-item { color:var(--fg); }
+    .score-label { color:var(--muted); font-size:0.7em; margin-right:8px; }
+    .hint { color:#b6c7e6; font-size:clamp(14px, 2.5vw, 18px); margin-top:clamp(4px, 1vh, 8px); min-height:1.5em; }
+
+    .buttons { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; margin-top:clamp(8px, 1.5vh, 12px); }
+    .btn { padding:clamp(8px, 1.5vw, 12px) clamp(16px, 3vw, 24px); background:#2a3a5f; border:2px solid #3a4a6f; border-radius:12px; color:var(--fg); font-size:clamp(12px, 2vw, 16px); font-weight:600; cursor:pointer; touch-action:manipulation; user-select:none; min-width:clamp(80px, 10vw, 100px); min-height:40px; transition:all 0.2s; }
+    .btn:active { background:#3a4a7f; transform:scale(0.95); }
+    .btn.primary { background:#5ad; border-color:#6be; color:#041e2e; }
+    .btn.primary:active { background:#4bc; }
+    .btn.active-tool { background:#5ad; border-color:#6be; color:#041e2e; }
+
+    @media (max-width: 768px) { .hud { font-size:clamp(10px, 3vw, 14px); } .hint { font-size:clamp(12px, 3.5vw, 16px); } }
+  </style>
+
+  <meta name="description" content="Draw lines to create a track for the sled to ride on.">
+  <meta property="og:title" content="Line Rider - Play on Cade's Games">
+  <meta property="og:description" content="Draw lines to create a track for the sled to ride on.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/linerider">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Line Rider - Play on Cade's Games">
+  <meta name="twitter:description" content="Draw lines to create a track for the sled to ride on.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/linerider">
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">← Back</a>
+  <style>
+    .back-home { position: fixed; top: calc(env(safe-area-inset-top, 12px)); left: calc(env(safe-area-inset-left, 12px)); z-index: 9999; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.6); color: #fff; text-decoration: none; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; line-height: 1; font-weight: 600; backdrop-filter: saturate(150%) blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .back-home:hover { background: rgba(0,0,0,0.75); }
+    .back-home:focus { outline: 2px solid #fff; outline-offset: 2px; }
+  </style>
+  <div class="wrap">
+    <div id="canvas-container"><canvas id="game" width="900" height="600"></canvas></div>
+    <div class="hud">
+      <div class="score-display">
+        <div class="score-item"><span class="score-label">Distance:</span><span id="score">0</span></div>
+        <div class="score-item"><span class="score-label">High:</span><span id="high">0</span></div>
+      </div>
+      <div class="hint" id="hint">Draw lines to make a track, then press PLAY.</div>
+      <div class="buttons">
+        <button class="btn active-tool" id="tool-draw">DRAW</button>
+        <button class="btn" id="tool-erase">ERASE</button>
+        <button class="btn" id="tool-pan">PAN</button>
+        <button class="btn primary" id="play-btn">PLAY</button>
+        <button class="btn" id="reset-btn">RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+    rememberRecent('linerider');
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    let scale = 1;
+    function resize(){
+      const r = container.getBoundingClientRect();
+      const aspect = canvas.width / canvas.height;
+      if (r.width / r.height > aspect) { canvas.style.height='100%'; canvas.style.width='auto'; }
+      else { canvas.style.width='100%'; canvas.style.height='auto'; }
+      const rect = canvas.getBoundingClientRect();
+      scale = canvas.width / rect.width;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 100));
+
+    // Game State
+    let lines = [];
+    let isDrawing = false;
+    let lastPoint = null;
+    let tool = 'draw'; // 'draw', 'erase', or 'pan'
+    let state = 'edit'; // 'edit' or 'play'
+
+    let camera = { x: 0, y: 0, zoom: 1 };
+
+    // Physics constants
+    const GRAVITY = 800;
+    const FRICTION = 1.0;
+    const ITERATIONS = 10;
+    const SLED_START_X = 100;
+    const SLED_START_Y = 100;
+
+    // Sled data structure
+    let sled = { points: [], sticks: [] };
+
+    function initSled() {
+      // Create a triangle sled: Nose, Tail, Rider Head
+      const nose = { x: SLED_START_X + 20, y: SLED_START_Y, oldX: SLED_START_X + 20, oldY: SLED_START_Y, mass: 1 };
+      const tail = { x: SLED_START_X - 15, y: SLED_START_Y - 5, oldX: SLED_START_X - 15, oldY: SLED_START_Y - 5, mass: 1 };
+      const head = { x: SLED_START_X - 5, y: SLED_START_Y - 25, oldX: SLED_START_X - 5, oldY: SLED_START_Y - 25, mass: 0.5 };
+
+      sled.points = [nose, tail, head];
+
+      const distance = (p1, p2) => Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+      sled.sticks = [
+        { p1: nose, p2: tail, length: distance(nose, tail) },
+        { p1: tail, p2: head, length: distance(tail, head) },
+        { p1: head, p2: nose, length: distance(head, nose) }
+      ];
+    }
+
+    initSled();
+
+    const scoreEl = document.getElementById('score');
+    const highEl = document.getElementById('high');
+    const hintEl = document.getElementById('hint');
+
+    function getHigh() { const s = localStorage.getItem('linerider-high'); return s ? +s : 0; }
+    function setHigh(v) { const h = getHigh(); if (v > h) { localStorage.setItem('linerider-high', String(v)); return true; } return false; }
+    highEl.textContent = getHigh();
+
+    const btnDraw = document.getElementById('tool-draw');
+    const btnErase = document.getElementById('tool-erase');
+    const btnPan = document.getElementById('tool-pan');
+    const btnPlay = document.getElementById('play-btn');
+    const btnReset = document.getElementById('reset-btn');
+
+    function setTool(newTool) {
+      if (state === 'play') return;
+      tool = newTool;
+      btnDraw.classList.toggle('active-tool', tool === 'draw');
+      btnErase.classList.toggle('active-tool', tool === 'erase');
+      btnPan.classList.toggle('active-tool', tool === 'pan');
+
+      if (tool === 'draw') canvas.style.cursor = 'crosshair';
+      else if (tool === 'erase') canvas.style.cursor = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\' stroke=\'red\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'m4.9 4.9 14.2 14.2\'/></svg>") 12 12, auto';
+      else if (tool === 'pan') canvas.style.cursor = 'grab';
+    }
+
+    btnDraw.addEventListener('click', () => setTool('draw'));
+    btnErase.addEventListener('click', () => setTool('erase'));
+    btnPan.addEventListener('click', () => setTool('pan'));
+
+    function getScreenPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * scale,
+        y: (clientY - rect.top) * scale
+      };
+    }
+
+    function getMousePos(e) {
+      const screenPos = getScreenPos(e);
+      return {
+        x: (screenPos.x + camera.x) / camera.zoom,
+        y: (screenPos.y + camera.y) / camera.zoom
+      };
+    }
+
+    // Zoom handling
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+
+      const mousePosBeforeZoom = getMousePos(e);
+
+      const zoomFactor = 1.1;
+      if (e.deltaY < 0) {
+        camera.zoom *= zoomFactor;
+      } else {
+        camera.zoom /= zoomFactor;
+      }
+
+      // Clamp zoom
+      camera.zoom = Math.max(0.2, Math.min(5.0, camera.zoom));
+
+      const mousePosAfterZoom = getMousePos(e);
+
+      camera.x += (mousePosBeforeZoom.x - mousePosAfterZoom.x) * camera.zoom;
+      camera.y += (mousePosBeforeZoom.y - mousePosAfterZoom.y) * camera.zoom;
+    }, { passive: false });
+
+    function addLineSegment(p1, p2) {
+      // Don't add tiny segments
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      if (dx * dx + dy * dy < 16) return false;
+      lines.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+      return true;
+    }
+
+    function updatePhysics(dt) {
+      if (state !== 'play') return;
+
+      // Verlet Integration
+      for (const p of sled.points) {
+        const vx = (p.x - p.oldX) * FRICTION;
+        const vy = (p.y - p.oldY) * FRICTION;
+
+        p.oldX = p.x;
+        p.oldY = p.y;
+
+        p.x += vx;
+        p.y += vy + GRAVITY * dt * dt;
+      }
+
+      // Constrain Sticks and Collide Lines
+      for (let i = 0; i < ITERATIONS; i++) {
+        for (const p of sled.points) {
+          for (const line of lines) {
+            const dx = line.x2 - line.x1;
+            const dy = line.y2 - line.y1;
+            const lengthSq = dx * dx + dy * dy;
+            if (lengthSq === 0) continue;
+
+            let t = ((p.x - line.x1) * dx + (p.y - line.y1) * dy) / lengthSq;
+            t = Math.max(0, Math.min(1, t));
+
+            const closestX = line.x1 + t * dx;
+            const closestY = line.y1 + t * dy;
+
+            const distSq = (p.x - closestX) * (p.x - closestX) + (p.y - closestY) * (p.y - closestY);
+            const radius = 5;
+
+            if (distSq < radius * radius) {
+              const dist = Math.sqrt(distSq);
+              const overlap = radius - dist;
+              if (dist > 0) {
+                const nx = (p.x - closestX) / dist;
+                const ny = (p.y - closestY) / dist;
+
+                // Incoming velocity (includes gravity from this frame)
+                const vx_in = p.x - p.oldX;
+                const vy_in = p.y - p.oldY;
+
+                // Tangent vector is normalized direction of the line
+                const lineLen = Math.sqrt(lengthSq);
+                const tx = dx / lineLen;
+                const ty = dy / lineLen;
+
+                // Project velocity onto the line tangent to allow sliding
+                // Dot product of velocity and tangent
+                let dot = vx_in * tx + vy_in * ty;
+
+                // If velocity opposes the line direction, reverse the tangent we project onto
+                // This handles lines drawn right-to-left vs left-to-right correctly
+
+                // New velocity along the tangent (with slight friction)
+                const friction = 1.0;
+                const newVx = tx * dot * friction;
+                const newVy = ty * dot * friction;
+
+                // Push out along normal to stay on top of the line
+                p.x += nx * overlap;
+                p.y += ny * overlap;
+
+                // Update old position to match the new velocity, maintaining the slope angle
+                p.oldX = p.x - newVx;
+                p.oldY = p.y - newVy;
+              }
+            }
+          }
+        }
+
+        for (const s of sled.sticks) {
+          const dx = s.p2.x - s.p1.x;
+          const dy = s.p2.y - s.p1.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance === 0) continue;
+
+          const difference = s.length - distance;
+          const percent = difference / distance / 2;
+
+          const offsetX = dx * percent;
+          const offsetY = dy * percent;
+
+          s.p1.x -= offsetX;
+          s.p1.y -= offsetY;
+          s.p2.x += offsetX;
+          s.p2.y += offsetY;
+        }
+      }
+    }
+
+    function eraseLinesNear(p) {
+      const radiusSq = 400; // 20px radius
+      lines = lines.filter(line => {
+        // Distance from point p to line segment (x1,y1)-(x2,y2)
+        const l2 = (line.x2 - line.x1) ** 2 + (line.y2 - line.y1) ** 2;
+        if (l2 === 0) {
+          const dx = p.x - line.x1;
+          const dy = p.y - line.y1;
+          return (dx * dx + dy * dy) > radiusSq;
+        }
+        let t = ((p.x - line.x1) * (line.x2 - line.x1) + (p.y - line.y1) * (line.y2 - line.y1)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        const projX = line.x1 + t * (line.x2 - line.x1);
+        const projY = line.y1 + t * (line.y2 - line.y1);
+        const distSq = (p.x - projX) ** 2 + (p.y - projY) ** 2;
+        return distSq > radiusSq;
+      });
+    }
+
+    function onPointerDown(e) {
+      if (state === 'play') return;
+      isDrawing = true;
+      if (tool === 'pan') {
+        lastPoint = getScreenPos(e);
+        canvas.style.cursor = 'grabbing';
+      } else {
+        lastPoint = getMousePos(e);
+        if (tool === 'erase') eraseLinesNear(lastPoint);
+      }
+    }
+
+    function onPointerMove(e) {
+      if (!isDrawing || state === 'play') return;
+
+      if (tool === 'pan') {
+        const currentScreenPoint = getScreenPos(e);
+        camera.x -= (currentScreenPoint.x - lastPoint.x);
+        camera.y -= (currentScreenPoint.y - lastPoint.y);
+        lastPoint = currentScreenPoint;
+        return;
+      }
+
+      const currentPoint = getMousePos(e);
+
+      if (tool === 'draw') {
+        if (addLineSegment(lastPoint, currentPoint)) {
+          lastPoint = currentPoint;
+        }
+      } else if (tool === 'erase') {
+        eraseLinesNear(currentPoint);
+        lastPoint = currentPoint;
+      }
+    }
+
+    function onPointerUp() {
+      isDrawing = false;
+      lastPoint = null;
+      if (tool === 'pan') {
+        canvas.style.cursor = 'grab';
+      }
+    }
+
+    canvas.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onPointerDown(e); }, { passive: false });
+    window.addEventListener('touchmove', (e) => { if (isDrawing) e.preventDefault(); onPointerMove(e); }, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+
+    let maxDistance = 0;
+    let earnedCoinsDistance = 0;
+
+    function drawScene() {
+      // Update camera to follow sled if in play state
+      if (state === 'play') {
+        const avgX = (sled.points[0].x + sled.points[1].x + sled.points[2].x) / 3;
+        const avgY = (sled.points[0].y + sled.points[1].y + sled.points[2].y) / 3;
+
+        // Target camera position (centered on sled considering zoom)
+        const targetX = avgX * camera.zoom - canvas.width / 2;
+        const targetY = avgY * camera.zoom - canvas.height / 2;
+
+        // Smooth camera follow
+        camera.x += (targetX - camera.x) * 0.1;
+        camera.y += (targetY - camera.y) * 0.1;
+
+        // Update score based on distance traveled right
+        if (avgX - SLED_START_X > maxDistance) {
+          maxDistance = avgX - SLED_START_X;
+          const score = Math.floor(maxDistance / 10);
+          scoreEl.textContent = score;
+
+          if (setHigh(score)) {
+            highEl.textContent = score;
+          }
+
+          // Earn 1 coin per 100 distance
+          if (maxDistance - earnedCoinsDistance > 1000) {
+             addCoinsFn(1);
+             earnedCoinsDistance += 1000;
+             maybeUnlock({ anyPlay: true });
+          }
+        }
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(-camera.x, -camera.y);
+      ctx.scale(camera.zoom, camera.zoom);
+
+      // Draw grid
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.lineWidth = 1;
+      const gridSize = 50;
+
+      // Calculate visible bounds in world coordinates
+      const worldLeft = camera.x / camera.zoom;
+      const worldTop = camera.y / camera.zoom;
+      const worldWidth = canvas.width / camera.zoom;
+      const worldHeight = canvas.height / camera.zoom;
+
+      const startX = Math.floor(worldLeft / gridSize) * gridSize;
+      const startY = Math.floor(worldTop / gridSize) * gridSize;
+
+      ctx.beginPath();
+      for (let x = startX; x < startX + worldWidth + gridSize; x += gridSize) {
+        ctx.moveTo(x, worldTop);
+        ctx.lineTo(x, worldTop + worldHeight);
+      }
+      for (let y = startY; y < startY + worldHeight + gridSize; y += gridSize) {
+        ctx.moveTo(worldLeft, y);
+        ctx.lineTo(worldLeft + worldWidth, y);
+      }
+      ctx.stroke();
+
+      // Draw start point
+      ctx.fillStyle = '#5ad';
+      ctx.beginPath();
+      ctx.arc(SLED_START_X, SLED_START_Y, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw Sled
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (const s of sled.sticks) {
+        ctx.moveTo(s.p1.x, s.p1.y);
+        ctx.lineTo(s.p2.x, s.p2.y);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      for (const p of sled.points) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw lines
+      ctx.strokeStyle = '#0b1020';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.beginPath();
+      for (const line of lines) {
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+      }
+      ctx.stroke();
+
+      // Draw current drawing line
+      if (isDrawing && tool === 'draw' && lastPoint) {
+        // Handled by adding segments directly, but could draw preview here
+      }
+
+      ctx.restore();
+    }
+
+    let lastTime = performance.now();
+    function loop(time) {
+      const dt = Math.min((time - lastTime) / 1000, 0.05); // Cap dt
+      lastTime = time;
+
+      updatePhysics(dt);
+      drawScene();
+
+      requestAnimationFrame(loop);
+    }
+
+    function setState(newState) {
+      state = newState;
+      if (state === 'play') {
+        initSled();
+        camera.x = SLED_START_X - canvas.width / 2;
+        camera.y = SLED_START_Y - canvas.height / 2;
+        btnPlay.textContent = 'PAUSE';
+        btnDraw.classList.remove('active-tool');
+        btnErase.classList.remove('active-tool');
+        btnPan.classList.remove('active-tool');
+        canvas.style.cursor = 'default';
+        maxDistance = 0;
+        earnedCoinsDistance = 0;
+        scoreEl.textContent = '0';
+      } else {
+        btnPlay.textContent = 'PLAY';
+        setTool(tool); // restore tool styling
+      }
+    }
+
+    // Set initial camera position
+    camera.x = SLED_START_X - 900 / 2;
+    camera.y = SLED_START_Y - 600 / 2;
+
+    btnPlay.addEventListener('click', () => {
+      setState(state === 'play' ? 'edit' : 'play');
+    });
+
+    btnReset.addEventListener('click', () => {
+      lines = [];
+      initSled();
+      setState('edit');
+      camera = { x: 0, y: 0, zoom: 1 };
+    });
+
+    // Set initial lines
+    lines.push({ x1: SLED_START_X - 50, y1: SLED_START_Y + 50, x2: SLED_START_X + 200, y2: SLED_START_Y + 100 });
+
+    requestAnimationFrame(loop);
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: "linerider", gameName: "Line Rider" });
+  </script>
+</body>
+</html>

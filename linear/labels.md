@@ -62,5 +62,6 @@
 - game/riftdrifter
 - game/circuitpath
 - game/signalstack
+- game/linerider
 
 Generated from `src/meta/feedback.js`.
