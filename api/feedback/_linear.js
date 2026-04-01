@@ -505,30 +505,34 @@ async function provisionFeedbackLinearResources({
   const baselineResults = [];
 
   if (normalizedProjectId) {
-    for (const game of normalizedGames) {
+    // ⚡ Bolt: Implemented Promise.all concurrency to eliminate N+1 latency
+    // when provisioning baseline issues for multiple games.
+    const gamePromises = normalizedGames.map(async (game) => {
       try {
         const result = await ensureBaselineIssueForGame(game, {
           projectId: normalizedProjectId,
           teamId: normalizedTeamId,
           labels,
         });
-        baselineResults.push({
+        return {
           gameSlug: game.slug,
           gameName: game.name,
           created: result.created,
           issue: result.issue,
           error: "",
-        });
+        };
       } catch (error) {
-        baselineResults.push({
+        return {
           gameSlug: game.slug,
           gameName: game.name,
           created: false,
           issue: null,
           error: String(error?.message || error),
-        });
+        };
       }
-    }
+    });
+    const results = await Promise.all(gamePromises);
+    baselineResults.push(...results);
   }
 
   return {

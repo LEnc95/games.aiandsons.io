@@ -1,3 +1,1 @@
-## 2024-04-01 - Identifying debounce opportunity for game search
-**Learning:** `index.html` has a search input `gameSearchInput` without debouncing. It updates the entire UI (`updateUI()`) on every keystroke, which re-renders the game list, missions, and assignments sections, including KPI events.
-**Action:** Wrap the `gameSearchInputEl.addEventListener('input', ...)` with a debounce to prevent unnecessary re-renders on fast typing. This fits perfectly with "Debounce search input to reduce API calls" (though it's reducing DOM manipulations/re-renders here, not API calls, but it's the exact same performance concept).
+- N+1 API fetching patterns can be effectively resolved using `Promise.all` with `.map` if array `.push()` calls are gathered and pushed at the end. Make sure to keep `try/catch` inside the map to gracefully handle individual promise failures in the batch.
