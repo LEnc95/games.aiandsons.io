@@ -746,17 +746,8 @@
 
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
-    const escapeHtml = (unsafe) => {
-      if (typeof unsafe !== 'string') return unsafe;
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
-
     const normalizeText = (value) => String(value || '').toLowerCase();
+    const escapeHtml = (str) => String(str || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     const economyLabel = (game) => game.earnsCoins === false ? 'No coin rewards' : 'Earns coins';
     const formatWeekLabel = (weekKey) => {
       if (typeof weekKey !== 'string' || !weekKey) return '';
@@ -978,9 +969,9 @@
           : `${challenge.progress}/${challenge.target} - ${challenge.rewardLabel}`;
 
         card.innerHTML = `
-          <h3 class="mission-name">${escapeHtml(challenge.name)}</h3>
-          <p class="mission-desc">${escapeHtml(challenge.desc)}</p>
-          <p class="mission-progress">${escapeHtml(statusText)}</p>
+          <h3 class="mission-name">${challenge.name}</h3>
+          <p class="mission-desc">${challenge.desc}</p>
+          <p class="mission-progress">${statusText}</p>
         `;
         premiumTrackListEl.appendChild(card);
       }
@@ -1128,18 +1119,18 @@
           card.tabIndex = -1;
         }
 
-        const actionLabel = locked ? 'Locked For Class' : `Play ${game.name} &rarr;`;
+        const actionLabel = locked ? 'Locked For Class' : `Play ${escapeHtml(game.name)} &rarr;`;
         const earnsCoins = game.earnsCoins !== false;
         const coinTagClass = earnsCoins ? 'coin' : 'no-coin';
         const coinTagLabel = earnsCoins ? 'Earns coins' : 'No coin rewards';
         const desc = locked
-          ? `${game.desc || `Play ${game.name}!`} Classroom session currently blocks this game.`
-          : (game.desc || `Play ${game.name}!`);
+          ? escapeHtml(`${game.desc || `Play ${game.name}!`} Classroom session currently blocks this game.`)
+          : escapeHtml(game.desc || `Play ${game.name}!`);
 
         card.innerHTML = `
-          <div class="game-icon">${game.emoji}</div>
+          <div class="game-icon">${escapeHtml(game.emoji)}</div>
           <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span></div>
-          <h2 class="game-title">${game.name}</h2>
+          <h2 class="game-title">${escapeHtml(game.name)}</h2>
           <p class="game-desc">${desc}</p>
           <div class="game-link">${actionLabel}</div>
         `;
