@@ -1,3 +1,4 @@
+- N+1 API fetching patterns can be effectively resolved using `Promise.all` with `.map` if array `.push()` calls are gathered and pushed at the end. Make sure to keep `try/catch` inside the map to gracefully handle individual promise failures in the batch.
 # ⚡ Bolt Learnings
 
 * When optimizing independent network operations like database transactions, use `Promise.all` to execute them concurrently instead of sequentially using a `for` loop.
