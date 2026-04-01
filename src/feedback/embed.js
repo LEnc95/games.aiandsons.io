@@ -245,13 +245,14 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
 
   const root = document.createElement("div");
   root.id = ROOT_ID;
-  root.innerHTML = `
+
+  const htmlTemplate = `
     <button type="button" class="cade-feedback-launcher" id="cadeFeedbackOpenBtn" aria-haspopup="dialog">
       Report Feedback
     </button>
     <div class="cade-feedback-backdrop" id="cadeFeedbackBackdrop" aria-hidden="true">
       <div class="cade-feedback-modal" role="dialog" aria-modal="true" aria-labelledby="cadeFeedbackTitle">
-        <h2 id="cadeFeedbackTitle">Share feedback for ${gameName}</h2>
+        <h2 id="cadeFeedbackTitle"></h2>
         <p>Tell us about bugs, rough spots, or ideas while the details are still fresh.</p>
         <form class="cade-feedback-form" id="cadeFeedbackForm">
           <div class="cade-feedback-account" id="cadeFeedbackAccount">
@@ -309,7 +310,14 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
       </div>
     </div>
   `;
+
+  root.insertAdjacentHTML("beforeend", htmlTemplate);
   document.body.appendChild(root);
+
+  const titleEl = document.getElementById("cadeFeedbackTitle");
+  if (titleEl) {
+    titleEl.textContent = `Share feedback for ${gameName}`;
+  }
 
   const openBtn = document.getElementById("cadeFeedbackOpenBtn");
   const backdrop = document.getElementById("cadeFeedbackBackdrop");
