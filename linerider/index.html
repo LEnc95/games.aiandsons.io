@@ -64,6 +64,7 @@
       <div class="buttons">
         <button class="btn active-tool" id="tool-draw">DRAW</button>
         <button class="btn" id="tool-erase">ERASE</button>
+        <button class="btn" id="tool-pan">PAN</button>
         <button class="btn primary" id="play-btn">PLAY</button>
         <button class="btn" id="reset-btn">RESET</button>
       </div>
@@ -96,10 +97,10 @@
     let lines = [];
     let isDrawing = false;
     let lastPoint = null;
-    let tool = 'draw'; // 'draw' or 'erase'
+    let tool = 'draw'; // 'draw', 'erase', or 'pan'
     let state = 'edit'; // 'edit' or 'play'
 
-    let camera = { x: 0, y: 0 };
+    let camera = { x: 0, y: 0, zoom: 1 };
 
     // Physics constants
     const GRAVITY = 800;
@@ -140,6 +141,7 @@
 
     const btnDraw = document.getElementById('tool-draw');
     const btnErase = document.getElementById('tool-erase');
+    const btnPan = document.getElementById('tool-pan');
     const btnPlay = document.getElementById('play-btn');
     const btnReset = document.getElementById('reset-btn');
 
@@ -148,21 +150,56 @@
       tool = newTool;
       btnDraw.classList.toggle('active-tool', tool === 'draw');
       btnErase.classList.toggle('active-tool', tool === 'erase');
-      canvas.style.cursor = tool === 'draw' ? 'crosshair' : 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\' stroke=\'red\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'m4.9 4.9 14.2 14.2\'/></svg>") 12 12, auto';
+      btnPan.classList.toggle('active-tool', tool === 'pan');
+
+      if (tool === 'draw') canvas.style.cursor = 'crosshair';
+      else if (tool === 'erase') canvas.style.cursor = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\' stroke=\'red\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'m4.9 4.9 14.2 14.2\'/></svg>") 12 12, auto';
+      else if (tool === 'pan') canvas.style.cursor = 'grab';
     }
 
     btnDraw.addEventListener('click', () => setTool('draw'));
     btnErase.addEventListener('click', () => setTool('erase'));
+    btnPan.addEventListener('click', () => setTool('pan'));
 
-    function getMousePos(e) {
+    function getScreenPos(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return {
-        x: (clientX - rect.left) * scale + camera.x,
-        y: (clientY - rect.top) * scale + camera.y
+        x: (clientX - rect.left) * scale,
+        y: (clientY - rect.top) * scale
       };
     }
+
+    function getMousePos(e) {
+      const screenPos = getScreenPos(e);
+      return {
+        x: (screenPos.x + camera.x) / camera.zoom,
+        y: (screenPos.y + camera.y) / camera.zoom
+      };
+    }
+
+    // Zoom handling
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+
+      const mousePosBeforeZoom = getMousePos(e);
+
+      const zoomFactor = 1.1;
+      if (e.deltaY < 0) {
+        camera.zoom *= zoomFactor;
+      } else {
+        camera.zoom /= zoomFactor;
+      }
+
+      // Clamp zoom
+      camera.zoom = Math.max(0.2, Math.min(5.0, camera.zoom));
+
+      const mousePosAfterZoom = getMousePos(e);
+
+      camera.x += (mousePosBeforeZoom.x - mousePosAfterZoom.x) * camera.zoom;
+      camera.y += (mousePosBeforeZoom.y - mousePosAfterZoom.y) * camera.zoom;
+    }, { passive: false });
 
     function addLineSegment(p1, p2) {
       // Don't add tiny segments
@@ -213,16 +250,31 @@
                 const nx = (p.x - closestX) / dist;
                 const ny = (p.y - closestY) / dist;
 
-                // One sided collision: only push out if moving down relative to the line
-                // To do this simply, we just push out along the normal.
+                // Push out along normal
                 p.x += nx * overlap;
                 p.y += ny * overlap;
 
-                // Add some friction
+                // Current velocity
                 const vx = p.x - p.oldX;
                 const vy = p.y - p.oldY;
-                p.oldX = p.x - vx * 0.8; // line friction
-                p.oldY = p.y - vy * 0.8;
+
+                // Project velocity onto the line tangent to allow sliding
+                // Tangent vector is normalized direction of the line
+                const lineLen = Math.sqrt(lengthSq);
+                const tx = dx / lineLen;
+                const ty = dy / lineLen;
+
+                // Dot product of velocity and tangent
+                const dot = vx * tx + vy * ty;
+
+                // New velocity along the tangent (with slight friction)
+                const friction = 0.98;
+                const newVx = tx * dot * friction;
+                const newVy = ty * dot * friction;
+
+                // Update old position to match the new velocity
+                p.oldX = p.x - newVx;
+                p.oldY = p.y - newVy;
               }
             }
           }
@@ -270,12 +322,26 @@
     function onPointerDown(e) {
       if (state === 'play') return;
       isDrawing = true;
-      lastPoint = getMousePos(e);
-      if (tool === 'erase') eraseLinesNear(lastPoint);
+      if (tool === 'pan') {
+        lastPoint = getScreenPos(e);
+        canvas.style.cursor = 'grabbing';
+      } else {
+        lastPoint = getMousePos(e);
+        if (tool === 'erase') eraseLinesNear(lastPoint);
+      }
     }
 
     function onPointerMove(e) {
       if (!isDrawing || state === 'play') return;
+
+      if (tool === 'pan') {
+        const currentScreenPoint = getScreenPos(e);
+        camera.x -= (currentScreenPoint.x - lastPoint.x);
+        camera.y -= (currentScreenPoint.y - lastPoint.y);
+        lastPoint = currentScreenPoint;
+        return;
+      }
+
       const currentPoint = getMousePos(e);
 
       if (tool === 'draw') {
@@ -291,6 +357,9 @@
     function onPointerUp() {
       isDrawing = false;
       lastPoint = null;
+      if (tool === 'pan') {
+        canvas.style.cursor = 'grab';
+      }
     }
 
     canvas.addEventListener('mousedown', onPointerDown);
@@ -309,9 +378,13 @@
         const avgX = (sled.points[0].x + sled.points[1].x + sled.points[2].x) / 3;
         const avgY = (sled.points[0].y + sled.points[1].y + sled.points[2].y) / 3;
 
+        // Target camera position (centered on sled considering zoom)
+        const targetX = avgX * camera.zoom - canvas.width / 2;
+        const targetY = avgY * camera.zoom - canvas.height / 2;
+
         // Smooth camera follow
-        camera.x += (avgX - canvas.width / 2 - camera.x) * 0.1;
-        camera.y += (avgY - canvas.height / 2 - camera.y) * 0.1;
+        camera.x += (targetX - camera.x) * 0.1;
+        camera.y += (targetY - camera.y) * 0.1;
 
         // Update score based on distance traveled right
         if (avgX - SLED_START_X > maxDistance) {
@@ -336,22 +409,30 @@
 
       ctx.save();
       ctx.translate(-camera.x, -camera.y);
+      ctx.scale(camera.zoom, camera.zoom);
 
       // Draw grid
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.lineWidth = 1;
       const gridSize = 50;
-      const startX = Math.floor(camera.x / gridSize) * gridSize;
-      const startY = Math.floor(camera.y / gridSize) * gridSize;
+
+      // Calculate visible bounds in world coordinates
+      const worldLeft = camera.x / camera.zoom;
+      const worldTop = camera.y / camera.zoom;
+      const worldWidth = canvas.width / camera.zoom;
+      const worldHeight = canvas.height / camera.zoom;
+
+      const startX = Math.floor(worldLeft / gridSize) * gridSize;
+      const startY = Math.floor(worldTop / gridSize) * gridSize;
 
       ctx.beginPath();
-      for (let x = startX; x < startX + canvas.width + gridSize; x += gridSize) {
-        ctx.moveTo(x, camera.y);
-        ctx.lineTo(x, camera.y + canvas.height);
+      for (let x = startX; x < startX + worldWidth + gridSize; x += gridSize) {
+        ctx.moveTo(x, worldTop);
+        ctx.lineTo(x, worldTop + worldHeight);
       }
-      for (let y = startY; y < startY + canvas.height + gridSize; y += gridSize) {
-        ctx.moveTo(camera.x, y);
-        ctx.lineTo(camera.x + canvas.width, y);
+      for (let y = startY; y < startY + worldHeight + gridSize; y += gridSize) {
+        ctx.moveTo(worldLeft, y);
+        ctx.lineTo(worldLeft + worldWidth, y);
       }
       ctx.stroke();
 
@@ -419,6 +500,7 @@
         btnPlay.textContent = 'PAUSE';
         btnDraw.classList.remove('active-tool');
         btnErase.classList.remove('active-tool');
+        btnPan.classList.remove('active-tool');
         canvas.style.cursor = 'default';
         maxDistance = 0;
         earnedCoinsDistance = 0;
@@ -441,7 +523,7 @@
       lines = [];
       initSled();
       setState('edit');
-      camera = { x: 0, y: 0 };
+      camera = { x: 0, y: 0, zoom: 1 };
     });
 
     // Set initial lines
