@@ -5,7 +5,8 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Next: add `pacman/index.html`, integrate into game list, and validate with Playwright client + screenshots.
 
 - New request (2026-03-05): Recreate Pokemon.
-- Plan: add a new /pokemon game with overworld exploration, random encounters, turn-based battles, capture mechanics, mobile + desktop controls, and deterministic test hooks (ender_game_to_text, dvanceTime).
+- Plan: add a new /pokemon game with overworld exploration, random encounters, turn-based battles, capture mechanics, mobile + desktop controls, and deterministic test hooks (
+ender_game_to_text, dvanceTime).
 
 
 - Pac-Man implementation completed in `pacman/index.html` with: pellets + power pellets, 4 ghosts with chase/scatter/frightened/eyes states, fruit spawns, lives, score/high score, pause/resume/restart, level progression, game over, and fullscreen toggle (`F`).
@@ -1474,14 +1475,17 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 
 ## 2026-03-29 Rift Drifter Implementation
 - New request: add a game not currently on the site.
-- Implemented new standalone game page: iftdrifter/index.html (Rift Drifter).
+- Implemented new standalone game page: 
+iftdrifter/index.html (Rift Drifter).
   - Gameplay: six-lane drift runner with hazard dodge + collectible flux cores, cooldown dash invulnerability, score/timer win-loss loop, and coin rewards.
   - Controls: desktop (A/D or arrows + Space/P/R/F) and mobile touch controls (Left/Right/Dash/Pause/Restart/FS).
-  - Platform hooks: ememberRecent('riftdrifter'), coin payout via ddCoins, achievement payload via maybeUnlock.
+  - Platform hooks: 
+ememberRecent('riftdrifter'), coin payout via ddCoins, achievement payload via maybeUnlock.
   - Automation hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state.
   - Feedback integration: mountGameFeedback({ gameSlug: 'riftdrifter', gameName: 'Rift Drifter' }).
 - Integrated launcher/routing wiring:
-  - Added iftdrifter metadata entry in src/meta/games.js.
+  - Added 
+iftdrifter metadata entry in src/meta/games.js.
   - Added fallback homepage card in index.html.
   - Added /riftdrifter rewrites and /riftdrifter/index.html cache-header entry in ercel.json.
 - Validation results:
@@ -1537,3 +1541,25 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
   - Skill-required Playwright loop via `$WEB_GAME_CLIENT` on `/signalstack`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright validation loop for `/signalstack` in an environment that allows child-process + Chromium launch.
+
+## 2026-04-01 Vault Runner Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `vaultrunner/index.html` (Vault Runner).
+  - Gameplay: tile-based infiltration run where player collects keycards, avoids moving patrol drones, and reaches the vault tile after collecting keycards before lockout.
+  - Controls: desktop keyboard (WASD/Arrows + P/R/F) and mobile touch controls (Up/Left/Down/Right plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('vaultrunner')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with explicit coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'vaultrunner', gameName: 'Vault Runner' })`.
+- Integrated launcher/routing wiring:
+  - Added `vaultrunner` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/vaultrunner` rewrites and `/vaultrunner/index.html` cache-header entry in `vercel.json`.
+- Next: run validation checks (`feedback:sync-linear`, `test:feedback`, and the skill Playwright loop) and record outcomes.
+- Validation results (this run):
+  - `rg -n "vaultrunner" src/meta/games.js index.html vercel.json vaultrunner/index.html`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed to execute in this sandbox with `spawn EPERM`.
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/vaultrunner`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/vaultrunner` in an environment that allows child-process and Chromium launch.

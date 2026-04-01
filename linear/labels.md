@@ -63,5 +63,6 @@
 - game/circuitpath
 - game/signalstack
 - game/linerider
+- game/vaultrunner
 
 Generated from `src/meta/feedback.js`.
