@@ -275,8 +275,8 @@ async function syncFamilyMemberProfiles(account, ownerProfile) {
 
   const familyAccess = getFamilyAccessContext(ownerProfile);
   const members = Array.isArray(account.members) ? account.members : [];
-  const syncedMembers = [];
-  for (const member of members) {
+
+  const syncedMembers = await Promise.all(members.map(async (member) => {
     const existing = await getStripeBillingProfile(member.userId);
     const currentEntitlements = existing.entitlements && typeof existing.entitlements === "object"
       ? existing.entitlements
@@ -304,8 +304,8 @@ async function syncFamilyMemberProfiles(account, ownerProfile) {
       seatCount: account.members.length,
       lastSource: isOwner ? "family_owner_sync" : "family_member_sync",
     });
-    syncedMembers.push(saved);
-  }
+    return saved;
+  }));
 
   return syncedMembers;
 }
