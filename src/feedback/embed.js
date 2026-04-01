@@ -245,7 +245,8 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
 
   const root = document.createElement("div");
   root.id = ROOT_ID;
-  root.innerHTML = `
+
+  const htmlTemplate = `
     <button type="button" class="cade-feedback-launcher" id="cadeFeedbackOpenBtn" aria-haspopup="dialog">
       Report Feedback
     </button>
@@ -309,6 +310,8 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
       </div>
     </div>
   `;
+
+  root.insertAdjacentHTML("beforeend", htmlTemplate);
   document.body.appendChild(root);
 
   const titleEl = document.getElementById("cadeFeedbackTitle");
