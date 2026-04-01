@@ -239,15 +239,6 @@ function readFileAsDataUrl(file) {
   });
 }
 
-function escapeHtml(unsafe) {
-  return String(unsafe || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   if (!gameSlug || !gameName || document.getElementById(ROOT_ID)) return;
   injectStyles();
@@ -260,7 +251,7 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     </button>
     <div class="cade-feedback-backdrop" id="cadeFeedbackBackdrop" aria-hidden="true">
       <div class="cade-feedback-modal" role="dialog" aria-modal="true" aria-labelledby="cadeFeedbackTitle">
-        <h2 id="cadeFeedbackTitle">Share feedback for ${escapeHtml(gameName)}</h2>
+        <h2 id="cadeFeedbackTitle"></h2>
         <p>Tell us about bugs, rough spots, or ideas while the details are still fresh.</p>
         <form class="cade-feedback-form" id="cadeFeedbackForm">
           <div class="cade-feedback-account" id="cadeFeedbackAccount">
@@ -319,6 +310,11 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     </div>
   `;
   document.body.appendChild(root);
+
+  const titleEl = document.getElementById("cadeFeedbackTitle");
+  if (titleEl) {
+    titleEl.textContent = `Share feedback for ${gameName}`;
+  }
 
   const openBtn = document.getElementById("cadeFeedbackOpenBtn");
   const backdrop = document.getElementById("cadeFeedbackBackdrop");

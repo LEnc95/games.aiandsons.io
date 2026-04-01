@@ -5,5 +5,4 @@
 
 ## 2026-04-01 - [Fix XSS in Feedback Embed]
 **Vulnerability**: In `src/feedback/embed.js`, dynamic text strings like `gameName` were being unsafely embedded into the UI using `innerHTML`. This allowed arbitrary strings containing malicious HTML/JS to be interpreted as code instead of raw text.
-**Learning**: Whenever using `innerHTML` to render dynamically provided values or input, strictly wrap strings with an `escapeHtml` utility function that escapes basic markup characters (`&`, `<`, `>`, `"`, `'`). This ensures the browser treats them strictly as display text.
-- Ensure user-facing strings are escaped before being injected via \`innerHTML\`.
+**Learning**: Whenever rendering dynamically provided values or input, avoid interpolating them directly into `innerHTML` strings. Instead, construct the element or use a placeholder, and then set the dynamic value using `textContent` on the specific DOM node. This ensures the browser treats the input strictly as display text, avoiding XSS and passing static analysis tools.
