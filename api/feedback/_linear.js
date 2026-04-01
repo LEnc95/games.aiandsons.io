@@ -315,18 +315,33 @@ async function ensureLinearLabels(labelNames = [], { teamId = "" } = {}) {
   const labels = await loadLinearLabels();
   const created = [];
 
-  for (const name of normalizedNames) {
-    if (labels.has(name)) continue;
+  // ⚡ Bolt: Implemented Promise.all concurrency to eliminate N+1 latency
+  // when provisioning multiple new labels sequentially.
+  const creationPromises = normalizedNames.map(async (name) => {
+    if (labels.has(name)) return null;
     try {
       const label = await createLinearLabel({ name, teamId: normalizedTeamId });
-      labels.set(label.name, label.id);
-      created.push(label);
+      return { success: true, label };
     } catch (error) {
-      created.push({
-        id: "",
-        name,
-        error: String(error?.message || error),
-      });
+      return {
+        success: false,
+        errorData: {
+          id: "",
+          name,
+          error: String(error?.message || error),
+        },
+      };
+    }
+  });
+
+  const results = await Promise.all(creationPromises);
+  for (const result of results) {
+    if (!result) continue;
+    if (result.success) {
+      labels.set(result.label.name, result.label.id);
+      created.push(result.label);
+    } else {
+      created.push(result.errorData);
     }
   }
 
