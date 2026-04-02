@@ -872,11 +872,18 @@ async function handleFamilyRemoveMember(req, res) {
       });
     }
 
-    const refreshed = await buildFamilySummary(session);
+    const updatedMembers = nextAccount.members;
+    const seatCounts = countReservedFamilySeats(nextAccount, summary.invites);
     return sendJson(res, 200, {
       ok: true,
       removedUserId: memberUserId,
-      ...refreshed.payload,
+      ...summary.payload,
+      family: {
+        ...summary.payload.family,
+        members: updatedMembers,
+        seatCount: updatedMembers.length,
+        seatsRemaining: Math.max(0, nextAccount.seatLimit - seatCounts.reservedSeatCount),
+      }
     });
   } catch (error) {
     const code = String(error?.message || error);
@@ -1025,12 +1032,19 @@ async function handleFamilyResendInvite(req, res) {
     }
 
     const delivery = await deliverFamilyInviteEmail({ invite, account, session });
-    const refreshed = await buildFamilySummary(session);
+    const fullUpdatedInvite = { ...invite, ...delivery.invite, lastEmailDelivery: delivery.emailResult?.delivery };
+    const updatedInvites = summary.invites.map((inv) =>
+      inv.id === delivery.invite.id ? fullUpdatedInvite : inv
+    );
     return sendJson(res, 200, {
       ok: true,
-      invite: refreshed.invites?.find((entry) => entry.id === invite.id) || delivery.invite,
+      invite: fullUpdatedInvite,
       email: delivery.emailResult,
-      ...refreshed.payload,
+      ...summary.payload,
+      family: {
+        ...summary.payload.family,
+        invites: updatedInvites,
+      }
     });
   } catch (error) {
     return sendError(res, 500, "Could not resend the family invite.", "family_resend_failed", {
@@ -1071,11 +1085,22 @@ async function handleFamilyRevokeInvite(req, res) {
     await saveFamilyInvite(invite.id, {
       status: "revoked",
     });
-    const refreshed = await buildFamilySummary(session);
+    const fullUpdatedInvite = { ...invite, status: "revoked" };
+    const updatedInvites = summary.invites.map((inv) =>
+      inv.id === invite.id ? fullUpdatedInvite : inv
+    );
+    const seatCounts = countReservedFamilySeats(account, updatedInvites);
     return sendJson(res, 200, {
       ok: true,
       revokedInviteId: invite.id,
-      ...refreshed.payload,
+      ...summary.payload,
+      family: {
+        ...summary.payload.family,
+        invites: updatedInvites,
+        pendingInviteCount: seatCounts.pendingInviteCount,
+        reservedSeatCount: seatCounts.reservedSeatCount,
+        seatsRemaining: Math.max(0, account.seatLimit - seatCounts.reservedSeatCount),
+      }
     });
   } catch (error) {
     return sendError(res, 500, "Could not revoke the family invite.", "family_revoke_failed", {
