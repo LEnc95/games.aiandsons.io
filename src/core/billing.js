@@ -63,6 +63,21 @@ export const normalizeBillingConfig = (source) => {
   };
 };
 
+export const verifyReceipt = async (receiptToken) => {
+  try {
+    const response = await fetch('/api/billing/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: receiptToken }),
+    });
+    if (!response.ok) throw new Error('Verification failed');
+    return await response.json();
+  } catch (error) {
+    console.error('Receipt verification error:', error);
+    throw error;
+  }
+};
+
 const parseApiResponse = async (response) => {
   let payload = null;
   try {
