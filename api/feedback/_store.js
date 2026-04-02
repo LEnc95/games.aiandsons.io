@@ -529,15 +529,16 @@ async function enforceFeedbackRateLimit({
     };
   }
 
-  const counts = await Promise.all(
-    buckets.map(async (bucket) => {
-      const key = getRateLimitKey(bucket);
-      const currentCount = Number((await getStoredValue(key)) || 0) + 1;
-      await setStoredValueWithExpiry(key, String(currentCount), Math.ceil(windowMs / 1000));
-      return currentCount;
-    })
+  const keys = buckets.map(getRateLimitKey);
+  const currentCounts = await Promise.all(
+    keys.map(async (key) => Number((await getStoredValue(key)) || 0) + 1)
   );
-  const highestCount = Math.max(0, ...counts);
+
+  await Promise.all(
+    keys.map((key, i) => setStoredValueWithExpiry(key, String(currentCounts[i]), Math.ceil(windowMs / 1000)))
+  );
+
+  const highestCount = Math.max(0, ...currentCounts);
 
   return {
     blocked: highestCount > maxRequests,
