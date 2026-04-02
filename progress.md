@@ -1603,3 +1603,6 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
   - No `errors-*.json` artifacts emitted in the final smoke run directory.
 - Follow-up:
   - Apply the same de-duplication rewrite pass to `signalstack`, `riftdrifter`, `cometcourier`, and to either `vaultrunner` or `circuitpath` so each has a unique primary mechanic family.
+- Delivery update:
+  - Committed rewrite as `12edc03 Rework Chrome Shift into distinct color-flood puzzle` and pushed to `origin/main`.
+  - Deployment propagation may lag behind git push; immediate curl check still returned previous cached Chrome Shift variant at edge.
