@@ -48,6 +48,6 @@ export const GAMES = [
   { slug:'signalstack',    name:'Signal Stack',        emoji:'\u{1F4E1}', scoreHint:'combo',      url:'/signalstack',   desc:'Swap channels, match packet colors, and keep your uplink stable for a full decoding shift.', earnsCoins:true },
   { slug:'linerider',      name:'Line Rider',          emoji:'\u270F\uFE0F', scoreHint:'distance', url:'/linerider',   desc:'Draw lines to create a track for the sled to ride on.', earnsCoins:true },
   { slug:'vaultrunner',    name:'Vault Runner',        emoji:'\u{1F510}', scoreHint:'keycards',   url:'/vaultrunner',   desc:'Collect keycards, dodge patrol drones, and reach the vault uplink before security lockout.', earnsCoins:true },
-  { slug:'chromeshift',    name:'Chrome Shift',        emoji:'\u{1F539}', scoreHint:'streak',     url:'/chromeshift',   desc:'Shift lanes and polarity to neutralize incoming shards before the reactor overloads.', earnsCoins:true },
+  { slug:'chromeshift',    name:'Chrome Shift',        emoji:'\u{1F539}', scoreHint:'territory',  url:'/chromeshift',   desc:'Flood the board by shifting chrome colors and capture every tile before moves run out.', earnsCoins:true },
 ];
 

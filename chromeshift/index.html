@@ -8,31 +8,29 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="Shift lanes and polarity to neutralize incoming shards before the reactor overloads.">
+  <meta name="description" content="Flood the board by shifting chrome colors and capture every tile before moves run out.">
   <meta property="og:title" content="Chrome Shift - Play on Cade's Games">
-  <meta property="og:description" content="Shift lanes and polarity to neutralize incoming shards before the reactor overloads.">
+  <meta property="og:description" content="Flood the board by shifting chrome colors and capture every tile before moves run out.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://games.aiandsons.io/chromeshift">
   <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
   <meta property="og:site_name" content="Cade's Games">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Chrome Shift - Play on Cade's Games">
-  <meta name="twitter:description" content="Shift lanes and polarity to neutralize incoming shards before the reactor overloads.">
+  <meta name="twitter:description" content="Flood the board by shifting chrome colors and capture every tile before moves run out.">
   <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
   <link rel="canonical" href="https://games.aiandsons.io/chromeshift">
   <style>
     :root {
-      --bg0: #02050f;
-      --bg1: #0d1a3e;
-      --panel: rgba(8, 17, 38, 0.88);
-      --line: rgba(136, 193, 255, 0.35);
-      --text: #edf6ff;
-      --muted: #bfd4f6;
+      --bg0: #030813;
+      --bg1: #11284b;
+      --panel: rgba(8, 16, 37, 0.9);
+      --line: rgba(141, 201, 255, 0.4);
+      --text: #ecf5ff;
+      --muted: #bfd5f5;
       --good: #98ffd0;
       --warn: #ffe29f;
       --bad: #ff9db8;
-      --blue: #5ac7ff;
-      --orange: #ffaf61;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -44,8 +42,8 @@
       font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(85% 70% at 10% 0%, #1b3f77 0%, transparent 62%),
-        radial-gradient(75% 64% at 92% 100%, #2a2448 0%, transparent 60%),
+        radial-gradient(88% 72% at 8% 0%, #254f83 0%, transparent 58%),
+        radial-gradient(78% 62% at 92% 100%, #2f2959 0%, transparent 62%),
         linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
     }
     .back-home {
@@ -85,7 +83,7 @@
       border-radius: 14px;
       border: 2px solid rgba(142, 209, 255, 0.58);
       box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
-      background: linear-gradient(180deg, #15284f 0%, #070f23 100%);
+      background: linear-gradient(180deg, #142a4f 0%, #090f25 100%);
       touch-action: none;
     }
     .overlay {
@@ -148,7 +146,7 @@
       border: 1px solid var(--line);
       background: var(--panel);
       display: grid;
-      grid-template-columns: repeat(8, minmax(0, 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 8px;
       padding: 10px;
     }
@@ -186,39 +184,56 @@
       background: var(--panel);
       padding: 10px;
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 1fr auto;
       gap: 10px;
       align-items: center;
     }
+    .color-group {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .color-btn {
+      min-height: 46px;
+      border-width: 2px;
+      border-style: solid;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .color-btn.active {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) inset;
+    }
+    .color-btn.selected {
+      box-shadow: 0 0 0 2px rgba(6, 11, 24, 0.55) inset, 0 0 0 2px rgba(255, 255, 255, 0.72);
+    }
+    .chrome-blue { background: #46c4ff; border-color: #93e3ff; color: #052643; }
+    .chrome-amber { background: #ffb763; border-color: #ffd7a5; color: #412203; }
+    .chrome-violet { background: #ad95ff; border-color: #d8d0ff; color: #23154f; }
+    .chrome-mint { background: #62e2bb; border-color: #bcf8e4; color: #0b3a31; }
     .touch-group {
       display: flex;
-      align-items: center;
-      justify-content: center;
       flex-wrap: wrap;
-      gap: 6px;
+      justify-content: center;
+      gap: 8px;
     }
-    .touch-group button {
-      min-width: 58px;
-      height: 46px;
-      padding: 0 12px;
-      font-size: 14px;
-      font-weight: 800;
-    }
+    .touch-group button { min-width: 84px; }
     .hint {
+      width: min(96vw, 980px);
       text-align: center;
-      color: #cadcf6;
+      color: #c8dcf7;
       font-size: 12px;
       line-height: 1.35;
-      padding: 0 8px;
+      padding: 4px 10px 0;
     }
-    .wide { min-width: 92px !important; }
     @media (max-width: 900px) {
       .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .controls { grid-template-columns: 1fr; }
     }
     @media (max-width: 560px) {
       .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .hint { font-size: 11px; }
+      .color-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -231,9 +246,9 @@
       <div id="overlay" class="overlay show">
         <div class="panel">
           <h1>Chrome Shift</h1>
-          <p>Slide between lanes and toggle polarity to neutralize incoming shards before reactor integrity collapses.</p>
-          <p>Desktop: A/D or arrows move, Space switches polarity, P pause, R restart, F fullscreen.</p>
-          <p>Mobile: tap Left/Right and Shift to match shard colors before impact.</p>
+          <p>Flood the full board from the top-left corner by choosing chrome colors in the right order.</p>
+          <p>Desktop: keys 1-4 to pick colors, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap color buttons. Capture all tiles before moves or time run out.</p>
           <div class="row">
             <button id="startBtn" type="button">Start Run</button>
             <button id="overlayFsBtn" type="button">Fullscreen</button>
@@ -244,28 +259,28 @@
 
     <section class="hud" aria-live="polite">
       <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
-      <div class="chip"><span>Lane</span><b id="hudLane">1</b></div>
-      <div class="chip"><span>Polarity</span><b id="hudPolarity">BLUE</b></div>
+      <div class="chip"><span>Territory</span><b id="hudOwned">1/100</b></div>
+      <div class="chip"><span>Moves Left</span><b id="hudMoves">20</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">120.0s</b></div>
+      <div class="chip"><span>Color</span><b id="hudColor">Blue</b></div>
       <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
-      <div class="chip"><span>Streak</span><b id="hudStreak">0</b></div>
-      <div class="chip"><span>Integrity</span><b id="hudLives">3</b></div>
-      <div class="chip warn"><span>Time</span><b id="hudTime">78.0s</b></div>
       <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
     </section>
 
     <section class="controls" aria-label="Controls">
-      <div class="touch-group">
-        <button type="button" id="btnLeft">Left</button>
-        <button type="button" id="btnShift">Shift</button>
-        <button type="button" id="btnRight">Right</button>
+      <div class="color-group">
+        <button type="button" id="color0" class="color-btn chrome-blue">1 Blue</button>
+        <button type="button" id="color1" class="color-btn chrome-amber">2 Amber</button>
+        <button type="button" id="color2" class="color-btn chrome-violet">3 Violet</button>
+        <button type="button" id="color3" class="color-btn chrome-mint">4 Mint</button>
       </div>
-      <div class="hint">Blue shards need blue polarity. Amber shards need amber polarity. Wrong match costs integrity.</div>
       <div class="touch-group">
-        <button type="button" id="btnPause" class="wide">Pause</button>
-        <button type="button" id="btnRestart" class="wide">Restart</button>
-        <button type="button" id="btnFullscreen" class="wide">FS</button>
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
       </div>
     </section>
+    <div class="hint">Capturing more tiles early gives better control. Avoid repeating your current color because it does not spend a move.</div>
   </main>
 
   <script type="module">
@@ -274,89 +289,137 @@
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    const overlayEl = document.getElementById('overlay');
 
+    const overlayEl = document.getElementById('overlay');
     const hudMode = document.getElementById('hudMode');
-    const hudLane = document.getElementById('hudLane');
-    const hudPolarity = document.getElementById('hudPolarity');
-    const hudScore = document.getElementById('hudScore');
-    const hudStreak = document.getElementById('hudStreak');
-    const hudLives = document.getElementById('hudLives');
+    const hudOwned = document.getElementById('hudOwned');
+    const hudMoves = document.getElementById('hudMoves');
     const hudTime = document.getElementById('hudTime');
+    const hudColor = document.getElementById('hudColor');
+    const hudScore = document.getElementById('hudScore');
     const hudCoins = document.getElementById('hudCoins');
 
-    const btnLeft = document.getElementById('btnLeft');
-    const btnShift = document.getElementById('btnShift');
-    const btnRight = document.getElementById('btnRight');
+    const colorButtons = [
+      document.getElementById('color0'),
+      document.getElementById('color1'),
+      document.getElementById('color2'),
+      document.getElementById('color3'),
+    ];
     const btnPause = document.getElementById('btnPause');
     const btnRestart = document.getElementById('btnRestart');
     const btnFullscreen = document.getElementById('btnFullscreen');
 
-    const LANES = 6;
-    const ROUND_SECONDS = 78;
+    const ROWS = 10;
+    const COLS = 10;
+    const TOTAL_TILES = ROWS * COLS;
+    const MAX_MOVES = 20;
+    const ROUND_SECONDS = 120;
+    const COLORS = [
+      { name: 'Blue', fill: '#46c4ff' },
+      { name: 'Amber', fill: '#ffb763' },
+      { name: 'Violet', fill: '#ad95ff' },
+      { name: 'Mint', fill: '#62e2bb' },
+    ];
 
     const board = {
-      x: 165,
-      y: 68,
-      width: 870,
-      height: 612,
+      x: 290,
+      y: 98,
+      size: 560,
     };
 
     const state = {
       mode: 'menu',
-      score: 0,
-      lives: 3,
+      grid: [],
+      owned: [],
+      ownedCount: 1,
+      currentColor: 0,
+      selector: 0,
+      movesUsed: 0,
       timeLeft: ROUND_SECONDS,
-      streak: 0,
-      lane: Math.floor(LANES / 2),
-      polarity: 'blue',
-      shards: [],
-      sparks: [],
-      spawnTimer: 0,
-      spawnInterval: 0.66,
+      score: 0,
       result: 'none',
       runCoinsEarned: 0,
       hasRemembered: false,
+      particles: [],
     };
 
     let controlledStep = false;
     let rafId = 0;
     let previousTime = performance.now();
 
-    function laneWidth() {
-      return board.width / LANES;
+    function randomColor() {
+      return Math.floor(Math.random() * COLORS.length);
     }
 
-    function laneCenter(lane) {
-      return board.x + laneWidth() * lane + laneWidth() * 0.5;
+    function buildGrid() {
+      const grid = [];
+      for (let row = 0; row < ROWS; row += 1) {
+        const line = [];
+        for (let col = 0; col < COLS; col += 1) {
+          line.push(randomColor());
+        }
+        grid.push(line);
+      }
+      return grid;
     }
 
-    function playerY() {
-      return board.y + board.height - 66;
+    function buildOwnedMatrix() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(false));
     }
 
-    function togglePolarity() {
-      if (state.mode !== 'playing') return;
-      state.polarity = state.polarity === 'blue' ? 'amber' : 'blue';
-      addSpark(laneCenter(state.lane), playerY(), state.polarity === 'blue' ? '#6fd7ff' : '#ffc27c', 18);
+    function floodOwned() {
+      const target = state.currentColor;
+      state.owned = buildOwnedMatrix();
+      const queue = [[0, 0]];
+      state.owned[0][0] = true;
+      let count = 0;
+
+      while (queue.length > 0) {
+        const [row, col] = queue.shift();
+        count += 1;
+        const neighbors = [
+          [row - 1, col],
+          [row + 1, col],
+          [row, col - 1],
+          [row, col + 1],
+        ];
+        for (const [nextRow, nextCol] of neighbors) {
+          if (nextRow < 0 || nextRow >= ROWS || nextCol < 0 || nextCol >= COLS) continue;
+          if (state.owned[nextRow][nextCol]) continue;
+          if (state.grid[nextRow][nextCol] !== target) continue;
+          state.owned[nextRow][nextCol] = true;
+          queue.push([nextRow, nextCol]);
+        }
+      }
+      state.ownedCount = count;
     }
 
-    function moveLane(delta) {
-      if (state.mode !== 'playing') return;
-      state.lane = Math.max(0, Math.min(LANES - 1, state.lane + delta));
+    function recolorOwned(nextColor) {
+      for (let row = 0; row < ROWS; row += 1) {
+        for (let col = 0; col < COLS; col += 1) {
+          if (state.owned[row][col]) {
+            state.grid[row][col] = nextColor;
+          }
+        }
+      }
+      state.currentColor = nextColor;
+      floodOwned();
     }
 
-    function addSpark(x, y, color, count = 10) {
-      for (let i = 0; i < count; i += 1) {
+    function addBurst(row, col, color) {
+      const tile = board.size / ROWS;
+      const x = board.x + col * tile + tile * 0.5;
+      const y = board.y + row * tile + tile * 0.5;
+      for (let i = 0; i < 12; i += 1) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 40 + Math.random() * 170;
-        state.sparks.push({
+        const speed = 30 + Math.random() * 120;
+        state.particles.push({
           x,
           y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           age: 0,
-          life: 0.18 + Math.random() * 0.34,
+          life: 0.16 + Math.random() * 0.28,
           color,
         });
       }
@@ -364,18 +427,22 @@
 
     function resetRun() {
       state.mode = 'playing';
-      state.score = 0;
-      state.lives = 3;
+      state.grid = buildGrid();
+      state.owned = buildOwnedMatrix();
+      state.currentColor = state.grid[0][0];
+      state.selector = state.currentColor;
+      state.movesUsed = 0;
       state.timeLeft = ROUND_SECONDS;
-      state.streak = 0;
-      state.lane = Math.floor(LANES / 2);
-      state.polarity = 'blue';
-      state.shards = [];
-      state.sparks = [];
-      state.spawnTimer = 0;
-      state.spawnInterval = 0.66;
+      state.score = 0;
       state.result = 'none';
       state.runCoinsEarned = 0;
+      state.particles = [];
+      floodOwned();
+
+      if (state.ownedCount === TOTAL_TILES) {
+        state.grid[ROWS - 1][COLS - 1] = (state.currentColor + 1) % COLORS.length;
+        floodOwned();
+      }
     }
 
     function setModeOverlay(title, body, buttonLabel = 'Start Run') {
@@ -384,7 +451,7 @@
         <div class="panel">
           <h1>${title}</h1>
           <p>${body}</p>
-          <p>Desktop: A/D or arrows move, Space switches polarity, P pause, R restart, F fullscreen.</p>
+          <p>Desktop: keys 1-4 to pick colors, P pause, R restart, F fullscreen.</p>
           <div class="row">
             <button id="startBtn" type="button">${buttonLabel}</button>
             <button id="overlayFsBtn" type="button">Fullscreen</button>
@@ -401,25 +468,33 @@
         state.hasRemembered = true;
         try { rememberRecent('chromeshift'); } catch {}
       }
-      try { maybeUnlock({ anyPlay: true, chromeshift: { score: 0, clears: 0, result: 'started' } }); } catch {}
+      try { maybeUnlock({ anyPlay: true, chromeshift: { territory: state.ownedCount, score: 0, result: 'started' } }); } catch {}
       overlayEl.classList.remove('show');
       updateHud();
+      draw();
+    }
+
+    function scoreNow() {
+      const coveragePoints = state.ownedCount * 6;
+      const moveBonus = Math.max(0, (MAX_MOVES - state.movesUsed) * 12);
+      const timeBonus = Math.max(0, Math.floor(state.timeLeft));
+      return coveragePoints + moveBonus + timeBonus;
     }
 
     function rewardRun(result) {
-      const scoreBonus = Math.floor(state.score / 140);
-      const streakBonus = Math.floor(state.streak / 3);
-      const clearBonus = result === 'win' ? 15 : 0;
-      const coins = Math.max(2, scoreBonus + streakBonus + clearBonus);
+      const territoryBonus = Math.floor(state.ownedCount / 10);
+      const clearBonus = result === 'win' ? 12 : 0;
+      const efficiencyBonus = result === 'win' ? Math.max(0, MAX_MOVES - state.movesUsed) : 0;
+      const coins = Math.max(2, territoryBonus + clearBonus + efficiencyBonus);
       state.runCoinsEarned = coins;
       try { addCoins(coins); } catch {}
       try {
         maybeUnlock({
           anyPlay: true,
           chromeshift: {
+            territory: state.ownedCount,
             score: state.score,
-            streak: state.streak,
-            lives: state.lives,
+            movesLeft: MAX_MOVES - state.movesUsed,
             result,
           },
         });
@@ -430,50 +505,54 @@
       if (state.mode !== 'playing' && state.mode !== 'paused') return;
       state.mode = result === 'win' ? 'won' : 'lost';
       state.result = result;
+      state.score = scoreNow();
       rewardRun(result);
       const message = result === 'win'
-        ? `Reactor stabilized. Score ${state.score}, streak ${state.streak}, coins ${state.runCoinsEarned}.`
-        : `Reactor failure. Score ${state.score}, streak ${state.streak}, coins ${state.runCoinsEarned}.`;
-      setModeOverlay(result === 'win' ? 'Shift Complete' : 'System Breach', message, 'Run Again');
+        ? `Board captured in ${state.movesUsed} moves. Score ${state.score}, coins ${state.runCoinsEarned}.`
+        : `Run ended with ${state.ownedCount}/${TOTAL_TILES} tiles captured. Score ${state.score}, coins ${state.runCoinsEarned}.`;
+      setModeOverlay(result === 'win' ? 'Grid Stabilized' : 'Grid Locked', message, 'Run Again');
       updateHud();
     }
 
-    function spawnShard() {
-      const lane = Math.floor(Math.random() * LANES);
-      const polarity = Math.random() < 0.5 ? 'blue' : 'amber';
-      const speed = 190 + Math.random() * 110 + (1 - state.timeLeft / ROUND_SECONDS) * 90;
-      state.shards.push({
-        lane,
-        y: board.y - 20,
-        speed,
-        polarity,
-        radius: 18,
-      });
-    }
+    function chooseColor(nextColor) {
+      if (state.mode !== 'playing') return;
+      if (nextColor < 0 || nextColor >= COLORS.length) return;
+      if (nextColor === state.currentColor) return;
 
-    function resolveCollision(shard) {
-      if (shard.lane !== state.lane) {
-        state.streak = 0;
+      state.selector = nextColor;
+      state.movesUsed += 1;
+      const prevOwned = state.ownedCount;
+      recolorOwned(nextColor);
+      const gained = state.ownedCount - prevOwned;
+      if (gained > 0) {
+        addBurst(0, 0, COLORS[nextColor].fill);
+      }
+      state.score = scoreNow();
+
+      if (state.ownedCount >= TOTAL_TILES) {
+        finishRun('win');
         return;
       }
-      if (shard.polarity === state.polarity) {
-        state.streak += 1;
-        state.score += 60 + state.streak * 4;
-        addSpark(laneCenter(shard.lane), playerY() - 24, shard.polarity === 'blue' ? '#7de0ff' : '#ffcf8f', 16);
-      } else {
-        state.streak = 0;
-        state.lives -= 1;
-        addSpark(laneCenter(shard.lane), playerY() - 12, '#ff9db8', 22);
-        if (state.lives <= 0) {
-          finishRun('loss');
-        }
+      if (state.movesUsed >= MAX_MOVES) {
+        finishRun('loss');
       }
+    }
+
+    function shiftSelector(delta) {
+      if (state.mode !== 'playing') return;
+      state.selector = (state.selector + delta + COLORS.length) % COLORS.length;
+      updateHud();
+      draw();
+    }
+
+    function applySelectedColor() {
+      chooseColor(state.selector);
     }
 
     function pauseToggle() {
       if (state.mode === 'playing') {
         state.mode = 'paused';
-        setModeOverlay('Paused', 'Shard stream halted. Resume when ready.', 'Resume');
+        setModeOverlay('Paused', 'Color flow paused. Resume when ready.', 'Resume');
       } else if (state.mode === 'paused') {
         state.mode = 'playing';
         overlayEl.classList.remove('show');
@@ -482,121 +561,81 @@
     }
 
     function update(dt) {
-      if (state.mode !== 'playing') return;
-
-      state.timeLeft = Math.max(0, state.timeLeft - dt);
-      state.spawnTimer -= dt;
-      if (state.spawnTimer <= 0) {
-        spawnShard();
-        state.spawnInterval = Math.max(0.24, state.spawnInterval - 0.004);
-        state.spawnTimer = state.spawnInterval;
-      }
-
-      for (let i = state.shards.length - 1; i >= 0; i -= 1) {
-        const shard = state.shards[i];
-        shard.y += shard.speed * dt;
-        if (shard.y >= playerY() - 18) {
-          resolveCollision(shard);
-          state.shards.splice(i, 1);
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        state.score = scoreNow();
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
         }
       }
 
-      for (let i = state.sparks.length - 1; i >= 0; i -= 1) {
-        const spark = state.sparks[i];
-        spark.age += dt;
-        if (spark.age >= spark.life) {
-          state.sparks.splice(i, 1);
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
           continue;
         }
-        spark.x += spark.vx * dt;
-        spark.y += spark.vy * dt;
-        spark.vy += 120 * dt;
-      }
-
-      state.score += Math.floor(dt * 6);
-
-      if (state.timeLeft <= 0) {
-        finishRun('win');
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 110 * dt;
       }
     }
 
     function drawBoard() {
-      const colW = laneWidth();
-      const grad = ctx.createLinearGradient(0, board.y, 0, board.y + board.height);
-      grad.addColorStop(0, '#132f5e');
-      grad.addColorStop(1, '#0a1630');
-      ctx.fillStyle = grad;
-      ctx.fillRect(board.x, board.y, board.width, board.height);
+      const tile = board.size / ROWS;
+      ctx.fillStyle = '#0a1733';
+      ctx.fillRect(board.x, board.y, board.size, board.size);
 
-      for (let lane = 0; lane < LANES; lane += 1) {
-        const x = board.x + lane * colW;
-        ctx.fillStyle = lane % 2 === 0 ? 'rgba(29, 57, 101, 0.45)' : 'rgba(18, 40, 78, 0.45)';
-        ctx.fillRect(x + 1, board.y + 1, colW - 2, board.height - 2);
+      for (let row = 0; row < ROWS; row += 1) {
+        for (let col = 0; col < COLS; col += 1) {
+          const x = board.x + col * tile;
+          const y = board.y + row * tile;
+          ctx.fillStyle = COLORS[state.grid[row][col]].fill;
+          ctx.fillRect(x + 1, y + 1, tile - 2, tile - 2);
+
+          if (state.owned[row][col]) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 3, y + 3, tile - 6, tile - 6);
+          }
+        }
       }
 
-      ctx.strokeStyle = 'rgba(137, 192, 255, 0.28)';
+      ctx.strokeStyle = 'rgba(144, 201, 255, 0.3)';
       ctx.lineWidth = 1;
-      for (let lane = 0; lane <= LANES; lane += 1) {
-        const x = board.x + lane * colW;
+      for (let i = 0; i <= ROWS; i += 1) {
+        const p = board.x + i * tile;
         ctx.beginPath();
-        ctx.moveTo(x, board.y);
-        ctx.lineTo(x, board.y + board.height);
+        ctx.moveTo(p, board.y);
+        ctx.lineTo(p, board.y + board.size);
         ctx.stroke();
       }
-    }
-
-    function drawShards() {
-      for (const shard of state.shards) {
-        const x = laneCenter(shard.lane);
-        const c = shard.polarity === 'blue' ? '#66d2ff' : '#ffb36a';
-        ctx.fillStyle = c;
+      for (let i = 0; i <= COLS; i += 1) {
+        const p = board.y + i * tile;
         ctx.beginPath();
-        ctx.moveTo(x, shard.y - shard.radius);
-        ctx.lineTo(x + shard.radius * 0.8, shard.y);
-        ctx.lineTo(x, shard.y + shard.radius);
-        ctx.lineTo(x - shard.radius * 0.8, shard.y);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-        ctx.lineWidth = 2;
+        ctx.moveTo(board.x, p);
+        ctx.lineTo(board.x + board.size, p);
         ctx.stroke();
       }
-    }
 
-    function drawPlayer() {
-      const x = laneCenter(state.lane);
-      const y = playerY();
-      const color = state.polarity === 'blue' ? '#5ac7ff' : '#ffaf61';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.beginPath();
-      ctx.ellipse(x, y + 18, 44, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, 30, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(237, 246, 255, 0.95)';
+      const pulse = Math.sin(performance.now() * 0.01) * 3;
+      const startX = board.x + 0.5 * tile;
+      const startY = board.y + 0.5 * tile;
+      ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.arc(startX, startY, tile * 0.28 + pulse, 0, Math.PI * 2);
       ctx.stroke();
-
-      ctx.fillStyle = '#e9f5ff';
-      ctx.font = '700 12px Trebuchet MS';
-      ctx.textAlign = 'center';
-      ctx.fillText(state.polarity === 'blue' ? 'BLUE' : 'AMBER', x, y + 4);
     }
 
-    function drawSparks() {
-      for (const spark of state.sparks) {
-        const alpha = Math.max(0, 1 - spark.age / spark.life);
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = spark.color;
+        ctx.fillStyle = part.color;
         ctx.beginPath();
-        ctx.arc(spark.x, spark.y, 2.2, 0, Math.PI * 2);
+        ctx.arc(part.x, part.y, 2.1, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -604,17 +643,17 @@
 
     function drawTopLabel() {
       ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
-      ctx.fillRect(14, 12, 620, 58);
+      ctx.fillRect(14, 12, 700, 58);
       ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(14, 12, 620, 58);
+      ctx.strokeRect(14, 12, 700, 58);
       ctx.fillStyle = '#f0f7ff';
       ctx.font = '700 24px Trebuchet MS';
       ctx.textAlign = 'left';
       ctx.fillText('Chrome Shift', 28, 38);
       ctx.font = '600 14px Trebuchet MS';
       ctx.fillStyle = '#c6daf3';
-      ctx.fillText('Match polarity at impact to clear shards and preserve integrity', 28, 58);
+      ctx.fillText('Flood every tile from the top-left origin before moves and timer expire', 28, 58);
     }
 
     function drawPauseLabel() {
@@ -629,40 +668,47 @@
 
     function draw() {
       const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#173569');
-      grad.addColorStop(1, '#080f21');
+      grad.addColorStop(0, '#173568');
+      grad.addColorStop(1, '#080f22');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       drawBoard();
-      drawShards();
-      drawSparks();
-      drawPlayer();
+      drawParticles();
       drawTopLabel();
       drawPauseLabel();
     }
 
+    function updateColorButtons() {
+      for (let i = 0; i < colorButtons.length; i += 1) {
+        colorButtons[i].classList.toggle('active', i === state.currentColor);
+        colorButtons[i].classList.toggle('selected', i === state.selector);
+      }
+    }
+
     function updateHud() {
       hudMode.textContent = state.mode.toUpperCase();
-      hudLane.textContent = String(state.lane + 1);
-      hudPolarity.textContent = state.polarity === 'blue' ? 'BLUE' : 'AMBER';
-      hudScore.textContent = String(state.score);
-      hudStreak.textContent = String(state.streak);
-      hudLives.textContent = String(Math.max(0, state.lives));
+      hudOwned.textContent = `${state.ownedCount}/${TOTAL_TILES}`;
+      hudMoves.textContent = String(Math.max(0, MAX_MOVES - state.movesUsed));
       hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudColor.textContent = COLORS[state.currentColor]?.name ?? '-';
+      hudScore.textContent = String(state.score);
       hudCoins.textContent = String(Number(profileState?.coins || 0));
 
-      hudLives.parentElement.classList.toggle('good', state.lives >= 3);
-      hudLives.parentElement.classList.toggle('warn', state.lives === 2);
-      hudLives.parentElement.classList.toggle('bad', state.lives <= 1);
+      hudOwned.parentElement.classList.toggle('good', state.ownedCount >= TOTAL_TILES * 0.85);
+      hudOwned.parentElement.classList.toggle('warn', state.ownedCount < TOTAL_TILES * 0.85 && state.ownedCount >= TOTAL_TILES * 0.5);
+      hudOwned.parentElement.classList.toggle('bad', state.ownedCount < TOTAL_TILES * 0.5);
 
-      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 30);
-      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 30 && state.timeLeft >= 12);
-      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 12);
+      const movesLeft = MAX_MOVES - state.movesUsed;
+      hudMoves.parentElement.classList.toggle('good', movesLeft >= 8);
+      hudMoves.parentElement.classList.toggle('warn', movesLeft < 8 && movesLeft >= 4);
+      hudMoves.parentElement.classList.toggle('bad', movesLeft < 4);
 
-      hudPolarity.parentElement.classList.toggle('good', state.polarity === 'blue');
-      hudPolarity.parentElement.classList.toggle('warn', state.polarity !== 'blue');
-      hudPolarity.parentElement.classList.toggle('bad', false);
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 50);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 50 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+
+      updateColorButtons();
     }
 
     function toggleFullscreen() {
@@ -697,39 +743,26 @@
 
     window.addEventListener('keydown', (event) => {
       if (event.repeat) return;
-      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
-        event.preventDefault();
-        moveLane(-1);
-      }
-      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-        event.preventDefault();
-        moveLane(1);
-      }
-      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') {
-        event.preventDefault();
-        togglePolarity();
-      }
-      if (event.code === 'KeyP') {
-        event.preventDefault();
-        pauseToggle();
-      }
-      if (event.code === 'KeyR') {
-        event.preventDefault();
-        startRun();
-      }
-      if (event.code === 'KeyF') {
-        event.preventDefault();
-        toggleFullscreen();
-      }
+      if (event.code === 'Digit1') { event.preventDefault(); chooseColor(0); }
+      if (event.code === 'Digit2') { event.preventDefault(); chooseColor(1); }
+      if (event.code === 'Digit3') { event.preventDefault(); chooseColor(2); }
+      if (event.code === 'Digit4') { event.preventDefault(); chooseColor(3); }
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); shiftSelector(-1); }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); shiftSelector(1); }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); shiftSelector(-1); }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); shiftSelector(1); }
+      if (event.code === 'Space' || event.code === 'Enter' || event.code === 'KeyB') { event.preventDefault(); applySelectedColor(); }
+      if (event.code === 'KeyP') { event.preventDefault(); pauseToggle(); }
+      if (event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
     });
 
-    btnLeft.addEventListener('click', () => moveLane(-1));
-    btnShift.addEventListener('click', () => togglePolarity());
-    btnRight.addEventListener('click', () => moveLane(1));
+    colorButtons.forEach((button, index) => {
+      button.addEventListener('click', () => chooseColor(index));
+    });
     btnPause.addEventListener('click', () => pauseToggle());
     btnRestart.addEventListener('click', () => startRun());
     btnFullscreen.addEventListener('click', () => toggleFullscreen());
-
     document.getElementById('startBtn').addEventListener('click', () => startRun());
     document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
 
@@ -741,36 +774,34 @@
       const payload = {
         game: 'chromeshift',
         mode: state.mode,
-        coordinate_system: 'lane-based board with lane 0 at far left; y grows downward from board top',
+        coordinate_system: '10x10 grid with origin at top-left tile (row 0,col 0); +row downward, +col rightward',
         objective: {
-          survive_seconds: ROUND_SECONDS,
-          maintain_integrity_above: 0,
-          match_polarity_on_collision: true,
+          capture_all_tiles: TOTAL_TILES,
+          move_limit: MAX_MOVES,
+          time_limit_seconds: ROUND_SECONDS,
         },
-        player: {
-          lane: state.lane,
-          polarity: state.polarity,
-          integrity: state.lives,
-        },
-        shards: state.shards.map((shard) => ({
-          lane: shard.lane,
-          y: Number(shard.y.toFixed(2)),
-          polarity: shard.polarity,
-          speed: Number(shard.speed.toFixed(2)),
-        })),
         resources: {
+          owned_tiles: state.ownedCount,
+          total_tiles: TOTAL_TILES,
+          moves_used: state.movesUsed,
+          moves_left: Math.max(0, MAX_MOVES - state.movesUsed),
           time_left: Number(state.timeLeft.toFixed(2)),
+          active_color: COLORS[state.currentColor].name,
           score: state.score,
-          streak: state.streak,
         },
+        board_rows: state.grid.map((row) => row.join('')),
         result: state.result,
         coins: Number(profileState?.coins || 0),
       };
       return JSON.stringify(payload);
     };
 
+    resetRun();
+    state.mode = 'menu';
     draw();
     updateHud();
+    setModeOverlay('Chrome Shift', 'Flood the board by choosing color transitions that grow your connected territory.', 'Start Run');
+
     rafId = requestAnimationFrame((now) => {
       previousTime = now;
       frame(now);

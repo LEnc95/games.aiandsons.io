@@ -1585,3 +1585,21 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
   - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/chromeshift`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/chromeshift` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-02 Chrome Shift Differentiation Fix
+- User feedback: recent additions were too template-similar (lane dodgers and tile stealth clones).
+- Reworked `chromeshift/index.html` from a lane/polarity dodger into a distinct color-flood strategy puzzle.
+  - New core loop: capture a 10x10 board from top-left by selecting one of four colors to expand connected territory.
+  - Win/lose conditions: full capture before move limit/time limit; score and coin rewards tied to territory and efficiency.
+  - Controls now support both direct color keys (`1-4`) and action-client friendly inputs (`ArrowLeft/ArrowRight` to select, `Space/Enter` to apply), plus mobile color buttons.
+  - Retained deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Updated launcher/copy wiring:
+  - `src/meta/games.js` description and score hint updated to puzzle semantics.
+  - `index.html` fallback card description updated to match new gameplay.
+- Validation:
+  - Playwright skill loop passed locally using a temporary local server:
+    - `output/web-game/chromeshift-refresh-smoke3/shot-0.png..shot-2.png`
+    - `state-2.json` confirms interaction progression (`moves_used: 3`, `owned_tiles: 19`).
+  - No `errors-*.json` artifacts emitted in the final smoke run directory.
+- Follow-up:
+  - Apply the same de-duplication rewrite pass to `signalstack`, `riftdrifter`, `cometcourier`, and to either `vaultrunner` or `circuitpath` so each has a unique primary mechanic family.
