@@ -340,9 +340,7 @@ async function provisionFamilyAccountForProfile({ userId, profile, session }) {
   });
 
   const nonOwnerMembers = inactiveAccount.members.filter((member) => member.userId !== inactiveAccount.ownerUserId);
-  for (const member of nonOwnerMembers) {
-    await clearFamilyAccessForUser(member.userId);
-  }
+  await Promise.all(nonOwnerMembers.map((member) => clearFamilyAccessForUser(member.userId)));
   await saveStripeBillingProfile(userId, {
     familyAccountId: inactiveAccount.id,
     familyRole: "owner",
