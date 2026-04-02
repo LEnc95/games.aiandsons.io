@@ -945,9 +945,14 @@ async function handleAdminLookup(req, res) {
         lookedUpFamilyAccount.ownerUserId,
         ...((Array.isArray(lookedUpFamilyAccount.members) ? lookedUpFamilyAccount.members : []).map((member) => member.userId)),
       ]);
-      for (const memberUserId of memberUserIds) {
-        if (!memberUserId) continue;
-        addProfile(await getStripeBillingProfile(memberUserId));
+      const validMemberIds = Array.from(memberUserIds).filter(Boolean);
+      if (validMemberIds.length > 0) {
+        const fetchedProfiles = await Promise.all(
+          validMemberIds.map((id) => getStripeBillingProfile(id))
+        );
+        for (const profile of fetchedProfiles) {
+          addProfile(profile);
+        }
       }
     }
 
