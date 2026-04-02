@@ -1631,3 +1631,19 @@ pm run test:feedback passed (31/31 tests).
   - 
 pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json, success=true).
 - TODO next run: spot-check production routes after deployment propagation (/chromeshift, /signalstack, /riftdrifter, /cometcourier, /vaultrunner).
+
+## CLEAN NOTE (latest run)
+- Completed de-duplication rewrite across these game files:
+  - signalstack/index.html
+  - riftdrifter/index.html
+  - cometcourier/index.html
+  - vaultrunner/index.html
+- Updated matching metadata and fallback card copy in src/meta/games.js and index.html.
+- Fixed duplicate function declaration in cometcourier/index.html (togglePause) that had caused a load-time syntax error.
+- Validation complete and passing:
+  - develop-web-game Playwright runs for /signalstack, /riftdrifter, /cometcourier, /vaultrunner (smoke2 dirs)
+  - npm run feedback:sync-linear
+  - npm run test:feedback (31/31)
+  - npm run test:feedback-smoke:raw
+- Pushed to origin/main in commit 7a70e05.
+- Immediate production check: all routes return HTTP 200, but some pages may still be serving cached prior variants; recheck after propagation.
