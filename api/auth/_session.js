@@ -40,6 +40,10 @@ function getSessionSecret() {
     return cachedSecret;
   }
 
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    throw new Error("Missing APP_SESSION_SECRET in production.");
+  }
+
   cachedSecret = "cade-games-dev-session-secret";
   return cachedSecret;
 }
