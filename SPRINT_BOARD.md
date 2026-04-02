@@ -285,3 +285,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-03-30] Key PR links: none merged for this date.
 - [nightly 2026-03-31] No repository commits found for this date.
 - [nightly 2026-03-31] Key PR links: none merged for this date.
+- [nightly 2026-04-01] Tracked changes: 9 commit(s) - Add Vault Runner game and wire site routing metadata; update sprint board.; Merge pull request #57 from LEnc95/sentinel-fix-xss-15606326905744107900; Merge pull request #56 from LEnc95/bolt-debounce-search-2662894813776952574; Merge pull request #55 from LEnc95/palette-a11y-inputs-418373600541951323; Merge pull request #54 from LEnc95/add-line-rider-6796471402573778864; Sentinel: [HIGH] Fix XSS vulnerability in file upload; Bolt: Debounce game search input; Palette: Add ARIA labels to profile and classroom inputs.
+- [nightly 2026-04-01] Key PR links: #57, #56, #55, #54.

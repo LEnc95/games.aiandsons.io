@@ -1563,3 +1563,25 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
   - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/vaultrunner`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/vaultrunner` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-02 Chrome Shift Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `chromeshift/index.html` (Chrome Shift).
+  - Gameplay: six-lane reactor defense where player shifts lanes and toggles polarity to neutralize incoming blue/amber shards before integrity reaches zero.
+  - Controls: desktop keyboard (A/D or arrows + Space/W/Up + P/R/F) and mobile touch controls (Left/Shift/Right plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('chromeshift')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'chromeshift', gameName: 'Chrome Shift' })`.
+- Integrated launcher/routing wiring:
+  - Added `chromeshift` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/chromeshift` rewrites and `/chromeshift/index.html` cache-header entry in `vercel.json`.
+- Next: run validation checks (`feedback:sync-linear`, `test:feedback`, and the skill Playwright loop) and record outcomes.
+- Validation results (this run):
+  - `rg -n "chromeshift" chromeshift/index.html src/meta/games.js index.html vercel.json progress.md`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed to execute in this sandbox with `spawn EPERM`.
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/chromeshift`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/chromeshift` in an environment that allows child-process and Chromium launch.

@@ -64,5 +64,6 @@
 - game/signalstack
 - game/linerider
 - game/vaultrunner
+- game/chromeshift
 
 Generated from `src/meta/feedback.js`.

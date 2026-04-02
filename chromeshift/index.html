@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chrome Shift - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Shift lanes and polarity to neutralize incoming shards before the reactor overloads.">
+  <meta property="og:title" content="Chrome Shift - Play on Cade's Games">
+  <meta property="og:description" content="Shift lanes and polarity to neutralize incoming shards before the reactor overloads.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/chromeshift">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Chrome Shift - Play on Cade's Games">
+  <meta name="twitter:description" content="Shift lanes and polarity to neutralize incoming shards before the reactor overloads.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/chromeshift">
+  <style>
+    :root {
+      --bg0: #02050f;
+      --bg1: #0d1a3e;
+      --panel: rgba(8, 17, 38, 0.88);
+      --line: rgba(136, 193, 255, 0.35);
+      --text: #edf6ff;
+      --muted: #bfd4f6;
+      --good: #98ffd0;
+      --warn: #ffe29f;
+      --bad: #ff9db8;
+      --blue: #5ac7ff;
+      --orange: #ffaf61;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(85% 70% at 10% 0%, #1b3f77 0%, transparent 62%),
+        radial-gradient(75% 64% at 92% 100%, #2a2448 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #15284f 0%, #070f23 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 93, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Chrome Shift game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Chrome Shift</h1>
+          <p>Slide between lanes and toggle polarity to neutralize incoming shards before reactor integrity collapses.</p>
+          <p>Desktop: A/D or arrows move, Space switches polarity, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap Left/Right and Shift to match shard colors before impact.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Lane</span><b id="hudLane">1</b></div>
+      <div class="chip"><span>Polarity</span><b id="hudPolarity">BLUE</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Streak</span><b id="hudStreak">0</b></div>
+      <div class="chip"><span>Integrity</span><b id="hudLives">3</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">78.0s</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnShift">Shift</button>
+        <button type="button" id="btnRight">Right</button>
+      </div>
+      <div class="hint">Blue shards need blue polarity. Amber shards need amber polarity. Wrong match costs integrity.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const overlayEl = document.getElementById('overlay');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudLane = document.getElementById('hudLane');
+    const hudPolarity = document.getElementById('hudPolarity');
+    const hudScore = document.getElementById('hudScore');
+    const hudStreak = document.getElementById('hudStreak');
+    const hudLives = document.getElementById('hudLives');
+    const hudTime = document.getElementById('hudTime');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnLeft = document.getElementById('btnLeft');
+    const btnShift = document.getElementById('btnShift');
+    const btnRight = document.getElementById('btnRight');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const LANES = 6;
+    const ROUND_SECONDS = 78;
+
+    const board = {
+      x: 165,
+      y: 68,
+      width: 870,
+      height: 612,
+    };
+
+    const state = {
+      mode: 'menu',
+      score: 0,
+      lives: 3,
+      timeLeft: ROUND_SECONDS,
+      streak: 0,
+      lane: Math.floor(LANES / 2),
+      polarity: 'blue',
+      shards: [],
+      sparks: [],
+      spawnTimer: 0,
+      spawnInterval: 0.66,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function laneWidth() {
+      return board.width / LANES;
+    }
+
+    function laneCenter(lane) {
+      return board.x + laneWidth() * lane + laneWidth() * 0.5;
+    }
+
+    function playerY() {
+      return board.y + board.height - 66;
+    }
+
+    function togglePolarity() {
+      if (state.mode !== 'playing') return;
+      state.polarity = state.polarity === 'blue' ? 'amber' : 'blue';
+      addSpark(laneCenter(state.lane), playerY(), state.polarity === 'blue' ? '#6fd7ff' : '#ffc27c', 18);
+    }
+
+    function moveLane(delta) {
+      if (state.mode !== 'playing') return;
+      state.lane = Math.max(0, Math.min(LANES - 1, state.lane + delta));
+    }
+
+    function addSpark(x, y, color, count = 10) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 40 + Math.random() * 170;
+        state.sparks.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.18 + Math.random() * 0.34,
+          color,
+        });
+      }
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.score = 0;
+      state.lives = 3;
+      state.timeLeft = ROUND_SECONDS;
+      state.streak = 0;
+      state.lane = Math.floor(LANES / 2);
+      state.polarity = 'blue';
+      state.shards = [];
+      state.sparks = [];
+      state.spawnTimer = 0;
+      state.spawnInterval = 0.66;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: A/D or arrows move, Space switches polarity, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('chromeshift'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, chromeshift: { score: 0, clears: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 140);
+      const streakBonus = Math.floor(state.streak / 3);
+      const clearBonus = result === 'win' ? 15 : 0;
+      const coins = Math.max(2, scoreBonus + streakBonus + clearBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          chromeshift: {
+            score: state.score,
+            streak: state.streak,
+            lives: state.lives,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      const message = result === 'win'
+        ? `Reactor stabilized. Score ${state.score}, streak ${state.streak}, coins ${state.runCoinsEarned}.`
+        : `Reactor failure. Score ${state.score}, streak ${state.streak}, coins ${state.runCoinsEarned}.`;
+      setModeOverlay(result === 'win' ? 'Shift Complete' : 'System Breach', message, 'Run Again');
+      updateHud();
+    }
+
+    function spawnShard() {
+      const lane = Math.floor(Math.random() * LANES);
+      const polarity = Math.random() < 0.5 ? 'blue' : 'amber';
+      const speed = 190 + Math.random() * 110 + (1 - state.timeLeft / ROUND_SECONDS) * 90;
+      state.shards.push({
+        lane,
+        y: board.y - 20,
+        speed,
+        polarity,
+        radius: 18,
+      });
+    }
+
+    function resolveCollision(shard) {
+      if (shard.lane !== state.lane) {
+        state.streak = 0;
+        return;
+      }
+      if (shard.polarity === state.polarity) {
+        state.streak += 1;
+        state.score += 60 + state.streak * 4;
+        addSpark(laneCenter(shard.lane), playerY() - 24, shard.polarity === 'blue' ? '#7de0ff' : '#ffcf8f', 16);
+      } else {
+        state.streak = 0;
+        state.lives -= 1;
+        addSpark(laneCenter(shard.lane), playerY() - 12, '#ff9db8', 22);
+        if (state.lives <= 0) {
+          finishRun('loss');
+        }
+      }
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Shard stream halted. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnShard();
+        state.spawnInterval = Math.max(0.24, state.spawnInterval - 0.004);
+        state.spawnTimer = state.spawnInterval;
+      }
+
+      for (let i = state.shards.length - 1; i >= 0; i -= 1) {
+        const shard = state.shards[i];
+        shard.y += shard.speed * dt;
+        if (shard.y >= playerY() - 18) {
+          resolveCollision(shard);
+          state.shards.splice(i, 1);
+        }
+      }
+
+      for (let i = state.sparks.length - 1; i >= 0; i -= 1) {
+        const spark = state.sparks[i];
+        spark.age += dt;
+        if (spark.age >= spark.life) {
+          state.sparks.splice(i, 1);
+          continue;
+        }
+        spark.x += spark.vx * dt;
+        spark.y += spark.vy * dt;
+        spark.vy += 120 * dt;
+      }
+
+      state.score += Math.floor(dt * 6);
+
+      if (state.timeLeft <= 0) {
+        finishRun('win');
+      }
+    }
+
+    function drawBoard() {
+      const colW = laneWidth();
+      const grad = ctx.createLinearGradient(0, board.y, 0, board.y + board.height);
+      grad.addColorStop(0, '#132f5e');
+      grad.addColorStop(1, '#0a1630');
+      ctx.fillStyle = grad;
+      ctx.fillRect(board.x, board.y, board.width, board.height);
+
+      for (let lane = 0; lane < LANES; lane += 1) {
+        const x = board.x + lane * colW;
+        ctx.fillStyle = lane % 2 === 0 ? 'rgba(29, 57, 101, 0.45)' : 'rgba(18, 40, 78, 0.45)';
+        ctx.fillRect(x + 1, board.y + 1, colW - 2, board.height - 2);
+      }
+
+      ctx.strokeStyle = 'rgba(137, 192, 255, 0.28)';
+      ctx.lineWidth = 1;
+      for (let lane = 0; lane <= LANES; lane += 1) {
+        const x = board.x + lane * colW;
+        ctx.beginPath();
+        ctx.moveTo(x, board.y);
+        ctx.lineTo(x, board.y + board.height);
+        ctx.stroke();
+      }
+    }
+
+    function drawShards() {
+      for (const shard of state.shards) {
+        const x = laneCenter(shard.lane);
+        const c = shard.polarity === 'blue' ? '#66d2ff' : '#ffb36a';
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.moveTo(x, shard.y - shard.radius);
+        ctx.lineTo(x + shard.radius * 0.8, shard.y);
+        ctx.lineTo(x, shard.y + shard.radius);
+        ctx.lineTo(x - shard.radius * 0.8, shard.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer() {
+      const x = laneCenter(state.lane);
+      const y = playerY();
+      const color = state.polarity === 'blue' ? '#5ac7ff' : '#ffaf61';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(x, y + 18, 44, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(237, 246, 255, 0.95)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#e9f5ff';
+      ctx.font = '700 12px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText(state.polarity === 'blue' ? 'BLUE' : 'AMBER', x, y + 4);
+    }
+
+    function drawSparks() {
+      for (const spark of state.sparks) {
+        const alpha = Math.max(0, 1 - spark.age / spark.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = spark.color;
+        ctx.beginPath();
+        ctx.arc(spark.x, spark.y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 620, 58);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 620, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Chrome Shift', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Match polarity at impact to clear shards and preserve integrity', 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#173569');
+      grad.addColorStop(1, '#080f21');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawBoard();
+      drawShards();
+      drawSparks();
+      drawPlayer();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudLane.textContent = String(state.lane + 1);
+      hudPolarity.textContent = state.polarity === 'blue' ? 'BLUE' : 'AMBER';
+      hudScore.textContent = String(state.score);
+      hudStreak.textContent = String(state.streak);
+      hudLives.textContent = String(Math.max(0, state.lives));
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudLives.parentElement.classList.toggle('good', state.lives >= 3);
+      hudLives.parentElement.classList.toggle('warn', state.lives === 2);
+      hudLives.parentElement.classList.toggle('bad', state.lives <= 1);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 30);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 30 && state.timeLeft >= 12);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 12);
+
+      hudPolarity.parentElement.classList.toggle('good', state.polarity === 'blue');
+      hudPolarity.parentElement.classList.toggle('warn', state.polarity !== 'blue');
+      hudPolarity.parentElement.classList.toggle('bad', false);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        moveLane(-1);
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        moveLane(1);
+      }
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        togglePolarity();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    btnLeft.addEventListener('click', () => moveLane(-1));
+    btnShift.addEventListener('click', () => togglePolarity());
+    btnRight.addEventListener('click', () => moveLane(1));
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'chromeshift',
+        mode: state.mode,
+        coordinate_system: 'lane-based board with lane 0 at far left; y grows downward from board top',
+        objective: {
+          survive_seconds: ROUND_SECONDS,
+          maintain_integrity_above: 0,
+          match_polarity_on_collision: true,
+        },
+        player: {
+          lane: state.lane,
+          polarity: state.polarity,
+          integrity: state.lives,
+        },
+        shards: state.shards.map((shard) => ({
+          lane: shard.lane,
+          y: Number(shard.y.toFixed(2)),
+          polarity: shard.polarity,
+          speed: Number(shard.speed.toFixed(2)),
+        })),
+        resources: {
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+          streak: state.streak,
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'chromeshift', gameName: 'Chrome Shift' });
+  </script>
+</body>
+</html>
