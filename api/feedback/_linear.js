@@ -315,33 +315,54 @@ async function ensureLinearLabels(labelNames = [], { teamId = "" } = {}) {
   const labels = await loadLinearLabels();
   const created = [];
 
-  // ⚡ Bolt: Implemented Promise.all concurrency to eliminate N+1 latency
-  // when provisioning multiple new labels sequentially.
-  const creationPromises = normalizedNames.map(async (name) => {
-    if (labels.has(name)) return null;
-    try {
-      const label = await createLinearLabel({ name, teamId: normalizedTeamId });
-      return { success: true, label };
-    } catch (error) {
-      return {
-        success: false,
-        errorData: {
-          id: "",
-          name,
-          error: String(error?.message || error),
-        },
-      };
-    }
-  });
+  // Filter normalized names up front to skip already-existing labels
+  const missingNames = [...new Set(normalizedNames.filter(name => !labels.has(name)))];
 
-  const results = await Promise.all(creationPromises);
-  for (const result of results) {
-    if (!result) continue;
-    if (result.success) {
-      labels.set(result.label.name, result.label.id);
-      created.push(result.label);
-    } else {
-      created.push(result.errorData);
+  if (missingNames.length > 0) {
+    // ⚡ Bolt: Implemented bounded concurrency to eliminate N+1 latency
+    // while preventing duplicate creation and API rate limit issues.
+    const concurrencyLimit = 3;
+    const queue = [...missingNames];
+    const results = [];
+
+    const worker = async () => {
+      while (queue.length > 0) {
+        const name = queue.shift();
+
+        // Re-check labels in case it was created concurrently by another worker
+        // (though with deduplicated normalizedNames this is mostly a safeguard)
+        if (labels.has(name)) {
+           continue;
+        }
+
+        try {
+          const label = await createLinearLabel({ name, teamId: normalizedTeamId });
+          // Update labels immediately so subsequent iterations can see it
+          labels.set(label.name, label.id);
+          results.push({ success: true, label });
+        } catch (error) {
+          results.push({
+            success: false,
+            errorData: {
+              id: "",
+              name,
+              error: String(error?.message || error),
+            },
+          });
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(concurrencyLimit, missingNames.length) }, worker));
+
+    // Sort results to match original missingNames order as best as possible
+    // Though missingNames is already a Set iteration result.
+    for (const result of results) {
+      if (result.success) {
+        created.push(result.label);
+      } else {
+        created.push(result.errorData);
+      }
     }
   }
 
