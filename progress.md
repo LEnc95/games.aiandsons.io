@@ -1606,3 +1606,28 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
 - Delivery update:
   - Committed rewrite as `12edc03 Rework Chrome Shift into distinct color-flood puzzle` and pushed to `origin/main`.
   - Deployment propagation may lag behind git push; immediate curl check still returned previous cached Chrome Shift variant at edge.
+
+## 2026-04-02T14:51:55-04:00 Multi-game de-duplication continuation
+- Continued the user-requested anti-clone pass by replacing mechanics in:
+  - signalstack/index.html -> relay-routing tile rotation puzzle.
+  - iftdrifter/index.html -> zero-g inertia piloting with shard collection.
+  - cometcourier/index.html -> station-demand dispatch management loop.
+  - aultrunner/index.html -> vault tumbler code-cracking stages.
+- Fixed validation blocker in cometcourier/index.html: removed duplicate 	ogglePause() declaration that caused SyntaxError: Identifier 'togglePause' has already been declared.
+- Updated game discovery copy to match new mechanics:
+  - src/meta/games.js score hints + descriptions for signalstack, iftdrifter, cometcourier, aultrunner.
+  - index.html fallback game-card descriptions for the same four slugs.
+- Skill validation ($develop-web-game) completed successfully against local http://127.0.0.1:4173:
+  - output/web-game/signalstack-dedupe-smoke2
+  - output/web-game/riftdrifter-dedupe-smoke2
+  - output/web-game/cometcourier-dedupe-smoke2
+  - output/web-game/vaultrunner-dedupe-smoke2
+  - All four runs produced shot-0..2.png and state-0..2.json with no errors-*.json artifacts.
+- QA checklist runs:
+  - 
+pm run feedback:sync-linear passed.
+  - 
+pm run test:feedback passed (31/31 tests).
+  - 
+pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json, success=true).
+- TODO next run: spot-check production routes after deployment propagation (/chromeshift, /signalstack, /riftdrifter, /cometcourier, /vaultrunner).

@@ -8,29 +8,29 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="Collect keycards, dodge patrol drones, and reach the vault uplink before security lockout.">
+  <meta name="description" content="Crack sequential vault tumbler codes before the alarm meter fills up.">
   <meta property="og:title" content="Vault Runner - Play on Cade's Games">
-  <meta property="og:description" content="Collect keycards, dodge patrol drones, and reach the vault uplink before security lockout.">
+  <meta property="og:description" content="Crack sequential vault tumbler codes before the alarm meter fills up.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://games.aiandsons.io/vaultrunner">
   <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
   <meta property="og:site_name" content="Cade's Games">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Vault Runner - Play on Cade's Games">
-  <meta name="twitter:description" content="Collect keycards, dodge patrol drones, and reach the vault uplink before security lockout.">
+  <meta name="twitter:description" content="Crack sequential vault tumbler codes before the alarm meter fills up.">
   <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
   <link rel="canonical" href="https://games.aiandsons.io/vaultrunner">
   <style>
     :root {
-      --bg0: #040913;
-      --bg1: #0d1d36;
-      --panel: rgba(9, 18, 36, 0.86);
-      --line: rgba(139, 212, 255, 0.36);
-      --text: #edf5ff;
-      --muted: #c0d6f4;
-      --good: #98ffd3;
-      --warn: #ffd89a;
-      --bad: #ff9fb3;
+      --bg0: #050813;
+      --bg1: #0f2144;
+      --panel: rgba(8, 16, 34, 0.88);
+      --line: rgba(138, 205, 255, 0.4);
+      --text: #eef6ff;
+      --muted: #c3d8f6;
+      --good: #98ffd2;
+      --warn: #ffd894;
+      --bad: #ff9cb7;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -42,8 +42,8 @@
       font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(88% 72% at 10% 4%, #173c70 0%, transparent 62%),
-        radial-gradient(74% 60% at 92% 100%, #122b52 0%, transparent 62%),
+        radial-gradient(88% 72% at 10% 4%, #193f72 0%, transparent 62%),
+        radial-gradient(74% 60% at 92% 100%, #15335c 0%, transparent 62%),
         linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
     }
     .back-home {
@@ -83,7 +83,7 @@
       border-radius: 14px;
       border: 2px solid rgba(142, 209, 255, 0.58);
       box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
-      background: linear-gradient(180deg, #12264b 0%, #081228 100%);
+      background: linear-gradient(180deg, #132957 0%, #081127 100%);
       touch-action: none;
     }
     .overlay {
@@ -103,7 +103,7 @@
       pointer-events: auto;
     }
     .panel {
-      max-width: 660px;
+      max-width: 670px;
       border-radius: 14px;
       border: 1px solid var(--line);
       background: var(--panel);
@@ -130,7 +130,7 @@
     }
     button {
       border: 1px solid var(--line);
-      background: rgba(27, 53, 94, 0.92);
+      background: rgba(25, 52, 94, 0.92);
       color: var(--text);
       border-radius: 10px;
       padding: 10px 14px;
@@ -229,11 +229,11 @@
       <div id="overlay" class="overlay show">
         <div class="panel">
           <h1>Vault Runner</h1>
-          <p>Collect every keycard, dodge red patrol drones, then reach the vault uplink before the timer expires.</p>
-          <p>Desktop: Arrow keys or WASD move one tile, P pause, R restart, F fullscreen.</p>
-          <p>Mobile: tap directional buttons to step tiles. Patrol hits cost shields, so route carefully.</p>
+          <p>Crack 5 vault stages by matching tumbler codes. Every wrong turn pushes the alarm higher.</p>
+          <p>Desktop: Left/Right select tumbler, Space turns selected tumbler, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use Select Left/Right and Turn to lock each stage before alarm reaches 100%.</p>
           <div class="row">
-            <button id="startBtn" type="button">Start Run</button>
+            <button id="startBtn" type="button">Start Heist</button>
             <button id="overlayFsBtn" type="button">Fullscreen</button>
           </div>
         </div>
@@ -242,23 +242,22 @@
 
     <section class="hud" aria-live="polite">
       <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
-      <div class="chip"><span>Position</span><b id="hudPos">1,9</b></div>
+      <div class="chip"><span>Stage</span><b id="hudStage">1/5</b></div>
+      <div class="chip"><span>Selected</span><b id="hudSelected">1</b></div>
+      <div class="chip"><span>Moves</span><b id="hudMoves">0</b></div>
+      <div class="chip"><span>Alarm</span><b id="hudAlarm">0%</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">130.0s</b></div>
       <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
-      <div class="chip"><span>Keys</span><b id="hudNodes">0/4</b></div>
-      <div class="chip"><span>Shields</span><b id="hudLives">3</b></div>
-      <div class="chip"><span>Invuln</span><b id="hudInvuln">0.0s</b></div>
-      <div class="chip warn"><span>Time</span><b id="hudTime">90.0s</b></div>
       <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
     </section>
 
     <section class="controls" aria-label="Controls">
       <div class="touch-group">
-        <button type="button" id="btnUp">Up</button>
-        <button type="button" id="btnLeft">Left</button>
-        <button type="button" id="btnDown">Down</button>
-        <button type="button" id="btnRight">Right</button>
+        <button type="button" id="btnLeft">Select Left</button>
+        <button type="button" id="btnTurn">Turn</button>
+        <button type="button" id="btnRight">Select Right</button>
       </div>
-      <div class="hint">Start at the green tile, gather all nodes, then finish on the violet uplink tile at top-right.</div>
+      <div class="hint">Match all three tumblers to the hidden target code. Completed stages lower the alarm.</div>
       <div class="touch-group">
         <button type="button" id="btnPause" class="wide">Pause</button>
         <button type="button" id="btnRestart" class="wide">Restart</button>
@@ -276,136 +275,94 @@
 
     const overlayEl = document.getElementById('overlay');
     const hudMode = document.getElementById('hudMode');
-    const hudPos = document.getElementById('hudPos');
-    const hudScore = document.getElementById('hudScore');
-    const hudNodes = document.getElementById('hudNodes');
-    const hudLives = document.getElementById('hudLives');
-    const hudInvuln = document.getElementById('hudInvuln');
+    const hudStage = document.getElementById('hudStage');
+    const hudSelected = document.getElementById('hudSelected');
+    const hudMoves = document.getElementById('hudMoves');
+    const hudAlarm = document.getElementById('hudAlarm');
     const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
     const hudCoins = document.getElementById('hudCoins');
 
-    const btnUp = document.getElementById('btnUp');
     const btnLeft = document.getElementById('btnLeft');
-    const btnDown = document.getElementById('btnDown');
+    const btnTurn = document.getElementById('btnTurn');
     const btnRight = document.getElementById('btnRight');
     const btnPause = document.getElementById('btnPause');
     const btnRestart = document.getElementById('btnRestart');
     const btnFullscreen = document.getElementById('btnFullscreen');
 
-    const GRID_COLS = 9;
-    const GRID_ROWS = 9;
-    const REQUIRED_NODES = 4;
-    const ROUND_SECONDS = 82;
-
-    const board = {
-      x: 160,
-      y: 70,
-      size: 610,
-    };
+    const TOTAL_STAGES = 5;
+    const ROUND_SECONDS = 130;
 
     const state = {
       mode: 'menu',
-      score: 0,
-      lives: 3,
+      stage: 1,
+      selected: 0,
+      tumblers: [0, 0, 0],
+      target: [0, 0, 0],
+      moves: 0,
+      alarm: 0,
       timeLeft: ROUND_SECONDS,
-      nodesCollected: 0,
-      invulnerable: 0,
-      moveCooldown: 0,
+      score: 0,
       result: 'none',
       runCoinsEarned: 0,
       hasRemembered: false,
-      player: { col: 0, row: GRID_ROWS - 1 },
-      nodes: [],
-      sweeps: [],
       particles: [],
     };
 
     let controlledStep = false;
-    let rafId = 0;
     let previousTime = performance.now();
+    let rafId = 0;
 
-    function cellSize() {
-      return board.size / GRID_COLS;
+    function randomDigit() {
+      return Math.floor(Math.random() * 10);
     }
 
-    function tileCenter(col, row) {
-      const s = cellSize();
-      return {
-        x: board.x + col * s + s * 0.5,
-        y: board.y + row * s + s * 0.5,
-      };
+    function randomCode() {
+      return [randomDigit(), randomDigit(), randomDigit()];
     }
 
-    function randomOpenTile(exclusions) {
-      while (true) {
-        const col = Math.floor(Math.random() * GRID_COLS);
-        const row = Math.floor(Math.random() * GRID_ROWS);
-        const key = `${col},${row}`;
-        if (!exclusions.has(key)) return { col, row, key };
-      }
-    }
-
-    function rebuildNodes() {
-      state.nodes = [];
-      const exclusions = new Set(['0,8', '8,0']);
-      for (let i = 0; i < REQUIRED_NODES; i += 1) {
-        const next = randomOpenTile(exclusions);
-        exclusions.add(next.key);
-        state.nodes.push({ col: next.col, row: next.row, taken: false });
-      }
-    }
-
-    function rebuildSweeps() {
-      const rows = [1, 3, 5, 7];
-      state.sweeps = rows.map((row, index) => ({
-        row,
-        col: index % 2 === 0 ? 0.4 : GRID_COLS - 1.4,
-        speed: 1.5 + index * 0.45,
-        dir: index % 2 === 0 ? 1 : -1,
-      }));
-    }
-
-    function resetRun() {
-      state.mode = 'playing';
-      state.score = 0;
-      state.lives = 3;
-      state.timeLeft = ROUND_SECONDS;
-      state.nodesCollected = 0;
-      state.invulnerable = 0;
-      state.moveCooldown = 0;
-      state.result = 'none';
-      state.runCoinsEarned = 0;
-      state.player.col = 0;
-      state.player.row = GRID_ROWS - 1;
-      state.particles = [];
-      rebuildNodes();
-      rebuildSweeps();
-    }
-
-    function addParticles(col, row, color, count = 10) {
-      const center = tileCenter(col, row);
+    function spawnBurst(x, y, color, count = 10) {
       for (let i = 0; i < count; i += 1) {
-        const a = Math.random() * Math.PI * 2;
-        const s = 30 + Math.random() * 140;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 35 + Math.random() * 140;
         state.particles.push({
-          x: center.x,
-          y: center.y,
-          vx: Math.cos(a) * s,
-          vy: Math.sin(a) * s,
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
           age: 0,
-          life: 0.2 + Math.random() * 0.35,
+          life: 0.16 + Math.random() * 0.34,
           color,
         });
       }
     }
 
-    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+    function setupStage(stageNumber) {
+      state.stage = stageNumber;
+      state.selected = 0;
+      state.target = randomCode();
+      state.tumblers = randomCode();
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.moves = 0;
+      state.alarm = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.score = 0;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.particles = [];
+      setupStage(1);
+    }
+
+    function showOverlay(title, detail, buttonLabel = 'Start Heist') {
       overlayEl.classList.add('show');
       overlayEl.innerHTML = `
         <div class="panel">
           <h1>${title}</h1>
-          <p>${body}</p>
-          <p>Desktop: Arrow keys or WASD move one tile, P pause, R restart, F fullscreen.</p>
+          <p>${detail}</p>
+          <p>Desktop: Left/Right select tumbler, Space turns tumbler, P pause, R restart, F fullscreen.</p>
           <div class="row">
             <button id="startBtn" type="button">${buttonLabel}</button>
             <button id="overlayFsBtn" type="button">Fullscreen</button>
@@ -422,25 +379,38 @@
         state.hasRemembered = true;
         try { rememberRecent('vaultrunner'); } catch {}
       }
-      try { maybeUnlock({ anyPlay: true, vaultrunner: { score: 0, keys: 0, result: 'started' } }); } catch {}
+      try { maybeUnlock({ anyPlay: true, vaultrunner: { stage: 1, score: 0, result: 'started' } }); } catch {}
       overlayEl.classList.remove('show');
       updateHud();
+      draw();
+    }
+
+    function isStageSolved() {
+      return state.tumblers.every((value, i) => value === state.target[i]);
+    }
+
+    function scoreNow() {
+      const stageScore = (state.stage - 1) * 520;
+      const timeBonus = Math.max(0, Math.floor(state.timeLeft) * 2);
+      const alarmPenalty = Math.floor(state.alarm * 4);
+      const efficiency = Math.max(0, 220 - state.moves);
+      return Math.max(0, stageScore + timeBonus + efficiency - alarmPenalty);
     }
 
     function rewardRun(result) {
-      const scoreBonus = Math.floor(state.score / 120);
-      const nodeBonus = state.nodesCollected * 2;
-      const clearBonus = result === 'win' ? 15 : 0;
-      const coins = Math.max(2, scoreBonus + nodeBonus + clearBonus);
+      const stageBonus = (state.stage - 1) * 2;
+      const clearBonus = result === 'win' ? 14 : 0;
+      const alarmBonus = result === 'win' ? Math.max(0, Math.floor((100 - state.alarm) / 15)) : 0;
+      const coins = Math.max(2, stageBonus + clearBonus + alarmBonus);
       state.runCoinsEarned = coins;
       try { addCoins(coins); } catch {}
       try {
         maybeUnlock({
           anyPlay: true,
           vaultrunner: {
+            stage: state.stage,
             score: state.score,
-            keys: state.nodesCollected,
-            lives: state.lives,
+            alarm: Math.round(state.alarm),
             result,
           },
         });
@@ -451,60 +421,50 @@
       if (state.mode !== 'playing' && state.mode !== 'paused') return;
       state.mode = result === 'win' ? 'won' : 'lost';
       state.result = result;
+      state.score = scoreNow();
       rewardRun(result);
-      const message = result === 'win'
-        ? `Route complete. Score ${state.score}, nodes ${state.nodesCollected}, coins ${state.runCoinsEarned}.`
-        : `Run failed. Score ${state.score}, nodes ${state.nodesCollected}, coins ${state.runCoinsEarned}.`;
-      setModeOverlay(result === 'win' ? 'Uplink Online' : 'Circuit Breach', message, 'Run Again');
+      const detail = result === 'win'
+        ? `All vault stages cracked. Score ${state.score}, alarm ${Math.round(state.alarm)}%, coins ${state.runCoinsEarned}.`
+        : `Heist failed. Stage ${state.stage}/${TOTAL_STAGES}, score ${state.score}, coins ${state.runCoinsEarned}.`;
+      showOverlay(result === 'win' ? 'Vault Opened' : 'Alarm Triggered', detail, 'Run Again');
       updateHud();
     }
 
-    function stepPlayer(dx, dy) {
+    function selectDelta(delta) {
       if (state.mode !== 'playing') return;
-      if (state.moveCooldown > 0) return;
-      const nextCol = Math.max(0, Math.min(GRID_COLS - 1, state.player.col + dx));
-      const nextRow = Math.max(0, Math.min(GRID_ROWS - 1, state.player.row + dy));
-      if (nextCol === state.player.col && nextRow === state.player.row) return;
-      state.player.col = nextCol;
-      state.player.row = nextRow;
-      state.moveCooldown = 0.07;
-      addParticles(nextCol, nextRow, '#8bcfff', 6);
-      evaluateTile();
+      state.selected = (state.selected + delta + 3) % 3;
     }
 
-    function evaluateTile() {
-      for (const node of state.nodes) {
-        if (!node.taken && node.col === state.player.col && node.row === state.player.row) {
-          node.taken = true;
-          state.nodesCollected += 1;
-          state.score += 110;
-          addParticles(node.col, node.row, '#8cfedc', 12);
+    function turnSelectedTumbler() {
+      if (state.mode !== 'playing') return;
+      const idx = state.selected;
+      state.tumblers[idx] = (state.tumblers[idx] + 1) % 10;
+      state.moves += 1;
+
+      const aligned = state.tumblers[idx] === state.target[idx];
+      state.alarm = Math.max(0, Math.min(100, state.alarm + (aligned ? -2 : 4.5)));
+
+      const x = 410 + idx * 190;
+      const y = 365;
+      spawnBurst(x, y, aligned ? '#98ffd2' : '#ff9ab9', 12);
+
+      if (isStageSolved()) {
+        state.score = scoreNow() + 140;
+        state.alarm = Math.max(0, state.alarm - 15);
+        if (state.stage >= TOTAL_STAGES) {
+          finishRun('win');
+          return;
         }
-      }
-
-      const atExit = state.player.col === GRID_COLS - 1 && state.player.row === 0;
-      if (atExit && state.nodesCollected >= REQUIRED_NODES) {
-        state.score += Math.floor(state.timeLeft * 5);
-        finishRun('win');
-      }
-    }
-
-    function takeHit() {
-      if (state.invulnerable > 0) return;
-      state.lives -= 1;
-      state.invulnerable = 1.2;
-      addParticles(state.player.col, state.player.row, '#ff9ab0', 18);
-      state.player.col = 0;
-      state.player.row = GRID_ROWS - 1;
-      if (state.lives <= 0) {
+        setupStage(state.stage + 1);
+      } else if (state.alarm >= 100) {
         finishRun('loss');
       }
     }
 
-    function pauseToggle() {
+    function togglePause() {
       if (state.mode === 'playing') {
         state.mode = 'paused';
-        setModeOverlay('Paused', 'Patrol drones paused. Resume when ready.', 'Resume');
+        showOverlay('Paused', 'Vault lock paused. Resume when ready.', 'Resume');
       } else if (state.mode === 'paused') {
         state.mode = 'playing';
         overlayEl.classList.remove('show');
@@ -513,26 +473,18 @@
     }
 
     function update(dt) {
-      if (state.mode !== 'playing') return;
-
-      state.timeLeft = Math.max(0, state.timeLeft - dt);
-      state.invulnerable = Math.max(0, state.invulnerable - dt);
-      state.moveCooldown = Math.max(0, state.moveCooldown - dt);
-      state.score += Math.floor(dt * 8);
-
-      for (const sweep of state.sweeps) {
-        sweep.col += sweep.dir * sweep.speed * dt;
-        if (sweep.col >= GRID_COLS - 0.3) {
-          sweep.col = GRID_COLS - 0.3;
-          sweep.dir = -1;
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
+          return;
         }
-        if (sweep.col <= 0.3) {
-          sweep.col = 0.3;
-          sweep.dir = 1;
+        state.alarm = Math.max(0, Math.min(100, state.alarm + dt * 0.55));
+        if (state.alarm >= 100) {
+          finishRun('loss');
+          return;
         }
-        if (state.player.row === sweep.row && Math.abs(state.player.col - sweep.col) <= 0.36) {
-          takeHit();
-        }
+        state.score = scoreNow();
       }
 
       for (let i = state.particles.length - 1; i >= 0; i -= 1) {
@@ -544,105 +496,62 @@
         }
         part.x += part.vx * dt;
         part.y += part.vy * dt;
-        part.vy += 90 * dt;
-      }
-
-      if (state.timeLeft <= 0) {
-        finishRun('loss');
+        part.vy += 80 * dt;
       }
     }
 
-    function drawBoard() {
-      const s = cellSize();
-      ctx.fillStyle = '#0a1933';
-      ctx.fillRect(board.x, board.y, board.size, board.size);
+    function drawVault() {
+      const centerX = canvas.width * 0.5;
+      const centerY = canvas.height * 0.53;
+      const radius = 210;
 
-      for (let row = 0; row < GRID_ROWS; row += 1) {
-        for (let col = 0; col < GRID_COLS; col += 1) {
-          const x = board.x + col * s;
-          const y = board.y + row * s;
-          const isStart = col === 0 && row === GRID_ROWS - 1;
-          const isExit = col === GRID_COLS - 1 && row === 0;
-          ctx.fillStyle = isStart
-            ? 'rgba(120, 250, 191, 0.22)'
-            : isExit
-              ? 'rgba(176, 134, 255, 0.25)'
-              : 'rgba(16, 34, 67, 0.85)';
-          ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
-        }
-      }
-
-      ctx.strokeStyle = 'rgba(142, 204, 255, 0.26)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= GRID_COLS; i += 1) {
-        const x = board.x + i * s;
-        ctx.beginPath();
-        ctx.moveTo(x, board.y);
-        ctx.lineTo(x, board.y + board.size);
-        ctx.stroke();
-      }
-      for (let i = 0; i <= GRID_ROWS; i += 1) {
-        const y = board.y + i * s;
-        ctx.beginPath();
-        ctx.moveTo(board.x, y);
-        ctx.lineTo(board.x + board.size, y);
-        ctx.stroke();
-      }
-    }
-
-    function drawNodes() {
-      for (const node of state.nodes) {
-        if (node.taken) continue;
-        const center = tileCenter(node.col, node.row);
-        const pulse = 8 + Math.sin(performance.now() * 0.01 + node.col) * 1.5;
-        ctx.fillStyle = '#8ffedf';
-        ctx.beginPath();
-        ctx.arc(center.x, center.y, pulse, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(222, 255, 245, 0.95)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    }
-
-    function drawSweeps() {
-      const s = cellSize();
-      for (const sweep of state.sweeps) {
-        const center = tileCenter(sweep.col, sweep.row);
-        const barW = s * 0.78;
-        const barH = s * 0.22;
-        ctx.fillStyle = 'rgba(255, 117, 138, 0.92)';
-        ctx.fillRect(center.x - barW * 0.5, center.y - barH * 0.5, barW, barH);
-        ctx.strokeStyle = 'rgba(255, 207, 216, 0.95)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(center.x - barW * 0.5, center.y - barH * 0.5, barW, barH);
-
-        ctx.strokeStyle = 'rgba(255, 102, 132, 0.35)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(board.x, center.y);
-        ctx.lineTo(board.x + board.size, center.y);
-        ctx.stroke();
-      }
-    }
-
-    function drawPlayer() {
-      const center = tileCenter(state.player.col, state.player.row);
-      const radius = cellSize() * 0.26;
-      if (state.invulnerable > 0) {
-        ctx.fillStyle = 'rgba(159, 245, 255, 0.24)';
-        ctx.beginPath();
-        ctx.arc(center.x, center.y, radius + 10 + Math.sin(performance.now() * 0.02) * 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = '#e8f6ff';
+      ctx.fillStyle = '#102548';
       ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, radius + 38, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#66bfff';
+      ctx.strokeStyle = 'rgba(149, 210, 255, 0.48)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = '#0c1a35';
       ctx.beginPath();
-      ctx.arc(center.x, center.y, radius * 0.46, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.fill();
+
+      for (let i = 0; i < 3; i += 1) {
+        const x = 410 + i * 190;
+        const y = centerY;
+        const selected = i === state.selected && state.mode === 'playing';
+        const solvedDigit = state.tumblers[i] === state.target[i];
+
+        ctx.fillStyle = selected ? 'rgba(128, 212, 255, 0.22)' : 'rgba(255, 255, 255, 0.06)';
+        ctx.fillRect(x - 58, y - 86, 116, 172);
+        ctx.strokeStyle = selected ? '#ecfbff' : 'rgba(149, 210, 255, 0.4)';
+        ctx.lineWidth = selected ? 3 : 2;
+        ctx.strokeRect(x - 58, y - 86, 116, 172);
+
+        ctx.fillStyle = solvedDigit ? '#9fffd7' : '#eaf6ff';
+        ctx.font = '700 64px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(state.tumblers[i]), x, y + 20);
+
+        ctx.fillStyle = '#9cc4ea';
+        ctx.font = '600 14px Trebuchet MS';
+        ctx.fillText(`Target ${state.target[i]}`, x, y + 56);
+      }
+
+      const barX = 285;
+      const barY = 610;
+      const barW = 630;
+      const barH = 18;
+      const ratio = Math.max(0, Math.min(1, state.alarm / 100));
+      ctx.fillStyle = 'rgba(22, 37, 66, 0.95)';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.strokeStyle = 'rgba(148, 208, 255, 0.42)';
+      ctx.strokeRect(barX, barY, barW, barH);
+      const alarmColor = ratio < 0.45 ? '#7ef5bf' : (ratio < 0.75 ? '#ffd27f' : '#ff91ad');
+      ctx.fillStyle = alarmColor;
+      ctx.fillRect(barX + 2, barY + 2, (barW - 4) * ratio, barH - 4);
     }
 
     function drawParticles() {
@@ -651,7 +560,7 @@
         ctx.globalAlpha = alpha;
         ctx.fillStyle = part.color;
         ctx.beginPath();
-        ctx.arc(part.x, part.y, 2.1, 0, Math.PI * 2);
+        ctx.arc(part.x, part.y, 2, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -659,66 +568,63 @@
 
     function drawTopLabel() {
       ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
-      ctx.fillRect(14, 12, 560, 58);
+      ctx.fillRect(14, 12, 730, 58);
       ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(14, 12, 560, 58);
+      ctx.strokeRect(14, 12, 730, 58);
       ctx.fillStyle = '#f0f7ff';
       ctx.font = '700 24px Trebuchet MS';
       ctx.textAlign = 'left';
       ctx.fillText('Vault Runner', 28, 38);
       ctx.font = '600 14px Trebuchet MS';
       ctx.fillStyle = '#c6daf3';
-      ctx.fillText(`Keys ${state.nodesCollected}/${REQUIRED_NODES} | Exit unlocks after all keys are collected`, 28, 58);
+      ctx.fillText('Select tumbler, turn digits, and match the target code before alarm reaches 100%.', 28, 58);
     }
 
-    function drawPauseLabel() {
+    function drawPauseShade() {
       if (state.mode !== 'paused') return;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 52px Trebuchet MS';
       ctx.textAlign = 'center';
-      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.52);
     }
 
     function draw() {
       const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#132b53');
-      grad.addColorStop(1, '#0a152d');
+      grad.addColorStop(0, '#142a56');
+      grad.addColorStop(1, '#081228');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      drawBoard();
-      drawNodes();
-      drawSweeps();
+      drawVault();
       drawParticles();
-      drawPlayer();
       drawTopLabel();
-      drawPauseLabel();
+      drawPauseShade();
     }
 
     function updateHud() {
       hudMode.textContent = state.mode.toUpperCase();
-      hudPos.textContent = `${state.player.col + 1},${state.player.row + 1}`;
-      hudScore.textContent = String(state.score);
-      hudNodes.textContent = `${state.nodesCollected}/${REQUIRED_NODES}`;
-      hudLives.textContent = String(Math.max(0, state.lives));
-      hudInvuln.textContent = `${state.invulnerable.toFixed(1)}s`;
+      hudStage.textContent = `${state.stage}/${TOTAL_STAGES}`;
+      hudSelected.textContent = String(state.selected + 1);
+      hudMoves.textContent = String(state.moves);
+      hudAlarm.textContent = `${Math.round(state.alarm)}%`;
       hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
       hudCoins.textContent = String(Number(profileState?.coins || 0));
 
-      hudLives.parentElement.classList.toggle('good', state.lives >= 3);
-      hudLives.parentElement.classList.toggle('warn', state.lives === 2);
-      hudLives.parentElement.classList.toggle('bad', state.lives <= 1);
+      hudAlarm.parentElement.classList.toggle('good', state.alarm < 45);
+      hudAlarm.parentElement.classList.toggle('warn', state.alarm >= 45 && state.alarm < 75);
+      hudAlarm.parentElement.classList.toggle('bad', state.alarm >= 75);
 
-      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 35);
-      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 35 && state.timeLeft >= 15);
-      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 15);
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 55);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 55 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
 
-      hudInvuln.parentElement.classList.toggle('good', state.invulnerable > 0.01);
-      hudInvuln.parentElement.classList.toggle('warn', state.invulnerable <= 0.01);
-      hudInvuln.parentElement.classList.toggle('bad', false);
+      hudStage.parentElement.classList.toggle('good', state.stage >= 4);
+      hudStage.parentElement.classList.toggle('warn', state.stage >= 2 && state.stage < 4);
+      hudStage.parentElement.classList.toggle('bad', state.stage < 2);
     }
 
     function toggleFullscreen() {
@@ -752,42 +658,18 @@
     }
 
     window.addEventListener('keydown', (event) => {
-      if (event.repeat) return;
-      if (event.code === 'ArrowUp' || event.code === 'KeyW') {
-        event.preventDefault();
-        stepPlayer(0, -1);
-      }
-      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
-        event.preventDefault();
-        stepPlayer(-1, 0);
-      }
-      if (event.code === 'ArrowDown' || event.code === 'KeyS') {
-        event.preventDefault();
-        stepPlayer(0, 1);
-      }
-      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-        event.preventDefault();
-        stepPlayer(1, 0);
-      }
-      if (event.code === 'KeyP') {
-        event.preventDefault();
-        pauseToggle();
-      }
-      if (event.code === 'KeyR') {
-        event.preventDefault();
-        startRun();
-      }
-      if (event.code === 'KeyF') {
-        event.preventDefault();
-        toggleFullscreen();
-      }
+      if (!event.repeat && (event.code === 'ArrowLeft' || event.code === 'KeyA')) { event.preventDefault(); selectDelta(-1); }
+      if (!event.repeat && (event.code === 'ArrowRight' || event.code === 'KeyD')) { event.preventDefault(); selectDelta(1); }
+      if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW' || event.code === 'Enter' || event.code === 'KeyB')) { event.preventDefault(); turnSelectedTumbler(); }
+      if (!event.repeat && event.code === 'KeyP') { event.preventDefault(); togglePause(); }
+      if (!event.repeat && event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (!event.repeat && event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
     });
 
-    btnUp.addEventListener('click', () => stepPlayer(0, -1));
-    btnLeft.addEventListener('click', () => stepPlayer(-1, 0));
-    btnDown.addEventListener('click', () => stepPlayer(0, 1));
-    btnRight.addEventListener('click', () => stepPlayer(1, 0));
-    btnPause.addEventListener('click', () => pauseToggle());
+    btnLeft.addEventListener('click', () => selectDelta(-1));
+    btnRight.addEventListener('click', () => selectDelta(1));
+    btnTurn.addEventListener('click', () => turnSelectedTumbler());
+    btnPause.addEventListener('click', () => togglePause());
     btnRestart.addEventListener('click', () => startRun());
     btnFullscreen.addEventListener('click', () => toggleFullscreen());
     document.getElementById('startBtn').addEventListener('click', () => startRun());
@@ -801,32 +683,24 @@
       const payload = {
         game: 'vaultrunner',
         mode: state.mode,
-        coordinate_system: 'grid origin at top-left tile (col 0,row 0); +col right, +row down',
         objective: {
-          collect_keycards_required: REQUIRED_NODES,
-          reach_exit_at: { col: GRID_COLS - 1, row: 0 },
-          survive_seconds: ROUND_SECONDS,
+          total_stages: TOTAL_STAGES,
+          current_stage: state.stage,
+          match_target_digits: true,
+          alarm_limit_percent: 100,
+          time_limit_seconds: ROUND_SECONDS,
         },
-        player: {
-          col: state.player.col,
-          row: state.player.row,
-          lives: state.lives,
-          invulnerable: Number(state.invulnerable.toFixed(2)),
-        },
-        nodes: state.nodes.map((node) => ({
-          col: node.col,
-          row: node.row,
-          taken: node.taken,
-        })),
-        drones: state.sweeps.map((sweep) => ({
-          row: sweep.row,
-          col: Number(sweep.col.toFixed(2)),
-          dir: sweep.dir,
-          speed: Number(sweep.speed.toFixed(2)),
+        tumblers: state.tumblers.map((value, i) => ({
+          index: i,
+          value,
+          target: state.target[i],
+          selected: i === state.selected,
+          matched: value === state.target[i],
         })),
         resources: {
+          moves: state.moves,
+          alarm_percent: Number(state.alarm.toFixed(2)),
           time_left: Number(state.timeLeft.toFixed(2)),
-          keycards_collected: state.nodesCollected,
           score: state.score,
         },
         result: state.result,
@@ -835,10 +709,12 @@
       return JSON.stringify(payload);
     };
 
-    rebuildNodes();
-    rebuildSweeps();
+    resetRun();
+    state.mode = 'menu';
     draw();
     updateHud();
+    showOverlay('Vault Runner', 'Match each stage code by rotating tumblers before the alarm spikes.', 'Start Heist');
+
     rafId = requestAnimationFrame((now) => {
       previousTime = now;
       frame(now);
