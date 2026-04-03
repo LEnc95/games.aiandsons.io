@@ -65,5 +65,6 @@
 - game/linerider
 - game/vaultrunner
 - game/chromeshift
+- game/trailblazer
 
 Generated from `src/meta/feedback.js`.

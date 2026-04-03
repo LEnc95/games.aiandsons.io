@@ -1647,3 +1647,25 @@ pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json
   - npm run test:feedback-smoke:raw
 - Pushed to origin/main in commit 7a70e05.
 - Immediate production check: all routes return HTTP 200, but some pages may still be serving cached prior variants; recheck after propagation.
+
+## 2026-04-03 Trailblazer Grid Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `trailblazer/index.html` (Trailblazer Grid).
+  - Gameplay: paint a 12x12 arena while dodging moving patrol drones and collecting timed energy pickups.
+  - Win/loss loop: capture at least 108 tiles before timer expires; drone hits drain lives; coins + score awarded at run end.
+  - Controls: desktop keyboard (WASD/Arrows + P/R/F) and mobile touch controls (D-pad + pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('trailblazer')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'trailblazer', gameName: 'Trailblazer Grid' })`.
+- Integrated launcher/routing wiring:
+  - Added `trailblazer` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/trailblazer` rewrites and `/trailblazer/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "trailblazer" trailblazer/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed in this sandbox (`spawn EPERM`).
+  - Skill-required Playwright loop via `web_game_playwright_client.js` on `/trailblazer`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/trailblazer` in an environment that allows child-process and Chromium launch.

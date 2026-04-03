@@ -5,6 +5,8 @@ Operational command reference for contributors and automations in this repositor
 
 ## Core Workflows
 - Install dependencies: `npm install`
+- Install dependencies with lockfile parity (CI): `npm ci`
+- Install Playwright browser runtime for smoke tests: `npx playwright install --with-deps chromium`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
 - Run combined QA gate: `npm run test:qa`

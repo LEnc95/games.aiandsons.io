@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Trailblazer Grid - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Paint the arena, dodge patrol drones, and capture enough tiles before time runs out." />
+  <meta property="og:title" content="Trailblazer Grid - Play on Cade's Games" />
+  <meta property="og:description" content="Paint the arena, dodge patrol drones, and capture enough tiles before time runs out." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/trailblazer" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trailblazer Grid - Play on Cade's Games" />
+  <meta name="twitter:description" content="Paint the arena, dodge patrol drones, and capture enough tiles before time runs out." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/trailblazer" />
+  <style>
+    :root {
+      --bg0: #08121a;
+      --bg1: #173147;
+      --panel: rgba(5, 17, 27, 0.9);
+      --line: rgba(130, 212, 255, 0.35);
+      --text: #e8f7ff;
+      --muted: #b9d8ea;
+      --good: #94ffc3;
+      --warn: #ffe89a;
+      --bad: #ff9db1;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(90% 70% at 8% 0%, #24516b 0%, transparent 60%),
+        radial-gradient(80% 64% at 92% 100%, #25486f 0%, transparent 64%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.36);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(130, 212, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+      background: linear-gradient(180deg, #163049 0%, #0a1420 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(23, 50, 74, 0.94);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 52px));
+      grid-template-rows: repeat(3, minmax(0, 44px));
+      gap: 6px;
+    }
+    .dpad button {
+      min-width: 0;
+      min-height: 44px;
+      padding: 0;
+      font-size: 13px;
+    }
+    .dpad .empty {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .control-copy {
+      text-align: center;
+      color: #c8deef;
+      font-size: 12px;
+      line-height: 1.38;
+      padding: 0 6px;
+    }
+    .touch-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .touch-group button { min-width: 82px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+      .dpad { margin: 0 auto; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Trailblazer Grid game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Trailblazer Grid</h1>
+          <p>Paint enough tiles before the countdown ends. Patrol drones will drain lives on contact.</p>
+          <p>Desktop: WASD or arrows to move, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use the on-screen D-pad. Grab energy cells for extra time.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Painted</span><b id="hudPainted">1/108</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">95.0s</b></div>
+      <div class="chip bad"><span>Lives</span><b id="hudLives">3</b></div>
+      <div class="chip"><span>Drones</span><b id="hudDrones">3</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="dpad" id="dpad">
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+        <button type="button" data-dir="up">Up</button>
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+        <button type="button" data-dir="left">Left</button>
+        <button type="button" data-dir="stay">Wait</button>
+        <button type="button" data-dir="right">Right</button>
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+        <button type="button" data-dir="down">Down</button>
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+      </div>
+      <div class="control-copy">
+        Paint target tiles while avoiding drones.<br />
+        Energy pickups add +6s and bonus score.
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudPainted = document.getElementById('hudPainted');
+    const hudTime = document.getElementById('hudTime');
+    const hudLives = document.getElementById('hudLives');
+    const hudDrones = document.getElementById('hudDrones');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID_ROWS = 12;
+    const GRID_COLS = 12;
+    const TOTAL_TILES = GRID_ROWS * GRID_COLS;
+    const TARGET_TILES = 108;
+    const ROUND_SECONDS = 95;
+    const MOVE_INTERVAL = 0.14;
+    const MAX_LIVES = 3;
+
+    const board = {
+      x: 322,
+      y: 95,
+      size: 530,
+      tile: 530 / GRID_ROWS,
+    };
+
+    const state = {
+      mode: 'menu',
+      painted: [],
+      paintedCount: 0,
+      player: { row: 0, col: 0, moveCooldown: 0 },
+      drones: [],
+      pickups: [],
+      spawnTimer: 4,
+      invuln: 0,
+      timeLeft: ROUND_SECONDS,
+      lives: MAX_LIVES,
+      score: 0,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      flashes: [],
+    };
+
+    const heldKeys = new Set();
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function makePaintMatrix() {
+      return Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(false));
+    }
+
+    function markPainted(row, col) {
+      if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS) return false;
+      if (state.painted[row][col]) return false;
+      state.painted[row][col] = true;
+      state.paintedCount += 1;
+      state.score += 10;
+      state.flashes.push({ row, col, age: 0, life: 0.22 });
+      return true;
+    }
+
+    function randomOpenTile() {
+      for (let tries = 0; tries < 80; tries += 1) {
+        const row = Math.floor(Math.random() * GRID_ROWS);
+        const col = Math.floor(Math.random() * GRID_COLS);
+        if (row === state.player.row && col === state.player.col) continue;
+        const hasPickup = state.pickups.some((pickup) => pickup.row === row && pickup.col === col);
+        if (hasPickup) continue;
+        return { row, col };
+      }
+      return { row: GRID_ROWS - 1, col: GRID_COLS - 1 };
+    }
+
+    function spawnDrone(row, col, vx, vy) {
+      return {
+        x: board.x + (col + 0.5) * board.tile,
+        y: board.y + (row + 0.5) * board.tile,
+        vx,
+        vy,
+        radius: board.tile * 0.28,
+      };
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.painted = makePaintMatrix();
+      state.paintedCount = 0;
+      state.player = { row: 0, col: 0, moveCooldown: 0 };
+      state.drones = [
+        spawnDrone(3, 3, 132, 84),
+        spawnDrone(8, 7, -118, 109),
+        spawnDrone(6, 10, -146, -72),
+      ];
+      state.pickups = [];
+      state.spawnTimer = 4;
+      state.invuln = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.lives = MAX_LIVES;
+      state.score = 0;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.flashes = [];
+
+      markPainted(state.player.row, state.player.col);
+      updateHud();
+      draw();
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: WASD or arrows to move, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('trailblazer'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, trailblazer: { painted: state.paintedCount, score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      heldKeys.clear();
+      updateHud();
+      draw();
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      const capturedBonus = Math.floor(state.paintedCount / 4);
+      const lifeBonus = result === 'win' ? state.lives * 20 : 0;
+      const timeBonus = result === 'win' ? Math.floor(state.timeLeft) * 2 : 0;
+      state.score += capturedBonus + lifeBonus + timeBonus;
+
+      const baseCoins = Math.floor(state.paintedCount / 18);
+      const winCoins = result === 'win' ? 9 : 2;
+      const lifeCoins = Math.max(0, state.lives - 1);
+      const coins = Math.max(2, baseCoins + winCoins + lifeCoins);
+      state.runCoinsEarned = coins;
+
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          trailblazer: {
+            painted: state.paintedCount,
+            score: state.score,
+            lives: state.lives,
+            result,
+          },
+        });
+      } catch {}
+
+      const message = result === 'win'
+        ? `Grid secured with ${state.paintedCount}/${TARGET_TILES} painted. Score ${state.score}, coins ${coins}.`
+        : `Run ended at ${state.paintedCount}/${TARGET_TILES} painted. Score ${state.score}, coins ${coins}.`;
+      setModeOverlay(result === 'win' ? 'Sector Secured' : 'Patrol Overrun', message, 'Run Again');
+      updateHud();
+    }
+
+    function applyMove(direction) {
+      if (state.mode !== 'playing') return;
+      let deltaRow = 0;
+      let deltaCol = 0;
+      if (direction === 'up') deltaRow = -1;
+      if (direction === 'down') deltaRow = 1;
+      if (direction === 'left') deltaCol = -1;
+      if (direction === 'right') deltaCol = 1;
+      if (direction === 'stay') {
+        state.score = Math.max(0, state.score - 1);
+        return;
+      }
+
+      const nextRow = Math.max(0, Math.min(GRID_ROWS - 1, state.player.row + deltaRow));
+      const nextCol = Math.max(0, Math.min(GRID_COLS - 1, state.player.col + deltaCol));
+      if (nextRow === state.player.row && nextCol === state.player.col) return;
+
+      state.player.row = nextRow;
+      state.player.col = nextCol;
+      state.player.moveCooldown = MOVE_INTERVAL;
+      markPainted(nextRow, nextCol);
+
+      for (let i = state.pickups.length - 1; i >= 0; i -= 1) {
+        const pickup = state.pickups[i];
+        if (pickup.row === nextRow && pickup.col === nextCol) {
+          state.pickups.splice(i, 1);
+          state.timeLeft = Math.min(ROUND_SECONDS + 20, state.timeLeft + 6);
+          state.score += 65;
+          state.flashes.push({ row: nextRow, col: nextCol, age: 0, life: 0.3, color: 'pickup' });
+        }
+      }
+
+      if (state.paintedCount >= TARGET_TILES) {
+        finishRun('win');
+      }
+    }
+
+    function hitPlayer() {
+      if (state.invuln > 0 || state.mode !== 'playing') return;
+      state.lives -= 1;
+      state.invuln = 1.35;
+      state.score = Math.max(0, state.score - 40);
+      if (state.lives <= 0) {
+        finishRun('loss');
+      }
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Trailblazer run paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function spawnPickup() {
+      if (state.pickups.length >= 3) return;
+      const tile = randomOpenTile();
+      state.pickups.push({ row: tile.row, col: tile.col, ttl: 13 });
+    }
+
+    function updateHeldMovement(dt) {
+      if (state.player.moveCooldown > 0) {
+        state.player.moveCooldown = Math.max(0, state.player.moveCooldown - dt);
+        return;
+      }
+      if (heldKeys.has('up')) { applyMove('up'); return; }
+      if (heldKeys.has('down')) { applyMove('down'); return; }
+      if (heldKeys.has('left')) { applyMove('left'); return; }
+      if (heldKeys.has('right')) { applyMove('right'); }
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        state.invuln = Math.max(0, state.invuln - dt);
+
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
+        }
+
+        updateHeldMovement(dt);
+
+        const minX = board.x + board.tile * 0.5;
+        const maxX = board.x + board.size - board.tile * 0.5;
+        const minY = board.y + board.tile * 0.5;
+        const maxY = board.y + board.size - board.tile * 0.5;
+
+        for (const drone of state.drones) {
+          drone.x += drone.vx * dt;
+          drone.y += drone.vy * dt;
+
+          if (drone.x < minX || drone.x > maxX) {
+            drone.vx *= -1;
+            drone.x = Math.max(minX, Math.min(maxX, drone.x));
+          }
+          if (drone.y < minY || drone.y > maxY) {
+            drone.vy *= -1;
+            drone.y = Math.max(minY, Math.min(maxY, drone.y));
+          }
+
+          const playerX = board.x + (state.player.col + 0.5) * board.tile;
+          const playerY = board.y + (state.player.row + 0.5) * board.tile;
+          const dx = drone.x - playerX;
+          const dy = drone.y - playerY;
+          const limit = drone.radius + board.tile * 0.23;
+          if ((dx * dx + dy * dy) <= limit * limit) {
+            hitPlayer();
+          }
+        }
+
+        state.spawnTimer -= dt;
+        if (state.spawnTimer <= 0) {
+          spawnPickup();
+          state.spawnTimer = 7.5;
+        }
+
+        for (let i = state.pickups.length - 1; i >= 0; i -= 1) {
+          const pickup = state.pickups[i];
+          pickup.ttl -= dt;
+          if (pickup.ttl <= 0) {
+            state.pickups.splice(i, 1);
+          }
+        }
+      }
+
+      for (let i = state.flashes.length - 1; i >= 0; i -= 1) {
+        state.flashes[i].age += dt;
+        if (state.flashes[i].age >= state.flashes[i].life) {
+          state.flashes.splice(i, 1);
+        }
+      }
+    }
+
+    function drawBoard() {
+      const tile = board.tile;
+      ctx.fillStyle = '#0a1a27';
+      ctx.fillRect(board.x, board.y, board.size, board.size);
+
+      for (let row = 0; row < GRID_ROWS; row += 1) {
+        for (let col = 0; col < GRID_COLS; col += 1) {
+          const x = board.x + col * tile;
+          const y = board.y + row * tile;
+          const painted = state.painted[row][col];
+          ctx.fillStyle = painted ? '#44b37f' : '#193246';
+          ctx.fillRect(x + 1, y + 1, tile - 2, tile - 2);
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(161, 213, 247, 0.2)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= GRID_ROWS; i += 1) {
+        const p = board.x + i * tile;
+        ctx.beginPath();
+        ctx.moveTo(p, board.y);
+        ctx.lineTo(p, board.y + board.size);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= GRID_COLS; i += 1) {
+        const p = board.y + i * tile;
+        ctx.beginPath();
+        ctx.moveTo(board.x, p);
+        ctx.lineTo(board.x + board.size, p);
+        ctx.stroke();
+      }
+    }
+
+    function drawFlashes() {
+      const tile = board.tile;
+      for (const flash of state.flashes) {
+        const alpha = Math.max(0, 1 - flash.age / flash.life);
+        const x = board.x + flash.col * tile;
+        const y = board.y + flash.row * tile;
+        ctx.globalAlpha = 0.5 * alpha;
+        ctx.fillStyle = flash.color === 'pickup' ? '#ffe07c' : '#9fffd5';
+        ctx.fillRect(x + 2, y + 2, tile - 4, tile - 4);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPlayer() {
+      const tile = board.tile;
+      const x = board.x + (state.player.col + 0.5) * tile;
+      const y = board.y + (state.player.row + 0.5) * tile;
+      const blink = state.invuln > 0 && Math.floor(state.invuln * 10) % 2 === 0;
+
+      ctx.fillStyle = blink ? '#ffe598' : '#d8f8ff';
+      ctx.beginPath();
+      ctx.arc(x, y, tile * 0.26, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#0c2232';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function drawDrones() {
+      for (const drone of state.drones) {
+        ctx.fillStyle = '#ff6f95';
+        ctx.beginPath();
+        ctx.arc(drone.x, drone.y, drone.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffd0df';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(drone.x - drone.radius * 0.5, drone.y - drone.radius * 0.5);
+        ctx.lineTo(drone.x + drone.radius * 0.5, drone.y + drone.radius * 0.5);
+        ctx.moveTo(drone.x + drone.radius * 0.5, drone.y - drone.radius * 0.5);
+        ctx.lineTo(drone.x - drone.radius * 0.5, drone.y + drone.radius * 0.5);
+        ctx.stroke();
+      }
+    }
+
+    function drawPickups() {
+      const tile = board.tile;
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.01);
+      for (const pickup of state.pickups) {
+        const x = board.x + (pickup.col + 0.5) * tile;
+        const y = board.y + (pickup.row + 0.5) * tile;
+        const r = tile * (0.17 + pulse * 0.08);
+        ctx.fillStyle = '#ffe07c';
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff6cc';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(6, 13, 20, 0.7)';
+      ctx.fillRect(14, 12, 780, 58);
+      ctx.strokeStyle = 'rgba(141, 207, 245, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 780, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Trailblazer Grid', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6dbec';
+      ctx.fillText('Paint tiles, dodge drones, and collect energy cells for extra time', 28, 58);
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#1a3b56');
+      grad.addColorStop(1, '#09131d');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawBoard();
+      drawFlashes();
+      drawPickups();
+      drawDrones();
+      drawPlayer();
+      drawTopLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudPainted.textContent = `${state.paintedCount}/${TARGET_TILES}`;
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudLives.textContent = String(Math.max(0, state.lives));
+      hudDrones.textContent = String(state.drones.length);
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudPainted.parentElement.classList.toggle('good', state.paintedCount >= TARGET_TILES);
+      hudPainted.parentElement.classList.toggle('warn', state.paintedCount < TARGET_TILES && state.paintedCount >= Math.floor(TARGET_TILES * 0.6));
+      hudPainted.parentElement.classList.toggle('bad', state.paintedCount < Math.floor(TARGET_TILES * 0.6));
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 40);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 40 && state.timeLeft >= 16);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 16);
+
+      hudLives.parentElement.classList.toggle('good', state.lives >= 3);
+      hudLives.parentElement.classList.toggle('warn', state.lives === 2);
+      hudLives.parentElement.classList.toggle('bad', state.lives <= 1);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function normalizeDirectionFromCode(code) {
+      if (code === 'ArrowUp' || code === 'KeyW') return 'up';
+      if (code === 'ArrowDown' || code === 'KeyS') return 'down';
+      if (code === 'ArrowLeft' || code === 'KeyA') return 'left';
+      if (code === 'ArrowRight' || code === 'KeyD') return 'right';
+      return '';
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat && !['KeyP', 'KeyR', 'KeyF'].includes(event.code)) return;
+
+      const dir = normalizeDirectionFromCode(event.code);
+      if (dir) {
+        event.preventDefault();
+        heldKeys.add(dir);
+        if (state.player.moveCooldown <= 0) {
+          applyMove(dir);
+        }
+      }
+
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      const dir = normalizeDirectionFromCode(event.code);
+      if (dir) {
+        heldKeys.delete(dir);
+      }
+    });
+
+    for (const button of document.querySelectorAll('[data-dir]')) {
+      button.addEventListener('click', () => {
+        applyMove(button.dataset.dir || 'stay');
+      });
+    }
+
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'trailblazer',
+        mode: state.mode,
+        coordinate_system: '12x12 tile grid with origin at top-left tile (row 0,col 0); +row downward, +col rightward',
+        objective: {
+          target_painted_tiles: TARGET_TILES,
+          total_tiles: TOTAL_TILES,
+          round_time_seconds: ROUND_SECONDS,
+        },
+        player: {
+          row: state.player.row,
+          col: state.player.col,
+          invulnerable_seconds: Number(state.invuln.toFixed(2)),
+        },
+        resources: {
+          painted_tiles: state.paintedCount,
+          lives: state.lives,
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+          pickups_active: state.pickups.length,
+        },
+        drones: state.drones.map((drone) => ({
+          row: Number(((drone.y - board.y) / board.tile).toFixed(2)),
+          col: Number(((drone.x - board.x) / board.tile).toFixed(2)),
+          vx: Number(drone.vx.toFixed(2)),
+          vy: Number(drone.vy.toFixed(2)),
+        })),
+        pickups: state.pickups.map((pickup) => ({ row: pickup.row, col: pickup.col, ttl: Number(pickup.ttl.toFixed(2)) })),
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    setModeOverlay('Trailblazer Grid', 'Paint enough tiles while dodging patrol drones to lock down the sector.', 'Start Run');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'trailblazer', gameName: 'Trailblazer Grid' });
+  </script>
+</body>
+</html>
