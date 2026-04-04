@@ -20,6 +20,7 @@ export const GAMES = [
   { slug:'ski',            name:'Retro Downhill Ski',  emoji:'\u26F7\uFE0F', scoreHint:'distance', url:'/ski',         desc:'Dodge trees and rocks as you race down the mountain!', earnsCoins:true },
   { slug:'homerunderby',   name:'Home Run Derby',      emoji:'\u26BE',    scoreHint:'homeruns',   url:'/homerunderby/', desc:'Time your swing to crush home runs before you rack up 10 outs.', earnsCoins:true },
   { slug:'micro-rc-racer', name:'Micro RC Racer',      emoji:'\u{1F3CE}\uFE0F', scoreHint:'best lap', url:'/microrc',   desc:'Top-down RC dirt racing with tank steering and slippery drifts.', earnsCoins:false },
+  { slug:'oregontrail',    name:'Oregon Trail',        emoji:'\u{1F40E}', scoreHint:'miles',      url:'/oregontrail/', desc:'Lead a wagon party across 2,000 miles, ration supplies, and survive trail disasters.', earnsCoins:false },
   { slug:'neonrally',      name:'Neon Rally',          emoji:'\u{1F3C1}', scoreHint:'position',   url:'/neonrally',     desc:'Race AI rivals through neon turns, chain boosts, and finish 3 laps before time runs out.', earnsCoins:true },
   { slug:'pacman',         name:'Pac-Man',             emoji:'\u{1F7E1}', scoreHint:'score',      url:'/pacman',        desc:'Eat pellets, outsmart ghosts, and clear multiple levels.', earnsCoins:true },
   { slug:'pokemon',        name:'Pokemon',             emoji:'\u{1F9E2}', scoreHint:'badges',     url:'/pokemon',       desc:'Build your team, battle trainers, and collect badges.', earnsCoins:true },
