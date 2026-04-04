@@ -1289,7 +1289,7 @@ async function handleCreatePortalSession(req, res) {
       const metadataUserId = typeof checkoutSession?.metadata?.appUserId === "string"
         ? checkoutSession.metadata.appUserId.trim()
         : "";
-      if (metadataUserId && metadataUserId !== session.userId) {
+      if (!metadataUserId || metadataUserId !== session.userId) {
         return sendError(res, 403, "Checkout session does not belong to this user.", "session_user_mismatch");
       }
 
@@ -1405,7 +1405,7 @@ async function handleSubscriptionStatus(req, res) {
       const metadataUserId = typeof checkoutSession?.metadata?.appUserId === "string"
         ? checkoutSession.metadata.appUserId.trim()
         : "";
-      if (metadataUserId && metadataUserId !== session.userId) {
+      if (!metadataUserId || metadataUserId !== session.userId) {
         return sendError(res, 403, "Checkout session does not belong to this user.", "session_user_mismatch");
       }
 

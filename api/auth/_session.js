@@ -32,14 +32,6 @@ function getSessionSecret() {
     return cachedSecret;
   }
 
-  const stripeKeySeed = typeof process.env.STRIPE_SECRET_KEY === "string"
-    ? process.env.STRIPE_SECRET_KEY.trim()
-    : "";
-  if (stripeKeySeed) {
-    cachedSecret = `stripe_seed_${stripeKeySeed}`;
-    return cachedSecret;
-  }
-
   if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
     throw new Error("Missing APP_SESSION_SECRET in production.");
   }
