@@ -279,3 +279,13 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
 - [nightly 2026-03-13] Tracked changes: 2 commit(s) - c593230 Add new game without emoji changes; 7fe8a6c Add favicon links across pages.
 - [nightly 2026-03-13] Key PR links: none merged for this date.
+- [nightly 2026-03-28] No repository commits found for this date.
+- [nightly 2026-03-28] Key PR links: none merged for this date.
+- [nightly 2026-03-30] Tracked changes: 1 commit(s) - Add Circuit Path game and wire routing metadata.
+- [nightly 2026-03-30] Key PR links: none merged for this date.
+- [nightly 2026-03-31] No repository commits found for this date.
+- [nightly 2026-03-31] Key PR links: none merged for this date.
+- [nightly 2026-04-01] Tracked changes: 9 commit(s) - Add Vault Runner game and wire site routing metadata; update sprint board.; Merge pull request #57 from LEnc95/sentinel-fix-xss-15606326905744107900; Merge pull request #56 from LEnc95/bolt-debounce-search-2662894813776952574; Merge pull request #55 from LEnc95/palette-a11y-inputs-418373600541951323; Merge pull request #54 from LEnc95/add-line-rider-6796471402573778864; Sentinel: [HIGH] Fix XSS vulnerability in file upload; Bolt: Debounce game search input; Palette: Add ARIA labels to profile and classroom inputs.
+- [nightly 2026-04-01] Key PR links: #57, #56, #55, #54.
+- [nightly 2026-04-02] Tracked changes: 17 commit(s) - e8f8263 Append clean progress handoff note; 7a70e05 Rework duplicate game slugs into distinct mechanics; 9cf272e Record Chrome Shift rewrite delivery status; 12edc03 Rework Chrome Shift into distinct color-flood puzzle; b87a25c Add Chrome Shift game and update sprint board notes (+12 more).
+- [nightly 2026-04-02] Key PR links: [#68](https://github.com/LEnc95/games.aiandsons.io/pull/68), [#70](https://github.com/LEnc95/games.aiandsons.io/pull/70), [#75](https://github.com/LEnc95/games.aiandsons.io/pull/75), [#76](https://github.com/LEnc95/games.aiandsons.io/pull/76), [#77](https://github.com/LEnc95/games.aiandsons.io/pull/77), [#78](https://github.com/LEnc95/games.aiandsons.io/pull/78).

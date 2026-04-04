@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Dino Run</title>
+  <title>Dino Run - Play on Cade's Games</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -31,6 +31,19 @@
 
     @media (max-width: 768px) { .hud { font-size:clamp(10px, 3vw, 14px); } .hint { font-size:clamp(12px, 3.5vw, 16px); } }
   </style>
+
+  <meta name="description" content="Endless runner with speed ramp and multipliers.">
+  <meta property="og:title" content="Dino Run - Play on Cade's Games">
+  <meta property="og:description" content="Endless runner with speed ramp and multipliers.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/dino">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dino Run - Play on Cade's Games">
+  <meta name="twitter:description" content="Endless runner with speed ramp and multipliers.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/dino">
 </head>
 <body>
   <!-- Back to Home button -->
@@ -278,12 +291,55 @@
         ctx.globalAlpha = 1;
       }
 
-      ctx.fillStyle = '#e7f0ff';
       const w = state.dino.w * (state.dino.duck? cfg.duckScale: 1);
       const h = state.dino.h * (state.dino.duck? cfg.duckScale: 1);
-      ctx.fillRect(state.dino.x, state.dino.y - h, w, h);
+      const x = state.dino.x;
+      const y = state.dino.y;
+      const stride = Math.max(1, Math.floor(state.spd / 300));
+      const isRunning = started && !over && state.dino.y >= GROUND_Y - 0.5;
+      const step = isRunning ? Math.floor(performance.now() / 95) % 2 : 0;
+      const legLiftA = step ? stride : 0;
+      const legLiftB = step ? 0 : stride;
+      const duckOffset = state.dino.duck ? h * 0.15 : 0;
+
+      // T-rex tail: low and thick near hips, tapering backward
+      ctx.fillStyle = '#aab8cf';
+      ctx.fillRect(x - w * 0.32, y - h * 0.34 + duckOffset, w * 0.24, h * 0.11);
+      ctx.fillRect(x - w * 0.2, y - h * 0.42 + duckOffset, w * 0.14, h * 0.08);
+
+      // main body (horizontal, chunky)
+      ctx.fillStyle = '#e7f0ff';
+      ctx.fillRect(x, y - h * 0.6 + duckOffset, w * 0.58, h * 0.42);
+      ctx.fillRect(x + w * 0.1, y - h * 0.72 + duckOffset, w * 0.22, h * 0.12);
+
+      // neck and oversized T-rex skull
+      ctx.fillRect(x + w * 0.5, y - h * 0.78 + duckOffset, w * 0.14, h * 0.18);
+      ctx.fillRect(x + w * 0.58, y - h * 1.0 + duckOffset, w * 0.34, h * 0.3);
+
+      // short jaw + teeth strip
+      ctx.fillStyle = '#d3deef';
+      ctx.fillRect(x + w * 0.84, y - h * 0.84 + duckOffset, w * 0.14, h * 0.09);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + w * 0.86, y - h * 0.79 + duckOffset, w * 0.09, h * 0.03);
+
+      // tiny T-rex arms (small and tucked in)
+      ctx.fillStyle = '#e7f0ff';
+      ctx.fillRect(x + w * 0.49, y - h * 0.52 + duckOffset, w * 0.06, h * 0.06);
+      ctx.fillRect(x + w * 0.53, y - h * 0.46 + duckOffset, w * 0.05, h * 0.05);
+
+      // powerful hind legs
+      const rearLegH = h * 0.35;
+      const frontLegH = h * 0.3;
+      ctx.fillRect(x + w * 0.15, y - rearLegH + legLiftA + duckOffset, w * 0.16, rearLegH - legLiftA);
+      ctx.fillRect(x + w * 0.36, y - frontLegH + legLiftB + duckOffset, w * 0.15, frontLegH - legLiftB);
+
+      // broad feet
+      ctx.fillRect(x + w * 0.1, y - 6 + duckOffset, w * 0.24, 6);
+      ctx.fillRect(x + w * 0.32, y - 6 + duckOffset, w * 0.22, 6);
+
       // eye
-      ctx.fillStyle = '#0b1020'; ctx.fillRect(state.dino.x + w - 10, state.dino.y - h + 10, 4, 4);
+      ctx.fillStyle = '#0b1020';
+      ctx.fillRect(x + w * 0.7, y - h * 0.9 + duckOffset, w * 0.06, h * 0.06);
 
       // overlays
       if(over){
@@ -305,6 +361,10 @@
 
     function loop(ts){ const dt = Math.min(1/30, (ts-lastT)/1000)||0; lastT=ts; update(dt); draw(); requestAnimationFrame(loop); }
     init(); updateHUD(); requestAnimationFrame(loop);
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: "dino", gameName: "Dino Run" });
   </script>
 </body>
 </html>

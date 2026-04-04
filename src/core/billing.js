@@ -1,4 +1,4 @@
-﻿import { get, set } from "./storage.js";
+import { get, set } from "./storage.js";
 import { ENTITLEMENT_KEYS, getEntitlements, setEntitlements } from "./entitlements.js";
 
 const BILLING_EMAIL_STORAGE_KEY = "billingEmail";
@@ -45,21 +45,6 @@ const normalizeSupportedPlans = (plans) => {
   return normalized;
 };
 
-const shouldSkipRemoteBillingProbe = () => {
-  if (typeof location === "undefined") return false;
-  const host = String(location.hostname || "").toLowerCase();
-  const isLoopback = host === "localhost" || host === "127.0.0.1";
-  if (!isLoopback) return false;
-
-  try {
-    const params = new URLSearchParams(location.search || "");
-    const forceProbe = params.get("stripeApiProbe");
-    return forceProbe !== "1";
-  } catch {
-    return true;
-  }
-};
-
 export const normalizeBillingConfig = (source) => {
   const raw = source && typeof source === "object" ? source : {};
   const providerRaw = typeof raw.provider === "string" ? raw.provider.trim().toLowerCase() : "local";
@@ -78,6 +63,21 @@ export const normalizeBillingConfig = (source) => {
   };
 };
 
+export const verifyReceipt = async (receiptToken) => {
+  try {
+    const response = await fetch('/api/billing/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: receiptToken }),
+    });
+    if (!response.ok) throw new Error('Verification failed');
+    return await response.json();
+  } catch (error) {
+    console.error('Receipt verification error:', error);
+    throw error;
+  }
+};
+
 const parseApiResponse = async (response) => {
   let payload = null;
   try {
@@ -94,7 +94,8 @@ const parseApiResponse = async (response) => {
 };
 
 export const ensureBillingSession = async ({ force = false } = {}) => {
-  if (shouldSkipRemoteBillingProbe()) {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) {
     cachedBillingSession = null;
     billingSessionFetchedAt = Date.now();
     return null;
@@ -128,7 +129,8 @@ export const ensureBillingSession = async ({ force = false } = {}) => {
 };
 
 export const fetchBillingConfig = async ({ force = false } = {}) => {
-  if (shouldSkipRemoteBillingProbe()) {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) {
     cachedBillingConfig = DEFAULT_BILLING_CONFIG;
     billingConfigFetchedAt = Date.now();
     return cachedBillingConfig;
@@ -237,6 +239,11 @@ export const fetchStripeSubscriptionStatus = async ({
   sessionId,
   customerEmail,
 } = {}) => {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) {
+    return { mode: "local", entitlements: {}, activePlanId: "" };
+  }
+
   await ensureBillingSession();
   const query = new URLSearchParams();
   if (typeof sessionId === "string" && sessionId.trim()) {
@@ -273,6 +280,7 @@ export const applyStripeEntitlementSnapshot = (snapshot, { fallbackPlanId = "" }
     : { status: "idle", planId: "", token: "", startedAt: 0, completedAt: 0 };
   const familyPremium = Boolean(snapshot.entitlements?.familyPremium);
   const schoolLicense = Boolean(snapshot.entitlements?.schoolLicense);
+  const hasPaidAccess = familyPremium || schoolLicense;
   const nextPlanId = typeof snapshot.activePlanId === "string" && snapshot.activePlanId
     ? snapshot.activePlanId
     : (fallbackPlanId || checkout.planId);
@@ -282,11 +290,11 @@ export const applyStripeEntitlementSnapshot = (snapshot, { fallbackPlanId = "" }
     [ENTITLEMENT_KEYS.FAMILY_PREMIUM]: familyPremium,
     [ENTITLEMENT_KEYS.SCHOOL_LICENSE]: schoolLicense,
     checkout: {
-      status: familyPremium ? "active" : "idle",
-      planId: familyPremium ? nextPlanId : "",
+      status: hasPaidAccess ? "active" : "idle",
+      planId: hasPaidAccess ? nextPlanId : "",
       token: "",
-      startedAt: familyPremium ? (checkout.startedAt || Date.now()) : 0,
-      completedAt: familyPremium ? Date.now() : 0,
+      startedAt: hasPaidAccess ? (checkout.startedAt || Date.now()) : 0,
+      completedAt: hasPaidAccess ? Date.now() : 0,
     },
   });
 };
@@ -319,4 +327,58 @@ export const syncEntitlementsWithBillingBackend = async ({
   }
 
   return { synced: true, snapshot, entitlements };
+};
+
+export const fetchFamilyBillingSummary = async () => {
+  await ensureBillingSession();
+  const response = await fetch("/api/stripe/family-summary", {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  return parseApiResponse(response);
+};
+
+export const sendFamilyInvite = async ({ email } = {}) => {
+  await ensureBillingSession();
+  const normalizedEmail = normalizeEmail(email);
+  if (!isLikelyEmail(normalizedEmail)) {
+    throw new Error("Enter a valid email address before sending a family invite.");
+  }
+  return postJson("/api/stripe/family-invite", { email: normalizedEmail });
+};
+
+export const acceptFamilyInvite = async ({ token } = {}) => {
+  await ensureBillingSession();
+  const normalizedToken = typeof token === "string" ? token.trim() : "";
+  if (!normalizedToken) {
+    throw new Error("Family invite token is missing.");
+  }
+  return postJson("/api/stripe/family-accept-invite", { token: normalizedToken });
+};
+
+export const removeFamilyMember = async ({ memberUserId } = {}) => {
+  await ensureBillingSession();
+  const normalizedMemberUserId = typeof memberUserId === "string" ? memberUserId.trim() : "";
+  if (!normalizedMemberUserId) {
+    throw new Error("Choose a valid family member before removing them.");
+  }
+  return postJson("/api/stripe/family-remove-member", { memberUserId: normalizedMemberUserId });
+};
+
+export const resendFamilyInvite = async ({ inviteId } = {}) => {
+  await ensureBillingSession();
+  const normalizedInviteId = typeof inviteId === "string" ? inviteId.trim() : "";
+  if (!normalizedInviteId) {
+    throw new Error("Choose a valid family invite before resending it.");
+  }
+  return postJson("/api/stripe/family-resend-invite", { inviteId: normalizedInviteId });
+};
+
+export const revokeFamilyInvite = async ({ inviteId } = {}) => {
+  await ensureBillingSession();
+  const normalizedInviteId = typeof inviteId === "string" ? inviteId.trim() : "";
+  if (!normalizedInviteId) {
+    throw new Error("Choose a valid family invite before revoking it.");
+  }
+  return postJson("/api/stripe/family-revoke-invite", { inviteId: normalizedInviteId });
 };

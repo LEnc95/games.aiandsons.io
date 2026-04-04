@@ -1,0 +1,86 @@
+name: Nightly Billing Reconcile
+
+on:
+  schedule:
+    - cron: "45 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-billing-reconcile
+  cancel-in-progress: false
+
+jobs:
+  billing-reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Nightly Billing Reconcile
+        id: reconcile
+        env:
+          STRIPE_ADMIN_TOKEN: ${{ secrets.STRIPE_ADMIN_TOKEN }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 }}
+        shell: bash
+        run: |
+          node scripts/stripe/nightly-reconcile.mjs \
+            --base-url https://games.aiandsons.io \
+            --dry-run false \
+            --output output/stripe/nightly-reconcile-summary.json
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+
+          const outcome = JSON.parse(fs.readFileSync("output/stripe/nightly-reconcile-summary.json", "utf8"));
+          const summary = outcome.summary || {};
+          const text = [
+            `profiles=${outcome.profileCount ?? 0}`,
+            `targets=${outcome.targetCount ?? 0}`,
+            `repaired=${summary.repaired ?? 0}`,
+            `unchanged=${summary.unchanged ?? 0}`,
+            `unbound=${summary.unbound ?? 0}`,
+            `failed=${summary.failed ?? 0}`,
+          ].join(", ");
+          if (process.env.GITHUB_OUTPUT) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `summary_text=${text}\n`);
+          }
+          EOF
+
+      - name: Upload Billing Reconcile Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-billing-reconcile
+          path: output/stripe/nightly-reconcile-summary.json
+          if-no-files-found: warn
+
+      - name: Notify Slack
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CI_WEBHOOK_URL }}
+          SLACK_NOTIFY_ON_SUCCESS: ${{ vars.SLACK_NOTIFY_SUCCESS }}
+          WORKFLOW_NAME: Nightly Billing Reconcile
+          WORKFLOW_STATUS: ${{ job.status }}
+          WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WORKFLOW_ARTIFACTS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts
+          WORKFLOW_PROVISION_SUMMARY: ${{ steps.reconcile.outputs.summary_text }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: node scripts/ci/send-slack-notification.mjs

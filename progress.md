@@ -5,7 +5,8 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Next: add `pacman/index.html`, integrate into game list, and validate with Playwright client + screenshots.
 
 - New request (2026-03-05): Recreate Pokemon.
-- Plan: add a new /pokemon game with overworld exploration, random encounters, turn-based battles, capture mechanics, mobile + desktop controls, and deterministic test hooks (ender_game_to_text, dvanceTime).
+- Plan: add a new /pokemon game with overworld exploration, random encounters, turn-based battles, capture mechanics, mobile + desktop controls, and deterministic test hooks (
+ender_game_to_text, dvanceTime).
 
 
 - Pac-Man implementation completed in `pacman/index.html` with: pellets + power pellets, 4 ghosts with chase/scatter/frightened/eyes states, fruit spawns, lives, score/high score, pause/resume/restart, level progression, game over, and fullscreen toggle (`F`).
@@ -1296,3 +1297,375 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
   - Confirmed `lightsout` references in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
 - Follow-up TODO:
   - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop in an environment that allows child-process spawn and Chromium launch.
+- New request (2026-03-19): add a game not currently on the site.
+- Implemented new standalone game page: `skywire/index.html` (Skywire Sprint).
+  - Gameplay: lane-switching hover bike runner with obstacle dodge, pickups, dash ability, escalating speed, win/loss states, and score/distance progression.
+  - Controls: desktop (A/D or arrows + Space/P/R/F) and mobile touch controls (left/right/dash/pause/restart).
+  - Platform hooks: `rememberRecent('skywire')`, coin payout via `addCoins`, progression pings via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated route/discovery wiring:
+  - Added `skywire` metadata entry in `src/meta/games.js`.
+  - Added `/skywire` rewrites and `/skywire/index.html` cache header in `vercel.json`.
+- Next: run `npm run test:shop` and Playwright skill-client validation for `/skywire`.
+- Validation results (this run):
+  - `npm.cmd run test:shop`: blocked in this sandbox (`spawn EPERM` while Node test runner launches child processes).
+  - Skill Playwright client run for `/skywire`: blocked in this sandbox (`browserType.launch: spawn EPERM` for Chromium).
+- Integration verification:
+  - Confirmed `skywire` references in `src/meta/games.js` and `vercel.json` via `rg`.
+  - Verified `vercel.json` parses successfully with `ConvertFrom-Json`.
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop in an environment that allows child-process spawn and Chromium launch.
+
+## 2026-03-20 Starfield Dodger Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `starfielddodger/index.html` (Starfield Dodger).
+  - Gameplay: five-lane dodge-and-collect runner with meteor hazards, star pickups, shield health, dash ability, timed mission win/loss flow, scoring, and persistent best score.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (left/right/dash plus pause/restart/fullscreen buttons).
+  - Platform hooks: `rememberRecent('starfielddodger')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `starfielddodger` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/starfielddodger` rewrites and `/starfielddodger/index.html` cache header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "starfielddodger" ...` integration check: pass (references found in game page, metadata, homepage, and vercel config).
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - `$WEB_GAME_CLIENT` Playwright run for `/starfielddodger`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and Playwright gameplay validation for `/starfielddodger` in an environment that allows Chromium/process spawn.
+
+## 2026-03-20 Starfield Dodger Startup Fix
+- User report: game page loaded but gameplay script never started.
+- Root cause: `starfielddodger/index.html` imported `addCoins` and `getCoins` from `/src/core/storage.js`, but that module only exports `get`, `set`, and `del`.
+- Fix applied:
+  - Switched import to `get`/`set`.
+  - Added local coin helpers in the game file: `getCoins()` + `addCoins(amount)` backed by namespaced storage key `coins`.
+- Result: module import mismatch removed; startup blocker resolved at source.
+- Validation note: full headless runtime smoke is not available in this environment right now because local Playwright package is not installed in `node_modules`.
+
+## 2026-03-21 Reaction Grid Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `reactiongrid/index.html` (Reaction Grid).
+  - Gameplay: 8-direction shield defense where incoming bolts converge on the core; player rotates shield to block and uses a cooldown pulse blast to clear close threats.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (left/right/pulse plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('reactiongrid')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `reactiongrid` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/reactiongrid` rewrites and `/reactiongrid/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "reactiongrid" ...` integration check: pass (references found in game page, metadata, homepage, and vercel config).
+  - `Get-Content vercel.json -Raw | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - `$WEB_GAME_CLIENT` Playwright run for `/reactiongrid`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and Playwright gameplay validation for `/reactiongrid` in an environment that allows Chromium/process spawn.
+
+## 2026-03-21 Starfield Dodger Lane-Step Fix
+- User report: left/right input moved the ship all the way to edge instead of exactly one lane.
+- Root cause: update loop reapplied `moveLanes()` every frame while directional input remained true.
+- Fix in `starfielddodger/index.html`:
+  - Removed frame-by-frame directional movement logic.
+  - Switched keyboard lane movement to discrete single-step actions on keydown (`ArrowLeft/KeyA`, `ArrowRight/KeyD`) with repeat suppression.
+  - Kept touch controls as discrete one-step moves on pointerdown.
+  - Removed now-unused input state + keyup tracking helpers.
+- Expected behavior now: each press/tap shifts exactly one lane.
+- New request (2026-03-22): Add a brand-new game not already on the site.
+- Implemented `simonsays/index.html` (Simon Says Spectrum): sequence-memory gameplay with escalating rounds, score/lives, menu/pause/game-over flow, desktop + touch controls, fullscreen toggle (`F`), deterministic hooks (`window.advanceTime`, `window.render_game_to_text`).
+- Registered the new game in `src/meta/games.js` with slug `simonsays` so it appears in launcher/discovery.
+- Fixed pause/resume behavior so resuming from pause returns to the correct mode (`showing` vs `input`) without skipping sequence playback.
+- Validation status: attempted required Playwright loop via skill client and built-in Playwright tooling, but browser launch/network constraints in this sandbox blocked full automated run (`spawn EPERM`, local loopback/file URL restrictions).
+- Follow-up TODO: run `$WEB_GAME_CLIENT` on a host with browser launch + localhost access and review screenshots/state artifacts for full end-to-end verification.
+## 2026-03-23 Gravity Switch Implementation (in progress)
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `gravityswitch/index.html` (Gravity Switch).
+  - Gameplay: 90-second gravity-flip runner with floor/ceiling lane switching, barrier dodging, star collection combos, shield hits, win/loss states, and score/distance progression.
+  - Controls: desktop keyboard (Space/Up/W + P/R/F) and mobile/touch controls (Flip/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('gravityswitch')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `gravityswitch` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/gravityswitch` rewrites and `/gravityswitch/index.html` cache-header entry in `vercel.json`.
+- Next: run validation commands (`npm run test:shop`, Playwright skill-client loop) and record outcomes.
+- Validation results (this run):
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked in this sandbox (`spawn EPERM` in Node test runner).
+  - Skill Playwright client attempt for `/gravityswitch` via `web_game_playwright_client.js`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Integration verification:
+  - Confirmed `gravityswitch` references in `src/meta/games.js`, `index.html`, and `vercel.json` via `rg`.
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and the `$develop-web-game` Playwright loop for `/gravityswitch` in an environment that allows process spawn + Chromium launch.
+
+## 2026-03-24 Orb Burst Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `orbburst/index.html` (Orb Burst).
+  - Gameplay: top-down survival shooter with horizontal movement, manual fire, descending multi-HP orbs, combo scoring, heat/jam mechanic, timer-based win/loss, and coin payout.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (hold Left/Right/Fire plus pause/restart/fullscreen buttons).
+  - Platform hooks: `rememberRecent('orbburst')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+- Integrated launcher/routing wiring:
+  - Added `orbburst` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/orbburst` rewrites and `/orbburst/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "orbburst" ...` integration check: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Playwright prerequisite check: `npx.cmd --version` pass (`10.9.3`); `npx --version` blocked by local PowerShell execution policy.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - Skill Playwright client run for `/orbburst`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and `$WEB_GAME_CLIENT` for `/orbburst` in an environment that allows Chromium/process spawn.
+
+## 2026-03-25 Laser Maze Dash Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `lasermaze/index.html` (Laser Maze Dash).
+  - Gameplay: dodge moving laser gates with variable safe gaps, collect in-gap energy cores for bonus score, use cooldown dash for burst movement and temporary invulnerability, survive a 70-second run.
+  - Controls: desktop keyboard (WASD/Arrows + Space/P/R/F) and mobile/touch controls (Up/Left/Down/Right + Dash/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('lasermaze')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'lasermaze', gameName: 'Laser Maze Dash' })`.
+- Integrated launcher/routing wiring:
+  - Added `lasermaze` metadata entry in `src/meta/games.js`.
+  - Added static fallback card in `index.html`.
+  - Added `/lasermaze` rewrites and `/lasermaze/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "lasermaze" ...` integration check: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run test:shop`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner).
+  - `$WEB_GAME_CLIENT` Playwright run for `/lasermaze`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:shop` and `$WEB_GAME_CLIENT` gameplay validation for `/lasermaze` in an environment that allows Chromium/process spawn.
+- New request (2026-03-26): add a brand-new game not already in the catalog.
+- Implemented new standalone game page: `moonlander/index.html` (Moon Lander Patrol).
+  - Gameplay: low-gravity landing mission across 3 sectors with fuel, hull, landing-speed thresholds, boost, pause/restart/fullscreen, desktop + touch controls.
+  - Platform hooks: `rememberRecent('moonlander')`, coin rewards via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'moonlander', gameName: 'Moon Lander Patrol' })`.
+- Added metadata entry in `src/meta/games.js` and fallback homepage card in `index.html`.
+- Added `/moonlander` rewrites and `/moonlander/index.html` cache-header entry in `vercel.json`.
+- Verification run (2026-03-26):
+  - `npm.cmd run feedback:check-daily` initially failed due stale Linear artifacts, so I ran `npm.cmd run feedback:sync-linear:files` (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - Re-ran `npm.cmd run test:feedback`: daily guard passed, but node test subprocesses failed in this sandbox with `spawn EPERM`.
+  - Ran skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/moonlander`; blocked by Chromium launch `browserType.launch: spawn EPERM` in this environment.
+- Follow-up needed in a less restricted environment: rerun `npm run test:feedback` and the Playwright validation loop for `/moonlander`.
+
+## 2026-03-28 Comet Courier Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `cometcourier/index.html` (Comet Courier).
+  - Gameplay: five-lane courier run with discrete lane switching, meteor hazards, collectible cargo pods, cooldown-based dash invulnerability, score/hull/timer win-loss flow, and coin rewards.
+  - Controls: desktop keyboard (A/D or arrows + Space/P/R/F) and mobile touch controls (Left/Right/Dash/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('cometcourier')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'cometcourier', gameName: 'Comet Courier' })`.
+- Integrated launcher/routing wiring:
+  - Added `cometcourier` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/cometcourier` rewrites and `/cometcourier/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "cometcourier" ...` integration check: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (also refreshed `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: blocked by sandbox/process policy (`spawn EPERM` in Node test runner child process spawn).
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` on `/cometcourier`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/cometcourier` in an environment that allows Chromium/process spawn.
+
+## 2026-03-29 Rift Drifter Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: 
+iftdrifter/index.html (Rift Drifter).
+  - Gameplay: six-lane drift runner with hazard dodge + collectible flux cores, cooldown dash invulnerability, score/timer win-loss loop, and coin rewards.
+  - Controls: desktop (A/D or arrows + Space/P/R/F) and mobile touch controls (Left/Right/Dash/Pause/Restart/FS).
+  - Platform hooks: 
+ememberRecent('riftdrifter'), coin payout via ddCoins, achievement payload via maybeUnlock.
+  - Automation hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state.
+  - Feedback integration: mountGameFeedback({ gameSlug: 'riftdrifter', gameName: 'Rift Drifter' }).
+- Integrated launcher/routing wiring:
+  - Added 
+iftdrifter metadata entry in src/meta/games.js.
+  - Added fallback homepage card in index.html.
+  - Added /riftdrifter rewrites and /riftdrifter/index.html cache-header entry in ercel.json.
+- Validation results:
+  - 
+pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
+  - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
+  - 
+pm.cmd run test:feedback: blocked by sandbox process policy (spawn EPERM in Node test runner child process spawn).
+  - $WEB_GAME_CLIENT Playwright run for /riftdrifter: blocked in this sandbox (rowserType.launch: spawn EPERM).
+- Follow-up TODO:
+  - Re-run 
+pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter in an environment that allows Chromium/process spawn.
+
+## 2026-03-30 Circuit Path Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `circuitpath/index.html` (Circuit Path).
+  - Gameplay: tile-based route puzzle where players collect 5 data nodes, dodge horizontal sentry sweeps, and reach the uplink before timeout.
+  - Controls: desktop keyboard (WASD/Arrows + P/R/F) and mobile touch controls (Up/Left/Down/Right plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('circuitpath')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with explicit coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'circuitpath', gameName: 'Circuit Path' })`.
+- Integrated launcher/routing wiring:
+  - Added `circuitpath` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/circuitpath` rewrites and `/circuitpath/index.html` cache-header entry in `vercel.json`.
+- Next: run validation checks (`vercel.json` parse, integration grep, feedback tests, and skill Playwright loop) and record outcomes.
+- Validation results (this run):
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `rg -n "circuitpath" src/meta/games.js index.html vercel.json circuitpath/index.html`: pass (references found in all required files).
+  - `npm.cmd run feedback:sync-linear:files`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: `feedback:check-daily` passed, but integration tests failed to execute in this sandbox with `spawn EPERM`.
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/circuitpath`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright validation loop for `/circuitpath` in an environment that allows child-process + Chromium launch.
+
+## 2026-03-31 Signal Stack Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `signalstack/index.html` (Signal Stack).
+  - Gameplay: five-lane packet-routing challenge with color-matching catches, combo scoring, shield penalties for misses/mismatches, and a 75-second win/loss run loop.
+  - Controls: desktop keyboard (A/D or arrows + W/Up/Space + P/R/F) and mobile touch controls (Left/Right/Swap/Pause/Restart/FS).
+  - Platform hooks: `rememberRecent('signalstack')`, coin rewards via `addCoins`, progression payload via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'signalstack', gameName: 'Signal Stack' })`.
+- Integrated launcher/routing wiring:
+  - Added `signalstack` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/signalstack` rewrites and `/signalstack/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "signalstack" signalstack/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear:files`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed to execute in this sandbox (`spawn EPERM`).
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` on `/signalstack`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright validation loop for `/signalstack` in an environment that allows child-process + Chromium launch.
+
+## 2026-04-01 Vault Runner Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `vaultrunner/index.html` (Vault Runner).
+  - Gameplay: tile-based infiltration run where player collects keycards, avoids moving patrol drones, and reaches the vault tile after collecting keycards before lockout.
+  - Controls: desktop keyboard (WASD/Arrows + P/R/F) and mobile touch controls (Up/Left/Down/Right plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('vaultrunner')`, coin payout via `addCoins`, and progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with explicit coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'vaultrunner', gameName: 'Vault Runner' })`.
+- Integrated launcher/routing wiring:
+  - Added `vaultrunner` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/vaultrunner` rewrites and `/vaultrunner/index.html` cache-header entry in `vercel.json`.
+- Next: run validation checks (`feedback:sync-linear`, `test:feedback`, and the skill Playwright loop) and record outcomes.
+- Validation results (this run):
+  - `rg -n "vaultrunner" src/meta/games.js index.html vercel.json vaultrunner/index.html`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed to execute in this sandbox with `spawn EPERM`.
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/vaultrunner`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/vaultrunner` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-02 Chrome Shift Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `chromeshift/index.html` (Chrome Shift).
+  - Gameplay: six-lane reactor defense where player shifts lanes and toggles polarity to neutralize incoming blue/amber shards before integrity reaches zero.
+  - Controls: desktop keyboard (A/D or arrows + Space/W/Up + P/R/F) and mobile touch controls (Left/Shift/Right plus pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('chromeshift')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'chromeshift', gameName: 'Chrome Shift' })`.
+- Integrated launcher/routing wiring:
+  - Added `chromeshift` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/chromeshift` rewrites and `/chromeshift/index.html` cache-header entry in `vercel.json`.
+- Next: run validation checks (`feedback:sync-linear`, `test:feedback`, and the skill Playwright loop) and record outcomes.
+- Validation results (this run):
+  - `rg -n "chromeshift" chromeshift/index.html src/meta/games.js index.html vercel.json progress.md`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed to execute in this sandbox with `spawn EPERM`.
+  - Skill-required Playwright loop via `$WEB_GAME_CLIENT` for `/chromeshift`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and `$WEB_GAME_CLIENT` gameplay validation for `/chromeshift` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-02 Chrome Shift Differentiation Fix
+- User feedback: recent additions were too template-similar (lane dodgers and tile stealth clones).
+- Reworked `chromeshift/index.html` from a lane/polarity dodger into a distinct color-flood strategy puzzle.
+  - New core loop: capture a 10x10 board from top-left by selecting one of four colors to expand connected territory.
+  - Win/lose conditions: full capture before move limit/time limit; score and coin rewards tied to territory and efficiency.
+  - Controls now support both direct color keys (`1-4`) and action-client friendly inputs (`ArrowLeft/ArrowRight` to select, `Space/Enter` to apply), plus mobile color buttons.
+  - Retained deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Updated launcher/copy wiring:
+  - `src/meta/games.js` description and score hint updated to puzzle semantics.
+  - `index.html` fallback card description updated to match new gameplay.
+- Validation:
+  - Playwright skill loop passed locally using a temporary local server:
+    - `output/web-game/chromeshift-refresh-smoke3/shot-0.png..shot-2.png`
+    - `state-2.json` confirms interaction progression (`moves_used: 3`, `owned_tiles: 19`).
+  - No `errors-*.json` artifacts emitted in the final smoke run directory.
+- Follow-up:
+  - Apply the same de-duplication rewrite pass to `signalstack`, `riftdrifter`, `cometcourier`, and to either `vaultrunner` or `circuitpath` so each has a unique primary mechanic family.
+- Delivery update:
+  - Committed rewrite as `12edc03 Rework Chrome Shift into distinct color-flood puzzle` and pushed to `origin/main`.
+  - Deployment propagation may lag behind git push; immediate curl check still returned previous cached Chrome Shift variant at edge.
+
+## 2026-04-02T14:51:55-04:00 Multi-game de-duplication continuation
+- Continued the user-requested anti-clone pass by replacing mechanics in:
+  - signalstack/index.html -> relay-routing tile rotation puzzle.
+  - iftdrifter/index.html -> zero-g inertia piloting with shard collection.
+  - cometcourier/index.html -> station-demand dispatch management loop.
+  - aultrunner/index.html -> vault tumbler code-cracking stages.
+- Fixed validation blocker in cometcourier/index.html: removed duplicate 	ogglePause() declaration that caused SyntaxError: Identifier 'togglePause' has already been declared.
+- Updated game discovery copy to match new mechanics:
+  - src/meta/games.js score hints + descriptions for signalstack, iftdrifter, cometcourier, aultrunner.
+  - index.html fallback game-card descriptions for the same four slugs.
+- Skill validation ($develop-web-game) completed successfully against local http://127.0.0.1:4173:
+  - output/web-game/signalstack-dedupe-smoke2
+  - output/web-game/riftdrifter-dedupe-smoke2
+  - output/web-game/cometcourier-dedupe-smoke2
+  - output/web-game/vaultrunner-dedupe-smoke2
+  - All four runs produced shot-0..2.png and state-0..2.json with no errors-*.json artifacts.
+- QA checklist runs:
+  - 
+pm run feedback:sync-linear passed.
+  - 
+pm run test:feedback passed (31/31 tests).
+  - 
+pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json, success=true).
+- TODO next run: spot-check production routes after deployment propagation (/chromeshift, /signalstack, /riftdrifter, /cometcourier, /vaultrunner).
+
+## CLEAN NOTE (latest run)
+- Completed de-duplication rewrite across these game files:
+  - signalstack/index.html
+  - riftdrifter/index.html
+  - cometcourier/index.html
+  - vaultrunner/index.html
+- Updated matching metadata and fallback card copy in src/meta/games.js and index.html.
+- Fixed duplicate function declaration in cometcourier/index.html (togglePause) that had caused a load-time syntax error.
+- Validation complete and passing:
+  - develop-web-game Playwright runs for /signalstack, /riftdrifter, /cometcourier, /vaultrunner (smoke2 dirs)
+  - npm run feedback:sync-linear
+  - npm run test:feedback (31/31)
+  - npm run test:feedback-smoke:raw
+- Pushed to origin/main in commit 7a70e05.
+- Immediate production check: all routes return HTTP 200, but some pages may still be serving cached prior variants; recheck after propagation.
+
+## 2026-04-03 Trailblazer Grid Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `trailblazer/index.html` (Trailblazer Grid).
+  - Gameplay: paint a 12x12 arena while dodging moving patrol drones and collecting timed energy pickups.
+  - Win/loss loop: capture at least 108 tiles before timer expires; drone hits drain lives; coins + score awarded at run end.
+  - Controls: desktop keyboard (WASD/Arrows + P/R/F) and mobile touch controls (D-pad + pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('trailblazer')`, coin payout via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'trailblazer', gameName: 'Trailblazer Grid' })`.
+- Integrated launcher/routing wiring:
+  - Added `trailblazer` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/trailblazer` rewrites and `/trailblazer/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "trailblazer" trailblazer/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed in this sandbox (`spawn EPERM`).
+  - Skill-required Playwright loop via `web_game_playwright_client.js` on `/trailblazer`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/trailblazer` in an environment that allows child-process and Chromium launch.

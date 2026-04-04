@@ -7,57 +7,247 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="stylesheet" href="./src/styles/accessibility.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/space-parallax.css">
   <style>
-    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
+    :root {
+      --bg: #1a0b2e;
+      --fg: #ffffff;
+      --muted: #a7b8df;
+      --accent: #f472b6;
+      --accent-hover: #fb923c;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --card-hover-bg: rgba(255, 255, 255, 0.12);
+      --card-active-bg: rgba(255, 255, 255, 0.18);
+    }
     * { box-sizing: border-box; }
-    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: transparent !important;
+      color: var(--fg);
+      font-family: 'Fredoka', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
 
-    .wrap { max-width:1200px; margin:0 auto; padding:clamp(20px, 5vh, 40px) clamp(16px, 4vw, 32px); }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: clamp(20px, 5vh, 40px) clamp(16px, 4vw, 32px); }
 
-    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px clamp(16px,4vw,32px); background:rgba(12,20,46,0.6); backdrop-filter:blur(8px); border-bottom:1px solid rgba(90,173,221,0.2); }
-    .topbar h1 { margin:0; font-size:clamp(20px,3vw,28px); }
-    .coin-display { display:flex; align-items:center; gap:6px; padding:8px 14px; background:rgba(90,173,221,0.15); border:1px solid rgba(90,173,221,0.3); border-radius:12px; font-weight:600; font-size:14px; }
-    .back-link { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; transition:all 0.2s; }
-    .back-link:hover { background:rgba(255,255,255,0.12); }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px clamp(16px, 4vw, 32px);
+      background: rgba(26, 11, 46, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid var(--card-border);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+    .topbar h1 { margin: 0; font-size: clamp(20px, 3vw, 28px); font-weight: 700; color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
 
-    .shop-controls { margin-top:10px; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.05); display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:10px; }
+    .coin-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(251, 191, 36, 0.2);
+      border: 2px solid rgba(251, 191, 36, 0.4);
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .back-link {
+      padding: 8px 16px;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      color: var(--fg);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      touch-action: manipulation;
+    }
+    .back-link:hover { transform: scale(1.05); background: var(--card-hover-bg); border-color: var(--accent); }
+    .back-link:active { transform: scale(0.95); background: var(--card-active-bg); }
+
+    .shop-controls {
+      margin-top: 10px;
+      padding: 20px;
+      border-radius: 24px;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
     .shop-controls input,
-    .shop-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
-    .shop-filter-summary { grid-column:1 / -1; font-size:12px; color:#b4ccf0; }
-    .shop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-top:24px; }
-    .shop-notice { margin-top:16px; padding:12px 14px; border-radius:10px; border:1px solid rgba(90,173,221,0.45); background:rgba(90,173,221,0.15); font-size:14px; font-weight:600; }
-    .shop-notice.hidden { display:none; }
-    .shop-notice.ended { border-color:rgba(116,166,230,0.45); background:rgba(116,166,230,0.18); }
-    .shop-item { background:linear-gradient(180deg,#0c142e 0%, #0b1020 100%); border:2px solid #192544; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:16px; transition:border-color 0.2s, box-shadow 0.2s, background 0.2s; }
-    .shop-item.owned { border-color:var(--accent); background:rgba(90,173,221,0.1); }
-    .shop-item.equipped { border-color:#8ad7ff; background:rgba(90,173,221,0.18); box-shadow:0 0 0 2px rgba(90,173,221,0.25); }
-    .shop-item.premium-locked { border-color:rgba(244, 191, 97, 0.6); background:linear-gradient(180deg,#1a1830 0%, #121120 100%); }
-    .shop-item-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .shop-item-title { font-size:20px; font-weight:600; margin:0; }
-    .shop-item-price { padding:6px 12px; background:rgba(90,173,221,0.2); border-radius:8px; font-weight:600; font-size:14px; transition:background 0.2s, color 0.2s; }
-    .shop-item-price.owned { background:rgba(90,173,221,0.25); color:var(--fg); }
-    .shop-item-price.equipped { background:var(--accent); color:#0b1020; }
-    .shop-item-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:-6px; }
-    .shop-item-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#d7e7ff; font-size:11px; font-weight:700; }
-    .shop-item-tag.premium { border-color:rgba(244, 191, 97, 0.62); background:rgba(244, 191, 97, 0.2); color:#ffe9be; }
-    .shop-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; text-align:center; color:#b7cdf0; font-size:15px; }
-    .shop-item-desc { color:var(--muted); font-size:14px; line-height:1.5; margin:0; }
-    .shop-item-preview { padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; text-align:center; min-height:80px; display:flex; align-items:center; justify-content:center; }
-    .shop-item-btn { padding:12px; background:var(--accent); border:none; border-radius:8px; color:#0b1020; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.2s; }
-    .shop-item-btn:hover:not(:disabled) { background:#6be; }
-    .shop-item-btn:disabled { opacity:0.5; cursor:not-allowed; }
-    .shop-item-btn.owned { background:rgba(90,173,221,0.25); color:var(--fg); }
-    .shop-item-btn.owned:hover:not(:disabled) { background:rgba(90,173,221,0.4); }
-    .shop-item-btn.equipped { background:var(--accent); color:#0b1020; }
-    .shop-item-btn.equipped:hover:not(:disabled) { background:#6be; }
-    .shop-item-btn.premium-lock { background:rgba(244, 191, 97, 0.2); color:#ffe6b3; border:1px solid rgba(244, 191, 97, 0.4); }
-    .shop-item-note { margin:0; font-size:12px; color:#ffdca0; line-height:1.4; }
+    .shop-controls select {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: 2px solid var(--card-border);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--fg);
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .shop-controls input:focus,
+    .shop-controls select:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.2);
+    }
+
+    .shop-filter-summary { grid-column: 1 / -1; font-size: 14px; color: var(--muted); font-weight: 600; }
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px; }
+
+    .shop-notice {
+      margin-top: 16px;
+      padding: 16px 20px;
+      border-radius: 20px;
+      border: 2px solid var(--accent);
+      background: rgba(244, 114, 182, 0.15);
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffd7eb;
+      animation: noticeIn 0.5s ease-out;
+    }
+    @keyframes noticeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .shop-notice.hidden { display: none; }
+    .shop-notice.ended { border-color: #22d3ee; background: rgba(34, 211, 238, 0.15); color: #d1f7ff; }
+
+    .shop-item {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 30px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+      position: relative;
+    }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(30px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .shop-item:hover { transform: translateY(-8px) scale(1.02); border-color: var(--accent); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); background: var(--card-hover-bg); }
+    .shop-item.owned { border-color: #22d3ee; background: rgba(34, 211, 238, 0.05); }
+    .shop-item.equipped { border-color: #fbbf24; background: rgba(251, 191, 36, 0.08); box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2); }
+    .shop-item.premium-locked { border-color: #f472b6; background: rgba(244, 114, 182, 0.05); }
+
+    .shop-item-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .shop-item-title { font-size: 22px; font-weight: 700; margin: 0; color: #fff; }
+
+    .shop-item-price {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      font-weight: 800;
+      font-size: 15px;
+      color: #fbbf24;
+      transition: all 0.3s;
+    }
+    .shop-item-price.owned { background: rgba(34, 211, 238, 0.2); color: #22d3ee; }
+    .shop-item-price.equipped { background: #fbbf24; color: #1a0b2e; }
+
+    .shop-item-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px; }
+    .shop-item-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 2px solid var(--card-border);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .shop-item-tag.premium { border-color: var(--accent); background: rgba(244, 114, 182, 0.15); color: #ffd7eb; }
+
+    .shop-empty { border: 2px dashed var(--card-border); border-radius: 24px; padding: 40px; text-align: center; color: var(--muted); font-size: 18px; font-weight: 600; }
+    .shop-item-desc { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0; font-weight: 500; }
+
+    .shop-item-preview {
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+      text-align: center;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--card-border);
+      transition: all 0.3s;
+    }
+    .shop-item:hover .shop-item-preview { transform: scale(1.05); border-color: rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); }
+
+    .shop-item-btn {
+      padding: 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 16px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 15px rgba(244, 114, 182, 0.3);
+      touch-action: manipulation;
+    }
+    .shop-item-btn:hover:not(:disabled) { transform: scale(1.05); background: var(--accent-hover); box-shadow: 0 6px 20px rgba(244, 114, 182, 0.5); }
+    .shop-item-btn:active:not(:disabled) { transform: scale(0.95); }
+    .shop-item-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    .shop-item-btn.owned { background: rgba(34, 211, 238, 0.3); color: #fff; box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3); border: 2px solid rgba(34, 211, 238, 0.5); }
+    .shop-item-btn.owned:hover:not(:disabled) { background: rgba(34, 211, 238, 0.5); }
+    .shop-item-btn.equipped { background: #fbbf24; color: #1a0b2e; box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3); }
+    .shop-item-btn.premium-lock { background: rgba(244, 114, 182, 0.2); color: #ffd7eb; border: 2px solid var(--accent); }
+
+    .shop-item-note { margin: 0; font-size: 13px; color: #ffdca0; line-height: 1.4; font-weight: 600; text-align: center; }
+
     @media (max-width: 700px) {
-      .shop-controls { grid-template-columns:1fr; }
+      .shop-controls { grid-template-columns: 1fr; }
+      .wrap { padding: 20px 16px; }
+      .shop-grid { gap: 16px; }
     }
   </style>
+
+  <meta name="description" content="Unlock premium items, player icons, and themes.">
+  <meta property="og:title" content="Shop - Cade's Games">
+  <meta property="og:description" content="Unlock premium items, player icons, and themes.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/shop.html">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shop - Cade's Games">
+  <meta name="twitter:description" content="Unlock premium items, player icons, and themes.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/shop.html">
 </head>
 <body>
+  <div class="bg-animation">
+    <div class="stars-layer stars-1"></div>
+    <div class="stars-layer stars-2"></div>
+    <div class="stars-layer stars-3"></div>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+  </div>
   <a class="skip-link" href="#shopGrid">Skip to shop items</a>
   <div class="topbar">
     <h1>🛒 Shop</h1>
@@ -104,8 +294,52 @@
       } from './src/core/entitlements.js';
       import { syncEntitlementsWithBillingBackend } from './src/core/billing.js';
       import { trackKpiEvent } from './src/core/metrics.js';
+      import { mountAccountWidget } from './src/auth/embed.js';
 
       loadAndApplyAccessibility();
+      mountAccountWidget();
+
+      // --- Shop State and Helpers ---
+      let remoteEntitlementSyncInFlight = false;
+      let remoteEntitlementLastSyncedAt = 0;
+
+      async function refreshRemoteEntitlements({ forceConfig = false } = {}) {
+        if (remoteEntitlementSyncInFlight) return false;
+        remoteEntitlementSyncInFlight = true;
+        try {
+          const result = await syncEntitlementsWithBillingBackend({ forceConfig });
+          remoteEntitlementLastSyncedAt = Date.now();
+          return Boolean(result && result.synced);
+        } catch {
+          return false;
+        } finally {
+          remoteEntitlementSyncInFlight = false;
+        }
+      }
+
+      const shopSearchInput = document.getElementById("shopSearchInput");
+      const shopGameFilter = document.getElementById("shopGameFilter");
+      const shopFilterSummary = document.getElementById("shopFilterSummary");
+      const shopNotice = document.getElementById("shopNotice");
+      const shopGrid = document.getElementById("shopGrid");
+
+      let shopSearchQuery = "";
+      let selectedShopGame = "all";
+
+      const normalizeText = (t) => String(t || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const escapeHtml = (str) => {
+        const p = document.createElement("p");
+        p.textContent = str;
+        return p.innerHTML;
+      };
+      const formatMinutes = (m) => {
+        if (m < 1) return "less than a minute";
+        if (m === 1) return "1 minute";
+        return `${m} minutes`;
+      };
+      const isShopLocked = () => {
+        return state.classroom.enabled && state.classroom.shopDisabledDuringClass && isClassroomSessionActive();
+      };
 
       if (!(state.inventory instanceof Set)) {
         state.inventory = new Set(Array.isArray(state.inventory) ? state.inventory : []);
@@ -681,69 +915,29 @@
         },
       ];
 
-      const itemById = new Map(items.map(item => [item.id, item]));
-      const shopNotice = document.getElementById("shopNotice");
-      const shopSearchInput = document.getElementById("shopSearchInput");
-      const shopGameFilter = document.getElementById("shopGameFilter");
-      const shopFilterSummary = document.getElementById("shopFilterSummary");
-      const normalizeText = (value) => String(value || "").toLowerCase();
-      const escapeHtml = (value) => String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\"", "&quot;")
-        .replaceAll("'", "&#39;");
-      let shopSearchQuery = "";
-      let selectedShopGame = "all";
-      let remoteEntitlementSyncInFlight = false;
-      let remoteEntitlementLastSyncedAt = 0;
+      const itemById = new Map(items.map(i => [i.id, i]));
 
-      async function refreshRemoteEntitlements({ forceConfig = false } = {}) {
-        if (remoteEntitlementSyncInFlight) return false;
-        remoteEntitlementSyncInFlight = true;
-        try {
-          const result = await syncEntitlementsWithBillingBackend({ forceConfig });
-          remoteEntitlementLastSyncedAt = Date.now();
-          return Boolean(result && result.synced);
-        } catch {
-          return false;
-        } finally {
-          remoteEntitlementSyncInFlight = false;
-        }
-      }
-
-      const allShopGames = [...new Set(items
-        .map((item) => typeof item.game === "string" ? item.game.trim() : "")
-        .filter(Boolean))]
-        .sort((a, b) => a.localeCompare(b));
-
-      for (const gameName of allShopGames) {
-        const option = document.createElement("option");
-        option.value = gameName;
-        option.textContent = gameName;
-        shopGameFilter.appendChild(option);
-      }
-
-      const getFilteredItems = () => {
-        return items.filter((item) => {
+      function getFilteredItems() {
+        return items.filter(item => {
+          const matchesSearch = !shopSearchQuery || 
+            normalizeText(item.name).includes(shopSearchQuery) || 
+            normalizeText(item.desc).includes(shopSearchQuery);
           const matchesGame = selectedShopGame === "all" || item.game === selectedShopGame;
-          if (!matchesGame) return false;
-          if (!shopSearchQuery) return true;
-          const haystack = normalizeText(`${item.name} ${item.desc || ""} ${item.game || ""} ${item.id}`);
-          return haystack.includes(shopSearchQuery);
+          return matchesSearch && matchesGame;
         });
-      };
+      }
 
-      const isShopLocked = () => (
-        isClassroomSessionActive() && state.classroom && state.classroom.shopDisabledDuringClass
-      );
-      const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? "" : "s"}`;
+      // Populate game filter
+      const gamesWithItems = [...new Set(items.map(i => i.game).filter(Boolean))].sort();
+      gamesWithItems.forEach(game => {
+        const opt = document.createElement("option");
+        opt.value = game;
+        opt.textContent = game;
+        shopGameFilter.appendChild(opt);
+      });
 
       const renderShopNotice = () => {
-        if (!shopNotice) return;
-        shopNotice.classList.remove("ended");
-        const entitlements = getEntitlements();
-        const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
+        const prem = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM);
         if (isShopLocked()) {
           shopNotice.classList.remove("hidden");
           shopNotice.textContent = "Classroom session is active. Shop actions are locked until the session ends.";
@@ -759,7 +953,7 @@
           shopNotice.textContent = `${endedMessage} Shop actions are now unlocked.`;
           return;
         }
-        if (!hasFamilyPremium) {
+        if (!prem) {
           shopNotice.classList.remove("hidden");
           shopNotice.textContent = "Some shop items are Family Premium. Free users can still access all core gameplay.";
           return;

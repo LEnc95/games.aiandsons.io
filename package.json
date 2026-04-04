@@ -5,10 +5,20 @@
   "description": "Static browser arcade site",
   "scripts": {
     "test:shop": "node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs tests/premium-challenges.integration.test.mjs tests/metrics.integration.test.mjs tests/billing.integration.test.mjs tests/stripe-store.integration.test.mjs tests/kpi-export.integration.test.mjs tests/stripe-admin-auth.integration.test.mjs tests/stripe-reconcile-audit.integration.test.mjs tests/prisoners-dilemma-engine.test.mjs",
+    "seo": "node scripts/generate-sitemap.mjs && node scripts/inject-seo.mjs",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage --project games-aiandsons-io",
+    "test:shop": "node --test tests/shop-items.integration.test.mjs tests/entitlements.integration.test.mjs tests/premium-challenges.integration.test.mjs tests/metrics.integration.test.mjs tests/account-view-models.integration.test.mjs tests/billing.integration.test.mjs tests/billing-routing.integration.test.mjs tests/billing-admin.integration.test.mjs tests/email.integration.test.mjs tests/stripe-store.integration.test.mjs tests/stripe-shared.integration.test.mjs tests/family-store.integration.test.mjs tests/family-billing.integration.test.mjs tests/kpi-export.integration.test.mjs tests/stripe-admin-auth.integration.test.mjs tests/stripe-reconcile-audit.integration.test.mjs tests/stripe-nightly-reconcile.integration.test.mjs",
+    "feedback:check-daily": "node scripts/feedback/check-daily-workflow.mjs",
+    "test:feedback": "npm run feedback:check-daily && node --test tests/auth-session.integration.test.mjs tests/feedback-admin-auth.integration.test.mjs tests/feedback-coverage.integration.test.mjs tests/feedback-api.integration.test.mjs tests/feedback-slack.integration.test.mjs tests/slack-ci.integration.test.mjs",
+    "feedback:sync-linear": "node scripts/feedback/sync-linear-seeds.mjs",
+    "feedback:sync-linear:files": "node scripts/feedback/sync-linear-seeds.mjs --skip-live",
+    "feedback:provision-linear": "node scripts/feedback/provision-linear.mjs",
     "metrics:export": "node scripts/metrics/export-kpi-snapshot.mjs",
     "stripe:reconcile-audit": "node scripts/stripe/reconcile-audit.mjs",
+    "stripe:nightly-reconcile": "node scripts/stripe/nightly-reconcile.mjs",
     "test:classroom-smoke": "node scripts/qa/run-classroom-smoke.mjs",
     "test:classroom-smoke:raw": "node scripts/qa/classroom-mode-smoke.mjs http://127.0.0.1:4173",
+    "test:feedback-smoke:raw": "node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4173",
     "test:discovery-smoke:raw": "node scripts/qa/discovery-search-filter-smoke.mjs http://127.0.0.1:4173",
     "test:missions-smoke:raw": "node scripts/qa/daily-missions-smoke.mjs http://127.0.0.1:4173",
     "test:weekly-smoke:raw": "node scripts/qa/weekly-challenges-smoke.mjs http://127.0.0.1:4173",
@@ -24,12 +34,13 @@
     "test:metrics-smoke:raw": "node scripts/qa/metrics-baseline-smoke.mjs http://127.0.0.1:4173",
     "test:launch-readiness-smoke": "node scripts/qa/run-launch-readiness-smoke.mjs",
     "test:launch-readiness-smoke:raw": "node scripts/qa/launch-readiness-smoke.mjs http://127.0.0.1:4173",
-    "test:qa": "npm run test:shop && npm run test:classroom-smoke"
+    "test:qa": "npm run test:shop && npm run test:feedback && npm run test:classroom-smoke"
   },
   "dependencies": {
+    "firebase-admin": "^13.7.0",
     "stripe": "^20.4.0"
   },
   "devDependencies": {
-    "playwright": "^1.50.0"
+    "playwright": "^1.59.1"
   }
 }

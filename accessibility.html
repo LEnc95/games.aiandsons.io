@@ -2,247 +2,384 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Accessibility Settings - Cade's Games</title>
+  <title>Accessibility - Cade's Games</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="stylesheet" href="./src/styles/accessibility.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/space-parallax.css">
   <style>
     :root {
-      --bg: #0b1020;
-      --fg: #e7f0ff;
-      --muted: #8aa0c3;
-      --accent: #5ad;
+      --bg: #1a0b2e;
+      --fg: #ffffff;
+      --muted: #a7b8df;
+      --accent: #f472b6;
+      --accent-hover: #fb923c;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --card-hover-bg: rgba(255, 255, 255, 0.12);
+      --card-active-bg: rgba(255, 255, 255, 0.18);
     }
-    * { box-sizing: border-box; }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     html, body {
       margin: 0;
       padding: 0;
-      min-height: 100%;
-      background: radial-gradient(circle at 18% 0%, #17305e 0%, var(--bg) 54%, #060b16 100%);
+      background: transparent !important;
       color: var(--fg);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-family: var(--font-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
     }
+
+
+    /* --- Topbar --- */
     .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       padding: 16px clamp(16px, 4vw, 32px);
-      border-bottom: 1px solid rgba(90, 173, 221, 0.28);
-      background: rgba(9, 19, 40, 0.84);
-      backdrop-filter: blur(8px);
-      flex-wrap: wrap;
+      background: rgba(26, 11, 46, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid var(--card-border);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
     }
-    .topbar h1 { margin: 0; font-size: clamp(20px, 3vw, 28px); }
-    .links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .topbar h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 15px rgba(244,114,182,0.3);
+    }
+    .links { display: flex; gap: 10px; }
     .link-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
       color: var(--fg);
       text-decoration: none;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 8px 12px;
       font-size: 14px;
       font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .link-btn:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* --- Wrap & Main Content --- */
     .wrap {
-      width: min(980px, 100%);
+      max-width: 1000px;
       margin: 0 auto;
-      padding: clamp(20px, 4vw, 34px) clamp(16px, 4vw, 30px) 48px;
+      padding: 40px 20px;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
     }
     .panel {
-      border: 1px solid rgba(121, 182, 233, 0.38);
-      border-radius: 14px;
-      background: linear-gradient(180deg, #122243 0%, #0c1730 100%);
-      padding: 16px;
-    }
-    .panel h2 {
-      margin: 0 0 10px 0;
-      font-size: 22px;
-    }
-    .panel p {
-      margin: 0 0 10px 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
-    }
-    .form-row {
+      background: var(--card-bg);
+      border: 3px solid var(--card-border);
+      border-radius: 30px;
+      padding: 32px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-bottom: 12px;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: cardFadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .panel:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: var(--accent);
+      background: var(--card-hover-bg);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .panel h2 {
+      font-size: 28px;
+      margin: 0 0 12px;
+      color: var(--accent);
+    }
+    .panel p {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* --- Form Elements --- */
+    .form-row {
+      margin-bottom: 20px;
     }
     .form-row label {
-      font-size: 13px;
-      color: var(--muted);
+      display: block;
+      font-size: 14px;
       font-weight: 600;
-    }
-    .form-row select,
-    .form-row input[type="checkbox"] {
-      accent-color: var(--accent);
+      margin-bottom: 8px;
+      color: var(--muted);
     }
     .form-row select {
       width: 100%;
-      border-radius: 9px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid var(--card-border);
+      background: rgba(255,255,255,0.05);
       color: var(--fg);
-      padding: 10px 11px;
-      font-size: 15px;
+      font-family: inherit;
+      font-size: 16px;
+      cursor: pointer;
     }
     .toggle-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 11px;
-      font-size: 14px;
+      gap: 12px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--fg);
+      padding: 8px 0;
     }
+    .toggle-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
     .actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
+      gap: 12px;
+      margin-top: 12px;
     }
     .actions button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
+      padding: 14px;
+      border: 3px solid var(--card-border);
+      border-radius: 20px;
       font-weight: 700;
       cursor: pointer;
+      font-family: inherit;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .actions button:not(.secondary) {
       background: var(--accent);
-      color: #041028;
+      border-color: #fbcfe8;
+      color: #500724;
+      box-shadow: 0 4px 15px rgba(244, 114, 182, 0.3);
+    }
+    .actions button:not(.secondary):hover {
+      background: #fbcfe8;
+      border-color: #fff;
     }
     .actions button.secondary {
-      background: rgba(255, 255, 255, 0.16);
+      background: var(--card-bg);
       color: var(--fg);
-      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-color: var(--card-border);
     }
+    .actions button.secondary:hover {
+      background: var(--card-hover-bg);
+      border-color: var(--accent);
+    }
+    .actions button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
     .status {
-      margin-top: 12px;
-      min-height: 20px;
-      font-size: 13px;
-      color: #d2e6ff;
-    }
-    .status.ok {
-      color: #c8ffe6;
-    }
-    .preview-card {
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.06);
+      margin-top: 20px;
+      font-size: 14px;
       padding: 14px;
-      display: grid;
-      gap: 8px;
-    }
-    .preview-chip {
-      display: inline-flex;
+      border-radius: 16px;
+      text-align: center;
+      min-height: 48px;
+      display: flex;
       align-items: center;
       justify-content: center;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .status.ok {
+      background: rgba(107, 230, 173, 0.15);
+      color: #b9ffdf;
+      border-color: rgba(107, 230, 173, 0.4);
+    }
+
+    /* --- Preview & Shortcuts --- */
+    .preview-card {
+      background: var(--card-bg);
+      border: 3px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .preview-card strong {
+      display: block;
+      font-size: 18px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .preview-chips {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .preview-chip {
+      padding: 4px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-      padding: 4px 10px;
       font-size: 12px;
       font-weight: 700;
-      width: fit-content;
+      border: 1px solid currentColor;
     }
-    .preview-chip.coin {
-      color: #c8ffe7;
-      border-color: rgba(122, 223, 186, 0.7);
-      background: rgba(122, 223, 186, 0.16);
-    }
-    .preview-chip.no-coin {
-      color: #d7e6ff;
-      border-color: rgba(172, 198, 236, 0.65);
-      background: rgba(172, 198, 236, 0.14);
-    }
+    .preview-chip.coin { color: var(--success); background: rgba(52, 211, 153, 0.1); }
+    .preview-chip.no-coin { color: var(--muted); background: rgba(148, 163, 184, 0.1); }
+    
     .preview-btn {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
-      font-weight: 700;
+      padding: 12px 24px;
+      border: 2px solid #fbcfe8;
+      border-radius: 12px;
       background: var(--accent);
-      color: #041028;
-      cursor: pointer;
-      width: fit-content;
-    }
-    .shortcuts {
-      margin: 0;
-      padding-left: 18px;
-      color: #d4e5ff;
+      color: #500724;
+      font-weight: 700;
       font-size: 14px;
-      line-height: 1.5;
+      box-shadow: 0 4px 12px rgba(244, 114, 182, 0.2);
+      transition: all 0.2s;
     }
-    @media (max-width: 900px) {
-      .wrap { grid-template-columns: 1fr; }
+    .preview-btn:hover { background: #fbcfe8; transform: translateY(-2px); }
+
+    .shortcuts {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .shortcuts li {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--fg);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .shortcuts li::before { content: "⌨️"; }
+    .shortcuts code {
+      background: rgba(255,255,255,0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .wrap { padding: 20px; }
+      .actions { grid-template-columns: 1fr; }
     }
   </style>
+
+  <meta name="description" content="Learn about accessibility features in Cade's Games.">
+  <meta property="og:title" content="Accessibility - Cade's Games">
+  <meta property="og:description" content="Learn about accessibility features in Cade's Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/accessibility.html">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Accessibility - Cade's Games">
+  <meta name="twitter:description" content="Learn about accessibility features in Cade's Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/accessibility.html">
 </head>
 <body>
-  <a class="skip-link" href="#settingsPanel">Skip to accessibility settings</a>
+  <div class="bg-animation">
+    <div class="stars-layer stars-1"></div>
+    <div class="stars-layer stars-2"></div>
+    <div class="stars-layer stars-3"></div>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+  </div>
+
   <header class="topbar">
-    <h1>Accessibility</h1>
-    <nav class="links" aria-label="Accessibility navigation links">
+    <h1>Cade's Games</h1>
+    <nav class="links">
       <a class="link-btn" href="/">Home</a>
       <a class="link-btn" href="/shop.html">Shop</a>
       <a class="link-btn" href="/pricing.html">Plans</a>
-      <a class="link-btn" href="/teacher/">Teacher</a>
+      <a class="link-btn" href="/accessibility.html">Help</a>
     </nav>
   </header>
 
   <main class="wrap">
-    <section id="settingsPanel" class="panel" tabindex="-1">
-      <h2>Display and Motion</h2>
-      <p>These settings persist on this device and apply across launcher, shop, teacher, and plan pages.</p>
+    <section id="settingsPanel" class="panel">
+      <h2>Preferences</h2>
+      <p>Your settings are saved to this device and apply to the launcher, shop, and other pages.</p>
+      
       <div class="form-row">
-        <label for="colorProfileSelect">Color profile</label>
+        <label for="colorProfileSelect">Color Profile</label>
         <select id="colorProfileSelect">
-          <option value="standard">Standard</option>
+          <option value="standard">Standard Colors</option>
           <option value="protanopia">Protanopia-friendly</option>
           <option value="deuteranopia">Deuteranopia-friendly</option>
           <option value="tritanopia">Tritanopia-friendly</option>
         </select>
       </div>
+
       <label class="toggle-row">
         <input id="largeUiToggle" type="checkbox" />
-        Larger UI text and controls
+        Larger text and buttons
       </label>
+      
       <label class="toggle-row">
         <input id="reducedMotionToggle" type="checkbox" />
-        Reduced motion
+        Reduced motion (fewer animations)
       </label>
+      
       <label class="toggle-row">
         <input id="highContrastToggle" type="checkbox" />
-        Higher contrast text and borders
+        High contrast text
       </label>
+
       <div class="actions">
         <button id="saveBtn" type="button">Save Settings</button>
-        <button id="resetBtn" class="secondary" type="button">Reset Defaults</button>
+        <button id="resetBtn" class="secondary" type="button">Reset All</button>
       </div>
-      <div id="status" class="status" aria-live="polite"></div>
+      
+      <div id="status" class="status" aria-live="polite">Adjust settings above to see a preview.</div>
     </section>
 
     <section class="panel">
-      <h2>Preview + Keyboard Tips</h2>
-      <p>Use Tab to move focus, Shift+Tab to move backward, and Enter/Space to activate controls.</p>
+      <h2>Preview & Tips</h2>
+      <p>Check out how your settings look in real-time below.</p>
+      
       <div class="preview-card">
-        <strong>Example Card</strong>
-        <span>This text preview reflects your current accessibility settings.</span>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <span class="preview-chip coin">Earns coins</span>
-          <span class="preview-chip no-coin">No coin rewards</span>
+        <strong>Card Preview</strong>
+        <p>This text reflects your current contrast and size settings.</p>
+        <div class="preview-chips">
+          <span class="preview-chip coin">Rewards Enabled</span>
+          <span class="preview-chip no-coin">Standard Only</span>
         </div>
-        <button class="preview-btn" type="button">Example Action</button>
+        <button class="preview-btn" type="button" disabled>Sample Button</button>
       </div>
+
       <ul class="shortcuts">
-        <li>Home launcher shortcut: press <code>/</code> to focus game search.</li>
-        <li>Shop shortcut: press <code>/</code> to focus item search.</li>
-        <li>Use the skip link at page start to jump directly to main content.</li>
+        <li>Tap <code>/</code> on the home page to search for games.</li>
+        <li>Tap <code>/</code> in the shop to filter items.</li>
+        <li>Tab through buttons to navigate with a keyboard or controller.</li>
       </ul>
     </section>
   </main>

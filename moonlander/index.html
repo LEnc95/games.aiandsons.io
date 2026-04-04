@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Moon Lander Patrol - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Stabilize your lander, conserve fuel, and touch down safely on every moon pad.">
+  <meta property="og:title" content="Moon Lander Patrol - Play on Cade's Games">
+  <meta property="og:description" content="Stabilize your lander, conserve fuel, and touch down safely on every moon pad.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/moonlander">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Moon Lander Patrol - Play on Cade's Games">
+  <meta name="twitter:description" content="Stabilize your lander, conserve fuel, and touch down safely on every moon pad.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/moonlander">
+  <style>
+    :root {
+      --bg0: #050812;
+      --bg1: #0e1a35;
+      --panel: rgba(14, 24, 45, 0.86);
+      --line: rgba(152, 210, 255, 0.34);
+      --text: #edf5ff;
+      --muted: #c1d7f0;
+      --good: #98ffd9;
+      --warn: #ffd58d;
+      --bad: #ff9aa8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(100% 82% at 15% 0%, #17315b 0%, transparent 64%),
+        radial-gradient(82% 70% at 85% 100%, #12203d 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 700px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(143, 198, 255, 0.58);
+      box-shadow: 0 16px 46px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #101f3d 0%, #091224 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 640px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(30, 57, 101, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(170, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #c8dbf4;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Moon Lander Patrol game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Moon Lander Patrol</h1>
+          <p>Guide the patrol lander through low gravity and touch down safely on each highlighted pad.</p>
+          <p>Desktop: Arrow keys or WASD move, Shift boost, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: hold thrusters to stabilize, tap Boost to recover from steep descent.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Launch Mission</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Sector</span><b id="hudLevel">1/3</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Fuel</span><b id="hudFuel">100%</b></div>
+      <div class="chip"><span>Hull</span><b id="hudHull">3</b></div>
+      <div class="chip warn"><span>V-Speed</span><b id="hudVy">0</b></div>
+      <div class="chip"><span>Pad</span><b id="hudPad">Ready</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnUp">Up</button>
+        <button type="button" id="btnRight">Right</button>
+      </div>
+      <div class="hint">Safe landing requires low vertical speed and staying inside the glowing pad zone.</div>
+      <div class="touch-group">
+        <button type="button" id="btnBoost" class="wide">Boost</button>
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudLevel = document.getElementById('hudLevel');
+    const hudScore = document.getElementById('hudScore');
+    const hudFuel = document.getElementById('hudFuel');
+    const hudHull = document.getElementById('hudHull');
+    const hudVy = document.getElementById('hudVy');
+    const hudPad = document.getElementById('hudPad');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    const btnUp = document.getElementById('btnUp');
+    const btnBoost = document.getElementById('btnBoost');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const LEVELS = [
+      {
+        gravity: 62,
+        terrainAmp: 72,
+        terrainFreq: 0.011,
+        pad: { x: 880, w: 180, yOffset: 58 },
+      },
+      {
+        gravity: 72,
+        terrainAmp: 82,
+        terrainFreq: 0.013,
+        pad: { x: 520, w: 170, yOffset: 64 },
+      },
+      {
+        gravity: 82,
+        terrainAmp: 90,
+        terrainFreq: 0.015,
+        pad: { x: 180, w: 190, yOffset: 70 },
+      },
+    ];
+
+    const input = {
+      left: false,
+      right: false,
+      up: false,
+      boost: false,
+    };
+
+    const state = {
+      mode: 'menu',
+      levelIndex: 0,
+      score: 0,
+      hull: 3,
+      fuel: 100,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      shake: 0,
+      particles: [],
+      player: {
+        x: 190,
+        y: 120,
+        vx: 0,
+        vy: 0,
+        radius: 18,
+      },
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function getLevel() {
+      return LEVELS[state.levelIndex];
+    }
+
+    function terrainYAt(x) {
+      const level = getLevel();
+      const center = canvas.height - 138;
+      const wave = Math.sin((x * level.terrainFreq) + state.levelIndex * 0.7) * level.terrainAmp;
+      const blend = Math.sin((x * level.terrainFreq * 0.42) + 1.8) * 28;
+      return center + wave + blend;
+    }
+
+    function padRect() {
+      const level = getLevel();
+      const left = level.pad.x;
+      const right = level.pad.x + level.pad.w;
+      const y = terrainYAt(left + level.pad.w * 0.5) - level.pad.yOffset;
+      return { x: left, y, w: level.pad.w, h: 16, right };
+    }
+
+    function resetPlayer() {
+      state.player.x = 190 + state.levelIndex * 24;
+      state.player.y = 110;
+      state.player.vx = 0;
+      state.player.vy = 0;
+    }
+
+    function resetMission() {
+      state.mode = 'playing';
+      state.levelIndex = 0;
+      state.score = 0;
+      state.hull = 3;
+      state.fuel = 100;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.shake = 0;
+      state.particles = [];
+      resetPlayer();
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Launch Mission') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: Arrow keys or WASD move, Shift boost, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetMission();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('moonlander'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, moonlander: { score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+    }
+
+    function addParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i += 1) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 30 + Math.random() * 160;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          age: 0,
+          life: 0.18 + Math.random() * 0.38,
+          color,
+        });
+      }
+    }
+
+    function rewardRun(result) {
+      const scoreBonus = Math.floor(state.score / 160);
+      const levelBonus = state.levelIndex * 3;
+      const clearBonus = result === 'win' ? 12 : 0;
+      const coins = Math.max(2, scoreBonus + levelBonus + clearBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          moonlander: {
+            score: state.score,
+            level: state.levelIndex + 1,
+            hull: state.hull,
+            fuel: Math.round(state.fuel),
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      rewardRun(result);
+      setModeOverlay(
+        result === 'win' ? 'Moon Patrol Complete' : 'Mission Failed',
+        result === 'win'
+          ? `All sectors cleared. Score ${state.score}, hull ${state.hull}, coins ${state.runCoinsEarned}.`
+          : `Lander lost. Score ${state.score}, sector ${state.levelIndex + 1}, coins ${state.runCoinsEarned}.`,
+        'Play Again'
+      );
+      updateHud();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Thrusters idle. Tap resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function loseHull() {
+      state.hull -= 1;
+      state.shake = 0.4;
+      addParticles(state.player.x, state.player.y, '#ff9cad', 20);
+      if (state.hull <= 0) {
+        finishRun('loss');
+      } else {
+        resetPlayer();
+      }
+    }
+
+    function handleLanding(pad) {
+      const insidePad = state.player.x > pad.x + 14 && state.player.x < pad.right - 14;
+      const gentleVy = Math.abs(state.player.vy) < 56;
+      const gentleVx = Math.abs(state.player.vx) < 42;
+      if (insidePad && gentleVy && gentleVx) {
+        state.score += 180 + Math.round(state.fuel * 1.2);
+        state.levelIndex += 1;
+        addParticles(state.player.x, state.player.y, '#90ffdb', 16);
+        if (state.levelIndex >= LEVELS.length) {
+          finishRun('win');
+        } else {
+          resetPlayer();
+          state.fuel = Math.min(100, state.fuel + 24);
+        }
+      } else {
+        loseHull();
+      }
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      const level = getLevel();
+      const p = state.player;
+
+      const sideAccel = 86;
+      const thrustAccel = 174;
+      const boostAccel = 250;
+      const gravity = level.gravity;
+
+      if (input.left) p.vx -= sideAccel * dt;
+      if (input.right) p.vx += sideAccel * dt;
+      if (input.up && state.fuel > 0) {
+        p.vy -= thrustAccel * dt;
+        state.fuel = Math.max(0, state.fuel - 11 * dt);
+        if (Math.random() < 0.35) addParticles(p.x, p.y + p.radius + 4, '#ffd799', 2);
+      }
+      if (input.boost && state.fuel > 0) {
+        p.vy -= boostAccel * dt;
+        state.fuel = Math.max(0, state.fuel - 18 * dt);
+        if (Math.random() < 0.5) addParticles(p.x, p.y + p.radius + 4, '#ffcb7c', 3);
+      }
+
+      p.vy += gravity * dt;
+      p.vx *= 0.994;
+      p.vy *= 0.998;
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.x = Math.max(28, Math.min(canvas.width - 28, p.x));
+
+      const terrain = terrainYAt(p.x);
+      const pad = padRect();
+      const hitsPadTop = p.y + p.radius >= pad.y && p.y < pad.y && p.x > pad.x && p.x < pad.right;
+      if (hitsPadTop) {
+        p.y = pad.y - p.radius;
+        handleLanding(pad);
+      } else if (p.y + p.radius >= terrain) {
+        p.y = terrain - p.radius;
+        loseHull();
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 80 * dt;
+      }
+
+      state.score += Math.floor(dt * 9);
+      state.shake = Math.max(0, state.shake - dt);
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#122247');
+      grad.addColorStop(1, '#091426');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(218, 236, 255, 0.7)';
+      for (let i = 0; i < 60; i += 1) {
+        const x = (i * 193 + state.levelIndex * 47) % canvas.width;
+        const y = (i * 121) % (canvas.height * 0.7);
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
+
+    function drawTerrain() {
+      const pad = padRect();
+      ctx.fillStyle = '#2b3f63';
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x += 12) {
+        const y = terrainYAt(x);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#9bffdb';
+      ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
+      ctx.strokeStyle = 'rgba(220, 255, 241, 0.95)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(pad.x, pad.y, pad.w, pad.h);
+
+      ctx.fillStyle = '#dff0ff';
+      ctx.font = '700 14px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('LAND', pad.x + pad.w * 0.5, pad.y - 8);
+    }
+
+    function drawLander() {
+      const p = state.player;
+      ctx.save();
+      if (state.shake > 0) {
+        ctx.translate((Math.random() - 0.5) * 6 * state.shake, (Math.random() - 0.5) * 6 * state.shake);
+      }
+      ctx.translate(p.x, p.y);
+
+      ctx.fillStyle = '#e9f6ff';
+      ctx.beginPath();
+      ctx.moveTo(0, -20);
+      ctx.lineTo(16, 8);
+      ctx.lineTo(-16, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#8cc7ff';
+      ctx.fillRect(-12, 8, 24, 8);
+      ctx.strokeStyle = '#c6e6ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-14, 16);
+      ctx.lineTo(-22, 24);
+      ctx.moveTo(14, 16);
+      ctx.lineTo(22, 24);
+      ctx.stroke();
+
+      if ((input.up || input.boost) && state.mode === 'playing' && state.fuel > 0) {
+        ctx.fillStyle = input.boost ? '#ffc061' : '#ffde9b';
+        ctx.beginPath();
+        ctx.moveTo(0, 28);
+        ctx.lineTo(-7, 12);
+        ctx.lineTo(7, 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.66)';
+      ctx.fillRect(14, 12, 520, 62);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 520, 62);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Moon Lander Patrol', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText(`Sector ${state.levelIndex + 1} / ${LEVELS.length} | Fuel ${Math.round(state.fuel)}%`, 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      drawBackground();
+      drawTerrain();
+      drawParticles();
+      drawLander();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudLevel.textContent = `${Math.min(state.levelIndex + 1, LEVELS.length)}/${LEVELS.length}`;
+      hudScore.textContent = String(state.score);
+      hudFuel.textContent = `${Math.round(state.fuel)}%`;
+      hudHull.textContent = String(Math.max(0, state.hull));
+      hudVy.textContent = state.player.vy.toFixed(1);
+      const pad = padRect();
+      const padStatus = state.player.x >= pad.x && state.player.x <= pad.right ? 'Aligned' : 'Seek';
+      hudPad.textContent = padStatus;
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudFuel.parentElement.classList.toggle('warn', state.fuel < 40 && state.fuel >= 20);
+      hudFuel.parentElement.classList.toggle('bad', state.fuel < 20);
+      hudFuel.parentElement.classList.toggle('good', state.fuel >= 40);
+      hudHull.parentElement.classList.toggle('warn', state.hull === 2);
+      hudHull.parentElement.classList.toggle('bad', state.hull <= 1);
+      hudHull.parentElement.classList.toggle('good', state.hull >= 3);
+      hudVy.parentElement.classList.toggle('good', Math.abs(state.player.vy) < 56);
+      hudVy.parentElement.classList.toggle('warn', Math.abs(state.player.vy) >= 56 && Math.abs(state.player.vy) < 82);
+      hudVy.parentElement.classList.toggle('bad', Math.abs(state.player.vy) >= 82);
+      hudPad.parentElement.classList.toggle('good', padStatus === 'Aligned');
+      hudPad.parentElement.classList.toggle('warn', padStatus !== 'Aligned');
+      hudPad.parentElement.classList.toggle('bad', false);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function setHoldButton(button, key) {
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        input[key] = true;
+      });
+      const clear = (event) => {
+        if (event) event.preventDefault();
+        input[key] = false;
+      };
+      button.addEventListener('pointerup', clear);
+      button.addEventListener('pointercancel', clear);
+      button.addEventListener('pointerleave', clear);
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        input.left = true;
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        input.right = true;
+      }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        input.up = true;
+      }
+      if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
+        event.preventDefault();
+        input.boost = true;
+      }
+      if (event.code === 'KeyP' && !event.repeat) {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR' && !event.repeat) {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF' && !event.repeat) {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') input.left = false;
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') input.right = false;
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') input.up = false;
+      if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') input.boost = false;
+    });
+
+    window.addEventListener('blur', () => {
+      input.left = false;
+      input.right = false;
+      input.up = false;
+      input.boost = false;
+    });
+
+    setHoldButton(btnLeft, 'left');
+    setHoldButton(btnRight, 'right');
+    setHoldButton(btnUp, 'up');
+    setHoldButton(btnBoost, 'boost');
+
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const pad = padRect();
+      const payload = {
+        game: 'moonlander',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left, +x right, +y down; gravity increases +y',
+        objective: {
+          current_sector: Math.min(state.levelIndex + 1, LEVELS.length),
+          total_sectors: LEVELS.length,
+          land_softly_on_pad: true,
+        },
+        player: {
+          x: Number(state.player.x.toFixed(1)),
+          y: Number(state.player.y.toFixed(1)),
+          vx: Number(state.player.vx.toFixed(1)),
+          vy: Number(state.player.vy.toFixed(1)),
+          radius: state.player.radius,
+        },
+        resources: {
+          fuel: Number(state.fuel.toFixed(1)),
+          hull: state.hull,
+        },
+        pad: {
+          x: Number(pad.x.toFixed(1)),
+          y: Number(pad.y.toFixed(1)),
+          width: pad.w,
+          height: pad.h,
+          safe_vx_abs_lt: 42,
+          safe_vy_abs_lt: 56,
+        },
+        terrain_sample: [
+          120, 260, 420, 580, 740, 900, 1060,
+        ].map((x) => ({ x, y: Number(terrainYAt(x).toFixed(1)) })),
+        score: state.score,
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    draw();
+    updateHud();
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'moonlander', gameName: 'Moon Lander Patrol' });
+  </script>
+</body>
+</html>

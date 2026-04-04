@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Vault Runner - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Crack sequential vault tumbler codes before the alarm meter fills up.">
+  <meta property="og:title" content="Vault Runner - Play on Cade's Games">
+  <meta property="og:description" content="Crack sequential vault tumbler codes before the alarm meter fills up.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/vaultrunner">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vault Runner - Play on Cade's Games">
+  <meta name="twitter:description" content="Crack sequential vault tumbler codes before the alarm meter fills up.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/vaultrunner">
+  <style>
+    :root {
+      --bg0: #050813;
+      --bg1: #0f2144;
+      --panel: rgba(8, 16, 34, 0.88);
+      --line: rgba(138, 205, 255, 0.4);
+      --text: #eef6ff;
+      --muted: #c3d8f6;
+      --good: #98ffd2;
+      --warn: #ffd894;
+      --bad: #ff9cb7;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(88% 72% at 10% 4%, #193f72 0%, transparent 62%),
+        radial-gradient(74% 60% at 92% 100%, #15335c 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #132957 0%, #081127 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 670px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(25, 52, 94, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Vault Runner game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Vault Runner</h1>
+          <p>Crack 5 vault stages by matching tumbler codes. Every wrong turn pushes the alarm higher.</p>
+          <p>Desktop: Left/Right select tumbler, Space turns selected tumbler, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use Select Left/Right and Turn to lock each stage before alarm reaches 100%.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Heist</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Stage</span><b id="hudStage">1/5</b></div>
+      <div class="chip"><span>Selected</span><b id="hudSelected">1</b></div>
+      <div class="chip"><span>Moves</span><b id="hudMoves">0</b></div>
+      <div class="chip"><span>Alarm</span><b id="hudAlarm">0%</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">130.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">Select Left</button>
+        <button type="button" id="btnTurn">Turn</button>
+        <button type="button" id="btnRight">Select Right</button>
+      </div>
+      <div class="hint">Match all three tumblers to the hidden target code. Completed stages lower the alarm.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudStage = document.getElementById('hudStage');
+    const hudSelected = document.getElementById('hudSelected');
+    const hudMoves = document.getElementById('hudMoves');
+    const hudAlarm = document.getElementById('hudAlarm');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnLeft = document.getElementById('btnLeft');
+    const btnTurn = document.getElementById('btnTurn');
+    const btnRight = document.getElementById('btnRight');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const TOTAL_STAGES = 5;
+    const ROUND_SECONDS = 130;
+
+    const state = {
+      mode: 'menu',
+      stage: 1,
+      selected: 0,
+      tumblers: [0, 0, 0],
+      target: [0, 0, 0],
+      moves: 0,
+      alarm: 0,
+      timeLeft: ROUND_SECONDS,
+      score: 0,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      particles: [],
+    };
+
+    let controlledStep = false;
+    let previousTime = performance.now();
+    let rafId = 0;
+
+    function randomDigit() {
+      return Math.floor(Math.random() * 10);
+    }
+
+    function randomCode() {
+      return [randomDigit(), randomDigit(), randomDigit()];
+    }
+
+    function spawnBurst(x, y, color, count = 10) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 35 + Math.random() * 140;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.16 + Math.random() * 0.34,
+          color,
+        });
+      }
+    }
+
+    function setupStage(stageNumber) {
+      state.stage = stageNumber;
+      state.selected = 0;
+      state.target = randomCode();
+      state.tumblers = randomCode();
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.moves = 0;
+      state.alarm = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.score = 0;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.particles = [];
+      setupStage(1);
+    }
+
+    function showOverlay(title, detail, buttonLabel = 'Start Heist') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${detail}</p>
+          <p>Desktop: Left/Right select tumbler, Space turns tumbler, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('vaultrunner'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, vaultrunner: { stage: 1, score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function isStageSolved() {
+      return state.tumblers.every((value, i) => value === state.target[i]);
+    }
+
+    function scoreNow() {
+      const stageScore = (state.stage - 1) * 520;
+      const timeBonus = Math.max(0, Math.floor(state.timeLeft) * 2);
+      const alarmPenalty = Math.floor(state.alarm * 4);
+      const efficiency = Math.max(0, 220 - state.moves);
+      return Math.max(0, stageScore + timeBonus + efficiency - alarmPenalty);
+    }
+
+    function rewardRun(result) {
+      const stageBonus = (state.stage - 1) * 2;
+      const clearBonus = result === 'win' ? 14 : 0;
+      const alarmBonus = result === 'win' ? Math.max(0, Math.floor((100 - state.alarm) / 15)) : 0;
+      const coins = Math.max(2, stageBonus + clearBonus + alarmBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          vaultrunner: {
+            stage: state.stage,
+            score: state.score,
+            alarm: Math.round(state.alarm),
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      state.score = scoreNow();
+      rewardRun(result);
+      const detail = result === 'win'
+        ? `All vault stages cracked. Score ${state.score}, alarm ${Math.round(state.alarm)}%, coins ${state.runCoinsEarned}.`
+        : `Heist failed. Stage ${state.stage}/${TOTAL_STAGES}, score ${state.score}, coins ${state.runCoinsEarned}.`;
+      showOverlay(result === 'win' ? 'Vault Opened' : 'Alarm Triggered', detail, 'Run Again');
+      updateHud();
+    }
+
+    function selectDelta(delta) {
+      if (state.mode !== 'playing') return;
+      state.selected = (state.selected + delta + 3) % 3;
+    }
+
+    function turnSelectedTumbler() {
+      if (state.mode !== 'playing') return;
+      const idx = state.selected;
+      state.tumblers[idx] = (state.tumblers[idx] + 1) % 10;
+      state.moves += 1;
+
+      const aligned = state.tumblers[idx] === state.target[idx];
+      state.alarm = Math.max(0, Math.min(100, state.alarm + (aligned ? -2 : 4.5)));
+
+      const x = 410 + idx * 190;
+      const y = 365;
+      spawnBurst(x, y, aligned ? '#98ffd2' : '#ff9ab9', 12);
+
+      if (isStageSolved()) {
+        state.score = scoreNow() + 140;
+        state.alarm = Math.max(0, state.alarm - 15);
+        if (state.stage >= TOTAL_STAGES) {
+          finishRun('win');
+          return;
+        }
+        setupStage(state.stage + 1);
+      } else if (state.alarm >= 100) {
+        finishRun('loss');
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        showOverlay('Paused', 'Vault lock paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
+          return;
+        }
+        state.alarm = Math.max(0, Math.min(100, state.alarm + dt * 0.55));
+        if (state.alarm >= 100) {
+          finishRun('loss');
+          return;
+        }
+        state.score = scoreNow();
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 80 * dt;
+      }
+    }
+
+    function drawVault() {
+      const centerX = canvas.width * 0.5;
+      const centerY = canvas.height * 0.53;
+      const radius = 210;
+
+      ctx.fillStyle = '#102548';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius + 38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(149, 210, 255, 0.48)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = '#0c1a35';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let i = 0; i < 3; i += 1) {
+        const x = 410 + i * 190;
+        const y = centerY;
+        const selected = i === state.selected && state.mode === 'playing';
+        const solvedDigit = state.tumblers[i] === state.target[i];
+
+        ctx.fillStyle = selected ? 'rgba(128, 212, 255, 0.22)' : 'rgba(255, 255, 255, 0.06)';
+        ctx.fillRect(x - 58, y - 86, 116, 172);
+        ctx.strokeStyle = selected ? '#ecfbff' : 'rgba(149, 210, 255, 0.4)';
+        ctx.lineWidth = selected ? 3 : 2;
+        ctx.strokeRect(x - 58, y - 86, 116, 172);
+
+        ctx.fillStyle = solvedDigit ? '#9fffd7' : '#eaf6ff';
+        ctx.font = '700 64px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(state.tumblers[i]), x, y + 20);
+
+        ctx.fillStyle = '#9cc4ea';
+        ctx.font = '600 14px Trebuchet MS';
+        ctx.fillText(`Target ${state.target[i]}`, x, y + 56);
+      }
+
+      const barX = 285;
+      const barY = 610;
+      const barW = 630;
+      const barH = 18;
+      const ratio = Math.max(0, Math.min(1, state.alarm / 100));
+      ctx.fillStyle = 'rgba(22, 37, 66, 0.95)';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.strokeStyle = 'rgba(148, 208, 255, 0.42)';
+      ctx.strokeRect(barX, barY, barW, barH);
+      const alarmColor = ratio < 0.45 ? '#7ef5bf' : (ratio < 0.75 ? '#ffd27f' : '#ff91ad');
+      ctx.fillStyle = alarmColor;
+      ctx.fillRect(barX + 2, barY + 2, (barW - 4) * ratio, barH - 4);
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 730, 58);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 730, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Vault Runner', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Select tumbler, turn digits, and match the target code before alarm reaches 100%.', 28, 58);
+    }
+
+    function drawPauseShade() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.52);
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#142a56');
+      grad.addColorStop(1, '#081228');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawVault();
+      drawParticles();
+      drawTopLabel();
+      drawPauseShade();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudStage.textContent = `${state.stage}/${TOTAL_STAGES}`;
+      hudSelected.textContent = String(state.selected + 1);
+      hudMoves.textContent = String(state.moves);
+      hudAlarm.textContent = `${Math.round(state.alarm)}%`;
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudAlarm.parentElement.classList.toggle('good', state.alarm < 45);
+      hudAlarm.parentElement.classList.toggle('warn', state.alarm >= 45 && state.alarm < 75);
+      hudAlarm.parentElement.classList.toggle('bad', state.alarm >= 75);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 55);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 55 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+
+      hudStage.parentElement.classList.toggle('good', state.stage >= 4);
+      hudStage.parentElement.classList.toggle('warn', state.stage >= 2 && state.stage < 4);
+      hudStage.parentElement.classList.toggle('bad', state.stage < 2);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (!event.repeat && (event.code === 'ArrowLeft' || event.code === 'KeyA')) { event.preventDefault(); selectDelta(-1); }
+      if (!event.repeat && (event.code === 'ArrowRight' || event.code === 'KeyD')) { event.preventDefault(); selectDelta(1); }
+      if (!event.repeat && (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW' || event.code === 'Enter' || event.code === 'KeyB')) { event.preventDefault(); turnSelectedTumbler(); }
+      if (!event.repeat && event.code === 'KeyP') { event.preventDefault(); togglePause(); }
+      if (!event.repeat && event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (!event.repeat && event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    });
+
+    btnLeft.addEventListener('click', () => selectDelta(-1));
+    btnRight.addEventListener('click', () => selectDelta(1));
+    btnTurn.addEventListener('click', () => turnSelectedTumbler());
+    btnPause.addEventListener('click', () => togglePause());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'vaultrunner',
+        mode: state.mode,
+        objective: {
+          total_stages: TOTAL_STAGES,
+          current_stage: state.stage,
+          match_target_digits: true,
+          alarm_limit_percent: 100,
+          time_limit_seconds: ROUND_SECONDS,
+        },
+        tumblers: state.tumblers.map((value, i) => ({
+          index: i,
+          value,
+          target: state.target[i],
+          selected: i === state.selected,
+          matched: value === state.target[i],
+        })),
+        resources: {
+          moves: state.moves,
+          alarm_percent: Number(state.alarm.toFixed(2)),
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    showOverlay('Vault Runner', 'Match each stage code by rotating tumblers before the alarm spikes.', 'Start Heist');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'vaultrunner', gameName: 'Vault Runner' });
+  </script>
+</body>
+</html>

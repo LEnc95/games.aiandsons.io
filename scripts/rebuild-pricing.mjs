@@ -1,0 +1,375 @@
+import fs from "node:fs";
+
+const htmlContent = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Family Plans - Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="./src/styles/accessibility.css">
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --good:#6be6ad; }
+    * { box-sizing:border-box; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px clamp(16px,4vw,32px); border-bottom:1px solid rgba(90,173,221,0.2); background:rgba(12,20,46,0.6); backdrop-filter:blur(8px); }
+    .topbar h1 { margin:0; font-size:clamp(20px,3vw,28px); }
+    .links { display:flex; align-items:center; gap:10px; }
+    .link-btn { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; }
+    .wrap { max-width:1060px; margin:0 auto; padding:clamp(20px,4vw,34px) clamp(16px,4vw,32px) 48px; }
+    .hero { margin-bottom:18px; }
+    .hero h2 { margin:0 0 8px 0; font-size:clamp(24px,4vw,34px); }
+    .hero p { margin:0; color:var(--muted); font-size:16px; line-height:1.5; }
+    .plan-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin-top:18px; }
+    .plan-card { border:1px solid rgba(255,255,255,0.18); border-radius:14px; padding:16px; background:rgba(255,255,255,0.05); }
+    .plan-card.selected { border-color:rgba(90,173,221,0.7); box-shadow:0 0 0 1px rgba(90,173,221,0.4) inset; }
+    .plan-card h3 { margin:0 0 6px 0; font-size:20px; }
+    .price { margin:0 0 10px 0; font-size:22px; font-weight:700; }
+    .plan-meta { margin:0 0 14px 0; color:var(--muted); font-size:13px; line-height:1.45; }
+    .plan-features { margin:0; padding-left:18px; color:#d2e3ff; font-size:14px; line-height:1.5; }
+    .plan-features li { margin:0 0 4px 0; }
+    .select-btn { margin-top:14px; width:100%; padding:10px 12px; border:none; border-radius:10px; background:var(--accent); color:#081328; font-weight:700; cursor:pointer; }
+    .checkout-panel { margin-top:20px; border:1px solid rgba(90,173,221,0.35); border-radius:14px; padding:16px; background:rgba(90,173,221,0.1); }
+    .checkout-panel h3 { margin:0 0 8px 0; font-size:20px; }
+    .checkout-panel p { margin:0 0 8px 0; color:#d7e8ff; font-size:14px; line-height:1.5; }
+    .billing-row { margin:8px 0 10px 0; display:grid; gap:6px; }
+    .billing-row label { font-size:13px; color:#c7daf7; font-weight:600; }
+    .billing-row input {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.1);
+      color:var(--fg);
+      font-size:14px;
+    }
+    .billing-row input::placeholder { color:#9db4d6; }
+    .checkout-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .checkout-actions button { padding:10px 12px; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
+    .primary { background:var(--accent); color:#081328; }
+    .secondary { background:rgba(255,255,255,0.14); color:var(--fg); border:1px solid rgba(255,255,255,0.2); }
+    .success { color:var(--good); font-weight:700; }
+    .token { margin:6px 0 0 0; font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace; font-size:13px; color:#cde1ff; }
+    .note { margin-top:14px; color:#a8bfdc; font-size:12px; line-height:1.45; }
+    @media (max-width: 700px) {
+      .checkout-actions { flex-direction:column; }
+      .checkout-actions button { width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#planGrid">Skip to plan options</a>
+  <header class="topbar">
+    <h1>Family Plans</h1>
+    <div class="links">
+      <a class="link-btn" href="/">Home</a>
+      <a class="link-btn" href="/shop.html">Shop</a>
+      <a class="link-btn" href="/school-license.html">School License</a>
+      <a class="link-btn" href="/accessibility.html">Accessibility</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h2>Simple family pricing</h2>
+      <p>Choose a plan any time. No timers, no pressure prompts, and no gameplay lockouts for free users.</p>
+    </section>
+
+    <section class="plan-grid" id="planGrid"></section>
+
+    <section class="checkout-panel">
+      <h3>Checkout</h3>
+      <p id="checkoutStatus">Choose a plan to continue.</p>
+      <div class="billing-row" id="billingEmailRow" style="display:none;">
+        <label for="billingEmailInput">Billing email</label>
+        <input id="billingEmailInput" type="email" autocomplete="email" placeholder="parent@example.com" />
+      </div>
+      <div class="checkout-actions">
+        <button id="startCheckoutBtn" class="primary" type="button">Start Checkout</button>
+        <button id="manageBillingBtn" class="secondary" type="button" style="display:none;">Manage Subscription</button>
+      </div>
+      <p class="note" id="checkoutNote">Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { mountAccountWidget } from './src/auth/embed.js';
+    import { loadAndApplyAccessibility } from './src/core/accessibility.js';
+    import {
+      ENTITLEMENT_KEYS,
+      getEntitlements,
+      hasEntitlement,
+    } from './src/core/entitlements.js';
+    import {
+      fetchBillingConfig,
+      isStripeBillingEnabled,
+      createStripeCheckoutSession,
+      createStripePortalSession,
+      syncLocalEntitlementsFromStripe,
+      getBillingEmail,
+      setBillingEmail,
+    } from './src/core/billing.js';
+    import { trackKpiEvent } from './src/core/metrics.js';
+
+    loadAndApplyAccessibility();
+    mountAccountWidget();
+
+    const plans = [
+      {
+        id: 'family-monthly',
+        name: 'Family Monthly',
+        price: '$4.99 / month',
+        meta: 'Flexible month-to-month plan.',
+        features: [
+          'Access to Family Premium cosmetic packs',
+          'Premium challenge tracks when available',
+          'No ads and no manipulative upsells',
+        ],
+      },
+      {
+        id: 'family-annual',
+        name: 'Family Annual',
+        price: '$39.00 / year',
+        meta: 'Best value for long-term play.',
+        features: [
+          'Everything in Family Monthly',
+          'Lower yearly cost vs monthly billing',
+          'One purchase for the full school year',
+        ],
+      },
+    ];
+
+    const planGrid = document.getElementById('planGrid');
+    const checkoutStatus = document.getElementById('checkoutStatus');
+    const checkoutNote = document.getElementById('checkoutNote');
+    const billingEmailRow = document.getElementById('billingEmailRow');
+    const billingEmailInput = document.getElementById('billingEmailInput');
+    const startCheckoutBtn = document.getElementById('startCheckoutBtn');
+    const manageBillingBtn = document.getElementById('manageBillingBtn');
+
+    let selectedPlanId = plans[0].id;
+    let billingConfig = null;
+    let checkoutBusy = false;
+
+    const isStripeMode = () => isStripeBillingEnabled(billingConfig);
+    const getSupportedPlans = () => new Set(Array.isArray(billingConfig?.supportedPlans) ? billingConfig.supportedPlans : []);
+
+    function setCheckoutBusy(nextBusy) {
+      checkoutBusy = Boolean(nextBusy);
+      if (checkoutBusy) {
+        startCheckoutBtn.disabled = true;
+        manageBillingBtn.disabled = true;
+      }
+    }
+
+    function updateBillingEmail() {
+      const saved = setBillingEmail(billingEmailInput.value);
+      billingEmailInput.value = saved;
+      return saved;
+    }
+
+    function renderPlans() {
+      planGrid.innerHTML = '';
+      for (const plan of plans) {
+        const card = document.createElement('article');
+        card.className = \\\`plan-card\${selectedPlanId === plan.id ? ' selected' : ''}\\\`;
+        card.dataset.planId = plan.id;
+        const features = plan.features.map((feature) => \\\`<li>\${feature}</li>\\\`).join('');
+        card.innerHTML = \\\`
+          <h3>\${plan.name}</h3>
+          <p class="price">\${plan.price}</p>
+          <p class="plan-meta">\${plan.meta}</p>
+          <ul class="plan-features">\${features}</ul>
+          <button class="select-btn" type="button">Select \${plan.name}</button>
+        \\\`;
+        const btn = card.querySelector('.select-btn');
+        btn.addEventListener('click', () => {
+          selectedPlanId = plan.id;
+          trackKpiEvent('pricing_plan_selected', { planId: plan.id });
+          renderPlans();
+          renderCheckout();
+        });
+        planGrid.appendChild(card);
+      }
+    }
+
+    function renderCheckout() {
+      const entitlements = getEntitlements();
+      const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
+      const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
+      const stripeMode = isStripeMode();
+
+      if (stripeMode) {
+        const supportedPlans = getSupportedPlans();
+        const selectedPlanSupported = supportedPlans.has(selectedPlanId);
+        startCheckoutBtn.textContent = 'Continue to Secure Checkout';
+        billingEmailRow.style.display = 'grid';
+        manageBillingBtn.style.display = 'inline-flex';
+        checkoutNote.textContent = 'Secure checkout and subscription management are powered by Stripe. Use the billing email tied to your subscription.';
+
+        if (hasFamilyPremium) {
+          checkoutStatus.innerHTML = \\\`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\\\`;
+          manageBillingBtn.disabled = checkoutBusy;
+        } else if (!selectedPlanSupported) {
+          checkoutStatus.textContent = \\\`Selected plan is not configured on this environment. Choose a supported plan or contact support.\\\`;
+          manageBillingBtn.disabled = true;
+        } else {
+          checkoutStatus.textContent = \\\`Selected plan: \${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.\\\`;
+          manageBillingBtn.disabled = checkoutBusy;
+        }
+
+        startCheckoutBtn.disabled = checkoutBusy || !selectedPlanId || !selectedPlanSupported;
+        return;
+      }
+
+      startCheckoutBtn.textContent = 'Billing Unavailable';
+      billingEmailRow.style.display = 'none';
+      manageBillingBtn.style.display = 'none';
+      manageBillingBtn.disabled = true;
+      checkoutNote.textContent = 'Billing is not configured for this environment. Stripe provider is required.';
+
+      if (hasFamilyPremium) {
+        checkoutStatus.innerHTML = \\\`<span class="success">Family Premium is active.</span> You can use premium items in the shop.\\\`;
+      } else {
+        checkoutStatus.textContent = 'Provider connection failed.';
+      }
+      startCheckoutBtn.disabled = true;
+    }
+
+    async function syncStripeCheckoutFromUrl() {
+      if (!isStripeMode()) return;
+      const url = new URL(window.location.href);
+      const checkoutResult = url.searchParams.get('checkout');
+      const sessionId = url.searchParams.get('session_id');
+      if (!checkoutResult) return;
+
+      const billingEmail = getBillingEmail();
+      if (checkoutResult === 'success') {
+        try {
+          const syncResult = await syncLocalEntitlementsFromStripe({ sessionId, customerEmail: billingEmail });
+          if (syncResult?.synced) {
+            trackKpiEvent('checkout_completed', { planId: syncResult.snapshot?.activePlanId || selectedPlanId, billingProvider: 'stripe' });
+          }
+        } catch (error) {
+          checkoutStatus.textContent = \\\`Checkout return detected, but subscription sync failed: \${error.message}\\\`;
+        }
+      } else if (checkoutResult === 'canceled') {
+        checkoutStatus.textContent = 'Checkout canceled. You can try again at any time.';
+        trackKpiEvent('checkout_canceled', { planId: selectedPlanId, billingProvider: 'stripe' });
+      }
+
+      url.searchParams.delete('checkout');
+      url.searchParams.delete('session_id');
+      const nextSearch = url.searchParams.toString();
+      const nextUrl = \\\`\${url.pathname}\${nextSearch ? \\\`?\${nextSearch}\\\` : ''}\${url.hash || ''}\\\`;
+      window.history.replaceState({}, '', nextUrl);
+    }
+
+    async function initializeBilling({ force = false } = {}) {
+      billingConfig = await fetchBillingConfig({ force });
+      const stripeMode = isStripeMode();
+      billingEmailInput.value = getBillingEmail();
+      if (stripeMode) {
+        await syncStripeCheckoutFromUrl();
+      }
+    }
+
+    startCheckoutBtn.addEventListener('click', async () => {
+      if (!selectedPlanId || checkoutBusy || !isStripeMode()) return;
+      
+      const billingEmail = updateBillingEmail();
+      if (!billingEmail) {
+        checkoutStatus.textContent = 'Enter your billing email to continue to secure checkout.';
+        billingEmailInput.focus();
+        return;
+      }
+
+      setCheckoutBusy(true);
+      renderCheckout();
+      try {
+        const session = await createStripeCheckoutSession({
+          planId: selectedPlanId,
+          customerEmail: billingEmail,
+          successUrl: \\\`\${window.location.origin}/pricing.html?checkout=success&session_id={CHECKOUT_SESSION_ID}\\\`,
+          cancelUrl: \\\`\${window.location.origin}/pricing.html?checkout=canceled\\\`,
+        });
+        trackKpiEvent('checkout_started', { planId: selectedPlanId, billingProvider: 'stripe' });
+        window.location.assign(session.url);
+        return;
+      } catch (error) {
+        checkoutStatus.textContent = \\\`Secure checkout is unavailable right now: \${error.message}\\\`;
+        setCheckoutBusy(false);
+        renderCheckout();
+        return;
+      }
+    });
+
+    manageBillingBtn.addEventListener('click', async () => {
+      if (!isStripeMode() || checkoutBusy) return;
+      const billingEmail = updateBillingEmail();
+
+      setCheckoutBusy(true);
+      renderCheckout();
+      try {
+        const portal = await createStripePortalSession({
+          customerEmail: billingEmail,
+          returnUrl: \\\`\${window.location.origin}/pricing.html\\\`,
+        });
+        trackKpiEvent('billing_portal_opened', { billingProvider: 'stripe' });
+        window.location.assign(portal.url);
+      } catch (error) {
+        checkoutStatus.textContent = \\\`Could not open billing management: \${error.message}\\\`;
+        setCheckoutBusy(false);
+        renderCheckout();
+      }
+    });
+
+    billingEmailInput.addEventListener('change', () => {
+      updateBillingEmail();
+    });
+
+    window.render_game_to_text = () => {
+      const entitlements = getEntitlements();
+      return JSON.stringify({
+        view: 'pricing',
+        selectedPlanId,
+        billingProvider: isStripeMode() ? 'stripe' : 'local',
+        stripeBillingEnabled: isStripeMode(),
+        familyPremium: hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements),
+      });
+    };
+
+    window.advanceTime = async (ms = 0) => {
+      const wait = Math.max(0, Number(ms) || 0);
+      if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+      renderCheckout();
+    };
+
+    renderPlans();
+    trackKpiEvent('pricing_view', { defaultPlanId: selectedPlanId });
+    initializeBilling()
+      .then(() => {
+        renderCheckout();
+      })
+      .catch(() => {
+        renderCheckout();
+      });
+    window.addEventListener('pageshow', () => {
+      initializeBilling({ force: true })
+        .then(() => {
+          setCheckoutBusy(false);
+          renderCheckout();
+        })
+        .catch(() => {
+          setCheckoutBusy(false);
+          renderCheckout();
+        });
+    });
+  </script>
+</body>
+</html>`;
+
+fs.writeFileSync("C:/Users/Luke/Documents/GitHub/games.aiandsons.io/pricing.html", htmlContent, { encoding: "utf8" });

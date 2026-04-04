@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chrome Shift - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Flood the board by shifting chrome colors and capture every tile before moves run out.">
+  <meta property="og:title" content="Chrome Shift - Play on Cade's Games">
+  <meta property="og:description" content="Flood the board by shifting chrome colors and capture every tile before moves run out.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/chromeshift">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Chrome Shift - Play on Cade's Games">
+  <meta name="twitter:description" content="Flood the board by shifting chrome colors and capture every tile before moves run out.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/chromeshift">
+  <style>
+    :root {
+      --bg0: #030813;
+      --bg1: #11284b;
+      --panel: rgba(8, 16, 37, 0.9);
+      --line: rgba(141, 201, 255, 0.4);
+      --text: #ecf5ff;
+      --muted: #bfd5f5;
+      --good: #98ffd0;
+      --warn: #ffe29f;
+      --bad: #ff9db8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(88% 72% at 8% 0%, #254f83 0%, transparent 58%),
+        radial-gradient(78% 62% at 92% 100%, #2f2959 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #142a4f 0%, #090f25 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 93, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .color-group {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .color-btn {
+      min-height: 46px;
+      border-width: 2px;
+      border-style: solid;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .color-btn.active {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) inset;
+    }
+    .color-btn.selected {
+      box-shadow: 0 0 0 2px rgba(6, 11, 24, 0.55) inset, 0 0 0 2px rgba(255, 255, 255, 0.72);
+    }
+    .chrome-blue { background: #46c4ff; border-color: #93e3ff; color: #052643; }
+    .chrome-amber { background: #ffb763; border-color: #ffd7a5; color: #412203; }
+    .chrome-violet { background: #ad95ff; border-color: #d8d0ff; color: #23154f; }
+    .chrome-mint { background: #62e2bb; border-color: #bcf8e4; color: #0b3a31; }
+    .touch-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .touch-group button { min-width: 84px; }
+    .hint {
+      width: min(96vw, 980px);
+      text-align: center;
+      color: #c8dcf7;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 4px 10px 0;
+    }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .color-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Chrome Shift game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Chrome Shift</h1>
+          <p>Flood the full board from the top-left corner by choosing chrome colors in the right order.</p>
+          <p>Desktop: keys 1-4 to pick colors, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap color buttons. Capture all tiles before moves or time run out.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Territory</span><b id="hudOwned">1/100</b></div>
+      <div class="chip"><span>Moves Left</span><b id="hudMoves">20</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">120.0s</b></div>
+      <div class="chip"><span>Color</span><b id="hudColor">Blue</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="color-group">
+        <button type="button" id="color0" class="color-btn chrome-blue">1 Blue</button>
+        <button type="button" id="color1" class="color-btn chrome-amber">2 Amber</button>
+        <button type="button" id="color2" class="color-btn chrome-violet">3 Violet</button>
+        <button type="button" id="color3" class="color-btn chrome-mint">4 Mint</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
+      </div>
+    </section>
+    <div class="hint">Capturing more tiles early gives better control. Avoid repeating your current color because it does not spend a move.</div>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudOwned = document.getElementById('hudOwned');
+    const hudMoves = document.getElementById('hudMoves');
+    const hudTime = document.getElementById('hudTime');
+    const hudColor = document.getElementById('hudColor');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const colorButtons = [
+      document.getElementById('color0'),
+      document.getElementById('color1'),
+      document.getElementById('color2'),
+      document.getElementById('color3'),
+    ];
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const ROWS = 10;
+    const COLS = 10;
+    const TOTAL_TILES = ROWS * COLS;
+    const MAX_MOVES = 20;
+    const ROUND_SECONDS = 120;
+    const COLORS = [
+      { name: 'Blue', fill: '#46c4ff' },
+      { name: 'Amber', fill: '#ffb763' },
+      { name: 'Violet', fill: '#ad95ff' },
+      { name: 'Mint', fill: '#62e2bb' },
+    ];
+
+    const board = {
+      x: 290,
+      y: 98,
+      size: 560,
+    };
+
+    const state = {
+      mode: 'menu',
+      grid: [],
+      owned: [],
+      ownedCount: 1,
+      currentColor: 0,
+      selector: 0,
+      movesUsed: 0,
+      timeLeft: ROUND_SECONDS,
+      score: 0,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      particles: [],
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function randomColor() {
+      return Math.floor(Math.random() * COLORS.length);
+    }
+
+    function buildGrid() {
+      const grid = [];
+      for (let row = 0; row < ROWS; row += 1) {
+        const line = [];
+        for (let col = 0; col < COLS; col += 1) {
+          line.push(randomColor());
+        }
+        grid.push(line);
+      }
+      return grid;
+    }
+
+    function buildOwnedMatrix() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+    }
+
+    function floodOwned() {
+      const target = state.currentColor;
+      state.owned = buildOwnedMatrix();
+      const queue = [[0, 0]];
+      state.owned[0][0] = true;
+      let count = 0;
+
+      while (queue.length > 0) {
+        const [row, col] = queue.shift();
+        count += 1;
+        const neighbors = [
+          [row - 1, col],
+          [row + 1, col],
+          [row, col - 1],
+          [row, col + 1],
+        ];
+        for (const [nextRow, nextCol] of neighbors) {
+          if (nextRow < 0 || nextRow >= ROWS || nextCol < 0 || nextCol >= COLS) continue;
+          if (state.owned[nextRow][nextCol]) continue;
+          if (state.grid[nextRow][nextCol] !== target) continue;
+          state.owned[nextRow][nextCol] = true;
+          queue.push([nextRow, nextCol]);
+        }
+      }
+      state.ownedCount = count;
+    }
+
+    function recolorOwned(nextColor) {
+      for (let row = 0; row < ROWS; row += 1) {
+        for (let col = 0; col < COLS; col += 1) {
+          if (state.owned[row][col]) {
+            state.grid[row][col] = nextColor;
+          }
+        }
+      }
+      state.currentColor = nextColor;
+      floodOwned();
+    }
+
+    function addBurst(row, col, color) {
+      const tile = board.size / ROWS;
+      const x = board.x + col * tile + tile * 0.5;
+      const y = board.y + row * tile + tile * 0.5;
+      for (let i = 0; i < 12; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 120;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.16 + Math.random() * 0.28,
+          color,
+        });
+      }
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.grid = buildGrid();
+      state.owned = buildOwnedMatrix();
+      state.currentColor = state.grid[0][0];
+      state.selector = state.currentColor;
+      state.movesUsed = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.score = 0;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.particles = [];
+      floodOwned();
+
+      if (state.ownedCount === TOTAL_TILES) {
+        state.grid[ROWS - 1][COLS - 1] = (state.currentColor + 1) % COLORS.length;
+        floodOwned();
+      }
+    }
+
+    function setModeOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: keys 1-4 to pick colors, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('chromeshift'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, chromeshift: { territory: state.ownedCount, score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function scoreNow() {
+      const coveragePoints = state.ownedCount * 6;
+      const moveBonus = Math.max(0, (MAX_MOVES - state.movesUsed) * 12);
+      const timeBonus = Math.max(0, Math.floor(state.timeLeft));
+      return coveragePoints + moveBonus + timeBonus;
+    }
+
+    function rewardRun(result) {
+      const territoryBonus = Math.floor(state.ownedCount / 10);
+      const clearBonus = result === 'win' ? 12 : 0;
+      const efficiencyBonus = result === 'win' ? Math.max(0, MAX_MOVES - state.movesUsed) : 0;
+      const coins = Math.max(2, territoryBonus + clearBonus + efficiencyBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          chromeshift: {
+            territory: state.ownedCount,
+            score: state.score,
+            movesLeft: MAX_MOVES - state.movesUsed,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      state.score = scoreNow();
+      rewardRun(result);
+      const message = result === 'win'
+        ? `Board captured in ${state.movesUsed} moves. Score ${state.score}, coins ${state.runCoinsEarned}.`
+        : `Run ended with ${state.ownedCount}/${TOTAL_TILES} tiles captured. Score ${state.score}, coins ${state.runCoinsEarned}.`;
+      setModeOverlay(result === 'win' ? 'Grid Stabilized' : 'Grid Locked', message, 'Run Again');
+      updateHud();
+    }
+
+    function chooseColor(nextColor) {
+      if (state.mode !== 'playing') return;
+      if (nextColor < 0 || nextColor >= COLORS.length) return;
+      if (nextColor === state.currentColor) return;
+
+      state.selector = nextColor;
+      state.movesUsed += 1;
+      const prevOwned = state.ownedCount;
+      recolorOwned(nextColor);
+      const gained = state.ownedCount - prevOwned;
+      if (gained > 0) {
+        addBurst(0, 0, COLORS[nextColor].fill);
+      }
+      state.score = scoreNow();
+
+      if (state.ownedCount >= TOTAL_TILES) {
+        finishRun('win');
+        return;
+      }
+      if (state.movesUsed >= MAX_MOVES) {
+        finishRun('loss');
+      }
+    }
+
+    function shiftSelector(delta) {
+      if (state.mode !== 'playing') return;
+      state.selector = (state.selector + delta + COLORS.length) % COLORS.length;
+      updateHud();
+      draw();
+    }
+
+    function applySelectedColor() {
+      chooseColor(state.selector);
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setModeOverlay('Paused', 'Color flow paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        state.score = scoreNow();
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
+        }
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 110 * dt;
+      }
+    }
+
+    function drawBoard() {
+      const tile = board.size / ROWS;
+      ctx.fillStyle = '#0a1733';
+      ctx.fillRect(board.x, board.y, board.size, board.size);
+
+      for (let row = 0; row < ROWS; row += 1) {
+        for (let col = 0; col < COLS; col += 1) {
+          const x = board.x + col * tile;
+          const y = board.y + row * tile;
+          ctx.fillStyle = COLORS[state.grid[row][col]].fill;
+          ctx.fillRect(x + 1, y + 1, tile - 2, tile - 2);
+
+          if (state.owned[row][col]) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 3, y + 3, tile - 6, tile - 6);
+          }
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(144, 201, 255, 0.3)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= ROWS; i += 1) {
+        const p = board.x + i * tile;
+        ctx.beginPath();
+        ctx.moveTo(p, board.y);
+        ctx.lineTo(p, board.y + board.size);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= COLS; i += 1) {
+        const p = board.y + i * tile;
+        ctx.beginPath();
+        ctx.moveTo(board.x, p);
+        ctx.lineTo(board.x + board.size, p);
+        ctx.stroke();
+      }
+
+      const pulse = Math.sin(performance.now() * 0.01) * 3;
+      const startX = board.x + 0.5 * tile;
+      const startY = board.y + 0.5 * tile;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(startX, startY, tile * 0.28 + pulse, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 700, 58);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 700, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Chrome Shift', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Flood every tile from the top-left origin before moves and timer expire', 28, 58);
+    }
+
+    function drawPauseLabel() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#173568');
+      grad.addColorStop(1, '#080f22');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawBoard();
+      drawParticles();
+      drawTopLabel();
+      drawPauseLabel();
+    }
+
+    function updateColorButtons() {
+      for (let i = 0; i < colorButtons.length; i += 1) {
+        colorButtons[i].classList.toggle('active', i === state.currentColor);
+        colorButtons[i].classList.toggle('selected', i === state.selector);
+      }
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudOwned.textContent = `${state.ownedCount}/${TOTAL_TILES}`;
+      hudMoves.textContent = String(Math.max(0, MAX_MOVES - state.movesUsed));
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudColor.textContent = COLORS[state.currentColor]?.name ?? '-';
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudOwned.parentElement.classList.toggle('good', state.ownedCount >= TOTAL_TILES * 0.85);
+      hudOwned.parentElement.classList.toggle('warn', state.ownedCount < TOTAL_TILES * 0.85 && state.ownedCount >= TOTAL_TILES * 0.5);
+      hudOwned.parentElement.classList.toggle('bad', state.ownedCount < TOTAL_TILES * 0.5);
+
+      const movesLeft = MAX_MOVES - state.movesUsed;
+      hudMoves.parentElement.classList.toggle('good', movesLeft >= 8);
+      hudMoves.parentElement.classList.toggle('warn', movesLeft < 8 && movesLeft >= 4);
+      hudMoves.parentElement.classList.toggle('bad', movesLeft < 4);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 50);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 50 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+
+      updateColorButtons();
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'Digit1') { event.preventDefault(); chooseColor(0); }
+      if (event.code === 'Digit2') { event.preventDefault(); chooseColor(1); }
+      if (event.code === 'Digit3') { event.preventDefault(); chooseColor(2); }
+      if (event.code === 'Digit4') { event.preventDefault(); chooseColor(3); }
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); shiftSelector(-1); }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); shiftSelector(1); }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); shiftSelector(-1); }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); shiftSelector(1); }
+      if (event.code === 'Space' || event.code === 'Enter' || event.code === 'KeyB') { event.preventDefault(); applySelectedColor(); }
+      if (event.code === 'KeyP') { event.preventDefault(); pauseToggle(); }
+      if (event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    });
+
+    colorButtons.forEach((button, index) => {
+      button.addEventListener('click', () => chooseColor(index));
+    });
+    btnPause.addEventListener('click', () => pauseToggle());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'chromeshift',
+        mode: state.mode,
+        coordinate_system: '10x10 grid with origin at top-left tile (row 0,col 0); +row downward, +col rightward',
+        objective: {
+          capture_all_tiles: TOTAL_TILES,
+          move_limit: MAX_MOVES,
+          time_limit_seconds: ROUND_SECONDS,
+        },
+        resources: {
+          owned_tiles: state.ownedCount,
+          total_tiles: TOTAL_TILES,
+          moves_used: state.movesUsed,
+          moves_left: Math.max(0, MAX_MOVES - state.movesUsed),
+          time_left: Number(state.timeLeft.toFixed(2)),
+          active_color: COLORS[state.currentColor].name,
+          score: state.score,
+        },
+        board_rows: state.grid.map((row) => row.join('')),
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    setModeOverlay('Chrome Shift', 'Flood the board by choosing color transitions that grow your connected territory.', 'Start Run');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'chromeshift', gameName: 'Chrome Shift' });
+  </script>
+</body>
+</html>

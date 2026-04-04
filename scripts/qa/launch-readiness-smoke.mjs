@@ -39,6 +39,11 @@ async function main() {
 
   const checks = [
     {
+      name: "feedback_inbox",
+      script: "scripts/qa/feedback-smoke.mjs",
+      summaryPath: path.join("output", "web-game", "feedback-e2e", "summary.json"),
+    },
+    {
       name: "discovery_launcher_shop",
       script: "scripts/qa/discovery-search-filter-smoke.mjs",
       summaryPath: path.join("output", "web-game", "discovery-filter-e2e", "summary.json"),

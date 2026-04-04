@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Simon Says Spectrum - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg0: #070f1f;
+      --bg1: #12294a;
+      --panel: rgba(8, 17, 34, 0.86);
+      --line: rgba(146, 199, 255, 0.34);
+      --text: #edf7ff;
+      --muted: #b7cce7;
+      --good: #90f6c0;
+      --warn: #ffd899;
+      --bad: #ff9cb0;
+      --focus: #80dcff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(130% 90% at 12% 8%, #27518c 0%, transparent 58%),
+        radial-gradient(92% 96% at 88% 92%, #17386a 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.44);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(62dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(146, 199, 255, 0.62);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #142b54 0%, #0a1731 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 170ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.44;
+      font-size: clamp(13px, 2.1vw, 15px);
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(28, 54, 95, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    button:hover { filter: brightness(1.08); }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(173, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .chip.focus b { color: var(--focus); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .pad-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(58px, 86px));
+      gap: 6px;
+      justify-content: start;
+    }
+    .pad-btn {
+      height: 46px;
+      padding: 0;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .pad-btn.active {
+      border-color: rgba(255, 255, 255, 0.8);
+      transform: translateY(1px);
+      filter: brightness(1.2);
+    }
+    .pad-red { background: #9f2d3f; }
+    .pad-blue { background: #2259a5; }
+    .pad-yellow { background: #a8791f; }
+    .pad-green { background: #2b8a5a; }
+    .actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .actions button { min-width: 78px; }
+    .hint {
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: center;
+      max-width: 320px;
+      justify-self: end;
+    }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+      .pad-grid { justify-content: center; }
+      .hint { justify-self: center; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+      .pad-grid { grid-template-columns: repeat(2, minmax(74px, 120px)); }
+    }
+  </style>
+
+  <meta name="description" content="Memorize flashing color sequences, repeat them perfectly, and survive as patterns get longer.">
+  <meta property="og:title" content="Simon Says Spectrum - Play on Cade's Games">
+  <meta property="og:description" content="Memorize flashing color sequences, repeat them perfectly, and survive as patterns get longer.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/simonsays">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Simon Says Spectrum - Play on Cade's Games">
+  <meta name="twitter:description" content="Memorize flashing color sequences, repeat them perfectly, and survive as patterns get longer.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/simonsays">
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Simon Says board"></canvas>
+
+      <div id="menuOverlay" class="overlay show">
+        <div class="panel">
+          <h1>Simon Says Spectrum</h1>
+          <p>Watch the flashing sequence and repeat it. A new color is added each round.</p>
+          <p>Desktop: `1/2/3/4` or Arrow keys to match colors, `P` pause, `R` restart, `F` fullscreen.</p>
+          <p>Mobile: tap the colored pads or use the on-screen color buttons.</p>
+          <div class="row">
+            <button id="start-btn">Start Game</button>
+            <button id="fullscreenBtn">Fullscreen (F)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pauseOverlay" class="overlay">
+        <div class="panel">
+          <h1>Paused</h1>
+          <p>Resume when you are ready to continue your sequence streak.</p>
+          <div class="row">
+            <button id="resumeBtn">Resume</button>
+            <button id="restartBtn">Restart</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gameOverOverlay" class="overlay">
+        <div class="panel">
+          <h1>Run Over</h1>
+          <p id="gameOverText"></p>
+          <div class="row">
+            <button id="retryBtn">Play Again</button>
+            <button id="gameOverMenuBtn">Menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-label="Game status">
+      <div class="chip good"><span>Round</span><b id="roundValue">0</b></div>
+      <div class="chip focus"><span>Score</span><b id="scoreValue">0</b></div>
+      <div class="chip"><span>Best</span><b id="bestValue">0</b></div>
+      <div class="chip bad"><span>Lives</span><b id="livesValue">3</b></div>
+      <div class="chip"><span>Mode</span><b id="modeValue">Menu</b></div>
+      <div class="chip warn"><span>Sequence</span><b id="sequenceValue">0</b></div>
+      <div class="chip"><span>Input</span><b id="inputValue">0/0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Touch controls">
+      <div class="pad-grid">
+        <button class="pad-btn pad-red" data-pad="0">1 Red</button>
+        <button class="pad-btn pad-blue" data-pad="1">2 Blue</button>
+        <button class="pad-btn pad-yellow" data-pad="2">3 Yellow</button>
+        <button class="pad-btn pad-green" data-pad="3">4 Green</button>
+      </div>
+      <div class="actions">
+        <button id="pauseBtn">Pause</button>
+        <button id="controlRestartBtn">Restart</button>
+        <button id="controlFullscreenBtn">Fullscreen</button>
+      </div>
+      <p class="hint">Origin: top-left of the canvas. X increases right, Y increases down.</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+
+      const menuOverlay = document.getElementById('menuOverlay');
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      const gameOverOverlay = document.getElementById('gameOverOverlay');
+      const gameOverText = document.getElementById('gameOverText');
+
+      const roundValue = document.getElementById('roundValue');
+      const scoreValue = document.getElementById('scoreValue');
+      const bestValue = document.getElementById('bestValue');
+      const livesValue = document.getElementById('livesValue');
+      const modeValue = document.getElementById('modeValue');
+      const sequenceValue = document.getElementById('sequenceValue');
+      const inputValue = document.getElementById('inputValue');
+
+      const padButtons = [...document.querySelectorAll('.pad-btn')];
+      const padNames = ['Red', 'Blue', 'Yellow', 'Green'];
+      const padColors = ['#d94762', '#4d8de8', '#f2be4d', '#52c78a'];
+      const padDim = ['#7a2233', '#1f4b88', '#886319', '#256f49'];
+
+      const state = {
+        mode: 'menu',
+        sequence: [],
+        round: 0,
+        inputIndex: 0,
+        showingIndex: -1,
+        showTimer: 0,
+        showOffTimer: 0,
+        flashPad: -1,
+        flashTimer: 0,
+        score: 0,
+        bestRound: Number(localStorage.getItem('simonsays-best-round') || 0),
+        lives: 3,
+        message: 'Press Start',
+      };
+
+      const timings = {
+        showOnMs: 480,
+        showOffMs: 230,
+        betweenRoundsMs: 560,
+        pressFlashMs: 180,
+      };
+
+      let seeded = (Date.now() & 0x7fffffff) || 1;
+      let pendingRoundTimer = 0;
+      let rafId = 0;
+      let lastTs = 0;
+      let stepping = false;
+      let pauseReturnMode = 'input';
+
+      function rng() {
+        seeded = (seeded * 1103515245 + 12345) & 0x7fffffff;
+        return seeded / 0x80000000;
+      }
+
+      function randomPad() {
+        return Math.floor(rng() * 4);
+      }
+
+      function setOverlayVisibility() {
+        menuOverlay.classList.toggle('show', state.mode === 'menu');
+        pauseOverlay.classList.toggle('show', state.mode === 'paused');
+        gameOverOverlay.classList.toggle('show', state.mode === 'gameover');
+      }
+
+      function setMode(nextMode) {
+        state.mode = nextMode;
+        setOverlayVisibility();
+        updateHud();
+      }
+
+      function modeLabel(mode) {
+        switch (mode) {
+          case 'menu': return 'Menu';
+          case 'showing': return 'Showing';
+          case 'input': return 'Input';
+          case 'paused': return 'Paused';
+          case 'gameover': return 'Game Over';
+          default: return mode;
+        }
+      }
+
+      function resetRun(goToMenu = false) {
+        state.sequence = [];
+        state.round = 0;
+        state.inputIndex = 0;
+        state.showingIndex = -1;
+        state.showTimer = 0;
+        state.showOffTimer = 0;
+        state.flashPad = -1;
+        state.flashTimer = 0;
+        state.score = 0;
+        state.lives = 3;
+        state.message = 'Watch carefully';
+        pendingRoundTimer = 0;
+        pauseReturnMode = 'input';
+        setMode(goToMenu ? 'menu' : 'showing');
+        if (!goToMenu) {
+          startNextRound();
+        }
+      }
+
+      function startGame() {
+        resetRun(false);
+      }
+
+      function startNextRound() {
+        state.round += 1;
+        state.sequence.push(randomPad());
+        state.inputIndex = 0;
+        state.showingIndex = 0;
+        state.showTimer = timings.showOnMs;
+        state.showOffTimer = 0;
+        state.flashPad = state.sequence[0];
+        state.flashTimer = timings.showOnMs;
+        state.message = 'Memorize the sequence';
+        setMode('showing');
+      }
+
+      function replayCurrentRound() {
+        state.inputIndex = 0;
+        state.showingIndex = 0;
+        state.showTimer = timings.showOnMs;
+        state.showOffTimer = 0;
+        state.flashPad = state.sequence[0];
+        state.flashTimer = timings.showOnMs;
+        state.message = 'Try that sequence again';
+        setMode('showing');
+      }
+
+      function failInput() {
+        state.lives -= 1;
+        state.flashTimer = 0;
+        state.flashPad = -1;
+        if (state.lives <= 0) {
+          endGame();
+          return;
+        }
+        state.message = 'Wrong color';
+        replayCurrentRound();
+      }
+
+      function completeRound() {
+        state.score += state.round * 10;
+        if (state.round > state.bestRound) {
+          state.bestRound = state.round;
+          localStorage.setItem('simonsays-best-round', String(state.bestRound));
+        }
+        pendingRoundTimer = timings.betweenRoundsMs;
+        state.message = 'Round cleared';
+        setMode('input');
+      }
+
+      function endGame() {
+        state.message = 'Run over';
+        gameOverText.textContent = `You reached round ${state.round} with score ${state.score}.`;
+        setMode('gameover');
+      }
+
+      function handlePadInput(index) {
+        if (state.mode !== 'input') {
+          return;
+        }
+        state.flashPad = index;
+        state.flashTimer = timings.pressFlashMs;
+
+        if (state.sequence[state.inputIndex] !== index) {
+          failInput();
+          updateHud();
+          return;
+        }
+
+        state.inputIndex += 1;
+        if (state.inputIndex >= state.sequence.length) {
+          completeRound();
+        }
+        updateHud();
+      }
+
+      function updateHud() {
+        roundValue.textContent = String(state.round);
+        scoreValue.textContent = String(state.score);
+        bestValue.textContent = String(state.bestRound);
+        livesValue.textContent = String(state.lives);
+        modeValue.textContent = modeLabel(state.mode);
+        sequenceValue.textContent = String(state.sequence.length);
+        inputValue.textContent = `${Math.min(state.inputIndex, state.sequence.length)}/${state.sequence.length}`;
+
+        for (const btn of padButtons) {
+          const index = Number(btn.dataset.pad);
+          btn.classList.toggle('active', state.flashPad === index && state.flashTimer > 0);
+        }
+      }
+
+      function update(ms) {
+        if (state.mode === 'paused' || state.mode === 'menu' || state.mode === 'gameover') {
+          if (state.flashTimer > 0) {
+            state.flashTimer = Math.max(0, state.flashTimer - ms);
+            if (state.flashTimer <= 0) {
+              state.flashPad = -1;
+            }
+          }
+          return;
+        }
+
+        if (state.mode === 'showing') {
+          if (state.showTimer > 0) {
+            state.showTimer -= ms;
+            if (state.showTimer <= 0) {
+              state.showOffTimer = timings.showOffMs;
+              state.flashPad = -1;
+              state.flashTimer = 0;
+            }
+          } else if (state.showOffTimer > 0) {
+            state.showOffTimer -= ms;
+            if (state.showOffTimer <= 0) {
+              state.showingIndex += 1;
+              if (state.showingIndex >= state.sequence.length) {
+                state.showingIndex = -1;
+                state.inputIndex = 0;
+                state.message = 'Your turn';
+                setMode('input');
+              } else {
+                state.flashPad = state.sequence[state.showingIndex];
+                state.flashTimer = timings.showOnMs;
+                state.showTimer = timings.showOnMs;
+              }
+            }
+          }
+        } else if (state.mode === 'input') {
+          if (state.flashTimer > 0) {
+            state.flashTimer = Math.max(0, state.flashTimer - ms);
+            if (state.flashTimer <= 0) {
+              state.flashPad = -1;
+            }
+          }
+
+          if (pendingRoundTimer > 0) {
+            pendingRoundTimer -= ms;
+            if (pendingRoundTimer <= 0) {
+              startNextRound();
+            }
+          }
+        }
+      }
+
+      function drawBoard() {
+        const w = canvas.width;
+        const h = canvas.height;
+        const margin = Math.min(w, h) * 0.06;
+        const panelW = (w - margin * 3) / 2;
+        const panelH = (h - margin * 3) / 2;
+
+        const rects = [
+          { x: margin, y: margin, w: panelW, h: panelH },
+          { x: margin * 2 + panelW, y: margin, w: panelW, h: panelH },
+          { x: margin, y: margin * 2 + panelH, w: panelW, h: panelH },
+          { x: margin * 2 + panelW, y: margin * 2 + panelH, w: panelW, h: panelH },
+        ];
+
+        ctx.save();
+        ctx.clearRect(0, 0, w, h);
+
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#16315f');
+        grad.addColorStop(1, '#09182f');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 4; i += 1) {
+          const rect = rects[i];
+          const active = state.flashPad === i && state.flashTimer > 0;
+          ctx.fillStyle = active ? padColors[i] : padDim[i];
+          ctx.beginPath();
+          ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 24);
+          ctx.fill();
+          ctx.lineWidth = active ? 7 : 4;
+          ctx.strokeStyle = active ? '#f6fbff' : 'rgba(224, 238, 255, 0.32)';
+          ctx.stroke();
+
+          ctx.fillStyle = active ? '#112034' : '#dae8ff';
+          ctx.font = '700 40px Trebuchet MS';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${i + 1}`, rect.x + rect.w / 2, rect.y + rect.h / 2);
+        }
+
+        ctx.fillStyle = 'rgba(6, 13, 24, 0.72)';
+        ctx.beginPath();
+        ctx.roundRect(w * 0.24, h * 0.43, w * 0.52, h * 0.14, 18);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(156, 205, 255, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#e8f4ff';
+        ctx.font = '700 36px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.message, w * 0.5, h * 0.50);
+
+        ctx.font = '600 22px Trebuchet MS';
+        ctx.fillStyle = '#bbd4f3';
+        ctx.fillText(`Round ${state.round}   Score ${state.score}`, w * 0.5, h * 0.56);
+
+        if (state.mode === 'paused') {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+          ctx.fillRect(0, 0, w, h);
+        }
+
+        ctx.restore();
+      }
+
+      function render() {
+        drawBoard();
+        updateHud();
+      }
+
+      function togglePause() {
+        if (state.mode === 'menu' || state.mode === 'gameover') {
+          return;
+        }
+        if (state.mode === 'paused') {
+          setMode(pauseReturnMode);
+          if (pauseReturnMode === 'input') {
+            state.message = 'Your turn';
+          } else if (pauseReturnMode === 'showing') {
+            state.message = 'Memorize the sequence';
+          }
+          return;
+        }
+        pauseReturnMode = state.mode === 'showing' ? 'showing' : 'input';
+        setMode('paused');
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.().catch(() => {});
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
+      }
+
+      function mapKeyToPad(key) {
+        switch (key) {
+          case '1':
+          case 'q':
+          case 'arrowup':
+            return 0;
+          case '2':
+          case 'w':
+          case 'arrowright':
+            return 1;
+          case '3':
+          case 'a':
+          case 'arrowleft':
+            return 2;
+          case '4':
+          case 's':
+          case 'arrowdown':
+            return 3;
+          default:
+            return -1;
+        }
+      }
+
+      function handleCanvasPointer(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (clientX - rect.left) * (canvas.width / rect.width);
+        const y = (clientY - rect.top) * (canvas.height / rect.height);
+        const pad = resolvePadFromPoint(x, y);
+        if (pad >= 0) {
+          handlePadInput(pad);
+        }
+      }
+
+      function resolvePadFromPoint(x, y) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const margin = Math.min(w, h) * 0.06;
+        const panelW = (w - margin * 3) / 2;
+        const panelH = (h - margin * 3) / 2;
+
+        if (x >= margin && x <= margin + panelW && y >= margin && y <= margin + panelH) {
+          return 0;
+        }
+        if (x >= margin * 2 + panelW && x <= margin * 2 + panelW * 2 && y >= margin && y <= margin + panelH) {
+          return 1;
+        }
+        if (x >= margin && x <= margin + panelW && y >= margin * 2 + panelH && y <= margin * 2 + panelH * 2) {
+          return 2;
+        }
+        if (x >= margin * 2 + panelW && x <= margin * 2 + panelW * 2 && y >= margin * 2 + panelH && y <= margin * 2 + panelH * 2) {
+          return 3;
+        }
+        return -1;
+      }
+
+      function bindEvents() {
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('retryBtn').addEventListener('click', startGame);
+        document.getElementById('gameOverMenuBtn').addEventListener('click', () => resetRun(true));
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('resumeBtn').addEventListener('click', () => {
+          if (state.mode === 'paused') {
+            setMode(pauseReturnMode);
+            if (pauseReturnMode === 'input') {
+              state.message = 'Your turn';
+            } else if (pauseReturnMode === 'showing') {
+              state.message = 'Memorize the sequence';
+            }
+          }
+        });
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+        document.getElementById('controlRestartBtn').addEventListener('click', startGame);
+        document.getElementById('controlFullscreenBtn').addEventListener('click', toggleFullscreen);
+        document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+        for (const btn of padButtons) {
+          btn.addEventListener('click', () => {
+            handlePadInput(Number(btn.dataset.pad));
+          });
+        }
+
+        canvas.addEventListener('pointerdown', (event) => {
+          event.preventDefault();
+          handleCanvasPointer(event.clientX, event.clientY);
+        });
+
+        window.addEventListener('keydown', (event) => {
+          const key = event.key.toLowerCase();
+          if (key === 'f') {
+            event.preventDefault();
+            toggleFullscreen();
+            return;
+          }
+          if (key === 'r') {
+            event.preventDefault();
+            startGame();
+            return;
+          }
+          if (key === 'p') {
+            event.preventDefault();
+            togglePause();
+            return;
+          }
+          if (key === 'escape' && document.fullscreenElement) {
+            document.exitFullscreen?.().catch(() => {});
+            return;
+          }
+          const mapped = mapKeyToPad(key);
+          if (mapped >= 0) {
+            event.preventDefault();
+            handlePadInput(mapped);
+          }
+        });
+      }
+
+      function gameLoop(ts) {
+        if (!lastTs) {
+          lastTs = ts;
+        }
+        const delta = Math.min(50, ts - lastTs);
+        lastTs = ts;
+
+        if (!stepping) {
+          update(delta);
+        }
+        render();
+        rafId = requestAnimationFrame(gameLoop);
+      }
+
+      window.advanceTime = (ms) => {
+        const step = 1000 / 60;
+        const steps = Math.max(1, Math.round(ms / step));
+        stepping = true;
+        for (let i = 0; i < steps; i += 1) {
+          update(step);
+        }
+        stepping = false;
+        render();
+      };
+
+      window.render_game_to_text = () => {
+        const w = canvas.width;
+        const h = canvas.height;
+        const margin = Math.min(w, h) * 0.06;
+        const panelW = (w - margin * 3) / 2;
+        const panelH = (h - margin * 3) / 2;
+
+        const pads = [
+          { id: 0, name: 'red', center: { x: Math.round(margin + panelW * 0.5), y: Math.round(margin + panelH * 0.5) } },
+          { id: 1, name: 'blue', center: { x: Math.round(margin * 2 + panelW * 1.5), y: Math.round(margin + panelH * 0.5) } },
+          { id: 2, name: 'yellow', center: { x: Math.round(margin + panelW * 0.5), y: Math.round(margin * 2 + panelH * 1.5) } },
+          { id: 3, name: 'green', center: { x: Math.round(margin * 2 + panelW * 1.5), y: Math.round(margin * 2 + panelH * 1.5) } },
+        ];
+
+        const payload = {
+          mode: state.mode,
+          round: state.round,
+          score: state.score,
+          best_round: state.bestRound,
+          lives: state.lives,
+          sequence_length: state.sequence.length,
+          input_progress: state.inputIndex,
+          showing_index: state.showingIndex,
+          flash_pad: state.flashPad,
+          flash_time_ms: Math.max(0, Math.round(state.flashTimer)),
+          next_expected_pad: state.mode === 'input' ? state.sequence[state.inputIndex] ?? null : null,
+          can_accept_input: state.mode === 'input',
+          message: state.message,
+          coordinate_system: {
+            origin: 'top-left',
+            x_direction: 'right',
+            y_direction: 'down',
+            canvas: { width: w, height: h },
+          },
+          pads,
+        };
+        return JSON.stringify(payload);
+      };
+
+      function init() {
+        bindEvents();
+        updateHud();
+        setOverlayVisibility();
+        render();
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(gameLoop);
+      }
+
+      init();
+    })();
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: "simonsays", gameName: "Simon Says Spectrum" });
+  </script>
+</body>
+</html>

@@ -2,101 +2,348 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Family Plans - Cade's Games</title>
+  <title>Pricing & Plans - Cade's Games</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="stylesheet" href="./src/styles/accessibility.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/space-parallax.css">
   <style>
-    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; --good:#6be6ad; }
-    * { box-sizing:border-box; }
-    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px clamp(16px,4vw,32px); border-bottom:1px solid rgba(90,173,221,0.2); background:rgba(12,20,46,0.6); backdrop-filter:blur(8px); }
-    .topbar h1 { margin:0; font-size:clamp(20px,3vw,28px); }
-    .links { display:flex; align-items:center; gap:10px; }
-    .link-btn { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:var(--fg); text-decoration:none; font-size:14px; font-weight:600; }
-    .wrap { max-width:1060px; margin:0 auto; padding:clamp(20px,4vw,34px) clamp(16px,4vw,32px) 48px; }
-    .hero { margin-bottom:18px; }
-    .hero h2 { margin:0 0 8px 0; font-size:clamp(24px,4vw,34px); }
-    .hero p { margin:0; color:var(--muted); font-size:16px; line-height:1.5; }
-    .plan-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin-top:18px; }
-    .plan-card { border:1px solid rgba(255,255,255,0.18); border-radius:14px; padding:16px; background:rgba(255,255,255,0.05); }
-    .plan-card.selected { border-color:rgba(90,173,221,0.7); box-shadow:0 0 0 1px rgba(90,173,221,0.4) inset; }
-    .plan-card h3 { margin:0 0 6px 0; font-size:20px; }
-    .price { margin:0 0 10px 0; font-size:22px; font-weight:700; }
-    .plan-meta { margin:0 0 14px 0; color:var(--muted); font-size:13px; line-height:1.45; }
-    .plan-features { margin:0; padding-left:18px; color:#d2e3ff; font-size:14px; line-height:1.5; }
-    .plan-features li { margin:0 0 4px 0; }
-    .select-btn { margin-top:14px; width:100%; padding:10px 12px; border:none; border-radius:10px; background:var(--accent); color:#081328; font-weight:700; cursor:pointer; }
-    .checkout-panel { margin-top:20px; border:1px solid rgba(90,173,221,0.35); border-radius:14px; padding:16px; background:rgba(90,173,221,0.1); }
-    .checkout-panel h3 { margin:0 0 8px 0; font-size:20px; }
-    .checkout-panel p { margin:0 0 8px 0; color:#d7e8ff; font-size:14px; line-height:1.5; }
-    .billing-row { margin:8px 0 10px 0; display:grid; gap:6px; }
-    .billing-row label { font-size:13px; color:#c7daf7; font-weight:600; }
-    .billing-row input {
-      width:100%;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.2);
-      background:rgba(255,255,255,0.1);
-      color:var(--fg);
-      font-size:14px;
+    :root {
+      --bg: #1a0b2e;
+      --fg: #ffffff;
+      --muted: #a7b8df;
+      --accent: #f472b6;
+      --accent-hover: #fb923c;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --card-hover-bg: rgba(255, 255, 255, 0.12);
+      --card-active-bg: rgba(255, 255, 255, 0.18);
     }
-    .billing-row input::placeholder { color:#9db4d6; }
-    .checkout-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .checkout-actions button { padding:10px 12px; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
-    .primary { background:var(--accent); color:#081328; }
-    .secondary { background:rgba(255,255,255,0.14); color:var(--fg); border:1px solid rgba(255,255,255,0.2); }
-    .success { color:var(--good); font-weight:700; }
-    .token { margin:6px 0 0 0; font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace; font-size:13px; color:#cde1ff; }
-    .note { margin-top:14px; color:#a8bfdc; font-size:12px; line-height:1.45; }
-    @media (max-width: 700px) {
-      .checkout-actions { flex-direction:column; }
-      .checkout-actions button { width:100%; }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent !important;
+      color: var(--fg);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+
+    /* --- Topbar --- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px clamp(16px, 4vw, 32px);
+      background: rgba(26, 11, 46, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid var(--card-border);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 15px rgba(244,114,182,0.3);
+    }
+    .links { display: flex; gap: 10px; }
+    .link-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      color: var(--fg);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .link-btn:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* --- Wrap & Hero --- */
+    .wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .hero { text-align: center; margin-bottom: 40px; }
+    .hero h2 {
+      font-size: clamp(32px, 5vw, 48px);
+      margin: 0 0 16px;
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent-glow);
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* --- Plan Grid --- */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .plan-card {
+      background: var(--card-bg);
+      border: 3px solid var(--card-border);
+      border-radius: 30px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+      animation: cardFadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .plan-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: var(--accent);
+      background: var(--card-hover-bg);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .plan-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .plan-card h3 {
+      font-size: 28px;
+      margin: 0 0 8px;
+      color: var(--accent);
+    }
+    .price {
+      font-size: 36px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      color: var(--fg);
+    }
+    .plan-meta {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .plan-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 32px;
+      flex-grow: 1;
+    }
+    .plan-features li {
+      padding-left: 28px;
+      position: relative;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .plan-features li::before {
+      content: "⭐";
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    .select-btn {
+      width: 100%;
+      padding: 16px;
+      border: 3px solid #fbcfe8;
+      border-radius: 20px;
+      background: var(--accent);
+      color: #500724;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 15px rgba(244, 114, 182, 0.3);
+    }
+    .select-btn:hover {
+      background: #fbcfe8;
+      border-color: #fff;
+      transform: scale(1.02);
+      box-shadow: 0 8px 25px rgba(244, 114, 182, 0.4);
+    }
+    .select-btn:active { transform: scale(0.98); transition: 0.1s; }
+
+    /* --- Checkout Panel --- */
+    .checkout-panel {
+      background: var(--card-bg);
+      border: 3px dashed var(--card-border);
+      border-radius: 30px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .checkout-panel h3 {
+      font-size: 24px;
+      margin: 0 0 16px;
+      color: var(--accent);
+    }
+    #checkoutStatus { font-size: 16px; margin-bottom: 16px; }
+    .billing-row { margin-bottom: 20px; }
+    .billing-row label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+    .billing-row input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 2px solid var(--card-border);
+      background: rgba(255,255,255,0.05);
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    .billing-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(255,255,255,0.1);
+    }
+    .checkout-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .checkout-actions button {
+      padding: 14px 24px;
+      border: 3px solid var(--card-border);
+      border-radius: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 16px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .checkout-actions .primary {
+      background: var(--accent);
+      border-color: #fbcfe8;
+      color: #500724;
+      box-shadow: 0 4px 12px rgba(244, 114, 182, 0.3);
+    }
+    .checkout-actions .primary:hover {
+      background: #fbcfe8;
+      border-color: #fff;
+    }
+    .checkout-actions .secondary {
+      background: var(--card-bg);
+      color: var(--fg);
+      border-color: var(--card-border);
+    }
+    .checkout-actions .secondary:hover {
+      background: var(--card-hover-bg);
+      border-color: var(--accent);
+    }
+    .checkout-actions button:hover { transform: translateY(-3px) scale(1.05); }
+    .checkout-actions button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    .success { color: var(--success); font-weight: 700; }
+    .token {
+      display: block;
+      margin: 12px 0;
+      padding: 12px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      font-family: monospace;
+      color: var(--accent);
+      word-break: break-all;
+    }
+    .note { margin-top: 20px; color: var(--muted); font-size: 13px; font-style: italic; }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 12px; }
+      .links { display: none; } /* On mobile, the hamburger menu in account widget is usually present */
+      .hero h2 { font-size: 32px; }
+      .plan-card { padding: 24px; }
+      .checkout-actions button { width: 100%; }
     }
   </style>
+
+  <meta name="description" content="View subscription options for Cade's Games premium features.">
+  <meta property="og:title" content="Pricing & Plans - Cade's Games">
+  <meta property="og:description" content="View subscription options for Cade's Games premium features.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pricing.html">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pricing & Plans - Cade's Games">
+  <meta name="twitter:description" content="View subscription options for Cade's Games premium features.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pricing.html">
 </head>
 <body>
-  <a class="skip-link" href="#planGrid">Skip to plan options</a>
+  <div class="bg-animation">
+    <div class="stars-layer stars-1"></div>
+    <div class="stars-layer stars-2"></div>
+    <div class="stars-layer stars-3"></div>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+  </div>
+
   <header class="topbar">
-    <h1>Family Plans</h1>
+    <h1>Cade's Games</h1>
     <div class="links">
       <a class="link-btn" href="/">Home</a>
       <a class="link-btn" href="/shop.html">Shop</a>
-      <a class="link-btn" href="/school-license.html">School License</a>
-      <a class="link-btn" href="/accessibility.html">Accessibility</a>
+      <a class="link-btn" href="/school-license.html">School</a>
+      <a class="link-btn" href="/accessibility.html">Help</a>
     </div>
   </header>
 
   <main class="wrap">
     <section class="hero">
-      <h2>Simple family pricing</h2>
-      <p>Choose a plan any time. No timers, no pressure prompts, and no gameplay lockouts for free users.</p>
+      <h2>Family Plans</h2>
+      <p>Unlock premium features and support the mission of making games for everyone. Simple, fair, and fun!</p>
     </section>
 
     <section class="plan-grid" id="planGrid"></section>
 
     <section class="checkout-panel">
-      <h3>Checkout</h3>
-      <p id="checkoutStatus">Choose a plan to continue.</p>
+      <h3>Family Checkout</h3>
+      <p id="checkoutStatus">Choose a plan above to continue.</p>
       <p class="token" id="checkoutToken" style="display:none;"></p>
       <div class="billing-row" id="billingEmailRow" style="display:none;">
-        <label for="billingEmailInput">Billing email</label>
+        <label for="billingEmailInput">Parent email</label>
         <input id="billingEmailInput" type="email" autocomplete="email" placeholder="parent@example.com" />
       </div>
       <div class="checkout-actions">
         <button id="startCheckoutBtn" class="primary" type="button">Start Checkout</button>
-        <button id="completeCheckoutBtn" class="secondary" type="button">Complete Purchase</button>
-        <button id="clearCheckoutBtn" class="secondary" type="button">Clear Pending</button>
-        <button id="manageBillingBtn" class="secondary" type="button" style="display:none;">Manage Subscription</button>
+        <button id="completeCheckoutBtn" class="secondary" type="button" style="display:none;">Complete Purchase</button>
+        <button id="clearCheckoutBtn" class="secondary" type="button" style="display:none;">Clear Pending</button>
+        <button id="manageBillingBtn" class="secondary" type="button" style="display:none;">Manage Billing</button>
       </div>
       <p class="note" id="checkoutNote">
-        Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.
+        Secure checkout and subscription management provided for families.
       </p>
     </section>
   </main>
 
   <script type="module">
+    import { getCachedAuthSession, onAuthSessionChanged, signInWithGoogle } from './src/auth/client.js';
+    import { mountAccountWidget } from './src/auth/embed.js';
     import { loadAndApplyAccessibility } from './src/core/accessibility.js';
     import {
       ENTITLEMENT_KEYS,
@@ -119,6 +366,14 @@
     import { trackKpiEvent } from './src/core/metrics.js';
 
     loadAndApplyAccessibility();
+    mountAccountWidget();
+
+    onAuthSessionChanged((session) => {
+      if (session?.isAuthenticated && session?.email && billingEmailInput) {
+        billingEmailInput.value = session.email;
+        setBillingEmail(session.email);
+      }
+    });
 
     const plans = [
       {
@@ -174,9 +429,18 @@
     }
 
     function updateBillingEmail() {
-      const saved = setBillingEmail(billingEmailInput.value);
-      billingEmailInput.value = saved;
-      return saved;
+      let email = billingEmailInput.value.trim();
+      if (!email) {
+        const session = getCachedAuthSession();
+        if (session && session.email) {
+          email = session.email;
+          billingEmailInput.value = email;
+        }
+      }
+      if (email) {
+        setBillingEmail(email);
+      }
+      return email;
     }
 
     function renderPlans() {
@@ -225,13 +489,14 @@
 
         if (hasFamilyPremium) {
           checkoutStatus.innerHTML = `<span class="success">Family Premium is active.</span> You can use premium items in the shop.`;
+          manageBillingBtn.style.display = 'inline-flex';
           manageBillingBtn.disabled = checkoutBusy;
         } else if (!selectedPlanSupported) {
           checkoutStatus.textContent = `Selected plan is not configured on this environment. Choose a supported plan or contact support.`;
-          manageBillingBtn.disabled = true;
+          manageBillingBtn.style.display = 'none';
         } else {
           checkoutStatus.textContent = `Selected plan: ${selectedPlan ? selectedPlan.name : selectedPlanId}. Continue to Stripe checkout to activate Family Premium.`;
-          manageBillingBtn.disabled = checkoutBusy;
+          manageBillingBtn.style.display = 'none';
         }
 
         startCheckoutBtn.disabled = checkoutBusy || !selectedPlanId || !selectedPlanSupported;
@@ -242,8 +507,8 @@
       completeCheckoutBtn.style.display = 'inline-flex';
       clearCheckoutBtn.style.display = 'inline-flex';
       billingEmailRow.style.display = 'none';
-      manageBillingBtn.style.display = 'none';
-      manageBillingBtn.disabled = true;
+      manageBillingBtn.style.display = hasFamilyPremium ? 'inline-flex' : 'none';
+      manageBillingBtn.disabled = checkoutBusy;
       checkoutNote.textContent = 'Demo flow: checkout state is stored locally. A real payment processor can replace this intent flow later.';
 
       if (hasFamilyPremium) {
@@ -307,6 +572,18 @@
 
     startCheckoutBtn.addEventListener('click', async () => {
       if (!selectedPlanId || checkoutBusy) return;
+
+      const session = getCachedAuthSession();
+      if (!session?.isAuthenticated && !session?.stubbed) {
+        checkoutStatus.textContent = 'Please sign in with Google to continue secure checkout.';
+        try {
+          await signInWithGoogle();
+        } catch (error) {
+          checkoutStatus.textContent = `Sign in required: ${error.message}`;
+        }
+        return;
+      }
+
       if (isStripeMode()) {
         const billingEmail = updateBillingEmail();
         if (!billingEmail) {
@@ -359,7 +636,24 @@
 
     manageBillingBtn.addEventListener('click', async () => {
       if (!isStripeMode() || checkoutBusy) return;
+
+      const session = getCachedAuthSession();
+      if (!session?.isAuthenticated && !session?.stubbed) {
+        checkoutStatus.textContent = 'Please sign in with Google to manage your subscription.';
+        try {
+          await signInWithGoogle();
+        } catch (error) {
+          checkoutStatus.textContent = `Sign in required: ${error.message}`;
+        }
+        return;
+      }
+
       const billingEmail = updateBillingEmail();
+      if (!billingEmail) {
+        checkoutStatus.textContent = 'Enter your billing email to manage your subscription.';
+        billingEmailInput.focus();
+        return;
+      }
 
       setCheckoutBusy(true);
       renderCheckout();

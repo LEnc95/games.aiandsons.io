@@ -1,13 +1,18 @@
 # Release Notes - Sprint 6 Launch Candidate
-## Weekly Highlights (2026-03-07 to 2026-03-13)
-- Added Doodle Jump to launcher metadata and routing support.
-- Added Hangman with computer/friend modes, then shipped friend-input and mobile keyboard visibility fixes plus a kid-friendly dynamic word pack.
-- Added Treasure Maze and Neon Rally entries and updated launcher routing/index coverage.
-- Added Water Balloon Code Duel with metadata, index, and route wiring.
-- Added Whack-a-Mole Blitz and rolled out favicon links across core pages.
+## Weekly Highlights (2026-03-21 to 2026-03-28)
+- Added and integrated new games across the launcher and routes, including `reactiongrid`, `simonsays`, `orbburst`, `clubpenguin-world`, `lasermaze`, and `moonlander`.
+- Shipped Firebase-backed auth/persistence and billing hardening updates, including Google sign-in flow fixes, Stripe checkout enforcement, and nightly billing reconcile automation.
+- Added daily feedback provisioning and Slack failure-alert workflows, plus feedback attachments and Linear provisioning support.
+- Applied a broad Space Arcade visual refresh across core pages, onboarding surfaces, and teacher dashboard screens, then stabilized related smoke-test coverage.
+- Landed deployment and test reliability fixes for Club Penguin integration and CI path/timezone inconsistencies.
 
-## Key PR Links (2026-03-07 to 2026-03-13)
-- No merged pull requests found in repository history for this date window.
+## Key PR Links (2026-03-21 to 2026-03-28)
+- [#49](https://github.com/LEnc95/games.aiandsons.io/pull/49) - Club Penguin integration branch merged to `main` (2026-03-24).
+- [#48](https://github.com/LEnc95/games.aiandsons.io/pull/48) - Club Penguin main integration merged to `main` (2026-03-24).
+- [#47](https://github.com/LEnc95/games.aiandsons.io/pull/47) - Skywire lane-swap double-move fix merged (2026-03-23).
+- [#46](https://github.com/LEnc95/games.aiandsons.io/pull/46) - Dino Run sprite feedback update merged (2026-03-23).
+- [#45](https://github.com/LEnc95/games.aiandsons.io/pull/45) - Additional Dino Run sprite refinement merged (2026-03-23).
+- [#43](https://github.com/LEnc95/games.aiandsons.io/pull/43) - Nightly launch-readiness failure fix merged (2026-03-23).
 
 ## Release Scope
 - Onboarding split from home launcher with dedicated parent and teacher onboarding pages.

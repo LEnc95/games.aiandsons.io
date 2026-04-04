@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Skywire Sprint - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg: #050919;
+      --panel: rgba(7, 14, 29, 0.86);
+      --line: rgba(154, 214, 255, 0.36);
+      --text: #eff8ff;
+      --muted: #abc8ea;
+      --good: #89f4bc;
+      --warn: #ffd784;
+      --bad: #ff9cb0;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: radial-gradient(120% 80% at 10% 10%, #18376b 0%, transparent 55%), linear-gradient(180deg, #0f2042 0%, #050919 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 30;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 12px;
+      background: rgba(7, 12, 24, 0.64);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 50px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(62dvh, 720px);
+      aspect-ratio: 16 / 9;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(157, 214, 255, 0.65);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+      touch-action: none;
+      background: linear-gradient(180deg, #152d58 0%, #0b1633 45%, #070d20 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .panel {
+      max-width: 640px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+      padding: 16px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.03em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: clamp(13px, 2.1vw, 15px);
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(27, 56, 98, 0.94);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(182, 224, 255, 0.3);
+      background: rgba(255, 255, 255, 0.06);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.3vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+    }
+    .touch-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #c4daf2;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 76px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+
+  <meta name="description" content="Swap lanes, dodge drone traffic, and dash through hazards to finish a high-speed skyway run.">
+  <meta property="og:title" content="Skywire Sprint - Play on Cade's Games">
+  <meta property="og:description" content="Swap lanes, dodge drone traffic, and dash through hazards to finish a high-speed skyway run.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/skywire">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Skywire Sprint - Play on Cade's Games">
+  <meta name="twitter:description" content="Swap lanes, dodge drone traffic, and dash through hazards to finish a high-speed skyway run.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/skywire">
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="960" height="540" aria-label="Skywire Sprint playfield"></canvas>
+
+      <div id="menuOverlay" class="overlay show">
+        <div class="panel">
+          <h1>Skywire Sprint</h1>
+          <p>Weave between lanes, dodge drones, and grab energy cells while your hover bike accelerates.</p>
+          <p>Desktop: Left/Right or A/D to swap lanes, Space to dash through danger, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use left/right and dash buttons.</p>
+          <div class="row">
+            <button id="start-btn">Start Run</button>
+            <button id="fullscreenBtn">Fullscreen (F)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pauseOverlay" class="overlay">
+        <div class="panel">
+          <h1>Paused</h1>
+          <p>Resume when you are ready to continue the sprint.</p>
+          <div class="row">
+            <button id="resumeBtn">Resume</button>
+            <button id="restartBtn">Restart</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="endOverlay" class="overlay">
+        <div class="panel">
+          <h1 id="endTitle">Run Complete</h1>
+          <p id="endSummary"></p>
+          <div class="row">
+            <button id="playAgainBtn">Play Again</button>
+            <button id="menuBtn">Back To Menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Lane</span><b id="hudLane">2</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Distance</span><b id="hudDistance">0m</b></div>
+      <div class="chip bad"><span>Lives</span><b id="hudLives">3</b></div>
+      <div class="chip warn"><span>Dash</span><b id="hudDash">READY</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls">
+      <div class="touch-group">
+        <button data-touch="left">&lt;</button>
+        <button data-touch="right">&gt;</button>
+      </div>
+      <div class="hint">Reach 1800m to win. Dashing gives brief invulnerability and clears one nearby obstacle.</div>
+      <div class="touch-group">
+        <button data-touch="dash" class="wide">Dash</button>
+        <button id="pauseBtn" class="wide">Pause</button>
+        <button id="restartBtn2" class="wide">Restart</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '../src/core/state.js';
+    import { maybeUnlock } from '../src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const ui = {
+      mode: document.getElementById('hudMode'),
+      lane: document.getElementById('hudLane'),
+      score: document.getElementById('hudScore'),
+      distance: document.getElementById('hudDistance'),
+      lives: document.getElementById('hudLives'),
+      dash: document.getElementById('hudDash'),
+      coins: document.getElementById('hudCoins'),
+      menu: document.getElementById('menuOverlay'),
+      pause: document.getElementById('pauseOverlay'),
+      end: document.getElementById('endOverlay'),
+      endTitle: document.getElementById('endTitle'),
+      endSummary: document.getElementById('endSummary'),
+    };
+
+    const lanesX = [300, 480, 660];
+    const finishDistance = 1800;
+    const laneSwapCooldown = 0.11;
+
+    function makeRng(seed) {
+      let t = seed >>> 0;
+      return () => {
+        t += 0x6d2b79f5;
+        let r = Math.imul(t ^ (t >>> 15), 1 | t);
+        r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+        return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const state = {
+      mode: 'menu',
+      playerLane: 1,
+      lives: 3,
+      score: 0,
+      distance: 0,
+      speed: 220,
+      obstacles: [],
+      pickups: [],
+      spawnTimer: 0.9,
+      pickupTimer: 1.6,
+      laneCooldown: 0,
+      dashCooldown: 0,
+      dashActive: 0,
+      invulnerable: 0,
+      flashTimer: 0,
+      result: 'none',
+      totalCoinsEarned: 0,
+      profileCoins: Number(profileState?.coins || 0),
+      rngSeed: 0,
+      rng: makeRng(1),
+    };
+
+    const input = { move: 0, dash: false };
+    let controlledStep = false;
+    let lastFrame = performance.now();
+
+    function resetRng() {
+      state.rngSeed = Math.floor(Date.now() % 2147483647) + 1;
+      state.rng = makeRng(state.rngSeed);
+    }
+
+    function rand() {
+      return state.rng();
+    }
+
+    function randomLane(excludeLane = -1) {
+      let lane = Math.floor(rand() * lanesX.length);
+      if (lane === excludeLane) {
+        lane = (lane + 1 + Math.floor(rand() * (lanesX.length - 1))) % lanesX.length;
+      }
+      return lane;
+    }
+
+    function resetRun() {
+      resetRng();
+      state.mode = 'playing';
+      state.playerLane = 1;
+      state.lives = 3;
+      state.score = 0;
+      state.distance = 0;
+      state.speed = 220;
+      state.obstacles = [];
+      state.pickups = [];
+      state.spawnTimer = 0.7;
+      state.pickupTimer = 1.4;
+      state.laneCooldown = 0;
+      state.dashCooldown = 0;
+      state.dashActive = 0;
+      state.invulnerable = 0;
+      state.flashTimer = 0;
+      state.result = 'none';
+      state.totalCoinsEarned = 0;
+      if (typeof rememberRecent === 'function') {
+        rememberRecent('skywire');
+      }
+      if (typeof maybeUnlock === 'function') {
+        maybeUnlock({ anyPlay: true, skywire: { distance: 0, score: 0, result: 'started' } });
+      }
+      setOverlay();
+      updateHud();
+    }
+
+    function setOverlay() {
+      ui.menu.classList.toggle('show', state.mode === 'menu');
+      ui.pause.classList.toggle('show', state.mode === 'paused');
+      ui.end.classList.toggle('show', state.mode === 'ended');
+    }
+
+    function awardCoinsAndProgress() {
+      const distanceBonus = Math.floor(state.distance / 250) * 3;
+      const scoreBonus = Math.floor(state.score / 18);
+      const finishBonus = state.result === 'win' ? 18 : 0;
+      const coins = Math.max(0, distanceBonus + scoreBonus + finishBonus);
+      state.totalCoinsEarned = coins;
+      if (coins > 0 && typeof addCoins === 'function') {
+        addCoins(coins);
+      }
+      state.profileCoins = Number(profileState?.coins || state.profileCoins + coins);
+      if (typeof maybeUnlock === 'function') {
+        maybeUnlock({
+          anyPlay: true,
+          skywire: {
+            distance: Math.floor(state.distance),
+            score: Math.floor(state.score),
+            result: state.result,
+            coins,
+          },
+        });
+      }
+    }
+
+    function endRun(result) {
+      state.mode = 'ended';
+      state.result = result;
+      awardCoinsAndProgress();
+      if (result === 'win') {
+        ui.endTitle.textContent = 'Skywire Cleared';
+        ui.endSummary.textContent = `You reached ${Math.floor(state.distance)}m with ${Math.floor(state.score)} score and earned ${state.totalCoinsEarned} coins.`;
+      } else {
+        ui.endTitle.textContent = 'Bike Wrecked';
+        ui.endSummary.textContent = `Distance ${Math.floor(state.distance)}m, score ${Math.floor(state.score)}. You still earned ${state.totalCoinsEarned} coins.`;
+      }
+      setOverlay();
+      updateHud();
+    }
+
+    function laneForPlayer() {
+      return lanesX[state.playerLane];
+    }
+
+    function spawnObstacle() {
+      const isWide = rand() < 0.28;
+      const lane = randomLane();
+      const x = lanesX[lane];
+      state.obstacles.push({
+        id: `${Date.now()}-${Math.floor(rand() * 9999)}`,
+        lane,
+        x,
+        y: -60,
+        w: isWide ? 130 : 94,
+        h: isWide ? 38 : 30,
+        speed: state.speed + 110 + rand() * 70,
+      });
+      if (rand() < 0.26) {
+        const secondLane = randomLane(lane);
+        state.obstacles.push({
+          id: `${Date.now()}-${Math.floor(rand() * 9999)}-b`,
+          lane: secondLane,
+          x: lanesX[secondLane],
+          y: -125 - rand() * 60,
+          w: 88,
+          h: 28,
+          speed: state.speed + 90,
+        });
+      }
+    }
+
+    function spawnPickup() {
+      const lane = randomLane();
+      state.pickups.push({
+        id: `p-${Date.now()}-${Math.floor(rand() * 9999)}`,
+        lane,
+        x: lanesX[lane],
+        y: -48,
+        r: 14,
+        speed: state.speed + 80,
+      });
+    }
+
+    function clearClosestObstacle() {
+      if (!state.obstacles.length) return;
+      let closest = -1;
+      let dist = Infinity;
+      for (let i = 0; i < state.obstacles.length; i += 1) {
+        const o = state.obstacles[i];
+        if (o.lane !== state.playerLane) continue;
+        const d = Math.abs(o.y - 430);
+        if (d < dist) {
+          dist = d;
+          closest = i;
+        }
+      }
+      if (closest >= 0 && dist < 220) {
+        state.obstacles.splice(closest, 1);
+        state.score += 8;
+      }
+    }
+
+    function triggerDash() {
+      if (state.dashCooldown > 0 || state.mode !== 'playing') return;
+      state.dashCooldown = 3.8;
+      state.dashActive = 0.38;
+      state.invulnerable = Math.max(state.invulnerable, 0.42);
+      clearClosestObstacle();
+    }
+
+    function queueLaneMove(direction) {
+      if (direction !== -1 && direction !== 1) return;
+      if (input.move === 0) input.move = direction;
+    }
+
+    function handleInput() {
+      if (state.mode !== 'playing') return;
+      if (state.laneCooldown > 0 || input.move === 0) return;
+
+      const nextLane = Math.max(0, Math.min(lanesX.length - 1, state.playerLane + input.move));
+      input.move = 0;
+      if (nextLane === state.playerLane) return;
+      state.playerLane = nextLane;
+      state.laneCooldown = laneSwapCooldown;
+    }
+
+    function intersectsPlayer(o) {
+      const px = laneForPlayer();
+      const py = 430;
+      const halfW = 44;
+      const halfH = 22;
+      const ox1 = o.x - o.w * 0.5;
+      const oy1 = o.y - o.h * 0.5;
+      const ox2 = o.x + o.w * 0.5;
+      const oy2 = o.y + o.h * 0.5;
+      const px1 = px - halfW;
+      const py1 = py - halfH;
+      const px2 = px + halfW;
+      const py2 = py + halfH;
+      return !(px2 < ox1 || px1 > ox2 || py2 < oy1 || py1 > oy2);
+    }
+
+    function collectPickup(p) {
+      const px = laneForPlayer();
+      const py = 430;
+      const dx = px - p.x;
+      const dy = py - p.y;
+      return (dx * dx + dy * dy) < 1700;
+    }
+
+    function update(dt) {
+      if (state.mode !== 'playing') return;
+
+      if (dt > 0.2) {
+        input.move = 0;
+      }
+
+      state.laneCooldown = Math.max(0, state.laneCooldown - dt);
+      state.dashCooldown = Math.max(0, state.dashCooldown - dt);
+      state.dashActive = Math.max(0, state.dashActive - dt);
+      state.invulnerable = Math.max(0, state.invulnerable - dt);
+      state.flashTimer = Math.max(0, state.flashTimer - dt);
+
+      handleInput();
+
+      if (input.dash) {
+        input.dash = false;
+        triggerDash();
+      }
+
+      state.speed = Math.min(520, state.speed + dt * 10.5);
+      state.distance += state.speed * dt * 0.12;
+      state.score += dt * (6 + state.speed * 0.02);
+
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnObstacle();
+        state.spawnTimer = Math.max(0.28, 0.76 - state.distance * 0.0002);
+      }
+
+      state.pickupTimer -= dt;
+      if (state.pickupTimer <= 0) {
+        spawnPickup();
+        state.pickupTimer = 1.45 + rand() * 0.95;
+      }
+
+      const obstacleSpeedBonus = state.speed * 0.44;
+      for (let i = state.obstacles.length - 1; i >= 0; i -= 1) {
+        const o = state.obstacles[i];
+        o.y += (o.speed + obstacleSpeedBonus) * dt;
+        if (o.y > canvas.height + 90) {
+          state.obstacles.splice(i, 1);
+          continue;
+        }
+        if (intersectsPlayer(o)) {
+          if (state.invulnerable > 0 || state.dashActive > 0) {
+            state.obstacles.splice(i, 1);
+            state.score += 3;
+            continue;
+          }
+          state.lives -= 1;
+          state.flashTimer = 0.35;
+          state.invulnerable = 1.0;
+          state.obstacles.splice(i, 1);
+          if (state.lives <= 0) {
+            endRun('loss');
+            return;
+          }
+        }
+      }
+
+      for (let i = state.pickups.length - 1; i >= 0; i -= 1) {
+        const p = state.pickups[i];
+        p.y += (p.speed + obstacleSpeedBonus * 0.8) * dt;
+        if (p.y > canvas.height + 50) {
+          state.pickups.splice(i, 1);
+          continue;
+        }
+        if (collectPickup(p)) {
+          state.pickups.splice(i, 1);
+          state.score += 14;
+          state.dashCooldown = Math.max(0, state.dashCooldown - 0.8);
+        }
+      }
+
+      if (state.distance >= finishDistance) {
+        endRun('win');
+      }
+
+      updateHud();
+    }
+
+    function drawRoad() {
+      const topY = 0;
+      const bottomY = canvas.height;
+      const topWidth = 210;
+      const bottomWidth = 760;
+      const center = canvas.width * 0.5;
+
+      ctx.fillStyle = 'rgba(5, 12, 26, 0.95)';
+      ctx.beginPath();
+      ctx.moveTo(center - topWidth * 0.5, topY);
+      ctx.lineTo(center + topWidth * 0.5, topY);
+      ctx.lineTo(center + bottomWidth * 0.5, bottomY);
+      ctx.lineTo(center - bottomWidth * 0.5, bottomY);
+      ctx.closePath();
+      ctx.fill();
+
+      for (let i = 1; i <= 2; i += 1) {
+        const t = i / 3;
+        const xTop = center - topWidth * 0.5 + topWidth * t;
+        const xBottom = center - bottomWidth * 0.5 + bottomWidth * t;
+        ctx.strokeStyle = 'rgba(128, 188, 255, 0.28)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(xTop, topY);
+        ctx.lineTo(xBottom, bottomY);
+        ctx.stroke();
+      }
+
+      const stripePhase = (state.distance * 3) % 90;
+      for (let y = -80; y < canvas.height + 80; y += 90) {
+        const yy = y + stripePhase;
+        const k = yy / canvas.height;
+        const width = topWidth + (bottomWidth - topWidth) * k;
+        ctx.fillStyle = 'rgba(171, 222, 255, 0.26)';
+        ctx.fillRect(center - 6, yy, 12, Math.max(18, 35 * k));
+        ctx.fillRect(center - width / 3 - 5, yy + 5, 10, Math.max(16, 26 * k));
+        ctx.fillRect(center + width / 3 - 5, yy + 5, 10, Math.max(16, 26 * k));
+      }
+    }
+
+    function drawPlayer() {
+      const x = laneForPlayer();
+      const y = 430;
+      const activeDash = state.dashActive > 0;
+      if (state.flashTimer > 0 && Math.sin(state.flashTimer * 50) > 0) {
+        return;
+      }
+
+      if (activeDash) {
+        ctx.fillStyle = 'rgba(125, 233, 255, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 8, 58, 38, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#9df3ff';
+      ctx.beginPath();
+      ctx.moveTo(x, y - 30);
+      ctx.lineTo(x + 36, y + 20);
+      ctx.lineTo(x - 36, y + 20);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#2bd6ff';
+      ctx.fillRect(x - 12, y - 8, 24, 18);
+
+      ctx.fillStyle = activeDash ? '#fff39a' : '#73c9ff';
+      ctx.beginPath();
+      ctx.moveTo(x - 14, y + 20);
+      ctx.lineTo(x + 14, y + 20);
+      ctx.lineTo(x, y + 43);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawEntities() {
+      for (const o of state.obstacles) {
+        ctx.fillStyle = '#ff6182';
+        ctx.fillRect(o.x - o.w * 0.5, o.y - o.h * 0.5, o.w, o.h);
+        ctx.fillStyle = '#ffd0d8';
+        ctx.fillRect(o.x - o.w * 0.38, o.y - o.h * 0.22, o.w * 0.76, o.h * 0.22);
+      }
+      for (const p of state.pickups) {
+        ctx.fillStyle = '#6af7bf';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#d7ffed';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 0.46, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawBackdrop() {
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, '#1a3a73');
+      g.addColorStop(0.5, '#10244b');
+      g.addColorStop(1, '#060d20');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scroll = (state.distance * 5) % canvas.height;
+      ctx.fillStyle = 'rgba(130, 198, 255, 0.16)';
+      for (let i = 0; i < 18; i += 1) {
+        const x = (i * 97 + 35) % canvas.width;
+        const y = (i * 83 + scroll) % canvas.height;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
+
+    function drawStatusLine() {
+      ctx.fillStyle = 'rgba(7, 17, 36, 0.7)';
+      ctx.fillRect(14, 12, 408, 58);
+      ctx.strokeStyle = 'rgba(148, 206, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 408, 58);
+
+      ctx.fillStyle = '#eff6ff';
+      ctx.font = '700 22px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Skywire Sprint', 28, 36);
+
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#bdd8f7';
+      const dashReady = state.dashCooldown <= 0 ? 'READY' : `${state.dashCooldown.toFixed(1)}s`;
+      ctx.fillText(`Lane ${state.playerLane + 1} | Dash ${dashReady}`, 28, 56);
+    }
+
+    function draw() {
+      drawBackdrop();
+      drawRoad();
+      drawEntities();
+      drawPlayer();
+      drawStatusLine();
+    }
+
+    function updateHud() {
+      const mode = state.mode === 'menu'
+        ? 'MENU'
+        : state.mode === 'playing'
+          ? 'PLAY'
+          : state.mode === 'paused'
+            ? 'PAUSE'
+            : state.result === 'win' ? 'WIN' : 'LOSS';
+      ui.mode.textContent = mode;
+      ui.lane.textContent = String(state.playerLane + 1);
+      ui.score.textContent = String(Math.floor(state.score));
+      ui.distance.textContent = `${Math.floor(state.distance)}m`;
+      ui.lives.textContent = String(state.lives);
+      ui.dash.textContent = state.dashCooldown <= 0 ? 'READY' : `${state.dashCooldown.toFixed(1)}s`;
+      ui.coins.textContent = String(Number(profileState?.coins || state.profileCoins));
+    }
+
+    function clearInputs() {
+      input.move = 0;
+      input.dash = false;
+    }
+
+    function onKey(event, down) {
+      const key = event.key.toLowerCase();
+      if (down && !event.repeat && (key === 'arrowleft' || key === 'a')) queueLaneMove(-1);
+      if (down && !event.repeat && (key === 'arrowright' || key === 'd')) queueLaneMove(1);
+      if (down && (key === ' ' || key === 'enter')) input.dash = true;
+      if (!down) return;
+
+      if (key === 'p') {
+        if (state.mode === 'playing') state.mode = 'paused';
+        else if (state.mode === 'paused') state.mode = 'playing';
+        setOverlay();
+        updateHud();
+      }
+      if (key === 'r') {
+        resetRun();
+      }
+      if (key === 'f') {
+        toggleFullscreen();
+      }
+    }
+
+    document.addEventListener('keydown', (event) => onKey(event, true));
+    document.addEventListener('keyup', (event) => onKey(event, false));
+    window.addEventListener('blur', clearInputs);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearInputs();
+    });
+
+    function bindTouchButton(button, key) {
+      if (!button) return;
+      const clear = () => {
+        if (key === 'left' || key === 'right') input.move = 0;
+      };
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        button.setPointerCapture?.(event.pointerId);
+        if (key === 'dash') input.dash = true;
+        else if (key === 'left') queueLaneMove(-1);
+        else if (key === 'right') queueLaneMove(1);
+      });
+      button.addEventListener('pointerup', clear);
+      button.addEventListener('pointercancel', clear);
+      button.addEventListener('lostpointercapture', clear);
+      button.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') clear();
+      });
+    }
+
+    document.querySelectorAll('[data-touch]').forEach((button) => {
+      bindTouchButton(button, button.getAttribute('data-touch'));
+    });
+
+    const startBtn = document.getElementById('start-btn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const restartBtn2 = document.getElementById('restartBtn2');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    startBtn.addEventListener('click', resetRun);
+    resumeBtn.addEventListener('click', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'playing';
+        setOverlay();
+        updateHud();
+      }
+    });
+    restartBtn.addEventListener('click', resetRun);
+    restartBtn2.addEventListener('click', resetRun);
+    playAgainBtn.addEventListener('click', resetRun);
+    menuBtn.addEventListener('click', () => {
+      state.mode = 'menu';
+      setOverlay();
+      updateHud();
+    });
+    pauseBtn.addEventListener('click', () => {
+      if (state.mode === 'playing') state.mode = 'paused';
+      else if (state.mode === 'paused') state.mode = 'playing';
+      setOverlay();
+      updateHud();
+    });
+
+    function toggleFullscreen() {
+      const root = document.documentElement;
+      if (!document.fullscreenElement) {
+        root.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      lastFrame = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function stepByMs(ms) {
+      const loops = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < loops; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      controlledStep = false;
+    }
+
+    window.advanceTime = (ms) => {
+      stepByMs(ms);
+    };
+
+    window.render_game_to_text = () => {
+      return JSON.stringify({
+        game: 'skywire',
+        mode: state.mode,
+        coordinate_system: 'canvas origin top-left; x rightward, y downward; player anchored near y=430',
+        player: {
+          lane: state.playerLane,
+          x: laneForPlayer(),
+          y: 430,
+          lives: state.lives,
+          invulnerable_ms: Math.round(state.invulnerable * 1000),
+          dash_active_ms: Math.round(state.dashActive * 1000),
+          dash_cooldown_ms: Math.round(state.dashCooldown * 1000),
+        },
+        score: Math.floor(state.score),
+        distance_m: Math.floor(state.distance),
+        finish_distance_m: finishDistance,
+        obstacles: state.obstacles.slice(0, 8).map((o) => ({
+          lane: o.lane,
+          x: Math.round(o.x),
+          y: Math.round(o.y),
+          w: Math.round(o.w),
+          h: Math.round(o.h),
+        })),
+        pickups: state.pickups.slice(0, 6).map((p) => ({
+          lane: p.lane,
+          x: Math.round(p.x),
+          y: Math.round(p.y),
+          r: Math.round(p.r),
+        })),
+        coins: Number(profileState?.coins || state.profileCoins),
+        result: state.result,
+      });
+    };
+
+    setOverlay();
+    updateHud();
+    draw();
+    requestAnimationFrame(frame);
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: "skywire", gameName: "Skywire Sprint" });
+  </script>
+</body>
+</html>

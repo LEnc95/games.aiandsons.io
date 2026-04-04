@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install Dependencies
         run: npm install
@@ -31,6 +30,35 @@ jobs:
       - name: Run Integration Suite
         run: npm run test:shop
 
+      - name: Run Feedback Suite
+        run: npm run test:feedback
+
+      - name: Provision Linear Feedback Resources
+        id: provision
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          LINEAR_TEAM_ID: ${{ secrets.LINEAR_TEAM_ID }}
+          LINEAR_PROJECT_ID: ${{ secrets.LINEAR_PROJECT_ID }}
+        shell: bash
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          import { runFeedbackLinearProvision } from "./scripts/feedback/provision-linear.mjs";
+
+          const outcome = await runFeedbackLinearProvision();
+          const summary = outcome.summary || {};
+          if (process.env.GITHUB_OUTPUT) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, [
+              `summary_text=${String(summary.text || "").replace(/[\r\n]+/g, " ")}`,
+              `labels_created=${summary.labelsCreated ?? 0}`,
+              `label_warnings=${summary.labelWarnings ?? 0}`,
+              `baselines_created=${summary.baselinesCreated ?? 0}`,
+              `baselines_existing=${summary.baselinesExisting ?? 0}`,
+              `baseline_warnings=${summary.baselineWarnings ?? 0}`,
+            ].join("\n") + "\n");
+          }
+          EOF
+
       - name: Run Launch Readiness Smoke Suite
         run: npm run test:launch-readiness-smoke
 
@@ -40,6 +68,7 @@ jobs:
         with:
           name: launch-readiness-artifacts
           path: |
+            output/web-game/feedback-e2e
             output/web-game/launch-readiness-e2e
             output/web-game/discovery-filter-e2e
             output/web-game/classroom-e2e
@@ -47,3 +76,22 @@ jobs:
             output/web-game/premium-track-e2e
             output/web-game/onboarding-split-e2e
             output/web-game/metrics-baseline-e2e
+
+      - name: Notify Slack
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CI_WEBHOOK_URL }}
+          SLACK_NOTIFY_ON_SUCCESS: ${{ vars.SLACK_NOTIFY_SUCCESS }}
+          WORKFLOW_NAME: Nightly Launch Readiness
+          WORKFLOW_STATUS: ${{ job.status }}
+          WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WORKFLOW_ARTIFACTS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts
+          WORKFLOW_PROVISION_SUMMARY: ${{ steps.provision.outputs.summary_text }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: node scripts/ci/send-slack-notification.mjs

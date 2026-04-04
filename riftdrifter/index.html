@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Rift Drifter - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Pilot with inertia, harvest rift shards, and avoid anomalies in a drifting zero-g arena.">
+  <meta property="og:title" content="Rift Drifter - Play on Cade's Games">
+  <meta property="og:description" content="Pilot with inertia, harvest rift shards, and avoid anomalies in a drifting zero-g arena.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/riftdrifter">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rift Drifter - Play on Cade's Games">
+  <meta name="twitter:description" content="Pilot with inertia, harvest rift shards, and avoid anomalies in a drifting zero-g arena.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/riftdrifter">
+  <style>
+    :root {
+      --bg0: #040913;
+      --bg1: #11223f;
+      --panel: rgba(8, 16, 34, 0.88);
+      --line: rgba(133, 199, 255, 0.4);
+      --text: #eef6ff;
+      --muted: #c2d8f6;
+      --good: #9affd4;
+      --warn: #ffd893;
+      --bad: #ff9db8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(90% 72% at 8% 0%, #1a3f72 0%, transparent 60%),
+        radial-gradient(80% 64% at 92% 100%, #152f5d 0%, transparent 63%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #12244c 0%, #081127 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 670px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(25, 52, 94, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Rift Drifter game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Rift Drifter</h1>
+          <p>Zero-g drift challenge: rotate, thrust, collect shards, and dodge anomaly fields.</p>
+          <p>Desktop: Left/Right rotate, Space thrust, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: hold Turn Left/Turn Right and Thrust to control momentum.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Drift</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Shards</span><b id="hudShards">0/12</b></div>
+      <div class="chip"><span>Hull</span><b id="hudHull">3</b></div>
+      <div class="chip"><span>Speed</span><b id="hudSpeed">0</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">100.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Angle</span><b id="hudAngle">0°</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnTurnLeft">Turn Left</button>
+        <button type="button" id="btnThrust">Thrust</button>
+        <button type="button" id="btnTurnRight">Turn Right</button>
+      </div>
+      <div class="hint">You keep drifting after thrust. Plan turns early and avoid magenta anomalies.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudShards = document.getElementById('hudShards');
+    const hudHull = document.getElementById('hudHull');
+    const hudSpeed = document.getElementById('hudSpeed');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudAngle = document.getElementById('hudAngle');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnTurnLeft = document.getElementById('btnTurnLeft');
+    const btnThrust = document.getElementById('btnThrust');
+    const btnTurnRight = document.getElementById('btnTurnRight');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const FIELD = { x: 120, y: 80, w: 960, h: 590 };
+    const TARGET_SHARDS = 12;
+    const ROUND_SECONDS = 100;
+
+    const state = {
+      mode: 'menu',
+      score: 0,
+      hull: 3,
+      shardsCollected: 0,
+      timeLeft: ROUND_SECONDS,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      player: { x: 0, y: 0, vx: 0, vy: 0, angle: -Math.PI / 2, radius: 16, invuln: 0 },
+      shards: [],
+      anomalies: [],
+      particles: [],
+      stars: [],
+      keys: { left: false, right: false, thrust: false },
+    };
+
+    let controlledStep = false;
+    let previousTime = performance.now();
+    let rafId = 0;
+
+    function spawnStars() {
+      state.stars = [];
+      for (let i = 0; i < 140; i += 1) {
+        state.stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          z: 0.4 + Math.random() * 1.4,
+        });
+      }
+    }
+
+    function randomFieldPoint(padding = 24) {
+      return {
+        x: FIELD.x + padding + Math.random() * (FIELD.w - padding * 2),
+        y: FIELD.y + padding + Math.random() * (FIELD.h - padding * 2),
+      };
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.score = 0;
+      state.hull = 3;
+      state.shardsCollected = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.player = {
+        x: FIELD.x + FIELD.w * 0.5,
+        y: FIELD.y + FIELD.h * 0.5,
+        vx: 0,
+        vy: 0,
+        angle: -Math.PI / 2,
+        radius: 16,
+        invuln: 0,
+      };
+      state.shards = [];
+      state.anomalies = [];
+      state.particles = [];
+      state.keys = { left: false, right: false, thrust: false };
+      spawnStars();
+
+      for (let i = 0; i < 6; i += 1) {
+        const p = randomFieldPoint();
+        state.shards.push({ x: p.x, y: p.y, radius: 10 });
+      }
+      for (let i = 0; i < 4; i += 1) {
+        const p = randomFieldPoint(60);
+        state.anomalies.push({
+          x: p.x,
+          y: p.y,
+          vx: (Math.random() - 0.5) * 130,
+          vy: (Math.random() - 0.5) * 130,
+          radius: 18 + Math.random() * 8,
+        });
+      }
+    }
+
+    function showOverlay(title, detail, buttonLabel = 'Start Drift') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${detail}</p>
+          <p>Desktop: Left/Right rotate, Space thrust, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('riftdrifter'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, riftdrifter: { shards: 0, score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function speedMagnitude() {
+      return Math.hypot(state.player.vx, state.player.vy);
+    }
+
+    function spawnBurst(x, y, color, count = 12) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 40 + Math.random() * 150;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.18 + Math.random() * 0.35,
+          color,
+        });
+      }
+    }
+
+    function scoreNow() {
+      return state.shardsCollected * 140 + Math.floor(Math.max(0, state.timeLeft) * 2) + Math.floor(speedMagnitude());
+    }
+
+    function rewardRun(result) {
+      const shardBonus = state.shardsCollected;
+      const clearBonus = result === 'win' ? 12 : 0;
+      const hullBonus = result === 'win' ? state.hull * 2 : 0;
+      const coins = Math.max(2, shardBonus + clearBonus + hullBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          riftdrifter: {
+            shards: state.shardsCollected,
+            score: state.score,
+            hull: state.hull,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      state.score = scoreNow();
+      rewardRun(result);
+      const detail = result === 'win'
+        ? `Drift stabilized with ${state.shardsCollected} shards. Score ${state.score}, coins ${state.runCoinsEarned}.`
+        : `Hull collapsed. Shards ${state.shardsCollected}, score ${state.score}, coins ${state.runCoinsEarned}.`;
+      showOverlay(result === 'win' ? 'Rift Stabilized' : 'Drift Failed', detail, 'Run Again');
+      updateHud();
+    }
+
+    function respawnShard() {
+      const p = randomFieldPoint();
+      state.shards.push({ x: p.x, y: p.y, radius: 10 });
+    }
+
+    function applyInputs(dt) {
+      if (state.keys.left) state.player.angle -= 2.6 * dt;
+      if (state.keys.right) state.player.angle += 2.6 * dt;
+      if (state.keys.thrust) {
+        const thrust = 210 * dt;
+        state.player.vx += Math.cos(state.player.angle) * thrust;
+        state.player.vy += Math.sin(state.player.angle) * thrust;
+        spawnBurst(
+          state.player.x - Math.cos(state.player.angle) * 12,
+          state.player.y - Math.sin(state.player.angle) * 12,
+          '#8dd7ff',
+          2
+        );
+      }
+    }
+
+    function keepInBounds() {
+      const p = state.player;
+      if (p.x < FIELD.x + p.radius) { p.x = FIELD.x + p.radius; p.vx *= -0.6; }
+      if (p.x > FIELD.x + FIELD.w - p.radius) { p.x = FIELD.x + FIELD.w - p.radius; p.vx *= -0.6; }
+      if (p.y < FIELD.y + p.radius) { p.y = FIELD.y + p.radius; p.vy *= -0.6; }
+      if (p.y > FIELD.y + FIELD.h - p.radius) { p.y = FIELD.y + FIELD.h - p.radius; p.vy *= -0.6; }
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
+          return;
+        }
+
+        applyInputs(dt);
+        state.player.vx *= 0.992;
+        state.player.vy *= 0.992;
+        state.player.x += state.player.vx * dt;
+        state.player.y += state.player.vy * dt;
+        keepInBounds();
+        state.player.invuln = Math.max(0, state.player.invuln - dt);
+
+        for (const star of state.stars) {
+          star.y += (30 + speedMagnitude() * 0.05) * star.z * dt;
+          if (star.y > canvas.height + 4) {
+            star.y = -4;
+            star.x = Math.random() * canvas.width;
+          }
+        }
+
+        for (const anomaly of state.anomalies) {
+          anomaly.x += anomaly.vx * dt;
+          anomaly.y += anomaly.vy * dt;
+          if (anomaly.x < FIELD.x + anomaly.radius || anomaly.x > FIELD.x + FIELD.w - anomaly.radius) anomaly.vx *= -1;
+          if (anomaly.y < FIELD.y + anomaly.radius || anomaly.y > FIELD.y + FIELD.h - anomaly.radius) anomaly.vy *= -1;
+        }
+
+        for (let i = state.shards.length - 1; i >= 0; i -= 1) {
+          const shard = state.shards[i];
+          const dx = shard.x - state.player.x;
+          const dy = shard.y - state.player.y;
+          if (dx * dx + dy * dy <= (state.player.radius + shard.radius) ** 2) {
+            state.shards.splice(i, 1);
+            state.shardsCollected += 1;
+            spawnBurst(shard.x, shard.y, '#99ffe2', 14);
+            respawnShard();
+            if (state.shardsCollected >= TARGET_SHARDS) {
+              finishRun('win');
+              return;
+            }
+          }
+        }
+
+        if (state.player.invuln <= 0) {
+          for (const anomaly of state.anomalies) {
+            const dx = anomaly.x - state.player.x;
+            const dy = anomaly.y - state.player.y;
+            if (dx * dx + dy * dy <= (state.player.radius + anomaly.radius) ** 2) {
+              state.hull -= 1;
+              state.player.invuln = 1.2;
+              spawnBurst(state.player.x, state.player.y, '#ff98b6', 18);
+              state.player.vx -= dx * 0.25;
+              state.player.vy -= dy * 0.25;
+              if (state.hull <= 0) {
+                finishRun('loss');
+                return;
+              }
+              break;
+            }
+          }
+        }
+
+        state.score = scoreNow();
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 70 * dt;
+      }
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#142b53');
+      grad.addColorStop(1, '#081226');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (const star of state.stars) {
+        const alpha = Math.min(1, 0.32 + star.z * 0.45);
+        ctx.fillStyle = `rgba(212, 236, 255, ${alpha})`;
+        const size = star.z > 1.2 ? 2.2 : 1.4;
+        ctx.fillRect(star.x, star.y, size, size);
+      }
+
+      ctx.strokeStyle = 'rgba(141, 201, 255, 0.36)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(FIELD.x, FIELD.y, FIELD.w, FIELD.h);
+    }
+
+    function drawShards() {
+      for (const shard of state.shards) {
+        const pulse = 1 + Math.sin((shard.x + shard.y + performance.now() * 0.2) * 0.03) * 0.2;
+        ctx.fillStyle = '#8fffe1';
+        ctx.beginPath();
+        ctx.arc(shard.x, shard.y, shard.radius * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(228, 255, 246, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawAnomalies() {
+      for (const anomaly of state.anomalies) {
+        ctx.fillStyle = 'rgba(255, 124, 186, 0.82)';
+        ctx.beginPath();
+        ctx.arc(anomaly.x, anomaly.y, anomaly.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 223, 242, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer() {
+      const p = state.player;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+
+      if (p.invuln > 0) {
+        ctx.fillStyle = 'rgba(160, 235, 255, 0.3)';
+        ctx.beginPath();
+        ctx.arc(0, 0, p.radius + 10 + Math.sin(performance.now() * 0.02) * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#e9f6ff';
+      ctx.beginPath();
+      ctx.moveTo(18, 0);
+      ctx.lineTo(-12, -10);
+      ctx.lineTo(-7, 0);
+      ctx.lineTo(-12, 10);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#81cfff';
+      ctx.fillRect(-10, -4, 8, 8);
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 620, 58);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 620, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Rift Drifter', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Collect green shards, avoid magenta anomalies, and manage inertia drift.', 28, 58);
+    }
+
+    function drawPauseShade() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.52);
+    }
+
+    function draw() {
+      drawBackground();
+      drawShards();
+      drawAnomalies();
+      drawParticles();
+      drawPlayer();
+      drawTopLabel();
+      drawPauseShade();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudShards.textContent = `${state.shardsCollected}/${TARGET_SHARDS}`;
+      hudHull.textContent = String(Math.max(0, state.hull));
+      hudSpeed.textContent = speedMagnitude().toFixed(0);
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudAngle.textContent = `${Math.round(((state.player.angle * 180) / Math.PI + 360) % 360)}°`;
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudHull.parentElement.classList.toggle('good', state.hull >= 3);
+      hudHull.parentElement.classList.toggle('warn', state.hull === 2);
+      hudHull.parentElement.classList.toggle('bad', state.hull <= 1);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 55);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 55 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+
+      hudShards.parentElement.classList.toggle('good', state.shardsCollected >= TARGET_SHARDS * 0.7);
+      hudShards.parentElement.classList.toggle('warn', state.shardsCollected < TARGET_SHARDS * 0.7 && state.shardsCollected >= TARGET_SHARDS * 0.35);
+      hudShards.parentElement.classList.toggle('bad', state.shardsCollected < TARGET_SHARDS * 0.35);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        showOverlay('Paused', 'Thrusters idle. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function setTurnLeft(pressed) { state.keys.left = pressed; }
+    function setTurnRight(pressed) { state.keys.right = pressed; }
+    function setThrust(pressed) { state.keys.thrust = pressed; }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); setTurnLeft(true); }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); setTurnRight(true); }
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); setThrust(true); }
+      if (!event.repeat && event.code === 'KeyP') { event.preventDefault(); togglePause(); }
+      if (!event.repeat && event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (!event.repeat && event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') setTurnLeft(false);
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') setTurnRight(false);
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') setThrust(false);
+    });
+
+    function bindHoldButton(button, onDown, onUp) {
+      const start = (e) => { e.preventDefault(); onDown(); };
+      const end = (e) => { e.preventDefault(); onUp(); };
+      button.addEventListener('pointerdown', start);
+      button.addEventListener('pointerup', end);
+      button.addEventListener('pointercancel', end);
+      button.addEventListener('pointerleave', end);
+      button.addEventListener('touchstart', start, { passive: false });
+      button.addEventListener('touchend', end, { passive: false });
+    }
+
+    bindHoldButton(btnTurnLeft, () => setTurnLeft(true), () => setTurnLeft(false));
+    bindHoldButton(btnTurnRight, () => setTurnRight(true), () => setTurnRight(false));
+    bindHoldButton(btnThrust, () => setThrust(true), () => setThrust(false));
+    btnPause.addEventListener('click', () => togglePause());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'riftdrifter',
+        mode: state.mode,
+        coordinate_system: 'arena origin at top-left of canvas; +x right, +y down; player angle in radians',
+        objective: {
+          collect_target_shards: TARGET_SHARDS,
+          avoid_anomaly_collisions: true,
+          time_limit_seconds: ROUND_SECONDS,
+        },
+        player: {
+          x: Number(state.player.x.toFixed(2)),
+          y: Number(state.player.y.toFixed(2)),
+          vx: Number(state.player.vx.toFixed(2)),
+          vy: Number(state.player.vy.toFixed(2)),
+          angle: Number(state.player.angle.toFixed(3)),
+          speed: Number(speedMagnitude().toFixed(2)),
+          hull: state.hull,
+          invuln: Number(state.player.invuln.toFixed(2)),
+        },
+        shards: state.shards.slice(0, 8).map((shard) => ({
+          x: Number(shard.x.toFixed(2)),
+          y: Number(shard.y.toFixed(2)),
+          radius: shard.radius,
+        })),
+        anomalies: state.anomalies.map((anomaly) => ({
+          x: Number(anomaly.x.toFixed(2)),
+          y: Number(anomaly.y.toFixed(2)),
+          vx: Number(anomaly.vx.toFixed(2)),
+          vy: Number(anomaly.vy.toFixed(2)),
+          radius: Number(anomaly.radius.toFixed(2)),
+        })),
+        resources: {
+          shards_collected: state.shardsCollected,
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    showOverlay('Rift Drifter', 'Use inertia and thrust control to harvest shards while avoiding anomaly fields.', 'Start Drift');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'riftdrifter', gameName: 'Rift Drifter' });
+  </script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Comet Courier - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Manage station demand, deliver cargo, and keep every orbital port supplied before overload.">
+  <meta property="og:title" content="Comet Courier - Play on Cade's Games">
+  <meta property="og:description" content="Manage station demand, deliver cargo, and keep every orbital port supplied before overload.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/cometcourier">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Comet Courier - Play on Cade's Games">
+  <meta name="twitter:description" content="Manage station demand, deliver cargo, and keep every orbital port supplied before overload.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/cometcourier">
+  <style>
+    :root {
+      --bg0: #050914;
+      --bg1: #102347;
+      --panel: rgba(8, 16, 36, 0.88);
+      --line: rgba(138, 207, 255, 0.4);
+      --text: #eef6ff;
+      --muted: #c2d8f6;
+      --good: #9affd4;
+      --warn: #ffd893;
+      --bad: #ff9db8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(86% 72% at 10% 4%, #1a3f76 0%, transparent 62%),
+        radial-gradient(74% 60% at 92% 100%, #15345f 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #142b56 0%, #081227 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 670px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(25, 52, 94, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Comet Courier game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Comet Courier</h1>
+          <p>Dispatch cargo to overloaded stations. Keep all demand bars below red until shift end.</p>
+          <p>Desktop: Left/Right move between stations, Space deliver/reload, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use Left/Right and Action. Station C is the depot where you reload cargo.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Dispatch</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Station</span><b id="hudStation">C</b></div>
+      <div class="chip"><span>Cargo</span><b id="hudCargo">20</b></div>
+      <div class="chip"><span>Served</span><b id="hudServed">0</b></div>
+      <div class="chip"><span>Max Demand</span><b id="hudDemand">0%</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">95.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnRight">Right</button>
+        <button type="button" id="btnAction">Action</button>
+      </div>
+      <div class="hint">At station C (depot), Action reloads. At other stations, Action delivers and lowers demand.</div>
+      <div class="touch-group">
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudStation = document.getElementById('hudStation');
+    const hudCargo = document.getElementById('hudCargo');
+    const hudServed = document.getElementById('hudServed');
+    const hudDemand = document.getElementById('hudDemand');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    const btnAction = document.getElementById('btnAction');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const STATION_NAMES = ['A', 'B', 'C', 'D', 'E'];
+    const DEPOT_INDEX = 2;
+    const MAX_CARGO = 20;
+    const RUN_SECONDS = 95;
+    const DEMAND_LIMIT = 100;
+
+    const board = {
+      x: 140,
+      y: 110,
+      w: 920,
+      h: 480,
+    };
+
+    const state = {
+      mode: 'menu',
+      station: DEPOT_INDEX,
+      cargo: MAX_CARGO,
+      served: 0,
+      score: 0,
+      timeLeft: RUN_SECONDS,
+      demands: [0, 0, 0, 0, 0],
+      demandRates: [6, 7, 0, 8, 5],
+      actionHeld: false,
+      actionTick: 0,
+      particles: [],
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+    };
+
+    let controlledStep = false;
+    let previousTime = performance.now();
+    let rafId = 0;
+
+    function stationX(index) {
+      const step = board.w / (STATION_NAMES.length - 1);
+      return board.x + step * index;
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.station = DEPOT_INDEX;
+      state.cargo = MAX_CARGO;
+      state.served = 0;
+      state.score = 0;
+      state.timeLeft = RUN_SECONDS;
+      state.demands = [18, 25, 0, 24, 16];
+      state.demandRates = [6 + Math.random() * 2, 7 + Math.random() * 2, 0, 7 + Math.random() * 2, 6 + Math.random() * 2];
+      state.actionHeld = false;
+      state.actionTick = 0;
+      state.particles = [];
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+    }
+
+    function showOverlay(title, detail, buttonLabel = 'Start Dispatch') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${detail}</p>
+          <p>Desktop: Left/Right move between stations, Space delivers or reloads, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('cometcourier'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, cometcourier: { served: 0, score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function maxDemand() {
+      return Math.max(...state.demands.filter((_, i) => i !== DEPOT_INDEX));
+    }
+
+    function scoreNow() {
+      const stability = Math.max(0, 100 - maxDemand()) * 4;
+      const service = state.served * 18;
+      const cargoValue = state.cargo * 2;
+      return Math.floor(stability + service + cargoValue);
+    }
+
+    function spawnBurst(x, y, color, count = 10) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 150;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.16 + Math.random() * 0.34,
+          color,
+        });
+      }
+    }
+
+    function rewardRun(result) {
+      const serviceBonus = Math.floor(state.served / 2);
+      const stabilityBonus = result === 'win' ? Math.max(0, Math.floor((100 - maxDemand()) / 8)) : 0;
+      const clearBonus = result === 'win' ? 12 : 0;
+      const coins = Math.max(2, serviceBonus + stabilityBonus + clearBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          cometcourier: {
+            served: state.served,
+            score: state.score,
+            maxDemand: Math.round(maxDemand()),
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      state.score = scoreNow();
+      rewardRun(result);
+      const detail = result === 'win'
+        ? `All stations stayed online. Served ${state.served}, score ${state.score}, coins ${state.runCoinsEarned}.`
+        : `A station overloaded. Served ${state.served}, score ${state.score}, coins ${state.runCoinsEarned}.`;
+      showOverlay(result === 'win' ? 'Dispatch Complete' : 'Station Overload', detail, 'Run Again');
+      updateHud();
+    }
+
+    function moveStation(delta) {
+      if (state.mode !== 'playing') return;
+      state.station = Math.max(0, Math.min(STATION_NAMES.length - 1, state.station + delta));
+    }
+
+    function setActionHeld(pressed) {
+      if (state.mode !== 'playing') return;
+      state.actionHeld = pressed;
+      state.actionTick = 0;
+    }
+
+    function performActionTick() {
+      const x = stationX(state.station);
+      const y = board.y + board.h - 74;
+      if (state.station === DEPOT_INDEX) {
+        if (state.cargo < MAX_CARGO) {
+          state.cargo = Math.min(MAX_CARGO, state.cargo + 1);
+          spawnBurst(x, y, '#9bdcff', 3);
+        }
+      } else if (state.cargo > 0) {
+        const demandBefore = state.demands[state.station];
+        state.cargo = Math.max(0, state.cargo - 1);
+        state.demands[state.station] = Math.max(0, state.demands[state.station] - 4.5);
+        if (state.demands[state.station] < demandBefore) {
+          state.served += 1;
+          spawnBurst(x, y - 40, '#a0ffd9', 5);
+        }
+      }
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        showOverlay('Paused', 'Dispatch timeline paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        if (state.timeLeft <= 0) {
+          finishRun('win');
+          return;
+        }
+
+        for (let i = 0; i < STATION_NAMES.length; i += 1) {
+          if (i === DEPOT_INDEX) continue;
+          const pressure = 1 + (state.timeLeft < 40 ? 0.5 : 0) + (state.timeLeft < 20 ? 0.4 : 0);
+          state.demands[i] += state.demandRates[i] * pressure * dt;
+          if (state.demands[i] >= DEMAND_LIMIT) {
+            state.demands[i] = DEMAND_LIMIT;
+            finishRun('loss');
+            return;
+          }
+        }
+
+        if (state.actionHeld) {
+          state.actionTick -= dt;
+          if (state.actionTick <= 0) {
+            performActionTick();
+            state.actionTick = 0.12;
+          }
+        }
+
+        state.score = scoreNow();
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 75 * dt;
+      }
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#142c57');
+      grad.addColorStop(1, '#09142a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(17, 34, 69, 0.85)';
+      ctx.fillRect(board.x, board.y, board.w, board.h);
+      ctx.strokeStyle = 'rgba(144, 202, 255, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(board.x, board.y, board.w, board.h);
+    }
+
+    function drawStations() {
+      const baseY = board.y + board.h - 74;
+      for (let i = 0; i < STATION_NAMES.length; i += 1) {
+        const x = stationX(i);
+        const isDepot = i === DEPOT_INDEX;
+        const demand = state.demands[i];
+        const ratio = isDepot ? 0 : Math.max(0, Math.min(1, demand / DEMAND_LIMIT));
+        const h = 210;
+        const w = 62;
+
+        ctx.fillStyle = 'rgba(11, 26, 54, 0.9)';
+        ctx.fillRect(x - w * 0.5, baseY - h, w, h);
+        ctx.strokeStyle = 'rgba(146, 204, 255, 0.42)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - w * 0.5, baseY - h, w, h);
+
+        if (isDepot) {
+          ctx.fillStyle = '#82ccff';
+          ctx.fillRect(x - w * 0.35, baseY - h + 12, w * 0.7, h - 24);
+        } else {
+          const fillH = (h - 24) * ratio;
+          const dangerColor = ratio < 0.5 ? '#7ef4bf' : (ratio < 0.8 ? '#ffd27f' : '#ff8fa9');
+          ctx.fillStyle = dangerColor;
+          ctx.fillRect(x - w * 0.35, baseY - 12 - fillH, w * 0.7, fillH);
+        }
+
+        ctx.fillStyle = '#f0f7ff';
+        ctx.font = '700 14px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.fillText(STATION_NAMES[i], x, baseY + 20);
+        if (!isDepot) {
+          ctx.fillStyle = '#cae0f8';
+          ctx.font = '600 11px Trebuchet MS';
+          ctx.fillText(`${Math.round(demand)}%`, x, baseY + 34);
+        } else {
+          ctx.fillStyle = '#cae0f8';
+          ctx.font = '600 11px Trebuchet MS';
+          ctx.fillText('DEPOT', x, baseY + 34);
+        }
+      }
+    }
+
+    function drawCourier() {
+      const x = stationX(state.station);
+      const y = board.y + board.h - 74;
+
+      ctx.fillStyle = 'rgba(170, 240, 255, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(x, y + 30, 38, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#e8f6ff';
+      ctx.beginPath();
+      ctx.moveTo(x, y - 14);
+      ctx.lineTo(x + 20, y + 18);
+      ctx.lineTo(x - 20, y + 18);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#7ac9ff';
+      ctx.fillRect(x - 12, y + 18, 24, 9);
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 700, 58);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 700, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Comet Courier', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Balance station demand, deliver cargo, and prevent overloads.', 28, 58);
+    }
+
+    function drawPauseShade() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.52);
+    }
+
+    function draw() {
+      drawBackground();
+      drawStations();
+      drawCourier();
+      drawParticles();
+      drawTopLabel();
+      drawPauseShade();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudStation.textContent = STATION_NAMES[state.station];
+      hudCargo.textContent = String(state.cargo);
+      hudServed.textContent = String(state.served);
+      hudDemand.textContent = `${Math.round(maxDemand())}%`;
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      const maxD = maxDemand();
+      hudDemand.parentElement.classList.toggle('good', maxD < 45);
+      hudDemand.parentElement.classList.toggle('warn', maxD >= 45 && maxD < 75);
+      hudDemand.parentElement.classList.toggle('bad', maxD >= 75);
+
+      hudCargo.parentElement.classList.toggle('good', state.cargo >= 10);
+      hudCargo.parentElement.classList.toggle('warn', state.cargo < 10 && state.cargo >= 4);
+      hudCargo.parentElement.classList.toggle('bad', state.cargo < 4);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 50);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 50 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (!event.repeat && (event.code === 'ArrowLeft' || event.code === 'KeyA')) { event.preventDefault(); moveStation(-1); }
+      if (!event.repeat && (event.code === 'ArrowRight' || event.code === 'KeyD')) { event.preventDefault(); moveStation(1); }
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); setActionHeld(true); }
+      if (!event.repeat && event.code === 'KeyP') { event.preventDefault(); togglePause(); }
+      if (!event.repeat && event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (!event.repeat && event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') setActionHeld(false);
+    });
+
+    function bindActionHold(button) {
+      const down = (e) => { e.preventDefault(); setActionHeld(true); };
+      const up = (e) => { e.preventDefault(); setActionHeld(false); };
+      button.addEventListener('pointerdown', down);
+      button.addEventListener('pointerup', up);
+      button.addEventListener('pointercancel', up);
+      button.addEventListener('pointerleave', up);
+      button.addEventListener('touchstart', down, { passive: false });
+      button.addEventListener('touchend', up, { passive: false });
+    }
+
+    btnLeft.addEventListener('click', () => moveStation(-1));
+    btnRight.addEventListener('click', () => moveStation(1));
+    bindActionHold(btnAction);
+    btnPause.addEventListener('click', () => togglePause());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'cometcourier',
+        mode: state.mode,
+        coordinate_system: 'five stations laid left-to-right, index 0..4 where index 2 is depot',
+        objective: {
+          prevent_station_overload: DEMAND_LIMIT,
+          survive_seconds: RUN_SECONDS,
+          deliver_from_cargo: true,
+        },
+        player: {
+          station_index: state.station,
+          station_name: STATION_NAMES[state.station],
+          cargo: state.cargo,
+          action_held: state.actionHeld,
+        },
+        stations: state.demands.map((demand, index) => ({
+          index,
+          name: STATION_NAMES[index],
+          isDepot: index === DEPOT_INDEX,
+          demand: Number(demand.toFixed(2)),
+          demand_rate: Number(state.demandRates[index].toFixed(2)),
+        })),
+        resources: {
+          served: state.served,
+          max_demand: Number(maxDemand().toFixed(2)),
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    showOverlay('Comet Courier', 'Deliver cargo to overloaded ports and keep every station online.', 'Start Dispatch');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'cometcourier', gameName: 'Comet Courier' });
+  </script>
+</body>
+</html>

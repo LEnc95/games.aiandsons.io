@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Signal Stack - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Rotate network tiles to connect source and uplink before your move budget expires.">
+  <meta property="og:title" content="Signal Stack - Play on Cade's Games">
+  <meta property="og:description" content="Rotate network tiles to connect source and uplink before your move budget expires.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/signalstack">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Signal Stack - Play on Cade's Games">
+  <meta name="twitter:description" content="Rotate network tiles to connect source and uplink before your move budget expires.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/signalstack">
+  <style>
+    :root {
+      --bg0: #040913;
+      --bg1: #11234a;
+      --panel: rgba(8, 17, 38, 0.88);
+      --line: rgba(139, 207, 255, 0.4);
+      --text: #eef6ff;
+      --muted: #c2d8f6;
+      --good: #9affd4;
+      --warn: #ffd893;
+      --bad: #ff9db8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(88% 72% at 10% 4%, #1b3f73 0%, transparent 62%),
+        radial-gradient(74% 60% at 92% 100%, #14305c 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 50;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(142, 209, 255, 0.58);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.52);
+      background: linear-gradient(180deg, #132a57 0%, #081126 100%);
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 670px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.44;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(25, 52, 94, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .touch-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .touch-group button {
+      min-width: 58px;
+      height: 46px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .hint {
+      text-align: center;
+      color: #cadcf6;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+    .wide { min-width: 92px !important; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Signal Stack game board"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Signal Stack</h1>
+          <p>Rotate relays to connect power from SOURCE (top-left) to UPLINK (bottom-right).</p>
+          <p>Desktop: Arrows/WASD move cursor, Space rotates tile, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: directional buttons move cursor, Rotate spins the selected relay.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Routing</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Cursor</span><b id="hudCursor">4,4</b></div>
+      <div class="chip"><span>Connected</span><b id="hudConnected">1/64</b></div>
+      <div class="chip"><span>Moves Left</span><b id="hudMoves">58</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">140.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="touch-group">
+        <button type="button" id="btnUp">Up</button>
+        <button type="button" id="btnLeft">Left</button>
+        <button type="button" id="btnDown">Down</button>
+        <button type="button" id="btnRight">Right</button>
+      </div>
+      <div class="hint">The path only works when adjacent relay openings face each other. Rotate smartly to save moves.</div>
+      <div class="touch-group">
+        <button type="button" id="btnRotate" class="wide">Rotate</button>
+        <button type="button" id="btnPause" class="wide">Pause</button>
+        <button type="button" id="btnRestart" class="wide">Restart</button>
+        <button type="button" id="btnFullscreen" class="wide">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlayEl = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudCursor = document.getElementById('hudCursor');
+    const hudConnected = document.getElementById('hudConnected');
+    const hudMoves = document.getElementById('hudMoves');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnUp = document.getElementById('btnUp');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnDown = document.getElementById('btnDown');
+    const btnRight = document.getElementById('btnRight');
+    const btnRotate = document.getElementById('btnRotate');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID = 8;
+    const TOTAL_CELLS = GRID * GRID;
+    const MOVE_LIMIT = 58;
+    const ROUND_SECONDS = 140;
+
+    const TILE_STRAIGHT = 0;
+    const TILE_ELBOW = 1;
+    const TILE_TEE = 2;
+    const TILE_CROSS = 3;
+
+    const board = {
+      x: 305,
+      y: 95,
+      size: 540,
+    };
+
+    const DIRS = [
+      { dr: -1, dc: 0, bit: 1, opposite: 4 },
+      { dr: 0, dc: 1, bit: 2, opposite: 8 },
+      { dr: 1, dc: 0, bit: 4, opposite: 1 },
+      { dr: 0, dc: -1, bit: 8, opposite: 2 },
+    ];
+
+    const state = {
+      mode: 'menu',
+      grid: [],
+      connected: [],
+      cursorRow: 3,
+      cursorCol: 3,
+      connectedCount: 1,
+      movesUsed: 0,
+      timeLeft: ROUND_SECONDS,
+      score: 0,
+      solved: false,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      particles: [],
+    };
+
+    let controlledStep = false;
+    let previousTime = performance.now();
+    let rafId = 0;
+
+    function tileSize() {
+      return board.size / GRID;
+    }
+
+    function randomTileType() {
+      const roll = Math.random();
+      if (roll < 0.45) return TILE_ELBOW;
+      if (roll < 0.75) return TILE_STRAIGHT;
+      return TILE_TEE;
+    }
+
+    function makeGrid() {
+      const grid = [];
+      for (let row = 0; row < GRID; row += 1) {
+        const line = [];
+        for (let col = 0; col < GRID; col += 1) {
+          line.push({
+            type: randomTileType(),
+            rot: Math.floor(Math.random() * 4),
+          });
+        }
+        grid.push(line);
+      }
+      grid[0][0] = { type: TILE_CROSS, rot: 0 };
+      grid[GRID - 1][GRID - 1] = { type: TILE_CROSS, rot: 0 };
+      return grid;
+    }
+
+    function openMask(tile) {
+      switch (tile.type) {
+        case TILE_STRAIGHT:
+          return tile.rot % 2 === 0 ? 1 | 4 : 2 | 8;
+        case TILE_ELBOW:
+          switch (tile.rot % 4) {
+            case 0: return 1 | 2;
+            case 1: return 2 | 4;
+            case 2: return 4 | 8;
+            default: return 8 | 1;
+          }
+        case TILE_TEE:
+          switch (tile.rot % 4) {
+            case 0: return 1 | 2 | 8;
+            case 1: return 1 | 2 | 4;
+            case 2: return 2 | 4 | 8;
+            default: return 1 | 4 | 8;
+          }
+        case TILE_CROSS:
+        default:
+          return 1 | 2 | 4 | 8;
+      }
+    }
+
+    function resetConnected() {
+      return Array.from({ length: GRID }, () => Array(GRID).fill(false));
+    }
+
+    function computeNetwork() {
+      state.connected = resetConnected();
+      const queue = [[0, 0]];
+      state.connected[0][0] = true;
+      let count = 0;
+
+      while (queue.length > 0) {
+        const [row, col] = queue.shift();
+        count += 1;
+        const mask = openMask(state.grid[row][col]);
+
+        for (const dir of DIRS) {
+          if ((mask & dir.bit) === 0) continue;
+          const nr = row + dir.dr;
+          const nc = col + dir.dc;
+          if (nr < 0 || nr >= GRID || nc < 0 || nc >= GRID) continue;
+          if (state.connected[nr][nc]) continue;
+
+          const neighborMask = openMask(state.grid[nr][nc]);
+          if ((neighborMask & dir.opposite) === 0) continue;
+
+          state.connected[nr][nc] = true;
+          queue.push([nr, nc]);
+        }
+      }
+
+      state.connectedCount = count;
+      state.solved = state.connected[GRID - 1][GRID - 1];
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.grid = makeGrid();
+      state.connected = resetConnected();
+      state.cursorRow = Math.floor(GRID / 2);
+      state.cursorCol = Math.floor(GRID / 2);
+      state.connectedCount = 1;
+      state.movesUsed = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.score = 0;
+      state.solved = false;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.particles = [];
+      computeNetwork();
+    }
+
+    function showOverlay(title, detail, buttonLabel = 'Start Routing') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${detail}</p>
+          <p>Desktop: Arrows/WASD move cursor, Space rotates tile, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('signalstack'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, signalstack: { connected: 1, score: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function scoreNow() {
+      const networkScore = state.connectedCount * 12;
+      const moveScore = Math.max(0, (MOVE_LIMIT - state.movesUsed) * 6);
+      const timeScore = Math.max(0, Math.floor(state.timeLeft));
+      return networkScore + moveScore + timeScore;
+    }
+
+    function burstAt(row, col, color) {
+      const size = tileSize();
+      const x = board.x + col * size + size * 0.5;
+      const y = board.y + row * size + size * 0.5;
+      for (let i = 0; i < 12; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 35 + Math.random() * 130;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          age: 0,
+          life: 0.18 + Math.random() * 0.32,
+          color,
+        });
+      }
+    }
+
+    function rewardRun(result) {
+      const networkBonus = Math.floor(state.connectedCount / 8);
+      const moveBonus = result === 'win' ? Math.max(0, MOVE_LIMIT - state.movesUsed) : 0;
+      const clearBonus = result === 'win' ? 14 : 0;
+      const coins = Math.max(2, networkBonus + moveBonus + clearBonus);
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          signalstack: {
+            connected: state.connectedCount,
+            score: state.score,
+            moves_left: MOVE_LIMIT - state.movesUsed,
+            result,
+          },
+        });
+      } catch {}
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+      state.score = scoreNow();
+      rewardRun(result);
+      const detail = result === 'win'
+        ? `Uplink connected with ${MOVE_LIMIT - state.movesUsed} moves left. Score ${state.score}, coins ${state.runCoinsEarned}.`
+        : `Routing failed. Connected ${state.connectedCount}/${TOTAL_CELLS} relays. Score ${state.score}, coins ${state.runCoinsEarned}.`;
+      showOverlay(result === 'win' ? 'Network Stable' : 'Signal Dropped', detail, 'Run Again');
+      updateHud();
+    }
+
+    function rotateCurrentTile() {
+      if (state.mode !== 'playing') return;
+      const tile = state.grid[state.cursorRow][state.cursorCol];
+      if (tile.type === TILE_CROSS || (state.cursorRow === 0 && state.cursorCol === 0) || (state.cursorRow === GRID - 1 && state.cursorCol === GRID - 1)) {
+        return;
+      }
+      tile.rot = (tile.rot + 1) % 4;
+      state.movesUsed += 1;
+      burstAt(state.cursorRow, state.cursorCol, '#9bd9ff');
+      computeNetwork();
+      state.score = scoreNow();
+      if (state.solved) {
+        finishRun('win');
+        return;
+      }
+      if (state.movesUsed >= MOVE_LIMIT) {
+        finishRun('loss');
+      }
+    }
+
+    function moveCursor(dr, dc) {
+      if (state.mode !== 'playing') return;
+      state.cursorRow = Math.max(0, Math.min(GRID - 1, state.cursorRow + dr));
+      state.cursorCol = Math.max(0, Math.min(GRID - 1, state.cursorCol + dc));
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        showOverlay('Paused', 'Routing paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        state.score = scoreNow();
+        if (state.timeLeft <= 0) {
+          finishRun('loss');
+        }
+      }
+
+      for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+        const part = state.particles[i];
+        part.age += dt;
+        if (part.age >= part.life) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+        part.vy += 100 * dt;
+      }
+    }
+
+    function drawTile(row, col) {
+      const size = tileSize();
+      const x = board.x + col * size;
+      const y = board.y + row * size;
+      const tile = state.grid[row][col];
+      const mask = openMask(tile);
+
+      const connected = state.connected[row][col];
+      const base = connected ? 'rgba(78, 171, 255, 0.28)' : 'rgba(17, 36, 70, 0.9)';
+      ctx.fillStyle = base;
+      ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+
+      const cx = x + size * 0.5;
+      const cy = y + size * 0.5;
+      const arm = size * 0.34;
+      ctx.strokeStyle = connected ? '#a7ecff' : '#6fa1d8';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      if (mask & 1) { ctx.lineTo(cx, cy - arm); ctx.moveTo(cx, cy); }
+      if (mask & 2) { ctx.lineTo(cx + arm, cy); ctx.moveTo(cx, cy); }
+      if (mask & 4) { ctx.lineTo(cx, cy + arm); ctx.moveTo(cx, cy); }
+      if (mask & 8) { ctx.lineTo(cx - arm, cy); }
+      ctx.stroke();
+
+      ctx.fillStyle = connected ? '#cff6ff' : '#8db6e4';
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (row === 0 && col === 0) {
+        ctx.fillStyle = '#8dffcf';
+        ctx.font = '700 12px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.fillText('SRC', cx, y + 16);
+      }
+      if (row === GRID - 1 && col === GRID - 1) {
+        ctx.fillStyle = '#ffce9a';
+        ctx.font = '700 12px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.fillText('UPL', cx, y + 16);
+      }
+
+      if (row === state.cursorRow && col === state.cursorCol && state.mode === 'playing') {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 4, y + 4, size - 8, size - 8);
+      }
+    }
+
+    function drawBoard() {
+      ctx.fillStyle = '#0a1836';
+      ctx.fillRect(board.x, board.y, board.size, board.size);
+      for (let row = 0; row < GRID; row += 1) {
+        for (let col = 0; col < GRID; col += 1) {
+          drawTile(row, col);
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(145, 204, 255, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(board.x, board.y, board.size, board.size);
+    }
+
+    function drawParticles() {
+      for (const part of state.particles) {
+        const alpha = Math.max(0, 1 - part.age / part.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTopLabel() {
+      ctx.fillStyle = 'rgba(7, 15, 30, 0.68)';
+      ctx.fillRect(14, 12, 720, 58);
+      ctx.strokeStyle = 'rgba(145, 202, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 720, 58);
+      ctx.fillStyle = '#f0f7ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Signal Stack', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6daf3';
+      ctx.fillText('Build a continuous relay path from SRC to UPL with limited rotations.', 28, 58);
+    }
+
+    function drawPauseShade() {
+      if (state.mode !== 'paused') return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 52px Trebuchet MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', canvas.width * 0.5, canvas.height * 0.52);
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#132b53');
+      grad.addColorStop(1, '#0a152d');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawBoard();
+      drawParticles();
+      drawTopLabel();
+      drawPauseShade();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudCursor.textContent = `${state.cursorCol + 1},${state.cursorRow + 1}`;
+      hudConnected.textContent = `${state.connectedCount}/${TOTAL_CELLS}`;
+      hudMoves.textContent = String(Math.max(0, MOVE_LIMIT - state.movesUsed));
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudConnected.parentElement.classList.toggle('good', state.connectedCount >= TOTAL_CELLS * 0.75);
+      hudConnected.parentElement.classList.toggle('warn', state.connectedCount < TOTAL_CELLS * 0.75 && state.connectedCount >= TOTAL_CELLS * 0.4);
+      hudConnected.parentElement.classList.toggle('bad', state.connectedCount < TOTAL_CELLS * 0.4);
+
+      const movesLeft = MOVE_LIMIT - state.movesUsed;
+      hudMoves.parentElement.classList.toggle('good', movesLeft >= 20);
+      hudMoves.parentElement.classList.toggle('warn', movesLeft < 20 && movesLeft >= 8);
+      hudMoves.parentElement.classList.toggle('bad', movesLeft < 8);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 55);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 55 && state.timeLeft >= 25);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 25);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); moveCursor(-1, 0); }
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); moveCursor(0, -1); }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); moveCursor(1, 0); }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); moveCursor(0, 1); }
+      if (event.code === 'Space' || event.code === 'Enter' || event.code === 'KeyB') { event.preventDefault(); rotateCurrentTile(); }
+      if (event.code === 'KeyP') { event.preventDefault(); togglePause(); }
+      if (event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    });
+
+    btnUp.addEventListener('click', () => moveCursor(-1, 0));
+    btnLeft.addEventListener('click', () => moveCursor(0, -1));
+    btnDown.addEventListener('click', () => moveCursor(1, 0));
+    btnRight.addEventListener('click', () => moveCursor(0, 1));
+    btnRotate.addEventListener('click', () => rotateCurrentTile());
+    btnPause.addEventListener('click', () => togglePause());
+    btnRestart.addEventListener('click', () => startRun());
+    btnFullscreen.addEventListener('click', () => toggleFullscreen());
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('overlayFsBtn').addEventListener('click', () => toggleFullscreen());
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'signalstack',
+        mode: state.mode,
+        coordinate_system: '8x8 grid origin at top-left tile (row 0,col 0); +row down, +col right',
+        objective: {
+          connect_source: { row: 0, col: 0 },
+          connect_uplink: { row: GRID - 1, col: GRID - 1 },
+          move_limit: MOVE_LIMIT,
+          time_limit_seconds: ROUND_SECONDS,
+        },
+        cursor: { row: state.cursorRow, col: state.cursorCol },
+        resources: {
+          connected_tiles: state.connectedCount,
+          total_tiles: TOTAL_CELLS,
+          moves_used: state.movesUsed,
+          moves_left: Math.max(0, MOVE_LIMIT - state.movesUsed),
+          time_left: Number(state.timeLeft.toFixed(2)),
+          score: state.score,
+        },
+        solved: state.solved,
+        grid: state.grid.map((row) => row.map((tile) => `${tile.type}${tile.rot}`).join('')),
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    showOverlay('Signal Stack', 'Rotate relays to route power from source to uplink before you run out of moves.', 'Start Routing');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'signalstack', gameName: 'Signal Stack' });
+  </script>
+</body>
+</html>

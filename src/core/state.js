@@ -347,7 +347,10 @@ if (missionsNeedsResave) {
   set('missions', state.missions);
 }
 
-export const save = () => {
+let saveQueued = false;
+
+const flushSave = () => {
+  saveQueued = false;
   set('profile', state.profile);
   set('coins', state.coins);
   set('badges', [...state.badges]);
@@ -357,6 +360,13 @@ export const save = () => {
   set('recent', state.recent.slice(0, 6));
   set('classroom', state.classroom);
   set('missions', state.missions);
+};
+
+export const save = () => {
+  if (!saveQueued) {
+    saveQueued = true;
+    Promise.resolve().then(flushSave);
+  }
 };
 
 export const reloadCoins = () => { state.coins = loadCoins(); };
