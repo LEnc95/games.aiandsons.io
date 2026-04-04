@@ -15,3 +15,7 @@
 **Vulnerability:** In `api/auth/_session.js`, the session signing secret mechanism fell back to a hardcoded dev secret ("cade-games-dev-session-secret") if `APP_SESSION_SECRET` or `STRIPE_SECRET_KEY` were not provided.
 **Learning:** Hardcoded dev secrets can easily leak into production environments due to configuration drift or missing environment variables, resulting in session forgery risks.
 **Prevention:** In production environments (`NODE_ENV === "production"`), the application must explicitly throw an error if the required session secrets are missing rather than quietly falling back to weak or known development defaults.
+## 2026-04-04 - [Fix Host Header Trust in Return URLs]
+**Vulnerability:** The application used request-derived origins (via `req.headers.host`) to build Stripe success/cancel return URLs when `APP_BASE_URL` was unset. This allowed Host Header Injection attacks where malicious redirects could be constructed during billing flows.
+**Learning:** `APP_BASE_URL` must be strictly enforced in production to ensure sensitive billing return URLs are immutable and safely constructed. Falling back to the `host` header is only safe for local development, not edge/proxy ingress environments.
+**Prevention:** In production environments (`NODE_ENV === "production"`), the application must explicitly throw an error if `APP_BASE_URL` is missing, preventing any fallback to request-derived origins.
