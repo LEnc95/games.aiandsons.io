@@ -48,8 +48,12 @@ function getRequestOrigin(req) {
     try {
       return new URL(configuredBaseUrl).origin;
     } catch {
-      // Fall through to request-derived origin.
+      // Fall through to request-derived origin if not in production.
     }
+  }
+
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    throw new Error("Missing APP_BASE_URL in production. Host header fallback is disabled for security.");
   }
 
   const host = req?.headers?.host || "localhost";
