@@ -4,6 +4,7 @@ export const GAMES = [
   { slug:'snake',          name:'Snake',               emoji:'\u{1F40D}', scoreHint:'length',     url:'/snake',         desc:'Eat food, grow longer, avoid walls and yourself.', earnsCoins:true },
   { slug:'tictactoe',      name:'Tic-Tac-Toe',         emoji:'\u274C',    scoreHint:'wins',       url:'/tictactoe',     desc:'Play vs AI or local 2-player. Try to get 3 in a row!', earnsCoins:true },
   { slug:'rps',            name:'Rock Paper Scissors', emoji:'\u270A',    scoreHint:'streak',     url:'/rps',           desc:'Quick rounds. Build a winning streak!', earnsCoins:true },
+  { slug:'prisonersdilemma', name:'Prisoner\'s Dilemma Lab', emoji:'\u2696\uFE0F', scoreHint:'net payoff', url:'/prisonersdilemma', desc:'Run secure repeated Prisoner\'s Dilemma matches against configurable opponent strategies.', earnsCoins:false },
   { slug:'memory',         name:'Memory',              emoji:'\u{1F9E0}', scoreHint:'pairs',      url:'/memory',        desc:'Flip cards to find pairs. Solo or pass-and-play.', earnsCoins:true },
   { slug:'hangman',        name:'Hangman',             emoji:'\u{1FAA2}', scoreHint:'wins',       url:'/hangman',       desc:'Guess letters to solve words. Play against computer or challenge a friend.', earnsCoins:true },
   { slug:'breakout',       name:'Breakout',            emoji:'\u{1F9F1}', scoreHint:'bricks',     url:'/breakout',      desc:'Break all the bricks. Advance levels and score big.', earnsCoins:true },
