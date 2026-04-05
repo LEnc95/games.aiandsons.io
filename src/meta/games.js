@@ -52,5 +52,6 @@ export const GAMES = [
   { slug:'vaultrunner',    name:'Vault Runner',        emoji:'\u{1F510}', scoreHint:'stages',     url:'/vaultrunner',   desc:'Crack rotating tumbler codes across multiple vault stages before alarm pressure hits critical.', earnsCoins:true },
   { slug:'chromeshift',    name:'Chrome Shift',        emoji:'\u{1F539}', scoreHint:'territory',  url:'/chromeshift',   desc:'Flood the board by shifting chrome colors and capture every tile before moves run out.', earnsCoins:true },
   { slug:'trailblazer',    name:'Trailblazer Grid',    emoji:'\u{1F9ED}', scoreHint:'painted',    url:'/trailblazer',   desc:'Paint the arena, dodge patrol drones, and capture enough tiles before time runs out.', earnsCoins:true },
+  { slug:'portpilot',      name:'Port Pilot',          emoji:'\u{2693}',  scoreHint:'delivered',  url:'/portpilot',     desc:'Rotate conveyor nodes and route color-coded cargo pods into matching docks before integrity collapses.', earnsCoins:true },
 ];
 

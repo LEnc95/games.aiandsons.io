@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Port Pilot - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Rotate conveyor nodes, route cargo pods to matching docks, and keep port integrity online." />
+  <meta property="og:title" content="Port Pilot - Play on Cade's Games" />
+  <meta property="og:description" content="Rotate conveyor nodes, route cargo pods to matching docks, and keep port integrity online." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/portpilot" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Port Pilot - Play on Cade's Games" />
+  <meta name="twitter:description" content="Rotate conveyor nodes, route cargo pods to matching docks, and keep port integrity online." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/portpilot" />
+  <style>
+    :root {
+      --bg0: #050d1a;
+      --bg1: #13243f;
+      --panel: rgba(7, 15, 26, 0.9);
+      --line: rgba(130, 178, 255, 0.42);
+      --text: #eaf2ff;
+      --muted: #bdd0ee;
+      --good: #96ffd5;
+      --warn: #ffe6a0;
+      --bad: #ff9eb4;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(90% 80% at 12% 0%, #254675 0%, transparent 62%),
+        radial-gradient(80% 70% at 88% 100%, #2a3660 0%, transparent 64%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.36);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(64dvh, 720px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(130, 178, 255, 0.65);
+      box-shadow: 0 16px 46px rgba(0, 0, 0, 0.58);
+      background: linear-gradient(180deg, #1a3359 0%, #0b1526 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(23, 47, 79, 0.94);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 204, 255, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 52px));
+      grid-template-rows: repeat(3, minmax(0, 44px));
+      gap: 6px;
+    }
+    .dpad button {
+      min-width: 0;
+      min-height: 44px;
+      padding: 0;
+      font-size: 13px;
+    }
+    .dpad .empty {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .control-copy {
+      text-align: center;
+      color: #c4d4f0;
+      font-size: 12px;
+      line-height: 1.38;
+      padding: 0 6px;
+    }
+    .touch-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .touch-group button { min-width: 82px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+      .dpad { margin: 0 auto; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="750" aria-label="Port Pilot game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Port Pilot</h1>
+          <p>Route each cargo pod to the dock with the same color. Rotate nodes before pods reach the edge.</p>
+          <p>Desktop: move cursor with WASD or arrows, Space or Enter rotates selected node. P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use D-pad to move cursor and the Rotate button to turn selected nodes.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Shift</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip good"><span>Delivered</span><b id="hudDelivered">0/20</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">90.0s</b></div>
+      <div class="chip bad"><span>Integrity</span><b id="hudIntegrity">5</b></div>
+      <div class="chip"><span>In Transit</span><b id="hudTransit">0</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="dpad">
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+        <button type="button" data-dir="up">Up</button>
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+        <button type="button" data-dir="left">Left</button>
+        <button type="button" id="btnRotateCenter">Rotate</button>
+        <button type="button" data-dir="right">Right</button>
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+        <button type="button" data-dir="down">Down</button>
+        <button class="empty" type="button" aria-hidden="true" tabindex="-1">&nbsp;</button>
+      </div>
+      <div class="control-copy">
+        Match pod colors with dock exits.<br />
+        Wrong exits and leaks reduce integrity.
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const overlayEl = document.getElementById('overlay');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudDelivered = document.getElementById('hudDelivered');
+    const hudTime = document.getElementById('hudTime');
+    const hudIntegrity = document.getElementById('hudIntegrity');
+    const hudTransit = document.getElementById('hudTransit');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID = 7;
+    const TARGET_DELIVERED = 20;
+    const ROUND_SECONDS = 90;
+    const MAX_INTEGRITY = 5;
+    const PACKAGE_STEP = 0.34;
+
+    const board = {
+      x: 350,
+      y: 100,
+      size: 490,
+      tile: 490 / GRID,
+    };
+
+    const COLORS = {
+      amber: '#ffcc66',
+      cyan: '#79d7ff',
+      mint: '#8af5c5',
+      violet: '#c6a2ff',
+    };
+
+    const EXITS = [
+      { side: 'top', row: 0, col: 3, color: 'amber', dir: 0 },
+      { side: 'right', row: 3, col: 6, color: 'cyan', dir: 1 },
+      { side: 'bottom', row: 6, col: 3, color: 'mint', dir: 2 },
+      { side: 'left', row: 3, col: 0, color: 'violet', dir: 3 },
+    ];
+
+    const state = {
+      mode: 'menu',
+      tiles: [],
+      selected: { row: 3, col: 3 },
+      packages: [],
+      spawnTimer: 1.8,
+      moveTimer: PACKAGE_STEP,
+      timeLeft: ROUND_SECONDS,
+      integrity: MAX_INTEGRITY,
+      delivered: 0,
+      score: 0,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      combo: 0,
+      flashes: [],
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function isExitCell(row, col) {
+      return EXITS.some((entry) => entry.row === row && entry.col === col);
+    }
+
+    function randomDir() {
+      return Math.floor(Math.random() * 4);
+    }
+
+    function makeTiles() {
+      return Array.from({ length: GRID }, (_, row) => (
+        Array.from({ length: GRID }, (_, col) => {
+          const fixed = EXITS.find((entry) => entry.row === row && entry.col === col);
+          return fixed ? fixed.dir : randomDir();
+        })
+      ));
+    }
+
+    function directionVector(dir) {
+      if (dir === 0) return { dr: -1, dc: 0 };
+      if (dir === 1) return { dr: 0, dc: 1 };
+      if (dir === 2) return { dr: 1, dc: 0 };
+      return { dr: 0, dc: -1 };
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.tiles = makeTiles();
+      state.selected = { row: 3, col: 3 };
+      state.packages = [];
+      state.spawnTimer = 1.8;
+      state.moveTimer = PACKAGE_STEP;
+      state.timeLeft = ROUND_SECONDS;
+      state.integrity = MAX_INTEGRITY;
+      state.delivered = 0;
+      state.score = 0;
+      state.combo = 0;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.flashes = [];
+      updateHud();
+      draw();
+    }
+
+    function setOverlay(title, body, buttonLabel = 'Start Shift') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: arrows or WASD move cursor, Space or Enter rotates tile, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('portpilot'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, portpilot: { delivered: 0, result: 'started' } }); } catch {}
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function finishRun(result) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = result === 'win' ? 'won' : 'lost';
+      state.result = result;
+
+      const deliveredBonus = state.delivered * 18;
+      const integrityBonus = state.integrity * 35;
+      const timeBonus = result === 'win' ? Math.floor(state.timeLeft) * 2 : 0;
+      state.score += deliveredBonus + integrityBonus + timeBonus;
+
+      const baseCoins = Math.floor(state.delivered / 3);
+      const coins = Math.max(2, baseCoins + (result === 'win' ? 8 : 2) + state.integrity);
+      state.runCoinsEarned = coins;
+
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          portpilot: {
+            delivered: state.delivered,
+            integrity: state.integrity,
+            score: state.score,
+            result,
+          },
+        });
+      } catch {}
+
+      const body = result === 'win'
+        ? `Port secured. Delivered ${state.delivered}/${TARGET_DELIVERED} pods. Score ${state.score}, coins ${coins}.`
+        : `Shift ended. Delivered ${state.delivered}/${TARGET_DELIVERED} pods. Score ${state.score}, coins ${coins}.`;
+      setOverlay(result === 'win' ? 'Port Secured' : 'Port Breached', body, 'Run Again');
+      updateHud();
+    }
+
+    function spawnPackage() {
+      const target = EXITS[Math.floor(Math.random() * EXITS.length)].color;
+      state.packages.push({ row: 3, col: 3, color: target });
+      if (state.packages.length > 16) {
+        state.packages.shift();
+        state.integrity = Math.max(0, state.integrity - 1);
+      }
+    }
+
+    function rotateSelected() {
+      if (state.mode !== 'playing') return;
+      const { row, col } = state.selected;
+      if (isExitCell(row, col)) return;
+      state.tiles[row][col] = (state.tiles[row][col] + 1) % 4;
+      state.score = Math.max(0, state.score - 1);
+      state.flashes.push({ row, col, age: 0, life: 0.18, color: '#cde2ff' });
+    }
+
+    function moveCursor(dir) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      if (state.mode === 'paused') return;
+      if (dir === 'up') state.selected.row = Math.max(0, state.selected.row - 1);
+      if (dir === 'down') state.selected.row = Math.min(GRID - 1, state.selected.row + 1);
+      if (dir === 'left') state.selected.col = Math.max(0, state.selected.col - 1);
+      if (dir === 'right') state.selected.col = Math.min(GRID - 1, state.selected.col + 1);
+      state.flashes.push({ row: state.selected.row, col: state.selected.col, age: 0, life: 0.12, color: '#95bbff' });
+    }
+
+    function resolvePackageStep() {
+      for (let i = state.packages.length - 1; i >= 0; i -= 1) {
+        const pkg = state.packages[i];
+        const dir = state.tiles[pkg.row][pkg.col];
+        const { dr, dc } = directionVector(dir);
+        const nextRow = pkg.row + dr;
+        const nextCol = pkg.col + dc;
+
+        if (nextRow < 0 || nextRow >= GRID || nextCol < 0 || nextCol >= GRID) {
+          const exit = EXITS.find((entry) => entry.row === pkg.row && entry.col === pkg.col && entry.dir === dir);
+          if (exit && exit.color === pkg.color) {
+            state.delivered += 1;
+            state.combo += 1;
+            state.score += 40 + Math.min(60, state.combo * 5);
+            state.flashes.push({ row: pkg.row, col: pkg.col, age: 0, life: 0.28, color: COLORS[pkg.color] });
+            if (state.delivered >= TARGET_DELIVERED) {
+              finishRun('win');
+            }
+          } else {
+            state.combo = 0;
+            state.integrity = Math.max(0, state.integrity - 1);
+            state.score = Math.max(0, state.score - 24);
+            state.flashes.push({ row: pkg.row, col: pkg.col, age: 0, life: 0.25, color: '#ff8ea9' });
+            if (state.integrity <= 0) {
+              finishRun('loss');
+            }
+          }
+          state.packages.splice(i, 1);
+          continue;
+        }
+
+        pkg.row = nextRow;
+        pkg.col = nextCol;
+      }
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setOverlay('Paused', 'Dispatch paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.timeLeft = Math.max(0, state.timeLeft - dt);
+        if (state.timeLeft <= 0) {
+          finishRun(state.delivered >= TARGET_DELIVERED ? 'win' : 'loss');
+        }
+
+        state.spawnTimer -= dt;
+        if (state.spawnTimer <= 0) {
+          spawnPackage();
+          state.spawnTimer = Math.max(1.25, 3.1 - (state.delivered * 0.04));
+        }
+
+        state.moveTimer -= dt;
+        while (state.moveTimer <= 0) {
+          resolvePackageStep();
+          state.moveTimer += PACKAGE_STEP;
+          if (state.mode !== 'playing') break;
+        }
+      }
+
+      for (let i = state.flashes.length - 1; i >= 0; i -= 1) {
+        state.flashes[i].age += dt;
+        if (state.flashes[i].age >= state.flashes[i].life) {
+          state.flashes.splice(i, 1);
+        }
+      }
+    }
+
+    function drawArrowCell(x, y, dir, fixed) {
+      ctx.fillStyle = fixed ? 'rgba(41, 63, 92, 0.9)' : 'rgba(20, 41, 66, 0.92)';
+      ctx.fillRect(x + 1, y + 1, board.tile - 2, board.tile - 2);
+      ctx.strokeStyle = 'rgba(161, 199, 255, 0.32)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1, y + 1, board.tile - 2, board.tile - 2);
+
+      const cx = x + board.tile * 0.5;
+      const cy = y + board.tile * 0.5;
+      const len = board.tile * 0.22;
+      const head = board.tile * 0.12;
+      const angle = dir * (Math.PI / 2) - Math.PI / 2;
+
+      const ex = cx + Math.cos(angle) * len;
+      const ey = cy + Math.sin(angle) * len;
+      const bx = cx - Math.cos(angle) * len * 0.6;
+      const by = cy - Math.sin(angle) * len * 0.6;
+
+      ctx.strokeStyle = fixed ? '#ffe8ba' : '#d2e2ff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+
+      const left = angle + Math.PI * 0.78;
+      const right = angle - Math.PI * 0.78;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex + Math.cos(left) * head, ey + Math.sin(left) * head);
+      ctx.lineTo(ex + Math.cos(right) * head, ey + Math.sin(right) * head);
+      ctx.closePath();
+      ctx.fillStyle = fixed ? '#ffe0a0' : '#d2e2ff';
+      ctx.fill();
+    }
+
+    function drawBoard() {
+      ctx.fillStyle = '#0a1a31';
+      ctx.fillRect(board.x - 8, board.y - 8, board.size + 16, board.size + 16);
+
+      for (let row = 0; row < GRID; row += 1) {
+        for (let col = 0; col < GRID; col += 1) {
+          const x = board.x + col * board.tile;
+          const y = board.y + row * board.tile;
+          const fixed = isExitCell(row, col);
+          drawArrowCell(x, y, state.tiles[row][col], fixed);
+        }
+      }
+
+      for (const exit of EXITS) {
+        const x = board.x + exit.col * board.tile;
+        const y = board.y + exit.row * board.tile;
+        ctx.strokeStyle = COLORS[exit.color];
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 4, y + 4, board.tile - 8, board.tile - 8);
+      }
+    }
+
+    function drawCursor() {
+      const x = board.x + state.selected.col * board.tile;
+      const y = board.y + state.selected.row * board.tile;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 6, y + 6, board.tile - 12, board.tile - 12);
+    }
+
+    function drawPackages() {
+      for (const pkg of state.packages) {
+        const x = board.x + (pkg.col + 0.5) * board.tile;
+        const y = board.y + (pkg.row + 0.5) * board.tile;
+        ctx.fillStyle = COLORS[pkg.color];
+        ctx.beginPath();
+        ctx.arc(x, y, board.tile * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawFlashes() {
+      for (const flash of state.flashes) {
+        const alpha = Math.max(0, 1 - flash.age / flash.life);
+        const x = board.x + flash.col * board.tile;
+        const y = board.y + flash.row * board.tile;
+        ctx.globalAlpha = 0.52 * alpha;
+        ctx.fillStyle = flash.color;
+        ctx.fillRect(x + 2, y + 2, board.tile - 4, board.tile - 4);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawHeader() {
+      ctx.fillStyle = 'rgba(6, 12, 21, 0.72)';
+      ctx.fillRect(14, 12, 860, 58);
+      ctx.strokeStyle = 'rgba(152, 197, 255, 0.42)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 860, 58);
+      ctx.fillStyle = '#edf5ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.textAlign = 'left';
+      ctx.fillText('Port Pilot', 28, 38);
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c6d8f1';
+      ctx.fillText('Route pods from center to matching edge docks before integrity drops to zero', 28, 58);
+    }
+
+    function drawLegend() {
+      let x = 900;
+      const y = 22;
+      for (const exit of EXITS) {
+        ctx.fillStyle = COLORS[exit.color];
+        ctx.fillRect(x, y, 16, 16);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, 16, 16);
+        ctx.fillStyle = '#dce9ff';
+        ctx.font = '600 12px Trebuchet MS';
+        ctx.fillText(exit.color.toUpperCase(), x + 22, y + 13);
+        x += 72;
+      }
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#1d3661');
+      grad.addColorStop(1, '#0a1525');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawBoard();
+      drawFlashes();
+      drawPackages();
+      drawCursor();
+      drawHeader();
+      drawLegend();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudDelivered.textContent = `${state.delivered}/${TARGET_DELIVERED}`;
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudIntegrity.textContent = String(Math.max(0, state.integrity));
+      hudTransit.textContent = String(state.packages.length);
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudDelivered.parentElement.classList.toggle('good', state.delivered >= TARGET_DELIVERED || state.delivered >= 14);
+      hudDelivered.parentElement.classList.toggle('warn', state.delivered < 14 && state.delivered >= 7);
+      hudDelivered.parentElement.classList.toggle('bad', state.delivered < 7);
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 45);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 45 && state.timeLeft >= 18);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 18);
+
+      hudIntegrity.parentElement.classList.toggle('good', state.integrity >= 4);
+      hudIntegrity.parentElement.classList.toggle('warn', state.integrity === 3 || state.integrity === 2);
+      hudIntegrity.parentElement.classList.toggle('bad', state.integrity <= 1);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function normalizeDirectionFromCode(code) {
+      if (code === 'ArrowUp' || code === 'KeyW') return 'up';
+      if (code === 'ArrowDown' || code === 'KeyS') return 'down';
+      if (code === 'ArrowLeft' || code === 'KeyA') return 'left';
+      if (code === 'ArrowRight' || code === 'KeyD') return 'right';
+      return '';
+    }
+
+    window.addEventListener('keydown', (event) => {
+      const dir = normalizeDirectionFromCode(event.code);
+      if (dir) {
+        event.preventDefault();
+        moveCursor(dir);
+      }
+      if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault();
+        rotateSelected();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    for (const button of document.querySelectorAll('[data-dir]')) {
+      button.addEventListener('click', () => moveCursor(button.dataset.dir || 'up'));
+    }
+
+    document.getElementById('btnRotateCenter').addEventListener('click', rotateSelected);
+    btnPause.addEventListener('click', pauseToggle);
+    btnRestart.addEventListener('click', startRun);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'portpilot',
+        mode: state.mode,
+        coordinate_system: '7x7 tile grid; origin at top-left tile (row 0,col 0); row increases downward, col increases rightward',
+        objective: {
+          delivered_target: TARGET_DELIVERED,
+          round_time_seconds: ROUND_SECONDS,
+          integrity_max: MAX_INTEGRITY,
+        },
+        selected_tile: { row: state.selected.row, col: state.selected.col, direction: state.tiles[state.selected.row][state.selected.col] },
+        resources: {
+          delivered: state.delivered,
+          time_left: Number(state.timeLeft.toFixed(2)),
+          integrity: state.integrity,
+          in_transit: state.packages.length,
+          score: state.score,
+          combo: state.combo,
+          next_spawn_in: Number(Math.max(0, state.spawnTimer).toFixed(2)),
+        },
+        exits: EXITS.map((entry) => ({ side: entry.side, row: entry.row, col: entry.col, color: entry.color })),
+        packages: state.packages.map((pkg) => ({ row: pkg.row, col: pkg.col, color: pkg.color })),
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    setOverlay('Port Pilot', 'Keep the docks online by routing pods to matching exits.', 'Start Shift');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'portpilot', gameName: 'Port Pilot' });
+  </script>
+</body>
+</html>

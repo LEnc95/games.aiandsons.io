@@ -66,5 +66,6 @@
 - game/vaultrunner
 - game/chromeshift
 - game/trailblazer
+- game/portpilot
 
 Generated from `src/meta/feedback.js`.

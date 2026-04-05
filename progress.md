@@ -1669,3 +1669,25 @@ pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json
   - Skill-required Playwright loop via `web_game_playwright_client.js` on `/trailblazer`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/trailblazer` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-05 Port Pilot Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `portpilot/index.html` (Port Pilot).
+  - Gameplay: 7x7 conveyor-routing puzzle where color-coded cargo pods spawn from center and must be routed to matching color docks on each edge.
+  - Win/loss loop: deliver 20 pods before time expires; wrong exits/overload reduce integrity; end-run score and coin payout included.
+  - Controls: desktop keyboard (WASD/Arrows to move cursor, Space/Enter rotate, P/R/F) and mobile controls (D-pad + Rotate + pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('portpilot')`, coin rewards via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state payload.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'portpilot', gameName: 'Port Pilot' })`.
+- Integrated launcher/routing wiring:
+  - Added `portpilot` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/portpilot` rewrites and `/portpilot/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "portpilot" portpilot/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed in this sandbox (`spawn EPERM`).
+  - Skill-required Playwright loop via `web_game_playwright_client.js` for `/portpilot`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/portpilot` in an environment that allows child-process and Chromium launch.
