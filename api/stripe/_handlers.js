@@ -210,15 +210,13 @@ function isInvitePending(invite, now = Date.now()) {
 async function reconcileFamilyInvitesForAccount(accountId) {
   const invites = await listFamilyInvitesForAccount(accountId);
   const now = Date.now();
-  const out = [];
-  for (const invite of invites) {
+  // ⚡ Bolt: Use Promise.all to expire pending invites concurrently, reducing sequential I/O blocking
+  const out = await Promise.all(invites.map(async (invite) => {
     if (invite.status === "pending" && Number(invite.expiresAt || 0) > 0 && Number(invite.expiresAt) <= now) {
-      const expired = await saveFamilyInvite(invite.id, { status: "expired" });
-      out.push(expired);
-    } else {
-      out.push(invite);
+      return saveFamilyInvite(invite.id, { status: "expired" });
     }
-  }
+    return invite;
+  }));
   return out;
 }
 
