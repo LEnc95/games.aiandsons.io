@@ -293,3 +293,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-03] Key PR links: none merged for this date.
 - [nightly 2026-04-04] No repository commits found for this date.
 - [nightly 2026-04-04] Key PR links: none merged for this date.
+- [nightly 2026-04-05] Tracked changes: 2 commit(s) - Add Port Pilot game and wire launcher routing; Update release notes and append nightly sprint board entries.
+- [nightly 2026-04-05] Key PR links: none merged for this date.
+- [nightly 2026-04-06] No repository commits found for this date.
+- [nightly 2026-04-06] Key PR links: none merged for this date.

@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Beat Forge - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Hit incoming beats on time, build streaks, and survive the full set." />
+  <meta property="og:title" content="Beat Forge - Play on Cade's Games" />
+  <meta property="og:description" content="Hit incoming beats on time, build streaks, and survive the full set." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/beatforge" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Beat Forge - Play on Cade's Games" />
+  <meta name="twitter:description" content="Hit incoming beats on time, build streaks, and survive the full set." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/beatforge" />
+  <style>
+    :root {
+      --bg0: #0b1024;
+      --bg1: #1a1f48;
+      --panel: rgba(8, 12, 28, 0.88);
+      --line: rgba(160, 196, 255, 0.35);
+      --text: #edf1ff;
+      --muted: #bcc9ec;
+      --good: #88ffd1;
+      --warn: #ffe39f;
+      --bad: #ff9db0;
+      --lane0: #53c7ff;
+      --lane1: #77f3a9;
+      --lane2: #f8cb63;
+      --lane3: #f68bc2;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(90% 80% at 10% 5%, #324da2 0%, transparent 60%),
+        radial-gradient(80% 74% at 85% 95%, #4a2e84 0%, transparent 62%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(66dvh, 740px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(138, 175, 255, 0.66);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, #242f69 0%, #0e1430 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 170ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 660px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(27, 40, 92, 0.94);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 204, 255, 0.32);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .lane-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .lane-buttons button {
+      min-height: 52px;
+      font-size: 13px;
+      border-width: 2px;
+      background: rgba(17, 27, 64, 0.95);
+    }
+    .lane-buttons button[data-lane='0'] { border-color: rgba(83, 199, 255, 0.8); }
+    .lane-buttons button[data-lane='1'] { border-color: rgba(119, 243, 169, 0.8); }
+    .lane-buttons button[data-lane='2'] { border-color: rgba(248, 203, 99, 0.8); }
+    .lane-buttons button[data-lane='3'] { border-color: rgba(246, 139, 194, 0.8); }
+    .touch-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .touch-group button { min-width: 88px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .lane-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="760" aria-label="Beat Forge game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Beat Forge</h1>
+          <p>Hit each lane as notes reach the strike line. Build long streaks and survive the full set.</p>
+          <p>Desktop: A/S/K/L or Left/Up/Down/Right hit lanes. P pause, R restart, F fullscreen.</p>
+          <p>Mobile: tap lane pads at the bottom. Keep health above zero to finish the song.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Set</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Streak</span><b id="hudStreak">0</b></div>
+      <div class="chip"><span>Best</span><b id="hudBest">0</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">75.0s</b></div>
+      <div class="chip bad"><span>Health</span><b id="hudHealth">100</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="lane-buttons">
+        <button type="button" data-lane="0">Lane 1<br />A or Left</button>
+        <button type="button" data-lane="1">Lane 2<br />S or Up</button>
+        <button type="button" data-lane="2">Lane 3<br />K or Down</button>
+        <button type="button" data-lane="3">Lane 4<br />L or Right</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const overlayEl = document.getElementById('overlay');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudScore = document.getElementById('hudScore');
+    const hudStreak = document.getElementById('hudStreak');
+    const hudBest = document.getElementById('hudBest');
+    const hudTime = document.getElementById('hudTime');
+    const hudHealth = document.getElementById('hudHealth');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const ROUND_SECONDS = 75;
+    const LANE_COUNT = 4;
+    const HIT_WINDOW_GREAT = 0.075;
+    const HIT_WINDOW_GOOD = 0.12;
+    const HIT_WINDOW_MISS = 0.18;
+
+    const laneColors = ['#53c7ff', '#77f3a9', '#f8cb63', '#f68bc2'];
+    const laneDark = ['#1a3f5a', '#1a4f3b', '#5a4822', '#5b2f4f'];
+
+    const field = {
+      x: 260,
+      y: 48,
+      width: 680,
+      height: 640,
+      strikeY: 624,
+      laneWidth: 680 / LANE_COUNT,
+      pixelsPerSecond: 330,
+    };
+
+    const state = {
+      mode: 'menu',
+      time: 0,
+      timeLeft: ROUND_SECONDS,
+      notes: [],
+      score: 0,
+      streak: 0,
+      bestStreak: 0,
+      health: 100,
+      hits: 0,
+      misses: 0,
+      runCoinsEarned: 0,
+      result: 'none',
+      hasRemembered: false,
+      recentJudgement: '',
+      flashes: [],
+      pressedLaneUntil: [0, 0, 0, 0],
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function seededRandom(seed) {
+      let s = seed >>> 0;
+      return () => {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+
+    function makeChart() {
+      const rand = seededRandom(42077611);
+      const notes = [];
+      let t = 0.9;
+      while (t < ROUND_SECONDS - 0.25) {
+        const lane = Math.floor(rand() * LANE_COUNT);
+        notes.push({ lane, time: Number(t.toFixed(3)), hit: false, passed: false });
+
+        if (rand() > 0.75 && t < ROUND_SECONDS - 0.5) {
+          const lane2 = (lane + 1 + Math.floor(rand() * 2)) % LANE_COUNT;
+          notes.push({ lane: lane2, time: Number((t + 0.08).toFixed(3)), hit: false, passed: false });
+        }
+
+        const density = t < 16 ? 0.63 : t < 34 ? 0.49 : t < 54 ? 0.4 : 0.33;
+        t += density + rand() * 0.24;
+      }
+      notes.sort((a, b) => a.time - b.time || a.lane - b.lane);
+      return notes;
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.time = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.notes = makeChart();
+      state.score = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.health = 100;
+      state.hits = 0;
+      state.misses = 0;
+      state.runCoinsEarned = 0;
+      state.result = 'none';
+      state.recentJudgement = 'Ready';
+      state.flashes = [];
+      state.pressedLaneUntil = [0, 0, 0, 0];
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function setOverlay(title, body, buttonLabel = 'Start Set') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: A/S/K/L or arrow keys hit lanes. P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('beatforge'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, beatforge: { result: 'started', score: 0, bestStreak: 0 } }); } catch {}
+    }
+
+    function finishRun(win) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = win ? 'won' : 'lost';
+      state.result = win ? 'win' : 'loss';
+
+      const accuracy = state.hits + state.misses > 0 ? state.hits / (state.hits + state.misses) : 0;
+      const accuracyBonus = Math.round(accuracy * 500);
+      const survivalBonus = win ? 350 : 100;
+      state.score += accuracyBonus + survivalBonus;
+
+      const coins = Math.max(2, Math.floor(state.score / 220) + Math.floor(state.bestStreak / 4) + (win ? 5 : 2));
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          beatforge: {
+            result: state.result,
+            score: state.score,
+            bestStreak: state.bestStreak,
+            hits: state.hits,
+            misses: state.misses,
+          },
+        });
+      } catch {}
+
+      const body = win
+        ? `Set complete. Score ${state.score}, best streak ${state.bestStreak}, coins ${coins}.`
+        : `Set failed. Score ${state.score}, best streak ${state.bestStreak}, coins ${coins}.`;
+      setOverlay(win ? 'Encore Cleared' : 'Set Dropped', body, 'Play Again');
+      updateHud();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setOverlay('Paused', 'Session paused. Resume when ready.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function judgeHit(delta) {
+      const abs = Math.abs(delta);
+      if (abs <= HIT_WINDOW_GREAT) return { label: 'Great', score: 120, health: 2 };
+      if (abs <= HIT_WINDOW_GOOD) return { label: 'Good', score: 80, health: 1 };
+      return null;
+    }
+
+    function registerMiss(reason) {
+      state.misses += 1;
+      state.streak = 0;
+      state.health = Math.max(0, state.health - (reason === 'late' ? 9 : 7));
+      state.recentJudgement = 'Miss';
+      state.flashes.push({ lane: -1, age: 0, life: 0.2, color: '#ff9db0' });
+      if (state.health <= 0) {
+        finishRun(false);
+      }
+    }
+
+    function hitLane(lane) {
+      if (state.mode !== 'playing') return;
+      const now = state.time;
+      state.pressedLaneUntil[lane] = now + 0.09;
+
+      let target = null;
+      for (const note of state.notes) {
+        if (note.hit || note.passed || note.lane !== lane) continue;
+        if (note.time < now - HIT_WINDOW_MISS) {
+          note.passed = true;
+          registerMiss('late');
+          continue;
+        }
+        target = note;
+        break;
+      }
+
+      if (!target) {
+        registerMiss('empty');
+        return;
+      }
+
+      const judgement = judgeHit(target.time - now);
+      if (!judgement) {
+        if (target.time < now) {
+          target.passed = true;
+          registerMiss('late');
+        } else {
+          registerMiss('early');
+        }
+        return;
+      }
+
+      target.hit = true;
+      state.hits += 1;
+      state.streak += 1;
+      state.bestStreak = Math.max(state.bestStreak, state.streak);
+      state.score += judgement.score + Math.min(90, state.streak * 2);
+      state.health = Math.min(100, state.health + judgement.health);
+      state.recentJudgement = judgement.label;
+      state.flashes.push({ lane, age: 0, life: 0.18, color: laneColors[lane] });
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.time += dt;
+        state.timeLeft = Math.max(0, ROUND_SECONDS - state.time);
+
+        for (const note of state.notes) {
+          if (!note.hit && !note.passed && note.time + HIT_WINDOW_MISS < state.time) {
+            note.passed = true;
+            registerMiss('late');
+            if (state.mode !== 'playing') break;
+          }
+        }
+
+        if (state.mode === 'playing' && state.timeLeft <= 0) {
+          finishRun(state.health > 0);
+        }
+      }
+
+      for (let i = state.flashes.length - 1; i >= 0; i -= 1) {
+        state.flashes[i].age += dt;
+        if (state.flashes[i].age >= state.flashes[i].life) {
+          state.flashes.splice(i, 1);
+        }
+      }
+    }
+
+    function drawLanes() {
+      const x = field.x;
+      const y = field.y;
+      const w = field.width;
+      const h = field.height;
+
+      ctx.fillStyle = 'rgba(6, 9, 22, 0.74)';
+      ctx.fillRect(x, y, w, h);
+
+      for (let lane = 0; lane < LANE_COUNT; lane += 1) {
+        const laneX = x + lane * field.laneWidth;
+        const active = state.pressedLaneUntil[lane] > state.time;
+        const grad = ctx.createLinearGradient(0, y, 0, y + h);
+        grad.addColorStop(0, active ? `${laneColors[lane]}55` : `${laneDark[lane]}88`);
+        grad.addColorStop(1, 'rgba(8, 12, 30, 0.65)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(laneX + 2, y + 2, field.laneWidth - 4, h - 4);
+
+        ctx.strokeStyle = 'rgba(180, 205, 255, 0.22)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(laneX + 2, y + 2, field.laneWidth - 4, h - 4);
+      }
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x + 4, field.strikeY);
+      ctx.lineTo(x + w - 4, field.strikeY);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 6; i += 1) {
+        const gy = field.strikeY - i * 96;
+        ctx.beginPath();
+        ctx.moveTo(x + 4, gy);
+        ctx.lineTo(x + w - 4, gy);
+        ctx.stroke();
+      }
+    }
+
+    function drawNotes() {
+      for (const note of state.notes) {
+        if (note.hit || note.passed) continue;
+        const y = field.strikeY - (note.time - state.time) * field.pixelsPerSecond;
+        if (y < field.y - 24 || y > field.y + field.height + 24) continue;
+
+        const laneX = field.x + note.lane * field.laneWidth;
+        ctx.fillStyle = laneColors[note.lane];
+        ctx.fillRect(laneX + 16, y - 14, field.laneWidth - 32, 28);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(laneX + 16, y - 14, field.laneWidth - 32, 28);
+      }
+    }
+
+    function drawFlashes() {
+      for (const flash of state.flashes) {
+        const alpha = Math.max(0, 1 - flash.age / flash.life);
+        ctx.globalAlpha = 0.34 * alpha;
+        if (flash.lane >= 0) {
+          const laneX = field.x + flash.lane * field.laneWidth;
+          ctx.fillStyle = flash.color;
+          ctx.fillRect(laneX + 6, field.y + 6, field.laneWidth - 12, field.height - 12);
+        } else {
+          ctx.fillStyle = flash.color;
+          ctx.fillRect(field.x + 4, field.y + 4, field.width - 8, field.height - 8);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawHeader() {
+      ctx.fillStyle = 'rgba(6, 12, 21, 0.74)';
+      ctx.fillRect(14, 12, 1172, 54);
+      ctx.strokeStyle = 'rgba(154, 189, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(14, 12, 1172, 54);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#edf5ff';
+      ctx.font = '700 24px Trebuchet MS';
+      ctx.fillText('Beat Forge', 28, 38);
+
+      ctx.font = '600 14px Trebuchet MS';
+      ctx.fillStyle = '#c9d8f7';
+      ctx.fillText('Hit on the strike line, hold streak, and keep the crowd meter alive', 28, 58);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ffe39f';
+      ctx.fillText(`Last: ${state.recentJudgement}`, 1168, 39);
+      ctx.fillStyle = '#d2e4ff';
+      ctx.fillText(`Hits ${state.hits} | Misses ${state.misses}`, 1168, 58);
+    }
+
+    function drawLaneLabels() {
+      const labels = ['A / Left', 'S / Up', 'K / Down', 'L / Right'];
+      ctx.textAlign = 'center';
+      ctx.font = '600 13px Trebuchet MS';
+      for (let lane = 0; lane < LANE_COUNT; lane += 1) {
+        const x = field.x + lane * field.laneWidth + field.laneWidth * 0.5;
+        ctx.fillStyle = laneColors[lane];
+        ctx.fillText(labels[lane], x, field.y + field.height + 26);
+      }
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#2a3f8f');
+      grad.addColorStop(1, '#111835');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawLanes();
+      drawNotes();
+      drawFlashes();
+      drawHeader();
+      drawLaneLabels();
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudScore.textContent = String(state.score);
+      hudStreak.textContent = String(state.streak);
+      hudBest.textContent = String(state.bestStreak);
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudHealth.textContent = String(Math.round(state.health));
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 40);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 40 && state.timeLeft >= 18);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 18);
+
+      hudHealth.parentElement.classList.toggle('good', state.health >= 65);
+      hudHealth.parentElement.classList.toggle('warn', state.health < 65 && state.health >= 35);
+      hudHealth.parentElement.classList.toggle('bad', state.health < 35);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function normalizeLane(code) {
+      if (code === 'KeyA' || code === 'ArrowLeft') return 0;
+      if (code === 'KeyS' || code === 'ArrowUp') return 1;
+      if (code === 'KeyK' || code === 'ArrowDown') return 2;
+      if (code === 'KeyL' || code === 'ArrowRight') return 3;
+      return -1;
+    }
+
+    window.addEventListener('keydown', (event) => {
+      const lane = normalizeLane(event.code);
+      if (lane >= 0) {
+        event.preventDefault();
+        hitLane(lane);
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    for (const button of document.querySelectorAll('[data-lane]')) {
+      button.addEventListener('click', () => hitLane(Number(button.dataset.lane)));
+    }
+
+    btnPause.addEventListener('click', pauseToggle);
+    btnRestart.addEventListener('click', startRun);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const nextNotes = [];
+      for (const note of state.notes) {
+        if (note.hit || note.passed) continue;
+        if (note.time < state.time - 0.2) continue;
+        nextNotes.push({
+          lane: note.lane,
+          eta_seconds: Number((note.time - state.time).toFixed(3)),
+        });
+        if (nextNotes.length >= 8) break;
+      }
+
+      const payload = {
+        game: 'beatforge',
+        mode: state.mode,
+        coordinate_system: '4 vertical lanes on canvas; lane index 0..3 left-to-right; strike line fixed near bottom at y=624px',
+        objective: {
+          survive_seconds: ROUND_SECONDS,
+          keep_health_above: 0,
+          maximize_streak: true,
+        },
+        resources: {
+          song_time: Number(state.time.toFixed(3)),
+          time_left: Number(state.timeLeft.toFixed(3)),
+          health: Number(state.health.toFixed(1)),
+          score: state.score,
+          streak: state.streak,
+          best_streak: state.bestStreak,
+          hits: state.hits,
+          misses: state.misses,
+        },
+        controls: {
+          lane_0: 'A or ArrowLeft',
+          lane_1: 'S or ArrowUp',
+          lane_2: 'K or ArrowDown',
+          lane_3: 'L or ArrowRight',
+        },
+        next_notes: nextNotes,
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    setOverlay('Beat Forge', 'Hold timing under pressure and finish the full rhythm set.', 'Start Set');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'beatforge', gameName: 'Beat Forge' });
+  </script>
+</body>
+</html>

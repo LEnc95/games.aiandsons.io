@@ -53,5 +53,7 @@ export const GAMES = [
   { slug:'chromeshift',    name:'Chrome Shift',        emoji:'\u{1F539}', scoreHint:'territory',  url:'/chromeshift',   desc:'Flood the board by shifting chrome colors and capture every tile before moves run out.', earnsCoins:true },
   { slug:'trailblazer',    name:'Trailblazer Grid',    emoji:'\u{1F9ED}', scoreHint:'painted',    url:'/trailblazer',   desc:'Paint the arena, dodge patrol drones, and capture enough tiles before time runs out.', earnsCoins:true },
   { slug:'portpilot',      name:'Port Pilot',          emoji:'\u{2693}',  scoreHint:'delivered',  url:'/portpilot',     desc:'Rotate conveyor nodes and route color-coded cargo pods into matching docks before integrity collapses.', earnsCoins:true },
+  { slug:'beatforge',      name:'Beat Forge',          emoji:'\u{1F3B5}', scoreHint:'streak',     url:'/beatforge',     desc:'Time lane hits on the strike line, chain streaks, and keep crowd health alive through a full rhythm set.', earnsCoins:true },
+  { slug:'bytebloom',      name:'Byte Bloom',          emoji:'\u{1FAB4}', scoreHint:'bloom',      url:'/bytebloom',     desc:'Plant pulse-seeds, spread healthy bloom, and contain blight pockets before your timer expires.', earnsCoins:true },
 ];
 

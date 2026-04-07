@@ -1691,3 +1691,16 @@ pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json
   - Skill-required Playwright loop via `web_game_playwright_client.js` for `/portpilot`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/portpilot` in an environment that allows child-process and Chromium launch.
+
+- Automation run 2026-04-06T07:08:51-04:00: added new game beatforge with rhythm-hit gameplay, desktop/mobile controls, window.advanceTime, window.render_game_to_text, coin rewards, and mounted feedback; wired src/meta/games.js, index.html, and vercel.json.
+
+## 2026-04-07T07:05:40-04:00 Byte Bloom automation run
+- Added a brand-new game route ytebloom at ytebloom/index.html with a grid-based bloom-vs-blight strategy loop.
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + achievement hooks, feedback mount, and deterministic automation hooks: window.advanceTime(ms) and window.render_game_to_text().
+- Wired catalog/routing in src/meta/games.js, fallback launcher card in index.html, and Vercel rewrites/cache header entries in ercel.json.
+- Validation passed: g wiring check and ercel.json parse check; 
+pm.cmd run feedback:sync-linear passed and refreshed linear/labels.md + linear/game-issues.csv.
+- Validation blockers in this sandbox: 
+pm.cmd run test:feedback failed with spawn EPERM and required $develop-web-game Playwright run for /bytebloom failed with rowserType.launch: spawn EPERM.
+- Follow-up: rerun 
+pm run test:feedback and the Playwright gameplay loop for /bytebloom in an environment that allows child-process and Chromium launch.
