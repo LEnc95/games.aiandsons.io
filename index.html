@@ -191,7 +191,8 @@
     .economy-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 9px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); font-size:12px; font-weight:700; }
     .economy-tag.coin { color:#b9ffdf; border-color:rgba(107,230,173,0.55); background:rgba(85,205,145,0.18); }
     .economy-tag.no-coin { color:#d3e4ff; border-color:rgba(166,189,234,0.48); background:rgba(133,154,198,0.2); }
-    .games-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; color:#b7cdf0; text-align:center; font-size:15px; }
+    .games-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:48px 24px; color:#b7cdf0; text-align:center; font-size:15px; grid-column: 1 / -1; }
+    .games-empty-icon { font-size: 48px; opacity: 0.8; margin-bottom: 16px; }
     
     .game-link { margin-top:auto; padding:clamp(14px, 2vw, 18px); background:var(--accent); border:3px solid #fbcfe8; border-radius:16px; color:#500724; font-size:clamp(16px, 2.5vw, 18px); font-weight:700; text-align:center; transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow:0 4px 15px rgba(244,114,182,0.3); }
     .game-card:hover .game-link { background:#fbcfe8; border-color:#fff; transform:scale(1.02); }
@@ -1079,6 +1080,15 @@
       closeClassroom();
     };
 
+    window.clearGameFilters = () => {
+      gameSearchInputEl.value = '';
+      gameCoinFilterEl.value = 'all';
+      gameSearchQuery = '';
+      gameCoinFilter = 'all';
+      trackKpiEvent('launcher_search_cleared', {});
+      updateUI();
+    };
+
     function updateUI() {
       const welcomeEl = document.getElementById('welcome');
       const coinsEl = document.getElementById('coins');
@@ -1154,7 +1164,7 @@
 
       gameSearchCountEl.textContent = `Showing ${filteredGames.length} of ${GAMES.length} games`;
       if (!filteredGames.length) {
-        gamesGrid.innerHTML = '<div class="games-empty">No games match this search/filter yet.</div>';
+        gamesGrid.innerHTML = '<div class="games-empty"><div class="games-empty-icon" aria-hidden="true">🔍</div><p>No games match your search.</p><button type="button" class="topbar-btn" onclick="clearGameFilters()">Clear Filters</button></div>';
         return;
       }
 
