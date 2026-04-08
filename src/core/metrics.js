@@ -100,17 +100,35 @@ export const normalizeMetricsState = (source) => {
   return { events };
 };
 
+let memoryState = null;
+let saveQueued = false;
+
+const flushMetricsSave = () => {
+  saveQueued = false;
+  if (memoryState) {
+    set(METRICS_STORAGE_KEY, memoryState);
+  }
+};
+
 export const getMetricsState = () => {
-  return normalizeMetricsState(get(METRICS_STORAGE_KEY, DEFAULT_METRICS_STATE));
+  if (!memoryState) {
+    memoryState = normalizeMetricsState(get(METRICS_STORAGE_KEY, DEFAULT_METRICS_STATE));
+  }
+  return memoryState;
 };
 
 export const setMetricsState = (nextState) => {
   const normalized = normalizeMetricsState(nextState);
-  set(METRICS_STORAGE_KEY, normalized);
+  memoryState = normalized;
+  if (!saveQueued) {
+    saveQueued = true;
+    Promise.resolve().then(flushMetricsSave);
+  }
   return normalized;
 };
 
 export const clearMetricsState = () => {
+  memoryState = null;
   del(METRICS_STORAGE_KEY);
 };
 
@@ -125,11 +143,19 @@ export const trackKpiEvent = (name, meta = {}, timestamp = Date.now()) => {
   if (!event) return getMetricsState();
 
   const current = getMetricsState();
-  const next = normalizeMetricsState({
-    events: [...current.events, event],
-  });
-  set(METRICS_STORAGE_KEY, next);
-  return next;
+
+  // ⚡ Bolt Optimization: Use in-memory cache and slice to avoid O(N) re-normalization of the entire events array
+  memoryState = {
+    events: [...current.events, event].slice(-MAX_METRIC_EVENTS),
+  };
+
+  // ⚡ Bolt Optimization: Batch localStorage saves to prevent main thread blocking during high frequency events
+  if (!saveQueued) {
+    saveQueued = true;
+    Promise.resolve().then(flushMetricsSave);
+  }
+
+  return memoryState;
 };
 
 export const summarizeKpiEvents = (events, options = {}) => {
