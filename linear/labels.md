@@ -71,5 +71,7 @@
 - game/portpilot
 - game/beatforge
 - game/bytebloom
+- game/gemswap
+- game/hexharvest
 
 Generated from `src/meta/feedback.js`.

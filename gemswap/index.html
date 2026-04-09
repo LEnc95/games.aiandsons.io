@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Gem Swap Blitz - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Swap adjacent gems, trigger cascades, and hit the target score before time runs out." />
+  <meta property="og:title" content="Gem Swap Blitz - Play on Cade's Games" />
+  <meta property="og:description" content="Swap adjacent gems, trigger cascades, and hit the target score before time runs out." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/gemswap" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Gem Swap Blitz - Play on Cade's Games" />
+  <meta name="twitter:description" content="Swap adjacent gems, trigger cascades, and hit the target score before time runs out." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/gemswap" />
+  <style>
+    :root {
+      --bg0: #140a28;
+      --bg1: #2b1352;
+      --panel: rgba(18, 9, 36, 0.9);
+      --line: rgba(212, 176, 255, 0.32);
+      --text: #f7ecff;
+      --muted: #c9b2e3;
+      --good: #85f7c2;
+      --warn: #ffd680;
+      --bad: #ff9fb4;
+      --gem0: #74d1ff;
+      --gem1: #ff7bc2;
+      --gem2: #ffd36e;
+      --gem3: #8ef08b;
+      --gem4: #b497ff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(80% 65% at 12% 8%, #5d2c92 0%, transparent 62%),
+        radial-gradient(70% 70% at 90% 92%, #3b2a8a 0%, transparent 58%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(66dvh, 740px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(212, 176, 255, 0.6);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, #362066 0%, #160d2d 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 170ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 680px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(43, 23, 77, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(214, 191, 246, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      max-width: 320px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .dpad .blank {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .touch-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .touch-group button { min-width: 96px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="760" aria-label="Gem Swap Blitz game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Gem Swap Blitz</h1>
+          <p>Swap adjacent gems, trigger match cascades, and reach the target score before the timer runs out.</p>
+          <p>Desktop: arrows or WASD move cursor, Space selects/swaps, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use the d-pad and Select button to choose two adjacent gems to swap.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Target</span><b id="hudTarget">1800</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">90.0s</b></div>
+      <div class="chip"><span>Combo</span><b id="hudCombo">0</b></div>
+      <div class="chip"><span>Matches</span><b id="hudMatches">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="dpad">
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="up">Up</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="left">Left</button>
+        <button type="button" id="btnSelect">Select</button>
+        <button type="button" data-move="right">Right</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="down">Down</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const overlayEl = document.getElementById('overlay');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudScore = document.getElementById('hudScore');
+    const hudTarget = document.getElementById('hudTarget');
+    const hudTime = document.getElementById('hudTime');
+    const hudCombo = document.getElementById('hudCombo');
+    const hudMatches = document.getElementById('hudMatches');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnSelect = document.getElementById('btnSelect');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID = 8;
+    const COLORS = ['#74d1ff', '#ff7bc2', '#ffd36e', '#8ef08b', '#b497ff'];
+    const ROUND_SECONDS = 90;
+    const TARGET_SCORE = 1800;
+
+    const state = {
+      mode: 'menu',
+      board: [],
+      cursor: { x: 0, y: 0 },
+      selected: null,
+      score: 0,
+      matches: 0,
+      combo: 0,
+      bestCombo: 0,
+      cascades: 0,
+      time: 0,
+      timeLeft: ROUND_SECONDS,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function inBounds(x, y) {
+      return x >= 0 && y >= 0 && x < GRID && y < GRID;
+    }
+
+    function randGem() {
+      return Math.floor(Math.random() * COLORS.length);
+    }
+
+    function setOverlay(title, detail, buttonLabel) {
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${detail}</p>
+          <p>Desktop: arrows/WASD move, Space select/swap, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: d-pad + Select. Make adjacent swaps to create 3+ matches.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.classList.add('show');
+      document.getElementById('startBtn').addEventListener('click', startRun);
+      document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+    }
+
+    function clearOverlay() {
+      overlayEl.classList.remove('show');
+    }
+
+    function areAdjacent(a, b) {
+      return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+    }
+
+    function swapCells(a, b) {
+      const t = state.board[a.y][a.x];
+      state.board[a.y][a.x] = state.board[b.y][b.x];
+      state.board[b.y][b.x] = t;
+    }
+
+    function collectMatches() {
+      const marks = new Set();
+      for (let y = 0; y < GRID; y += 1) {
+        let runStart = 0;
+        for (let x = 1; x <= GRID; x += 1) {
+          const same = x < GRID && state.board[y][x] === state.board[y][runStart];
+          if (!same) {
+            if (x - runStart >= 3) {
+              for (let i = runStart; i < x; i += 1) marks.add(`${i},${y}`);
+            }
+            runStart = x;
+          }
+        }
+      }
+      for (let x = 0; x < GRID; x += 1) {
+        let runStart = 0;
+        for (let y = 1; y <= GRID; y += 1) {
+          const same = y < GRID && state.board[y][x] === state.board[runStart][x];
+          if (!same) {
+            if (y - runStart >= 3) {
+              for (let i = runStart; i < y; i += 1) marks.add(`${x},${i}`);
+            }
+            runStart = y;
+          }
+        }
+      }
+      return marks;
+    }
+
+    function applyGravity() {
+      for (let x = 0; x < GRID; x += 1) {
+        const stack = [];
+        for (let y = GRID - 1; y >= 0; y -= 1) {
+          const val = state.board[y][x];
+          if (val !== -1) stack.push(val);
+        }
+        for (let y = GRID - 1; y >= 0; y -= 1) {
+          state.board[y][x] = stack[GRID - 1 - y] ?? randGem();
+        }
+      }
+    }
+
+    function resolveBoard(comboStart = 1) {
+      let combo = comboStart;
+      let anyMatch = false;
+      while (true) {
+        const marks = collectMatches();
+        if (!marks.size) break;
+        anyMatch = true;
+        state.cascades += 1;
+        state.combo = combo;
+        state.bestCombo = Math.max(state.bestCombo, combo);
+        state.matches += marks.size;
+        state.score += marks.size * 45 * combo;
+
+        for (const key of marks) {
+          const [x, y] = key.split(',').map(Number);
+          state.board[y][x] = -1;
+        }
+        applyGravity();
+        combo += 1;
+      }
+      if (!anyMatch) state.combo = 0;
+      return anyMatch;
+    }
+
+    function buildBoard() {
+      state.board = Array.from({ length: GRID }, () => Array.from({ length: GRID }, randGem));
+      while (resolveBoard(1)) {
+        // Remove accidental opening matches so first move matters.
+      }
+      state.combo = 0;
+      state.matches = 0;
+      state.cascades = 0;
+      state.score = 0;
+      state.selected = null;
+      state.cursor = { x: 0, y: 0 };
+    }
+
+    function resetRun() {
+      buildBoard();
+      state.mode = 'menu';
+      state.time = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.hasRemembered = false;
+    }
+
+    function awardProgress(didWin) {
+      const coins = Math.max(2, Math.floor(state.score / 300) + (didWin ? 18 : 0));
+      state.runCoinsEarned = coins;
+      addCoins(coins);
+      maybeUnlock({
+        anyPlay: { score: state.score },
+        gemswap: {
+          score: state.score,
+          matches: state.matches,
+          bestCombo: state.bestCombo,
+          won: didWin,
+        },
+      });
+    }
+
+    function finishRun(didWin) {
+      if (state.mode === 'won' || state.mode === 'lost') return;
+      state.mode = didWin ? 'won' : 'lost';
+      state.result = didWin ? 'won' : 'lost';
+      awardProgress(didWin);
+      const msg = didWin
+        ? `Target reached with ${state.score} points and ${state.bestCombo}x max combo. +${state.runCoinsEarned} coins.`
+        : `Time expired at ${state.score} points. Reach ${TARGET_SCORE} to win. +${state.runCoinsEarned} coins.`;
+      setOverlay(didWin ? 'Run Complete' : 'Run Failed', msg, 'Play Again');
+    }
+
+    function startRun() {
+      if (!state.hasRemembered) {
+        rememberRecent('gemswap');
+        state.hasRemembered = true;
+      }
+      buildBoard();
+      state.mode = 'running';
+      state.time = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.result = 'none';
+      clearOverlay();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'running') {
+        state.mode = 'paused';
+        setOverlay('Paused', 'Plan your next swap, then resume to keep the cascade going.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'running';
+        clearOverlay();
+      }
+    }
+
+    function moveCursor(dx, dy) {
+      state.cursor.x = (state.cursor.x + dx + GRID) % GRID;
+      state.cursor.y = (state.cursor.y + dy + GRID) % GRID;
+    }
+
+    function selectOrSwap() {
+      if (state.mode !== 'running') return;
+      const here = { x: state.cursor.x, y: state.cursor.y };
+      if (!state.selected) {
+        state.selected = here;
+        return;
+      }
+      if (state.selected.x === here.x && state.selected.y === here.y) {
+        state.selected = null;
+        return;
+      }
+      if (!areAdjacent(state.selected, here)) {
+        state.selected = here;
+        return;
+      }
+      swapCells(state.selected, here);
+      const valid = resolveBoard(1);
+      if (!valid) {
+        swapCells(state.selected, here);
+        state.timeLeft = Math.max(0, state.timeLeft - 1.2);
+        state.combo = 0;
+      }
+      state.selected = null;
+      if (state.score >= TARGET_SCORE) finishRun(true);
+    }
+
+    function update(dt) {
+      if (state.mode === 'running') {
+        state.time += dt;
+        state.timeLeft -= dt;
+        if (state.score >= TARGET_SCORE) {
+          finishRun(true);
+          return;
+        }
+        if (state.timeLeft <= 0) {
+          finishRun(state.score >= TARGET_SCORE);
+          return;
+        }
+      }
+    }
+
+    function drawGem(x, y, size, colorIndex, selected, cursor) {
+      const px = x + size * 0.5;
+      const py = y + size * 0.5;
+      const r = size * 0.35;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i += 1) {
+        const a = (-Math.PI / 2) + (i * Math.PI / 3);
+        const gx = px + Math.cos(a) * r;
+        const gy = py + Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(gx, gy);
+        else ctx.lineTo(gx, gy);
+      }
+      ctx.closePath();
+      ctx.fillStyle = COLORS[colorIndex];
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if (selected || cursor) {
+        ctx.strokeStyle = selected ? '#ffffff' : '#e6d6ff';
+        ctx.lineWidth = selected ? 4 : 2;
+        ctx.strokeRect(x + 4, y + 4, size - 8, size - 8);
+      }
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#3c1f70');
+      grad.addColorStop(1, '#190d31');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const boardPx = 560;
+      const tile = boardPx / GRID;
+      const boardX = 170;
+      const boardY = 96;
+
+      ctx.fillStyle = 'rgba(8, 4, 16, 0.7)';
+      ctx.fillRect(boardX - 12, boardY - 12, boardPx + 24, boardPx + 24);
+
+      for (let y = 0; y < GRID; y += 1) {
+        for (let x = 0; x < GRID; x += 1) {
+          const px = boardX + x * tile;
+          const py = boardY + y * tile;
+          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.fillRect(px + 1, py + 1, tile - 2, tile - 2);
+          drawGem(
+            px,
+            py,
+            tile,
+            state.board[y][x],
+            state.selected && state.selected.x === x && state.selected.y === y,
+            state.cursor.x === x && state.cursor.y === y
+          );
+        }
+      }
+
+      ctx.fillStyle = '#f4ebff';
+      ctx.font = '700 30px Trebuchet MS';
+      ctx.fillText('Gem Swap Blitz', 810, 128);
+
+      ctx.font = '600 20px Trebuchet MS';
+      ctx.fillStyle = '#d7c4ed';
+      ctx.fillText(`Target Score: ${TARGET_SCORE}`, 810, 174);
+      ctx.fillText(`Current Score: ${state.score}`, 810, 206);
+      ctx.fillText(`Time Left: ${Math.max(0, state.timeLeft).toFixed(1)}s`, 810, 238);
+      ctx.fillText(`Matched Gems: ${state.matches}`, 810, 270);
+      ctx.fillText(`Best Combo: x${Math.max(1, state.bestCombo)}`, 810, 302);
+
+      ctx.font = '600 15px Trebuchet MS';
+      ctx.fillStyle = '#e5d8f8';
+      ctx.fillText('Swap adjacent gems to make lines of 3 or more.', 810, 350);
+      ctx.fillText('Bigger cascades stack combo multipliers for fast scoring.', 810, 378);
+      ctx.fillText('Invalid swaps lose 1.2 seconds, so plan efficient moves.', 810, 406);
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudScore.textContent = String(state.score);
+      hudTarget.textContent = String(TARGET_SCORE);
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudCombo.textContent = state.combo ? `x${state.combo}` : '-';
+      hudMatches.textContent = String(state.matches);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 50);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 50 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+
+      hudScore.parentElement.classList.toggle('good', state.score >= TARGET_SCORE);
+      hudScore.parentElement.classList.toggle('warn', state.score >= TARGET_SCORE * 0.65 && state.score < TARGET_SCORE);
+      hudScore.parentElement.classList.toggle('bad', state.score < TARGET_SCORE * 0.65);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function handleKey(event) {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        moveCursor(-1, 0);
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        moveCursor(1, 0);
+      }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        moveCursor(0, -1);
+      }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        event.preventDefault();
+        moveCursor(0, 1);
+      }
+      if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault();
+        selectOrSwap();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    }
+
+    window.addEventListener('keydown', handleKey);
+
+    for (const button of document.querySelectorAll('[data-move]')) {
+      button.addEventListener('click', () => {
+        const dir = button.dataset.move;
+        if (dir === 'left') moveCursor(-1, 0);
+        if (dir === 'right') moveCursor(1, 0);
+        if (dir === 'up') moveCursor(0, -1);
+        if (dir === 'down') moveCursor(0, 1);
+      });
+    }
+
+    btnSelect.addEventListener('click', selectOrSwap);
+    btnPause.addEventListener('click', pauseToggle);
+    btnRestart.addEventListener('click', startRun);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'gemswap',
+        mode: state.mode,
+        coordinate_system: '8x8 board with origin at top-left (0,0); x increases right and y increases downward',
+        objective: {
+          target_score: TARGET_SCORE,
+          survive_seconds: ROUND_SECONDS,
+        },
+        resources: {
+          elapsed_seconds: Number(state.time.toFixed(3)),
+          time_left_seconds: Number(state.timeLeft.toFixed(3)),
+          score: state.score,
+          matched_gems: state.matches,
+          current_combo: state.combo,
+          best_combo: state.bestCombo,
+        },
+        player: {
+          cursor_x: state.cursor.x,
+          cursor_y: state.cursor.y,
+          selected_cell: state.selected,
+        },
+        visible_board: state.board,
+        controls: {
+          move: 'ArrowKeys/WASD',
+          select_swap: 'Space/Enter',
+          pause: 'P',
+          restart: 'R',
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    draw();
+    updateHud();
+    setOverlay('Gem Swap Blitz', 'Line up 3+ gems and chain cascades to beat the target score.', 'Start Run');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'gemswap', gameName: 'Gem Swap Blitz' });
+  </script>
+</body>
+</html>
