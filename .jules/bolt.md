@@ -8,3 +8,7 @@
 ## 2024-05-20 - Debouncing localStorage saves
 **Learning:** Frequent calls to `save()` in `src/core/state.js` (which executes multiple synchronous `localStorage.setItem` and `JSON.stringify` calls) cause blocking on the main thread during high-frequency game events (like scoring coins or rapid updates). Batching saves asynchronously via microtasks (`Promise.resolve().then()`) significantly reduces redundant I/O operations and main thread blocking while ensuring data is still saved quickly.
 **Action:** When a function synchronously accesses storage APIs (`localStorage`, `sessionStorage`) or does expensive serialization multiple times in a short span, queue the actual flush into a microtask or `setTimeout` to batch operations together in the next event loop tick.
+
+## 2024-05-21 - Memory Caching and Array Slice vs JSON Parsing
+**Learning:** In `src/core/metrics.js`, tracking events triggered a full synchronous `localStorage.getItem` parse, followed by O(N) re-normalization of up to 1000 items on *every single event insertion*. This caused massive main-thread latency (300ms+ for 100 events) during high-frequency tracking bursts.
+**Action:** Always maintain an in-memory variable (e.g. `memoryState`) for frequently modified array state rather than reading and re-parsing from `localStorage` each time. Append and bound the array using `slice(-MAX_SIZE)` directly on the in-memory array, and defer the serialization to a batched microtask.
