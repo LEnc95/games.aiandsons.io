@@ -100,17 +100,30 @@ export const normalizeMetricsState = (source) => {
   return { events };
 };
 
+let cachedState = null;
+let saveQueued = false;
+
+const flushSave = () => {
+  if (cachedState) {
+    set(METRICS_STORAGE_KEY, cachedState);
+  }
+  saveQueued = false;
+};
+
 export const getMetricsState = () => {
-  return normalizeMetricsState(get(METRICS_STORAGE_KEY, DEFAULT_METRICS_STATE));
+  if (cachedState) return cachedState;
+  cachedState = normalizeMetricsState(get(METRICS_STORAGE_KEY, DEFAULT_METRICS_STATE));
+  return cachedState;
 };
 
 export const setMetricsState = (nextState) => {
-  const normalized = normalizeMetricsState(nextState);
-  set(METRICS_STORAGE_KEY, normalized);
-  return normalized;
+  cachedState = normalizeMetricsState(nextState);
+  set(METRICS_STORAGE_KEY, cachedState);
+  return cachedState;
 };
 
 export const clearMetricsState = () => {
+  cachedState = null;
   del(METRICS_STORAGE_KEY);
 };
 
@@ -122,14 +135,21 @@ export const trackKpiEvent = (name, meta = {}, timestamp = Date.now()) => {
     meta,
   });
 
-  if (!event) return getMetricsState();
-
   const current = getMetricsState();
-  const next = normalizeMetricsState({
-    events: [...current.events, event],
-  });
-  set(METRICS_STORAGE_KEY, next);
-  return next;
+  if (!event) return current;
+
+  // Immutably append and enforce limit.
+  // The event is already normalized above via normalizeMetricEvent.
+  cachedState = {
+    events: [...current.events, event].slice(-MAX_METRIC_EVENTS),
+  };
+
+  if (!saveQueued) {
+    saveQueued = true;
+    Promise.resolve().then(flushSave);
+  }
+
+  return cachedState;
 };
 
 export const summarizeKpiEvents = (events, options = {}) => {
