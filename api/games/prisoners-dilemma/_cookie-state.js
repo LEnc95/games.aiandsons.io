@@ -35,6 +35,10 @@ function getSigningSecret() {
     return cachedSecret;
   }
 
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    throw new Error("Missing APP_SESSION_SECRET in production.");
+  }
+
   const stripeSeed = typeof process.env.STRIPE_SECRET_KEY === "string"
     ? process.env.STRIPE_SECRET_KEY.trim()
     : "";
