@@ -1137,7 +1137,19 @@
 
         shopGrid.innerHTML = "";
         if (!filteredItems.length) {
-          shopGrid.innerHTML = '<div class="shop-empty">No shop items match this search/filter yet.<br><br><button type="button" class="back-link" onclick="document.getElementById(\'shopSearchInput\').value=\'\'; document.getElementById(\'shopGameFilter\').value=\'all\'; document.getElementById(\'shopSearchInput\').dispatchEvent(new Event(\'input\')); document.getElementById(\'shopGameFilter\').dispatchEvent(new Event(\'change\'));">Clear Filters</button></div>';
+          shopGrid.innerHTML = `
+            <div class="shop-empty" style="grid-column: 1 / -1;">
+              <p style="margin-top:0;">No shop items match this search/filter yet.</p>
+              <button class="back-link" style="cursor:pointer; font-family:inherit;" id="clearShopFiltersBtn">Clear Filters</button>
+            </div>
+          `;
+          document.getElementById('clearShopFiltersBtn').onclick = () => {
+            shopSearchInput.value = '';
+            shopGameFilter.value = 'all';
+            shopSearchQuery = '';
+            selectedShopGame = 'all';
+            updateUI();
+          };
           return;
         }
 
@@ -1255,11 +1267,22 @@
         });
       }
 
-      shopSearchInput.addEventListener("input", () => {
+      // ⚡ Bolt: Debounce helper to prevent unnecessary rapid executions
+      // Impact: Prevents updating the entire UI (and tracking KPI) on every keystroke.
+      // Reduces re-renders and analytic spam significantly for fast typers.
+      function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+      }
+
+      shopSearchInput.addEventListener("input", debounce(() => {
         shopSearchQuery = normalizeText(shopSearchInput.value.trim());
         trackKpiEvent("shop_search_changed", { queryLength: shopSearchQuery.length });
         updateUI();
-      });
+      }, 300));
       window.addEventListener("keydown", (event) => {
         if (event.key !== "/") return;
         const target = event.target;
