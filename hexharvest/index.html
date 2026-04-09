@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hex Harvest - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Grow, harvest, and defend a living field before weeds drain your soil." />
+  <meta property="og:title" content="Hex Harvest - Play on Cade's Games" />
+  <meta property="og:description" content="Grow, harvest, and defend a living field before weeds drain your soil." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/hexharvest" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Hex Harvest - Play on Cade's Games" />
+  <meta name="twitter:description" content="Grow, harvest, and defend a living field before weeds drain your soil." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/hexharvest" />
+  <style>
+    :root {
+      --bg0: #1b1020;
+      --bg1: #3d2434;
+      --panel: rgba(28, 19, 33, 0.9);
+      --line: rgba(246, 206, 128, 0.35);
+      --text: #fff6e6;
+      --muted: #dbc9ad;
+      --good: #9cf0b9;
+      --warn: #ffd380;
+      --bad: #ff98a4;
+      --seed: #826233;
+      --sprout: #59a45d;
+      --ripe: #f6be59;
+      --weed: #6f3d46;
+      --cursor: #fff2c2;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(75% 60% at 20% 10%, #6d4250 0%, transparent 60%),
+        radial-gradient(70% 70% at 88% 92%, #4c2f45 0%, transparent 58%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(66dvh, 740px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(246, 206, 128, 0.6);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, #5a3543 0%, #231522 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 170ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 680px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(62, 38, 48, 0.95);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(242, 212, 156, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      max-width: 320px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .dpad .blank { visibility: hidden; pointer-events: none; }
+    .touch-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .touch-group button { min-width: 96px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="760" aria-label="Hex Harvest game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Hex Harvest</h1>
+          <p>Grow ripe crops, harvest before blight spreads, and keep your soil healthy until the timer ends.</p>
+          <p>Desktop: arrows or WASD move, Space interacts, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use d-pad plus Interact. Interact auto-prioritizes clear weed, harvest ripe, plant seed, then tend.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip good"><span>Harvest</span><b id="hudHarvest">0</b></div>
+      <div class="chip"><span>Target</span><b id="hudTarget">30</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">90.0s</b></div>
+      <div class="chip bad"><span>Soil</span><b id="hudSoil">100%</b></div>
+      <div class="chip"><span>Seeds</span><b id="hudSeeds">5</b></div>
+      <div class="chip"><span>Weeds</span><b id="hudWeeds">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="dpad">
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="up">Up</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="left">Left</button>
+        <button type="button" id="btnInteract">Interact</button>
+        <button type="button" data-move="right">Right</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="down">Down</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">Fullscreen</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlay = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudHarvest = document.getElementById('hudHarvest');
+    const hudTarget = document.getElementById('hudTarget');
+    const hudTime = document.getElementById('hudTime');
+    const hudSoil = document.getElementById('hudSoil');
+    const hudSeeds = document.getElementById('hudSeeds');
+    const hudWeeds = document.getElementById('hudWeeds');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnInteract = document.getElementById('btnInteract');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID = 9;
+    const TARGET_HARVEST = 30;
+    const ROUND_SECONDS = 90;
+
+    const state = {
+      mode: 'menu',
+      result: null,
+      time: 0,
+      timeLeft: ROUND_SECONDS,
+      harvested: 0,
+      score: 0,
+      soil: 100,
+      seeds: 5,
+      weeds: 0,
+      cursor: { x: Math.floor(GRID / 2), y: Math.floor(GRID / 2) },
+      board: [],
+      growthTick: 0,
+      seedRegenTick: 0,
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function randInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function createCell() {
+      return {
+        crop: Math.random() < 0.22 ? 1 + randInt(2) : 0,
+        weed: Math.random() < 0.06,
+      };
+    }
+
+    function resetBoard() {
+      state.board = Array.from({ length: GRID }, () => Array.from({ length: GRID }, createCell));
+      state.board[state.cursor.y][state.cursor.x] = { crop: 1, weed: false };
+      recountWeeds();
+    }
+
+    function resetRun() {
+      state.mode = 'menu';
+      state.result = null;
+      state.time = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.harvested = 0;
+      state.score = 0;
+      state.soil = 100;
+      state.seeds = 5;
+      state.cursor.x = Math.floor(GRID / 2);
+      state.cursor.y = Math.floor(GRID / 2);
+      state.growthTick = 0;
+      state.seedRegenTick = 0;
+      resetBoard();
+    }
+
+    function setOverlay(title, desc, cta) {
+      overlay.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${desc}</p>
+          <p>Desktop: arrows or WASD move, Space interacts, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use d-pad + Interact to tend each tile.</p>
+          <div class="row">
+            <button id="overlayAction" type="button">${cta}</button>
+            <button id="overlayFs" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlay.classList.add('show');
+      overlay.querySelector('#overlayAction')?.addEventListener('click', startRun);
+      overlay.querySelector('#overlayFs')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function hideOverlay() {
+      overlay.classList.remove('show');
+    }
+
+    function startRun() {
+      resetRun();
+      state.mode = 'running';
+      state.result = null;
+      hideOverlay();
+      try {
+        rememberRecent('hexharvest');
+      } catch {}
+      try {
+        maybeUnlock({ anyPlay: true, hexharvest: { result: 'started', harvested: 0, score: 0 } });
+      } catch {}
+    }
+
+    function finishRun(win) {
+      if (state.mode === 'complete') return;
+      state.mode = 'complete';
+      state.result = win ? 'win' : 'lose';
+
+      const coins = Math.max(3, Math.floor(state.score / 220) + (win ? 12 : 0));
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          hexharvest: {
+            result: state.result,
+            harvested: state.harvested,
+            score: state.score,
+            soil: Math.round(state.soil),
+          },
+        });
+      } catch {}
+
+      const resultText = win
+        ? `Harvest complete. You collected ${state.harvested} crops and earned ${coins} coins.`
+        : `Run ended. You harvested ${state.harvested} crops and earned ${coins} coins.`;
+      setOverlay(win ? 'Field Saved' : 'Field Overrun', resultText, 'Play Again');
+    }
+
+    function recountWeeds() {
+      let weeds = 0;
+      for (let y = 0; y < GRID; y += 1) {
+        for (let x = 0; x < GRID; x += 1) {
+          if (state.board[y][x].weed) weeds += 1;
+        }
+      }
+      state.weeds = weeds;
+    }
+
+    function cellAt(x, y) {
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID) return null;
+      return state.board[y][x];
+    }
+
+    function neighbors(x, y) {
+      return [
+        [x + 1, y],
+        [x - 1, y],
+        [x, y + 1],
+        [x, y - 1],
+      ];
+    }
+
+    function growthStep() {
+      const next = state.board.map((row) => row.map((cell) => ({ ...cell })));
+
+      for (let y = 0; y < GRID; y += 1) {
+        for (let x = 0; x < GRID; x += 1) {
+          const cell = state.board[y][x];
+          const target = next[y][x];
+
+          if (cell.weed) {
+            target.crop = 0;
+            for (const [nx, ny] of neighbors(x, y)) {
+              const n = cellAt(nx, ny);
+              if (!n) continue;
+              if (!n.weed && Math.random() < 0.09) {
+                next[ny][nx].weed = true;
+                next[ny][nx].crop = 0;
+              }
+            }
+            continue;
+          }
+
+          const nearCursor = Math.abs(state.cursor.x - x) + Math.abs(state.cursor.y - y) <= 2;
+          const growthChance = nearCursor ? 0.24 : 0.15;
+          if (cell.crop > 0 && cell.crop < 3 && Math.random() < growthChance) {
+            target.crop += 1;
+          }
+
+          if (cell.crop === 0 && Math.random() < 0.06) {
+            target.crop = 1;
+          }
+
+          if (Math.random() < 0.012) {
+            target.weed = true;
+            target.crop = 0;
+          }
+        }
+      }
+
+      state.board = next;
+      recountWeeds();
+
+      state.soil = Math.max(0, state.soil - state.weeds * 0.09);
+      state.score = Math.max(0, state.score - state.weeds * 0.2);
+    }
+
+    function interact() {
+      if (state.mode !== 'running') return;
+      const cell = state.board[state.cursor.y][state.cursor.x];
+      if (!cell) return;
+
+      if (cell.weed) {
+        cell.weed = false;
+        state.score += 18;
+        state.soil = Math.min(100, state.soil + 2.4);
+        recountWeeds();
+        return;
+      }
+
+      if (cell.crop >= 3) {
+        cell.crop = 0;
+        state.harvested += 1;
+        state.score += 90;
+        state.soil = Math.min(100, state.soil + 1.2);
+        return;
+      }
+
+      if (cell.crop === 0 && state.seeds > 0) {
+        cell.crop = 1;
+        state.seeds -= 1;
+        state.score += 10;
+        return;
+      }
+
+      if (cell.crop > 0 && cell.crop < 3) {
+        cell.crop += 1;
+        state.score += 14;
+      }
+    }
+
+    function moveCursor(dx, dy) {
+      if (state.mode !== 'running') return;
+      state.cursor.x = Math.max(0, Math.min(GRID - 1, state.cursor.x + dx));
+      state.cursor.y = Math.max(0, Math.min(GRID - 1, state.cursor.y + dy));
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'running') {
+        state.mode = 'paused';
+        setOverlay('Paused', 'Take a breather, then keep the field alive.', 'Resume');
+        return;
+      }
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    }
+
+    function update(dt) {
+      if (state.mode !== 'running') return;
+
+      state.time += dt;
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      state.growthTick += dt;
+      state.seedRegenTick += dt;
+
+      while (state.growthTick >= 0.7) {
+        state.growthTick -= 0.7;
+        growthStep();
+      }
+
+      while (state.seedRegenTick >= 4.5) {
+        state.seedRegenTick -= 4.5;
+        state.seeds = Math.min(9, state.seeds + 1);
+      }
+
+      if (state.harvested >= TARGET_HARVEST) {
+        finishRun(true);
+        return;
+      }
+
+      if (state.timeLeft <= 0 || state.soil <= 0) {
+        finishRun(false);
+      }
+    }
+
+    function drawCell(x, y, cell, tile, boardX, boardY) {
+      const px = boardX + x * tile;
+      const py = boardY + y * tile;
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+      ctx.fillRect(px + 1, py + 1, tile - 2, tile - 2);
+
+      if (cell.weed) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--weed');
+      } else if (cell.crop >= 3) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ripe');
+      } else if (cell.crop > 0) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--sprout');
+      } else {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--seed');
+      }
+
+      ctx.beginPath();
+      ctx.roundRect(px + 8, py + 8, tile - 16, tile - 16, 10);
+      ctx.fill();
+
+      if (!cell.weed && cell.crop > 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.font = '700 20px Trebuchet MS';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(cell.crop), px + tile / 2, py + tile / 2);
+      }
+
+      if (state.cursor.x === x && state.cursor.y === y) {
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--cursor');
+        ctx.lineWidth = 4;
+        ctx.strokeRect(px + 4, py + 4, tile - 8, tile - 8);
+      }
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#63374a');
+      grad.addColorStop(1, '#2a1927');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const boardPx = 560;
+      const tile = boardPx / GRID;
+      const boardX = 170;
+      const boardY = 96;
+
+      ctx.fillStyle = 'rgba(20, 12, 18, 0.75)';
+      ctx.fillRect(boardX - 12, boardY - 12, boardPx + 24, boardPx + 24);
+
+      for (let y = 0; y < GRID; y += 1) {
+        for (let x = 0; x < GRID; x += 1) {
+          drawCell(x, y, state.board[y][x], tile, boardX, boardY);
+        }
+      }
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#fff2de';
+      ctx.font = '700 30px Trebuchet MS';
+      ctx.fillText('Hex Harvest', 810, 128);
+
+      ctx.font = '600 20px Trebuchet MS';
+      ctx.fillStyle = '#f4dcb6';
+      ctx.fillText(`Target: ${TARGET_HARVEST} harvests`, 810, 174);
+      ctx.fillText(`Current harvest: ${state.harvested}`, 810, 206);
+      ctx.fillText(`Time left: ${Math.max(0, state.timeLeft).toFixed(1)}s`, 810, 238);
+      ctx.fillText(`Soil health: ${Math.max(0, state.soil).toFixed(0)}%`, 810, 270);
+      ctx.fillText(`Weeds active: ${state.weeds}`, 810, 302);
+
+      ctx.font = '600 15px Trebuchet MS';
+      ctx.fillStyle = '#ffe9c9';
+      ctx.fillText('Interact priority: clear weed -> harvest -> plant -> tend.', 810, 350);
+      ctx.fillText('Standing near crops boosts growth speed.', 810, 378);
+      ctx.fillText('Too many weeds drain soil and your score.', 810, 406);
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudHarvest.textContent = String(state.harvested);
+      hudTarget.textContent = String(TARGET_HARVEST);
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudSoil.textContent = `${Math.max(0, state.soil).toFixed(0)}%`;
+      hudSeeds.textContent = String(state.seeds);
+      hudWeeds.textContent = String(state.weeds);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 50);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 50 && state.timeLeft >= 20);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 20);
+
+      hudSoil.parentElement.classList.toggle('good', state.soil >= 70);
+      hudSoil.parentElement.classList.toggle('warn', state.soil < 70 && state.soil >= 35);
+      hudSoil.parentElement.classList.toggle('bad', state.soil < 35);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) update(1 / 60);
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function handleKey(event) {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); moveCursor(-1, 0); }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); moveCursor(1, 0); }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); moveCursor(0, -1); }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); moveCursor(0, 1); }
+      if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); interact(); }
+      if (event.code === 'KeyP') { event.preventDefault(); pauseToggle(); }
+      if (event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    }
+
+    window.addEventListener('keydown', handleKey);
+
+    for (const button of document.querySelectorAll('[data-move]')) {
+      button.addEventListener('click', () => {
+        const dir = button.dataset.move;
+        if (dir === 'left') moveCursor(-1, 0);
+        if (dir === 'right') moveCursor(1, 0);
+        if (dir === 'up') moveCursor(0, -1);
+        if (dir === 'down') moveCursor(0, 1);
+      });
+    }
+
+    btnInteract.addEventListener('click', interact);
+    btnPause.addEventListener('click', pauseToggle);
+    btnRestart.addEventListener('click', startRun);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const payload = {
+        game: 'hexharvest',
+        mode: state.mode,
+        coordinate_system: '9x9 farm board with origin at top-left (0,0); x increases right and y increases downward',
+        objective: {
+          target_harvest: TARGET_HARVEST,
+          survive_seconds: ROUND_SECONDS,
+        },
+        resources: {
+          elapsed_seconds: Number(state.time.toFixed(3)),
+          time_left_seconds: Number(state.timeLeft.toFixed(3)),
+          soil_health: Number(state.soil.toFixed(2)),
+          seeds: state.seeds,
+          weeds: state.weeds,
+          score: Math.round(state.score),
+          harvested: state.harvested,
+        },
+        player: {
+          cursor_x: state.cursor.x,
+          cursor_y: state.cursor.y,
+          interaction: 'clear weed -> harvest ripe -> plant seed -> tend crop',
+        },
+        visible_board: state.board.map((row) => row.map((cell) => ({ crop: cell.crop, weed: cell.weed }))),
+        controls: {
+          move: 'ArrowKeys/WASD',
+          interact: 'Space/Enter',
+          pause: 'P',
+          restart: 'R',
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    draw();
+    updateHud();
+    setOverlay('Hex Harvest', 'Grow a healthy field and collect 30 harvests before the blight takes over.', 'Start Run');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'hexharvest', gameName: 'Hex Harvest' });
+  </script>
+</body>
+</html>
