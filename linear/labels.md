@@ -21,6 +21,7 @@
 - game/snake
 - game/tictactoe
 - game/rps
+- game/prisonersdilemma
 - game/memory
 - game/hangman
 - game/breakout
@@ -36,6 +37,7 @@
 - game/ski
 - game/homerunderby
 - game/micro-rc-racer
+- game/oregontrail
 - game/neonrally
 - game/pacman
 - game/pokemon
@@ -66,5 +68,10 @@
 - game/vaultrunner
 - game/chromeshift
 - game/trailblazer
+- game/portpilot
+- game/beatforge
+- game/bytebloom
+- game/gemswap
+- game/hexharvest
 
 Generated from `src/meta/feedback.js`.

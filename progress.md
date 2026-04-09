@@ -1669,3 +1669,54 @@ pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json
   - Skill-required Playwright loop via `web_game_playwright_client.js` on `/trailblazer`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/trailblazer` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-05 Port Pilot Implementation
+- New request: add a game not currently on the site.
+- Implemented new standalone game page: `portpilot/index.html` (Port Pilot).
+  - Gameplay: 7x7 conveyor-routing puzzle where color-coded cargo pods spawn from center and must be routed to matching color docks on each edge.
+  - Win/loss loop: deliver 20 pods before time expires; wrong exits/overload reduce integrity; end-run score and coin payout included.
+  - Controls: desktop keyboard (WASD/Arrows to move cursor, Space/Enter rotate, P/R/F) and mobile controls (D-pad + Rotate + pause/restart/fullscreen).
+  - Platform hooks: `rememberRecent('portpilot')`, coin rewards via `addCoins`, progression payloads via `maybeUnlock`.
+  - Automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state payload.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'portpilot', gameName: 'Port Pilot' })`.
+- Integrated launcher/routing wiring:
+  - Added `portpilot` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/portpilot` rewrites and `/portpilot/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "portpilot" portpilot/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: daily guard passed, but integration tests failed in this sandbox (`spawn EPERM`).
+  - Skill-required Playwright loop via `web_game_playwright_client.js` for `/portpilot`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the `$develop-web-game` Playwright gameplay validation loop for `/portpilot` in an environment that allows child-process and Chromium launch.
+
+- Automation run 2026-04-06T07:08:51-04:00: added new game beatforge with rhythm-hit gameplay, desktop/mobile controls, window.advanceTime, window.render_game_to_text, coin rewards, and mounted feedback; wired src/meta/games.js, index.html, and vercel.json.
+
+## 2026-04-07T07:05:40-04:00 Byte Bloom automation run
+- Added a brand-new game route ytebloom at ytebloom/index.html with a grid-based bloom-vs-blight strategy loop.
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + achievement hooks, feedback mount, and deterministic automation hooks: window.advanceTime(ms) and window.render_game_to_text().
+- Wired catalog/routing in src/meta/games.js, fallback launcher card in index.html, and Vercel rewrites/cache header entries in ercel.json.
+- Validation passed: g wiring check and ercel.json parse check; 
+pm.cmd run feedback:sync-linear passed and refreshed linear/labels.md + linear/game-issues.csv.
+- Validation blockers in this sandbox: 
+pm.cmd run test:feedback failed with spawn EPERM and required $develop-web-game Playwright run for /bytebloom failed with rowserType.launch: spawn EPERM.
+- Follow-up: rerun 
+pm run test:feedback and the Playwright gameplay loop for /bytebloom in an environment that allows child-process and Chromium launch.
+
+## 2026-04-08T19:07:15-04:00 Gem Swap Blitz automation run
+- Added a brand-new game `gemswap` at `gemswap/index.html` with a match-3 swap-and-cascade loop.
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (`addCoins`, `rememberRecent`, `maybeUnlock`), feedback mount, and deterministic automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Wired catalog/routing in `src/meta/games.js`, fallback launcher card in `index.html`, and Vercel rewrites/cache header entries in `vercel.json`.
+- Validation passed: `rg` wiring check and `vercel.json` parse check; `npm.cmd run feedback:sync-linear` passed and refreshed `linear/labels.md` + `linear/game-issues.csv`.
+- Validation blockers in this sandbox: `npm.cmd run test:feedback` failed with `spawn EPERM` and required `$develop-web-game` Playwright run for `/gemswap` failed with `browserType.launch: spawn EPERM`.
+- Follow-up: rerun `npm run test:feedback` and the Playwright gameplay loop for `/gemswap` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-09 Hex Harvest automation run
+- Added a brand-new game `hexharvest` at `hexharvest/index.html` with a distinct farm-management loop (grow, harvest, and weed-control under soil/time pressure).
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (`addCoins`, `rememberRecent`, `maybeUnlock`), feedback mount, and deterministic automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Wired catalog/routing in `src/meta/games.js`, fallback launcher card in `index.html`, and Vercel rewrites/cache header entries in `vercel.json`.
+- Validation passed: `rg` wiring check and `vercel.json` parse check; `npm.cmd run feedback:sync-linear` passed and refreshed `linear/labels.md` + `linear/game-issues.csv`.
+- Validation blockers in this sandbox: `npm.cmd run test:feedback` failed with `spawn EPERM` and required `$develop-web-game` Playwright run for `/hexharvest` failed with `browserType.launch: spawn EPERM`.
+- Follow-up: rerun `npm run test:feedback` and the Playwright gameplay loop for `/hexharvest` in an environment that allows child-process and Chromium launch.

@@ -1,18 +1,18 @@
 # Release Notes - Sprint 6 Launch Candidate
-## Weekly Highlights (2026-03-21 to 2026-03-28)
-- Added and integrated new games across the launcher and routes, including `reactiongrid`, `simonsays`, `orbburst`, `clubpenguin-world`, `lasermaze`, and `moonlander`.
-- Shipped Firebase-backed auth/persistence and billing hardening updates, including Google sign-in flow fixes, Stripe checkout enforcement, and nightly billing reconcile automation.
-- Added daily feedback provisioning and Slack failure-alert workflows, plus feedback attachments and Linear provisioning support.
-- Applied a broad Space Arcade visual refresh across core pages, onboarding surfaces, and teacher dashboard screens, then stabilized related smoke-test coverage.
-- Landed deployment and test reliability fixes for Club Penguin integration and CI path/timezone inconsistencies.
+## Weekly Highlights (2026-03-29 to 2026-04-03)
+- Added and wired multiple new games in the launcher during the week, including `riftdrifter`, `circuitpath`, `signalstack`, `linerider`, `vaultrunner`, `chromeshift`, and `trailblazergrid`.
+- Reworked `chromeshift` from its initial launch into a distinct color-flood puzzle and recorded the rewrite delivery status.
+- Landed a broad security hardening pass with high-severity XSS fixes across upload, premium track, challenge properties, feedback/embed surfaces, and index search rendering, plus a production session-secret fallback fix.
+- Improved feedback/billing and provisioning performance by debouncing search and localStorage writes, optimizing feedback and Firestore rate limiting, parallelizing Linear baseline/label provisioning, and reducing redundant Stripe family-summary lookups.
+- Expanded quality coverage with new tests for storage getters, onboarding normalization, games list integrity, and receipt verification, while also stabilizing nightly launch-readiness smoke screenshots.
 
-## Key PR Links (2026-03-21 to 2026-03-28)
-- [#49](https://github.com/LEnc95/games.aiandsons.io/pull/49) - Club Penguin integration branch merged to `main` (2026-03-24).
-- [#48](https://github.com/LEnc95/games.aiandsons.io/pull/48) - Club Penguin main integration merged to `main` (2026-03-24).
-- [#47](https://github.com/LEnc95/games.aiandsons.io/pull/47) - Skywire lane-swap double-move fix merged (2026-03-23).
-- [#46](https://github.com/LEnc95/games.aiandsons.io/pull/46) - Dino Run sprite feedback update merged (2026-03-23).
-- [#45](https://github.com/LEnc95/games.aiandsons.io/pull/45) - Additional Dino Run sprite refinement merged (2026-03-23).
-- [#43](https://github.com/LEnc95/games.aiandsons.io/pull/43) - Nightly launch-readiness failure fix merged (2026-03-23).
+## Key PR Links (2026-03-29 to 2026-04-03)
+- [#78](https://github.com/LEnc95/games.aiandsons.io/pull/78) - Debounce localStorage save operations for client-state persistence (merged 2026-04-02).
+- [#77](https://github.com/LEnc95/games.aiandsons.io/pull/77) - Add Escape key modal-close accessibility support (merged 2026-04-02).
+- [#76](https://github.com/LEnc95/games.aiandsons.io/pull/76) - Fix production session secret fallback behavior (merged 2026-04-02).
+- [#73](https://github.com/LEnc95/games.aiandsons.io/pull/73) - Optimize Stripe family summary lookups in invite handlers (merged 2026-04-01).
+- [#63](https://github.com/LEnc95/games.aiandsons.io/pull/63) - Fix index.html XSS vulnerability in search rendering flow (merged 2026-04-01).
+- [#53](https://github.com/LEnc95/games.aiandsons.io/pull/53) - Add Signal Stack game and launcher wiring (merged 2026-03-31).
 
 ## Release Scope
 - Onboarding split from home launcher with dedicated parent and teacher onboarding pages.

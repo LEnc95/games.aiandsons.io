@@ -289,3 +289,13 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-01] Key PR links: #57, #56, #55, #54.
 - [nightly 2026-04-02] Tracked changes: 17 commit(s) - e8f8263 Append clean progress handoff note; 7a70e05 Rework duplicate game slugs into distinct mechanics; 9cf272e Record Chrome Shift rewrite delivery status; 12edc03 Rework Chrome Shift into distinct color-flood puzzle; b87a25c Add Chrome Shift game and update sprint board notes (+12 more).
 - [nightly 2026-04-02] Key PR links: [#68](https://github.com/LEnc95/games.aiandsons.io/pull/68), [#70](https://github.com/LEnc95/games.aiandsons.io/pull/70), [#75](https://github.com/LEnc95/games.aiandsons.io/pull/75), [#76](https://github.com/LEnc95/games.aiandsons.io/pull/76), [#77](https://github.com/LEnc95/games.aiandsons.io/pull/77), [#78](https://github.com/LEnc95/games.aiandsons.io/pull/78).
+- [nightly 2026-04-03] Tracked changes: 1 commit(s) - Add Trailblazer Grid game and wire launcher routes.
+- [nightly 2026-04-03] Key PR links: none merged for this date.
+- [nightly 2026-04-04] No repository commits found for this date.
+- [nightly 2026-04-04] Key PR links: none merged for this date.
+- [nightly 2026-04-05] Tracked changes: 2 commit(s) - Add Port Pilot game and wire launcher routing; Update release notes and append nightly sprint board entries.
+- [nightly 2026-04-05] Key PR links: none merged for this date.
+- [nightly 2026-04-06] No repository commits found for this date.
+- [nightly 2026-04-06] Key PR links: none merged for this date.
+- [nightly 2026-04-08] No repository commits found for this date.
+- [nightly 2026-04-08] Key PR links: none merged for this date.
