@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Byte Bloom - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Plant pulse-seeds, grow Byte Bloom patches, and hold back spreading blight." />
+  <meta property="og:title" content="Byte Bloom - Play on Cade's Games" />
+  <meta property="og:description" content="Plant pulse-seeds, grow Byte Bloom patches, and hold back spreading blight." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/bytebloom" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Byte Bloom - Play on Cade's Games" />
+  <meta name="twitter:description" content="Plant pulse-seeds, grow Byte Bloom patches, and hold back spreading blight." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/bytebloom" />
+  <style>
+    :root {
+      --bg0: #07111d;
+      --bg1: #123048;
+      --panel: rgba(8, 17, 29, 0.9);
+      --line: rgba(140, 224, 192, 0.3);
+      --text: #ebfff3;
+      --muted: #b3d6c9;
+      --good: #82f5b4;
+      --warn: #f7d180;
+      --bad: #ff9ea7;
+      --cursor: #9af8cb;
+      --empty: #143347;
+      --sprout: #2f7663;
+      --bloom: #65d9a8;
+      --blight: #90374a;
+      --wall: #1e1a36;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(90% 70% at 15% 10%, #295f70 0%, transparent 65%),
+        radial-gradient(70% 70% at 90% 90%, #283067 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(66dvh, 740px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(140, 224, 192, 0.6);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, #173753 0%, #0a1526 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 170ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 680px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(22, 48, 66, 0.92);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(169, 227, 198, 0.28);
+      background: rgba(255, 255, 255, 0.07);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      max-width: 320px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .dpad .blank {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .touch-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .touch-group button { min-width: 96px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="760" aria-label="Byte Bloom game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Byte Bloom</h1>
+          <p>Plant pulse-seeds, spread healthy bloom, and contain blight pockets before your timer expires.</p>
+          <p>Desktop: arrows or WASD move cursor, Space plants, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use the d-pad and Plant button. Reach 40 bloom tiles before 80 seconds.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip good"><span>Bloom</span><b id="hudBloom">1</b></div>
+      <div class="chip bad"><span>Blight</span><b id="hudBlight">2</b></div>
+      <div class="chip"><span>Seeds</span><b id="hudSeeds">8</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">80.0s</b></div>
+      <div class="chip good"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="dpad">
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="up">Up</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="left">Left</button>
+        <button type="button" id="btnPlant">Plant</button>
+        <button type="button" data-move="right">Right</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="down">Down</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">FS</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const overlayEl = document.getElementById('overlay');
+
+    const hudMode = document.getElementById('hudMode');
+    const hudBloom = document.getElementById('hudBloom');
+    const hudBlight = document.getElementById('hudBlight');
+    const hudSeeds = document.getElementById('hudSeeds');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnPlant = document.getElementById('btnPlant');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID_SIZE = 10;
+    const ROUND_SECONDS = 80;
+    const TARGET_BLOOM = 40;
+    const START_SEEDS = 8;
+    const START_BLIGHT = 2;
+
+    const TILE_EMPTY = 0;
+    const TILE_BLOOM = 1;
+    const TILE_BLIGHT = 2;
+    const TILE_WALL = 3;
+
+    const dirs = [
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 0, y: -1 },
+    ];
+
+    const state = {
+      mode: 'menu',
+      time: 0,
+      timeLeft: ROUND_SECONDS,
+      board: [],
+      cursor: { x: 0, y: 0 },
+      seedCharges: START_SEEDS,
+      bloomCount: 1,
+      blightCount: START_BLIGHT,
+      score: 0,
+      result: 'none',
+      runCoinsEarned: 0,
+      hasRemembered: false,
+      growthTimer: 0,
+      blightTimer: 0,
+      seedRechargeTimer: 0,
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function seededRandom(seed) {
+      let s = seed >>> 0;
+      return () => {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+
+    function inBounds(x, y) {
+      return x >= 0 && y >= 0 && x < GRID_SIZE && y < GRID_SIZE;
+    }
+
+    function tileAt(x, y) {
+      return state.board[y][x];
+    }
+
+    function setTile(x, y, value) {
+      state.board[y][x] = value;
+    }
+
+    function countTiles(value) {
+      let count = 0;
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          if (tileAt(x, y) === value) count += 1;
+        }
+      }
+      return count;
+    }
+
+    function neighbors(x, y) {
+      const out = [];
+      for (const d of dirs) {
+        const nx = x + d.x;
+        const ny = y + d.y;
+        if (inBounds(nx, ny) && tileAt(nx, ny) !== TILE_WALL) {
+          out.push({ x: nx, y: ny });
+        }
+      }
+      return out;
+    }
+
+    function buildBoard() {
+      const rand = seededRandom(994037);
+      const board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(TILE_EMPTY));
+
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          if ((x === 0 && y === 0) || (x === GRID_SIZE - 1 && y === GRID_SIZE - 1)) continue;
+          if (rand() < 0.08) board[y][x] = TILE_WALL;
+        }
+      }
+
+      board[0][0] = TILE_BLOOM;
+      board[GRID_SIZE - 1][GRID_SIZE - 1] = TILE_EMPTY;
+
+      let placedBlight = 0;
+      while (placedBlight < START_BLIGHT) {
+        const x = Math.floor(rand() * GRID_SIZE);
+        const y = Math.floor(rand() * GRID_SIZE);
+        if ((x === 0 && y === 0) || board[y][x] !== TILE_EMPTY) continue;
+        board[y][x] = TILE_BLIGHT;
+        placedBlight += 1;
+      }
+
+      return board;
+    }
+
+    function resetRun() {
+      state.mode = 'playing';
+      state.time = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.board = buildBoard();
+      state.cursor = { x: 0, y: 0 };
+      state.seedCharges = START_SEEDS;
+      state.bloomCount = countTiles(TILE_BLOOM);
+      state.blightCount = countTiles(TILE_BLIGHT);
+      state.score = 0;
+      state.result = 'none';
+      state.runCoinsEarned = 0;
+      state.growthTimer = 0;
+      state.blightTimer = 0;
+      state.seedRechargeTimer = 0;
+      overlayEl.classList.remove('show');
+      updateHud();
+      draw();
+    }
+
+    function setOverlay(title, body, buttonLabel = 'Start Run') {
+      overlayEl.classList.add('show');
+      overlayEl.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${body}</p>
+          <p>Desktop: arrows/WASD move, Space plants, P pause, R restart, F fullscreen.</p>
+          <div class="row">
+            <button id="startBtn" type="button">${buttonLabel}</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlayEl.querySelector('#startBtn')?.addEventListener('click', startRun);
+      overlayEl.querySelector('#overlayFsBtn')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function startRun() {
+      resetRun();
+      if (!state.hasRemembered) {
+        state.hasRemembered = true;
+        try { rememberRecent('bytebloom'); } catch {}
+      }
+      try { maybeUnlock({ anyPlay: true, bytebloom: { result: 'started', bloom: 1, score: 0 } }); } catch {}
+    }
+
+    function finishRun(win) {
+      if (state.mode !== 'playing' && state.mode !== 'paused') return;
+      state.mode = win ? 'won' : 'lost';
+      state.result = win ? 'win' : 'loss';
+      state.bloomCount = countTiles(TILE_BLOOM);
+      state.blightCount = countTiles(TILE_BLIGHT);
+
+      const bloomBonus = state.bloomCount * 18;
+      const blightPenalty = state.blightCount * 12;
+      const timeBonus = Math.floor(state.timeLeft * 6);
+      state.score = Math.max(0, bloomBonus - blightPenalty + (win ? 350 : 120) + timeBonus);
+
+      const coins = Math.max(2, Math.floor(state.score / 210) + (win ? 4 : 2));
+      state.runCoinsEarned = coins;
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          bytebloom: {
+            result: state.result,
+            score: state.score,
+            bloom: state.bloomCount,
+            blight: state.blightCount,
+          },
+        });
+      } catch {}
+
+      const body = win
+        ? `Sanctuary stable. Bloom tiles ${state.bloomCount}, blight ${state.blightCount}, coins ${coins}.`
+        : `Blight spread too far. Bloom tiles ${state.bloomCount}, blight ${state.blightCount}, coins ${coins}.`;
+      setOverlay(win ? 'Garden Secured' : 'Bloom Collapsed', body, 'Play Again');
+      updateHud();
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused';
+        setOverlay('Paused', 'Growth simulation paused.', 'Resume');
+      } else if (state.mode === 'paused') {
+        state.mode = 'playing';
+        overlayEl.classList.remove('show');
+      }
+      updateHud();
+    }
+
+    function moveCursor(dx, dy) {
+      if (state.mode !== 'playing') return;
+      const nx = Math.max(0, Math.min(GRID_SIZE - 1, state.cursor.x + dx));
+      const ny = Math.max(0, Math.min(GRID_SIZE - 1, state.cursor.y + dy));
+      state.cursor.x = nx;
+      state.cursor.y = ny;
+    }
+
+    function plantSeed() {
+      if (state.mode !== 'playing') return;
+      if (state.seedCharges <= 0) return;
+      const { x, y } = state.cursor;
+      const tile = tileAt(x, y);
+      if (tile === TILE_WALL) return;
+      if (tile === TILE_BLOOM) return;
+
+      state.seedCharges -= 1;
+      if (tile === TILE_BLIGHT) {
+        setTile(x, y, TILE_BLOOM);
+      } else {
+        setTile(x, y, TILE_BLOOM);
+      }
+      state.bloomCount = countTiles(TILE_BLOOM);
+      state.blightCount = countTiles(TILE_BLIGHT);
+    }
+
+    function spreadBloom() {
+      const additions = [];
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          if (tileAt(x, y) !== TILE_BLOOM) continue;
+          for (const next of neighbors(x, y)) {
+            if (tileAt(next.x, next.y) === TILE_EMPTY) {
+              additions.push(next);
+              break;
+            }
+          }
+        }
+      }
+
+      for (const cell of additions) {
+        if (tileAt(cell.x, cell.y) === TILE_EMPTY) {
+          setTile(cell.x, cell.y, TILE_BLOOM);
+        }
+      }
+    }
+
+    function spreadBlight() {
+      const additions = [];
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          if (tileAt(x, y) !== TILE_BLIGHT) continue;
+          for (const next of neighbors(x, y)) {
+            const target = tileAt(next.x, next.y);
+            if (target === TILE_BLOOM || target === TILE_EMPTY) {
+              additions.push(next);
+              break;
+            }
+          }
+        }
+      }
+
+      for (const cell of additions) {
+        if (tileAt(cell.x, cell.y) !== TILE_WALL) {
+          setTile(cell.x, cell.y, TILE_BLIGHT);
+        }
+      }
+    }
+
+    function update(dt) {
+      if (state.mode === 'playing') {
+        state.time += dt;
+        state.timeLeft = Math.max(0, ROUND_SECONDS - state.time);
+
+        state.growthTimer += dt;
+        state.blightTimer += dt;
+        state.seedRechargeTimer += dt;
+
+        if (state.growthTimer >= 1.0) {
+          state.growthTimer -= 1.0;
+          spreadBloom();
+        }
+        if (state.blightTimer >= 1.4) {
+          state.blightTimer -= 1.4;
+          spreadBlight();
+        }
+        if (state.seedRechargeTimer >= 2.6) {
+          state.seedRechargeTimer -= 2.6;
+          state.seedCharges = Math.min(12, state.seedCharges + 1);
+        }
+
+        state.bloomCount = countTiles(TILE_BLOOM);
+        state.blightCount = countTiles(TILE_BLIGHT);
+
+        if (state.blightCount >= 32) {
+          finishRun(false);
+          return;
+        }
+
+        if (state.timeLeft <= 0) {
+          finishRun(state.bloomCount >= TARGET_BLOOM);
+          return;
+        }
+      }
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#204764');
+      grad.addColorStop(1, '#0a1829');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const boardPx = 620;
+      const tile = boardPx / GRID_SIZE;
+      const boardX = 140;
+      const boardY = 90;
+
+      ctx.fillStyle = 'rgba(5, 11, 22, 0.8)';
+      ctx.fillRect(boardX - 12, boardY - 12, boardPx + 24, boardPx + 24);
+
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          const v = tileAt(x, y);
+          if (v === TILE_WALL) ctx.fillStyle = '#1e1a36';
+          else if (v === TILE_BLOOM) ctx.fillStyle = '#65d9a8';
+          else if (v === TILE_BLIGHT) ctx.fillStyle = '#90374a';
+          else ctx.fillStyle = '#143347';
+          ctx.fillRect(boardX + x * tile, boardY + y * tile, tile - 2, tile - 2);
+        }
+      }
+
+      ctx.strokeStyle = '#ecfff5';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(
+        boardX + state.cursor.x * tile + 2,
+        boardY + state.cursor.y * tile + 2,
+        tile - 6,
+        tile - 6
+      );
+
+      ctx.fillStyle = '#e8fff1';
+      ctx.font = '700 28px Trebuchet MS';
+      ctx.fillText('Byte Bloom', 810, 126);
+
+      ctx.font = '600 20px Trebuchet MS';
+      ctx.fillStyle = '#b8dacd';
+      ctx.fillText(`Target Bloom: ${TARGET_BLOOM}`, 810, 170);
+      ctx.fillText(`Current Bloom: ${state.bloomCount}`, 810, 202);
+      ctx.fillText(`Current Blight: ${state.blightCount}`, 810, 234);
+      ctx.fillText(`Seed Charges: ${state.seedCharges}`, 810, 266);
+      ctx.fillText(`Time Left: ${Math.max(0, state.timeLeft).toFixed(1)}s`, 810, 298);
+
+      ctx.font = '600 16px Trebuchet MS';
+      ctx.fillStyle = '#d3efe4';
+      ctx.fillText('Planting on blight converts it back to bloom.', 810, 348);
+      ctx.fillText('Walls block spread for both bloom and blight.', 810, 376);
+      ctx.fillText('Keep blight below 32 tiles to avoid collapse.', 810, 404);
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudBloom.textContent = String(state.bloomCount);
+      hudBlight.textContent = String(state.blightCount);
+      hudSeeds.textContent = String(state.seedCharges);
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(state.score);
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 42);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 42 && state.timeLeft >= 16);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 16);
+
+      hudBlight.parentElement.classList.toggle('good', state.blightCount <= 10);
+      hudBlight.parentElement.classList.toggle('warn', state.blightCount > 10 && state.blightCount < 24);
+      hudBlight.parentElement.classList.toggle('bad', state.blightCount >= 24);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) {
+        update(1 / 60);
+      }
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function handleKey(event) {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        moveCursor(-1, 0);
+      }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        moveCursor(1, 0);
+      }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        moveCursor(0, -1);
+      }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        event.preventDefault();
+        moveCursor(0, 1);
+      }
+      if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault();
+        plantSeed();
+      }
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        pauseToggle();
+      }
+      if (event.code === 'KeyR') {
+        event.preventDefault();
+        startRun();
+      }
+      if (event.code === 'KeyF') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    }
+
+    window.addEventListener('keydown', handleKey);
+
+    for (const button of document.querySelectorAll('[data-move]')) {
+      button.addEventListener('click', () => {
+        const dir = button.dataset.move;
+        if (dir === 'left') moveCursor(-1, 0);
+        if (dir === 'right') moveCursor(1, 0);
+        if (dir === 'up') moveCursor(0, -1);
+        if (dir === 'down') moveCursor(0, 1);
+      });
+    }
+
+    btnPlant.addEventListener('click', plantSeed);
+    btnPause.addEventListener('click', pauseToggle);
+    btnRestart.addEventListener('click', startRun);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const activeBlight = [];
+      const activeBloom = [];
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          const v = tileAt(x, y);
+          if (v === TILE_BLIGHT && activeBlight.length < 20) activeBlight.push({ x, y });
+          if (v === TILE_BLOOM && activeBloom.length < 20) activeBloom.push({ x, y });
+        }
+      }
+
+      const payload = {
+        game: 'bytebloom',
+        mode: state.mode,
+        coordinate_system: '10x10 board grid with origin at top-left (0,0); x increases right, y increases downward',
+        objective: {
+          target_bloom_tiles: TARGET_BLOOM,
+          collapse_threshold_blight_tiles: 32,
+          survive_seconds: ROUND_SECONDS,
+        },
+        resources: {
+          elapsed_seconds: Number(state.time.toFixed(3)),
+          time_left_seconds: Number(state.timeLeft.toFixed(3)),
+          seed_charges: state.seedCharges,
+          bloom_tiles: state.bloomCount,
+          blight_tiles: state.blightCount,
+          score: state.score,
+        },
+        player: {
+          cursor_x: state.cursor.x,
+          cursor_y: state.cursor.y,
+        },
+        visible_tiles: {
+          bloom_sample: activeBloom,
+          blight_sample: activeBlight,
+        },
+        controls: {
+          move: 'ArrowKeys/WASD',
+          plant: 'Space/Enter',
+          pause: 'P',
+          restart: 'R',
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    state.mode = 'menu';
+    draw();
+    updateHud();
+    setOverlay('Byte Bloom', 'Grow enough bloom tiles while suppressing blight spread.', 'Start Run');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'bytebloom', gameName: 'Byte Bloom' });
+  </script>
+</body>
+</html>
