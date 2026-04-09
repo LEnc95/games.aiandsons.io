@@ -1704,3 +1704,19 @@ pm.cmd run feedback:sync-linear passed and refreshed linear/labels.md + linear/g
 pm.cmd run test:feedback failed with spawn EPERM and required $develop-web-game Playwright run for /bytebloom failed with rowserType.launch: spawn EPERM.
 - Follow-up: rerun 
 pm run test:feedback and the Playwright gameplay loop for /bytebloom in an environment that allows child-process and Chromium launch.
+
+## 2026-04-08T19:07:15-04:00 Gem Swap Blitz automation run
+- Added a brand-new game `gemswap` at `gemswap/index.html` with a match-3 swap-and-cascade loop.
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (`addCoins`, `rememberRecent`, `maybeUnlock`), feedback mount, and deterministic automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Wired catalog/routing in `src/meta/games.js`, fallback launcher card in `index.html`, and Vercel rewrites/cache header entries in `vercel.json`.
+- Validation passed: `rg` wiring check and `vercel.json` parse check; `npm.cmd run feedback:sync-linear` passed and refreshed `linear/labels.md` + `linear/game-issues.csv`.
+- Validation blockers in this sandbox: `npm.cmd run test:feedback` failed with `spawn EPERM` and required `$develop-web-game` Playwright run for `/gemswap` failed with `browserType.launch: spawn EPERM`.
+- Follow-up: rerun `npm run test:feedback` and the Playwright gameplay loop for `/gemswap` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-09 Hex Harvest automation run
+- Added a brand-new game `hexharvest` at `hexharvest/index.html` with a distinct farm-management loop (grow, harvest, and weed-control under soil/time pressure).
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (`addCoins`, `rememberRecent`, `maybeUnlock`), feedback mount, and deterministic automation hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+- Wired catalog/routing in `src/meta/games.js`, fallback launcher card in `index.html`, and Vercel rewrites/cache header entries in `vercel.json`.
+- Validation passed: `rg` wiring check and `vercel.json` parse check; `npm.cmd run feedback:sync-linear` passed and refreshed `linear/labels.md` + `linear/game-issues.csv`.
+- Validation blockers in this sandbox: `npm.cmd run test:feedback` failed with `spawn EPERM` and required `$develop-web-game` Playwright run for `/hexharvest` failed with `browserType.launch: spawn EPERM`.
+- Follow-up: rerun `npm run test:feedback` and the Playwright gameplay loop for `/hexharvest` in an environment that allows child-process and Chromium launch.

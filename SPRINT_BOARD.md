@@ -297,3 +297,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-05] Key PR links: none merged for this date.
 - [nightly 2026-04-06] No repository commits found for this date.
 - [nightly 2026-04-06] Key PR links: none merged for this date.
+- [nightly 2026-04-08] No repository commits found for this date.
+- [nightly 2026-04-08] Key PR links: none merged for this date.
