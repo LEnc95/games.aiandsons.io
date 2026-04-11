@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>Dice Forge - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" href="/favicon.ico" sizes="any"/>
+<meta name="description" content="Draft dice, spend rerolls, and lock scoring combos before the forge timer runs out."/>
+<meta property="og:title" content="Dice Forge - Play on Cade's Games"/><meta property="og:description" content="Draft dice, spend rerolls, and lock scoring combos before the forge timer runs out."/>
+<meta property="og:type" content="website"/><meta property="og:url" content="https://games.aiandsons.io/diceforge"/><meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png"/>
+<meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="Dice Forge - Play on Cade's Games"/><meta name="twitter:description" content="Draft dice, spend rerolls, and lock scoring combos before the forge timer runs out."/>
+<link rel="canonical" href="https://games.aiandsons.io/diceforge"/>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;touch-action:none;font-family:Trebuchet MS,Segoe UI,Tahoma,sans-serif;color:#eef8ff;background:radial-gradient(70% 60% at 15% 10%,#2d4f80 0,transparent 62%),radial-gradient(80% 80% at 88% 92%,#1b3154 0,transparent 62%),linear-gradient(180deg,#1f2f4d,#0e1a2c)}
+.back{position:fixed;top:12px;left:12px;z-index:40;color:#fff;text-decoration:none;font-size:14px;font-weight:700;border-radius:10px;border:1px solid #ffffff59;padding:8px 12px;background:#0000006b}
+.app{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:62px 10px 10px}
+.wrap{width:min(96vw,980px);aspect-ratio:16/10;max-height:min(66dvh,740px);position:relative}
+canvas{width:100%;height:100%;display:block;border-radius:14px;border:2px solid #8ad0ff91;box-shadow:0 16px 48px #0000009e;background:linear-gradient(180deg,#1a3558,#101f38)}
+.ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .16s}.ov.show{opacity:1;pointer-events:auto}
+.panel{max-width:700px;border-radius:14px;border:1px solid #a2d0ff52;background:#0d1a31e8;box-shadow:0 14px 30px #00000070;padding:16px}
+h1{margin:0 0 8px;font-size:clamp(28px,4.2vw,38px)}p{margin:0 0 10px;color:#bdd7ef;font-size:clamp(13px,2.1vw,15px);line-height:1.45}.row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{border:1px solid #a2d0ff52;background:#162d4af2;color:#eef8ff;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;min-height:42px}
+.hud{width:min(96vw,980px);border-radius:12px;border:1px solid #a2d0ff52;background:#0d1a31e8;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:10px}
+.chip{border-radius:9px;border:1px solid #b7e2ff40;background:#ffffff14;min-height:48px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:2px;padding:4px}.chip span{color:#bdd7ef;font-size:11px;letter-spacing:.05em;text-transform:uppercase;line-height:1}.chip b{font-size:clamp(14px,2.2vw,18px);line-height:1.1}
+.good b{color:#96ffcb}.warn b{color:#ffd48a}.bad b{color:#ff9cae}
+.controls{width:min(96vw,980px);border-radius:12px;border:1px solid #a2d0ff52;background:#0d1a31e8;padding:10px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+@media(max-width:900px){.hud{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:560px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app"><div class="wrap"><canvas id="game" width="1200" height="760" aria-label="Dice Forge game canvas"></canvas>
+<div id="ov" class="ov show"><div class="panel"><h1>Dice Forge</h1><p>Draft five dice across eight rounds. Hold values, spend rerolls, and lock each scoring category once.</p><p>Desktop: Arrows/WASD move, Space/Enter toggle hold or lock category, X reroll, P pause, R restart, F fullscreen.</p><p>Mobile: use Hold 1-5, Prev/Next Category, Lock, and Reroll controls.</p><div class="row"><button id="startBtn" type="button">Start Run</button><button id="ovFs" type="button">Fullscreen</button></div></div></div>
+</div>
+<section class="hud" aria-live="polite">
+<div class="chip"><span>Mode</span><b id="m">MENU</b></div><div class="chip"><span>Round</span><b id="r">0/8</b></div><div class="chip"><span>Rerolls</span><b id="rr">2</b></div><div class="chip"><span>Category</span><b id="cat">Chance</b></div><div class="chip"><span>Preview</span><b id="pv">0</b></div><div class="chip good"><span>Total</span><b id="s">0</b></div><div class="chip warn"><span>Time</span><b id="t">160.0s</b></div><div class="chip"><span>Coins</span><b id="c">0</b></div>
+</section>
+<section class="controls" aria-label="Controls">
+<button data-h="0">Hold 1</button><button data-h="1">Hold 2</button><button data-h="2">Hold 3</button><button data-h="3">Hold 4</button><button data-h="4">Hold 5</button>
+<button id="prev">Prev Category</button><button id="next">Next Category</button><button id="reroll">Reroll</button><button id="lock">Lock Category</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="fs">Fullscreen</button>
+</section></main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+const cv=document.getElementById('game'),x=cv.getContext('2d'),ov=document.getElementById('ov');
+const m=document.getElementById('m'),r=document.getElementById('r'),rr=document.getElementById('rr'),cat=document.getElementById('cat'),pv=document.getElementById('pv'),s=document.getElementById('s'),t=document.getElementById('t'),c=document.getElementById('c');
+const ROUND_LIMIT=8,ROUND_SECONDS=20,TOTAL_SECONDS=160,WIN_SCORE=170;
+const CATS=[
+{key:'chance',label:'Chance',desc:'Sum all dice.',calc:d=>d.reduce((a,b)=>a+b,0)},
+{key:'pair',label:'Pair',desc:'Best pair x2.',calc:d=>{const n=count(d);for(let f=6;f>=1;f--)if((n[f]||0)>=2)return f*2;return 0;}},
+{key:'triple',label:'Triple',desc:'Three kind x3.',calc:d=>{const n=count(d);for(let f=6;f>=1;f--)if((n[f]||0)>=3)return f*3;return 0;}},
+{key:'fourkind',label:'Fourkind',desc:'Four kind sum+8.',calc:d=>Object.values(count(d)).some(v=>v>=4)?d.reduce((a,b)=>a+b,0)+8:0},
+{key:'fullhouse',label:'Full House',desc:'Three+two = 30.',calc:d=>{const v=Object.values(count(d));return v.includes(3)&&v.includes(2)?30:0;}},
+{key:'smallstraight',label:'Small Straight',desc:'1-5 = 25.',calc:d=>seq(d,[1,2,3,4,5])?25:0},
+{key:'largestraight',label:'Large Straight',desc:'2-6 = 35.',calc:d=>seq(d,[2,3,4,5,6])?35:0},
+{key:'forge',label:'Forge',desc:'Five kind = 50.',calc:d=>Object.values(count(d)).some(v=>v===5)?50:0},
+];
+const st={mode:'menu',result:null,time:0,timeLeft:TOTAL_SECONDS,roundTimeLeft:ROUND_SECONDS,round:1,dice:[1,1,1,1,1],held:[0,0,0,0,0],rerollsLeft:2,totalScore:0,categoryScores:{},selectedCategoryIndex:0,focus:{area:'dice',index:0},log:[]};
+let controlled=false,raf=0,prev=performance.now();
+const count=d=>{const n={};for(const v of d)n[v]=(n[v]||0)+1;return n};
+const seq=(d,a)=>{const s=new Set(d);return a.every(v=>s.has(v))};
+const available=()=>CATS.map((_,i)=>i).filter(i=>st.categoryScores[CATS[i].key]==null);
+const cur=()=>CATS[st.selectedCategoryIndex];
+const roll=()=>1+Math.floor(Math.random()*6);
+function rollDice(all=false){for(let i=0;i<5;i++)if(all||!st.held[i])st.dice[i]=roll();}
+function syncCat(){const a=available();if(!a.length)return;if(!a.includes(st.selectedCategoryIndex))st.selectedCategoryIndex=a[0];}
+function setOv(title,desc,cta){ov.innerHTML=`<div class="panel"><h1>${title}</h1><p>${desc}</p><p>Use holds and rerolls to set up each category before locking it.</p><div class="row"><button id="oa" type="button">${cta}</button><button id="of" type="button">Fullscreen</button></div></div>`;ov.classList.add('show');ov.querySelector('#oa')?.addEventListener('click',start);ov.querySelector('#of')?.addEventListener('click',fs);}
+function hideOv(){ov.classList.remove('show');}
+function reset(){st.mode='menu';st.result=null;st.time=0;st.timeLeft=TOTAL_SECONDS;st.roundTimeLeft=ROUND_SECONDS;st.round=1;st.held=[0,0,0,0,0];st.rerollsLeft=2;st.totalScore=0;st.categoryScores={};st.selectedCategoryIndex=0;st.focus={area:'dice',index:0};st.log=[];rollDice(true);}
+function start(){reset();st.mode='running';hideOv();try{rememberRecent('diceforge')}catch{};try{maybeUnlock({anyPlay:true,diceforge:{result:'started',score:0}})}catch{}}
+function hold(i){if(st.mode!=='running'||i<0||i>4)return;st.held[i]=!st.held[i];}
+function reroll(){if(st.mode!=='running'||st.rerollsLeft<=0||st.held.every(Boolean))return;st.rerollsLeft--;rollDice(false);}
+function moveCat(step){const a=available();if(!a.length)return;const p=a.indexOf(st.selectedCategoryIndex);const n=(Math.max(0,p)+step+a.length)%a.length;st.selectedCategoryIndex=a[n];}
+function commit(){if(st.mode!=='running')return;syncCat();const cc=cur();if(!cc||st.categoryScores[cc.key]!=null)return;const sc=cc.calc(st.dice);st.categoryScores[cc.key]=sc;st.totalScore+=sc;st.log.push(`${cc.label}: +${sc}`);if(st.log.length>4)st.log.shift();const used=Object.keys(st.categoryScores).length;if(used>=ROUND_LIMIT||used>=CATS.length){finish(st.totalScore>=WIN_SCORE);return;}st.round=used+1;st.roundTimeLeft=ROUND_SECONDS;st.rerollsLeft=2;st.held=[0,0,0,0,0];syncCat();rollDice(true);}
+function finish(win){if(st.mode==='complete')return;st.mode='complete';st.result=win?'win':'lose';const coins=Math.max(4,Math.floor(st.totalScore/35)+(win?12:6));try{addCoins(coins)}catch{};try{maybeUnlock({anyPlay:true,diceforge:{result:st.result,score:Math.round(st.totalScore),rounds:Object.keys(st.categoryScores).length}})}catch{};setOv(win?'Forge Cleared':'Forge Complete',`${win?'Forge complete':'Run finished'} at ${Math.round(st.totalScore)} points and ${coins} coins.`,'Play Again');}
+function pause(){if(st.mode==='running'){st.mode='paused';setOv('Paused','Rerolls and category locks will resume where you left off.','Resume');}else if(st.mode==='paused'){st.mode='running';hideOv();}}
+function upd(dt){if(st.mode!=='running')return;st.time+=dt;st.timeLeft=Math.max(0,st.timeLeft-dt);st.roundTimeLeft=Math.max(0,st.roundTimeLeft-dt);if(st.roundTimeLeft<=0)commit();if(st.timeLeft<=0)finish(st.totalScore>=WIN_SCORE);}
+function pips(v){const c=.5,o=.24,e=.76;if(v===1)return[[c,c]];if(v===2)return[[o,o],[e,e]];if(v===3)return[[o,o],[c,c],[e,e]];if(v===4)return[[o,o],[e,o],[o,e],[e,e]];if(v===5)return[[o,o],[e,o],[c,c],[o,e],[e,e]];return[[o,o],[e,o],[o,c],[e,c],[o,e],[e,e]];}
+function drawDie(px,py,sz,v,h,f){x.fillStyle=h?'#ffe59cf2':'#f2f7fff5';x.strokeStyle=f?'#8bd4ff':'#182642cc';x.lineWidth=f?5:3;x.beginPath();x.roundRect(px,py,sz,sz,14);x.fill();x.stroke();x.fillStyle='#14203b';for(const [rx,ry] of pips(v)){x.beginPath();x.arc(px+rx*sz,py+ry*sz,sz*.08,0,Math.PI*2);x.fill();}if(h){x.fillStyle='#4b3a07';x.font='700 14px Trebuchet MS';x.textAlign='center';x.textBaseline='top';x.fillText('HELD',px+sz/2,py+sz+6);}}
+function draw(){const g=x.createLinearGradient(0,0,0,cv.height);g.addColorStop(0,'#19365c');g.addColorStop(1,'#0c1930');x.fillStyle=g;x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#f0f9ff';x.font='700 36px Trebuchet MS';x.textAlign='left';x.textBaseline='alphabetic';x.fillText('Dice Forge',70,80);x.fillStyle='#b8d8f2';x.font='600 18px Trebuchet MS';x.fillText('Hold dice, reroll smart, and lock each category once.',70,114);
+const sz=110,dy=150;for(let i=0;i<5;i++){const px=80+i*136;drawDie(px,dy,sz,st.dice[i],st.held[i],st.focus.area==='dice'&&st.focus.index===i);}x.fillStyle='#0b172ac2';x.fillRect(760,138,360,500);x.strokeStyle='#a2d0ff52';x.lineWidth=2;x.strokeRect(760,138,360,500);x.fillStyle='#ebf8ff';x.font='700 24px Trebuchet MS';x.fillText('Categories',790,176);
+const used=new Set(Object.keys(st.categoryScores));for(let i=0;i<CATS.length;i++){const cc=CATS[i],y=214+i*48,u=used.has(cc.key),sel=i===st.selectedCategoryIndex;x.fillStyle=u?'#4a668880':sel?'#77c3ff42':'#ffffff0d';x.fillRect(776,y-28,328,40);if(sel&&!u){x.strokeStyle='#8bd4ff';x.lineWidth=2.5;x.strokeRect(776,y-28,328,40);}x.fillStyle='#ecf8ff';x.font='700 18px Trebuchet MS';x.fillText(cc.label,788,y-2);x.textAlign='right';x.fillStyle=u?'#9fd6ff':'#cfe8fb';const shown=u?st.categoryScores[cc.key]:cc.calc(st.dice);x.fillText(String(shown),1088,y-2);x.textAlign='left';}
+const cc=cur();x.fillStyle='#c5ddf4';x.font='600 16px Trebuchet MS';if(cc)x.fillText(cc.desc,70,334);x.fillText(`Round ${st.round}/${ROUND_LIMIT} | Rerolls left: ${st.rerollsLeft}`,70,370);x.fillText(`Round timer: ${st.roundTimeLeft.toFixed(1)}s | Forge timer: ${st.timeLeft.toFixed(1)}s`,70,402);x.fillText(`Focus: ${st.focus.area==='dice'?`Die ${st.focus.index+1}`:'Category list'}`,70,434);x.fillStyle='#edf8ff';x.font='700 20px Trebuchet MS';x.fillText(`Total Score: ${Math.round(st.totalScore)}`,70,476);x.fillText(`Target: ${WIN_SCORE}`,70,506);x.fillStyle='#b0ceea';x.font='600 14px Trebuchet MS';x.fillText('Recent Locks:',70,548);const logs=st.log.length?st.log:['No categories locked yet.'];for(let i=0;i<logs.length;i++)x.fillText(`- ${logs[i]}`,70,576+i*22);}
+function hud(){const cc=cur();m.textContent=st.mode.toUpperCase();r.textContent=`${Math.min(st.round,ROUND_LIMIT)}/${ROUND_LIMIT}`;rr.textContent=String(st.rerollsLeft);cat.textContent=cc?cc.label:'-';pv.textContent=String(cc?cc.calc(st.dice):0);s.textContent=String(Math.round(st.totalScore));t.textContent=`${Math.max(0,st.timeLeft).toFixed(1)}s`;c.textContent=String(Number(profileState?.coins||0));t.parentElement.classList.toggle('good',st.timeLeft>=TOTAL_SECONDS*.5);t.parentElement.classList.toggle('warn',st.timeLeft<TOTAL_SECONDS*.5&&st.timeLeft>=TOTAL_SECONDS*.2);t.parentElement.classList.toggle('bad',st.timeLeft<TOTAL_SECONDS*.2);}
+function fs(){if(!document.fullscreenElement){document.documentElement.requestFullscreen?.().catch(()=>{});}else{document.exitFullscreen?.().catch(()=>{});}}
+function action(){if(st.mode!=='running')return;if(st.focus.area==='dice')hold(st.focus.index);else commit();}
+function move(dx,dy){if(st.mode!=='running')return;if(dy!==0){st.focus.area=st.focus.area==='dice'?'category':'dice';return;}if(st.focus.area==='dice')st.focus.index=Math.max(0,Math.min(4,st.focus.index+dx));else if(dx!==0)moveCat(dx>0?1:-1);}
+function step(ms){const n=Math.max(1,Math.round((Number(ms)||0)/(1000/60)));controlled=true;for(let i=0;i<n;i++)upd(1/60);draw();hud();controlled=false;}
+function frame(now){const dt=Math.min(.05,(now-prev)/1000);prev=now;if(!controlled){upd(dt);draw();hud();}raf=requestAnimationFrame(frame);}
+function key(e){if(e.code==='ArrowLeft'||e.code==='KeyA'){e.preventDefault();move(-1,0);}if(e.code==='ArrowRight'||e.code==='KeyD'){e.preventDefault();move(1,0);}if(e.code==='ArrowUp'||e.code==='KeyW'){e.preventDefault();move(0,-1);}if(e.code==='ArrowDown'||e.code==='KeyS'){e.preventDefault();move(0,1);}if(e.code==='Space'||e.code==='Enter'){e.preventDefault();action();}if(e.code==='KeyX'){e.preventDefault();reroll();}if(e.code==='KeyZ'){e.preventDefault();commit();}if(e.code==='Digit1'){e.preventDefault();hold(0);}if(e.code==='Digit2'){e.preventDefault();hold(1);}if(e.code==='Digit3'){e.preventDefault();hold(2);}if(e.code==='Digit4'){e.preventDefault();hold(3);}if(e.code==='Digit5'){e.preventDefault();hold(4);}if(e.code==='BracketLeft'||e.code==='Comma'){e.preventDefault();moveCat(-1);}if(e.code==='BracketRight'||e.code==='Period'){e.preventDefault();moveCat(1);}if(e.code==='KeyP'){e.preventDefault();pause();}if(e.code==='KeyR'){e.preventDefault();start();}if(e.code==='KeyF'){e.preventDefault();fs();}}
+function canvasDie(cx,cy){const r=cv.getBoundingClientRect(),sx=cv.width/r.width,sy=cv.height/r.height,xp=(cx-r.left)*sx,yp=(cy-r.top)*sy,sz=110,dy=150;if(yp<dy||yp>dy+sz+22)return null;for(let i=0;i<5;i++){const px=80+i*136;if(xp>=px&&xp<=px+sz)return i;}return null;}
+window.addEventListener('keydown',key);cv.addEventListener('pointerdown',e=>{if(st.mode!=='running')return;const i=canvasDie(e.clientX,e.clientY);if(i!=null){st.focus.area='dice';st.focus.index=i;hold(i);}});
+document.querySelectorAll('[data-h]').forEach(b=>b.addEventListener('click',()=>hold(Number(b.dataset.h))));
+document.getElementById('prev').addEventListener('click',()=>moveCat(-1));document.getElementById('next').addEventListener('click',()=>moveCat(1));document.getElementById('reroll').addEventListener('click',reroll);document.getElementById('lock').addEventListener('click',commit);document.getElementById('pause').addEventListener('click',pause);document.getElementById('restart').addEventListener('click',start);document.getElementById('fs').addEventListener('click',fs);document.getElementById('startBtn').addEventListener('click',start);document.getElementById('ovFs').addEventListener('click',fs);
+window.advanceTime=ms=>step(ms);
+window.render_game_to_text=()=>JSON.stringify({game:'diceforge',mode:st.mode,coordinate_system:'UI state uses dice indices 0-4 left->right and category indices 0-7 top->bottom',objective:{rounds_total:ROUND_LIMIT,target_score:WIN_SCORE,total_time_seconds:TOTAL_SECONDS},resources:{elapsed_seconds:Number(st.time.toFixed(3)),time_left_seconds:Number(st.timeLeft.toFixed(3)),round_time_left_seconds:Number(st.roundTimeLeft.toFixed(3)),rerolls_left:st.rerollsLeft,total_score:Math.round(st.totalScore),round_number:st.round},player:{focus_area:st.focus.area,focus_index:st.focus.index},dice:st.dice.map((v,i)=>({index:i,value:v,held:!!st.held[i]})),categories:CATS.map((q,i)=>({key:q.key,label:q.label,selected:i===st.selectedCategoryIndex,locked:st.categoryScores[q.key]!=null,locked_score:st.categoryScores[q.key]??null,preview_score:q.calc(st.dice)})),recent_locks:st.log,controls:{move_focus:'ArrowKeys/WASD',action:'Space/Enter',reroll:'X',lock_category:'Z',hold_direct:'Digit1-5',category_cycle:'[ ] or , .',pause:'P',restart:'R'},result:st.result,coins:Number(profileState?.coins||0)});
+reset();draw();hud();setOv('Dice Forge','Draft dice over eight rounds. Lock each category once and beat 170 points.','Start Run');
+raf=requestAnimationFrame(now=>{prev=now;frame(now)});window.addEventListener('beforeunload',()=>cancelAnimationFrame(raf));
+</script>
+<script type="module">import { mountGameFeedback } from '../src/feedback/embed.js'; mountGameFeedback({ gameSlug:'diceforge', gameName:'Dice Forge' });</script>
+</body></html>

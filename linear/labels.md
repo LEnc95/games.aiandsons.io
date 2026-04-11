@@ -73,5 +73,7 @@
 - game/bytebloom
 - game/gemswap
 - game/hexharvest
+- game/wordweave
+- game/diceforge
 
 Generated from `src/meta/feedback.js`.

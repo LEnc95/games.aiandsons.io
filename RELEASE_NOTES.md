@@ -1,18 +1,18 @@
 # Release Notes - Sprint 6 Launch Candidate
-## Weekly Highlights (2026-03-29 to 2026-04-03)
-- Added and wired multiple new games in the launcher during the week, including `riftdrifter`, `circuitpath`, `signalstack`, `linerider`, `vaultrunner`, `chromeshift`, and `trailblazergrid`.
-- Reworked `chromeshift` from its initial launch into a distinct color-flood puzzle and recorded the rewrite delivery status.
-- Landed a broad security hardening pass with high-severity XSS fixes across upload, premium track, challenge properties, feedback/embed surfaces, and index search rendering, plus a production session-secret fallback fix.
-- Improved feedback/billing and provisioning performance by debouncing search and localStorage writes, optimizing feedback and Firestore rate limiting, parallelizing Linear baseline/label provisioning, and reducing redundant Stripe family-summary lookups.
-- Expanded quality coverage with new tests for storage getters, onboarding normalization, games list integrity, and receipt verification, while also stabilizing nightly launch-readiness smoke screenshots.
+## Weekly Highlights (2026-04-04 to 2026-04-10)
+- Added and wired three new games in the launcher this week: `portpilot`, `hexharvest`, and `wordweave`.
+- Strengthened security hardening with host-header trust fixes, stricter production secret handling for session and feedback attachment flows, and CSP baseline/header rollout updates.
+- Improved discovery and shop UX with actionable empty-search states and clear-filters CTAs across index and shop surfaces.
+- Optimized runtime performance by debouncing shop search interactions and adding batched/cached KPI event persistence.
+- Improved family invite reliability by expiring and reconciling invite records concurrently.
 
-## Key PR Links (2026-03-29 to 2026-04-03)
-- [#78](https://github.com/LEnc95/games.aiandsons.io/pull/78) - Debounce localStorage save operations for client-state persistence (merged 2026-04-02).
-- [#77](https://github.com/LEnc95/games.aiandsons.io/pull/77) - Add Escape key modal-close accessibility support (merged 2026-04-02).
-- [#76](https://github.com/LEnc95/games.aiandsons.io/pull/76) - Fix production session secret fallback behavior (merged 2026-04-02).
-- [#73](https://github.com/LEnc95/games.aiandsons.io/pull/73) - Optimize Stripe family summary lookups in invite handlers (merged 2026-04-01).
-- [#63](https://github.com/LEnc95/games.aiandsons.io/pull/63) - Fix index.html XSS vulnerability in search rendering flow (merged 2026-04-01).
-- [#53](https://github.com/LEnc95/games.aiandsons.io/pull/53) - Add Signal Stack game and launcher wiring (merged 2026-03-31).
+## Key PR Links (2026-04-04 to 2026-04-10)
+- [#100](https://github.com/LEnc95/games.aiandsons.io/pull/100) - Add clear-filters UX path for empty search/filter states (merged 2026-04-09).
+- [#99](https://github.com/LEnc95/games.aiandsons.io/pull/99) - Apply follow-up CSP security fixes (merged 2026-04-09).
+- [#96](https://github.com/LEnc95/games.aiandsons.io/pull/96) - Optimize KPI metrics persistence path (merged 2026-04-09).
+- [#94](https://github.com/LEnc95/games.aiandsons.io/pull/94) - Add CSP baseline configuration for deployment (merged 2026-04-09).
+- [#93](https://github.com/LEnc95/games.aiandsons.io/pull/93) - Parallelize family invite reconciliation flow (merged 2026-04-09).
+- [#90](https://github.com/LEnc95/games.aiandsons.io/pull/90) - Fix session secret fallback behavior in production paths (merged 2026-04-09).
 
 ## Release Scope
 - Onboarding split from home launcher with dedicated parent and teacher onboarding pages.
