@@ -12,3 +12,7 @@
 ## 2024-05-21 - Memory Caching and Array Slice vs JSON Parsing
 **Learning:** In `src/core/metrics.js`, tracking events triggered a full synchronous `localStorage.getItem` parse, followed by O(N) re-normalization of up to 1000 items on *every single event insertion*. This caused massive main-thread latency (300ms+ for 100 events) during high-frequency tracking bursts.
 **Action:** Always maintain an in-memory variable (e.g. `memoryState`) for frequently modified array state rather than reading and re-parsing from `localStorage` each time. Append and bound the array using `slice(-MAX_SIZE)` directly on the in-memory array, and defer the serialization to a batched microtask.
+
+## 2024-05-22 - Replacing sequential loops with parallel Promise.all in admin handlers
+**Learning:** Sequential iterations inside data lookup endpoints (such as `handleAdminLookup` in `api/stripe/_handlers.js`) over aggregate function calls (e.g., `buildBillingAdminRecord`) that internally trigger multiple sequential async operations cause massive N+1 bottleneck behavior and delay API responses.
+**Action:** When a handler needs to hydrate an array of metadata entries without strict sequential dependency, wrap the synchronous iterator (`for...of` or `.map()`) in an `await Promise.all()` boundary to distribute the network/DB I/O requests concurrently, reducing blocking accumulation.
