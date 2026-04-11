@@ -4,3 +4,6 @@
 ## 2025-04-09 - Actionable Empty States for Search Filters
 **Learning:** Empty states caused by search/filter inputs can act as dead-ends for users, requiring them to manually back out of inputs to recover. This is especially tedious on mobile or for keyboard users.
 **Action:** Added a "Clear Filters" call-to-action button directly inside the empty state message. This provides a one-click recovery path, improving task success rates and reducing friction when exploring games or shop items.
+## 2026-04-11 - Modal Focus Restoration
+**Learning:** Custom modals must restore focus to the previously focused element when closed to maintain keyboard accessibility and prevent users from losing their place in the tab order.
+**Action:** When creating or modifying custom modals, ensure `document.activeElement` is saved before opening, and explicitly focus it upon closure.
