@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Word Weave - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Trace letter paths to spell target words before the clock runs out." />
+  <meta property="og:title" content="Word Weave - Play on Cade's Games" />
+  <meta property="og:description" content="Trace letter paths to spell target words before the clock runs out." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://games.aiandsons.io/wordweave" />
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <meta property="og:site_name" content="Cade's Games" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Word Weave - Play on Cade's Games" />
+  <meta name="twitter:description" content="Trace letter paths to spell target words before the clock runs out." />
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+  <link rel="canonical" href="https://games.aiandsons.io/wordweave" />
+  <style>
+    :root {
+      --bg0: #0a1730;
+      --bg1: #182b4f;
+      --panel: rgba(11, 22, 44, 0.88);
+      --line: rgba(132, 203, 255, 0.35);
+      --text: #e9f7ff;
+      --muted: #b4d4ea;
+      --good: #9effcc;
+      --warn: #ffd78c;
+      --bad: #ff9db2;
+      --tile: #20426c;
+      --tile-hi: #2f5e95;
+      --tile-focus: #8bd4ff;
+      --tile-selected: #66c8f4;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(70% 60% at 15% 10%, #284d7f 0%, transparent 60%),
+        radial-gradient(80% 80% at 88% 90%, #163054 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px));
+      left: calc(env(safe-area-inset-left, 12px));
+      z-index: 40;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: max(calc(env(safe-area-inset-top, 10px) + 48px), 62px) 10px calc(env(safe-area-inset-bottom, 10px) + 10px);
+    }
+    .canvas-wrap {
+      width: min(96vw, 980px);
+      max-height: min(66dvh, 740px);
+      aspect-ratio: 16 / 10;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 2px solid rgba(128, 204, 255, 0.58);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, #1b3358 0%, #0f2039 100%);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 170ms ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel {
+      max-width: 700px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44);
+      padding: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4.2vw, 38px);
+      letter-spacing: 0.04em;
+    }
+    p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: clamp(13px, 2.1vw, 15px);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(22, 45, 74, 0.95);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 42px;
+    }
+    .hud {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .chip {
+      border-radius: 9px;
+      border: 1px solid rgba(182, 229, 255, 0.26);
+      background: rgba(255, 255, 255, 0.08);
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+      padding: 4px;
+    }
+    .chip span {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .chip b {
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height: 1.1;
+    }
+    .chip.good b { color: var(--good); }
+    .chip.warn b { color: var(--warn); }
+    .chip.bad b { color: var(--bad); }
+    .controls {
+      width: min(96vw, 980px);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      max-width: 320px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .dpad .blank { visibility: hidden; pointer-events: none; }
+    .touch-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .touch-group button { min-width: 96px; }
+    @media (max-width: 900px) {
+      .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="/" aria-label="Back to Home">&larr; Back</a>
+
+  <main class="app">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1200" height="760" aria-label="Word Weave game canvas"></canvas>
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <h1>Word Weave</h1>
+          <p>Spell each target word by tracing adjacent letters. Keep the streak alive before time runs out.</p>
+          <p>Desktop: arrows or WASD move cursor, Space/Enter select, Backspace undo, C clear, X shuffle, P pause, R restart, F fullscreen.</p>
+          <p>Mobile: use the d-pad plus Select/Undo/Clear/Shuffle.</p>
+          <div class="row">
+            <button id="startBtn" type="button">Start Run</button>
+            <button id="overlayFsBtn" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="hud" aria-live="polite">
+      <div class="chip"><span>Mode</span><b id="hudMode">MENU</b></div>
+      <div class="chip"><span>Target</span><b id="hudTarget">SYNC</b></div>
+      <div class="chip"><span>Input</span><b id="hudInput">-</b></div>
+      <div class="chip good"><span>Solved</span><b id="hudSolved">0</b></div>
+      <div class="chip"><span>Streak</span><b id="hudStreak">0</b></div>
+      <div class="chip warn"><span>Time</span><b id="hudTime">100.0s</b></div>
+      <div class="chip"><span>Score</span><b id="hudScore">0</b></div>
+      <div class="chip"><span>Coins</span><b id="hudCoins">0</b></div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="dpad">
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="up">Up</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="left">Left</button>
+        <button type="button" id="btnSelect">Select</button>
+        <button type="button" data-move="right">Right</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+        <button type="button" data-move="down">Down</button>
+        <button class="blank" type="button" tabindex="-1" aria-hidden="true">-</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" id="btnUndo">Undo</button>
+        <button type="button" id="btnClear">Clear</button>
+        <button type="button" id="btnShuffle">Shuffle</button>
+        <button type="button" id="btnPause">Pause</button>
+        <button type="button" id="btnRestart">Restart</button>
+        <button type="button" id="btnFullscreen">Fullscreen</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+    import { maybeUnlock } from '/src/prog/achievements.js';
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const overlay = document.getElementById('overlay');
+    const hudMode = document.getElementById('hudMode');
+    const hudTarget = document.getElementById('hudTarget');
+    const hudInput = document.getElementById('hudInput');
+    const hudSolved = document.getElementById('hudSolved');
+    const hudStreak = document.getElementById('hudStreak');
+    const hudTime = document.getElementById('hudTime');
+    const hudScore = document.getElementById('hudScore');
+    const hudCoins = document.getElementById('hudCoins');
+
+    const btnSelect = document.getElementById('btnSelect');
+    const btnUndo = document.getElementById('btnUndo');
+    const btnClear = document.getElementById('btnClear');
+    const btnShuffle = document.getElementById('btnShuffle');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    const GRID = 6;
+    const ROUND_SECONDS = 100;
+    const WIN_TARGET = 12;
+    const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const WORD_POOL = [
+      'SYNC', 'GRID', 'TRACE', 'CODE', 'NODE', 'WAVE', 'FLUX', 'BLOOM', 'SPARK', 'QUEST',
+      'CLOUD', 'LASER', 'PIXEL', 'SHIFT', 'RIVER', 'STARS', 'MUSIC', 'LIGHT', 'STORM', 'CRANE',
+    ];
+
+    const state = {
+      mode: 'menu',
+      result: null,
+      time: 0,
+      timeLeft: ROUND_SECONDS,
+      score: 0,
+      wordsSolved: 0,
+      streak: 0,
+      targetWord: 'SYNC',
+      inputWord: '',
+      board: [],
+      selectedCells: [],
+      cursor: { x: Math.floor(GRID / 2), y: Math.floor(GRID / 2) },
+      shuffleCharges: 3,
+    };
+
+    let controlledStep = false;
+    let rafId = 0;
+    let previousTime = performance.now();
+
+    function randInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function randomLetter() {
+      return LETTERS[randInt(LETTERS.length)];
+    }
+
+    function keyFor(x, y) {
+      return `${x},${y}`;
+    }
+
+    function getNeighbors(x, y) {
+      const list = [];
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < GRID && ny >= 0 && ny < GRID) {
+            list.push({ x: nx, y: ny });
+          }
+        }
+      }
+      return list;
+    }
+
+    function buildPath(length) {
+      for (let attempt = 0; attempt < 180; attempt += 1) {
+        const start = { x: randInt(GRID), y: randInt(GRID) };
+        const path = [start];
+        const used = new Set([keyFor(start.x, start.y)]);
+        while (path.length < length) {
+          const head = path[path.length - 1];
+          const options = getNeighbors(head.x, head.y)
+            .filter((pos) => !used.has(keyFor(pos.x, pos.y)));
+          if (!options.length) break;
+          const pick = options[randInt(options.length)];
+          path.push(pick);
+          used.add(keyFor(pick.x, pick.y));
+        }
+        if (path.length === length) return path;
+      }
+      return null;
+    }
+
+    function chooseWord() {
+      return WORD_POOL[randInt(WORD_POOL.length)];
+    }
+
+    function rebuildBoard(word) {
+      const board = Array.from({ length: GRID }, () =>
+        Array.from({ length: GRID }, () => ({ letter: randomLetter() })));
+      const path = buildPath(word.length);
+      if (path) {
+        for (let i = 0; i < word.length; i += 1) {
+          const pos = path[i];
+          board[pos.y][pos.x].letter = word[i];
+        }
+      }
+      state.board = board;
+      state.selectedCells = [];
+      state.inputWord = '';
+    }
+
+    function setOverlay(title, desc, cta) {
+      overlay.innerHTML = `
+        <div class="panel">
+          <h1>${title}</h1>
+          <p>${desc}</p>
+          <p>Desktop: arrows or WASD move, Space/Enter select, Backspace undo, C clear, X shuffle.</p>
+          <p>Mobile: d-pad + Select. Use Shuffle when you get stuck.</p>
+          <div class="row">
+            <button id="overlayAction" type="button">${cta}</button>
+            <button id="overlayFs" type="button">Fullscreen</button>
+          </div>
+        </div>
+      `;
+      overlay.classList.add('show');
+      overlay.querySelector('#overlayAction')?.addEventListener('click', startRun);
+      overlay.querySelector('#overlayFs')?.addEventListener('click', toggleFullscreen);
+    }
+
+    function hideOverlay() {
+      overlay.classList.remove('show');
+    }
+
+    function resetRun() {
+      state.mode = 'menu';
+      state.result = null;
+      state.time = 0;
+      state.timeLeft = ROUND_SECONDS;
+      state.score = 0;
+      state.wordsSolved = 0;
+      state.streak = 0;
+      state.shuffleCharges = 3;
+      state.cursor.x = Math.floor(GRID / 2);
+      state.cursor.y = Math.floor(GRID / 2);
+      state.targetWord = chooseWord();
+      rebuildBoard(state.targetWord);
+    }
+
+    function startRun() {
+      resetRun();
+      state.mode = 'running';
+      hideOverlay();
+      try {
+        rememberRecent('wordweave');
+      } catch {}
+      try {
+        maybeUnlock({ anyPlay: true, wordweave: { result: 'started', solved: 0, score: 0 } });
+      } catch {}
+    }
+
+    function clearSelection() {
+      state.selectedCells = [];
+      state.inputWord = '';
+    }
+
+    function advanceWord() {
+      state.targetWord = chooseWord();
+      rebuildBoard(state.targetWord);
+    }
+
+    function isSelected(x, y) {
+      return state.selectedCells.some((cell) => cell.x === x && cell.y === y);
+    }
+
+    function canSelect(x, y) {
+      if (isSelected(x, y)) return false;
+      if (!state.selectedCells.length) return true;
+      const last = state.selectedCells[state.selectedCells.length - 1];
+      return Math.abs(last.x - x) <= 1 && Math.abs(last.y - y) <= 1;
+    }
+
+    function submitMismatchPenalty() {
+      state.streak = 0;
+      state.score = Math.max(0, state.score - 15);
+      clearSelection();
+    }
+
+    function selectAt(x, y) {
+      if (state.mode !== 'running') return;
+      if (!canSelect(x, y)) return;
+      state.selectedCells.push({ x, y });
+      state.inputWord += state.board[y][x].letter;
+      if (!state.targetWord.startsWith(state.inputWord)) {
+        submitMismatchPenalty();
+        return;
+      }
+      if (state.inputWord === state.targetWord) {
+        state.wordsSolved += 1;
+        state.streak += 1;
+        state.score += 80 + state.streak * 12;
+        advanceWord();
+      }
+    }
+
+    function selectCursor() {
+      selectAt(state.cursor.x, state.cursor.y);
+    }
+
+    function undoSelection() {
+      if (state.mode !== 'running') return;
+      if (!state.selectedCells.length) return;
+      state.selectedCells.pop();
+      state.inputWord = state.inputWord.slice(0, -1);
+    }
+
+    function shuffleBoard() {
+      if (state.mode !== 'running') return;
+      if (state.shuffleCharges <= 0) return;
+      state.shuffleCharges -= 1;
+      state.timeLeft = Math.max(0, state.timeLeft - 2.5);
+      rebuildBoard(state.targetWord);
+    }
+
+    function moveCursor(dx, dy) {
+      if (state.mode !== 'running') return;
+      state.cursor.x = Math.max(0, Math.min(GRID - 1, state.cursor.x + dx));
+      state.cursor.y = Math.max(0, Math.min(GRID - 1, state.cursor.y + dy));
+    }
+
+    function finishRun(win) {
+      if (state.mode === 'complete') return;
+      state.mode = 'complete';
+      state.result = win ? 'win' : 'lose';
+      const coins = Math.max(4, Math.floor(state.score / 180) + (win ? 10 : 0));
+      try { addCoins(coins); } catch {}
+      try {
+        maybeUnlock({
+          anyPlay: true,
+          wordweave: {
+            result: state.result,
+            solved: state.wordsSolved,
+            score: Math.round(state.score),
+            streak: state.streak,
+          },
+        });
+      } catch {}
+      const note = win
+        ? `Great run. You solved ${state.wordsSolved} words and earned ${coins} coins.`
+        : `Time up. You solved ${state.wordsSolved} words and earned ${coins} coins.`;
+      setOverlay(win ? 'Word Weave Clear' : 'Word Weave Complete', note, 'Play Again');
+    }
+
+    function pauseToggle() {
+      if (state.mode === 'running') {
+        state.mode = 'paused';
+        setOverlay('Paused', 'Keep your chain alive when you resume.', 'Resume');
+        return;
+      }
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    }
+
+    function update(dt) {
+      if (state.mode !== 'running') return;
+      state.time += dt;
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+
+      if (state.wordsSolved >= WIN_TARGET) {
+        finishRun(true);
+        return;
+      }
+      if (state.timeLeft <= 0) {
+        finishRun(false);
+      }
+    }
+
+    function drawBoard(boardX, boardY, boardSize) {
+      const tile = boardSize / GRID;
+      const selected = new Set(state.selectedCells.map((cell) => keyFor(cell.x, cell.y)));
+
+      ctx.fillStyle = 'rgba(8, 18, 34, 0.85)';
+      ctx.fillRect(boardX - 12, boardY - 12, boardSize + 24, boardSize + 24);
+
+      for (let y = 0; y < GRID; y += 1) {
+        for (let x = 0; x < GRID; x += 1) {
+          const px = boardX + x * tile;
+          const py = boardY + y * tile;
+          const selectedCell = selected.has(keyFor(x, y));
+          const cursorCell = state.cursor.x === x && state.cursor.y === y;
+
+          ctx.fillStyle = selectedCell ? 'rgba(102, 200, 244, 0.55)' : 'rgba(33, 70, 111, 0.95)';
+          ctx.fillRect(px + 3, py + 3, tile - 6, tile - 6);
+
+          if (cursorCell) {
+            ctx.strokeStyle = 'rgba(139, 212, 255, 1)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(px + 5, py + 5, tile - 10, tile - 10);
+          }
+
+          ctx.fillStyle = '#f1fbff';
+          ctx.font = '700 34px Trebuchet MS';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(state.board[y][x].letter, px + tile / 2, py + tile / 2 + 2);
+        }
+      }
+    }
+
+    function drawTrail(boardX, boardY, boardSize) {
+      if (state.selectedCells.length < 2) return;
+      const tile = boardSize / GRID;
+      ctx.strokeStyle = 'rgba(180, 237, 255, 0.85)';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < state.selectedCells.length; i += 1) {
+        const cell = state.selectedCells[i];
+        const cx = boardX + (cell.x + 0.5) * tile;
+        const cy = boardY + (cell.y + 0.5) * tile;
+        if (i === 0) ctx.moveTo(cx, cy);
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+    }
+
+    function draw() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#173459');
+      grad.addColorStop(1, '#0b1a32');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const boardSize = 560;
+      const boardX = 130;
+      const boardY = 98;
+
+      drawBoard(boardX, boardY, boardSize);
+      drawTrail(boardX, boardY, boardSize);
+
+      ctx.fillStyle = '#eef9ff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = '700 34px Trebuchet MS';
+      ctx.fillText('Word Weave', 760, 124);
+
+      ctx.font = '700 22px Trebuchet MS';
+      ctx.fillStyle = '#d7f0ff';
+      ctx.fillText(`Target: ${state.targetWord}`, 760, 176);
+      ctx.fillText(`Input: ${state.inputWord || '-'}`, 760, 214);
+      ctx.fillText(`Solved: ${state.wordsSolved}/${WIN_TARGET}`, 760, 252);
+      ctx.fillText(`Streak: ${state.streak}`, 760, 290);
+      ctx.fillText(`Shuffles: ${state.shuffleCharges}`, 760, 328);
+      ctx.fillText(`Time: ${Math.max(0, state.timeLeft).toFixed(1)}s`, 760, 366);
+      ctx.fillText(`Score: ${Math.round(state.score)}`, 760, 404);
+
+      ctx.fillStyle = '#afceeb';
+      ctx.font = '600 16px Trebuchet MS';
+      ctx.fillText('Select adjacent letters only.', 760, 462);
+      ctx.fillText('Wrong chain clears input and streak.', 760, 490);
+      ctx.fillText('Tap tiles directly or use cursor controls.', 760, 518);
+    }
+
+    function updateHud() {
+      hudMode.textContent = state.mode.toUpperCase();
+      hudTarget.textContent = state.targetWord;
+      hudInput.textContent = state.inputWord || '-';
+      hudSolved.textContent = String(state.wordsSolved);
+      hudStreak.textContent = String(state.streak);
+      hudTime.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+      hudScore.textContent = String(Math.round(state.score));
+      hudCoins.textContent = String(Number(profileState?.coins || 0));
+
+      hudTime.parentElement.classList.toggle('good', state.timeLeft >= 60);
+      hudTime.parentElement.classList.toggle('warn', state.timeLeft < 60 && state.timeLeft >= 25);
+      hudTime.parentElement.classList.toggle('bad', state.timeLeft < 25);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    function stepFixed(ms) {
+      const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+      controlledStep = true;
+      for (let i = 0; i < steps; i += 1) update(1 / 60);
+      draw();
+      updateHud();
+      controlledStep = false;
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      previousTime = now;
+      if (!controlledStep) {
+        update(dt);
+        draw();
+        updateHud();
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function handleKey(event) {
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); moveCursor(-1, 0); }
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); moveCursor(1, 0); }
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); moveCursor(0, -1); }
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); moveCursor(0, 1); }
+      if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); selectCursor(); }
+      if (event.code === 'Backspace') { event.preventDefault(); undoSelection(); }
+      if (event.code === 'KeyC') { event.preventDefault(); clearSelection(); }
+      if (event.code === 'KeyX') { event.preventDefault(); shuffleBoard(); }
+      if (event.code === 'KeyP') { event.preventDefault(); pauseToggle(); }
+      if (event.code === 'KeyR') { event.preventDefault(); startRun(); }
+      if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+    }
+
+    function canvasToCell(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (clientX - rect.left) * scaleX;
+      const y = (clientY - rect.top) * scaleY;
+      const boardSize = 560;
+      const boardX = 130;
+      const boardY = 98;
+      if (x < boardX || y < boardY || x >= boardX + boardSize || y >= boardY + boardSize) return null;
+      const tile = boardSize / GRID;
+      return {
+        x: Math.floor((x - boardX) / tile),
+        y: Math.floor((y - boardY) / tile),
+      };
+    }
+
+    window.addEventListener('keydown', handleKey);
+    canvas.addEventListener('pointerdown', (event) => {
+      const cell = canvasToCell(event.clientX, event.clientY);
+      if (!cell) return;
+      state.cursor.x = cell.x;
+      state.cursor.y = cell.y;
+      selectAt(cell.x, cell.y);
+    });
+
+    for (const button of document.querySelectorAll('[data-move]')) {
+      button.addEventListener('click', () => {
+        const dir = button.dataset.move;
+        if (dir === 'left') moveCursor(-1, 0);
+        if (dir === 'right') moveCursor(1, 0);
+        if (dir === 'up') moveCursor(0, -1);
+        if (dir === 'down') moveCursor(0, 1);
+      });
+    }
+
+    btnSelect.addEventListener('click', selectCursor);
+    btnUndo.addEventListener('click', undoSelection);
+    btnClear.addEventListener('click', clearSelection);
+    btnShuffle.addEventListener('click', shuffleBoard);
+    btnPause.addEventListener('click', pauseToggle);
+    btnRestart.addEventListener('click', startRun);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('overlayFsBtn').addEventListener('click', toggleFullscreen);
+
+    window.advanceTime = (ms) => {
+      stepFixed(ms);
+    };
+
+    window.render_game_to_text = () => {
+      const selected = new Set(state.selectedCells.map((cell) => keyFor(cell.x, cell.y)));
+      const payload = {
+        game: 'wordweave',
+        mode: state.mode,
+        coordinate_system: '6x6 letter board with origin at top-left (0,0); x increases right and y increases downward',
+        objective: {
+          solve_words: WIN_TARGET,
+          survive_seconds: ROUND_SECONDS,
+          current_target: state.targetWord,
+        },
+        resources: {
+          elapsed_seconds: Number(state.time.toFixed(3)),
+          time_left_seconds: Number(state.timeLeft.toFixed(3)),
+          score: Math.round(state.score),
+          words_solved: state.wordsSolved,
+          streak: state.streak,
+          shuffles_remaining: state.shuffleCharges,
+        },
+        player: {
+          cursor_x: state.cursor.x,
+          cursor_y: state.cursor.y,
+          current_input: state.inputWord,
+        },
+        visible_board: state.board.map((row, y) =>
+          row.map((cell, x) => ({ letter: cell.letter, selected: selected.has(keyFor(x, y)) }))),
+        controls: {
+          move: 'ArrowKeys/WASD',
+          select: 'Space/Enter',
+          undo: 'Backspace',
+          clear: 'C',
+          shuffle: 'X',
+          pause: 'P',
+          restart: 'R',
+        },
+        result: state.result,
+        coins: Number(profileState?.coins || 0),
+      };
+      return JSON.stringify(payload);
+    };
+
+    resetRun();
+    draw();
+    updateHud();
+    setOverlay('Word Weave', 'Trace letter paths to solve 12 words before the timer runs out.', 'Start Run');
+
+    rafId = requestAnimationFrame((now) => {
+      previousTime = now;
+      frame(now);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(rafId);
+    });
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'wordweave', gameName: 'Word Weave' });
+  </script>
+</body>
+</html>

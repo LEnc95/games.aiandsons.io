@@ -139,6 +139,10 @@ function getFeedbackAttachmentSecret() {
     : "";
   if (appSessionSecret) return appSessionSecret;
 
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    throw new Error("Missing FEEDBACK_ATTACHMENT_SECRET or APP_SESSION_SECRET in production.");
+  }
+
   return "cade-games-feedback-attachment-secret";
 }
 

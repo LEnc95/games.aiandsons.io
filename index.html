@@ -657,6 +657,30 @@
         <p class="game-desc">Plant pulse-seeds, spread healthy bloom, and contain blight pockets before your timer expires.</p>
         <div class="game-link">Play Byte Bloom &rarr;</div>
       </a>
+      <a href="/gemswap" class="game-card">
+        <div class="game-icon">&#128142;</div>
+        <h2 class="game-title">Gem Swap Blitz</h2>
+        <p class="game-desc">Swap adjacent gems, trigger cascades, and beat the target score before the round timer expires.</p>
+        <div class="game-link">Play Gem Swap Blitz &rarr;</div>
+      </a>
+      <a href="/hexharvest" class="game-card">
+        <div class="game-icon">&#127806;</div>
+        <h2 class="game-title">Hex Harvest</h2>
+        <p class="game-desc">Grow and harvest a living field while clearing spreading weeds before soil health collapses.</p>
+        <div class="game-link">Play Hex Harvest &rarr;</div>
+      </a>
+      <a href="/wordweave" class="game-card">
+        <div class="game-icon">&#128221;</div>
+        <h2 class="game-title">Word Weave</h2>
+        <p class="game-desc">Trace adjacent letter paths, complete target words, and build streaks before the timer expires.</p>
+        <div class="game-link">Play Word Weave &rarr;</div>
+      </a>
+      <a href="/diceforge" class="game-card">
+        <div class="game-icon">&#127922;</div>
+        <h2 class="game-title">Dice Forge</h2>
+        <p class="game-desc">Draft dice with hold-and-reroll strategy, then lock each scoring category before the forge timer expires.</p>
+        <div class="game-link">Play Dice Forge &rarr;</div>
+      </a>
     </div>
     
     <footer>
@@ -813,6 +837,7 @@
     let lastClassroomSessionActive = isClassroomSessionActive();
     let gameSearchQuery = '';
     let gameCoinFilter = 'all';
+    let lastFocusedElement = null;
 
     function renderOnboarding() {
       const onboarding = getOnboardingState();
@@ -1044,6 +1069,7 @@
     }
 
     function openClassroom() {
+      lastFocusedElement = document.activeElement;
       classroomEnabledEl.checked = Boolean(state.classroom.enabled);
       classroomPinEl.value = state.classroom.teacherPin || '';
       classroomDurationEl.value = String(state.classroom.session.durationMinutes || 30);
@@ -1054,6 +1080,10 @@
 
     window.closeClassroom = () => {
       classroomModal.classList.remove('active');
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+      }
     };
 
     window.saveClassroomSettings = (closeModal = true) => {
@@ -1154,7 +1184,19 @@
 
       gameSearchCountEl.textContent = `Showing ${filteredGames.length} of ${GAMES.length} games`;
       if (!filteredGames.length) {
-        gamesGrid.innerHTML = '<div class="games-empty">No games match this search/filter yet.</div>';
+        gamesGrid.innerHTML = `
+          <div class="games-empty" style="grid-column: 1 / -1;">
+            <p style="margin-top:0;">No games match this search/filter yet.</p>
+            <button class="onboarding-btn" id="clearFiltersBtn">Clear Filters</button>
+          </div>
+        `;
+        document.getElementById('clearFiltersBtn').onclick = () => {
+          gameSearchInputEl.value = '';
+          gameCoinFilterEl.value = 'all';
+          gameSearchQuery = '';
+          gameCoinFilter = 'all';
+          updateUI();
+        };
         return;
       }
 
@@ -1212,9 +1254,14 @@
 
     window.closeProfile = () => {
       document.getElementById('profileModal').classList.remove('active');
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+      }
     };
 
     document.getElementById('profileBtn').onclick = () => {
+      lastFocusedElement = document.activeElement;
       const modal = document.getElementById('profileModal');
       document.getElementById('profileName').value = state.profile.name || '';
       modal.classList.add('active');
@@ -1230,15 +1277,20 @@
 
     document.getElementById('profileModal').onclick = (e) => {
       if (e.target.classList.contains('modal-backdrop')) {
-        e.target.classList.remove('active');
+        closeProfile();
       }
     };
 
     window.closeBadges = () => {
       document.getElementById('badgesModal').classList.remove('active');
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+      }
     };
 
     document.getElementById('badgesBtn').onclick = () => {
+      lastFocusedElement = document.activeElement;
       const modal = document.getElementById('badgesModal');
       const grid = document.getElementById('badgesGrid');
       const badges = listBadges();
@@ -1257,7 +1309,7 @@
 
     document.getElementById('badgesModal').onclick = (e) => {
       if (e.target.classList.contains('modal-backdrop')) {
-        e.target.classList.remove('active');
+        closeBadges();
       }
     };
 
@@ -1316,6 +1368,10 @@
         const activeModal = document.querySelector('.modal-backdrop.active');
         if (activeModal) {
           activeModal.classList.remove('active');
+          if (lastFocusedElement) {
+            lastFocusedElement.focus();
+            lastFocusedElement = null;
+          }
           return;
         }
       }

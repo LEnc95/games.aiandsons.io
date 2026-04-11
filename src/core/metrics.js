@@ -100,30 +100,35 @@ export const normalizeMetricsState = (source) => {
   return { events };
 };
 
-let cachedState = null;
+let memoryState = null;
 let saveQueued = false;
 
-const flushSave = () => {
-  if (cachedState) {
-    set(METRICS_STORAGE_KEY, cachedState);
-  }
+const flushMetricsSave = () => {
   saveQueued = false;
+  if (memoryState) {
+    set(METRICS_STORAGE_KEY, memoryState);
+  }
 };
 
 export const getMetricsState = () => {
-  if (cachedState) return cachedState;
-  cachedState = normalizeMetricsState(get(METRICS_STORAGE_KEY, DEFAULT_METRICS_STATE));
-  return cachedState;
+  if (!memoryState) {
+    memoryState = normalizeMetricsState(get(METRICS_STORAGE_KEY, DEFAULT_METRICS_STATE));
+  }
+  return memoryState;
 };
 
 export const setMetricsState = (nextState) => {
-  cachedState = normalizeMetricsState(nextState);
-  set(METRICS_STORAGE_KEY, cachedState);
-  return cachedState;
+  const normalized = normalizeMetricsState(nextState);
+  memoryState = normalized;
+  if (!saveQueued) {
+    saveQueued = true;
+    Promise.resolve().then(flushMetricsSave);
+  }
+  return normalized;
 };
 
 export const clearMetricsState = () => {
-  cachedState = null;
+  memoryState = null;
   del(METRICS_STORAGE_KEY);
 };
 
@@ -138,18 +143,18 @@ export const trackKpiEvent = (name, meta = {}, timestamp = Date.now()) => {
   const current = getMetricsState();
   if (!event) return current;
 
-  // Immutably append and enforce limit.
-  // The event is already normalized above via normalizeMetricEvent.
-  cachedState = {
+  // ⚡ Bolt Optimization: Use in-memory cache and slice to avoid O(N) re-normalization of the entire events array
+  memoryState = {
     events: [...current.events, event].slice(-MAX_METRIC_EVENTS),
   };
 
+  // ⚡ Bolt Optimization: Batch localStorage saves to prevent main thread blocking during high frequency events
   if (!saveQueued) {
     saveQueued = true;
-    Promise.resolve().then(flushSave);
+    Promise.resolve().then(flushMetricsSave);
   }
 
-  return cachedState;
+  return memoryState;
 };
 
 export const summarizeKpiEvents = (events, options = {}) => {
