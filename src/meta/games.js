@@ -58,5 +58,6 @@ export const GAMES = [
   { slug:'gemswap',        name:'Gem Swap Blitz',      emoji:'\u{1F48E}', scoreHint:'score',      url:'/gemswap',       desc:'Swap adjacent gems, trigger cascades, and beat the target score before the round timer expires.', earnsCoins:true },
   { slug:'hexharvest',     name:'Hex Harvest',         emoji:'\u{1F33E}', scoreHint:'harvest',    url:'/hexharvest',    desc:'Grow and harvest a living field while clearing spreading weeds before soil health collapses.', earnsCoins:true },
   { slug:'wordweave',      name:'Word Weave',          emoji:'\u{1F4DD}', scoreHint:'words',      url:'/wordweave',     desc:'Trace adjacent letter paths, complete target words, and build streaks before the timer expires.', earnsCoins:true },
+  { slug:'diceforge',      name:'Dice Forge',          emoji:'\u{1F3B2}', scoreHint:'score',      url:'/diceforge',     desc:'Draft dice with hold-and-reroll strategy, then lock each scoring category before the forge timer expires.', earnsCoins:true },
 ];
 
