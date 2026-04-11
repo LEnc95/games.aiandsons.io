@@ -140,9 +140,8 @@ export const trackKpiEvent = (name, meta = {}, timestamp = Date.now()) => {
     meta,
   });
 
-  if (!event) return getMetricsState();
-
   const current = getMetricsState();
+  if (!event) return current;
 
   // ⚡ Bolt Optimization: Use in-memory cache and slice to avoid O(N) re-normalization of the entire events array
   memoryState = {
