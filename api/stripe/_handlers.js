@@ -961,11 +961,13 @@ async function handleAdminLookup(req, res) {
       }
     }
 
-    const matches = [];
-    for (const profile of profiles) {
-      const record = await buildBillingAdminRecord(profile);
-      if (record) matches.push(record);
-    }
+    // ⚡ Bolt: Use Promise.all to fetch admin records for multiple profiles concurrently,
+    // avoiding N+1 I/O delays since buildBillingAdminRecord makes multiple async calls.
+    const matches = (
+      await Promise.all(
+        profiles.map((profile) => buildBillingAdminRecord(profile))
+      )
+    ).filter(Boolean);
 
     const familyAccount = lookedUpFamilyAccount ? {
       id: lookedUpFamilyAccount.id,
