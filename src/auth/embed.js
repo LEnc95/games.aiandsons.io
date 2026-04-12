@@ -511,7 +511,7 @@ function createFamilyCard(title, lines = [], badge = "") {
 }
 
 function renderBillingCards(section, model) {
-  section.cardsEl.innerHTML = "";
+  section.cardsEl.textContent = "";
   const cards = Array.isArray(model?.cards) ? model.cards : [];
   section.cardsEl.hidden = cards.length === 0;
   for (const card of cards) {
@@ -773,7 +773,7 @@ export function mountAccountWidget() {
   }
 
   function renderMemberCards(summary) {
-    familySection.membersListEl.innerHTML = "";
+    familySection.membersListEl.textContent = "";
     const family = summary?.family;
     const members = Array.isArray(family?.members) ? family.members : [];
     familySection.membersListEl.hidden = members.length === 0;
@@ -817,7 +817,7 @@ export function mountAccountWidget() {
   }
 
   function renderInviteCards(summary) {
-    familySection.invitesListEl.innerHTML = "";
+    familySection.invitesListEl.textContent = "";
     const invites = Array.isArray(summary?.family?.invites) ? summary.family.invites : [];
     const pendingInvites = invites.filter((invite) => invite.status === "pending");
     const isOwner = summary?.family?.ownerUserId === currentSession?.userId;
@@ -903,7 +903,7 @@ export function mountAccountWidget() {
   }
 
   function renderFamilySummaryCards(summary) {
-    familySection.summaryListEl.innerHTML = "";
+    familySection.summaryListEl.textContent = "";
     const family = summary?.family;
     if (!family) {
       familySection.summaryListEl.hidden = true;
