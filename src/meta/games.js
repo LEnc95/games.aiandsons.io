@@ -59,5 +59,6 @@ export const GAMES = [
   { slug:'hexharvest',     name:'Hex Harvest',         emoji:'\u{1F33E}', scoreHint:'harvest',    url:'/hexharvest',    desc:'Grow and harvest a living field while clearing spreading weeds before soil health collapses.', earnsCoins:true },
   { slug:'wordweave',      name:'Word Weave',          emoji:'\u{1F4DD}', scoreHint:'words',      url:'/wordweave',     desc:'Trace adjacent letter paths, complete target words, and build streaks before the timer expires.', earnsCoins:true },
   { slug:'diceforge',      name:'Dice Forge',          emoji:'\u{1F3B2}', scoreHint:'score',      url:'/diceforge',     desc:'Draft dice with hold-and-reroll strategy, then lock each scoring category before the forge timer expires.', earnsCoins:true },
+  { slug:'keystrike',      name:'Keystrike Command',   emoji:'\u{2328}\uFE0F', scoreHint:'score', url:'/keystrike',     desc:'Type matching signal keys to intercept incoming drones before hull integrity is lost.', earnsCoins:true },
 ];
 

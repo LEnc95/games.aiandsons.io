@@ -75,5 +75,6 @@
 - game/hexharvest
 - game/wordweave
 - game/diceforge
+- game/keystrike
 
 Generated from `src/meta/feedback.js`.

@@ -303,3 +303,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-09] Key PR links: [#90](https://github.com/LEnc95/games.aiandsons.io/pull/90), [#91](https://github.com/LEnc95/games.aiandsons.io/pull/91), [#92](https://github.com/LEnc95/games.aiandsons.io/pull/92), [#93](https://github.com/LEnc95/games.aiandsons.io/pull/93), [#94](https://github.com/LEnc95/games.aiandsons.io/pull/94), [#95](https://github.com/LEnc95/games.aiandsons.io/pull/95), [#96](https://github.com/LEnc95/games.aiandsons.io/pull/96), [#97](https://github.com/LEnc95/games.aiandsons.io/pull/97), [#99](https://github.com/LEnc95/games.aiandsons.io/pull/99), [#100](https://github.com/LEnc95/games.aiandsons.io/pull/100).
 - [nightly 2026-04-10] Tracked changes: 1 commit(s) - Add Word Weave game and wire catalog, routes, and tracking.
 - [nightly 2026-04-10] Key PR links: none merged for this date.
+- [nightly 2026-04-11] Tracked changes: 3 commit(s) - Refresh README with current workflows and backend setup; Add Dice Forge game and wire launcher routes and metadata; Add Word Weave game and wire catalog, routes, and tracking.
+- [nightly 2026-04-11] Key PR links: none merged for this date.
+- [nightly 2026-04-12] No repository commits found for this date.
+- [nightly 2026-04-12] Key PR links: none merged for this date.

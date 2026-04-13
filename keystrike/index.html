@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Keystrike Command - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Type the matching keys to intercept incoming signal drones before hull integrity collapses." />
+<meta property="og:title" content="Keystrike Command - Play on Cade's Games" />
+<meta property="og:description" content="Type the matching keys to intercept incoming signal drones before hull integrity collapses." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/keystrike" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Keystrike Command - Play on Cade's Games" />
+<meta name="twitter:description" content="Type the matching keys to intercept incoming signal drones before hull integrity collapses." />
+<link rel="canonical" href="https://games.aiandsons.io/keystrike" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; touch-action: none; font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif; color: #eaf4ff; background: radial-gradient(65% 70% at 15% 15%, #233f70 0%, transparent 65%), radial-gradient(70% 70% at 82% 92%, #2b1450 0%, transparent 60%), linear-gradient(180deg, #070d1d 0%, #0b1327 100%); }
+.back { position: fixed; top: 12px; left: 12px; z-index: 30; color: #fff; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 10px; border: 1px solid #ffffff54; padding: 8px 12px; background: #00000070; }
+.app { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 62px 10px 10px; }
+.wrap { width: min(96vw, 980px); aspect-ratio: 16 / 10; max-height: min(66dvh, 740px); position: relative; }
+canvas { width: 100%; height: 100%; display: block; border-radius: 14px; border: 2px solid #86bfff96; box-shadow: 0 18px 52px #000000ad; background: linear-gradient(180deg, #121f3f 0%, #0a1226 100%); }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .16s; }
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel { max-width: 700px; border-radius: 14px; border: 1px solid #a2c8ff4d; background: #0b1832ea; box-shadow: 0 14px 30px #0000007d; padding: 16px; }
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.3vw, 40px); }
+p { margin: 0 0 10px; color: #bfd5f3; font-size: clamp(13px, 2.1vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button { border: 1px solid #a4c5ff56; background: #142749f5; color: #edf6ff; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; min-height: 42px; }
+.hud { width: min(96vw, 980px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1832e8; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+.chip { border-radius: 9px; border: 1px solid #b4d6ff3e; background: #ffffff14; min-height: 48px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding: 4px; }
+.chip span { color: #bbd2ef; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9dffd1; }
+.warn b { color: #ffd58e; }
+.bad b { color: #ffa0b5; }
+.controls { width: min(96vw, 980px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1832e8; padding: 10px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.key-btn { background: #1b3f76; border-color: #7fb3ff66; }
+.ctrl-btn { background: #183257; border-color: #9abfff5e; }
+@media (max-width: 900px) { .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); } .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Keystrike Command game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Combo</span><b id="combo">0x</b></div>
+    <div class="chip"><span>Integrity</span><b id="integrity">6</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip"><span>Wave</span><b id="wave">1</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" id="controls" aria-label="Touch controls"></section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const controls = document.getElementById('controls');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const comboEl = document.getElementById('combo');
+const integrityEl = document.getElementById('integrity');
+const timeEl = document.getElementById('time');
+const waveEl = document.getElementById('wave');
+const coinsEl = document.getElementById('coins');
+
+const LETTERS = ['A', 'S', 'D', 'F', 'J', 'K', 'L', 'Q', 'W'];
+const TOTAL_SECONDS = 90;
+const START_INTEGRITY = 6;
+const WIN_SCORE = 640;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  combo: 0,
+  integrity: START_INTEGRITY,
+  wave: 1,
+  spawnTimer: 0,
+  spawnEvery: 1.2,
+  drones: [],
+  log: [],
+  pulse: 0,
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomLetter() { return LETTERS[Math.floor(Math.random() * LETTERS.length)]; }
+function spawnDrone() {
+  const lane = Math.floor(Math.random() * LETTERS.length);
+  const laneWidth = canvas.width / LETTERS.length;
+  const x = lane * laneWidth + laneWidth / 2;
+  const y = -30;
+  const speed = 110 + Math.random() * 80 + state.wave * 8;
+  const letter = randomLetter();
+  state.drones.push({ id: Math.random(), lane, x, y, speed, letter, r: 24 });
+}
+
+function showOverlay(title, body, cta) {
+  overlay.innerHTML = `<div class="panel"><h1>${title}</h1><p>${body}</p><p>Desktop: press matching letter keys. Mobile: tap letter buttons. P pause, R restart, F fullscreen.</p><div class="row"><button id="overlayAction" type="button">${cta}</button><button id="overlayFullscreen" type="button">Fullscreen</button></div></div>`;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', startGame);
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() { overlay.classList.remove('show'); }
+
+function resetGame() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.combo = 0;
+  state.integrity = START_INTEGRITY;
+  state.wave = 1;
+  state.spawnTimer = 0.3;
+  state.spawnEvery = 1.2;
+  state.drones = [];
+  state.log = [];
+  state.pulse = 0;
+}
+
+function startGame() {
+  resetGame();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('keystrike'); } catch {}
+  try { maybeUnlock({ anyPlay: true, keystrike: { result: 'started', score: 0 } }); } catch {}
+}
+
+function addLog(line) {
+  state.log.push(line);
+  if (state.log.length > 4) state.log.shift();
+}
+
+function finishGame(win) {
+  if (state.mode === 'complete') return;
+  state.mode = 'complete';
+  state.result = win ? 'win' : 'lose';
+  const coins = Math.max(5, Math.floor(state.score / 45) + (win ? 14 : 7));
+  try { addCoins(coins); } catch {}
+  try { maybeUnlock({ anyPlay: true, keystrike: { result: state.result, score: Math.round(state.score), wave: state.wave } }); } catch {}
+  showOverlay(win ? 'Signal Grid Secured' : 'Signal Grid Breached', `${win ? 'You held the line.' : 'Intercept chain failed.'} Final score ${Math.round(state.score)} and ${coins} coins.`, 'Play Again');
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Drone descent is frozen. Resume when ready.', 'Resume');
+    return;
+  }
+  if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function fireLetter(letter) {
+  if (state.mode !== 'running') return;
+  const filtered = state.drones.filter((d) => d.letter === letter);
+  if (!filtered.length) {
+    state.combo = 0;
+    addLog(`${letter}: miss`);
+    return;
+  }
+  let target = filtered[0];
+  for (const drone of filtered) {
+    if (drone.y > target.y) target = drone;
+  }
+  state.drones = state.drones.filter((d) => d !== target);
+  state.combo += 1;
+  const gained = 10 + Math.min(20, state.combo * 2);
+  state.score += gained;
+  state.pulse = 0.16;
+  addLog(`${letter}: +${gained}`);
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  state.wave = 1 + Math.floor(state.elapsed / 15);
+  state.spawnEvery = Math.max(0.45, 1.2 - state.elapsed * 0.006);
+  state.spawnTimer -= dt;
+  if (state.spawnTimer <= 0) {
+    spawnDrone();
+    state.spawnTimer += state.spawnEvery;
+  }
+
+  const floorY = canvas.height - 70;
+  const next = [];
+  for (const drone of state.drones) {
+    drone.y += drone.speed * dt;
+    if (drone.y + drone.r >= floorY) {
+      state.integrity -= 1;
+      state.combo = 0;
+      addLog(`${drone.letter}: hull hit`);
+      continue;
+    }
+    next.push(drone);
+  }
+  state.drones = next;
+  if (state.pulse > 0) state.pulse = Math.max(0, state.pulse - dt);
+
+  if (state.integrity <= 0) finishGame(false);
+  else if (state.timeLeft <= 0) finishGame(state.score >= WIN_SCORE);
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#1a2d56');
+  grad.addColorStop(1, '#0a1022');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const laneWidth = canvas.width / LETTERS.length;
+  for (let i = 0; i < LETTERS.length; i += 1) {
+    const x = i * laneWidth;
+    ctx.fillStyle = i % 2 === 0 ? '#ffffff08' : '#00000014';
+    ctx.fillRect(x, 0, laneWidth, canvas.height);
+    ctx.strokeStyle = '#a1c4ff22';
+    ctx.strokeRect(x + 0.5, 0, laneWidth - 1, canvas.height);
+  }
+  ctx.fillStyle = '#86c5ff';
+  ctx.fillRect(0, canvas.height - 70, canvas.width, 70);
+  if (state.pulse > 0) {
+    ctx.fillStyle = `rgba(146, 247, 196, ${state.pulse * 0.45})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function drawDrones() {
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const drone of state.drones) {
+    ctx.fillStyle = '#5f7cff';
+    ctx.beginPath();
+    ctx.arc(drone.x, drone.y, drone.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#d7e6ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#eef5ff';
+    ctx.font = '700 28px Trebuchet MS';
+    ctx.fillText(drone.letter, drone.x, drone.y + 1);
+  }
+}
+
+function drawForeground() {
+  const laneWidth = canvas.width / LETTERS.length;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < LETTERS.length; i += 1) {
+    const x = i * laneWidth + laneWidth / 2;
+    const y = canvas.height - 36;
+    ctx.fillStyle = '#0f1f3e';
+    ctx.beginPath();
+    ctx.roundRect(x - 28, y - 20, 56, 36, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff55';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#f2f8ff';
+    ctx.font = '700 20px Trebuchet MS';
+    ctx.fillText(LETTERS[i], x, y - 1);
+  }
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#eaf4ff';
+  ctx.font = '700 36px Trebuchet MS';
+  ctx.fillText('Keystrike Command', 24, 52);
+  ctx.fillStyle = '#b8ccee';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Goal: score ${WIN_SCORE}+ in ${TOTAL_SECONDS}s while keeping hull above 0.`, 24, 78);
+
+  const lines = state.log.length ? state.log : ['Press start, then hit matching letter keys or tap controls.'];
+  ctx.fillStyle = '#c7d8f4';
+  ctx.font = '600 15px Trebuchet MS';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 24, 106 + i * 20);
+  }
+}
+
+function draw() {
+  drawBackground();
+  drawDrones();
+  drawForeground();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  comboEl.textContent = `${state.combo}x`;
+  integrityEl.textContent = String(Math.max(0, state.integrity));
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  waveEl.textContent = String(state.wave);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const parent = timeEl.parentElement;
+  parent.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.5);
+  parent.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.5 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  parent.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function keyHandler(event) {
+  const k = (event.key || '').toUpperCase();
+  if (LETTERS.includes(k)) {
+    event.preventDefault();
+    fireLetter(k);
+    return;
+  }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function buildControls() {
+  controls.innerHTML = '';
+  for (const letter of LETTERS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'key-btn';
+    btn.textContent = letter;
+    btn.addEventListener('click', () => fireLetter(letter));
+    controls.appendChild(btn);
+  }
+  const pauseBtn = document.createElement('button');
+  pauseBtn.type = 'button';
+  pauseBtn.className = 'ctrl-btn';
+  pauseBtn.textContent = 'Pause';
+  pauseBtn.addEventListener('click', togglePause);
+  controls.appendChild(pauseBtn);
+
+  const restartBtn = document.createElement('button');
+  restartBtn.type = 'button';
+  restartBtn.className = 'ctrl-btn';
+  restartBtn.textContent = 'Restart';
+  restartBtn.addEventListener('click', startGame);
+  controls.appendChild(restartBtn);
+
+  const fsBtn = document.createElement('button');
+  fsBtn.type = 'button';
+  fsBtn.className = 'ctrl-btn';
+  fsBtn.textContent = 'Fullscreen';
+  fsBtn.addEventListener('click', toggleFullscreen);
+  controls.appendChild(fsBtn);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+window.addEventListener('keydown', keyHandler);
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'keystrike',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin at top-left; x increases right; y increases downward; lanes map to letter keys left-to-right.',
+  objective: { target_score: WIN_SCORE, total_time_seconds: TOTAL_SECONDS, keep_integrity_above: 0 },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    combo: state.combo,
+    integrity: state.integrity,
+    wave: state.wave,
+    spawn_every_seconds: Number(state.spawnEvery.toFixed(3)),
+  },
+  lanes: LETTERS.map((letter, index) => ({ index, letter })),
+  drones: state.drones.map((d) => ({ lane: d.lane, x: Number(d.x.toFixed(2)), y: Number(d.y.toFixed(2)), speed: Number(d.speed.toFixed(2)), letter: d.letter })),
+  recent_events: state.log,
+  controls: {
+    intercept: 'A/S/D/F/J/K/L/Q/W',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+buildControls();
+resetGame();
+draw();
+syncHud();
+showOverlay('Keystrike Command', 'Intercept descending signal drones by pressing their letter before they breach hull integrity.', 'Start Defense');
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'keystrike', gameName: 'Keystrike Command' });
+</script>
+</body>
+</html>
