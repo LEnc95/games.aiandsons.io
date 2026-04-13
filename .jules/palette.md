@@ -7,3 +7,6 @@
 ## 2026-04-11 - Modal Focus Restoration
 **Learning:** Custom modals must restore focus to the previously focused element when closed to maintain keyboard accessibility and prevent users from losing their place in the tab order.
 **Action:** When creating or modifying custom modals, ensure `document.activeElement` is saved before opening, and explicitly focus it upon closure.
+## 2026-04-12 - [Feedback Widget Coverage]
+**Learning:** To satisfy `tests/feedback-coverage.integration.test.mjs`, every game page (`index.html`) must explicitly import and call `mountGameFeedback` from `src/feedback/embed.js`.
+**Action:** Always ensure new games have the feedback widget mounted.
