@@ -61,5 +61,6 @@ export const GAMES = [
   { slug:'diceforge',      name:'Dice Forge',          emoji:'\u{1F3B2}', scoreHint:'score',      url:'/diceforge',     desc:'Draft dice with hold-and-reroll strategy, then lock each scoring category before the forge timer expires.', earnsCoins:true },
   { slug:'keystrike',      name:'Keystrike Command',   emoji:'\u{2328}\uFE0F', scoreHint:'score', url:'/keystrike',     desc:'Type matching signal keys to intercept incoming drones before hull integrity is lost.', earnsCoins:true },
   { slug:'pulseparry',     name:'Pulse Parry',         emoji:'\u{1F6E1}\uFE0F', scoreHint:'score', url:'/pulseparry',    desc:'Rotate your shield, time pulse bursts, and parry incoming drones before the core breaks.', earnsCoins:true },
+  { slug:'magnetrail',     name:'Magnet Rail',         emoji:'\u{1F9F2}', scoreHint:'delivered',  url:'/magnetrail',    desc:'Toggle magnetic rails, reroute incoming pods, and deliver them to matching bays before shields collapse.', earnsCoins:true },
 ];
 

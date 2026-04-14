@@ -1759,3 +1759,25 @@ pm.cmd run feedback:sync-linear (updated linear/labels.md + linear/game-issues.c
 - Sandbox blockers: 
 pm.cmd run test:feedback failed with spawn EPERM; required $develop-web-game Playwright run for /pulseparry failed with rowserType.launch: spawn EPERM.
 - Runtime: ~00:16:00.
+
+## 2026-04-14 Magnet Rail automation run
+- New request: add a game not currently on the site.
+- Added brand-new game `magnetrail` at `magnetrail/index.html` with a magnetic-routing gameplay loop.
+  - Core loop: move a cursor across the rail grid and toggle lane deflectors to steer falling pods into matching color bays.
+  - Win/loss loop: deliver `24` pods before time runs out; mismatches drain shield; end-run score + coin payout included.
+  - Controls: desktop (WASD/Arrows + Space/Enter toggle + P/R/F) and mobile buttons (cursor move, toggle, pause, restart, fullscreen).
+  - Platform hooks: `rememberRecent('magnetrail')`, coin rewards via `addCoins`, progression payloads via `maybeUnlock`.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'magnetrail', gameName: 'Magnet Rail' })`.
+- Integrated launcher/routing wiring:
+  - Added `magnetrail` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/magnetrail` rewrites and `/magnetrail/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "magnetrail" magnetrail/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/magnetrail`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/magnetrail` in an environment that allows child-process and Chromium launch.

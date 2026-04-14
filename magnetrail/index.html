@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Magnet Rail - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Toggle magnetic rails, reroute incoming pods, and deliver them to matching bays before shields collapse." />
+<meta property="og:title" content="Magnet Rail - Play on Cade's Games" />
+<meta property="og:description" content="Toggle magnetic rails, reroute incoming pods, and deliver them to matching bays before shields collapse." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/magnetrail" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Magnet Rail - Play on Cade's Games" />
+<meta name="twitter:description" content="Toggle magnetic rails, reroute incoming pods, and deliver them to matching bays before shields collapse." />
+<link rel="canonical" href="https://games.aiandsons.io/magnetrail" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; touch-action: none; font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif; color: #eef5ff; background: radial-gradient(65% 60% at 20% 18%, #1f426d 0%, transparent 60%), radial-gradient(60% 55% at 82% 84%, #3b205d 0%, transparent 62%), linear-gradient(180deg, #070d1d 0%, #0d152d 100%); }
+.back { position: fixed; top: 12px; left: 12px; z-index: 25; color: #fff; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 10px; border: 1px solid #ffffff50; padding: 8px 12px; background: #00000066; }
+.app { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 62px 10px 10px; }
+.wrap { width: min(96vw, 980px); aspect-ratio: 16 / 10; max-height: min(66dvh, 740px); position: relative; }
+canvas { width: 100%; height: 100%; display: block; border-radius: 14px; border: 2px solid #89baff8d; box-shadow: 0 18px 52px #000000ad; background: linear-gradient(180deg, #132747 0%, #0c162f 100%); }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .16s; }
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel { max-width: 700px; border-radius: 14px; border: 1px solid #a2c8ff4d; background: #0b1832ec; box-shadow: 0 14px 30px #0000007d; padding: 16px; }
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #bfd5f3; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button { border: 1px solid #a4c5ff56; background: #142749f5; color: #edf6ff; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; min-height: 42px; }
+.hud { width: min(96vw, 980px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1832e8; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+.chip { border-radius: 9px; border: 1px solid #b4d6ff3e; background: #ffffff14; min-height: 48px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding: 4px; }
+.chip span { color: #bbd2ef; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9dffd1; }
+.warn b { color: #ffd58e; }
+.bad b { color: #ffa0b5; }
+.controls { width: min(96vw, 980px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1832e8; padding: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ctrl-btn { background: #183257; border-color: #9abfff5e; }
+@media (max-width: 900px) { .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); } .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Magnet Rail game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Combo</span><b id="combo">0x</b></div>
+    <div class="chip"><span>Shield</span><b id="shield">6</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip"><span>Delivered</span><b id="delivered">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="upBtn" type="button" class="ctrl-btn">Up</button>
+    <button id="toggleBtn" type="button">Toggle Rail</button>
+    <button id="downBtn" type="button" class="ctrl-btn">Down</button>
+    <button id="leftBtn" type="button" class="ctrl-btn">Left</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Right</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const comboEl = document.getElementById('combo');
+const shieldEl = document.getElementById('shield');
+const timeEl = document.getElementById('time');
+const deliveredEl = document.getElementById('delivered');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 90;
+const START_SHIELD = 6;
+const TARGET_DELIVERIES = 24;
+const COLS = 7;
+const ROWS = 9;
+const COLORS = ['teal', 'gold', 'rose'];
+const COLOR_STYLE = {
+  teal: { fill: '#67f3de', glow: '#59d2ff', bay: '#0f8178' },
+  gold: { fill: '#ffd878', glow: '#f8b74e', bay: '#967223' },
+  rose: { fill: '#ffa2bc', glow: '#ff7099', bay: '#8b3150' },
+};
+
+const grid = { x: 220, y: 120, w: 760, h: 520 };
+const cellW = grid.w / COLS;
+const cellH = grid.h / ROWS;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  combo: 0,
+  shield: START_SHIELD,
+  delivered: 0,
+  cursorCol: Math.floor(COLS / 2),
+  cursorRow: Math.floor(ROWS / 2),
+  rails: [],
+  pods: [],
+  spawnTimer: 0,
+  spawnEvery: 1.0,
+  log: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function colorForColumn(col) {
+  return COLORS[col % COLORS.length];
+}
+
+function addLog(line) {
+  state.log.push(line);
+  if (state.log.length > 5) state.log.shift();
+}
+
+function showOverlay(title, body, cta, action) {
+  overlay.innerHTML = `<div class="panel"><h1>${title}</h1><p>${body}</p><p>Desktop: Arrow keys / WASD move cursor, Space toggles rail, P pause, R restart, F fullscreen.</p><div class="row"><button id="overlayAction" type="button">${cta}</button><button id="overlayFullscreen" type="button">Fullscreen</button></div></div>`;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', action);
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function buildRails() {
+  const rows = [];
+  for (let r = 1; r < ROWS - 1; r += 1) {
+    const row = [];
+    for (let c = 0; c < COLS; c += 1) {
+      row.push(Math.random() < 0.34 ? -1 : Math.random() < 0.68 ? 1 : 0);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function resetGame() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.combo = 0;
+  state.shield = START_SHIELD;
+  state.delivered = 0;
+  state.cursorCol = Math.floor(COLS / 2);
+  state.cursorRow = Math.floor(ROWS / 2);
+  state.rails = buildRails();
+  state.pods = [];
+  state.spawnTimer = 0.6;
+  state.spawnEvery = 1.0;
+  state.log = [];
+}
+
+function startGame() {
+  resetGame();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('magnetrail'); } catch {}
+  try { maybeUnlock({ anyPlay: true, magnetrail: { result: 'started', score: 0 } }); } catch {}
+}
+
+function resumeGame() {
+  state.mode = 'running';
+  hideOverlay();
+}
+
+function finishGame(win) {
+  if (state.mode === 'complete') return;
+  state.mode = 'complete';
+  state.result = win ? 'win' : 'lose';
+  const coins = Math.max(6, Math.floor(state.score / 50) + (win ? 16 : 8));
+  try { addCoins(coins); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, magnetrail: { result: state.result, score: Math.round(state.score), delivered: state.delivered } });
+  } catch {}
+  showOverlay(
+    win ? 'Rail Network Stable' : 'Shield Failure',
+    `${win ? 'Excellent routing under pressure.' : 'Too many mismatched drops hit the bay floor.'} Final score ${Math.round(state.score)} and ${coins} coins.`,
+    'Play Again',
+    startGame,
+  );
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Pod flow frozen. Resume when ready.', 'Resume', resumeGame);
+  } else if (state.mode === 'paused') {
+    resumeGame();
+  }
+}
+
+function moveCursor(dx, dy) {
+  if (state.mode !== 'running') return;
+  state.cursorCol = Math.max(0, Math.min(COLS - 1, state.cursorCol + dx));
+  state.cursorRow = Math.max(1, Math.min(ROWS - 2, state.cursorRow + dy));
+}
+
+function toggleRail() {
+  if (state.mode !== 'running') return;
+  const rowIndex = state.cursorRow - 1;
+  const colIndex = state.cursorCol;
+  const current = state.rails[rowIndex][colIndex];
+  const next = current === -1 ? 0 : current === 0 ? 1 : -1;
+  state.rails[rowIndex][colIndex] = next;
+}
+
+function spawnPod() {
+  const col = Math.floor(Math.random() * COLS);
+  state.pods.push({
+    id: Math.random().toString(36).slice(2),
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    lane: col,
+    y: -0.3,
+    speed: 1.9 + Math.random() * 0.9 + state.elapsed * 0.008,
+    appliedRows: new Set(),
+  });
+}
+
+function applyRailSteer(pod) {
+  const row = Math.floor(pod.y);
+  if (row < 1 || row > ROWS - 2) return;
+  if (pod.appliedRows.has(row)) return;
+  pod.appliedRows.add(row);
+  const steer = state.rails[row - 1][pod.lane];
+  pod.lane = Math.max(0, Math.min(COLS - 1, pod.lane + steer));
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+
+  state.spawnEvery = Math.max(0.42, 1.0 - state.elapsed * 0.003);
+  state.spawnTimer -= dt;
+  if (state.spawnTimer <= 0) {
+    spawnPod();
+    if (Math.random() < Math.min(0.26, state.elapsed / 130)) spawnPod();
+    state.spawnTimer += state.spawnEvery;
+  }
+
+  const remaining = [];
+  for (const pod of state.pods) {
+    pod.y += pod.speed * dt;
+    applyRailSteer(pod);
+    if (pod.y >= ROWS - 0.2) {
+      const targetColor = colorForColumn(pod.lane);
+      if (targetColor === pod.color) {
+        state.delivered += 1;
+        state.combo += 1;
+        const gain = 12 + Math.min(28, state.combo * 2);
+        state.score += gain;
+        addLog(`Delivery +${gain}`);
+      } else {
+        state.shield -= 1;
+        state.combo = 0;
+        addLog('Mismatch impact');
+      }
+      continue;
+    }
+    remaining.push(pod);
+  }
+  state.pods = remaining;
+
+  if (state.delivered >= TARGET_DELIVERIES) {
+    finishGame(true);
+  } else if (state.shield <= 0 || state.timeLeft <= 0) {
+    finishGame(false);
+  }
+}
+
+function drawBoard() {
+  const g = ctx.createLinearGradient(0, grid.y, 0, grid.y + grid.h);
+  g.addColorStop(0, '#163357');
+  g.addColorStop(1, '#0d1a36');
+  ctx.fillStyle = g;
+  ctx.fillRect(grid.x, grid.y, grid.w, grid.h);
+
+  ctx.strokeStyle = '#90beff4f';
+  ctx.lineWidth = 1.4;
+  for (let c = 0; c <= COLS; c += 1) {
+    const x = grid.x + c * cellW;
+    ctx.beginPath();
+    ctx.moveTo(x, grid.y);
+    ctx.lineTo(x, grid.y + grid.h);
+    ctx.stroke();
+  }
+  for (let r = 0; r <= ROWS; r += 1) {
+    const y = grid.y + r * cellH;
+    ctx.beginPath();
+    ctx.moveTo(grid.x, y);
+    ctx.lineTo(grid.x + grid.w, y);
+    ctx.stroke();
+  }
+
+  for (let c = 0; c < COLS; c += 1) {
+    const color = colorForColumn(c);
+    ctx.fillStyle = COLOR_STYLE[color].bay;
+    ctx.fillRect(grid.x + c * cellW + 5, grid.y + grid.h - cellH + 5, cellW - 10, cellH - 10);
+    ctx.fillStyle = '#eaf5ff';
+    ctx.font = '700 12px Trebuchet MS';
+    ctx.textAlign = 'center';
+    ctx.fillText(color.toUpperCase(), grid.x + c * cellW + cellW / 2, grid.y + grid.h - cellH / 2 + 5);
+  }
+
+  for (let r = 1; r < ROWS - 1; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      const steer = state.rails[r - 1][c];
+      if (steer === 0) continue;
+      const cx = grid.x + c * cellW + cellW / 2;
+      const cy = grid.y + r * cellH + cellH / 2;
+      ctx.strokeStyle = steer < 0 ? '#7bdfff' : '#ffc983';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx + (steer < 0 ? 18 : -18), cy + 12);
+      ctx.lineTo(cx, cy - 12);
+      ctx.lineTo(cx + (steer < 0 ? -18 : 18), cy + 12);
+      ctx.stroke();
+    }
+  }
+
+  const cursorX = grid.x + state.cursorCol * cellW;
+  const cursorY = grid.y + state.cursorRow * cellH;
+  ctx.strokeStyle = '#ecf5ff';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(cursorX + 3, cursorY + 3, cellW - 6, cellH - 6);
+}
+
+function drawPods() {
+  for (const pod of state.pods) {
+    const x = grid.x + pod.lane * cellW + cellW / 2;
+    const y = grid.y + pod.y * cellH;
+    const style = COLOR_STYLE[pod.color];
+    ctx.fillStyle = style.fill;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.min(cellW, cellH) * 0.24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = style.glow;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#eaf4ff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '700 36px Trebuchet MS';
+  ctx.fillText('Magnet Rail', 24, 52);
+  ctx.fillStyle = '#bfd4f3';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Goal: deliver ${TARGET_DELIVERIES} pods before time ends and keep shields above zero.`, 24, 78);
+
+  const lines = state.log.length ? state.log : ['Move cursor and toggle rails to steer pod lanes into matching color bays.'];
+  ctx.fillStyle = '#c6d9f5';
+  ctx.font = '600 15px Trebuchet MS';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 24, 106 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBoard();
+  drawPods();
+  drawLabels();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  comboEl.textContent = `${state.combo}x`;
+  shieldEl.textContent = String(Math.max(0, state.shield));
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  deliveredEl.textContent = String(state.delivered);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const parent = timeEl.parentElement;
+  parent.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.5);
+  parent.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.5 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  parent.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function keyHandler(event) {
+  if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); moveCursor(0, -1); return; }
+  if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); moveCursor(0, 1); return; }
+  if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); moveCursor(-1, 0); return; }
+  if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); moveCursor(1, 0); return; }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); toggleRail(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function wireControls() {
+  document.getElementById('upBtn').addEventListener('click', () => moveCursor(0, -1));
+  document.getElementById('downBtn').addEventListener('click', () => moveCursor(0, 1));
+  document.getElementById('leftBtn').addEventListener('click', () => moveCursor(-1, 0));
+  document.getElementById('rightBtn').addEventListener('click', () => moveCursor(1, 0));
+  document.getElementById('toggleBtn').addEventListener('click', toggleRail);
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.getElementById('restartBtn').addEventListener('click', startGame);
+  document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+}
+
+window.addEventListener('keydown', keyHandler);
+wireControls();
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'magnetrail',
+  mode: state.mode,
+  coordinate_system: 'Board origin is top-left. lane x increases left-to-right (0-6). row y increases top-to-bottom (0-8).',
+  objective: { target_deliveries: TARGET_DELIVERIES, total_time_seconds: TOTAL_SECONDS, minimum_shield: 1 },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    combo: state.combo,
+    shield: state.shield,
+    delivered: state.delivered,
+    cursor_lane: state.cursorCol,
+    cursor_row: state.cursorRow,
+  },
+  rails: state.rails.map((row) => row.slice()),
+  pods: state.pods.map((pod) => ({
+    id: pod.id,
+    color: pod.color,
+    lane: pod.lane,
+    row_float: Number(pod.y.toFixed(3)),
+    speed_rows_per_second: Number(pod.speed.toFixed(3)),
+  })),
+  bays: Array.from({ length: COLS }, (_, lane) => ({ lane, color: colorForColumn(lane) })),
+  recent_events: state.log,
+  controls: {
+    cursor_move: 'WASD / Arrow keys',
+    toggle_rail: 'Space / Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetGame();
+draw();
+syncHud();
+showOverlay('Magnet Rail', 'Toggle magnetic rails and route each pod into a matching color bay before your shield or timer runs out.', 'Start Run', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'magnetrail', gameName: 'Magnet Rail' });
+</script>
+</body>
+</html>

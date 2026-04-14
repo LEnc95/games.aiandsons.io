@@ -77,5 +77,6 @@
 - game/diceforge
 - game/keystrike
 - game/pulseparry
+- game/magnetrail
 
 Generated from `src/meta/feedback.js`.
