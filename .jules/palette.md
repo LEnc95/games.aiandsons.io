@@ -10,3 +10,6 @@
 ## 2026-04-12 - [Feedback Widget Coverage]
 **Learning:** To satisfy `tests/feedback-coverage.integration.test.mjs`, every game page (`index.html`) must explicitly import and call `mountGameFeedback` from `src/feedback/embed.js`.
 **Action:** Always ensure new games have the feedback widget mounted.
+## 2026-04-14 - Decorative Icons Accessibility
+**Learning:** Decorative icons and emojis in UI components (like `.game-icon`, `.recent-icon`, or `.shop-item-preview`) can cause screen readers to read out literal emoji Unicode names (e.g., "grinning face with sweat") redundantly alongside the adjacent title text.
+**Action:** Always add `aria-hidden="true"` to purely decorative icons or emojis when the adjacent text already provides the context or description.
