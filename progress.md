@@ -1748,3 +1748,14 @@ pm run test:feedback and the Playwright gameplay loop for /diceforge in an envir
 - Validation passed: `npm.cmd run feedback:sync-linear` (updated `linear/labels.md` + `linear/game-issues.csv`).
 - Sandbox blockers: `npm.cmd run test:feedback` failed with `spawn EPERM`; required `$develop-web-game` Playwright run for `/keystrike` failed with `browserType.launch: spawn EPERM`.
 - Runtime: ~00:18:00.
+
+## 2026-04-13T07:05:09-04:00 Pulse Parry automation run
+- Added brand-new game pulseparry at pulseparry/index.html with a shield-rotation + pulse-parry defense loop (block/parry incoming drones before core integrity reaches zero).
+- Included desktop/mobile controls, fullscreen/pause/restart, coin/progression hooks (ememberRecent, ddCoins, maybeUnlock), feedback mount, and deterministic automation hooks (window.advanceTime(ms), window.render_game_to_text()).
+- Wired pulseparry into src/meta/games.js, static fallback card in index.html, and route/cache entries in ercel.json.
+- Validation passed: slug wiring checks and ercel.json parse.
+- Validation passed: 
+pm.cmd run feedback:sync-linear (updated linear/labels.md + linear/game-issues.csv).
+- Sandbox blockers: 
+pm.cmd run test:feedback failed with spawn EPERM; required $develop-web-game Playwright run for /pulseparry failed with rowserType.launch: spawn EPERM.
+- Runtime: ~00:16:00.

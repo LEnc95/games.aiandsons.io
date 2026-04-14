@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Pulse Parry - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Rotate your shield, time pulse bursts, and parry incoming drones before the core breaks." />
+<meta property="og:title" content="Pulse Parry - Play on Cade's Games" />
+<meta property="og:description" content="Rotate your shield, time pulse bursts, and parry incoming drones before the core breaks." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/pulseparry" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Pulse Parry - Play on Cade's Games" />
+<meta name="twitter:description" content="Rotate your shield, time pulse bursts, and parry incoming drones before the core breaks." />
+<link rel="canonical" href="https://games.aiandsons.io/pulseparry" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; touch-action: none; font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif; color: #ecf4ff; background: radial-gradient(60% 60% at 20% 15%, #214470 0%, transparent 65%), radial-gradient(55% 55% at 82% 85%, #28184c 0%, transparent 60%), linear-gradient(180deg, #060b19 0%, #0a1228 100%); }
+.back { position: fixed; top: 12px; left: 12px; z-index: 20; color: #fff; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 10px; border: 1px solid #ffffff54; padding: 8px 12px; background: #00000066; }
+.app { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 62px 10px 10px; }
+.wrap { width: min(96vw, 980px); aspect-ratio: 16 / 10; max-height: min(66dvh, 740px); position: relative; }
+canvas { width: 100%; height: 100%; display: block; border-radius: 14px; border: 2px solid #89bbff8f; box-shadow: 0 18px 52px #000000ad; background: linear-gradient(180deg, #101e3c 0%, #091327 100%); }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .16s; }
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel { max-width: 680px; border-radius: 14px; border: 1px solid #a2c8ff4d; background: #0b1832ea; box-shadow: 0 14px 30px #0000007d; padding: 16px; }
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #bfd5f3; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button { border: 1px solid #a4c5ff56; background: #142749f5; color: #edf6ff; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; min-height: 42px; }
+.hud { width: min(96vw, 980px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1832e8; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+.chip { border-radius: 9px; border: 1px solid #b4d6ff3e; background: #ffffff14; min-height: 48px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding: 4px; }
+.chip span { color: #bbd2ef; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9dffd1; }
+.warn b { color: #ffd58e; }
+.bad b { color: #ffa0b5; }
+.controls { width: min(96vw, 980px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1832e8; padding: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ctrl-btn { background: #183257; border-color: #9abfff5e; }
+@media (max-width: 900px) { .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); } .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Pulse Parry game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Combo</span><b id="combo">0x</b></div>
+    <div class="chip"><span>Integrity</span><b id="integrity">7</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">80.0s</b></div>
+    <div class="chip"><span>Wave</span><b id="wave">1</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn" type="button" class="ctrl-btn">Rotate Left</button>
+    <button id="pulseBtn" type="button">Pulse</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Rotate Right</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const comboEl = document.getElementById('combo');
+const integrityEl = document.getElementById('integrity');
+const timeEl = document.getElementById('time');
+const waveEl = document.getElementById('wave');
+const coinsEl = document.getElementById('coins');
+
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const pulseBtn = document.getElementById('pulseBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+
+const TOTAL_SECONDS = 80;
+const START_INTEGRITY = 7;
+const TARGET_SCORE = 780;
+const CORE_RADIUS = 58;
+const ARENA_RADIUS = 320;
+const SHIELD_ARC = Math.PI / 4.2;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  combo: 0,
+  integrity: START_INTEGRITY,
+  wave: 1,
+  spawnTimer: 0,
+  spawnEvery: 1.05,
+  shieldAngle: -Math.PI / 2,
+  pulseCooldown: 0,
+  pulseGlow: 0,
+  spinVelocity: 0,
+  drones: [],
+  log: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function normalizeAngle(a) {
+  let n = a;
+  while (n <= -Math.PI) n += Math.PI * 2;
+  while (n > Math.PI) n -= Math.PI * 2;
+  return n;
+}
+
+function shortestArcDiff(a, b) {
+  return Math.abs(normalizeAngle(a - b));
+}
+
+function addLog(line) {
+  state.log.push(line);
+  if (state.log.length > 4) state.log.shift();
+}
+
+function showOverlay(title, body, cta, action) {
+  overlay.innerHTML = `<div class="panel"><h1>${title}</h1><p>${body}</p><p>Desktop: A/D or arrows rotate, Space pulses, P pause, R restart, F fullscreen.</p><div class="row"><button id="overlayAction" type="button">${cta}</button><button id="overlayFullscreen" type="button">Fullscreen</button></div></div>`;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', action);
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function resetGame() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.combo = 0;
+  state.integrity = START_INTEGRITY;
+  state.wave = 1;
+  state.spawnTimer = 0.45;
+  state.spawnEvery = 1.05;
+  state.shieldAngle = -Math.PI / 2;
+  state.pulseCooldown = 0;
+  state.pulseGlow = 0;
+  state.spinVelocity = 0;
+  state.drones = [];
+  state.log = [];
+}
+
+function startGame() {
+  resetGame();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('pulseparry'); } catch {}
+  try { maybeUnlock({ anyPlay: true, pulseparry: { result: 'started', score: 0 } }); } catch {}
+}
+
+function resumeGame() {
+  state.mode = 'running';
+  hideOverlay();
+}
+
+function finishGame(win) {
+  if (state.mode === 'complete') return;
+  state.mode = 'complete';
+  state.result = win ? 'win' : 'lose';
+  const coins = Math.max(5, Math.floor(state.score / 55) + (win ? 16 : 8));
+  try { addCoins(coins); } catch {}
+  try { maybeUnlock({ anyPlay: true, pulseparry: { result: state.result, score: Math.round(state.score), wave: state.wave } }); } catch {}
+  showOverlay(win ? 'Core Stabilized' : 'Core Collapse', `${win ? 'Great parry timing.' : 'Too many drones reached the core.'} Final score ${Math.round(state.score)} and ${coins} coins.`, 'Play Again', startGame);
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Simulation frozen. Resume whenever you are ready.', 'Resume', resumeGame);
+  } else if (state.mode === 'paused') {
+    resumeGame();
+  }
+}
+
+function spawnDrone() {
+  const angle = Math.random() * Math.PI * 2;
+  const speed = 85 + Math.random() * 65 + state.wave * 5;
+  const radius = 13 + Math.random() * 5;
+  state.drones.push({
+    id: Math.random().toString(36).slice(2),
+    angle,
+    distance: ARENA_RADIUS,
+    speed,
+    radius,
+    hue: Math.floor(180 + Math.random() * 110),
+  });
+}
+
+function rotate(dir) {
+  if (state.mode !== 'running') return;
+  state.spinVelocity = Math.max(-3.4, Math.min(3.4, state.spinVelocity + dir * 0.55));
+}
+
+function pulse() {
+  if (state.mode !== 'running' || state.pulseCooldown > 0) return;
+  state.pulseCooldown = 0.32;
+  state.pulseGlow = 0.2;
+
+  let target = null;
+  for (const drone of state.drones) {
+    const arcDiff = shortestArcDiff(drone.angle, state.shieldAngle);
+    if (arcDiff > SHIELD_ARC * 0.72) continue;
+    if (drone.distance > 290) continue;
+    if (!target || drone.distance < target.distance) target = drone;
+  }
+
+  if (target) {
+    state.drones = state.drones.filter((drone) => drone !== target);
+    state.combo += 1;
+    const gain = 14 + Math.min(24, state.combo * 2);
+    state.score += gain;
+    addLog(`Parry +${gain}`);
+  } else {
+    state.combo = 0;
+    addLog('Pulse miss');
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  state.wave = 1 + Math.floor(state.elapsed / 16);
+  state.spawnEvery = Math.max(0.42, 1.05 - state.elapsed * 0.005);
+
+  state.spawnTimer -= dt;
+  if (state.spawnTimer <= 0) {
+    spawnDrone();
+    if (Math.random() < Math.min(0.3, state.elapsed / 100)) spawnDrone();
+    state.spawnTimer += state.spawnEvery;
+  }
+
+  state.shieldAngle = normalizeAngle(state.shieldAngle + state.spinVelocity * dt);
+  state.spinVelocity *= Math.pow(0.12, dt);
+
+  if (state.pulseCooldown > 0) state.pulseCooldown = Math.max(0, state.pulseCooldown - dt);
+  if (state.pulseGlow > 0) state.pulseGlow = Math.max(0, state.pulseGlow - dt);
+
+  const remaining = [];
+  for (const drone of state.drones) {
+    drone.distance -= drone.speed * dt;
+    if (drone.distance <= CORE_RADIUS + drone.radius * 0.5) {
+      state.integrity -= 1;
+      state.combo = 0;
+      addLog('Core hit');
+      continue;
+    }
+    remaining.push(drone);
+  }
+  state.drones = remaining;
+
+  if (state.integrity <= 0) finishGame(false);
+  else if (state.timeLeft <= 0) finishGame(state.score >= TARGET_SCORE);
+}
+
+function drawArena() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  const bg = ctx.createRadialGradient(cx, cy, 30, cx, cy, ARENA_RADIUS + 80);
+  bg.addColorStop(0, '#172f5a');
+  bg.addColorStop(1, '#091128');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 1; i <= 5; i += 1) {
+    const r = (ARENA_RADIUS / 5) * i;
+    ctx.strokeStyle = i === 5 ? '#6fa6ff6e' : '#8ec0ff22';
+    ctx.lineWidth = i === 5 ? 2.5 : 1.2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 12; i += 1) {
+    const angle = i * (Math.PI * 2 / 12);
+    const x = cx + Math.cos(angle) * ARENA_RADIUS;
+    const y = cy + Math.sin(angle) * ARENA_RADIUS;
+    ctx.strokeStyle = '#8ec0ff1f';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#8addff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, CORE_RADIUS, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#e8f6ff';
+  ctx.font = '700 18px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('CORE', cx, cy + 1);
+
+  if (state.pulseGlow > 0) {
+    ctx.strokeStyle = `rgba(149, 255, 218, ${0.45 * state.pulseGlow / 0.2})`;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(cx, cy, CORE_RADIUS + 16, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawShield() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const radius = CORE_RADIUS + 24;
+  ctx.strokeStyle = state.pulseCooldown > 0 ? '#ffd28c' : '#9dffd1';
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, state.shieldAngle - SHIELD_ARC / 2, state.shieldAngle + SHIELD_ARC / 2);
+  ctx.stroke();
+
+  const tipX = cx + Math.cos(state.shieldAngle) * (radius + 8);
+  const tipY = cy + Math.sin(state.shieldAngle) * (radius + 8);
+  ctx.fillStyle = '#eaf6ff';
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawDrones() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  for (const drone of state.drones) {
+    const x = cx + Math.cos(drone.angle) * drone.distance;
+    const y = cy + Math.sin(drone.angle) * drone.distance;
+    ctx.fillStyle = `hsl(${drone.hue} 90% 66%)`;
+    ctx.beginPath();
+    ctx.arc(x, y, drone.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffffb8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#eaf4ff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '700 36px Trebuchet MS';
+  ctx.fillText('Pulse Parry', 24, 52);
+  ctx.fillStyle = '#b8ccee';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Goal: score ${TARGET_SCORE}+ and protect integrity for ${TOTAL_SECONDS}s.`, 24, 79);
+
+  const lines = state.log.length ? state.log : ['Rotate into incoming lanes and pulse when drones are in arc range.'];
+  ctx.fillStyle = '#c7d8f4';
+  ctx.font = '600 15px Trebuchet MS';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 24, 106 + i * 20);
+  }
+}
+
+function draw() {
+  drawArena();
+  drawDrones();
+  drawShield();
+  drawLabels();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  comboEl.textContent = `${state.combo}x`;
+  integrityEl.textContent = String(Math.max(0, state.integrity));
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  waveEl.textContent = String(state.wave);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const parent = timeEl.parentElement;
+  parent.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.5);
+  parent.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.5 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  parent.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function keyHandler(event) {
+  if (event.code === 'KeyA' || event.code === 'ArrowLeft') { event.preventDefault(); rotate(-1); return; }
+  if (event.code === 'KeyD' || event.code === 'ArrowRight') { event.preventDefault(); rotate(1); return; }
+  if (event.code === 'Space') { event.preventDefault(); pulse(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+leftBtn.addEventListener('click', () => rotate(-1));
+rightBtn.addEventListener('click', () => rotate(1));
+pulseBtn.addEventListener('click', pulse);
+pauseBtn.addEventListener('click', togglePause);
+
+window.addEventListener('keydown', keyHandler);
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'pulseparry',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left; x increases right; y increases downward; drone angle uses radians around core center with 0 on +x axis.',
+  objective: { target_score: TARGET_SCORE, total_time_seconds: TOTAL_SECONDS, keep_integrity_above: 0 },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    combo: state.combo,
+    integrity: state.integrity,
+    wave: state.wave,
+    pulse_cooldown_seconds: Number(state.pulseCooldown.toFixed(3)),
+    shield_angle_radians: Number(state.shieldAngle.toFixed(4)),
+  },
+  drones: state.drones.map((drone) => ({
+    id: drone.id,
+    angle_radians: Number(drone.angle.toFixed(4)),
+    distance_from_core: Number(drone.distance.toFixed(2)),
+    speed: Number(drone.speed.toFixed(2)),
+    radius: Number(drone.radius.toFixed(2)),
+  })),
+  recent_events: state.log,
+  controls: {
+    rotate_left: 'A / Left Arrow',
+    rotate_right: 'D / Right Arrow',
+    pulse: 'Space',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetGame();
+draw();
+syncHud();
+showOverlay('Pulse Parry', 'Rotate your shield to incoming lanes and fire pulse bursts to delete drones before they hit the core.', 'Start Run', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'pulseparry', gameName: 'Pulse Parry' });
+</script>
+</body>
+</html>

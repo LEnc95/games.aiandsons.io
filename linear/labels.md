@@ -76,5 +76,6 @@
 - game/wordweave
 - game/diceforge
 - game/keystrike
+- game/pulseparry
 
 Generated from `src/meta/feedback.js`.
