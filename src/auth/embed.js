@@ -671,8 +671,19 @@ function mountStandaloneModal() {
   const panel = createAccountPanel({ includeClose: true });
   modalCard.appendChild(panel.root);
 
-  const closeModal = () => backdropEl.classList.remove("active");
-  triggerEl.addEventListener("click", () => backdropEl.classList.add("active"));
+  let lastFocusedElement = null;
+
+  const closeModal = () => {
+    backdropEl.classList.remove("active");
+    if (lastFocusedElement) {
+      lastFocusedElement.focus();
+      lastFocusedElement = null;
+    }
+  };
+  triggerEl.addEventListener("click", () => {
+    lastFocusedElement = document.activeElement;
+    backdropEl.classList.add("active");
+  });
   panel.closeBtn?.addEventListener("click", closeModal);
   backdropEl.addEventListener("click", (event) => {
     if (event.target === backdropEl) {
