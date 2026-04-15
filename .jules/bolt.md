@@ -24,3 +24,6 @@
 ## 2024-05-23 - Concurrent I/O in Aggregation Handlers
 **Learning:** Functions that aggregate data from multiple asynchronous sources (like `buildBillingAdminRecord` fetching invites, and various email deliveries) create unnecessary latency when awaited sequentially.
 **Action:** Always group independent I/O operations using `Promise.all` in aggregation functions to fetch data concurrently. In our benchmark, this reduced execution time by approximately 40%.
+## 2024-05-24 - Concurrent I/O in Handlers and Helpers
+**Learning:** Sequential execution of independent I/O tasks within backend handlers (e.g. `clearFamilyAccessForUser` and `getStripeBillingProfile` in `handleFamilyRemoveMember`, or `syncFamilyMemberProfiles` and `sendFamilyInviteAcceptedEmail` in `handleFamilyAcceptInvite`, and data fetching in `buildFamilySummary`) unnecessarily delays response times.
+**Action:** Identify independent async operations within handlers and helper functions, and execute them concurrently using `Promise.all()`. This eliminates N+1 style blocking and reduces overall request latency.
