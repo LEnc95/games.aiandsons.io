@@ -13,3 +13,6 @@
 ## 2026-04-14 - Decorative Icons Accessibility
 **Learning:** Decorative icons and emojis in UI components (like `.game-icon`, `.recent-icon`, or `.shop-item-preview`) can cause screen readers to read out literal emoji Unicode names (e.g., "grinning face with sweat") redundantly alongside the adjacent title text.
 **Action:** Always add `aria-hidden="true"` to purely decorative icons or emojis when the adjacent text already provides the context or description.
+## 2026-04-15 - Global Custom Modal Keyboard Accessibility Focus Restoration
+**Learning:** All custom modals (even those scattered across different files like `src/auth/embed.js` or `teacher/index.html`) must strictly capture `document.activeElement` when opened and restore focus back to it when closed to comply with WCAG standards and prevent users from losing their place in the DOM tab order.
+**Action:** When implementing or modifying *any* modal in the codebase, always verify that `document.activeElement` is saved to a scoped variable on open, and that variable `.focus()` is called on close.

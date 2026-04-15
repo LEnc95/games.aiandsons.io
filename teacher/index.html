@@ -513,8 +513,8 @@
   </main>
 
   <div id="pinModal" class="pin-modal">
-    <div class="pin-card">
-      <h3>PIN Required</h3>
+    <div class="pin-card" role="dialog" aria-modal="true" aria-labelledby="pinModalTitle">
+      <h3 id="pinModalTitle">PIN Required</h3>
       <p id="pinPromptText">Enter teacher PIN to continue.</p>
       <input id="pinVerifyInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Enter PIN" />
       <div class="pin-actions">
@@ -754,14 +754,21 @@
       return isClassroomSessionActive() && hasTeacherPin();
     }
 
+    let lastFocusedElementBeforePinModal = null;
+
     function closePinModal() {
       pinModal.classList.remove("active");
       pinVerifyInput.value = "";
       pinError.textContent = "";
       pendingMutation = null;
+      if (lastFocusedElementBeforePinModal) {
+        lastFocusedElementBeforePinModal.focus();
+        lastFocusedElementBeforePinModal = null;
+      }
     }
 
     function openPinModal(contextLabel, callback) {
+      lastFocusedElementBeforePinModal = document.activeElement;
       pendingMutation = callback;
       pinPromptText.textContent = `Enter teacher PIN to ${contextLabel} while session is active.`;
       pinVerifyInput.value = "";
