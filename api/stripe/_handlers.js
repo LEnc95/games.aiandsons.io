@@ -357,10 +357,15 @@ async function buildFamilySummary(session) {
     profile,
     session,
   }) || await getFamilyAccountForUser(session.userId);
-  const emailDeliveries = account ? await listEmailDeliveriesForFamilyAccount(account.id) : [];
-  const invites = account && account.ownerUserId === session.userId
-    ? await reconcileFamilyInvitesForAccount(account.id)
-    : [];
+
+  // ⚡ Bolt Optimization: Use Promise.all to fetch related records concurrently instead of sequentially
+  const [emailDeliveries, invites] = await Promise.all([
+    account ? listEmailDeliveriesForFamilyAccount(account.id) : Promise.resolve([]),
+    account && account.ownerUserId === session.userId
+      ? reconcileFamilyInvitesForAccount(account.id)
+      : Promise.resolve([])
+  ]);
+
   const deliveriesById = new Map(emailDeliveries.map((delivery) => [delivery.id, delivery]));
   const invitesWithDelivery = invites.map((invite) => ({
     ...invite,
@@ -798,14 +803,20 @@ async function handleFamilyAcceptInvite(req, res) {
       claimedByDisplayName: getDisplayNameFromSession(session),
     });
     const ownerProfile = await getStripeBillingProfile(accepted.account.ownerUserId);
-    await syncFamilyMemberProfiles(accepted.account, ownerProfile);
-    if (accepted.account.ownerEmail) {
-      await sendFamilyInviteAcceptedEmail({
-        to: accepted.account.ownerEmail,
-        memberName: getDisplayNameFromSession(session) || session.email,
-        familyAccountId: accepted.account.id,
-      });
-    }
+
+    // ⚡ Bolt Optimization: Fire and await email concurrently with profile sync to avoid blocking the user wait time
+    const emailPromise = accepted.account.ownerEmail
+      ? sendFamilyInviteAcceptedEmail({
+          to: accepted.account.ownerEmail,
+          memberName: getDisplayNameFromSession(session) || session.email,
+          familyAccountId: accepted.account.id,
+        })
+      : Promise.resolve();
+
+    await Promise.all([
+      syncFamilyMemberProfiles(accepted.account, ownerProfile),
+      emailPromise
+    ]);
 
     const summary = await buildFamilySummary(session);
     return sendJson(res, 200, {
@@ -861,8 +872,13 @@ async function handleFamilyRemoveMember(req, res) {
       familyAccountId: account.id,
       memberUserId,
     });
-    const removedProfile = await clearFamilyAccessForUser(memberUserId);
-    const ownerProfile = await getStripeBillingProfile(session.userId);
+
+    // ⚡ Bolt Optimization: Use Promise.all to fetch/update related member records concurrently
+    const [removedProfile, ownerProfile] = await Promise.all([
+      clearFamilyAccessForUser(memberUserId),
+      getStripeBillingProfile(session.userId)
+    ]);
+
     await syncFamilyMemberProfiles(nextAccount, ownerProfile);
     if (removedMember?.email && canSendBillingEmail(removedProfile, "productEmail")) {
       await sendFamilyMemberRemovedEmail({
