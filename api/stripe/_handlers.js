@@ -510,17 +510,20 @@ async function buildBillingAdminRecord(profile) {
   const familyAccount = safeProfile.familyAccountId
     ? await getFamilyAccount(safeProfile.familyAccountId)
     : await getFamilyAccountForUser(safeProfile.userId);
-  const invites = familyAccount ? await reconcileFamilyInvitesForAccount(familyAccount.id) : [];
-  const userDeliveries = await listEmailDeliveries({
-    userId: safeProfile.userId,
-    limit: 25,
-  });
-  const customerDeliveries = safeProfile.customerId
-    ? await listEmailDeliveries({ customerId: safeProfile.customerId, limit: 25 })
-    : [];
-  const familyDeliveries = familyAccount
-    ? await listEmailDeliveries({ familyAccountId: familyAccount.id, limit: 25 })
-    : [];
+
+  // ⚡ Bolt: Use Promise.all to fetch admin record dependencies concurrently
+  const [
+    invites,
+    userDeliveries,
+    customerDeliveries,
+    familyDeliveries
+  ] = await Promise.all([
+    familyAccount ? reconcileFamilyInvitesForAccount(familyAccount.id) : [],
+    listEmailDeliveries({ userId: safeProfile.userId, limit: 25 }),
+    safeProfile.customerId ? listEmailDeliveries({ customerId: safeProfile.customerId, limit: 25 }) : [],
+    familyAccount ? listEmailDeliveries({ familyAccountId: familyAccount.id, limit: 25 }) : []
+  ]);
+
   const emailDeliveries = mergeDeliveryLists(userDeliveries, customerDeliveries, familyDeliveries);
 
   return {
