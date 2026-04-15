@@ -78,5 +78,6 @@
 - game/keystrike
 - game/pulseparry
 - game/magnetrail
+- game/loomlock
 
 Generated from `src/meta/feedback.js`.

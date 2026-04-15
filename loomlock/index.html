@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Loom Lock - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Jump like a knight, dodge sentinel scan lanes, and collect enough beacons before the lock collapses." />
+<meta property="og:title" content="Loom Lock - Play on Cade's Games" />
+<meta property="og:description" content="Jump like a knight, dodge sentinel scan lanes, and collect enough beacons before the lock collapses." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/loomlock" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Loom Lock - Play on Cade's Games" />
+<meta name="twitter:description" content="Jump like a knight, dodge sentinel scan lanes, and collect enough beacons before the lock collapses." />
+<link rel="canonical" href="https://games.aiandsons.io/loomlock" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; touch-action: none; font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif; color: #edf4ff; background: radial-gradient(68% 60% at 18% 14%, #1f284e 0%, transparent 65%), radial-gradient(60% 56% at 84% 84%, #4f1f44 0%, transparent 62%), linear-gradient(180deg, #050915 0%, #111a34 100%); }
+.back { position: fixed; top: 12px; left: 12px; z-index: 20; color: #fff; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 10px; border: 1px solid #ffffff4f; padding: 8px 12px; background: #00000066; }
+.app { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 62px 10px 10px; }
+.wrap { width: min(96vw, 960px); aspect-ratio: 16 / 10; max-height: min(66dvh, 720px); position: relative; }
+canvas { width: 100%; height: 100%; display: block; border-radius: 14px; border: 2px solid #8fb4ff80; box-shadow: 0 18px 50px #000000af; background: linear-gradient(180deg, #121f3e 0%, #0c142b 100%); }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .16s; }
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel { max-width: 680px; border-radius: 14px; border: 1px solid #a8c6ff47; background: #0b1732ed; box-shadow: 0 14px 32px #00000080; padding: 16px; }
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #c1d5f6; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button { border: 1px solid #a4c5ff56; background: #152a4df5; color: #edf6ff; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; min-height: 42px; }
+.hud { width: min(96vw, 960px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1732e8; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+.chip { border-radius: 9px; border: 1px solid #b3d5ff3e; background: #ffffff14; min-height: 48px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding: 4px; }
+.chip span { color: #bbd2ef; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.controls { width: min(96vw, 960px); border-radius: 12px; border: 1px solid #a4c5ff52; background: #0b1732e8; padding: 10px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.ctrl-btn { background: #18345d; border-color: #9bbfff66; }
+@media (max-width: 900px) { .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); } .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Loom Lock game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Beacons</span><b id="beacons">0</b></div>
+    <div class="chip"><span>Integrity</span><b id="integrity">5</b></div>
+    <div class="chip"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip"><span>Turn</span><b id="turn">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="prevBtn" type="button" class="ctrl-btn">Prev Move</button>
+    <button id="nextBtn" type="button" class="ctrl-btn">Next Move</button>
+    <button id="jumpBtn" type="button">Jump</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const beaconsEl = document.getElementById('beacons');
+const integrityEl = document.getElementById('integrity');
+const timeEl = document.getElementById('time');
+const turnEl = document.getElementById('turn');
+const coinsEl = document.getElementById('coins');
+
+const GRID = 9;
+const CELL = 66;
+const BOARD_X = 300;
+const BOARD_Y = 92;
+const TOTAL_SECONDS = 90;
+const START_INTEGRITY = 5;
+const TARGET_BEACONS = 14;
+const KNIGHT_OFFSETS = [
+  { x: 1, y: 2 },
+  { x: 2, y: 1 },
+  { x: 2, y: -1 },
+  { x: 1, y: -2 },
+  { x: -1, y: -2 },
+  { x: -2, y: -1 },
+  { x: -2, y: 1 },
+  { x: -1, y: 2 },
+];
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  beacons: 0,
+  integrity: START_INTEGRITY,
+  turn: 0,
+  player: { x: 4, y: 4 },
+  beacon: { x: 7, y: 1 },
+  sentinels: [],
+  options: [],
+  selectedOption: 0,
+  log: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function sameCell(a, b) {
+  return a.x === b.x && a.y === b.y;
+}
+
+function addLog(text) {
+  state.log.push(text);
+  if (state.log.length > 5) state.log.shift();
+}
+
+function computeThreatCells() {
+  const set = new Set();
+  for (const s of state.sentinels) {
+    for (let x = 0; x < GRID; x += 1) set.add(`${x},${s.y}`);
+    for (let y = 0; y < GRID; y += 1) set.add(`${s.x},${y}`);
+  }
+  return set;
+}
+
+function pickEmptyCell() {
+  const threatened = computeThreatCells();
+  for (let tries = 0; tries < 80; tries += 1) {
+    const cell = { x: randomInt(GRID), y: randomInt(GRID) };
+    if (sameCell(cell, state.player)) continue;
+    if (state.sentinels.some((s) => sameCell(s, cell))) continue;
+    if (threatened.has(`${cell.x},${cell.y}`)) continue;
+    return cell;
+  }
+  return { x: randomInt(GRID), y: randomInt(GRID) };
+}
+
+function buildKnightMoves(from) {
+  const moves = [];
+  for (const d of KNIGHT_OFFSETS) {
+    const x = from.x + d.x;
+    const y = from.y + d.y;
+    if (x < 0 || x >= GRID || y < 0 || y >= GRID) continue;
+    if (state.sentinels.some((s) => s.x === x && s.y === y)) continue;
+    moves.push({ x, y });
+  }
+  return moves;
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.beacons = 0;
+  state.integrity = START_INTEGRITY;
+  state.turn = 0;
+  state.player = { x: 4, y: 4 };
+  state.sentinels = [
+    { x: 1, y: 1 },
+    { x: 7, y: 2 },
+    { x: 2, y: 7 },
+  ];
+  state.beacon = pickEmptyCell();
+  state.options = buildKnightMoves(state.player);
+  state.selectedOption = 0;
+  state.log = ['Pick a knight jump, then avoid scan lanes.'];
+}
+
+function showOverlay(title, body, cta, onAction) {
+  overlay.innerHTML = `<div class="panel"><h1>${title}</h1><p>${body}</p><p>Desktop: Left/Right choose jump, Space commits, P pause, R restart, F fullscreen.</p><div class="row"><button id="overlayAction" type="button">${cta}</button><button id="overlayFullscreen" type="button">Fullscreen</button></div></div>`;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', onAction);
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function endGame(result) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = result;
+  const bonus = result === 'win' ? 28 : 8;
+  const coins = Math.max(4, Math.round(state.score / 18) + bonus);
+  try { addCoins(coins); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, loomlock: { result, score: Math.round(state.score), beacons: state.beacons } });
+  } catch {}
+  showOverlay(
+    result === 'win' ? 'Vault Solved' : 'Lockdown Triggered',
+    result === 'win'
+      ? `You captured ${state.beacons} beacons and stabilized the lock. +${coins} coins.`
+      : `You recovered ${state.beacons} beacons before collapse. +${coins} coins.`,
+    'Play Again',
+    startGame,
+  );
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'playing';
+  try { rememberRecent('loomlock'); } catch {}
+  try { maybeUnlock({ anyPlay: true, loomlock: { result: 'started', score: 0, beacons: 0 } }); } catch {}
+  hideOverlay();
+}
+
+function togglePause() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Sentinel scans are frozen. Resume when ready.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hideOverlay();
+      }
+    });
+    return;
+  }
+  if (state.mode === 'paused') {
+    state.mode = 'playing';
+    hideOverlay();
+  }
+}
+
+function cycleOption(dir) {
+  if (state.mode !== 'playing' || state.options.length === 0) return;
+  const len = state.options.length;
+  state.selectedOption = (state.selectedOption + dir + len) % len;
+}
+
+function moveSentinels() {
+  for (const s of state.sentinels) {
+    const dir = randomInt(4);
+    const dx = dir === 0 ? 1 : dir === 1 ? -1 : 0;
+    const dy = dir === 2 ? 1 : dir === 3 ? -1 : 0;
+    const nx = Math.min(GRID - 1, Math.max(0, s.x + dx));
+    const ny = Math.min(GRID - 1, Math.max(0, s.y + dy));
+    if (nx === state.player.x && ny === state.player.y) continue;
+    s.x = nx;
+    s.y = ny;
+  }
+}
+
+function commitJump() {
+  if (state.mode !== 'playing') return;
+  const option = state.options[state.selectedOption];
+  if (!option) return;
+  state.player = { x: option.x, y: option.y };
+  state.turn += 1;
+
+  if (sameCell(state.player, state.beacon)) {
+    state.beacons += 1;
+    state.score += 125;
+    addLog(`Beacon secured. Total ${state.beacons}/${TARGET_BEACONS}.`);
+    state.beacon = pickEmptyCell();
+  } else {
+    state.score += 15;
+    addLog('Jump complete.');
+  }
+
+  moveSentinels();
+  const threatened = computeThreatCells();
+  if (threatened.has(`${state.player.x},${state.player.y}`)) {
+    state.integrity = Math.max(0, state.integrity - 1);
+    state.score = Math.max(0, state.score - 70);
+    addLog('Scan lane hit. Integrity lost.');
+    if (state.integrity <= 0) {
+      endGame('fail');
+      return;
+    }
+  }
+
+  state.options = buildKnightMoves(state.player);
+  state.selectedOption = Math.min(state.selectedOption, Math.max(0, state.options.length - 1));
+
+  if (state.beacons >= TARGET_BEACONS) {
+    endGame('win');
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'playing') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  if (state.timeLeft <= 0) endGame(state.beacons >= TARGET_BEACONS ? 'win' : 'fail');
+}
+
+function cellCenter(x, y) {
+  return { x: BOARD_X + x * CELL + CELL / 2, y: BOARD_Y + y * CELL + CELL / 2 };
+}
+
+function drawBoard(threatened) {
+  ctx.fillStyle = '#0d1530';
+  ctx.fillRect(BOARD_X - 8, BOARD_Y - 8, GRID * CELL + 16, GRID * CELL + 16);
+  for (let y = 0; y < GRID; y += 1) {
+    for (let x = 0; x < GRID; x += 1) {
+      const isDark = (x + y) % 2 === 0;
+      ctx.fillStyle = isDark ? '#1a2b53' : '#152445';
+      ctx.fillRect(BOARD_X + x * CELL, BOARD_Y + y * CELL, CELL - 1, CELL - 1);
+      if (threatened.has(`${x},${y}`)) {
+        ctx.fillStyle = 'rgba(255, 95, 140, 0.22)';
+        ctx.fillRect(BOARD_X + x * CELL, BOARD_Y + y * CELL, CELL - 1, CELL - 1);
+      }
+    }
+  }
+}
+
+function drawActors() {
+  const beaconCenter = cellCenter(state.beacon.x, state.beacon.y);
+  ctx.fillStyle = '#ffde7a';
+  ctx.beginPath();
+  ctx.arc(beaconCenter.x, beaconCenter.y, CELL * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffd044';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  for (const s of state.sentinels) {
+    const p = cellCenter(s.x, s.y);
+    ctx.fillStyle = '#ff6f95';
+    ctx.fillRect(p.x - CELL * 0.18, p.y - CELL * 0.18, CELL * 0.36, CELL * 0.36);
+    ctx.strokeStyle = '#ff9eb7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x - CELL * 0.18, p.y - CELL * 0.18, CELL * 0.36, CELL * 0.36);
+  }
+
+  state.options.forEach((move, index) => {
+    const p = cellCenter(move.x, move.y);
+    const selected = index === state.selectedOption;
+    ctx.fillStyle = selected ? 'rgba(122, 220, 255, 0.42)' : 'rgba(122, 220, 255, 0.2)';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, CELL * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    if (selected) {
+      ctx.strokeStyle = '#b3f2ff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  });
+
+  const playerCenter = cellCenter(state.player.x, state.player.y);
+  ctx.fillStyle = '#8ed8ff';
+  ctx.beginPath();
+  ctx.arc(playerCenter.x, playerCenter.y, CELL * 0.24, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#d8f6ff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function drawText() {
+  ctx.fillStyle = '#e9f3ff';
+  ctx.font = '700 36px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Loom Lock', 26, 52);
+
+  ctx.fillStyle = '#bfd4f3';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Goal: collect ${TARGET_BEACONS} beacons before ${TOTAL_SECONDS} seconds and keep integrity above zero.`, 26, 78);
+
+  const lines = state.log.length ? state.log : ['Cycle jumps, commit, avoid red scan lanes, and chain beacon captures.'];
+  ctx.font = '600 15px Trebuchet MS';
+  ctx.fillStyle = '#c5d8f4';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 26, 104 + i * 20);
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#96b6e8';
+  ctx.font = '600 14px Trebuchet MS';
+  ctx.fillText('Selected jump', 190, 656);
+  ctx.fillStyle = '#d8ebff';
+  ctx.font = '700 28px Trebuchet MS';
+  ctx.fillText(String(state.selectedOption + 1), 190, 688);
+}
+
+function draw() {
+  const threatened = computeThreatCells();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBoard(threatened);
+  drawActors();
+  drawText();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  beaconsEl.textContent = `${state.beacons}/${TARGET_BEACONS}`;
+  integrityEl.textContent = String(Math.max(0, state.integrity));
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  turnEl.textContent = String(state.turn);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function keyHandler(event) {
+  if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); cycleOption(-1); return; }
+  if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); cycleOption(1); return; }
+  if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); cycleOption(-1); return; }
+  if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); cycleOption(1); return; }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); commitJump(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function wireControls() {
+  document.getElementById('prevBtn').addEventListener('click', () => cycleOption(-1));
+  document.getElementById('nextBtn').addEventListener('click', () => cycleOption(1));
+  document.getElementById('jumpBtn').addEventListener('click', commitJump);
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.getElementById('restartBtn').addEventListener('click', startGame);
+  document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+}
+
+window.addEventListener('keydown', keyHandler);
+wireControls();
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'loomlock',
+  mode: state.mode,
+  coordinate_system: 'Grid origin is top-left. x increases left-to-right from 0 to 8, y increases top-to-bottom from 0 to 8.',
+  objective: { target_beacons: TARGET_BEACONS, total_time_seconds: TOTAL_SECONDS, minimum_integrity: 1 },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    beacons_collected: state.beacons,
+    integrity: state.integrity,
+    turn: state.turn,
+    selected_jump_index: state.selectedOption,
+  },
+  player: { x: state.player.x, y: state.player.y },
+  beacon: { x: state.beacon.x, y: state.beacon.y },
+  sentinels: state.sentinels.map((s) => ({ x: s.x, y: s.y })),
+  threatened_cells: Array.from(computeThreatCells()).map((cell) => {
+    const [x, y] = cell.split(',').map(Number);
+    return { x, y };
+  }),
+  knight_move_options: state.options.map((m) => ({ x: m.x, y: m.y })),
+  recent_events: state.log,
+  controls: {
+    cycle_moves: 'A/D or Left/Right',
+    jump: 'Space or Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Loom Lock', 'Jump in knight patterns, avoid sentinel scan lanes, and capture enough beacons before the lock collapses.', 'Start Run', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'loomlock', gameName: 'Loom Lock' });
+</script>
+</body>
+</html>

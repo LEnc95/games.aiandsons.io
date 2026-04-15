@@ -1781,3 +1781,28 @@ pm.cmd run test:feedback failed with spawn EPERM; required $develop-web-game Pla
   - Skill-required Playwright loop via `$develop-web-game` client for `/magnetrail`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/magnetrail` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-15T07:04:40-04:00 Loom Lock automation run
+- New request: add a game not currently on the site.
+- Added brand-new game loomlock at loomlock/index.html with a knight-jump tactical loop.
+  - Core loop: cycle legal knight jumps, commit movement, collect beacons, and avoid sentinel row/column scan lanes.
+  - Win/loss loop: secure 14 beacons before time expires; scan-lane hits drain integrity; end-run score + coin payout included.
+  - Controls: desktop (A/D or arrows to cycle jump, Space/Enter commit, P/R/F) and mobile controls (Prev/Next/Jump + pause/restart/fullscreen).
+  - Platform hooks: ememberRecent('loomlock'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state.
+  - Feedback integration: mountGameFeedback({ gameSlug: 'loomlock', gameName: 'Loom Lock' }).
+- Integrated launcher/routing wiring:
+  - Added loomlock metadata entry in src/meta/games.js.
+  - Added static fallback home card in index.html.
+  - Added /loomlock rewrites and /loomlock/index.html cache-header entry in ercel.json.
+- Validation results (this run):
+  - g -n "loomlock" loomlock/index.html src/meta/games.js index.html vercel.json: pass.
+  - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
+  - 
+pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
+  - 
+pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integration tests.
+  - Skill-required Playwright loop via $develop-web-game client for /loomlock: blocked in this sandbox (rowserType.launch: spawn EPERM).
+- Follow-up TODO:
+  - Re-run 
+pm run test:feedback and the Playwright gameplay validation loop for /loomlock in an environment that allows child-process and Chromium launch.
