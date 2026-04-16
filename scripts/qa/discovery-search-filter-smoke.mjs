@@ -65,6 +65,7 @@ async function main() {
   try {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await page.fill("#gameSearchInput", "tetris");
+    await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length === 1);
     const homeSearchState = await page.evaluate(() => {
       const titles = [...document.querySelectorAll("#gamesGrid .game-title")]
         .map((node) => (node.textContent || "").trim())
@@ -80,7 +81,9 @@ async function main() {
     summary.checks.push({ name: "home_search_tetris", pass: true, data: homeSearchState });
 
     await page.fill("#gameSearchInput", "");
+    await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length >= 63);
     await page.selectOption("#gameCoinFilter", "no-coins");
+    await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length === 4);
     const homeNoCoinState = await page.evaluate(() => {
       const titles = [...document.querySelectorAll("#gamesGrid .game-title")]
         .map((node) => (node.textContent || "").trim())
@@ -90,9 +93,11 @@ async function main() {
         .filter(Boolean);
       return { titles, tags };
     });
-    assert(homeNoCoinState.titles.length === 2, "Expected exactly two non-coin games on home filter.");
+    assert(homeNoCoinState.titles.length === 4, "Expected exactly four non-coin games on home filter.");
+    assert(homeNoCoinState.titles.includes("Prisoner's Dilemma Lab"), "Expected Prisoner's Dilemma Lab in non-coin filter.");
     assert(homeNoCoinState.titles.includes("Pocket Mini Golf"), "Expected Pocket Mini Golf in non-coin filter.");
     assert(homeNoCoinState.titles.includes("Micro RC Racer"), "Expected Micro RC Racer in non-coin filter.");
+    assert(homeNoCoinState.titles.includes("Oregon Trail"), "Expected Oregon Trail in non-coin filter.");
     assert(homeNoCoinState.tags.every((tag) => tag === "No coin rewards"), "Expected all non-coin filter tags to match.");
     summary.checks.push({ name: "home_non_coin_filter", pass: true, data: homeNoCoinState });
     const homeShot = path.join(OUTPUT_DIR, "home-search-filter.png");
@@ -101,6 +106,7 @@ async function main() {
 
     await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
     await page.selectOption("#shopGameFilter", "Tetris");
+    await page.waitForFunction(() => document.querySelectorAll("#shopGrid .shop-item").length === 2);
     const shopTagState = await page.evaluate(() => {
       const cards = [...document.querySelectorAll("#shopGrid .shop-item")].map((card) => ({
         title: (card.querySelector(".shop-item-title")?.textContent || "").trim(),
@@ -126,6 +132,7 @@ async function main() {
     summary.checks.push({ name: "shop_game_filter_tetris", pass: true, data: shopTagState });
 
     await page.fill("#shopSearchInput", "aurora");
+    await page.waitForFunction(() => document.querySelectorAll("#shopGrid .shop-item-title").length === 1);
     const shopSearchState = await page.evaluate(() => {
       const titles = [...document.querySelectorAll("#shopGrid .shop-item-title")]
         .map((node) => (node.textContent || "").trim())
