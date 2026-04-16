@@ -311,3 +311,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-13] Key PR links: none merged for this date.
 - [nightly 2026-04-14] Tracked changes: 4 commit(s) - Add SAIL blog featured image asset; Add feedback widget mounts to legacy game pages; Add Magnet Rail game and wire routing metadata; Add Pulse Parry game and wire site metadata.
 - [nightly 2026-04-14] Key PR links: none merged for this date.
+- [nightly 2026-04-15] Tracked changes: 1 commit(s) - Add Loom Lock game and wire site metadata and routing.
+- [nightly 2026-04-15] Key PR links: none merged for this date.

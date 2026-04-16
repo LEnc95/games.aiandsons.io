@@ -79,5 +79,6 @@
 - game/pulseparry
 - game/magnetrail
 - game/loomlock
+- game/tidetower
 
 Generated from `src/meta/feedback.js`.

@@ -1806,3 +1806,26 @@ pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integra
 - Follow-up TODO:
   - Re-run 
 pm run test:feedback and the Playwright gameplay validation loop for /loomlock in an environment that allows child-process and Chromium launch.
+
+## 2026-04-16 Tide Tower automation run (in progress)
+- Added brand-new game `tidetower` at `tidetower/index.html` with a floodgate-management loop.
+  - Core loop: monitor four storm channels (north/east/south/west), toggle gates open/closed, divert surge into basins, and prevent tower integrity collapse.
+  - Loss conditions: integrity reaches zero from breaches/overflow.
+  - Win condition: survive the full storm timer.
+  - Controls: desktop (A/D or Left/Right to select gate, Space/Enter toggle, P pause, R restart, F fullscreen) and mobile buttons (Prev/Next/Toggle/Pause/Restart/Fullscreen).
+  - Platform hooks: `rememberRecent('tidetower')`, coin rewards via `addCoins`, progression payload via `maybeUnlock`.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` including coordinate-system note and full live channel/gate state.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'tidetower', gameName: 'Tide Tower' })`.
+- Wired route metadata and launchers:
+  - Added `tidetower` entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/tidetower` rewrites and `/tidetower/index.html` cache-header entry in `vercel.json`.
+- Next step: run wiring/JSON validation, feedback sync, and attempt required test/playwright checks in this sandbox.
+- Validation results (this run):
+  - `rg -n "tidetower" tidetower/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/tidetower`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/tidetower` in an environment that allows child-process and Chromium launch.

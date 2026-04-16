@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Tide Tower - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Manage four floodgates, redirect storm surges, and keep Tide Tower intact until the storm passes." />
+<meta property="og:title" content="Tide Tower - Play on Cade's Games" />
+<meta property="og:description" content="Manage four floodgates, redirect storm surges, and keep Tide Tower intact until the storm passes." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/tidetower" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Tide Tower - Play on Cade's Games" />
+<meta name="twitter:description" content="Manage four floodgates, redirect storm surges, and keep Tide Tower intact until the storm passes." />
+<link rel="canonical" href="https://games.aiandsons.io/tidetower" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  color: #e9f6ff;
+  background: radial-gradient(65% 56% at 15% 10%, #18405f 0%, transparent 65%), radial-gradient(60% 52% at 85% 85%, #14323f 0%, transparent 62%), linear-gradient(180deg, #041018 0%, #0a2434 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff45;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #8ec5e880;
+  box-shadow: 0 18px 50px #000000af;
+  background: linear-gradient(180deg, #0b2437 0%, #113952 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 14px;
+  border: 1px solid #b1e5ff44;
+  background: #092238ed;
+  box-shadow: 0 14px 32px #00000080;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(28px, 4.2vw, 40px);
+}
+p {
+  margin: 0 0 10px;
+  color: #bddff6;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #a4d7ff56;
+  background: #114163f5;
+  color: #edf6ff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #a4d7ff52;
+  background: #092238e8;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #b3e4ff3e;
+  background: #ffffff14;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #b6daef;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #a4d7ff52;
+  background: #092238e8;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #154d74; border-color: #9acff066; }
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1240" height="780" aria-label="Tide Tower game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Integrity</span><b id="integrity">100</b></div>
+    <div class="chip"><span>Time</span><b id="time">95.0s</b></div>
+    <div class="chip"><span>Combo</span><b id="combo">0</b></div>
+    <div class="chip"><span>Gate</span><b id="gate">North</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="prevBtn" type="button" class="ctrl-btn">Prev Gate</button>
+    <button id="nextBtn" type="button" class="ctrl-btn">Next Gate</button>
+    <button id="toggleBtn" type="button">Toggle Gate</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const integrityEl = document.getElementById('integrity');
+const timeEl = document.getElementById('time');
+const comboEl = document.getElementById('combo');
+const gateEl = document.getElementById('gate');
+const coinsEl = document.getElementById('coins');
+
+const CHANNELS = [
+  { key: 'north', label: 'North', color: '#5ac8ff', x: 620, y: 128, dx: 0, dy: -1 },
+  { key: 'east', label: 'East', color: '#6ee3ff', x: 1018, y: 390, dx: 1, dy: 0 },
+  { key: 'south', label: 'South', color: '#4fb9ff', x: 620, y: 652, dx: 0, dy: 1 },
+  { key: 'west', label: 'West', color: '#72d2ff', x: 222, y: 390, dx: -1, dy: 0 },
+];
+const TOTAL_SECONDS = 95;
+const START_INTEGRITY = 100;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  integrity: START_INTEGRITY,
+  combo: 0,
+  selectedGate: 0,
+  gates: [false, false, false, false],
+  surge: [0.25, 0.2, 0.22, 0.26],
+  basin: [0.14, 0.2, 0.1, 0.16],
+  peakBasin: 0,
+  eventTimer: 0,
+  phase: 0,
+  logs: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function rand(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function addLog(line) {
+  state.logs.push(line);
+  if (state.logs.length > 5) state.logs.shift();
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.integrity = START_INTEGRITY;
+  state.combo = 0;
+  state.selectedGate = 0;
+  state.gates = [false, false, false, false];
+  state.surge = [rand(0.12, 0.3), rand(0.12, 0.3), rand(0.12, 0.3), rand(0.12, 0.3)];
+  state.basin = [rand(0.06, 0.2), rand(0.06, 0.2), rand(0.06, 0.2), rand(0.06, 0.2)];
+  state.peakBasin = Math.max(...state.basin);
+  state.eventTimer = 0;
+  state.phase = 0;
+  state.logs = ['Keep surges away from Tide Tower until the storm timer ends.'];
+}
+
+function showOverlay(title, body, cta, onAction) {
+  overlay.innerHTML = `<div class="panel"><h1>${title}</h1><p>${body}</p><p>Desktop: A/D or Left/Right chooses gate, Space toggles gate, P pause, R restart, F fullscreen.</p><div class="row"><button id="overlayAction" type="button">${cta}</button><button id="overlayFullscreen" type="button">Fullscreen</button></div></div>`;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', onAction);
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'playing';
+  try { rememberRecent('tidetower'); } catch {}
+  try { maybeUnlock({ anyPlay: true, tidetower: { result: 'started', score: 0, integrity: START_INTEGRITY } }); } catch {}
+  hideOverlay();
+}
+
+function endGame(result) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = result;
+  const coins = Math.max(5, Math.round(state.score / 120) + (result === 'win' ? 22 : 8));
+  try { addCoins(coins); } catch {}
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      tidetower: {
+        result,
+        score: Math.round(state.score),
+        integrity: Math.max(0, Math.round(state.integrity)),
+        combo: state.combo,
+      },
+    });
+  } catch {}
+  showOverlay(
+    result === 'win' ? 'Storm Endured' : 'Tower Flooded',
+    result === 'win'
+      ? `Tide Tower survived with ${Math.max(0, Math.round(state.integrity))}% integrity. +${coins} coins.`
+      : `The surge overwhelmed your defenses. +${coins} coins for reconstruction funds.`,
+    'Play Again',
+    startGame,
+  );
+}
+
+function togglePause() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Storm simulation is paused. Resume when ready.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'playing';
+        hideOverlay();
+      }
+    });
+    return;
+  }
+  if (state.mode === 'paused') {
+    state.mode = 'playing';
+    hideOverlay();
+  }
+}
+
+function selectGate(delta) {
+  if (state.mode !== 'playing') return;
+  state.selectedGate = (state.selectedGate + delta + CHANNELS.length) % CHANNELS.length;
+}
+
+function toggleGate(index = state.selectedGate) {
+  if (state.mode !== 'playing') return;
+  state.gates[index] = !state.gates[index];
+  addLog(`${CHANNELS[index].label} gate ${state.gates[index] ? 'OPEN' : 'CLOSED'}.`);
+}
+
+function applySurgeEvent(index) {
+  const pressure = state.surge[index];
+  if (state.gates[index]) {
+    const diverted = 0.24 + pressure * 0.7;
+    state.basin[index] += diverted;
+    state.score += 45 + Math.round(pressure * 30);
+    state.combo += 1;
+    if (state.combo > 1) state.score += Math.min(90, state.combo * 4);
+    addLog(`${CHANNELS[index].label} surge diverted.`);
+  } else {
+    const damage = 8 + pressure * 10;
+    state.integrity = Math.max(0, state.integrity - damage);
+    state.score = Math.max(0, state.score - Math.round(22 + pressure * 28));
+    state.combo = 0;
+    addLog(`${CHANNELS[index].label} breach! Tower damaged.`);
+  }
+  state.surge[index] = rand(0.05, 0.22);
+}
+
+function update(dt) {
+  if (state.mode !== 'playing') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  state.phase += dt;
+  state.eventTimer += dt;
+
+  for (let i = 0; i < CHANNELS.length; i += 1) {
+    const wavePulse = 0.018 + 0.012 * Math.sin(state.phase * 1.6 + i * 1.3);
+    state.surge[i] += dt * (0.05 + wavePulse);
+    state.basin[i] = Math.max(0, state.basin[i] - dt * 0.12);
+
+    if (state.basin[i] > 1.14) {
+      const overflow = (state.basin[i] - 1.14) * 30;
+      state.integrity = Math.max(0, state.integrity - overflow * dt);
+      state.score = Math.max(0, state.score - overflow * dt * 2.2);
+      state.combo = 0;
+    }
+
+    if (state.surge[i] >= 1) applySurgeEvent(i);
+  }
+
+  if (state.eventTimer >= 1.3) {
+    const idx = Math.floor(Math.random() * CHANNELS.length);
+    state.surge[idx] = Math.min(1.2, state.surge[idx] + rand(0.12, 0.26));
+    state.eventTimer = 0;
+  }
+
+  state.peakBasin = Math.max(state.peakBasin, ...state.basin);
+
+  if (state.integrity <= 0) {
+    endGame('fail');
+    return;
+  }
+  if (state.timeLeft <= 0) {
+    endGame('win');
+  }
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#0b2c43');
+  grad.addColorStop(0.45, '#164566');
+  grad.addColorStop(1, '#0e2f47');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(180, 234, 255, 0.14)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < canvas.height; y += 26) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y + Math.sin((y + state.phase * 80) * 0.02) * 6);
+    ctx.stroke();
+  }
+}
+
+function drawTower() {
+  ctx.save();
+  ctx.translate(620, 390);
+  const radius = 112;
+
+  ctx.fillStyle = '#f2f8ff';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#93bdd6';
+  ctx.beginPath();
+  ctx.arc(0, 0, 74, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0e2d43';
+  ctx.font = '700 20px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillText('TIDE', 0, -6);
+  ctx.fillText('TOWER', 0, 22);
+
+  ctx.fillStyle = 'rgba(72, 134, 170, 0.35)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 136, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawChannel(i) {
+  const channel = CHANNELS[i];
+  const selected = state.selectedGate === i;
+  const open = state.gates[i];
+  const surge = Math.max(0, Math.min(1.25, state.surge[i]));
+  const basin = Math.max(0, Math.min(1.3, state.basin[i]));
+
+  let x = channel.x;
+  let y = channel.y;
+  let w = channel.dx === 0 ? 170 : 116;
+  let h = channel.dx === 0 ? 116 : 170;
+
+  ctx.fillStyle = selected ? 'rgba(220, 247, 255, 0.3)' : 'rgba(180, 227, 250, 0.16)';
+  ctx.fillRect(x - w / 2 - 8, y - h / 2 - 8, w + 16, h + 16);
+
+  ctx.fillStyle = '#103752';
+  ctx.fillRect(x - w / 2, y - h / 2, w, h);
+
+  if (channel.dx === 0) {
+    const fillH = Math.min(h, h * surge);
+    ctx.fillStyle = channel.color;
+    ctx.fillRect(x - w / 2, y + h / 2 - fillH, w, fillH);
+  } else {
+    const fillW = Math.min(w, w * surge);
+    ctx.fillStyle = channel.color;
+    if (channel.dx > 0) ctx.fillRect(x - w / 2, y - h / 2, fillW, h);
+    else ctx.fillRect(x + w / 2 - fillW, y - h / 2, fillW, h);
+  }
+
+  ctx.strokeStyle = 'rgba(216, 244, 255, 0.75)';
+  ctx.lineWidth = selected ? 4 : 2;
+  ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+
+  const gateW = channel.dx === 0 ? 104 : 20;
+  const gateH = channel.dx === 0 ? 20 : 104;
+  const gx = 620 + channel.dx * 148;
+  const gy = 390 + channel.dy * 148;
+  ctx.fillStyle = open ? '#6df7b2' : '#ff6f8f';
+  ctx.fillRect(gx - gateW / 2, gy - gateH / 2, gateW, gateH);
+  ctx.strokeStyle = '#072132';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(gx - gateW / 2, gy - gateH / 2, gateW, gateH);
+
+  ctx.fillStyle = '#e6f7ff';
+  ctx.font = '700 16px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillText(channel.label, x, y - h / 2 - 16);
+  ctx.fillStyle = '#d6f1ff';
+  ctx.font = '600 14px Trebuchet MS';
+  ctx.fillText(`Surge ${(surge * 100).toFixed(0)}%`, x, y + h / 2 + 20);
+
+  const bx = i < 2 ? 1060 : 180;
+  const by = i % 2 === 0 ? 190 : 590;
+  ctx.fillStyle = 'rgba(17, 58, 86, 0.9)';
+  ctx.fillRect(bx - 70, by - 44, 140, 88);
+  ctx.fillStyle = 'rgba(96, 205, 255, 0.72)';
+  ctx.fillRect(bx - 60, by + 34 - 68 * Math.min(1, basin), 120, 68 * Math.min(1, basin));
+  ctx.strokeStyle = 'rgba(206, 240, 255, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(bx - 70, by - 44, 140, 88);
+  ctx.fillStyle = '#d8f2ff';
+  ctx.font = '700 13px Trebuchet MS';
+  ctx.fillText(`${channel.label} Basin ${Math.round(Math.min(130, basin * 100))}%`, bx, by - 54);
+}
+
+function drawStatusText() {
+  ctx.fillStyle = '#eff9ff';
+  ctx.font = '700 36px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Tide Tower', 26, 52);
+
+  ctx.fillStyle = '#c5e5f8';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText('Keep floodgates in sync with surges. Open to divert water, close before basins overflow.', 26, 78);
+
+  ctx.fillStyle = '#cae9fc';
+  ctx.font = '600 15px Trebuchet MS';
+  const lines = state.logs.length ? state.logs : ['Monitor all four channels and hold integrity until storm timer ends.'];
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 26, 104 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawTower();
+  for (let i = 0; i < CHANNELS.length; i += 1) drawChannel(i);
+  drawStatusText();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  integrityEl.textContent = `${Math.max(0, Math.round(state.integrity))}%`;
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  comboEl.textContent = String(state.combo);
+  gateEl.textContent = CHANNELS[state.selectedGate].label;
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function keyHandler(event) {
+  if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); selectGate(-1); return; }
+  if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); selectGate(1); return; }
+  if (event.code === 'Digit1') { state.selectedGate = 0; return; }
+  if (event.code === 'Digit2') { state.selectedGate = 1; return; }
+  if (event.code === 'Digit3') { state.selectedGate = 2; return; }
+  if (event.code === 'Digit4') { state.selectedGate = 3; return; }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); toggleGate(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function wireControls() {
+  document.getElementById('prevBtn').addEventListener('click', () => selectGate(-1));
+  document.getElementById('nextBtn').addEventListener('click', () => selectGate(1));
+  document.getElementById('toggleBtn').addEventListener('click', () => toggleGate());
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.getElementById('restartBtn').addEventListener('click', startGame);
+  document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+}
+
+window.addEventListener('keydown', keyHandler);
+wireControls();
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'tidetower',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left in pixels. Tower center is approximately (620,390). Channel order: north, east, south, west.',
+  objective: { survive_seconds: TOTAL_SECONDS, keep_integrity_above: 0 },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    integrity_percent: Number(state.integrity.toFixed(2)),
+    combo: state.combo,
+    selected_gate_index: state.selectedGate,
+    selected_gate: CHANNELS[state.selectedGate].key,
+  },
+  channels: CHANNELS.map((channel, idx) => ({
+    key: channel.key,
+    label: channel.label,
+    surge_level: Number(state.surge[idx].toFixed(3)),
+    gate_open: state.gates[idx],
+    basin_fill: Number(state.basin[idx].toFixed(3)),
+  })),
+  peak_basin_fill: Number(state.peakBasin.toFixed(3)),
+  recent_events: state.logs,
+  controls: {
+    select_gate: 'A/D or Left/Right or buttons',
+    toggle_gate: 'Space or Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Tide Tower', 'Manage four floodgates, redirect incoming surges, and keep tower integrity above zero until the storm timer expires.', 'Start Storm Shift', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'tidetower', gameName: 'Tide Tower' });
+</script>
+</body>
+</html>
