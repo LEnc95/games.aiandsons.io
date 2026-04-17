@@ -24,3 +24,7 @@
 **Vulnerability:** Clearing DOM element contents using `.innerHTML = ""` was present in `src/auth/embed.js`.
 **Learning:** While assigning an empty string to `innerHTML` does not intrinsically cause an XSS vulnerability, static analysis tools and Sourcery CI will correctly flag ANY assignment to `.innerHTML` as a potential DOM-based XSS blocking issue, reflecting a codebase architecture goal to ban the property entirely where possible.
 **Prevention:** Always use `.textContent = ""` to clear DOM element children to satisfy security analysis scanners and follow codebase strictness rules.
+## 2026-04-12 - DOM Clearing XSS Warning
+**Vulnerability:** Clearing DOM element contents using `.innerHTML = ""` was present across several frontend files (e.g. `clubpenguin-world/public/client.js`, `ops/billing/index.html`, `shop.html`, `src/feedback/embed.js`, `teacher/index.html`).
+**Learning:** While assigning an empty string to `innerHTML` does not intrinsically cause an XSS vulnerability, static analysis tools and Sourcery CI will correctly flag ANY assignment to `.innerHTML` as a potential DOM-based XSS blocking issue, reflecting a codebase architecture goal to ban the property entirely where possible.
+**Prevention:** Always use `.textContent = ""` to clear DOM element children to satisfy security analysis scanners and follow codebase strictness rules.
