@@ -27,3 +27,6 @@
 ## 2024-05-24 - Concurrent I/O in Handlers and Helpers
 **Learning:** Sequential execution of independent I/O tasks within backend handlers (e.g. `clearFamilyAccessForUser` and `getStripeBillingProfile` in `handleFamilyRemoveMember`, or `syncFamilyMemberProfiles` and `sendFamilyInviteAcceptedEmail` in `handleFamilyAcceptInvite`, and data fetching in `buildFamilySummary`) unnecessarily delays response times.
 **Action:** Identify independent async operations within handlers and helper functions, and execute them concurrently using `Promise.all()`. This eliminates N+1 style blocking and reduces overall request latency.
+## 2026-04-17 - Optimize Array Membership Check in `normalizeSupportedPlans`
+**Learning:** Checking for membership in a constantly growing array within a loop using `.includes()` leads to (N^2)$ (or (N*M)$) time complexity. Using a `Set` ensures (1)$ lookup time.
+**Action:** Replaced the `normalized` Array with a `Set` during the loop in `normalizeSupportedPlans`, significantly improving execution time for large inputs. Convert the `Set` back to an `Array` before returning it.
