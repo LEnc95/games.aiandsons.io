@@ -219,16 +219,18 @@ const loadOwnedCosmetics = (equipped) => {
       if (!Array.isArray(values)) continue;
       if (!baseSets[category]) baseSets[category] = new Set();
       for (const value of values) {
-        if (typeof value !== 'string') continue;
-        baseSets[category].add(value);
+        if (typeof value === 'string') {
+          baseSets[category].add(value);
+        }
       }
     }
   }
 
   for (const [category, value] of Object.entries(equipped)) {
-    if (typeof value !== 'string') continue;
-    if (!baseSets[category]) baseSets[category] = new Set();
-    baseSets[category].add(value);
+    if (typeof value === 'string') {
+      if (!baseSets[category]) baseSets[category] = new Set();
+      baseSets[category].add(value);
+    }
   }
 
   return Object.fromEntries(
