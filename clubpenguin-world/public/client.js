@@ -494,7 +494,7 @@
     if (!chatSuggestionsEl) {
       return;
     }
-    chatSuggestionsEl.innerHTML = "";
+    chatSuggestionsEl.textContent = "";
 
     if (!state.chatCatalogLoaded) {
       chatSuggestionsEl.appendChild(createEmptyListItem("Loading quick chat phrases..."));
@@ -829,7 +829,7 @@
       return left.localeCompare(right);
     });
 
-    rosterEl.innerHTML = "";
+    rosterEl.textContent = "";
     if (players.length === 0) {
       rosterEl.appendChild(
         createEmptyListItem(state.connected ? "No penguins in this room yet." : "Connect to see room roster.")
@@ -899,7 +899,7 @@
     const coins = Number(progress.coins) || 0;
     coinCountEl.textContent = `${coins} coin${coins === 1 ? "" : "s"}`;
 
-    questListEl.innerHTML = "";
+    questListEl.textContent = "";
     if (!state.progressLoaded) {
       questListEl.appendChild(createEmptyListItem("Loading starter tasks..."));
       return;
@@ -963,7 +963,7 @@
 
   function updateRoomSelect() {
     const rooms = Array.isArray(state.rooms) && state.rooms.length > 0 ? state.rooms : DEFAULT_ROOMS;
-    roomSelectEl.innerHTML = "";
+    roomSelectEl.textContent = "";
 
     for (const room of rooms) {
       if (!room || typeof room.id !== "string") {
@@ -984,7 +984,7 @@
   }
 
   function renderChatEmptyState(text) {
-    chatLogEl.innerHTML = "";
+    chatLogEl.textContent = "";
     chatLogEl.appendChild(createEmptyListItem(text));
   }
 
@@ -992,7 +992,7 @@
     if (chatLogEl.children.length === 1) {
       const onlyChild = chatLogEl.children[0];
       if (onlyChild && onlyChild.classList.contains("empty")) {
-        chatLogEl.innerHTML = "";
+        chatLogEl.textContent = "";
       }
     }
 
