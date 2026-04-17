@@ -336,6 +336,7 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   const signOutBtn = document.getElementById("cadeFeedbackSignOutBtn");
 
   let currentSession = null;
+  let lastFocusedElement = null;
 
   function setStatus(message, tone = "") {
     statusEl.textContent = message;
@@ -392,6 +393,7 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   }
 
   function openModal() {
+    lastFocusedElement = document.activeElement;
     backdrop.classList.add("active");
     backdrop.setAttribute("aria-hidden", "false");
     setStatus("");
@@ -401,7 +403,10 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   function closeModal() {
     backdrop.classList.remove("active");
     backdrop.setAttribute("aria-hidden", "true");
-    openBtn.focus();
+    if (lastFocusedElement) {
+      lastFocusedElement.focus();
+      lastFocusedElement = null;
+    }
   }
 
   function renderSelectedFiles() {
