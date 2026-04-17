@@ -27,3 +27,6 @@
 ## 2024-05-24 - Concurrent I/O in Handlers and Helpers
 **Learning:** Sequential execution of independent I/O tasks within backend handlers (e.g. `clearFamilyAccessForUser` and `getStripeBillingProfile` in `handleFamilyRemoveMember`, or `syncFamilyMemberProfiles` and `sendFamilyInviteAcceptedEmail` in `handleFamilyAcceptInvite`, and data fetching in `buildFamilySummary`) unnecessarily delays response times.
 **Action:** Identify independent async operations within handlers and helper functions, and execute them concurrently using `Promise.all()`. This eliminates N+1 style blocking and reduces overall request latency.
+## 2024-04-17 - O(N^2) to O(N) whitelist normalization
+**Learning:** Checking for duplicates using `Array.prototype.includes` within a loop over an array leads to O(N^2) time complexity, which becomes a performance bottleneck for large arrays.
+**Action:** Use a `Set` for deduplication within the loop (O(1) insertion and check), and then convert the `Set` back to an array using `Array.from()` at the end, resulting in O(N) time complexity.

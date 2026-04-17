@@ -48,14 +48,14 @@ const clampSessionDuration = (value) => {
 
 const normalizeWhitelist = (value) => {
   if (!Array.isArray(value)) return [];
-  const normalized = [];
+  const normalized = new Set();
   for (const entry of value) {
     if (typeof entry !== 'string') continue;
     const slug = entry.trim();
-    if (!slug || normalized.includes(slug)) continue;
-    normalized.push(slug);
+    if (!slug) continue;
+    normalized.add(slug);
   }
-  return normalized;
+  return Array.from(normalized);
 };
 
 const normalizeAssignment = (value) => {
