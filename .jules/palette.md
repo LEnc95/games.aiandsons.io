@@ -16,3 +16,6 @@
 ## 2026-04-15 - Global Custom Modal Keyboard Accessibility Focus Restoration
 **Learning:** All custom modals (even those scattered across different files like `src/auth/embed.js` or `teacher/index.html`) must strictly capture `document.activeElement` when opened and restore focus back to it when closed to comply with WCAG standards and prevent users from losing their place in the DOM tab order.
 **Action:** When implementing or modifying *any* modal in the codebase, always verify that `document.activeElement` is saved to a scoped variable on open, and that variable `.focus()` is called on close.
+## 2026-04-17 - Global Event Listener Teardown in Component Lifecycle
+**Learning:** When adding global event listeners (like `window.addEventListener('keydown', ...)`) inside vanilla JavaScript class components to satisfy accessibility requirements (like listening for the `Escape` key), failing to implement a `destroy()` or teardown method will lead to memory leaks and duplicate event executions if the component is ever unmounted or recreated.
+**Action:** Always verify that any global listeners added in a component's `init()` or `constructor` are properly removed via `removeEventListener` in a designated `destroy()` or cleanup method.
