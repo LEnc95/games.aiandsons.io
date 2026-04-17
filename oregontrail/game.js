@@ -42,6 +42,7 @@ class OregonTrailGame {
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleInput = this.handleInput.bind(this);
+    this.handleKeyDown = this.handleKeyDown.bind(this);
   }
 
   createInitialState() {
@@ -85,7 +86,22 @@ class OregonTrailGame {
     this.container.addEventListener('click', this.handleClick);
     this.container.addEventListener('change', this.handleChange);
     this.container.addEventListener('input', this.handleInput);
+    window.addEventListener('keydown', this.handleKeyDown);
     this.render();
+  }
+
+
+  destroy() {
+    this.container.removeEventListener('click', this.handleClick);
+    this.container.removeEventListener('change', this.handleChange);
+    this.container.removeEventListener('input', this.handleInput);
+    window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleKeyDown(event) {
+    if (event.key === 'Escape' && this.state.activeEvent) {
+      this.dismissEvent();
+    }
   }
 
   handleClick(event) {
@@ -442,6 +458,7 @@ class OregonTrailGame {
     this.state.activeEvent = { title, body };
     this.state.previousScreen = this.state.currentScreen === 'event' ? this.state.previousScreen : this.state.currentScreen;
     this.state.currentScreen = 'event';
+    this.lastFocusedElement = document.activeElement;
   }
 
   dismissEvent() {
@@ -451,6 +468,11 @@ class OregonTrailGame {
     this.state.activeEvent = null;
     this.state.currentScreen = this.state.outcome ? 'end' : returnScreen;
     this.render();
+
+    if (this.lastFocusedElement) {
+      this.lastFocusedElement.focus();
+      this.lastFocusedElement = null;
+    }
   }
 
   restart() {
@@ -520,6 +542,13 @@ class OregonTrailGame {
         ${this.renderEventModal()}
       </div>
     `;
+
+    if (this.state.currentScreen === 'event') {
+      const dismissBtn = document.getElementById('ot-event-dismiss-btn');
+      if (dismissBtn) {
+        dismissBtn.focus();
+      }
+    }
   }
 
   renderMainMenu() {
@@ -796,7 +825,7 @@ class OregonTrailGame {
         <div class="ot-modal" role="dialog" aria-modal="true" aria-labelledby="ot-event-title">
           <h2 id="ot-event-title">${this.escapeHtml(this.state.activeEvent.title)}</h2>
           <p>${this.escapeHtml(this.state.activeEvent.body)}</p>
-          <button class="ot-button ot-button--primary" type="button" data-action="dismiss-event">Continue</button>
+          <button class="ot-button ot-button--primary" type="button" data-action="dismiss-event" id="ot-event-dismiss-btn">Continue</button>
         </div>
       </div>
     `;
