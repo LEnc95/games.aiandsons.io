@@ -7,6 +7,7 @@ Operational command reference for contributors and automations in this repositor
 - Install dependencies: `npm install`
 - Install dependencies with lockfile parity (CI): `npm ci`
 - Install Playwright browser runtime for smoke tests: `npx playwright install --with-deps chromium`
+- Run local static server for raw smoke tests: `python -m http.server 4173`
 - Regenerate sitemap and inject SEO metadata: `npm run seo`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
@@ -49,6 +50,7 @@ Operational command reference for contributors and automations in this repositor
 - Nightly billing drift reconcile: `.github/workflows/nightly-billing-reconcile.yml`
 - Tagged release policy gate: `.github/workflows/policy-release-gate.yml`
 - Slack notifications for those workflows use the `SLACK_CI_WEBHOOK_URL` Actions secret and notify on failures by default.
+- Set repository variable `SLACK_NOTIFY_SUCCESS=true` to enable success notifications for those workflows.
 - Production feedback sync failures can post to Slack from the deployed app when `SLACK_FEEDBACK_WEBHOOK_URL` is set in Vercel.
 - Billing reconcile additionally needs GitHub repository secrets `STRIPE_ADMIN_TOKEN` and either `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` so it can enumerate customer-backed billing profiles from Firestore before calling the admin reconcile route.
 
@@ -69,5 +71,3 @@ Operational command reference for contributors and automations in this repositor
 - Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
 - Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
 
-## TODO
-- Confirm whether `python -m http.server 4173` is the canonical local server command and if an explicit `127.0.0.1` bind is required for all `*:raw` smoke runs.

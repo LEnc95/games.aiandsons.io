@@ -313,3 +313,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-14] Key PR links: none merged for this date.
 - [nightly 2026-04-15] Tracked changes: 1 commit(s) - Add Loom Lock game and wire site metadata and routing.
 - [nightly 2026-04-15] Key PR links: none merged for this date.
+- [nightly 2026-04-16] Tracked changes: 5 commit(s) - e7a857b Add Tide Tower game and wire site metadata and routing; 1fb6edf Add Loom Lock game and wire site metadata and routing; 8a8e45c Merge pull request #114 from LEnc95/sentinel-security-headers-9041407985542366875; 704498a Merge pull request #113 from LEnc95/fix/launch-readiness-discovery-smoke; df0f140 Add Strict-Transport-Security header.
+- [nightly 2026-04-16] Key PR links: [#113](https://github.com/LEnc95/games.aiandsons.io/pull/113), [#114](https://github.com/LEnc95/games.aiandsons.io/pull/114).

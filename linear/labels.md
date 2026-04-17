@@ -80,5 +80,6 @@
 - game/magnetrail
 - game/loomlock
 - game/tidetower
+- game/starlattice
 
 Generated from `src/meta/feedback.js`.

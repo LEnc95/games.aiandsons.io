@@ -64,5 +64,6 @@ export const GAMES = [
   { slug:'magnetrail',     name:'Magnet Rail',         emoji:'\u{1F9F2}', scoreHint:'delivered',  url:'/magnetrail',    desc:'Toggle magnetic rails, reroute incoming pods, and deliver them to matching bays before shields collapse.', earnsCoins:true },
   { slug:'loomlock',       name:'Loom Lock',           emoji:'\u{1F5DD}\uFE0F', scoreHint:'beacons', url:'/loomlock',    desc:'Jump in knight patterns, dodge sentinel scan lanes, and collect enough beacons before the lock collapses.', earnsCoins:true },
   { slug:'tidetower',      name:'Tide Tower',          emoji:'\u{1F30A}', scoreHint:'integrity',  url:'/tidetower',     desc:'Manage floodgates, redirect surges, and keep Tide Tower standing until the storm expires.', earnsCoins:true },
+  { slug:'starlattice',    name:'Star Lattice',        emoji:'\u{1F31F}', scoreHint:'delivered',  url:'/starlattice',   desc:'Place mirror tiles, route color pulses, and hit matching docks before your shield collapses.', earnsCoins:true },
 ];
 
