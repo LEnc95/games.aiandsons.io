@@ -409,7 +409,7 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     if (!fileList) return;
 
     // Clear the list before appending
-    fileList.innerHTML = "";
+    fileList.textContent = "";
     if (!files.length) {
       return;
     }

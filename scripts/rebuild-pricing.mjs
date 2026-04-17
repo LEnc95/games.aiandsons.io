@@ -170,7 +170,7 @@ const htmlContent = `<!doctype html>
     }
 
     function renderPlans() {
-      planGrid.innerHTML = '';
+      planGrid.textContent = '';
       for (const plan of plans) {
         const card = document.createElement('article');
         card.className = \\\`plan-card\${selectedPlanId === plan.id ? ' selected' : ''}\\\`;

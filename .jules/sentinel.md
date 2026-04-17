@@ -24,3 +24,7 @@
 **Vulnerability:** Clearing DOM element contents using `.innerHTML = ""` was present in `src/auth/embed.js`.
 **Learning:** While assigning an empty string to `innerHTML` does not intrinsically cause an XSS vulnerability, static analysis tools and Sourcery CI will correctly flag ANY assignment to `.innerHTML` as a potential DOM-based XSS blocking issue, reflecting a codebase architecture goal to ban the property entirely where possible.
 **Prevention:** Always use `.textContent = ""` to clear DOM element children to satisfy security analysis scanners and follow codebase strictness rules.
+## 2026-04-18 - [Fix innerHTML DOM XSS Risk]
+**Vulnerability:** Clearing DOM elements using `.innerHTML = ''` or `.innerHTML = ""`. While an empty string doesn't inherently inject malicious HTML, using `.innerHTML` violates strict XSS-prevention architecture rules and is flagged by static analysis scanners.
+**Learning:** Security posture isn't just about active exploits but also about enforcing strict APIs. By using `.textContent` to clear DOM elements, we satisfy both static analysis tools and best practices.
+**Action:** Replace all instances of `.innerHTML = ''` and `.innerHTML = ""` with `.textContent = ''` across the codebase to clear nodes securely and compliantly.
