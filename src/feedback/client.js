@@ -112,7 +112,7 @@ function getStubSessionUserId() {
   }
   const existing = normalizeString(storage.getItem(STUB_SESSION_KEY), 80);
   if (existing) return existing;
-  const created = `stub_usr_${Math.random().toString(16).slice(2, 10)}`;
+  const created = `stub_usr_${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
   storage.setItem(STUB_SESSION_KEY, created);
   return created;
 }
@@ -235,7 +235,7 @@ function createStubSubmission(payload) {
   const submissions = readStubSubmissions();
   const submittedAt = Date.now();
   const submission = {
-    id: `stub_fb_${submittedAt}_${Math.random().toString(16).slice(2, 8)}`,
+    id: `stub_fb_${submittedAt}_${crypto.randomUUID().replace(/-/g, "").slice(0, 6)}`,
     submittedAt,
     updatedAt: submittedAt,
     sessionUserId: getStubSessionUserId(),

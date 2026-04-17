@@ -24,3 +24,6 @@
 **Vulnerability:** Clearing DOM element contents using `.innerHTML = ""` was present in `src/auth/embed.js`.
 **Learning:** While assigning an empty string to `innerHTML` does not intrinsically cause an XSS vulnerability, static analysis tools and Sourcery CI will correctly flag ANY assignment to `.innerHTML` as a potential DOM-based XSS blocking issue, reflecting a codebase architecture goal to ban the property entirely where possible.
 **Prevention:** Always use `.textContent = ""` to clear DOM element children to satisfy security analysis scanners and follow codebase strictness rules.
+## 2026-04-17 - Secure Randomness for Stub Session User IDs
+**Learning:** `Math.random()` generates highly predictable sequences, making it vulnerable to predictability and hijacking in scenarios like session ID generation or identifiers (e.g., in `src/feedback/client.js`).
+**Action:** Replace `Math.random()` with standard secure alternatives like `crypto.randomUUID()` to generate truly unpredictable values.
