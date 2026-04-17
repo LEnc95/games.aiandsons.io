@@ -209,29 +209,33 @@ const loadEquippedCosmetics = () => {
 };
 
 const loadOwnedCosmetics = (equipped) => {
-  const base = Object.fromEntries(
-    Object.entries(DEFAULT_COSMETICS).map(([category, defaultValue]) => [category, [defaultValue]])
+  const baseSets = Object.fromEntries(
+    Object.entries(DEFAULT_COSMETICS).map(([category, defaultValue]) => [category, new Set([defaultValue])])
   );
 
   const stored = get('cosmeticsOwned', null);
   if (stored && typeof stored === 'object') {
     for (const [category, values] of Object.entries(stored)) {
       if (!Array.isArray(values)) continue;
-      if (!base[category]) base[category] = [];
+      if (!baseSets[category]) baseSets[category] = new Set();
       for (const value of values) {
-        if (typeof value !== 'string') continue;
-        if (!base[category].includes(value)) base[category].push(value);
+        if (typeof value === 'string') {
+          baseSets[category].add(value);
+        }
       }
     }
   }
 
   for (const [category, value] of Object.entries(equipped)) {
-    if (typeof value !== 'string') continue;
-    if (!base[category]) base[category] = [];
-    if (!base[category].includes(value)) base[category].push(value);
+    if (typeof value === 'string') {
+      if (!baseSets[category]) baseSets[category] = new Set();
+      baseSets[category].add(value);
+    }
   }
 
-  return base;
+  return Object.fromEntries(
+    Object.entries(baseSets).map(([category, valueSet]) => [category, Array.from(valueSet)])
+  );
 };
 
 const loadInventory = () => {

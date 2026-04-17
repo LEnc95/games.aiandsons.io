@@ -27,3 +27,8 @@
 ## 2024-05-24 - Concurrent I/O in Handlers and Helpers
 **Learning:** Sequential execution of independent I/O tasks within backend handlers (e.g. `clearFamilyAccessForUser` and `getStripeBillingProfile` in `handleFamilyRemoveMember`, or `syncFamilyMemberProfiles` and `sendFamilyInviteAcceptedEmail` in `handleFamilyAcceptInvite`, and data fetching in `buildFamilySummary`) unnecessarily delays response times.
 **Action:** Identify independent async operations within handlers and helper functions, and execute them concurrently using `Promise.all()`. This eliminates N+1 style blocking and reduces overall request latency.
+
+## 2024-05-18 - Optimize Cosmetic Deduplication
+
+**Learning:** Checking membership with `Array.includes` inside a nested loop when resolving combined item inventories results in an O(N*M) lookup bottleneck (where N is the number of total items and M is the number of iterations across equipped and stored sets).
+**Action:** Replace `Array` bases with `Set` objects for membership checking during insertion to achieve O(1) lookups, returning the base as an Array mapped object at the end to maintain the API boundary.
