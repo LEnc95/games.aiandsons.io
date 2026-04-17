@@ -35,14 +35,14 @@ const isLikelyEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value 
 
 const normalizeSupportedPlans = (plans) => {
   if (!Array.isArray(plans)) return [];
-  const normalized = [];
+  const normalized = new Set();
   for (const rawPlan of plans) {
     if (typeof rawPlan !== "string") continue;
     const plan = rawPlan.trim();
-    if (!KNOWN_PLAN_IDS.has(plan) || normalized.includes(plan)) continue;
-    normalized.push(plan);
+    if (!KNOWN_PLAN_IDS.has(plan)) continue;
+    normalized.add(plan);
   }
-  return normalized;
+  return Array.from(normalized);
 };
 
 export const normalizeBillingConfig = (source) => {
