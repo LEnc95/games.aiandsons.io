@@ -16,3 +16,6 @@
 ## 2026-04-15 - Global Custom Modal Keyboard Accessibility Focus Restoration
 **Learning:** All custom modals (even those scattered across different files like `src/auth/embed.js` or `teacher/index.html`) must strictly capture `document.activeElement` when opened and restore focus back to it when closed to comply with WCAG standards and prevent users from losing their place in the DOM tab order.
 **Action:** When implementing or modifying *any* modal in the codebase, always verify that `document.activeElement` is saved to a scoped variable on open, and that variable `.focus()` is called on close.
+## 2025-04-17 - Feedback Modal Focus Restoration
+**Learning:** Similar to other custom modals in the codebase, the feedback modal lacked dynamic focus restoration when closing, hardcoding the focus back to the open button. This breaks if the modal was triggered in other ways.
+**Action:** Updated the feedback modal to capture `document.activeElement` when opened and restore focus to it when closed, aligning with WCAG keyboard accessibility standards and existing modal patterns.
