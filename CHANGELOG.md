@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-04-19
+
+### Changed
+- Bumped product version to `1.0.0`.
+- Standardized version tracking across `version.json` (runtime badge) and `package.json` (project metadata).
+- Established the release practice: each changelog update should be paired with a version increment.
+
 ## [0.2.0] - 2026-04-19
 
 ### Added
