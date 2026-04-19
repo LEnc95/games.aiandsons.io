@@ -10,6 +10,7 @@ const BASE_URL = 'https://games.aiandsons.io';
 
 const mainPages = [
   '/',
+  '/changelog',
   '/shop.html',
   '/pricing.html',
   '/accessibility.html',

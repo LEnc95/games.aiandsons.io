@@ -14,6 +14,7 @@ const DEFAULT_DESC = "Play classic and custom HTML5 arcade games directly in you
 
 const mainPages = [
   { file: 'index.html', url: '/', title: "Cade's Games - Browser Arcade", desc: DEFAULT_DESC },
+  { file: 'changelog/index.html', url: '/changelog', title: "Changelog - Cade's Games", desc: "Track feature updates, game additions, and release notes for Cade's Games." },
   { file: 'shop.html', url: '/shop.html', title: "Shop - Cade's Games", desc: "Unlock premium items, player icons, and themes." },
   { file: 'pricing.html', url: '/pricing.html', title: "Pricing & Plans - Cade's Games", desc: "View subscription options for Cade's Games premium features." },
   { file: 'accessibility.html', url: '/accessibility.html', title: "Accessibility - Cade's Games", desc: "Learn about accessibility features in Cade's Games." },
