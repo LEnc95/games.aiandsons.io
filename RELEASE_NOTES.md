@@ -1,18 +1,18 @@
 # Release Notes - Sprint 6 Launch Candidate
-## Weekly Highlights (2026-04-04 to 2026-04-10)
-- Added and wired three new games in the launcher this week: `portpilot`, `hexharvest`, and `wordweave`.
-- Strengthened security hardening with host-header trust fixes, stricter production secret handling for session and feedback attachment flows, and CSP baseline/header rollout updates.
-- Improved discovery and shop UX with actionable empty-search states and clear-filters CTAs across index and shop surfaces.
-- Optimized runtime performance by debouncing shop search interactions and adding batched/cached KPI event persistence.
-- Improved family invite reliability by expiring and reconciling invite records concurrently.
+## Weekly Highlights (2026-04-11 to 2026-04-17)
+- Added and wired seven new games in the launcher this week: `diceforge`, `keystrike-command`, `pulse-parry`, `magnet-rail`, `loom-lock`, `tide-tower`, and `star-lattice`.
+- Hardened security posture by mitigating DOM-clearing XSS risk with safer text rendering and adding a Strict-Transport-Security response header.
+- Improved accessibility and UX with modal focus restoration, decorative icon screen-reader cleanup, and better keyboard/focus behavior around clear-filter flows.
+- Expanded feedback coverage by mounting feedback widgets on additional legacy game pages.
+- Improved backend and billing/admin handler performance and reliability by parallelizing independent I/O operations with `Promise.all`, plus stabilizing launch-readiness discovery smoke checks.
 
-## Key PR Links (2026-04-04 to 2026-04-10)
-- [#100](https://github.com/LEnc95/games.aiandsons.io/pull/100) - Add clear-filters UX path for empty search/filter states (merged 2026-04-09).
-- [#99](https://github.com/LEnc95/games.aiandsons.io/pull/99) - Apply follow-up CSP security fixes (merged 2026-04-09).
-- [#96](https://github.com/LEnc95/games.aiandsons.io/pull/96) - Optimize KPI metrics persistence path (merged 2026-04-09).
-- [#94](https://github.com/LEnc95/games.aiandsons.io/pull/94) - Add CSP baseline configuration for deployment (merged 2026-04-09).
-- [#93](https://github.com/LEnc95/games.aiandsons.io/pull/93) - Parallelize family invite reconciliation flow (merged 2026-04-09).
-- [#90](https://github.com/LEnc95/games.aiandsons.io/pull/90) - Fix session secret fallback behavior in production paths (merged 2026-04-09).
+## Key PR Links (2026-04-11 to 2026-04-17)
+- [#114](https://github.com/LEnc95/games.aiandsons.io/pull/114) - Add Strict-Transport-Security header (merged 2026-04-16).
+- [#113](https://github.com/LEnc95/games.aiandsons.io/pull/113) - Stabilize launch-readiness discovery smoke checks (merged 2026-04-16).
+- [#112](https://github.com/LEnc95/games.aiandsons.io/pull/112) - Use Promise.all for independent handler operations (merged 2026-04-15).
+- [#111](https://github.com/LEnc95/games.aiandsons.io/pull/111) - Improve modal and icon accessibility behavior (merged 2026-04-15).
+- [#109](https://github.com/LEnc95/games.aiandsons.io/pull/109) - Fetch admin record deliveries concurrently (merged 2026-04-14).
+- [#106](https://github.com/LEnc95/games.aiandsons.io/pull/106) - Mitigate potential DOM-based XSS in element clearing (merged 2026-04-13).
 
 ## Release Scope
 - Onboarding split from home launcher with dedicated parent and teacher onboarding pages.

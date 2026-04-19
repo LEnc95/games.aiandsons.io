@@ -81,5 +81,7 @@
 - game/loomlock
 - game/tidetower
 - game/starlattice
+- game/reactorrelay
+- game/prismpipeline
 
 Generated from `src/meta/feedback.js`.

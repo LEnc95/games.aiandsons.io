@@ -65,5 +65,7 @@ export const GAMES = [
   { slug:'loomlock',       name:'Loom Lock',           emoji:'\u{1F5DD}\uFE0F', scoreHint:'beacons', url:'/loomlock',    desc:'Jump in knight patterns, dodge sentinel scan lanes, and collect enough beacons before the lock collapses.', earnsCoins:true },
   { slug:'tidetower',      name:'Tide Tower',          emoji:'\u{1F30A}', scoreHint:'integrity',  url:'/tidetower',     desc:'Manage floodgates, redirect surges, and keep Tide Tower standing until the storm expires.', earnsCoins:true },
   { slug:'starlattice',    name:'Star Lattice',        emoji:'\u{1F31F}', scoreHint:'delivered',  url:'/starlattice',   desc:'Place mirror tiles, route color pulses, and hit matching docks before your shield collapses.', earnsCoins:true },
+  { slug:'reactorrelay',   name:'Reactor Relay',       emoji:'\u{1F50C}', scoreHint:'stabilized', url:'/reactorrelay',  desc:'Rotate relay tiles, route energy packets, and hit matching docks before reactor shielding collapses.', earnsCoins:true },
+  { slug:'prismpipeline',  name:'Prism Pipeline',      emoji:'\u{1F9EA}', scoreHint:'stabilized', url:'/prismpipeline', desc:'Cycle prism relays, route photon packets, and stabilize the grid before containment fails.', earnsCoins:true },
 ];
 

@@ -1840,3 +1840,49 @@ pm run test:feedback and the Playwright gameplay validation loop for /loomlock i
 pm.cmd run feedback:sync-linear (updated linear/labels.md + linear/game-issues.csv).
 - Sandbox blockers: 
 pm.cmd run test:feedback failed with spawn EPERM; required $develop-web-game Playwright run for /starlattice failed with rowserType.launch: spawn EPERM.
+
+## 2026-04-18T07:02:56-04:00 Reactor Relay automation run
+- New request: add a game not currently on the site.
+- Added brand-new game `reactorrelay` at `reactorrelay/index.html` with a relay-routing puzzle loop.
+  - Core loop: move cursor on an 8x8 relay grid, cycle relay tiles, and steer color-matched energy packets into matching docks.
+  - Win/loss loop: stabilize 22 packets before timer expires; misroutes drain shields; end-run score + coin payout included.
+  - Controls: desktop (WASD/Arrows + Space/Enter + P/R/F) and mobile buttons (Up/Left/Down/Right/Cycle/Pause/Restart/Fullscreen).
+  - Platform hooks: `rememberRecent('reactorrelay')`, coin rewards via `addCoins`, progression payloads via `maybeUnlock`.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state payload.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'reactorrelay', gameName: 'Reactor Relay' })`.
+- Integrated launcher/routing wiring:
+  - Added `reactorrelay` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/reactorrelay` rewrites and `/reactorrelay/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "reactorrelay" reactorrelay/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/reactorrelay`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/reactorrelay` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-19T07:03:15-04:00 Prism Pipeline automation run
+- Added brand-new game prismpipeline at prismpipeline/index.html with a prism-routing packet loop.
+  - Core loop: move cursor on an 8x8 grid, cycle prism relay tiles (. -> / -> \), and route color packets into matching docks.
+  - Win/loss loop: stabilize 26 packets before timer expires; containment shield starts at 6 and drops on misroutes; end-run score + coin payout included.
+  - Controls: desktop (WASD/Arrows + Space/Enter + P/R/F) and mobile buttons (Up/Left/Down/Right/Cycle Prism/Pause/Restart/Fullscreen).
+  - Platform hooks: ememberRecent('prismpipeline'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state payload.
+  - Feedback integration: mountGameFeedback({ gameSlug: 'prismpipeline', gameName: 'Prism Pipeline' }).
+- Integrated launcher/routing wiring:
+  - Added prismpipeline metadata entry in src/meta/games.js.
+  - Added static fallback home card in index.html.
+  - Added /prismpipeline rewrites and /prismpipeline/index.html cache-header entry in ercel.json.
+- Validation results (this run):
+  - g -n "prismpipeline" prismpipeline/index.html src/meta/games.js index.html vercel.json: pass.
+  - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
+  - 
+pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
+  - 
+pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integration tests.
+  - Skill-required Playwright loop via $develop-web-game client for /prismpipeline: blocked in this sandbox (rowserType.launch: spawn EPERM).
+- Follow-up TODO:
+  - Re-run 
+pm run test:feedback and the Playwright gameplay validation loop for /prismpipeline in an environment that allows child-process and Chromium launch.
