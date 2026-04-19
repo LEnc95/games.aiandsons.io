@@ -6,15 +6,15 @@
 <title>Prism Pipeline - Play on Cade's Games</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
-<meta name="description" content="Route photon packets through prism relays and deliver them to matching docks before containment fails." />
+<meta name="description" content="Rotate prism clusters to bend photons into matching collectors before containment fails." />
 <meta property="og:title" content="Prism Pipeline - Play on Cade's Games" />
-<meta property="og:description" content="Route photon packets through prism relays and deliver them to matching docks before containment fails." />
+<meta property="og:description" content="Rotate prism clusters to bend photons into matching collectors before containment fails." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://games.aiandsons.io/prismpipeline" />
 <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Prism Pipeline - Play on Cade's Games" />
-<meta name="twitter:description" content="Route photon packets through prism relays and deliver them to matching docks before containment fails." />
+<meta name="twitter:description" content="Rotate prism clusters to bend photons into matching collectors before containment fails." />
 <link rel="canonical" href="https://games.aiandsons.io/prismpipeline" />
 <style>
 * { box-sizing: border-box; }
@@ -26,9 +26,9 @@ html, body {
   font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
   color: #ecf8ff;
   background:
-    radial-gradient(65% 50% at 20% 10%, #1f3d73 0%, transparent 65%),
-    radial-gradient(55% 45% at 80% 85%, #3a1c5f 0%, transparent 68%),
-    linear-gradient(180deg, #060a1e 0%, #0f1d3f 100%);
+    radial-gradient(63% 48% at 22% 10%, #2f2d7e 0%, transparent 64%),
+    radial-gradient(46% 42% at 82% 84%, #4f1f64 0%, transparent 64%),
+    linear-gradient(180deg, #090b24 0%, #151647 100%);
 }
 .back {
   position: fixed;
@@ -66,7 +66,7 @@ canvas {
   border-radius: 14px;
   border: 2px solid #a6c5ff80;
   box-shadow: 0 18px 50px #000000af;
-  background: linear-gradient(180deg, #101a3c 0%, #17295a 100%);
+  background: linear-gradient(180deg, #17144b 0%, #111636 100%);
 }
 .overlay {
   position: absolute;
@@ -185,10 +185,10 @@ button {
   <section class="hud" aria-live="polite">
     <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
     <div class="chip"><span>Score</span><b id="score">0</b></div>
-    <div class="chip"><span>Delivered</span><b id="delivered">0</b></div>
-    <div class="chip"><span>Shield</span><b id="shield">5</b></div>
-    <div class="chip"><span>Time</span><b id="time">90.0s</b></div>
-    <div class="chip"><span>Combo</span><b id="combo">0</b></div>
+    <div class="chip"><span>Matched</span><b id="matched">0</b></div>
+    <div class="chip"><span>Integrity</span><b id="integrity">6</b></div>
+    <div class="chip"><span>Time</span><b id="time">95.0s</b></div>
+    <div class="chip"><span>Leaks</span><b id="leaks">0</b></div>
     <div class="chip"><span>Coins</span><b id="coins">0</b></div>
   </section>
   <section class="controls" aria-label="Touch controls">
@@ -196,7 +196,7 @@ button {
     <button id="leftBtn" type="button" class="ctrl-btn">Left</button>
     <button id="downBtn" type="button" class="ctrl-btn">Down</button>
     <button id="rightBtn" type="button" class="ctrl-btn">Right</button>
-    <button id="cycleBtn" type="button">Cycle Prism</button>
+    <button id="rotateBtn" type="button">Rotate Prism</button>
     <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
     <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
     <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
@@ -213,29 +213,33 @@ const overlay = document.getElementById('overlay');
 
 const modeEl = document.getElementById('mode');
 const scoreEl = document.getElementById('score');
-const deliveredEl = document.getElementById('delivered');
-const shieldEl = document.getElementById('shield');
+const matchedEl = document.getElementById('matched');
+const integrityEl = document.getElementById('integrity');
 const timeEl = document.getElementById('time');
-const comboEl = document.getElementById('combo');
+const leaksEl = document.getElementById('leaks');
 const coinsEl = document.getElementById('coins');
 
-const GRID_COLS = 8;
-const GRID_ROWS = 8;
-const CELL = 72;
-const GRID_LEFT = 352;
-const GRID_TOP = 120;
+const GRID_COLS = 9;
+const GRID_ROWS = 9;
+const CELL = 60;
+const GRID_LEFT = 320;
+const GRID_TOP = 100;
 const TOTAL_SECONDS = 95;
-const TARGET_DELIVERIES = 26;
-const START_SHIELD = 6;
-const SPAWN_INTERVAL = 0.96;
-const STEP_INTERVAL = 0.14;
+const TARGET_MATCHES = 28;
+const START_INTEGRITY = 6;
+const SPAWN_INTERVAL = 0.82;
+const STEP_INTERVAL = 0.09;
 
 const COLORS = [
-  { key: 'cyan', color: '#71f8ff', glow: '#45d7ff' },
-  { key: 'gold', color: '#ffd978', glow: '#f0b34a' },
-  { key: 'magenta', color: '#ff8feb', glow: '#ff5cd5' },
-  { key: 'lime', color: '#bfff8a', glow: '#91dd5b' },
+  { key: 'cyan', color: '#74f4ff', glow: '#43d8ff' },
+  { key: 'gold', color: '#ffd680', glow: '#f2b64e' },
+  { key: 'magenta', color: '#ff95ee', glow: '#ff5fd6' },
+  { key: 'lime', color: '#bffb8c', glow: '#8adf57' },
 ];
+
+const ORIENTATIONS = ['/', '\\', '|', '-'];
+const PRISM_COLS = [2, 4, 6];
+const PRISM_ROWS = [2, 4, 6];
 
 const state = {
   mode: 'menu',
@@ -243,14 +247,14 @@ const state = {
   elapsed: 0,
   timeLeft: TOTAL_SECONDS,
   score: 0,
-  delivered: 0,
-  shield: START_SHIELD,
-  combo: 0,
+  matched: 0,
+  integrity: START_INTEGRITY,
+  leaks: 0,
   spawnTimer: 0,
-  cursorX: 3,
-  cursorY: 3,
-  board: [],
-  packets: [],
+  photons: [],
+  prisms: [],
+  cursorPX: 1,
+  cursorPY: 1,
   logs: [],
 };
 
@@ -258,51 +262,44 @@ let raf = 0;
 let prev = performance.now();
 let controlled = false;
 
-function randInt(max) {
-  return Math.floor(Math.random() * max);
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function showOverlay(title, body, buttonLabel, buttonAction) {
+  overlay.classList.add('show');
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <div class="row">
+        <button id="overlayAction" type="button">${buttonLabel}</button>
+      </div>
+    </div>
+  `;
+  overlay.querySelector('#overlayAction')?.addEventListener('click', () => {
+    overlay.classList.remove('show');
+    buttonAction();
+  }, { once: true });
 }
 
-function colorForColumn(col) {
-  const bandSize = GRID_COLS / COLORS.length;
-  return Math.max(0, Math.min(COLORS.length - 1, Math.floor(col / bandSize)));
-}
-
-function directionToDelta(dir) {
-  if (dir === 'up') return { dx: 0, dy: -1 };
-  if (dir === 'down') return { dx: 0, dy: 1 };
-  if (dir === 'left') return { dx: -1, dy: 0 };
-  return { dx: 1, dy: 0 };
-}
-
-function rotateByMirror(dir, tileType) {
-  if (tileType === 1) {
-    if (dir === 'up') return 'right';
-    if (dir === 'right') return 'up';
-    if (dir === 'down') return 'left';
-    return 'down';
+function prismAt(col, row) {
+  for (let i = 0; i < state.prisms.length; i += 1) {
+    const p = state.prisms[i];
+    if (p.col === col && p.row === row) return p;
   }
-  if (tileType === 2) {
-    if (dir === 'up') return 'left';
-    if (dir === 'left') return 'up';
-    if (dir === 'down') return 'right';
-    return 'down';
-  }
-  return dir;
+  return null;
 }
 
-function addLog(line) {
-  state.logs.push(line);
-  if (state.logs.length > 5) state.logs.shift();
-}
-
-function newBoard() {
-  const board = [];
-  for (let y = 0; y < GRID_ROWS; y += 1) {
-    const row = [];
-    for (let x = 0; x < GRID_COLS; x += 1) row.push(0);
-    board.push(row);
+function initPrisms() {
+  state.prisms = [];
+  for (let py = 0; py < PRISM_ROWS.length; py += 1) {
+    for (let px = 0; px < PRISM_COLS.length; px += 1) {
+      state.prisms.push({
+        col: PRISM_COLS[px],
+        row: PRISM_ROWS[py],
+        o: Math.floor(Math.random() * ORIENTATIONS.length),
+      });
+    }
   }
-  return board;
 }
 
 function resetState() {
@@ -311,379 +308,347 @@ function resetState() {
   state.elapsed = 0;
   state.timeLeft = TOTAL_SECONDS;
   state.score = 0;
-  state.delivered = 0;
-  state.shield = START_SHIELD;
-  state.combo = 0;
+  state.matched = 0;
+  state.integrity = START_INTEGRITY;
+  state.leaks = 0;
   state.spawnTimer = 0;
-  state.cursorX = 3;
-  state.cursorY = 3;
-  state.board = newBoard();
-  state.packets = [];
-  state.logs = [];
+  state.photons = [];
+  state.cursorPX = 1;
+  state.cursorPY = 1;
+  state.logs = ['Rotate prisms to route photons into matching bins.'];
+  initPrisms();
 }
 
-function showOverlay(title, body, cta, onCta, secondary, onSecondary) {
-  overlay.innerHTML = '';
-  const panel = document.createElement('div');
-  panel.className = 'panel';
-  const h = document.createElement('h1');
-  h.textContent = title;
-  const p = document.createElement('p');
-  p.textContent = body;
-  panel.appendChild(h);
-  panel.appendChild(p);
-  const row = document.createElement('div');
-  row.className = 'row';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.textContent = cta;
-  btn.onclick = () => onCta?.();
-  row.appendChild(btn);
-  if (secondary && onSecondary) {
-    const alt = document.createElement('button');
-    alt.type = 'button';
-    alt.textContent = secondary;
-    alt.onclick = () => onSecondary();
-    row.appendChild(alt);
-  }
-  panel.appendChild(row);
-  overlay.appendChild(panel);
-  overlay.classList.add('show');
+function pushLog(line) {
+  state.logs.unshift(line);
+  if (state.logs.length > 4) state.logs.length = 4;
 }
 
-function hideOverlay() {
-  overlay.classList.remove('show');
-  overlay.innerHTML = '';
+function spawnPhoton() {
+  const colorIdx = Math.floor(Math.random() * COLORS.length);
+  const spawnCol = Math.floor(Math.random() * GRID_COLS);
+  state.photons.push({
+    x: spawnCol,
+    y: -0.5,
+    dx: 0,
+    dy: 1,
+    colorIdx,
+    progress: 0,
+    ttl: 180,
+  });
 }
 
 function startGame() {
   resetState();
-  state.mode = 'play';
-  hideOverlay();
-  addLog('Route each packet to matching color docks.');
+  state.mode = 'running';
   try { rememberRecent('prismpipeline'); } catch {}
-  try { maybeUnlock({ anyPlay: true, prismpipeline: { result: 'started', score: 0, delivered: 0 } }); } catch {}
+  try { maybeUnlock({ anyPlay: true, prismpipeline: { result: 'started', score: 0, matched: 0 } }); } catch {}
 }
 
 function finishGame(result) {
-  if (state.mode === 'won' || state.mode === 'lost') return;
-  state.mode = result === 'won' ? 'won' : 'lost';
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
   state.result = result;
-
-  const base = Math.floor(state.score / 150);
-  const reward = result === 'won'
-    ? Math.max(8, base + state.delivered + state.shield * 2)
-    : Math.max(2, Math.floor(state.delivered / 2) + base);
-  try { addCoins(reward); } catch {}
+  const reward = Math.max(4, Math.floor(state.score / 260) + (result === 'won' ? 14 : 6));
   try {
+    addCoins(reward);
     maybeUnlock({
       anyPlay: true,
       prismpipeline: {
         result,
         score: Math.round(state.score),
-        delivered: state.delivered,
-        shield: state.shield,
+        matched: state.matched,
+        leaks: state.leaks,
       },
     });
   } catch {}
 
-  if (result === 'won') {
-    showOverlay(
-      'Lattice Stable',
-      `You delivered ${state.delivered}/${TARGET_DELIVERIES} packets and earned ${reward} coins.`,
-      'Play Again',
-      startGame,
-      'Back Home',
-      () => { window.location.href = '/'; },
-    );
+  const message = result === 'won'
+    ? `Pipeline stabilized with ${state.matched} matches. You earned ${reward} coins.`
+    : `Containment failed after ${state.matched} matches. You still earned ${reward} coins.`;
+  showOverlay('Run Complete', message, 'Play Again', startGame);
+}
+
+function bottomBinForX(x) {
+  if (x <= 1) return 0;
+  if (x <= 4) return 1;
+  if (x <= 6) return 2;
+  return 3;
+}
+
+function reflectPhoton(photon, prism) {
+  const orientation = ORIENTATIONS[prism.o];
+  const dx = photon.dx;
+  const dy = photon.dy;
+
+  if (orientation === '/') {
+    photon.dx = -dy;
+    photon.dy = -dx;
+  } else if (orientation === '\\') {
+    photon.dx = dy;
+    photon.dy = dx;
+  } else if (orientation === '|') {
+    photon.dx = 0;
+    photon.dy = dy === 0 ? 1 : Math.sign(dy);
   } else {
-    showOverlay(
-      'Lattice Failed',
-      `Shield depleted with ${state.delivered}/${TARGET_DELIVERIES} deliveries. You still earned ${reward} coins.`,
-      'Retry Run',
-      startGame,
-      'Back Home',
-      () => { window.location.href = '/'; },
-    );
+    photon.dy = 0;
+    if (dx === 0) photon.dx = Math.random() < 0.5 ? -1 : 1;
+    else photon.dx = Math.sign(dx);
   }
+
+  if (photon.dx === 0 && photon.dy === 0) photon.dy = 1;
 }
 
-function spawnpacket() {
-  const spawnCol = randInt(GRID_COLS);
-  const colorIdx = randInt(COLORS.length);
-  state.packets.push({
-    x: spawnCol,
-    y: -1,
-    dir: 'down',
-    colorIdx,
-    progress: 0,
-  });
-}
-
-function applyPenalty(reason) {
-  state.shield = Math.max(0, state.shield - 1);
-  state.combo = 0;
-  addLog(reason);
-  if (state.shield <= 0) finishGame('lost');
-}
-
-function deliverpacket(column, colorIdx) {
-  const required = colorForColumn(column);
-  if (required === colorIdx) {
-    state.delivered += 1;
-    state.combo += 1;
-    state.score += 110 + state.combo * 12;
-    addLog(`Delivered ${COLORS[colorIdx].key} packet. Combo x${state.combo}.`);
-    if (state.delivered >= TARGET_DELIVERIES) finishGame('won');
-  } else {
-    applyPenalty(`Misdirected packet at column ${column + 1}.`);
-  }
-}
-
-function movepacket(packet) {
-  const delta = directionToDelta(packet.dir);
-  const nextX = packet.x + delta.dx;
-  const nextY = packet.y + delta.dy;
-
-  if (nextX < 0 || nextX >= GRID_COLS || nextY < -1) {
-    applyPenalty('packet escaped the lattice edge.');
-    return false;
-  }
-  if (nextY >= GRID_ROWS) {
-    deliverpacket(nextX, packet.colorIdx);
-    return false;
-  }
-
-  packet.x = nextX;
-  packet.y = nextY;
-  if (nextY >= 0) {
-    const tileType = state.board[nextY][nextX];
-    packet.dir = rotateByMirror(packet.dir, tileType);
-  }
-  return true;
-}
-
-function update(dt) {
-  if (state.mode !== 'play') return;
-
-  state.elapsed += dt;
-  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
-  state.spawnTimer += dt;
-
-  while (state.spawnTimer >= SPAWN_INTERVAL) {
-    state.spawnTimer -= SPAWN_INTERVAL;
-    spawnpacket();
-  }
-
-  const nextpackets = [];
-  for (let i = 0; i < state.packets.length; i += 1) {
-    const packet = state.packets[i];
-    packet.progress += dt;
-    let alive = true;
-    while (alive && packet.progress >= STEP_INTERVAL) {
-      packet.progress -= STEP_INTERVAL;
-      alive = movepacket(packet);
-    }
-    if (alive) nextpackets.push(packet);
-  }
-  state.packets = nextpackets;
-
-  if (state.timeLeft <= 0) {
-    if (state.delivered >= TARGET_DELIVERIES) finishGame('won');
-    else finishGame('lost');
-  }
-}
-
-function cycleTile() {
-  if (state.mode !== 'play') return;
-  const current = state.board[state.cursorY][state.cursorX];
-  const next = (current + 1) % 3;
-  state.board[state.cursorY][state.cursorX] = next;
+function rotateSelectedPrism() {
+  if (state.mode !== 'running') return;
+  const col = PRISM_COLS[state.cursorPX];
+  const row = PRISM_ROWS[state.cursorPY];
+  const prism = prismAt(col, row);
+  if (!prism) return;
+  prism.o = (prism.o + 1) % ORIENTATIONS.length;
 }
 
 function moveCursor(dx, dy) {
-  if (state.mode !== 'play') return;
-  state.cursorX = Math.max(0, Math.min(GRID_COLS - 1, state.cursorX + dx));
-  state.cursorY = Math.max(0, Math.min(GRID_ROWS - 1, state.cursorY + dy));
+  state.cursorPX = clamp(state.cursorPX + dx, 0, PRISM_COLS.length - 1);
+  state.cursorPY = clamp(state.cursorPY + dy, 0, PRISM_ROWS.length - 1);
 }
 
 function togglePause() {
-  if (state.mode === 'play') {
-    state.mode = 'paused';
-    showOverlay('Paused', 'Adjust relay lanes, then continue routing packets.', 'Resume', () => {
-      state.mode = 'play';
-      hideOverlay();
-    }, 'Restart', startGame);
+  if (state.mode === 'running') state.mode = 'paused';
+  else if (state.mode === 'paused') state.mode = 'running';
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+
+  state.spawnTimer += dt;
+  while (state.spawnTimer >= SPAWN_INTERVAL) {
+    state.spawnTimer -= SPAWN_INTERVAL;
+    spawnPhoton();
+  }
+
+  for (let i = state.photons.length - 1; i >= 0; i -= 1) {
+    const p = state.photons[i];
+    p.progress += dt;
+    let alive = true;
+
+    while (alive && p.progress >= STEP_INTERVAL) {
+      p.progress -= STEP_INTERVAL;
+      p.ttl -= 1;
+
+      p.x += p.dx;
+      p.y += p.dy;
+
+      if (p.x < 0) { p.x = 0; p.dx = 1; }
+      if (p.x > GRID_COLS - 1) { p.x = GRID_COLS - 1; p.dx = -1; }
+
+      const cellX = Math.round(p.x);
+      const cellY = Math.round(p.y);
+      if (cellY >= 0 && cellY < GRID_ROWS) {
+        const prism = prismAt(cellX, cellY);
+        if (prism) reflectPhoton(p, prism);
+      }
+
+      if (p.y >= GRID_ROWS - 0.2) {
+        const bin = bottomBinForX(p.x);
+        if (bin === p.colorIdx) {
+          state.matched += 1;
+          state.score += 52 + (state.matched % 5) * 8;
+          pushLog(`Matched ${COLORS[p.colorIdx].key} photon.`);
+        } else {
+          state.integrity -= 1;
+          state.leaks += 1;
+          pushLog(`Leak: ${COLORS[p.colorIdx].key} photon to wrong bin.`);
+        }
+        alive = false;
+      }
+
+      if (p.ttl <= 0) {
+        state.integrity -= 1;
+        state.leaks += 1;
+        pushLog('Leak: photon dissipated in pipeline.');
+        alive = false;
+      }
+    }
+
+    if (!alive) state.photons.splice(i, 1);
+  }
+
+  if (state.matched >= TARGET_MATCHES) {
+    finishGame('won');
     return;
   }
-  if (state.mode === 'paused') {
-    state.mode = 'play';
-    hideOverlay();
+  if (state.integrity <= 0) {
+    finishGame('lost');
+    return;
+  }
+  if (state.timeLeft <= 0) {
+    finishGame(state.matched >= TARGET_MATCHES ? 'won' : 'lost');
   }
 }
 
 function drawBackground() {
   const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  grad.addColorStop(0, '#121b45');
-  grad.addColorStop(1, '#1a2f6b');
+  grad.addColorStop(0, '#1b1961');
+  grad.addColorStop(1, '#131a3b');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let i = 0; i < 95; i += 1) {
-    const seed = (i * 37) % 100;
-    const x = ((i * 127.3) % canvas.width);
-    const y = ((i * 61.9) % canvas.height);
-    const a = 0.08 + (seed / 2000);
-    ctx.fillStyle = `rgba(219, 232, 255, ${a})`;
+  for (let i = 0; i < 80; i += 1) {
+    const x = (i * 151) % canvas.width;
+    const y = (i * 83) % canvas.height;
+    const r = 1 + (i % 3) * 0.8;
+    ctx.fillStyle = `rgba(179, 191, 255, ${0.08 + (i % 4) * 0.02})`;
     ctx.beginPath();
-    ctx.arc(x, y, 1 + (seed % 2), 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
 function drawGrid() {
-  ctx.save();
-  ctx.translate(GRID_LEFT, GRID_TOP);
-
   for (let y = 0; y < GRID_ROWS; y += 1) {
     for (let x = 0; x < GRID_COLS; x += 1) {
-      const px = x * CELL;
-      const py = y * CELL;
-      const tile = state.board[y][x];
-
-      ctx.fillStyle = '#1b2d62';
-      ctx.fillRect(px, py, CELL - 2, CELL - 2);
-
-      if (tile) {
-        ctx.strokeStyle = tile === 1 ? '#9fe4ff' : '#ffc3ff';
-        ctx.lineWidth = 6;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        if (tile === 1) {
-          ctx.moveTo(px + 12, py + CELL - 14);
-          ctx.lineTo(px + CELL - 14, py + 12);
-        } else {
-          ctx.moveTo(px + 12, py + 12);
-          ctx.lineTo(px + CELL - 14, py + CELL - 14);
-        }
-        ctx.stroke();
-      }
-
-      ctx.strokeStyle = 'rgba(198, 214, 255, 0.18)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px, py, CELL - 2, CELL - 2);
+      const px = GRID_LEFT + x * CELL;
+      const py = GRID_TOP + y * CELL;
+      ctx.fillStyle = '#ffffff0a';
+      ctx.fillRect(px + 2, py + 2, CELL - 4, CELL - 4);
+      ctx.strokeStyle = '#a9b8ff2e';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
     }
   }
-
-  const cx = state.cursorX * CELL;
-  const cy = state.cursorY * CELL;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(cx + 2, cy + 2, CELL - 6, CELL - 6);
-  ctx.restore();
 }
 
-function drawCollectors() {
-  const y = GRID_TOP + GRID_ROWS * CELL + 10;
-  const totalWidth = GRID_COLS * CELL;
-  for (let i = 0; i < COLORS.length; i += 1) {
-    const x = GRID_LEFT + i * (totalWidth / COLORS.length);
-    const w = totalWidth / COLORS.length;
-    const color = COLORS[i];
-    ctx.fillStyle = `${color.color}55`;
-    ctx.fillRect(x + 2, y, w - 4, 58);
-    ctx.strokeStyle = `${color.color}cc`;
+function drawPrisms() {
+  for (let i = 0; i < state.prisms.length; i += 1) {
+    const prism = state.prisms[i];
+    const px = GRID_LEFT + prism.col * CELL;
+    const py = GRID_TOP + prism.row * CELL;
+    const selected = prism.col === PRISM_COLS[state.cursorPX] && prism.row === PRISM_ROWS[state.cursorPY];
+
+    ctx.fillStyle = selected ? '#d9e5ff33' : '#bfd0ff1c';
+    ctx.fillRect(px + 4, py + 4, CELL - 8, CELL - 8);
+    ctx.strokeStyle = selected ? '#f3f7ff' : '#9db7ff99';
+    ctx.lineWidth = selected ? 3 : 2;
+    ctx.strokeRect(px + 4, py + 4, CELL - 8, CELL - 8);
+
+    ctx.strokeStyle = '#f5ecff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    if (ORIENTATIONS[prism.o] === '/') {
+      ctx.moveTo(px + 12, py + CELL - 12);
+      ctx.lineTo(px + CELL - 12, py + 12);
+    } else if (ORIENTATIONS[prism.o] === '\\') {
+      ctx.moveTo(px + 12, py + 12);
+      ctx.lineTo(px + CELL - 12, py + CELL - 12);
+    } else if (ORIENTATIONS[prism.o] === '|') {
+      ctx.moveTo(px + CELL / 2, py + 12);
+      ctx.lineTo(px + CELL / 2, py + CELL - 12);
+    } else {
+      ctx.moveTo(px + 12, py + CELL / 2);
+      ctx.lineTo(px + CELL - 12, py + CELL / 2);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawBins() {
+  const y = GRID_TOP + GRID_ROWS * CELL + 8;
+  const bins = [
+    { x0: 0, x1: 1, colorIdx: 0 },
+    { x0: 2, x1: 4, colorIdx: 1 },
+    { x0: 5, x1: 6, colorIdx: 2 },
+    { x0: 7, x1: 8, colorIdx: 3 },
+  ];
+
+  for (let i = 0; i < bins.length; i += 1) {
+    const b = bins[i];
+    const x = GRID_LEFT + b.x0 * CELL;
+    const w = (b.x1 - b.x0 + 1) * CELL;
+    const c = COLORS[b.colorIdx];
+    ctx.fillStyle = `${c.color}33`;
+    ctx.fillRect(x + 2, y, w - 4, 54);
+    ctx.strokeStyle = `${c.color}cc`;
     ctx.lineWidth = 2;
-    ctx.strokeRect(x + 2, y, w - 4, 58);
-    ctx.fillStyle = '#ecf3ff';
-    ctx.font = '700 14px Trebuchet MS';
+    ctx.strokeRect(x + 2, y, w - 4, 54);
+    ctx.fillStyle = '#eff5ff';
+    ctx.font = '700 12px Trebuchet MS';
     ctx.textAlign = 'center';
-    ctx.fillText(color.key.toUpperCase(), x + w / 2, y + 36);
+    ctx.fillText(c.key.toUpperCase(), x + w / 2, y + 33);
   }
 }
 
-function drawSpawns() {
-  const y = GRID_TOP - 48;
-  for (let x = 0; x < GRID_COLS; x += 1) {
-    const centerX = GRID_LEFT + x * CELL + CELL / 2;
-    const color = COLORS[colorForColumn(x)];
-    ctx.fillStyle = `${color.color}66`;
-    ctx.beginPath();
-    ctx.arc(centerX, y, 10, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
+function drawPhotons() {
+  for (let i = 0; i < state.photons.length; i += 1) {
+    const photon = state.photons[i];
+    const c = COLORS[photon.colorIdx];
+    const x = GRID_LEFT + photon.x * CELL + CELL / 2;
+    const y = GRID_TOP + photon.y * CELL + CELL / 2;
 
-function packetPixel(packet) {
-  const x = GRID_LEFT + packet.x * CELL + CELL / 2;
-  const y = GRID_TOP + packet.y * CELL + CELL / 2;
-  return { x, y };
-}
-
-function drawpackets() {
-  for (let i = 0; i < state.packets.length; i += 1) {
-    const packet = state.packets[i];
-    const color = COLORS[packet.colorIdx];
-    const pos = packetPixel(packet);
-    const alpha = packet.y < 0 ? 0.5 : 1;
-    ctx.fillStyle = `${color.glow}${alpha < 1 ? 'aa' : ''}`;
+    ctx.fillStyle = `${c.glow}d5`;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 11, 0, Math.PI * 2);
+    ctx.arc(x, y, 11, 0, Math.PI * 2);
     ctx.fill();
+
     ctx.fillStyle = '#ffffffee';
     ctx.beginPath();
-    ctx.arc(pos.x - 3, pos.y - 3, 3, 0, Math.PI * 2);
+    ctx.arc(x - 2.5, y - 2.5, 3, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
 function drawSidebar() {
-  const x = 968;
-  const y = 124;
-  ctx.fillStyle = 'rgba(11, 23, 66, 0.82)';
-  ctx.fillRect(x, y, 270, 474);
+  const x = 948;
+  const y = 120;
+  ctx.fillStyle = 'rgba(11, 23, 66, 0.84)';
+  ctx.fillRect(x, y, 292, 500);
   ctx.strokeStyle = 'rgba(179, 198, 255, 0.5)';
   ctx.lineWidth = 2;
-  ctx.strokeRect(x, y, 270, 474);
+  ctx.strokeRect(x, y, 292, 500);
 
   ctx.fillStyle = '#edf3ff';
   ctx.font = '700 30px Trebuchet MS';
   ctx.textAlign = 'left';
-  ctx.fillText('Prism Pipeline', x + 18, y + 44);
+  ctx.fillText('Prism Pipeline', x + 16, y + 42);
 
+  ctx.fillStyle = '#c8d7ff';
   ctx.font = '600 16px Trebuchet MS';
-  ctx.fillStyle = '#c7d6ff';
-  ctx.fillText(`Goal: ${TARGET_DELIVERIES} stabilized packets`, x + 18, y + 74);
-  ctx.fillText('Rotate prism relays before packet waves stack.', x + 18, y + 96);
+  ctx.fillText(`Goal: ${TARGET_MATCHES} matched photons`, x + 16, y + 72);
+  ctx.fillText('Rotate prism clusters to steer each color.', x + 16, y + 94);
 
   ctx.fillStyle = '#dbe7ff';
   ctx.font = '700 14px Trebuchet MS';
-  const lines = state.logs.length ? state.logs : ['Use arrows/WASD to move cursor.', 'Press Space/Enter to cycle relay tile.'];
-  for (let i = 0; i < lines.length; i += 1) ctx.fillText(`- ${lines[i]}`, x + 18, y + 136 + i * 22);
+  for (let i = 0; i < state.logs.length; i += 1) {
+    ctx.fillText(`- ${state.logs[i]}`, x + 16, y + 138 + i * 24);
+  }
 
-  ctx.fillStyle = '#a8b9f7';
+  ctx.fillStyle = '#b7c8fb';
   ctx.font = '600 13px Trebuchet MS';
-  ctx.fillText('Tile cycle: empty -> / -> \\', x + 18, y + 430);
-  ctx.fillText('Keys: Move, Space, P, R, F', x + 18, y + 452);
+  ctx.fillText('Rotate: Space/Enter', x + 16, y + 446);
+  ctx.fillText('Move prism selector: WASD/Arrows', x + 16, y + 468);
+  ctx.fillText('P pause, R restart, F fullscreen', x + 16, y + 490);
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
-  drawSpawns();
   drawGrid();
-  drawCollectors();
-  drawpackets();
+  drawBins();
+  drawPrisms();
+  drawPhotons();
   drawSidebar();
 }
 
 function syncHud() {
   modeEl.textContent = state.mode.toUpperCase();
   scoreEl.textContent = String(Math.round(state.score));
-  deliveredEl.textContent = `${state.delivered}/${TARGET_DELIVERIES}`;
-  shieldEl.textContent = String(Math.max(0, state.shield));
+  matchedEl.textContent = `${state.matched}/${TARGET_MATCHES}`;
+  integrityEl.textContent = String(Math.max(0, state.integrity));
   timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
-  comboEl.textContent = String(state.combo);
+  leaksEl.textContent = String(state.leaks);
   coinsEl.textContent = String(Number(profileState?.coins || 0));
 }
 
@@ -697,7 +662,7 @@ function keyHandler(event) {
   if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); moveCursor(-1, 0); return; }
   if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); moveCursor(0, 1); return; }
   if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); moveCursor(1, 0); return; }
-  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); cycleTile(); return; }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); rotateSelectedPrism(); return; }
   if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
   if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
   if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
@@ -728,7 +693,7 @@ function wireControls() {
   document.getElementById('leftBtn').addEventListener('click', () => moveCursor(-1, 0));
   document.getElementById('downBtn').addEventListener('click', () => moveCursor(0, 1));
   document.getElementById('rightBtn').addEventListener('click', () => moveCursor(1, 0));
-  document.getElementById('cycleBtn').addEventListener('click', cycleTile);
+  document.getElementById('rotateBtn').addEventListener('click', rotateSelectedPrism);
   document.getElementById('pauseBtn').addEventListener('click', togglePause);
   document.getElementById('restartBtn').addEventListener('click', startGame);
   document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
@@ -740,36 +705,33 @@ window.advanceTime = (ms) => step(ms);
 window.render_game_to_text = () => JSON.stringify({
   game: 'prismpipeline',
   mode: state.mode,
-  coordinate_system: 'Canvas origin is top-left in pixels. Grid starts near (352,120). X increases right, Y increases down.',
+  coordinate_system: 'Canvas origin is top-left. Photon grid starts around (320,100). X grows right, Y grows down.',
   objective: {
-    matched_deliveries_target: TARGET_DELIVERIES,
+    matched_target: TARGET_MATCHES,
     survive_seconds: TOTAL_SECONDS,
-    shield_must_stay_above: 0,
+    integrity_must_stay_above: 0,
   },
   resources: {
     elapsed_seconds: Number(state.elapsed.toFixed(3)),
     time_left_seconds: Number(state.timeLeft.toFixed(3)),
     score: Math.round(state.score),
-    delivered: state.delivered,
-    shield: state.shield,
-    combo: state.combo,
-    cursor: { x: state.cursorX, y: state.cursorY },
+    matched: state.matched,
+    integrity: state.integrity,
+    leaks: state.leaks,
+    selector: { prism_col: PRISM_COLS[state.cursorPX], prism_row: PRISM_ROWS[state.cursorPY] },
   },
-  packets: state.packets.map((packet) => ({
-    grid_x: packet.x,
-    grid_y: packet.y,
-    direction: packet.dir,
-    color: COLORS[packet.colorIdx].key,
-  })),
-  board: state.board.map((row) => row.map((tile) => (tile === 0 ? '.' : tile === 1 ? '/' : '\\'))),
-  dock_bands: COLORS.map((entry, index) => ({
-    color: entry.key,
-    column_range: [index * 2, index * 2 + 1],
-  })),
+  prisms: state.prisms.map((p) => ({ col: p.col, row: p.row, orientation: ORIENTATIONS[p.o] })),
+  photons: state.photons.map((p) => ({ x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)), dx: p.dx, dy: p.dy, color: COLORS[p.colorIdx].key, ttl: p.ttl })),
+  bins: [
+    { color: 'cyan', columns: [0, 1] },
+    { color: 'gold', columns: [2, 4] },
+    { color: 'magenta', columns: [5, 6] },
+    { color: 'lime', columns: [7, 8] },
+  ],
   recent_events: state.logs,
   controls: {
-    move_cursor: 'WASD or Arrow keys or touch arrows',
-    cycle_tile: 'Space or Enter or touch Cycle Prism',
+    move_selector: 'WASD or Arrow keys or touch arrows',
+    rotate_prism: 'Space or Enter or touch Rotate Prism',
     pause: 'P',
     restart: 'R',
     fullscreen: 'F',
@@ -781,7 +743,7 @@ window.render_game_to_text = () => JSON.stringify({
 resetState();
 draw();
 syncHud();
-showOverlay('Prism Pipeline', 'Shape prism routes and deliver color-matched photon packets before containment fails.', 'Start Run', startGame);
+showOverlay('Prism Pipeline', 'Rotate a 3x3 prism cluster to bend photons into matching collector bins before integrity collapses.', 'Start Run', startGame);
 raf = requestAnimationFrame((now) => { prev = now; frame(now); });
 window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
 </script>
@@ -791,5 +753,3 @@ mountGameFeedback({ gameSlug: 'prismpipeline', gameName: 'Prism Pipeline' });
 </script>
 </body>
 </html>
-
-
