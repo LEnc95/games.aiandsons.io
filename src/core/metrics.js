@@ -168,17 +168,18 @@ export const summarizeKpiEvents = (events, options = {}) => {
   const activeDays = new Set();
   let totalEvents = 0;
 
+  // ⚡ Bolt Optimization: Skip expensive O(N) normalizeMetricEvent during read/summary.
+  // Events stored in state are already strictly normalized during write (trackKpiEvent).
   for (const event of source) {
-    const normalized = normalizeMetricEvent(event);
-    if (!normalized) continue;
-    if (normalized.ts < cutoff) continue;
+    if (!event || !event.name) continue;
+    if (event.ts < cutoff) continue;
     totalEvents += 1;
-    counts[normalized.name] = (counts[normalized.name] || 0) + 1;
-    if (normalized.page) {
-      pages[normalized.page] = (pages[normalized.page] || 0) + 1;
+    counts[event.name] = (counts[event.name] || 0) + 1;
+    if (event.page) {
+      pages[event.page] = (pages[event.page] || 0) + 1;
     }
-    const dayKey = normalized.ts > 0
-      ? new Date(normalized.ts).toISOString().slice(0, 10)
+    const dayKey = event.ts > 0
+      ? new Date(event.ts).toISOString().slice(0, 10)
       : "unknown";
     activeDays.add(dayKey);
   }
