@@ -83,5 +83,6 @@
 - game/starlattice
 - game/reactorrelay
 - game/prismpipeline
+- game/glacierguard
 
 Generated from `src/meta/feedback.js`.

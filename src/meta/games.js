@@ -67,5 +67,6 @@ export const GAMES = [
   { slug:'starlattice',    name:'Star Lattice',        emoji:'\u{1F31F}', scoreHint:'delivered',  url:'/starlattice',   desc:'Place mirror tiles, route color pulses, and hit matching docks before your shield collapses.', earnsCoins:true },
   { slug:'reactorrelay',   name:'Reactor Relay',       emoji:'\u{1F50C}', scoreHint:'stabilized', url:'/reactorrelay',  desc:'Rotate relay tiles, route energy packets, and hit matching docks before reactor shielding collapses.', earnsCoins:true },
   { slug:'prismpipeline',  name:'Prism Pipeline',      emoji:'\u{1F9EA}', scoreHint:'stabilized', url:'/prismpipeline', desc:'Cycle prism relays, route photon packets, and stabilize the grid before containment fails.', earnsCoins:true },
+  { slug:'glacierguard',   name:'Glacier Guard',       emoji:'\u{1F9CA}', scoreHint:'melted',     url:'/glacierguard',  desc:'Move the harbor turret, melt incoming glaciers, and keep your shield intact until storm timeout.', earnsCoins:true },
 ];
 

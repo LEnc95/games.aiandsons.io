@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Glacier Guard - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Defend the harbor by melting incoming glaciers before they break through your shield." />
+<meta property="og:title" content="Glacier Guard - Play on Cade's Games" />
+<meta property="og:description" content="Defend the harbor by melting incoming glaciers before they break through your shield." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/glacierguard" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Glacier Guard - Play on Cade's Games" />
+<meta name="twitter:description" content="Defend the harbor by melting incoming glaciers before they break through your shield." />
+<link rel="canonical" href="https://games.aiandsons.io/glacierguard" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #e9f7ff;
+  background:
+    radial-gradient(58% 54% at 18% 10%, #175992 0%, transparent 62%),
+    radial-gradient(48% 40% at 84% 88%, #11466f 0%, transparent 60%),
+    linear-gradient(180deg, #041422 0%, #08263c 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff57;
+  padding: 8px 12px;
+  background: #0000006e;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #8be9ff8a;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #0b4068 0%, #072234 60%, #061929 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 14px;
+  border: 1px solid #8edfff6e;
+  background: #08243ceb;
+  box-shadow: 0 14px 30px #0000007f;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #c0e4f7; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #88d5ff72;
+  background: #1176a4f0;
+  color: #eefcff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #8bdfff5c;
+  background: #072337eb;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #b6e8ff38;
+  background: #ffffff12;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #b6d8ea;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.warn b { color: #ffd89d; }
+.bad b { color: #ffafc0; }
+.good b { color: #9cfbd6; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #8bdfff5c;
+  background: #072337eb;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #0b4f70; border-color: #8cdfff66; }
+.fire-btn { background: #1f8f65; border-color: #a8ffdc66; }
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Glacier Guard game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Melted</span><b id="melted">0</b></div>
+    <div class="chip"><span>Shield</span><b id="shield">8</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">85.0s</b></div>
+    <div class="chip"><span>Wave</span><b id="wave">1</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn" type="button" class="ctrl-btn">Left</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Right</button>
+    <button id="fireBtn" type="button" class="fire-btn">Fire</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const meltedEl = document.getElementById('melted');
+const shieldEl = document.getElementById('shield');
+const timeEl = document.getElementById('time');
+const waveEl = document.getElementById('wave');
+const coinsEl = document.getElementById('coins');
+
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const fireBtn = document.getElementById('fireBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const restartBtn = document.getElementById('restartBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+const TOTAL_SECONDS = 85;
+const START_SHIELD = 8;
+const TARGET_MELTED = 34;
+const HARBOR_LINE_Y = canvas.height - 104;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  melted: 0,
+  shield: START_SHIELD,
+  wave: 1,
+  turretX: canvas.width / 2,
+  fireCooldown: 0,
+  spawnTimer: 0,
+  spawnEvery: 1.0,
+  icebergs: [],
+  shots: [],
+  logs: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function addLog(line) {
+  state.logs.unshift(line);
+  if (state.logs.length > 4) state.logs.length = 4;
+}
+
+function showOverlay(title, body, actionLabel, actionFn) {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: Left/Right move, Space fires, P pause, R restart, F fullscreen.</p>
+      <div class="row">
+        <button id="overlayAction" type="button">${actionLabel}</button>
+        <button id="overlayFullscreen" type="button">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', actionFn, { once: true });
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.melted = 0;
+  state.shield = START_SHIELD;
+  state.wave = 1;
+  state.turretX = canvas.width / 2;
+  state.fireCooldown = 0;
+  state.spawnTimer = 0.4;
+  state.spawnEvery = 1.0;
+  state.icebergs = [];
+  state.shots = [];
+  state.logs = ['Melt incoming icebergs before they hit the harbor line.'];
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('glacierguard'); } catch {}
+  try { maybeUnlock({ anyPlay: true, glacierguard: { result: 'started', score: 0, melted: 0 } }); } catch {}
+}
+
+function finishGame(win) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = win ? 'won' : 'lost';
+  const coins = Math.max(5, Math.floor(state.score / 60) + (win ? 15 : 7));
+  try {
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      glacierguard: {
+        result: state.result,
+        score: Math.round(state.score),
+        melted: state.melted,
+        wave: state.wave,
+      },
+    });
+  } catch {}
+  const msg = win
+    ? `Harbor secured. Melted ${state.melted} glaciers and earned ${coins} coins.`
+    : `Shield collapsed. Melted ${state.melted} glaciers and earned ${coins} coins.`;
+  showOverlay('Run Complete', msg, 'Play Again', startGame);
+}
+
+function spawnIceberg() {
+  const radius = 22 + Math.random() * 18;
+  const x = radius + Math.random() * (canvas.width - radius * 2);
+  const vx = (Math.random() - 0.5) * (35 + state.wave * 2.5);
+  const vy = 70 + Math.random() * 55 + state.wave * 4;
+  const hp = 1 + Math.floor(state.wave / 3) + (Math.random() < 0.25 ? 1 : 0);
+  state.icebergs.push({
+    id: Math.random().toString(36).slice(2),
+    x, y: -radius - 20, vx, vy, r: radius, hp, maxHp: hp,
+  });
+}
+
+function moveTurret(dir) {
+  if (state.mode !== 'running') return;
+  state.turretX = clamp(state.turretX + dir * 24, 70, canvas.width - 70);
+}
+
+function fireShot() {
+  if (state.mode !== 'running' || state.fireCooldown > 0) return;
+  state.fireCooldown = 0.22;
+  state.shots.push({
+    x: state.turretX,
+    y: HARBOR_LINE_Y - 20,
+    vy: 560,
+    r: 8,
+  });
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'The harbor watch is paused.', 'Resume', () => {
+      state.mode = 'running';
+      hideOverlay();
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  state.wave = 1 + Math.floor(state.elapsed / 16);
+  state.spawnEvery = Math.max(0.42, 1.0 - state.elapsed * 0.0055);
+  if (state.fireCooldown > 0) state.fireCooldown = Math.max(0, state.fireCooldown - dt);
+
+  state.spawnTimer += dt;
+  while (state.spawnTimer >= state.spawnEvery) {
+    state.spawnTimer -= state.spawnEvery;
+    spawnIceberg();
+    if (Math.random() < Math.min(0.32, state.elapsed / 95)) spawnIceberg();
+  }
+
+  for (let i = state.shots.length - 1; i >= 0; i -= 1) {
+    const shot = state.shots[i];
+    shot.y -= shot.vy * dt;
+    if (shot.y < -30) {
+      state.shots.splice(i, 1);
+    }
+  }
+
+  for (let i = state.icebergs.length - 1; i >= 0; i -= 1) {
+    const berg = state.icebergs[i];
+    berg.x += berg.vx * dt;
+    berg.y += berg.vy * dt;
+
+    if (berg.x - berg.r < 0) { berg.x = berg.r; berg.vx = Math.abs(berg.vx); }
+    if (berg.x + berg.r > canvas.width) { berg.x = canvas.width - berg.r; berg.vx = -Math.abs(berg.vx); }
+
+    let destroyed = false;
+    for (let s = state.shots.length - 1; s >= 0; s -= 1) {
+      const shot = state.shots[s];
+      const dx = shot.x - berg.x;
+      const dy = shot.y - berg.y;
+      const rr = shot.r + berg.r;
+      if (dx * dx + dy * dy > rr * rr) continue;
+
+      state.shots.splice(s, 1);
+      berg.hp -= 1;
+      if (berg.hp <= 0) {
+        state.icebergs.splice(i, 1);
+        state.melted += 1;
+        state.score += 32 + Math.min(18, state.wave * 2);
+        addLog(`Melted glacier (+${32 + Math.min(18, state.wave * 2)})`);
+        destroyed = true;
+      }
+      break;
+    }
+    if (destroyed) continue;
+
+    if (berg.y + berg.r >= HARBOR_LINE_Y) {
+      state.icebergs.splice(i, 1);
+      state.shield -= 1;
+      addLog('Harbor hit by glacier');
+    }
+  }
+
+  if (state.melted >= TARGET_MELTED) {
+    finishGame(true);
+    return;
+  }
+  if (state.shield <= 0) {
+    finishGame(false);
+    return;
+  }
+  if (state.timeLeft <= 0) {
+    finishGame(state.melted >= TARGET_MELTED);
+  }
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  sky.addColorStop(0, '#0e5a88');
+  sky.addColorStop(0.52, '#0a3d62');
+  sky.addColorStop(1, '#08293f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 55; i += 1) {
+    const x = (i * 147) % canvas.width;
+    const y = (i * 91 + Math.floor(state.elapsed * 10)) % (canvas.height * 0.62);
+    const r = 1 + (i % 3);
+    ctx.fillStyle = `rgba(200, 245, 255, ${0.08 + (i % 4) * 0.03})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#0a324f';
+  ctx.fillRect(0, HARBOR_LINE_Y, canvas.width, canvas.height - HARBOR_LINE_Y);
+  ctx.strokeStyle = '#9ee9ff8c';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, HARBOR_LINE_Y);
+  ctx.lineTo(canvas.width, HARBOR_LINE_Y);
+  ctx.stroke();
+}
+
+function drawTurret() {
+  const x = state.turretX;
+  const y = HARBOR_LINE_Y - 16;
+  ctx.fillStyle = '#b8f6ff';
+  ctx.beginPath();
+  ctx.arc(x, y, 21, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0e597f';
+  ctx.fillRect(x - 8, y - 46, 16, 34);
+  if (state.fireCooldown > 0) {
+    ctx.fillStyle = `rgba(167, 255, 220, ${state.fireCooldown / 0.22})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 34, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawShots() {
+  for (const shot of state.shots) {
+    ctx.fillStyle = '#b0ffd3';
+    ctx.beginPath();
+    ctx.arc(shot.x, shot.y, shot.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawIcebergs() {
+  for (const berg of state.icebergs) {
+    const hpPct = berg.hp / berg.maxHp;
+    ctx.fillStyle = hpPct > 0.66 ? '#d5f5ff' : hpPct > 0.33 ? '#a6dff0' : '#73bed7';
+    ctx.beginPath();
+    ctx.arc(berg.x, berg.y, berg.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ebfdff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const barW = berg.r * 1.4;
+    const bx = berg.x - barW / 2;
+    const by = berg.y - berg.r - 12;
+    ctx.fillStyle = '#0a1b27cc';
+    ctx.fillRect(bx, by, barW, 6);
+    ctx.fillStyle = '#8bf8cf';
+    ctx.fillRect(bx, by, barW * hpPct, 6);
+  }
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#ecfcff';
+  ctx.font = '700 36px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Glacier Guard', 22, 48);
+
+  ctx.fillStyle = '#c8e8f8';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Goal: melt ${TARGET_MELTED} glaciers before shield reaches zero.`, 22, 74);
+
+  ctx.fillStyle = '#d9f0fb';
+  ctx.font = '600 14px Trebuchet MS';
+  const lines = state.logs.length ? state.logs : ['Move the turret and fire heat pulses at incoming targets.'];
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 22, 100 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawIcebergs();
+  drawShots();
+  drawTurret();
+  drawLabels();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  meltedEl.textContent = `${state.melted}/${TARGET_MELTED}`;
+  shieldEl.textContent = String(Math.max(0, state.shield));
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  waveEl.textContent = String(state.wave);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const timeChip = timeEl.parentElement;
+  timeChip.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.55);
+  timeChip.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.55 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  timeChip.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function keyHandler(event) {
+  if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); moveTurret(-1); return; }
+  if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); moveTurret(1); return; }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); fireShot(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+leftBtn.addEventListener('click', () => moveTurret(-1));
+rightBtn.addEventListener('click', () => moveTurret(1));
+fireBtn.addEventListener('click', fireShot);
+pauseBtn.addEventListener('click', togglePause);
+restartBtn.addEventListener('click', startGame);
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', keyHandler);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'glacierguard',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left, x increases right, y increases down. Harbor defense line is near y=656.',
+  objective: {
+    melt_target: TARGET_MELTED,
+    survive_seconds: TOTAL_SECONDS,
+    keep_shield_above: 0,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    melted: state.melted,
+    shield: state.shield,
+    wave: state.wave,
+    fire_cooldown_seconds: Number(state.fireCooldown.toFixed(3)),
+  },
+  turret: {
+    x: Number(state.turretX.toFixed(2)),
+    y: HARBOR_LINE_Y - 16,
+  },
+  icebergs: state.icebergs.map((berg) => ({
+    id: berg.id,
+    x: Number(berg.x.toFixed(2)),
+    y: Number(berg.y.toFixed(2)),
+    vx: Number(berg.vx.toFixed(2)),
+    vy: Number(berg.vy.toFixed(2)),
+    radius: Number(berg.r.toFixed(2)),
+    hp: berg.hp,
+    max_hp: berg.maxHp,
+  })),
+  shots: state.shots.map((shot) => ({
+    x: Number(shot.x.toFixed(2)),
+    y: Number(shot.y.toFixed(2)),
+    vy: Number(shot.vy.toFixed(2)),
+    radius: shot.r,
+  })),
+  recent_events: state.logs,
+  controls: {
+    move_left: 'Left Arrow or A',
+    move_right: 'Right Arrow or D',
+    fire: 'Space or Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Glacier Guard', 'Incoming glaciers are drifting toward your harbor. Move and fire to melt them before your shield breaks.', 'Start Watch', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'glacierguard', gameName: 'Glacier Guard' });
+</script>
+</body>
+</html>
