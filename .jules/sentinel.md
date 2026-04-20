@@ -27,3 +27,7 @@
 ## 2026-04-17 - Secure Randomness for Stub Session User IDs
 **Learning:** `Math.random()` generates highly predictable sequences, making it vulnerable to predictability and hijacking in scenarios like session ID generation or identifiers (e.g., in `src/feedback/client.js`).
 **Action:** Replace `Math.random()` with standard secure alternatives like `crypto.randomUUID()` to generate truly unpredictable values.
+## 2026-04-20 - [Secure Randomness Fallback]
+**Vulnerability:** The `randomToken()` fallback mechanism relied on the predictable `Math.random()` when `globalThis.crypto.randomUUID` was unavailable.
+**Learning:** When replacing insecure `Math.random()` fallbacks with `globalThis.crypto.getRandomValues()` for token generation or session IDs, always wrap the usage in a feature detection check (e.g., `if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function')`) to prevent regressions in environments lacking native web crypto support.
+**Prevention:** Ensure that anywhere secure randomness is introduced as an alternative or fallback, it checks for the existence of the expected `crypto` APIs before executing.
