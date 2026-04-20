@@ -105,6 +105,12 @@ const randomToken = () => {
   } catch {
     // Fallback below.
   }
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+    const buffer = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(buffer);
+    const seed = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `co_${seed.slice(0, 24)}`;
+  }
   const seed = `${Date.now()}_${Math.random().toString(16).slice(2)}_${Math.random().toString(16).slice(2)}`;
   return `co_${seed.replace(/[^a-zA-Z0-9]/g, '').slice(0, 24)}`;
 };
