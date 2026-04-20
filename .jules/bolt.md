@@ -30,3 +30,7 @@
 ## 2025-04-16 - Optmizing cosmetics category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly results in O(N*M) complexity which is extremely bad for performance for large inputs. Use `Set` which handles insertions efficiently in O(1).
 **Action:** Before checking a set/array membership, establish what its underlying implementation is, and ensure it supports optimized insertion/search.
+
+## 2025-02-12 - Avoid Redundant Object Normalization on Read Paths
+**Learning:** `summarizeKpiEvents` in `src/core/metrics.js` was running a deep normalization step (`normalizeMetricEvent` and `sanitizeMetricMeta`) on every stored event during read/summary time. Because the events list can grow to 1000 items, and because `setMetricsState` and `trackKpiEvent` strictly normalize data before writing it to state, this redundant step on read caused significant unnecessary object allocation, string slicing, and GC overhead during render cycles.
+**Action:** When a store inherently guarantees that its internal state is already normalized upon write, skip deep normalization routines on read paths. Perform simple existence checks instead (e.g. `if (!event || !event.name)`).
