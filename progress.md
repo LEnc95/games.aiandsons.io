@@ -1911,3 +1911,30 @@ pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integra
 - Follow-up TODO:
   - Re-run 
 pm run test:feedback and the Playwright gameplay validation loop for /glacierguard in an environment that allows child-process and Chromium launch.
+
+## 2026-04-21T07:03:52-04:00 Storm Vault automation run (in progress)
+- New request: add a game not currently on the site.
+- Added brand-new game stormvault at stormvault/index.html with a polarity-matching storm-defense loop.
+  - Core loop: select one of five lanes, toggle capacitor polarity (+/-), and absorb incoming matching lightning strikes.
+  - Win/loss loop: store 28 charge before timer expires; mismatches drain shield; end-run score + coin payout included.
+  - Controls: desktop (A/D or Left/Right to select lane, Space/Enter toggle polarity, P/R/F) and mobile buttons (Prev/Next/Toggle/Pause/Restart/Fullscreen).
+  - Platform hooks: ememberRecent('stormvault'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state payload.
+  - Feedback integration: mountGameFeedback({ gameSlug: 'stormvault', gameName: 'Storm Vault' }).
+- Integrated launcher/routing wiring:
+  - Added stormvault metadata entry in src/meta/games.js.
+  - Added static fallback home card in index.html.
+  - Added /stormvault rewrites and /stormvault/index.html cache-header entry in ercel.json.
+- Next step: run wiring checks, ercel.json parse, feedback sync, and attempt required Playwright + feedback tests in this sandbox.
+- Validation results (this run):
+  - g -n "stormvault" stormvault/index.html src/meta/games.js index.html vercel.json: pass.
+  - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
+  - 
+pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
+  - 
+pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integration tests.
+  - Skill-required Playwright loop via $develop-web-game client for /stormvault: blocked in this sandbox (rowserType.launch: spawn EPERM).
+- Follow-up TODO:
+  - Re-run 
+pm run test:feedback and the Playwright gameplay validation loop for /stormvault in an environment that allows child-process and Chromium launch.
+- Run marker: 2026-04-21T07:04:33-04:00.

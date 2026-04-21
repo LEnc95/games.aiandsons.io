@@ -321,3 +321,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-18] Key PR links: none merged for this date.
 - [nightly 2026-04-19] Tracked changes: 5 commit(s) - Bump project version to 1.0.0 and update changelog; Add styled changelog page and link it in footer and sitemap; Differentiate Reactor Relay and Prism Pipeline visual themes; Differentiate Reactor Relay and Prism Pipeline gameplay loops; Add Prism Pipeline game and wire it into site.
 - [nightly 2026-04-19] Key PR links: none merged for this date.
+- [nightly 2026-04-20] Tracked changes: 1 commit(s) - 662f787 Add Glacier Guard game and wire it into site.
+- [nightly 2026-04-20] Key PR links: none merged for this date.

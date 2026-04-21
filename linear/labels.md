@@ -84,5 +84,6 @@
 - game/reactorrelay
 - game/prismpipeline
 - game/glacierguard
+- game/stormvault
 
 Generated from `src/meta/feedback.js`.
