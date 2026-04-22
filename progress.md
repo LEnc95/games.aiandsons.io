@@ -1938,3 +1938,19 @@ pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integra
   - Re-run 
 pm run test:feedback and the Playwright gameplay validation loop for /stormvault in an environment that allows child-process and Chromium launch.
 - Run marker: 2026-04-21T07:04:33-04:00.
+
+## 2026-04-22 Drift Dredger automation run (in progress)
+- New request: add a game not currently on the site via $develop-web-game.
+- Added brand-new game `driftdredger` at `driftdredger/index.html` with a salvage-sub survival loop (collect drifting scrap while dodging homing sea mines).
+- Included desktop/mobile controls, pause/restart/fullscreen, feedback mount, coin/progression hooks (`rememberRecent`, `addCoins`, `maybeUnlock`), and deterministic hooks (`window.advanceTime(ms)`, `window.render_game_to_text()`).
+- Wired `driftdredger` into `src/meta/games.js`, fallback launcher card in `index.html`, and route/cache entries in `vercel.json`.
+- Next: run wiring checks, parse checks, feedback sync, then attempt feedback + Playwright validation.
+- Validation results (this run):
+  - `rg -n "driftdredger" driftdredger/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` + `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/driftdredger`: failed in this sandbox with `browserType.launch: spawn EPERM`.
+  - Attempt to auto-run local `python -m http.server` for Playwright setup via `Start-Process` was blocked by sandbox policy.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/driftdredger` in an environment that allows child-process and Chromium launch.

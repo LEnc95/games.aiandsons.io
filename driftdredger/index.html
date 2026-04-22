@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Drift Dredger - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Pilot a salvage sub, collect drifting scrap, and dodge sea mines before your hull fails." />
+<meta property="og:title" content="Drift Dredger - Play on Cade's Games" />
+<meta property="og:description" content="Pilot a salvage sub, collect drifting scrap, and dodge sea mines before your hull fails." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/driftdredger" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Drift Dredger - Play on Cade's Games" />
+<meta name="twitter:description" content="Pilot a salvage sub, collect drifting scrap, and dodge sea mines before your hull fails." />
+<link rel="canonical" href="https://games.aiandsons.io/driftdredger" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #e8f8ff;
+  background:
+    radial-gradient(62% 58% at 12% 14%, #0d3d66 0%, transparent 66%),
+    radial-gradient(50% 48% at 82% 86%, #0a2e4d 0%, transparent 68%),
+    linear-gradient(180deg, #041826 0%, #062536 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #7ec7eb66;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #0d3d5e 0%, #0b2f45 60%, #082236 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 14px;
+  border: 1px solid #a6dbf266;
+  background: #082336ee;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #cae7f4; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #b4e5f25f;
+  background: #186085f0;
+  color: #ecfbff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #9ed9ef4f;
+  background: #082336ee;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #c4ebf531;
+  background: #ffffff12;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #bedeea;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.warn b { color: #ffd395; }
+.bad b { color: #ff9bad; }
+.good b { color: #9af0c4; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #9ed9ef4f;
+  background: #082336ee;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #195f83; border-color: #b3e6f255; }
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Drift Dredger game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Salvage</span><b id="salvage">0/20</b></div>
+    <div class="chip"><span>Hull</span><b id="hull">6</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">80.0s</b></div>
+    <div class="chip"><span>Mines</span><b id="mines">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="upBtn" type="button" class="ctrl-btn">Up</button>
+    <button id="leftBtn" type="button" class="ctrl-btn">Left</button>
+    <button id="downBtn" type="button" class="ctrl-btn">Down</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Right</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="dashBtn" type="button" class="ctrl-btn">Dash</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const salvageEl = document.getElementById('salvage');
+const hullEl = document.getElementById('hull');
+const timeEl = document.getElementById('time');
+const minesEl = document.getElementById('mines');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 80;
+const TARGET_SALVAGE = 20;
+const START_HULL = 6;
+const WORLD = { left: 70, top: 90, right: canvas.width - 70, bottom: canvas.height - 90 };
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  hull: START_HULL,
+  collected: 0,
+  mineSpawnTimer: 0.9,
+  mineSpawnEvery: 1.25,
+  salvageSpawnTimer: 0.4,
+  salvageSpawnEvery: 1.2,
+  invuln: 0,
+  dashCooldown: 0,
+  input: { up: false, down: false, left: false, right: false },
+  player: { x: canvas.width * 0.5, y: canvas.height * 0.5, vx: 0, vy: 0, r: 22 },
+  mines: [],
+  salvage: [],
+  logs: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function dist2(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return dx * dx + dy * dy;
+}
+
+function addLog(line) {
+  state.logs.unshift(line);
+  if (state.logs.length > 4) state.logs.length = 4;
+}
+
+function showOverlay(title, body, actionLabel, actionFn) {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: WASD or arrows to steer, Shift for dash, P pause, R restart, F fullscreen.</p>
+      <div class="row">
+        <button id="overlayAction" type="button">${actionLabel}</button>
+        <button id="overlayFullscreen" type="button">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  overlay.querySelector('#overlayAction')?.addEventListener('click', actionFn, { once: true });
+  overlay.querySelector('#overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function spawnMine(forceEdge = false) {
+  const edge = Math.floor(Math.random() * 4);
+  let x = randomRange(WORLD.left + 8, WORLD.right - 8);
+  let y = randomRange(WORLD.top + 8, WORLD.bottom - 8);
+  if (forceEdge || Math.random() < 0.8) {
+    if (edge === 0) y = WORLD.top + 6;
+    else if (edge === 1) x = WORLD.right - 6;
+    else if (edge === 2) y = WORLD.bottom - 6;
+    else x = WORLD.left + 6;
+  }
+  const speed = randomRange(85, 145) + state.elapsed * 0.7;
+  state.mines.push({ id: Math.random().toString(36).slice(2), x, y, vx: 0, vy: 0, speed, r: randomRange(16, 21) });
+}
+
+function spawnSalvage() {
+  state.salvage.push({
+    id: Math.random().toString(36).slice(2),
+    x: randomRange(WORLD.left + 50, WORLD.right - 50),
+    y: randomRange(WORLD.top + 50, WORLD.bottom - 50),
+    vx: randomRange(-22, 22),
+    vy: randomRange(-18, 18),
+    r: randomRange(10, 14),
+    value: 10 + Math.floor(Math.random() * 8),
+  });
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.hull = START_HULL;
+  state.collected = 0;
+  state.mineSpawnTimer = 0.9;
+  state.mineSpawnEvery = 1.25;
+  state.salvageSpawnTimer = 0.4;
+  state.salvageSpawnEvery = 1.2;
+  state.invuln = 0;
+  state.dashCooldown = 0;
+  state.player = { x: canvas.width * 0.5, y: canvas.height * 0.5, vx: 0, vy: 0, r: 22 };
+  state.mines = [];
+  state.salvage = [];
+  state.logs = ['Collect drifting scrap and avoid mine impacts.'];
+  for (let i = 0; i < 4; i += 1) spawnSalvage();
+  for (let i = 0; i < 2; i += 1) spawnMine(true);
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('driftdredger'); } catch {}
+  try { maybeUnlock({ anyPlay: true, driftdredger: { result: 'started', score: 0, salvage: 0 } }); } catch {}
+}
+
+function finishGame(win) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = win ? 'won' : 'lost';
+  const coins = Math.max(6, Math.floor(state.score / 45) + (win ? 15 : 7));
+  try {
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      driftdredger: {
+        result: state.result,
+        score: Math.round(state.score),
+        salvage: state.collected,
+        hull: state.hull,
+      },
+    });
+  } catch {}
+  const summary = win
+    ? `Dredge complete. Salvaged ${state.collected} crates and earned ${coins} coins.`
+    : `Hull breached after ${state.collected} crates. You still earned ${coins} coins.`;
+  showOverlay('Run Complete', summary, 'Play Again', startGame);
+}
+
+function applyMoveInput() {
+  const speed = 265;
+  const damping = 0.86;
+  const ax = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
+  const ay = (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
+  const mag = Math.hypot(ax, ay) || 1;
+  state.player.vx += (ax / mag) * speed * (1 / 60);
+  state.player.vy += (ay / mag) * speed * (1 / 60);
+  state.player.vx *= damping;
+  state.player.vy *= damping;
+}
+
+function attemptDash() {
+  if (state.mode !== 'running' || state.dashCooldown > 0) return;
+  const ax = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
+  const ay = (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
+  const mag = Math.hypot(ax, ay);
+  if (mag > 0.1) {
+    state.player.vx += (ax / mag) * 250;
+    state.player.vy += (ay / mag) * 250;
+  } else {
+    state.player.vx *= 1.6;
+    state.player.vy *= 1.6;
+  }
+  state.dashCooldown = 2.4;
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Dredger hold pattern active.', 'Resume', () => {
+      state.mode = 'running';
+      hideOverlay();
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function updatePlayer(dt) {
+  applyMoveInput();
+  state.player.x += state.player.vx * dt;
+  state.player.y += state.player.vy * dt;
+
+  if (state.player.x < WORLD.left + state.player.r) {
+    state.player.x = WORLD.left + state.player.r;
+    state.player.vx *= -0.25;
+  }
+  if (state.player.x > WORLD.right - state.player.r) {
+    state.player.x = WORLD.right - state.player.r;
+    state.player.vx *= -0.25;
+  }
+  if (state.player.y < WORLD.top + state.player.r) {
+    state.player.y = WORLD.top + state.player.r;
+    state.player.vy *= -0.25;
+  }
+  if (state.player.y > WORLD.bottom - state.player.r) {
+    state.player.y = WORLD.bottom - state.player.r;
+    state.player.vy *= -0.25;
+  }
+}
+
+function updateMines(dt) {
+  for (const mine of state.mines) {
+    const dx = state.player.x - mine.x;
+    const dy = state.player.y - mine.y;
+    const mag = Math.hypot(dx, dy) || 1;
+    mine.vx = (dx / mag) * mine.speed;
+    mine.vy = (dy / mag) * mine.speed;
+    mine.x += mine.vx * dt;
+    mine.y += mine.vy * dt;
+    mine.x = clamp(mine.x, WORLD.left + mine.r, WORLD.right - mine.r);
+    mine.y = clamp(mine.y, WORLD.top + mine.r, WORLD.bottom - mine.r);
+  }
+}
+
+function updateSalvage(dt) {
+  for (const node of state.salvage) {
+    node.x += node.vx * dt;
+    node.y += node.vy * dt;
+    if (node.x < WORLD.left + node.r || node.x > WORLD.right - node.r) node.vx *= -1;
+    if (node.y < WORLD.top + node.r || node.y > WORLD.bottom - node.r) node.vy *= -1;
+    node.x = clamp(node.x, WORLD.left + node.r, WORLD.right - node.r);
+    node.y = clamp(node.y, WORLD.top + node.r, WORLD.bottom - node.r);
+  }
+}
+
+function resolveCollisions() {
+  for (let i = state.salvage.length - 1; i >= 0; i -= 1) {
+    const node = state.salvage[i];
+    const rr = (node.r + state.player.r) * (node.r + state.player.r);
+    if (dist2(node, state.player) > rr) continue;
+    state.salvage.splice(i, 1);
+    state.collected += 1;
+    state.score += node.value + 8;
+    addLog(`Salvage secured +${node.value + 8}`);
+  }
+
+  if (state.invuln > 0) return;
+  for (const mine of state.mines) {
+    const rr = (mine.r + state.player.r - 2) * (mine.r + state.player.r - 2);
+    if (dist2(mine, state.player) > rr) continue;
+    state.hull -= 1;
+    state.invuln = 1.15;
+    state.score = Math.max(0, state.score - 28);
+    addLog('Mine impact. Hull integrity dropped.');
+    break;
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  state.invuln = Math.max(0, state.invuln - dt);
+  state.dashCooldown = Math.max(0, state.dashCooldown - dt);
+
+  state.mineSpawnEvery = Math.max(0.48, 1.25 - state.elapsed * 0.0085);
+  state.salvageSpawnEvery = Math.max(0.75, 1.2 - state.elapsed * 0.0042);
+
+  state.mineSpawnTimer += dt;
+  while (state.mineSpawnTimer >= state.mineSpawnEvery) {
+    state.mineSpawnTimer -= state.mineSpawnEvery;
+    spawnMine();
+    if (Math.random() < Math.min(0.35, state.elapsed / 130)) spawnMine();
+    if (state.mines.length > 24) state.mines.splice(0, state.mines.length - 24);
+  }
+
+  state.salvageSpawnTimer += dt;
+  while (state.salvageSpawnTimer >= state.salvageSpawnEvery) {
+    state.salvageSpawnTimer -= state.salvageSpawnEvery;
+    spawnSalvage();
+    if (state.salvage.length > 14) state.salvage.splice(0, state.salvage.length - 14);
+  }
+
+  updatePlayer(dt);
+  updateMines(dt);
+  updateSalvage(dt);
+  resolveCollisions();
+
+  if (state.collected >= TARGET_SALVAGE) {
+    finishGame(true);
+    return;
+  }
+  if (state.hull <= 0) {
+    finishGame(false);
+    return;
+  }
+  if (state.timeLeft <= 0) {
+    finishGame(state.collected >= TARGET_SALVAGE);
+  }
+}
+
+function drawBackground() {
+  const water = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  water.addColorStop(0, '#0f4465');
+  water.addColorStop(0.62, '#0b2f46');
+  water.addColorStop(1, '#082335');
+  ctx.fillStyle = water;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 64; i += 1) {
+    const x = (i * 101 + Math.floor(state.elapsed * 18)) % canvas.width;
+    const y = (i * 67 + Math.floor(state.elapsed * 10)) % canvas.height;
+    ctx.fillStyle = `rgba(179, 232, 255, ${0.05 + (i % 3) * 0.03})`;
+    ctx.fillRect(x, y, 2 + (i % 2), 2 + (i % 2));
+  }
+
+  ctx.strokeStyle = '#9ad8ed55';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(WORLD.left, WORLD.top, WORLD.right - WORLD.left, WORLD.bottom - WORLD.top);
+}
+
+function drawSalvage() {
+  for (const node of state.salvage) {
+    ctx.fillStyle = '#6de3d9';
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#c4fff8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#05323a';
+    ctx.fillRect(node.x - node.r * 0.5, node.y - 2, node.r, 4);
+  }
+}
+
+function drawMines() {
+  for (const mine of state.mines) {
+    ctx.fillStyle = '#fb6f76';
+    ctx.beginPath();
+    ctx.arc(mine.x, mine.y, mine.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd6d8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffb6ba';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i += 1) {
+      const a = (Math.PI * 2 * i) / 6;
+      const x1 = mine.x + Math.cos(a) * (mine.r - 2);
+      const y1 = mine.y + Math.sin(a) * (mine.r - 2);
+      const x2 = mine.x + Math.cos(a) * (mine.r + 8);
+      const y2 = mine.y + Math.sin(a) * (mine.r + 8);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawPlayer() {
+  const pulse = 0.7 + Math.sin(state.elapsed * 8) * 0.08;
+  ctx.fillStyle = state.invuln > 0 ? `rgba(255, 232, 164, ${pulse})` : '#9ce8ff';
+  ctx.beginPath();
+  ctx.arc(state.player.x, state.player.y, state.player.r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#def8ff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  const headingX = state.player.x + clamp(state.player.vx, -1, 1) * 10;
+  const headingY = state.player.y + clamp(state.player.vy, -1, 1) * 10;
+  ctx.fillStyle = '#0d3044';
+  ctx.beginPath();
+  ctx.arc(headingX, headingY, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#e9f8ff';
+  ctx.font = '700 34px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Drift Dredger', 24, 48);
+
+  ctx.fillStyle = '#c1e4f2';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Goal: secure ${TARGET_SALVAGE} salvage crates before hull reaches zero.`, 24, 74);
+
+  const lines = state.logs.length ? state.logs : ['Use dash for escapes when mines converge.'];
+  ctx.fillStyle = '#d1edf8';
+  ctx.font = '600 14px Trebuchet MS';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 24, 102 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawSalvage();
+  drawMines();
+  drawPlayer();
+  drawLabels();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  salvageEl.textContent = `${state.collected}/${TARGET_SALVAGE}`;
+  hullEl.textContent = String(Math.max(0, state.hull));
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  minesEl.textContent = String(state.mines.length);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const timeChip = timeEl.parentElement;
+  timeChip.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.55);
+  timeChip.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.55 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  timeChip.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function setInput(key, pressed) {
+  if (key === 'up') state.input.up = pressed;
+  if (key === 'down') state.input.down = pressed;
+  if (key === 'left') state.input.left = pressed;
+  if (key === 'right') state.input.right = pressed;
+}
+
+function mapKey(event, pressed) {
+  const code = event.code;
+  if (code === 'ArrowUp' || code === 'KeyW') { event.preventDefault(); setInput('up', pressed); return true; }
+  if (code === 'ArrowDown' || code === 'KeyS') { event.preventDefault(); setInput('down', pressed); return true; }
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); setInput('left', pressed); return true; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); setInput('right', pressed); return true; }
+  return false;
+}
+
+function onKeyDown(event) {
+  if (mapKey(event, true)) return;
+  if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') { event.preventDefault(); attemptDash(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function onKeyUp(event) {
+  mapKey(event, false);
+}
+
+function bindHoldButton(id, key) {
+  const btn = document.getElementById(id);
+  const press = (event) => { event.preventDefault(); setInput(key, true); };
+  const release = (event) => { event.preventDefault(); setInput(key, false); };
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+bindHoldButton('upBtn', 'up');
+bindHoldButton('downBtn', 'down');
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('dashBtn').addEventListener('click', attemptDash);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'driftdredger',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left. x increases right, y increases down. playable world is bounded by world.left/top/right/bottom.',
+  objective: {
+    target_salvage: TARGET_SALVAGE,
+    survive_seconds: TOTAL_SECONDS,
+    keep_hull_above: 0,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    hull: state.hull,
+    salvage_collected: state.collected,
+    mines_active: state.mines.length,
+    dash_cooldown_seconds: Number(state.dashCooldown.toFixed(3)),
+    invulnerability_seconds: Number(state.invuln.toFixed(3)),
+  },
+  world_bounds: WORLD,
+  player: {
+    x: Number(state.player.x.toFixed(2)),
+    y: Number(state.player.y.toFixed(2)),
+    vx: Number(state.player.vx.toFixed(2)),
+    vy: Number(state.player.vy.toFixed(2)),
+    radius: state.player.r,
+  },
+  mines: state.mines.map((mine) => ({
+    id: mine.id,
+    x: Number(mine.x.toFixed(2)),
+    y: Number(mine.y.toFixed(2)),
+    vx: Number(mine.vx.toFixed(2)),
+    vy: Number(mine.vy.toFixed(2)),
+    speed: Number(mine.speed.toFixed(2)),
+    radius: Number(mine.r.toFixed(2)),
+  })),
+  salvage_nodes: state.salvage.map((node) => ({
+    id: node.id,
+    x: Number(node.x.toFixed(2)),
+    y: Number(node.y.toFixed(2)),
+    vx: Number(node.vx.toFixed(2)),
+    vy: Number(node.vy.toFixed(2)),
+    radius: Number(node.r.toFixed(2)),
+    value: node.value,
+  })),
+  recent_events: state.logs,
+  controls: {
+    move: 'WASD or Arrow Keys',
+    dash: 'Shift',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Drift Dredger', 'Pilot your salvage sub through mine swarms, collect drifting crates, and keep hull integrity online.', 'Start Run', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'driftdredger', gameName: 'Drift Dredger' });
+</script>
+</body>
+</html>

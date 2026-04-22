@@ -85,5 +85,6 @@
 - game/prismpipeline
 - game/glacierguard
 - game/stormvault
+- game/driftdredger
 
 Generated from `src/meta/feedback.js`.

@@ -69,5 +69,6 @@ export const GAMES = [
   { slug:'prismpipeline',  name:'Prism Pipeline',      emoji:'\u{1F9EA}', scoreHint:'stabilized', url:'/prismpipeline', desc:'Cycle prism relays, route photon packets, and stabilize the grid before containment fails.', earnsCoins:true },
   { slug:'glacierguard',   name:'Glacier Guard',       emoji:'\u{1F9CA}', scoreHint:'melted',     url:'/glacierguard',  desc:'Move the harbor turret, melt incoming glaciers, and keep your shield intact until storm timeout.', earnsCoins:true },
   { slug:'stormvault',     name:'Storm Vault',         emoji:'\u26A1',    scoreHint:'charge',     url:'/stormvault',   desc:'Match rod polarity to incoming strikes, charge the vault, and keep the shield online until the storm passes.', earnsCoins:true },
+  { slug:'driftdredger',   name:'Drift Dredger',       emoji:'\u{1F6A4}', scoreHint:'salvage',    url:'/driftdredger', desc:'Pilot a salvage sub, collect drifting scrap, and dodge sea mines before your hull fails.', earnsCoins:true },
 ];
 
