@@ -34,3 +34,7 @@
 ## 2025-02-12 - Avoid Redundant Object Normalization on Read Paths
 **Learning:** `summarizeKpiEvents` in `src/core/metrics.js` was running a deep normalization step (`normalizeMetricEvent` and `sanitizeMetricMeta`) on every stored event during read/summary time. Because the events list can grow to 1000 items, and because `setMetricsState` and `trackKpiEvent` strictly normalize data before writing it to state, this redundant step on read caused significant unnecessary object allocation, string slicing, and GC overhead during render cycles.
 **Action:** When a store inherently guarantees that its internal state is already normalized upon write, skip deep normalization routines on read paths. Perform simple existence checks instead (e.g. `if (!event || !event.name)`).
+
+## 2024-05-25 - Avoid spreading and deep clone on hot paths for object mutations
+**Learning:** `rememberRecent` inside `src/core/state.js` was creating deep copies of objects (using object spread syntax `...`) on every invocation, leading to significant execution overhead and garbage collection.
+**Action:** Mutate the relevant fields in-place for fast-path operations instead of creating deep clones, effectively dropping execution times drastically on high-frequency routines.
