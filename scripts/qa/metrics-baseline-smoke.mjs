@@ -106,6 +106,23 @@ async function main() {
 
     await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
     await page.fill("#shopSearchInput", "sky");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "shop_search_changed");
+      } catch {
+        return false;
+      }
+    });
+    await page.waitForFunction(() => {
+      const cards = Array.from(document.querySelectorAll("#shopGrid .shop-item"));
+      return cards.some((card) => {
+        const title = card.querySelector(".shop-item-title")?.textContent?.trim();
+        return title === "Sky Paddle";
+      });
+    });
     const skyPaddleCard = page.locator("#shopGrid .shop-item").filter({
       has: page.locator(".shop-item-title", { hasText: "Sky Paddle" }),
     }).first();
