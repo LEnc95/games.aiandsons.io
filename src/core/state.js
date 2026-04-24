@@ -48,11 +48,13 @@ const clampSessionDuration = (value) => {
 
 const normalizeWhitelist = (value) => {
   if (!Array.isArray(value)) return [];
+  const seen = new Set();
   const normalized = [];
   for (const entry of value) {
     if (typeof entry !== 'string') continue;
     const slug = entry.trim();
-    if (!slug || normalized.includes(slug)) continue;
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
     normalized.push(slug);
   }
   return normalized;
@@ -269,11 +271,13 @@ const loadInventory = () => {
 
 const normalizeMissionIds = (value) => {
   if (!Array.isArray(value)) return [];
+  const seen = new Set();
   const ids = [];
   for (const entry of value) {
     if (typeof entry !== 'string') continue;
     const id = entry.trim();
-    if (!id || ids.includes(id)) continue;
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
     ids.push(id);
   }
   return ids;
