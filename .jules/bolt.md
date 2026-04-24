@@ -38,3 +38,7 @@
 ## 2024-05-25 - Avoid spreading and deep clone on hot paths for object mutations
 **Learning:** `rememberRecent` inside `src/core/state.js` was creating deep copies of objects (using object spread syntax `...`) on every invocation, leading to significant execution overhead and garbage collection.
 **Action:** Mutate the relevant fields in-place for fast-path operations instead of creating deep clones, effectively dropping execution times drastically on high-frequency routines.
+
+## 2025-05-18 - Avoid O(N*M) Deduplication using Array.includes()
+**Learning:** Functions like `normalizeMissionIds` and `normalizeWhitelist` inside `src/core/state.js` were using `Array.prototype.includes()` in a `for...of` loop to deduplicate arrays, which leads to O(N*M) execution time as array size scales.
+**Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when performing deduplication on potentially unbounded arrays, rendering the time complexity to a linear O(N).
