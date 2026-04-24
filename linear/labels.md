@@ -86,5 +86,7 @@
 - game/glacierguard
 - game/stormvault
 - game/driftdredger
+- game/solarskiff
+- game/cindercrash
 
 Generated from `src/meta/feedback.js`.

@@ -1954,3 +1954,50 @@ pm run test:feedback and the Playwright gameplay validation loop for /stormvault
   - Attempt to auto-run local `python -m http.server` for Playwright setup via `Start-Process` was blocked by sandbox policy.
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/driftdredger` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-23T07:05:53-04:00 Solar Skiff automation run
+- New request: add a game not currently on the site via $develop-web-game.
+- Added brand-new game solarskiff at solarskiff/index.html with a wind-and-trim skiff loop:
+  - Core loop: trim sail angle left/right to match shifting wind, collect drifting star shards, and dodge homing flare swarms.
+  - Win/loss loop: secure 22 shards before 85-second timer expires; flare impacts reduce integrity; end-run score + coin payout included.
+  - Controls: desktop (A/D or Left/Right trim, Space/Enter boost, P/R/F) and mobile buttons (Trim Left/Trim Right/Boost/Pause/Restart/Fullscreen).
+  - Platform hooks: ememberRecent('solarskiff'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state payload.
+  - Feedback integration: mountGameFeedback({ gameSlug: 'solarskiff', gameName: 'Solar Skiff' }).
+- Integrated launcher/routing wiring:
+  - Added solarskiff metadata entry in src/meta/games.js.
+  - Added static fallback home card in index.html.
+  - Added /solarskiff rewrites and /solarskiff/index.html cache-header entry in ercel.json.
+- Validation results (this run):
+  - g -n "solarskiff" solarskiff/index.html src/meta/games.js index.html vercel.json: pass.
+  - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
+  - 
+pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
+  - 
+pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integration tests.
+  - Skill-required Playwright loop via $develop-web-game client for /solarskiff: blocked in this sandbox (rowserType.launch: spawn EPERM).
+- Follow-up TODO:
+  - Re-run 
+pm run test:feedback and the Playwright gameplay validation loop for /solarskiff in an environment that allows child-process and Chromium launch.
+
+## 2026-04-24 Cinder Crash automation run
+- New request: add a game not currently on the site via $develop-web-game.
+- Added brand-new game `cindercrash` at `cindercrash/index.html` with a magma-skimmer survival loop.
+  - Core loop: steer heading against shifting ash flow, recover ember cores, and dodge cinder bursts before integrity fails.
+  - Win/loss loop: secure 22 cores before timer expires; cinder hits drain integrity; end-run score + coin payout included.
+  - Controls: desktop (A/D or Left/Right, Space/Enter, P/R/F) and mobile buttons (Heading Left/Heading Right/Boost/Pause/Restart/Fullscreen).
+  - Platform hooks: `rememberRecent('cindercrash')`, coin rewards via `addCoins`, progression payloads via `maybeUnlock`.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live-state payload.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'cindercrash', gameName: 'Cinder Crash' })`.
+- Integrated launcher/routing wiring:
+  - Added `cindercrash` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/cindercrash` rewrites and `/cindercrash/index.html` cache-header entry in `vercel.json`.
+- Validation results (this run):
+  - `rg -n "cindercrash" cindercrash/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/cindercrash`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/cindercrash` in an environment that allows child-process and Chromium launch.

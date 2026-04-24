@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Cinder Crash - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Steer a magma skimmer through ash squalls, recover ember cores, and dodge cinder bursts before hull integrity fails." />
+<meta property="og:title" content="Cinder Crash - Play on Cade's Games" />
+<meta property="og:description" content="Steer a magma skimmer through ash squalls, recover ember cores, and dodge cinder bursts before hull integrity fails." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/cindercrash" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Cinder Crash - Play on Cade's Games" />
+<meta name="twitter:description" content="Steer a magma skimmer through ash squalls, recover ember cores, and dodge cinder bursts before hull integrity fails." />
+<link rel="canonical" href="https://games.aiandsons.io/cindercrash" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #fff3e3;
+  background:
+    radial-gradient(70% 62% at 8% 14%, #6a2408 0%, transparent 66%),
+    radial-gradient(52% 48% at 88% 84%, #43120c 0%, transparent 70%),
+    linear-gradient(180deg, #120603 0%, #280a05 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #ffb57569;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #30120b 0%, #1f0a06 60%, #160704 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 14px;
+  border: 1px solid #ffbe8f6b;
+  background: #1f0a06ef;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #ffd6ba; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #ffc9a568;
+  background: #9a3f1bf0;
+  color: #fff4ea;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #ffbe8f4d;
+  background: #1c0905f0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #ffd7be30;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #f5c8ab;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.warn b { color: #ffd395; }
+.bad b { color: #ff9bad; }
+.good b { color: #9af0c4; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #ffbe8f4d;
+  background: #1c0905f0;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #9a3e1b; border-color: #ffcea970; }
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Cinder Crash game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Cores</span><b id="cores">0/22</b></div>
+    <div class="chip"><span>Integrity</span><b id="integrity">6</b></div>
+    <div class="chip"><span>Flow</span><b id="wind">0 deg</b></div>
+    <div class="chip"><span>Heading</span><b id="trim">0 deg</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">85.0s</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn" type="button" class="ctrl-btn">Heading Left</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Heading Right</button>
+    <button id="boostBtn" type="button" class="ctrl-btn">Boost</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const coresEl = document.getElementById('cores');
+const integrityEl = document.getElementById('integrity');
+const windEl = document.getElementById('wind');
+const trimEl = document.getElementById('trim');
+const timeEl = document.getElementById('time');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 85;
+const TARGET_SHARDS = 22;
+const START_INTEGRITY = 6;
+const BOOST_COOLDOWN = 2.4;
+const WORLD = { left: 70, top: 90, right: canvas.width - 70, bottom: canvas.height - 90 };
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  integrity: START_INTEGRITY,
+  coresCollected: 0,
+  shardSpawnTimer: 0.3,
+  flareSpawnTimer: 1.0,
+  windAngle: -Math.PI / 2,
+  trimAngle: -Math.PI / 2,
+  windShiftTimer: 3,
+  boostCooldown: 0,
+  invuln: 0,
+  input: { left: false, right: false },
+  player: { x: canvas.width * 0.5, y: canvas.height * 0.55, vx: 0, vy: 0, r: 20 },
+  cores: [],
+  flares: [],
+  logs: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function angleWrap(angle) {
+  let next = angle;
+  while (next > Math.PI) next -= Math.PI * 2;
+  while (next < -Math.PI) next += Math.PI * 2;
+  return next;
+}
+
+function dist2(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return dx * dx + dy * dy;
+}
+
+function addLog(line) {
+  state.logs.unshift(line);
+  if (state.logs.length > 4) state.logs.length = 4;
+}
+
+function showOverlay(title, body, actionLabel, actionFn) {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <div class="row">
+        <button id="overlayAction" type="button">${actionLabel}</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', actionFn, { once: true });
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function spawnShard() {
+  state.cores.push({
+    id: Math.random().toString(36).slice(2),
+    x: randomRange(WORLD.left + 40, WORLD.right - 40),
+    y: randomRange(WORLD.top + 40, WORLD.bottom - 40),
+    vx: randomRange(-22, 22),
+    vy: randomRange(-22, 22),
+    r: randomRange(11, 14),
+    value: 12 + Math.floor(Math.random() * 10),
+  });
+}
+
+function spawnFlare(forceEdge = false) {
+  const edge = Math.floor(Math.random() * 4);
+  let x = randomRange(WORLD.left + 20, WORLD.right - 20);
+  let y = randomRange(WORLD.top + 20, WORLD.bottom - 20);
+  if (forceEdge || Math.random() < 0.85) {
+    if (edge === 0) y = WORLD.top + 8;
+    else if (edge === 1) x = WORLD.right - 8;
+    else if (edge === 2) y = WORLD.bottom - 8;
+    else x = WORLD.left + 8;
+  }
+  state.flares.push({
+    id: Math.random().toString(36).slice(2),
+    x,
+    y,
+    vx: randomRange(-36, 36),
+    vy: randomRange(-36, 36),
+    speed: randomRange(88, 140) + state.elapsed * 0.7,
+    r: randomRange(15, 19),
+  });
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.integrity = START_INTEGRITY;
+  state.coresCollected = 0;
+  state.shardSpawnTimer = 0.3;
+  state.flareSpawnTimer = 1.0;
+  state.windAngle = -Math.PI / 2;
+  state.trimAngle = -Math.PI / 2;
+  state.windShiftTimer = 3;
+  state.boostCooldown = 0;
+  state.invuln = 0;
+  state.input = { left: false, right: false };
+  state.player = { x: canvas.width * 0.5, y: canvas.height * 0.55, vx: 0, vy: 0, r: 20 };
+  state.cores = [];
+  state.flares = [];
+  state.logs = ['Steer with A/D and align your skimmer heading with ash flow for speed.'];
+  for (let i = 0; i < 5; i += 1) spawnShard();
+  for (let i = 0; i < 3; i += 1) spawnFlare(true);
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('cindercrash'); } catch {}
+  try { maybeUnlock({ anyPlay: true, cindercrash: { result: 'started', score: 0, cores: 0 } }); } catch {}
+}
+
+function finishGame(win) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = win ? 'won' : 'lost';
+  const coins = Math.max(6, Math.floor(state.score / 48) + (win ? 16 : 8));
+  try {
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      cindercrash: {
+        result: state.result,
+        score: Math.round(state.score),
+        cores: state.coresCollected,
+        integrity: state.integrity,
+      },
+    });
+  } catch {}
+
+  const summary = win
+    ? `Route complete. You secured ${state.coresCollected} cores and earned ${coins} coins.`
+    : `Skimmer integrity failed after ${state.coresCollected} cores. You still earned ${coins} coins.`;
+  showOverlay('Run Complete', summary, 'Play Again', startGame);
+}
+
+function applyHeadingInput(dt) {
+  const turnRate = 2.6;
+  if (state.input.left) state.trimAngle -= turnRate * dt;
+  if (state.input.right) state.trimAngle += turnRate * dt;
+  state.trimAngle = angleWrap(state.trimAngle);
+}
+
+function attemptBoost() {
+  if (state.mode !== 'running' || state.boostCooldown > 0) return;
+  const boost = 220;
+  state.player.vx += Math.cos(state.trimAngle) * boost;
+  state.player.vy += Math.sin(state.trimAngle) * boost;
+  state.boostCooldown = BOOST_COOLDOWN;
+  addLog('Thrust burst fired.');
+}
+
+function updateFlow(dt) {
+  state.windShiftTimer -= dt;
+  if (state.windShiftTimer <= 0) {
+    state.windShiftTimer = randomRange(2.4, 4.2);
+    state.windAngle = angleWrap(state.windAngle + randomRange(-0.85, 0.85));
+    addLog('Ash flow shifted. Retune heading.');
+  }
+}
+
+function updatePlayer(dt) {
+  applyHeadingInput(dt);
+  updateFlow(dt);
+
+  const align = Math.cos(angleWrap(state.trimAngle - state.windAngle));
+  const windPush = Math.max(0, align) * (220 + state.elapsed * 0.35);
+  state.player.vx += Math.cos(state.windAngle) * windPush * dt;
+  state.player.vy += Math.sin(state.windAngle) * windPush * dt;
+
+  const drag = 0.89;
+  state.player.vx *= drag;
+  state.player.vy *= drag;
+
+  state.player.x += state.player.vx * dt;
+  state.player.y += state.player.vy * dt;
+
+  if (state.player.x < WORLD.left + state.player.r) {
+    state.player.x = WORLD.left + state.player.r;
+    state.player.vx *= -0.35;
+  } else if (state.player.x > WORLD.right - state.player.r) {
+    state.player.x = WORLD.right - state.player.r;
+    state.player.vx *= -0.35;
+  }
+  if (state.player.y < WORLD.top + state.player.r) {
+    state.player.y = WORLD.top + state.player.r;
+    state.player.vy *= -0.35;
+  } else if (state.player.y > WORLD.bottom - state.player.r) {
+    state.player.y = WORLD.bottom - state.player.r;
+    state.player.vy *= -0.35;
+  }
+}
+
+function updateCores(dt) {
+  state.shardSpawnTimer -= dt;
+  const shardCap = 7;
+  const shardEvery = Math.max(0.62, 1.35 - state.elapsed * 0.002);
+  if (state.shardSpawnTimer <= 0 && state.cores.length < shardCap) {
+    state.shardSpawnTimer = shardEvery;
+    spawnShard();
+  }
+
+  for (let i = state.cores.length - 1; i >= 0; i -= 1) {
+    const shard = state.cores[i];
+    shard.x += shard.vx * dt;
+    shard.y += shard.vy * dt;
+
+    if (shard.x < WORLD.left + shard.r || shard.x > WORLD.right - shard.r) shard.vx *= -1;
+    if (shard.y < WORLD.top + shard.r || shard.y > WORLD.bottom - shard.r) shard.vy *= -1;
+
+    if (dist2(shard, state.player) <= (shard.r + state.player.r) ** 2) {
+      state.cores.splice(i, 1);
+      state.coresCollected += 1;
+      state.score += shard.value;
+      state.integrity = Math.min(START_INTEGRITY, state.integrity + 0.2);
+      addLog(`Core secured (${state.coresCollected}/${TARGET_SHARDS}).`);
+    }
+  }
+}
+
+function updateFlares(dt) {
+  state.flareSpawnTimer -= dt;
+  const flareCap = 14;
+  const flareEvery = Math.max(0.55, 1.1 - state.elapsed * 0.0026);
+  if (state.flareSpawnTimer <= 0 && state.flares.length < flareCap) {
+    state.flareSpawnTimer = flareEvery;
+    spawnFlare();
+  }
+
+  for (let i = state.flares.length - 1; i >= 0; i -= 1) {
+    const flare = state.flares[i];
+    const dx = state.player.x - flare.x;
+    const dy = state.player.y - flare.y;
+    const d = Math.hypot(dx, dy) || 1;
+    flare.vx += (dx / d) * flare.speed * 0.13 * dt;
+    flare.vy += (dy / d) * flare.speed * 0.13 * dt;
+
+    const speedCap = flare.speed;
+    const mag = Math.hypot(flare.vx, flare.vy);
+    if (mag > speedCap) {
+      flare.vx = (flare.vx / mag) * speedCap;
+      flare.vy = (flare.vy / mag) * speedCap;
+    }
+
+    flare.x += flare.vx * dt;
+    flare.y += flare.vy * dt;
+
+    if (flare.x < WORLD.left + flare.r || flare.x > WORLD.right - flare.r) flare.vx *= -1;
+    if (flare.y < WORLD.top + flare.r || flare.y > WORLD.bottom - flare.r) flare.vy *= -1;
+
+    if (state.invuln <= 0 && dist2(flare, state.player) <= (flare.r + state.player.r) ** 2) {
+      state.integrity -= 1;
+      state.invuln = 1.0;
+      state.score = Math.max(0, state.score - 14);
+      state.flares.splice(i, 1);
+      addLog(`Flare impact. Integrity ${Math.max(0, state.integrity)}.`);
+      if (state.integrity <= 0) {
+        finishGame(false);
+        return;
+      }
+    }
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  state.invuln = Math.max(0, state.invuln - dt);
+  state.boostCooldown = Math.max(0, state.boostCooldown - dt);
+
+  updatePlayer(dt);
+  updateCores(dt);
+  updateFlares(dt);
+
+  if (state.coresCollected >= TARGET_SHARDS) {
+    finishGame(true);
+    return;
+  }
+  if (state.timeLeft <= 0) {
+    finishGame(state.coresCollected >= TARGET_SHARDS);
+  }
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#2d0d06');
+  grad.addColorStop(0.55, '#200805');
+  grad.addColorStop(1, '#150503');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 80; i += 1) {
+    const x = (i * 127 + Math.floor(state.elapsed * 18)) % canvas.width;
+    const y = (i * 71 + Math.floor(state.elapsed * 10)) % canvas.height;
+    ctx.fillStyle = `rgba(255, 211, 153, ${0.04 + (i % 3) * 0.03})`;
+    ctx.fillRect(x, y, 2 + (i % 2), 2 + (i % 2));
+  }
+
+  ctx.strokeStyle = '#ffb7814f';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(WORLD.left, WORLD.top, WORLD.right - WORLD.left, WORLD.bottom - WORLD.top);
+
+  const windX = canvas.width - 190;
+  const windY = 56;
+  const arrowLen = 56;
+  const wx = Math.cos(state.windAngle) * arrowLen;
+  const wy = Math.sin(state.windAngle) * arrowLen;
+  ctx.strokeStyle = '#ffd9b5';
+  ctx.fillStyle = '#ffd9b5';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(windX - wx * 0.5, windY - wy * 0.5);
+  ctx.lineTo(windX + wx * 0.5, windY + wy * 0.5);
+  ctx.stroke();
+
+  const tipX = windX + wx * 0.5;
+  const tipY = windY + wy * 0.5;
+  const nx = Math.cos(state.windAngle + Math.PI * 0.75) * 12;
+  const ny = Math.sin(state.windAngle + Math.PI * 0.75) * 12;
+  const px = Math.cos(state.windAngle - Math.PI * 0.75) * 12;
+  const py = Math.sin(state.windAngle - Math.PI * 0.75) * 12;
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(tipX + nx, tipY + ny);
+  ctx.lineTo(tipX + px, tipY + py);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCores() {
+  for (const shard of state.cores) {
+    ctx.save();
+    ctx.translate(shard.x, shard.y);
+    ctx.rotate(state.elapsed * 2.2 + shard.x * 0.002);
+    ctx.fillStyle = '#ffe19d';
+    ctx.beginPath();
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (Math.PI * 2 * i) / 6;
+      const r = i % 2 === 0 ? shard.r : shard.r * 0.45;
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawFlares() {
+  for (const flare of state.flares) {
+    const pulse = 0.8 + Math.sin((state.elapsed + flare.x * 0.002) * 9) * 0.18;
+    ctx.fillStyle = `rgba(255, 113, 82, ${pulse})`;
+    ctx.beginPath();
+    ctx.arc(flare.x, flare.y, flare.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffd0bd';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i += 1) {
+      const a = (Math.PI * 2 * i) / 8;
+      ctx.beginPath();
+      ctx.moveTo(flare.x + Math.cos(a) * (flare.r - 2), flare.y + Math.sin(a) * (flare.r - 2));
+      ctx.lineTo(flare.x + Math.cos(a) * (flare.r + 7), flare.y + Math.sin(a) * (flare.r + 7));
+      ctx.stroke();
+    }
+  }
+}
+
+function drawPlayer() {
+  const player = state.player;
+  const nx = Math.cos(state.trimAngle);
+  const ny = Math.sin(state.trimAngle);
+  const px = Math.cos(state.trimAngle + Math.PI * 0.5);
+  const py = Math.sin(state.trimAngle + Math.PI * 0.5);
+
+  ctx.fillStyle = state.invuln > 0 ? '#fff4b8' : '#a4ebff';
+  ctx.beginPath();
+  ctx.moveTo(player.x + nx * 26, player.y + ny * 26);
+  ctx.lineTo(player.x - nx * 20 + px * 14, player.y - ny * 20 + py * 14);
+  ctx.lineTo(player.x - nx * 20 - px * 14, player.y - ny * 20 - py * 14);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#173642';
+  ctx.beginPath();
+  ctx.arc(player.x - nx * 4, player.y - ny * 4, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#ffe7d2';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(player.x, player.y);
+  ctx.lineTo(player.x - nx * 8 + px * 26, player.y - ny * 8 + py * 26);
+  ctx.lineTo(player.x - nx * 8 + px * 8, player.y - ny * 8 + py * 8);
+  ctx.stroke();
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#ffe8d4';
+  ctx.font = '700 34px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Cinder Crash', 24, 48);
+
+  ctx.fillStyle = '#ffd3b4';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Secure ${TARGET_SHARDS} ember cores before integrity reaches zero.`, 24, 74);
+
+  const lines = state.logs.length ? state.logs : ['Follow the ash-flow arrow and collect ember cores to score.'];
+  ctx.fillStyle = '#ffe0cc';
+  ctx.font = '600 14px Trebuchet MS';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 24, 102 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawCores();
+  drawFlares();
+  drawPlayer();
+  drawLabels();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  coresEl.textContent = `${state.coresCollected}/${TARGET_SHARDS}`;
+  integrityEl.textContent = String(Math.max(0, Math.ceil(state.integrity)));
+  windEl.textContent = `${Math.round((state.windAngle * 180) / Math.PI)} deg`;
+  trimEl.textContent = `${Math.round((state.trimAngle * 180) / Math.PI)} deg`;
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const timeChip = timeEl.parentElement;
+  timeChip.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.55);
+  timeChip.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.55 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  timeChip.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Adjust your heading before relaunching into the ash lane.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function mapKey(event, pressed) {
+  const code = event.code;
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); state.input.left = pressed; return true; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); state.input.right = pressed; return true; }
+  return false;
+}
+
+function onKeyDown(event) {
+  if (mapKey(event, true)) return;
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); attemptBoost(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function onKeyUp(event) {
+  mapKey(event, false);
+}
+
+function bindHoldButton(id, key) {
+  const btn = document.getElementById(id);
+  const press = (event) => { event.preventDefault(); state.input[key] = true; };
+  const release = (event) => { event.preventDefault(); state.input[key] = false; };
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+document.getElementById('boostBtn').addEventListener('click', attemptBoost);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'cindercrash',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left. x increases right, y increases down. playable world is bounded by world.left/top/right/bottom.',
+  objective: {
+    target_cores: TARGET_SHARDS,
+    survive_seconds: TOTAL_SECONDS,
+    keep_integrity_above: 0,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    integrity: Number(state.integrity.toFixed(2)),
+    cores_collected: state.coresCollected,
+    flare_count: state.flares.length,
+    boost_cooldown_seconds: Number(state.boostCooldown.toFixed(3)),
+    invulnerability_seconds: Number(state.invuln.toFixed(3)),
+  },
+  environment: {
+    wind_angle_radians: Number(state.windAngle.toFixed(4)),
+    wind_angle_degrees: Number(((state.windAngle * 180) / Math.PI).toFixed(2)),
+    trim_angle_radians: Number(state.trimAngle.toFixed(4)),
+    trim_angle_degrees: Number(((state.trimAngle * 180) / Math.PI).toFixed(2)),
+  },
+  world_bounds: WORLD,
+  player: {
+    x: Number(state.player.x.toFixed(2)),
+    y: Number(state.player.y.toFixed(2)),
+    vx: Number(state.player.vx.toFixed(2)),
+    vy: Number(state.player.vy.toFixed(2)),
+    radius: state.player.r,
+  },
+  flares: state.flares.map((flare) => ({
+    id: flare.id,
+    x: Number(flare.x.toFixed(2)),
+    y: Number(flare.y.toFixed(2)),
+    vx: Number(flare.vx.toFixed(2)),
+    vy: Number(flare.vy.toFixed(2)),
+    speed: Number(flare.speed.toFixed(2)),
+    radius: Number(flare.r.toFixed(2)),
+  })),
+  cores: state.cores.map((shard) => ({
+    id: shard.id,
+    x: Number(shard.x.toFixed(2)),
+    y: Number(shard.y.toFixed(2)),
+    vx: Number(shard.vx.toFixed(2)),
+    vy: Number(shard.vy.toFixed(2)),
+    radius: Number(shard.r.toFixed(2)),
+    value: shard.value,
+  })),
+  recent_events: state.logs,
+  controls: {
+    heading_left: 'A or Left Arrow',
+    heading_right: 'D or Right Arrow',
+    boost: 'Space or Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Cinder Crash', 'Pilot through lava channels, align heading with shifting ash flow, and collect ember cores before cinder bursts break your skimmer.', 'Start Run', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'cindercrash', gameName: 'Cinder Crash' });
+</script>
+</body>
+</html>
+

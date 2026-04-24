@@ -70,5 +70,7 @@ export const GAMES = [
   { slug:'glacierguard',   name:'Glacier Guard',       emoji:'\u{1F9CA}', scoreHint:'melted',     url:'/glacierguard',  desc:'Move the harbor turret, melt incoming glaciers, and keep your shield intact until storm timeout.', earnsCoins:true },
   { slug:'stormvault',     name:'Storm Vault',         emoji:'\u26A1',    scoreHint:'charge',     url:'/stormvault',   desc:'Match rod polarity to incoming strikes, charge the vault, and keep the shield online until the storm passes.', earnsCoins:true },
   { slug:'driftdredger',   name:'Drift Dredger',       emoji:'\u{1F6A4}', scoreHint:'salvage',    url:'/driftdredger', desc:'Pilot a salvage sub, collect drifting scrap, and dodge sea mines before your hull fails.', earnsCoins:true },
+  { slug:'solarskiff',     name:'Solar Skiff',         emoji:'\u{1F6F6}', scoreHint:'shards',     url:'/solarskiff',   desc:'Trim your sail with shifting solar winds, collect star shards, and dodge flare swarms before integrity fails.', earnsCoins:true },
+  { slug:'cindercrash',    name:'Cinder Crash',        emoji:'\u{1F525}', scoreHint:'cores',      url:'/cindercrash',  desc:'Steer a magma skimmer through ash squalls, recover ember cores, and dodge cinder bursts before hull integrity fails.', earnsCoins:true },
 ];
 
