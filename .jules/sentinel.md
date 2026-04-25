@@ -31,3 +31,8 @@
 **Vulnerability:** The `randomToken()` fallback mechanism relied on the predictable `Math.random()` when `globalThis.crypto.randomUUID` was unavailable.
 **Learning:** When replacing insecure `Math.random()` fallbacks with `globalThis.crypto.getRandomValues()` for token generation or session IDs, always wrap the usage in a feature detection check (e.g., `if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function')`) to prevent regressions in environments lacking native web crypto support.
 **Prevention:** Ensure that anywhere secure randomness is introduced as an alternative or fallback, it checks for the existence of the expected `crypto` APIs before executing.
+
+## 2026-04-25 - [DOM Clearing XSS Defense]
+**Vulnerability:** Clearing DOM elements using `.innerHTML = ''` triggers static analysis blocking flags for DOM-based XSS, even when assigning an empty string.
+**Learning:** Found several games (`cindercrash`, `solarskiff`, `starlattice`) using `.innerHTML = ''` instead of the codebase standard `.textContent = ''`.
+**Prevention:** Apply `.textContent = ''` universally for clearing elements to ensure security scanners pass and to enforce strict vanilla JS safety patterns.
