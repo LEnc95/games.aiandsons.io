@@ -90,10 +90,13 @@ function isProbablyMobileBrowser() {
 
 function shouldUseRedirectFallback(error) {
   const code = typeof error?.code === "string" ? error.code : "";
+  const message = String(error?.message || "");
   return (
     code === "auth/popup-blocked" ||
     code === "auth/cancelled-popup-request" ||
-    code === "auth/operation-not-supported-in-this-environment"
+    code === "auth/operation-not-supported-in-this-environment" ||
+    code === "auth/internal-error" ||
+    message.includes("auth/internal-error")
   );
 }
 
