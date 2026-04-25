@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Orbit Orchard - Play on Cade's Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="description" content="Steer around nested orbit rings, harvest glowing fruit, and dodge thorn drones before vitality runs out." />
+<meta property="og:title" content="Orbit Orchard - Play on Cade's Games" />
+<meta property="og:description" content="Steer around nested orbit rings, harvest glowing fruit, and dodge thorn drones before vitality runs out." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://games.aiandsons.io/orbitorchard" />
+<meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Orbit Orchard - Play on Cade's Games" />
+<meta name="twitter:description" content="Steer around nested orbit rings, harvest glowing fruit, and dodge thorn drones before vitality runs out." />
+<link rel="canonical" href="https://games.aiandsons.io/orbitorchard" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #eef9ff;
+  background:
+    radial-gradient(72% 60% at 12% 14%, #1a3f57 0%, transparent 66%),
+    radial-gradient(48% 46% at 86% 82%, #22462b 0%, transparent 70%),
+    linear-gradient(180deg, #08121a 0%, #0a1a22 50%, #0d1f1a 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #92e5c269;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #0f2531 0%, #0c1f28 60%, #0a181f 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 14px;
+  border: 1px solid #b6f5dc6b;
+  background: #0a2422ef;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #cdeede; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #c7ffe668;
+  background: #187b60f0;
+  color: #effff6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #9cf2d84d;
+  background: #09211bf0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #ddfff430;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c2efe0;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.warn b { color: #ffe39a; }
+.bad b { color: #ff9bad; }
+.good b { color: #9af0c4; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #9cf2d84d;
+  background: #09211bf0;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #17765d; border-color: #b9ffe270; }
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Orbit Orchard game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Fruit</span><b id="fruit">0/24</b></div>
+    <div class="chip"><span>Vitality</span><b id="vitality">6</b></div>
+    <div class="chip"><span>Ring</span><b id="ring">Middle</b></div>
+    <div class="chip"><span>Speed</span><b id="speed">0.00</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn" type="button" class="ctrl-btn">Rotate Left</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Rotate Right</button>
+    <button id="inwardBtn" type="button" class="ctrl-btn">Ring In</button>
+    <button id="outwardBtn" type="button" class="ctrl-btn">Ring Out</button>
+    <button id="boostBtn" type="button" class="ctrl-btn">Boost</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const fruitEl = document.getElementById('fruit');
+const vitalityEl = document.getElementById('vitality');
+const ringEl = document.getElementById('ring');
+const speedEl = document.getElementById('speed');
+const timeEl = document.getElementById('time');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 90;
+const TARGET_FRUIT = 24;
+const START_VITALITY = 6;
+const BOOST_COOLDOWN = 2.2;
+const SWITCH_COOLDOWN = 0.3;
+const CENTER = { x: canvas.width * 0.5, y: canvas.height * 0.53 };
+const RINGS = [130, 220, 305];
+const RING_LABELS = ['Inner', 'Middle', 'Outer'];
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  vitality: START_VITALITY,
+  fruitCollected: 0,
+  boostCooldown: 0,
+  switchCooldown: 0,
+  invuln: 0,
+  player: {
+    angle: -Math.PI / 2,
+    angVel: 0,
+    ringIndex: 1,
+    r: 19,
+  },
+  input: { left: false, right: false },
+  fruitSpawnTimer: 0.35,
+  thornSpawnTimer: 1.15,
+  fruit: [],
+  thorns: [],
+  logs: [],
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function addLog(line) {
+  state.logs.unshift(line);
+  if (state.logs.length > 4) state.logs.length = 4;
+}
+
+function polarToXY(radius, angle) {
+  return {
+    x: CENTER.x + Math.cos(angle) * radius,
+    y: CENTER.y + Math.sin(angle) * radius,
+  };
+}
+
+function angleDelta(a, b) {
+  let d = a - b;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+
+function showOverlay(title, body, actionLabel, actionFn) {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <div class="row">
+        <button id="overlayAction" type="button">${actionLabel}</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', actionFn, { once: true });
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function spawnFruit() {
+  state.fruit.push({
+    id: Math.random().toString(36).slice(2),
+    ring: Math.floor(randomRange(0, RINGS.length)),
+    angle: randomRange(-Math.PI, Math.PI),
+    angVel: randomRange(-0.8, 0.8),
+    r: randomRange(10, 13),
+    value: 12 + Math.floor(Math.random() * 9),
+  });
+}
+
+function spawnThorn() {
+  state.thorns.push({
+    id: Math.random().toString(36).slice(2),
+    ring: Math.floor(randomRange(0, RINGS.length)),
+    angle: randomRange(-Math.PI, Math.PI),
+    angVel: randomRange(-1.3, 1.3),
+    r: randomRange(14, 18),
+  });
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.vitality = START_VITALITY;
+  state.fruitCollected = 0;
+  state.boostCooldown = 0;
+  state.switchCooldown = 0;
+  state.invuln = 0;
+  state.player = { angle: -Math.PI / 2, angVel: 0, ringIndex: 1, r: 19 };
+  state.input = { left: false, right: false };
+  state.fruitSpawnTimer = 0.35;
+  state.thornSpawnTimer = 1.15;
+  state.fruit = [];
+  state.thorns = [];
+  state.logs = ['Harvest glowing fruit and avoid thorn drones on all rings.'];
+
+  for (let i = 0; i < 6; i += 1) spawnFruit();
+  for (let i = 0; i < 4; i += 1) spawnThorn();
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('orbitorchard'); } catch {}
+  try { maybeUnlock({ anyPlay: true, orbitorchard: { result: 'started', score: 0, fruit: 0 } }); } catch {}
+}
+
+function finishGame(win) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = win ? 'won' : 'lost';
+  const coins = Math.max(6, Math.floor(state.score / 50) + (win ? 16 : 8));
+  try {
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      orbitorchard: {
+        result: state.result,
+        score: Math.round(state.score),
+        fruit: state.fruitCollected,
+        vitality: state.vitality,
+      },
+    });
+  } catch {}
+
+  const summary = win
+    ? `Harvest complete. You gathered ${state.fruitCollected} fruit and earned ${coins} coins.`
+    : `Orchard overrun after ${state.fruitCollected} fruit. You still earned ${coins} coins.`;
+  showOverlay('Run Complete', summary, 'Play Again', startGame);
+}
+
+function shiftRing(delta) {
+  if (state.mode !== 'running' || state.switchCooldown > 0) return;
+  const next = clamp(state.player.ringIndex + delta, 0, RINGS.length - 1);
+  if (next === state.player.ringIndex) return;
+  state.player.ringIndex = next;
+  state.switchCooldown = SWITCH_COOLDOWN;
+  addLog(`Shifted to ${RING_LABELS[next].toLowerCase()} ring.`);
+}
+
+function attemptBoost() {
+  if (state.mode !== 'running' || state.boostCooldown > 0) return;
+  const direction = state.player.angVel >= 0 ? 1 : -1;
+  state.player.angVel += direction * 1.8;
+  state.boostCooldown = BOOST_COOLDOWN;
+  addLog('Orbital boost engaged.');
+}
+
+function updatePlayer(dt) {
+  const turn = 3.1;
+  if (state.input.left) state.player.angVel -= turn * dt;
+  if (state.input.right) state.player.angVel += turn * dt;
+
+  const friction = 0.88;
+  state.player.angVel *= friction;
+  state.player.angVel = clamp(state.player.angVel, -2.7, 2.7);
+  state.player.angle += state.player.angVel * dt;
+
+  if (state.player.angle > Math.PI) state.player.angle -= Math.PI * 2;
+  if (state.player.angle < -Math.PI) state.player.angle += Math.PI * 2;
+}
+
+function updateFruit(dt) {
+  state.fruitSpawnTimer -= dt;
+  const cap = 9;
+  const every = Math.max(0.55, 1.35 - state.elapsed * 0.0022);
+  if (state.fruitSpawnTimer <= 0 && state.fruit.length < cap) {
+    state.fruitSpawnTimer = every;
+    spawnFruit();
+  }
+
+  for (let i = state.fruit.length - 1; i >= 0; i -= 1) {
+    const item = state.fruit[i];
+    item.angle += item.angVel * dt;
+
+    if (item.ring === state.player.ringIndex) {
+      const d = Math.abs(angleDelta(item.angle, state.player.angle));
+      if (d <= 0.14) {
+        state.fruit.splice(i, 1);
+        state.fruitCollected += 1;
+        state.score += item.value;
+        state.vitality = Math.min(START_VITALITY, state.vitality + 0.2);
+        addLog(`Fruit harvested (${state.fruitCollected}/${TARGET_FRUIT}).`);
+      }
+    }
+  }
+}
+
+function updateThorns(dt) {
+  state.thornSpawnTimer -= dt;
+  const cap = 14;
+  const every = Math.max(0.45, 1.05 - state.elapsed * 0.0024);
+  if (state.thornSpawnTimer <= 0 && state.thorns.length < cap) {
+    state.thornSpawnTimer = every;
+    spawnThorn();
+  }
+
+  for (let i = state.thorns.length - 1; i >= 0; i -= 1) {
+    const thorn = state.thorns[i];
+    thorn.angle += thorn.angVel * dt;
+
+    if (thorn.ring === state.player.ringIndex) {
+      const d = Math.abs(angleDelta(thorn.angle, state.player.angle));
+      if (state.invuln <= 0 && d <= 0.13) {
+        state.thorns.splice(i, 1);
+        state.vitality -= 1;
+        state.invuln = 1.0;
+        state.score = Math.max(0, state.score - 15);
+        addLog(`Thorn impact. Vitality ${Math.max(0, state.vitality)}.`);
+        if (state.vitality <= 0) {
+          finishGame(false);
+          return;
+        }
+      }
+    }
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  state.boostCooldown = Math.max(0, state.boostCooldown - dt);
+  state.switchCooldown = Math.max(0, state.switchCooldown - dt);
+  state.invuln = Math.max(0, state.invuln - dt);
+
+  updatePlayer(dt);
+  updateFruit(dt);
+  updateThorns(dt);
+
+  if (state.fruitCollected >= TARGET_FRUIT) {
+    finishGame(true);
+    return;
+  }
+  if (state.timeLeft <= 0) {
+    finishGame(state.fruitCollected >= TARGET_FRUIT);
+  }
+}
+
+function drawBackground() {
+  const grad = ctx.createRadialGradient(CENTER.x, CENTER.y, 20, CENTER.x, CENTER.y, 470);
+  grad.addColorStop(0, '#1a5f47');
+  grad.addColorStop(0.42, '#114334');
+  grad.addColorStop(1, '#0a1b1d');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 88; i += 1) {
+    const x = (i * 131 + Math.floor(state.elapsed * 12)) % canvas.width;
+    const y = (i * 89 + Math.floor(state.elapsed * 6)) % canvas.height;
+    ctx.fillStyle = `rgba(183, 255, 224, ${0.04 + (i % 4) * 0.02})`;
+    ctx.fillRect(x, y, 2 + (i % 2), 2 + (i % 2));
+  }
+}
+
+function drawRings() {
+  for (let i = 0; i < RINGS.length; i += 1) {
+    const r = RINGS[i];
+    ctx.strokeStyle = i === state.player.ringIndex ? '#c1ffe8' : '#8ce3c556';
+    ctx.lineWidth = i === state.player.ringIndex ? 4 : 2;
+    ctx.beginPath();
+    ctx.arc(CENTER.x, CENTER.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#d8fff1';
+  ctx.beginPath();
+  ctx.arc(CENTER.x, CENTER.y, 24, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0f3f34';
+  ctx.font = '700 16px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillText('Core', CENTER.x, CENTER.y + 5);
+}
+
+function drawFruit() {
+  for (const item of state.fruit) {
+    const p = polarToXY(RINGS[item.ring], item.angle);
+    ctx.fillStyle = '#ffd987';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, item.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#fff4c9';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - item.r);
+    ctx.lineTo(p.x + 4, p.y - item.r - 7);
+    ctx.stroke();
+  }
+}
+
+function drawThorns() {
+  for (const thorn of state.thorns) {
+    const p = polarToXY(RINGS[thorn.ring], thorn.angle);
+    const pulse = 0.83 + Math.sin((state.elapsed + p.x * 0.002) * 8) * 0.15;
+    ctx.fillStyle = `rgba(255, 106, 106, ${pulse})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, thorn.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffd2d2';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 10; i += 1) {
+      const a = (Math.PI * 2 * i) / 10;
+      ctx.beginPath();
+      ctx.moveTo(p.x + Math.cos(a) * (thorn.r - 2), p.y + Math.sin(a) * (thorn.r - 2));
+      ctx.lineTo(p.x + Math.cos(a) * (thorn.r + 7), p.y + Math.sin(a) * (thorn.r + 7));
+      ctx.stroke();
+    }
+  }
+}
+
+function drawPlayer() {
+  const radius = RINGS[state.player.ringIndex];
+  const p = polarToXY(radius, state.player.angle);
+  const tangent = state.player.angle + Math.PI / 2;
+  const tx = Math.cos(tangent);
+  const ty = Math.sin(tangent);
+  const nx = Math.cos(state.player.angle);
+  const ny = Math.sin(state.player.angle);
+
+  ctx.fillStyle = state.invuln > 0 ? '#fff2bd' : '#9fd6ff';
+  ctx.beginPath();
+  ctx.moveTo(p.x + tx * 24, p.y + ty * 24);
+  ctx.lineTo(p.x - tx * 20 + nx * 14, p.y - ty * 20 + ny * 14);
+  ctx.lineTo(p.x - tx * 20 - nx * 14, p.y - ty * 20 - ny * 14);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#15435a';
+  ctx.beginPath();
+  ctx.arc(p.x - tx * 5, p.y - ty * 5, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#e9fff6';
+  ctx.font = '700 34px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Orbit Orchard', 24, 48);
+
+  ctx.fillStyle = '#caf2e5';
+  ctx.font = '600 16px Trebuchet MS';
+  ctx.fillText(`Harvest ${TARGET_FRUIT} fruit before vitality reaches zero.`, 24, 74);
+
+  const lines = state.logs.length ? state.logs : ['Hold left/right to rotate, move between rings, and avoid thorns.'];
+  ctx.fillStyle = '#d8f7ed';
+  ctx.font = '600 14px Trebuchet MS';
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(`- ${lines[i]}`, 24, 102 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawRings();
+  drawFruit();
+  drawThorns();
+  drawPlayer();
+  drawLabels();
+}
+
+function syncHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  fruitEl.textContent = `${state.fruitCollected}/${TARGET_FRUIT}`;
+  vitalityEl.textContent = String(Math.max(0, Math.ceil(state.vitality)));
+  ringEl.textContent = RING_LABELS[state.player.ringIndex];
+  speedEl.textContent = state.player.angVel.toFixed(2);
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const timeChip = timeEl.parentElement;
+  timeChip.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.55);
+  timeChip.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.55 && state.timeLeft >= TOTAL_SECONDS * 0.2);
+  timeChip.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.2);
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Shift rings and resume when your route is clear.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function mapKey(event, pressed) {
+  const code = event.code;
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); state.input.left = pressed; return true; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); state.input.right = pressed; return true; }
+  return false;
+}
+
+function onKeyDown(event) {
+  if (mapKey(event, true)) return;
+  if (event.code === 'ArrowUp' || event.code === 'KeyW') { event.preventDefault(); shiftRing(-1); return; }
+  if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); shiftRing(1); return; }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); attemptBoost(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function onKeyUp(event) {
+  mapKey(event, false);
+}
+
+function bindHoldButton(id, key) {
+  const btn = document.getElementById(id);
+  const press = (event) => { event.preventDefault(); state.input[key] = true; };
+  const release = (event) => { event.preventDefault(); state.input[key] = false; };
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+document.getElementById('inwardBtn').addEventListener('click', () => shiftRing(-1));
+document.getElementById('outwardBtn').addEventListener('click', () => shiftRing(1));
+document.getElementById('boostBtn').addEventListener('click', attemptBoost);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'orbitorchard',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left. Orbital coordinates are polar around center (x=600,y=402.8). Angle in radians increases clockwise on screen due to y-down canvas coordinates.',
+  objective: {
+    target_fruit: TARGET_FRUIT,
+    survive_seconds: TOTAL_SECONDS,
+    keep_vitality_above: 0,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    vitality: Number(state.vitality.toFixed(2)),
+    fruit_collected: state.fruitCollected,
+    thorn_count: state.thorns.length,
+    boost_cooldown_seconds: Number(state.boostCooldown.toFixed(3)),
+    ring_switch_cooldown_seconds: Number(state.switchCooldown.toFixed(3)),
+    invulnerability_seconds: Number(state.invuln.toFixed(3)),
+  },
+  rings: RINGS,
+  center: CENTER,
+  player: {
+    ring_index: state.player.ringIndex,
+    ring_label: RING_LABELS[state.player.ringIndex],
+    angle_radians: Number(state.player.angle.toFixed(4)),
+    angle_degrees: Number(((state.player.angle * 180) / Math.PI).toFixed(2)),
+    angular_velocity: Number(state.player.angVel.toFixed(4)),
+    radius: state.player.r,
+  },
+  fruit: state.fruit.map((item) => ({
+    id: item.id,
+    ring_index: item.ring,
+    angle_radians: Number(item.angle.toFixed(4)),
+    angular_velocity: Number(item.angVel.toFixed(4)),
+    radius: Number(item.r.toFixed(2)),
+    value: item.value,
+  })),
+  thorns: state.thorns.map((thorn) => ({
+    id: thorn.id,
+    ring_index: thorn.ring,
+    angle_radians: Number(thorn.angle.toFixed(4)),
+    angular_velocity: Number(thorn.angVel.toFixed(4)),
+    radius: Number(thorn.r.toFixed(2)),
+  })),
+  recent_events: state.logs,
+  controls: {
+    rotate_left: 'A or Left Arrow',
+    rotate_right: 'D or Right Arrow',
+    ring_in: 'W or Up Arrow',
+    ring_out: 'S or Down Arrow',
+    boost: 'Space or Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Orbit Orchard', 'Harvest glowing fruit from orbital rings, shift lanes with precision, and dodge thorn drones before vitality fails.', 'Start Run', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'orbitorchard', gameName: 'Orbit Orchard' });
+</script>
+</body>
+</html>

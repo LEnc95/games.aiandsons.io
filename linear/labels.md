@@ -88,5 +88,6 @@
 - game/driftdredger
 - game/solarskiff
 - game/cindercrash
+- game/orbitorchard
 
 Generated from `src/meta/feedback.js`.

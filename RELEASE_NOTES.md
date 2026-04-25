@@ -1,18 +1,16 @@
 # Release Notes - Sprint 6 Launch Candidate
-## Weekly Highlights (2026-04-11 to 2026-04-17)
-- Added and wired seven new games in the launcher this week: `diceforge`, `keystrike-command`, `pulse-parry`, `magnet-rail`, `loom-lock`, `tide-tower`, and `star-lattice`.
-- Hardened security posture by mitigating DOM-clearing XSS risk with safer text rendering and adding a Strict-Transport-Security response header.
-- Improved accessibility and UX with modal focus restoration, decorative icon screen-reader cleanup, and better keyboard/focus behavior around clear-filter flows.
-- Expanded feedback coverage by mounting feedback widgets on additional legacy game pages.
-- Improved backend and billing/admin handler performance and reliability by parallelizing independent I/O operations with `Promise.all`, plus stabilizing launch-readiness discovery smoke checks.
+## Weekly Highlights (2026-04-18 to 2026-04-24)
+- Added and wired six new game routes this week: `prism-pipeline`, `glacier-guard`, `storm-vault`, `drift-dredger`, `cindercrash`, and `solarskiff`.
+- Refined game differentiation work by separating Reactor Relay and Prism Pipeline gameplay loops and visual themes.
+- Improved performance by optimizing `rememberRecent` and skipping redundant normalization in metrics summary generation.
+- Hardened token generation by replacing insecure `Math.random()` usage in `randomToken`.
+- Improved accessibility by marking decorative game icons with `aria-hidden`.
 
-## Key PR Links (2026-04-11 to 2026-04-17)
-- [#114](https://github.com/LEnc95/games.aiandsons.io/pull/114) - Add Strict-Transport-Security header (merged 2026-04-16).
-- [#113](https://github.com/LEnc95/games.aiandsons.io/pull/113) - Stabilize launch-readiness discovery smoke checks (merged 2026-04-16).
-- [#112](https://github.com/LEnc95/games.aiandsons.io/pull/112) - Use Promise.all for independent handler operations (merged 2026-04-15).
-- [#111](https://github.com/LEnc95/games.aiandsons.io/pull/111) - Improve modal and icon accessibility behavior (merged 2026-04-15).
-- [#109](https://github.com/LEnc95/games.aiandsons.io/pull/109) - Fetch admin record deliveries concurrently (merged 2026-04-14).
-- [#106](https://github.com/LEnc95/games.aiandsons.io/pull/106) - Mitigate potential DOM-based XSS in element clearing (merged 2026-04-13).
+## Key PR Links (2026-04-18 to 2026-04-24)
+- [#132](https://github.com/LEnc95/games.aiandsons.io/pull/132) - Optimize rememberRecent performance (merged 2026-04-22).
+- [#131](https://github.com/LEnc95/games.aiandsons.io/pull/131) - Skip redundant normalization in metrics summary loop (merged 2026-04-20).
+- [#130](https://github.com/LEnc95/games.aiandsons.io/pull/130) - Fix insecure `Math.random()` usage in `randomToken` (merged 2026-04-20).
+- [#129](https://github.com/LEnc95/games.aiandsons.io/pull/129) - Add missing `aria-hidden` to decorative game icons in `index.html` (merged 2026-04-20).
 
 ## Release Scope
 - Onboarding split from home launcher with dedicated parent and teacher onboarding pages.

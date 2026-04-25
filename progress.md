@@ -2001,3 +2001,25 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Skill-required Playwright loop via `$develop-web-game` client for `/cindercrash`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/cindercrash` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-25 Orbit Orchard automation run
+- Added brand-new game `orbitorchard` at `orbitorchard/index.html` with an orbital-harvest loop.
+  - Core loop: rotate around three orbit rings, shift inward/outward rings, collect glowing fruit, and avoid thorn drones.
+  - Win/loss loop: harvest 24 fruit before 90-second timer expires; thorn hits reduce vitality; end-run score + coin payout included.
+  - Controls: desktop (A/D or Left/Right rotate, W/S or Up/Down ring shift, Space/Enter boost, P/R/F) and mobile buttons (Rotate Left/Rotate Right/Ring In/Ring Out/Boost/Pause/Restart/Fullscreen).
+  - Platform hooks: `rememberRecent('orbitorchard')`, coin rewards via `addCoins`, progression payload via `maybeUnlock`.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise live state payload.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'orbitorchard', gameName: 'Orbit Orchard' })`.
+- Integrated launcher/routing wiring:
+  - Added `orbitorchard` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/orbitorchard` rewrites and `/orbitorchard/index.html` cache-header entry in `vercel.json`.
+- Next: run wiring checks, vercel.json parse, feedback sync, and attempt required feedback + Playwright validations in this sandbox.
+- Validation results (this run):
+  - `rg -n "orbitorchard" orbitorchard/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/orbitorchard`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/orbitorchard` in an environment that allows child-process and Chromium launch.
