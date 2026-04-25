@@ -166,6 +166,7 @@
         <button id="startBtn" class="btn primary" type="button">Start Maze</button>
         <button id="nextMazeBtn" class="btn" type="button">Next Maze</button>
         <button id="repeatBtn" class="btn" type="button">Repeat Instructions</button>
+        <button id="audioBtn" class="btn" type="button">Audio: Locked</button>
       </div>
 
       <section class="stats" aria-live="polite">
@@ -225,6 +226,7 @@
     const startBtn = document.getElementById("startBtn");
     const nextMazeBtn = document.getElementById("nextMazeBtn");
     const repeatBtn = document.getElementById("repeatBtn");
+    const audioBtn = document.getElementById("audioBtn");
 
     function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
     function formatTime(milliseconds) {
@@ -270,7 +272,14 @@
       beaconTimer: 0,
       liveTimer: 0,
       steppingExternally: false,
-      audio: { context: null, master: null },
+      audio: {
+        context: null,
+        master: null,
+        unlocked: false,
+        enabled: true,
+        available: true,
+        unlockInFlight: false,
+      },
     };
     let lastFrame = performance.now();
 
@@ -318,21 +327,71 @@
       if (speak) speakText(message);
     }
 
+    function updateAudioButton() {
+      if (!state.audio.available) {
+        audioBtn.textContent = "Audio: Unsupported";
+        audioBtn.disabled = true;
+        return;
+      }
+      if (!state.audio.enabled) {
+        audioBtn.textContent = "Audio: Off";
+        audioBtn.disabled = false;
+        return;
+      }
+      audioBtn.disabled = false;
+      audioBtn.textContent = state.audio.unlocked ? "Audio: On" : "Audio: Locked";
+    }
+
+    function setAudioEnabled(enabled) {
+      state.audio.enabled = Boolean(enabled);
+      updateAudioButton();
+    }
+
     function ensureAudioContext() {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return null;
+      if (!AudioCtx) {
+        state.audio.available = false;
+        updateAudioButton();
+        return null;
+      }
       if (!state.audio.context) {
         state.audio.context = new AudioCtx();
         state.audio.master = state.audio.context.createGain();
-        state.audio.master.gain.value = 0.22;
+        state.audio.master.gain.value = 0.65;
         state.audio.master.connect(state.audio.context.destination);
       }
-      if (state.audio.context.state === "suspended") state.audio.context.resume().catch(() => {});
       return state.audio.context;
     }
-    function playTone({ frequency = 440, duration = 0.1, type = "sine", gain = 0.03, pan = 0, startDelay = 0, slideTo = null } = {}) {
+
+    function unlockAudioFromInteraction() {
+      if (!state.audio.available || !state.audio.enabled) return;
       const audio = ensureAudioContext();
-      if (!audio || !state.audio.master) return;
+      if (!audio) return;
+      if (audio.state === "running") {
+        state.audio.unlocked = true;
+        updateAudioButton();
+        return;
+      }
+      if (audio.state === "suspended" && !state.audio.unlockInFlight) {
+        state.audio.unlockInFlight = true;
+        audio.resume()
+          .then(() => {
+            state.audio.unlocked = audio.state === "running";
+          })
+          .catch(() => {
+            state.audio.unlocked = false;
+          })
+          .finally(() => {
+            state.audio.unlockInFlight = false;
+            updateAudioButton();
+          });
+      }
+    }
+
+    function playTone({ frequency = 440, duration = 0.1, type = "sine", gain = 0.03, pan = 0, startDelay = 0, slideTo = null } = {}) {
+      if (!state.audio.enabled) return;
+      const audio = ensureAudioContext();
+      if (!audio || !state.audio.master || !state.audio.unlocked || audio.state !== "running") return;
       const start = audio.currentTime + Math.max(0, startDelay);
       const osc = audio.createOscillator();
       const env = audio.createGain();
@@ -359,29 +418,29 @@
     }
     function playFootstep(name) {
       const pan = directionPan(name);
-      playTone({ frequency: 170, slideTo: 125, duration: 0.08, type: "triangle", gain: 0.03, pan });
-      playTone({ frequency: 260, slideTo: 200, duration: 0.05, type: "square", gain: 0.018, pan, startDelay: 0.03 });
+      playTone({ frequency: 170, slideTo: 125, duration: 0.08, type: "triangle", gain: 0.06, pan });
+      playTone({ frequency: 260, slideTo: 200, duration: 0.05, type: "square", gain: 0.035, pan, startDelay: 0.03 });
     }
-    function playWallThud() { playTone({ frequency: 130, slideTo: 80, duration: 0.12, type: "sawtooth", gain: 0.032 }); }
+    function playWallThud() { playTone({ frequency: 130, slideTo: 80, duration: 0.12, type: "sawtooth", gain: 0.07 }); }
     function playHazardWarning(delay = 0, pan = 0) {
-      playTone({ frequency: 760, duration: 0.06, type: "square", gain: 0.022, pan, startDelay: delay });
-      playTone({ frequency: 560, duration: 0.08, type: "square", gain: 0.022, pan, startDelay: delay + 0.07 });
+      playTone({ frequency: 760, duration: 0.06, type: "square", gain: 0.045, pan, startDelay: delay });
+      playTone({ frequency: 560, duration: 0.08, type: "square", gain: 0.045, pan, startDelay: delay + 0.07 });
     }
     function playGoalChime(delay = 0, pan = 0) {
-      playTone({ frequency: 520, duration: 0.12, type: "triangle", gain: 0.03, pan, startDelay: delay });
-      playTone({ frequency: 740, duration: 0.16, type: "triangle", gain: 0.028, pan, startDelay: delay + 0.08 });
-      playTone({ frequency: 980, duration: 0.2, type: "triangle", gain: 0.024, pan, startDelay: delay + 0.16 });
+      playTone({ frequency: 520, duration: 0.12, type: "triangle", gain: 0.06, pan, startDelay: delay });
+      playTone({ frequency: 740, duration: 0.16, type: "triangle", gain: 0.055, pan, startDelay: delay + 0.08 });
+      playTone({ frequency: 980, duration: 0.2, type: "triangle", gain: 0.05, pan, startDelay: delay + 0.16 });
     }
-    function playPingSend() { playTone({ frequency: 430, slideTo: 890, duration: 0.09, type: "sine", gain: 0.024 }); }
-    function playWallReflection(dist, dir) { playTone({ frequency: 180, slideTo: 140, duration: 0.07, type: "triangle", gain: 0.02, pan: reflectionPan(dir, dist), startDelay: 0.055 * dist }); }
+    function playPingSend() { playTone({ frequency: 430, slideTo: 890, duration: 0.09, type: "sine", gain: 0.05 }); }
+    function playWallReflection(dist, dir) { playTone({ frequency: 180, slideTo: 140, duration: 0.07, type: "triangle", gain: 0.045, pan: reflectionPan(dir, dist), startDelay: 0.055 * dist }); }
     function playHazardReflection(dist, dir) { playHazardWarning(0.055 * dist, reflectionPan(dir, dist)); }
     function playGoalReflection(dist, dir) { playGoalChime(0.055 * dist, reflectionPan(dir, dist)); }
 
     function emitBeaconPulse() {
-      if (state.mode !== "playing") return;
+      if (state.mode !== "playing" || !state.audio.unlocked || !state.audio.enabled) return;
       const mix = getBeaconMix();
-      playTone({ frequency: mix.frequency, slideTo: mix.frequency * 1.08, duration: 0.2, type: "sine", gain: mix.gain, pan: mix.pan });
-      playTone({ frequency: mix.frequency * 1.5, duration: 0.11, type: "triangle", gain: mix.gain * 0.52, pan: mix.pan, startDelay: 0.03 });
+      playTone({ frequency: mix.frequency, slideTo: mix.frequency * 1.08, duration: 0.2, type: "sine", gain: mix.gain * 1.8, pan: mix.pan });
+      playTone({ frequency: mix.frequency * 1.5, duration: 0.11, type: "triangle", gain: mix.gain, pan: mix.pan, startDelay: 0.03 });
     }
     function nextBeaconInterval() { return 0.28 + getBeaconMix().normalizedDistance * 0.74; }
 
@@ -549,10 +608,17 @@
         beacon: { next_pulse_sec: Number(Math.max(state.beaconTimer, 0).toFixed(2)), pan_hint: Number(beacon.pan.toFixed(3)), gain_hint: Number(beacon.gain.toFixed(3)) },
         ping_preview: computePingReflections().map((hit) => ({ direction: hit.direction, distance: hit.distance, cell: CELL_NAME[hit.cell] })),
         controls: { move: "Arrow keys", ping: "Space", repeat_instructions: "Enter", quit_to_menu: "Escape" },
+        audio: {
+          available: state.audio.available,
+          enabled: state.audio.enabled,
+          unlocked: state.audio.unlocked,
+          context_state: state.audio.context ? state.audio.context.state : "none",
+        },
       });
     };
 
     document.addEventListener("keydown", (event) => {
+      unlockAudioFromInteraction();
       if (isEditableTarget(event.target)) return;
       if (event.code in DIRECTIONS || event.code === "Space" || event.code === "Enter" || event.code === "Escape") event.preventDefault();
       if (event.code in DIRECTIONS) {
@@ -579,9 +645,25 @@
       if (event.code === "Escape" && state.mode !== "menu") goToMenu();
     });
 
-    startBtn.addEventListener("click", () => { ensureAudioContext(); startMaze({ speakIntro: false }); });
-    nextMazeBtn.addEventListener("click", () => { ensureAudioContext(); state.mazeIndex = (state.mazeIndex + 1) % MAZES.length; startMaze({ speakIntro: false }); });
-    repeatBtn.addEventListener("click", () => { ensureAudioContext(); repeatInstructions(); });
+    document.addEventListener("pointerdown", unlockAudioFromInteraction, { passive: true });
+
+    startBtn.addEventListener("click", () => { unlockAudioFromInteraction(); startMaze({ speakIntro: false }); });
+    nextMazeBtn.addEventListener("click", () => { unlockAudioFromInteraction(); state.mazeIndex = (state.mazeIndex + 1) % MAZES.length; startMaze({ speakIntro: false }); });
+    repeatBtn.addEventListener("click", () => { unlockAudioFromInteraction(); repeatInstructions(); });
+    audioBtn.addEventListener("click", () => {
+      if (!state.audio.available) {
+        announce("Audio is not supported in this browser.");
+        return;
+      }
+      if (!state.audio.enabled) {
+        setAudioEnabled(true);
+        unlockAudioFromInteraction();
+        announce(state.audio.unlocked ? "Audio enabled." : "Audio enabled. Press any key to unlock sound.");
+        return;
+      }
+      setAudioEnabled(false);
+      announce("Audio muted.");
+    });
 
     function loop(timestamp) {
       const dt = clamp((timestamp - lastFrame) / 1000, 0, 0.05);
@@ -595,6 +677,7 @@
 
     loadMaze();
     renderHud();
+    updateAudioButton();
     startMaze({ speakIntro: false });
     repeatInstructions();
     requestAnimationFrame(loop);
