@@ -86,7 +86,31 @@ async function main() {
     await page.reload({ waitUntil: "networkidle" });
 
     await page.fill("#gameSearchInput", "tetris");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "launcher_search_changed");
+      } catch {
+        return false;
+      }
+    });
+    await page.waitForFunction(() => {
+      const input = document.querySelector("#gameSearchInput");
+      return input && input.value === "tetris";
+    });
     await page.selectOption("#gameCoinFilter", "no-coins");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "launcher_coin_filter_changed");
+      } catch {
+        return false;
+      }
+    });
     await Promise.all([
       page.waitForURL("**/pricing.html"),
       page.click("#premiumTrackCta a"),
