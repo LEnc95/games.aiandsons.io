@@ -2023,3 +2023,35 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Skill-required Playwright loop via `$develop-web-game` client for `/orbitorchard`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/orbitorchard` in an environment that allows child-process and Chromium launch.
+
+- New request (2026-04-25): Implement Echo Labyrinth audio-first maze MVP.
+- Added `echolabyrinth/index.html` with:
+  - Keyboard-only controls (arrows move, Space ping, Enter repeat instructions, Esc menu).
+  - `aria-live` announcement region + repeat-instructions button and first-load spoken tutorial.
+  - 4 handcrafted 7x7 maze layouts with cell types EMPTY/WALL/HAZARD/GOAL.
+  - Web Audio synth cues (footstep, wall thud, hazard warning, ping send/reflection, goal chime).
+  - Directional/volume beacon pulse loop toward the goal.
+  - Ping raycast reflections by cardinal direction and distance.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Shared feedback mount: `mountGameFeedback({ gameSlug: "echolabyrinth", gameName: "Echo Labyrinth" })`.
+- Added game metadata entry in `src/meta/games.js`:
+  - slug `echolabyrinth`, url `/echolabyrinth`, scoreHint `moves`, earnsCoins `false`.
+- Ran required repo commands:
+  - `npm run feedback:sync-linear` (updated `linear/labels.md`, `linear/game-issues.csv`; live provisioning skipped due missing env).
+  - `npm run test:feedback` (pass: 31/31 tests).
+  - `npm run seo` (updated sitemap and rewrote SEO blocks across indexed pages, including new route).
+- Game QA:
+  - Ran develop-web-game Playwright client against `http://127.0.0.1:4173/echolabyrinth` with action bursts.
+  - Artifacts: `output/web-game/echolabyrinth-run1/shot-0..2.png`, `state-0..2.json`.
+  - Verified no console/page error artifact files emitted.
+  - Extra playwright check confirmed:
+    - wall collision status updates,
+    - ping reflection status includes goal/wall distances,
+    - Esc moves game to menu,
+    - Enter resumes from menu.
+- Follow-up adjustment:
+  - Startup sequence now initializes gameplay first, then announces full instructions so first-load status/live-region ends on tutorial copy while mode remains `playing`.
+- Re-ran develop-web-game client after the startup tweak:
+  - Artifacts: `output/web-game/echolabyrinth-run2/shot-0..2.png`, `state-0..2.json`.
+  - No Playwright error artifact files emitted.
+- Additional verification: `node --test tests/unit/games.test.mjs` passed (5/5).

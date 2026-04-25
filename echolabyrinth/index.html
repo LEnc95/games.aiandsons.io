@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Echo Labyrinth - Play on Cade's Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    :root {
+      --bg: #071224;
+      --panel: rgba(12, 26, 48, 0.94);
+      --border: rgba(142, 182, 236, 0.38);
+      --text: #eef6ff;
+      --muted: #bfd1ea;
+      --accent: #89e4bf;
+      --btn: #244a75;
+      --btn-border: #4b76a8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: radial-gradient(140% 100% at 10% 8%, #174069 0%, transparent 52%), linear-gradient(180deg, #071427, #040912);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+    }
+    .back-home {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 10px) + 8px);
+      left: calc(env(safe-area-inset-left, 10px) + 8px);
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.52);
+    }
+    .wrap {
+      min-height: 100dvh;
+      padding: 64px 12px 14px;
+      padding-top: max(calc(env(safe-area-inset-top, 8px) + 56px), 64px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+      display: flex;
+      justify-content: center;
+    }
+    .panel {
+      width: min(860px, 100%);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(18, 36, 62, 0.98), var(--panel));
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    h1 { margin: 0; font-size: clamp(24px, 4vw, 34px); }
+    .subtitle { margin: 0; color: var(--muted); line-height: 1.5; font-size: 15px; }
+    .instructions {
+      margin: 0;
+      border: 1px solid rgba(159, 197, 246, 0.34);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      min-height: 40px;
+      padding: 9px 13px;
+      border-radius: 10px;
+      border: 2px solid var(--btn-border);
+      background: var(--btn);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.primary { background: var(--accent); border-color: #b8f8db; color: #072317; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .stat {
+      border-radius: 10px;
+      border: 1px solid rgba(153, 194, 241, 0.35);
+      background: rgba(255, 255, 255, 0.04);
+      min-height: 52px;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      text-align: center;
+    }
+    .label { font-size: 11px; text-transform: uppercase; color: var(--muted); line-height: 1; }
+    .value { font-size: clamp(14px, 2.4vw, 18px); font-weight: 800; line-height: 1.15; }
+    .status { margin: 0; min-height: 1.3em; color: #d5e7ff; font-weight: 600; font-size: 15px; }
+    .map-shell { border: 1px solid rgba(144, 184, 234, 0.28); border-radius: 10px; background: #071527; padding: 10px; }
+    .map-title { margin: 0 0 6px 0; color: #bdd8f7; font-size: 12px; text-transform: uppercase; }
+    .map {
+      margin: 0;
+      white-space: pre;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: clamp(11px, 2.1vw, 13px);
+      line-height: 1.35;
+      color: #d4ebff;
+      user-select: none;
+    }
+    .legend { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    @media (max-width: 760px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+
+  <meta name="description" content="Navigate by sound alone using footsteps, wall thuds, and beacon echoes to find the maze exit.">
+  <meta property="og:title" content="Echo Labyrinth - Play on Cade's Games">
+  <meta property="og:description" content="Navigate by sound alone using footsteps, wall thuds, and beacon echoes to find the maze exit.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/echolabyrinth">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="Cade's Games">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Echo Labyrinth - Play on Cade's Games">
+  <meta name="twitter:description" content="Navigate by sound alone using footsteps, wall thuds, and beacon echoes to find the maze exit.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/echolabyrinth">
+</head>
+<body>
+  <a href="/" class="back-home" aria-label="Back to Home">&larr; Back</a>
+  <main class="wrap">
+    <section class="panel" aria-label="Echo Labyrinth game panel">
+      <header>
+        <h1>Echo Labyrinth</h1>
+        <p class="subtitle">Audio-only maze navigation using footsteps, wall thuds, ping echoes, and a directional beacon.</p>
+      </header>
+
+      <section class="instructions">
+        <div><strong>Controls:</strong> Arrow keys move, Space pings, Enter repeats instructions, Esc returns to menu.</div>
+        <div><strong>Audio:</strong> Footstep = move, thud = wall, warning = hazard, bright chime = exit.</div>
+        <div><strong>Goal:</strong> Track beacon pan/volume cues and reach the goal in the fewest moves.</div>
+      </section>
+
+      <div class="actions">
+        <button id="startBtn" class="btn primary" type="button">Start Maze</button>
+        <button id="nextMazeBtn" class="btn" type="button">Next Maze</button>
+        <button id="repeatBtn" class="btn" type="button">Repeat Instructions</button>
+      </div>
+
+      <section class="stats" aria-live="polite">
+        <div class="stat"><span class="label">Mode</span><span id="modeValue" class="value">Menu</span></div>
+        <div class="stat"><span class="label">Maze</span><span id="mazeValue" class="value">-</span></div>
+        <div class="stat"><span class="label">Position</span><span id="positionValue" class="value">-</span></div>
+        <div class="stat"><span class="label">Moves</span><span id="movesValue" class="value">0</span></div>
+        <div class="stat"><span class="label">Time</span><span id="timeValue" class="value">0:00</span></div>
+      </section>
+
+      <p id="statusLine" class="status">Press Start Maze to begin.</p>
+      <div id="liveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+      <section class="map-shell" aria-hidden="true">
+        <p class="map-title">Optional Visual Aid</p>
+        <pre id="miniMap" class="map"></pre>
+      </section>
+      <p class="legend">Legend: <strong>P</strong>=player, <strong>G</strong>=goal, <strong>!</strong>=hazard, <strong>#</strong>=wall, <strong>.</strong>=open.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { rememberRecent } from "../src/core/state.js";
+    rememberRecent("echolabyrinth");
+
+    const GRID_SIZE = 7;
+    const PING_RANGE = 4;
+    const CellType = Object.freeze({ EMPTY: 0, WALL: 1, HAZARD: 2, GOAL: 3 });
+    const CELL_NAME = Object.freeze({ [CellType.EMPTY]: "empty", [CellType.WALL]: "wall", [CellType.HAZARD]: "hazard", [CellType.GOAL]: "goal" });
+    const DIRECTIONS = Object.freeze({
+      ArrowUp: { dx: 0, dy: -1, name: "up" },
+      ArrowDown: { dx: 0, dy: 1, name: "down" },
+      ArrowLeft: { dx: -1, dy: 0, name: "left" },
+      ArrowRight: { dx: 1, dy: 0, name: "right" },
+    });
+    const PING_DIRECTIONS = [
+      { name: "up", dx: 0, dy: -1 },
+      { name: "right", dx: 1, dy: 0 },
+      { name: "down", dx: 0, dy: 1 },
+      { name: "left", dx: -1, dy: 0 },
+    ];
+    const MAZE_BLUEPRINTS = [
+      { id: "A1", rows: ["#######", "#S...G#", "#.###.#", "#...#.#", "###.#.#", "#..H..#", "#######"] },
+      { id: "B2", rows: ["#######", "#S#...#", "#.#.#G#", "#.#.#.#", "#...#.#", "#H###.#", "#######"] },
+      { id: "C3", rows: ["#######", "#S..#.#", "###.#.#", "#...#.#", "#.###.#", "#H..G.#", "#######"] },
+      { id: "D4", rows: ["#######", "#S#...#", "#.#.#.#", "#.#.#G#", "#...#.#", "#.H...#", "#######"] },
+    ];
+
+    const modeValueEl = document.getElementById("modeValue");
+    const mazeValueEl = document.getElementById("mazeValue");
+    const positionValueEl = document.getElementById("positionValue");
+    const movesValueEl = document.getElementById("movesValue");
+    const timeValueEl = document.getElementById("timeValue");
+    const statusLineEl = document.getElementById("statusLine");
+    const liveRegionEl = document.getElementById("liveRegion");
+    const miniMapEl = document.getElementById("miniMap");
+    const startBtn = document.getElementById("startBtn");
+    const nextMazeBtn = document.getElementById("nextMazeBtn");
+    const repeatBtn = document.getElementById("repeatBtn");
+
+    function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
+    function formatTime(milliseconds) {
+      const total = Math.max(0, Math.floor(milliseconds / 1000));
+      return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+    }
+    function parseMaze(definition) {
+      const grid = [];
+      let start = null;
+      let goal = null;
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        const row = definition.rows[y];
+        const out = [];
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          const token = row[x];
+          if (token === "#") out.push(CellType.WALL);
+          else if (token === ".") out.push(CellType.EMPTY);
+          else if (token === "H") out.push(CellType.HAZARD);
+          else if (token === "G") { out.push(CellType.GOAL); goal = { x, y }; }
+          else if (token === "S") { out.push(CellType.EMPTY); start = { x, y }; }
+          else throw new Error(`Unsupported token ${token}`);
+        }
+        grid.push(out);
+      }
+      if (!start || !goal) throw new Error(`Maze ${definition.id} missing start/goal`);
+      return { id: definition.id, grid, start, goal };
+    }
+    const MAZES = MAZE_BLUEPRINTS.map(parseMaze);
+
+    const state = {
+      mode: "menu",
+      mazeIndex: 0,
+      mazeId: MAZES[0].id,
+      mazeGrid: MAZES[0].grid,
+      playerX: MAZES[0].start.x,
+      playerY: MAZES[0].start.y,
+      goalX: MAZES[0].goal.x,
+      goalY: MAZES[0].goal.y,
+      moveCount: 0,
+      startTime: performance.now(),
+      elapsedMs: 0,
+      statusText: "Press Start Maze to begin.",
+      beaconTimer: 0,
+      liveTimer: 0,
+      steppingExternally: false,
+      audio: { context: null, master: null },
+    };
+    let lastFrame = performance.now();
+
+    function getCurrentMaze() { return MAZES[state.mazeIndex]; }
+    function getCell(x, y) { return x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE ? CellType.WALL : state.mazeGrid[y][x]; }
+    function isEditableTarget(target) {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
+    }
+    function getGoalVector() {
+      const dx = state.goalX - state.playerX;
+      const dy = state.goalY - state.playerY;
+      return { dx, dy, euclidean: Math.hypot(dx, dy), manhattan: Math.abs(dx) + Math.abs(dy) };
+    }
+    function getBeaconMix() {
+      const vector = getGoalVector();
+      const maxDist = Math.hypot(GRID_SIZE - 1, GRID_SIZE - 1);
+      const norm = clamp(vector.euclidean / maxDist, 0, 1);
+      return {
+        pan: clamp(vector.dx / (GRID_SIZE - 1), -1, 1),
+        gain: 0.012 + (1 - norm) * 0.05,
+        frequency: 220 + (1 - norm) * 300,
+        normalizedDistance: norm,
+      };
+    }
+    function speakText(text) {
+      if (!("speechSynthesis" in window) || !text) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1;
+        utter.pitch = 1;
+        window.speechSynthesis.speak(utter);
+      } catch {}
+    }
+    function announce(text, { speak = false } = {}) {
+      const message = String(text || "").trim();
+      if (!message) return;
+      state.statusText = message;
+      statusLineEl.textContent = message;
+      liveRegionEl.textContent = "";
+      window.clearTimeout(state.liveTimer);
+      state.liveTimer = window.setTimeout(() => { liveRegionEl.textContent = message; }, 20);
+      if (speak) speakText(message);
+    }
+
+    function ensureAudioContext() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!state.audio.context) {
+        state.audio.context = new AudioCtx();
+        state.audio.master = state.audio.context.createGain();
+        state.audio.master.gain.value = 0.22;
+        state.audio.master.connect(state.audio.context.destination);
+      }
+      if (state.audio.context.state === "suspended") state.audio.context.resume().catch(() => {});
+      return state.audio.context;
+    }
+    function playTone({ frequency = 440, duration = 0.1, type = "sine", gain = 0.03, pan = 0, startDelay = 0, slideTo = null } = {}) {
+      const audio = ensureAudioContext();
+      if (!audio || !state.audio.master) return;
+      const start = audio.currentTime + Math.max(0, startDelay);
+      const osc = audio.createOscillator();
+      const env = audio.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(Math.max(40, frequency), start);
+      if (typeof slideTo === "number") osc.frequency.exponentialRampToValueAtTime(Math.max(40, slideTo), start + duration);
+      env.gain.setValueAtTime(0.0001, start);
+      env.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), start + 0.012);
+      env.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      if (typeof audio.createStereoPanner === "function") {
+        const panner = audio.createStereoPanner();
+        panner.pan.setValueAtTime(clamp(pan, -1, 1), start);
+        osc.connect(env); env.connect(panner); panner.connect(state.audio.master);
+      } else {
+        osc.connect(env); env.connect(state.audio.master);
+      }
+      osc.start(start);
+      osc.stop(start + duration + 0.03);
+    }
+    function directionPan(name) { return name === "left" ? -0.42 : name === "right" ? 0.42 : 0; }
+    function reflectionPan(name, dist) {
+      const amount = 0.32 + dist * 0.16;
+      return name === "left" ? clamp(-amount, -1, 0) : name === "right" ? clamp(amount, 0, 1) : 0;
+    }
+    function playFootstep(name) {
+      const pan = directionPan(name);
+      playTone({ frequency: 170, slideTo: 125, duration: 0.08, type: "triangle", gain: 0.03, pan });
+      playTone({ frequency: 260, slideTo: 200, duration: 0.05, type: "square", gain: 0.018, pan, startDelay: 0.03 });
+    }
+    function playWallThud() { playTone({ frequency: 130, slideTo: 80, duration: 0.12, type: "sawtooth", gain: 0.032 }); }
+    function playHazardWarning(delay = 0, pan = 0) {
+      playTone({ frequency: 760, duration: 0.06, type: "square", gain: 0.022, pan, startDelay: delay });
+      playTone({ frequency: 560, duration: 0.08, type: "square", gain: 0.022, pan, startDelay: delay + 0.07 });
+    }
+    function playGoalChime(delay = 0, pan = 0) {
+      playTone({ frequency: 520, duration: 0.12, type: "triangle", gain: 0.03, pan, startDelay: delay });
+      playTone({ frequency: 740, duration: 0.16, type: "triangle", gain: 0.028, pan, startDelay: delay + 0.08 });
+      playTone({ frequency: 980, duration: 0.2, type: "triangle", gain: 0.024, pan, startDelay: delay + 0.16 });
+    }
+    function playPingSend() { playTone({ frequency: 430, slideTo: 890, duration: 0.09, type: "sine", gain: 0.024 }); }
+    function playWallReflection(dist, dir) { playTone({ frequency: 180, slideTo: 140, duration: 0.07, type: "triangle", gain: 0.02, pan: reflectionPan(dir, dist), startDelay: 0.055 * dist }); }
+    function playHazardReflection(dist, dir) { playHazardWarning(0.055 * dist, reflectionPan(dir, dist)); }
+    function playGoalReflection(dist, dir) { playGoalChime(0.055 * dist, reflectionPan(dir, dist)); }
+
+    function emitBeaconPulse() {
+      if (state.mode !== "playing") return;
+      const mix = getBeaconMix();
+      playTone({ frequency: mix.frequency, slideTo: mix.frequency * 1.08, duration: 0.2, type: "sine", gain: mix.gain, pan: mix.pan });
+      playTone({ frequency: mix.frequency * 1.5, duration: 0.11, type: "triangle", gain: mix.gain * 0.52, pan: mix.pan, startDelay: 0.03 });
+    }
+    function nextBeaconInterval() { return 0.28 + getBeaconMix().normalizedDistance * 0.74; }
+
+    function buildMiniMap() {
+      const lines = [];
+      for (let y = 0; y < GRID_SIZE; y += 1) {
+        const row = [];
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          if (state.mode !== "menu" && x === state.playerX && y === state.playerY) row.push("P");
+          else {
+            const cell = getCell(x, y);
+            row.push(cell === CellType.WALL ? "#" : cell === CellType.HAZARD ? "!" : cell === CellType.GOAL ? "G" : ".");
+          }
+        }
+        lines.push(row.join(" "));
+      }
+      return lines.join("\n");
+    }
+    function renderHud() {
+      modeValueEl.textContent = state.mode === "playing" ? "Playing" : state.mode === "won" ? "Won" : "Menu";
+      mazeValueEl.textContent = `${state.mazeId} (${state.mazeIndex + 1}/${MAZES.length})`;
+      positionValueEl.textContent = state.mode === "menu" ? "-" : `r${state.playerY + 1}, c${state.playerX + 1}`;
+      movesValueEl.textContent = String(state.moveCount);
+      timeValueEl.textContent = formatTime(state.elapsedMs);
+      miniMapEl.textContent = buildMiniMap();
+      startBtn.textContent = state.mode === "playing" ? "Restart Maze" : "Start Maze";
+      statusLineEl.textContent = state.statusText;
+    }
+
+    function loadMaze() {
+      const maze = getCurrentMaze();
+      state.mazeId = maze.id;
+      state.mazeGrid = maze.grid;
+      state.playerX = maze.start.x;
+      state.playerY = maze.start.y;
+      state.goalX = maze.goal.x;
+      state.goalY = maze.goal.y;
+      state.moveCount = 0;
+      state.startTime = performance.now();
+      state.elapsedMs = 0;
+      state.beaconTimer = 0.05;
+    }
+    function startMaze({ speakIntro = false } = {}) {
+      loadMaze();
+      state.mode = "playing";
+      announce(`Maze ${state.mazeId} started. Row ${state.playerY + 1}, column ${state.playerX + 1}.`);
+      if (speakIntro) repeatInstructions();
+      renderHud();
+    }
+    function goToMenu() {
+      state.mode = "menu";
+      announce("Returned to menu. Press Enter or Start Maze to begin.");
+      renderHud();
+    }
+    function repeatInstructions() {
+      announce("You are in a maze. Use arrow keys to move. Press space to ping. Press Enter to repeat instructions. Press Escape to quit to menu. Follow the beacon to reach the exit.", { speak: true });
+      renderHud();
+    }
+    function describeDistance(dist) { return `${dist} ${dist === 1 ? "step" : "steps"}`; }
+    function computePingReflections(range = PING_RANGE) {
+      const findings = [];
+      for (const dir of PING_DIRECTIONS) {
+        for (let dist = 1; dist <= range; dist += 1) {
+          const cell = getCell(state.playerX + dir.dx * dist, state.playerY + dir.dy * dist);
+          if (cell === CellType.EMPTY) continue;
+          if (cell === CellType.WALL || cell === CellType.HAZARD || cell === CellType.GOAL) {
+            findings.push({ direction: dir.name, distance: dist, cell });
+            break;
+          }
+        }
+      }
+      return findings;
+    }
+    function performPing() {
+      if (state.mode !== "playing") return;
+      playPingSend();
+      const reflections = computePingReflections();
+      if (!reflections.length) {
+        announce("Ping: open space nearby.");
+        renderHud();
+        return;
+      }
+      const phrases = [];
+      for (const hit of reflections) {
+        if (hit.cell === CellType.WALL) playWallReflection(hit.distance, hit.direction);
+        else if (hit.cell === CellType.HAZARD) playHazardReflection(hit.distance, hit.direction);
+        else if (hit.cell === CellType.GOAL) playGoalReflection(hit.distance, hit.direction);
+        phrases.push(`${CELL_NAME[hit.cell]} ${describeDistance(hit.distance)} ${hit.direction}`);
+      }
+      announce(`Ping: ${phrases.join(", ")}.`);
+      renderHud();
+    }
+    function completeMaze() {
+      state.mode = "won";
+      playGoalChime();
+      announce(`Exit reached. ${state.moveCount} moves in ${formatTime(state.elapsedMs)}. Press Escape for menu, or Next Maze to continue.`, { speak: true });
+      renderHud();
+    }
+    function movePlayer(name, dx, dy) {
+      if (state.mode !== "playing") return;
+      const nx = state.playerX + dx;
+      const ny = state.playerY + dy;
+      const cell = getCell(nx, ny);
+      if (cell === CellType.WALL) {
+        playWallThud();
+        announce(`Wall ahead ${name}.`);
+        renderHud();
+        return;
+      }
+      state.playerX = nx;
+      state.playerY = ny;
+      state.moveCount += 1;
+      playFootstep(name);
+      if (cell === CellType.HAZARD) {
+        playHazardWarning(0, directionPan(name) * 0.65);
+        announce(`Step ${name}. Hazard underfoot. Row ${ny + 1}, column ${nx + 1}.`);
+      } else if (cell === CellType.GOAL) {
+        completeMaze();
+      } else {
+        announce(`Step ${name}. Row ${ny + 1}, column ${nx + 1}.`);
+      }
+      state.beaconTimer = Math.min(state.beaconTimer, 0.12);
+      renderHud();
+    }
+    function update(dt) {
+      if (state.mode === "playing") {
+        state.elapsedMs += dt * 1000;
+        state.beaconTimer -= dt;
+        if (state.beaconTimer <= 0) {
+          emitBeaconPulse();
+          state.beaconTimer = nextBeaconInterval();
+        }
+      }
+    }
+    function stepSimulation(milliseconds) {
+      let left = clamp(Number(milliseconds) || 0, 0, 5000) / 1000;
+      while (left > 0) {
+        const dt = Math.min(1 / 120, left);
+        update(dt);
+        left -= dt;
+      }
+      renderHud();
+    }
+
+    window.advanceTime = (milliseconds) => {
+      state.steppingExternally = true;
+      stepSimulation(milliseconds);
+      state.steppingExternally = false;
+    };
+    window.render_game_to_text = () => {
+      const vector = getGoalVector();
+      const beacon = getBeaconMix();
+      return JSON.stringify({
+        coordinate_system: { origin: "top-left", x_axis: "right", y_axis: "down", units: "tile", grid: { cols: GRID_SIZE, rows: GRID_SIZE } },
+        mode: state.mode,
+        maze_id: state.mazeId,
+        maze_index: state.mazeIndex,
+        player: { x: state.playerX, y: state.playerY, row: state.playerY + 1, column: state.playerX + 1 },
+        goal: { x: state.goalX, y: state.goalY, row: state.goalY + 1, column: state.goalX + 1 },
+        goal_vector: { dx: vector.dx, dy: vector.dy, manhattan: vector.manhattan, euclidean: Number(vector.euclidean.toFixed(3)) },
+        move_count: state.moveCount,
+        elapsed_ms: Math.round(state.elapsedMs),
+        elapsed_sec: Number((state.elapsedMs / 1000).toFixed(2)),
+        status: state.statusText,
+        beacon: { next_pulse_sec: Number(Math.max(state.beaconTimer, 0).toFixed(2)), pan_hint: Number(beacon.pan.toFixed(3)), gain_hint: Number(beacon.gain.toFixed(3)) },
+        ping_preview: computePingReflections().map((hit) => ({ direction: hit.direction, distance: hit.distance, cell: CELL_NAME[hit.cell] })),
+        controls: { move: "Arrow keys", ping: "Space", repeat_instructions: "Enter", quit_to_menu: "Escape" },
+      });
+    };
+
+    document.addEventListener("keydown", (event) => {
+      if (isEditableTarget(event.target)) return;
+      if (event.code in DIRECTIONS || event.code === "Space" || event.code === "Enter" || event.code === "Escape") event.preventDefault();
+      if (event.code in DIRECTIONS) {
+        if (state.mode === "playing") {
+          const dir = DIRECTIONS[event.code];
+          ensureAudioContext();
+          movePlayer(dir.name, dir.dx, dir.dy);
+        }
+        return;
+      }
+      if (event.code === "Space") {
+        if (state.mode === "playing") {
+          ensureAudioContext();
+          performPing();
+        }
+        return;
+      }
+      if (event.code === "Enter") {
+        ensureAudioContext();
+        if (state.mode === "menu") startMaze({ speakIntro: true });
+        else repeatInstructions();
+        return;
+      }
+      if (event.code === "Escape" && state.mode !== "menu") goToMenu();
+    });
+
+    startBtn.addEventListener("click", () => { ensureAudioContext(); startMaze({ speakIntro: false }); });
+    nextMazeBtn.addEventListener("click", () => { ensureAudioContext(); state.mazeIndex = (state.mazeIndex + 1) % MAZES.length; startMaze({ speakIntro: false }); });
+    repeatBtn.addEventListener("click", () => { ensureAudioContext(); repeatInstructions(); });
+
+    function loop(timestamp) {
+      const dt = clamp((timestamp - lastFrame) / 1000, 0, 0.05);
+      lastFrame = timestamp;
+      if (!state.steppingExternally) {
+        update(dt);
+        renderHud();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    loadMaze();
+    renderHud();
+    startMaze({ speakIntro: false });
+    repeatInstructions();
+    requestAnimationFrame(loop);
+  </script>
+
+  <script type="module">
+    import { mountGameFeedback } from "../src/feedback/embed.js";
+    mountGameFeedback({ gameSlug: "echolabyrinth", gameName: "Echo Labyrinth" });
+  </script>
+</body>
+</html>

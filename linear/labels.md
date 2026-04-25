@@ -45,6 +45,7 @@
 - game/asteroids
 - game/bomberman
 - game/treasuremaze
+- game/echolabyrinth
 - game/boxquest
 - game/waterballoon
 - game/whackamole
