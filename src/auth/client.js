@@ -108,6 +108,9 @@ function describeSignInError(error) {
   if (code === "auth/network-request-failed") {
     return "Google sign-in could not reach Firebase. Check your connection and try again.";
   }
+  if (code === "auth/internal-error") {
+    return "Google sign-in is being blocked by browser security settings or site policy. Refresh and try again.";
+  }
   return String(error?.message || error || "Google sign-in failed.");
 }
 
