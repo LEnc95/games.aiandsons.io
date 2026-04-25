@@ -1,4 +1,22 @@
 const FIREBASE_WEB_SDK_VERSION = "12.11.0";
+const FIREBASE_WEB_SDK_BASE_PATH = `/src/vendor/firebase/${FIREBASE_WEB_SDK_VERSION}`;
+const FIREBASE_WEB_SDK_SOURCES = [
+  {
+    name: "self-hosted",
+    appUrl: `${FIREBASE_WEB_SDK_BASE_PATH}/firebase-app.js`,
+    authUrl: `${FIREBASE_WEB_SDK_BASE_PATH}/firebase-auth.js`,
+  },
+  {
+    name: "gstatic",
+    appUrl: `https://www.gstatic.com/firebasejs/${FIREBASE_WEB_SDK_VERSION}/firebase-app.js`,
+    authUrl: `https://www.gstatic.com/firebasejs/${FIREBASE_WEB_SDK_VERSION}/firebase-auth.js`,
+  },
+  {
+    name: "esm.sh",
+    appUrl: `https://esm.sh/firebase@${FIREBASE_WEB_SDK_VERSION}/app`,
+    authUrl: `https://esm.sh/firebase@${FIREBASE_WEB_SDK_VERSION}/auth`,
+  },
+];
 
 let firebaseConfigPromise = null;
 let firebaseSdkPromise = null;
@@ -126,13 +144,37 @@ export async function getFirebaseWebConfig() {
 
 async function loadFirebaseSdk() {
   if (!firebaseSdkPromise) {
-    firebaseSdkPromise = Promise.all([
-      import(`https://www.gstatic.com/firebasejs/${FIREBASE_WEB_SDK_VERSION}/firebase-app.js`),
-      import(`https://www.gstatic.com/firebasejs/${FIREBASE_WEB_SDK_VERSION}/firebase-auth.js`),
-    ]).then(([appSdk, authSdk]) => ({
-      ...appSdk,
-      ...authSdk,
-    }));
+    firebaseSdkPromise = (async () => {
+      const sourceErrors = [];
+
+      for (const source of FIREBASE_WEB_SDK_SOURCES) {
+        try {
+          const [appSdk, authSdk] = await Promise.all([
+            import(source.appUrl),
+            import(source.authUrl),
+          ]);
+          return {
+            ...appSdk,
+            ...authSdk,
+          };
+        } catch (error) {
+          sourceErrors.push({
+            name: source.name,
+            message: String(error?.message || error || "unknown error"),
+          });
+        }
+      }
+
+      const details = sourceErrors
+        .map((entry) => `${entry.name}: ${entry.message}`)
+        .join(" | ");
+      throw new Error(`Google sign-in could not load Firebase SDK modules. ${details}`);
+    })();
+
+    firebaseSdkPromise.catch(() => {
+      // Let users retry sign-in if an earlier SDK import attempt failed.
+      firebaseSdkPromise = null;
+    });
   }
   return firebaseSdkPromise;
 }
@@ -156,6 +198,11 @@ async function ensureFirebaseAuth() {
         auth,
       };
     })();
+
+    firebaseAuthPromise.catch(() => {
+      // Allow retries after transient initialization failures.
+      firebaseAuthPromise = null;
+    });
   }
   return firebaseAuthPromise;
 }
