@@ -353,6 +353,11 @@
   </main>
 
   <script type="module">
+    import { trackKpiEvent } from '../src/core/metrics.js';
+
+    const GAME_SLUG = 'beatrail';
+    const GAME_GENRE = 'rhythm';
+
     const SONG_CONFIG = {
       id: 'starter-loop',
       name: 'Starter Loop',
@@ -453,10 +458,57 @@
       simNow: 0,
       lastNow: 0,
     };
+    const analyticsRun = { id: 0, active: false, completed: false };
 
     let audioContext = null;
     let rafId = 0;
     let controlledStep = false;
+
+    function beginAnalyticsRun(source = 'start') {
+      analyticsRun.id += 1;
+      analyticsRun.active = true;
+      analyticsRun.completed = false;
+      trackKpiEvent('audio_game_start', {
+        game: GAME_SLUG,
+        genre: GAME_GENRE,
+        runId: analyticsRun.id,
+        source,
+        difficulty: state.selectedDifficulty,
+        practiceMode: state.practiceMode,
+      });
+    }
+
+    function completeAnalyticsRun() {
+      if (!analyticsRun.active || analyticsRun.completed) return;
+      analyticsRun.active = false;
+      analyticsRun.completed = true;
+      trackKpiEvent('audio_game_complete', {
+        game: GAME_SLUG,
+        genre: GAME_GENRE,
+        runId: analyticsRun.id,
+        difficulty: state.selectedDifficulty,
+        practiceMode: state.practiceMode,
+        hits: state.hits,
+        misses: state.misses,
+        accuracy: computeAccuracyPercent(state.hits, state.misses),
+      });
+    }
+
+    function failAnalyticsRun(reason) {
+      if (!analyticsRun.active || analyticsRun.completed) return;
+      analyticsRun.active = false;
+      trackKpiEvent('audio_game_fail', {
+        game: GAME_SLUG,
+        genre: GAME_GENRE,
+        runId: analyticsRun.id,
+        reason,
+        mode: state.mode,
+        difficulty: state.selectedDifficulty,
+        practiceMode: state.practiceMode,
+        hits: state.hits,
+        misses: state.misses,
+      });
+    }
 
     function computeAccuracyPercent(hits, misses) {
       const total = hits + misses;
@@ -832,6 +884,7 @@
     function finishSong() {
       if (state.mode === 'complete') return;
       state.mode = 'complete';
+      completeAnalyticsRun();
       pauseBtn.textContent = 'Pause';
       const accuracy = computeAccuracyPercent(state.hits, state.misses);
       state.summaryLine = `Song complete. Hits: ${state.hits}. Misses: ${state.misses}. Accuracy: ${accuracy} percent.`;
@@ -845,6 +898,7 @@
 
     async function startSongRun({ announceStart = true } = {}) {
       if (state.loadingChart) return;
+      failAnalyticsRun('restart');
 
       try {
         setLoading(true);
@@ -882,6 +936,7 @@
         state.nextCountdownAnnouncement = 0;
         state.lanePulse = [0, 0, 0];
         state.lastNow = getClockNow();
+        beginAnalyticsRun(announceStart ? 'start' : 'restart');
 
         updateInstructionLine();
         if (announceStart) {
@@ -1339,6 +1394,7 @@
     rafId = requestAnimationFrame(frameLoop);
 
     window.addEventListener('beforeunload', () => {
+      failAnalyticsRun('unload');
       cancelAnimationFrame(rafId);
     });
   </script>

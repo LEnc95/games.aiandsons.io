@@ -73,6 +73,7 @@
 - game/beatforge
 - game/beatrail
 - game/bytebloom
+- game/branchingaudio
 - game/gemswap
 - game/hexharvest
 - game/wordweave

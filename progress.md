@@ -2102,3 +2102,60 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
     - `output/web-game/beatrail-fullpage-mobile.png`
   - Re-ran skill Playwright loop after the layout fix: `output/web-game/beatrail-run3` (no error artifacts).
   - Re-ran `npm run test:feedback-smoke:raw` (pass).
+- New request (2026-04-25): Build `branchingaudio` Branching Audio Adventure MVP (JSON-driven interactive fiction shell with narrated choices).
+- Implemented new game page: `branchingaudio/index.html`.
+  - JSON story graph with 15 scenes total (10 branching decision scenes + 5 endings) themed around "AI agent helping a client".
+  - Semantic scene UI (`h1`, paragraph narrative, `ul > button` choices), number-key choice activation, Arrow/Enter navigation, restart/quit flow for endings.
+  - Accessibility: scene updates announced in `aria-live` region with title + choice count; focusable labeled choice buttons.
+  - Audio: browser Speech Synthesis narration reads scene title/text and explicit "Press X for ..." choices; repeat narration controls included.
+  - Deterministic hooks for automation: `window.render_game_to_text()` and `window.advanceTime(ms)`.
+  - Added `rememberRecent("branchingaudio")` and mounted shared feedback widget.
+- Integrated routing + metadata:
+  - Added game entry to `src/meta/games.js`.
+  - Added rewrite routes and cache-header entry in `vercel.json` for `/branchingaudio` and `/branchingaudio/`.
+- Synced feedback baseline artifacts:
+  - Ran `npm run feedback:sync-linear:files` and updated `linear/labels.md` + `linear/game-issues.csv`.
+- Validation runs:
+  - Playwright skill client run: `output/web-game/branchingaudio-run1` (full path to ending).
+  - Playwright skill client run: `output/web-game/branchingaudio-run2` (intermediate choice scenes + ending).
+  - Reviewed screenshots (`shot-0.png`, `shot-2.png`) and state snapshots; no `errors-*.json` emitted.
+  - Ran `node --test tests/feedback-coverage.integration.test.mjs` after seed sync: all tests pass.
+- Follow-up TODO:
+  - Optional: add a dedicated raw smoke script for `/branchingaudio` under `scripts/qa` if this game should join automated launch-readiness bundles.
+
+## 2026-04-25 Audio-only accessibility integration run
+- Added launcher metadata tags/category in `src/meta/games.js` for:
+  - `echolabyrinth`
+  - `beatrail`
+  - `branchingaudio`
+  - Category: `audio-only-blind-accessible`
+  - Explicit tags: `100% playable without sight`, `Keyboard and screen reader friendly`
+- Updated `index.html` launcher UX:
+  - Added category filter select: `All categories` + `Audio-Only & Blind Accessible`
+  - Extended game filtering logic to include category filter
+  - Added card-level accessibility tag chips plus category chip on matching games
+  - Added analytics event `launcher_category_filter_changed`
+  - Added topbar/footer links to new help page
+- Added new help page `audio-accessibility.html` with screen-reader setup recommendations and keybindings for Echo Labyrinth, Beat Rail, and Branching Audio Adventure.
+- Added lightweight in-game analytics instrumentation:
+  - `echolabyrinth/index.html`: emits `audio_game_start`, `audio_game_complete`, `audio_game_fail`
+  - `beatrail/index.html`: emits `audio_game_start`, `audio_game_complete`, `audio_game_fail`
+  - `branchingaudio/index.html`: emits `audio_game_start`, `audio_game_complete`, `audio_game_fail`
+- Next: run validation commands/tests and spot-check via Playwright where possible.
+- Validation completed:
+  - `npm run test:feedback` passed (31/31 tests).
+  - `npm run test:classroom-smoke` passed.
+  - Ran skill Playwright loop for updated games using local static server and action payloads:
+    - `output/web-game/echolabyrinth-a11y-integration`
+    - `output/web-game/beatrail-a11y-integration`
+    - `output/web-game/branchingaudio-a11y-integration`
+  - Reviewed `shot-0.png` and `state-0.json` artifacts for each run; no `errors-*.json` artifacts emitted.
+- Note: repository currently has pre-existing unrelated working tree changes outside this task (`linear/*`, `vercel.json`) and `branchingaudio/` appears as untracked in git status in this workspace.
+- Final content adjustment: updated launcher metadata tags to exact requested phrase `100% playable without sight; keyboard and screen reader friendly` for all three audio-only titles.
+- Re-ran `npm run test:feedback` after that adjustment (pass, 31/31).
+- Added launcher verification for the new category filter with direct Playwright script:
+  - Selected `audio-only-blind-accessible` in `#gameCategoryFilter`.
+  - Confirmed filtered card titles are exactly `Echo Labyrinth`, `Beat Rail`, and `Branching Audio Adventure`.
+  - Confirmed explicit tag phrase appears on all 3 cards.
+  - Artifact: `output/web-game/home-audio-category-filtered.png`.
+- Ran `npm run test:feedback-smoke:raw` with a local server for shell-change coverage (pass).

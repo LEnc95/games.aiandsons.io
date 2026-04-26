@@ -195,7 +195,11 @@
 
   <script type="module">
     import { rememberRecent } from "../src/core/state.js";
+    import { trackKpiEvent } from "../src/core/metrics.js";
     rememberRecent("echolabyrinth");
+
+    const GAME_SLUG = "echolabyrinth";
+    const GAME_GENRE = "audio-navigation";
 
     const GRID_SIZE = 7;
     const PING_RANGE = 4;
@@ -286,7 +290,45 @@
         unlockInFlight: false,
       },
     };
+    const analyticsRun = { id: 0, active: false, completed: false };
     let lastFrame = performance.now();
+
+    function beginAnalyticsRun(source = "start") {
+      analyticsRun.id += 1;
+      analyticsRun.active = true;
+      analyticsRun.completed = false;
+      trackKpiEvent("audio_game_start", {
+        game: GAME_SLUG,
+        genre: GAME_GENRE,
+        runId: analyticsRun.id,
+        source,
+      });
+    }
+    function completeAnalyticsRun() {
+      if (!analyticsRun.active || analyticsRun.completed) return;
+      analyticsRun.completed = true;
+      analyticsRun.active = false;
+      trackKpiEvent("audio_game_complete", {
+        game: GAME_SLUG,
+        genre: GAME_GENRE,
+        runId: analyticsRun.id,
+        moves: state.moveCount,
+        elapsedSeconds: Number((state.elapsedMs / 1000).toFixed(2)),
+      });
+    }
+    function failAnalyticsRun(reason) {
+      if (!analyticsRun.active || analyticsRun.completed) return;
+      analyticsRun.active = false;
+      trackKpiEvent("audio_game_fail", {
+        game: GAME_SLUG,
+        genre: GAME_GENRE,
+        runId: analyticsRun.id,
+        reason,
+        mode: state.mode,
+        moves: state.moveCount,
+        elapsedSeconds: Number((state.elapsedMs / 1000).toFixed(2)),
+      });
+    }
 
     function getCurrentMaze() { return MAZES[state.mazeIndex]; }
     function getCell(x, y) { return x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE ? CellType.WALL : state.mazeGrid[y][x]; }
@@ -488,14 +530,17 @@
       state.elapsedMs = 0;
       state.beaconTimer = 0.05;
     }
-    function startMaze({ speakIntro = false } = {}) {
+    function startMaze({ speakIntro = false, source = "start" } = {}) {
+      failAnalyticsRun("restart");
       loadMaze();
       state.mode = "playing";
+      beginAnalyticsRun(source);
       announce(`Maze ${state.mazeId} started. Row ${state.playerY + 1}, column ${state.playerX + 1}.`);
       if (speakIntro) repeatInstructions();
       renderHud();
     }
     function goToMenu() {
+      if (state.mode === "playing") failAnalyticsRun("quit_to_menu");
       state.mode = "menu";
       announce("Returned to menu. Press Enter or Start Maze to begin.");
       renderHud();
@@ -540,6 +585,7 @@
     }
     function completeMaze() {
       state.mode = "won";
+      completeAnalyticsRun();
       playGoalChime();
       announce(`Exit reached. ${state.moveCount} moves in ${formatTime(state.elapsedMs)}. Press Escape for menu, or Next Maze to continue.`, { speak: true });
       renderHud();
@@ -643,7 +689,7 @@
       }
       if (event.code === "Enter") {
         ensureAudioContext();
-        if (state.mode === "menu") startMaze({ speakIntro: true });
+        if (state.mode === "menu") startMaze({ speakIntro: true, source: "keyboard_enter" });
         else repeatInstructions();
         return;
       }
@@ -652,8 +698,8 @@
 
     document.addEventListener("pointerdown", unlockAudioFromInteraction, { passive: true });
 
-    startBtn.addEventListener("click", () => { unlockAudioFromInteraction(); startMaze({ speakIntro: false }); });
-    nextMazeBtn.addEventListener("click", () => { unlockAudioFromInteraction(); state.mazeIndex = (state.mazeIndex + 1) % MAZES.length; startMaze({ speakIntro: false }); });
+    startBtn.addEventListener("click", () => { unlockAudioFromInteraction(); startMaze({ speakIntro: false, source: "start_button" }); });
+    nextMazeBtn.addEventListener("click", () => { unlockAudioFromInteraction(); state.mazeIndex = (state.mazeIndex + 1) % MAZES.length; startMaze({ speakIntro: false, source: "next_maze_button" }); });
     repeatBtn.addEventListener("click", () => { unlockAudioFromInteraction(); repeatInstructions(); });
     audioBtn.addEventListener("click", () => {
       if (!state.audio.available) {
@@ -680,10 +726,14 @@
       requestAnimationFrame(loop);
     }
 
+    window.addEventListener("beforeunload", () => {
+      failAnalyticsRun("unload");
+    });
+
     loadMaze();
     renderHud();
     updateAudioButton();
-    startMaze({ speakIntro: false });
+    startMaze({ speakIntro: false, source: "initial_load" });
     repeatInstructions();
     requestAnimationFrame(loop);
   </script>

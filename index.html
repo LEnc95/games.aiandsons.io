@@ -99,7 +99,7 @@
     h1 { font-size:clamp(32px, 6vw, 48px); margin:0 0 clamp(8px, 1.5vh, 12px) 0; color:var(--fg); font-weight:700; }
     .subtitle { font-size:clamp(14px, 2.5vw, 18px); color:var(--muted); margin:0; }
 
-    .search-controls { display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:10px; margin-bottom:16px; }
+    .search-controls { display:grid; grid-template-columns:minmax(0, 1fr) 220px 280px; gap:10px; margin-bottom:16px; }
     .search-controls input,
     .search-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
     .search-count { grid-column:1 / -1; color:#b4ccf0; font-size:12px; text-align:left; }
@@ -187,10 +187,12 @@
     
     .game-title { font-size:clamp(24px, 3.5vw, 32px); font-weight:600; margin:0 0 clamp(8px, 1vh, 12px) 0; text-align:center; }
     .game-desc { font-size:clamp(14px, 2vw, 16px); color:var(--muted); margin:0; text-align:center; line-height:1.5; flex-grow:1; }
-    .game-meta { display:flex; justify-content:center; margin:0 0 8px 0; }
+    .game-meta { display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin:0 0 8px 0; }
     .economy-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 9px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); font-size:12px; font-weight:700; }
     .economy-tag.coin { color:#b9ffdf; border-color:rgba(107,230,173,0.55); background:rgba(85,205,145,0.18); }
     .economy-tag.no-coin { color:#d3e4ff; border-color:rgba(166,189,234,0.48); background:rgba(133,154,198,0.2); }
+    .accessibility-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 9px; border-radius:999px; border:1px solid rgba(154,239,198,0.5); font-size:12px; font-weight:700; color:#d6ffe8; background:rgba(112,224,173,0.14); }
+    .accessibility-tag.category { border-color:rgba(130,205,255,0.55); color:#cde8ff; background:rgba(116,166,230,0.18); }
     .games-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; color:#b7cdf0; text-align:center; font-size:15px; }
     
     .game-link { margin-top:auto; padding:clamp(14px, 2vw, 18px); background:var(--accent); border:3px solid #fbcfe8; border-radius:16px; color:#500724; font-size:clamp(16px, 2.5vw, 18px); font-weight:700; text-align:center; transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow:0 4px 15px rgba(244,114,182,0.3); }
@@ -299,6 +301,7 @@
       <a href="/pricing.html" class="topbar-btn">Plans</a>
       <a href="/school-license.html" class="topbar-btn">School Plans</a>
       <a href="/accessibility.html" class="topbar-btn">Accessibility</a>
+      <a href="/audio-accessibility.html" class="topbar-btn">Audio Help</a>
       <a href="/teacher/" class="topbar-btn">Teacher</a>
       <button class="topbar-btn" id="classroomBtn">Classroom</button>
       <button class="topbar-btn" id="profileBtn">Profile</button>
@@ -344,6 +347,10 @@
         <option value="all">All games</option>
         <option value="coins">Coin earning</option>
         <option value="no-coins">No coin rewards</option>
+      </select>
+      <select id="gameCategoryFilter" aria-label="Filter by game category">
+        <option value="all">All categories</option>
+        <option value="audio-only-blind-accessible">Audio-Only &amp; Blind Accessible</option>
       </select>
       <div id="gameSearchCount" class="search-count" aria-live="polite"></div>
     </div>
@@ -783,6 +790,7 @@
       <div class="footer-links">
         <a href="/privacy.html">Privacy</a>
         <a href="/school-privacy.html">School Data</a>
+        <a href="/audio-accessibility.html">Audio Screen Reader Help</a>
         <a href="/changelog">Changelog</a>
         <a href="/SPRINT_BOARD.md">Sprint Board</a>
       </div>
@@ -883,6 +891,7 @@
     const classroomShopLockEl = document.getElementById('classroomShopLock');
     const gameSearchInputEl = document.getElementById('gameSearchInput');
     const gameCoinFilterEl = document.getElementById('gameCoinFilter');
+    const gameCategoryFilterEl = document.getElementById('gameCategoryFilter');
     const gameSearchCountEl = document.getElementById('gameSearchCount');
     const dailyMissionsListEl = document.getElementById('dailyMissionsList');
     const dailyMissionsMetaEl = document.getElementById('dailyMissionsMeta');
@@ -913,12 +922,18 @@
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
     const normalizeText = (value) => String(value || '').toLowerCase();
     const economyLabel = (game) => game.earnsCoins === false ? 'No coin rewards' : 'Earns coins';
+    const normalizeCategoryFilter = (value) => (
+      value === 'audio-only-blind-accessible' ? value : 'all'
+    );
 
     // ⚡ Bolt: Precompute search haystack for games array once to prevent string
     // concatenation and replacement on every keystroke during render.
     // Impact: Reduces filter operation time from ~0.88ms to ~0.07ms (11x faster)
     GAMES.forEach(game => {
-      game._searchHaystack = normalizeText(`${game.name} ${game.slug} ${game.desc || ''} ${game.scoreHint || ''}`);
+      const accessibilityTags = Array.isArray(game.accessibilityTags)
+        ? game.accessibilityTags.join(' ')
+        : '';
+      game._searchHaystack = normalizeText(`${game.name} ${game.slug} ${game.desc || ''} ${game.scoreHint || ''} ${game.category || ''} ${accessibilityTags}`);
     });
     const formatWeekLabel = (weekKey) => {
       if (typeof weekKey !== 'string' || !weekKey) return '';
@@ -933,6 +948,7 @@
     let lastClassroomSessionActive = isClassroomSessionActive();
     let gameSearchQuery = '';
     let gameCoinFilter = 'all';
+    let gameCategoryFilter = 'all';
     let lastFocusedElement = null;
 
     function renderOnboarding() {
@@ -1274,6 +1290,11 @@
           (gameCoinFilter === 'no-coins' && game.earnsCoins === false)
         );
         if (!matchesCoinFilter) return false;
+        const matchesCategoryFilter = (
+          gameCategoryFilter === 'all' ||
+          game.category === gameCategoryFilter
+        );
+        if (!matchesCategoryFilter) return false;
         if (!gameSearchQuery) return true;
         return game._searchHaystack.includes(gameSearchQuery);
       });
@@ -1289,8 +1310,10 @@
         document.getElementById('clearFiltersBtn').onclick = () => {
           gameSearchInputEl.value = '';
           gameCoinFilterEl.value = 'all';
+          gameCategoryFilterEl.value = 'all';
           gameSearchQuery = '';
           gameCoinFilter = 'all';
+          gameCategoryFilter = 'all';
           updateUI();
           gameSearchInputEl.focus();
         };
@@ -1312,13 +1335,22 @@
         const earnsCoins = game.earnsCoins !== false;
         const coinTagClass = earnsCoins ? 'coin' : 'no-coin';
         const coinTagLabel = earnsCoins ? 'Earns coins' : 'No coin rewards';
+        const accessibilityTags = Array.isArray(game.accessibilityTags)
+          ? game.accessibilityTags
+          : [];
+        const accessibilityTagMarkup = accessibilityTags
+          .map((tag) => `<span class="accessibility-tag">${escapeHtml(tag)}</span>`)
+          .join('');
+        const categoryTagMarkup = game.category === 'audio-only-blind-accessible'
+          ? '<span class="accessibility-tag category">Audio-Only &amp; Blind Accessible</span>'
+          : '';
         const desc = locked
           ? escapeHtml(`${game.desc || `Play ${game.name}!`} Classroom session currently blocks this game.`)
           : escapeHtml(game.desc || `Play ${game.name}!`);
 
         card.innerHTML = `
           <div class="game-icon" aria-hidden="true">${escapeHtml(game.emoji)}</div>
-          <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span></div>
+          <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span>${categoryTagMarkup}${accessibilityTagMarkup}</div>
           <h2 class="game-title">${escapeHtml(game.name)}</h2>
           <p class="game-desc">${desc}</p>
           <div class="game-link">${actionLabel}</div>
@@ -1458,6 +1490,11 @@
       const value = gameCoinFilterEl.value;
       gameCoinFilter = value === 'coins' || value === 'no-coins' ? value : 'all';
       trackKpiEvent('launcher_coin_filter_changed', { filter: gameCoinFilter });
+      updateUI();
+    });
+    gameCategoryFilterEl.addEventListener('change', () => {
+      gameCategoryFilter = normalizeCategoryFilter(gameCategoryFilterEl.value);
+      trackKpiEvent('launcher_category_filter_changed', { category: gameCategoryFilter });
       updateUI();
     });
     window.addEventListener('keydown', (event) => {
