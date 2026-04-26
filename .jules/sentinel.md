@@ -36,3 +36,7 @@
 **Vulnerability:** Clearing DOM elements using `.innerHTML = ''` triggers static analysis blocking flags for DOM-based XSS, even when assigning an empty string.
 **Learning:** Found several games (`cindercrash`, `solarskiff`, `starlattice`) using `.innerHTML = ''` instead of the codebase standard `.textContent = ''`.
 **Prevention:** Apply `.textContent = ''` universally for clearing elements to ensure security scanners pass and to enforce strict vanilla JS safety patterns.
+## 2026-04-26 - [DOM Clearing XSS Defense]
+**Vulnerability:** Clearing DOM elements using `.innerHTML = ""` triggers static analysis blocking flags for DOM-based XSS, even when assigning an empty string, and interpolating error messages via innerHTML is dangerous.
+**Learning:** Found several games (`branchingaudio`, `orbitorchard`) using `.innerHTML = ""` and `.innerHTML = \`<p>...error...</p>\`` instead of the codebase standard `.textContent = ""`.
+**Prevention:** Apply `.textContent = ""` universally for clearing elements and use `.textContent` to safely render dynamic content to ensure security scanners pass and to enforce strict vanilla JS safety patterns.

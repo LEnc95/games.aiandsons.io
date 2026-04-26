@@ -199,9 +199,9 @@
     async function toggleFullscreen() { try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); } catch {} }
 
     function renderScene(speakScene = true, focusAfter = false) {
-      const scene = getScene(); if (!scene) { sceneTitleEl.textContent = "Story Error"; narrativeEl.innerHTML = "<p>The requested scene is missing.</p>"; choiceListEl.innerHTML = ""; endingHelpEl.hidden = false; endingHelpEl.textContent = "Press R to restart."; statusLineEl.textContent = "Story scene missing."; announceLive("Story scene missing."); return; }
-      sceneTitleEl.textContent = scene.title; narrativeEl.innerHTML = ""; scene.text.forEach((line) => { const p = document.createElement("p"); p.textContent = line; narrativeEl.appendChild(p); });
-      choiceListEl.innerHTML = ""; const choices = getChoices(scene);
+      const scene = getScene(); if (!scene) { sceneTitleEl.textContent = "Story Error"; narrativeEl.textContent = "The requested scene is missing."; choiceListEl.textContent = ""; endingHelpEl.hidden = false; endingHelpEl.textContent = "Press R to restart."; statusLineEl.textContent = "Story scene missing."; announceLive("Story scene missing."); return; }
+      sceneTitleEl.textContent = scene.title; narrativeEl.textContent = ""; scene.text.forEach((line) => { const p = document.createElement("p"); p.textContent = line; narrativeEl.appendChild(p); });
+      choiceListEl.textContent = ""; const choices = getChoices(scene);
       if (choices.length) {
         choicesTitleEl.textContent = "Choices"; endingHelpEl.hidden = true;
         choices.forEach((choice, index) => { const key = String(choice.key || index + 1), li = document.createElement("li"), button = document.createElement("button"); button.type = "button"; button.dataset.choiceKey = key; button.textContent = `${key}. ${choice.label}`; button.setAttribute("aria-label", `Choice ${key}: ${choice.label}`); button.classList.toggle("active", index === state.choiceFocusIndex); button.addEventListener("click", () => transitionTo(choice.next)); li.appendChild(button); choiceListEl.appendChild(li); });
@@ -244,7 +244,7 @@
     repeatBtn.addEventListener("click", repeatNarration); restartBtn.addEventListener("click", () => restartStory(true)); stopVoiceBtn.addEventListener("click", () => { stopVoice(); statusLineEl.textContent = "Voice stopped."; announceLive("Voice stopped."); }); fullscreenBtn.addEventListener("click", toggleFullscreen); document.addEventListener("keydown", handleKeydown);
     window.addEventListener("beforeunload", () => { failAnalyticsRun("unload"); });
     function loop(ts) { const dt = clamp((ts - state.lastFrameTs) / 1000, 0, 0.05); state.lastFrameTs = ts; if (!state.steppingExternally) updateClock(dt); requestAnimationFrame(loop); }
-    try { validateStory(); beginAnalyticsRun("initial_load"); renderScene(true, true); requestAnimationFrame(loop); } catch (error) { sceneTitleEl.textContent = "Story Validation Error"; narrativeEl.innerHTML = `<p>${String(error && error.message ? error.message : error)}</p>`; choiceListEl.innerHTML = ""; endingHelpEl.hidden = false; endingHelpEl.textContent = "Fix story JSON and reload."; statusLineEl.textContent = "Unable to load story."; announceLive("Unable to load story due to validation error."); }
+    try { validateStory(); beginAnalyticsRun("initial_load"); renderScene(true, true); requestAnimationFrame(loop); } catch (error) { sceneTitleEl.textContent = "Story Validation Error"; narrativeEl.textContent = String(error && error.message ? error.message : error); choiceListEl.textContent = ""; endingHelpEl.hidden = false; endingHelpEl.textContent = "Fix story JSON and reload."; statusLineEl.textContent = "Unable to load story."; announceLive("Unable to load story due to validation error."); }
   </script>
   <script type="module">
     import { mountGameFeedback } from "../src/feedback/embed.js";
