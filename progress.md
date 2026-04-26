@@ -2159,3 +2159,11 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Confirmed explicit tag phrase appears on all 3 cards.
   - Artifact: `output/web-game/home-audio-category-filtered.png`.
 - Ran `npm run test:feedback-smoke:raw` with a local server for shell-change coverage (pass).
+
+- Automation run (2026-04-26): Added new game `emberwatch` (`emberwatch/index.html`) with a fire-response rescue loop (move skimmer, spray nearby fires, rescue civilians, manage water and district danger before timeout).
+- Included desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (`rememberRecent`, `addCoins`, `maybeUnlock`), feedback mount, and deterministic hooks (`window.advanceTime(ms)`, `window.render_game_to_text()`).
+- Wired listing + route/cache entries in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Regenerated SEO/sitemap via `npm run seo` (adds Ember Watch to sitemap and home JSON-LD list) and synced feedback seeds via `npm.cmd run feedback:sync-linear` (updated `linear/labels.md` + `linear/game-issues.csv`).
+- Validation: `node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8'))"` passed; slug grep checks passed.
+- Sandbox blockers: `npm.cmd run test:feedback` failed with `spawn EPERM`; required `$develop-web-game` Playwright client run for `/emberwatch` failed with `browserType.launch: spawn EPERM`.
+- TODO: rerun `npm run test:feedback` and the Playwright gameplay loop in an environment where browser/test process spawn is allowed.

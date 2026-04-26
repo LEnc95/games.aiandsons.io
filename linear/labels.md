@@ -92,5 +92,6 @@
 - game/solarskiff
 - game/cindercrash
 - game/orbitorchard
+- game/emberwatch
 
 Generated from `src/meta/feedback.js`.

@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Ember Watch | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #eff8ff;
+  background:
+    radial-gradient(68% 58% at 14% 18%, #16344a 0%, transparent 66%),
+    radial-gradient(54% 54% at 86% 80%, #3b2318 0%, transparent 72%),
+    linear-gradient(180deg, #081118 0%, #0b1a24 50%, #111d21 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #98d1f06e;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #102031 0%, #111d2d 58%, #1f1a15 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 14px;
+  border: 1px solid #b9e8ff66;
+  background: #0d2230f2;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #cde8f8; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #c4e8ff75;
+  background: #1d5f87f0;
+  color: #f3fbff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #9bc7df52;
+  background: #0a1a25f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #ddf3ff30;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #bdd8ea;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.warn b { color: #ffd993; }
+.bad b { color: #ff8f8f; }
+.good b { color: #99efcb; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #9bc7df52;
+  background: #0a1a25f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #1b5a80; border-color: #c4e8ff75; }
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Ember Watch | AI and Sons Games">
+  <meta property="og:description" content="Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/emberwatch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ember Watch | AI and Sons Games">
+  <meta name="twitter:description" content="Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/emberwatch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Ember Watch","description":"Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/emberwatch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Ember Watch game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Rescued</span><b id="rescued">0/8</b></div>
+    <div class="chip"><span>Fires Out</span><b id="fires">0/18</b></div>
+    <div class="chip bad"><span>Danger</span><b id="danger">0%</b></div>
+    <div class="chip"><span>Water</span><b id="water">100%</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">100.0s</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="upBtn" type="button" class="ctrl-btn">Up</button>
+    <button id="leftBtn" type="button" class="ctrl-btn">Left</button>
+    <button id="downBtn" type="button" class="ctrl-btn">Down</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Right</button>
+    <button id="sprayBtn" type="button" class="ctrl-btn">Spray</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const rescuedEl = document.getElementById('rescued');
+const firesEl = document.getElementById('fires');
+const dangerEl = document.getElementById('danger');
+const waterEl = document.getElementById('water');
+const timeEl = document.getElementById('time');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 100;
+const TARGET_RESCUED = 8;
+const TARGET_FIRES = 18;
+const MAX_DANGER = 100;
+const PLAYER_SPEED = 360;
+const SPRAY_RANGE = 146;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  rescued: 0,
+  firesOut: 0,
+  danger: 0,
+  water: 100,
+  sprayPressed: false,
+  sprayCooldown: 0,
+  fireSpawnTimer: 0.8,
+  civilianSpawnTimer: 2.4,
+  input: { up: false, down: false, left: false, right: false },
+  player: {
+    x: canvas.width * 0.24,
+    y: canvas.height * 0.54,
+    vx: 0,
+    vy: 0,
+    speed: PLAYER_SPEED,
+    radius: 18,
+    facingX: 1,
+    facingY: 0,
+  },
+  fires: [],
+  civilians: [],
+  logs: [],
+  idCounter: 0,
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function pushLog(type, data) {
+  state.logs.unshift({
+    t: Number(state.elapsed.toFixed(2)),
+    type,
+    ...data,
+  });
+  if (state.logs.length > 8) state.logs.length = 8;
+}
+
+function createFire() {
+  const id = `fire-${state.idCounter += 1}`;
+  const x = randomRange(canvas.width * 0.42, canvas.width * 0.92);
+  const y = randomRange(canvas.height * 0.12, canvas.height * 0.9);
+  const intensity = randomRange(1.1, 2.2);
+  return {
+    id,
+    x,
+    y,
+    intensity,
+    spreadTimer: randomRange(2.2, 4.8),
+    drift: randomRange(-0.3, 0.3),
+  };
+}
+
+function createCivilian() {
+  const id = `civilian-${state.idCounter += 1}`;
+  const sideBias = Math.random() < 0.65 ? 0.55 : 0.8;
+  const x = randomRange(canvas.width * sideBias, canvas.width * 0.95);
+  const y = randomRange(canvas.height * 0.13, canvas.height * 0.88);
+  return {
+    id,
+    x,
+    y,
+    panic: randomRange(0.04, 0.22),
+    pulse: randomRange(0, Math.PI * 2),
+  };
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.rescued = 0;
+  state.firesOut = 0;
+  state.danger = 0;
+  state.water = 100;
+  state.sprayPressed = false;
+  state.sprayCooldown = 0;
+  state.fireSpawnTimer = 0.8;
+  state.civilianSpawnTimer = 2.4;
+  state.input.up = false;
+  state.input.down = false;
+  state.input.left = false;
+  state.input.right = false;
+  state.player.x = canvas.width * 0.24;
+  state.player.y = canvas.height * 0.54;
+  state.player.vx = 0;
+  state.player.vy = 0;
+  state.player.facingX = 1;
+  state.player.facingY = 0;
+  state.fires = [];
+  state.civilians = [];
+  state.logs = [];
+  state.idCounter = 0;
+
+  for (let i = 0; i < 6; i += 1) state.fires.push(createFire());
+  for (let i = 0; i < 3; i += 1) state.civilians.push(createCivilian());
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function showOverlay(title, body, buttonLabel, handler) {
+  overlay.classList.add('show');
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <div class="row">
+        <button id="overlayButton" type="button">${buttonLabel}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayButton').addEventListener('click', handler, { once: true });
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('emberwatch'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, emberwatch: { result: 'started', score: 0, rescued: 0, firesOut: 0 } });
+  } catch {}
+  pushLog('run_started', { fires: state.fires.length, civilians: state.civilians.length });
+}
+
+function finishGame(result) {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  state.mode = result;
+  state.result = result;
+  const coinsEarned = Math.max(6, Math.min(60, Math.round(state.score / 18)));
+  if (coinsEarned > 0) {
+    try { addCoins(coinsEarned); } catch {}
+  }
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      emberwatch: {
+        result,
+        score: Math.round(state.score),
+        rescued: state.rescued,
+        firesOut: state.firesOut,
+        danger: Number(state.danger.toFixed(2)),
+      },
+    });
+  } catch {}
+
+  const win = result === 'won';
+  const title = win ? 'District Saved' : 'Fireline Broken';
+  const body = win
+    ? `You rescued ${state.rescued} residents and extinguished ${state.firesOut} fires. Coins +${coinsEarned}.`
+    : `Danger reached ${state.danger.toFixed(0)}%. Rescued: ${state.rescued}, fires out: ${state.firesOut}. Coins +${coinsEarned}.`;
+  showOverlay(title, body, 'Play Again', startGame);
+}
+
+function handleSpawns(dt) {
+  state.fireSpawnTimer -= dt;
+  const targetFireCount = 8 + Math.floor(state.elapsed / 18);
+  if (state.fireSpawnTimer <= 0 && state.fires.length < targetFireCount) {
+    state.fires.push(createFire());
+    state.fireSpawnTimer = randomRange(1.2, 2.7);
+  }
+
+  state.civilianSpawnTimer -= dt;
+  const targetCivilianCount = 2 + Math.floor(state.elapsed / 30);
+  if (state.civilianSpawnTimer <= 0 && state.civilians.length < targetCivilianCount) {
+    state.civilians.push(createCivilian());
+    state.civilianSpawnTimer = randomRange(3.8, 6.5);
+  }
+}
+
+function updatePlayer(dt) {
+  const xDir = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
+  const yDir = (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
+
+  let vx = xDir;
+  let vy = yDir;
+  const mag = Math.hypot(vx, vy) || 1;
+  if (xDir || yDir) {
+    vx /= mag;
+    vy /= mag;
+    state.player.facingX = vx;
+    state.player.facingY = vy;
+  }
+
+  state.player.vx = vx * state.player.speed;
+  state.player.vy = vy * state.player.speed;
+
+  state.player.x = clamp(state.player.x + state.player.vx * dt, 44, canvas.width - 44);
+  state.player.y = clamp(state.player.y + state.player.vy * dt, 62, canvas.height - 42);
+}
+
+function isSpraying() {
+  return state.sprayPressed && state.water > 0.5;
+}
+
+function updateFires(dt) {
+  let dangerRate = 0;
+  const spraying = isSpraying();
+
+  for (const fire of state.fires) {
+    fire.spreadTimer -= dt;
+    fire.intensity = clamp(fire.intensity + dt * randomRange(0.16, 0.3), 0, 4.2);
+
+    if (fire.spreadTimer <= 0 && state.fires.length < 20) {
+      const extra = {
+        ...createFire(),
+        x: clamp(fire.x + randomRange(-110, 110), canvas.width * 0.38, canvas.width * 0.95),
+        y: clamp(fire.y + randomRange(-95, 95), canvas.height * 0.1, canvas.height * 0.92),
+        intensity: randomRange(0.8, 1.45),
+      };
+      state.fires.push(extra);
+      fire.spreadTimer = randomRange(2.8, 5.2);
+      dangerRate += 0.65;
+    }
+
+    fire.y = clamp(fire.y + fire.drift * 18 * dt, canvas.height * 0.1, canvas.height * 0.92);
+    if (fire.y <= canvas.height * 0.1 || fire.y >= canvas.height * 0.92) fire.drift *= -1;
+
+    if (spraying) {
+      const dx = fire.x - state.player.x;
+      const dy = fire.y - state.player.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= SPRAY_RANGE) {
+        const projected = (dx * state.player.facingX + dy * state.player.facingY) / (dist || 1);
+        if (projected > -0.15) {
+          const damp = (1 - dist / SPRAY_RANGE) * 2.7;
+          fire.intensity -= dt * (1.2 + damp);
+          state.score += dt * (5 + damp * 1.7);
+        }
+      }
+    }
+
+    dangerRate += Math.max(0, fire.intensity - 1.2) * 0.58;
+  }
+
+  const before = state.fires.length;
+  state.fires = state.fires.filter((fire) => fire.intensity > 0.08);
+  const removed = before - state.fires.length;
+  if (removed > 0) {
+    state.firesOut += removed;
+    state.score += removed * 35;
+    pushLog('fires_out', { count: removed, total: state.firesOut });
+  }
+
+  if (spraying) {
+    state.water = clamp(state.water - dt * 22, 0, 100);
+    state.sprayCooldown = 0.18;
+  } else {
+    const refill = state.sprayCooldown > 0 ? 8 : 14;
+    state.water = clamp(state.water + dt * refill, 0, 100);
+  }
+  state.sprayCooldown = Math.max(0, state.sprayCooldown - dt);
+
+  state.danger = clamp(state.danger + dangerRate * dt, 0, MAX_DANGER);
+}
+
+function updateCivilians(dt) {
+  for (let i = state.civilians.length - 1; i >= 0; i -= 1) {
+    const civilian = state.civilians[i];
+    civilian.pulse += dt * 2.2;
+
+    let localHeat = 0;
+    for (const fire of state.fires) {
+      const dist = Math.hypot(fire.x - civilian.x, fire.y - civilian.y);
+      if (dist < 170) {
+        localHeat += (170 - dist) * 0.0022 * fire.intensity;
+      }
+    }
+
+    civilian.panic = clamp(civilian.panic + localHeat * dt + dt * 0.028, 0, 1.6);
+
+    const toPlayer = Math.hypot(civilian.x - state.player.x, civilian.y - state.player.y);
+    if (toPlayer < 44) {
+      state.rescued += 1;
+      state.score += 50;
+      state.civilians.splice(i, 1);
+      pushLog('civilian_rescued', { total: state.rescued });
+      continue;
+    }
+
+    if (civilian.panic >= 1.45) {
+      state.danger = clamp(state.danger + 12, 0, MAX_DANGER);
+      state.civilians.splice(i, 1);
+      pushLog('civilian_lost', { danger: Number(state.danger.toFixed(1)) });
+    }
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+
+  updatePlayer(dt);
+  handleSpawns(dt);
+  updateFires(dt);
+  updateCivilians(dt);
+
+  if (state.danger >= MAX_DANGER) {
+    finishGame('lost');
+    return;
+  }
+
+  if (state.rescued >= TARGET_RESCUED && state.firesOut >= TARGET_FIRES) {
+    finishGame('won');
+    return;
+  }
+
+  if (state.timeLeft <= 0) {
+    if (state.rescued >= TARGET_RESCUED && state.firesOut >= TARGET_FIRES) finishGame('won');
+    else finishGame('lost');
+  }
+}
+
+function drawBackground() {
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, '#102637');
+  g.addColorStop(0.55, '#1b2631');
+  g.addColorStop(1, '#2a1f1a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#1f3f57';
+  ctx.fillRect(0, 0, canvas.width * 0.34, canvas.height);
+  ctx.fillStyle = '#32576f';
+  ctx.fillRect(canvas.width * 0.31, 0, 16, canvas.height);
+
+  ctx.globalAlpha = 0.25;
+  for (let i = 0; i < 18; i += 1) {
+    const y = 52 + i * 38;
+    ctx.fillStyle = i % 2 ? '#223949' : '#243f54';
+    ctx.fillRect(canvas.width * 0.37, y, canvas.width * 0.58, 10);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawFires() {
+  for (const fire of state.fires) {
+    const r = 12 + fire.intensity * 8;
+    const glow = ctx.createRadialGradient(fire.x, fire.y, 2, fire.x, fire.y, r * 2.4);
+    glow.addColorStop(0, '#fff4d0');
+    glow.addColorStop(0.35, '#ffbb55');
+    glow.addColorStop(0.7, '#ff6b2f');
+    glow.addColorStop(1, 'rgba(255, 70, 30, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(fire.x, fire.y, r * 2.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffb058';
+    ctx.beginPath();
+    ctx.arc(fire.x, fire.y + 4, r * 0.56, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ff5f2a';
+    ctx.beginPath();
+    ctx.arc(fire.x, fire.y - 2, r * 0.44, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawCivilians() {
+  for (const civilian of state.civilians) {
+    const pulse = 3 + Math.sin(civilian.pulse) * 2;
+
+    ctx.fillStyle = '#d7f2ff';
+    ctx.beginPath();
+    ctx.arc(civilian.x, civilian.y - 14, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#63a9d3';
+    ctx.fillRect(civilian.x - 8, civilian.y - 6, 16, 22);
+
+    ctx.strokeStyle = civilian.panic > 1 ? '#ff8c8c' : '#98d8ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(civilian.x, civilian.y, 18 + pulse, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawPlayer() {
+  const { x, y, radius, facingX, facingY } = state.player;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.atan2(facingY, facingX));
+
+  ctx.fillStyle = '#9ce8ff';
+  ctx.beginPath();
+  ctx.moveTo(24, 0);
+  ctx.lineTo(-16, -15);
+  ctx.lineTo(-10, 0);
+  ctx.lineTo(-16, 15);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#1f6f9c';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#d9f8ff';
+  ctx.beginPath();
+  ctx.arc(6, -4, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (isSpraying()) {
+    const cone = ctx.createRadialGradient(12, 0, 6, 42, 0, SPRAY_RANGE * 0.72);
+    cone.addColorStop(0, 'rgba(167, 235, 255, 0.8)');
+    cone.addColorStop(1, 'rgba(167, 235, 255, 0)');
+    ctx.fillStyle = cone;
+    ctx.beginPath();
+    ctx.moveTo(8, -8);
+    ctx.lineTo(SPRAY_RANGE, -56);
+    ctx.lineTo(SPRAY_RANGE, 56);
+    ctx.lineTo(8, 8);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  drawFires();
+  drawCivilians();
+  drawPlayer();
+}
+
+function syncHud() {
+  modeEl.textContent = String(state.mode).toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  rescuedEl.textContent = `${state.rescued}/${TARGET_RESCUED}`;
+  firesEl.textContent = `${state.firesOut}/${TARGET_FIRES}`;
+  dangerEl.textContent = `${Math.round(state.danger)}%`;
+  waterEl.textContent = `${Math.round(state.water)}%`;
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const dangerChip = dangerEl.parentElement;
+  dangerChip.classList.toggle('good', state.danger < 35);
+  dangerChip.classList.toggle('warn', state.danger >= 35 && state.danger < 75);
+  dangerChip.classList.toggle('bad', state.danger >= 75);
+
+  const timeChip = timeEl.parentElement;
+  timeChip.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.6);
+  timeChip.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.6 && state.timeLeft >= TOTAL_SECONDS * 0.22);
+  timeChip.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.22);
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Refill your plan, then resume extinguishing before danger spikes.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function mapDirectionKey(event, pressed) {
+  const code = event.code;
+  if (code === 'ArrowUp' || code === 'KeyW') { event.preventDefault(); state.input.up = pressed; return true; }
+  if (code === 'ArrowDown' || code === 'KeyS') { event.preventDefault(); state.input.down = pressed; return true; }
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); state.input.left = pressed; return true; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); state.input.right = pressed; return true; }
+  return false;
+}
+
+function onKeyDown(event) {
+  if (mapDirectionKey(event, true)) return;
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); state.sprayPressed = true; return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function onKeyUp(event) {
+  if (mapDirectionKey(event, false)) return;
+  if (event.code === 'Space' || event.code === 'Enter') {
+    event.preventDefault();
+    state.sprayPressed = false;
+  }
+}
+
+function bindHoldButton(id, press, release = press) {
+  const btn = document.getElementById(id);
+  const down = (event) => { event.preventDefault(); press(); };
+  const up = (event) => { event.preventDefault(); release(); };
+  btn.addEventListener('pointerdown', down);
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
+  btn.addEventListener('pointerleave', up);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+bindHoldButton('upBtn', () => { state.input.up = true; }, () => { state.input.up = false; });
+bindHoldButton('downBtn', () => { state.input.down = true; }, () => { state.input.down = false; });
+bindHoldButton('leftBtn', () => { state.input.left = true; }, () => { state.input.left = false; });
+bindHoldButton('rightBtn', () => { state.input.right = true; }, () => { state.input.right = false; });
+bindHoldButton('sprayBtn', () => { state.sprayPressed = true; }, () => { state.sprayPressed = false; });
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'emberwatch',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left; +x moves right, +y moves down. All entities report pixel coordinates in this space.',
+  objective: {
+    rescue_target: TARGET_RESCUED,
+    fires_out_target: TARGET_FIRES,
+    avoid_danger_at_or_above: MAX_DANGER,
+    time_limit_seconds: TOTAL_SECONDS,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    rescued: state.rescued,
+    fires_out: state.firesOut,
+    danger_percent: Number(state.danger.toFixed(2)),
+    water_percent: Number(state.water.toFixed(2)),
+    spray_pressed: state.sprayPressed,
+    spray_cooldown_seconds: Number(state.sprayCooldown.toFixed(3)),
+  },
+  player: {
+    x: Number(state.player.x.toFixed(2)),
+    y: Number(state.player.y.toFixed(2)),
+    vx: Number(state.player.vx.toFixed(2)),
+    vy: Number(state.player.vy.toFixed(2)),
+    speed: state.player.speed,
+    radius: state.player.radius,
+    facing: {
+      x: Number(state.player.facingX.toFixed(3)),
+      y: Number(state.player.facingY.toFixed(3)),
+    },
+  },
+  fires: state.fires.map((fire) => ({
+    id: fire.id,
+    x: Number(fire.x.toFixed(2)),
+    y: Number(fire.y.toFixed(2)),
+    intensity: Number(fire.intensity.toFixed(3)),
+    spread_timer_seconds: Number(fire.spreadTimer.toFixed(3)),
+  })),
+  civilians: state.civilians.map((civilian) => ({
+    id: civilian.id,
+    x: Number(civilian.x.toFixed(2)),
+    y: Number(civilian.y.toFixed(2)),
+    panic: Number(civilian.panic.toFixed(3)),
+  })),
+  recent_events: state.logs,
+  controls: {
+    move: 'WASD or Arrow Keys',
+    spray: 'Space or Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay('Ember Watch', 'Steer your response skimmer, spray nearby fire zones, and rescue residents before district danger reaches 100%.', 'Start Shift', startGame);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'emberwatch', gameName: 'Ember Watch' });
+</script>
+</body>
+</html>

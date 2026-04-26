@@ -76,5 +76,6 @@ export const GAMES = [
   { slug:'solarskiff',     name:'Solar Skiff',         emoji:'\u{1F6F6}', scoreHint:'shards',     url:'/solarskiff',   desc:'Trim your sail with shifting solar winds, collect star shards, and dodge flare swarms before integrity fails.', earnsCoins:true },
   { slug:'cindercrash',    name:'Cinder Crash',        emoji:'\u{1F525}', scoreHint:'cores',      url:'/cindercrash',  desc:'Steer a magma skimmer through ash squalls, recover ember cores, and dodge cinder bursts before hull integrity fails.', earnsCoins:true },
   { slug:'orbitorchard',   name:'Orbit Orchard',       emoji:'\u{1F34F}', scoreHint:'fruit',      url:'/orbitorchard', desc:'Steer around nested orbit rings, harvest glowing fruit, and dodge thorn drones before vitality runs out.', earnsCoins:true },
+  { slug:'emberwatch',     name:'Ember Watch',         emoji:'\u{1F6A8}', scoreHint:'rescues',    url:'/emberwatch',   desc:'Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical.', earnsCoins:true },
 ];
 
