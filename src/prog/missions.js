@@ -416,8 +416,11 @@ export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
     changed = true;
   }
 
-  const allDailyCompleted = state.missions.activeIds.length > 0
-    && state.missions.activeIds.every((id) => state.missions.completed.includes(id));
+  const allDailyCompleted = state.missions.activeIds.length > 0 && (() => {
+    // ⚡ Bolt: Convert lookup array to a Set to reduce nested array membership check complexity from O(N*M) to O(N)
+    const dailyCompletedSet = new Set(state.missions.completed);
+    return state.missions.activeIds.every((id) => dailyCompletedSet.has(id));
+  })();
   if (allDailyCompleted && !state.badges.has('daily-mission-sweep')) {
     state.badges.add('daily-mission-sweep');
     changed = true;
@@ -429,8 +432,11 @@ export const recordMissionProgress = (ctx, timestamp = Date.now()) => {
   }
 
   const weeklyBucket = state.missions.weekly;
-  const allWeeklyCompleted = weeklyBucket.activeIds.length > 0
-    && weeklyBucket.activeIds.every((id) => weeklyBucket.completed.includes(id));
+  const allWeeklyCompleted = weeklyBucket.activeIds.length > 0 && (() => {
+    // ⚡ Bolt: Convert lookup array to a Set to reduce nested array membership check complexity from O(N*M) to O(N)
+    const weeklyCompletedSet = new Set(weeklyBucket.completed);
+    return weeklyBucket.activeIds.every((id) => weeklyCompletedSet.has(id));
+  })();
   if (allWeeklyCompleted && !state.badges.has('weekly-challenge-sweep')) {
     state.badges.add('weekly-challenge-sweep');
     changed = true;
