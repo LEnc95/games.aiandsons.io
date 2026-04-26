@@ -71,6 +71,7 @@
 - game/trailblazer
 - game/portpilot
 - game/beatforge
+- game/beatrail
 - game/bytebloom
 - game/gemswap
 - game/hexharvest

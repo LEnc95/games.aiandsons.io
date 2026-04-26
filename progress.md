@@ -2055,3 +2055,50 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Artifacts: `output/web-game/echolabyrinth-run2/shot-0..2.png`, `state-0..2.json`.
   - No Playwright error artifact files emitted.
 - Additional verification: `node --test tests/unit/games.test.mjs` passed (5/5).
+- New request (2026-04-25): Build Beat Rail MVP (accessible 3-lane rhythm game with generous timing, count-in, spoken/text guidance, and practice mode).
+- Added new game implementation at `beatrail/index.html`:
+  - 3-lane rhythm gameplay with keyboard controls (`ArrowLeft`, `ArrowDown`, `ArrowRight`).
+  - Spacebar pause/resume flow that triggers assertive pause announcement and repeats spoken instructions.
+  - Difficulty selection (`Easy`, `Medium`) with separate BPM and separate chart JSON files.
+  - Practice mode toggle with no score awarding while still providing cues and stats.
+  - Count-in flow (`3, 2, 1, go`) with both live region announcements and speech synthesis.
+  - Web Audio scheduling based on `AudioContext.currentTime` for metronome clicks, lane cues, backing beat loop, hit/miss sounds.
+  - Hit detection via per-lane pointer to next pending note and wide timing window (`+/-200ms`).
+  - Miss processing for timeout misses and off-beat presses.
+  - End-of-song spoken/text summary in requested format: `Song complete. Hits: X. Misses: Y. Accuracy: Z percent.`
+  - Added required deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()`.
+  - Mounted feedback widget: `mountGameFeedback({ gameSlug: 'beatrail', gameName: 'Beat Rail' })`.
+- Added pre-authored note charts:
+  - `beatrail/charts/easy.json`
+  - `beatrail/charts/medium.json`
+- Game integration updates:
+  - Added Beat Rail metadata entry in `src/meta/games.js`.
+  - Added homepage fallback card in `index.html`.
+  - Added rewrites and cache header entries in `vercel.json` for `/beatrail` and `/beatrail/index.html`.
+- Ran `npm run seo` to regenerate sitemap and SEO blocks after game registration updates.
+- Ran `npm run feedback:sync-linear` (local artifact update path):
+  - updated `linear/labels.md`
+  - updated `linear/game-issues.csv`
+  - live provisioning skipped (missing LINEAR envs), expected behavior.
+- Verification runs and artifacts:
+  - Skill Playwright run: `output/web-game/beatrail-run1` (3 iterations, start + lane inputs + pause/resume actions).
+  - Pause-focused Playwright run: `output/web-game/beatrail-pause-check` (state confirms `mode: paused`; screenshot shows PAUSED overlay).
+  - Post-layout-fix Playwright run: `output/web-game/beatrail-run2`.
+  - Reviewed screenshots from all above runs and verified no `errors-*.json` artifacts were emitted.
+  - Additional full-page visual checks:
+    - Desktop: `output/web-game/beatrail-fullpage-desktop.png`
+    - Mobile: `output/web-game/beatrail-fullpage-mobile.png`
+- Layout follow-up fixed during verification:
+  - Initial viewport clipping on shorter heights was resolved by allowing vertical page scroll and removing fixed `height: 100%` lock from `html/body` in `beatrail/index.html`.
+- Additional QA gate run:
+  - `npm run test:feedback-smoke:raw` passed.
+- TODO suggestions for next agent:
+  - Add a deterministic Playwright action script that intentionally times key hits to produce non-zero `hits` and validates summary accuracy math near song end.
+  - Consider optional reduced-motion visual mode and optional speech on/off toggle for accessibility preference control.
+- Post-scroll-height fix verification (2026-04-25 late pass):
+  - Confirmed document scroll height on desktop viewport (`docScrollHeight: 980`) so lower controls/status panel are reachable.
+  - Captured updated full-page snapshots:
+    - `output/web-game/beatrail-fullpage-desktop.png`
+    - `output/web-game/beatrail-fullpage-mobile.png`
+  - Re-ran skill Playwright loop after the layout fix: `output/web-game/beatrail-run3` (no error artifacts).
+  - Re-ran `npm run test:feedback-smoke:raw` (pass).

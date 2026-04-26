@@ -329,3 +329,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-23] Key PR links: none merged for this date.
 - [nightly 2026-04-24] Tracked changes: 1 commit(s) - 0e394c8 Add Cindercrash and Solarskiff game content and metadata.
 - [nightly 2026-04-24] Key PR links: none merged for this date.
+- [nightly 2026-04-25] Tracked changes: 7 commit(s) - 904cc81 Handle Firebase internal errors with redirect fallback and relax CSP; 2f5e680 Allow Firebase auth CSP sources and clarify internal sign-in error; da33dc5 Improve SEO metadata, structured data, and sitemap generation; 33f6903 Fix Echo Labyrinth audio unlock flow and add audio toggle; 4435334 Add Echo Labyrinth MVP and wire feedback/SEO metadata (+2 more).
+- [nightly 2026-04-25] Key PR links: none merged for this date.
