@@ -18,4 +18,6 @@
 **Action:** When implementing or modifying *any* modal in the codebase, always verify that `document.activeElement` is saved to a scoped variable on open, and that variable `.focus()` is called on close.
 ## 2026-04-17 - Global Event Listener Teardown in Component Lifecycle
 **Learning:** When adding global event listeners (like `window.addEventListener('keydown', ...)`) inside vanilla JavaScript class components to satisfy accessibility requirements (like listening for the `Escape` key), failing to implement a `destroy()` or teardown method will lead to memory leaks and duplicate event executions if the component is ever unmounted or recreated.
-**Action:** Always verify that any global listeners added in a component's `init()` or `constructor` are properly removed via `removeEventListener` in a designated `destroy()` or cleanup method.
+## 2026-04-26 - Add keyboard shortcut hint to search placeholders
+**Learning:** Undocumented keyboard shortcuts (like `/` to focus search) remain unused by the majority of users. A subtle text hint in the input's placeholder is an invisible UX enhancement that provides discoverability without cluttering the UI. Furthermore, adding `aria-keyshortcuts="/"` makes it accessible to screen readers.
+**Action:** Always document search keyboard shortcuts directly in the input placeholder or via a small floating icon within the search bar, and ensure `aria-keyshortcuts` is used to expose them properly.
