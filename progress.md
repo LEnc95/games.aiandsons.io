@@ -2167,3 +2167,26 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Validation: `node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8'))"` passed; slug grep checks passed.
 - Sandbox blockers: `npm.cmd run test:feedback` failed with `spawn EPERM`; required `$develop-web-game` Playwright client run for `/emberwatch` failed with `browserType.launch: spawn EPERM`.
 - TODO: rerun `npm run test:feedback` and the Playwright gameplay loop in an environment where browser/test process spawn is allowed.
+
+## 2026-04-27 Cloud Climber automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Added brand-new game `cloudclimber` at `cloudclimber/index.html` with a balloon-courier survival loop.
+  - Core loop: steer horizontally, boost climb against gravity, rescue drifting lanterns, and avoid storm birds.
+  - Win/loss loop: save 20 lanterns before 95-second timer expires; bird collisions and hard drops reduce hull; score and coin payout included.
+  - Controls: desktop (`A/D` or `Left/Right`, `W/Up/Space/Enter`, `P/R/F`) and mobile buttons (Left/Right/Boost/Pause/Restart/Fullscreen).
+  - Platform hooks: `rememberRecent('cloudclimber')`, coin rewards via `addCoins`, progression payload via `maybeUnlock`.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise state payload.
+  - Feedback integration: `mountGameFeedback({ gameSlug: 'cloudclimber', gameName: 'Cloud Climber' })`.
+- Integrated launcher/routing wiring:
+  - Added `cloudclimber` metadata entry in `src/meta/games.js`.
+  - Added static fallback home card in `index.html`.
+  - Added `/cloudclimber` rewrites and `/cloudclimber/index.html` cache-header entry in `vercel.json`.
+- Ran `npm run seo` to regenerate sitemap and SEO injections; new route now included.
+- Validation results (this run):
+  - `rg -n "cloudclimber" cloudclimber/index.html src/meta/games.js index.html vercel.json`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - `npm.cmd run feedback:sync-linear`: pass (updated `linear/labels.md` and `linear/game-issues.csv`).
+  - `npm.cmd run test:feedback`: failed in this sandbox with `spawn EPERM` across integration tests.
+  - Skill-required Playwright loop via `$develop-web-game` client for `/cloudclimber`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/cloudclimber` in an environment that allows child-process and Chromium launch.

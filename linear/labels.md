@@ -93,5 +93,6 @@
 - game/cindercrash
 - game/orbitorchard
 - game/emberwatch
+- game/cloudclimber
 
 Generated from `src/meta/feedback.js`.
