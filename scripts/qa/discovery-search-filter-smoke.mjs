@@ -65,6 +65,16 @@ async function main() {
   try {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await page.fill("#gameSearchInput", "tetris");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "launcher_search_changed");
+      } catch {
+        return false;
+      }
+    });
     await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length === 1);
     const homeSearchState = await page.evaluate(() => {
       const titles = [...document.querySelectorAll("#gamesGrid .game-title")]
@@ -83,6 +93,16 @@ async function main() {
     await page.fill("#gameSearchInput", "");
     await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length >= 63);
     await page.selectOption("#gameCoinFilter", "no-coins");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "launcher_coin_filter_changed");
+      } catch {
+        return false;
+      }
+    });
     await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length === 4);
     const homeNoCoinState = await page.evaluate(() => {
       const titles = [...document.querySelectorAll("#gamesGrid .game-title")]
@@ -106,6 +126,16 @@ async function main() {
 
     await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
     await page.selectOption("#shopGameFilter", "Tetris");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "shop_game_filter_changed");
+      } catch {
+        return false;
+      }
+    });
     await page.waitForFunction(() => document.querySelectorAll("#shopGrid .shop-item").length === 2);
     const shopTagState = await page.evaluate(() => {
       const cards = [...document.querySelectorAll("#shopGrid .shop-item")].map((card) => ({
@@ -132,6 +162,16 @@ async function main() {
     summary.checks.push({ name: "shop_game_filter_tetris", pass: true, data: shopTagState });
 
     await page.fill("#shopSearchInput", "aurora");
+    await page.waitForFunction(() => {
+      try {
+        const raw = localStorage.getItem("cadegames:v1:metrics");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.events) && parsed.events.some((event) => event?.name === "shop_search_changed");
+      } catch {
+        return false;
+      }
+    });
     await page.waitForFunction(() => document.querySelectorAll("#shopGrid .shop-item-title").length === 1);
     const shopSearchState = await page.evaluate(() => {
       const titles = [...document.querySelectorAll("#shopGrid .shop-item-title")]
