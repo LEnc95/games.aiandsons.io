@@ -60,6 +60,22 @@ async function readOnboardingState(page) {
   });
 }
 
+async function safeScreenshot(page, outputPath, options = {}) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(150 * attempt);
+      await page.screenshot({ path: outputPath, fullPage: true, ...options });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(200 * attempt);
+    }
+  }
+  throw lastError;
+}
+
 async function main() {
   ensureDir(OUTPUT_DIR);
   const baseUrl = process.argv[2] || "http://127.0.0.1:4173";
@@ -111,7 +127,7 @@ async function main() {
     summary.checks.push({ name: "home_onboarding_paths_visible", pass: true, data: initialHome });
 
     const homeInitialShot = path.join(OUTPUT_DIR, "home-onboarding-initial.png");
-    await page.screenshot({ path: homeInitialShot, fullPage: true });
+    await safeScreenshot(page, homeInitialShot);
     summary.screenshots.push(homeInitialShot);
 
     await Promise.all([
@@ -133,7 +149,7 @@ async function main() {
     summary.checks.push({ name: "parent_path_role_state", pass: true, data: { parentPage, parentStorage } });
 
     const parentShot = path.join(OUTPUT_DIR, "parent-onboarding.png");
-    await page.screenshot({ path: parentShot, fullPage: true });
+    await safeScreenshot(page, parentShot);
     summary.screenshots.push(parentShot);
 
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
@@ -156,7 +172,7 @@ async function main() {
     summary.checks.push({ name: "teacher_path_role_state", pass: true, data: { teacherPage, teacherStorage } });
 
     const teacherShot = path.join(OUTPUT_DIR, "teacher-onboarding.png");
-    await page.screenshot({ path: teacherShot, fullPage: true });
+    await safeScreenshot(page, teacherShot);
     summary.screenshots.push(teacherShot);
 
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
@@ -190,7 +206,7 @@ async function main() {
     summary.checks.push({ name: "skip_onboarding_non_blocking", pass: true, data: skippedHome });
 
     const skipShot = path.join(OUTPUT_DIR, "home-onboarding-skipped.png");
-    await page.screenshot({ path: skipShot, fullPage: true });
+    await safeScreenshot(page, skipShot);
     summary.screenshots.push(skipShot);
 
     await page.click("#showOnboardingBtn");
@@ -218,7 +234,7 @@ async function main() {
     summary.checks.push({ name: "show_onboarding_restore", pass: true, data: restoredHome });
 
     const restoredShot = path.join(OUTPUT_DIR, "home-onboarding-restored.png");
-    await page.screenshot({ path: restoredShot, fullPage: true });
+    await safeScreenshot(page, restoredShot);
     summary.screenshots.push(restoredShot);
 
     summary.consoleErrors = consoleErrors;
