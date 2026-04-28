@@ -94,5 +94,6 @@
 - game/orbitorchard
 - game/emberwatch
 - game/cloudclimber
+- game/reefrunner
 
 Generated from `src/meta/feedback.js`.

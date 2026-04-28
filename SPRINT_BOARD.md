@@ -333,3 +333,6 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-04-25] Key PR links: none merged for this date.
 - [nightly 2026-04-26] Tracked changes: 1 commit(s) - e313c46 Add Ember Watch game and integrate site routing metadata.
 - [nightly 2026-04-26] Key PR links: none merged for this date.
+
+- [nightly 2026-04-27] Tracked changes: 1 commit(s) - c447446 Add Cloud Climber game and update site metadata.
+- [nightly 2026-04-27] Key PR links: none merged for this date.

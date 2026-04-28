@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Reef Runner | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #e8f6ff;
+  background:
+    radial-gradient(62% 58% at 22% 20%, #1b3a6a 0%, transparent 70%),
+    radial-gradient(56% 48% at 82% 82%, #2b2554 0%, transparent 72%),
+    linear-gradient(180deg, #080f21 0%, #101e3e 50%, #132c4a 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #95c6ff6c;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #132952 0%, #1b3566 48%, #1e4d76 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 14px;
+  border: 1px solid #bbdcff66;
+  background: #0b2144f2;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #c6ddf8; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #c4e8ff75;
+  background: #2a5fbbf0;
+  color: #f3fbff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #99c7ff52;
+  background: #0a1a36f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #ddf3ff30;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #bdd8ea;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.warn b { color: #ffe39a; }
+.bad b { color: #ff9aa8; }
+.good b { color: #9bf0d3; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #99c7ff52;
+  background: #0a1a36f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn {
+  background: #1e4a96;
+  border-color: #c4e8ff75;
+}
+@media (max-width: 900px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Steer a reef skimmer through tide lanes, recover drifting beacons, and avoid reef spikes before hull integrity fails. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Reef Runner | AI and Sons Games">
+  <meta property="og:description" content="Steer a reef skimmer through tide lanes, recover drifting beacons, and avoid reef spikes before hull integrity fails. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/reefrunner">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Reef Runner | AI and Sons Games">
+  <meta name="twitter:description" content="Steer a reef skimmer through tide lanes, recover drifting beacons, and avoid reef spikes before hull integrity fails. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/reefrunner">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Reef Runner","description":"Steer a reef skimmer through tide lanes, recover drifting beacons, and avoid reef spikes before hull integrity fails. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/reefrunner","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Reef Runner game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Beacons</span><b id="lanterns">0/20</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip bad"><span>Hull</span><b id="hull">100%</b></div>
+    <div class="chip"><span>Boost</span><b id="boost">100%</b></div>
+    <div class="chip"><span>Storm</span><b id="storm">1</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn" type="button" class="ctrl-btn">Left</button>
+    <button id="rightBtn" type="button" class="ctrl-btn">Right</button>
+    <button id="boostBtn" type="button" class="ctrl-btn">Boost</button>
+    <button id="pauseBtn" type="button" class="ctrl-btn">Pause</button>
+    <button id="restartBtn" type="button" class="ctrl-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="ctrl-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const lanternsEl = document.getElementById('lanterns');
+const timeEl = document.getElementById('time');
+const hullEl = document.getElementById('hull');
+const boostEl = document.getElementById('boost');
+const stormEl = document.getElementById('storm');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 90;
+const LANTERN_TARGET = 18;
+const PLAYER_SPEED_X = 300;
+const BOOST_ACCEL = 620;
+const GRAVITY = 380;
+const MAX_HULL = 100;
+const PLAYER_RADIUS = 18;
+const CLOUD_COUNT = 10;
+const STAR_COUNT = 24;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  score: 0,
+  lanterns: 0,
+  hull: MAX_HULL,
+  boost: 100,
+  stormLevel: 1,
+  input: { left: false, right: false, boost: false },
+  player: {
+    x: canvas.width * 0.5,
+    y: canvas.height * 0.68,
+    vx: 0,
+    vy: 0,
+    radius: PLAYER_RADIUS,
+  },
+  lanternsLive: [],
+  birds: [],
+  clouds: [],
+  stars: [],
+  logs: [],
+  idCounter: 0,
+  spawnLanternTimer: 0.9,
+  spawnBirdTimer: 1.4,
+  damageCooldown: 0,
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function pushLog(type, data) {
+  state.logs.unshift({
+    t: Number(state.elapsed.toFixed(2)),
+    type,
+    ...data,
+  });
+  if (state.logs.length > 10) state.logs.length = 10;
+}
+
+function createLantern() {
+  const id = `lantern-${state.idCounter += 1}`;
+  return {
+    id,
+    x: randomRange(70, canvas.width - 70),
+    y: canvas.height + randomRange(30, 180),
+    radius: randomRange(10, 15),
+    drift: randomRange(-36, 36),
+    rise: randomRange(90, 150) + state.stormLevel * 8,
+    wobble: randomRange(0, Math.PI * 2),
+  };
+}
+
+function createBird() {
+  const id = `bird-${state.idCounter += 1}`;
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  const speedBase = randomRange(170, 260) + state.stormLevel * 24;
+  return {
+    id,
+    x: dir > 0 ? -60 : canvas.width + 60,
+    y: randomRange(90, canvas.height * 0.82),
+    vx: speedBase * dir,
+    vy: randomRange(-42, 42),
+    flap: randomRange(0, Math.PI * 2),
+    radius: randomRange(18, 24),
+  };
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.score = 0;
+  state.lanterns = 0;
+  state.hull = MAX_HULL;
+  state.boost = 100;
+  state.stormLevel = 1;
+  state.input.left = false;
+  state.input.right = false;
+  state.input.boost = false;
+  state.player.x = canvas.width * 0.5;
+  state.player.y = canvas.height * 0.68;
+  state.player.vx = 0;
+  state.player.vy = 0;
+  state.lanternsLive = [];
+  state.birds = [];
+  state.logs = [];
+  state.idCounter = 0;
+  state.spawnLanternTimer = 0.9;
+  state.spawnBirdTimer = 1.4;
+  state.damageCooldown = 0;
+
+  state.clouds = Array.from({ length: CLOUD_COUNT }, (_, i) => ({
+    x: randomRange(20, canvas.width - 20),
+    y: randomRange(40, canvas.height - 80),
+    speed: randomRange(14, 34),
+    size: randomRange(36, 88),
+    alpha: randomRange(0.1, 0.3),
+    layer: i % 2,
+  }));
+  state.stars = Array.from({ length: STAR_COUNT }, () => ({
+    x: randomRange(0, canvas.width),
+    y: randomRange(0, canvas.height),
+    twinkle: randomRange(0, Math.PI * 2),
+    size: randomRange(1, 2.2),
+  }));
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function showOverlay(title, body, buttonLabel, handler) {
+  overlay.classList.add('show');
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <div class="row">
+        <button id="overlayButton" type="button">${buttonLabel}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayButton').addEventListener('click', handler, { once: true });
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('reefrunner'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, reefrunner: { result: 'started', score: 0, lanterns: 0 } });
+  } catch {}
+  pushLog('run_started', { lantern_target: LANTERN_TARGET });
+}
+
+function finishGame(result) {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  state.mode = result;
+  state.result = result;
+
+  const coinsEarned = Math.max(6, Math.min(70, Math.round((state.score + state.lanterns * 15) / 14)));
+  if (coinsEarned > 0) {
+    try { addCoins(coinsEarned); } catch {}
+  }
+
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      reefrunner: {
+        result,
+        score: Math.round(state.score),
+        lanterns: state.lanterns,
+        hull: Number(state.hull.toFixed(2)),
+        stormLevel: state.stormLevel,
+      },
+    });
+  } catch {}
+
+  const win = result === 'won';
+  const title = win ? 'Sky Route Secured' : 'Storm Took The Route';
+  const body = win
+    ? `You guided ${state.lanterns} lanterns to safety and held the hull. Coins +${coinsEarned}.`
+    : `Hull dropped to ${Math.max(0, state.hull).toFixed(0)}% with ${state.lanterns} lanterns saved. Coins +${coinsEarned}.`;
+  showOverlay(title, body, 'Fly Again', startGame);
+}
+
+function updateSpawns(dt) {
+  state.spawnLanternTimer -= dt;
+  const liveLanternCap = 5 + Math.floor(state.elapsed / 24);
+  if (state.spawnLanternTimer <= 0 && state.lanternsLive.length < liveLanternCap) {
+    state.lanternsLive.push(createLantern());
+    state.spawnLanternTimer = randomRange(0.45, 1.15);
+  }
+
+  state.spawnBirdTimer -= dt;
+  const liveBirdCap = 3 + Math.floor(state.elapsed / 18);
+  if (state.spawnBirdTimer <= 0 && state.birds.length < liveBirdCap) {
+    state.birds.push(createBird());
+    state.spawnBirdTimer = randomRange(0.7, 1.45);
+  }
+}
+
+function updatePlayer(dt) {
+  let xAxis = 0;
+  if (state.input.left) xAxis -= 1;
+  if (state.input.right) xAxis += 1;
+  state.player.vx = xAxis * PLAYER_SPEED_X;
+
+  const boostActive = state.input.boost && state.boost > 0.8;
+  if (boostActive) {
+    state.player.vy -= BOOST_ACCEL * dt;
+    state.boost = clamp(state.boost - dt * 28, 0, 100);
+  } else {
+    state.boost = clamp(state.boost + dt * 16, 0, 100);
+  }
+
+  state.player.vy += GRAVITY * dt;
+  state.player.vy = clamp(state.player.vy, -290, 390);
+
+  state.player.x = clamp(state.player.x + state.player.vx * dt, 40, canvas.width - 40);
+  state.player.y = clamp(state.player.y + state.player.vy * dt, 74, canvas.height - 48);
+
+  if (state.player.y >= canvas.height - 48) {
+    state.player.vy *= -0.2;
+    state.hull = clamp(state.hull - dt * 12, 0, MAX_HULL);
+  }
+}
+
+function updateBeacons(dt) {
+  for (let i = state.lanternsLive.length - 1; i >= 0; i -= 1) {
+    const lantern = state.lanternsLive[i];
+    lantern.y -= lantern.rise * dt;
+    lantern.wobble += dt * 2.3;
+    lantern.x += Math.sin(lantern.wobble) * lantern.drift * dt;
+    lantern.x = clamp(lantern.x, 30, canvas.width - 30);
+
+    const dx = lantern.x - state.player.x;
+    const dy = lantern.y - state.player.y;
+    if (Math.hypot(dx, dy) <= lantern.radius + state.player.radius + 6) {
+      state.lanterns += 1;
+      state.score += 60;
+      state.lanternsLive.splice(i, 1);
+      pushLog('lantern_saved', { total: state.lanterns });
+      continue;
+    }
+
+    if (lantern.y < -30) {
+      state.lanternsLive.splice(i, 1);
+      state.score += 18;
+    }
+  }
+}
+
+function updateBirds(dt) {
+  state.damageCooldown = Math.max(0, state.damageCooldown - dt);
+  const wind = Math.sin(state.elapsed * 0.7) * (18 + state.stormLevel * 4);
+
+  for (let i = state.birds.length - 1; i >= 0; i -= 1) {
+    const bird = state.birds[i];
+    bird.flap += dt * (6 + state.stormLevel * 0.5);
+    bird.x += (bird.vx + wind) * dt;
+    bird.y += bird.vy * dt + Math.sin(bird.flap) * 46 * dt;
+
+    if (bird.y < 50 || bird.y > canvas.height - 50) bird.vy *= -1;
+
+    const dx = bird.x - state.player.x;
+    const dy = bird.y - state.player.y;
+    if (state.damageCooldown <= 0 && Math.hypot(dx, dy) <= bird.radius + state.player.radius) {
+      state.hull = clamp(state.hull - (12 + state.stormLevel * 1.8), 0, MAX_HULL);
+      state.player.vy += 110;
+      state.damageCooldown = 0.7;
+      pushLog('bird_collision', { hull: Number(state.hull.toFixed(1)) });
+    }
+
+    if (bird.x < -90 || bird.x > canvas.width + 90) {
+      state.birds.splice(i, 1);
+    }
+  }
+}
+
+function updateStorm(dt) {
+  const threshold = 1 + Math.floor(state.elapsed / 24);
+  state.stormLevel = clamp(threshold, 1, 5);
+  state.score += dt * (2 + state.stormLevel * 0.2);
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+
+  for (const cloud of state.clouds) {
+    const drift = cloud.layer === 0 ? 1 : -1;
+    cloud.x += dt * cloud.speed * drift;
+    if (cloud.x < -cloud.size * 2) cloud.x = canvas.width + cloud.size * 2;
+    if (cloud.x > canvas.width + cloud.size * 2) cloud.x = -cloud.size * 2;
+  }
+  for (const star of state.stars) star.twinkle += dt * 3.1;
+
+  updateSpawns(dt);
+  updatePlayer(dt);
+  updateBeacons(dt);
+  updateBirds(dt);
+  updateStorm(dt);
+
+  if (state.hull <= 0) {
+    finishGame('lost');
+    return;
+  }
+
+  if (state.lanterns >= LANTERN_TARGET) {
+    finishGame('won');
+    return;
+  }
+
+  if (state.timeLeft <= 0) {
+    finishGame(state.lanterns >= LANTERN_TARGET ? 'won' : 'lost');
+  }
+}
+
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, '#11234d');
+  g.addColorStop(0.45, '#183d72');
+  g.addColorStop(1, '#256388');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (const star of state.stars) {
+    const alpha = 0.3 + (Math.sin(star.twinkle) + 1) * 0.2;
+    ctx.fillStyle = `rgba(236,244,255,${alpha.toFixed(3)})`;
+    ctx.fillRect(star.x, star.y, star.size, star.size);
+  }
+
+  for (const cloud of state.clouds) {
+    ctx.globalAlpha = cloud.alpha;
+    ctx.fillStyle = cloud.layer === 0 ? '#c8dcf5' : '#a9c8ee';
+    ctx.beginPath();
+    ctx.arc(cloud.x, cloud.y, cloud.size * 0.4, 0, Math.PI * 2);
+    ctx.arc(cloud.x + cloud.size * 0.48, cloud.y - cloud.size * 0.1, cloud.size * 0.34, 0, Math.PI * 2);
+    ctx.arc(cloud.x - cloud.size * 0.45, cloud.y + cloud.size * 0.04, cloud.size * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBeacons() {
+  for (const lantern of state.lanternsLive) {
+    const glow = ctx.createRadialGradient(lantern.x, lantern.y, 2, lantern.x, lantern.y, lantern.radius * 4);
+    glow.addColorStop(0, 'rgba(255,247,205,0.95)');
+    glow.addColorStop(0.45, 'rgba(255,199,108,0.84)');
+    glow.addColorStop(1, 'rgba(255,199,108,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(lantern.x, lantern.y, lantern.radius * 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffd08a';
+    ctx.beginPath();
+    ctx.arc(lantern.x, lantern.y, lantern.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#fff6d5';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(lantern.x, lantern.y + lantern.radius);
+    ctx.lineTo(lantern.x, lantern.y + lantern.radius + 11);
+    ctx.stroke();
+  }
+}
+
+function drawBirds() {
+  for (const bird of state.birds) {
+    const flap = Math.sin(bird.flap) * 8;
+    const dir = Math.sign(bird.vx) || 1;
+
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.scale(dir, 1);
+
+    ctx.fillStyle = '#243345';
+    ctx.beginPath();
+    ctx.moveTo(-20, 0);
+    ctx.quadraticCurveTo(0, -12, 20, 0);
+    ctx.quadraticCurveTo(0, 14, -20, 0);
+    ctx.fill();
+
+    ctx.fillStyle = '#35516c';
+    ctx.beginPath();
+    ctx.moveTo(-6, -2);
+    ctx.quadraticCurveTo(-30, -18 - flap, -44, -4);
+    ctx.quadraticCurveTo(-24, 2, -6, 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(6, -2);
+    ctx.quadraticCurveTo(30, -18 - flap, 44, -4);
+    ctx.quadraticCurveTo(24, 2, 6, 4);
+    ctx.fill();
+
+    ctx.fillStyle = '#f2f6ff';
+    ctx.beginPath();
+    ctx.arc(7, -3, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawPlayer() {
+  const { x, y, vy, radius } = state.player;
+
+  const balloonTopY = y - 44;
+  const bob = Math.sin(state.elapsed * 4.2) * 3;
+
+  const balloon = ctx.createRadialGradient(x - 8, balloonTopY - 8 + bob, 6, x, balloonTopY + bob, 50);
+  balloon.addColorStop(0, '#f5fbff');
+  balloon.addColorStop(0.55, '#95d3ff');
+  balloon.addColorStop(1, '#3b89cf');
+  ctx.fillStyle = balloon;
+  ctx.beginPath();
+  ctx.arc(x, balloonTopY + bob, 28, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#ecf7ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 10, balloonTopY + 20 + bob);
+  ctx.lineTo(x - 12, y - 10);
+  ctx.moveTo(x + 10, balloonTopY + 20 + bob);
+  ctx.lineTo(x + 12, y - 10);
+  ctx.stroke();
+
+  ctx.fillStyle = '#9c5b31';
+  ctx.fillRect(x - 17, y - 10, 34, 22);
+  ctx.fillStyle = '#d69a67';
+  ctx.fillRect(x - 14, y - 7, 28, 16);
+
+  const flameScale = state.input.boost && state.boost > 0.8 ? 1.3 : 0.55;
+  const flame = ctx.createLinearGradient(x, y + 14, x, y + 42);
+  flame.addColorStop(0, 'rgba(255,247,194,0.95)');
+  flame.addColorStop(0.45, 'rgba(255,165,75,0.9)');
+  flame.addColorStop(1, 'rgba(255,95,46,0)');
+  ctx.fillStyle = flame;
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + 12);
+  ctx.lineTo(x - 2, y + 14 + 26 * flameScale);
+  ctx.lineTo(x + 2, y + 14 + 30 * flameScale);
+  ctx.lineTo(x + 5, y + 12);
+  ctx.closePath();
+  ctx.fill();
+
+  if (state.damageCooldown > 0) {
+    ctx.strokeStyle = 'rgba(255,152,169,0.9)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y - 10, radius + 20, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (vy < -20) {
+    ctx.fillStyle = 'rgba(202,236,255,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(x - 34, y + 10);
+    ctx.lineTo(x - 10, y + 1);
+    ctx.lineTo(x - 10, y + 16);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(x + 34, y + 10);
+    ctx.lineTo(x + 10, y + 1);
+    ctx.lineTo(x + 10, y + 16);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawStormBands() {
+  const bandCount = 4;
+  for (let i = 0; i < bandCount; i += 1) {
+    const y = ((state.elapsed * (26 + i * 8)) % (canvas.height + 130)) - 100;
+    const alpha = 0.08 + state.stormLevel * 0.02;
+    ctx.fillStyle = `rgba(157,195,255,${alpha.toFixed(3)})`;
+    ctx.fillRect(0, y, canvas.width, 24 + i * 6);
+  }
+}
+
+function draw() {
+  drawSky();
+  drawStormBands();
+  drawBeacons();
+  drawBirds();
+  drawPlayer();
+}
+
+function syncHud() {
+  modeEl.textContent = String(state.mode).toUpperCase();
+  scoreEl.textContent = String(Math.round(state.score));
+  lanternsEl.textContent = `${state.lanterns}/${LANTERN_TARGET}`;
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  hullEl.textContent = `${Math.max(0, Math.round(state.hull))}%`;
+  boostEl.textContent = `${Math.round(state.boost)}%`;
+  stormEl.textContent = String(state.stormLevel);
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const timeChip = timeEl.parentElement;
+  timeChip.classList.toggle('good', state.timeLeft >= TOTAL_SECONDS * 0.6);
+  timeChip.classList.toggle('warn', state.timeLeft < TOTAL_SECONDS * 0.6 && state.timeLeft >= TOTAL_SECONDS * 0.25);
+  timeChip.classList.toggle('bad', state.timeLeft < TOTAL_SECONDS * 0.25);
+
+  const hullChip = hullEl.parentElement;
+  hullChip.classList.toggle('good', state.hull >= 65);
+  hullChip.classList.toggle('warn', state.hull < 65 && state.hull >= 35);
+  hullChip.classList.toggle('bad', state.hull < 35);
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'Hold your altitude, then resume your lantern escort route.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function onKeyDown(event) {
+  const code = event.code;
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); state.input.left = true; return; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); state.input.right = true; return; }
+  if (code === 'ArrowUp' || code === 'KeyW' || code === 'Space' || code === 'Enter') { event.preventDefault(); state.input.boost = true; return; }
+  if (code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function onKeyUp(event) {
+  const code = event.code;
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); state.input.left = false; return; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); state.input.right = false; return; }
+  if (code === 'ArrowUp' || code === 'KeyW' || code === 'Space' || code === 'Enter') {
+    event.preventDefault();
+    state.input.boost = false;
+  }
+}
+
+function bindHoldButton(id, press, release = press) {
+  const btn = document.getElementById(id);
+  const down = (event) => { event.preventDefault(); press(); };
+  const up = (event) => { event.preventDefault(); release(); };
+  btn.addEventListener('pointerdown', down);
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
+  btn.addEventListener('pointerleave', up);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+bindHoldButton('leftBtn', () => { state.input.left = true; }, () => { state.input.left = false; });
+bindHoldButton('rightBtn', () => { state.input.right = true; }, () => { state.input.right = false; });
+bindHoldButton('boostBtn', () => { state.input.boost = true; }, () => { state.input.boost = false; });
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'reefrunner',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left; +x moves right, +y moves down. All entities use pixel coordinates in this frame.',
+  objective: {
+    lantern_target: LANTERN_TARGET,
+    keep_hull_above_percent: 0,
+    time_limit_seconds: TOTAL_SECONDS,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    lanterns_saved: state.lanterns,
+    hull_percent: Number(state.hull.toFixed(2)),
+    boost_percent: Number(state.boost.toFixed(2)),
+    storm_level: state.stormLevel,
+  },
+  player: {
+    x: Number(state.player.x.toFixed(2)),
+    y: Number(state.player.y.toFixed(2)),
+    vx: Number(state.player.vx.toFixed(2)),
+    vy: Number(state.player.vy.toFixed(2)),
+    radius: state.player.radius,
+    boost_pressed: state.input.boost,
+  },
+  lanterns: state.lanternsLive.map((lantern) => ({
+    id: lantern.id,
+    x: Number(lantern.x.toFixed(2)),
+    y: Number(lantern.y.toFixed(2)),
+    radius: Number(lantern.radius.toFixed(2)),
+    rise_speed: Number(lantern.rise.toFixed(2)),
+  })),
+  birds: state.birds.map((bird) => ({
+    id: bird.id,
+    x: Number(bird.x.toFixed(2)),
+    y: Number(bird.y.toFixed(2)),
+    vx: Number(bird.vx.toFixed(2)),
+    vy: Number(bird.vy.toFixed(2)),
+    radius: Number(bird.radius.toFixed(2)),
+  })),
+  timers: {
+    spawn_lantern_seconds: Number(state.spawnLanternTimer.toFixed(3)),
+    spawn_bird_seconds: Number(state.spawnBirdTimer.toFixed(3)),
+    damage_cooldown_seconds: Number(state.damageCooldown.toFixed(3)),
+  },
+  recent_events: state.logs,
+  controls: {
+    move: 'A/D or Left/Right',
+    boost: 'W/Up/Space/Enter',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay(
+  'Reef Runner',
+  'Pilot your balloon courier through storm lanes. Save 18 drifting beacons before time runs out, and keep your hull from collapsing.',
+  'Launch',
+  startGame,
+);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'reefrunner', gameName: 'Reef Runner' });
+</script>
+</body>
+</html>
+
