@@ -79,5 +79,6 @@ export const GAMES = [
   { slug:'emberwatch',     name:'Ember Watch',         emoji:'\u{1F6A8}', scoreHint:'rescues',    url:'/emberwatch',   desc:'Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical.', earnsCoins:true },
   { slug:'cloudclimber',   name:'Cloud Climber',       emoji:'\u{1F388}', scoreHint:'lanterns',   url:'/cloudclimber', desc:'Pilot a balloon courier through storm lanes, rescue drifting lanterns, and keep your hull intact before time expires.', earnsCoins:true },
   { slug:'reefrunner',     name:'Reef Runner',         emoji:'\u{1F30A}', scoreHint:'beacons',    url:'/reefrunner',   desc:'Steer a reef skimmer through tide lanes, recover drifting beacons, and avoid reef spikes before hull integrity fails.', earnsCoins:true },
+  { slug:'codebreaker',    name:'Codebreaker Grid',    emoji:'\u{1F510}', scoreHint:'solves',     url:'/codebreaker',  desc:'Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills.', earnsCoins:true },
 ];
 

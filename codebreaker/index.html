@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Codebreaker Grid | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f5f7fb;
+  background:
+    radial-gradient(60% 52% at 18% 16%, #2d3b66 0%, transparent 68%),
+    radial-gradient(48% 52% at 88% 78%, #315341 0%, transparent 72%),
+    linear-gradient(180deg, #10131b 0%, #151b28 48%, #18221e 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #d7ead26c;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #172033 0%, #1d2635 50%, #26352e 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 14px;
+  border: 1px solid #d7ead266;
+  background: #111a24f4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #d7e2ed; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #e7f4da75;
+  background: #34614ef0;
+  color: #f9fff8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #d7ead252;
+  background: #101821f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #f4ffe530;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c9d5df;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a9f2c6; }
+.warn b { color: #ffe199; }
+.bad b { color: #ff9d9d; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #d7ead252;
+  background: #101821f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.ctrl-btn { background: #2b5748; border-color: #e7f4da75; }
+.swatch-btn {
+  min-width: 0;
+  padding: 10px 8px;
+  color: #10131b;
+  text-shadow: 0 1px 0 #ffffff80;
+}
+.utility-btn { background: #39415a; }
+@media (max-width: 920px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Codebreaker Grid | AI and Sons Games">
+  <meta property="og:description" content="Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/codebreaker">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Codebreaker Grid | AI and Sons Games">
+  <meta name="twitter:description" content="Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/codebreaker">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Codebreaker Grid","description":"Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/codebreaker","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Codebreaker Grid game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Attempt</span><b id="attempt">1/10</b></div>
+    <div class="chip"><span>Exact</span><b id="exact">0</b></div>
+    <div class="chip"><span>Near</span><b id="near">0</b></div>
+    <div class="chip"><span>Guess</span><b id="guess">0/4</b></div>
+    <div class="chip"><span>Streak</span><b id="streak">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">0.0s</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="color0" type="button" class="swatch-btn" style="background:#e84f5f;">Red</button>
+    <button id="color1" type="button" class="swatch-btn" style="background:#47a3ff;">Blue</button>
+    <button id="color2" type="button" class="swatch-btn" style="background:#58d58a;">Green</button>
+    <button id="color3" type="button" class="swatch-btn" style="background:#ffd65a;">Yellow</button>
+    <button id="color4" type="button" class="swatch-btn" style="background:#9f7cff;">Violet</button>
+    <button id="color5" type="button" class="swatch-btn" style="background:#ff9a4d;">Orange</button>
+    <button id="removeBtn" type="button" class="utility-btn">Undo</button>
+    <button id="submitBtn" type="button" class="ctrl-btn">Submit</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const attemptEl = document.getElementById('attempt');
+const exactEl = document.getElementById('exact');
+const nearEl = document.getElementById('near');
+const guessEl = document.getElementById('guess');
+const streakEl = document.getElementById('streak');
+const timeEl = document.getElementById('time');
+const coinsEl = document.getElementById('coins');
+
+const CODE_LENGTH = 4;
+const MAX_ATTEMPTS = 10;
+const BOARD_X = 92;
+const BOARD_Y = 92;
+const ROW_H = 58;
+const PEG_GAP = 54;
+const PEG_R = 18;
+const PALETTE_X = 820;
+const PALETTE_Y = 138;
+const PALETTE_GAP = 72;
+const COLORS = [
+  { id: 'red', name: 'Red', hex: '#e84f5f' },
+  { id: 'blue', name: 'Blue', hex: '#47a3ff' },
+  { id: 'green', name: 'Green', hex: '#58d58a' },
+  { id: 'yellow', name: 'Yellow', hex: '#ffd65a' },
+  { id: 'violet', name: 'Violet', hex: '#9f7cff' },
+  { id: 'orange', name: 'Orange', hex: '#ff9a4d' },
+];
+const SECRET_CODES = [
+  ['red', 'blue', 'green', 'yellow'],
+  ['violet', 'orange', 'blue', 'red'],
+  ['green', 'green', 'yellow', 'violet'],
+  ['orange', 'red', 'violet', 'blue'],
+  ['yellow', 'blue', 'orange', 'green'],
+];
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  score: 0,
+  streak: 0,
+  selectedColor: 0,
+  currentGuess: [],
+  rows: [],
+  secret: SECRET_CODES[0].slice(),
+  secretIndex: 0,
+  message: 'Choose four colors, then submit.',
+  flashTimer: 0,
+  shakeTimer: 0,
+  input: {
+    selected: false,
+    removed: false,
+    submitted: false,
+  },
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getColor(id) {
+  return COLORS.find((color) => color.id === id) || COLORS[0];
+}
+
+function loadSecretIndex() {
+  try {
+    const raw = window.localStorage?.getItem('codebreaker:secret-index');
+    const parsed = Number.parseInt(raw || '0', 10);
+    if (Number.isFinite(parsed)) return clamp(parsed, 0, SECRET_CODES.length - 1);
+  } catch {}
+  return 0;
+}
+
+function saveSecretIndex(index) {
+  try { window.localStorage?.setItem('codebreaker:secret-index', String(index)); } catch {}
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.score = 0;
+  state.selectedColor = 0;
+  state.currentGuess = [];
+  state.rows = [];
+  state.secretIndex = loadSecretIndex();
+  state.secret = SECRET_CODES[state.secretIndex % SECRET_CODES.length].slice();
+  state.message = 'Choose four colors, then submit.';
+  state.flashTimer = 0;
+  state.shakeTimer = 0;
+  state.input.selected = false;
+  state.input.removed = false;
+  state.input.submitted = false;
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function showOverlay(title, body, buttonLabel, handler) {
+  overlay.classList.add('show');
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <div class="row">
+        <button id="overlayButton" type="button">${buttonLabel}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayButton').addEventListener('click', handler, { once: true });
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('codebreaker'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, codebreaker: { result: 'started', attempts: 0, score: 0 } });
+  } catch {}
+}
+
+function finishGame(result) {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  state.mode = result;
+  state.result = result;
+
+  const won = result === 'won';
+  const attemptsUsed = state.rows.length;
+  const coinsEarned = won
+    ? Math.max(8, Math.min(55, 12 + (MAX_ATTEMPTS - attemptsUsed) * 5 + state.streak * 2))
+    : Math.max(2, Math.min(16, Math.round(state.score / 18)));
+  if (coinsEarned > 0) {
+    try { addCoins(coinsEarned); } catch {}
+  }
+
+  if (won) {
+    state.streak += 1;
+    const nextIndex = (state.secretIndex + 1) % SECRET_CODES.length;
+    saveSecretIndex(nextIndex);
+  } else {
+    state.streak = 0;
+  }
+
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      codebreaker: {
+        result,
+        score: Math.round(state.score),
+        attempts: attemptsUsed,
+        elapsed: Number(state.elapsed.toFixed(2)),
+      },
+    });
+  } catch {}
+
+  const secretText = state.secret.map((id) => getColor(id).name).join(', ');
+  const title = won ? 'Code Cracked' : 'Grid Locked';
+  const body = won
+    ? `Solved in ${attemptsUsed} attempts. Coins +${coinsEarned}.`
+    : `The hidden code was ${secretText}. Coins +${coinsEarned}.`;
+  showOverlay(title, body, 'New Code', startGame);
+}
+
+function selectColor(index) {
+  if (state.mode !== 'running') return;
+  state.selectedColor = (index + COLORS.length) % COLORS.length;
+  state.input.selected = true;
+  state.message = `${COLORS[state.selectedColor].name} selected.`;
+}
+
+function addSelectedColor() {
+  if (state.mode !== 'running') return;
+  if (state.currentGuess.length >= CODE_LENGTH) {
+    state.message = 'Guess is full. Submit or undo.';
+    state.shakeTimer = 0.18;
+    return;
+  }
+  const color = COLORS[state.selectedColor];
+  state.currentGuess.push(color.id);
+  state.input.selected = true;
+  state.flashTimer = 0.16;
+  state.message = `${color.name} added.`;
+}
+
+function removeLastColor() {
+  if (state.mode !== 'running') return;
+  if (!state.currentGuess.length) {
+    state.message = 'No colors to undo.';
+    state.shakeTimer = 0.18;
+    return;
+  }
+  state.currentGuess.pop();
+  state.input.removed = true;
+  state.message = 'Last color removed.';
+}
+
+function scoreGuess(guess, secret) {
+  let exact = 0;
+  const guessCounts = new Map();
+  const secretCounts = new Map();
+
+  for (let i = 0; i < CODE_LENGTH; i += 1) {
+    if (guess[i] === secret[i]) {
+      exact += 1;
+    } else {
+      guessCounts.set(guess[i], (guessCounts.get(guess[i]) || 0) + 1);
+      secretCounts.set(secret[i], (secretCounts.get(secret[i]) || 0) + 1);
+    }
+  }
+
+  let near = 0;
+  for (const [id, count] of guessCounts.entries()) {
+    near += Math.min(count, secretCounts.get(id) || 0);
+  }
+
+  return { exact, near };
+}
+
+function submitGuess() {
+  if (state.mode !== 'running') return;
+  if (state.currentGuess.length !== CODE_LENGTH) {
+    state.message = `Add ${CODE_LENGTH - state.currentGuess.length} more color${CODE_LENGTH - state.currentGuess.length === 1 ? '' : 's'}.`;
+    state.shakeTimer = 0.18;
+    return;
+  }
+
+  const guess = state.currentGuess.slice();
+  const result = scoreGuess(guess, state.secret);
+  state.rows.push({
+    guess,
+    exact: result.exact,
+    near: result.near,
+    attempt: state.rows.length + 1,
+  });
+  state.currentGuess = [];
+  state.input.submitted = true;
+  state.score += result.exact * 25 + result.near * 10 + 5;
+  state.message = `${result.exact} exact, ${result.near} near.`;
+  state.flashTimer = 0.24;
+
+  if (result.exact === CODE_LENGTH) {
+    state.score += (MAX_ATTEMPTS - state.rows.length + 1) * 45;
+    finishGame('won');
+    return;
+  }
+
+  if (state.rows.length >= MAX_ATTEMPTS) {
+    finishGame('lost');
+  }
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'The grid is held. Resume when you are ready to test the next pattern.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function drawPeg(x, y, id, radius = PEG_R, alpha = 1) {
+  const color = getColor(id);
+  ctx.globalAlpha = alpha;
+  const grad = ctx.createRadialGradient(x - radius * 0.35, y - radius * 0.45, 2, x, y, radius * 1.25);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.24, color.hex);
+  grad.addColorStop(1, '#111827');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff88';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawEmptySlot(x, y, radius = PEG_R) {
+  ctx.strokeStyle = '#e9f0df45';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#00000022';
+  ctx.beginPath();
+  ctx.arc(x, y, radius - 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawFeedback(x, y, exact, near) {
+  const pegs = [];
+  for (let i = 0; i < exact; i += 1) pegs.push('#f7f7f7');
+  for (let i = 0; i < near; i += 1) pegs.push('#1b1e27');
+  while (pegs.length < CODE_LENGTH) pegs.push('#ffffff28');
+
+  for (let i = 0; i < CODE_LENGTH; i += 1) {
+    const px = x + (i % 2) * 18;
+    const py = y + Math.floor(i / 2) * 18;
+    ctx.fillStyle = pegs[i];
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff70';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function drawBoard() {
+  const shake = state.shakeTimer > 0 ? Math.sin(state.elapsed * 80) * 5 : 0;
+
+  ctx.save();
+  ctx.translate(shake, 0);
+  drawRoundedRect(BOARD_X - 28, BOARD_Y - 38, 650, 628, 18);
+  ctx.fillStyle = '#121a24d8';
+  ctx.fill();
+  ctx.strokeStyle = '#e9f0df40';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ecf4e8';
+  ctx.font = '700 24px Trebuchet MS, sans-serif';
+  ctx.fillText('Deduction Board', BOARD_X, BOARD_Y - 8);
+  ctx.font = '700 16px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#bdc9d3';
+  ctx.fillText('white = exact slot, black = right color wrong slot', BOARD_X + 230, BOARD_Y - 8);
+
+  for (let row = 0; row < MAX_ATTEMPTS; row += 1) {
+    const y = BOARD_Y + row * ROW_H + 36;
+    const isCurrent = state.mode === 'running' && row === state.rows.length;
+    drawRoundedRect(BOARD_X - 10, y - 28, 560, 46, 10);
+    ctx.fillStyle = isCurrent ? '#edf7d817' : '#ffffff08';
+    ctx.fill();
+    ctx.strokeStyle = isCurrent ? '#d8f4b6a6' : '#ffffff16';
+    ctx.lineWidth = isCurrent ? 2 : 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#d6dfeb';
+    ctx.font = '700 16px Trebuchet MS, sans-serif';
+    ctx.fillText(String(row + 1).padStart(2, '0'), BOARD_X, y + 5);
+
+    const rowData = state.rows[row];
+    const guess = rowData ? rowData.guess : (isCurrent ? state.currentGuess : []);
+    for (let i = 0; i < CODE_LENGTH; i += 1) {
+      const x = BOARD_X + 74 + i * PEG_GAP;
+      if (guess[i]) drawPeg(x, y, guess[i], PEG_R);
+      else drawEmptySlot(x, y, PEG_R);
+    }
+
+    if (rowData) {
+      drawFeedback(BOARD_X + 352, y - 14, rowData.exact, rowData.near);
+      ctx.fillStyle = '#cfe6ce';
+      ctx.font = '700 16px Trebuchet MS, sans-serif';
+      ctx.fillText(`${rowData.exact} exact`, BOARD_X + 420, y - 2);
+      ctx.fillText(`${rowData.near} near`, BOARD_X + 420, y + 18);
+    } else if (isCurrent) {
+      ctx.fillStyle = '#9fb4c7';
+      ctx.font = '700 16px Trebuchet MS, sans-serif';
+      ctx.fillText('building', BOARD_X + 405, y + 6);
+    }
+  }
+  ctx.restore();
+}
+
+function drawPalette() {
+  drawRoundedRect(PALETTE_X - 36, PALETTE_Y - 64, 300, 496, 18);
+  ctx.fillStyle = '#111923d8';
+  ctx.fill();
+  ctx.strokeStyle = '#e9f0df40';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ecf4e8';
+  ctx.font = '700 24px Trebuchet MS, sans-serif';
+  ctx.fillText('Palette', PALETTE_X, PALETTE_Y - 28);
+
+  COLORS.forEach((color, index) => {
+    const x = PALETTE_X + (index % 2) * 128;
+    const y = PALETTE_Y + Math.floor(index / 2) * PALETTE_GAP;
+    const selected = index === state.selectedColor;
+    drawRoundedRect(x - 22, y - 24, 104, 50, 12);
+    ctx.fillStyle = selected ? '#ffffff22' : '#ffffff0c';
+    ctx.fill();
+    ctx.strokeStyle = selected ? '#f4ffb2' : '#ffffff24';
+    ctx.lineWidth = selected ? 3 : 1;
+    ctx.stroke();
+    drawPeg(x, y, color.id, 17);
+    ctx.fillStyle = '#e8eef4';
+    ctx.font = '700 14px Trebuchet MS, sans-serif';
+    ctx.fillText(String(index + 1), x + 36, y + 5);
+  });
+
+  drawRoundedRect(PALETTE_X - 6, PALETTE_Y + 248, 210, 58, 12);
+  ctx.fillStyle = state.currentGuess.length === CODE_LENGTH ? '#6a8f55aa' : '#263142cc';
+  ctx.fill();
+  ctx.strokeStyle = '#e9f0df44';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = '#eef7ea';
+  ctx.font = '700 17px Trebuchet MS, sans-serif';
+  ctx.fillText('Enter submits', PALETTE_X + 18, PALETTE_Y + 282);
+
+  drawRoundedRect(PALETTE_X - 6, PALETTE_Y + 320, 210, 70, 12);
+  ctx.fillStyle = '#222c3acc';
+  ctx.fill();
+  ctx.strokeStyle = '#e9f0df33';
+  ctx.stroke();
+  ctx.fillStyle = '#cdd8e2';
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.fillText('Arrows select', PALETTE_X + 18, PALETTE_Y + 346);
+  ctx.fillText('Space/A add', PALETTE_X + 18, PALETTE_Y + 368);
+  ctx.fillText('B or Backspace undo', PALETTE_X + 18, PALETTE_Y + 390);
+}
+
+function drawStatus() {
+  drawRoundedRect(82, 704, 1036, 38, 12);
+  ctx.fillStyle = '#0d131ccf';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff24';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = state.flashTimer > 0 ? '#f2ffd1' : '#d9e7ef';
+  ctx.font = '700 18px Trebuchet MS, sans-serif';
+  ctx.fillText(state.message, 108, 729);
+}
+
+function drawSecretPreview() {
+  drawRoundedRect(824, 58, 212, 42, 10);
+  ctx.fillStyle = '#151d28cc';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff24';
+  ctx.stroke();
+  ctx.fillStyle = '#cdd8e2';
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.fillText('Hidden code: ????', 846, 84);
+}
+
+function drawBackground() {
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, '#182035');
+  g.addColorStop(0.55, '#1f2734');
+  g.addColorStop(1, '#23372e');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = '#dbe9d7';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < canvas.width; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 160, canvas.height);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function draw() {
+  drawBackground();
+  drawSecretPreview();
+  drawBoard();
+  drawPalette();
+  drawStatus();
+}
+
+function syncHud() {
+  const lastRow = state.rows[state.rows.length - 1] || { exact: 0, near: 0 };
+  modeEl.textContent = String(state.mode).toUpperCase();
+  attemptEl.textContent = `${Math.min(state.rows.length + 1, MAX_ATTEMPTS)}/${MAX_ATTEMPTS}`;
+  exactEl.textContent = String(lastRow.exact);
+  nearEl.textContent = String(lastRow.near);
+  guessEl.textContent = `${state.currentGuess.length}/${CODE_LENGTH}`;
+  streakEl.textContent = String(state.streak);
+  timeEl.textContent = `${state.elapsed.toFixed(1)}s`;
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const attemptChip = attemptEl.parentElement;
+  attemptChip.classList.toggle('good', state.rows.length <= 3);
+  attemptChip.classList.toggle('warn', state.rows.length > 3 && state.rows.length < 8);
+  attemptChip.classList.toggle('bad', state.rows.length >= 8);
+}
+
+function update(dt) {
+  if (state.mode === 'running') {
+    state.elapsed += dt;
+  }
+  state.flashTimer = Math.max(0, state.flashTimer - dt);
+  state.shakeTimer = Math.max(0, state.shakeTimer - dt);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function onKeyDown(event) {
+  if (event.repeat) return;
+  const code = event.code;
+  if (code === 'ArrowLeft') { event.preventDefault(); selectColor(state.selectedColor - 1); return; }
+  if (code === 'ArrowRight') { event.preventDefault(); selectColor(state.selectedColor + 1); return; }
+  if (code === 'Space' || code === 'KeyA') { event.preventDefault(); addSelectedColor(); return; }
+  if (code === 'KeyB' || code === 'Backspace' || code === 'Delete') { event.preventDefault(); removeLastColor(); return; }
+  if (code === 'Enter') { event.preventDefault(); submitGuess(); return; }
+  if (code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (code === 'KeyF') { event.preventDefault(); toggleFullscreen(); return; }
+  if (/^Digit[1-6]$/.test(code)) {
+    event.preventDefault();
+    selectColor(Number(code.slice(5)) - 1);
+    addSelectedColor();
+  }
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+    y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+  };
+}
+
+function onCanvasPointerDown(event) {
+  event.preventDefault();
+  if (state.mode !== 'running') return;
+  const pt = canvasPoint(event);
+
+  COLORS.forEach((color, index) => {
+    const x = PALETTE_X + (index % 2) * 128;
+    const y = PALETTE_Y + Math.floor(index / 2) * PALETTE_GAP;
+    if (pt.x >= x - 24 && pt.x <= x + 82 && pt.y >= y - 26 && pt.y <= y + 28) {
+      selectColor(index);
+      addSelectedColor();
+    }
+  });
+}
+
+COLORS.forEach((color, index) => {
+  document.getElementById(`color${index}`).addEventListener('click', () => {
+    selectColor(index);
+    addSelectedColor();
+  });
+});
+document.getElementById('removeBtn').addEventListener('click', removeLastColor);
+document.getElementById('submitBtn').addEventListener('click', submitGuess);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', onCanvasPointerDown);
+window.addEventListener('keydown', onKeyDown);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'codebreaker',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left; +x moves right, +y moves down. Board rows and palette use pixel coordinates in this frame.',
+  objective: {
+    code_length: CODE_LENGTH,
+    max_attempts: MAX_ATTEMPTS,
+    solve_hidden_code_before_attempts_run_out: true,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    score: Math.round(state.score),
+    attempts_used: state.rows.length,
+    attempts_remaining: Math.max(0, MAX_ATTEMPTS - state.rows.length),
+    current_guess_slots: state.currentGuess.length,
+    streak: state.streak,
+  },
+  palette: COLORS.map((color, index) => ({
+    index,
+    id: color.id,
+    name: color.name,
+    selected: index === state.selectedColor,
+  })),
+  current_guess: state.currentGuess.map((id) => getColor(id).name),
+  submitted_rows: state.rows.map((row) => ({
+    attempt: row.attempt,
+    guess: row.guess.map((id) => getColor(id).name),
+    exact: row.exact,
+    near: row.near,
+  })),
+  last_feedback: state.rows.length ? {
+    exact: state.rows[state.rows.length - 1].exact,
+    near: state.rows[state.rows.length - 1].near,
+  } : null,
+  automation_secret: state.secret.map((id) => getColor(id).name),
+  message: state.message,
+  controls: {
+    select_color: 'Left/Right arrows or color buttons',
+    add_color: 'Space or A',
+    undo: 'B, Backspace, or Undo button',
+    submit: 'Enter or Submit button',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay(
+  'Codebreaker Grid',
+  'Deduce the hidden four-color code. Each submitted row reports exact color-and-slot matches plus near matches that are right color, wrong slot.',
+  'Start Cracking',
+  startGame,
+);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'codebreaker', gameName: 'Codebreaker Grid' });
+</script>
+</body>
+</html>

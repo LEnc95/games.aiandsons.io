@@ -95,5 +95,6 @@
 - game/emberwatch
 - game/cloudclimber
 - game/reefrunner
+- game/codebreaker
 
 Generated from `src/meta/feedback.js`.

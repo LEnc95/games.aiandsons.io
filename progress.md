@@ -2190,3 +2190,20 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Skill-required Playwright loop via `$develop-web-game` client for `/cloudclimber`: blocked in this sandbox (`browserType.launch: spawn EPERM`).
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the Playwright gameplay validation loop for `/cloudclimber` in an environment that allows child-process and Chromium launch.
+
+## 2026-04-29 Codebreaker Grid automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `codebreaker` / Codebreaker Grid because the catalog did not have a Mastermind-style hidden-code deduction game.
+- Added `codebreaker/index.html` with a canvas deduction board, six-color palette, exact/near clue scoring, desktop controls, touch controls, pause/restart/fullscreen support, profile coin rewards, achievement payloads, feedback mount, and deterministic hooks (`window.advanceTime(ms)`, `window.render_game_to_text()`).
+- Started integration wiring in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Regenerated SEO/sitemap with `npm run seo`; `/codebreaker` now has generated SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning was skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Slug grep checks across `codebreaker/index.html`, `src/meta/games.js`, `index.html`, `vercel.json`, `sitemap.xml`, and Linear seed artifacts: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` with Node to confirm Codebreaker Grid is present in the game catalog and feedback map: pass.
+  - Parsed both `codebreaker/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - `npm run test:feedback`: blocked after the daily metadata guard passed because the Node test runner hit sandbox `spawn EPERM`.
+  - `$develop-web-game` Playwright client for `/codebreaker`: blocked because Chromium launch hit sandbox `browserType.launch: spawn EPERM`.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay loop for `/codebreaker` in an environment where child process and Chromium launch are allowed.

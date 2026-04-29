@@ -336,3 +336,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 
 - [nightly 2026-04-27] Tracked changes: 1 commit(s) - c447446 Add Cloud Climber game and update site metadata.
 - [nightly 2026-04-27] Key PR links: none merged for this date.
+- [nightly 2026-04-28] Tracked changes: 1 commit(s) - b83ea26 Add Reef Runner game and wire routes metadata and SEO.
+- [nightly 2026-04-28] Key PR links: none merged for this date.
