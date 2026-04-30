@@ -96,5 +96,7 @@
 - game/cloudclimber
 - game/reefrunner
 - game/codebreaker
+- game/potionpantry
+- game/marblecircuit
 
 Generated from `src/meta/feedback.js`.

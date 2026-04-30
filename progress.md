@@ -2207,3 +2207,70 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `$develop-web-game` Playwright client for `/codebreaker`: blocked because Chromium launch hit sandbox `browserType.launch: spawn EPERM`.
 - Follow-up TODO:
   - Re-run `npm run test:feedback` and the Playwright gameplay loop for `/codebreaker` in an environment where child process and Chromium launch are allowed.
+
+## 2026-04-29 Reef Runner uniqueness pass
+- New request: "cloud climber and reef runner are too similar. Make them unqiue games"
+- Kept Cloud Climber as the vertical balloon-courier rescue loop.
+- Reworked `reefrunner/index.html` into a distinct underwater side-scroller:
+  - New controls: depth steering (`W/S` or Up/Down), throttle/brake (`D/A` or Left/Right), sonar ping (`Space/Enter`).
+  - New loop: travel a 2400m reef route, recover 14 beacons, manage hull + oxygen, and use sonar to charge beacons or stun jellyfish.
+  - New hazards/resources: coral gates, jellyfish, oxygen bubbles, current bands, sonar energy, reef floor visuals.
+  - Updated `window.render_game_to_text()` to expose route, oxygen, sonar, coral gates, jellyfish, oxygen bubbles, and beacon charge state.
+- Updated launcher/catalog copy in `src/meta/games.js` and `index.html`; regenerated SEO/sitemap with `npm run seo`.
+- Validation completed:
+  - Parsed module scripts for `reefrunner/index.html` and `cloudclimber/index.html` with `vm.SourceTextModule`: pass.
+  - Required `$develop-web-game` Playwright client run for `/reefrunner`: `output/web-game/reefrunner-unique-run1`, no `errors-*.json`.
+  - Reviewed screenshots: new coral gates, sonar pulse, charged beacons, oxygen bubbles, jellyfish, and skimmer are visible.
+  - Extra Playwright layout/controls check: `output/web-game/reefrunner-unique-layout`, pause/resume and mobile running state pass with zero browser errors.
+  - Targeted collection check: `output/web-game/reefrunner-unique-collect`, recovered 1 charged beacon and cleared a coral gate with zero browser errors.
+  - `npm run test:feedback`: pass, 31/31.
+  - `npm run test:feedback-smoke:raw`: pass.
+- Follow-up TODO:
+  - Optional: tune Reef Runner difficulty after human playtesting; automated runs show coral collisions are possible when holding a simple scripted route, but the targeted controller can recover beacons cleanly.
+
+## 2026-04-29 Potion Pantry automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `potionpantry` / Potion Pantry because the catalog did not have a compact ingredient-mixing order puzzle.
+- Added `potionpantry/index.html` with a single-canvas potion rush loop:
+  - Core loop: read the active order card, add matching ingredient drops, serve before patience drains, and fill 12 orders before the 90-second rush ends.
+  - Controls: desktop number keys 1-4, Backspace undo, C clear, Enter/Space serve, P/R/F; mobile/touch buttons for all primary actions.
+  - Platform hooks: `rememberRecent('potionpantry')`, coin rewards via `addCoins`, progression payload via `maybeUnlock`, and feedback mount.
+  - Deterministic hooks: `window.advanceTime(ms)` and `window.render_game_to_text()` with coordinate-system note and concise order/cauldron state.
+- Started integration wiring in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Regenerated SEO/sitemap with `npm run seo`; `/potionpantry` now has SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Parsed both `potionpantry/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` with Node to confirm Potion Pantry is present in the game catalog and feedback map: pass.
+  - Slug grep checks across `potionpantry/index.html`, `src/meta/games.js`, `index.html`, `vercel.json`, `sitemap.xml`, and Linear seed artifacts: pass.
+  - Served `/potionpantry` through a short-lived local Node static server and confirmed the HTML contains expected game + deterministic hook content: pass.
+  - `npm run test:feedback`: blocked after the daily metadata guard passed because the Node test runner hit sandbox `spawn EPERM`.
+  - `$develop-web-game` Playwright client for `/potionpantry`: blocked because Chromium launch hit sandbox `browserType.launch: spawn EPERM`.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback` and the Playwright gameplay loop for `/potionpantry` in an environment where child process and Chromium launch are allowed.
+
+## 2026-04-30 Marble Circuit automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `marblecircuit` / Marble Circuit because the catalog did not have a tilt-controlled marble maze physics game.
+- Plan: add a standalone canvas game with desktop/mobile tilt controls, checkpoints, gates, traps, finish target, feedback mount, and deterministic hooks; then wire catalog, routing, SEO, and feedback baseline artifacts.
+- Added `marblecircuit/index.html` with a single-canvas tilt maze game, three courses, ring collection, gate unlocking, sink-hole hazards, score/coin payout, desktop and touch controls, fullscreen/pause/restart, shared feedback mount, and deterministic hooks (`window.advanceTime(ms)`, `window.render_game_to_text()`).
+- Started integration wiring in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Early validation:
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Imported `src/meta/games.js` and confirmed Marble Circuit is present in the catalog: pass.
+  - Parsed both `marblecircuit/index.html` module scripts with `vm.SourceTextModule`: pass.
+- Regenerated SEO/sitemap with `npm run seo`; `/marblecircuit` now has generated SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Parsed both `marblecircuit/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` with Node to confirm Marble Circuit is present in the game catalog and feedback map: pass.
+  - Slug grep checks across `marblecircuit/index.html`, `src/meta/games.js`, `src/meta/feedback.js`, `index.html`, `vercel.json`, `sitemap.xml`, and Linear seed artifacts: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass (4/4).
+  - Served `/marblecircuit` plus required module URLs through a short-lived local Node static server: pass.
+  - `npm run test:feedback`: blocked after the daily metadata guard passed because the Node test runner hit sandbox `spawn EPERM`.
+  - `$develop-web-game` Playwright client for `/marblecircuit`: blocked because Chromium launch hit sandbox `browserType.launch: spawn EPERM`; no screenshots were produced.
+  - `npm run test:feedback-smoke:raw`: attempted with the local Node static server, but Chromium launch hit sandbox `browserType.launch: spawn EPERM`.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/marblecircuit` in an environment where child process and Chromium launch are allowed.

@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Marble Circuit | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(55% 44% at 18% 14%, #1b5961 0%, transparent 70%),
+    radial-gradient(42% 48% at 84% 82%, #6d432f 0%, transparent 72%),
+    linear-gradient(180deg, #10141b 0%, #18212c 50%, #1c2622 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 1040px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #d7f0ef70;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #192532 0%, #22313c 54%, #24312c 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 730px;
+  border-radius: 14px;
+  border: 1px solid #d9fbff66;
+  background: #111b25f4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 42px); }
+p { margin: 0 0 10px; color: #d6e7ed; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #e5fff875;
+  background: #2f6c66f0;
+  color: #f9fffe;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 1040px);
+  border-radius: 12px;
+  border: 1px solid #d9fbff52;
+  background: #101a24f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #f4ffe530;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cad9df;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a7f5c0; }
+.warn b { color: #ffe59d; }
+.bad b { color: #ffaaa0; }
+.controls {
+  width: min(96vw, 1040px);
+  border-radius: 12px;
+  border: 1px solid #d9fbff52;
+  background: #101a24f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.tilt-btn { background: #2f5e73; border-color: #e8fbff75; }
+.brake-btn { background: #77613b; border-color: #ffefbe75; }
+.utility-btn { background: #424b61; border-color: #d9e3ff75; }
+@media (max-width: 920px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  html, body { overflow: auto; }
+  .app { justify-content: flex-start; }
+  .wrap { max-height: 54dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Marble Circuit | AI and Sons Games">
+  <meta property="og:description" content="Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/marblecircuit">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Marble Circuit | AI and Sons Games">
+  <meta name="twitter:description" content="Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/marblecircuit">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Marble Circuit","description":"Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/marblecircuit","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Marble Circuit game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Course</span><b id="course">1/3</b></div>
+    <div class="chip"><span>Rings</span><b id="rings">0/0</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">95.0s</b></div>
+    <div class="chip bad"><span>Lives</span><b id="lives">3</b></div>
+    <div class="chip"><span>Speed</span><b id="speed">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="tiltUp" type="button" class="tilt-btn">Tilt Up</button>
+    <button id="tiltLeft" type="button" class="tilt-btn">Tilt Left</button>
+    <button id="tiltDown" type="button" class="tilt-btn">Tilt Down</button>
+    <button id="tiltRight" type="button" class="tilt-btn">Tilt Right</button>
+    <button id="brakeBtn" type="button" class="brake-btn">Brake</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const courseEl = document.getElementById('course');
+const ringsEl = document.getElementById('rings');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const livesEl = document.getElementById('lives');
+const speedEl = document.getElementById('speed');
+const coinsEl = document.getElementById('coins');
+
+const W = canvas.width;
+const H = canvas.height;
+const CELL = 52;
+const ORIGIN = { x: 106, y: 74 };
+const BALL_R = 15;
+const MAX_SPEED = 440;
+const ACCEL = 620;
+const FRICTION = 0.985;
+const BRAKE = 0.88;
+const COURSE_TIME = 95;
+
+const rawLevels = [
+  {
+    name: 'Training Loop',
+    par: 50,
+    grid: [
+      '###################',
+      '#S....#.....C.....#',
+      '#.###.#.#####.###.#',
+      '#...#.#.....#...#.#',
+      '###.#.###.#.###.#.#',
+      '#...#.....#.....#.#',
+      '#.#####.#####.###.#',
+      '#.....#...C...#...#',
+      '#.###.#.#####.#.#G#',
+      '#...#.....O.....#F#',
+      '#C..###############',
+      '###################',
+    ],
+  },
+  {
+    name: 'Switchback Foundry',
+    par: 62,
+    grid: [
+      '###################',
+      '#S..#......#...C..#',
+      '#.#.#.####.#.####.#',
+      '#.#...#....#....#.#',
+      '#.#####.######.#..#',
+      '#.....#....O...#.##',
+      '#####.#######.##..#',
+      '#C....#.....#..#G##',
+      '#.###.#.###.#..#F##',
+      '#...#...#...#C....#',
+      '###.###########.###',
+      '###################',
+    ],
+  },
+  {
+    name: 'Final Spiral',
+    par: 70,
+    grid: [
+      '###################',
+      '#S....#C....#.....#',
+      '#####.#.###.#.###.#',
+      '#.....#...#.#...#.#',
+      '#.#######.#.###.#.#',
+      '#.#C......#.....#.#',
+      '#.#.###########.#.#',
+      '#.#.....O.....#.#.#',
+      '#.#####.#####.#.#G#',
+      '#.....#...C...#.#F#',
+      '#####.#########...#',
+      '###################',
+    ],
+  },
+];
+
+function normalizeLevel(raw) {
+  const rows = raw.grid;
+  const cols = Math.max(...rows.map((row) => row.length));
+  const grid = rows.map((row) => row.padEnd(cols, '#').slice(0, cols).split(''));
+  const level = {
+    name: raw.name,
+    par: raw.par,
+    cols,
+    rows: grid.length,
+    grid,
+    start: { x: ORIGIN.x + CELL * 1.5, y: ORIGIN.y + CELL * 1.5 },
+    finish: { x: ORIGIN.x + CELL * (cols - 1.5), y: ORIGIN.y + CELL * (grid.length - 1.5), r: 28 },
+    checkpoints: [],
+    holes: [],
+    gates: [],
+  };
+
+  for (let row = 0; row < grid.length; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const mark = grid[row][col];
+      const center = { x: ORIGIN.x + col * CELL + CELL / 2, y: ORIGIN.y + row * CELL + CELL / 2 };
+      if (mark === 'S') {
+        level.start = center;
+        grid[row][col] = '.';
+      } else if (mark === 'F') {
+        level.finish = { ...center, r: 30 };
+        grid[row][col] = '.';
+      } else if (mark === 'C') {
+        level.checkpoints.push({ ...center, r: 22, collected: false });
+        grid[row][col] = '.';
+      } else if (mark === 'O') {
+        level.holes.push({ ...center, r: 25 });
+        grid[row][col] = '.';
+      } else if (mark === 'G') {
+        level.gates.push({ row, col, ...center });
+      }
+    }
+  }
+
+  return level;
+}
+
+const levels = rawLevels.map(normalizeLevel);
+
+const keys = new Set();
+const pointerTilt = { x: 0, y: 0, brake: false };
+const state = {
+  mode: 'menu',
+  levelIndex: 0,
+  score: 0,
+  lives: 3,
+  timeLeft: COURSE_TIME,
+  coinsEarned: 0,
+  startedAt: 0,
+  lastMessage: 'Tilt the board, collect all rings, then roll into the finish gate.',
+  runPaid: false,
+  ball: { x: 0, y: 0, vx: 0, vy: 0 },
+  sparks: [],
+  trail: [],
+};
+
+function level() {
+  return levels[state.levelIndex];
+}
+
+function resetBall() {
+  const start = level().start;
+  state.ball.x = start.x;
+  state.ball.y = start.y;
+  state.ball.vx = 0;
+  state.ball.vy = 0;
+  state.trail = [];
+}
+
+function resetLevelProgress() {
+  level().checkpoints.forEach((ring) => { ring.collected = false; });
+  state.timeLeft = COURSE_TIME;
+  resetBall();
+}
+
+function resetRun() {
+  levels.forEach((course) => course.checkpoints.forEach((ring) => { ring.collected = false; }));
+  state.mode = 'running';
+  state.levelIndex = 0;
+  state.score = 0;
+  state.lives = 3;
+  state.timeLeft = COURSE_TIME;
+  state.coinsEarned = 0;
+  state.startedAt = Date.now();
+  state.lastMessage = 'Course 1 started. Collect every ring to unlock the finish gate.';
+  state.runPaid = false;
+  state.sparks = [];
+  resetBall();
+
+  try { rememberRecent('marblecircuit'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, marblecircuit: { result: 'started', score: 0, level: 1 } });
+  } catch {}
+}
+
+function startGame() {
+  resetRun();
+  hideOverlay();
+}
+
+function pauseGame() {
+  if (state.mode !== 'running') return;
+  state.mode = 'paused';
+  state.lastMessage = 'Paused.';
+  showOverlay('Paused', 'Press Resume, Space, or P to keep rolling through the circuit.', [
+    { id: 'resumeGame', label: 'Resume', action: resumeGame },
+    { id: 'restartGame', label: 'Restart', action: startGame },
+  ]);
+}
+
+function resumeGame() {
+  if (state.mode !== 'paused') return;
+  state.mode = 'running';
+  state.lastMessage = 'Resumed.';
+  hideOverlay();
+}
+
+function finishRun(result) {
+  state.mode = result === 'win' ? 'won' : 'lost';
+  const course = level();
+  const rings = collectedCount();
+  const timeBonus = Math.max(0, Math.round(state.timeLeft * 8));
+  const finishBonus = result === 'win' ? 900 : 0;
+  state.score += timeBonus + finishBonus;
+
+  if (!state.runPaid) {
+    const coins = result === 'win' ? Math.max(12, Math.floor(state.score / 350)) : Math.max(2, rings);
+    state.coinsEarned += coins;
+    try { addCoins(coins); } catch {}
+    state.runPaid = true;
+  }
+
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      marblecircuit: {
+        result,
+        score: state.score,
+        level: state.levelIndex + 1,
+        rings,
+        timeLeft: Math.round(state.timeLeft),
+      },
+    });
+  } catch {}
+
+  const title = result === 'win' ? 'Circuit Cleared' : 'Run Ended';
+  const copy = result === 'win'
+    ? `You cleared all ${levels.length} marble circuits and banked ${state.coinsEarned} coins.`
+    : `The marble lost the course on ${course.name}. Score: ${state.score}.`;
+  showOverlay(title, copy, [
+    { id: 'playAgain', label: 'Play Again', action: startGame },
+  ]);
+}
+
+function showMenu() {
+  state.mode = 'menu';
+  showOverlay('Marble Circuit', 'Tilt through three maze circuits. Collect every brass ring to unlock the finish gate, avoid sink holes, and beat the target time.', [
+    { id: 'startGame', label: 'Start Circuit', action: startGame },
+  ]);
+}
+
+function showOverlay(title, copy, buttons) {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${copy}</p>
+      <p>Desktop: Arrow keys or WASD tilt, Space brakes, P pauses, R restarts, F fullscreen. Touch: use the tilt and brake buttons.</p>
+      <div class="row">${buttons.map((button) => `<button id="${button.id}" type="button">${button.label}</button>`).join('')}</div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  buttons.forEach((button) => {
+    document.getElementById(button.id)?.addEventListener('click', button.action);
+  });
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function collectedCount() {
+  return level().checkpoints.filter((ring) => ring.collected).length;
+}
+
+function allRingsCollected() {
+  return collectedCount() === level().checkpoints.length;
+}
+
+function cellAt(x, y) {
+  return {
+    col: Math.floor((x - ORIGIN.x) / CELL),
+    row: Math.floor((y - ORIGIN.y) / CELL),
+  };
+}
+
+function solidAt(x, y) {
+  const course = level();
+  const { row, col } = cellAt(x, y);
+  if (row < 0 || col < 0 || row >= course.rows || col >= course.cols) return true;
+  const mark = course.grid[row][col];
+  if (mark === '#') return true;
+  if (mark === 'G' && !allRingsCollected()) return true;
+  return false;
+}
+
+function collidesAt(x, y) {
+  const r = BALL_R;
+  const samples = [
+    [r, 0], [-r, 0], [0, r], [0, -r],
+    [r * 0.72, r * 0.72], [-r * 0.72, r * 0.72],
+    [r * 0.72, -r * 0.72], [-r * 0.72, -r * 0.72],
+  ];
+  return samples.some(([dx, dy]) => solidAt(x + dx, y + dy));
+}
+
+function moveAxis(axis, amount) {
+  if (amount === 0) return;
+  const ball = state.ball;
+  ball[axis] += amount;
+  if (!collidesAt(ball.x, ball.y)) return;
+
+  const sign = Math.sign(amount);
+  let guard = 0;
+  while (collidesAt(ball.x, ball.y) && guard < 80) {
+    ball[axis] -= sign;
+    guard += 1;
+  }
+
+  if (axis === 'x') {
+    ball.vx *= -0.35;
+  } else {
+    ball.vy *= -0.35;
+  }
+  addSpark(ball.x, ball.y, '#fff0b3', 8);
+}
+
+function tiltVector() {
+  let x = pointerTilt.x;
+  let y = pointerTilt.y;
+  if (keys.has('arrowleft') || keys.has('a')) x -= 1;
+  if (keys.has('arrowright') || keys.has('d')) x += 1;
+  if (keys.has('arrowup') || keys.has('w')) y -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) y += 1;
+
+  const len = Math.hypot(x, y);
+  if (len > 1) {
+    x /= len;
+    y /= len;
+  }
+
+  return { x, y, brake: pointerTilt.brake || keys.has(' ') };
+}
+
+function addSpark(x, y, color, count) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 50 + Math.random() * 120;
+    state.sparks.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.35 + Math.random() * 0.25,
+      max: 0.6,
+      color,
+    });
+  }
+}
+
+function loseLife(reason) {
+  state.lives -= 1;
+  state.timeLeft = Math.max(0, state.timeLeft - 5);
+  state.lastMessage = reason;
+  addSpark(state.ball.x, state.ball.y, '#ff8f7a', 28);
+
+  if (state.lives <= 0) {
+    finishRun('loss');
+    return;
+  }
+
+  resetBall();
+}
+
+function completeCourse() {
+  const course = level();
+  const levelBonus = 550 + Math.max(0, Math.round((state.timeLeft - Math.max(0, COURSE_TIME - course.par)) * 6));
+  state.score += levelBonus;
+  state.lastMessage = `${course.name} cleared. Bonus ${levelBonus}.`;
+  addSpark(course.finish.x, course.finish.y, '#a8ffcf', 36);
+
+  if (state.levelIndex >= levels.length - 1) {
+    finishRun('win');
+    return;
+  }
+
+  state.levelIndex += 1;
+  resetLevelProgress();
+  state.lastMessage = `${level().name} started. The gate is locked until every ring is collected.`;
+}
+
+function update(dt) {
+  state.sparks = state.sparks
+    .map((spark) => ({
+      ...spark,
+      x: spark.x + spark.vx * dt,
+      y: spark.y + spark.vy * dt,
+      vx: spark.vx * 0.95,
+      vy: spark.vy * 0.95,
+      life: spark.life - dt,
+    }))
+    .filter((spark) => spark.life > 0);
+
+  if (state.mode !== 'running') return;
+
+  const input = tiltVector();
+  const ball = state.ball;
+  ball.vx += input.x * ACCEL * dt;
+  ball.vy += input.y * ACCEL * dt;
+  ball.vx *= input.brake ? BRAKE : FRICTION;
+  ball.vy *= input.brake ? BRAKE : FRICTION;
+
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed > MAX_SPEED) {
+    const scale = MAX_SPEED / speed;
+    ball.vx *= scale;
+    ball.vy *= scale;
+  }
+
+  moveAxis('x', ball.vx * dt);
+  moveAxis('y', ball.vy * dt);
+
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  state.trail.push({ x: ball.x, y: ball.y, life: 0.6 });
+  state.trail = state.trail
+    .map((dot) => ({ ...dot, life: dot.life - dt }))
+    .filter((dot) => dot.life > 0)
+    .slice(-26);
+
+  for (const ring of level().checkpoints) {
+    if (!ring.collected && Math.hypot(ball.x - ring.x, ball.y - ring.y) < ring.r + BALL_R) {
+      ring.collected = true;
+      state.score += 240 + Math.round(state.timeLeft);
+      state.lastMessage = `Ring ${collectedCount()} of ${level().checkpoints.length} collected.`;
+      addSpark(ring.x, ring.y, '#ffdf80', 24);
+      if (allRingsCollected()) {
+        state.lastMessage = 'All rings collected. Finish gate unlocked.';
+      }
+    }
+  }
+
+  for (const hole of level().holes) {
+    if (Math.hypot(ball.x - hole.x, ball.y - hole.y) < hole.r + BALL_R * 0.35) {
+      loseLife('The marble dropped into a sink hole.');
+      return;
+    }
+  }
+
+  const finish = level().finish;
+  if (allRingsCollected() && Math.hypot(ball.x - finish.x, ball.y - finish.y) < finish.r + BALL_R) {
+    completeCourse();
+    return;
+  }
+
+  if (state.timeLeft <= 0) {
+    finishRun('loss');
+  }
+}
+
+function renderBoard() {
+  const course = level();
+  const boardW = course.cols * CELL;
+  const boardH = course.rows * CELL;
+
+  ctx.save();
+  ctx.translate(ORIGIN.x, ORIGIN.y);
+  const floor = ctx.createLinearGradient(0, 0, 0, boardH);
+  floor.addColorStop(0, '#213344');
+  floor.addColorStop(1, '#263c31');
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, 0, boardW, boardH);
+
+  ctx.strokeStyle = '#ffffff10';
+  ctx.lineWidth = 1;
+  for (let col = 0; col <= course.cols; col += 1) {
+    ctx.beginPath();
+    ctx.moveTo(col * CELL, 0);
+    ctx.lineTo(col * CELL, boardH);
+    ctx.stroke();
+  }
+  for (let row = 0; row <= course.rows; row += 1) {
+    ctx.beginPath();
+    ctx.moveTo(0, row * CELL);
+    ctx.lineTo(boardW, row * CELL);
+    ctx.stroke();
+  }
+
+  for (let row = 0; row < course.rows; row += 1) {
+    for (let col = 0; col < course.cols; col += 1) {
+      const mark = course.grid[row][col];
+      if (mark !== '#' && mark !== 'G') continue;
+      const x = col * CELL;
+      const y = row * CELL;
+      if (mark === 'G' && allRingsCollected()) {
+        ctx.fillStyle = '#9bf0c044';
+        ctx.fillRect(x + 8, y + 8, CELL - 16, CELL - 16);
+        ctx.strokeStyle = '#9bf0c0';
+        ctx.strokeRect(x + 10, y + 10, CELL - 20, CELL - 20);
+        continue;
+      }
+
+      const wall = ctx.createLinearGradient(x, y, x, y + CELL);
+      wall.addColorStop(0, mark === 'G' ? '#90673a' : '#40536a');
+      wall.addColorStop(1, mark === 'G' ? '#604625' : '#263344');
+      ctx.fillStyle = wall;
+      ctx.fillRect(x, y, CELL, CELL);
+      ctx.fillStyle = '#ffffff18';
+      ctx.fillRect(x + 4, y + 4, CELL - 8, 7);
+      ctx.strokeStyle = '#0000004a';
+      ctx.strokeRect(x + 0.5, y + 0.5, CELL - 1, CELL - 1);
+    }
+  }
+  ctx.restore();
+}
+
+function drawRing(ring, index) {
+  ctx.save();
+  ctx.translate(ring.x, ring.y);
+  ctx.globalAlpha = ring.collected ? 0.24 : 1;
+  ctx.lineWidth = 7;
+  ctx.strokeStyle = ring.collected ? '#e8fff0' : '#ffd36d';
+  ctx.beginPath();
+  ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#fff7ca';
+  ctx.beginPath();
+  ctx.arc(0, 0, ring.r - 10, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#111b25';
+  ctx.font = '700 14px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(index + 1), 0, 1);
+  ctx.restore();
+}
+
+function drawHole(hole) {
+  const gradient = ctx.createRadialGradient(hole.x, hole.y, 2, hole.x, hole.y, hole.r + 12);
+  gradient.addColorStop(0, '#030609');
+  gradient.addColorStop(0.64, '#090d12');
+  gradient.addColorStop(1, '#ff7d5f44');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(hole.x, hole.y, hole.r + 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffb087aa';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(hole.x, hole.y, hole.r + 6, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawFinish() {
+  const finish = level().finish;
+  const unlocked = allRingsCollected();
+  ctx.save();
+  ctx.translate(finish.x, finish.y);
+  ctx.fillStyle = unlocked ? '#9bf0c0' : '#ffffff24';
+  ctx.strokeStyle = unlocked ? '#e8fff0' : '#ffffff68';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(0, 0, finish.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = unlocked ? '#113222' : '#d8e1e8';
+  ctx.font = '900 16px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('FIN', 0, 1);
+  ctx.restore();
+}
+
+function drawBall() {
+  const ball = state.ball;
+  for (const dot of state.trail) {
+    ctx.globalAlpha = Math.max(0, dot.life / 0.6) * 0.4;
+    ctx.fillStyle = '#9ee8ff';
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  const shine = ctx.createRadialGradient(ball.x - 6, ball.y - 8, 2, ball.x, ball.y, BALL_R + 5);
+  shine.addColorStop(0, '#ffffff');
+  shine.addColorStop(0.34, '#9ee8ff');
+  shine.addColorStop(1, '#2f7893');
+  ctx.fillStyle = shine;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#dff9ff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const input = tiltVector();
+  if (input.x || input.y) {
+    ctx.strokeStyle = '#ffdf80cc';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(ball.x, ball.y);
+    ctx.lineTo(ball.x + input.x * 42, ball.y + input.y * 42);
+    ctx.stroke();
+  }
+}
+
+function drawSparks() {
+  for (const spark of state.sparks) {
+    ctx.globalAlpha = Math.max(0, spark.life / spark.max);
+    ctx.fillStyle = spark.color;
+    ctx.beginPath();
+    ctx.arc(spark.x, spark.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawStatusText() {
+  ctx.save();
+  ctx.fillStyle = '#eff9ff';
+  ctx.font = '900 26px Trebuchet MS';
+  ctx.fillText(level().name, 42, 42);
+  ctx.font = '700 15px Trebuchet MS';
+  ctx.fillStyle = '#c9d8df';
+  ctx.fillText(state.lastMessage, 42, 66);
+
+  const gateText = allRingsCollected() ? 'Gate open' : 'Gate locked';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = allRingsCollected() ? '#a8ffcf' : '#ffdf80';
+  ctx.fillText(gateText, W - 42, 42);
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#162333');
+  bg.addColorStop(0.55, '#20313c');
+  bg.addColorStop(1, '#1d2a25');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  renderBoard();
+  drawFinish();
+  level().holes.forEach(drawHole);
+  level().checkpoints.forEach(drawRing);
+  drawSparks();
+  drawBall();
+  drawStatusText();
+
+  if (state.mode === 'paused') {
+    ctx.fillStyle = '#00000070';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  updateHud();
+}
+
+function updateHud() {
+  const speed = Math.round(Math.hypot(state.ball.vx, state.ball.vy));
+  modeEl.textContent = state.mode.toUpperCase();
+  courseEl.textContent = `${state.levelIndex + 1}/${levels.length}`;
+  ringsEl.textContent = `${collectedCount()}/${level().checkpoints.length}`;
+  scoreEl.textContent = String(state.score);
+  timeEl.textContent = `${state.timeLeft.toFixed(1)}s`;
+  livesEl.textContent = String(state.lives);
+  speedEl.textContent = String(speed);
+  coinsEl.textContent = String(profileState.coins ?? state.coinsEarned);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.min(12, Math.round(ms / (1000 / 60))));
+  const dt = Math.min(1 / 30, (ms / 1000) / steps);
+  for (let i = 0; i < steps; i += 1) update(dt);
+  render();
+}
+
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(1 / 30, Math.max(0, (now - lastTime) / 1000));
+  lastTime = now;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function setPointerButton(id, tilt) {
+  const button = document.getElementById(id);
+  if (!button) return;
+  const start = (event) => {
+    event.preventDefault();
+    pointerTilt.x += tilt.x || 0;
+    pointerTilt.y += tilt.y || 0;
+    pointerTilt.brake = pointerTilt.brake || Boolean(tilt.brake);
+  };
+  const end = (event) => {
+    event.preventDefault();
+    pointerTilt.x -= tilt.x || 0;
+    pointerTilt.y -= tilt.y || 0;
+    if (tilt.brake) pointerTilt.brake = false;
+  };
+  button.addEventListener('pointerdown', start);
+  button.addEventListener('pointerup', end);
+  button.addEventListener('pointercancel', end);
+  button.addEventListener('pointerleave', end);
+}
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+    event.preventDefault();
+    keys.add(key);
+  }
+  if (key === 'enter' && (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost')) startGame();
+  if (key === 'p') (state.mode === 'paused' ? resumeGame() : pauseGame());
+  if (key === ' ' && state.mode === 'paused') resumeGame();
+  if (key === 'r') startGame();
+  if (key === 'f') toggleFullscreen();
+});
+
+document.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+document.getElementById('pauseBtn')?.addEventListener('click', () => {
+  if (state.mode === 'paused') resumeGame();
+  else pauseGame();
+});
+document.getElementById('restartBtn')?.addEventListener('click', startGame);
+document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+
+setPointerButton('tiltUp', { y: -1 });
+setPointerButton('tiltLeft', { x: -1 });
+setPointerButton('tiltDown', { y: 1 });
+setPointerButton('tiltRight', { x: 1 });
+setPointerButton('brakeBtn', { brake: true });
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  coordinate_system: 'canvas pixels, origin top-left, x right, y down',
+  mode: state.mode,
+  course: {
+    index: state.levelIndex + 1,
+    total: levels.length,
+    name: level().name,
+    par_seconds: level().par,
+  },
+  time_left: Number(state.timeLeft.toFixed(2)),
+  lives: state.lives,
+  score: state.score,
+  rings: {
+    collected: collectedCount(),
+    total: level().checkpoints.length,
+    next: level().checkpoints.find((ring) => !ring.collected)
+      ? {
+          x: Math.round(level().checkpoints.find((ring) => !ring.collected).x),
+          y: Math.round(level().checkpoints.find((ring) => !ring.collected).y),
+        }
+      : null,
+  },
+  gate_locked: !allRingsCollected(),
+  ball: {
+    x: Math.round(state.ball.x),
+    y: Math.round(state.ball.y),
+    vx: Math.round(state.ball.vx),
+    vy: Math.round(state.ball.vy),
+    speed: Math.round(Math.hypot(state.ball.vx, state.ball.vy)),
+  },
+  finish: {
+    x: Math.round(level().finish.x),
+    y: Math.round(level().finish.y),
+    unlocked: allRingsCollected(),
+  },
+  hazards: level().holes.map((hole) => ({ x: Math.round(hole.x), y: Math.round(hole.y), r: hole.r })),
+  last_message: state.lastMessage,
+  coins_earned_this_run: state.coinsEarned,
+});
+
+showMenu();
+resetBall();
+render();
+requestAnimationFrame(loop);
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'marblecircuit', gameName: 'Marble Circuit' });
+</script>
+</body>
+</html>

@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Potion Pantry | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(62% 54% at 18% 16%, #244e58 0%, transparent 70%),
+    radial-gradient(52% 48% at 82% 82%, #63435b 0%, transparent 72%),
+    linear-gradient(180deg, #11161f 0%, #182331 48%, #1d2c28 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 10px;
+}
+.wrap {
+  width: min(96vw, 980px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #d7f5df72;
+  box-shadow: 0 18px 50px #000000b0;
+  background: linear-gradient(180deg, #1a2931 0%, #223243 48%, #26392f 100%);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 14px;
+  border: 1px solid #d9f8e866;
+  background: #13212df4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 40px); }
+p { margin: 0 0 10px; color: #d7e4ed; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #dff9e675;
+  background: #2f6f5ff0;
+  color: #f9fff9;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+.hud {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #d9f8e852;
+  background: #101b26f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #f4ffe530;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cad8df;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a9f2c6; }
+.warn b { color: #ffe199; }
+.bad b { color: #ff9d9d; }
+.controls {
+  width: min(96vw, 980px);
+  border-radius: 12px;
+  border: 1px solid #d9f8e852;
+  background: #101b26f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.ingredient-btn {
+  min-width: 0;
+  padding: 10px 8px;
+  color: #13212d;
+  text-shadow: 0 1px 0 #ffffff80;
+}
+.utility-btn { background: #41516a; border-color: #d9e3ff75; }
+.serve-btn { background: #327e61; border-color: #ddffe975; }
+@media (max-width: 920px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Mix ingredient drops into requested potions, manage bubbling patience, and serve each order before the pantry closes. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Potion Pantry | AI and Sons Games">
+  <meta property="og:description" content="Mix ingredient drops into requested potions, manage bubbling patience, and serve each order before the pantry closes. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/potionpantry">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Potion Pantry | AI and Sons Games">
+  <meta name="twitter:description" content="Mix ingredient drops into requested potions, manage bubbling patience, and serve each order before the pantry closes. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/potionpantry">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Potion Pantry","description":"Mix ingredient drops into requested potions, manage bubbling patience, and serve each order before the pantry closes. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/potionpantry","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Potion Pantry game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip"><span>Orders</span><b id="orders">0/12</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Streak</span><b id="streak">0x</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip"><span>Patience</span><b id="patience">100%</b></div>
+    <div class="chip bad"><span>Hearts</span><b id="hearts">4</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Touch controls">
+    <button id="ingredient0" type="button" class="ingredient-btn" style="background:#f15b63;">Ruby</button>
+    <button id="ingredient1" type="button" class="ingredient-btn" style="background:#5c97ff;">Azure</button>
+    <button id="ingredient2" type="button" class="ingredient-btn" style="background:#58d27d;">Clover</button>
+    <button id="ingredient3" type="button" class="ingredient-btn" style="background:#ffd75b;">Solar</button>
+    <button id="undoBtn" type="button" class="utility-btn">Undo</button>
+    <button id="clearBtn" type="button" class="utility-btn">Clear</button>
+    <button id="serveBtn" type="button" class="serve-btn">Serve</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const ordersEl = document.getElementById('orders');
+const scoreEl = document.getElementById('score');
+const streakEl = document.getElementById('streak');
+const timeEl = document.getElementById('time');
+const patienceEl = document.getElementById('patience');
+const heartsEl = document.getElementById('hearts');
+const coinsEl = document.getElementById('coins');
+
+const TOTAL_SECONDS = 90;
+const TARGET_ORDERS = 12;
+const START_HEARTS = 4;
+const MAX_DROPS = 3;
+const CAULDRON = { x: 570, y: 470, w: 360, h: 185 };
+const INGREDIENTS = [
+  { id: 'ruby', name: 'Ruby', short: 'R', hex: '#f15b63' },
+  { id: 'azure', name: 'Azure', short: 'A', hex: '#5c97ff' },
+  { id: 'clover', name: 'Clover', short: 'C', hex: '#58d27d' },
+  { id: 'solar', name: 'Solar', short: 'S', hex: '#ffd75b' },
+];
+const RECIPES = [
+  { key: 'azure+ruby', name: 'Violet Fizz', color: '#aa73df', patience: 13 },
+  { key: 'clover+ruby', name: 'Root Remedy', color: '#9a8b58', patience: 12 },
+  { key: 'ruby+solar', name: 'Sunfire Syrup', color: '#f89159', patience: 11 },
+  { key: 'azure+clover', name: 'Tide Tonic', color: '#58bbbf', patience: 12 },
+  { key: 'azure+solar', name: 'Sky Sparkle', color: '#accdb2', patience: 10 },
+  { key: 'clover+solar', name: 'Lime Lantern', color: '#a9d76c', patience: 12 },
+  { key: 'azure+clover+ruby', name: 'Prism Punch', color: '#8e8fbe', patience: 14 },
+  { key: 'azure+ruby+solar', name: 'Dusk Draught', color: '#bd95a8', patience: 13 },
+  { key: 'clover+ruby+solar', name: 'Harvest Brew', color: '#c99a63', patience: 13 },
+  { key: 'azure+clover+solar', name: 'Mint Moon', color: '#8bc8a7', patience: 12 },
+];
+const ORDER_SEQUENCE = [0, 2, 3, 5, 1, 6, 4, 8, 7, 9, 0, 5, 3, 6, 2, 9];
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  ordersFilled: 0,
+  orderCursor: 0,
+  score: 0,
+  streak: 0,
+  hearts: START_HEARTS,
+  cauldron: [],
+  activeOrder: null,
+  nextOrders: [],
+  message: 'Fill the cauldron with matching drops.',
+  bubbles: [],
+  sparkles: [],
+  shakeTimer: 0,
+  flashTimer: 0,
+  input: {
+    added: false,
+    served: false,
+    cleared: false,
+  },
+};
+
+let raf = 0;
+let prev = performance.now();
+let controlled = false;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getIngredient(id) {
+  return INGREDIENTS.find((ingredient) => ingredient.id === id) || INGREDIENTS[0];
+}
+
+function recipeKey(ids) {
+  return ids.slice().sort().join('+');
+}
+
+function currentMixColor() {
+  if (!state.cauldron.length) return '#263442';
+  const totals = state.cauldron.reduce((acc, id) => {
+    const hex = getIngredient(id).hex.slice(1);
+    acc.r += parseInt(hex.slice(0, 2), 16);
+    acc.g += parseInt(hex.slice(2, 4), 16);
+    acc.b += parseInt(hex.slice(4, 6), 16);
+    return acc;
+  }, { r: 0, g: 0, b: 0 });
+  const count = state.cauldron.length;
+  const r = Math.round(totals.r / count).toString(16).padStart(2, '0');
+  const g = Math.round(totals.g / count).toString(16).padStart(2, '0');
+  const b = Math.round(totals.b / count).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`;
+}
+
+function makeOrder(offset = 0) {
+  const index = ORDER_SEQUENCE[(state.orderCursor + offset) % ORDER_SEQUENCE.length];
+  const recipe = RECIPES[index];
+  return {
+    id: `order-${state.orderCursor + offset}`,
+    key: recipe.key,
+    name: recipe.name,
+    color: recipe.color,
+    maxPatience: recipe.patience,
+    patience: recipe.patience,
+  };
+}
+
+function refreshQueue() {
+  state.activeOrder = makeOrder(0);
+  state.nextOrders = [makeOrder(1), makeOrder(2)];
+}
+
+function resetState() {
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.ordersFilled = 0;
+  state.orderCursor = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.hearts = START_HEARTS;
+  state.cauldron = [];
+  state.message = 'Fill the cauldron with matching drops.';
+  state.bubbles = [];
+  state.sparkles = [];
+  state.shakeTimer = 0;
+  state.flashTimer = 0;
+  state.input.added = false;
+  state.input.served = false;
+  state.input.cleared = false;
+  refreshQueue();
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+
+function showOverlay(title, body, buttonLabel, handler) {
+  overlay.classList.add('show');
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: 1-4 add drops, Backspace undo, C clear, Enter or Space serve, P pause, R restart, F fullscreen.</p>
+      <div class="row">
+        <button id="overlayButton" type="button">${buttonLabel}</button>
+        <button id="overlayFullscreen" type="button">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayButton').addEventListener('click', handler, { once: true });
+  document.getElementById('overlayFullscreen').addEventListener('click', toggleFullscreen);
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  try { rememberRecent('potionpantry'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, potionpantry: { result: 'started', orders: 0, score: 0 } });
+  } catch {}
+}
+
+function nextOrder() {
+  state.orderCursor += 1;
+  refreshQueue();
+}
+
+function addSparkles(x, y, color, count = 12) {
+  for (let i = 0; i < count; i += 1) {
+    state.sparkles.push({
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 160,
+      vy: -40 - Math.random() * 90,
+      life: 0.45 + Math.random() * 0.4,
+      color,
+      size: 3 + Math.random() * 5,
+    });
+  }
+  if (state.sparkles.length > 80) state.sparkles.splice(0, state.sparkles.length - 80);
+}
+
+function finishGame(result) {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  state.mode = result;
+  state.result = result;
+  const won = result === 'won';
+  const coinsEarned = Math.max(5, Math.min(70, Math.round(state.score / 50) + (won ? 18 : 6)));
+  try {
+    addCoins(coinsEarned);
+    maybeUnlock({
+      anyPlay: true,
+      potionpantry: {
+        result,
+        score: Math.round(state.score),
+        orders: state.ordersFilled,
+        streak: state.streak,
+      },
+    });
+  } catch {}
+
+  const body = won
+    ? `Pantry rush complete. Served ${state.ordersFilled} orders and earned ${coinsEarned} coins.`
+    : `Rush ended after ${state.ordersFilled} orders. You earned ${coinsEarned} coins.`;
+  showOverlay(won ? 'Pantry Complete' : 'Pantry Closed', body, 'Play Again', startGame);
+}
+
+function addIngredient(index) {
+  if (state.mode !== 'running') return;
+  if (state.cauldron.length >= MAX_DROPS) {
+    state.message = 'Cauldron is full. Serve or clear it.';
+    state.shakeTimer = 0.2;
+    return;
+  }
+  const ingredient = INGREDIENTS[index % INGREDIENTS.length];
+  state.cauldron.push(ingredient.id);
+  state.input.added = true;
+  state.flashTimer = 0.16;
+  state.message = `${ingredient.name} drop added.`;
+  state.bubbles.push({
+    x: CAULDRON.x + 70 + Math.random() * (CAULDRON.w - 140),
+    y: CAULDRON.y + 44 + Math.random() * 44,
+    r: 9 + Math.random() * 8,
+    color: ingredient.hex,
+    life: 1,
+  });
+}
+
+function undoDrop() {
+  if (state.mode !== 'running') return;
+  if (!state.cauldron.length) {
+    state.message = 'No drops to undo.';
+    state.shakeTimer = 0.18;
+    return;
+  }
+  state.cauldron.pop();
+  state.message = 'Last drop removed.';
+}
+
+function clearCauldron() {
+  if (state.mode !== 'running') return;
+  state.cauldron = [];
+  state.input.cleared = true;
+  state.message = 'Cauldron cleared.';
+}
+
+function failOrder(reason) {
+  state.hearts -= 1;
+  state.streak = 0;
+  state.cauldron = [];
+  state.shakeTimer = 0.28;
+  state.message = reason;
+  nextOrder();
+  if (state.hearts <= 0) finishGame('lost');
+}
+
+function servePotion() {
+  if (state.mode !== 'running') return;
+  if (!state.cauldron.length) {
+    state.message = 'Add drops before serving.';
+    state.shakeTimer = 0.18;
+    return;
+  }
+  const key = recipeKey(state.cauldron);
+  state.input.served = true;
+
+  if (key === state.activeOrder.key) {
+    const patienceRatio = state.activeOrder.patience / state.activeOrder.maxPatience;
+    state.ordersFilled += 1;
+    state.streak += 1;
+    const gain = 80 + Math.round(patienceRatio * 90) + state.streak * 18;
+    state.score += gain;
+    state.message = `${state.activeOrder.name} served for ${gain}.`;
+    addSparkles(CAULDRON.x + CAULDRON.w / 2, CAULDRON.y + 42, state.activeOrder.color, 16);
+    state.cauldron = [];
+    nextOrder();
+    if (state.ordersFilled >= TARGET_ORDERS) {
+      finishGame('won');
+    }
+  } else {
+    failOrder('Wrong recipe. Order moved on.');
+  }
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'The order rail is held.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function update(dt) {
+  if (state.mode === 'running') {
+    state.elapsed += dt;
+    state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+    state.activeOrder.patience = Math.max(0, state.activeOrder.patience - dt);
+    if (state.activeOrder.patience <= 0) {
+      failOrder('Patience ran out. Order moved on.');
+    }
+    if (state.timeLeft <= 0) {
+      finishGame(state.ordersFilled >= TARGET_ORDERS ? 'won' : 'lost');
+    }
+  }
+
+  state.shakeTimer = Math.max(0, state.shakeTimer - dt);
+  state.flashTimer = Math.max(0, state.flashTimer - dt);
+
+  for (let i = state.bubbles.length - 1; i >= 0; i -= 1) {
+    const bubble = state.bubbles[i];
+    bubble.y -= 18 * dt;
+    bubble.life -= 0.45 * dt;
+    bubble.r += 4 * dt;
+    if (bubble.life <= 0) state.bubbles.splice(i, 1);
+  }
+  for (let i = state.sparkles.length - 1; i >= 0; i -= 1) {
+    const sparkle = state.sparkles[i];
+    sparkle.x += sparkle.vx * dt;
+    sparkle.y += sparkle.vy * dt;
+    sparkle.vy += 110 * dt;
+    sparkle.life -= dt;
+    if (sparkle.life <= 0) state.sparkles.splice(i, 1);
+  }
+}
+
+function roundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#1e3440');
+  grad.addColorStop(0.52, '#25384a');
+  grad.addColorStop(1, '#243c32');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#0d1620aa';
+  ctx.fillRect(44, 102, 318, 526);
+  ctx.fillRect(838, 102, 318, 526);
+  ctx.strokeStyle = '#e6f7dd2c';
+  ctx.lineWidth = 2;
+  for (let y = 180; y <= 560; y += 94) {
+    ctx.beginPath();
+    ctx.moveTo(64, y);
+    ctx.lineTo(342, y);
+    ctx.moveTo(858, y);
+    ctx.lineTo(1136, y);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#eef8e6';
+  ctx.font = '700 36px Trebuchet MS, sans-serif';
+  ctx.fillText('Potion Pantry', 404, 66);
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#cbdde6';
+  ctx.fillText('Mix the highlighted recipe before the order patience drains.', 404, 92);
+}
+
+function drawBottle(x, y, ingredient, selected = false) {
+  ctx.save();
+  roundedRect(x - 35, y - 52, 70, 108, 18);
+  ctx.fillStyle = '#d6efe833';
+  ctx.fill();
+  ctx.strokeStyle = selected ? '#fff5b2' : '#ffffff55';
+  ctx.lineWidth = selected ? 3 : 2;
+  ctx.stroke();
+  roundedRect(x - 21, y - 10, 42, 46, 12);
+  ctx.fillStyle = ingredient.hex;
+  ctx.fill();
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - 14, y - 1, 9, 28);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '700 18px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(ingredient.name, x, y + 82);
+  ctx.font = '700 14px Trebuchet MS, sans-serif';
+  ctx.fillText(String(INGREDIENTS.indexOf(ingredient) + 1), x, y - 68);
+  ctx.restore();
+}
+
+function drawIngredients() {
+  ctx.fillStyle = '#dcece7';
+  ctx.font = '700 23px Trebuchet MS, sans-serif';
+  ctx.fillText('Drops', 82, 142);
+  INGREDIENTS.forEach((ingredient, index) => {
+    const x = index % 2 === 0 ? 130 : 270;
+    const y = 238 + Math.floor(index / 2) * 210;
+    drawBottle(x, y, ingredient);
+  });
+}
+
+function drawOrderCard(order, x, y, scale = 1) {
+  const w = 260 * scale;
+  const h = 116 * scale;
+  roundedRect(x, y, w, h, 14 * scale);
+  ctx.fillStyle = '#152231e0';
+  ctx.fill();
+  ctx.strokeStyle = '#e2f7dc55';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = order.color;
+  ctx.beginPath();
+  ctx.arc(x + 42 * scale, y + 42 * scale, 24 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff88';
+  ctx.stroke();
+
+  ctx.fillStyle = '#edf8ff';
+  ctx.font = `700 ${19 * scale}px Trebuchet MS, sans-serif`;
+  ctx.fillText(order.name, x + 80 * scale, y + 35 * scale);
+  ctx.fillStyle = '#cbdde6';
+  ctx.font = `700 ${13 * scale}px Trebuchet MS, sans-serif`;
+  ctx.fillText(order.key.split('+').map((id) => getIngredient(id).short).join(' + '), x + 80 * scale, y + 60 * scale);
+
+  const ratio = clamp(order.patience / order.maxPatience, 0, 1);
+  roundedRect(x + 22 * scale, y + 82 * scale, 216 * scale, 14 * scale, 7 * scale);
+  ctx.fillStyle = '#0d151e';
+  ctx.fill();
+  roundedRect(x + 22 * scale, y + 82 * scale, 216 * scale * ratio, 14 * scale, 7 * scale);
+  ctx.fillStyle = ratio > 0.55 ? '#8df2a7' : ratio > 0.25 ? '#ffd66d' : '#ff6e84';
+  ctx.fill();
+}
+
+function drawOrders() {
+  ctx.fillStyle = '#dcece7';
+  ctx.font = '700 23px Trebuchet MS, sans-serif';
+  ctx.fillText('Order Rail', 876, 142);
+  drawOrderCard(state.activeOrder, 866, 166, 1);
+  ctx.fillStyle = '#aebdca';
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.fillText('Next', 876, 322);
+  state.nextOrders.forEach((order, index) => {
+    drawOrderCard(order, 890, 348 + index * 126, 0.78);
+  });
+}
+
+function drawCauldron() {
+  const shake = state.shakeTimer > 0 ? Math.sin(state.elapsed * 80) * 5 : 0;
+  ctx.save();
+  ctx.translate(shake, 0);
+
+  ctx.fillStyle = '#0f151c';
+  ctx.beginPath();
+  ctx.ellipse(CAULDRON.x + CAULDRON.w / 2, CAULDRON.y + CAULDRON.h - 14, 196, 42, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  roundedRect(CAULDRON.x, CAULDRON.y, CAULDRON.w, CAULDRON.h, 40);
+  ctx.fillStyle = '#17212b';
+  ctx.fill();
+  ctx.strokeStyle = '#dff9e675';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.ellipse(CAULDRON.x + CAULDRON.w / 2, CAULDRON.y + 38, CAULDRON.w / 2 - 30, 48, 0, 0, Math.PI * 2);
+  ctx.fillStyle = currentMixColor();
+  ctx.fill();
+  ctx.strokeStyle = state.flashTimer > 0 ? '#fff4a8' : '#ffffff70';
+  ctx.stroke();
+
+  ctx.fillStyle = '#ecf6ee';
+  ctx.font = '700 24px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  const label = state.cauldron.length
+    ? state.cauldron.map((id) => getIngredient(id).short).join(' + ')
+    : 'empty';
+  ctx.fillText(label, CAULDRON.x + CAULDRON.w / 2, CAULDRON.y + 118);
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#bdd1d7';
+  ctx.fillText(`${state.cauldron.length}/${MAX_DROPS} drops`, CAULDRON.x + CAULDRON.w / 2, CAULDRON.y + 145);
+
+  for (const bubble of state.bubbles) {
+    ctx.globalAlpha = clamp(bubble.life, 0, 1);
+    ctx.fillStyle = bubble.color;
+    ctx.beginPath();
+    ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawSparkles() {
+  for (const sparkle of state.sparkles) {
+    ctx.globalAlpha = clamp(sparkle.life, 0, 1);
+    ctx.fillStyle = sparkle.color;
+    ctx.beginPath();
+    ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawStatus() {
+  roundedRect(404, 632, 392, 54, 16);
+  ctx.fillStyle = '#111c28dd';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff24';
+  ctx.stroke();
+  ctx.fillStyle = state.flashTimer > 0 ? '#fff4a8' : '#dceaf0';
+  ctx.font = '700 18px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(state.message, 600, 665);
+  ctx.textAlign = 'left';
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawIngredients();
+  drawOrders();
+  drawCauldron();
+  drawSparkles();
+  drawStatus();
+}
+
+function syncHud() {
+  modeEl.textContent = String(state.mode).toUpperCase();
+  ordersEl.textContent = `${state.ordersFilled}/${TARGET_ORDERS}`;
+  scoreEl.textContent = String(Math.round(state.score));
+  streakEl.textContent = `${state.streak}x`;
+  timeEl.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  const patience = state.activeOrder ? state.activeOrder.patience / state.activeOrder.maxPatience : 0;
+  patienceEl.textContent = `${Math.round(clamp(patience, 0, 1) * 100)}%`;
+  heartsEl.textContent = String(Math.max(0, state.hearts));
+  coinsEl.textContent = String(Number(profileState?.coins || 0));
+
+  const patienceChip = patienceEl.parentElement;
+  patienceChip.classList.toggle('good', patience > 0.55);
+  patienceChip.classList.toggle('warn', patience <= 0.55 && patience > 0.25);
+  patienceChip.classList.toggle('bad', patience <= 0.25);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.round((Number(ms) || 0) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function onKeyDown(event) {
+  if (event.repeat) return;
+  const code = event.code;
+  if (/^Digit[1-4]$/.test(code)) {
+    event.preventDefault();
+    addIngredient(Number(code.slice(5)) - 1);
+    return;
+  }
+  if (code === 'Backspace' || code === 'Delete') { event.preventDefault(); undoDrop(); return; }
+  if (code === 'KeyC') { event.preventDefault(); clearCauldron(); return; }
+  if (code === 'Enter' || code === 'Space') { event.preventDefault(); servePotion(); return; }
+  if (code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+    y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+  };
+}
+
+function onCanvasPointerDown(event) {
+  event.preventDefault();
+  if (state.mode !== 'running') return;
+  const pt = canvasPoint(event);
+  INGREDIENTS.forEach((ingredient, index) => {
+    const x = index % 2 === 0 ? 130 : 270;
+    const y = 238 + Math.floor(index / 2) * 210;
+    if (pt.x >= x - 44 && pt.x <= x + 44 && pt.y >= y - 64 && pt.y <= y + 100) {
+      addIngredient(index);
+    }
+  });
+  const inCauldron = pt.x >= CAULDRON.x && pt.x <= CAULDRON.x + CAULDRON.w
+    && pt.y >= CAULDRON.y && pt.y <= CAULDRON.y + CAULDRON.h;
+  if (inCauldron && state.cauldron.length) servePotion();
+}
+
+INGREDIENTS.forEach((ingredient, index) => {
+  document.getElementById(`ingredient${index}`).addEventListener('click', () => addIngredient(index));
+});
+document.getElementById('undoBtn').addEventListener('click', undoDrop);
+document.getElementById('clearBtn').addEventListener('click', clearCauldron);
+document.getElementById('serveBtn').addEventListener('click', servePotion);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', onCanvasPointerDown);
+window.addEventListener('keydown', onKeyDown);
+
+window.advanceTime = (ms) => step(ms);
+window.render_game_to_text = () => JSON.stringify({
+  game: 'potionpantry',
+  mode: state.mode,
+  coordinate_system: 'Canvas origin is top-left; +x moves right and +y moves down. Ingredient bottles are on the left shelf, active order is on the right, cauldron is centered near the bottom.',
+  objective: {
+    target_orders: TARGET_ORDERS,
+    survive_seconds: TOTAL_SECONDS,
+    keep_hearts_above: 0,
+  },
+  resources: {
+    elapsed_seconds: Number(state.elapsed.toFixed(3)),
+    time_left_seconds: Number(state.timeLeft.toFixed(3)),
+    score: Math.round(state.score),
+    orders_filled: state.ordersFilled,
+    hearts: state.hearts,
+    streak: state.streak,
+  },
+  active_order: state.activeOrder ? {
+    id: state.activeOrder.id,
+    name: state.activeOrder.name,
+    recipe_key: state.activeOrder.key,
+    required_drops: state.activeOrder.key.split('+').map((id) => getIngredient(id).name),
+    patience_seconds: Number(state.activeOrder.patience.toFixed(3)),
+    max_patience_seconds: state.activeOrder.maxPatience,
+  } : null,
+  next_orders: state.nextOrders.map((order) => ({
+    name: order.name,
+    recipe_key: order.key,
+  })),
+  cauldron: {
+    drops: state.cauldron.map((id) => getIngredient(id).name),
+    recipe_key: recipeKey(state.cauldron),
+    max_drops: MAX_DROPS,
+    mixed_color: currentMixColor(),
+  },
+  ingredients: INGREDIENTS.map((ingredient, index) => ({
+    index,
+    id: ingredient.id,
+    name: ingredient.name,
+    key: String(index + 1),
+  })),
+  message: state.message,
+  controls: {
+    add_ingredient: 'Number keys 1-4 or ingredient buttons',
+    undo: 'Backspace or Undo button',
+    clear: 'C or Clear button',
+    serve: 'Enter, Space, Serve button, or tap cauldron',
+    pause: 'P',
+    restart: 'R',
+    fullscreen: 'F',
+  },
+  result: state.result,
+  coins: Number(profileState?.coins || 0),
+});
+
+resetState();
+draw();
+syncHud();
+showOverlay(
+  'Potion Pantry',
+  'Read the order card, add the matching ingredient drops, and serve enough potions before the rush ends.',
+  'Open Pantry',
+  startGame,
+);
+raf = requestAnimationFrame((now) => { prev = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'potionpantry', gameName: 'Potion Pantry' });
+</script>
+</body>
+</html>

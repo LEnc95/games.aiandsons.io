@@ -78,7 +78,9 @@ export const GAMES = [
   { slug:'orbitorchard',   name:'Orbit Orchard',       emoji:'\u{1F34F}', scoreHint:'fruit',      url:'/orbitorchard', desc:'Steer around nested orbit rings, harvest glowing fruit, and dodge thorn drones before vitality runs out.', earnsCoins:true },
   { slug:'emberwatch',     name:'Ember Watch',         emoji:'\u{1F6A8}', scoreHint:'rescues',    url:'/emberwatch',   desc:'Guide a rapid-response skimmer, rescue trapped residents, and extinguish spreading fires before district danger hits critical.', earnsCoins:true },
   { slug:'cloudclimber',   name:'Cloud Climber',       emoji:'\u{1F388}', scoreHint:'lanterns',   url:'/cloudclimber', desc:'Pilot a balloon courier through storm lanes, rescue drifting lanterns, and keep your hull intact before time expires.', earnsCoins:true },
-  { slug:'reefrunner',     name:'Reef Runner',         emoji:'\u{1F30A}', scoreHint:'beacons',    url:'/reefrunner',   desc:'Steer a reef skimmer through tide lanes, recover drifting beacons, and avoid reef spikes before hull integrity fails.', earnsCoins:true },
+  { slug:'reefrunner',     name:'Reef Runner',         emoji:'\u{1F30A}', scoreHint:'beacons',    url:'/reefrunner',   desc:'Pilot a reef skimmer through coral gates, ping sonar to charge lost beacons, and manage oxygen while jellyfish drift through the current.', earnsCoins:true },
   { slug:'codebreaker',    name:'Codebreaker Grid',    emoji:'\u{1F510}', scoreHint:'solves',     url:'/codebreaker',  desc:'Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills.', earnsCoins:true },
+  { slug:'potionpantry',   name:'Potion Pantry',       emoji:'\u{1F9EA}', scoreHint:'orders',     url:'/potionpantry', desc:'Mix ingredient drops into requested potions, manage bubbling patience, and serve each order before the pantry closes.', earnsCoins:true },
+  { slug:'marblecircuit',  name:'Marble Circuit',      emoji:'\u{1F535}', scoreHint:'courses',    url:'/marblecircuit', desc:'Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out.', earnsCoins:true },
 ];
 
