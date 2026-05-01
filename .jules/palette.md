@@ -21,3 +21,7 @@
 ## 2026-04-26 - Add keyboard shortcut hint to search placeholders
 **Learning:** Undocumented keyboard shortcuts (like `/` to focus search) remain unused by the majority of users. A subtle text hint in the input's placeholder is an invisible UX enhancement that provides discoverability without cluttering the UI. Furthermore, adding `aria-keyshortcuts="/"` makes it accessible to screen readers.
 **Action:** Always document search keyboard shortcuts directly in the input placeholder or via a small floating icon within the search bar, and ensure `aria-keyshortcuts` is used to expose them properly.
+
+## 2026-05-01 - Search Landmark Roles on Control Wrappers
+**Learning:** The application uses custom wrapper classes like `.search-controls` and `.shop-controls` for its primary search inputs. Without the `role="search"` landmark on these specific wrapper elements, screen reader users cannot quickly navigate to the main search areas using landmark shortcuts.
+**Action:** Always ensure that any container wrapping a global or primary search input (typically featuring the `.search-controls` or similar classes) explicitly includes the `role="search"` attribute to provide a standard navigation landmark.
