@@ -2322,3 +2322,27 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `npm run test:feedback-smoke:raw` also hit Chromium `browserType.launch: spawn EPERM`.
 - Follow-up TODO:
   - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/canallock/` in an environment where Node test-runner child processes and Chromium launch are allowed.
+
+## 2026-05-03 Skyline Stacker automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `skylinestacker` / Skyline Stacker because the catalog did not have a one-button timing tower-stacking game.
+- Plan: add a standalone canvas game where players drop sliding floors to build a skyline, reward precision streaks, support keyboard/pointer/touch controls, mount feedback, expose `window.advanceTime(ms)` and `window.render_game_to_text()`, then wire catalog/routing/SEO/feedback artifacts.
+- Added `skylinestacker/index.html` with a single-canvas tower timing game, desktop/touch controls, pause/restart/fullscreen, nudge assist, feedback mount, profile reward hooks, and deterministic automation hooks.
+- Wired initial catalog/routing integration in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Regenerated SEO/sitemap with `npm run seo`; `/skylinestacker` now has managed SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw .\vercel.json | ConvertFrom-Json`: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` to confirm Skyline Stacker is present in the catalog and feedback map: pass.
+  - Parsed both `skylinestacker/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - Slug grep checks across game page, metadata, Vercel config, sitemap, and Linear seed artifacts: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass (4/4).
+  - Served `/skylinestacker/` plus `/src/core/state.js` through a short-lived Node static server: pass.
+  - Ran a lightweight Node VM runtime harness with stubbed DOM/canvas to start the game, advance deterministic time, drop floors, and read `window.render_game_to_text()`: pass.
+  - `git diff --check`: pass; only existing Git line-ending warnings were printed.
+- Sandbox blockers:
+  - `npm run test:feedback` passed the daily metadata guard, then Node test runner hit `spawn EPERM`.
+  - Required `$develop-web-game` Playwright client for `/skylinestacker/` hit Chromium `browserType.launch: spawn EPERM`; no screenshots were produced.
+  - Feedback smoke raw script with a short-lived static server also hit Chromium `browserType.launch: spawn EPERM`.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/skylinestacker/` in an environment where Node test-runner child processes and Chromium launch are allowed.

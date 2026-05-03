@@ -100,5 +100,6 @@
 - game/marblecircuit
 - game/switchyard
 - game/canallock
+- game/skylinestacker
 
 Generated from `src/meta/feedback.js`.

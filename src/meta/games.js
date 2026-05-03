@@ -84,5 +84,6 @@ export const GAMES = [
   { slug:'marblecircuit',  name:'Marble Circuit',      emoji:'\u{1F535}', scoreHint:'courses',    url:'/marblecircuit', desc:'Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out.', earnsCoins:true },
   { slug:'switchyard',     name:'Switchyard Shuffle',  emoji:'\u{1F686}', scoreHint:'delivered',  url:'/switchyard',    desc:'Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails.', earnsCoins:true },
   { slug:'canallock',      name:'Canal Lock',          emoji:'\u{1F6A2}', scoreHint:'delivered',  url:'/canallock',     desc:'Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor.', earnsCoins:true },
+  { slug:'skylinestacker', name:'Skyline Stacker',     emoji:'\u{1F3D9}\uFE0F', scoreHint:'floors', url:'/skylinestacker', desc:'Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away.', earnsCoins:true },
 ];
 

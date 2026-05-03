@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Skyline Stacker | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(42% 38% at 16% 12%, #315f78 0%, transparent 70%),
+    radial-gradient(36% 44% at 86% 78%, #6e4736 0%, transparent 72%),
+    linear-gradient(180deg, #10141f 0%, #1e2f3c 56%, #211b23 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.wrap {
+  width: min(97vw, 1060px);
+  aspect-ratio: 16 / 10;
+  max-height: min(68dvh, 740px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #e9c37b70;
+  box-shadow: 0 18px 50px #000000b0;
+  background: #142230;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #ffd99f66;
+  background: #111a25f4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 42px); }
+p { margin: 0 0 10px; color: #e4eef2; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #ffe5b878;
+  background: #814f2cf0;
+  color: #fffaf2;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1060px);
+  border-radius: 12px;
+  border: 1px solid #ffd99f52;
+  background: #111a25f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #fff0c930;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cfd9de;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a9f3bd; }
+.warn b { color: #ffe497; }
+.bad b { color: #ffaaa0; }
+.controls {
+  width: min(97vw, 1060px);
+  border-radius: 12px;
+  border: 1px solid #ffd99f52;
+  background: #111a25e8;
+  display: grid;
+  grid-template-columns: 1.35fr repeat(3, .68fr);
+  gap: 8px;
+  padding: 10px;
+}
+.drop {
+  background: #cf7130;
+  font-size: clamp(16px, 2.8vw, 20px);
+  letter-spacing: .03em;
+}
+@media (max-width: 760px) {
+  .app { justify-content: flex-start; padding-top: 58px; }
+  .wrap { width: 98vw; max-height: 54dvh; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .chip { min-height: 44px; }
+  .controls { grid-template-columns: 1fr 1fr; }
+  .drop { grid-column: 1 / -1; min-height: 56px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Skyline Stacker | AI and Sons Games">
+  <meta property="og:description" content="Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/skylinestacker">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Skyline Stacker | AI and Sons Games">
+  <meta name="twitter:description" content="Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/skylinestacker">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Skyline Stacker","description":"Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/skylinestacker","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to Games</a>
+<main class="app">
+  <section class="wrap" aria-label="Skyline Stacker game">
+    <canvas id="game" width="960" height="600"></canvas>
+    <div id="overlay" class="overlay show">
+      <div class="panel">
+        <h1>Skyline Stacker</h1>
+        <p id="overlayText">Drop each sliding floor onto the tower. Bigger overlaps keep the building wide; perfect drops restore lost width and build a bonus streak.</p>
+        <div class="row">
+          <button id="startBtn">Start Stacking</button>
+          <button id="fullscreenBtn">Fullscreen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hud" aria-label="Game status">
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Floors</span><b id="floors">0</b></div>
+    <div class="chip warn"><span>Streak</span><b id="streak">0</b></div>
+    <div class="chip"><span>Width</span><b id="width">0</b></div>
+    <div class="chip"><span>Speed</span><b id="speed">1.0x</b></div>
+    <div class="chip"><span>Best</span><b id="best">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+    <div class="chip bad"><span>Status</span><b id="status">Ready</b></div>
+  </section>
+
+  <section class="controls" aria-label="Controls">
+    <button id="dropBtn" class="drop">Drop Floor</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="restartBtn">Restart</button>
+    <button id="nudgeBtn">Nudge</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+const overlay = document.getElementById('overlay');
+const overlayText = document.getElementById('overlayText');
+const scoreEl = document.getElementById('score');
+const floorsEl = document.getElementById('floors');
+const streakEl = document.getElementById('streak');
+const widthEl = document.getElementById('width');
+const speedEl = document.getElementById('speed');
+const bestEl = document.getElementById('best');
+const coinsEl = document.getElementById('coins');
+const statusEl = document.getElementById('status');
+
+const BASE_Y = 520;
+const FLOOR_H = 30;
+const START_WIDTH = 310;
+const MIN_WIDTH = 28;
+const PERFECT_TOLERANCE = 10;
+const COLORS = ['#f6c76e', '#55c7df', '#f38a62', '#8fd47f', '#c9a0ff', '#f2e27c', '#6bd0ad', '#ff9eba'];
+
+const keys = new Set();
+let lastFrame = performance.now();
+let manualStepping = false;
+let bestFloors = Number(localStorage.getItem('skylinestacker_best_floors') || 0);
+
+const game = {
+  mode: 'menu',
+  score: 0,
+  floors: [],
+  active: null,
+  direction: 1,
+  speed: 130,
+  streak: 0,
+  perfects: 0,
+  misses: 0,
+  cameraY: 0,
+  targetCameraY: 0,
+  shake: 0,
+  message: 'Ready',
+  coinsEarned: 0,
+  wind: 0,
+  settledTimer: 0,
+};
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function makeFloor(index, x, y, width, active = false) {
+  return {
+    index,
+    x,
+    y,
+    w: width,
+    h: FLOOR_H,
+    color: COLORS[index % COLORS.length],
+    active,
+    vx: 0,
+    perfect: false,
+  };
+}
+
+function resetRun() {
+  game.mode = 'menu';
+  game.score = 0;
+  game.floors = [makeFloor(0, W / 2 - START_WIDTH / 2, BASE_Y, START_WIDTH, false)];
+  game.active = null;
+  game.direction = 1;
+  game.speed = 130;
+  game.streak = 0;
+  game.perfects = 0;
+  game.misses = 0;
+  game.cameraY = 0;
+  game.targetCameraY = 0;
+  game.shake = 0;
+  game.message = 'Ready';
+  game.coinsEarned = 0;
+  game.wind = 0;
+  game.settledTimer = 0;
+  updateHud();
+  render();
+}
+
+function startGame() {
+  resetRun();
+  game.mode = 'playing';
+  game.message = 'Drop the first floor';
+  try { rememberRecent('skylinestacker'); } catch {}
+  spawnActive();
+  overlay.classList.remove('show');
+  updateHud();
+}
+
+function spawnActive() {
+  const top = game.floors[game.floors.length - 1];
+  const width = clamp(top.w + (game.streak >= 4 ? 4 : 0), MIN_WIDTH, START_WIDTH);
+  const y = top.y - FLOOR_H;
+  const fromLeft = game.floors.length % 2 === 0;
+  const x = fromLeft ? 24 : W - width - 24;
+  const floor = makeFloor(game.floors.length, x, y, width, true);
+  floor.vx = (fromLeft ? 1 : -1) * game.speed;
+  game.direction = fromLeft ? 1 : -1;
+  game.active = floor;
+  game.wind = Math.sin(game.floors.length * 0.78) * Math.min(34, 4 + game.floors.length * 0.7);
+  game.targetCameraY = Math.max(0, BASE_Y - y - 210);
+}
+
+function awardCoins(amount) {
+  const coins = Math.max(0, Math.floor(amount));
+  if (!coins) return;
+  game.coinsEarned += coins;
+  try { addCoins(coins); } catch {}
+}
+
+function finishRun(reason) {
+  game.mode = 'gameover';
+  game.active = null;
+  game.message = reason;
+  const floorBonus = Math.floor(game.floors.length / 5);
+  const precisionBonus = Math.floor(game.perfects / 2);
+  awardCoins(floorBonus + precisionBonus);
+  if (game.floors.length - 1 > bestFloors) {
+    bestFloors = game.floors.length - 1;
+    localStorage.setItem('skylinestacker_best_floors', String(bestFloors));
+  }
+  overlayText.textContent = `${reason} You stacked ${game.floors.length - 1} floors, scored ${game.score}, and earned ${game.coinsEarned} coins.`;
+  document.getElementById('startBtn').textContent = 'Stack Again';
+  overlay.classList.add('show');
+  updateHud();
+}
+
+function dropFloor() {
+  if (game.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'paused') {
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing' || !game.active) return;
+
+  const base = game.floors[game.floors.length - 1];
+  const active = game.active;
+  const overlapLeft = Math.max(base.x, active.x);
+  const overlapRight = Math.min(base.x + base.w, active.x + active.w);
+  let overlap = overlapRight - overlapLeft;
+  const centerDelta = Math.abs((active.x + active.w / 2) - (base.x + base.w / 2));
+
+  if (overlap <= 0) {
+    game.misses += 1;
+    game.shake = 14;
+    finishRun('The floor missed the tower.');
+    return;
+  }
+
+  const perfect = centerDelta <= PERFECT_TOLERANCE;
+  if (perfect) {
+    game.streak += 1;
+    game.perfects += 1;
+    overlap = clamp(Math.max(overlap, base.w) + (game.streak >= 3 ? 8 : 0), MIN_WIDTH, START_WIDTH);
+    active.x = base.x + base.w / 2 - overlap / 2;
+    active.perfect = true;
+    game.message = game.streak >= 3 ? 'Perfect streak' : 'Perfect drop';
+    game.shake = 4;
+  } else {
+    game.streak = 0;
+    active.x = overlapLeft;
+    game.message = overlap < base.w * 0.55 ? 'Narrow save' : 'Good drop';
+    game.shake = 7;
+  }
+
+  active.w = overlap;
+  active.active = false;
+  active.vx = 0;
+  game.active = null;
+  game.floors.push(active);
+  game.score += Math.round(overlap * 0.35) + 12 + (perfect ? 22 + game.streak * 4 : 0);
+  game.speed = clamp(130 + game.floors.length * 9 + game.perfects * 2, 130, 310);
+  if (perfect && game.streak % 4 === 0) awardCoins(1);
+
+  if (overlap < MIN_WIDTH) {
+    finishRun('The tower became too narrow.');
+    return;
+  }
+
+  game.settledTimer = 0.12;
+  spawnActive();
+  updateHud();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused';
+    overlayText.textContent = 'Paused. Drop, Space, Enter, or P resumes the stack.';
+    overlay.classList.add('show');
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Stacking';
+    overlay.classList.remove('show');
+  }
+  updateHud();
+}
+
+function nudgeActive() {
+  if (game.mode !== 'playing' || !game.active) return;
+  const top = game.floors[game.floors.length - 1];
+  const activeCenter = game.active.x + game.active.w / 2;
+  const targetCenter = top.x + top.w / 2;
+  game.active.x += clamp((targetCenter - activeCenter) * 0.16, -14, 14);
+  game.message = 'Nudged';
+  updateHud();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function update(dt) {
+  if (game.shake > 0) game.shake = Math.max(0, game.shake - dt * 30);
+  game.cameraY += (game.targetCameraY - game.cameraY) * Math.min(1, dt * 5);
+
+  if (game.mode !== 'playing' || !game.active) return;
+
+  game.active.x += game.active.vx * dt;
+  const leftLimit = 18 + Math.max(0, game.wind);
+  const rightLimit = W - game.active.w - 18 + Math.min(0, game.wind);
+  if (game.active.x <= leftLimit) {
+    game.active.x = leftLimit;
+    game.active.vx = Math.abs(game.active.vx);
+  } else if (game.active.x >= rightLimit) {
+    game.active.x = rightLimit;
+    game.active.vx = -Math.abs(game.active.vx);
+  }
+
+  if (keys.has('arrowleft') || keys.has('a')) {
+    game.active.x -= 70 * dt;
+  }
+  if (keys.has('arrowright') || keys.has('d')) {
+    game.active.x += 70 * dt;
+  }
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#142033');
+  sky.addColorStop(0.52, '#254559');
+  sky.addColorStop(1, '#413141');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#fff3bf';
+  ctx.beginPath();
+  ctx.arc(800, 92, 34, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0d1421aa';
+  for (let i = 0; i < 16; i += 1) {
+    const x = i * 70 - 20;
+    const h = 70 + (i % 5) * 18;
+    ctx.fillRect(x, H - h, 54, h);
+    ctx.fillStyle = i % 3 === 0 ? '#ffd97955' : '#0d1421aa';
+    for (let y = H - h + 14; y < H - 12; y += 18) {
+      ctx.fillRect(x + 10, y, 8, 7);
+      ctx.fillRect(x + 30, y, 8, 7);
+    }
+    ctx.fillStyle = '#0d1421aa';
+  }
+
+  ctx.fillStyle = '#152432';
+  ctx.fillRect(0, BASE_Y + 34, W, H - BASE_Y - 34);
+}
+
+function drawFloor(floor, offsetY) {
+  const y = floor.y + offsetY;
+  const r = 5;
+  ctx.fillStyle = floor.color;
+  ctx.strokeStyle = floor.perfect ? '#ffffff' : '#00000066';
+  ctx.lineWidth = floor.perfect ? 3 : 2;
+  ctx.beginPath();
+  ctx.roundRect(floor.x, y, floor.w, floor.h, r);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff20';
+  ctx.fillRect(floor.x + 6, y + 5, Math.max(0, floor.w - 12), 7);
+  ctx.fillStyle = '#15192355';
+  const windowCount = Math.max(1, Math.floor(floor.w / 34));
+  for (let i = 0; i < windowCount; i += 1) {
+    ctx.fillRect(floor.x + 12 + i * 28, y + 16, 12, 8);
+  }
+}
+
+function render() {
+  ctx.save();
+  drawBackground();
+  const shakeX = game.shake > 0 ? Math.sin(performance.now() * 0.05) * game.shake : 0;
+  const shakeY = game.shake > 0 ? Math.cos(performance.now() * 0.04) * game.shake * 0.45 : 0;
+  ctx.translate(shakeX, shakeY);
+  const offsetY = game.cameraY;
+
+  for (const floor of game.floors) {
+    drawFloor(floor, offsetY);
+  }
+  if (game.active) {
+    drawFloor(game.active, offsetY);
+    const base = game.floors[game.floors.length - 1];
+    const y = base.y + offsetY - 8;
+    ctx.strokeStyle = '#ffffff80';
+    ctx.setLineDash([7, 8]);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(base.x, y, base.w, 4);
+    ctx.setLineDash([]);
+  }
+
+  ctx.restore();
+
+  ctx.fillStyle = '#ffffffd8';
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(game.message, 22, 30);
+  ctx.textAlign = 'right';
+  ctx.fillText('Space / Enter / Tap: drop', W - 22, 30);
+
+  if (game.mode === 'paused') {
+    ctx.fillStyle = '#00000070';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function updateHud() {
+  const top = game.active || game.floors[game.floors.length - 1];
+  scoreEl.textContent = String(game.score);
+  floorsEl.textContent = String(Math.max(0, game.floors.length - 1));
+  streakEl.textContent = String(game.streak);
+  widthEl.textContent = String(Math.round(top?.w || 0));
+  speedEl.textContent = `${(game.speed / 130).toFixed(1)}x`;
+  bestEl.textContent = String(bestFloors);
+  coinsEl.textContent = String(profileState?.coins ?? game.coinsEarned);
+  statusEl.textContent = game.mode === 'gameover' ? 'Done' : game.mode === 'playing' ? 'Stack' : game.mode === 'paused' ? 'Pause' : 'Ready';
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  dropFloor();
+  event.preventDefault();
+});
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) {
+    keys.add(key);
+    event.preventDefault();
+  } else if (key === ' ' || key === 'enter') {
+    if (!event.repeat) dropFloor();
+    event.preventDefault();
+  } else if (key === 'p') {
+    togglePause();
+    event.preventDefault();
+  } else if (key === 'r') {
+    startGame();
+    event.preventDefault();
+  } else if (key === 'f') {
+    toggleFullscreen();
+    event.preventDefault();
+  } else if (key === 'n') {
+    nudgeActive();
+    event.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+document.getElementById('startBtn')?.addEventListener('click', startGame);
+document.getElementById('dropBtn')?.addEventListener('click', dropFloor);
+document.getElementById('pauseBtn')?.addEventListener('click', togglePause);
+document.getElementById('restartBtn')?.addEventListener('click', startGame);
+document.getElementById('nudgeBtn')?.addEventListener('click', nudgeActive);
+document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+
+function step(ms) {
+  const steps = Math.max(1, Math.min(36, Math.round(ms / (1000 / 60))));
+  const dt = Math.min(1 / 30, (ms / 1000) / steps);
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  render();
+}
+
+window.advanceTime = (ms) => {
+  manualStepping = true;
+  step(ms);
+  lastFrame = performance.now();
+  manualStepping = false;
+};
+
+window.render_game_to_text = () => {
+  const base = game.floors[game.floors.length - 1] || null;
+  const active = game.active || null;
+  const overlap = base && active
+    ? Math.max(0, Math.min(base.x + base.w, active.x + active.w) - Math.max(base.x, active.x))
+    : null;
+  return JSON.stringify({
+    game: 'skylinestacker',
+    coordinate_system: 'canvas pixels; origin top-left; x increases right; y increases down; floors stack upward as y decreases',
+    mode: game.mode,
+    score: game.score,
+    floors_stacked: Math.max(0, game.floors.length - 1),
+    best_floors: bestFloors,
+    streak: game.streak,
+    perfects: game.perfects,
+    misses: game.misses,
+    speed_px_per_second: Math.round(game.speed),
+    current_width: Math.round((active || base)?.w || 0),
+    base_floor: base ? {
+      x: Math.round(base.x),
+      y: Math.round(base.y),
+      width: Math.round(base.w),
+    } : null,
+    active_floor: active ? {
+      x: Math.round(active.x),
+      y: Math.round(active.y),
+      width: Math.round(active.w),
+      velocity_x: Math.round(active.vx),
+      overlap_with_base: Math.round(overlap),
+      would_be_perfect: Boolean(base && Math.abs((active.x + active.w / 2) - (base.x + base.w / 2)) <= PERFECT_TOLERANCE),
+    } : null,
+    last_message: game.message,
+    coins_earned_this_run: game.coinsEarned,
+  });
+};
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(1 / 30, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    render();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+resetRun();
+requestAnimationFrame(frame);
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'skylinestacker', gameName: 'Skyline Stacker' });
+</script>
+</body>
+</html>
