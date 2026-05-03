@@ -98,5 +98,7 @@
 - game/codebreaker
 - game/potionpantry
 - game/marblecircuit
+- game/switchyard
+- game/canallock
 
 Generated from `src/meta/feedback.js`.

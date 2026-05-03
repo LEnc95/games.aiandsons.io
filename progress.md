@@ -2274,3 +2274,51 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `npm run test:feedback-smoke:raw`: attempted with the local Node static server, but Chromium launch hit sandbox `browserType.launch: spawn EPERM`.
 - Follow-up TODO:
   - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/marblecircuit` in an environment where child process and Chromium launch are allowed.
+
+## 2026-05-01 Switchyard Shuffle automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `switchyard` / Switchyard Shuffle because the catalog did not have a timed rail-dispatch switch-routing game.
+- Plan: add a standalone canvas game where players toggle rail junctions to deliver colored trains to matching platforms, with desktop/mobile controls, feedback mount, profile rewards, `window.advanceTime(ms)`, and `window.render_game_to_text()`.
+- Added `switchyard/index.html` with the rail graph, moving trains, switch toggles, target platform deliveries, safety/misroute/collision penalties, pause/restart/fullscreen, profile reward hooks, feedback mount, and deterministic automation hooks.
+- Wired initial catalog/routing integration in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Added arrow-key switch focus plus Space/Enter toggling so the Playwright skill client and keyboard-only players can exercise switch routing without number-key support.
+- Regenerated SEO/sitemap with `npm run seo`; `/switchyard` now has managed SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw .\vercel.json | ConvertFrom-Json`: pass.
+  - Parsed both `switchyard/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` to confirm Switchyard Shuffle is present in the catalog and feedback map: pass.
+  - Slug grep checks across game page, metadata, Vercel config, sitemap, and Linear seed artifacts: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass (4/4).
+  - Served `/switchyard`, `/src/core/state.js`, and `/src/feedback/embed.js` through a short-lived Node static server: pass.
+  - `git diff --check`: pass; only existing Git line-ending warnings were printed.
+- Sandbox blockers:
+  - `npm run test:feedback` passed the daily metadata guard, then Node test runner hit `spawn EPERM`.
+  - Required `$develop-web-game` Playwright client for `/switchyard` hit Chromium `browserType.launch: spawn EPERM`; no screenshots were produced.
+  - `npm run test:feedback-smoke:raw` also hit Chromium `browserType.launch: spawn EPERM`.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/switchyard` in an environment where Node test-runner child processes and Chromium launch are allowed.
+
+## 2026-05-02 Canal Lock automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `canallock` / Canal Lock because the catalog did not have a lock-chamber water-level routing puzzle.
+- Plan: add a standalone canvas game where players pump canal chambers up/down and open gates only when water levels match, with desktop/mobile controls, feedback mount, profile rewards, `window.advanceTime(ms)`, and `window.render_game_to_text()`.
+- Added `canallock/index.html` with the canal chamber loop, desktop/touch controls, pause/restart/fullscreen, feedback mount, profile reward hooks, and deterministic automation hooks.
+- Wired initial catalog/routing integration in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Regenerated SEO/sitemap with `npm run seo`; `/canallock` now has managed SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw .\vercel.json | ConvertFrom-Json`: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` to confirm Canal Lock is present in the catalog and feedback map: pass.
+  - Parsed both `canallock/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - Slug grep checks across game page, metadata, Vercel config, sitemap, and Linear seed artifacts: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass (4/4).
+  - Served `/canallock/` plus `/src/core/state.js` through a short-lived Node static server: pass.
+  - Ran a lightweight Node VM runtime harness with stubbed DOM/canvas to start the game, advance time, and read `window.render_game_to_text()`: pass.
+  - `git diff --check`: pass; only existing Git line-ending warnings were printed.
+- Sandbox blockers:
+  - `npm run test:feedback` passed the daily metadata guard, then Node test runner hit `spawn EPERM`.
+  - Required `$develop-web-game` Playwright client for `/canallock/` hit Chromium `browserType.launch: spawn EPERM`; no screenshots were produced.
+  - `npm run test:feedback-smoke:raw` also hit Chromium `browserType.launch: spawn EPERM`.
+- Follow-up TODO:
+  - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/canallock/` in an environment where Node test-runner child processes and Chromium launch are allowed.

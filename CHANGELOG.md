@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-05-01
+
+### Added
+- Added and wired seven new games: `orbit-orchard`, `echo-labyrinth`, `beat-rail`, `ember-watch`, `cloud-climber`, `reef-runner`, `codebreaker-grid`, and `marble-circuit`.
+- Added audio accessibility surfaces and game lifecycle analytics instrumentation.
+
+### Improved
+- Improved SEO metadata, structured data, and sitemap generation.
+- Improved launcher/search UX with keyboard shortcut hints and test hardening for debounced discovery, metrics, and launch-readiness flows.
+- Improved mission progress performance by switching nested membership checks to `Set.has`.
+
+### Security
+- Replaced unsafe DOM-clearing `innerHTML` patterns with safer text rendering approaches.
+- Updated Firebase auth/CSP handling and added fallback behavior for internal auth errors.
+
+### Operations
+- Key PRs: [#141](https://github.com/LEnc95/games.aiandsons.io/pull/141), [#140](https://github.com/LEnc95/games.aiandsons.io/pull/140), [#139](https://github.com/LEnc95/games.aiandsons.io/pull/139), [#138](https://github.com/LEnc95/games.aiandsons.io/pull/138), [#137](https://github.com/LEnc95/games.aiandsons.io/pull/137), [#136](https://github.com/LEnc95/games.aiandsons.io/pull/136), [#135](https://github.com/LEnc95/games.aiandsons.io/pull/135).
+
 ## [1.0.0] - 2026-04-19
 
 ### Changed

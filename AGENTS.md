@@ -37,6 +37,7 @@ Operational command reference for contributors and automations in this repositor
 - Export KPI snapshot: `npm run metrics:export -- --input data/metrics-state.json --output output/kpi/kpi-dashboard-snapshot.json --window-days 30`
 - Stripe reconcile/audit pass: `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
 - Stripe nightly reconcile sweep: `npm run stripe:nightly-reconcile -- --base-url https://<your-domain> --dry-run false`
+- Stripe nightly reconcile sweep with JSON summary output (matches CI artifact export): `npm run stripe:nightly-reconcile -- --base-url https://<your-domain> --dry-run false --output output/stripe/nightly-reconcile-summary.json`
 - Deploy tracked Firebase rules: `npm run firebase:deploy:rules`
 - Run the strict daily feedback metadata guard: `npm run feedback:check-daily`
 - Regenerate Linear feedback seed files and live-provision Linear when envs are present: `npm run feedback:sync-linear`

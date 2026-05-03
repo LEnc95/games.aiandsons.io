@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Canal Lock | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(48% 42% at 16% 10%, #315e72 0%, transparent 70%),
+    radial-gradient(42% 45% at 88% 82%, #604b28 0%, transparent 72%),
+    linear-gradient(180deg, #101820 0%, #1c2b34 52%, #172421 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.wrap {
+  width: min(97vw, 1120px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #d7efff70;
+  box-shadow: 0 18px 50px #000000b0;
+  background: #17252c;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #d8f5ff66;
+  background: #101923f5;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 42px); }
+p { margin: 0 0 10px; color: #d8e8ee; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #e7fbff78;
+  background: #2f6370f0;
+  color: #f8fdff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1120px);
+  border-radius: 12px;
+  border: 1px solid #d8f5ff52;
+  background: #101a24f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #f4ffe530;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cbd9de;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9cf0c2; }
+.warn b { color: #ffe39d; }
+.bad b { color: #ffafa4; }
+.controls {
+  width: min(97vw, 1120px);
+  border-radius: 12px;
+  border: 1px solid #d8f5ff52;
+  background: #101a24f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 8px;
+}
+.chamber-btn { background: #36566c; border-color: #d9f3ff75; }
+.pump-btn { background: #2f715e; border-color: #caf8d875; }
+.gate-btn { background: #7a5d31; border-color: #fff0b675; }
+.utility-btn { background: #474d62; border-color: #d9e3ff75; }
+@media (max-width: 980px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  html, body { touch-action: pan-y; }
+  .app { justify-content: flex-start; }
+  .wrap { max-height: 50dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Canal Lock | AI and Sons Games">
+  <meta property="og:description" content="Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/canallock">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Canal Lock | AI and Sons Games">
+  <meta name="twitter:description" content="Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/canallock">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Canal Lock","description":"Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/canallock","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Canal Lock game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Delivered</span><b id="delivered">0/10</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">100.0s</b></div>
+    <div class="chip bad"><span>Pressure</span><b id="pressure">0%</b></div>
+    <div class="chip"><span>Target</span><b id="target">LOW</b></div>
+    <div class="chip"><span>Selected</span><b id="selected">1</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Canal controls">
+    <button id="chamber1" type="button" class="chamber-btn">Chamber 1</button>
+    <button id="chamber2" type="button" class="chamber-btn">Chamber 2</button>
+    <button id="chamber3" type="button" class="chamber-btn">Chamber 3</button>
+    <button id="chamber4" type="button" class="chamber-btn">Chamber 4</button>
+    <button id="pumpUp" type="button" class="pump-btn">Pump Up</button>
+    <button id="pumpDown" type="button" class="pump-btn">Pump Down</button>
+    <button id="openGate" type="button" class="gate-btn">Open Gate</button>
+    <button id="startBtn" type="button" class="utility-btn">Start</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const deliveredEl = document.getElementById('delivered');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const pressureEl = document.getElementById('pressure');
+const targetEl = document.getElementById('target');
+const selectedEl = document.getElementById('selected');
+const coinsEl = document.getElementById('coins');
+
+const W = canvas.width;
+const H = canvas.height;
+const ROUND_TIME = 100;
+const GOAL = 10;
+const TOLERANCE = 0.085;
+const PUMP_SPEED = 0.32;
+const MOVE_TIME = 0.85;
+const CHAMBERS = [
+  { x: 154, y: 182, w: 190, h: 392, label: '1' },
+  { x: 390, y: 150, w: 190, h: 424, label: '2' },
+  { x: 626, y: 198, w: 190, h: 376, label: '3' },
+  { x: 862, y: 164, w: 190, h: 410, label: '4' },
+];
+const TARGETS = [
+  { id: 'low', label: 'LOW', level: 0.25, color: '#62c5ff', dark: '#1a4c66' },
+  { id: 'mid', label: 'MID', level: 0.52, color: '#7fe08f', dark: '#245c32' },
+  { id: 'high', label: 'HIGH', level: 0.78, color: '#ffcf6e', dark: '#745222' },
+];
+const TARGET_CYCLE = ['mid', 'low', 'high', 'mid', 'high', 'low', 'mid', 'low'];
+
+const keys = new Set();
+const touch = { pump: 0 };
+let manualStepping = false;
+let lastFrame = performance.now();
+
+const game = {
+  mode: 'menu',
+  time: ROUND_TIME,
+  delivered: 0,
+  score: 0,
+  pressure: 0,
+  selected: 0,
+  levels: [0.42, 0.55, 0.36, 0.62],
+  targetCursor: 0,
+  queue: [],
+  barge: null,
+  moving: null,
+  gateFlash: null,
+  gateCooldown: 0,
+  message: 'Match water levels, then open gates to move each cargo barge.',
+  paid: false,
+  coinsEarned: 0,
+  seed: 20260502,
+  particles: [],
+};
+
+function rand() {
+  game.seed = (game.seed * 1664525 + 1013904223) >>> 0;
+  return game.seed / 4294967296;
+}
+
+function getTarget(id) {
+  return TARGETS.find((target) => target.id === id) || TARGETS[0];
+}
+
+function makeJob() {
+  const preferred = TARGET_CYCLE[game.targetCursor % TARGET_CYCLE.length];
+  game.targetCursor += 1;
+  const target = getTarget(rand() < 0.18 ? TARGETS[Math.floor(rand() * TARGETS.length)].id : preferred);
+  return {
+    id: game.targetCursor,
+    targetId: target.id,
+    label: target.label,
+    level: target.level,
+    color: target.color,
+    dark: target.dark,
+  };
+}
+
+function refillQueue() {
+  while (game.queue.length < 4) {
+    game.queue.push(makeJob());
+  }
+}
+
+function chamberWaterY(index) {
+  const chamber = CHAMBERS[index];
+  return chamber.y + chamber.h * (1 - game.levels[index]);
+}
+
+function bargePosition(chamberIndex) {
+  const chamber = CHAMBERS[chamberIndex];
+  return {
+    x: chamber.x + chamber.w / 2,
+    y: chamberWaterY(chamberIndex) - 18,
+  };
+}
+
+function spawnBarge() {
+  refillQueue();
+  const job = game.queue.shift();
+  refillQueue();
+  game.barge = {
+    ...job,
+    chamber: 0,
+    x: bargePosition(0).x,
+    y: bargePosition(0).y,
+    moving: false,
+  };
+}
+
+function resetRun() {
+  game.mode = 'menu';
+  game.time = ROUND_TIME;
+  game.delivered = 0;
+  game.score = 0;
+  game.pressure = 0;
+  game.selected = 0;
+  game.levels = [0.42, 0.55, 0.36, 0.62];
+  game.targetCursor = 0;
+  game.queue = [];
+  game.moving = null;
+  game.gateFlash = null;
+  game.gateCooldown = 0;
+  game.message = 'Match water levels, then open gates to move each cargo barge.';
+  game.paid = false;
+  game.coinsEarned = 0;
+  game.seed = 20260502;
+  game.particles = [];
+  spawnBarge();
+  showOverlay();
+  updateHud();
+  render();
+}
+
+function startGame() {
+  if (game.mode === 'playing') return;
+  if (game.mode === 'won' || game.mode === 'lost') {
+    resetRun();
+  }
+  game.mode = 'playing';
+  game.message = 'Pump a chamber, then open the active gate when water levels match.';
+  hideOverlay();
+  try { rememberRecent('canallock'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, canallock: { result: 'started', delivered: 0, score: 0 } });
+  } catch {}
+}
+
+function finish(result) {
+  if (game.mode === 'won' || game.mode === 'lost') return;
+  game.mode = result === 'won' ? 'won' : 'lost';
+  const timeBonus = Math.max(0, Math.round(game.time * 5));
+  const pressureBonus = Math.max(0, Math.round((100 - game.pressure) * 3));
+  if (result === 'won') {
+    game.score += 800 + timeBonus + pressureBonus;
+  }
+
+  if (!game.paid) {
+    const coins = result === 'won'
+      ? Math.max(12, Math.floor(game.score / 420))
+      : Math.max(2, Math.floor(game.delivered / 2));
+    game.coinsEarned += coins;
+    try { addCoins(coins); } catch {}
+    game.paid = true;
+  }
+
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      canallock: {
+        result,
+        delivered: game.delivered,
+        score: game.score,
+        pressure: Math.round(game.pressure),
+      },
+    });
+  } catch {}
+
+  game.message = result === 'won'
+    ? `Harbor cleared. ${game.delivered} barges delivered with ${Math.round(game.pressure)}% pressure.`
+    : `Canal shift ended. ${game.delivered} barges delivered.`;
+  updateHud();
+  showOverlay();
+}
+
+function togglePause() {
+  if (game.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+    showOverlay();
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Resumed.';
+    hideOverlay();
+  }
+  updateHud();
+}
+
+function setSelected(index) {
+  game.selected = Math.max(0, Math.min(CHAMBERS.length - 1, index));
+  game.message = `Chamber ${game.selected + 1} selected.`;
+  updateHud();
+  render();
+}
+
+function selectDelta(delta) {
+  setSelected((game.selected + delta + CHAMBERS.length) % CHAMBERS.length);
+}
+
+function addParticle(x, y, color, count) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = rand() * Math.PI * 2;
+    const speed = 55 + rand() * 155;
+    game.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.4 + rand() * 0.35,
+      max: 0.75,
+      color,
+    });
+  }
+}
+
+function currentGateInfo() {
+  const barge = game.barge;
+  if (!barge) return null;
+  if (barge.chamber < CHAMBERS.length - 1) {
+    const from = barge.chamber;
+    const to = from + 1;
+    const diff = Math.abs(game.levels[from] - game.levels[to]);
+    return {
+      type: 'chamber',
+      from,
+      to,
+      required: game.levels[to],
+      actual: game.levels[from],
+      diff,
+      canOpen: diff <= TOLERANCE,
+      label: `Gate ${from + 1}-${to + 1}`,
+    };
+  }
+  const diff = Math.abs(game.levels[barge.chamber] - barge.level);
+  return {
+    type: 'dock',
+    from: barge.chamber,
+    to: null,
+    required: barge.level,
+    actual: game.levels[barge.chamber],
+    diff,
+    canOpen: diff <= TOLERANCE,
+    label: `${barge.label} dock`,
+  };
+}
+
+function failGate(info) {
+  const penalty = 9 + Math.round(info.diff * 55);
+  game.pressure = Math.min(100, game.pressure + penalty);
+  game.score = Math.max(0, game.score - 30);
+  game.gateCooldown = 0.4;
+  game.gateFlash = { index: info.from, timer: 0.4, good: false };
+  game.message = `${info.label} failed. Water mismatch: ${(info.diff * 100).toFixed(0)}%.`;
+  addParticle(bargePosition(info.from).x, chamberWaterY(info.from), '#ff9b7a', 22);
+  if (game.pressure >= 100) finish('lost');
+}
+
+function beginMove(info) {
+  const fromPos = bargePosition(info.from);
+  const toPos = bargePosition(info.to);
+  game.moving = {
+    from: info.from,
+    to: info.to,
+    t: 0,
+    fromX: fromPos.x,
+    fromY: fromPos.y,
+    toX: toPos.x,
+    toY: toPos.y,
+  };
+  game.barge.moving = true;
+  game.gateCooldown = 0.25;
+  game.gateFlash = { index: info.from, timer: 0.45, good: true };
+  game.score += 45 + Math.max(0, Math.round((TOLERANCE - info.diff) * 300));
+  game.pressure = Math.max(0, game.pressure - 2);
+  game.message = `${info.label} opened cleanly.`;
+  addParticle((fromPos.x + toPos.x) / 2, (fromPos.y + toPos.y) / 2, '#a9f4ff', 18);
+}
+
+function deliverBarge(info) {
+  const dockX = CHAMBERS[3].x + CHAMBERS[3].w + 86;
+  const dockY = CHAMBERS[3].y + CHAMBERS[3].h * (1 - game.barge.level);
+  game.delivered += 1;
+  game.score += 240 + Math.max(0, Math.round(game.time * 2)) + Math.max(0, Math.round((TOLERANCE - info.diff) * 480));
+  game.pressure = Math.max(0, game.pressure - 5);
+  game.gateCooldown = 0.35;
+  game.gateFlash = { index: 3, timer: 0.5, good: true };
+  game.message = `${game.barge.label} barge delivered.`;
+  addParticle(dockX, dockY, game.barge.color, 34);
+
+  if (game.delivered > 0 && game.delivered % 3 === 0) {
+    game.coinsEarned += 1;
+    try { addCoins(1); } catch {}
+  }
+
+  if (game.delivered >= GOAL) {
+    finish('won');
+    return;
+  }
+
+  spawnBarge();
+}
+
+function openGate() {
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'paused') {
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing' || game.moving || game.gateCooldown > 0) return;
+  const info = currentGateInfo();
+  if (!info) return;
+  if (!info.canOpen) {
+    failGate(info);
+    updateHud();
+    render();
+    return;
+  }
+  if (info.type === 'dock') {
+    deliverBarge(info);
+  } else {
+    beginMove(info);
+  }
+  updateHud();
+  render();
+}
+
+function pumpDirection() {
+  let direction = touch.pump;
+  if (keys.has('arrowup') || keys.has('w')) direction += 1;
+  if (keys.has('arrowdown') || keys.has('s')) direction -= 1;
+  return Math.max(-1, Math.min(1, direction));
+}
+
+function update(dt) {
+  game.particles = game.particles
+    .map((particle) => ({
+      ...particle,
+      x: particle.x + particle.vx * dt,
+      y: particle.y + particle.vy * dt,
+      vx: particle.vx * 0.94,
+      vy: particle.vy * 0.94 + 18 * dt,
+      life: particle.life - dt,
+    }))
+    .filter((particle) => particle.life > 0);
+
+  if (game.gateFlash) {
+    game.gateFlash.timer -= dt;
+    if (game.gateFlash.timer <= 0) game.gateFlash = null;
+  }
+  game.gateCooldown = Math.max(0, game.gateCooldown - dt);
+
+  if (game.mode !== 'playing') return;
+
+  game.time = Math.max(0, game.time - dt);
+  const direction = pumpDirection();
+  if (direction) {
+    const before = game.levels[game.selected];
+    game.levels[game.selected] = Math.max(0.12, Math.min(0.92, before + direction * PUMP_SPEED * dt));
+    const nearEdge = game.levels[game.selected] < 0.16 || game.levels[game.selected] > 0.88;
+    game.pressure = Math.min(100, game.pressure + (nearEdge ? 3.2 : 0.9) * dt);
+  } else {
+    game.pressure = Math.max(0, game.pressure - 1.4 * dt);
+  }
+
+  const info = currentGateInfo();
+  if (info && !info.canOpen) {
+    game.pressure = Math.min(100, game.pressure + Math.max(0, info.diff - TOLERANCE) * 1.4 * dt);
+  }
+
+  if (game.moving && game.barge) {
+    game.moving.t = Math.min(1, game.moving.t + dt / MOVE_TIME);
+    const t = game.moving.t;
+    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    game.barge.x = game.moving.fromX + (game.moving.toX - game.moving.fromX) * eased;
+    game.barge.y = game.moving.fromY + (game.moving.toY - game.moving.fromY) * eased;
+    if (t >= 1) {
+      game.barge.chamber = game.moving.to;
+      game.barge.moving = false;
+      game.moving = null;
+      const pos = bargePosition(game.barge.chamber);
+      game.barge.x = pos.x;
+      game.barge.y = pos.y;
+      game.selected = game.barge.chamber;
+      game.message = `Barge in chamber ${game.barge.chamber + 1}. Prepare the next gate.`;
+    }
+  } else if (game.barge) {
+    const pos = bargePosition(game.barge.chamber);
+    game.barge.x += (pos.x - game.barge.x) * Math.min(1, dt * 7);
+    game.barge.y += (pos.y - game.barge.y) * Math.min(1, dt * 7);
+  }
+
+  if (game.time <= 0 || game.pressure >= 100) {
+    finish('lost');
+  }
+  updateHud();
+}
+
+function updateHud() {
+  modeEl.textContent = game.mode.toUpperCase();
+  deliveredEl.textContent = `${game.delivered}/${GOAL}`;
+  scoreEl.textContent = String(game.score);
+  timeEl.textContent = `${game.time.toFixed(1)}s`;
+  pressureEl.textContent = `${Math.round(game.pressure)}%`;
+  targetEl.textContent = game.barge ? game.barge.label : 'NONE';
+  selectedEl.textContent = String(game.selected + 1);
+  coinsEl.textContent = String(profileState?.coins ?? game.coinsEarned);
+  for (let i = 0; i < CHAMBERS.length; i += 1) {
+    const button = document.getElementById(`chamber${i + 1}`);
+    if (button) button.textContent = `C${i + 1}: ${Math.round(game.levels[i] * 100)}%`;
+  }
+}
+
+function showOverlay() {
+  const active = ['menu', 'paused', 'won', 'lost'].includes(game.mode);
+  overlay.classList.toggle('show', active);
+  if (!active) return;
+  const title = game.mode === 'menu'
+    ? 'Canal Lock'
+    : game.mode === 'paused'
+      ? 'Paused'
+      : game.mode === 'won'
+        ? 'Harbor Cleared'
+        : 'Canal Closed';
+  const action = game.mode === 'paused' ? 'Resume' : game.mode === 'won' || game.mode === 'lost' ? 'New Shift' : 'Start Shift';
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${game.message}</p>
+      <p>Raise or lower canal chambers, then open the active gate only when the water levels match. The final chamber must match the cargo dock level.</p>
+      <p>Desktop: Left/Right selects chambers, Up/Down pumps, Space/Enter opens the gate, P pauses, R restarts, F fullscreen. Touch: use the controls below the board.</p>
+      <div class="row">
+        <button id="overlayStart" type="button">${action}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayStart')?.addEventListener('click', () => {
+    if (game.mode === 'paused') togglePause();
+    else startGame();
+  });
+  document.getElementById('overlayRestart')?.addEventListener('click', () => {
+    resetRun();
+    startGame();
+  });
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#203744');
+  sky.addColorStop(0.55, '#1d2d36');
+  sky.addColorStop(1, '#172521');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#0d151b';
+  for (let x = 0; x < W; x += 120) {
+    const h = 34 + (x % 240 === 0 ? 32 : 12);
+    ctx.fillRect(x, 120 - h, 78, h);
+  }
+
+  ctx.fillStyle = '#27342c';
+  ctx.fillRect(0, 590, W, 170);
+  ctx.fillStyle = '#34453a';
+  for (let x = 0; x < W; x += 56) {
+    ctx.fillRect(x, 602, 32, 12);
+  }
+
+  ctx.fillStyle = '#0d171de0';
+  ctx.beginPath();
+  ctx.roundRect(34, 24, 570, 62, 12);
+  ctx.fill();
+  ctx.fillStyle = '#eff9ff';
+  ctx.font = '900 26px Trebuchet MS, sans-serif';
+  ctx.fillText('Canal Lock', 54, 50);
+  ctx.font = '700 15px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#d6e8ee';
+  ctx.fillText(game.message, 54, 74);
+
+  ctx.fillStyle = '#0d171de0';
+  ctx.beginPath();
+  ctx.roundRect(720, 24, 432, 62, 12);
+  ctx.fill();
+  ctx.fillStyle = '#d6e8ee';
+  ctx.font = '700 14px Trebuchet MS, sans-serif';
+  ctx.fillText('Queue:', 742, 50);
+  game.queue.slice(0, 3).forEach((job, index) => {
+    ctx.fillStyle = job.color;
+    ctx.beginPath();
+    ctx.roundRect(802 + index * 98, 35, 72, 30, 8);
+    ctx.fill();
+    ctx.fillStyle = '#101820';
+    ctx.font = '900 12px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(job.label, 838 + index * 98, 55);
+    ctx.textAlign = 'left';
+  });
+}
+
+function drawWater(chamber, level) {
+  const waterH = chamber.h * level;
+  const waterY = chamber.y + chamber.h - waterH;
+  const gradient = ctx.createLinearGradient(0, waterY, 0, chamber.y + chamber.h);
+  gradient.addColorStop(0, '#7edaffd8');
+  gradient.addColorStop(1, '#1c78a0e8');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(chamber.x + 10, waterY, chamber.w - 20, waterH - 8);
+
+  ctx.strokeStyle = '#d9f7ffb8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(chamber.x + 13, waterY);
+  for (let x = chamber.x + 13; x <= chamber.x + chamber.w - 13; x += 18) {
+    ctx.lineTo(x, waterY + Math.sin((x + performance.now() * 0.002) * 0.18) * 3);
+  }
+  ctx.stroke();
+}
+
+function drawChambers() {
+  for (let i = 0; i < CHAMBERS.length; i += 1) {
+    const chamber = CHAMBERS[i];
+    ctx.fillStyle = '#18242b';
+    ctx.strokeStyle = i === game.selected ? '#ffffff' : '#83a8b8';
+    ctx.lineWidth = i === game.selected ? 5 : 3;
+    ctx.beginPath();
+    ctx.roundRect(chamber.x, chamber.y, chamber.w, chamber.h, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#314550';
+    ctx.fillRect(chamber.x + 8, chamber.y + 10, chamber.w - 16, chamber.h - 18);
+    drawWater(chamber, game.levels[i]);
+
+    for (let tick = 0.2; tick < 1; tick += 0.2) {
+      const y = chamber.y + chamber.h * (1 - tick);
+      ctx.strokeStyle = '#ffffff33';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(chamber.x + 18, y);
+      ctx.lineTo(chamber.x + chamber.w - 18, y);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#f7fbff';
+    ctx.font = '900 18px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Chamber ${i + 1}`, chamber.x + chamber.w / 2, chamber.y - 18);
+    ctx.font = '800 14px Trebuchet MS, sans-serif';
+    ctx.fillText(`${Math.round(game.levels[i] * 100)}%`, chamber.x + chamber.w / 2, chamber.y + chamber.h + 24);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawGates() {
+  for (let i = 0; i < CHAMBERS.length; i += 1) {
+    const chamber = CHAMBERS[i];
+    const x = chamber.x + chamber.w + (i < CHAMBERS.length - 1 ? (CHAMBERS[i + 1].x - chamber.x - chamber.w) / 2 : 42);
+    const y1 = Math.min(chamber.y, CHAMBERS[Math.min(i + 1, 3)].y) + 30;
+    const y2 = 590;
+    const active = game.barge && game.barge.chamber === i;
+    const flash = game.gateFlash && game.gateFlash.index === i ? game.gateFlash : null;
+    ctx.strokeStyle = flash ? (flash.good ? '#a9ffc5' : '#ff9b7a') : active ? '#fff2a6' : '#566b72';
+    ctx.lineWidth = active ? 8 : 5;
+    ctx.beginPath();
+    ctx.moveTo(x, y1);
+    ctx.lineTo(x, y2);
+    ctx.stroke();
+
+    ctx.fillStyle = active ? '#fff2a6' : '#a9bac2';
+    ctx.font = '900 13px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(i < 3 ? `G${i + 1}` : 'DOCK', x, y1 - 12);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawDocks() {
+  const right = CHAMBERS[3].x + CHAMBERS[3].w + 96;
+  for (const target of TARGETS) {
+    const y = CHAMBERS[3].y + CHAMBERS[3].h * (1 - target.level);
+    const active = game.barge && game.barge.targetId === target.id;
+    ctx.fillStyle = target.dark;
+    ctx.strokeStyle = active ? '#ffffff' : target.color;
+    ctx.lineWidth = active ? 4 : 2;
+    ctx.beginPath();
+    ctx.roundRect(right - 28, y - 22, 126, 44, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f8fdff';
+    ctx.font = '900 14px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${target.label} Dock`, right + 35, y + 5);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawBarge() {
+  if (!game.barge) return;
+  const barge = game.barge;
+  ctx.save();
+  ctx.translate(barge.x, barge.y);
+  ctx.fillStyle = '#111922';
+  ctx.strokeStyle = '#e7f9ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(-46, -16, 92, 32, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = barge.dark;
+  ctx.beginPath();
+  ctx.roundRect(-24, -28, 48, 26, 7);
+  ctx.fill();
+  ctx.strokeStyle = barge.color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = barge.color;
+  ctx.fillRect(-37, 3, 74, 7);
+  ctx.fillStyle = '#101820';
+  ctx.font = '900 13px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(barge.label, 0, -15);
+  ctx.restore();
+}
+
+function drawTargetLine() {
+  if (!game.barge) return;
+  const target = game.barge;
+  const y = CHAMBERS[3].y + CHAMBERS[3].h * (1 - target.level);
+  ctx.strokeStyle = target.color;
+  ctx.lineWidth = 3;
+  ctx.setLineDash([10, 8]);
+  ctx.beginPath();
+  ctx.moveTo(CHAMBERS[3].x + 10, y);
+  ctx.lineTo(CHAMBERS[3].x + CHAMBERS[3].w + 190, y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawParticles() {
+  for (const particle of game.particles) {
+    ctx.globalAlpha = Math.max(0, particle.life / particle.max);
+    ctx.fillStyle = particle.color;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawTargetLine();
+  drawChambers();
+  drawGates();
+  drawDocks();
+  drawBarge();
+  drawParticles();
+
+  const info = currentGateInfo();
+  if (info) {
+    ctx.fillStyle = '#101820e8';
+    ctx.beginPath();
+    ctx.roundRect(426, 654, 348, 48, 12);
+    ctx.fill();
+    ctx.fillStyle = info.canOpen ? '#9cf0c2' : '#ffcf6e';
+    ctx.font = '900 16px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${info.label}: mismatch ${(info.diff * 100).toFixed(0)}%`, 600, 684);
+    ctx.textAlign = 'left';
+  }
+
+  if (game.mode === 'paused') {
+    ctx.fillStyle = '#00000070';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * W,
+    y: ((event.clientY - rect.top) / rect.height) * H,
+  };
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  const point = canvasPoint(event);
+  for (let i = 0; i < CHAMBERS.length; i += 1) {
+    const chamber = CHAMBERS[i];
+    if (point.x >= chamber.x && point.x <= chamber.x + chamber.w && point.y >= chamber.y && point.y <= chamber.y + chamber.h) {
+      setSelected(i);
+      event.preventDefault();
+      return;
+    }
+  }
+  openGate();
+  event.preventDefault();
+});
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'w', 's'].includes(key)) {
+    keys.add(key);
+    event.preventDefault();
+  } else if (key === 'arrowleft' || key === 'a') {
+    if (!event.repeat) selectDelta(-1);
+    event.preventDefault();
+  } else if (key === 'arrowright' || key === 'd') {
+    if (!event.repeat) selectDelta(1);
+    event.preventDefault();
+  } else if (key >= '1' && key <= '4') {
+    setSelected(Number(key) - 1);
+    event.preventDefault();
+  } else if (key === ' ' || key === 'enter') {
+    openGate();
+    event.preventDefault();
+  } else if (key === 'p') {
+    togglePause();
+  } else if (key === 'r') {
+    resetRun();
+    startGame();
+  } else if (key === 'f') {
+    toggleFullscreen();
+  }
+});
+
+document.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+function holdPump(id, direction) {
+  const button = document.getElementById(id);
+  if (!button) return;
+  const start = (event) => {
+    event.preventDefault();
+    touch.pump = direction;
+  };
+  const end = (event) => {
+    event.preventDefault();
+    if (touch.pump === direction) touch.pump = 0;
+  };
+  button.addEventListener('pointerdown', start);
+  button.addEventListener('pointerup', end);
+  button.addEventListener('pointercancel', end);
+  button.addEventListener('pointerleave', end);
+}
+
+for (let i = 0; i < CHAMBERS.length; i += 1) {
+  document.getElementById(`chamber${i + 1}`)?.addEventListener('click', () => setSelected(i));
+}
+holdPump('pumpUp', 1);
+holdPump('pumpDown', -1);
+document.getElementById('openGate')?.addEventListener('click', openGate);
+document.getElementById('startBtn')?.addEventListener('click', startGame);
+document.getElementById('pauseBtn')?.addEventListener('click', togglePause);
+document.getElementById('restartBtn')?.addEventListener('click', () => {
+  resetRun();
+  startGame();
+});
+document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.min(30, Math.round(ms / (1000 / 60))));
+  const dt = Math.min(1 / 30, (ms / 1000) / steps);
+  for (let i = 0; i < steps; i += 1) update(dt);
+  render();
+}
+
+function levelLabel(value) {
+  if (value < 0.38) return 'low';
+  if (value < 0.66) return 'mid';
+  return 'high';
+}
+
+window.advanceTime = (ms) => {
+  manualStepping = true;
+  step(ms);
+  lastFrame = performance.now();
+  manualStepping = false;
+};
+
+window.render_game_to_text = () => {
+  const info = currentGateInfo();
+  return JSON.stringify({
+    game: 'canallock',
+    coordinate_system: 'canvas pixels; origin top-left; x increases right; y increases down; water levels are 0-1 from empty to full',
+    mode: game.mode,
+    time_left: Number(game.time.toFixed(2)),
+    delivered: game.delivered,
+    goal: GOAL,
+    score: game.score,
+    pressure: Math.round(game.pressure),
+    selected_chamber: game.selected + 1,
+    chamber_levels: game.levels.map((level, index) => ({
+      chamber: index + 1,
+      level: Number(level.toFixed(3)),
+      band: levelLabel(level),
+    })),
+    active_barge: game.barge ? {
+      target: game.barge.targetId,
+      target_label: game.barge.label,
+      required_exit_level: game.barge.level,
+      chamber: game.barge.chamber + 1,
+      x: Math.round(game.barge.x),
+      y: Math.round(game.barge.y),
+      moving: Boolean(game.barge.moving),
+    } : null,
+    active_gate: info ? {
+      label: info.label,
+      type: info.type,
+      from_chamber: info.from + 1,
+      to_chamber: info.to === null ? null : info.to + 1,
+      required_level: Number(info.required.toFixed(3)),
+      actual_level: Number(info.actual.toFixed(3)),
+      mismatch: Number(info.diff.toFixed(3)),
+      can_open: info.canOpen,
+    } : null,
+    queue: game.queue.slice(0, 4).map((job) => ({ target: job.targetId, label: job.label, level: job.level })),
+    last_message: game.message,
+    coins_earned_this_run: game.coinsEarned,
+  });
+};
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(1 / 30, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    render();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+resetRun();
+requestAnimationFrame(frame);
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'canallock', gameName: 'Canal Lock' });
+</script>
+</body>
+</html>

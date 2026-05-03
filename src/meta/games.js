@@ -82,5 +82,7 @@ export const GAMES = [
   { slug:'codebreaker',    name:'Codebreaker Grid',    emoji:'\u{1F510}', scoreHint:'solves',     url:'/codebreaker',  desc:'Deduce a hidden four-color code by reading exact and near-match clues before the attempt grid fills.', earnsCoins:true },
   { slug:'potionpantry',   name:'Potion Pantry',       emoji:'\u{1F9EA}', scoreHint:'orders',     url:'/potionpantry', desc:'Mix ingredient drops into requested potions, manage bubbling patience, and serve each order before the pantry closes.', earnsCoins:true },
   { slug:'marblecircuit',  name:'Marble Circuit',      emoji:'\u{1F535}', scoreHint:'courses',    url:'/marblecircuit', desc:'Tilt a marble through maze circuits, collect every brass ring, avoid sink holes, and unlock the finish gate before time runs out.', earnsCoins:true },
+  { slug:'switchyard',     name:'Switchyard Shuffle',  emoji:'\u{1F686}', scoreHint:'delivered',  url:'/switchyard',    desc:'Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails.', earnsCoins:true },
+  { slug:'canallock',      name:'Canal Lock',          emoji:'\u{1F6A2}', scoreHint:'delivered',  url:'/canallock',     desc:'Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor.', earnsCoins:true },
 ];
 

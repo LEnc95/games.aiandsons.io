@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Switchyard Shuffle | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(52% 38% at 14% 10%, #325b64 0%, transparent 70%),
+    radial-gradient(45% 48% at 88% 82%, #584329 0%, transparent 72%),
+    linear-gradient(180deg, #111820 0%, #182430 48%, #161b20 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.wrap {
+  width: min(97vw, 1120px);
+  aspect-ratio: 16 / 10;
+  max-height: min(67dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #f1e3bd70;
+  box-shadow: 0 18px 50px #000000b0;
+  background: #1c242a;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 740px;
+  border-radius: 14px;
+  border: 1px solid #f7ddb966;
+  background: #111820f4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 42px); }
+p { margin: 0 0 10px; color: #dfebf2; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #fff4cb78;
+  background: #5a4a2df0;
+  color: #fffaf0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1120px);
+  border-radius: 12px;
+  border: 1px solid #f7ddb952;
+  background: #101820f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #f4ffe530;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cbd9de;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a9f3bd; }
+.warn b { color: #ffe497; }
+.bad b { color: #ffaaa0; }
+.controls {
+  width: min(97vw, 1120px);
+  border-radius: 12px;
+  border: 1px solid #f7ddb952;
+  background: #101820f3;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.switch-btn { background: #3f6170; border-color: #dff6ff75; }
+.utility-btn { background: #4a4f61; border-color: #d9e3ff75; }
+@media (max-width: 920px) {
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  html, body { touch-action: pan-y; }
+  .app { justify-content: flex-start; }
+  .wrap { max-height: 54dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Switchyard Shuffle | AI and Sons Games">
+  <meta property="og:description" content="Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/switchyard">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Switchyard Shuffle | AI and Sons Games">
+  <meta name="twitter:description" content="Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/switchyard">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Switchyard Shuffle","description":"Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/switchyard","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="wrap">
+    <canvas id="game" width="1200" height="760" aria-label="Switchyard Shuffle game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Delivered</span><b id="delivered">0/14</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">120.0s</b></div>
+    <div class="chip bad"><span>Safety</span><b id="safety">100%</b></div>
+    <div class="chip"><span>Queue</span><b id="queue">RED</b></div>
+    <div class="chip"><span>Switches</span><b id="switches">N Y G R</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Dispatch controls">
+    <button id="switch1" type="button" class="switch-btn">Switch 1</button>
+    <button id="switch2" type="button" class="switch-btn">Switch 2</button>
+    <button id="switch3" type="button" class="switch-btn">Switch 3</button>
+    <button id="switch4" type="button" class="switch-btn">Switch 4</button>
+    <button id="startBtn" type="button" class="utility-btn">Start</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const modeEl = document.getElementById('mode');
+const deliveredEl = document.getElementById('delivered');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const safetyEl = document.getElementById('safety');
+const queueEl = document.getElementById('queue');
+const switchesEl = document.getElementById('switches');
+const coinsEl = document.getElementById('coins');
+
+const W = canvas.width;
+const H = canvas.height;
+const ROUND_TIME = 120;
+const GOAL = 14;
+const SPAWN_INTERVAL = 4.2;
+const TRAIN_SPEED = 94;
+const TRAIN_LENGTH = 56;
+const COLORS = {
+  red: { fill: '#f05a4f', dark: '#7d2825', text: 'RED' },
+  blue: { fill: '#4ca6ff', dark: '#1c436d', text: 'BLUE' },
+  yellow: { fill: '#f4cf52', dark: '#7a641f', text: 'YELLOW' },
+  green: { fill: '#5fd18a', dark: '#245d3a', text: 'GREEN' },
+};
+
+const nodes = {
+  depot: { x: 78, y: 378 },
+  s1: { x: 220, y: 378 },
+  n1: { x: 360, y: 232 },
+  s2: { x: 540, y: 232 },
+  m1: { x: 370, y: 378 },
+  s3: { x: 540, y: 378 },
+  l1: { x: 360, y: 524 },
+  s4: { x: 540, y: 524 },
+  redNorth: { x: 1018, y: 128 },
+  blue: { x: 1018, y: 272 },
+  yellow: { x: 1018, y: 380 },
+  green: { x: 1018, y: 488 },
+  redSouth: { x: 1018, y: 624 },
+};
+
+const terminals = {
+  redNorth: 'red',
+  blue: 'blue',
+  yellow: 'yellow',
+  green: 'green',
+  redSouth: 'red',
+};
+
+const routeOptions = {
+  s1: [
+    { label: 'North', short: 'N', path: ['s1', 'n1', 's2'] },
+    { label: 'Middle', short: 'M', path: ['s1', 'm1', 's3'] },
+    { label: 'South', short: 'S', path: ['s1', 'l1', 's4'] },
+  ],
+  s2: [
+    { label: 'Red High', short: 'R', path: ['s2', 'redNorth'] },
+    { label: 'Blue', short: 'B', path: ['s2', 'blue'] },
+  ],
+  s3: [
+    { label: 'Yellow', short: 'Y', path: ['s3', 'yellow'] },
+    { label: 'Green', short: 'G', path: ['s3', 'green'] },
+  ],
+  s4: [
+    { label: 'Green Low', short: 'G', path: ['s4', 'green'] },
+    { label: 'Red Low', short: 'R', path: ['s4', 'redSouth'] },
+  ],
+};
+
+const railSegments = [
+  ['depot', 's1'],
+  ['s1', 'n1'], ['n1', 's2'], ['s2', 'redNorth'], ['s2', 'blue'],
+  ['s1', 'm1'], ['m1', 's3'], ['s3', 'yellow'], ['s3', 'green'],
+  ['s1', 'l1'], ['l1', 's4'], ['s4', 'green'], ['s4', 'redSouth'],
+];
+
+const switchNodes = ['s1', 's2', 's3', 's4'];
+const targetCycle = ['red', 'blue', 'yellow', 'green', 'red', 'green', 'yellow', 'blue'];
+
+const state = {
+  mode: 'menu',
+  time: ROUND_TIME,
+  score: 0,
+  delivered: 0,
+  misroutes: 0,
+  collisions: 0,
+  safety: 100,
+  spawnTimer: 1.1,
+  nextTrainId: 1,
+  targetCursor: 0,
+  trains: [],
+  switches: { s1: 0, s2: 0, s3: 0, s4: 0 },
+  focusSwitch: 0,
+  message: 'Flip switches to route each train to its matching platform.',
+  ended: false,
+  seed: 42,
+};
+
+function rand() {
+  state.seed = (state.seed * 1664525 + 1013904223) >>> 0;
+  return state.seed / 4294967296;
+}
+
+function resetGame() {
+  state.mode = 'menu';
+  state.time = ROUND_TIME;
+  state.score = 0;
+  state.delivered = 0;
+  state.misroutes = 0;
+  state.collisions = 0;
+  state.safety = 100;
+  state.spawnTimer = 1.1;
+  state.nextTrainId = 1;
+  state.targetCursor = 0;
+  state.trains = [];
+  state.switches = { s1: 0, s2: 0, s3: 0, s4: 0 };
+  state.focusSwitch = 0;
+  state.message = 'Flip switches to route each train to its matching platform.';
+  state.ended = false;
+  state.seed = 42;
+  updateHud();
+  showOverlay();
+  render();
+}
+
+function startGame() {
+  if (state.mode === 'playing') return;
+  if (state.mode === 'won' || state.mode === 'lost') resetGame();
+  state.mode = 'playing';
+  hideOverlay();
+  try { rememberRecent('switchyard'); } catch {}
+  try {
+    maybeUnlock({ anyPlay: true, switchyard: { result: 'started', delivered: 0, score: 0 } });
+  } catch {}
+}
+
+function finish(result) {
+  if (state.ended) return;
+  state.ended = true;
+  state.mode = result;
+  const timeBonus = Math.max(0, Math.round(state.time * 2));
+  const safetyBonus = Math.max(0, Math.round(state.safety));
+  const coins = Math.max(2, Math.min(26, Math.floor(state.delivered * 1.5 + timeBonus / 25 + safetyBonus / 35)));
+  try { addCoins(coins); } catch {}
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      switchyard: {
+        result,
+        delivered: state.delivered,
+        score: state.score,
+        safety: Math.round(state.safety),
+        misroutes: state.misroutes,
+        collisions: state.collisions,
+      },
+    });
+  } catch {}
+  state.message = result === 'won'
+    ? `Shift complete. ${state.delivered} trains delivered.`
+    : `Shift failed. ${state.delivered} trains delivered.`;
+  updateHud();
+  showOverlay();
+}
+
+function nextTarget() {
+  const base = targetCycle[state.targetCursor % targetCycle.length];
+  state.targetCursor += 1;
+  if (rand() < 0.18) {
+    return targetCycle[Math.floor(rand() * targetCycle.length)];
+  }
+  return base;
+}
+
+function spawnTrain() {
+  const target = nextTarget();
+  state.trains.push({
+    id: state.nextTrainId++,
+    target,
+    x: nodes.depot.x,
+    y: nodes.depot.y,
+    path: ['depot', 's1'],
+    index: 0,
+    speed: TRAIN_SPEED + Math.min(22, state.delivered * 1.2),
+    routed: [],
+    done: false,
+    wrongFlash: 0,
+  });
+}
+
+function appendRoute(train, nodeId) {
+  const options = routeOptions[nodeId];
+  if (!options) return;
+  const choice = options[state.switches[nodeId] % options.length];
+  train.routed.push(`${nodeId}:${choice.short}`);
+  train.path.push(...choice.path.slice(1));
+}
+
+function updateTrain(train, dt) {
+  let remaining = train.speed * dt;
+  while (remaining > 0 && !train.done) {
+    const nextId = train.path[train.index + 1];
+    if (!nextId) {
+      const currentId = train.path[train.index];
+      if (terminals[currentId]) deliverTrain(train, terminals[currentId]);
+      else train.done = true;
+      break;
+    }
+    const next = nodes[nextId];
+    const dx = next.x - train.x;
+    const dy = next.y - train.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist <= remaining) {
+      train.x = next.x;
+      train.y = next.y;
+      train.index += 1;
+      remaining -= dist;
+      if (routeOptions[nextId] && train.index === train.path.length - 1) {
+        appendRoute(train, nextId);
+      }
+      if (terminals[nextId]) {
+        deliverTrain(train, terminals[nextId]);
+      }
+    } else {
+      train.x += (dx / dist) * remaining;
+      train.y += (dy / dist) * remaining;
+      remaining = 0;
+    }
+  }
+  train.wrongFlash = Math.max(0, train.wrongFlash - dt);
+}
+
+function deliverTrain(train, platformColor) {
+  train.done = true;
+  if (train.target === platformColor) {
+    const routeBonus = Math.max(0, Math.round(state.time));
+    state.delivered += 1;
+    state.score += 150 + routeBonus;
+    state.message = `${COLORS[platformColor].text} train delivered.`;
+  } else {
+    state.misroutes += 1;
+    state.safety = Math.max(0, state.safety - 14);
+    state.score = Math.max(0, state.score - 45);
+    train.wrongFlash = 0.35;
+    state.message = `${COLORS[train.target].text} train reached ${COLORS[platformColor].text}.`;
+  }
+}
+
+function checkCollisions() {
+  const doomed = new Set();
+  for (let i = 0; i < state.trains.length; i += 1) {
+    for (let j = i + 1; j < state.trains.length; j += 1) {
+      const a = state.trains[i];
+      const b = state.trains[j];
+      if (a.done || b.done) continue;
+      const sameNext = a.path[a.index + 1] === b.path[b.index + 1];
+      const close = Math.hypot(a.x - b.x, a.y - b.y) < 34;
+      if (sameNext && close) {
+        doomed.add(a);
+        doomed.add(b);
+      }
+    }
+  }
+  if (!doomed.size) return;
+  for (const train of doomed) train.done = true;
+  state.collisions += Math.floor(doomed.size / 2);
+  state.safety = Math.max(0, state.safety - 22);
+  state.score = Math.max(0, state.score - 80);
+  state.message = 'Collision in the yard. Slow the flow with cleaner routing.';
+}
+
+function update(dt) {
+  if (state.mode !== 'playing') return;
+  state.time = Math.max(0, state.time - dt);
+  state.spawnTimer -= dt;
+  const activeLimit = state.delivered < 7 ? 3 : 4;
+  if (state.spawnTimer <= 0 && state.trains.filter((train) => !train.done).length < activeLimit) {
+    spawnTrain();
+    state.spawnTimer = SPAWN_INTERVAL - Math.min(1.2, state.delivered * 0.06);
+  }
+
+  for (const train of state.trains) updateTrain(train, dt);
+  checkCollisions();
+  state.trains = state.trains.filter((train) => !train.done || train.wrongFlash > 0);
+
+  if (state.delivered >= GOAL) finish('won');
+  else if (state.time <= 0 || state.safety <= 0) finish('lost');
+  updateHud();
+}
+
+function cycleSwitch(id) {
+  const key = `s${id}`;
+  const options = routeOptions[key];
+  if (!options) return;
+  state.focusSwitch = id - 1;
+  state.switches[key] = (state.switches[key] + 1) % options.length;
+  state.message = `Switch ${id} set to ${options[state.switches[key]].label}.`;
+  if (state.mode === 'menu') showOverlay();
+  updateHud();
+  render();
+}
+
+function focusSwitch(delta) {
+  state.focusSwitch = (state.focusSwitch + delta + switchNodes.length) % switchNodes.length;
+  const key = switchNodes[state.focusSwitch];
+  const active = routeOptions[key][state.switches[key]];
+  state.message = `Switch ${state.focusSwitch + 1} selected: ${active.label}.`;
+  if (state.mode === 'menu' || state.mode === 'paused') showOverlay();
+  updateHud();
+  render();
+}
+
+function togglePause() {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    hideOverlay();
+  }
+  updateHud();
+}
+
+function updateHud() {
+  modeEl.textContent = state.mode.toUpperCase();
+  deliveredEl.textContent = `${state.delivered}/${GOAL}`;
+  scoreEl.textContent = String(state.score);
+  timeEl.textContent = `${state.time.toFixed(1)}s`;
+  safetyEl.textContent = `${Math.round(state.safety)}%`;
+  const queued = [targetCycle[state.targetCursor % targetCycle.length], targetCycle[(state.targetCursor + 1) % targetCycle.length]];
+  queueEl.textContent = queued.map((color) => COLORS[color].text).join(' ');
+  switchesEl.textContent = switchNodes.map((key) => routeOptions[key][state.switches[key]].short).join(' ');
+  coinsEl.textContent = String(profileState?.profile?.coins ?? 0);
+  for (let i = 1; i <= 4; i += 1) {
+    const key = `s${i}`;
+    const btn = document.getElementById(`switch${i}`);
+    btn.textContent = `S${i}: ${routeOptions[key][state.switches[key]].label}`;
+  }
+}
+
+function showOverlay() {
+  const active = state.mode === 'menu' || state.mode === 'paused' || state.mode === 'won' || state.mode === 'lost';
+  overlay.classList.toggle('show', active);
+  if (!active) return;
+  const title = state.mode === 'menu'
+    ? 'Switchyard Shuffle'
+    : state.mode === 'paused'
+      ? 'Paused'
+      : state.mode === 'won'
+        ? 'Shift Complete'
+        : 'Yard Closed';
+  const action = state.mode === 'paused' ? 'Resume' : state.mode === 'won' || state.mode === 'lost' ? 'New Shift' : 'Start Shift';
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${state.message}</p>
+      <p>Route colored trains to matching platforms by cycling switches 1-4. Click junctions on the rail map or use the switch buttons.</p>
+      <p>Desktop: 1-4 switch, arrows select a switch, Space/Enter toggles the selected switch during play, P pause, R restart, F fullscreen. Touch: use the controls below the board.</p>
+      <div class="row">
+        <button id="overlayStart" type="button">${action}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayStart').addEventListener('click', () => {
+    if (state.mode === 'paused') togglePause();
+    else startGame();
+  });
+  document.getElementById('overlayRestart').addEventListener('click', () => {
+    resetGame();
+    startGame();
+  });
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function drawBackground() {
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, '#22313a');
+  grd.addColorStop(0.54, '#263238');
+  grd.addColorStop(1, '#1c2427');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#12191e';
+  for (let y = 52; y < H; y += 72) {
+    ctx.fillRect(0, y, W, 2);
+  }
+  for (let x = 48; x < W; x += 86) {
+    ctx.fillRect(x, 0, 2, H);
+  }
+
+  ctx.fillStyle = '#2e3b3f';
+  ctx.fillRect(28, 68, 150, 618);
+  ctx.fillStyle = '#cfd6d5';
+  ctx.font = '700 16px Trebuchet MS, sans-serif';
+  ctx.fillText('DEPOT', 60, 104);
+}
+
+function drawLine(a, b, stroke, width) {
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+}
+
+function drawRails() {
+  for (const [from, to] of railSegments) {
+    drawLine(nodes[from], nodes[to], '#0c1115', 24);
+    drawLine(nodes[from], nodes[to], '#856f4e', 17);
+    drawLine(nodes[from], nodes[to], '#d2b982', 5);
+    const a = nodes[from];
+    const b = nodes[to];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy);
+    const nx = -dy / len;
+    const ny = dx / len;
+    const steps = Math.floor(len / 34);
+    for (let i = 1; i < steps; i += 1) {
+      const t = i / steps;
+      const x = a.x + dx * t;
+      const y = a.y + dy * t;
+      drawLine({ x: x - nx * 15, y: y - ny * 15 }, { x: x + nx * 15, y: y + ny * 15 }, '#3b2d21', 4);
+    }
+  }
+
+  for (const key of switchNodes) {
+    const node = nodes[key];
+    const active = routeOptions[key][state.switches[key]];
+    for (let i = 1; i < active.path.length; i += 1) {
+      drawLine(nodes[active.path[i - 1]], nodes[active.path[i]], '#fff0a7', 8);
+    }
+    ctx.fillStyle = '#17232b';
+    const isFocused = switchNodes[state.focusSwitch] === key;
+    ctx.strokeStyle = isFocused ? '#ffffff' : '#fff3bf';
+    ctx.lineWidth = isFocused ? 5 : 3;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff7d5';
+    ctx.font = '800 18px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(key.toUpperCase(), node.x, node.y - 3);
+    ctx.font = '800 13px Trebuchet MS, sans-serif';
+    ctx.fillText(active.short, node.x, node.y + 14);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawPlatforms() {
+  const entries = [
+    ['redNorth', 'Red Platform'],
+    ['blue', 'Blue Platform'],
+    ['yellow', 'Yellow Platform'],
+    ['green', 'Green Platform'],
+    ['redSouth', 'Red Freight'],
+  ];
+  for (const [nodeId, label] of entries) {
+    const color = terminals[nodeId];
+    const node = nodes[nodeId];
+    const c = COLORS[color];
+    ctx.fillStyle = c.dark;
+    ctx.strokeStyle = c.fill;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(node.x - 92, node.y - 28, 164, 56, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fffaf0';
+    ctx.font = '800 15px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, node.x - 10, node.y);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawTrain(train) {
+  const c = COLORS[train.target];
+  const nextId = train.path[train.index + 1] || train.path[train.index];
+  const next = nodes[nextId] || { x: train.x + 1, y: train.y };
+  const angle = Math.atan2(next.y - train.y, next.x - train.x);
+  ctx.save();
+  ctx.translate(train.x, train.y);
+  ctx.rotate(angle);
+  ctx.fillStyle = train.wrongFlash > 0 ? '#ffffff' : c.dark;
+  ctx.strokeStyle = c.fill;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(-TRAIN_LENGTH / 2, -17, TRAIN_LENGTH, 34, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = c.fill;
+  ctx.fillRect(-18, -11, 22, 22);
+  ctx.fillStyle = '#eef7ff';
+  ctx.fillRect(12, -9, 14, 8);
+  ctx.fillRect(12, 1, 14, 8);
+  ctx.fillStyle = '#101820';
+  ctx.font = '800 11px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(c.text[0], -7, 1);
+  ctx.restore();
+}
+
+function drawHudOnCanvas() {
+  ctx.fillStyle = '#0d1419d8';
+  ctx.beginPath();
+  ctx.roundRect(36, 24, 520, 60, 12);
+  ctx.fill();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '800 22px Trebuchet MS, sans-serif';
+  ctx.fillText('Switchyard Shuffle', 56, 50);
+  ctx.font = '700 14px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#dce8ed';
+  ctx.fillText(state.message, 56, 73);
+
+  ctx.fillStyle = '#0d1419d8';
+  ctx.beginPath();
+  ctx.roundRect(725, 24, 430, 60, 12);
+  ctx.fill();
+  const next = [targetCycle[state.targetCursor % targetCycle.length], targetCycle[(state.targetCursor + 1) % targetCycle.length], targetCycle[(state.targetCursor + 2) % targetCycle.length]];
+  ctx.fillStyle = '#dce8ed';
+  ctx.font = '700 14px Trebuchet MS, sans-serif';
+  ctx.fillText('Incoming:', 745, 48);
+  next.forEach((color, index) => {
+    ctx.fillStyle = COLORS[color].fill;
+    ctx.beginPath();
+    ctx.roundRect(826 + index * 96, 34, 72, 30, 8);
+    ctx.fill();
+    ctx.fillStyle = '#101820';
+    ctx.font = '800 12px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(COLORS[color].text, 862 + index * 96, 54);
+    ctx.textAlign = 'left';
+  });
+}
+
+function render() {
+  drawBackground();
+  drawRails();
+  drawPlatforms();
+  for (const train of state.trains) drawTrain(train);
+  drawHudOnCanvas();
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * W,
+    y: ((event.clientY - rect.top) / rect.height) * H,
+  };
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  const point = canvasPoint(event);
+  for (let i = 0; i < switchNodes.length; i += 1) {
+    const key = switchNodes[i];
+    const node = nodes[key];
+    if (Math.hypot(point.x - node.x, point.y - node.y) < 38) {
+      cycleSwitch(i + 1);
+      event.preventDefault();
+      return;
+    }
+  }
+  if (state.mode === 'menu') startGame();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.repeat && !['1', '2', '3', '4'].includes(event.key)) return;
+  if (event.key >= '1' && event.key <= '4') {
+    cycleSwitch(Number(event.key));
+    event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    focusSwitch(-1);
+    event.preventDefault();
+  } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    focusSwitch(1);
+    event.preventDefault();
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    if (state.mode === 'playing') cycleSwitch(state.focusSwitch + 1);
+    else if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') startGame();
+    else if (state.mode === 'paused') togglePause();
+    event.preventDefault();
+  } else if (event.key.toLowerCase() === 'p') {
+    togglePause();
+  } else if (event.key.toLowerCase() === 'r') {
+    resetGame();
+    startGame();
+  } else if (event.key.toLowerCase() === 'f') {
+    toggleFullscreen();
+  }
+});
+
+for (let i = 1; i <= 4; i += 1) {
+  document.getElementById(`switch${i}`).addEventListener('click', () => cycleSwitch(i));
+}
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', () => {
+  resetGame();
+  startGame();
+});
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function renderGameToText() {
+  const trains = state.trains
+    .filter((train) => !train.done)
+    .map((train) => ({
+      id: train.id,
+      target: train.target,
+      x: Math.round(train.x),
+      y: Math.round(train.y),
+      current_node: train.path[train.index],
+      next_node: train.path[train.index + 1] || null,
+      route_choices: train.routed.slice(-4),
+    }));
+  const switches = Object.fromEntries(
+    switchNodes.map((key, index) => [
+      `switch_${index + 1}`,
+      routeOptions[key][state.switches[key]].label,
+    ]),
+  );
+  return JSON.stringify({
+    game: 'switchyard',
+    coordinate_system: 'canvas pixels; origin top-left; x increases right; y increases down',
+    mode: state.mode,
+    time_left: Number(state.time.toFixed(2)),
+    score: state.score,
+    delivered: state.delivered,
+    goal: GOAL,
+    safety: Math.round(state.safety),
+    misroutes: state.misroutes,
+    collisions: state.collisions,
+    focused_switch: state.focusSwitch + 1,
+    switches,
+    active_trains: trains,
+    upcoming_targets: [
+      targetCycle[state.targetCursor % targetCycle.length],
+      targetCycle[(state.targetCursor + 1) % targetCycle.length],
+      targetCycle[(state.targetCursor + 2) % targetCycle.length],
+    ],
+    platforms: Object.fromEntries(Object.entries(terminals).map(([nodeId, color]) => [nodeId, color])),
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms) => {
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  manualStepping = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  manualStepping = false;
+};
+
+let lastFrame = performance.now();
+let manualStepping = false;
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.033, (now - lastFrame) / 1000 || 0);
+    update(dt);
+    render();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+resetGame();
+requestAnimationFrame(frame);
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'switchyard', gameName: 'Switchyard Shuffle' });
+</script>
+</body>
+</html>
