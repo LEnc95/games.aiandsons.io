@@ -31,6 +31,15 @@
     .btn.primary:active { background:#4bc; }
     .btn.difficulty, .btn.skin, .btn.world { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); min-width:clamp(70px, 12vw, 100px); font-size:clamp(12px, 2vw, 14px); }
     .btn.difficulty.active, .btn.skin.active, .btn.world.active { background:#5ad; border-color:#6be; }
+    .mode-panel { display:grid; gap:8px; margin-top:clamp(8px, 1.5vh, 12px); }
+    .mode-row { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; }
+    .btn.mode-toggle { min-width:clamp(100px, 17vw, 145px); padding:clamp(10px, 2vw, 14px) clamp(14px, 3vw, 20px); font-size:clamp(12px, 2vw, 15px); }
+    .btn.mode-toggle.active { background:#78f0c3; border-color:#a7ffd8; color:#06241c; }
+    .access-status { width:min(100%, 540px); margin:0 auto; border:1px solid rgba(122,180,232,0.4); border-radius:10px; padding:8px 10px; background:rgba(19,32,58,0.78); color:#d6e7ff; font-size:clamp(12px, 2vw, 15px); min-height:2.25em; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    body.audio-only #canvas-container { max-height:min(42vh, 420px); }
+    body.audio-only canvas { opacity:0.2; filter:contrast(1.35) grayscale(0.25); }
+    body.audio-only .access-status { border-color:#78f0c3; background:#071710; color:#eefef7; font-weight:700; }
     
     @media (max-width: 768px) {
       .hud { font-size:clamp(10px, 3vw, 14px); }
@@ -83,6 +92,14 @@
         <div class="score-item"><span class="score-label">High:</span><span id="high-score">0</span></div>
       </div>
       <div class="hint" id="hint">Tap/Click to flap. Press SPACE to start.</div>
+      <div class="mode-panel" aria-label="Accessibility modes">
+        <div class="mode-row" role="group" aria-label="Play mode">
+          <button class="btn mode-toggle active" id="visual-mode" type="button" aria-pressed="true">Visual Mode</button>
+          <button class="btn mode-toggle" id="audio-only-mode" type="button" aria-pressed="false">Audio-Only Mode</button>
+          <button class="btn mode-toggle active" id="audio-cues" type="button" aria-pressed="true">Audio Cues On</button>
+        </div>
+        <div class="access-status" id="access-status" aria-live="polite">Visual mode ready.</div>
+      </div>
       <div class="buttons">
         <button class="btn primary" id="start-btn">START</button>
         <button class="btn" id="pause-btn">PAUSE</button>
@@ -105,6 +122,8 @@
         <button class="btn world" data-world="night">🌙 Night</button>
       </div>
     </div>
+    <div class="sr-only" id="live-polite" aria-live="polite" aria-atomic="true"></div>
+    <div class="sr-only" id="live-assertive" aria-live="assertive" aria-atomic="true"></div>
   </div>
 
   <script type="module">
@@ -137,6 +156,36 @@
       green: '#4ECDC4'
     };
 
+    const ACCESS_MODE_KEY = 'flappy-access-mode';
+    const AUDIO_CUES_KEY = 'flappy-audio-cues';
+
+    function readStored(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value == null ? fallback : value;
+      } catch {
+        return fallback;
+      }
+    }
+    function writeStored(key, value) {
+      try { localStorage.setItem(key, value); } catch {}
+    }
+    function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+
+    const access = {
+      mode: readStored(ACCESS_MODE_KEY, 'visual') === 'audio' ? 'audio' : 'visual',
+      audioEnabled: readStored(AUDIO_CUES_KEY, 'on') !== 'off',
+      audioAvailable: Boolean(window.AudioContext || window.webkitAudioContext),
+      audioCtx: null,
+      master: null,
+      unlocked: false,
+      unlockInFlight: false,
+      liveTimer: 0,
+      lastStatus: 'Visual mode ready.',
+      events: [],
+      lastCueAt: 0
+    };
+
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     const canvasContainer = document.getElementById('canvas-container');
@@ -163,6 +212,8 @@
     let paused = false;
     let gameOver = false;
     let gameStarted = false;
+    let steppingExternally = false;
+    let pipeSeq = 0;
     let difficulty = 2;
     let currentSkin = 'yellow';
     let currentWorld = 'day';
@@ -198,11 +249,197 @@
     const difficultyBtns = document.querySelectorAll('.btn.difficulty');
     const skinBtns = document.querySelectorAll('.btn.skin');
     const worldBtns = document.querySelectorAll('.btn.world');
+    const visualModeBtn = document.getElementById('visual-mode');
+    const audioOnlyModeBtn = document.getElementById('audio-only-mode');
+    const audioCuesBtn = document.getElementById('audio-cues');
+    const accessStatusEl = document.getElementById('access-status');
+    const livePoliteEl = document.getElementById('live-polite');
+    const liveAssertiveEl = document.getElementById('live-assertive');
 
     function setHint(msg) { hintEl.textContent = msg; }
     function updateScore() {
       scoreEl.textContent = state.score;
       highScoreEl.textContent = getHighScore();
+    }
+    function isAudioOnly() { return access.mode === 'audio'; }
+    function pushAccessEvent(message) {
+      access.events.push(String(message));
+      if (access.events.length > 8) access.events.shift();
+    }
+    function writeLive(el, message) {
+      if (!el) return;
+      el.textContent = '';
+      clearTimeout(access.liveTimer);
+      access.liveTimer = setTimeout(() => { el.textContent = message; }, 20);
+    }
+    function speakText(text, { interrupt = true } = {}) {
+      if (!text || !('speechSynthesis' in window)) return;
+      try {
+        if (interrupt) window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.05;
+        utterance.pitch = 1;
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      } catch {}
+    }
+    function announce(message, { assertive = false, speak = false } = {}) {
+      const text = String(message || '').trim();
+      if (!text) return;
+      access.lastStatus = text;
+      accessStatusEl.textContent = text;
+      writeLive(assertive ? liveAssertiveEl : livePoliteEl, text);
+      pushAccessEvent(text);
+      if (speak || isAudioOnly()) speakText(text, { interrupt: assertive || isAudioOnly() });
+    }
+    function ensureAudioContext() {
+      if (!access.audioAvailable || !access.audioEnabled) return null;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!access.audioCtx && AudioCtx) {
+        access.audioCtx = new AudioCtx();
+        access.master = access.audioCtx.createGain();
+        access.master.gain.value = 0.5;
+        access.master.connect(access.audioCtx.destination);
+      }
+      return access.audioCtx;
+    }
+    function unlockAudioFromInteraction() {
+      if (!access.audioEnabled) return;
+      const audio = ensureAudioContext();
+      if (!audio) {
+        access.audioAvailable = false;
+        updateAccessUI();
+        return;
+      }
+      if (audio.state === 'running') {
+        access.unlocked = true;
+        updateAccessUI();
+        return;
+      }
+      if (audio.state === 'suspended' && !access.unlockInFlight) {
+        access.unlockInFlight = true;
+        audio.resume()
+          .then(() => { access.unlocked = audio.state === 'running'; })
+          .catch(() => { access.unlocked = false; })
+          .finally(() => { access.unlockInFlight = false; updateAccessUI(); });
+      }
+    }
+    function playTone({ frequency = 440, duration = 0.08, type = 'sine', gain = 0.04, pan = 0, startDelay = 0, slideTo = null } = {}) {
+      const audio = ensureAudioContext();
+      if (!audio || !access.master || !access.unlocked || audio.state !== 'running') return;
+      const start = audio.currentTime + Math.max(0, startDelay);
+      const osc = audio.createOscillator();
+      const amp = audio.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(Math.max(40, frequency), start);
+      if (typeof slideTo === 'number') osc.frequency.exponentialRampToValueAtTime(Math.max(40, slideTo), start + duration);
+      amp.gain.setValueAtTime(0.0001, start);
+      amp.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), start + 0.012);
+      amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      if (typeof audio.createStereoPanner === 'function') {
+        const panner = audio.createStereoPanner();
+        panner.pan.setValueAtTime(clamp(pan, -1, 1), start);
+        osc.connect(amp); amp.connect(panner); panner.connect(access.master);
+      } else {
+        osc.connect(amp); amp.connect(access.master);
+      }
+      osc.start(start);
+      osc.stop(start + duration + 0.04);
+    }
+    function playFlapCue() {
+      playTone({ frequency: 620, slideTo: 980, duration: 0.11, type: 'triangle', gain: 0.06 });
+    }
+    function playFallCue() {
+      playTone({ frequency: 260, slideTo: 180, duration: 0.15, type: 'sawtooth', gain: 0.04 });
+    }
+    function playHoldCue() {
+      playTone({ frequency: 430, duration: 0.08, type: 'sine', gain: 0.03 });
+      playTone({ frequency: 430, duration: 0.08, type: 'sine', gain: 0.03, startDelay: 0.1 });
+    }
+    function playScoreCue() {
+      playTone({ frequency: 720, duration: 0.08, type: 'triangle', gain: 0.04 });
+      playTone({ frequency: 960, duration: 0.12, type: 'triangle', gain: 0.04, startDelay: 0.07 });
+    }
+    function playHitCue() {
+      playTone({ frequency: 190, slideTo: 80, duration: 0.24, type: 'sawtooth', gain: 0.07 });
+    }
+    function getCurrentSpeed() { return cfg.pipe.speed * diff[difficulty].speed; }
+    function getNextPipe() {
+      return state.pipes
+        .filter(pipe => pipe.x + cfg.pipe.width >= state.bird.x)
+        .sort((a, b) => a.x - b.x)[0] || null;
+    }
+    function getPipeGuidance(pipe = getNextPipe()) {
+      if (!pipe) return { action: 'hold', label: 'clear path', vertical_error: 0, distance_px: null, time_to_pipe_sec: null };
+      const verticalError = state.bird.y - pipe.gapY;
+      const distance = Math.max(0, pipe.x - state.bird.x);
+      let action = 'hold';
+      let label = 'centered';
+      if (verticalError > 26) { action = 'flap'; label = 'below gap'; }
+      else if (verticalError < -26) { action = 'fall'; label = 'above gap'; }
+      return {
+        action,
+        label,
+        vertical_error: Number(verticalError.toFixed(2)),
+        distance_px: Number(distance.toFixed(2)),
+        time_to_pipe_sec: Number((distance / Math.max(1, getCurrentSpeed())).toFixed(2))
+      };
+    }
+    function updateAccessUI() {
+      document.body.classList.toggle('audio-only', isAudioOnly());
+      visualModeBtn.classList.toggle('active', !isAudioOnly());
+      visualModeBtn.setAttribute('aria-pressed', String(!isAudioOnly()));
+      audioOnlyModeBtn.classList.toggle('active', isAudioOnly());
+      audioOnlyModeBtn.setAttribute('aria-pressed', String(isAudioOnly()));
+      audioCuesBtn.classList.toggle('active', access.audioEnabled);
+      audioCuesBtn.textContent = access.audioEnabled ? 'Audio Cues On' : 'Audio Cues Off';
+      audioCuesBtn.setAttribute('aria-pressed', String(access.audioEnabled));
+      audioCuesBtn.disabled = !access.audioAvailable;
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', isAudioOnly() ? 'Flappy Bird visual canvas dimmed in audio-only mode.' : 'Flappy Bird visual playfield.');
+    }
+    function setAccessMode(mode, { announceChange = true } = {}) {
+      access.mode = mode === 'audio' ? 'audio' : 'visual';
+      writeStored(ACCESS_MODE_KEY, access.mode);
+      if (isAudioOnly()) access.audioEnabled = true;
+      writeStored(AUDIO_CUES_KEY, access.audioEnabled ? 'on' : 'off');
+      updateAccessUI();
+      if (isAudioOnly()) unlockAudioFromInteraction();
+      if (announceChange) {
+        announce(isAudioOnly()
+          ? 'Audio-only mode. Space or tap flaps. Listen for flap, fall, and hold cues.'
+          : 'Visual mode. Audio cues remain available from the cue toggle.',
+          { speak: isAudioOnly() });
+      }
+    }
+    function toggleAudioCues() {
+      access.audioEnabled = !access.audioEnabled;
+      writeStored(AUDIO_CUES_KEY, access.audioEnabled ? 'on' : 'off');
+      if (access.audioEnabled) unlockAudioFromInteraction();
+      updateAccessUI();
+      announce(access.audioEnabled ? 'Audio cues on.' : 'Audio cues off.', { speak: isAudioOnly() });
+    }
+    function cuePipeGuidance(force = false) {
+      if (!gameStarted || paused || gameOver) return;
+      const pipe = getNextPipe();
+      if (!pipe) return;
+      const guidance = getPipeGuidance(pipe);
+      const now = performance.now();
+      const urgent = guidance.time_to_pipe_sec != null && guidance.time_to_pipe_sec <= 0.65;
+      const soon = guidance.time_to_pipe_sec != null && guidance.time_to_pipe_sec <= 1.55;
+      if (!force && !urgent && !soon) return;
+      if (!force && now - access.lastCueAt < (urgent ? 420 : 850)) return;
+      access.lastCueAt = now;
+      if (guidance.action === 'flap') {
+        playFlapCue();
+        announce(urgent ? 'Flap now.' : 'Flap soon.', { assertive: urgent, speak: isAudioOnly() });
+      } else if (guidance.action === 'fall') {
+        playFallCue();
+        announce(urgent ? 'Let fall now.' : 'Let fall soon.', { assertive: urgent, speak: isAudioOnly() });
+      } else {
+        playHoldCue();
+        announce(urgent ? 'Hold steady through the gap.' : 'Hold steady.', { assertive: urgent, speak: isAudioOnly() });
+      }
     }
 
     function updateDifficultyUI() {
@@ -246,12 +483,15 @@
       state.scrollX = 0;
       state.parallax = 0;
       state.nextPipeX = canvas.width + 100;
+      pipeSeq = 0;
+      access.lastCueAt = 0;
       gameOver = false;
       gameStarted = false;
       paused = false;
       updateScore();
       updateStartButton();
       setHint('Tap/Click to flap. Press SPACE to start.');
+      if (isAudioOnly()) announce('Ready. Space starts and flaps.', { speak: true });
     }
 
     function spawnPipe() {
@@ -259,7 +499,7 @@
       const minY = cfg.ground.height + gap / 2;
       const maxY = canvas.height - cfg.ground.height - gap / 2;
       const gapY = minY + Math.random() * (maxY - minY);
-      state.pipes.push({ x: canvas.width + 40, gapY, gapSize: gap, passed: false });
+      state.pipes.push({ id: ++pipeSeq, x: canvas.width + 40, gapY, gapSize: gap, passed: false });
     }
 
     function jump() {
@@ -268,6 +508,8 @@
         return;
       }
       state.bird.vy = cfg.bird.jumpPower;
+      playFlapCue();
+      if (isAudioOnly()) announce('Flap.', { speak: false });
     }
 
     function startGame() {
@@ -279,10 +521,12 @@
         paused = false;
         updateStartButton();
         setHint('');
+        announce('Flight started.', { speak: isAudioOnly() });
       } else if (paused) {
         paused = false;
         updateStartButton();
         setHint('');
+        announce('Resumed.', { speak: isAudioOnly() });
       }
     }
 
@@ -291,11 +535,13 @@
         paused = !paused;
         updateStartButton();
         setHint(paused ? 'Paused. Tap RESUME to continue.' : '');
+        announce(paused ? 'Paused.' : 'Resumed.', { speak: isAudioOnly() });
       }
     }
 
     function endGame() {
       gameOver = true;
+      playHitCue();
       // Award coins: Math.floor(distance / 50)
       const coins = Math.floor((state.score || 0) / 50);
       if (coins > 0 && typeof addCoins === 'function') addCoins(coins);
@@ -304,6 +550,7 @@
       updateScore();
       updateStartButton();
       setHint(isNewHigh ? `🎉 New High Score! ${state.score} Tap PLAY AGAIN.` : `Game Over! Score: ${state.score} Tap PLAY AGAIN.`);
+      announce(isNewHigh ? `New high score ${state.score}.` : `Game over. Score ${state.score}.`, { assertive: true, speak: true });
     }
 
     function update(dt) {
@@ -330,10 +577,13 @@
         if (!pipe.passed && pipe.x + cfg.pipe.width < state.bird.x) {
           pipe.passed = true;
           state.score++;
+          playScoreCue();
+          announce(`Pipe cleared. Score ${state.score}.`, { speak: isAudioOnly() });
           updateScore();
         }
         return pipe.x + cfg.pipe.width > -50;
       });
+      cuePipeGuidance();
 
       // Collision detection
       const bird = state.bird;
@@ -483,43 +733,56 @@
     }
 
     // Input
-    canvas.addEventListener('click', jump);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); }, { passive: false });
+    canvas.addEventListener('click', () => { unlockAudioFromInteraction(); jump(); });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); unlockAudioFromInteraction(); jump(); }, { passive: false });
 
     addEventListener('keydown', e => {
+      unlockAudioFromInteraction();
       if (e.code === 'Space') {
         e.preventDefault();
         jump();
       }
       if (e.code === 'KeyP') pauseGame();
       if (e.code === 'KeyR') initGame();
-      if (e.code === 'Digit1') { difficulty = 1; updateDifficultyUI(); }
-      if (e.code === 'Digit2') { difficulty = 2; updateDifficultyUI(); }
-      if (e.code === 'Digit3') { difficulty = 3; updateDifficultyUI(); }
+      if (e.code === 'KeyA') setAccessMode('audio');
+      if (e.code === 'KeyV') setAccessMode('visual');
+      if (e.code === 'KeyM') toggleAudioCues();
+      if (e.code === 'Digit1') { difficulty = 1; updateDifficultyUI(); announce('Easy difficulty.', { speak: isAudioOnly() }); }
+      if (e.code === 'Digit2') { difficulty = 2; updateDifficultyUI(); announce('Medium difficulty.', { speak: isAudioOnly() }); }
+      if (e.code === 'Digit3') { difficulty = 3; updateDifficultyUI(); announce('Hard difficulty.', { speak: isAudioOnly() }); }
     });
 
-    startBtn.addEventListener('click', startGame);
-    pauseBtn.addEventListener('click', pauseGame);
-    restartBtn.addEventListener('click', initGame);
+    startBtn.addEventListener('click', () => { unlockAudioFromInteraction(); startGame(); });
+    pauseBtn.addEventListener('click', () => { unlockAudioFromInteraction(); pauseGame(); });
+    restartBtn.addEventListener('click', () => { unlockAudioFromInteraction(); initGame(); });
+    visualModeBtn.addEventListener('click', () => { unlockAudioFromInteraction(); setAccessMode('visual'); });
+    audioOnlyModeBtn.addEventListener('click', () => { unlockAudioFromInteraction(); setAccessMode('audio'); });
+    audioCuesBtn.addEventListener('click', () => { unlockAudioFromInteraction(); toggleAudioCues(); });
 
     difficultyBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        unlockAudioFromInteraction();
         difficulty = +btn.dataset.diff;
         updateDifficultyUI();
+        announce(`${btn.textContent.trim()} difficulty.`, { speak: isAudioOnly() });
       });
     });
 
     skinBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        unlockAudioFromInteraction();
         currentSkin = btn.dataset.skin;
         updateSkinUI();
+        announce(`${currentSkin} bird.`, { speak: isAudioOnly() });
       });
     });
 
     worldBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        unlockAudioFromInteraction();
         currentWorld = btn.dataset.world;
         updateWorldUI();
+        announce(`${currentWorld} world.`, { speak: isAudioOnly() });
       });
     });
 
@@ -533,14 +796,75 @@
     }, { passive: false });
 
     // Main loop
+    function stepSimulation(ms) {
+      let remaining = clamp(Number(ms) || 0, 0, 5000) / 1000;
+      while (remaining > 0) {
+        const dt = Math.min(1 / 120, remaining);
+        update(dt);
+        remaining -= dt;
+      }
+      updateScore();
+      draw();
+    }
+    window.advanceTime = (ms) => {
+      steppingExternally = true;
+      stepSimulation(ms);
+      steppingExternally = false;
+    };
+    window.render_game_to_text = () => {
+      const next = getNextPipe();
+      const guidance = getPipeGuidance(next);
+      return JSON.stringify({
+        coordinate_system: { origin: 'top-left', x_axis: 'right', y_axis: 'down', units: 'pixels', width: canvas.width, height: canvas.height, ground_height: cfg.ground.height },
+        game: 'flappy',
+        mode: gameOver ? 'game_over' : paused ? 'paused' : gameStarted ? 'playing' : 'ready',
+        score: state.score,
+        high_score: getHighScore(),
+        difficulty,
+        skin: currentSkin,
+        world: currentWorld,
+        bird: {
+          x: Number(state.bird.x.toFixed(2)),
+          y: Number(state.bird.y.toFixed(2)),
+          vy: Number(state.bird.vy.toFixed(2)),
+          radius: cfg.bird.radius,
+          angle: Number(state.bird.angle.toFixed(3))
+        },
+        next_pipe: next ? {
+          id: next.id,
+          x: Number(next.x.toFixed(2)),
+          width: cfg.pipe.width,
+          gap_y: Number(next.gapY.toFixed(2)),
+          gap_size: Number(next.gapSize.toFixed(2)),
+          gap_top: Number((next.gapY - next.gapSize / 2).toFixed(2)),
+          gap_bottom: Number((next.gapY + next.gapSize / 2).toFixed(2)),
+          passed: !!next.passed,
+          guidance
+        } : null,
+        pipes: state.pipes.slice(0, 4).map(pipe => ({ id:pipe.id, x:Number(pipe.x.toFixed(2)), gap_y:Number(pipe.gapY.toFixed(2)), gap_size:Number(pipe.gapSize.toFixed(2)), passed:!!pipe.passed })),
+        controls: { flap: 'Space or tap', audio_only_mode: 'KeyA', visual_mode: 'KeyV', audio_cues: 'KeyM', pause: 'KeyP', restart: 'KeyR', difficulty: 'Digit1-3' },
+        accessibility: {
+          mode: access.mode,
+          audio_cues_enabled: access.audioEnabled,
+          audio_available: access.audioAvailable,
+          audio_unlocked: access.unlocked,
+          last_status: access.lastStatus,
+          recent_events: access.events.slice(-6)
+        }
+      });
+    };
+
     function loop(ts) {
       const dt = Math.min(1/30, (ts - lastT) / 1000) || 0;
       lastT = ts;
-      update(dt);
-      draw();
+      if (!steppingExternally) {
+        update(dt);
+        draw();
+      }
       requestAnimationFrame(loop);
     }
 
+    setAccessMode(access.mode, { announceChange: false });
     updateScore();
     updateDifficultyUI();
     updateSkinUI();

@@ -2372,3 +2372,27 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Fixed Crane Cargo delivery ergonomics so bay matching uses the held crate's visible overlap with a bay instead of the exact hook point.
 - Follow-up TODO:
   - Optional human tuning: adjust crane swing difficulty after real playtesting; automated smoke and targeted delivery now pass.
+
+## 2026-05-04 Dino + Flappy blind accessibility revamp
+- New request: revamp Dino Run and Flappy Bird so each has visual and audio-only modes for blind accessibility.
+- Plan:
+  - Add in-game mode controls, screen-reader live regions, speech/audio cue toggles, and keyboard shortcuts.
+  - Make audio-only mode playable through spoken prompts plus WebAudio timing/proximity cues.
+  - Add `window.advanceTime(ms)` and `window.render_game_to_text()` hooks to both games for deterministic QA.
+  - Validate with syntax checks, lightweight runtime hooks, and the `$develop-web-game` Playwright client where available.
+- Implementation pass:
+  - `dino/index.html` now has Visual Mode / Audio-Only Mode toggles, Audio Cues toggle, ARIA live regions, speech prompts, jump/duck/hold WebAudio cues, obstacle timing guidance, keyboard shortcuts (`A`, `V`, `M`), and deterministic hooks.
+  - `flappy/index.html` now has matching mode/cue controls, ARIA live regions, speech prompts, flap/fall/hold WebAudio guidance for pipe gaps, keyboard shortcuts (`A`, `V`, `M`), and deterministic hooks.
+  - Next: run syntax checks, smoke each game, inspect screenshots/state output, and fix any regressions.
+- Validation:
+  - Script parse check with Node `vm` passed for `dino/index.html` and `flappy/index.html`.
+  - `git diff --check` passed; only existing Windows line-ending warnings were printed.
+  - Required `$develop-web-game` Playwright client runs passed against fresh local server `http://127.0.0.1:4174`:
+    - `output/web-game/dino-a11y-smoke-4174`
+    - `output/web-game/flappy-a11y-smoke-4174`
+    - `output/web-game/dino-visual-regression-4174`
+    - `output/web-game/flappy-visual-regression-4174`
+  - Reviewed canvas screenshots plus full-page screenshots `output/web-game/dino-a11y-full.png` and `output/web-game/flappy-a11y-full.png`.
+  - No `errors-*.json` artifacts were produced in the final smoke directories.
+- Follow-up TODO:
+  - Human playtest the cue timing with an actual screen reader user; automated runs confirm controls, state hooks, and browser rendering, but real audio timing comfort needs ears-on validation.
