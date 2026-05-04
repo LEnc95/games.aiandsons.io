@@ -101,5 +101,6 @@
 - game/switchyard
 - game/canallock
 - game/skylinestacker
+- game/cranecargo
 
 Generated from `src/meta/feedback.js`.

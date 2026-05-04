@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Crane Cargo | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(44% 38% at 16% 14%, #2c5b70 0%, transparent 70%),
+    radial-gradient(38% 44% at 86% 80%, #6b4a34 0%, transparent 72%),
+    linear-gradient(180deg, #101721 0%, #1d2f3a 54%, #24252b 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 12px;
+}
+.wrap {
+  width: min(97vw, 1060px);
+  aspect-ratio: 16 / 10;
+  max-height: min(67dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #ffcf7a73;
+  box-shadow: 0 18px 50px #000000b0;
+  background: #152431;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #ffd79b70;
+  background: #111b25f4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.3vw, 42px); }
+p { margin: 0 0 10px; color: #e4eef2; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #ffe2ad78;
+  background: #83572ff0;
+  color: #fffaf2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1060px);
+  border-radius: 12px;
+  border: 1px solid #ffd79b52;
+  background: #111b25f3;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #fff0c930;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cfd9de;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a9f3bd; }
+.warn b { color: #ffe497; }
+.bad b { color: #ffaaa0; }
+.controls {
+  width: min(97vw, 1060px);
+  border-radius: 12px;
+  border: 1px solid #ffd79b52;
+  background: #111b25e8;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.action {
+  background: #bd6d31;
+  font-size: clamp(15px, 2.5vw, 18px);
+}
+.utility { background: #405164; border-color: #d9e3ff75; }
+@media (max-width: 840px) {
+  .app { justify-content: flex-start; padding-top: 58px; }
+  .wrap { width: 98vw; max-height: 54dvh; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .chip { min-height: 44px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .action { grid-column: 1 / -1; min-height: 52px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Move a crane trolley, lower the swinging hook, and sort color-coded cargo into matching bays before the shift timer expires. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Crane Cargo | AI and Sons Games">
+  <meta property="og:description" content="Move a crane trolley, lower the swinging hook, and sort color-coded cargo into matching bays before the shift timer expires. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/cranecargo">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Crane Cargo | AI and Sons Games">
+  <meta name="twitter:description" content="Move a crane trolley, lower the swinging hook, and sort color-coded cargo into matching bays before the shift timer expires. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/cranecargo">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Crane Cargo","description":"Move a crane trolley, lower the swinging hook, and sort color-coded cargo into matching bays before the shift timer expires. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/cranecargo","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to Games</a>
+<main class="app">
+  <section class="wrap" aria-label="Crane Cargo game">
+    <canvas id="game" width="960" height="600"></canvas>
+    <div id="overlay" class="overlay show">
+      <div class="panel">
+        <h1>Crane Cargo</h1>
+        <p id="overlayText">Move the trolley, lower the hook, grab cargo, and drop each crate into the matching color bay before the shift ends.</p>
+        <p>Desktop: arrows or WASD move and raise/lower, Space grabs or drops, P pauses, R restarts, F toggles fullscreen.</p>
+        <div class="row">
+          <button id="startBtn">Start Shift</button>
+          <button id="fullscreenBtn">Fullscreen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Ready</b></div>
+    <div class="chip good"><span>Delivered</span><b id="delivered">0/10</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">90.0s</b></div>
+    <div class="chip bad"><span>Integrity</span><b id="integrity">100%</b></div>
+    <div class="chip"><span>Rope</span><b id="rope">0</b></div>
+    <div class="chip"><span>Load</span><b id="load">None</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn">Left</button>
+    <button id="rightBtn">Right</button>
+    <button id="raiseBtn">Raise</button>
+    <button id="lowerBtn">Lower</button>
+    <button id="grabBtn" class="action">Grab / Drop</button>
+    <button id="pauseBtn" class="utility">Pause</button>
+    <button id="restartBtn" class="utility">Restart</button>
+    <button id="fullBtn" class="utility">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+const overlay = document.getElementById('overlay');
+const overlayText = document.getElementById('overlayText');
+const modeEl = document.getElementById('mode');
+const deliveredEl = document.getElementById('delivered');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const integrityEl = document.getElementById('integrity');
+const ropeEl = document.getElementById('rope');
+const loadEl = document.getElementById('load');
+const coinsEl = document.getElementById('coins');
+
+const TRACK_Y = 74;
+const DOCK_Y = 438;
+const MIN_ROPE = 78;
+const MAX_ROPE = 388;
+const TARGET_DELIVERIES = 10;
+const SHIFT_SECONDS = 90;
+const COLORS = [
+  { id: 'red', label: 'Red', hex: '#f05c5c', bayX: 96 },
+  { id: 'blue', label: 'Blue', hex: '#5aa7ff', bayX: 306 },
+  { id: 'green', label: 'Green', hex: '#61d987', bayX: 516 },
+  { id: 'gold', label: 'Gold', hex: '#ffd66b', bayX: 726 },
+];
+const CARGO_SEQUENCE = ['red', 'blue', 'green', 'gold', 'blue', 'red', 'gold', 'green', 'red', 'gold', 'blue', 'green', 'gold', 'red'];
+
+const keys = new Set();
+const touch = { left: false, right: false, raise: false, lower: false };
+let lastFrame = performance.now();
+let manualStepping = false;
+
+const game = {
+  mode: 'menu',
+  result: null,
+  score: 0,
+  delivered: 0,
+  mistakes: 0,
+  integrity: 100,
+  timeLeft: SHIFT_SECONDS,
+  cargoSeed: 0,
+  cargo: [],
+  trolleyX: W / 2,
+  trolleyVel: 0,
+  rope: 170,
+  swing: 0,
+  swingVel: 0,
+  carryingId: null,
+  message: 'Ready',
+  coinsEarned: 0,
+  flash: 0,
+  shake: 0,
+  bestDelivered: Number(localStorage.getItem('cranecargo_best_delivered') || 0),
+};
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getColor(id) {
+  return COLORS.find((color) => color.id === id) || COLORS[0];
+}
+
+function bayForColor(id) {
+  const color = getColor(id);
+  return { x: color.bayX, y: 512, w: 138, h: 58, color };
+}
+
+function makeCargo(seed) {
+  const colorId = CARGO_SEQUENCE[seed % CARGO_SEQUENCE.length];
+  const lane = seed % 6;
+  const row = Math.floor(seed / 6) % 2;
+  return {
+    id: `cargo-${seed}`,
+    colorId,
+    x: 104 + lane * 142,
+    y: DOCK_Y + row * 34,
+    w: 54,
+    h: 36,
+    state: 'waiting',
+    wobble: 0,
+  };
+}
+
+function activeCargo() {
+  return game.cargo.find((cargo) => cargo.id === game.carryingId) || null;
+}
+
+function hookPosition() {
+  return {
+    x: game.trolleyX + Math.sin(game.swing) * game.rope * 0.26,
+    y: TRACK_Y + game.rope,
+  };
+}
+
+function fillCargoQueue() {
+  while (game.cargo.filter((cargo) => cargo.state === 'waiting').length < 6) {
+    game.cargo.push(makeCargo(game.cargoSeed));
+    game.cargoSeed += 1;
+  }
+}
+
+function resetRun() {
+  game.mode = 'menu';
+  game.result = null;
+  game.score = 0;
+  game.delivered = 0;
+  game.mistakes = 0;
+  game.integrity = 100;
+  game.timeLeft = SHIFT_SECONDS;
+  game.cargoSeed = 0;
+  game.cargo = [];
+  game.trolleyX = W / 2;
+  game.trolleyVel = 0;
+  game.rope = 170;
+  game.swing = 0;
+  game.swingVel = 0;
+  game.carryingId = null;
+  game.message = 'Ready';
+  game.coinsEarned = 0;
+  game.flash = 0;
+  game.shake = 0;
+  fillCargoQueue();
+  updateHud();
+  render();
+}
+
+function startGame() {
+  resetRun();
+  game.mode = 'playing';
+  game.message = 'Sort the first crate';
+  try { rememberRecent('cranecargo'); } catch {}
+  try { maybeUnlock({ anyPlay: true, cranecargo: { result: 'started', delivered: 0, score: 0 } }); } catch {}
+  overlay.classList.remove('show');
+  updateHud();
+}
+
+function awardCoins(amount) {
+  const coins = Math.max(0, Math.floor(amount));
+  if (!coins) return;
+  game.coinsEarned += coins;
+  try { addCoins(coins); } catch {}
+}
+
+function finishRun(result, reason) {
+  if (game.mode === 'won' || game.mode === 'lost') return;
+  game.mode = result;
+  game.result = result;
+  game.carryingId = null;
+  if (game.delivered > game.bestDelivered) {
+    game.bestDelivered = game.delivered;
+    localStorage.setItem('cranecargo_best_delivered', String(game.bestDelivered));
+  }
+  const bonus = result === 'won' ? 12 : 4;
+  awardCoins(bonus + Math.floor(game.delivered / 2) + Math.floor(game.score / 600));
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      cranecargo: {
+        result,
+        delivered: game.delivered,
+        score: Math.max(0, Math.round(game.score)),
+        mistakes: game.mistakes,
+      },
+    });
+  } catch {}
+  game.message = reason;
+  overlayText.textContent = `${reason} Delivered ${game.delivered}/${TARGET_DELIVERIES}, scored ${Math.max(0, Math.round(game.score))}, and earned ${game.coinsEarned} coins.`;
+  document.getElementById('startBtn').textContent = 'Run Another Shift';
+  overlay.classList.add('show');
+  updateHud();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused';
+    overlayText.textContent = 'Paused. Press P or the pause button to continue sorting cargo.';
+    overlay.classList.add('show');
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Back on shift';
+    overlay.classList.remove('show');
+  }
+  updateHud();
+}
+
+function scoreDelivery(cargo, bay) {
+  game.delivered += 1;
+  game.score += 160 + Math.round(game.timeLeft * 1.8) + Math.max(0, Math.round(game.integrity * 0.5));
+  game.flash = 0.35;
+  game.message = `${bay.color.label} bay matched`;
+  if (game.delivered % 3 === 0) awardCoins(1);
+  cargo.state = 'delivered';
+  game.carryingId = null;
+  fillCargoQueue();
+  if (game.delivered >= TARGET_DELIVERIES) {
+    finishRun('won', 'Cargo manifest complete.');
+  }
+}
+
+function penalize(amount, message) {
+  game.integrity = clamp(game.integrity - amount, 0, 100);
+  game.score = Math.max(0, game.score - amount * 9);
+  game.mistakes += 1;
+  game.shake = 10;
+  game.message = message;
+  if (game.integrity <= 0) {
+    finishRun('lost', 'The dock crew halted the shift after too many rough drops.');
+  }
+}
+
+function releaseCargo() {
+  const cargo = activeCargo();
+  if (!cargo) return;
+  const hook = hookPosition();
+  cargo.x = hook.x - cargo.w / 2;
+  cargo.y = hook.y + 10;
+  const cargoLeft = cargo.x;
+  const cargoRight = cargo.x + cargo.w;
+  const cargoBottom = cargo.y + cargo.h;
+  const matchedBay = COLORS.map((color) => bayForColor(color.id)).find((bay) => {
+    const overlap = Math.min(cargoRight, bay.x + bay.w) - Math.max(cargoLeft, bay.x);
+    return overlap >= cargo.w * 0.35 && cargoBottom >= bay.y - 18 && hook.y <= bay.y + bay.h + 12;
+  });
+
+  if (matchedBay) {
+    if (matchedBay.color.id === cargo.colorId) {
+      scoreDelivery(cargo, matchedBay);
+    } else {
+      cargo.state = 'waiting';
+      cargo.x = clamp(hook.x - cargo.w / 2, 56, W - 88);
+      cargo.y = DOCK_Y;
+      game.carryingId = null;
+      penalize(18, `Wrong bay for ${getColor(cargo.colorId).label} cargo`);
+    }
+    return;
+  }
+
+  cargo.state = 'waiting';
+  cargo.x = clamp(hook.x - cargo.w / 2, 56, W - 88);
+  cargo.y = DOCK_Y + ((game.mistakes + game.delivered) % 2) * 34;
+  game.carryingId = null;
+  penalize(7, 'Cargo set down outside a bay');
+}
+
+function grabCargo() {
+  if (game.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'paused') {
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing') return;
+
+  if (game.carryingId) {
+    releaseCargo();
+    return;
+  }
+
+  const hook = hookPosition();
+  let best = null;
+  let bestDist = Infinity;
+  for (const cargo of game.cargo) {
+    if (cargo.state !== 'waiting') continue;
+    const cx = cargo.x + cargo.w / 2;
+    const cy = cargo.y + cargo.h / 2;
+    const dist = Math.hypot(cx - hook.x, cy - hook.y);
+    if (dist < bestDist) {
+      best = cargo;
+      bestDist = dist;
+    }
+  }
+
+  if (best && bestDist <= 48) {
+    best.state = 'held';
+    game.carryingId = best.id;
+    game.message = `${getColor(best.colorId).label} cargo hooked`;
+    game.swingVel += (hook.x - (best.x + best.w / 2)) * 0.004;
+  } else {
+    penalize(4, 'Hook missed the cargo');
+  }
+  updateHud();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function update(dt) {
+  game.flash = Math.max(0, game.flash - dt);
+  game.shake = Math.max(0, game.shake - dt * 24);
+  for (const cargo of game.cargo) {
+    cargo.wobble += dt * 4;
+  }
+
+  if (game.mode !== 'playing') return;
+
+  game.timeLeft = Math.max(0, game.timeLeft - dt);
+  if (game.timeLeft <= 0) {
+    finishRun('lost', 'Shift timer expired.');
+    return;
+  }
+
+  const left = keys.has('arrowleft') || keys.has('a') || touch.left;
+  const right = keys.has('arrowright') || keys.has('d') || touch.right;
+  const raise = keys.has('arrowup') || keys.has('w') || touch.raise;
+  const lower = keys.has('arrowdown') || keys.has('s') || touch.lower;
+  const dir = (right ? 1 : 0) - (left ? 1 : 0);
+  const ropeDir = (lower ? 1 : 0) - (raise ? 1 : 0);
+
+  game.trolleyVel += (dir * 315 - game.trolleyVel) * Math.min(1, dt * 9);
+  game.trolleyX = clamp(game.trolleyX + game.trolleyVel * dt, 56, W - 56);
+  game.rope = clamp(game.rope + ropeDir * 250 * dt, MIN_ROPE, MAX_ROPE);
+
+  game.swingVel += dir * 1.8 * dt;
+  game.swingVel += -game.swing * 3.2 * dt;
+  game.swingVel *= Math.pow(0.86, dt * 10);
+  game.swing = clamp(game.swing + game.swingVel, -0.64, 0.64);
+
+  const cargo = activeCargo();
+  if (cargo) {
+    const hook = hookPosition();
+    cargo.x = hook.x - cargo.w / 2;
+    cargo.y = hook.y + 14;
+  }
+}
+
+function drawText(text, x, y, size = 16, color = '#ffffff', align = 'left') {
+  ctx.fillStyle = color;
+  ctx.font = `800 ${size}px Trebuchet MS, Segoe UI, sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#142235');
+  sky.addColorStop(0.48, '#254456');
+  sky.addColorStop(1, '#2c2b30');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#0d1623aa';
+  for (let i = 0; i < 8; i += 1) {
+    const x = i * 138 - 20;
+    const h = 92 + (i % 3) * 24;
+    ctx.fillRect(x, 352 - h, 96, h);
+    ctx.fillStyle = '#ffd66b44';
+    for (let y = 352 - h + 16; y < 340; y += 24) {
+      ctx.fillRect(x + 16, y, 16, 8);
+      ctx.fillRect(x + 52, y, 16, 8);
+    }
+    ctx.fillStyle = '#0d1623aa';
+  }
+
+  ctx.fillStyle = '#1b2b33';
+  ctx.fillRect(0, 360, W, 240);
+  ctx.fillStyle = '#243944';
+  for (let x = 0; x < W; x += 64) {
+    ctx.fillRect(x, 404, 38, 8);
+    ctx.fillRect(x + 18, 486, 42, 8);
+  }
+
+  ctx.fillStyle = '#32404d';
+  ctx.fillRect(42, TRACK_Y - 18, W - 84, 18);
+  ctx.fillStyle = '#687382';
+  ctx.fillRect(42, TRACK_Y - 12, W - 84, 5);
+  for (let x = 74; x < W - 70; x += 70) {
+    ctx.fillStyle = '#171d25';
+    ctx.fillRect(x, TRACK_Y - 26, 10, 34);
+  }
+}
+
+function drawBays() {
+  for (const color of COLORS) {
+    const bay = bayForColor(color.id);
+    ctx.fillStyle = '#0e141a';
+    ctx.fillRect(bay.x - 8, bay.y - 10, bay.w + 16, bay.h + 20);
+    ctx.fillStyle = color.hex;
+    ctx.globalAlpha = 0.28;
+    ctx.fillRect(bay.x, bay.y, bay.w, bay.h);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = color.hex;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(bay.x, bay.y, bay.w, bay.h);
+    drawText(color.label, bay.x + bay.w / 2, bay.y + bay.h / 2, 17, '#f8fbff', 'center');
+  }
+}
+
+function drawCargo(cargo) {
+  if (cargo.state === 'delivered') return;
+  const color = getColor(cargo.colorId);
+  const wobble = cargo.state === 'held' ? Math.sin(cargo.wobble) * 2 : 0;
+  ctx.fillStyle = '#11182099';
+  ctx.fillRect(cargo.x + 5, cargo.y + cargo.h + 4, cargo.w - 4, 7);
+  ctx.fillStyle = color.hex;
+  ctx.fillRect(cargo.x, cargo.y + wobble, cargo.w, cargo.h);
+  ctx.fillStyle = '#ffffff2f';
+  ctx.fillRect(cargo.x + 7, cargo.y + 6 + wobble, cargo.w - 14, 7);
+  ctx.strokeStyle = '#0c1118';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cargo.x, cargo.y + wobble, cargo.w, cargo.h);
+  drawText(color.label[0], cargo.x + cargo.w / 2, cargo.y + cargo.h / 2 + wobble, 18, '#101721', 'center');
+}
+
+function drawCrane() {
+  const hook = hookPosition();
+  const trolleyW = 78;
+  const shakeX = game.shake > 0 ? Math.sin(performance.now() * 0.05) * game.shake : 0;
+
+  ctx.save();
+  ctx.translate(shakeX, 0);
+
+  ctx.fillStyle = '#d28a36';
+  ctx.fillRect(game.trolleyX - trolleyW / 2, TRACK_Y - 44, trolleyW, 34);
+  ctx.fillStyle = '#f1b868';
+  ctx.fillRect(game.trolleyX - trolleyW / 2 + 8, TRACK_Y - 37, trolleyW - 16, 9);
+  ctx.fillStyle = '#151d25';
+  ctx.fillRect(game.trolleyX - 28, TRACK_Y - 10, 16, 16);
+  ctx.fillRect(game.trolleyX + 12, TRACK_Y - 10, 16, 16);
+
+  ctx.strokeStyle = game.carryingId ? '#f7d58d' : '#d9e1e6';
+  ctx.lineWidth = game.carryingId ? 5 : 4;
+  ctx.beginPath();
+  ctx.moveTo(game.trolleyX, TRACK_Y - 10);
+  ctx.lineTo(hook.x, hook.y);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#f7d58d';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(hook.x - 14, hook.y - 6);
+  ctx.lineTo(hook.x, hook.y + 14);
+  ctx.lineTo(hook.x + 14, hook.y - 6);
+  ctx.stroke();
+  ctx.fillStyle = '#f7d58d';
+  ctx.fillRect(hook.x - 9, hook.y - 12, 18, 11);
+
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  if (game.flash > 0) {
+    ctx.fillStyle = `rgba(255, 223, 143, ${game.flash * 0.45})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  drawBays();
+
+  for (const cargo of game.cargo.filter((item) => item.state !== 'held')) {
+    drawCargo(cargo);
+  }
+  drawCrane();
+  const held = activeCargo();
+  if (held) drawCargo(held);
+
+  drawText(game.message, 24, 28, 16, '#f8fbff');
+  drawText('Match cargo colors to bays', W - 24, 28, 15, '#dbe6ec', 'right');
+
+  const manifestX = 24;
+  drawText('Manifest', manifestX, 382, 15, '#cbd8e2');
+  for (let i = 0; i < Math.min(4, TARGET_DELIVERIES - game.delivered); i += 1) {
+    const color = getColor(CARGO_SEQUENCE[(game.cargoSeed + i) % CARGO_SEQUENCE.length]);
+    ctx.fillStyle = color.hex;
+    ctx.fillRect(manifestX + i * 34, 398, 24, 18);
+  }
+
+  if (game.mode === 'paused') {
+    ctx.fillStyle = '#00000070';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function updateHud() {
+  const held = activeCargo();
+  modeEl.textContent = game.mode === 'playing' ? 'Shift' : game.mode === 'paused' ? 'Pause' : game.mode === 'won' ? 'Won' : game.mode === 'lost' ? 'Done' : 'Ready';
+  deliveredEl.textContent = `${game.delivered}/${TARGET_DELIVERIES}`;
+  scoreEl.textContent = String(Math.max(0, Math.round(game.score)));
+  timeEl.textContent = `${game.timeLeft.toFixed(1)}s`;
+  integrityEl.textContent = `${Math.round(game.integrity)}%`;
+  ropeEl.textContent = String(Math.round(game.rope));
+  loadEl.textContent = held ? getColor(held.colorId).label : 'None';
+  coinsEl.textContent = String(profileState?.coins ?? game.coinsEarned);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.min(48, Math.round(ms / (1000 / 60))));
+  const dt = Math.min(1 / 30, (ms / 1000) / steps);
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  render();
+}
+
+window.advanceTime = (ms) => {
+  manualStepping = true;
+  step(ms);
+  lastFrame = performance.now();
+  manualStepping = false;
+};
+
+window.render_game_to_text = () => {
+  const hook = hookPosition();
+  const held = activeCargo();
+  return JSON.stringify({
+    game: 'cranecargo',
+    coordinate_system: 'canvas pixels; origin top-left; x increases right; y increases down; cargo bays are along the lower dock',
+    mode: game.mode,
+    result: game.result,
+    score: Math.max(0, Math.round(game.score)),
+    delivered: game.delivered,
+    target_deliveries: TARGET_DELIVERIES,
+    mistakes: game.mistakes,
+    integrity: Math.round(game.integrity),
+    time_left_seconds: Number(game.timeLeft.toFixed(2)),
+    crane: {
+      trolley_x: Math.round(game.trolleyX),
+      rope_length: Math.round(game.rope),
+      hook_x: Math.round(hook.x),
+      hook_y: Math.round(hook.y),
+      swing_angle: Number(game.swing.toFixed(3)),
+    },
+    carrying: held ? {
+      id: held.id,
+      color: held.colorId,
+      x: Math.round(held.x),
+      y: Math.round(held.y),
+    } : null,
+    waiting_cargo: game.cargo
+      .filter((cargo) => cargo.state === 'waiting')
+      .slice(0, 8)
+      .map((cargo) => ({
+        id: cargo.id,
+        color: cargo.colorId,
+        x: Math.round(cargo.x),
+        y: Math.round(cargo.y),
+      })),
+    bays: COLORS.map((color) => {
+      const bay = bayForColor(color.id);
+      return { color: color.id, x: bay.x, y: bay.y, width: bay.w, height: bay.h };
+    }),
+    last_message: game.message,
+    coins_earned_this_run: game.coinsEarned,
+    best_delivered: game.bestDelivered,
+  });
+};
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(1 / 30, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    render();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'a', 'd', 'w', 's'].includes(key)) {
+    keys.add(key);
+    event.preventDefault();
+  } else if (key === ' ' || key === 'enter') {
+    if (!event.repeat) grabCargo();
+    event.preventDefault();
+  } else if (key === 'p') {
+    togglePause();
+    event.preventDefault();
+  } else if (key === 'r') {
+    startGame();
+    event.preventDefault();
+  } else if (key === 'f') {
+    toggleFullscreen();
+    event.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+function bindHold(id, prop) {
+  const button = document.getElementById(id);
+  const set = (value, event) => {
+    touch[prop] = value;
+    event?.preventDefault();
+  };
+  button.addEventListener('pointerdown', (event) => set(true, event));
+  button.addEventListener('pointerup', (event) => set(false, event));
+  button.addEventListener('pointerleave', (event) => set(false, event));
+  button.addEventListener('pointercancel', (event) => set(false, event));
+}
+
+bindHold('leftBtn', 'left');
+bindHold('rightBtn', 'right');
+bindHold('raiseBtn', 'raise');
+bindHold('lowerBtn', 'lower');
+
+document.getElementById('startBtn')?.addEventListener('click', startGame);
+document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+document.getElementById('grabBtn')?.addEventListener('click', grabCargo);
+document.getElementById('pauseBtn')?.addEventListener('click', togglePause);
+document.getElementById('restartBtn')?.addEventListener('click', startGame);
+document.getElementById('fullBtn')?.addEventListener('click', toggleFullscreen);
+
+resetRun();
+requestAnimationFrame(frame);
+</script>
+<script type="module">
+import { mountGameFeedback } from '../src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'cranecargo', gameName: 'Crane Cargo' });
+</script>
+</body>
+</html>

@@ -2346,3 +2346,29 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Feedback smoke raw script with a short-lived static server also hit Chromium `browserType.launch: spawn EPERM`.
 - Follow-up TODO:
   - Re-run `npm run test:feedback`, `npm run test:feedback-smoke:raw`, and the Playwright gameplay loop for `/skylinestacker/` in an environment where Node test-runner child processes and Chromium launch are allowed.
+
+## 2026-05-04 Crane Cargo automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Selected `cranecargo` / Crane Cargo because the catalog does not have a crane-hook cargo sorting game.
+- Plan: add a standalone canvas game where players move a crane trolley, lower/raise a swinging hook, grab color-coded cargo, and drop it in matching bays with desktop/mobile controls, feedback mount, profile rewards, `window.advanceTime(ms)`, and `window.render_game_to_text()`.
+- Added `cranecargo/index.html` with the crane trolley, swinging hook, cargo queue, matching color bays, rough-drop penalties, shift timer, desktop/touch controls, profile reward hooks, feedback mount, and deterministic automation hooks.
+- Wired initial catalog/routing integration in `src/meta/games.js`, `index.html`, and `vercel.json`.
+- Regenerated SEO/sitemap with `npm run seo`; `/cranecargo` now has managed SEO metadata and sitemap coverage.
+- Synced feedback baseline artifacts with `npm run feedback:sync-linear`; live Linear provisioning skipped because Linear env vars are not set.
+- Validation completed:
+  - `Get-Content -Raw .\vercel.json | ConvertFrom-Json`: pass.
+  - Imported `src/meta/games.js` and `src/meta/feedback.js` to confirm Crane Cargo is present in the catalog and feedback map: pass.
+  - Slug grep checks across game page, metadata, Vercel config, sitemap, and Linear seed artifacts: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass (4/4).
+  - Parsed both `cranecargo/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - Served `/cranecargo/` plus `/src/core/state.js` through a short-lived Node static server: pass.
+  - Ran a lightweight Node VM runtime harness with stubbed DOM/canvas to start the game, advance deterministic time, lower the rope, trigger input, and read `window.render_game_to_text()`: pass.
+  - `git diff --check`: pass; only existing Git line-ending warnings were printed.
+- Push-fix validation on 2026-05-04:
+  - `npm run test:feedback`: pass (31/31).
+  - Required `$develop-web-game` Playwright client for `/cranecargo/`: pass, artifacts in `output/web-game/cranecargo-push-smoke-after-fix`, no browser error JSON.
+  - Targeted Playwright delivery scenario: pass, hooked the first red crate, dropped it in the red bay, and verified `delivered: 1` plus positive score in `render_game_to_text()`.
+  - `npm run test:feedback-smoke:raw`: pass against a short-lived Node static server.
+  - Fixed Crane Cargo delivery ergonomics so bay matching uses the held crate's visible overlap with a bay instead of the exact hook point.
+- Follow-up TODO:
+  - Optional human tuning: adjust crane swing difficulty after real playtesting; automated smoke and targeted delivery now pass.
