@@ -2372,3 +2372,35 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Fixed Crane Cargo delivery ergonomics so bay matching uses the held crate's visible overlap with a bay instead of the exact hook point.
 - Follow-up TODO:
   - Optional human tuning: adjust crane swing difficulty after real playtesting; automated smoke and targeted delivery now pass.
+
+## 2026-05-04 Audio Agar multiplayer client run
+- New request: build `audioagar/`, a real-time multiplayer, Agar.io-inspired browser game that is playable without sight through keyboard, Web Audio, and screen-reader announcements.
+- Read the `$develop-web-game` skill and confirmed `progress.md` already has an older original prompt at the top; preserving that history and appending this section.
+- Repo inspection notes:
+  - Existing games use top-level folders and `src/meta/games.js` for launcher metadata.
+  - `test-ws.js` and `clubpenguin-world/public/client.js` use `wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws` in production and localhost-style WebSocket fallbacks.
+  - `v2-server/` is currently a placeholder README in this checkout, so this pass defines the frontend protocol/client contract without implementing server authority.
+- Added `src/net/multiplayerClient.js` with a reusable versioned WebSocket envelope, endpoint resolution, join/input/ping messages, reconnect, heartbeat, queued input sending, and state/event callbacks.
+- Added initial `audioagar/` scaffold:
+  - `audioagar/index.html`
+  - `audioagar/styles.css`
+  - `audioagar/game.js`
+- Current game client includes keyboard-only movement/actions, canvas rendering, live-region announcements, Web Audio cue synthesis, deterministic hooks (`window.advanceTime`, `window.render_game_to_text`), and a local sensory preview that is replaced when authoritative server state arrives.
+- Wired Audio Agar into `src/meta/games.js`, homepage static fallback, and `vercel.json` rewrites/cache headers.
+- Updated Vercel CSP `connect-src` to explicitly allow `wss:` and `ws:` for multiplayer sockets.
+- Added `tests/audioagar-client.integration.test.mjs` plus `npm run test:audioagar` for protocol/page/routing coverage.
+- Added `?offline=1` local-preview support so browser smoke tests can exercise controls without noisy WebSocket failures when no v2 authoritative server is running locally; normal page loads still connect on startup.
+- Regenerated SEO/sitemap with `npm run seo` and feedback seed artifacts with `npm run feedback:sync-linear`.
+- Validation completed:
+  - `npm run test:audioagar`: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass.
+  - `Get-Content -Raw vercel.json | ConvertFrom-Json`: pass.
+  - Browser module parse for `audioagar/game.js` and `src/net/multiplayerClient.js`: pass.
+  - `$develop-web-game` Playwright client for `/audioagar/?preview=1&offline=1`: pass, artifacts in `output/web-game/audioagar-smoke-3`, no browser error JSON.
+  - Reviewed `output/web-game/audioagar-smoke-3/shot-2.png`; canvas is nonblank and shows self orb, nearby orb, pellets, grid, preview label, and threat compass.
+  - Targeted Playwright key check for `E`, `H`, and diagonal `W+D`: pass.
+  - `npm run test:feedback`: initially failed because dependencies were not installed (`firebase-admin` missing); after `npm install`, pass (31/31).
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4183`: pass.
+- Follow-up TODO:
+  - Implement the authoritative `v2-server` room loop for the `aiandsons.multiplayer.v1` join/input/state protocol defined by `src/net/multiplayerClient.js`.
+  - Replace the local preview with real server snapshots in production once `/ws/game` exists.
