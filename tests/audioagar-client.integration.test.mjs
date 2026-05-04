@@ -1,0 +1,49 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+
+import {
+  multiplayerProtocol,
+  normalizeWebSocketUrl,
+  resolveWebSocketUrl,
+} from "../src/net/multiplayerClient.js";
+
+const ROOT = process.cwd();
+
+test("multiplayer client normalizes versioned WebSocket endpoints", () => {
+  assert.equal(multiplayerProtocol.name, "aiandsons.multiplayer.v1");
+  assert.equal(normalizeWebSocketUrl("example.test"), "ws://example.test/ws/game");
+  assert.equal(normalizeWebSocketUrl("https://example.test/ws/game"), "wss://example.test/ws/game");
+  assert.equal(normalizeWebSocketUrl("http://127.0.0.1:8081"), "ws://127.0.0.1:8081/ws/game");
+  assert.equal(resolveWebSocketUrl("wss://arena.example/ws/custom"), "wss://arena.example/ws/custom");
+});
+
+test("audioagar page exposes blind-play and deterministic hooks", () => {
+  const html = fs.readFileSync(path.join(ROOT, "audioagar", "index.html"), "utf8");
+  const js = fs.readFileSync(path.join(ROOT, "audioagar", "game.js"), "utf8");
+
+  assert.match(html, /aria-live="polite"/);
+  assert.match(html, /aria-live="assertive"/);
+  assert.match(html, /<canvas id="arena"/);
+  assert.match(html, /mountGameFeedback\(\{ gameSlug: "audioagar"/);
+  assert.match(js, /connect\(\{\s*gameId: GAME_ID/m);
+  assert.match(js, /window\.advanceTime/);
+  assert.match(js, /window\.render_game_to_text/);
+  assert.match(js, /type: "move"/);
+  assert.match(js, /sendAction\("split"\)/);
+  assert.match(js, /sendAction\("eject"\)/);
+});
+
+test("audioagar is routed and allowed to open WebSocket connections", () => {
+  const vercel = JSON.parse(fs.readFileSync(path.join(ROOT, "vercel.json"), "utf8"));
+  const rewrites = vercel.rewrites || [];
+  assert.ok(rewrites.some((entry) => entry.source === "/audioagar" && entry.destination === "/audioagar/index.html"));
+  assert.ok(rewrites.some((entry) => entry.source === "/audioagar/" && entry.destination === "/audioagar/index.html"));
+
+  const cspHeader = (vercel.headers || [])
+    .flatMap((entry) => entry.headers || [])
+    .find((header) => header.key === "Content-Security-Policy");
+  assert.ok(cspHeader?.value.includes("wss:"), "Expected CSP connect-src to allow secure WebSocket endpoints.");
+  assert.ok(cspHeader?.value.includes("ws:"), "Expected CSP connect-src to allow local WebSocket endpoints.");
+});

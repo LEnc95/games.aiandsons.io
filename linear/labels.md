@@ -16,6 +16,7 @@
 ## Per-Game Labels
 
 - game/clubpenguin-world
+- game/audioagar
 - game/2048
 - game/pong
 - game/snake
