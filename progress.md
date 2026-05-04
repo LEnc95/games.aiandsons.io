@@ -1487,7 +1487,8 @@ ememberRecent('riftdrifter'), coin payout via ddCoins, achievement payload via 
   - Added 
 iftdrifter metadata entry in src/meta/games.js.
   - Added fallback homepage card in index.html.
-  - Added /riftdrifter rewrites and /riftdrifter/index.html cache-header entry in ercel.json.
+  - Added /riftdrifter rewrites and /riftdrifter/index.html cache-header entry in 
+ercel.json.
 - Validation results:
   - 
 pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
@@ -1610,12 +1611,16 @@ pm run test:feedback and $WEB_GAME_CLIENT gameplay validation for /riftdrifter i
 ## 2026-04-02T14:51:55-04:00 Multi-game de-duplication continuation
 - Continued the user-requested anti-clone pass by replacing mechanics in:
   - signalstack/index.html -> relay-routing tile rotation puzzle.
-  - iftdrifter/index.html -> zero-g inertia piloting with shard collection.
+  - 
+iftdrifter/index.html -> zero-g inertia piloting with shard collection.
   - cometcourier/index.html -> station-demand dispatch management loop.
-  - aultrunner/index.html -> vault tumbler code-cracking stages.
+  - 
+aultrunner/index.html -> vault tumbler code-cracking stages.
 - Fixed validation blocker in cometcourier/index.html: removed duplicate 	ogglePause() declaration that caused SyntaxError: Identifier 'togglePause' has already been declared.
 - Updated game discovery copy to match new mechanics:
-  - src/meta/games.js score hints + descriptions for signalstack, iftdrifter, cometcourier, aultrunner.
+  - src/meta/games.js score hints + descriptions for signalstack, 
+iftdrifter, cometcourier, 
+aultrunner.
   - index.html fallback game-card descriptions for the same four slugs.
 - Skill validation ($develop-web-game) completed successfully against local http://127.0.0.1:4173:
   - output/web-game/signalstack-dedupe-smoke2
@@ -1697,8 +1702,11 @@ pm run test:feedback-smoke:raw passed (output/web-game/feedback-e2e/summary.json
 ## 2026-04-07T07:05:40-04:00 Byte Bloom automation run
 - Added a brand-new game route ytebloom at ytebloom/index.html with a grid-based bloom-vs-blight strategy loop.
 - Implemented desktop/mobile controls, pause/restart/fullscreen, coin + achievement hooks, feedback mount, and deterministic automation hooks: window.advanceTime(ms) and window.render_game_to_text().
-- Wired catalog/routing in src/meta/games.js, fallback launcher card in index.html, and Vercel rewrites/cache header entries in ercel.json.
-- Validation passed: g wiring check and ercel.json parse check; 
+- Wired catalog/routing in src/meta/games.js, fallback launcher card in index.html, and Vercel rewrites/cache header entries in 
+ercel.json.
+- Validation passed: 
+g wiring check and 
+ercel.json parse check; 
 pm.cmd run feedback:sync-linear passed and refreshed linear/labels.md + linear/game-issues.csv.
 - Validation blockers in this sandbox: 
 pm.cmd run test:feedback failed with spawn EPERM and required $develop-web-game Playwright run for /bytebloom failed with rowserType.launch: spawn EPERM.
@@ -1731,9 +1739,13 @@ pm run test:feedback and the Playwright gameplay loop for /bytebloom in an envir
 
 ## 2026-04-11T07:11:14-04:00 Dice Forge automation run
 - Added a brand-new game diceforge at diceforge/index.html with a dice-drafting gameplay loop (hold/reroll dice, lock one scoring category per round, eight-round run with timer pressure).
-- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (ddCoins, ememberRecent, maybeUnlock), feedback mount, and deterministic automation hooks: window.advanceTime(ms) and window.render_game_to_text().
-- Wired catalog/routing in src/meta/games.js, fallback launcher card in index.html, and Vercel rewrites/cache header entries in ercel.json.
-- Validation passed: g wiring check and ercel.json parse check; 
+- Implemented desktop/mobile controls, pause/restart/fullscreen, coin + progression hooks (ddCoins, 
+ememberRecent, maybeUnlock), feedback mount, and deterministic automation hooks: window.advanceTime(ms) and window.render_game_to_text().
+- Wired catalog/routing in src/meta/games.js, fallback launcher card in index.html, and Vercel rewrites/cache header entries in 
+ercel.json.
+- Validation passed: 
+g wiring check and 
+ercel.json parse check; 
 pm.cmd run feedback:sync-linear passed and refreshed linear/labels.md + linear/game-issues.csv.
 - Validation blockers in this sandbox: 
 pm.cmd run test:feedback failed with spawn EPERM and required $develop-web-game Playwright run for /diceforge failed with rowserType.launch: spawn EPERM.
@@ -1751,9 +1763,12 @@ pm run test:feedback and the Playwright gameplay loop for /diceforge in an envir
 
 ## 2026-04-13T07:05:09-04:00 Pulse Parry automation run
 - Added brand-new game pulseparry at pulseparry/index.html with a shield-rotation + pulse-parry defense loop (block/parry incoming drones before core integrity reaches zero).
-- Included desktop/mobile controls, fullscreen/pause/restart, coin/progression hooks (ememberRecent, ddCoins, maybeUnlock), feedback mount, and deterministic automation hooks (window.advanceTime(ms), window.render_game_to_text()).
-- Wired pulseparry into src/meta/games.js, static fallback card in index.html, and route/cache entries in ercel.json.
-- Validation passed: slug wiring checks and ercel.json parse.
+- Included desktop/mobile controls, fullscreen/pause/restart, coin/progression hooks (
+ememberRecent, ddCoins, maybeUnlock), feedback mount, and deterministic automation hooks (window.advanceTime(ms), window.render_game_to_text()).
+- Wired pulseparry into src/meta/games.js, static fallback card in index.html, and route/cache entries in 
+ercel.json.
+- Validation passed: slug wiring checks and 
+ercel.json parse.
 - Validation passed: 
 pm.cmd run feedback:sync-linear (updated linear/labels.md + linear/game-issues.csv).
 - Sandbox blockers: 
@@ -1788,15 +1803,18 @@ pm.cmd run test:feedback failed with spawn EPERM; required $develop-web-game Pla
   - Core loop: cycle legal knight jumps, commit movement, collect beacons, and avoid sentinel row/column scan lanes.
   - Win/loss loop: secure 14 beacons before time expires; scan-lane hits drain integrity; end-run score + coin payout included.
   - Controls: desktop (A/D or arrows to cycle jump, Space/Enter commit, P/R/F) and mobile controls (Prev/Next/Jump + pause/restart/fullscreen).
-  - Platform hooks: ememberRecent('loomlock'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Platform hooks: 
+ememberRecent('loomlock'), coin rewards via ddCoins, progression payloads via maybeUnlock.
   - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state.
   - Feedback integration: mountGameFeedback({ gameSlug: 'loomlock', gameName: 'Loom Lock' }).
 - Integrated launcher/routing wiring:
   - Added loomlock metadata entry in src/meta/games.js.
   - Added static fallback home card in index.html.
-  - Added /loomlock rewrites and /loomlock/index.html cache-header entry in ercel.json.
+  - Added /loomlock rewrites and /loomlock/index.html cache-header entry in 
+ercel.json.
 - Validation results (this run):
-  - g -n "loomlock" loomlock/index.html src/meta/games.js index.html vercel.json: pass.
+  - 
+g -n "loomlock" loomlock/index.html src/meta/games.js index.html vercel.json: pass.
   - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
   - 
 pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
@@ -1833,9 +1851,12 @@ pm run test:feedback and the Playwright gameplay validation loop for /loomlock i
 ## 2026-04-17T07:05:50-04:00 Star Lattice automation run
 - Added brand-new game starlattice at starlattice/index.html with a mirror-routing lattice loop.
 - Gameplay: move cursor on an 8x8 grid, cycle mirror tiles (mpty -> / -> \), route color pulses into matching dock bands before shield reaches zero.
-- Included desktop/mobile controls, pause/restart/fullscreen, coin/progression hooks (ememberRecent, ddCoins, maybeUnlock), feedback mount, and deterministic hooks (window.advanceTime(ms), window.render_game_to_text()).
-- Wired starlattice into src/meta/games.js, static fallback card in index.html, and route/cache entries in ercel.json.
-- Validation passed: slug wiring checks and ercel.json parse.
+- Included desktop/mobile controls, pause/restart/fullscreen, coin/progression hooks (
+ememberRecent, ddCoins, maybeUnlock), feedback mount, and deterministic hooks (window.advanceTime(ms), window.render_game_to_text()).
+- Wired starlattice into src/meta/games.js, static fallback card in index.html, and route/cache entries in 
+ercel.json.
+- Validation passed: slug wiring checks and 
+ercel.json parse.
 - Validation passed: 
 pm.cmd run feedback:sync-linear (updated linear/labels.md + linear/game-issues.csv).
 - Sandbox blockers: 
@@ -1868,15 +1889,18 @@ pm.cmd run test:feedback failed with spawn EPERM; required $develop-web-game Pla
   - Core loop: move cursor on an 8x8 grid, cycle prism relay tiles (. -> / -> \), and route color packets into matching docks.
   - Win/loss loop: stabilize 26 packets before timer expires; containment shield starts at 6 and drops on misroutes; end-run score + coin payout included.
   - Controls: desktop (WASD/Arrows + Space/Enter + P/R/F) and mobile buttons (Up/Left/Down/Right/Cycle Prism/Pause/Restart/Fullscreen).
-  - Platform hooks: ememberRecent('prismpipeline'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Platform hooks: 
+ememberRecent('prismpipeline'), coin rewards via ddCoins, progression payloads via maybeUnlock.
   - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state payload.
   - Feedback integration: mountGameFeedback({ gameSlug: 'prismpipeline', gameName: 'Prism Pipeline' }).
 - Integrated launcher/routing wiring:
   - Added prismpipeline metadata entry in src/meta/games.js.
   - Added static fallback home card in index.html.
-  - Added /prismpipeline rewrites and /prismpipeline/index.html cache-header entry in ercel.json.
+  - Added /prismpipeline rewrites and /prismpipeline/index.html cache-header entry in 
+ercel.json.
 - Validation results (this run):
-  - g -n "prismpipeline" prismpipeline/index.html src/meta/games.js index.html vercel.json: pass.
+  - 
+g -n "prismpipeline" prismpipeline/index.html src/meta/games.js index.html vercel.json: pass.
   - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
   - 
 pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
@@ -1888,9 +1912,11 @@ pm.cmd run test:feedback: failed in this sandbox with spawn EPERM across integra
 pm run test:feedback and the Playwright gameplay validation loop for /prismpipeline in an environment that allows child-process and Chromium launch.
 
 ## 2026-04-19T11:18:30-04:00 Differentiation pass for Star Lattice clones
-- Reworked eactorrelay/index.html visual identity (industrial amber/steel palette) while keeping the new heat-management survival loop.
+- Reworked 
+eactorrelay/index.html visual identity (industrial amber/steel palette) while keeping the new heat-management survival loop.
 - Reworked prismpipeline/index.html visual identity (prismatic cyan/magenta palette) while keeping the new prism-cluster photon-routing loop.
-- Re-ran Playwright skill checks for /starlattice, /reactorrelay, and /prismpipeline with fresh artifacts under output/web-game/*-verify2 and confirmed distinct ender_game_to_text schemas.
+- Re-ran Playwright skill checks for /starlattice, /reactorrelay, and /prismpipeline with fresh artifacts under output/web-game/*-verify2 and confirmed distinct 
+ender_game_to_text schemas.
 
 
 ## 2026-04-20 Glacier Guard automation run
@@ -1898,10 +1924,12 @@ pm run test:feedback and the Playwright gameplay validation loop for /prismpipel
 - Core loop: move a harbor turret left/right, fire heat shots, melt incoming glaciers, and prevent breaches across an 85-second run.
 - Win/loss loop: melt target before timeout or lose when shield reaches zero; includes score + coin payout.
 - Included desktop/mobile controls, pause/restart/fullscreen, feedback mount, and deterministic hooks: window.advanceTime(ms) + window.render_game_to_text().
-- Wired glacierguard into src/meta/games.js, fallback launcher card in index.html, and route/cache entries in ercel.json.
+- Wired glacierguard into src/meta/games.js, fallback launcher card in index.html, and route/cache entries in 
+ercel.json.
 - Next: run wiring checks, vercel.json parse, feedback sync, and attempt required Playwright validation.
 - Validation results (this run):
-  - g -n "glacierguard" glacierguard/index.html src/meta/games.js index.html vercel.json: pass.
+  - 
+g -n "glacierguard" glacierguard/index.html src/meta/games.js index.html vercel.json: pass.
   - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
   - 
 pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
@@ -1918,16 +1946,20 @@ pm run test:feedback and the Playwright gameplay validation loop for /glaciergua
   - Core loop: select one of five lanes, toggle capacitor polarity (+/-), and absorb incoming matching lightning strikes.
   - Win/loss loop: store 28 charge before timer expires; mismatches drain shield; end-run score + coin payout included.
   - Controls: desktop (A/D or Left/Right to select lane, Space/Enter toggle polarity, P/R/F) and mobile buttons (Prev/Next/Toggle/Pause/Restart/Fullscreen).
-  - Platform hooks: ememberRecent('stormvault'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Platform hooks: 
+ememberRecent('stormvault'), coin rewards via ddCoins, progression payloads via maybeUnlock.
   - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state payload.
   - Feedback integration: mountGameFeedback({ gameSlug: 'stormvault', gameName: 'Storm Vault' }).
 - Integrated launcher/routing wiring:
   - Added stormvault metadata entry in src/meta/games.js.
   - Added static fallback home card in index.html.
-  - Added /stormvault rewrites and /stormvault/index.html cache-header entry in ercel.json.
-- Next step: run wiring checks, ercel.json parse, feedback sync, and attempt required Playwright + feedback tests in this sandbox.
+  - Added /stormvault rewrites and /stormvault/index.html cache-header entry in 
+ercel.json.
+- Next step: run wiring checks, 
+ercel.json parse, feedback sync, and attempt required Playwright + feedback tests in this sandbox.
 - Validation results (this run):
-  - g -n "stormvault" stormvault/index.html src/meta/games.js index.html vercel.json: pass.
+  - 
+g -n "stormvault" stormvault/index.html src/meta/games.js index.html vercel.json: pass.
   - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
   - 
 pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
@@ -1961,15 +1993,18 @@ pm run test:feedback and the Playwright gameplay validation loop for /stormvault
   - Core loop: trim sail angle left/right to match shifting wind, collect drifting star shards, and dodge homing flare swarms.
   - Win/loss loop: secure 22 shards before 85-second timer expires; flare impacts reduce integrity; end-run score + coin payout included.
   - Controls: desktop (A/D or Left/Right trim, Space/Enter boost, P/R/F) and mobile buttons (Trim Left/Trim Right/Boost/Pause/Restart/Fullscreen).
-  - Platform hooks: ememberRecent('solarskiff'), coin rewards via ddCoins, progression payloads via maybeUnlock.
+  - Platform hooks: 
+ememberRecent('solarskiff'), coin rewards via ddCoins, progression payloads via maybeUnlock.
   - Deterministic hooks: window.advanceTime(ms) and window.render_game_to_text() with coordinate-system note and concise live state payload.
   - Feedback integration: mountGameFeedback({ gameSlug: 'solarskiff', gameName: 'Solar Skiff' }).
 - Integrated launcher/routing wiring:
   - Added solarskiff metadata entry in src/meta/games.js.
   - Added static fallback home card in index.html.
-  - Added /solarskiff rewrites and /solarskiff/index.html cache-header entry in ercel.json.
+  - Added /solarskiff rewrites and /solarskiff/index.html cache-header entry in 
+ercel.json.
 - Validation results (this run):
-  - g -n "solarskiff" solarskiff/index.html src/meta/games.js index.html vercel.json: pass.
+  - 
+g -n "solarskiff" solarskiff/index.html src/meta/games.js index.html vercel.json: pass.
   - Get-Content -Raw vercel.json | ConvertFrom-Json: pass.
   - 
 pm.cmd run feedback:sync-linear: pass (updated linear/labels.md and linear/game-issues.csv).
@@ -2390,3 +2425,42 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `npm run test:feedback`: pass after installing repo dependencies with `npm install` (31/31).
   - `npm run test:feedback-smoke:raw`: pass after installing Playwright Chromium runtime with `npx playwright install chromium`.
 - Follow-up TODO: optional human playtest with NVDA/JAWS/VoiceOver to tune how verbose each move announcement feels in a real screenreader, but automated DOM/live-region checks confirm the board is fully playable without sight.
+## 2026-05-04 Dino + Flappy blind accessibility revamp
+- New request: revamp Dino Run and Flappy Bird so each has visual and audio-only modes for blind accessibility.
+- Plan:
+  - Add in-game mode controls, screen-reader live regions, speech/audio cue toggles, and keyboard shortcuts.
+  - Make audio-only mode playable through spoken prompts plus WebAudio timing/proximity cues.
+  - Add `window.advanceTime(ms)` and `window.render_game_to_text()` hooks to both games for deterministic QA.
+  - Validate with syntax checks, lightweight runtime hooks, and the `$develop-web-game` Playwright client where available.
+- Implementation pass:
+  - `dino/index.html` now has Visual Mode / Audio-Only Mode toggles, Audio Cues toggle, ARIA live regions, speech prompts, jump/duck/hold WebAudio cues, obstacle timing guidance, keyboard shortcuts (`A`, `V`, `M`), and deterministic hooks.
+  - `flappy/index.html` now has matching mode/cue controls, ARIA live regions, speech prompts, flap/fall/hold WebAudio guidance for pipe gaps, keyboard shortcuts (`A`, `V`, `M`), and deterministic hooks.
+  - Next: run syntax checks, smoke each game, inspect screenshots/state output, and fix any regressions.
+- Validation:
+  - Script parse check with Node `vm` passed for `dino/index.html` and `flappy/index.html`.
+  - `git diff --check` passed; only existing Windows line-ending warnings were printed.
+  - Required `$develop-web-game` Playwright client runs passed against fresh local server `http://127.0.0.1:4174`:
+    - `output/web-game/dino-a11y-smoke-4174`
+    - `output/web-game/flappy-a11y-smoke-4174`
+    - `output/web-game/dino-visual-regression-4174`
+    - `output/web-game/flappy-visual-regression-4174`
+  - Reviewed canvas screenshots plus full-page screenshots `output/web-game/dino-a11y-full.png` and `output/web-game/flappy-a11y-full.png`.
+  - No `errors-*.json` artifacts were produced in the final smoke directories.
+- Follow-up TODO:
+  - Human playtest the cue timing with an actual screen reader user; automated runs confirm controls, state hooks, and browser rendering, but real audio timing comfort needs ears-on validation.
+
+## 2026-05-04 Audio-only toggle-off bugfix
+- New request: audio-only mode could not be turned off after enabling it.
+- Reproduced with Playwright on `/dino/`: after enabling audio-only, clicking `#visual-mode` timed out because the dimmed canvas was still intercepting pointer events over the HUD controls.
+- Fix:
+  - Promoted HUD/mode controls above the canvas stacking layer and clipped the canvas container in `dino/index.html` and `flappy/index.html`.
+  - Forced a resize pass after mode changes so the canvas hitbox matches the visual layout.
+  - Made the `Audio-Only Mode` button act as a true toggle: clicking it again returns to visual mode.
+  - Targeted Playwright transition check passed for both games: audio mode -> Visual Mode button, audio mode -> second Audio-Only Mode click, and audio mode -> `V` key all return `accessibility.mode` to `visual`.
+  - `$develop-web-game` client smokes passed:
+    - `output/web-game/dino-audio-toggle-fix-smoke`
+    - `output/web-game/flappy-audio-toggle-fix-smoke`
+  - Reviewed fixed full-page screenshots:
+    - `output/web-game/dino-toggle-off-fixed.png`
+    - `output/web-game/flappy-toggle-off-fixed.png`
+  - Script parse check passed for both files and no browser errors were reported.
