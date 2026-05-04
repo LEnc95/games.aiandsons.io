@@ -2372,3 +2372,21 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Fixed Crane Cargo delivery ergonomics so bay matching uses the held crate's visible overlap with a bay instead of the exact hook point.
 - Follow-up TODO:
   - Optional human tuning: adjust crane swing difficulty after real playtesting; automated smoke and targeted delivery now pass.
+
+## 2026-05-04 2048 blind accessibility pass
+- New request: fix the existing `/2048` game and add full screenreader plus Web Audio cues so it is completely blind accessible.
+- Initial audit: current game supports arrow keys, swipe, scoring, feedback mount, and basic ARIA label on the board, but lacks `render_game_to_text`, `advanceTime`, fullscreen, directional button controls, board narration, live move summaries, and Web Audio cues.
+- Plan: keep the DOM-grid game, add screenreader-first semantic controls/status/live regions, add deterministic hooks, add Web Audio cue toggles and move/merge/win/game-over sonification, then validate with syntax checks and the `$develop-web-game` Playwright loop.
+- Implemented first pass in `2048/index.html`: semantic `role="grid"` rows/cells, live screenreader move summaries, explicit move buttons, Announce Board control, fullscreen toggle/key, `window.render_game_to_text`, `window.advanceTime`, and Web Audio cue synthesis for moves, merges, new tiles, blocked moves, win, game over, and new game.
+- Follow-up polish before browser validation: fixed the directional control pad to use explicit grid rows/columns so visual and focus order stay predictable.
+- Visual QA from `output/web-game/2048-a11y-run1/shot-2.png` showed the single-column desktop layout was too tall at 1280x720, cutting off the lower board/controls. Added a wide-screen two-column layout so the full board and access controls sit in the first viewport.
+- Targeted Playwright probe confirmed: Audio toggle sets `aria-pressed=true`, move buttons update state, Announce Board fills the screenreader live text with a full row-by-row board summary, the board has 4 rows/16 gridcells, and every move button exposes `aria-keyshortcuts`. Removed the duplicate live-region role from the visible status line so screenreader users hear the richer hidden announcement once.
+- Validation completed:
+  - Inline script parse with `vm.Script` / `vm.SourceTextModule`: pass.
+  - `git diff --check -- 2048/index.html progress.md`: pass (only existing LF-to-CRLF warning for `2048/index.html`).
+  - `$develop-web-game` Playwright runs: `output/web-game/2048-a11y-run2` and final `output/web-game/2048-a11y-run3`, no `errors-*.json`; screenshots reviewed.
+  - Targeted Playwright accessibility/audio probe: pass, no console errors, screenshot `output/web-game/2048-a11y-targeted.png`.
+  - Mobile/touch Playwright probe: pass, no console errors, screenshot `output/web-game/2048-a11y-mobile.png`.
+  - `npm run test:feedback`: pass after installing repo dependencies with `npm install` (31/31).
+  - `npm run test:feedback-smoke:raw`: pass after installing Playwright Chromium runtime with `npx playwright install chromium`.
+- Follow-up TODO: optional human playtest with NVDA/JAWS/VoiceOver to tune how verbose each move announcement feels in a real screenreader, but automated DOM/live-region checks confirm the board is fully playable without sight.
