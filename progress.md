@@ -2425,6 +2425,45 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `npm run test:feedback`: pass after installing repo dependencies with `npm install` (31/31).
   - `npm run test:feedback-smoke:raw`: pass after installing Playwright Chromium runtime with `npx playwright install chromium`.
 - Follow-up TODO: optional human playtest with NVDA/JAWS/VoiceOver to tune how verbose each move announcement feels in a real screenreader, but automated DOM/live-region checks confirm the board is fully playable without sight.
+## 2026-05-04 Dino + Flappy blind accessibility revamp
+- New request: revamp Dino Run and Flappy Bird so each has visual and audio-only modes for blind accessibility.
+- Plan:
+  - Add in-game mode controls, screen-reader live regions, speech/audio cue toggles, and keyboard shortcuts.
+  - Make audio-only mode playable through spoken prompts plus WebAudio timing/proximity cues.
+  - Add `window.advanceTime(ms)` and `window.render_game_to_text()` hooks to both games for deterministic QA.
+  - Validate with syntax checks, lightweight runtime hooks, and the `$develop-web-game` Playwright client where available.
+- Implementation pass:
+  - `dino/index.html` now has Visual Mode / Audio-Only Mode toggles, Audio Cues toggle, ARIA live regions, speech prompts, jump/duck/hold WebAudio cues, obstacle timing guidance, keyboard shortcuts (`A`, `V`, `M`), and deterministic hooks.
+  - `flappy/index.html` now has matching mode/cue controls, ARIA live regions, speech prompts, flap/fall/hold WebAudio guidance for pipe gaps, keyboard shortcuts (`A`, `V`, `M`), and deterministic hooks.
+  - Next: run syntax checks, smoke each game, inspect screenshots/state output, and fix any regressions.
+- Validation:
+  - Script parse check with Node `vm` passed for `dino/index.html` and `flappy/index.html`.
+  - `git diff --check` passed; only existing Windows line-ending warnings were printed.
+  - Required `$develop-web-game` Playwright client runs passed against fresh local server `http://127.0.0.1:4174`:
+    - `output/web-game/dino-a11y-smoke-4174`
+    - `output/web-game/flappy-a11y-smoke-4174`
+    - `output/web-game/dino-visual-regression-4174`
+    - `output/web-game/flappy-visual-regression-4174`
+  - Reviewed canvas screenshots plus full-page screenshots `output/web-game/dino-a11y-full.png` and `output/web-game/flappy-a11y-full.png`.
+  - No `errors-*.json` artifacts were produced in the final smoke directories.
+- Follow-up TODO:
+  - Human playtest the cue timing with an actual screen reader user; automated runs confirm controls, state hooks, and browser rendering, but real audio timing comfort needs ears-on validation.
+
+## 2026-05-04 Audio-only toggle-off bugfix
+- New request: audio-only mode could not be turned off after enabling it.
+- Reproduced with Playwright on `/dino/`: after enabling audio-only, clicking `#visual-mode` timed out because the dimmed canvas was still intercepting pointer events over the HUD controls.
+- Fix:
+  - Promoted HUD/mode controls above the canvas stacking layer and clipped the canvas container in `dino/index.html` and `flappy/index.html`.
+  - Forced a resize pass after mode changes so the canvas hitbox matches the visual layout.
+  - Made the `Audio-Only Mode` button act as a true toggle: clicking it again returns to visual mode.
+  - Targeted Playwright transition check passed for both games: audio mode -> Visual Mode button, audio mode -> second Audio-Only Mode click, and audio mode -> `V` key all return `accessibility.mode` to `visual`.
+  - `$develop-web-game` client smokes passed:
+    - `output/web-game/dino-audio-toggle-fix-smoke`
+    - `output/web-game/flappy-audio-toggle-fix-smoke`
+  - Reviewed fixed full-page screenshots:
+    - `output/web-game/dino-toggle-off-fixed.png`
+    - `output/web-game/flappy-toggle-off-fixed.png`
+  - Script parse check passed for both files and no browser errors were reported.
 ## 2026-05-04 Audio Agar multiplayer client run
 - New request: build `audioagar/`, a real-time multiplayer, Agar.io-inspired browser game that is playable without sight through keyboard, Web Audio, and screen-reader announcements.
 - Read the `$develop-web-game` skill and confirmed `progress.md` already has an older original prompt at the top; preserving that history and appending this section.
@@ -2452,6 +2491,5 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Targeted Playwright key check for `E`, `H`, and diagonal `W+D`: pass.
   - `npm run test:feedback`: initially failed because dependencies were not installed (`firebase-admin` missing); after `npm install`, pass (31/31).
   - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4183`: pass.
-- Follow-up TODO:
   - Implement the authoritative `v2-server` room loop for the `aiandsons.multiplayer.v1` join/input/state protocol defined by `src/net/multiplayerClient.js`.
   - Replace the local preview with real server snapshots in production once `/ws/game` exists.
