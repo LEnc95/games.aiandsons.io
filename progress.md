@@ -2396,3 +2396,20 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - No `errors-*.json` artifacts were produced in the final smoke directories.
 - Follow-up TODO:
   - Human playtest the cue timing with an actual screen reader user; automated runs confirm controls, state hooks, and browser rendering, but real audio timing comfort needs ears-on validation.
+
+## 2026-05-04 Audio-only toggle-off bugfix
+- New request: audio-only mode could not be turned off after enabling it.
+- Reproduced with Playwright on `/dino/`: after enabling audio-only, clicking `#visual-mode` timed out because the dimmed canvas was still intercepting pointer events over the HUD controls.
+- Fix:
+  - Promoted HUD/mode controls above the canvas stacking layer and clipped the canvas container in `dino/index.html` and `flappy/index.html`.
+  - Forced a resize pass after mode changes so the canvas hitbox matches the visual layout.
+  - Made the `Audio-Only Mode` button act as a true toggle: clicking it again returns to visual mode.
+- Validation:
+  - Targeted Playwright transition check passed for both games: audio mode -> Visual Mode button, audio mode -> second Audio-Only Mode click, and audio mode -> `V` key all return `accessibility.mode` to `visual`.
+  - `$develop-web-game` client smokes passed:
+    - `output/web-game/dino-audio-toggle-fix-smoke`
+    - `output/web-game/flappy-audio-toggle-fix-smoke`
+  - Reviewed fixed full-page screenshots:
+    - `output/web-game/dino-toggle-off-fixed.png`
+    - `output/web-game/flappy-toggle-off-fixed.png`
+  - Script parse check passed for both files and no browser errors were reported.

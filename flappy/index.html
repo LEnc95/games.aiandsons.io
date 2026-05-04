@@ -14,10 +14,10 @@
     html,body { height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow:hidden; position:fixed; width:100%; -webkit-overflow-scrolling:touch; touch-action:none; }
     .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; height:100dvh; gap:clamp(8px, 2vh, 16px); padding:clamp(8px, 2vh, 16px); padding-top:env(safe-area-inset-top, clamp(8px, 2vh, 16px)); padding-bottom:env(safe-area-inset-bottom, clamp(8px, 2vh, 16px)); }
     
-    #canvas-container { position:relative; width:100%; max-width:min(95vw, 600px); max-height:min(80vh, 800px); aspect-ratio:3/4; }
+    #canvas-container { position:relative; z-index:1; overflow:hidden; width:100%; max-width:min(95vw, 600px); max-height:min(80vh, 800px); aspect-ratio:3/4; }
     canvas { width:100%; height:100%; display:block; border:2px solid #192544; border-radius:12px; touch-action:none; image-rendering:auto; }
     
-    .hud { text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 600px); }
+    .hud { position:relative; z-index:3; text-align:center; font-size:clamp(12px, 2vw, 16px); color:var(--muted); user-select:none; width:100%; max-width:min(95vw, 600px); }
     .score-display { display:flex; justify-content:space-around; margin-bottom:clamp(8px, 1.5vh, 12px); font-size:clamp(14px, 2.5vw, 20px); }
     .score-item { color:var(--fg); }
     .score-label { color:var(--muted); font-size:0.7em; margin-right:8px; }
@@ -31,7 +31,7 @@
     .btn.primary:active { background:#4bc; }
     .btn.difficulty, .btn.skin, .btn.world { padding:clamp(10px, 2vw, 14px) clamp(16px, 3vw, 24px); min-width:clamp(70px, 12vw, 100px); font-size:clamp(12px, 2vw, 14px); }
     .btn.difficulty.active, .btn.skin.active, .btn.world.active { background:#5ad; border-color:#6be; }
-    .mode-panel { display:grid; gap:8px; margin-top:clamp(8px, 1.5vh, 12px); }
+    .mode-panel { position:relative; z-index:4; display:grid; gap:8px; margin-top:clamp(8px, 1.5vh, 12px); }
     .mode-row { display:flex; gap:clamp(8px, 1.5vw, 12px); justify-content:center; flex-wrap:wrap; }
     .btn.mode-toggle { min-width:clamp(100px, 17vw, 145px); padding:clamp(10px, 2vw, 14px) clamp(14px, 3vw, 20px); font-size:clamp(12px, 2vw, 15px); }
     .btn.mode-toggle.active { background:#78f0c3; border-color:#a7ffd8; color:#06241c; }
@@ -397,6 +397,7 @@
       audioCuesBtn.disabled = !access.audioAvailable;
       canvas.setAttribute('role', 'img');
       canvas.setAttribute('aria-label', isAudioOnly() ? 'Flappy Bird visual canvas dimmed in audio-only mode.' : 'Flappy Bird visual playfield.');
+      requestAnimationFrame(resizeCanvas);
     }
     function setAccessMode(mode, { announceChange = true } = {}) {
       access.mode = mode === 'audio' ? 'audio' : 'visual';
@@ -756,7 +757,7 @@
     pauseBtn.addEventListener('click', () => { unlockAudioFromInteraction(); pauseGame(); });
     restartBtn.addEventListener('click', () => { unlockAudioFromInteraction(); initGame(); });
     visualModeBtn.addEventListener('click', () => { unlockAudioFromInteraction(); setAccessMode('visual'); });
-    audioOnlyModeBtn.addEventListener('click', () => { unlockAudioFromInteraction(); setAccessMode('audio'); });
+    audioOnlyModeBtn.addEventListener('click', () => { unlockAudioFromInteraction(); setAccessMode(isAudioOnly() ? 'visual' : 'audio'); });
     audioCuesBtn.addEventListener('click', () => { unlockAudioFromInteraction(); toggleAudioCues(); });
 
     difficultyBtns.forEach(btn => {
