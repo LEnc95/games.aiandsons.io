@@ -6,7 +6,6 @@ const ARENA_DEFAULT = { width: 4200, height: 4200 };
 const VIEW = { width: 960, height: 640 };
 const SERVER_INTERPOLATION_MS = 130;
 const MOVE_RESEND_MS = 120;
-const PREVIEW_AFTER_MS = 3600;
 const CRITICAL_THREAT_RADIUS = 520;
 const NEARBY_RADIUS = 1100;
 
@@ -624,17 +623,11 @@ async function joinGame() {
   if (offlinePreview) {
     game.connectionStatus = "offline";
     activatePreview("Offline sensory preview active for local testing.");
-  } else if (!game.connection) {
-    startConnection();
-  }
-  if (forcePreview) {
+  } else if (forcePreview) {
     activatePreview("Preview arena active from URL option.");
   } else {
-    window.setTimeout(() => {
-      if (!game.lastServerStateAt && game.mode === "playing") {
-        activatePreview("No authoritative arena state received yet. Sensory preview is active until the server sends a room snapshot.");
-      }
-    }, PREVIEW_AFTER_MS);
+    activatePreview("Connecting to the multiplayer room. Sensory preview is active until authoritative state arrives.");
+    if (!game.connection) startConnection();
   }
 }
 
@@ -1040,9 +1033,6 @@ function isOnScreen(point, padding) {
 function update(dt, nowMs) {
   game.nowMs = nowMs;
   if (game.mode === "playing") {
-    if (!game.lastServerStateAt && !game.usingPreview && nowMs - game.lastFrameAt > PREVIEW_AFTER_MS && forcePreview) {
-      activatePreview("Preview arena active.");
-    }
     sendMove(false);
     updatePreview(dt);
     if (!game.usingPreview) {

@@ -13,9 +13,9 @@ const ROOT = process.cwd();
 
 test("multiplayer client normalizes versioned WebSocket endpoints", () => {
   assert.equal(multiplayerProtocol.name, "aiandsons.multiplayer.v1");
-  assert.equal(normalizeWebSocketUrl("example.test"), "ws://example.test/ws/game");
+  assert.equal(normalizeWebSocketUrl("example.test"), "ws://example.test/ws");
   assert.equal(normalizeWebSocketUrl("https://example.test/ws/game"), "wss://example.test/ws/game");
-  assert.equal(normalizeWebSocketUrl("http://127.0.0.1:8081"), "ws://127.0.0.1:8081/ws/game");
+  assert.equal(normalizeWebSocketUrl("http://127.0.0.1:8081"), "ws://127.0.0.1:8081/ws");
   assert.equal(resolveWebSocketUrl("wss://arena.example/ws/custom"), "wss://arena.example/ws/custom");
 });
 
@@ -26,6 +26,9 @@ test("audioagar page exposes blind-play and deterministic hooks", () => {
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /aria-live="assertive"/);
   assert.match(html, /<canvas id="arena"/);
+  assert.match(html, /href="\/audioagar\/styles\.css"/);
+  assert.match(html, /src="\/audioagar\/game\.js"/);
+  assert.match(html, /from "\/src\/feedback\/embed\.js"/);
   assert.match(html, /mountGameFeedback\(\{ gameSlug: "audioagar"/);
   assert.match(js, /connect\(\{\s*gameId: GAME_ID/m);
   assert.match(js, /window\.advanceTime/);
@@ -33,6 +36,9 @@ test("audioagar page exposes blind-play and deterministic hooks", () => {
   assert.match(js, /type: "move"/);
   assert.match(js, /sendAction\("split"\)/);
   assert.match(js, /sendAction\("eject"\)/);
+
+  const net = fs.readFileSync(path.join(ROOT, "src", "net", "multiplayerClient.js"), "utf8");
+  assert.match(net, /type\.includes\(":"\)/);
 });
 
 test("audioagar is routed and allowed to open WebSocket connections", () => {

@@ -2493,3 +2493,19 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4183`: pass.
   - Implement the authoritative `v2-server` room loop for the `aiandsons.multiplayer.v1` join/input/state protocol defined by `src/net/multiplayerClient.js`.
   - Replace the local preview with real server snapshots in production once `/ws/game` exists.
+
+## 2026-05-04 Audio Agar live route bugfix
+- New request: `/audioagar` on the live site had no working visuals and did not seem to work.
+- Reproduced against `https://games.aiandsons.io/audioagar` with the `$develop-web-game` Playwright client: the no-trailing-slash route resolved `./styles.css` and `./game.js` from the site root, causing a blank white page and console errors.
+- Fix in progress:
+  - Use absolute `/audioagar/...` asset URLs and `/src/...` feedback import so `/audioagar` and `/audioagar/` load the same client assets.
+  - Activate the sensory preview immediately after Join while the authoritative multiplayer socket connects, instead of leaving players waiting on an empty arena.
+  - Align the default reusable multiplayer endpoint with the deployed `test-ws.js` endpoint path (`/ws`), while keeping explicit `/ws/game` overrides supported for the future v2 room server.
+  - Ignore legacy namespaced messages like `world:snapshot` on the shared `/ws` endpoint unless they opt into the versioned Audio Agar protocol/game id.
+- Validation:
+  - `npm run test:audioagar`: pass.
+  - Browser module parse for `audioagar/game.js` and `src/net/multiplayerClient.js`: pass.
+  - `git diff --check -- audioagar/index.html audioagar/game.js src/net/multiplayerClient.js tests/audioagar-client.integration.test.mjs progress.md`: pass; only existing CRLF warnings.
+  - Required `$develop-web-game` client against a local Vercel-style `/audioagar?offline=1` no-slash route after the final socket guard: pass, screenshots in `output/web-game/audioagar-noslash-final`, no browser error JSON.
+  - Reviewed `output/web-game/audioagar-noslash-final/shot-2.png`; canvas is nonblank with self orb, pellet dots, another orb, grid, and preview label.
+  - Targeted Playwright pass for WASD diagonal movement, `E`, and `H`: pass, no console errors, full-page screenshot `output/web-game/audioagar-targeted-full.png`.

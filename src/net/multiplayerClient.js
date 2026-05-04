@@ -1,6 +1,6 @@
 const PROTOCOL = "aiandsons.multiplayer.v1";
-const DEFAULT_PRODUCTION_ENDPOINT = "wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws/game";
-const DEFAULT_LOCAL_ENDPOINT = "ws://127.0.0.1:8081/ws/game";
+const DEFAULT_PRODUCTION_ENDPOINT = "wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws";
+const DEFAULT_LOCAL_ENDPOINT = "ws://127.0.0.1:8081/ws";
 const STORAGE_KEY = "aiandsons-multiplayer-ws-endpoint";
 
 function nowMs() {
@@ -43,7 +43,7 @@ export function normalizeWebSocketUrl(rawEndpoint) {
     parsed.protocol = toWsProtocol(parsed.protocol);
     if (parsed.protocol !== "ws:" && parsed.protocol !== "wss:") return "";
     if (!parsed.host) return "";
-    if (!parsed.pathname || parsed.pathname === "/") parsed.pathname = "/ws/game";
+    if (!parsed.pathname || parsed.pathname === "/") parsed.pathname = "/ws";
     if (parsed.pathname.length > 1 && parsed.pathname.endsWith("/")) {
       parsed.pathname = parsed.pathname.replace(/\/+$/, "");
     }
@@ -292,6 +292,11 @@ class MultiplayerConnection {
 
     const type = String(message.type || "");
     const payload = message.payload && typeof message.payload === "object" ? message.payload : message;
+    const inboundProtocol = String(message.protocol || payload.protocol || "");
+    const inboundGameId = String(message.gameId || payload.gameId || "");
+    if (inboundProtocol && inboundProtocol !== PROTOCOL) return;
+    if (inboundGameId && inboundGameId !== this.gameId) return;
+    if (!inboundProtocol && !inboundGameId && type.includes(":")) return;
 
     if (payload.roomId && typeof payload.roomId === "string") {
       this.roomId = payload.roomId;
