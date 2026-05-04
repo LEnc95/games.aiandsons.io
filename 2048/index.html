@@ -7,27 +7,334 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <style>
-    :root { --bg:#0b1020; --fg:#e7f0ff; --muted:#8aa0c3; --accent:#5ad; }
-    * { box-sizing:border-box; }
-    html, body { margin:0; min-height:100%; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    .back-home { position: fixed; top: 12px; left: 12px; z-index: 10; padding:8px 12px; border-radius:8px; color:#fff; text-decoration:none; background:rgba(0,0,0,0.5); font-weight:600; }
-    .wrap { min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:56px 16px 16px; }
-    .hud { width:min(92vw, 430px); display:flex; justify-content:space-between; gap:12px; }
-    .stat { flex:1; background:#132040; border:1px solid #253966; border-radius:12px; padding:10px; text-align:center; }
-    .stat .label { font-size:12px; color:var(--muted); }
-    .stat .value { font-size:22px; font-weight:700; }
-    .board { width:min(92vw, 430px); aspect-ratio:1/1; background:#101936; border:1px solid #23345f; border-radius:16px; padding:12px; display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; touch-action:none; }
-    .cell { border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:clamp(18px, 4vw, 32px); background:#1c2d55; color:#e8f2ff; }
-    .v-0{background:#1a2748;color:transparent;}
-    .v-2{background:#dbe8ff;color:#1c2d55}.v-4{background:#c0dbff;color:#1c2d55}.v-8{background:#90c2ff}
-    .v-16{background:#63adff}.v-32{background:#3497ff}.v-64{background:#1f83ea}
-    .v-128{background:#2f65ff}.v-256{background:#6945ff}.v-512{background:#8b3eff}
-    .v-1024{background:#b13aff}.v-2048{background:#ffcf3f;color:#2e2a08}
-    body.neon .board { box-shadow:0 0 30px rgba(111, 57, 255, 0.25); border-color:#6447ff; }
-    body.neon .cell { box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 14px rgba(0,255,255,0.12); }
-    .controls { color:var(--muted); font-size:13px; text-align:center; }
-    .row { display:flex; gap:10px; }
-    button { padding:10px 16px; border-radius:10px; border:1px solid #3b4b74; background:#1e2e56; color:var(--fg); font-weight:700; cursor:pointer; }
+    :root {
+      --bg: #10140f;
+      --panel: #17212a;
+      --panel-strong: #203241;
+      --fg: #f1f6ee;
+      --muted: #a8b8ae;
+      --line: #38505b;
+      --accent: #f2bb4a;
+      --accent-2: #54d4b4;
+      --danger: #ff7c6e;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: radial-gradient(circle at 50% 0%, #1e332e 0, var(--bg) 54%);
+      color: var(--fg);
+      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    .back-home {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 10;
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: var(--fg);
+      text-decoration: none;
+      background: rgba(0, 0, 0, 0.52);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-weight: 700;
+    }
+
+    .wrap {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 58px 14px 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 9vw, 54px);
+      letter-spacing: 0;
+    }
+
+    .hud {
+      width: min(94vw, 460px);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-width: 0;
+      background: rgba(23, 33, 42, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat .label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stat .value {
+      margin-top: 2px;
+      font-size: clamp(18px, 5vw, 25px);
+      font-weight: 800;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .board {
+      width: min(94vw, 460px);
+      aspect-ratio: 1 / 1;
+      background: #132022;
+      border: 2px solid #44615a;
+      border-radius: 8px;
+      padding: clamp(8px, 2.8vw, 14px);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(4, minmax(0, 1fr));
+      gap: clamp(7px, 2vw, 11px);
+      touch-action: none;
+      outline: none;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    .board:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(242, 187, 74, 0.24), 0 18px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    .board-row {
+      display: contents;
+    }
+
+    .cell {
+      min-width: 0;
+      min-height: 0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: clamp(19px, 6.5vw, 40px);
+      line-height: 1;
+      color: #f8fbff;
+      background: #263539;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.16);
+      user-select: none;
+    }
+
+    .v-0 { background: #203034; color: transparent; }
+    .v-2 { background: #eaf1df; color: #223025; }
+    .v-4 { background: #cfe9d4; color: #223025; }
+    .v-8 { background: #7fd3bd; color: #10231d; }
+    .v-16 { background: #49b8c7; color: #082226; }
+    .v-32 { background: #4a91d6; color: #071625; }
+    .v-64 { background: #6a70d8; color: #f8fbff; }
+    .v-128 { background: #9b65cb; color: #f8fbff; font-size: clamp(17px, 5.3vw, 33px); }
+    .v-256 { background: #c0568b; color: #fff9fb; font-size: clamp(17px, 5.3vw, 33px); }
+    .v-512 { background: #df704a; color: #fff8f4; font-size: clamp(17px, 5.3vw, 33px); }
+    .v-1024 { background: #ed9a38; color: #2d1a06; font-size: clamp(15px, 4.6vw, 29px); }
+    .v-2048,
+    .v-super { background: var(--accent); color: #2e2509; font-size: clamp(15px, 4.6vw, 29px); }
+
+    body.neon .board {
+      border-color: #54d4b4;
+      box-shadow: 0 0 30px rgba(84, 212, 180, 0.18), 0 18px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    body.neon .cell {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 16px rgba(84, 212, 180, 0.12);
+    }
+
+    .tile-new {
+      outline: 3px solid rgba(84, 212, 180, 0.72);
+    }
+
+    .tile-merged {
+      outline: 3px solid rgba(242, 187, 74, 0.86);
+    }
+
+    .status {
+      width: min(94vw, 460px);
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(17, 25, 28, 0.78);
+      padding: 10px 12px;
+      color: var(--fg);
+      font-size: 14px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .row,
+    .move-pad {
+      width: min(94vw, 460px);
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .game-btn,
+    .move-btn {
+      min-height: 44px;
+      border-radius: 8px;
+      border: 1px solid #577070;
+      background: #203241;
+      color: var(--fg);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .game-btn {
+      padding: 10px 14px;
+    }
+
+    .move-pad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(64px, 1fr));
+      grid-template-rows: repeat(3, minmax(44px, auto));
+      max-width: 300px;
+    }
+
+    .move-btn {
+      padding: 10px;
+    }
+
+    .move-btn[data-dir="up"] {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .move-btn[data-dir="left"] {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .move-btn[data-dir="down"] {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .move-btn[data-dir="right"] {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .game-btn:hover,
+    .move-btn:hover,
+    .game-btn:focus-visible,
+    .move-btn:focus-visible {
+      border-color: var(--accent);
+      outline: 3px solid rgba(242, 187, 74, 0.22);
+      outline-offset: 1px;
+    }
+
+    .game-btn[aria-pressed="true"] {
+      border-color: var(--accent-2);
+      background: #1f453e;
+    }
+
+    .controls {
+      width: min(94vw, 460px);
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 380px) {
+      .hud {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (min-width: 820px) and (min-height: 620px) {
+      .wrap {
+        display: grid;
+        grid-template-columns: minmax(360px, 460px) minmax(280px, 360px);
+        grid-template-areas:
+          "title title"
+          "board hud"
+          "board status"
+          "board moves"
+          "board actions"
+          "board hint";
+        align-content: center;
+        align-items: center;
+        justify-content: center;
+        column-gap: 24px;
+        row-gap: 12px;
+        padding-top: 46px;
+      }
+
+      h1 {
+        grid-area: title;
+        text-align: center;
+      }
+
+      .hud {
+        grid-area: hud;
+        width: 100%;
+      }
+
+      .status {
+        grid-area: status;
+        width: 100%;
+      }
+
+      .board {
+        grid-area: board;
+        width: min(46vw, 460px, calc(100dvh - 180px));
+      }
+
+      .move-pad {
+        grid-area: moves;
+        width: 100%;
+      }
+
+      .row {
+        grid-area: actions;
+        width: 100%;
+      }
+
+      .controls {
+        grid-area: hint;
+        width: 100%;
+      }
+    }
   </style>
 
   <!-- SEO:BEGIN -->
@@ -49,16 +356,58 @@
   <!-- SEO:END -->
 </head>
 <body>
-  <a href="/" class="back-home">← Back</a>
-  <main class="wrap">
-    <h1 style="margin:0;">2048</h1>
-    <div class="hud">
+  <a href="/" class="back-home">Back</a>
+  <main class="wrap" aria-labelledby="gameTitle">
+    <h1 id="gameTitle">2048</h1>
+
+    <div id="srHelp" class="sr-only">
+      Play 2048 with the arrow keys, W A S D, swipe gestures, or the four move buttons.
+      The board is four rows by four columns, with row 1 at the top and column 1 at the left.
+      Use Announce board at any time to hear every row. Audio cues use higher notes for larger tiles,
+      left and right stereo position for columns, and short merge chords when tiles combine.
+    </div>
+
+    <div class="hud" aria-label="Game status">
       <div class="stat"><div class="label">Score</div><div id="score" class="value">0</div></div>
       <div class="stat"><div class="label">Best Tile</div><div id="bestTile" class="value">2</div></div>
+      <div class="stat"><div class="label">Moves</div><div id="moves" class="value">0</div></div>
     </div>
-    <div id="board" class="board" aria-label="2048 board"></div>
-    <div class="row"><button id="newGame">New Game</button></div>
-    <div id="hint" class="controls">Use arrow keys or swipe to move tiles.</div>
+
+    <div id="status" class="status">New game ready.</div>
+    <div id="srStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="srAlert" class="sr-only" role="alert" aria-atomic="true"></div>
+    <div id="boardSummary" class="sr-only"></div>
+
+    <div
+      id="board"
+      class="board"
+      role="grid"
+      tabindex="0"
+      aria-label="2048 board"
+      aria-describedby="srHelp boardSummary"
+      aria-rowcount="4"
+      aria-colcount="4"
+    ></div>
+
+    <div class="move-pad" aria-label="Move tiles">
+      <button class="move-btn" type="button" data-dir="up" aria-keyshortcuts="ArrowUp W">Up</button>
+      <button class="move-btn" type="button" data-dir="left" aria-keyshortcuts="ArrowLeft A">Left</button>
+      <button class="move-btn" type="button" data-dir="down" aria-keyshortcuts="ArrowDown S">Down</button>
+      <button class="move-btn" type="button" data-dir="right" aria-keyshortcuts="ArrowRight D">Right</button>
+    </div>
+
+    <div class="row" aria-label="Game actions">
+      <button id="newGame" class="game-btn" type="button">New Game</button>
+      <button id="announceBoard" class="game-btn" type="button">Announce Board</button>
+      <button id="soundToggle" class="game-btn" type="button" aria-pressed="false" aria-describedby="audioHelp">Audio Off</button>
+      <button id="fullscreenToggle" class="game-btn" type="button" aria-keyshortcuts="F">Fullscreen</button>
+    </div>
+
+    <div id="hint" class="controls">Use move buttons, arrow keys, W A S D, or swipe. Press F for fullscreen.</div>
+    <div id="audioHelp" class="sr-only">
+      Audio cues are generated with Web Audio. A move plays a short sweep, blocked moves buzz,
+      merged tiles play chords, a new tile plays a positional note, and game end states play short patterns.
+    </div>
   </main>
 
   <script type="module">
@@ -73,123 +422,587 @@
     const boardEl = document.getElementById('board');
     const scoreEl = document.getElementById('score');
     const bestTileEl = document.getElementById('bestTile');
+    const movesEl = document.getElementById('moves');
     const hintEl = document.getElementById('hint');
+    const statusEl = document.getElementById('status');
+    const srStatusEl = document.getElementById('srStatus');
+    const srAlertEl = document.getElementById('srAlert');
+    const boardSummaryEl = document.getElementById('boardSummary');
+    const soundToggleEl = document.getElementById('soundToggle');
+    const fullscreenToggleEl = document.getElementById('fullscreenToggle');
     const SIZE = 4;
+    const DIRECTIONS = ['up', 'right', 'down', 'left'];
+    const AUDIO_PREF_KEY = 'cade:2048:audio-cues';
+
     let grid = [];
     let score = 0;
+    let moves = 0;
+    let gameWon = false;
+    let gameOver = false;
+    let lastNewCell = null;
+    let lastMergeCells = [];
+    let lastAction = 'new_game';
+    let lastAnnouncement = '';
+    let audioEnabled = false;
+    let audioCtx = null;
+    let sx = 0;
+    let sy = 0;
 
-    function init() {
-      grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
-      score = 0;
-      addRandom(); addRandom();
-      render();
+    try {
+      audioEnabled = localStorage.getItem(AUDIO_PREF_KEY) === 'on';
+    } catch (error) {
+      audioEnabled = false;
     }
 
-    function emptyCells() {
+    function init(options = {}) {
+      grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+      score = 0;
+      moves = 0;
+      gameWon = false;
+      gameOver = false;
+      lastMergeCells = [];
+      lastAction = 'new_game';
+      addRandom();
+      lastNewCell = addRandom();
+      render();
+      const message = 'New game. Two tiles are on the board.';
+      announce(message, { includeBoard: true });
+      if (options.fromUser) playNewGameCue();
+    }
+
+    function cloneGrid(source = grid) {
+      return source.map((row) => [...row]);
+    }
+
+    function gridsEqual(a, b) {
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (a[r][c] !== b[r][c]) return false;
+        }
+      }
+      return true;
+    }
+
+    function emptyCells(source = grid) {
       const cells = [];
-      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!grid[r][c]) cells.push([r, c]);
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (!source[r][c]) cells.push([r, c]);
+        }
+      }
       return cells;
     }
 
     function addRandom() {
       const empties = emptyCells();
-      if (!empties.length) return;
-      const [r, c] = empties[Math.floor(Math.random() * empties.length)];
-      grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+      if (!empties.length) return null;
+      const [row, col] = empties[Math.floor(Math.random() * empties.length)];
+      const value = Math.random() < 0.9 ? 2 : 4;
+      grid[row][col] = value;
+      return { row, col, value };
     }
 
     function slideLine(line) {
       const compact = line.filter(Boolean);
       const out = [];
+      const merges = [];
       let gained = 0;
       for (let i = 0; i < compact.length; i++) {
         if (compact[i] === compact[i + 1]) {
           const merged = compact[i] * 2;
+          const index = out.length;
           out.push(merged);
+          merges.push({ value: merged, index });
           gained += merged;
           i++;
-        } else out.push(compact[i]);
+        } else {
+          out.push(compact[i]);
+        }
       }
       while (out.length < SIZE) out.push(0);
-      return { out, gained };
+      return { out, gained, merges };
     }
 
-    function move(dir) {
-      let moved = false;
+    function simulateMove(sourceGrid, dir) {
+      const next = cloneGrid(sourceGrid);
+      const merges = [];
       let gainedTotal = 0;
-      const original = JSON.stringify(grid);
 
       for (let i = 0; i < SIZE; i++) {
         let line;
         if (dir === 'left' || dir === 'right') {
-          line = [...grid[i]];
+          line = [...sourceGrid[i]];
           if (dir === 'right') line.reverse();
-          const { out, gained } = slideLine(line);
+          const result = slideLine(line);
+          const out = [...result.out];
+          for (const merge of result.merges) {
+            merges.push({
+              row: i,
+              col: dir === 'right' ? SIZE - 1 - merge.index : merge.index,
+              value: merge.value,
+            });
+          }
           if (dir === 'right') out.reverse();
-          grid[i] = out;
-          gainedTotal += gained;
+          next[i] = out;
+          gainedTotal += result.gained;
         } else {
-          line = grid.map(row => row[i]);
+          line = sourceGrid.map((row) => row[i]);
           if (dir === 'down') line.reverse();
-          const { out, gained } = slideLine(line);
+          const result = slideLine(line);
+          const out = [...result.out];
+          for (const merge of result.merges) {
+            merges.push({
+              row: dir === 'down' ? SIZE - 1 - merge.index : merge.index,
+              col: i,
+              value: merge.value,
+            });
+          }
           if (dir === 'down') out.reverse();
-          for (let r = 0; r < SIZE; r++) grid[r][i] = out[r];
-          gainedTotal += gained;
+          for (let r = 0; r < SIZE; r++) next[r][i] = out[r];
+          gainedTotal += result.gained;
         }
       }
 
-      moved = JSON.stringify(grid) !== original;
-      if (!moved) return;
-      score += gainedTotal;
-      if (typeof window.addCoins === 'function' && gainedTotal > 0) window.addCoins(Math.max(1, Math.floor(gainedTotal / 16)));
-      addRandom();
+      return {
+        next,
+        gained: gainedTotal,
+        merges,
+        moved: !gridsEqual(sourceGrid, next),
+      };
+    }
+
+    function move(dir) {
+      notePlayerGesture();
+      if (gameOver) {
+        lastAction = `blocked_${dir}_game_over`;
+        announce('Game over. Start a new game to play again.', { assertive: true });
+        playBlockedCue();
+        return false;
+      }
+
+      const result = simulateMove(grid, dir);
+      if (!result.moved) {
+        lastAction = `blocked_${dir}`;
+        render();
+        announce(`${directionName(dir)} is blocked. Available moves: ${availableMovesText()}.`);
+        playBlockedCue();
+        return false;
+      }
+
+      grid = result.next;
+      score += result.gained;
+      moves += 1;
+      lastMergeCells = result.merges.map(({ row, col }) => ({ row, col }));
+      lastNewCell = addRandom();
+      lastAction = dir;
+
+      if (typeof window.addCoins === 'function' && result.gained > 0) {
+        window.addCoins(Math.max(1, Math.floor(result.gained / 16)));
+      }
+
+      const wonNow = !gameWon && isWin();
+      if (wonNow) gameWon = true;
+      gameOver = !canMove();
+
       render();
-      if (isWin()) hintEl.textContent = '🎉 2048 reached! Keep going!';
-      else if (!canMove()) hintEl.textContent = 'Game over. Start a new game!';
-      else hintEl.textContent = 'Use arrow keys or swipe to move tiles.';
+      playMoveCue(dir);
+      result.merges.forEach((merge, index) => playMergeCue(merge, index));
+      if (lastNewCell) playNewTileCue(lastNewCell);
+      if (wonNow) playWinCue();
+      if (gameOver) playGameOverCue();
+      announceMove(dir, result, wonNow);
+      return true;
     }
 
     function canMove() {
       if (emptyCells().length) return true;
-      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
-        const v = grid[r][c];
-        if ((grid[r + 1] && grid[r + 1][c] === v) || (grid[r][c + 1] === v)) return true;
-      }
-      return false;
+      return DIRECTIONS.some((dir) => simulateMove(grid, dir).moved);
     }
 
-    const isWin = () => grid.some(row => row.some(v => v >= 2048));
+    function availableMoves() {
+      if (gameOver) return [];
+      return DIRECTIONS.filter((dir) => simulateMove(grid, dir).moved);
+    }
+
+    function availableMovesText() {
+      const movesAvailable = availableMoves();
+      return movesAvailable.length ? movesAvailable.map(directionName).join(', ') : 'none';
+    }
+
+    function isWin() {
+      return grid.some((row) => row.some((value) => value >= 2048));
+    }
+
+    function getBestTile() {
+      let bestTile = 2;
+      for (const row of grid) {
+        for (const value of row) {
+          bestTile = Math.max(bestTile, value || 2);
+        }
+      }
+      return bestTile;
+    }
+
+    function directionName(dir) {
+      return dir.charAt(0).toUpperCase() + dir.slice(1);
+    }
+
+    function tileName(value) {
+      return value ? `${value}` : 'empty';
+    }
+
+    function cellLabel(row, col, value) {
+      const notes = [];
+      if (lastNewCell && lastNewCell.row === row && lastNewCell.col === col) notes.push('new');
+      if (lastMergeCells.some((cell) => cell.row === row && cell.col === col)) notes.push('merged');
+      const suffix = notes.length ? `, ${notes.join(' and ')}` : '';
+      return `Row ${row + 1}, column ${col + 1}: ${tileName(value)}${suffix}`;
+    }
+
+    function boardRowsText(source = grid) {
+      return source
+        .map((row, index) => `Row ${index + 1}: ${row.map(tileName).join(', ')}`)
+        .join('. ');
+    }
+
+    function positionText(cell) {
+      return `row ${cell.row + 1}, column ${cell.col + 1}`;
+    }
 
     function render() {
       boardEl.textContent = '';
-      let bestTile = 2;
-      for (const row of grid) for (const v of row) {
-        bestTile = Math.max(bestTile, v || 2);
-        const el = document.createElement('div');
-        el.className = `cell v-${v}`;
-        el.textContent = v || '';
-        boardEl.appendChild(el);
+      const bestTile = getBestTile();
+      for (let r = 0; r < SIZE; r++) {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'board-row';
+        rowEl.setAttribute('role', 'row');
+        rowEl.setAttribute('aria-rowindex', String(r + 1));
+        for (let c = 0; c < SIZE; c++) {
+          const value = grid[r][c];
+          const el = document.createElement('div');
+          el.className = `cell ${valueClass(value)}`;
+          if (lastNewCell && lastNewCell.row === r && lastNewCell.col === c) el.classList.add('tile-new');
+          if (lastMergeCells.some((cell) => cell.row === r && cell.col === c)) el.classList.add('tile-merged');
+          el.textContent = value || '';
+          el.setAttribute('role', 'gridcell');
+          el.setAttribute('aria-colindex', String(c + 1));
+          el.setAttribute('aria-label', cellLabel(r, c, value));
+          rowEl.appendChild(el);
+        }
+        boardEl.appendChild(rowEl);
       }
       scoreEl.textContent = score;
       bestTileEl.textContent = bestTile;
+      movesEl.textContent = moves;
+      const summary = boardRowsText();
+      boardSummaryEl.textContent = `Current board. ${summary}. Available moves: ${availableMovesText()}.`;
+      boardEl.setAttribute('aria-label', `2048 board. Score ${score}. Best tile ${bestTile}. ${summary}`);
+      updateHint();
+      updateAudioButton();
+      updateFullscreenButton();
     }
 
-    document.addEventListener('keydown', (e) => {
-      const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
-      if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+    function valueClass(value) {
+      if (!value) return 'v-0';
+      return value <= 2048 ? `v-${value}` : 'v-super';
+    }
+
+    function updateHint() {
+      if (gameOver) {
+        hintEl.textContent = 'Game over. Start a new game to try again.';
+      } else if (gameWon) {
+        hintEl.textContent = '2048 reached. Keep merging for a higher score.';
+      } else {
+        hintEl.textContent = 'Use move buttons, arrow keys, W A S D, or swipe. Press F for fullscreen.';
+      }
+    }
+
+    function announce(message, options = {}) {
+      const fullMessage = options.includeBoard ? `${message} ${boardRowsText()}` : message;
+      lastAnnouncement = fullMessage;
+      statusEl.textContent = message;
+      const target = options.assertive ? srAlertEl : srStatusEl;
+      target.textContent = '';
+      window.setTimeout(() => {
+        target.textContent = fullMessage;
+      }, 10);
+    }
+
+    function announceMove(dir, result, wonNow) {
+      const parts = [`${directionName(dir)} move.`];
+      if (result.gained > 0) {
+        const mergeSummary = result.merges
+          .slice(0, 4)
+          .map((merge) => `${merge.value} at ${positionText(merge)}`)
+          .join('; ');
+        const extra = result.merges.length > 4 ? `; plus ${result.merges.length - 4} more merges` : '';
+        parts.push(`Merged for ${result.gained} points: ${mergeSummary}${extra}.`);
+      } else {
+        parts.push('No merges.');
+      }
+      if (lastNewCell) {
+        parts.push(`New ${lastNewCell.value} at ${positionText(lastNewCell)}.`);
+      }
+      parts.push(`Score ${score}. Best tile ${getBestTile()}. Available moves: ${availableMovesText()}.`);
+      if (wonNow) parts.push('2048 reached.');
+      if (gameOver) parts.push('Game over.');
+      announce(parts.join(' '), { includeBoard: true, assertive: gameOver || wonNow });
+    }
+
+    function announceBoard() {
+      notePlayerGesture();
+      announce(`Board review. Score ${score}. Best tile ${getBestTile()}. Moves ${moves}. Available moves: ${availableMovesText()}.`, {
+        includeBoard: true,
+      });
+      playBoardCue();
+    }
+
+    function notePlayerGesture() {
+      if (audioEnabled) getAudioContext();
+    }
+
+    function getAudioContext() {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return null;
+      if (!audioCtx) audioCtx = new AudioCtor();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function setAudioEnabled(enabled) {
+      if (enabled && !(window.AudioContext || window.webkitAudioContext)) {
+        audioEnabled = false;
+        announce('Web Audio is not available in this browser.');
+        updateAudioButton();
+        return;
+      }
+      audioEnabled = enabled;
+      try {
+        localStorage.setItem(AUDIO_PREF_KEY, enabled ? 'on' : 'off');
+      } catch (error) {}
+      updateAudioButton();
+      if (enabled) {
+        getAudioContext();
+        announce('Audio cues on. Moves, merges, new tiles, blocked moves, wins, and game over now play sounds.');
+        playNewGameCue();
+      } else {
+        announce('Audio cues off.');
+      }
+    }
+
+    function updateAudioButton() {
+      soundToggleEl.textContent = audioEnabled ? 'Audio On' : 'Audio Off';
+      soundToggleEl.setAttribute('aria-pressed', audioEnabled ? 'true' : 'false');
+    }
+
+    function playTone(freq, duration = 0.08, options = {}) {
+      if (!audioEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const start = ctx.currentTime + (options.delay || 0);
+      const end = start + duration;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = options.type || 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      if (options.endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(1, options.endFreq), end);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(options.volume || 0.045, start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, end);
+      osc.connect(gain);
+      if (typeof ctx.createStereoPanner === 'function') {
+        const pan = ctx.createStereoPanner();
+        pan.pan.setValueAtTime(Math.max(-1, Math.min(1, options.pan || 0)), start);
+        gain.connect(pan);
+        pan.connect(ctx.destination);
+      } else {
+        gain.connect(ctx.destination);
+      }
+      osc.start(start);
+      osc.stop(end + 0.02);
+    }
+
+    function frequencyForValue(value) {
+      return 180 + Math.min(920, Math.log2(Math.max(2, value)) * 58);
+    }
+
+    function panForColumn(col) {
+      return (col / (SIZE - 1)) * 1.6 - 0.8;
+    }
+
+    function delayForRow(row) {
+      return row * 0.035;
+    }
+
+    function playMoveCue(dir) {
+      const profiles = {
+        left: { start: 430, end: 230, pan: -0.55 },
+        right: { start: 250, end: 470, pan: 0.55 },
+        up: { start: 280, end: 650, pan: 0 },
+        down: { start: 650, end: 280, pan: 0 },
+      };
+      const profile = profiles[dir] || profiles.left;
+      playTone(profile.start, 0.075, {
+        endFreq: profile.end,
+        type: 'triangle',
+        volume: 0.035,
+        pan: profile.pan,
+      });
+    }
+
+    function playNewTileCue(tile) {
+      playTone(frequencyForValue(tile.value), 0.08, {
+        delay: 0.13 + delayForRow(tile.row),
+        pan: panForColumn(tile.col),
+        type: 'sine',
+        volume: 0.04,
+      });
+    }
+
+    function playMergeCue(merge, index) {
+      const base = frequencyForValue(merge.value);
+      const delay = 0.055 + index * 0.045;
+      const pan = panForColumn(merge.col);
+      playTone(base, 0.09, { delay, pan, type: 'square', volume: 0.03 });
+      playTone(base * 1.5, 0.075, { delay: delay + 0.035, pan, type: 'triangle', volume: 0.026 });
+    }
+
+    function playBlockedCue() {
+      playTone(135, 0.12, { endFreq: 82, type: 'sawtooth', volume: 0.036 });
+    }
+
+    function playWinCue() {
+      [523, 659, 784, 1046].forEach((freq, index) => {
+        playTone(freq, 0.11, { delay: 0.18 + index * 0.09, type: 'triangle', volume: 0.04 });
+      });
+    }
+
+    function playGameOverCue() {
+      [247, 196, 165, 123].forEach((freq, index) => {
+        playTone(freq, 0.12, { delay: 0.2 + index * 0.1, type: 'sine', volume: 0.04 });
+      });
+    }
+
+    function playNewGameCue() {
+      [262, 330, 392].forEach((freq, index) => {
+        playTone(freq, 0.08, { delay: index * 0.07, type: 'triangle', volume: 0.035 });
+      });
+    }
+
+    function playBoardCue() {
+      const best = getBestTile();
+      playTone(frequencyForValue(best), 0.11, { type: 'triangle', volume: 0.035 });
+    }
+
+    async function toggleFullscreen() {
+      notePlayerGesture();
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+          announce('Exited fullscreen.');
+        } else {
+          await document.documentElement.requestFullscreen();
+          announce('Entered fullscreen.');
+        }
+      } catch (error) {
+        announce('Fullscreen is not available right now.');
+      }
+      updateFullscreenButton();
+    }
+
+    function updateFullscreenButton() {
+      fullscreenToggleEl.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const map = {
+        ArrowLeft: 'left',
+        ArrowRight: 'right',
+        ArrowUp: 'up',
+        ArrowDown: 'down',
+        a: 'left',
+        d: 'right',
+        w: 'up',
+        s: 'down',
+        A: 'left',
+        D: 'right',
+        W: 'up',
+        S: 'down',
+      };
+      if (map[event.key]) {
+        event.preventDefault();
+        move(map[event.key]);
+      } else if (event.key === 'f' || event.key === 'F') {
+        event.preventDefault();
+        toggleFullscreen();
+      } else if (event.key === 'r' || event.key === 'R') {
+        event.preventDefault();
+        init({ fromUser: true });
+      }
     });
 
-    let sx = 0, sy = 0;
-    boardEl.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
-    boardEl.addEventListener('touchend', (e) => {
-      const t = e.changedTouches[0];
-      const dx = t.clientX - sx, dy = t.clientY - sy;
+    boardEl.addEventListener('touchstart', (event) => {
+      const touch = event.changedTouches[0];
+      sx = touch.clientX;
+      sy = touch.clientY;
+      notePlayerGesture();
+    }, { passive: true });
+
+    boardEl.addEventListener('touchend', (event) => {
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - sx;
+      const dy = touch.clientY - sy;
       if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
       if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
       else move(dy > 0 ? 'down' : 'up');
     }, { passive: true });
 
-    document.getElementById('newGame').addEventListener('click', init);
+    document.querySelectorAll('[data-dir]').forEach((button) => {
+      button.addEventListener('click', () => move(button.dataset.dir));
+    });
+
+    document.getElementById('newGame').addEventListener('click', () => {
+      notePlayerGesture();
+      init({ fromUser: true });
+    });
+
+    document.getElementById('announceBoard').addEventListener('click', announceBoard);
+    soundToggleEl.addEventListener('click', () => setAudioEnabled(!audioEnabled));
+    fullscreenToggleEl.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+
+    function renderGameToText() {
+      const payload = {
+        game: '2048',
+        coordinate_system: '4 by 4 grid. Row 1 is top, row 4 is bottom. Column 1 is left, column 4 is right.',
+        mode: gameOver ? 'game_over' : gameWon ? 'won_keep_playing' : 'playing',
+        score,
+        best_tile: getBestTile(),
+        moves,
+        can_move: canMove(),
+        available_moves: availableMoves(),
+        rows: cloneGrid(),
+        empty_cells: emptyCells().map(([row, col]) => ({ row: row + 1, col: col + 1 })),
+        last_new_tile: lastNewCell ? { row: lastNewCell.row + 1, col: lastNewCell.col + 1, value: lastNewCell.value } : null,
+        last_merge_cells: lastMergeCells.map((cell) => ({ row: cell.row + 1, col: cell.col + 1 })),
+        last_action: lastAction,
+        board_text: boardRowsText(),
+        screenreader_status: lastAnnouncement,
+        audio_cues_enabled: audioEnabled,
+      };
+      return JSON.stringify(payload);
+    }
+
+    window.render_game_to_text = renderGameToText;
+    window.advanceTime = () => {
+      render();
+      return renderGameToText();
+    };
+
+    updateAudioButton();
+    updateFullscreenButton();
     init();
   </script>
   <script type="module">
