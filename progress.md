@@ -2574,3 +2574,17 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Browser module parse for `audioagar/game.js` and `src/net/multiplayerClient.js`: pass.
   - Required `$develop-web-game` client against a local static frontend connected to the local Go server, no offline preview: pass, artifacts in `output/web-game/audioagar-server-authoritative-grace`, no browser error JSON.
   - Reviewed `output/web-game/audioagar-server-authoritative-grace/shot-2.png`; canvas is server-authoritative (`Room lobby`, no preview label) and `state-2.json` reports `server_authoritative: true`, `connection_status: open`, 8 players, and 150 pellets.
+
+## 2026-05-05 Audio Agar multiplayer deployment
+- New request: continue and finish the multiplayer deployment.
+- Direct Vercel and Railway CLIs are installed but not authenticated locally; GitHub and Google Cloud SDK are authenticated.
+- Confirmed the production WebSocket target is the existing Cloud Run service `clubpenguin-world` in project `games-aiandsons-io`, region `us-central1`, URL `https://clubpenguin-world-6owms56gxq-uc.a.run.app`.
+- Deployed `v2-server` to Cloud Run revision `clubpenguin-world-00003-6cr`, serving 100% of traffic with the existing 1-hour timeout and unauthenticated access.
+- Validation:
+  - `npm run test:audioagar:server`: pass before deploy.
+  - `node test-ws.js`: pass against `wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws`.
+  - Protocol smoke against production WebSocket: pass; joined `audioagar` room `deploy-smoke`, received welcome/state, 8 players, 150 pellets.
+  - Two-client production WebSocket smoke: pass; independent clients joined the same room and both observed `Deploy A` and `Deploy B` in shared state.
+  - Required `$develop-web-game` client against `https://games.aiandsons.io/audioagar`: pass, artifacts in `output/web-game/audioagar-production-deploy`, no browser error JSON.
+  - Reviewed `output/web-game/audioagar-production-deploy/shot-2.png`; live public page renders the arena with self orb, room label, grid, and pellets.
+  - `state-2.json` reports `server_authoritative: true`, `connection_status: open`, room `lobby`, 8 players, and 150 pellets.
