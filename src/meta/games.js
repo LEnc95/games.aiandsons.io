@@ -87,5 +87,6 @@ export const GAMES = [
   { slug:'canallock',      name:'Canal Lock',          emoji:'\u{1F6A2}', scoreHint:'delivered',  url:'/canallock',     desc:'Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor.', earnsCoins:true },
   { slug:'skylinestacker', name:'Skyline Stacker',     emoji:'\u{1F3D9}\uFE0F', scoreHint:'floors', url:'/skylinestacker', desc:'Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away.', earnsCoins:true },
   { slug:'cranecargo',     name:'Crane Cargo',         emoji:'\u{1F3D7}\uFE0F', scoreHint:'delivered', url:'/cranecargo', desc:'Move a crane trolley, lower the swinging hook, and sort color-coded cargo into matching bays before the shift timer expires.', earnsCoins:true },
+  { slug:'nebulacurl',     name:'Nebula Curl',         emoji:'\u{1F94C}', scoreHint:'rings',      url:'/nebulacurl',    desc:'Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings.', earnsCoins:true },
 ];
 

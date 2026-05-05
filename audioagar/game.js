@@ -8,6 +8,10 @@ const SERVER_INTERPOLATION_MS = 130;
 const MOVE_RESEND_MS = 120;
 const CRITICAL_THREAT_RADIUS = 520;
 const NEARBY_RADIUS = 1100;
+const SCAN_RADIUS = 1500;
+const AUTO_SCAN_MS = 6500;
+const BOUNDARY_WARN_DISTANCE = 320;
+const MASS_GAIN_STEP = 5;
 
 const DIR_KEYS = new Map([
   ["ArrowUp", { x: 0, y: -1 }],
@@ -69,7 +73,9 @@ const joinBtn = document.getElementById("joinBtn");
 const audioBtn = document.getElementById("audioBtn");
 const splitBtn = document.getElementById("splitBtn");
 const ejectBtn = document.getElementById("ejectBtn");
+const scanBtn = document.getElementById("scanBtn");
 const helpBtn = document.getElementById("helpBtn");
+const speechBtn = document.getElementById("speechBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const reconnectBtn = document.getElementById("reconnectBtn");
 const statusLineEl = document.getElementById("statusLine");
@@ -84,6 +90,8 @@ const hud = {
   pellets: document.getElementById("pelletValue"),
   room: document.getElementById("roomValue"),
   audio: document.getElementById("audioValue"),
+  sonar: document.getElementById("sonarValue"),
+  guide: document.getElementById("guideValue"),
 };
 
 const params = new URLSearchParams(window.location.search);
@@ -120,6 +128,15 @@ const game = {
   spawnAnnounced: false,
   deathPrompt: false,
   lastSummaryAt: 0,
+  lastTacticalScanAt: 0,
+  lastBoundaryAlertAt: 0,
+  lastMassCheckpoint: 0,
+  lastThreatLock: "",
+  lastScanText: "",
+  lastGuideText: "-",
+  lastSonarText: "Quiet",
+  speechEnabled: false,
+  autoScanEnabled: true,
   previewSeed: 92821,
 };
 
@@ -130,6 +147,7 @@ class AudioScene {
     this.ambience = null;
     this.enabled = false;
     this.nextByKey = new Map();
+    this.scanSerial = 0;
   }
 
   async enable() {
@@ -194,6 +212,116 @@ class AudioScene {
     }
     osc.start(t);
     osc.stop(t + duration + 0.02);
+  }
+
+  playScanSequence(items, self, nowMs) {
+    if (!this.enabled || !this.ctx || !this.master || !self) return;
+    const serial = this.scanSerial += 1;
+    items.slice(0, 5).forEach((item, index) => {
+      const delayMs = 110 + index * 165;
+      window.setTimeout(() => {
+        const pan = spatialPan(self, item.entity);
+        const closeness = clamp(1 - item.distance / SCAN_RADIUS, 0, 1);
+        if (item.kind === "threat") {
+          this.playTone({
+            key: `scan:${serial}:threat:${index}`,
+            frequency: 96 + closeness * 38,
+            duration: 0.2,
+            gain: 0.08 + closeness * 0.12,
+            pan,
+            type: "sawtooth",
+            nowMs: performance.now(),
+            intervalMs: 1,
+          });
+          window.setTimeout(() => this.playTone({
+            key: `scan:${serial}:threat-repeat:${index}`,
+            frequency: 74 + closeness * 32,
+            duration: 0.18,
+            gain: 0.06 + closeness * 0.1,
+            pan,
+            type: "square",
+            nowMs: performance.now(),
+            intervalMs: 1,
+          }), 92);
+        } else if (item.kind === "edible") {
+          this.playTone({
+            key: `scan:${serial}:edible:${index}`,
+            frequency: 520 + closeness * 230,
+            duration: 0.12,
+            gain: 0.07 + closeness * 0.07,
+            pan,
+            type: "triangle",
+            nowMs: performance.now(),
+            intervalMs: 1,
+          });
+          window.setTimeout(() => this.playTone({
+            key: `scan:${serial}:edible-rise:${index}`,
+            frequency: 680 + closeness * 260,
+            duration: 0.11,
+            gain: 0.05 + closeness * 0.06,
+            pan,
+            type: "triangle",
+            nowMs: performance.now(),
+            intervalMs: 1,
+          }), 86);
+        } else if (item.kind === "food") {
+          for (let tick = 0; tick < 3; tick += 1) {
+            window.setTimeout(() => this.playTone({
+              key: `scan:${serial}:food:${index}:${tick}`,
+              frequency: 920 + tick * 130 + closeness * 180,
+              duration: 0.05,
+              gain: 0.035 + closeness * 0.055,
+              pan,
+              type: "sine",
+              nowMs: performance.now(),
+              intervalMs: 1,
+            }), tick * 58);
+          }
+        } else if (item.kind === "boundary") {
+          this.playTone({
+            key: `scan:${serial}:boundary:${index}`,
+            frequency: 150,
+            duration: 0.22,
+            gain: 0.06,
+            pan,
+            type: "square",
+            nowMs: performance.now(),
+            intervalMs: 1,
+          });
+        }
+      }, delayMs);
+    });
+  }
+
+  playMassGain(amount, nowMs) {
+    if (!this.enabled) return;
+    const steps = clamp(Math.round(amount), 1, 5);
+    for (let i = 0; i < steps; i += 1) {
+      window.setTimeout(() => this.playTone({
+        key: `mass:${Math.round(nowMs)}:${i}`,
+        frequency: 440 + i * 84,
+        duration: 0.08,
+        gain: 0.055,
+        pan: 0,
+        type: "triangle",
+        nowMs: performance.now(),
+        intervalMs: 1,
+      }), i * 62);
+    }
+  }
+
+  playBoundaryWarning(boundary, nowMs) {
+    if (!this.enabled || !boundary) return;
+    this.playTone({
+      key: `boundary:${boundary.wall}`,
+      frequency: 132,
+      duration: 0.18,
+      gain: 0.07,
+      pan: boundary.pan,
+      type: "square",
+      nowMs,
+      intervalMs: 1400,
+    });
   }
 
   update(sceneState, nowMs) {
@@ -521,6 +649,217 @@ function directionWordsFromDelta(dx, dy) {
   return vertical || horizontal || "nearby";
 }
 
+function spatialPan(self, entity) {
+  if (!self || !entity) return 0;
+  const dx = entity.x - self.x;
+  const d = Math.max(1, Math.hypot(dx, entity.y - self.y));
+  return clamp(dx / d, -1, 1);
+}
+
+function vectorWords(x, y) {
+  if (Math.abs(x) < 0.12 && Math.abs(y) < 0.12) return "hold";
+  return directionWordsFromDelta(x * 100, y * 100);
+}
+
+function clockDirectionFromDelta(dx, dy) {
+  if (Math.hypot(dx, dy) < 24) return "on top of you";
+  const angle = (Math.atan2(dx, -dy) + Math.PI * 2) % (Math.PI * 2);
+  const hour = Math.round(angle / (Math.PI * 2) * 12) || 12;
+  return `${hour} o'clock`;
+}
+
+function describeBearing(self, entity) {
+  const dx = entity.x - self.x;
+  const dy = entity.y - self.y;
+  const words = directionWordsFromDelta(dx, dy);
+  const clock = clockDirectionFromDelta(dx, dy);
+  return clock === "on top of you" ? words : `${words}, ${clock}`;
+}
+
+function getBoundaryAlert(self, state) {
+  if (!self || !state) return null;
+  const options = [
+    { wall: "west", distance: self.x - self.radius, pan: -1, away: { x: 1, y: 0 } },
+    { wall: "east", distance: state.arenaWidth - self.x - self.radius, pan: 1, away: { x: -1, y: 0 } },
+    { wall: "north", distance: self.y - self.radius, pan: 0, away: { x: 0, y: 1 } },
+    { wall: "south", distance: state.arenaHeight - self.y - self.radius, pan: 0, away: { x: 0, y: -1 } },
+  ].sort((a, b) => a.distance - b.distance);
+  const nearest = options[0];
+  if (!nearest || nearest.distance > BOUNDARY_WARN_DISTANCE) return null;
+  return {
+    ...nearest,
+    units: distanceUnits(nearest.distance),
+    entity: {
+      id: `wall-${nearest.wall}`,
+      x: self.x - nearest.away.x * 260,
+      y: self.y - nearest.away.y * 260,
+    },
+    kind: "boundary",
+  };
+}
+
+function splitNearby(self, sceneState, radius = SCAN_RADIUS) {
+  const nearby = self ? collectNearby(sceneState, self).filter((item) => item.distance <= radius) : [];
+  return {
+    all: nearby,
+    threats: nearby.filter((item) => item.kind === "threat").sort((a, b) => a.distance - b.distance),
+    edible: nearby.filter((item) => item.kind === "edible").sort((a, b) => a.distance - b.distance),
+    pellets: nearby.filter((item) => item.kind === "pellet").sort((a, b) => a.distance - b.distance),
+  };
+}
+
+function findFoodCluster(self, pellets) {
+  if (!self || !pellets.length) return null;
+  const sample = pellets.slice(0, 18);
+  let weightTotal = 0;
+  let xTotal = 0;
+  let yTotal = 0;
+  let valueTotal = 0;
+  for (const item of sample) {
+    const weight = (Number(item.entity.value) || 1) / Math.max(80, item.distance);
+    weightTotal += weight;
+    xTotal += item.entity.x * weight;
+    yTotal += item.entity.y * weight;
+    valueTotal += Number(item.entity.value) || 1;
+  }
+  if (!weightTotal) return null;
+  const entity = {
+    id: "food-cluster",
+    name: "food cluster",
+    x: xTotal / weightTotal,
+    y: yTotal / weightTotal,
+    value: valueTotal,
+  };
+  return {
+    kind: "food",
+    entity,
+    distance: distance(self, entity),
+    count: sample.length,
+    value: Math.round(valueTotal),
+  };
+}
+
+function chooseGuide(self, sceneState, groups, boundary) {
+  const nearestThreat = groups.threats[0];
+  const critical = nearestThreat && nearestThreat.distance <= CRITICAL_THREAT_RADIUS;
+  if (critical) {
+    let x = self.x - nearestThreat.entity.x;
+    let y = self.y - nearestThreat.entity.y;
+    if (boundary) {
+      x += boundary.away.x * 320;
+      y += boundary.away.y * 320;
+    }
+    const length = Math.hypot(x, y) || 1;
+    return {
+      kind: "escape",
+      direction: vectorWords(x / length, y / length),
+      text: `Escape ${vectorWords(x / length, y / length)}`,
+    };
+  }
+  const target = groups.edible[0];
+  if (target) {
+    const direction = describeBearing(self, target.entity);
+    return {
+      kind: "hunt",
+      direction,
+      text: `Hunt ${target.entity.name || "orb"} ${direction}`,
+    };
+  }
+  const food = findFoodCluster(self, groups.pellets);
+  if (food) {
+    const direction = describeBearing(self, food.entity);
+    return {
+      kind: "feed",
+      direction,
+      text: `Feed ${direction}`,
+      food,
+    };
+  }
+  const center = { x: sceneState.arenaWidth / 2, y: sceneState.arenaHeight / 2 };
+  const direction = describeBearing(self, center);
+  return { kind: "center", direction, text: `Return ${direction}` };
+}
+
+function buildTacticalScan() {
+  const state = game.renderState;
+  const self = getSelf(state);
+  if (!self) return null;
+  const groups = splitNearby(self, state, SCAN_RADIUS);
+  const boundary = getBoundaryAlert(self, state);
+  const guide = chooseGuide(self, state, groups, boundary);
+  const nearestThreat = groups.threats[0];
+  const nearestTarget = groups.edible[0];
+  const food = guide.food || findFoodCluster(self, groups.pellets);
+  const parts = [`Mass ${Math.round(self.mass)}, ${sizeTier(self.mass)}`];
+  const audioItems = [];
+
+  if (nearestThreat) {
+    const threatText = `${nearestThreat.entity.name || "larger orb"} ${describeBearing(self, nearestThreat.entity)}, distance ${distanceUnits(nearestThreat.distance)}`;
+    parts.push(nearestThreat.distance <= CRITICAL_THREAT_RADIUS ? `Danger ${threatText}` : `Threat ${threatText}`);
+    audioItems.push(nearestThreat);
+  } else {
+    parts.push("No threats in scan range");
+  }
+
+  if (nearestTarget) {
+    parts.push(`Edible ${nearestTarget.entity.name || "orb"} ${describeBearing(self, nearestTarget.entity)}, distance ${distanceUnits(nearestTarget.distance)}`);
+    audioItems.push(nearestTarget);
+  }
+
+  if (food) {
+    parts.push(`Food cluster ${describeBearing(self, food.entity)}, distance ${distanceUnits(food.distance)}, ${food.count || 1} pellets`);
+    audioItems.push(food);
+  }
+
+  if (boundary) {
+    parts.push(`${capitalize(boundary.wall)} wall distance ${boundary.units}`);
+    audioItems.push(boundary);
+  }
+
+  parts.push(`Guide: ${guide.text}`);
+  const text = parts.join(". ") + ".";
+  return {
+    text,
+    status: `${guide.text}. ${nearestThreat ? `Threat ${distanceUnits(nearestThreat.distance)} away.` : "No close threat."}`,
+    sonar: nearestThreat && nearestThreat.distance <= CRITICAL_THREAT_RADIUS ? "Danger" : nearestThreat ? "Threat" : food ? "Food" : "Quiet",
+    guide: guide.text,
+    critical: Boolean(nearestThreat && nearestThreat.distance <= CRITICAL_THREAT_RADIUS),
+    audioItems,
+    boundary,
+    groups,
+  };
+}
+
+function performTacticalScan(force = false, source = "auto") {
+  const scan = buildTacticalScan();
+  if (!scan) return null;
+  const gap = force ? 500 : AUTO_SCAN_MS;
+  if (!force && game.nowMs - game.lastTacticalScanAt < gap) return scan;
+  game.lastTacticalScanAt = game.nowMs;
+  game.lastScanText = scan.text;
+  game.lastGuideText = scan.guide;
+  game.lastSonarText = scan.sonar;
+  setStatus(scan.status);
+  audio.playScanSequence(scan.audioItems, getSelf(game.renderState), game.nowMs);
+  if (scan.critical) {
+    announceAssertive(scan.text, "tactical-critical", force ? 500 : 2400);
+  } else {
+    announcePolite(scan.text, source === "manual" ? "manual-scan" : "tactical-scan", force ? 500 : 5200);
+  }
+  speakCue(scan.text, scan.critical || source === "manual");
+  return scan;
+}
+
+function speakCue(message, interrupt = false) {
+  if (!game.speechEnabled || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+  if (interrupt) window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.rate = 1.08;
+  utterance.pitch = 1;
+  utterance.volume = 0.88;
+  window.speechSynthesis.speak(utterance);
+}
+
 function updateInputVector() {
   let x = 0;
   let y = 0;
@@ -604,8 +943,32 @@ async function enableAudio() {
   const ok = await audio.enable();
   hud.audio.textContent = ok ? "On" : "Unavailable";
   audioBtn.textContent = ok ? "Audio On" : "Audio Unavailable";
-  if (ok) announcePolite("Audio enabled. Pellets tick, edible orbs chime, and threats pulse low.");
+  if (ok) {
+    announcePolite("Audio enabled. Threats pulse low, food ticks high, edible orbs chime, and scans describe the safest route.");
+    performTacticalScan(true, "audio");
+  }
   return ok;
+}
+
+function setSpeechUi() {
+  const available = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+  speechBtn.disabled = !available;
+  speechBtn.setAttribute("aria-pressed", game.speechEnabled ? "true" : "false");
+  speechBtn.textContent = available ? (game.speechEnabled ? "Speech On" : "Speech") : "Speech N/A";
+}
+
+function toggleSpeech() {
+  if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+    announcePolite("Browser speech is unavailable. Screen reader live regions are still active.", "speech-unavailable", 500);
+    return;
+  }
+  game.speechEnabled = !game.speechEnabled;
+  setSpeechUi();
+  const message = game.speechEnabled
+    ? "Browser speech cues on. Press R for a spoken tactical scan. Press V again to turn speech off."
+    : "Browser speech cues off. Screen reader live regions remain active.";
+  announcePolite(message, "speech-toggle", 500);
+  speakCue(message, true);
 }
 
 async function joinGame() {
@@ -707,8 +1070,11 @@ function activatePreview(reason) {
     game.previewStartedAt = game.nowMs;
     game.usingPreview = true;
     announcePolite("Sensory preview active. Multiplayer will take over when the server sends state.", "preview");
+    game.lastTacticalScanAt = 0;
+    game.lastMassCheckpoint = 0;
   }
   setStatus(reason);
+  performTacticalScan(true, "spawn");
 }
 
 function updatePreview(dt) {
@@ -744,6 +1110,7 @@ function updatePreview(dt) {
 function eatPreviewPellets(state, self) {
   const remaining = [];
   let eaten = 0;
+  const beforeMass = self.mass;
   for (const pellet of state.pellets) {
     if (distance(self, pellet) <= self.radius + 7) {
       self.mass += pellet.value;
@@ -754,6 +1121,7 @@ function eatPreviewPellets(state, self) {
   }
   if (eaten) {
     self.radius = massToRadius(self.mass);
+    audio.playMassGain(self.mass - beforeMass, game.nowMs);
     const random = seededRandom(game.previewSeed + state.tick + eaten);
     while (remaining.length < 95) {
       remaining.push({
@@ -822,10 +1190,10 @@ function hashText(text) {
 
 function updateHudAndAccessibility() {
   const self = getSelf(game.renderState);
-  const nearby = self ? collectNearby(game.renderState, self) : [];
-  const threats = nearby.filter((item) => item.kind === "threat" && item.distance < NEARBY_RADIUS);
-  const edible = nearby.filter((item) => item.kind === "edible" && item.distance < NEARBY_RADIUS);
-  const pellets = nearby.filter((item) => item.kind === "pellet" && item.distance < NEARBY_RADIUS);
+  const groups = self ? splitNearby(self, game.renderState, NEARBY_RADIUS) : { threats: [], edible: [], pellets: [] };
+  const threats = groups.threats;
+  const edible = groups.edible;
+  const pellets = groups.pellets;
   const tier = self ? sizeTier(self.mass) : game.lastTier;
 
   hud.mode.textContent = game.usingPreview ? "Preview" : game.connectionStatus || game.mode;
@@ -836,6 +1204,8 @@ function updateHudAndAccessibility() {
   hud.pellets.textContent = String(pellets.length);
   hud.room.textContent = game.roomId || "-";
   hud.audio.textContent = audio.enabled ? "On" : "Off";
+  hud.sonar.textContent = game.lastSonarText || "Quiet";
+  hud.guide.textContent = game.lastGuideText || "-";
 
   if (!self) return;
   if (!game.spawnAnnounced) {
@@ -847,19 +1217,44 @@ function updateHudAndAccessibility() {
     announcePolite(`You are now ${tier} size. Mass ${Math.round(self.mass)}.`, `tier-${tier}`, 800);
   }
 
-  const criticalThreat = threats.sort((a, b) => a.distance - b.distance)[0];
+  const massCheckpoint = Math.floor(self.mass / MASS_GAIN_STEP);
+  if (!game.lastMassCheckpoint) {
+    game.lastMassCheckpoint = massCheckpoint;
+  } else if (massCheckpoint > game.lastMassCheckpoint) {
+    game.lastMassCheckpoint = massCheckpoint;
+    const message = `Mass ${Math.round(self.mass)}. You are ${tier}.`;
+    announcePolite(message, "mass-gain", 1400);
+    speakCue(message);
+  }
+
+  const boundary = getBoundaryAlert(self, game.renderState);
+  if (boundary && game.nowMs - game.lastBoundaryAlertAt > 2200) {
+    game.lastBoundaryAlertAt = game.nowMs;
+    audio.playBoundaryWarning(boundary, game.nowMs);
+    announcePolite(`${capitalize(boundary.wall)} wall close, distance ${boundary.units}. Move ${vectorWords(boundary.away.x, boundary.away.y)}.`, `boundary-${boundary.wall}`, 1600);
+  }
+
+  const criticalThreat = threats[0];
   if (criticalThreat && criticalThreat.distance <= CRITICAL_THREAT_RADIUS) {
     const dir = directionWordsFromDelta(criticalThreat.entity.x - self.x, criticalThreat.entity.y - self.y);
+    if (game.lastThreatLock !== criticalThreat.entity.id) {
+      game.lastThreatLock = criticalThreat.entity.id;
+      performTacticalScan(true, "threat-lock");
+    }
     announceAssertive(
       `Warning: larger cell ${dir}, distance ${distanceUnits(criticalThreat.distance)}.`,
       `critical-${criticalThreat.entity.id}`,
       3600
     );
+  } else if (!criticalThreat || criticalThreat.distance > CRITICAL_THREAT_RADIUS * 1.35) {
+    game.lastThreatLock = "";
   }
 
-  if (game.nowMs - game.lastSummaryAt > 9000) {
+  if (game.autoScanEnabled && game.nowMs - game.lastTacticalScanAt > AUTO_SCAN_MS) {
+    performTacticalScan(false, "auto");
+  } else if (game.nowMs - game.lastSummaryAt > 12000) {
     game.lastSummaryAt = game.nowMs;
-    const nearest = nearestUsefulSummary(self, nearby);
+    const nearest = nearestUsefulSummary(self, groups.all);
     if (nearest) announcePolite(nearest, "summary", 7000);
   }
 }
@@ -885,17 +1280,16 @@ function capitalize(value) {
 
 function announceHelp() {
   const self = getSelf(game.renderState);
-  const nearby = self ? collectNearby(game.renderState, self) : [];
-  const threats = nearby.filter((item) => item.kind === "threat" && item.distance < NEARBY_RADIUS);
-  const edible = nearby.filter((item) => item.kind === "edible" && item.distance < NEARBY_RADIUS);
-  const pellets = nearby.filter((item) => item.kind === "pellet" && item.distance < NEARBY_RADIUS);
+  const groups = self ? splitNearby(self, game.renderState, NEARBY_RADIUS) : { all: [], threats: [], edible: [], pellets: [] };
   const tier = self ? sizeTier(self.mass) : "unknown";
-  const nearest = self ? nearestUsefulSummary(self, nearby) : "No arena state yet.";
+  const nearest = self ? nearestUsefulSummary(self, groups.all) : "No arena state yet.";
+  const scan = self ? buildTacticalScan() : null;
   announcePolite(
-    `Controls: WASD or arrows move in eight directions. Space splits. E ejects mass. F toggles fullscreen. You are ${tier}. ${threats.length} threats, ${edible.length} edible orbs, ${pellets.length} pellets nearby. ${nearest}`,
+    `Controls: WASD or arrows move in eight directions. R scans the arena. Space splits. E ejects mass. H repeats help. V toggles optional browser speech. F toggles fullscreen. You are ${tier}. ${groups.threats.length} threats, ${groups.edible.length} edible orbs, ${groups.pellets.length} pellets nearby. ${nearest} ${scan ? scan.status : ""}`,
     "help",
     500
   );
+  if (scan) performTacticalScan(true, "manual");
   setStatus("Help announced to screen reader.");
 }
 
@@ -1087,9 +1481,15 @@ function handleKeyDown(event) {
   } else if (event.code === "KeyE" && !isFormControl(event.target)) {
     event.preventDefault();
     sendAction("eject");
+  } else if (event.code === "KeyR" && !isFormControl(event.target)) {
+    event.preventDefault();
+    performTacticalScan(true, "manual");
   } else if (event.code === "KeyH" && !isFormControl(event.target)) {
     event.preventDefault();
     announceHelp();
+  } else if (event.code === "KeyV" && !isFormControl(event.target)) {
+    event.preventDefault();
+    toggleSpeech();
   } else if (event.code === "KeyF" && !isFormControl(event.target)) {
     event.preventDefault();
     toggleFullscreen();
@@ -1127,6 +1527,7 @@ window.advanceTime = (ms) => {
 window.render_game_to_text = () => {
   const self = getSelf(game.renderState);
   const nearby = self ? collectNearby(game.renderState, self) : [];
+  const tactical = self ? buildTacticalScan() : null;
   const summarize = (kind) => nearby
     .filter((item) => item.kind === kind)
     .sort((a, b) => a.distance - b.distance)
@@ -1146,6 +1547,7 @@ window.render_game_to_text = () => {
     server_authoritative: !game.usingPreview && !offlinePreview,
     room_id: game.roomId,
     audio_enabled: audio.enabled,
+    browser_speech_enabled: game.speechEnabled,
     input: {
       direction: input.direction,
       last_direction: input.lastDirection,
@@ -1163,6 +1565,17 @@ window.render_game_to_text = () => {
       edible: summarize("edible"),
       pellets: summarize("pellet"),
     } : { threats: [], edible: [], pellets: [] },
+    tactical: tactical ? {
+      sonar: tactical.sonar,
+      guide: tactical.guide,
+      scan_text: tactical.text,
+      critical: tactical.critical,
+      boundary: tactical.boundary ? {
+        wall: tactical.boundary.wall,
+        distance: tactical.boundary.units,
+        move: vectorWords(tactical.boundary.away.x, tactical.boundary.away.y),
+      } : null,
+    } : null,
     counts: {
       players: game.renderState.players.length,
       pellets: game.renderState.pellets.length,
@@ -1174,7 +1587,9 @@ joinBtn.addEventListener("click", joinGame);
 audioBtn.addEventListener("click", enableAudio);
 splitBtn.addEventListener("click", () => sendAction("split"));
 ejectBtn.addEventListener("click", () => sendAction("eject"));
+scanBtn.addEventListener("click", () => performTacticalScan(true, "manual"));
 helpBtn.addEventListener("click", announceHelp);
+speechBtn.addEventListener("click", toggleSpeech);
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 reconnectBtn.addEventListener("click", reconnect);
 window.addEventListener("keydown", handleKeyDown);
@@ -1182,6 +1597,7 @@ window.addEventListener("keyup", handleKeyUp);
 window.addEventListener("beforeunload", () => game.connection?.disconnect());
 
 showMenu();
+setSpeechUi();
 setStatus("Ready. Press Join Arena, then use WASD or arrow keys to move.");
 if (offlinePreview) {
   game.connectionStatus = "offline";

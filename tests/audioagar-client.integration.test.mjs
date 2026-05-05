@@ -29,13 +29,22 @@ test("audioagar page exposes blind-play and deterministic hooks", () => {
   assert.match(html, /href="\/audioagar\/styles\.css"/);
   assert.match(html, /src="\/audioagar\/game\.js"/);
   assert.match(html, /from "\/src\/feedback\/embed\.js"/);
+  assert.match(html, /id="scanBtn"/);
+  assert.match(html, /aria-keyshortcuts="R"/);
+  assert.match(html, /id="speechBtn"/);
+  assert.match(html, /id="sonarValue"/);
+  assert.match(html, /id="guideValue"/);
   assert.match(html, /mountGameFeedback\(\{ gameSlug: "audioagar"/);
   assert.match(js, /connect\(\{\s*gameId: GAME_ID/m);
   assert.match(js, /window\.advanceTime/);
   assert.match(js, /window\.render_game_to_text/);
+  assert.match(js, /performTacticalScan/);
+  assert.match(js, /buildTacticalScan/);
   assert.match(js, /type: "move"/);
   assert.match(js, /sendAction\("split"\)/);
   assert.match(js, /sendAction\("eject"\)/);
+  assert.match(js, /KeyR/);
+  assert.match(js, /KeyV/);
 
   const net = fs.readFileSync(path.join(ROOT, "src", "net", "multiplayerClient.js"), "utf8");
   assert.match(net, /type\.includes\(":"\)/);

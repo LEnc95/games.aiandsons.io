@@ -103,5 +103,6 @@
 - game/canallock
 - game/skylinestacker
 - game/cranecargo
+- game/nebulacurl
 
 Generated from `src/meta/feedback.js`.

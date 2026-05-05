@@ -2509,3 +2509,50 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Required `$develop-web-game` client against a local Vercel-style `/audioagar?offline=1` no-slash route after the final socket guard: pass, screenshots in `output/web-game/audioagar-noslash-final`, no browser error JSON.
   - Reviewed `output/web-game/audioagar-noslash-final/shot-2.png`; canvas is nonblank with self orb, pellet dots, another orb, grid, and preview label.
   - Targeted Playwright pass for WASD diagonal movement, `E`, and `H`: pass, no console errors, full-page screenshot `output/web-game/audioagar-targeted-full.png`.
+
+## 2026-05-04 Audio Agar blind-play depth pass
+- New request: the audio was not enough for a blind person to understand what is happening, and the game felt flat/basic/incomplete.
+- Plan:
+  - Upgrade passive tones into a tactical sonar layer with named scans, route guidance, threat urgency, boundary warnings, and mass-gain feedback.
+  - Add direct Scan (`R`) and optional browser Speech (`V`) controls while preserving ARIA live regions as the screen-reader source of truth.
+  - Expand `render_game_to_text()` with tactical scan details so automated validation can inspect the same state a blind player receives.
+- Implementation in progress:
+  - Added Sonar/Guide HUD fields, Scan and Speech controls, tactical scan builder, scan audio sequences, optional speech synthesis, boundary warnings, mass-gain audio, and auto scans.
+- Validation:
+  - `npm run test:audioagar`: pass.
+  - Browser module parse for `audioagar/game.js` and `src/net/multiplayerClient.js`: pass.
+  - `git diff --check -- audioagar/index.html audioagar/styles.css audioagar/game.js src/net/multiplayerClient.js tests/audioagar-client.integration.test.mjs progress.md`: pass; only existing CRLF warnings.
+  - Required `$develop-web-game` client against `/audioagar?offline=1`: pass, artifacts in `output/web-game/audioagar-a11y-depth-smoke`, no browser error JSON.
+  - Reviewed `output/web-game/audioagar-a11y-depth-smoke/shot-2.png`; canvas remains nonblank with the preview arena.
+  - Targeted Playwright pass for `R` scan, `V` speech toggle, `H` help, and diagonal movement: pass, no console errors, full-page screenshot `output/web-game/audioagar-a11y-depth-full.png`.
+  - `npm run test:feedback`: pass (31/31). The command appended a nightly sprint-board note as a side effect; removed that generated unrelated diff afterward.
+
+## 2026-05-05 Nebula Curl automation run
+- New request: add a game not currently on the site via `$develop-web-game`.
+- Existing automation memory says to avoid duplicating `canallock`, `skylinestacker`, and `cranecargo`; current worktree also has unrelated Audio Agar edits.
+- Selected `nebulacurl` / Nebula Curl because the catalog does not have a space-curling shot-planning game.
+- Plan: add a standalone canvas game where players aim and launch curling comets into target rings, interact with gravity wells/gates, support keyboard/pointer/touch controls, mount feedback, expose `window.advanceTime(ms)` and `window.render_game_to_text()`, then wire catalog/routing/SEO/feedback artifacts.
+- Added the initial Nebula Curl page plus catalog, homepage, Vercel routing, SEO/sitemap, and Linear feedback seed integration.
+- Early VM runtime harness found that a default shot could keep orbiting around gravity wells for too long; added deterministic shot timing, stronger friction, and a maximum shot duration so each launch resolves.
+- Follow-up harness pass found `advanceTime(ms)` was advancing only a small capped slice for large `ms` values; fixed it to advance the requested duration in bounded frame steps.
+- A targeted drag-aim harness exposed unstable velocities near gravity wells; reduced well strength, added speed clamping, and widened scoring rings for more reliable shot resolution.
+- Further tuning reduced gravity wells to gentle bends, restored glide friction so target rings are reachable, and added non-finite stone sanitization before state is rendered.
+- Positive-path harness showed safe shots were still stopping short; moved the target cluster fully inside the canvas and increased normal glide so aimed launches can score.
+- Default-shot harness then showed the north well could still bend shots into the top wall, so well pull was reduced again to act as a gentle course modifier.
+- Validation completed:
+  - `npm run seo`: pass; sitemap and managed SEO metadata regenerated for 89 games.
+  - `npm run feedback:sync-linear`: pass; local Linear seed files updated and live provisioning skipped because Linear env vars are not set.
+  - Vercel JSON parse: pass.
+  - Metadata import confirmed Nebula Curl exists in `GAMES` and `FEEDBACK_GAMES`: pass.
+  - Parsed both `nebulacurl/index.html` module scripts with `vm.SourceTextModule`: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass (4/4).
+  - VM runtime harness with mocked DOM/canvas started the match, launched a default shot, advanced deterministic time, and verified a finite settled stone: pass.
+  - VM drag-aim harness found a scoring shot at `{ x: 245, y: 225 }` worth 320 points: pass.
+  - Short-lived Node static server served `/nebulacurl/` with HTTP 200 and the expected page content: pass.
+  - `git diff --check` on Nebula Curl integration files: pass; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - `npm run test:feedback` passed `feedback:check-daily`, then Node test runner child-process launch failed with `spawn EPERM`.
+  - Required `$develop-web-game` Playwright client for `/nebulacurl/` failed because Chromium launch is blocked with `browserType.launch: spawn EPERM`; no screenshots were produced to inspect.
+  - `npm run test:feedback-smoke:raw` hit the same Chromium `spawn EPERM` blocker.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect the generated screenshots.

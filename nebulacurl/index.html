@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Nebula Curl | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(44% 38% at 18% 14%, #384e76 0%, transparent 70%),
+    radial-gradient(38% 42% at 86% 76%, #5b4a74 0%, transparent 72%),
+    linear-gradient(180deg, #0b1022 0%, #162538 58%, #241b33 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff5c;
+  padding: 8px 12px;
+  background: #00000068;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 12px;
+}
+.stage {
+  width: min(97vw, 1060px);
+  aspect-ratio: 16 / 10;
+  max-height: min(67dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #b9d7ff73;
+  box-shadow: 0 18px 50px #000000b0;
+  background: #101a2b;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #c7ddff75;
+  background: #111827f4;
+  box-shadow: 0 14px 30px #00000080;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.3vw, 42px); }
+p { margin: 0 0 10px; color: #e4eef2; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #d9e7ff78;
+  background: #2f5e8ff0;
+  color: #f8fbff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1060px);
+  border-radius: 12px;
+  border: 1px solid #b9d7ff52;
+  background: #101827ef;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  border-radius: 9px;
+  border: 1px solid #dbe8ff30;
+  background: #ffffff10;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cfd9de;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #a9f3bd; }
+.warn b { color: #ffe497; }
+.bad b { color: #ffaaa0; }
+.controls {
+  width: min(97vw, 1060px);
+  border-radius: 12px;
+  border: 1px solid #b9d7ff52;
+  background: #101827e8;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.action {
+  background: #6d54a3;
+  font-size: clamp(15px, 2.5vw, 18px);
+}
+.utility { background: #3f4d5d; border-color: #d9e3ff75; }
+@media (max-width: 840px) {
+  .app { justify-content: flex-start; padding-top: 58px; }
+  .stage { width: 98vw; max-height: 54dvh; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .chip { min-height: 44px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .action { grid-column: 1 / -1; min-height: 52px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Nebula Curl | AI and Sons Games">
+  <meta property="og:description" content="Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/nebulacurl">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nebula Curl | AI and Sons Games">
+  <meta name="twitter:description" content="Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/nebulacurl">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Nebula Curl","description":"Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/nebulacurl","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to Games</a>
+<main class="app">
+  <section class="stage" aria-label="Nebula Curl game">
+    <canvas id="game" width="960" height="600"></canvas>
+    <div id="overlay" class="overlay show">
+      <div class="panel">
+        <h1>Nebula Curl</h1>
+        <p id="overlayText">Aim and launch six curling comets into the target rings. Gravity wells bend each shot, gates add bonuses, and settled stones can block later launches.</p>
+        <p>Desktop: arrows or WASD adjust aim and power, Space launches, P pauses, R restarts, F toggles fullscreen. Pointer or touch: drag from the launcher toward your target and release.</p>
+        <div class="row">
+          <button id="startBtn">Start Match</button>
+          <button id="fullscreenBtn">Fullscreen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Ready</b></div>
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Target</span><b id="target">850</b></div>
+    <div class="chip warn"><span>Shot</span><b id="shot">0/6</b></div>
+    <div class="chip"><span>Power</span><b id="power">580</b></div>
+    <div class="chip"><span>Aim</span><b id="angle">0 deg</b></div>
+    <div class="chip"><span>Last</span><b id="last">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+
+  <section class="controls" aria-label="Touch controls">
+    <button id="leftBtn">Aim Left</button>
+    <button id="rightBtn">Aim Right</button>
+    <button id="powerUpBtn">Power Up</button>
+    <button id="powerDownBtn">Power Down</button>
+    <button id="launchBtn" class="action">Launch</button>
+    <button id="pauseBtn" class="utility">Pause</button>
+    <button id="restartBtn" class="utility">Restart</button>
+    <button id="fullBtn" class="utility">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+const overlay = document.getElementById('overlay');
+const overlayText = document.getElementById('overlayText');
+const modeEl = document.getElementById('mode');
+const scoreEl = document.getElementById('score');
+const targetEl = document.getElementById('target');
+const shotEl = document.getElementById('shot');
+const powerEl = document.getElementById('power');
+const angleEl = document.getElementById('angle');
+const lastEl = document.getElementById('last');
+const coinsEl = document.getElementById('coins');
+
+const START = { x: 116, y: 300 };
+const TARGET = { x: 760, y: 300 };
+const SHOTS_TOTAL = 6;
+const TARGET_SCORE = 850;
+const MIN_POWER = 300;
+const MAX_POWER = 820;
+const STONE_R = 15;
+const RINGS = [
+  { radius: 50, score: 320, color: '#fffbda', label: 'core' },
+  { radius: 90, score: 220, color: '#6ed7ff', label: 'inner' },
+  { radius: 135, score: 130, color: '#a886ff', label: 'middle' },
+  { radius: 180, score: 70, color: '#ff8e7a', label: 'outer' },
+];
+const WELLS = [
+  { id: 'north', x: 365, y: 190, radius: 86, pull: 14, color: '#7fd7ff' },
+  { id: 'south', x: 615, y: 410, radius: 92, pull: 12, color: '#e4a2ff' },
+];
+const BUMPERS = [
+  { id: 'left-bumper', x: 498, y: 260, r: 24 },
+  { id: 'right-bumper', x: 540, y: 346, r: 24 },
+];
+const GATE = { x: 458, width: 26, baseY: 300, height: 124 };
+const DUST_ZONES = [
+  { x: 258, y: 390, w: 148, h: 72, slow: 0.82 },
+  { x: 645, y: 145, w: 138, h: 72, slow: 0.84 },
+];
+
+const keys = new Set();
+const hold = { left: false, right: false, up: false, down: false };
+let lastFrame = performance.now();
+let manualStepping = false;
+let dragging = false;
+
+const game = {
+  mode: 'menu',
+  result: null,
+  score: 0,
+  targetScore: TARGET_SCORE,
+  shotsTaken: 0,
+  aimAngle: 0,
+  power: 580,
+  current: null,
+  stones: [],
+  message: 'Ready',
+  lastShotScore: 0,
+  combo: 0,
+  elapsed: 0,
+  shotTime: 0,
+  gateY: GATE.baseY,
+  gateCrossed: false,
+  settling: 0,
+  coinsEarned: 0,
+  flash: 0,
+  bestScore: Number(localStorage.getItem('nebulacurl_best_score') || 0),
+};
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function makeStone() {
+  return {
+    x: START.x,
+    y: START.y,
+    px: START.x,
+    py: START.y,
+    vx: 0,
+    vy: 0,
+    r: STONE_R,
+    shot: game.shotsTaken + 1,
+    score: null,
+    gateBonus: false,
+  };
+}
+
+function resetRun() {
+  game.mode = 'menu';
+  game.result = null;
+  game.score = 0;
+  game.targetScore = TARGET_SCORE;
+  game.shotsTaken = 0;
+  game.aimAngle = 0;
+  game.power = 580;
+  game.current = makeStone();
+  game.stones = [];
+  game.message = 'Ready';
+  game.lastShotScore = 0;
+  game.combo = 0;
+  game.elapsed = 0;
+  game.shotTime = 0;
+  game.gateY = GATE.baseY;
+  game.gateCrossed = false;
+  game.settling = 0;
+  game.coinsEarned = 0;
+  game.flash = 0;
+  overlayText.textContent = 'Aim and launch six curling comets into the target rings. Gravity wells bend each shot, gates add bonuses, and settled stones can block later launches.';
+  document.getElementById('startBtn').textContent = 'Start Match';
+  overlay.classList.add('show');
+  updateHud();
+  render();
+}
+
+function startGame() {
+  game.mode = 'aiming';
+  game.result = null;
+  game.score = 0;
+  game.shotsTaken = 0;
+  game.aimAngle = 0;
+  game.power = 580;
+  game.current = makeStone();
+  game.stones = [];
+  game.message = 'Line up the first comet';
+  game.lastShotScore = 0;
+  game.combo = 0;
+  game.elapsed = 0;
+  game.shotTime = 0;
+  game.gateCrossed = false;
+  game.settling = 0;
+  game.coinsEarned = 0;
+  game.flash = 0;
+  try { rememberRecent('nebulacurl'); } catch {}
+  try { maybeUnlock({ anyPlay: true, nebulacurl: { result: 'started', score: 0 } }); } catch {}
+  overlay.classList.remove('show');
+  updateHud();
+}
+
+function awardCoins(amount) {
+  const coins = Math.max(0, Math.floor(amount));
+  if (!coins) return;
+  game.coinsEarned += coins;
+  try { addCoins(coins); } catch {}
+}
+
+function finishRun(result, reason) {
+  if (game.mode === 'won' || game.mode === 'lost') return;
+  game.mode = result;
+  game.result = result;
+  if (game.score > game.bestScore) {
+    game.bestScore = game.score;
+    localStorage.setItem('nebulacurl_best_score', String(game.bestScore));
+  }
+  const coinBonus = result === 'won' ? 10 : 4;
+  awardCoins(coinBonus + Math.floor(game.score / 250));
+  try {
+    maybeUnlock({
+      anyPlay: true,
+      nebulacurl: {
+        result,
+        score: game.score,
+        shots: game.shotsTaken,
+        rings: game.stones.filter((stone) => stone.score > 0).length,
+      },
+    });
+  } catch {}
+  game.message = reason;
+  overlayText.textContent = `${reason} Final score ${game.score}/${game.targetScore}. Best score ${game.bestScore}. Coins earned this match: ${game.coinsEarned}.`;
+  document.getElementById('startBtn').textContent = 'Play Again';
+  overlay.classList.add('show');
+  updateHud();
+}
+
+function togglePause() {
+  if (game.mode === 'aiming' || game.mode === 'moving') {
+    game.mode = 'paused';
+    game.message = 'Paused';
+    overlayText.textContent = 'Paused. Press P or the pause button to return to the match.';
+    overlay.classList.add('show');
+  } else if (game.mode === 'paused') {
+    game.mode = game.current && Math.hypot(game.current.vx, game.current.vy) > 4 ? 'moving' : 'aiming';
+    game.message = game.mode === 'moving' ? 'Shot in motion' : 'Back on the launcher';
+    overlay.classList.remove('show');
+  }
+  updateHud();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function gateTop() {
+  return game.gateY - GATE.height / 2;
+}
+
+function gateBottom() {
+  return game.gateY + GATE.height / 2;
+}
+
+function launchStone() {
+  if (game.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'paused') {
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'aiming') return;
+  const stone = game.current || makeStone();
+  stone.x = START.x;
+  stone.y = START.y;
+  stone.px = START.x;
+  stone.py = START.y;
+  stone.vx = Math.cos(game.aimAngle) * game.power;
+  stone.vy = Math.sin(game.aimAngle) * game.power;
+  stone.shot = game.shotsTaken + 1;
+  stone.score = null;
+  stone.gateBonus = false;
+  game.current = stone;
+  game.shotsTaken += 1;
+  game.gateCrossed = false;
+  game.settling = 0;
+  game.shotTime = 0;
+  game.mode = 'moving';
+  game.message = `Shot ${game.shotsTaken} away`;
+  overlay.classList.remove('show');
+  updateHud();
+}
+
+function scoreCurrentStone() {
+  const stone = game.current;
+  if (!stone) return;
+  const distance = Math.hypot(stone.x - TARGET.x, stone.y - TARGET.y);
+  const ring = RINGS.find((entry) => distance <= entry.radius);
+  let score = ring ? ring.score : 0;
+  if (score > 0 && game.gateCrossed) {
+    score += 75;
+    stone.gateBonus = true;
+  }
+  if (score >= 130) {
+    game.combo += 1;
+    score += Math.max(0, game.combo - 1) * 35;
+  } else {
+    game.combo = 0;
+  }
+  stone.score = score;
+  game.lastShotScore = score;
+  game.score += score;
+  game.flash = score > 0 ? 0.36 : 0;
+  if (score >= 220) awardCoins(1);
+  stone.vx = 0;
+  stone.vy = 0;
+  game.stones.push({ ...stone });
+
+  if (game.score >= game.targetScore) {
+    finishRun('won', 'Target score reached.');
+    return;
+  }
+  if (game.shotsTaken >= SHOTS_TOTAL) {
+    finishRun('lost', 'The last comet came to rest.');
+    return;
+  }
+
+  game.current = makeStone();
+  game.shotTime = 0;
+  game.mode = 'aiming';
+  game.message = score > 0 ? `${ring.label} ring scored ${score}` : 'No ring score, adjust the next shot';
+  updateHud();
+}
+
+function pointInDust(x, y) {
+  return DUST_ZONES.find((zone) => x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h);
+}
+
+function limitStoneSpeed(stone, maxSpeed = 760) {
+  const speed = Math.hypot(stone.vx, stone.vy);
+  if (!Number.isFinite(speed)) {
+    stone.vx = 0;
+    stone.vy = 0;
+    return;
+  }
+  if (speed <= maxSpeed || speed === 0) return;
+  const scale = maxSpeed / speed;
+  stone.vx *= scale;
+  stone.vy *= scale;
+}
+
+function sanitizeStone(stone) {
+  if (
+    Number.isFinite(stone.x)
+    && Number.isFinite(stone.y)
+    && Number.isFinite(stone.vx)
+    && Number.isFinite(stone.vy)
+  ) {
+    return;
+  }
+  stone.x = clamp(Number.isFinite(stone.px) ? stone.px : START.x, 42, W - 42);
+  stone.y = clamp(Number.isFinite(stone.py) ? stone.py : START.y, 42, H - 42);
+  stone.vx = 0;
+  stone.vy = 0;
+  game.settling = 1;
+  game.message = 'Comet stabilized';
+}
+
+function applyBumperCollision(stone, bumper) {
+  const dx = stone.x - bumper.x;
+  const dy = stone.y - bumper.y;
+  const distance = Math.max(0.001, Math.hypot(dx, dy));
+  const minDist = stone.r + bumper.r;
+  if (distance >= minDist) return;
+  const nx = dx / distance;
+  const ny = dy / distance;
+  const overlap = minDist - distance;
+  stone.x += nx * overlap;
+  stone.y += ny * overlap;
+  const dot = stone.vx * nx + stone.vy * ny;
+  if (dot < 0) {
+    stone.vx -= 1.72 * dot * nx;
+    stone.vy -= 1.72 * dot * ny;
+  }
+  game.message = 'Bumper deflection';
+}
+
+function applyStoneCollision(stone, settled) {
+  const dx = stone.x - settled.x;
+  const dy = stone.y - settled.y;
+  const distance = Math.max(0.001, Math.hypot(dx, dy));
+  const minDist = stone.r + settled.r;
+  if (distance >= minDist) return;
+  const nx = dx / distance;
+  const ny = dy / distance;
+  const overlap = minDist - distance;
+  stone.x += nx * overlap;
+  const pushY = ny * overlap;
+  stone.y += pushY;
+  const dot = stone.vx * nx + stone.vy * ny;
+  if (dot < 0) {
+    stone.vx -= 1.35 * dot * nx;
+    stone.vy -= 1.35 * dot * ny;
+  }
+  game.message = 'Settled comet bumped';
+}
+
+function updateAiming(dt) {
+  const left = keys.has('arrowleft') || keys.has('a') || hold.left;
+  const right = keys.has('arrowright') || keys.has('d') || hold.right;
+  const up = keys.has('arrowup') || keys.has('w') || hold.up;
+  const down = keys.has('arrowdown') || keys.has('s') || hold.down;
+  const aimInput = (right ? 1 : 0) - (left ? 1 : 0);
+  const powerInput = (up ? 1 : 0) - (down ? 1 : 0);
+  game.aimAngle = clamp(game.aimAngle + aimInput * dt * 1.38, -0.78, 0.78);
+  game.power = clamp(game.power + powerInput * dt * 360, MIN_POWER, MAX_POWER);
+}
+
+function updateMoving(dt) {
+  const stone = game.current;
+  if (!stone) return;
+  game.shotTime += dt;
+  stone.px = stone.x;
+  stone.py = stone.y;
+
+  for (const well of WELLS) {
+    const dx = well.x - stone.x;
+    const dy = well.y - stone.y;
+    const distSq = Math.max(2400, dx * dx + dy * dy);
+    const dist = Math.sqrt(distSq);
+    if (dist < well.radius * 2.7) {
+      const strength = well.pull / distSq;
+      stone.vx += dx * strength * dt * 58;
+      stone.vy += dy * strength * dt * 58;
+    }
+  }
+
+  const curlInput = (keys.has('arrowright') || keys.has('d') || hold.right ? 1 : 0)
+    - (keys.has('arrowleft') || keys.has('a') || hold.left ? 1 : 0);
+  stone.vy += curlInput * 54 * dt;
+  limitStoneSpeed(stone);
+
+  const dust = pointInDust(stone.x, stone.y);
+  const friction = dust ? dust.slow : 0.992;
+  stone.vx *= Math.pow(friction, dt * 60);
+  stone.vy *= Math.pow(friction, dt * 60);
+  stone.x += stone.vx * dt;
+  stone.y += stone.vy * dt;
+  sanitizeStone(stone);
+
+  if (stone.px < GATE.x && stone.x >= GATE.x && stone.y > gateTop() && stone.y < gateBottom()) {
+    game.gateCrossed = true;
+    game.message = 'Bonus gate crossed';
+  }
+
+  if (stone.y < 42) {
+    stone.y = 42;
+    stone.vy = Math.abs(stone.vy) * 0.66;
+  } else if (stone.y > H - 42) {
+    stone.y = H - 42;
+    stone.vy = -Math.abs(stone.vy) * 0.66;
+  }
+  if (stone.x < 42) {
+    stone.x = 42;
+    stone.vx = Math.abs(stone.vx) * 0.58;
+  } else if (stone.x > W - 42) {
+    stone.x = W - 42;
+    stone.vx = -Math.abs(stone.vx) * 0.58;
+  }
+
+  for (const bumper of BUMPERS) applyBumperCollision(stone, bumper);
+  for (const settled of game.stones) applyStoneCollision(stone, settled);
+  sanitizeStone(stone);
+  limitStoneSpeed(stone);
+
+  const speed = Math.hypot(stone.vx, stone.vy);
+  game.settling = speed < 13 ? game.settling + dt : 0;
+  if (game.settling > 0.55 || game.shotTime > 13) {
+    if (game.shotTime > 13 && game.settling <= 0.55) game.message = 'Shot clock settled the comet';
+    scoreCurrentStone();
+  }
+}
+
+function update(dt) {
+  game.elapsed += dt;
+  game.flash = Math.max(0, game.flash - dt);
+  game.gateY = GATE.baseY + Math.sin(game.elapsed * 1.7) * 74;
+  if (game.mode === 'aiming') updateAiming(dt);
+  if (game.mode === 'moving') updateMoving(dt);
+}
+
+function drawText(text, x, y, size = 16, color = '#ffffff', align = 'left') {
+  ctx.fillStyle = color;
+  ctx.font = `800 ${size}px Trebuchet MS, Segoe UI, sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawBackground() {
+  const space = ctx.createLinearGradient(0, 0, 0, H);
+  space.addColorStop(0, '#0e1730');
+  space.addColorStop(0.55, '#182c3f');
+  space.addColorStop(1, '#241c35');
+  ctx.fillStyle = space;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 86; i += 1) {
+    const x = (i * 137) % W;
+    const y = (i * 83) % H;
+    const alpha = 0.18 + ((i * 23) % 60) / 100;
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(x, y, i % 7 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = '#ffffff12';
+  ctx.lineWidth = 1;
+  for (let x = 80; x < W; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 44);
+    ctx.lineTo(x, H - 44);
+    ctx.stroke();
+  }
+  for (let y = 60; y < H; y += 60) {
+    ctx.beginPath();
+    ctx.moveTo(44, y);
+    ctx.lineTo(W - 44, y);
+    ctx.stroke();
+  }
+
+  const lane = ctx.createLinearGradient(START.x, START.y, TARGET.x, TARGET.y);
+  lane.addColorStop(0, '#6ed7ff35');
+  lane.addColorStop(1, '#fffbda22');
+  ctx.strokeStyle = lane;
+  ctx.lineWidth = 78;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(START.x, START.y);
+  ctx.bezierCurveTo(315, 245, 560, 355, TARGET.x, TARGET.y);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+}
+
+function drawZones() {
+  for (const zone of DUST_ZONES) {
+    const gradient = ctx.createLinearGradient(zone.x, zone.y, zone.x + zone.w, zone.y + zone.h);
+    gradient.addColorStop(0, '#d6b27b12');
+    gradient.addColorStop(1, '#ffd27b28');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+    ctx.strokeStyle = '#ffd27b55';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(zone.x, zone.y, zone.w, zone.h);
+    drawText('dust', zone.x + zone.w / 2, zone.y + zone.h / 2, 13, '#ffe4a8', 'center');
+  }
+
+  for (const well of WELLS) {
+    const gradient = ctx.createRadialGradient(well.x, well.y, 8, well.x, well.y, well.radius);
+    gradient.addColorStop(0, `${well.color}88`);
+    gradient.addColorStop(1, `${well.color}08`);
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, well.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `${well.color}aa`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, well.radius * 0.52, 0, Math.PI * 2);
+    ctx.stroke();
+    drawText('gravity', well.x, well.y, 13, '#f8fbff', 'center');
+  }
+
+  ctx.fillStyle = '#b9d7ff20';
+  ctx.fillRect(GATE.x - GATE.width / 2, gateTop(), GATE.width, GATE.height);
+  ctx.strokeStyle = game.gateCrossed ? '#a9f3bd' : '#b9d7ff';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(GATE.x - GATE.width / 2, gateTop(), GATE.width, GATE.height);
+  drawText('+75 gate', GATE.x, gateTop() - 18, 13, '#dfeaff', 'center');
+}
+
+function drawTarget() {
+  for (let i = RINGS.length - 1; i >= 0; i -= 1) {
+    const ring = RINGS[i];
+    ctx.fillStyle = ring.color;
+    ctx.globalAlpha = 0.24 + i * 0.02;
+    ctx.beginPath();
+    ctx.arc(TARGET.x, TARGET.y, ring.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = ring.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(TARGET.x, TARGET.y, ring.radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  drawText('Target Rings', TARGET.x, TARGET.y - 168, 16, '#fffbda', 'center');
+}
+
+function drawBumpers() {
+  for (const bumper of BUMPERS) {
+    const gradient = ctx.createRadialGradient(bumper.x - 8, bumper.y - 8, 4, bumper.x, bumper.y, bumper.r);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.45, '#ef8a7a');
+    gradient.addColorStop(1, '#7e324d');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(bumper.x, bumper.y, bumper.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd4c9';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+}
+
+function drawStone(stone, active = false) {
+  const gradient = ctx.createRadialGradient(stone.x - 6, stone.y - 6, 3, stone.x, stone.y, stone.r);
+  gradient.addColorStop(0, '#ffffff');
+  gradient.addColorStop(0.45, active ? '#74d7ff' : '#b7c0ff');
+  gradient.addColorStop(1, active ? '#225e9e' : '#4e4b78');
+  ctx.fillStyle = '#00000055';
+  ctx.beginPath();
+  ctx.ellipse(stone.x + 5, stone.y + stone.r + 5, stone.r * 1.15, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(stone.x, stone.y, stone.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = active ? '#e5f8ff' : '#d8dcff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  if (stone.score !== null) {
+    drawText(String(stone.score), stone.x, stone.y - 30, 13, stone.score > 0 ? '#a9f3bd' : '#dbe2ea', 'center');
+  }
+}
+
+function drawAim() {
+  if (game.mode !== 'aiming' && game.mode !== 'menu') return;
+  const length = 64 + (game.power - MIN_POWER) * 0.28;
+  const x2 = START.x + Math.cos(game.aimAngle) * length;
+  const y2 = START.y + Math.sin(game.aimAngle) * length;
+  ctx.strokeStyle = '#a9f3bd';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(START.x, START.y);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  ctx.fillStyle = '#a9f3bd';
+  ctx.beginPath();
+  ctx.arc(x2, y2, 7, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawZones();
+  drawTarget();
+  drawBumpers();
+
+  if (game.flash > 0) {
+    ctx.fillStyle = `rgba(169, 243, 189, ${game.flash * 0.34})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  for (const stone of game.stones) drawStone(stone, false);
+  if (game.current) drawStone(game.current, true);
+  drawAim();
+
+  drawText(game.message, 24, 28, 16, '#f8fbff');
+  drawText(`Score ${game.score}/${game.targetScore}`, W - 24, 28, 15, '#dbe6ec', 'right');
+  drawText(`Shots ${game.shotsTaken}/${SHOTS_TOTAL}`, 24, H - 24, 15, '#dbe6ec');
+  drawText('Drag from launcher or use controls', W - 24, H - 24, 14, '#dbe6ec', 'right');
+
+  if (game.mode === 'paused') {
+    ctx.fillStyle = '#00000070';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function updateHud() {
+  const modeLabel = game.mode === 'aiming' ? 'Aiming'
+    : game.mode === 'moving' ? 'Moving'
+      : game.mode === 'paused' ? 'Pause'
+        : game.mode === 'won' ? 'Won'
+          : game.mode === 'lost' ? 'Done'
+            : 'Ready';
+  modeEl.textContent = modeLabel;
+  scoreEl.textContent = String(game.score);
+  targetEl.textContent = String(game.targetScore);
+  shotEl.textContent = `${game.shotsTaken}/${SHOTS_TOTAL}`;
+  powerEl.textContent = String(Math.round(game.power));
+  angleEl.textContent = `${Math.round(game.aimAngle * 180 / Math.PI)} deg`;
+  lastEl.textContent = String(game.lastShotScore);
+  coinsEl.textContent = String(profileState?.coins ?? game.coinsEarned);
+}
+
+function step(ms) {
+  const steps = Math.max(1, Math.min(600, Math.ceil(ms / (1000 / 60))));
+  const dt = (ms / 1000) / steps;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  render();
+}
+
+window.advanceTime = (ms) => {
+  manualStepping = true;
+  step(ms);
+  lastFrame = performance.now();
+  manualStepping = false;
+};
+
+window.render_game_to_text = () => JSON.stringify({
+  game: 'nebulacurl',
+  coordinate_system: 'canvas pixels; origin top-left; x increases right; y increases down; launcher is left and target rings are on the right',
+  mode: game.mode,
+  result: game.result,
+  score: game.score,
+  target_score: game.targetScore,
+  shots_taken: game.shotsTaken,
+  shots_total: SHOTS_TOTAL,
+  last_shot_score: game.lastShotScore,
+  combo: game.combo,
+  aim: {
+    angle_degrees: Math.round(game.aimAngle * 180 / Math.PI),
+    power: Math.round(game.power),
+  },
+  current_stone: game.current ? {
+    x: Math.round(game.current.x),
+    y: Math.round(game.current.y),
+    vx: Math.round(game.current.vx),
+    vy: Math.round(game.current.vy),
+    shot: game.current.shot,
+    shot_time_seconds: Number(game.shotTime.toFixed(2)),
+  } : null,
+  settled_stones: game.stones.map((stone) => ({
+    x: Math.round(stone.x),
+    y: Math.round(stone.y),
+    score: stone.score,
+    gate_bonus: stone.gateBonus,
+  })),
+  target: {
+    x: TARGET.x,
+    y: TARGET.y,
+    rings: RINGS.map((ring) => ({ label: ring.label, radius: ring.radius, score: ring.score })),
+  },
+  gravity_wells: WELLS.map((well) => ({ id: well.id, x: well.x, y: well.y, radius: well.radius })),
+  bonus_gate: {
+    x: GATE.x,
+    top: Math.round(gateTop()),
+    bottom: Math.round(gateBottom()),
+    crossed_this_shot: game.gateCrossed,
+  },
+  last_message: game.message,
+  coins_earned_this_match: game.coinsEarned,
+  best_score: game.bestScore,
+});
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(1 / 30, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    render();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * W / rect.width,
+    y: (event.clientY - rect.top) * H / rect.height,
+  };
+}
+
+function setAimFromPoint(point) {
+  const dx = point.x - START.x;
+  const dy = point.y - START.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 10) return;
+  game.aimAngle = clamp(Math.atan2(dy, dx), -0.78, 0.78);
+  game.power = clamp(260 + distance * 2.2, MIN_POWER, MAX_POWER);
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  if (game.mode === 'menu') startGame();
+  if (game.mode !== 'aiming') return;
+  dragging = true;
+  canvas.setPointerCapture?.(event.pointerId);
+  setAimFromPoint(canvasPoint(event));
+  event.preventDefault();
+});
+
+canvas.addEventListener('pointermove', (event) => {
+  if (!dragging || game.mode !== 'aiming') return;
+  setAimFromPoint(canvasPoint(event));
+  event.preventDefault();
+});
+
+canvas.addEventListener('pointerup', (event) => {
+  if (dragging && game.mode === 'aiming') {
+    setAimFromPoint(canvasPoint(event));
+    launchStone();
+  }
+  dragging = false;
+  event.preventDefault();
+});
+
+canvas.addEventListener('pointercancel', () => {
+  dragging = false;
+});
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'a', 'd', 'w', 's'].includes(key)) {
+    keys.add(key);
+    event.preventDefault();
+  } else if (key === ' ' || key === 'enter') {
+    if (!event.repeat) launchStone();
+    event.preventDefault();
+  } else if (key === 'p') {
+    togglePause();
+    event.preventDefault();
+  } else if (key === 'r') {
+    startGame();
+    event.preventDefault();
+  } else if (key === 'f') {
+    toggleFullscreen();
+    event.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+function bindHold(id, prop) {
+  const button = document.getElementById(id);
+  const set = (value, event) => {
+    hold[prop] = value;
+    event?.preventDefault();
+  };
+  button.addEventListener('pointerdown', (event) => set(true, event));
+  button.addEventListener('pointerup', (event) => set(false, event));
+  button.addEventListener('pointerleave', (event) => set(false, event));
+  button.addEventListener('pointercancel', (event) => set(false, event));
+}
+
+bindHold('leftBtn', 'left');
+bindHold('rightBtn', 'right');
+bindHold('powerUpBtn', 'up');
+bindHold('powerDownBtn', 'down');
+
+document.getElementById('startBtn')?.addEventListener('click', startGame);
+document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+document.getElementById('launchBtn')?.addEventListener('click', launchStone);
+document.getElementById('pauseBtn')?.addEventListener('click', togglePause);
+document.getElementById('restartBtn')?.addEventListener('click', startGame);
+document.getElementById('fullBtn')?.addEventListener('click', toggleFullscreen);
+
+resetRun();
+requestAnimationFrame(frame);
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'nebulacurl', gameName: 'Nebula Curl' });
+</script>
+</body>
+</html>
