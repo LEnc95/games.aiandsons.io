@@ -565,8 +565,7 @@ function applyAuthoritativeState(nextState, receivedAt) {
   game.interpolationStart = receivedAt;
   game.lastServerStateAt = receivedAt;
   game.roomId = nextState.roomId || game.roomId;
-  if (game.mode !== "playing") {
-    game.mode = "playing";
+  if (game.mode === "playing") {
     hideMenu();
   }
 }
@@ -989,8 +988,14 @@ async function joinGame() {
   } else if (forcePreview) {
     activatePreview("Preview arena active from URL option.");
   } else {
-    activatePreview("Connecting to the multiplayer room. Sensory preview is active until authoritative state arrives.");
-    if (!game.connection) startConnection();
+    if (game.lastServerStateAt) {
+      setStatus(`Connected to room ${game.roomId}. Server-authoritative arena active.`);
+      announcePolite(`Joined server-authoritative room ${game.roomId}. Press R for a tactical scan.`, "server-joined", 700);
+      performTacticalScan(true, "join");
+    } else {
+      activatePreview("Connecting to the multiplayer room. Sensory preview is active until authoritative state arrives.");
+      if (!game.connection) startConnection();
+    }
   }
 }
 

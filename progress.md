@@ -2556,3 +2556,21 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `npm run test:feedback-smoke:raw` hit the same Chromium `spawn EPERM` blocker.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect the generated screenshots.
+
+## 2026-05-05 Audio Agar authoritative server implementation
+- New request: fully implement Audio Agar with the multiplayer server.
+- Implemented `v2-server` as a Go WebSocket server for the `aiandsons.multiplayer.v1` protocol:
+  - `GET /healthz`, `WS /ws`, and `WS /ws/game`.
+  - Authoritative `audioagar` rooms keyed by room id.
+  - Server-owned movement, mass/radius, pellets, bot orbs, eating/collisions, respawn/death events, split burst, eject mass, per-player `selfId`, and personalized `state` snapshots.
+  - Room bots use simple chase/avoid/feed AI so a room is alive even with one human player.
+  - Spawn margin and short spawn protection prevent immediate unfair deaths.
+- Client adjustment:
+  - Server snapshots may now arrive before Join without hiding the start menu; Join enables audio and enters the already-connected authoritative room when available.
+- Validation:
+  - Added `npm run test:audioagar:server` for server-side Go coverage.
+  - `npm run test:audioagar:server`: pass, including WebSocket join/move/eject, pellet consumption, and two-human shared-room coverage.
+  - `npm run test:audioagar`: pass.
+  - Browser module parse for `audioagar/game.js` and `src/net/multiplayerClient.js`: pass.
+  - Required `$develop-web-game` client against a local static frontend connected to the local Go server, no offline preview: pass, artifacts in `output/web-game/audioagar-server-authoritative-grace`, no browser error JSON.
+  - Reviewed `output/web-game/audioagar-server-authoritative-grace/shot-2.png`; canvas is server-authoritative (`Room lobby`, no preview label) and `state-2.json` reports `server_authoritative: true`, `connection_status: open`, 8 players, and 150 pellets.
