@@ -2585,6 +2585,27 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `node test-ws.js`: pass against `wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws`.
   - Protocol smoke against production WebSocket: pass; joined `audioagar` room `deploy-smoke`, received welcome/state, 8 players, 150 pellets.
   - Two-client production WebSocket smoke: pass; independent clients joined the same room and both observed `Deploy A` and `Deploy B` in shared state.
-  - Required `$develop-web-game` client against `https://games.aiandsons.io/audioagar`: pass, artifacts in `output/web-game/audioagar-production-deploy`, no browser error JSON.
-  - Reviewed `output/web-game/audioagar-production-deploy/shot-2.png`; live public page renders the arena with self orb, room label, grid, and pellets.
-  - `state-2.json` reports `server_authoritative: true`, `connection_status: open`, room `lobby`, 8 players, and 150 pellets.
+- Required `$develop-web-game` client against `https://games.aiandsons.io/audioagar`: pass, artifacts in `output/web-game/audioagar-production-deploy`, no browser error JSON.
+- Reviewed `output/web-game/audioagar-production-deploy/shot-2.png`; live public page renders the arena with self orb, room label, grid, and pellets.
+- `state-2.json` reports `server_authoritative: true`, `connection_status: open`, room `lobby`, 8 players, and 150 pellets.
+
+## 2026-05-06 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Chosen game: Aero Courier (`/aerocourier`), an original glider delivery game with parcel pickup, color-matched rooftop delivery, wind lanes, boost, hazards, scoring, coins, deterministic hooks, and feedback integration.
+- Initial repo check: no existing `aerocourier` route or `Aero Courier` metadata entry found.
+- Implemented `aerocourier/index.html` with canvas rendering, parcel pickup/drop-off, matching rooftop pads, wind lanes, moving storm hazards, boost rings, score/coins, keyboard/touch controls, fullscreen, `window.render_game_to_text`, and `window.advanceTime`.
+- Registered Aero Courier in `src/meta/games.js`.
+- Ran `npm run seo`: pass; `index.html`, `sitemap.xml`, and Aero Courier SEO metadata updated.
+- Ran `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY`/`LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Static route check via temporary Node server at `http://127.0.0.1:4175/aerocourier/`: HTTP 200 with Aero Courier title.
+  - Inline module syntax check: pass; `window.render_game_to_text` and `window.advanceTime` present.
+  - Headless logic smoke with stub DOM/canvas: pass; started play, advanced deterministic time, picked up cargo, and emitted a delivery objective.
+  - `node --input-type=module` metadata checks: pass for `GAMES` and feedback metadata, both reporting 90 games including Aero Courier.
+  - `git diff --check` on touched integration files: pass; only existing LF-to-CRLF warnings were printed.
+- Sandbox blockers:
+  - Required `$develop-web-game` Playwright client against `/aerocourier/` failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced to inspect.
+  - `npm run test:feedback` passed `feedback:check-daily`, then Node test runner child-process launch failed with `spawn EPERM`.
+  - Direct `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4175` failed at Chromium launch with `spawn EPERM`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect gameplay screenshots.

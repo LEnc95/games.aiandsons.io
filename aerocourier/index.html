@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Aero Courier | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(42% 34% at 16% 10%, #4f7c95 0%, transparent 70%),
+    radial-gradient(36% 42% at 82% 84%, #754b63 0%, transparent 72%),
+    linear-gradient(180deg, #16233a 0%, #255468 52%, #342839 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #ffffff63;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1120px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #f2f8ff73;
+  background: #173248;
+  box-shadow: 0 18px 50px #000000a8;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #ffffff75;
+  background: #112033f5;
+  box-shadow: 0 14px 30px #00000085;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.2vw, 42px); }
+p { margin: 0 0 10px; color: #dbe9f0; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #f4fbff7a;
+  background: #326f83f0;
+  color: #f8fdff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1120px);
+  border-radius: 12px;
+  border: 1px solid #f2f8ff52;
+  background: #112033ef;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 9px;
+  border: 1px solid #ffffff30;
+  background: #ffffff11;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cddce3;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(97vw, 1120px);
+  border-radius: 12px;
+  border: 1px solid #f2f8ff52;
+  background: #112033ef;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.move-btn { background: #3f687d; }
+.boost-btn { background: #9c5f36; }
+.utility-btn { background: #4c5264; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  button { min-height: 44px; padding: 9px 10px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Pilot a glider through wind lanes, collect color-coded parcels, and deliver them to matching rooftop pads before dusk. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Aero Courier | AI and Sons Games">
+  <meta property="og:description" content="Pilot a glider through wind lanes, collect color-coded parcels, and deliver them to matching rooftop pads before dusk. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/aerocourier">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Aero Courier | AI and Sons Games">
+  <meta name="twitter:description" content="Pilot a glider through wind lanes, collect color-coded parcels, and deliver them to matching rooftop pads before dusk. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/aerocourier">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Aero Courier","description":"Pilot a glider through wind lanes, collect color-coded parcels, and deliver them to matching rooftop pads before dusk. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/aerocourier","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="stage">
+    <canvas id="game" width="1200" height="760" aria-label="Aero Courier game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Delivered</span><b id="delivered">0/7</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">95.0s</b></div>
+    <div class="chip bad"><span>Hull</span><b id="hull">100%</b></div>
+    <div class="chip"><span>Boost</span><b id="boost">100%</b></div>
+    <div class="chip"><span>Cargo</span><b id="cargo">EMPTY</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Aero Courier controls">
+    <button id="upBtn" type="button" class="move-btn">Up</button>
+    <button id="leftBtn" type="button" class="move-btn">Left</button>
+    <button id="rightBtn" type="button" class="move-btn">Right</button>
+    <button id="downBtn" type="button" class="move-btn">Down</button>
+    <button id="boostBtn" type="button" class="boost-btn">Boost</button>
+    <button id="startBtn" type="button" class="utility-btn">Start</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const hud = {
+  mode: document.getElementById('mode'),
+  delivered: document.getElementById('delivered'),
+  score: document.getElementById('score'),
+  time: document.getElementById('time'),
+  hull: document.getElementById('hull'),
+  boost: document.getElementById('boost'),
+  cargo: document.getElementById('cargo'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const DELIVERY_GOAL = 7;
+const keys = new Set();
+const touch = { up: false, down: false, left: false, right: false, boost: false };
+const palette = {
+  coral: '#ff8b72',
+  gold: '#ffd166',
+  mint: '#87e6b0',
+  blue: '#77c8ff',
+  ink: '#132034',
+  cloud: '#f5fbff',
+};
+const cargoColors = [
+  { id: 'coral', name: 'Coral', color: palette.coral },
+  { id: 'gold', name: 'Gold', color: palette.gold },
+  { id: 'mint', name: 'Mint', color: palette.mint },
+  { id: 'blue', name: 'Blue', color: palette.blue },
+];
+
+const docks = [
+  { id: 'coral', label: 'C1', x: 1010, y: 155, color: palette.coral },
+  { id: 'gold', label: 'G2', x: 1060, y: 325, color: palette.gold },
+  { id: 'mint', label: 'M3', x: 980, y: 515, color: palette.mint },
+  { id: 'blue', label: 'B4', x: 1110, y: 635, color: palette.blue },
+];
+
+const windLanes = [
+  { x: 295, y: 88, w: 520, h: 74, dx: 52, dy: 0, label: 'east' },
+  { x: 230, y: 238, w: 470, h: 70, dx: 0, dy: 58, label: 'down' },
+  { x: 388, y: 424, w: 560, h: 76, dx: -48, dy: 0, label: 'west' },
+  { x: 505, y: 572, w: 395, h: 70, dx: 0, dy: -62, label: 'up' },
+];
+
+const baseStorms = [
+  { x: 520, y: 210, vx: 74, vy: 42, r: 34, phase: 0.1 },
+  { x: 735, y: 390, vx: -68, vy: 46, r: 38, phase: 2.2 },
+  { x: 575, y: 605, vx: 88, vy: -35, r: 32, phase: 4.1 },
+];
+
+const baseRings = [
+  { x: 335, y: 190, r: 26 },
+  { x: 805, y: 250, r: 25 },
+  { x: 410, y: 555, r: 27 },
+  { x: 880, y: 585, r: 24 },
+];
+
+function cloneStorm(storm) {
+  return { ...storm };
+}
+
+function makeParcel(index) {
+  const color = cargoColors[index % cargoColors.length];
+  return {
+    id: color.id,
+    name: color.name,
+    color: color.color,
+    x: 140,
+    y: 160 + ((index * 137) % 420),
+    r: 18,
+    available: true,
+  };
+}
+
+function freshGame() {
+  return {
+    mode: 'menu',
+    score: 0,
+    deliveries: 0,
+    time: 95,
+    hull: 100,
+    boost: 100,
+    coinsEarned: 0,
+    cargo: null,
+    parcelIndex: 0,
+    parcel: makeParcel(0),
+    player: { x: 160, y: 374, vx: 0, vy: 0, r: 18, angle: 0 },
+    storms: baseStorms.map(cloneStorm),
+    rings: baseRings.map((ring) => ({ ...ring, active: true, timer: 0 })),
+    invuln: 0,
+    shake: 0,
+    message: '',
+    messageTimer: 0,
+    currentWind: '',
+    startedAtLeastOnce: false,
+  };
+}
+
+let game = freshGame();
+let lastTime = performance.now();
+let advancing = false;
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function distance(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.hypot(dx, dy);
+}
+
+function round(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function setMessage(text, seconds = 1.3) {
+  game.message = text;
+  game.messageTimer = seconds;
+}
+
+function activeInput() {
+  const left = keys.has('arrowleft') || keys.has('a') || touch.left;
+  const right = keys.has('arrowright') || keys.has('d') || touch.right;
+  const up = keys.has('arrowup') || keys.has('w') || touch.up;
+  const down = keys.has('arrowdown') || keys.has('s') || touch.down;
+  const boost = keys.has(' ') || keys.has('shift') || touch.boost;
+  return {
+    x: (right ? 1 : 0) - (left ? 1 : 0),
+    y: (down ? 1 : 0) - (up ? 1 : 0),
+    boost,
+  };
+}
+
+function startGame() {
+  if (game.mode === 'playing') return;
+  if (game.mode === 'won' || game.mode === 'lost') {
+    game = freshGame();
+  }
+  game.mode = 'playing';
+  if (!game.startedAtLeastOnce) {
+    game.startedAtLeastOnce = true;
+    rememberRecent('aerocourier');
+    maybeUnlock({ anyPlay: true, aerocourier: { deliveries: 0, score: 0 } });
+  }
+  setMessage('Pickup active');
+  updateOverlay();
+}
+
+function pauseGame() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+  }
+  updateOverlay();
+}
+
+function restartGame() {
+  game = freshGame();
+  startGame();
+}
+
+function finishGame(mode) {
+  if (game.mode === mode) return;
+  game.mode = mode;
+  game.player.vx *= 0.2;
+  game.player.vy *= 0.2;
+  if (mode === 'won' && game.coinsEarned === 0) {
+    const coins = 4 + Math.floor(game.score / 500);
+    addCoins(coins);
+    game.coinsEarned = coins;
+    maybeUnlock({ anyPlay: true, aerocourier: { deliveries: game.deliveries, score: game.score } });
+  }
+  updateOverlay();
+}
+
+function nextParcel() {
+  game.parcelIndex += 1;
+  game.parcel = makeParcel(game.parcelIndex);
+}
+
+function collectOrDeliver() {
+  const player = game.player;
+
+  if (!game.cargo && game.parcel.available && distance(player, game.parcel) < player.r + game.parcel.r + 8) {
+    game.cargo = {
+      id: game.parcel.id,
+      name: game.parcel.name,
+      color: game.parcel.color,
+    };
+    game.parcel.available = false;
+    game.score += 75;
+    game.boost = clamp(game.boost + 18, 0, 100);
+    setMessage(`${game.cargo.name} cargo loaded`);
+    return;
+  }
+
+  if (!game.cargo) return;
+
+  for (const dock of docks) {
+    if (distance(player, dock) > player.r + 40) continue;
+
+    if (dock.id === game.cargo.id) {
+      game.deliveries += 1;
+      const timeBonus = Math.max(0, Math.floor(game.time * 2));
+      game.score += 250 + timeBonus;
+      setMessage(`${game.cargo.name} delivered`);
+      game.cargo = null;
+      game.boost = clamp(game.boost + 24, 0, 100);
+      if (game.deliveries >= DELIVERY_GOAL) {
+        finishGame('won');
+      } else {
+        nextParcel();
+      }
+    } else if (game.invuln <= 0) {
+      game.hull = clamp(game.hull - 14, 0, 100);
+      game.score = Math.max(0, game.score - 40);
+      game.invuln = 1.0;
+      game.shake = 0.4;
+      setMessage('Wrong dock');
+      if (game.hull <= 0) finishGame('lost');
+    }
+    return;
+  }
+}
+
+function updateStorms(dt) {
+  for (const storm of game.storms) {
+    storm.x += storm.vx * dt;
+    storm.y += storm.vy * dt;
+    storm.phase += dt * 3.2;
+    if (storm.x < 250 || storm.x > 930) storm.vx *= -1;
+    if (storm.y < 120 || storm.y > 650) storm.vy *= -1;
+  }
+}
+
+function applyWind(dt) {
+  const player = game.player;
+  game.currentWind = '';
+  for (const lane of windLanes) {
+    const inside = player.x > lane.x && player.x < lane.x + lane.w && player.y > lane.y && player.y < lane.y + lane.h;
+    if (!inside) continue;
+    player.vx += lane.dx * dt;
+    player.vy += lane.dy * dt;
+    game.currentWind = lane.label;
+  }
+}
+
+function updateRings(dt) {
+  for (const ring of game.rings) {
+    if (!ring.active) {
+      ring.timer -= dt;
+      if (ring.timer <= 0) ring.active = true;
+      continue;
+    }
+    if (distance(game.player, ring) < game.player.r + ring.r) {
+      ring.active = false;
+      ring.timer = 9;
+      game.boost = clamp(game.boost + 36, 0, 100);
+      game.score += 55;
+      setMessage('Boost ring');
+    }
+  }
+}
+
+function updateHazards() {
+  if (game.invuln > 0) return;
+
+  for (const storm of game.storms) {
+    if (distance(game.player, storm) > game.player.r + storm.r * 0.82) continue;
+    const dx = game.player.x - storm.x;
+    const dy = game.player.y - storm.y;
+    const len = Math.max(1, Math.hypot(dx, dy));
+    game.player.vx += (dx / len) * 310;
+    game.player.vy += (dy / len) * 310;
+    game.hull = clamp(game.hull - 18, 0, 100);
+    game.score = Math.max(0, game.score - 35);
+    game.invuln = 1.2;
+    game.shake = 0.45;
+    setMessage('Storm hit');
+    if (game.hull <= 0) finishGame('lost');
+    return;
+  }
+}
+
+function update(dt) {
+  dt = Math.min(0.05, Math.max(0, dt));
+  if (game.messageTimer > 0) game.messageTimer = Math.max(0, game.messageTimer - dt);
+  if (game.invuln > 0) game.invuln = Math.max(0, game.invuln - dt);
+  if (game.shake > 0) game.shake = Math.max(0, game.shake - dt * 1.8);
+
+  if (game.mode !== 'playing') return;
+
+  game.time = Math.max(0, game.time - dt);
+  if (game.time <= 0) {
+    finishGame('lost');
+    return;
+  }
+
+  const input = activeInput();
+  const player = game.player;
+  let ix = input.x;
+  let iy = input.y;
+  const len = Math.hypot(ix, iy);
+  if (len > 0) {
+    ix /= len;
+    iy /= len;
+    player.angle = Math.atan2(iy, ix);
+  }
+
+  player.vx += ix * 470 * dt;
+  player.vy += iy * 470 * dt;
+  applyWind(dt);
+
+  if (input.boost && game.boost > 0) {
+    const bx = len > 0 ? ix : Math.cos(player.angle || 0);
+    const by = len > 0 ? iy : Math.sin(player.angle || 0);
+    player.vx += bx * 720 * dt;
+    player.vy += by * 720 * dt;
+    game.boost = clamp(game.boost - 48 * dt, 0, 100);
+  } else {
+    game.boost = clamp(game.boost + 11 * dt, 0, 100);
+  }
+
+  const speed = Math.hypot(player.vx, player.vy);
+  const maxSpeed = input.boost ? 420 : 315;
+  if (speed > maxSpeed) {
+    player.vx = (player.vx / speed) * maxSpeed;
+    player.vy = (player.vy / speed) * maxSpeed;
+  }
+
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+  player.vx *= 0.985;
+  player.vy *= 0.985;
+
+  if (player.x < 42 || player.x > W - 42) {
+    player.x = clamp(player.x, 42, W - 42);
+    player.vx *= -0.45;
+  }
+  if (player.y < 50 || player.y > H - 52) {
+    player.y = clamp(player.y, 50, H - 52);
+    player.vy *= -0.45;
+  }
+
+  updateStorms(dt);
+  updateRings(dt);
+  updateHazards();
+  collectOrDeliver();
+}
+
+function drawSky() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#76c5df');
+  sky.addColorStop(0.42, '#f0bc83');
+  sky.addColorStop(1, '#26405f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff3b';
+  for (const cloud of [
+    { x: 130, y: 105, s: 1.0 },
+    { x: 760, y: 105, s: 1.15 },
+    { x: 455, y: 690, s: 0.9 },
+  ]) {
+    ctx.beginPath();
+    ctx.ellipse(cloud.x, cloud.y, 46 * cloud.s, 18 * cloud.s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cloud.x + 38 * cloud.s, cloud.y + 8 * cloud.s, 52 * cloud.s, 19 * cloud.s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cloud.x - 34 * cloud.s, cloud.y + 11 * cloud.s, 40 * cloud.s, 16 * cloud.s, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#12243f';
+  for (let i = 0; i < 19; i += 1) {
+    const x = i * 70 - 15;
+    const h = 55 + ((i * 43) % 95);
+    ctx.fillRect(x, H - h, 58, h);
+    ctx.fillStyle = i % 3 === 0 ? '#ffd16650' : '#f8fbff26';
+    ctx.fillRect(x + 12, H - h + 16, 9, 12);
+    ctx.fillRect(x + 34, H - h + 34, 9, 12);
+    ctx.fillStyle = '#12243f';
+  }
+  ctx.fillStyle = '#0e1728';
+  ctx.fillRect(0, H - 34, W, 34);
+}
+
+function drawWindLane(lane, index) {
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = index % 2 === 0 ? '#eafcff' : '#fff4d0';
+  ctx.fillRect(lane.x, lane.y, lane.w, lane.h);
+  ctx.globalAlpha = 0.62;
+  ctx.strokeStyle = index % 2 === 0 ? '#ffffff' : '#ffd166';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([14, 12]);
+  ctx.strokeRect(lane.x + 4, lane.y + 4, lane.w - 8, lane.h - 8);
+  ctx.setLineDash([]);
+  const arrowCount = Math.floor(lane.w / 88);
+  ctx.fillStyle = '#14354caa';
+  for (let i = 0; i < arrowCount; i += 1) {
+    const x = lane.x + 48 + i * 86;
+    const y = lane.y + lane.h / 2;
+    drawArrow(x, y, lane.dx, lane.dy);
+  }
+  ctx.restore();
+}
+
+function drawArrow(x, y, dx, dy) {
+  const angle = Math.atan2(dy, dx || 0.001);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(23, 0);
+  ctx.lineTo(-14, -12);
+  ctx.lineTo(-6, 0);
+  ctx.lineTo(-14, 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDepot() {
+  ctx.save();
+  ctx.fillStyle = '#21304bde';
+  ctx.strokeStyle = '#f5fbff88';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(52, 105, 150, 520, 18);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#f5fbff';
+  ctx.font = '700 24px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Depot', 127, 144);
+  ctx.fillStyle = '#ffffff30';
+  for (let y = 190; y < 585; y += 62) {
+    ctx.fillRect(76, y, 102, 24);
+  }
+  ctx.restore();
+}
+
+function drawParcel() {
+  if (!game.parcel.available) return;
+  const p = game.parcel;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.fillStyle = p.color;
+  ctx.strokeStyle = '#ffffffcc';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(-21, -17, 42, 34, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = '#513a3a70';
+  ctx.beginPath();
+  ctx.moveTo(-19, 0);
+  ctx.lineTo(19, 0);
+  ctx.moveTo(0, -16);
+  ctx.lineTo(0, 16);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDocks() {
+  for (const dock of docks) {
+    const isTarget = game.cargo && game.cargo.id === dock.id;
+    ctx.save();
+    ctx.translate(dock.x, dock.y);
+    ctx.fillStyle = isTarget ? dock.color : '#20314de0';
+    ctx.strokeStyle = isTarget ? '#ffffff' : dock.color;
+    ctx.lineWidth = isTarget ? 5 : 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, isTarget ? 43 : 37, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = isTarget ? '#122033' : '#f6fbff';
+    ctx.font = '800 20px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(dock.label, 0, 0);
+    ctx.restore();
+  }
+}
+
+function drawStorm(storm) {
+  ctx.save();
+  ctx.translate(storm.x, storm.y);
+  ctx.rotate(storm.phase);
+  const glow = ctx.createRadialGradient(0, 0, 6, 0, 0, storm.r * 1.4);
+  glow.addColorStop(0, '#ffffffb8');
+  glow.addColorStop(0.45, '#8b5cf688');
+  glow.addColorStop(1, '#2a174000');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(0, 0, storm.r * 1.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#3d245ee0';
+  ctx.lineWidth = 6;
+  for (let i = 0; i < 3; i += 1) {
+    ctx.beginPath();
+    ctx.arc(0, 0, storm.r - i * 8, i * 0.8, Math.PI * 1.35 + i * 0.7);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawRing(ring) {
+  if (!ring.active) return;
+  ctx.save();
+  ctx.translate(ring.x, ring.y);
+  ctx.strokeStyle = '#fff2a8';
+  ctx.lineWidth = 6;
+  ctx.globalAlpha = 0.88;
+  ctx.beginPath();
+  ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, ring.r + 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPlayer() {
+  const player = game.player;
+  const blink = game.invuln > 0 && Math.floor(game.invuln * 12) % 2 === 0;
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.rotate(player.angle);
+  ctx.globalAlpha = blink ? 0.45 : 1;
+  ctx.fillStyle = '#f8fbff';
+  ctx.strokeStyle = '#0f2235';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(24, 0);
+  ctx.lineTo(-18, -16);
+  ctx.lineTo(-8, 0);
+  ctx.lineTo(-18, 16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#50b8d9';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 11, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (game.cargo) {
+    ctx.fillStyle = game.cargo.color;
+    ctx.strokeStyle = '#ffffffc8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-10, -31, 22, 18, 5);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawMeters() {
+  ctx.save();
+  ctx.fillStyle = '#102033d8';
+  ctx.fillRect(242, 24, 716, 38);
+  ctx.fillStyle = '#e9f8ff';
+  ctx.font = '800 20px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  const target = game.cargo ? docks.find((dock) => dock.id === game.cargo.id) : null;
+  const text = game.cargo
+    ? `Deliver ${game.cargo.name} cargo to ${target?.label || 'target'}`
+    : `Pick up ${game.parcel.name} cargo at the depot`;
+  ctx.fillText(text, 600, 49);
+  if (game.message && game.messageTimer > 0) {
+    ctx.fillStyle = '#fff2a8';
+    ctx.fillText(game.message, 600, 92);
+  }
+  ctx.restore();
+}
+
+function render() {
+  ctx.save();
+  if (game.shake > 0) {
+    const amp = 6 * game.shake;
+    ctx.translate(Math.sin(performance.now() / 38) * amp, Math.cos(performance.now() / 41) * amp);
+  }
+  drawSky();
+  windLanes.forEach(drawWindLane);
+  drawDepot();
+  drawDocks();
+  game.rings.forEach(drawRing);
+  drawParcel();
+  game.storms.forEach(drawStorm);
+  drawPlayer();
+  drawMeters();
+  ctx.restore();
+  updateHud();
+  updateOverlay();
+}
+
+function updateHud() {
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.delivered.textContent = `${game.deliveries}/${DELIVERY_GOAL}`;
+  hud.score.textContent = String(game.score);
+  hud.time.textContent = `${game.time.toFixed(1)}s`;
+  hud.hull.textContent = `${Math.round(game.hull)}%`;
+  hud.boost.textContent = `${Math.round(game.boost)}%`;
+  hud.cargo.textContent = game.cargo ? game.cargo.name.toUpperCase() : 'EMPTY';
+  hud.coins.textContent = String(profileState.coins + game.coinsEarned);
+}
+
+function updateOverlay() {
+  if (game.mode === 'playing') {
+    overlay.classList.remove('show');
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Aero Courier';
+  let body = 'Collect each colored parcel from the depot, ride wind lanes, boost through rings, and deliver cargo to the matching rooftop pad before dusk.';
+  let primary = 'Start';
+  if (game.mode === 'paused') {
+    title = 'Paused';
+    body = 'The route is frozen. Resume when ready.';
+    primary = 'Resume';
+  } else if (game.mode === 'won') {
+    title = 'Route Complete';
+    body = `Delivered ${game.deliveries} parcels with ${game.score} points and earned ${game.coinsEarned} coins.`;
+    primary = 'Fly Again';
+  } else if (game.mode === 'lost') {
+    title = 'Route Failed';
+    body = `Delivered ${game.deliveries} parcels before the run ended.`;
+    primary = 'Retry';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Move with arrows or WASD. Hold Space or Shift for boost. Use P to pause, R to restart, and F for fullscreen.</p>
+      <div class="row">
+        <button id="overlayStart" type="button">${primary}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayStart')?.addEventListener('click', startGame);
+  document.getElementById('overlayRestart')?.addEventListener('click', restartGame);
+}
+
+function loop(now) {
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+  if (!advancing) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+function bindHoldButton(id, name) {
+  const button = document.getElementById(id);
+  if (!button) return;
+  const set = (value) => {
+    touch[name] = value;
+  };
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    set(true);
+    button.setPointerCapture?.(event.pointerId);
+  });
+  button.addEventListener('pointerup', (event) => {
+    event.preventDefault();
+    set(false);
+  });
+  button.addEventListener('pointercancel', () => set(false));
+  button.addEventListener('pointerleave', () => set(false));
+}
+
+bindHoldButton('upBtn', 'up');
+bindHoldButton('downBtn', 'down');
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+bindHoldButton('boostBtn', 'boost');
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', restartGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === 'enter') startGame();
+  else if (key === 'p') pauseGame();
+  else if (key === 'r') restartGame();
+  else if (key === 'f') toggleFullscreen();
+  keys.add(key);
+});
+
+window.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+canvas.addEventListener('pointerdown', () => {
+  if (game.mode !== 'playing') startGame();
+});
+
+window.render_game_to_text = () => {
+  const targetDock = game.cargo ? docks.find((dock) => dock.id === game.cargo.id) : null;
+  return JSON.stringify({
+    mode: game.mode,
+    coordinate_system: 'origin top-left; x increases right; y increases down; canvas 1200x760',
+    player: {
+      x: round(game.player.x),
+      y: round(game.player.y),
+      vx: round(game.player.vx),
+      vy: round(game.player.vy),
+      hull: Math.round(game.hull),
+      boost: Math.round(game.boost),
+      carrying: game.cargo ? game.cargo.id : null,
+    },
+    objective: game.cargo
+      ? { action: 'deliver', target: targetDock ? { id: targetDock.id, label: targetDock.label, x: targetDock.x, y: targetDock.y } : null }
+      : { action: 'pickup', parcel: { id: game.parcel.id, x: game.parcel.x, y: game.parcel.y, available: game.parcel.available } },
+    deliveries: game.deliveries,
+    delivery_goal: DELIVERY_GOAL,
+    score: game.score,
+    time_remaining: round(game.time),
+    current_wind: game.currentWind || null,
+    storms: game.storms.map((storm) => ({ x: round(storm.x), y: round(storm.y), r: storm.r })),
+    active_boost_rings: game.rings.filter((ring) => ring.active).map((ring) => ({ x: ring.x, y: ring.y, r: ring.r })),
+  });
+};
+
+window.advanceTime = (ms) => {
+  advancing = true;
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) {
+    update(1 / 60);
+  }
+  render();
+  advancing = false;
+};
+
+render();
+requestAnimationFrame(loop);
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'aerocourier', gameName: 'Aero Courier' });
+</script>
+</body>
+</html>

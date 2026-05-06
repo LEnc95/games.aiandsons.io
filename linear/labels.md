@@ -104,5 +104,6 @@
 - game/skylinestacker
 - game/cranecargo
 - game/nebulacurl
+- game/aerocourier
 
 Generated from `src/meta/feedback.js`.
