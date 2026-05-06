@@ -1,5 +1,5 @@
 const PROTOCOL = "aiandsons.multiplayer.v1";
-const DEFAULT_PRODUCTION_ENDPOINT = "wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws";
+const DEFAULT_PRODUCTION_ENDPOINT = "wss://audioagar-server-6owms56gxq-uc.a.run.app/ws";
 const DEFAULT_LOCAL_ENDPOINT = "ws://127.0.0.1:8081/ws";
 const STORAGE_KEY = "aiandsons-multiplayer-ws-endpoint";
 

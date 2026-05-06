@@ -23,6 +23,10 @@ Endpoints:
 
 The Audio Agar frontend defaults to `ws://127.0.0.1:8081/ws` on localhost. You can also override the endpoint with `?ws=ws://127.0.0.1:8081/ws`.
 
+Production uses the dedicated Cloud Run endpoint:
+
+`wss://audioagar-server-6owms56gxq-uc.a.run.app/ws`
+
 ## Protocol
 
 Client messages use the versioned envelope:

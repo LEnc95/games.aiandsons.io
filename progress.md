@@ -2586,8 +2586,28 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Protocol smoke against production WebSocket: pass; joined `audioagar` room `deploy-smoke`, received welcome/state, 8 players, 150 pellets.
   - Two-client production WebSocket smoke: pass; independent clients joined the same room and both observed `Deploy A` and `Deploy B` in shared state.
 - Required `$develop-web-game` client against `https://games.aiandsons.io/audioagar`: pass, artifacts in `output/web-game/audioagar-production-deploy`, no browser error JSON.
-- Reviewed `output/web-game/audioagar-production-deploy/shot-2.png`; live public page renders the arena with self orb, room label, grid, and pellets.
-- `state-2.json` reports `server_authoritative: true`, `connection_status: open`, room `lobby`, 8 players, and 150 pellets.
+  - Reviewed `output/web-game/audioagar-production-deploy/shot-2.png`; live public page renders the arena with self orb, room label, grid, and pellets.
+  - `state-2.json` reports `server_authoritative: true`, `connection_status: open`, room `lobby`, 8 players, and 150 pellets.
+
+## 2026-05-06 Audio Agar movement feedback fix
+- New request: after multiplayer was enabled, the player seemed unable to move.
+- Diagnosis:
+  - Production WebSocket protocol smoke still accepts movement input and advances the authoritative player.
+  - A real browser probe against the live page confirmed keyboard input reaches the client, but because the camera tracks the player at center, movement can look/feel flat or stuck.
+  - Local-origin browser smoke against the legacy `clubpenguin-world` endpoint can receive a 403 from the deployed origin policy; the dedicated `audioagar-server` endpoint accepts the local and production Origins used for validation.
+- Client changes:
+  - Focus the arena panel after Join and capture movement key events at document capture phase.
+  - Stop replacing the status line with every server tick while playing.
+  - Add Move and Position HUD fields, spoken movement start/stop cues, velocity/position/tick fields in `render_game_to_text`, and a canvas motion trail plus camera lead so movement is visible even though the camera follows the orb.
+  - Set `/audioagar/game.js` and `/audioagar/styles.css` to revalidate on Vercel so players do not keep stale controls code for an hour.
+- Validation:
+  - `npm run test:audioagar`: pass.
+  - `npm run test:audioagar:server`: pass before this patch set; movement server coverage remains green.
+  - Browser module parse with `node --check audioagar/game.js`: pass.
+  - Required `$develop-web-game` client against local frontend plus local Go server: pass, artifacts in `output/web-game/audioagar-movement-local-final`, no browser error JSON.
+  - Required `$develop-web-game` client against local frontend plus dedicated production `audioagar-server`: pass, artifacts in `output/web-game/audioagar-movement-dedicated-final` and `output/web-game/audioagar-movement-hud-final`, no browser error JSON.
+  - Held-key Playwright probe against the dedicated server: pass; while ArrowRight was down, `render_game_to_text()` reported input `E`, movement `East`, status `Moving east`, and authoritative X advanced by 151.
+  - Reviewed screenshots `output/web-game/audioagar-movement-dedicated-final/shot-2.png` and `output/web-game/audioagar-movement-hud-final/fullpage.png`; the player now has a visible movement trail/camera lead and direction/position/speed readouts.
 
 ## 2026-05-06 Create a new game automation
 - New request: add a game we do not already have to the website using `$develop-web-game`.

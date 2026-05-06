@@ -13,6 +13,8 @@ const ROOT = process.cwd();
 
 test("multiplayer client normalizes versioned WebSocket endpoints", () => {
   assert.equal(multiplayerProtocol.name, "aiandsons.multiplayer.v1");
+  assert.equal(multiplayerProtocol.defaultProductionEndpoint, "wss://audioagar-server-6owms56gxq-uc.a.run.app/ws");
+  assert.ok(!multiplayerProtocol.defaultProductionEndpoint.includes("clubpenguin-world"));
   assert.equal(normalizeWebSocketUrl("example.test"), "ws://example.test/ws");
   assert.equal(normalizeWebSocketUrl("https://example.test/ws/game"), "wss://example.test/ws/game");
   assert.equal(normalizeWebSocketUrl("http://127.0.0.1:8081"), "ws://127.0.0.1:8081/ws");
@@ -34,6 +36,8 @@ test("audioagar page exposes blind-play and deterministic hooks", () => {
   assert.match(html, /id="speechBtn"/);
   assert.match(html, /id="sonarValue"/);
   assert.match(html, /id="guideValue"/);
+  assert.match(html, /id="moveValue"/);
+  assert.match(html, /id="positionValue"/);
   assert.match(html, /mountGameFeedback\(\{ gameSlug: "audioagar"/);
   assert.match(js, /connect\(\{\s*gameId: GAME_ID/m);
   assert.match(js, /window\.advanceTime/);
@@ -41,6 +45,8 @@ test("audioagar page exposes blind-play and deterministic hooks", () => {
   assert.match(js, /performTacticalScan/);
   assert.match(js, /buildTacticalScan/);
   assert.match(js, /type: "move"/);
+  assert.match(js, /movementLabelFor/);
+  assert.match(js, /drawMovementCue/);
   assert.match(js, /sendAction\("split"\)/);
   assert.match(js, /sendAction\("eject"\)/);
   assert.match(js, /KeyR/);
@@ -61,4 +67,6 @@ test("audioagar is routed and allowed to open WebSocket connections", () => {
     .find((header) => header.key === "Content-Security-Policy");
   assert.ok(cspHeader?.value.includes("wss:"), "Expected CSP connect-src to allow secure WebSocket endpoints.");
   assert.ok(cspHeader?.value.includes("ws:"), "Expected CSP connect-src to allow local WebSocket endpoints.");
+  assert.ok((vercel.headers || []).some((entry) => entry.source === "/audioagar/game.js"));
+  assert.ok((vercel.headers || []).some((entry) => entry.source === "/audioagar/styles.css"));
 });

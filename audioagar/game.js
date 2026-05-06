@@ -67,6 +67,7 @@ const COLORS = {
 
 const canvas = document.getElementById("arena");
 const ctx = canvas.getContext("2d");
+const arenaPanel = document.getElementById("arenaPanel");
 const menuEl = document.getElementById("menu");
 const menuCopyEl = document.getElementById("menuCopy");
 const joinBtn = document.getElementById("joinBtn");
@@ -88,6 +89,8 @@ const hud = {
   threats: document.getElementById("threatValue"),
   targets: document.getElementById("targetValue"),
   pellets: document.getElementById("pelletValue"),
+  move: document.getElementById("moveValue"),
+  position: document.getElementById("positionValue"),
   room: document.getElementById("roomValue"),
   audio: document.getElementById("audioValue"),
   sonar: document.getElementById("sonarValue"),
@@ -135,6 +138,8 @@ const game = {
   lastScanText: "",
   lastGuideText: "-",
   lastSonarText: "Quiet",
+  lastMoveCue: "Idle",
+  lastMovementStatusAt: 0,
   speechEnabled: false,
   autoScanEnabled: true,
   previewSeed: 92821,
@@ -641,6 +646,31 @@ function directionCodeFromVector(vector) {
   return `${vertical}${horizontal}` || "STOP";
 }
 
+function movementVectorFor(self) {
+  if (input.direction !== "STOP" && Math.hypot(input.vector.x, input.vector.y) > 0.01) {
+    return { ...input.vector };
+  }
+  const serverVector = self ? { x: Number(self.vx) || 0, y: Number(self.vy) || 0 } : { x: 0, y: 0 };
+  if (Math.hypot(serverVector.x, serverVector.y) > 8) return serverVector;
+  return { ...input.vector };
+}
+
+function movementSpeedFor(self) {
+  if (!self) return 0;
+  return Math.round(Math.hypot(Number(self.vx) || 0, Number(self.vy) || 0));
+}
+
+function movementLabelFor(self) {
+  const vector = movementVectorFor(self);
+  if (Math.hypot(vector.x, vector.y) <= 0.01) return "Idle";
+  return capitalize(vectorWords(vector.x, vector.y));
+}
+
+function positionLabelFor(self) {
+  if (!self) return "-";
+  return `${Math.round(self.x)}, ${Math.round(self.y)}`;
+}
+
 function directionWordsFromDelta(dx, dy) {
   const vertical = dy < -24 ? "north" : dy > 24 ? "south" : "";
   const horizontal = dx < -24 ? "west" : dx > 24 ? "east" : "";
@@ -972,6 +1002,10 @@ function toggleSpeech() {
 
 async function joinGame() {
   hideMenu();
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
+  arenaPanel?.focus?.({ preventScroll: true });
   game.mode = "playing";
   game.deathPrompt = false;
   setStatus("Joining multiplayer arena...");
@@ -1015,7 +1049,9 @@ async function startConnection() {
       const nextState = normalizeServerState(update);
       if (!nextState) return;
       applyAuthoritativeState(nextState, update.receivedAt || performance.now());
-      setStatus(`Connected to room ${nextState.roomId}. Server tick ${nextState.tick}.`);
+      if (game.mode !== "playing") {
+        setStatus(`Connected to room ${nextState.roomId}. Press Join Arena to play.`);
+      }
       updateHudAndAccessibility();
     });
     connection.onEvent(handleConnectionEvent);
@@ -1200,6 +1236,8 @@ function updateHudAndAccessibility() {
   const edible = groups.edible;
   const pellets = groups.pellets;
   const tier = self ? sizeTier(self.mass) : game.lastTier;
+  const moveLabel = self ? movementLabelFor(self) : "Idle";
+  const speed = movementSpeedFor(self);
 
   hud.mode.textContent = game.usingPreview ? "Preview" : game.connectionStatus || game.mode;
   hud.mass.textContent = self ? String(Math.round(self.mass)) : "0";
@@ -1207,12 +1245,15 @@ function updateHudAndAccessibility() {
   hud.threats.textContent = String(threats.length);
   hud.targets.textContent = String(edible.length);
   hud.pellets.textContent = String(pellets.length);
+  hud.move.textContent = speed > 8 ? `${moveLabel} ${speed}` : moveLabel;
+  hud.position.textContent = self ? positionLabelFor(self) : "-";
   hud.room.textContent = game.roomId || "-";
   hud.audio.textContent = audio.enabled ? "On" : "Off";
   hud.sonar.textContent = game.lastSonarText || "Quiet";
   hud.guide.textContent = game.lastGuideText || "-";
 
   if (!self) return;
+  updateMovementFeedback(self, moveLabel, speed);
   if (!game.spawnAnnounced) {
     game.spawnAnnounced = true;
     announcePolite(`Spawned ${tier} size. Nearby: ${threats.length} threats, ${edible.length} edible orbs, ${pellets.length} pellets.`);
@@ -1264,6 +1305,26 @@ function updateHudAndAccessibility() {
   }
 }
 
+function updateMovementFeedback(self, moveLabel, speed) {
+  if (game.mode !== "playing" || !self) return;
+  const moving = moveLabel !== "Idle";
+  const cue = moving ? `Moving ${moveLabel.toLowerCase()}` : "Idle";
+  const position = positionLabelFor(self);
+  if (cue !== game.lastMoveCue) {
+    game.lastMoveCue = cue;
+    const message = moving
+      ? `${cue}. Position ${position}.`
+      : `Stopped. Position ${position}.`;
+    announcePolite(message, `move-${cue}`, 700);
+  }
+  const statusGap = moving ? 320 : 1400;
+  if (game.nowMs - game.lastMovementStatusAt < statusGap) return;
+  game.lastMovementStatusAt = game.nowMs;
+  setStatus(moving
+    ? `${cue}. Position ${position}. Speed ${speed}.`
+    : `Idle at ${position}. Hold WASD or arrow keys to move.`);
+}
+
 function nearestUsefulSummary(self, nearby) {
   const sorted = nearby.filter((item) => item.distance < NEARBY_RADIUS).sort((a, b) => priorityOf(a.kind) - priorityOf(b.kind) || a.distance - b.distance);
   const item = sorted[0];
@@ -1309,10 +1370,18 @@ function render() {
   }
 
   const zoom = clamp(1.04 - self.radius / 220, 0.46, 1.0);
+  const moveVector = movementVectorFor(self);
+  const moveLength = Math.hypot(moveVector.x, moveVector.y);
+  const cameraLead = moveLength > 0.01
+    ? { x: (moveVector.x / moveLength) * 38, y: (moveVector.y / moveLength) * 38 }
+    : { x: 0, y: 0 };
+  const focus = { x: VIEW.width / 2 + cameraLead.x, y: VIEW.height / 2 + cameraLead.y };
   const toScreen = (entity) => ({
-    x: VIEW.width / 2 + (entity.x - self.x) * zoom,
-    y: VIEW.height / 2 + (entity.y - self.y) * zoom,
+    x: focus.x + (entity.x - self.x) * zoom,
+    y: focus.y + (entity.y - self.y) * zoom,
   });
+
+  drawMovementCue(self, focus);
 
   for (const pellet of state.pellets) {
     const point = toScreen(pellet);
@@ -1367,6 +1436,53 @@ function drawBackground(state, self) {
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   ctx.fillText(game.usingPreview ? "Sensory preview" : `Room ${state.roomId || game.roomId}`, 14, 24);
+  if (self) {
+    const moveLabel = movementLabelFor(self);
+    const speed = movementSpeedFor(self);
+    ctx.textAlign = "right";
+    ctx.fillStyle = moveLabel === "Idle" ? "rgba(255, 255, 255, 0.68)" : "rgba(142, 242, 194, 0.92)";
+    ctx.fillText(`${moveLabel} | ${positionLabelFor(self)} | ${speed}`, VIEW.width - 14, 24);
+  }
+}
+
+function drawMovementCue(self, center = { x: VIEW.width / 2, y: VIEW.height / 2 }) {
+  const vector = movementVectorFor(self);
+  const length = Math.hypot(vector.x, vector.y);
+  const intentActive = input.direction !== "STOP";
+  if (length <= 0.01 && !intentActive) return;
+
+  const dir = length > 0.01 ? { x: vector.x / length, y: vector.y / length } : vectorFromDirection(input.lastDirection);
+  const baseRadius = clamp(self.radius * 0.72, 18, 46);
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "rgba(142, 242, 194, 0.72)";
+  ctx.fillStyle = "rgba(142, 242, 194, 0.18)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(center.x - dir.x * (baseRadius + 6), center.y - dir.y * (baseRadius + 6));
+  ctx.lineTo(center.x - dir.x * (baseRadius + 78), center.y - dir.y * (baseRadius + 78));
+  ctx.stroke();
+
+  for (let i = 0; i < 4; i += 1) {
+    const distance = baseRadius + 22 + i * 20;
+    const size = 12 - i * 2;
+    const x = center.x - dir.x * distance;
+    const y = center.y - dir.y * distance;
+    ctx.globalAlpha = 0.34 - i * 0.055;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 0.94;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.76)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(center.x + dir.x * (baseRadius + 12), center.y + dir.y * (baseRadius + 12));
+  ctx.lineTo(center.x + dir.x * (baseRadius + 42), center.y + dir.y * (baseRadius + 42));
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawOrb(point, radius, kind, name, mass, isSelf) {
@@ -1551,16 +1667,25 @@ window.render_game_to_text = () => {
     connection_status: game.connectionStatus,
     server_authoritative: !game.usingPreview && !offlinePreview,
     room_id: game.roomId,
+    tick: game.renderState.tick,
     audio_enabled: audio.enabled,
     browser_speech_enabled: game.speechEnabled,
     input: {
       direction: input.direction,
       last_direction: input.lastDirection,
+      vector: {
+        x: Number(input.vector.x.toFixed(2)),
+        y: Number(input.vector.y.toFixed(2)),
+      },
     },
     self: self ? {
       id: self.id,
       x: Math.round(self.x),
       y: Math.round(self.y),
+      vx: Math.round(self.vx || 0),
+      vy: Math.round(self.vy || 0),
+      speed: movementSpeedFor(self),
+      movement: movementLabelFor(self),
       mass: Math.round(self.mass),
       radius: Math.round(self.radius),
       tier: sizeTier(self.mass),
@@ -1597,8 +1722,8 @@ helpBtn.addEventListener("click", announceHelp);
 speechBtn.addEventListener("click", toggleSpeech);
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 reconnectBtn.addEventListener("click", reconnect);
-window.addEventListener("keydown", handleKeyDown);
-window.addEventListener("keyup", handleKeyUp);
+document.addEventListener("keydown", handleKeyDown, { capture: true });
+document.addEventListener("keyup", handleKeyUp, { capture: true });
 window.addEventListener("beforeunload", () => game.connection?.disconnect());
 
 showMenu();

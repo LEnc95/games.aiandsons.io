@@ -153,6 +153,7 @@ func main() {
 	h := newHub()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", h.handleHealthz)
+	mux.HandleFunc("/healthz/", h.handleHealthz)
 	mux.HandleFunc("/ws", h.handleWS)
 	mux.HandleFunc("/ws/game", h.handleWS)
 
