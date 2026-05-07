@@ -351,3 +351,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-05-03] Key PR links: none merged for this date.
 - [nightly 2026-05-05] Tracked changes: 3 commit(s) - Document Audio Agar multiplayer deployment; Implement authoritative Audio Agar multiplayer server; Expand Audio Agar tactical blind guidance.
 - [nightly 2026-05-05] Key PR links: none merged for this date.
+- [nightly 2026-05-06] Tracked changes: 2 commit(s) - Improve Audio Agar movement feedback; Add Aero Courier game.
+- [nightly 2026-05-06] Key PR links: none merged for this date.

@@ -2629,3 +2629,57 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Direct `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4175` failed at Chromium launch with `spawn EPERM`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect gameplay screenshots.
+
+## 2026-05-06 Club Penguin World backend restore
+- New request: Club Penguins is broken and users cannot connect to the game server.
+- Diagnosis:
+  - Production `wss://clubpenguin-world-6owms56gxq-uc.a.run.app/ws` had been serving the Audio Agar `aiandsons.multiplayer.v1` server, so Club Penguin clients opened a socket but never received `world:init`.
+  - Confirmed Audio Agar protocol worked on the Club Penguin URL before the fix; confirmed Club Penguin protocol timed out waiting for `world:init`.
+- Production repair:
+  - Created dedicated Cloud Run service `audioagar-server` at `wss://audioagar-server-6owms56gxq-uc.a.run.app/ws`.
+  - Redeployed `clubpenguin-world` from `clubpenguin-world/` Dockerfile, restoring Club Penguin protocol on the original URL.
+  - Redeployed `audioagar-server` from `v2-server/`.
+  - Updated Club Penguin origin allowlist for production, local smoke ports, and direct Cloud Run URLs.
+- Code changes:
+  - Pointed `src/net/multiplayerClient.js` Audio Agar production default to the dedicated `audioagar-server` URL.
+  - Added `/healthz/` handlers to both Go services.
+  - Updated Club Penguin client health checks to use `/healthz/`.
+  - Added a test assertion preventing Audio Agar from defaulting to the Club Penguin service again.
+- Validation:
+  - Club Penguin production WebSocket smoke: pass; received `world:init`.
+  - Audio Agar production WebSocket smoke against dedicated service: pass; received `welcome` and authoritative `state`.
+  - `https://clubpenguin-world-6owms56gxq-uc.a.run.app/healthz/`: pass.
+  - `https://audioagar-server-6owms56gxq-uc.a.run.app/healthz/`: pass.
+  - `go test ./...` in `clubpenguin-world`: pass.
+  - `go test ./...` in `v2-server`: pass.
+  - `node --check clubpenguin-world/public/client.js`: pass.
+  - `node --test tests/audioagar-client.integration.test.mjs`: pass.
+  - Required `$develop-web-game` client against updated local Club Penguin frontend + production backend: pass, artifacts in `output/web-game/clubpenguin-world-local-client-prod-backend-healthslash3`, no browser error JSON; screenshot reviewed.
+- Deployment note:
+  - Vercel CLI is not authenticated locally, so the frontend JS change for Audio Agar's default endpoint could not be published from this machine. Backend production is restored for Club Penguin; publish the frontend bundle via Vercel/GitHub so Audio Agar no longer defaults to the Club Penguin backend.
+
+## 2026-05-07 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Chosen game: Ribbon Capture (`/ribboncapture`), an original area-claiming arcade game where players draw active trails from safe territory, return to seal enclosed grid space, and avoid moving hazards.
+- Initial integration changes:
+  - Added `ribboncapture/index.html` with canvas rendering, keyboard/touch controls, fullscreen, scoring, shields, time pressure, coin award on win, `window.render_game_to_text`, and `window.advanceTime`.
+  - Mounted the shared feedback widget with `mountGameFeedback({ gameSlug: 'ribboncapture', gameName: 'Ribbon Capture' })`.
+  - Registered Ribbon Capture in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata regenerated with Ribbon Capture included.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY`/`LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Metadata import check: pass; `GAMES` and `FEEDBACK_GAMES` both report 91 games including Ribbon Capture.
+  - Browser module parse with `vm.SourceTextModule`: pass for both module scripts in `ribboncapture/index.html`.
+  - `node tests/unit/games.test.mjs`: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass.
+  - Marker check confirmed `mountGameFeedback`, `window.render_game_to_text`, and `window.advanceTime` exist in the new page.
+  - Local static route check via short-lived Node server at `http://127.0.0.1:4176/ribboncapture/`: HTTP 200.
+  - Stubbed DOM/canvas logic harness: pass; started play, drew a capture path, sealed the ribbon, returned to safe border, and `render_game_to_text()` reported 15.9% claimed with positive score.
+  - `git diff --check` on Ribbon Capture integration files: pass; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/ribboncapture/` but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced to inspect.
+  - `npm run test:feedback` passed `feedback:check-daily`, then Node's multi-file test runner failed with `spawn EPERM`; direct single-file runs for game metadata and feedback coverage passed.
+  - `npm run test:feedback-smoke:raw` could not use port `4173` because that port is already occupied by a different local server. Running `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4176` against a verified local server reached HTTP 200, then failed at Chromium launch with `spawn EPERM`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect the generated screenshots.

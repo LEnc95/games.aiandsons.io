@@ -408,7 +408,7 @@
 
   function healthUrlForEndpoint(endpoint) {
     if (!endpoint) {
-      return `${window.location.origin}/healthz`;
+      return `${window.location.origin}/healthz/`;
     }
     let parsed = null;
     try {
@@ -422,11 +422,13 @@
       parsed.protocol = "https:";
     }
     if (!parsed.pathname || parsed.pathname === "/") {
-      parsed.pathname = "/healthz";
+      parsed.pathname = "/healthz/";
     } else if (/\/ws$/i.test(parsed.pathname)) {
-      parsed.pathname = parsed.pathname.replace(/\/ws$/i, "/healthz");
-    } else if (!/\/healthz$/i.test(parsed.pathname)) {
-      parsed.pathname = "/healthz";
+      parsed.pathname = parsed.pathname.replace(/\/ws$/i, "/healthz/");
+    } else if (/\/healthz$/i.test(parsed.pathname)) {
+      parsed.pathname = `${parsed.pathname}/`;
+    } else if (!/\/healthz\/$/i.test(parsed.pathname)) {
+      parsed.pathname = "/healthz/";
     }
     parsed.search = "";
     parsed.hash = "";

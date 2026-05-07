@@ -105,5 +105,6 @@
 - game/cranecargo
 - game/nebulacurl
 - game/aerocourier
+- game/ribboncapture
 
 Generated from `src/meta/feedback.js`.

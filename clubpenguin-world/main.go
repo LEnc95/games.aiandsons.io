@@ -2027,6 +2027,7 @@ func main() {
 	fileServer := http.FileServer(http.Dir("./public"))
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", serverState.handleHealth)
+	mux.HandleFunc("/healthz/", serverState.handleHealth)
 	mux.HandleFunc("/ws", serverState.handleWebSocket)
 	mux.Handle("/vendor/", http.StripPrefix("/vendor/", http.FileServer(http.Dir("./public/vendor"))))
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

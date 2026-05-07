@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Ribbon Capture | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f9fbff;
+  background:
+    radial-gradient(38% 32% at 14% 12%, #365d7a 0%, transparent 72%),
+    radial-gradient(30% 38% at 86% 82%, #70465b 0%, transparent 72%),
+    linear-gradient(160deg, #10182a 0%, #173753 48%, #2f283d 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid #ffffff66;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #f6fbff73;
+  background: #10233a;
+  box-shadow: 0 20px 52px #000000a3;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #ffffff75;
+  background: #111c30f4;
+  box-shadow: 0 16px 34px #00000085;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); }
+p { margin: 0 0 10px; color: #dbe8ef; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #f7fbff70;
+  background: #315f75f2;
+  color: #f8fdff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1080px);
+  border-radius: 12px;
+  border: 1px solid #f7fbff52;
+  background: #111c30ef;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 9px;
+  border: 1px solid #ffffff2f;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cad9e1;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(97vw, 1080px);
+  border-radius: 12px;
+  border: 1px solid #f7fbff52;
+  background: #111c30ef;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.move-btn { background: #46617d; }
+.utility-btn { background: #4d5164; }
+.start-btn { background: #287b6e; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  button { min-height: 44px; padding: 9px 10px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Draw safe ribbons through open space, seal territory, and avoid moving hazards while claiming the grid. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Ribbon Capture | AI and Sons Games">
+  <meta property="og:description" content="Draw safe ribbons through open space, seal territory, and avoid moving hazards while claiming the grid. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/ribboncapture">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ribbon Capture | AI and Sons Games">
+  <meta name="twitter:description" content="Draw safe ribbons through open space, seal territory, and avoid moving hazards while claiming the grid. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/ribboncapture">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Ribbon Capture","description":"Draw safe ribbons through open space, seal territory, and avoid moving hazards while claiming the grid. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/ribboncapture","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="stage">
+    <canvas id="game" width="960" height="640" aria-label="Ribbon Capture game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Claimed</span><b id="claimed">0%</b></div>
+    <div class="chip"><span>Target</span><b id="target">66%</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">110.0s</b></div>
+    <div class="chip bad"><span>Shields</span><b id="shields">3</b></div>
+    <div class="chip"><span>Trail</span><b id="trail">0</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Ribbon Capture controls">
+    <button id="upBtn" type="button" class="move-btn">Up</button>
+    <button id="leftBtn" type="button" class="move-btn">Left</button>
+    <button id="rightBtn" type="button" class="move-btn">Right</button>
+    <button id="downBtn" type="button" class="move-btn">Down</button>
+    <button id="startBtn" type="button" class="start-btn">Start</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+    <button id="clearBtn" type="button" class="utility-btn">Cancel Trail</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const hud = {
+  mode: document.getElementById('mode'),
+  claimed: document.getElementById('claimed'),
+  target: document.getElementById('target'),
+  time: document.getElementById('time'),
+  shields: document.getElementById('shields'),
+  trail: document.getElementById('trail'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const COLS = 30;
+const ROWS = 20;
+const CELL = 32;
+const W = canvas.width;
+const H = canvas.height;
+const TARGET_CLAIM = 66;
+const START_TIME = 110;
+const MOVE_INTERVAL = 0.075;
+const keys = new Set();
+const touch = { up: false, down: false, left: false, right: false };
+const directions = {
+  up: { c: 0, r: -1 },
+  down: { c: 0, r: 1 },
+  left: { c: -1, r: 0 },
+  right: { c: 1, r: 0 },
+};
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function keyFor(col, row) {
+  return `${col},${row}`;
+}
+
+function cellCenter(col, row) {
+  return {
+    x: col * CELL + CELL / 2,
+    y: row * CELL + CELL / 2,
+  };
+}
+
+function inBounds(col, row) {
+  return col >= 0 && col < COLS && row >= 0 && row < ROWS;
+}
+
+function makeGrid() {
+  const cells = [];
+  for (let row = 0; row < ROWS; row += 1) {
+    const line = [];
+    for (let col = 0; col < COLS; col += 1) {
+      line.push(col === 0 || row === 0 || col === COLS - 1 || row === ROWS - 1);
+    }
+    cells.push(line);
+  }
+  return cells;
+}
+
+function makeHazards() {
+  return [
+    { x: 520, y: 205, vx: 136, vy: 104, r: 13, color: '#ff6b84' },
+    { x: 725, y: 410, vx: -116, vy: 128, r: 14, color: '#ffd166' },
+    { x: 385, y: 492, vx: 154, vy: -102, r: 12, color: '#90e0ef' },
+  ];
+}
+
+function freshGame() {
+  return {
+    mode: 'menu',
+    grid: makeGrid(),
+    player: { col: 0, row: 10, dir: 'right', moveTimer: 0 },
+    lastSafe: { col: 0, row: 10 },
+    trail: [],
+    trailSet: new Set(),
+    hazards: makeHazards(),
+    time: START_TIME,
+    shields: 3,
+    score: 0,
+    coinsEarned: 0,
+    claimedPct: 0,
+    combo: 0,
+    invuln: 0,
+    pulse: 0,
+    shake: 0,
+    message: '',
+    messageTimer: 0,
+    startedAtLeastOnce: false,
+  };
+}
+
+let game = freshGame();
+let lastTime = performance.now();
+let advancing = false;
+
+function interiorCellCount() {
+  return (COLS - 2) * (ROWS - 2);
+}
+
+function claimedInteriorCells() {
+  let count = 0;
+  for (let row = 1; row < ROWS - 1; row += 1) {
+    for (let col = 1; col < COLS - 1; col += 1) {
+      if (game.grid[row][col]) count += 1;
+    }
+  }
+  return count;
+}
+
+function updateClaimedPct() {
+  game.claimedPct = Math.round((claimedInteriorCells() / interiorCellCount()) * 1000) / 10;
+}
+
+function round(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function setMessage(text, seconds = 1.25) {
+  game.message = text;
+  game.messageTimer = seconds;
+}
+
+function activeDirection() {
+  if (keys.has('arrowup') || keys.has('w') || touch.up) return 'up';
+  if (keys.has('arrowdown') || keys.has('s') || touch.down) return 'down';
+  if (keys.has('arrowleft') || keys.has('a') || touch.left) return 'left';
+  if (keys.has('arrowright') || keys.has('d') || touch.right) return 'right';
+  return '';
+}
+
+function isFilled(col, row) {
+  return inBounds(col, row) && game.grid[row][col];
+}
+
+function isTrail(col, row) {
+  return game.trailSet.has(keyFor(col, row));
+}
+
+function addTrailCell(col, row) {
+  const key = keyFor(col, row);
+  if (game.trailSet.has(key)) return false;
+  game.trailSet.add(key);
+  game.trail.push({ col, row });
+  return true;
+}
+
+function clearTrail() {
+  game.trail = [];
+  game.trailSet = new Set();
+}
+
+function resetAfterHit() {
+  clearTrail();
+  game.player.col = game.lastSafe.col;
+  game.player.row = game.lastSafe.row;
+  game.player.moveTimer = 0.16;
+  game.invuln = 1.15;
+  game.shake = 0.4;
+}
+
+function finishGame(mode) {
+  if (game.mode === mode) return;
+  game.mode = mode;
+  clearTrail();
+  if (mode === 'won' && game.coinsEarned === 0) {
+    const coins = 5 + Math.floor(game.score / 750);
+    addCoins(coins);
+    game.coinsEarned = coins;
+    maybeUnlock({ anyPlay: true, ribboncapture: { claimed: game.claimedPct, score: game.score } });
+  }
+  updateOverlay();
+}
+
+function loseShield(reason) {
+  if (game.invuln > 0 || game.mode !== 'playing') return;
+  game.shields -= 1;
+  game.score = Math.max(0, game.score - 80);
+  game.combo = 0;
+  setMessage(reason);
+  resetAfterHit();
+  if (game.shields <= 0) {
+    finishGame('lost');
+  }
+}
+
+function completeCapture() {
+  const hazardCells = new Set();
+  for (const hazard of game.hazards) {
+    const col = clamp(Math.floor(hazard.x / CELL), 1, COLS - 2);
+    const row = clamp(Math.floor(hazard.y / CELL), 1, ROWS - 2);
+    hazardCells.add(keyFor(col, row));
+  }
+
+  const reachable = new Set();
+  const queue = [];
+  for (const key of hazardCells) {
+    const [col, row] = key.split(',').map(Number);
+    if (!game.grid[row][col] && !game.trailSet.has(key)) {
+      reachable.add(key);
+      queue.push({ col, row });
+    }
+  }
+
+  while (queue.length) {
+    const current = queue.shift();
+    for (const delta of Object.values(directions)) {
+      const nextCol = current.col + delta.c;
+      const nextRow = current.row + delta.r;
+      const nextKey = keyFor(nextCol, nextRow);
+      if (!inBounds(nextCol, nextRow) || game.grid[nextRow][nextCol] || game.trailSet.has(nextKey) || reachable.has(nextKey)) {
+        continue;
+      }
+      reachable.add(nextKey);
+      queue.push({ col: nextCol, row: nextRow });
+    }
+  }
+
+  let captured = 0;
+  for (let row = 1; row < ROWS - 1; row += 1) {
+    for (let col = 1; col < COLS - 1; col += 1) {
+      const key = keyFor(col, row);
+      if (!game.grid[row][col] && !reachable.has(key)) {
+        game.grid[row][col] = true;
+        captured += 1;
+      }
+    }
+  }
+
+  for (const cell of game.trail) {
+    if (!game.grid[cell.row][cell.col]) {
+      game.grid[cell.row][cell.col] = true;
+      captured += 1;
+    }
+  }
+
+  game.combo += 1;
+  const previousPct = game.claimedPct;
+  updateClaimedPct();
+  const gain = Math.max(0, game.claimedPct - previousPct);
+  const bonus = Math.round(captured * 14 + gain * 28 + game.combo * 45);
+  game.score += bonus;
+  setMessage(captured > 0 ? `Claimed ${game.claimedPct.toFixed(1)}%` : 'Ribbon sealed');
+  clearTrail();
+  game.pulse = 0.45;
+
+  if (game.claimedPct >= TARGET_CLAIM) {
+    game.score += Math.floor(game.time * 8);
+    finishGame('won');
+  }
+}
+
+function stepPlayer(dt) {
+  const desired = activeDirection();
+  if (desired) game.player.dir = desired;
+  if (!desired) return;
+
+  game.player.moveTimer -= dt;
+  while (game.player.moveTimer <= 0) {
+    game.player.moveTimer += MOVE_INTERVAL;
+    const delta = directions[game.player.dir];
+    const nextCol = game.player.col + delta.c;
+    const nextRow = game.player.row + delta.r;
+    if (!inBounds(nextCol, nextRow)) return;
+    if (isTrail(nextCol, nextRow)) return;
+
+    const wasTrailing = game.trail.length > 0;
+    game.player.col = nextCol;
+    game.player.row = nextRow;
+
+    if (isFilled(nextCol, nextRow)) {
+      game.lastSafe = { col: nextCol, row: nextRow };
+      if (wasTrailing) completeCapture();
+      return;
+    }
+
+    addTrailCell(nextCol, nextRow);
+  }
+}
+
+function isSolidPixel(x, y) {
+  const col = clamp(Math.floor(x / CELL), 0, COLS - 1);
+  const row = clamp(Math.floor(y / CELL), 0, ROWS - 1);
+  return isFilled(col, row);
+}
+
+function updateHazards(dt) {
+  const speedScale = 1 + Math.min(0.42, game.claimedPct / 180);
+  for (const hazard of game.hazards) {
+    let nextX = hazard.x + hazard.vx * speedScale * dt;
+    let nextY = hazard.y + hazard.vy * speedScale * dt;
+
+    if (nextX < CELL + hazard.r || nextX > W - CELL - hazard.r || isSolidPixel(nextX + Math.sign(hazard.vx) * hazard.r, hazard.y)) {
+      hazard.vx *= -1;
+      nextX = hazard.x + hazard.vx * speedScale * dt;
+    }
+    if (nextY < CELL + hazard.r || nextY > H - CELL - hazard.r || isSolidPixel(hazard.x, nextY + Math.sign(hazard.vy) * hazard.r)) {
+      hazard.vy *= -1;
+      nextY = hazard.y + hazard.vy * speedScale * dt;
+    }
+
+    hazard.x = clamp(nextX, CELL + hazard.r, W - CELL - hazard.r);
+    hazard.y = clamp(nextY, CELL + hazard.r, H - CELL - hazard.r);
+  }
+}
+
+function checkHazardHits() {
+  if (game.invuln > 0 || game.trail.length === 0) return;
+
+  const playerCenter = cellCenter(game.player.col, game.player.row);
+  for (const hazard of game.hazards) {
+    if (Math.hypot(hazard.x - playerCenter.x, hazard.y - playerCenter.y) < hazard.r + CELL * 0.38) {
+      loseShield('Hazard crossed the ribbon');
+      return;
+    }
+
+    for (const cell of game.trail) {
+      const center = cellCenter(cell.col, cell.row);
+      if (Math.hypot(hazard.x - center.x, hazard.y - center.y) < hazard.r + CELL * 0.34) {
+        loseShield('Trail clipped');
+        return;
+      }
+    }
+  }
+}
+
+function startGame() {
+  if (game.mode === 'playing') return;
+  if (game.mode === 'won' || game.mode === 'lost') {
+    game = freshGame();
+  }
+  game.mode = 'playing';
+  if (!game.startedAtLeastOnce) {
+    game.startedAtLeastOnce = true;
+    rememberRecent('ribboncapture');
+    maybeUnlock({ anyPlay: true, ribboncapture: { claimed: 0, score: 0 } });
+  }
+  setMessage('Draw a ribbon');
+  updateOverlay();
+}
+
+function pauseGame() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+  }
+  updateOverlay();
+}
+
+function restartGame() {
+  game = freshGame();
+  startGame();
+}
+
+function cancelTrail() {
+  if (game.mode !== 'playing' || game.trail.length === 0) return;
+  clearTrail();
+  game.player.col = game.lastSafe.col;
+  game.player.row = game.lastSafe.row;
+  game.combo = 0;
+  setMessage('Trail canceled');
+}
+
+function update(dt) {
+  dt = Math.min(0.05, Math.max(0, dt));
+  if (game.messageTimer > 0) game.messageTimer = Math.max(0, game.messageTimer - dt);
+  if (game.invuln > 0) game.invuln = Math.max(0, game.invuln - dt);
+  if (game.pulse > 0) game.pulse = Math.max(0, game.pulse - dt * 1.8);
+  if (game.shake > 0) game.shake = Math.max(0, game.shake - dt * 1.8);
+
+  if (game.mode !== 'playing') return;
+
+  game.time = Math.max(0, game.time - dt);
+  if (game.time <= 0) {
+    finishGame('lost');
+    return;
+  }
+
+  stepPlayer(dt);
+  updateHazards(dt);
+  checkHazardHits();
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#243d5c');
+  bg.addColorStop(0.5, '#16283f');
+  bg.addColorStop(1, '#231b30');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff13';
+  for (let i = 0; i < 26; i += 1) {
+    const x = (i * 89 + 38) % W;
+    const y = (i * 53 + 27) % H;
+    ctx.beginPath();
+    ctx.arc(x, y, 2 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawGrid() {
+  for (let row = 0; row < ROWS; row += 1) {
+    for (let col = 0; col < COLS; col += 1) {
+      const x = col * CELL;
+      const y = row * CELL;
+      if (game.grid[row][col]) {
+        const edge = col === 0 || row === 0 || col === COLS - 1 || row === ROWS - 1;
+        ctx.fillStyle = edge ? '#2f5f79' : '#46b39f';
+        ctx.fillRect(x, y, CELL, CELL);
+        ctx.fillStyle = edge ? '#ffffff14' : '#ffffff20';
+        ctx.fillRect(x + 3, y + 3, CELL - 6, CELL - 6);
+      } else {
+        ctx.fillStyle = '#0c1525a8';
+        ctx.fillRect(x, y, CELL, CELL);
+      }
+    }
+  }
+
+  ctx.strokeStyle = '#ffffff10';
+  ctx.lineWidth = 1;
+  for (let col = 0; col <= COLS; col += 1) {
+    ctx.beginPath();
+    ctx.moveTo(col * CELL, 0);
+    ctx.lineTo(col * CELL, H);
+    ctx.stroke();
+  }
+  for (let row = 0; row <= ROWS; row += 1) {
+    ctx.beginPath();
+    ctx.moveTo(0, row * CELL);
+    ctx.lineTo(W, row * CELL);
+    ctx.stroke();
+  }
+}
+
+function drawTrail() {
+  if (!game.trail.length) return;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#ffe66d';
+  ctx.lineWidth = 11;
+  ctx.shadowColor = '#ffe66d';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  game.trail.forEach((cell, index) => {
+    const center = cellCenter(cell.col, cell.row);
+    if (index === 0) {
+      const safe = cellCenter(game.lastSafe.col, game.lastSafe.row);
+      ctx.moveTo(safe.x, safe.y);
+    }
+    ctx.lineTo(center.x, center.y);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawHazards() {
+  for (const hazard of game.hazards) {
+    const ring = 5 + Math.sin(performance.now() / 140 + hazard.x * 0.02) * 2;
+    ctx.save();
+    ctx.translate(hazard.x, hazard.y);
+    const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, hazard.r * 2.5);
+    glow.addColorStop(0, hazard.color);
+    glow.addColorStop(0.58, `${hazard.color}88`);
+    glow.addColorStop(1, '#00000000');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, hazard.r * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffffd8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, hazard.r + ring, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = hazard.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, hazard.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawPlayer() {
+  const center = cellCenter(game.player.col, game.player.row);
+  const blink = game.invuln > 0 && Math.floor(game.invuln * 12) % 2 === 0;
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.globalAlpha = blink ? 0.45 : 1;
+  ctx.fillStyle = game.trail.length ? '#ffe66d' : '#f8fbff';
+  ctx.strokeStyle = '#102033';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#253c5f';
+  ctx.beginPath();
+  const dir = directions[game.player.dir] || directions.right;
+  ctx.moveTo(dir.c * 16, dir.r * 16);
+  ctx.lineTo(-dir.r * 7 - dir.c * 5, dir.c * 7 - dir.r * 5);
+  ctx.lineTo(dir.r * 7 - dir.c * 5, -dir.c * 7 - dir.r * 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawTopStatus() {
+  ctx.save();
+  ctx.fillStyle = '#07101dcc';
+  ctx.fillRect(216, 14, 528, 38);
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '800 19px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const text = game.trail.length
+    ? `Return to green territory to seal ${game.trail.length} ribbon cells`
+    : `Claim ${TARGET_CLAIM}% by drawing ribbons through open space`;
+  ctx.fillText(text, 480, 34);
+  if (game.message && game.messageTimer > 0) {
+    ctx.fillStyle = '#ffe66d';
+    ctx.fillText(game.message, 480, 72);
+  }
+  ctx.restore();
+}
+
+function render() {
+  ctx.save();
+  if (game.shake > 0) {
+    const amp = 6 * game.shake;
+    ctx.translate(Math.sin(performance.now() / 32) * amp, Math.cos(performance.now() / 37) * amp);
+  }
+  drawBackground();
+  drawGrid();
+  if (game.pulse > 0) {
+    ctx.fillStyle = `rgba(255, 230, 109, ${game.pulse * 0.18})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  drawTrail();
+  drawHazards();
+  drawPlayer();
+  drawTopStatus();
+  ctx.restore();
+  updateHud();
+  updateOverlay();
+}
+
+function updateHud() {
+  updateClaimedPct();
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.claimed.textContent = `${game.claimedPct.toFixed(1)}%`;
+  hud.target.textContent = `${TARGET_CLAIM}%`;
+  hud.time.textContent = `${game.time.toFixed(1)}s`;
+  hud.shields.textContent = String(Math.max(0, game.shields));
+  hud.trail.textContent = String(game.trail.length);
+  hud.score.textContent = String(game.score);
+  hud.coins.textContent = String(profileState.coins + game.coinsEarned);
+}
+
+function updateOverlay() {
+  if (game.mode === 'playing') {
+    overlay.classList.remove('show');
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Ribbon Capture';
+  let body = `Claim ${TARGET_CLAIM}% of the grid by leaving safe territory, drawing a ribbon, and returning before a hazard crosses the active trail.`;
+  let primary = 'Start';
+  if (game.mode === 'paused') {
+    title = 'Paused';
+    body = 'The grid is paused with your current route preserved.';
+    primary = 'Resume';
+  } else if (game.mode === 'won') {
+    title = 'Grid Secured';
+    body = `Claimed ${game.claimedPct.toFixed(1)}% with ${game.score} points and earned ${game.coinsEarned} coins.`;
+    primary = 'Play Again';
+  } else if (game.mode === 'lost') {
+    title = 'Ribbon Broken';
+    body = `Claimed ${game.claimedPct.toFixed(1)}% before the run ended.`;
+    primary = 'Retry';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Move with arrows or WASD. Use Space to cancel an active trail, P to pause, R to restart, and F for fullscreen.</p>
+      <div class="row">
+        <button id="overlayStart" type="button">${primary}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayStart')?.addEventListener('click', startGame);
+  document.getElementById('overlayRestart')?.addEventListener('click', restartGame);
+}
+
+function loop(now) {
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+  if (!advancing) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+function bindHoldButton(id, name) {
+  const button = document.getElementById(id);
+  if (!button) return;
+  const set = (value) => {
+    touch[name] = value;
+  };
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    set(true);
+    button.setPointerCapture?.(event.pointerId);
+  });
+  button.addEventListener('pointerup', (event) => {
+    event.preventDefault();
+    set(false);
+  });
+  button.addEventListener('pointercancel', () => set(false));
+  button.addEventListener('pointerleave', () => set(false));
+}
+
+bindHoldButton('upBtn', 'up');
+bindHoldButton('downBtn', 'down');
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', restartGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+document.getElementById('clearBtn').addEventListener('click', cancelTrail);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'spacebar'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === 'enter') startGame();
+  else if (key === 'p') pauseGame();
+  else if (key === 'r') restartGame();
+  else if (key === 'f') toggleFullscreen();
+  else if (key === ' ' || key === 'spacebar') cancelTrail();
+  keys.add(key);
+});
+
+window.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+canvas.addEventListener('pointerdown', () => {
+  if (game.mode !== 'playing') startGame();
+});
+
+window.render_game_to_text = () => {
+  updateClaimedPct();
+  return JSON.stringify({
+    mode: game.mode,
+    coordinate_system: 'origin top-left; grid 30x20; x/col increases right; y/row increases down; each cell is 32 pixels',
+    player: {
+      col: game.player.col,
+      row: game.player.row,
+      direction: game.player.dir,
+      safe: isFilled(game.player.col, game.player.row),
+      invulnerable: game.invuln > 0,
+    },
+    objective: {
+      action: game.trail.length ? 'return_to_filled_territory' : 'draw_trail_from_filled_territory',
+      target_claim_percent: TARGET_CLAIM,
+    },
+    claimed_percent: round(game.claimedPct),
+    trail_cells: game.trail.map((cell) => ({ col: cell.col, row: cell.row })),
+    shields: Math.max(0, game.shields),
+    score: game.score,
+    time_remaining: round(game.time),
+    hazards: game.hazards.map((hazard) => ({
+      x: round(hazard.x),
+      y: round(hazard.y),
+      vx: round(hazard.vx),
+      vy: round(hazard.vy),
+      r: hazard.r,
+    })),
+    safe_cells: claimedInteriorCells(),
+    total_claimable_cells: interiorCellCount(),
+  });
+};
+
+window.advanceTime = (ms) => {
+  advancing = true;
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) {
+    update(1 / 60);
+  }
+  render();
+  advancing = false;
+};
+
+updateClaimedPct();
+render();
+requestAnimationFrame(loop);
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'ribboncapture', gameName: 'Ribbon Capture' });
+</script>
+</body>
+</html>
