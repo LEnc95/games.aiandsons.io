@@ -38,6 +38,21 @@ ender_game_to_text, dvanceTime).
 - Validation for polish pass:
   - Skill Playwright loop run: `output/web-game/pacman-polish-run1` (4 iterations, movement + pause/resume, state snapshots, screenshot review).
   - Frightened-mode regression check: `output/web-game/pacman-polish-frightened.png` plus state output confirmed all ghosts enter `frightened` and timer counts down.
+
+- New automation request (2026-05-08): add a game we do not already have to the website.
+- Plan: add `/tangletuner`, a standalone canvas signal-untangling puzzle with keyboard/touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback, coins on win, metadata registration, SEO refresh, and focused smoke tests.
+- Added `tangletuner/index.html` with receiver swapping gameplay, multi-level win/loss flow, keyboard/touch/pointer controls, fullscreen, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and feedback context.
+- Registered Tangle Tuner in `src/meta/games.js`.
+- Ran `npm run seo`; sitemap and SEO blocks now include `/tangletuner`.
+- Ran `npm run feedback:sync-linear`; local Linear seed artifacts were regenerated and live provisioning was skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not set.
+- Validation:
+  - After rebasing on `origin/main`, `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs` passed.
+  - `npm run feedback:check-daily` passed.
+  - Direct module checks passed for `src/meta/games.js` uniqueness, Tangle Tuner metadata, `src/meta/feedback.js` coverage, sitemap entry, Linear seed rows, SEO block, feedback mount, and deterministic hook presence.
+  - `$WEB_GAME_CLIENT` passed against `/tangletuner` on a temporary Node static server, producing screenshots and state snapshots in `output/web-game/tangletuner-push-smoke`.
+  - Screenshot inspection confirmed visible gameplay, receiver selection, colored crossing wires, pulse markers, and readable status text; no `errors-*.json` files were emitted.
+  - Browserless DOM/canvas stub smoke passed: solved level 1, advanced via `window.advanceTime`, then solved all four boards to `won` with score and coin reward.
+  - Static route smoke passed with a temporary Node server returning HTTP 200 for `/tangletuner`.
   - Mobile emulation check: `output/web-game/pacman-polish-mobile.png` with touch controls visible/usable and responsive HUD layout.
   - Console/runtime errors observed: none.
 - Additional visible polish pass applied in `pacman/index.html`:

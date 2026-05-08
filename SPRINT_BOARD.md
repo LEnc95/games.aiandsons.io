@@ -353,3 +353,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-05-05] Key PR links: none merged for this date.
 - [nightly 2026-05-06] Tracked changes: 2 commit(s) - Improve Audio Agar movement feedback; Add Aero Courier game.
 - [nightly 2026-05-06] Key PR links: none merged for this date.
+- [nightly 2026-05-07] Tracked changes: 1 commit(s) - Add Ribbon Capture and fix health check routing.
+- [nightly 2026-05-07] Key PR links: none merged for this date.

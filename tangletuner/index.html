@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Tangle Tuner | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background: linear-gradient(145deg, #121827 0%, #183649 46%, #382638 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid #ffffff66;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #f5fbff73;
+  background: #122033;
+  box-shadow: 0 20px 52px #000000a3;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #ffffff75;
+  background: #111c2ff4;
+  box-shadow: 0 16px 34px #00000085;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); }
+p { margin: 0 0 10px; color: #dceaf0; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #f7fbff70;
+  background: #306775f2;
+  color: #f8fdff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(97vw, 1080px);
+  border-radius: 12px;
+  border: 1px solid #f7fbff52;
+  background: #111c2fef;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 9px;
+  border: 1px solid #ffffff2f;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cad9e1;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(97vw, 1080px);
+  border-radius: 12px;
+  border: 1px solid #f7fbff52;
+  background: #111c2fef;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.select-btn { background: #4b637e; }
+.swap-btn { background: #6a5a92; }
+.start-btn { background: #2b7d70; }
+.utility-btn { background: #4d5164; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  button { min-height: 44px; padding: 9px 10px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Swap receiver sockets, untangle crossing signal lines, and tune every pulse board before the timer expires. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Tangle Tuner | AI and Sons Games">
+  <meta property="og:description" content="Swap receiver sockets, untangle crossing signal lines, and tune every pulse board before the timer expires. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/tangletuner">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tangle Tuner | AI and Sons Games">
+  <meta name="twitter:description" content="Swap receiver sockets, untangle crossing signal lines, and tune every pulse board before the timer expires. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/tangletuner">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Tangle Tuner","description":"Swap receiver sockets, untangle crossing signal lines, and tune every pulse board before the timer expires. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/tangletuner","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="stage">
+    <canvas id="game" width="1080" height="675" aria-label="Tangle Tuner game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Level</span><b id="level">1/4</b></div>
+    <div class="chip bad"><span>Tangles</span><b id="crossings">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">75.0s</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip good"><span>Streak</span><b id="streak">0</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Tangle Tuner controls">
+    <button id="selectUpBtn" type="button" class="select-btn">Select Up</button>
+    <button id="selectDownBtn" type="button" class="select-btn">Select Down</button>
+    <button id="swapUpBtn" type="button" class="swap-btn">Swap Up</button>
+    <button id="swapDownBtn" type="button" class="swap-btn">Swap Down</button>
+    <button id="startBtn" type="button" class="start-btn">Start</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const hud = {
+  mode: document.getElementById('mode'),
+  level: document.getElementById('level'),
+  crossings: document.getElementById('crossings'),
+  time: document.getElementById('time'),
+  moves: document.getElementById('moves'),
+  streak: document.getElementById('streak'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const LEFT_X = 168;
+const RIGHT_X = 864;
+const PANEL_TOP = 92;
+const SLOT_GAP = 92;
+const SLOT_COUNT = 6;
+const LEVELS = [
+  { name: 'Loose Patch', order: [1, 0, 2, 4, 3, 5], time: 64, par: 2 },
+  { name: 'Cross Talk', order: [2, 0, 4, 1, 5, 3], time: 76, par: 7 },
+  { name: 'Bent Relay', order: [4, 2, 5, 0, 3, 1], time: 88, par: 11 },
+  { name: 'Signal Knot', order: [5, 1, 3, 0, 4, 2], time: 96, par: 12 },
+];
+const COLORS = ['#6ee7ff', '#ffcf5a', '#ff7e9f', '#84f07d', '#b992ff', '#ff9f4a'];
+const LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+let lastTimestamp = 0;
+let manualStepping = false;
+let pointerDown = null;
+
+const game = {
+  mode: 'menu',
+  levelIndex: 0,
+  order: LEVELS[0].order.slice(),
+  selected: 0,
+  timeLeft: LEVELS[0].time,
+  moves: 0,
+  levelMoves: 0,
+  streak: 0,
+  score: 0,
+  pulse: 0,
+  message: 'Select a receiver and swap it up or down until the signal lines stop crossing.',
+  levelCompleteTimer: 0,
+  coinsEarned: 0,
+  startedAtLeastOnce: false,
+  solvedLevels: 0,
+  lastCrossings: 0,
+};
+
+function slotY(index) {
+  return PANEL_TOP + index * SLOT_GAP;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function countCrossings(order = game.order) {
+  let total = 0;
+  for (let i = 0; i < order.length; i += 1) {
+    for (let j = i + 1; j < order.length; j += 1) {
+      if (order[i] > order[j]) total += 1;
+    }
+  }
+  return total;
+}
+
+function getCrossingDetails(order = game.order) {
+  const crossings = [];
+  for (let i = 0; i < order.length; i += 1) {
+    for (let j = i + 1; j < order.length; j += 1) {
+      if (order[i] <= order[j]) continue;
+      const point = lineIntersection(
+        { x: LEFT_X, y: slotY(order[i]) },
+        { x: RIGHT_X, y: slotY(i) },
+        { x: LEFT_X, y: slotY(order[j]) },
+        { x: RIGHT_X, y: slotY(j) },
+      );
+      if (point) crossings.push({ a: order[i], b: order[j], x: point.x, y: point.y });
+    }
+  }
+  return crossings;
+}
+
+function lineIntersection(a, b, c, d) {
+  const denominator = (a.x - b.x) * (c.y - d.y) - (a.y - b.y) * (c.x - d.x);
+  if (Math.abs(denominator) < 0.0001) return null;
+  const t = ((a.x - c.x) * (c.y - d.y) - (a.y - c.y) * (c.x - d.x)) / denominator;
+  const u = -((a.x - b.x) * (a.y - c.y) - (a.y - b.y) * (a.x - c.x)) / denominator;
+  if (t <= 0.04 || t >= 0.96 || u <= 0.04 || u >= 0.96) return null;
+  return {
+    x: a.x + t * (b.x - a.x),
+    y: a.y + t * (b.y - a.y),
+  };
+}
+
+function cubicPoint(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  return {
+    x: mt * mt * mt * p0.x + 3 * mt * mt * t * p1.x + 3 * mt * t * t * p2.x + t * t * t * p3.x,
+    y: mt * mt * mt * p0.y + 3 * mt * mt * t * p1.y + 3 * mt * t * t * p2.y + t * t * t * p3.y,
+  };
+}
+
+function curveFor(sourceIndex, rightIndex) {
+  const p0 = { x: LEFT_X, y: slotY(sourceIndex) };
+  const p3 = { x: RIGHT_X, y: slotY(rightIndex) };
+  const bend = (rightIndex - sourceIndex) * 24;
+  return {
+    p0,
+    p1: { x: LEFT_X + 220, y: p0.y + bend },
+    p2: { x: RIGHT_X - 220, y: p3.y - bend },
+    p3,
+  };
+}
+
+function modeLabel() {
+  if (game.mode === 'levelComplete') return 'TUNED';
+  if (game.mode === 'won') return 'WON';
+  if (game.mode === 'lost') return 'LOST';
+  return game.mode.toUpperCase();
+}
+
+function updateHud() {
+  const crossings = countCrossings();
+  hud.mode.textContent = modeLabel();
+  hud.level.textContent = `${Math.min(game.levelIndex + 1, LEVELS.length)}/${LEVELS.length}`;
+  hud.crossings.textContent = String(crossings);
+  hud.time.textContent = `${Math.max(0, game.timeLeft).toFixed(1)}s`;
+  hud.moves.textContent = String(game.moves);
+  hud.streak.textContent = String(game.streak);
+  hud.score.textContent = String(game.score);
+  hud.coins.textContent = String(profileState.coins);
+}
+
+function showOverlay(title, body, primary = 'Start') {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: Up/Down selects a receiver, Left swaps it upward, Right or Space swaps it downward. P pauses, R restarts, F toggles fullscreen. Touch: use the controls or tap receiver sockets.</p>
+      <div class="row">
+        <button id="overlayStartBtn" type="button">${primary}</button>
+        <button id="overlayFullscreenBtn" type="button">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayStartBtn')?.addEventListener('click', () => {
+    if (game.mode === 'paused') {
+      setMode('playing');
+    } else {
+      startGame();
+    }
+  });
+  document.getElementById('overlayFullscreenBtn')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function updateOverlay() {
+  if (game.mode === 'menu') {
+    showOverlay(
+      'Tangle Tuner',
+      'Untangle each signal board by reordering the receiver sockets. Every useful swap clears crossings, builds a streak, and keeps the pulse network stable.',
+      'Start Tune',
+    );
+    return;
+  }
+  if (game.mode === 'paused') {
+    showOverlay('Paused', 'The current board is held in place.', 'Resume');
+    return;
+  }
+  if (game.mode === 'levelComplete') {
+    const level = LEVELS[game.levelIndex];
+    showOverlay(
+      'Board Tuned',
+      `${level.name} cleared in ${game.levelMoves} moves. Next board is loading.`,
+      'Continue',
+    );
+    return;
+  }
+  if (game.mode === 'won') {
+    showOverlay(
+      'Network Tuned',
+      `All boards are clear. Final score: ${game.score}. Coins earned: ${game.coinsEarned}.`,
+      'Play Again',
+    );
+    return;
+  }
+  if (game.mode === 'lost') {
+    showOverlay(
+      'Signal Dropped',
+      `The timer expired on ${LEVELS[game.levelIndex].name}. Score: ${game.score}.`,
+      'Retry',
+    );
+    return;
+  }
+  hideOverlay();
+}
+
+function setMode(nextMode) {
+  game.mode = nextMode;
+  updateOverlay();
+  updateHud();
+}
+
+function loadLevel(levelIndex) {
+  const level = LEVELS[levelIndex];
+  game.levelIndex = levelIndex;
+  game.order = level.order.slice();
+  game.selected = 0;
+  game.timeLeft = level.time;
+  game.levelMoves = 0;
+  game.levelCompleteTimer = 0;
+  game.lastCrossings = countCrossings();
+  game.message = `${level.name}: clear every crossing.`;
+}
+
+function startGame() {
+  game.moves = 0;
+  game.streak = 0;
+  game.score = 0;
+  game.coinsEarned = 0;
+  game.solvedLevels = 0;
+  loadLevel(0);
+  if (!game.startedAtLeastOnce) {
+    game.startedAtLeastOnce = true;
+    rememberRecent('tangletuner');
+    maybeUnlock({ anyPlay: true, tangletuner: { solved: 0, score: 0 } });
+  }
+  setMode('playing');
+}
+
+function finishGame() {
+  game.solvedLevels = LEVELS.length;
+  const timeBonus = Math.round(Math.max(0, game.timeLeft) * 6);
+  game.score += 500 + timeBonus;
+  if (game.coinsEarned === 0) {
+    const coins = 5 + Math.floor(game.score / 700);
+    addCoins(coins);
+    game.coinsEarned = coins;
+    maybeUnlock({ anyPlay: true, tangletuner: { solved: LEVELS.length, score: game.score } });
+  }
+  setMode('won');
+}
+
+function completeLevel() {
+  const level = LEVELS[game.levelIndex];
+  const parBonus = Math.max(0, level.par - game.levelMoves) * 60;
+  const timeBonus = Math.round(Math.max(0, game.timeLeft) * 4);
+  game.score += 260 + parBonus + timeBonus;
+  game.solvedLevels = Math.max(game.solvedLevels, game.levelIndex + 1);
+  if (game.levelIndex >= LEVELS.length - 1) {
+    finishGame();
+    return;
+  }
+  game.levelCompleteTimer = 1.0;
+  setMode('levelComplete');
+}
+
+function loseGame() {
+  game.timeLeft = 0;
+  game.streak = 0;
+  setMode('lost');
+}
+
+function selectSlot(delta) {
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (game.mode !== 'playing') return;
+  game.selected = clamp(game.selected + delta, 0, SLOT_COUNT - 1);
+  updateHud();
+}
+
+function swapSelected(delta) {
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (game.mode !== 'playing') return;
+  const target = game.selected + delta;
+  if (target < 0 || target >= SLOT_COUNT) return;
+
+  const before = countCrossings();
+  const nextOrder = game.order.slice();
+  [nextOrder[game.selected], nextOrder[target]] = [nextOrder[target], nextOrder[game.selected]];
+  game.order = nextOrder;
+  game.selected = target;
+  game.moves += 1;
+  game.levelMoves += 1;
+
+  const after = countCrossings();
+  const improvement = before - after;
+  if (improvement > 0) {
+    game.streak += 1;
+    game.score += improvement * 120 + game.streak * 15;
+    game.message = `${improvement} crossing${improvement === 1 ? '' : 's'} cleared.`;
+  } else if (improvement === 0) {
+    game.streak = 0;
+    game.score = Math.max(0, game.score - 10);
+    game.message = 'No crossing changed.';
+  } else {
+    game.streak = 0;
+    game.score = Math.max(0, game.score - 25);
+    game.message = 'That added a crossing.';
+  }
+  game.lastCrossings = after;
+
+  if (after === 0) {
+    completeLevel();
+  } else {
+    updateHud();
+  }
+}
+
+function continueFromLevelComplete() {
+  if (game.mode !== 'levelComplete') return;
+  loadLevel(game.levelIndex + 1);
+  setMode('playing');
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    setMode('paused');
+  } else if (game.mode === 'paused') {
+    setMode('playing');
+  } else if (game.mode === 'levelComplete') {
+    continueFromLevelComplete();
+  } else {
+    startGame();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function update(dt) {
+  game.pulse = (game.pulse + dt * 0.42) % 1;
+  if (game.mode === 'playing') {
+    game.timeLeft -= dt;
+    if (game.timeLeft <= 0) {
+      loseGame();
+    }
+  } else if (game.mode === 'levelComplete') {
+    game.levelCompleteTimer -= dt;
+    if (game.levelCompleteTimer <= 0) {
+      continueFromLevelComplete();
+    }
+  }
+  updateHud();
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#10213b');
+  bg.addColorStop(0.52, '#143b4a');
+  bg.addColorStop(1, '#34233a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.strokeStyle = '#d5f4ff';
+  ctx.lineWidth = 1;
+  for (let x = 60; x < W; x += 60) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 52; y < H; y += 52) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#09132399';
+  drawRoundedRect(56, 44, W - 112, H - 88, 26);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff30';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTerminalRail(x, label, alignRight = false) {
+  ctx.save();
+  ctx.fillStyle = '#0c1829e0';
+  drawRoundedRect(x - 54, PANEL_TOP - 54, 108, SLOT_GAP * (SLOT_COUNT - 1) + 108, 22);
+  ctx.fill();
+  ctx.strokeStyle = '#f8fbff38';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#dcecff';
+  ctx.font = '700 14px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, PANEL_TOP - 28);
+  ctx.restore();
+
+  for (let i = 0; i < SLOT_COUNT; i += 1) {
+    const y = slotY(i);
+    const selected = !alignRight && false;
+    ctx.save();
+    ctx.fillStyle = alignRight && i === game.selected ? '#ffffff2a' : '#ffffff12';
+    ctx.strokeStyle = alignRight && i === game.selected ? '#ffffff' : '#ffffff45';
+    ctx.lineWidth = alignRight && i === game.selected ? 4 : 2;
+    ctx.beginPath();
+    ctx.arc(x, y, selected ? 24 : 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = alignRight ? COLORS[game.order[i]] : COLORS[i];
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#091323';
+    ctx.font = '900 13px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(alignRight ? LABELS[game.order[i]] : LABELS[i], x, y + 1);
+    ctx.restore();
+  }
+}
+
+function drawWires() {
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let rightIndex = 0; rightIndex < SLOT_COUNT; rightIndex += 1) {
+    const sourceIndex = game.order[rightIndex];
+    const curve = curveFor(sourceIndex, rightIndex);
+    ctx.strokeStyle = COLORS[sourceIndex];
+    ctx.globalAlpha = 0.28;
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(curve.p0.x, curve.p0.y);
+    ctx.bezierCurveTo(curve.p1.x, curve.p1.y, curve.p2.x, curve.p2.y, curve.p3.x, curve.p3.y);
+    ctx.stroke();
+    ctx.globalAlpha = 0.94;
+    ctx.lineWidth = rightIndex === game.selected ? 6 : 4;
+    ctx.beginPath();
+    ctx.moveTo(curve.p0.x, curve.p0.y);
+    ctx.bezierCurveTo(curve.p1.x, curve.p1.y, curve.p2.x, curve.p2.y, curve.p3.x, curve.p3.y);
+    ctx.stroke();
+
+    const pulseT = (game.pulse + sourceIndex * 0.13) % 1;
+    const pulse = cubicPoint(curve.p0, curve.p1, curve.p2, curve.p3, pulseT);
+    ctx.globalAlpha = game.mode === 'playing' ? 1 : 0.65;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pulse.x, pulse.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = COLORS[sourceIndex];
+    ctx.beginPath();
+    ctx.arc(pulse.x, pulse.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawCrossings() {
+  const crossings = getCrossingDetails();
+  for (const crossing of crossings) {
+    ctx.save();
+    ctx.translate(crossing.x, crossing.y);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#ffec8a';
+    ctx.globalAlpha = 0.95;
+    ctx.fillRect(-9, -9, 18, 18);
+    ctx.strokeStyle = '#ff7e9f';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-10, -10, 20, 20);
+    ctx.restore();
+  }
+}
+
+function drawStatusStrip() {
+  const level = LEVELS[game.levelIndex] || LEVELS[LEVELS.length - 1];
+  const crossings = countCrossings();
+  ctx.save();
+  ctx.fillStyle = '#091323cc';
+  drawRoundedRect(118, H - 72, W - 236, 44, 14);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff25';
+  ctx.stroke();
+  ctx.fillStyle = '#edf7ff';
+  ctx.font = '800 18px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  const detail = game.mode === 'playing'
+    ? `${level.name}: ${crossings} crossing${crossings === 1 ? '' : 's'} left. ${game.message}`
+    : game.message;
+  ctx.fillText(detail, W / 2, H - 44);
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  drawWires();
+  drawCrossings();
+  drawTerminalRail(LEFT_X, 'Sources');
+  drawTerminalRail(RIGHT_X, 'Receivers', true);
+  drawStatusStrip();
+}
+
+function loop(timestamp) {
+  if (!lastTimestamp) lastTimestamp = timestamp;
+  const dt = Math.min(0.033, Math.max(0, (timestamp - lastTimestamp) / 1000));
+  lastTimestamp = timestamp;
+  if (!manualStepping) {
+    update(dt);
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = event.touches?.[0]?.clientX ?? event.changedTouches?.[0]?.clientX ?? event.clientX;
+  const clientY = event.touches?.[0]?.clientY ?? event.changedTouches?.[0]?.clientY ?? event.clientY;
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function slotAtPoint(point) {
+  if (Math.abs(point.x - RIGHT_X) > 84) return -1;
+  let best = -1;
+  let bestDistance = 999;
+  for (let i = 0; i < SLOT_COUNT; i += 1) {
+    const distance = Math.abs(point.y - slotY(i));
+    if (distance < bestDistance) {
+      best = i;
+      bestDistance = distance;
+    }
+  }
+  return bestDistance <= 44 ? best : -1;
+}
+
+function handleSlotChoice(index) {
+  if (index < 0) return;
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startGame();
+  }
+  if (game.mode !== 'playing') return;
+  if (Math.abs(index - game.selected) === 1) {
+    swapSelected(index - game.selected);
+  } else {
+    game.selected = index;
+    updateHud();
+  }
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  const point = canvasPoint(event);
+  pointerDown = { point, slot: slotAtPoint(point) };
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startGame();
+  }
+});
+
+canvas.addEventListener('pointerup', (event) => {
+  event.preventDefault();
+  const point = canvasPoint(event);
+  const slot = slotAtPoint(point);
+  if (pointerDown && pointerDown.slot === game.selected && slot === game.selected) {
+    pointerDown = null;
+    return;
+  }
+  handleSlotChoice(slot);
+  pointerDown = null;
+});
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === 'arrowup' || key === 'w') selectSlot(-1);
+  if (key === 'arrowdown' || key === 's') selectSlot(1);
+  if (key === 'arrowleft' || key === 'a') swapSelected(-1);
+  if (key === 'arrowright' || key === 'd' || key === ' ') swapSelected(1);
+  if (key === 'enter') {
+    if (game.mode === 'levelComplete') continueFromLevelComplete();
+    else startGame();
+  }
+  if (key === 'p') togglePause();
+  if (key === 'r') startGame();
+  if (key === 'f') toggleFullscreen();
+});
+
+document.getElementById('selectUpBtn').addEventListener('click', () => selectSlot(-1));
+document.getElementById('selectDownBtn').addEventListener('click', () => selectSlot(1));
+document.getElementById('swapUpBtn').addEventListener('click', () => swapSelected(-1));
+document.getElementById('swapDownBtn').addEventListener('click', () => swapSelected(1));
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+function renderGameToText() {
+  const crossings = getCrossingDetails();
+  const wires = game.order.map((source, rightIndex) => ({
+    sourceLabel: LABELS[source],
+    sourceIndex: source,
+    source: { x: LEFT_X, y: slotY(source) },
+    receiverIndex: rightIndex,
+    receiver: { x: RIGHT_X, y: slotY(rightIndex) },
+    selected: rightIndex === game.selected,
+  }));
+  return JSON.stringify({
+    coordinateSystem: 'canvas origin top-left, x increases right, y increases down',
+    mode: game.mode,
+    level: {
+      index: game.levelIndex,
+      count: LEVELS.length,
+      name: LEVELS[game.levelIndex]?.name || '',
+      par: LEVELS[game.levelIndex]?.par || 0,
+    },
+    timeLeft: Number(game.timeLeft.toFixed(2)),
+    score: game.score,
+    moves: game.moves,
+    levelMoves: game.levelMoves,
+    streak: game.streak,
+    crossingsRemaining: countCrossings(),
+    selectedReceiverIndex: game.selected,
+    receiverOrderTopToBottom: game.order.map((source) => LABELS[source]),
+    wires,
+    crossings: crossings.map((crossing) => ({
+      labels: [LABELS[crossing.a], LABELS[crossing.b]],
+      x: Math.round(crossing.x),
+      y: Math.round(crossing.y),
+    })),
+    pulsePhase: Number(game.pulse.toFixed(3)),
+    solvedLevels: game.solvedLevels,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) {
+    update(1 / 60);
+  }
+  draw();
+  manualStepping = false;
+  lastTimestamp = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+game.lastCrossings = countCrossings();
+updateOverlay();
+updateHud();
+draw();
+requestAnimationFrame(loop);
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'tangletuner', gameName: 'Tangle Tuner' });
+</script>
+</body>
+</html>

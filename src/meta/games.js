@@ -90,5 +90,6 @@ export const GAMES = [
   { slug:'nebulacurl',     name:'Nebula Curl',         emoji:'\u{1F94C}', scoreHint:'rings',      url:'/nebulacurl',    desc:'Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings.', earnsCoins:true },
   { slug:'aerocourier',    name:'Aero Courier',        emoji:'\u2708\uFE0F', scoreHint:'delivered', url:'/aerocourier',  desc:'Pilot a glider through wind lanes, collect color-coded parcels, and deliver them to matching rooftop pads before dusk.', earnsCoins:true },
   { slug:'ribboncapture',  name:'Ribbon Capture',      emoji:'\u{1F397}\uFE0F', scoreHint:'claimed', url:'/ribboncapture', desc:'Draw safe ribbons through open space, seal territory, and avoid moving hazards while claiming the grid.', earnsCoins:true },
+  { slug:'tangletuner',    name:'Tangle Tuner',        emoji:'\u{1F500}', scoreHint:'untangled',  url:'/tangletuner',   desc:'Swap receiver sockets, untangle crossing signal lines, and tune every pulse board before the timer expires.', earnsCoins:true },
 ];
 

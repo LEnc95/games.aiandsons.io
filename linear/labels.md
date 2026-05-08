@@ -106,5 +106,6 @@
 - game/nebulacurl
 - game/aerocourier
 - game/ribboncapture
+- game/tangletuner
 
 Generated from `src/meta/feedback.js`.
