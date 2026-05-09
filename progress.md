@@ -2698,3 +2698,27 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `npm run test:feedback-smoke:raw` could not use port `4173` because that port is already occupied by a different local server. Running `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4176` against a verified local server reached HTTP 200, then failed at Chromium launch with `spawn EPERM`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect the generated screenshots.
+
+## 2026-05-09 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Chosen game: Sundial Sprint (`/sundialsprint`), an original canvas arcade game where players collect hourglass shards while rotating sundial shadows drain their light.
+- Initial integration changes:
+  - Added `sundialsprint/index.html` with keyboard/touch controls, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Sundial Sprint in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata regenerated with Sundial Sprint included.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for both module scripts after SEO injection.
+  - `npm run feedback:check-daily`: pass.
+  - Direct in-process test module runs passed: `node tests/unit/games.test.mjs` and `node tests/feedback-coverage.integration.test.mjs`.
+  - Metadata artifact check passed for `GAMES`, `FEEDBACK_GAMES`, sitemap, Linear label, and Linear baseline row; both metadata lists now report 93 games.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/sundialsprint/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, triggered dash cooldown, advanced deterministic time, drove keyboard movement toward a shard, collected 1 shard, and kept finite player state.
+  - `git diff --check` on Sundial Sprint integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced to inspect.
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4178` failed at the same Chromium launch step with `spawn EPERM`.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs` also failed at Node test-runner worker launch with `spawn EPERM`, while the same modules passed when executed directly in-process.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated gameplay screenshots.

@@ -107,5 +107,6 @@
 - game/aerocourier
 - game/ribboncapture
 - game/tangletuner
+- game/sundialsprint
 
 Generated from `src/meta/feedback.js`.

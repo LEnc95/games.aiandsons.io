@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Sundial Sprint | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #17202a;
+  background:
+    radial-gradient(70% 56% at 20% 16%, #ffe9a6 0%, transparent 68%),
+    radial-gradient(52% 46% at 82% 78%, #8bd8d0 0%, transparent 72%),
+    linear-gradient(145deg, #f6c85f 0%, #d98952 48%, #35486f 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid #ffffff70;
+  padding: 8px 12px;
+  background: #00000070;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 12px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 16 / 10;
+  max-height: min(66dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #fff4c58a;
+  background: #f3c56b;
+  box-shadow: 0 20px 52px #1a182ab0;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 14px;
+  border: 1px solid #fff6c982;
+  background: #fff6d9f2;
+  box-shadow: 0 16px 34px #22182a70;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(30px, 4vw, 44px); color: #17202a; }
+p { margin: 0 0 10px; color: #314055; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #ffffff99;
+  background: #295f74;
+  color: #f7fcff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(96vw, 1080px);
+  border-radius: 12px;
+  border: 1px solid #fff8d866;
+  background: #17233df2;
+  color: #f7fbff;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 9px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c9dbec;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1080px);
+  border-radius: 12px;
+  border: 1px solid #fff8d866;
+  background: #17233df2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.move-btn { background: #315e78; }
+.dash-btn { background: #a75334; }
+.utility-btn { background: #4d5164; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  button { min-height: 44px; padding: 9px 10px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Race across a living sundial, collect hourglass shards, and dash through rotating shadows before your light runs out. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Sundial Sprint | AI and Sons Games">
+  <meta property="og:description" content="Race across a living sundial, collect hourglass shards, and dash through rotating shadows before your light runs out. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/sundialsprint">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sundial Sprint | AI and Sons Games">
+  <meta name="twitter:description" content="Race across a living sundial, collect hourglass shards, and dash through rotating shadows before your light runs out. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/sundialsprint">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Sundial Sprint","description":"Race across a living sundial, collect hourglass shards, and dash through rotating shadows before your light runs out. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/sundialsprint","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="stage">
+    <canvas id="game" width="1120" height="700" aria-label="Sundial Sprint game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Shards</span><b id="shards">0/18</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">80.0s</b></div>
+    <div class="chip bad"><span>Light</span><b id="light">100%</b></div>
+    <div class="chip"><span>Dash</span><b id="dash">Ready</b></div>
+    <div class="chip"><span>Danger</span><b id="danger">Clear</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Sundial Sprint controls">
+    <button id="upBtn" type="button" class="move-btn">Up</button>
+    <button id="leftBtn" type="button" class="move-btn">Left</button>
+    <button id="rightBtn" type="button" class="move-btn">Right</button>
+    <button id="downBtn" type="button" class="move-btn">Down</button>
+    <button id="dashBtn" type="button" class="dash-btn">Dash</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const hud = {
+  mode: document.getElementById('mode'),
+  shards: document.getElementById('shards'),
+  time: document.getElementById('time'),
+  light: document.getElementById('light'),
+  dash: document.getElementById('dash'),
+  danger: document.getElementById('danger'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const CENTER = { x: W * 0.5, y: H * 0.53 };
+const ARENA_RADIUS = 286;
+const INNER_SAFE_RADIUS = 46;
+const TOTAL_SECONDS = 80;
+const TARGET_SHARDS = 18;
+const SHADOW_COUNT = 3;
+const SHADOW_WIDTH = 0.34;
+const TAU = Math.PI * 2;
+
+let seed = 7927;
+let raf = 0;
+let lastFrame = performance.now();
+let controlled = false;
+let startedOnce = false;
+
+const state = {
+  mode: 'menu',
+  result: null,
+  elapsed: 0,
+  timeLeft: TOTAL_SECONDS,
+  light: 100,
+  score: 0,
+  shardsCollected: 0,
+  coinsEarned: 0,
+  shadowAngle: -0.8,
+  shadowSpeed: 0.78,
+  spawnTimer: 0,
+  dashTimer: 0,
+  dashCooldown: 0,
+  invulnerable: 0,
+  danger: false,
+  player: { x: CENTER.x, y: CENTER.y + 190, vx: 0, vy: 0, radius: 16 },
+  input: { up: false, down: false, left: false, right: false },
+  shards: [],
+  bursts: [],
+  logs: ['Collect hourglass shards while the sundial shadows sweep the floor.'],
+};
+
+function rand() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+}
+
+function randRange(min, max) {
+  return min + rand() * (max - min);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeAngle(angle) {
+  let a = angle % TAU;
+  if (a < 0) a += TAU;
+  return a;
+}
+
+function angleDelta(a, b) {
+  let d = normalizeAngle(a) - normalizeAngle(b);
+  if (d > Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+
+function addLog(line) {
+  state.logs.unshift(line);
+  if (state.logs.length > 4) state.logs.length = 4;
+}
+
+function polar(radius, angle) {
+  return {
+    x: CENTER.x + Math.cos(angle) * radius,
+    y: CENTER.y + Math.sin(angle) * radius,
+  };
+}
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function playerRadiusFromCenter() {
+  return Math.hypot(state.player.x - CENTER.x, state.player.y - CENTER.y);
+}
+
+function playerAngle() {
+  return Math.atan2(state.player.y - CENTER.y, state.player.x - CENTER.x);
+}
+
+function isPointInShadow(point) {
+  const radius = Math.hypot(point.x - CENTER.x, point.y - CENTER.y);
+  if (radius < INNER_SAFE_RADIUS || radius > ARENA_RADIUS + 8) return false;
+  const angle = Math.atan2(point.y - CENTER.y, point.x - CENTER.x);
+  for (let i = 0; i < SHADOW_COUNT; i += 1) {
+    const shadow = state.shadowAngle + (i * TAU) / SHADOW_COUNT;
+    if (Math.abs(angleDelta(angle, shadow)) <= SHADOW_WIDTH) return true;
+  }
+  return false;
+}
+
+function showOverlay(title, body, actionLabel, actionFn) {
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: move with WASD or arrows, dash with Space or Enter, pause with P, restart with R, fullscreen with F. Touch players can use the control buttons.</p>
+      <div class="row">
+        <button id="overlayAction" type="button">${actionLabel}</button>
+        <button id="overlayFullscreen" type="button">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', actionFn, { once: true });
+  document.getElementById('overlayFullscreen')?.addEventListener('click', toggleFullscreen);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.textContent = '';
+}
+
+function resetState() {
+  seed = 7927;
+  state.mode = 'menu';
+  state.result = null;
+  state.elapsed = 0;
+  state.timeLeft = TOTAL_SECONDS;
+  state.light = 100;
+  state.score = 0;
+  state.shardsCollected = 0;
+  state.coinsEarned = 0;
+  state.shadowAngle = -0.8;
+  state.shadowSpeed = 0.78;
+  state.spawnTimer = 0.2;
+  state.dashTimer = 0;
+  state.dashCooldown = 0;
+  state.invulnerable = 0;
+  state.danger = false;
+  state.player = { x: CENTER.x, y: CENTER.y + 190, vx: 0, vy: 0, radius: 16 };
+  state.input = { up: false, down: false, left: false, right: false };
+  state.shards = [];
+  state.bursts = [];
+  state.logs = ['Collect hourglass shards while the sundial shadows sweep the floor.'];
+  for (let i = 0; i < 7; i += 1) spawnShard(true);
+}
+
+function startGame() {
+  resetState();
+  state.mode = 'running';
+  hideOverlay();
+  if (!startedOnce) {
+    startedOnce = true;
+    try {
+      rememberRecent('sundialsprint');
+      maybeUnlock({ anyPlay: true, sundialsprint: { result: 'started', score: 0, shards: 0 } });
+    } catch {}
+  }
+}
+
+function finishGame(result) {
+  if (state.mode === 'ended') return;
+  state.mode = 'ended';
+  state.result = result;
+  const won = result === 'won';
+  const timeBonus = Math.round(state.timeLeft * 7);
+  if (won) state.score += 700 + timeBonus;
+  const coins = Math.max(5, Math.min(80, Math.floor(state.score / 55) + (won ? 12 : 4)));
+  state.coinsEarned = coins;
+  try {
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      sundialsprint: {
+        result,
+        score: state.score,
+        shards: state.shardsCollected,
+        light: Math.round(state.light),
+      },
+    });
+  } catch {}
+
+  const title = won ? 'Sun Path Restored' : 'Shadows Took the Dial';
+  const body = won
+    ? `You recovered ${state.shardsCollected} shards and banked ${coins} coins.`
+    : `Run ended with ${state.shardsCollected} shards and ${Math.max(0, Math.round(state.light))}% light. Coins +${coins}.`;
+  showOverlay(title, body, 'Play Again', startGame);
+}
+
+function spawnShard(initial = false) {
+  if (state.shards.length >= 8) return;
+  const radius = randRange(INNER_SAFE_RADIUS + 36, ARENA_RADIUS - 28);
+  const angle = randRange(-Math.PI, Math.PI);
+  const pos = polar(radius, angle);
+  state.shards.push({
+    id: `shard-${Math.round(rand() * 1e8)}`,
+    x: pos.x,
+    y: pos.y,
+    angle,
+    orbit: randRange(-0.24, 0.24),
+    pulse: randRange(0, TAU),
+    value: initial ? 90 : 110 + Math.floor(rand() * 50),
+  });
+}
+
+function attemptDash() {
+  if (state.mode !== 'running' || state.dashCooldown > 0) return;
+  state.dashTimer = 0.22;
+  state.dashCooldown = 1.45;
+  state.invulnerable = Math.max(state.invulnerable, 0.26);
+  state.bursts.push({ x: state.player.x, y: state.player.y, age: 0, color: '#fff6b0' });
+  addLog('Dash burst cut through the shade.');
+}
+
+function togglePause() {
+  if (state.mode === 'running') {
+    state.mode = 'paused';
+    showOverlay('Paused', 'The sundial holds its current shadow pattern.', 'Resume', () => {
+      if (state.mode === 'paused') {
+        state.mode = 'running';
+        hideOverlay();
+      }
+    });
+  } else if (state.mode === 'paused') {
+    state.mode = 'running';
+    hideOverlay();
+  } else {
+    startGame();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+
+function updatePlayer(dt) {
+  const ax = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
+  const ay = (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
+  const mag = Math.hypot(ax, ay) || 1;
+  const boost = state.dashTimer > 0 ? 1.78 : 1;
+  const accel = 690 * boost;
+  state.player.vx += (ax / mag) * accel * dt;
+  state.player.vy += (ay / mag) * accel * dt;
+  state.player.vx *= Math.pow(0.088, dt);
+  state.player.vy *= Math.pow(0.088, dt);
+  const maxSpeed = state.dashTimer > 0 ? 360 : 225;
+  const speed = Math.hypot(state.player.vx, state.player.vy);
+  if (speed > maxSpeed) {
+    state.player.vx = (state.player.vx / speed) * maxSpeed;
+    state.player.vy = (state.player.vy / speed) * maxSpeed;
+  }
+  state.player.x += state.player.vx * dt;
+  state.player.y += state.player.vy * dt;
+
+  const dx = state.player.x - CENTER.x;
+  const dy = state.player.y - CENTER.y;
+  const radius = Math.hypot(dx, dy);
+  const maxRadius = ARENA_RADIUS - state.player.radius;
+  if (radius > maxRadius) {
+    const scale = maxRadius / radius;
+    state.player.x = CENTER.x + dx * scale;
+    state.player.y = CENTER.y + dy * scale;
+    state.player.vx *= -0.18;
+    state.player.vy *= -0.18;
+  }
+}
+
+function updateShards(dt) {
+  state.spawnTimer -= dt;
+  if (state.spawnTimer <= 0) {
+    state.spawnTimer = Math.max(0.55, 1.4 - state.elapsed * 0.006);
+    spawnShard();
+  }
+
+  for (let i = state.shards.length - 1; i >= 0; i -= 1) {
+    const shard = state.shards[i];
+    shard.pulse += dt * 3.2;
+    if (shard.orbit) {
+      const radius = Math.hypot(shard.x - CENTER.x, shard.y - CENTER.y);
+      shard.angle += shard.orbit * dt;
+      const pos = polar(radius, shard.angle);
+      shard.x = pos.x;
+      shard.y = pos.y;
+    }
+
+    if (distance(state.player, shard) <= state.player.radius + 17) {
+      state.shards.splice(i, 1);
+      state.shardsCollected += 1;
+      state.score += shard.value + Math.round(Math.max(0, state.timeLeft));
+      state.light = Math.min(100, state.light + 4.5);
+      state.bursts.push({ x: shard.x, y: shard.y, age: 0, color: '#fff2a0' });
+      addLog(`Shard recovered (${state.shardsCollected}/${TARGET_SHARDS}).`);
+      if (state.shardsCollected >= TARGET_SHARDS) {
+        finishGame('won');
+        return;
+      }
+    }
+  }
+}
+
+function updateBursts(dt) {
+  for (let i = state.bursts.length - 1; i >= 0; i -= 1) {
+    state.bursts[i].age += dt;
+    if (state.bursts[i].age > 0.55) state.bursts.splice(i, 1);
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'running') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, TOTAL_SECONDS - state.elapsed);
+  state.shadowAngle = normalizeAngle(state.shadowAngle + state.shadowSpeed * dt);
+  state.shadowSpeed = 0.78 + Math.min(0.58, state.elapsed * 0.006);
+  state.dashTimer = Math.max(0, state.dashTimer - dt);
+  state.dashCooldown = Math.max(0, state.dashCooldown - dt);
+  state.invulnerable = Math.max(0, state.invulnerable - dt);
+
+  updatePlayer(dt);
+  updateShards(dt);
+  updateBursts(dt);
+  if (state.mode !== 'running') return;
+
+  state.danger = isPointInShadow(state.player);
+  if (state.danger && state.invulnerable <= 0) {
+    state.light -= 18 * dt;
+  } else if (!state.danger && playerRadiusFromCenter() <= INNER_SAFE_RADIUS + 28) {
+    state.light = Math.min(100, state.light + 8 * dt);
+  }
+
+  if (state.light <= 0) finishGame('lost');
+  else if (state.timeLeft <= 0) finishGame(state.shardsCollected >= TARGET_SHARDS ? 'won' : 'lost');
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#ffe49c');
+  sky.addColorStop(0.52, '#e0a861');
+  sky.addColorStop(1, '#32486f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.strokeStyle = '#fff8d8';
+  ctx.lineWidth = 1;
+  for (let x = 40; x < W; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x - 160, H);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSundial() {
+  ctx.save();
+  const base = ctx.createRadialGradient(CENTER.x, CENTER.y, 18, CENTER.x, CENTER.y, ARENA_RADIUS + 40);
+  base.addColorStop(0, '#fff6cf');
+  base.addColorStop(0.62, '#d49252');
+  base.addColorStop(1, '#6b4d5d');
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.arc(CENTER.x, CENTER.y, ARENA_RADIUS + 22, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#fff7d2';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  ctx.strokeStyle = '#653e38aa';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 24; i += 1) {
+    const a = (i / 24) * TAU;
+    const inner = polar(i % 2 === 0 ? ARENA_RADIUS - 42 : ARENA_RADIUS - 24, a);
+    const outer = polar(ARENA_RADIUS + 14, a);
+    ctx.beginPath();
+    ctx.moveTo(inner.x, inner.y);
+    ctx.lineTo(outer.x, outer.y);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#fffad7';
+  ctx.beginPath();
+  ctx.arc(CENTER.x, CENTER.y, INNER_SAFE_RADIUS, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#8a5a43';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#6b403c';
+  ctx.font = '900 18px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillText('SAFE', CENTER.x, CENTER.y + 6);
+  ctx.restore();
+}
+
+function drawShadows() {
+  ctx.save();
+  for (let i = 0; i < SHADOW_COUNT; i += 1) {
+    const angle = state.shadowAngle + (i * TAU) / SHADOW_COUNT;
+    ctx.beginPath();
+    ctx.moveTo(CENTER.x, CENTER.y);
+    ctx.arc(CENTER.x, CENTER.y, ARENA_RADIUS + 24, angle - SHADOW_WIDTH, angle + SHADOW_WIDTH);
+    ctx.closePath();
+    ctx.fillStyle = '#171b35a8';
+    ctx.fill();
+    ctx.strokeStyle = '#242b54c7';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawShards() {
+  for (const shard of state.shards) {
+    const pulse = 1 + Math.sin(shard.pulse) * 0.18;
+    ctx.save();
+    ctx.translate(shard.x, shard.y);
+    ctx.rotate(shard.pulse * 0.32);
+    ctx.fillStyle = '#fff7a8';
+    ctx.strokeStyle = '#9d5f2d';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -17 * pulse);
+    ctx.lineTo(11 * pulse, 0);
+    ctx.lineTo(0, 17 * pulse);
+    ctx.lineTo(-11 * pulse, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawPlayer() {
+  const p = state.player;
+  ctx.save();
+  if (state.dashTimer > 0 || state.invulnerable > 0) {
+    ctx.globalAlpha = 0.42;
+    ctx.fillStyle = '#fff8bf';
+    ctx.beginPath();
+    ctx.arc(p.x - p.vx * 0.09, p.y - p.vy * 0.09, p.radius * 1.75, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.fillStyle = state.danger && state.invulnerable <= 0 ? '#ff6f69' : '#2d6b7c';
+  ctx.strokeStyle = '#fff9cf';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.radius, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff9cf';
+  ctx.beginPath();
+  ctx.arc(p.x + 5, p.y - 5, 5, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBursts() {
+  for (const burst of state.bursts) {
+    const t = burst.age / 0.55;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - t);
+    ctx.strokeStyle = burst.color;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(burst.x, burst.y, 10 + t * 42, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawLabels() {
+  ctx.fillStyle = '#fff8d8';
+  ctx.font = '900 34px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Sundial Sprint', 28, 48);
+  ctx.font = '700 15px Trebuchet MS';
+  ctx.fillText('Recover shards, dash through shade, recharge in the center.', 30, 74);
+
+  ctx.font = '700 14px Trebuchet MS';
+  for (let i = 0; i < state.logs.length; i += 1) {
+    ctx.fillText(`- ${state.logs[i]}`, 30, 104 + i * 20);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawSundial();
+  drawShadows();
+  drawShards();
+  drawBursts();
+  drawPlayer();
+  drawLabels();
+}
+
+function syncHud() {
+  hud.mode.textContent = state.mode.toUpperCase();
+  hud.shards.textContent = `${state.shardsCollected}/${TARGET_SHARDS}`;
+  hud.time.textContent = `${Math.max(0, state.timeLeft).toFixed(1)}s`;
+  hud.light.textContent = `${Math.max(0, Math.round(state.light))}%`;
+  hud.dash.textContent = state.dashCooldown <= 0 ? 'Ready' : `${state.dashCooldown.toFixed(1)}s`;
+  hud.danger.textContent = state.danger ? 'Shadow' : 'Clear';
+  hud.score.textContent = String(Math.round(state.score));
+  hud.coins.textContent = String(Number(profileState?.coins || 0));
+  hud.light.parentElement.classList.toggle('bad', state.light < 30);
+  hud.light.parentElement.classList.toggle('warn', state.light >= 30 && state.light < 60);
+  hud.light.parentElement.classList.toggle('good', state.light >= 60);
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+  lastFrame = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    syncHud();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function mapKey(event, pressed) {
+  const code = event.code;
+  if (code === 'ArrowUp' || code === 'KeyW') { event.preventDefault(); state.input.up = pressed; return true; }
+  if (code === 'ArrowDown' || code === 'KeyS') { event.preventDefault(); state.input.down = pressed; return true; }
+  if (code === 'ArrowLeft' || code === 'KeyA') { event.preventDefault(); state.input.left = pressed; return true; }
+  if (code === 'ArrowRight' || code === 'KeyD') { event.preventDefault(); state.input.right = pressed; return true; }
+  return false;
+}
+
+function onKeyDown(event) {
+  if (mapKey(event, true)) return;
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); attemptDash(); return; }
+  if (event.code === 'KeyP') { event.preventDefault(); togglePause(); return; }
+  if (event.code === 'KeyR') { event.preventDefault(); startGame(); return; }
+  if (event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
+}
+
+function onKeyUp(event) {
+  mapKey(event, false);
+}
+
+function bindHoldButton(id, key) {
+  const btn = document.getElementById(id);
+  const press = (event) => { event.preventDefault(); state.input[key] = true; };
+  const release = (event) => { event.preventDefault(); state.input[key] = false; };
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
+}
+
+bindHoldButton('upBtn', 'up');
+bindHoldButton('downBtn', 'down');
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+document.getElementById('dashBtn').addEventListener('click', attemptDash);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+function renderGameToText() {
+  const shadows = Array.from({ length: SHADOW_COUNT }, (_, index) => {
+    const angle = normalizeAngle(state.shadowAngle + (index * TAU) / SHADOW_COUNT);
+    return {
+      index,
+      angle_radians: Number(angle.toFixed(4)),
+      angle_degrees: Number(((angle * 180) / Math.PI).toFixed(2)),
+      half_width_radians: SHADOW_WIDTH,
+    };
+  });
+  return JSON.stringify({
+    game: 'sundialsprint',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. Sundial center is (560,371). X increases right and Y increases down.',
+    objective: {
+      collect_shards: TARGET_SHARDS,
+      survive_seconds: TOTAL_SECONDS,
+      keep_light_above: 0,
+    },
+    resources: {
+      elapsed_seconds: Number(state.elapsed.toFixed(3)),
+      time_left_seconds: Number(state.timeLeft.toFixed(3)),
+      light_percent: Number(state.light.toFixed(2)),
+      score: Math.round(state.score),
+      shards_collected: state.shardsCollected,
+      shards_remaining_to_win: Math.max(0, TARGET_SHARDS - state.shardsCollected),
+      dash_cooldown_seconds: Number(state.dashCooldown.toFixed(3)),
+      dash_timer_seconds: Number(state.dashTimer.toFixed(3)),
+      invulnerable_seconds: Number(state.invulnerable.toFixed(3)),
+      in_shadow: state.danger,
+    },
+    arena: {
+      center: CENTER,
+      radius: ARENA_RADIUS,
+      safe_radius: INNER_SAFE_RADIUS,
+    },
+    player: {
+      x: Number(state.player.x.toFixed(2)),
+      y: Number(state.player.y.toFixed(2)),
+      vx: Number(state.player.vx.toFixed(2)),
+      vy: Number(state.player.vy.toFixed(2)),
+      radius: state.player.radius,
+      polar_radius: Number(playerRadiusFromCenter().toFixed(2)),
+      angle_radians: Number(playerAngle().toFixed(4)),
+    },
+    shadows,
+    shards: state.shards.map((shard) => ({
+      id: shard.id,
+      x: Number(shard.x.toFixed(2)),
+      y: Number(shard.y.toFixed(2)),
+      value: shard.value,
+      in_shadow: isPointInShadow(shard),
+    })),
+    recent_events: state.logs,
+    result: state.result,
+    coins: Number(profileState?.coins || 0),
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  syncHud();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+resetState();
+draw();
+syncHud();
+showOverlay(
+  'Sundial Sprint',
+  'Race across a living sundial, collect 18 hourglass shards, and keep your light from draining as rotating shadows sweep the floor.',
+  'Start Sprint',
+  startGame,
+);
+raf = requestAnimationFrame((now) => { lastFrame = now; frame(now); });
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'sundialsprint', gameName: 'Sundial Sprint' });
+</script>
+</body>
+</html>

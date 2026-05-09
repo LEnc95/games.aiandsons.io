@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-05-08
+
+### Added
+- Added and wired seven new games: `canal-lock`, `skyline-stacker`, `crane-cargo`, `audio-agar`, `aero-courier`, `ribbon-capture`, and `tangle-tuner`.
+- Added an authoritative Audio Agar multiplayer server path and deployment documentation.
+
+### Improved
+- Improved accessibility with blind-mode support for Dino/Flappy, stronger 2048 audio cues, accessible button/icon palette updates, and aria-label text alignment for WCAG 2.5.3.
+- Improved Audio Agar gameplay with expanded tactical blind guidance, movement feedback tuning, and live-route/health-check fixes.
+- Refreshed site metadata and launch-related SEO surfaces for newly added games.
+
+### Operations
+- Key PRs: [#151](https://github.com/LEnc95/games.aiandsons.io/pull/151), [#150](https://github.com/LEnc95/games.aiandsons.io/pull/150), [#149](https://github.com/LEnc95/games.aiandsons.io/pull/149), [#148](https://github.com/LEnc95/games.aiandsons.io/pull/148), [#147](https://github.com/LEnc95/games.aiandsons.io/pull/147).
+
 ## [1.1.0] - 2026-05-01
 
 ### Added
