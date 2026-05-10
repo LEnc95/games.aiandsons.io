@@ -46,3 +46,6 @@
 ## 2025-05-18 - Avoid O(N*M) Deduplication using Array.includes()
 **Learning:** Functions doing inner array membership checks with `.includes()` within loops like `.every()` lead to O(N*M) execution time as array sizes scale.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when performing lookups over arrays, dropping time complexity to linear O(N). When initializing expensive structures like a `Set` in the right-hand side of a short-circuit expression, wrap it in an IIFE to preserve lazy evaluation.
+## 2024-05-26 - O(N*M) Deduction in Missions Checking
+**Learning:** Functions doing inner array membership checks with `.includes()` within loops like `.every()` or `for...of` loops (like in `applyProgress` in `src/prog/missions.js`) lead to O(N*M) execution time as array sizes scale.
+**Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when performing lookups over arrays inside loops, dropping time complexity to linear O(N).
