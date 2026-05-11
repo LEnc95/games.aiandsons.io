@@ -46,3 +46,6 @@
 ## 2025-05-18 - Avoid O(N*M) Deduplication using Array.includes()
 **Learning:** Functions doing inner array membership checks with `.includes()` within loops like `.every()` lead to O(N*M) execution time as array sizes scale.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when performing lookups over arrays, dropping time complexity to linear O(N). When initializing expensive structures like a `Set` in the right-hand side of a short-circuit expression, wrap it in an IIFE to preserve lazy evaluation.
+## 2026-05-11 - Optimizing classroom game whitelist array lookups
+**Learning:** Checking an array with `.includes()` during a potentially repetitive verification logic (such as checking if a game is locked by classroom settings) adds unnecessary O(N) complexity for array sizes that scale.
+**Action:** When a set of simple strings like a game whitelist is verified inside a fast-path utility, memoize the normalized array into a `Set` to leverage O(1) membership lookups instead, but use lazy evaluation or reference checks to avoid constant initialization.

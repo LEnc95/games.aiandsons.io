@@ -555,7 +555,12 @@ export const isGameLockedByClassroom = (slug, now = Date.now()) => {
   if (!isClassroomSessionActive(now)) return false;
   const whitelist = state.classroom.gameWhitelist;
   if (!Array.isArray(whitelist) || whitelist.length === 0) return false;
-  return !whitelist.includes(slug);
+
+  if (!state.classroom._whitelistSet || state.classroom._whitelistArrayRef !== whitelist) {
+    state.classroom._whitelistSet = new Set(whitelist);
+    state.classroom._whitelistArrayRef = whitelist;
+  }
+  return !state.classroom._whitelistSet.has(slug);
 };
 
 export const hasTeacherPin = () => {
