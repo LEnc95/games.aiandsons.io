@@ -11,7 +11,13 @@ function makeMessageId() {
   if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
     return globalThis.crypto.randomUUID();
   }
-  return `${nowMs().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === "function") {
+    const buffer = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(buffer);
+    const seed = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${nowMs().toString(36)}-${seed.slice(0, 8)}`;
+  }
+  throw new Error("Secure random number generation is not supported in this environment.");
 }
 
 function safeJsonParse(raw) {
