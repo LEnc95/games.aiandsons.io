@@ -111,8 +111,7 @@ const randomToken = () => {
     const seed = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
     return `co_${seed.slice(0, 24)}`;
   }
-  const seed = `${Date.now()}_${Math.random().toString(16).slice(2)}_${Math.random().toString(16).slice(2)}`;
-  return `co_${seed.replace(/[^a-zA-Z0-9]/g, '').slice(0, 24)}`;
+  throw new Error("Secure random number generation is not supported in this environment.");
 };
 
 export const createCheckoutIntent = (planId) => {
