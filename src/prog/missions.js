@@ -344,6 +344,10 @@ const applyProgress = (bucket, entries, byId, payload) => {
   const rewardsNow = [];
   let changed = false;
 
+  // ⚡ Bolt: Use a Set for O(1) membership lookups to avoid O(N*M) scaling when iterating over entries.
+  const bucketCompletedSet = new Set(bucket.completed);
+  const bucketRewardedSet = new Set(bucket.rewarded);
+
   for (const entry of entries) {
     const def = byId.get(entry.id);
     if (!def) continue;
@@ -357,14 +361,16 @@ const applyProgress = (bucket, entries, byId, payload) => {
       changed = true;
     }
 
-    if (next >= entry.target && !bucket.completed.includes(entry.id)) {
+    if (next >= entry.target && !bucketCompletedSet.has(entry.id)) {
       bucket.completed = addUnique(bucket.completed, entry.id);
+      bucketCompletedSet.add(entry.id);
       completedNow.push(entry.id);
       changed = true;
     }
 
-    if (bucket.completed.includes(entry.id) && !bucket.rewarded.includes(entry.id)) {
+    if (bucketCompletedSet.has(entry.id) && !bucketRewardedSet.has(entry.id)) {
       bucket.rewarded = addUnique(bucket.rewarded, entry.id);
+      bucketRewardedSet.add(entry.id);
       state.coins = Math.max(0, state.coins + entry.rewardCoins);
       rewardsNow.push({ id: entry.id, coins: entry.rewardCoins });
       changed = true;
