@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Bubble Shooter | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #16202f;
+  background:
+    radial-gradient(42% 34% at 18% 12%, #ffeb9b 0%, transparent 72%),
+    radial-gradient(36% 36% at 84% 78%, #86e5cf 0%, transparent 74%),
+    linear-gradient(145deg, #f6a05d 0%, #4ba8ba 52%, #26395f 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1040px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 2px solid #ffffff85;
+  background: #f3fbff;
+  box-shadow: 0 20px 52px #1a2847a8;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 14px;
+  border: 1px solid #ffffff80;
+  background: #fffffff0;
+  box-shadow: 0 18px 38px #1a284780;
+  padding: 16px;
+}
+h1 { margin: 0 0 8px; font-size: clamp(30px, 4vw, 44px); color: #142033; }
+p { margin: 0 0 10px; color: #3d4d62; font-size: clamp(13px, 2vw, 15px); line-height: 1.45; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  border: 1px solid #ffffff99;
+  background: #286f8b;
+  color: #f7fcff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(96vw, 1040px);
+  border-radius: 12px;
+  border: 1px solid #ffffff66;
+  background: #182a46f2;
+  color: #f7fbff;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 9px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c9dbec;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.chip b { font-size: clamp(14px, 2.1vw, 18px); line-height: 1.1; }
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1040px);
+  border-radius: 12px;
+  border: 1px solid #ffffff66;
+  background: #182a46f2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.aim-btn { background: #2f6685; }
+.shoot-btn { background: #ad5434; }
+.utility-btn { background: #50576d; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  button { min-height: 44px; padding: 9px 10px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim, bank shots, and match colorful bubbles before the ceiling pressure reaches the danger line. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Bubble Shooter | AI and Sons Games">
+  <meta property="og:description" content="Aim, bank shots, and match colorful bubbles before the ceiling pressure reaches the danger line. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/bubbleshooter">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bubble Shooter | AI and Sons Games">
+  <meta name="twitter:description" content="Aim, bank shots, and match colorful bubbles before the ceiling pressure reaches the danger line. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/bubbleshooter">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Bubble Shooter","description":"Aim, bank shots, and match colorful bubbles before the ceiling pressure reaches the danger line. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/bubbleshooter","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <div class="stage">
+    <canvas id="game" width="960" height="640" aria-label="Bubble Shooter game canvas"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </div>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">MENU</b></div>
+    <div class="chip good"><span>Bubbles</span><b id="bubbles">0</b></div>
+    <div class="chip warn"><span>Shots</span><b id="shots">0/5</b></div>
+    <div class="chip"><span>Aim</span><b id="aim">0 deg</b></div>
+    <div class="chip"><span>Next</span><b id="next">-</b></div>
+    <div class="chip bad"><span>Danger</span><b id="danger">Safe</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Bubble Shooter controls">
+    <button id="leftBtn" type="button" class="aim-btn">Aim Left</button>
+    <button id="rightBtn" type="button" class="aim-btn">Aim Right</button>
+    <button id="shootBtn" type="button" class="shoot-btn">Shoot</button>
+    <button id="swapBtn" type="button" class="utility-btn">Swap</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+    <button id="centerBtn" type="button" class="utility-btn">Center</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  bubbles: document.getElementById('bubbles'),
+  shots: document.getElementById('shots'),
+  aim: document.getElementById('aim'),
+  next: document.getElementById('next'),
+  danger: document.getElementById('danger'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const GRID_COLS = 12;
+const GRID_ROWS = 13;
+const START_ROWS = 6;
+const R = 20;
+const COL_STEP = 38;
+const ROW_STEP = 34;
+const GRID_TOP = 58;
+const SHOOTER = { x: W / 2, y: H - 58 };
+const DANGER_Y = H - 156;
+const SHOT_SPEED = 560;
+const AIM_LIMIT = 68;
+const COLORS = [
+  { id: 'red', fill: '#f35b57', dark: '#b8393d', light: '#ffd2cc' },
+  { id: 'gold', fill: '#f7c846', dark: '#b5841f', light: '#fff1b4' },
+  { id: 'green', fill: '#5ec06c', dark: '#2f8748', light: '#d7ffd8' },
+  { id: 'blue', fill: '#48a4f0', dark: '#246db3', light: '#d7eeff' },
+  { id: 'violet', fill: '#a76bf2', dark: '#6a40aa', light: '#eadcff' },
+];
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+let seed = 45673;
+const keys = new Set();
+const hold = { left: false, right: false };
+
+const state = {
+  mode: 'menu',
+  grid: [],
+  active: null,
+  aim: 0,
+  queue: [],
+  shotsSinceDrop: 0,
+  totalShots: 0,
+  rowsAdded: 0,
+  score: 0,
+  popped: 0,
+  dropped: 0,
+  streak: 0,
+  comboFlash: 0,
+  coinsEarned: 0,
+  result: '',
+  logs: [],
+};
+
+function rand() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+}
+
+function pickColor(row = 0, col = 0) {
+  return COLORS[(row * 3 + col * 2 + Math.floor(rand() * COLORS.length)) % COLORS.length].id;
+}
+
+function colorInfo(id) {
+  return COLORS.find((color) => color.id === id) || COLORS[0];
+}
+
+function emptyRow() {
+  return Array.from({ length: GRID_COLS }, () => null);
+}
+
+function gridLeft(row) {
+  const offset = row % 2 ? COL_STEP / 2 : 0;
+  const width = (GRID_COLS - 1) * COL_STEP + offset;
+  return (W - width) / 2;
+}
+
+function cellCenter(row, col) {
+  return {
+    x: gridLeft(row) + col * COL_STEP,
+    y: GRID_TOP + row * ROW_STEP,
+  };
+}
+
+function validCell(row, col) {
+  return row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS;
+}
+
+function bubbleCount() {
+  let count = 0;
+  for (const row of state.grid) {
+    for (const cell of row) {
+      if (cell) count += 1;
+    }
+  }
+  return count;
+}
+
+function lowestBubbleY() {
+  let y = 0;
+  for (let row = 0; row < GRID_ROWS; row += 1) {
+    for (let col = 0; col < GRID_COLS; col += 1) {
+      if (state.grid[row][col]) y = Math.max(y, cellCenter(row, col).y + R);
+    }
+  }
+  return y;
+}
+
+function queueColorIds() {
+  return state.queue.map((id) => id);
+}
+
+function pushLog(message) {
+  state.logs = [message, ...state.logs].slice(0, 5);
+}
+
+function buildStartingGrid() {
+  const rows = [];
+  for (let row = 0; row < GRID_ROWS; row += 1) {
+    const cells = emptyRow();
+    if (row < START_ROWS) {
+      for (let col = 0; col < GRID_COLS; col += 1) {
+        const gap = row > 1 && ((row + col) % 7 === 0);
+        cells[col] = gap ? null : pickColor(row, col);
+      }
+    }
+    rows.push(cells);
+  }
+  rows[5][4] = 'blue';
+  rows[5][5] = 'blue';
+  rows[5][6] = 'blue';
+  return rows;
+}
+
+function refillQueue() {
+  while (state.queue.length < 3) {
+    state.queue.push(pickColor(2, state.queue.length + state.totalShots));
+  }
+}
+
+function resetGame(mode = 'menu') {
+  seed = 45673;
+  state.mode = mode;
+  state.grid = buildStartingGrid();
+  state.active = null;
+  state.aim = 0;
+  state.queue = [];
+  state.shotsSinceDrop = 0;
+  state.totalShots = 0;
+  state.rowsAdded = 0;
+  state.score = 0;
+  state.popped = 0;
+  state.dropped = 0;
+  state.streak = 0;
+  state.comboFlash = 0;
+  state.coinsEarned = 0;
+  state.result = '';
+  state.logs = ['Ready the launcher.'];
+  refillQueue();
+}
+
+function startGame() {
+  if (state.mode === 'paused') {
+    state.mode = 'playing';
+    pushLog('Resumed.');
+    return;
+  }
+  resetGame('playing');
+  rememberRecent('bubbleshooter');
+  maybeUnlock({ anyPlay: true, bubbleshooter: { started: true, score: 0 } });
+  pushLog('Round started.');
+}
+
+function finishGame(result) {
+  state.mode = result;
+  state.result = result;
+  state.active = null;
+  const coins = result === 'won'
+    ? Math.max(8, Math.min(25, Math.floor(state.score / 180)))
+    : Math.max(0, Math.min(6, Math.floor(state.score / 260)));
+  if (coins > 0 && state.coinsEarned === 0) {
+    addCoins(coins);
+    state.coinsEarned = coins;
+  }
+  maybeUnlock({
+    anyPlay: true,
+    bubbleshooter: {
+      result,
+      score: state.score,
+      popped: state.popped,
+      dropped: state.dropped,
+      shots: state.totalShots,
+    },
+  });
+  pushLog(result === 'won' ? 'Board cleared.' : 'Bubble line reached danger.');
+}
+
+function pauseGame() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    pushLog('Paused.');
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    pushLog('Resumed.');
+  }
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+function aimRadians() {
+  return (-90 + state.aim) * Math.PI / 180;
+}
+
+function setAim(value) {
+  state.aim = Math.max(-AIM_LIMIT, Math.min(AIM_LIMIT, value));
+}
+
+function shoot() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing' || state.active) return;
+  refillQueue();
+  const color = state.queue.shift();
+  refillQueue();
+  const angle = aimRadians();
+  state.active = {
+    x: SHOOTER.x,
+    y: SHOOTER.y,
+    vx: Math.cos(angle) * SHOT_SPEED,
+    vy: Math.sin(angle) * SHOT_SPEED,
+    color,
+  };
+  state.totalShots += 1;
+  state.shotsSinceDrop += 1;
+  state.streak = Math.max(0, state.streak - 1);
+  pushLog(`Shot ${color}.`);
+}
+
+function swapQueue() {
+  if (state.mode !== 'playing' || state.active || state.queue.length < 2) return;
+  const first = state.queue[0];
+  state.queue[0] = state.queue[1];
+  state.queue[1] = first;
+  pushLog('Swapped next shot.');
+}
+
+function neighbors(row, col) {
+  const odd = row % 2 === 1;
+  const offsets = odd
+    ? [[0, -1], [0, 1], [-1, 0], [-1, 1], [1, 0], [1, 1]]
+    : [[0, -1], [0, 1], [-1, -1], [-1, 0], [1, -1], [1, 0]];
+  return offsets
+    .map(([dr, dc]) => ({ row: row + dr, col: col + dc }))
+    .filter((cell) => validCell(cell.row, cell.col));
+}
+
+function connectedSame(row, col, color) {
+  const seen = new Set();
+  const stack = [{ row, col }];
+  const group = [];
+  while (stack.length) {
+    const cell = stack.pop();
+    const key = `${cell.row},${cell.col}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (!validCell(cell.row, cell.col) || state.grid[cell.row][cell.col] !== color) continue;
+    group.push(cell);
+    for (const next of neighbors(cell.row, cell.col)) stack.push(next);
+  }
+  return group;
+}
+
+function anchoredCells() {
+  const seen = new Set();
+  const stack = [];
+  for (let col = 0; col < GRID_COLS; col += 1) {
+    if (state.grid[0][col]) stack.push({ row: 0, col });
+  }
+  while (stack.length) {
+    const cell = stack.pop();
+    const key = `${cell.row},${cell.col}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    for (const next of neighbors(cell.row, cell.col)) {
+      if (state.grid[next.row][next.col] && !seen.has(`${next.row},${next.col}`)) {
+        stack.push(next);
+      }
+    }
+  }
+  return seen;
+}
+
+function findSnapCell(x, y) {
+  let best = null;
+  for (let row = 0; row < GRID_ROWS; row += 1) {
+    for (let col = 0; col < GRID_COLS; col += 1) {
+      if (state.grid[row][col]) continue;
+      const center = cellCenter(row, col);
+      const dist = Math.hypot(center.x - x, center.y - y);
+      if (!best || dist < best.dist) best = { row, col, dist };
+    }
+  }
+  return best;
+}
+
+function processPlacement(row, col) {
+  const color = state.grid[row][col];
+  const group = connectedSame(row, col, color);
+  if (group.length >= 3) {
+    for (const cell of group) state.grid[cell.row][cell.col] = null;
+    state.popped += group.length;
+    state.streak += 1;
+    state.score += group.length * 50 + state.streak * 30;
+    state.comboFlash = 0.35;
+    pushLog(`Popped ${group.length}.`);
+
+    const anchored = anchoredCells();
+    let drops = 0;
+    for (let r = 1; r < GRID_ROWS; r += 1) {
+      for (let c = 0; c < GRID_COLS; c += 1) {
+        if (state.grid[r][c] && !anchored.has(`${r},${c}`)) {
+          state.grid[r][c] = null;
+          drops += 1;
+        }
+      }
+    }
+    if (drops > 0) {
+      state.dropped += drops;
+      state.score += drops * 80;
+      pushLog(`Dropped ${drops} floaters.`);
+    }
+  } else {
+    state.streak = 0;
+    state.score += 10;
+    pushLog('No match.');
+  }
+
+  if (bubbleCount() === 0) finishGame('won');
+  else if (state.shotsSinceDrop >= 5) addPressureRow();
+  else if (lowestBubbleY() >= DANGER_Y) finishGame('lost');
+}
+
+function placeActiveBubble() {
+  const shot = state.active;
+  if (!shot) return;
+  const snap = findSnapCell(shot.x, shot.y);
+  if (!snap) {
+    finishGame('lost');
+    return;
+  }
+  state.grid[snap.row][snap.col] = shot.color;
+  state.active = null;
+  processPlacement(snap.row, snap.col);
+}
+
+function activeTouchesBubble() {
+  const shot = state.active;
+  if (!shot) return false;
+  for (let row = 0; row < GRID_ROWS; row += 1) {
+    for (let col = 0; col < GRID_COLS; col += 1) {
+      if (!state.grid[row][col]) continue;
+      const center = cellCenter(row, col);
+      if (Math.hypot(center.x - shot.x, center.y - shot.y) <= R * 1.86) return true;
+    }
+  }
+  return false;
+}
+
+function addPressureRow() {
+  state.shotsSinceDrop = 0;
+  state.rowsAdded += 1;
+  const lostRow = state.grid[GRID_ROWS - 1].some(Boolean);
+  state.grid.pop();
+  const newRow = emptyRow();
+  for (let col = 0; col < GRID_COLS; col += 1) {
+    const skip = (col + state.rowsAdded) % 9 === 0;
+    newRow[col] = skip ? null : pickColor(state.rowsAdded, col);
+  }
+  state.grid.unshift(newRow);
+  pushLog('Ceiling dropped.');
+  if (lostRow || lowestBubbleY() >= DANGER_Y) finishGame('lost');
+}
+
+function updateInput(dt) {
+  const left = keys.has('arrowleft') || keys.has('a') || hold.left;
+  const right = keys.has('arrowright') || keys.has('d') || hold.right;
+  if (left && !right) setAim(state.aim - 112 * dt);
+  if (right && !left) setAim(state.aim + 112 * dt);
+}
+
+function update(dt) {
+  if (state.mode !== 'playing') return;
+  updateInput(dt);
+  state.comboFlash = Math.max(0, state.comboFlash - dt);
+
+  if (state.active) {
+    const shot = state.active;
+    shot.x += shot.vx * dt;
+    shot.y += shot.vy * dt;
+    if (shot.x < R + 110) {
+      shot.x = R + 110;
+      shot.vx = Math.abs(shot.vx);
+    }
+    if (shot.x > W - R - 110) {
+      shot.x = W - R - 110;
+      shot.vx = -Math.abs(shot.vx);
+    }
+    if (shot.y <= GRID_TOP - R / 2 || activeTouchesBubble()) {
+      placeActiveBubble();
+    }
+    if (shot.y > H + R) {
+      state.active = null;
+      addPressureRow();
+    }
+  }
+}
+
+function drawBubble(x, y, colorId, radius = R, alpha = 1) {
+  const color = colorInfo(colorId);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const grad = ctx.createRadialGradient(x - radius * 0.35, y - radius * 0.4, radius * 0.2, x, y, radius);
+  grad.addColorStop(0, color.light);
+  grad.addColorStop(0.42, color.fill);
+  grad.addColorStop(1, color.dark);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#ffffffb8';
+  ctx.stroke();
+  ctx.fillStyle = '#ffffffa8';
+  ctx.beginPath();
+  ctx.arc(x - radius * 0.35, y - radius * 0.42, radius * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#eaffff');
+  sky.addColorStop(0.52, '#bdeef5');
+  sky.addColorStop(1, '#e5f4ff');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff66';
+  for (let i = 0; i < 9; i += 1) {
+    const x = 80 + i * 104;
+    const y = 72 + (i % 3) * 54;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 42, 15, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 28, y + 5, 34, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#24435a';
+  ctx.fillRect(100, 30, 8, DANGER_Y + 16);
+  ctx.fillRect(W - 108, 30, 8, DANGER_Y + 16);
+
+  ctx.strokeStyle = lowestBubbleY() > DANGER_Y - 42 ? '#e95555' : '#eaa342';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([10, 8]);
+  ctx.beginPath();
+  ctx.moveTo(112, DANGER_Y);
+  ctx.lineTo(W - 112, DANGER_Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawGrid() {
+  for (let row = 0; row < GRID_ROWS; row += 1) {
+    for (let col = 0; col < GRID_COLS; col += 1) {
+      const color = state.grid[row][col];
+      if (!color) continue;
+      const center = cellCenter(row, col);
+      drawBubble(center.x, center.y, color);
+    }
+  }
+}
+
+function drawAim() {
+  const angle = aimRadians();
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  ctx.save();
+  ctx.strokeStyle = '#182a46cc';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(SHOOTER.x, SHOOTER.y);
+  ctx.lineTo(SHOOTER.x + dx * 82, SHOOTER.y + dy * 82);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffffffcc';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(SHOOTER.x, SHOOTER.y);
+  ctx.lineTo(SHOOTER.x + dx * 84, SHOOTER.y + dy * 84);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawShooter() {
+  ctx.save();
+  ctx.fillStyle = '#182a46';
+  ctx.beginPath();
+  ctx.arc(SHOOTER.x, SHOOTER.y + 14, 44, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#eff8ff';
+  ctx.fillRect(SHOOTER.x - 48, SHOOTER.y + 14, 96, 26);
+  ctx.restore();
+  drawAim();
+  if (state.queue[0]) drawBubble(SHOOTER.x, SHOOTER.y, state.queue[0], 22);
+  if (state.queue[1]) drawBubble(SHOOTER.x - 72, SHOOTER.y + 18, state.queue[1], 15, 0.92);
+  if (state.queue[2]) drawBubble(SHOOTER.x - 108, SHOOTER.y + 18, state.queue[2], 12, 0.82);
+}
+
+function drawActive() {
+  if (state.active) drawBubble(state.active.x, state.active.y, state.active.color, R);
+}
+
+function drawText() {
+  ctx.save();
+  ctx.fillStyle = '#17243a';
+  ctx.font = '900 32px Trebuchet MS';
+  ctx.textAlign = 'left';
+  ctx.fillText('Bubble Shooter', 26, 44);
+  ctx.font = '700 14px Trebuchet MS';
+  ctx.fillText('Match 3 colors. Clear the board before the line reaches danger.', 28, 68);
+  ctx.textAlign = 'right';
+  ctx.fillText(`Score ${state.score}`, W - 26, 44);
+  ctx.fillText(`Shots ${state.shotsSinceDrop}/5`, W - 26, 66);
+  ctx.fillStyle = state.comboFlash > 0 ? '#b63d33' : '#415169';
+  for (let i = 0; i < state.logs.length; i += 1) {
+    ctx.fillText(state.logs[i], W - 26, 92 + i * 18);
+  }
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawGrid();
+  drawActive();
+  drawShooter();
+  drawText();
+}
+
+function updateHud() {
+  const count = bubbleCount();
+  hud.mode.textContent = state.mode.toUpperCase();
+  hud.bubbles.textContent = String(count);
+  hud.shots.textContent = `${state.shotsSinceDrop}/5`;
+  hud.aim.textContent = `${Math.round(state.aim)} deg`;
+  hud.next.textContent = state.queue.slice(0, 2).join(' / ');
+  const danger = Math.max(0, Math.round(DANGER_Y - lowestBubbleY()));
+  hud.danger.textContent = danger > 64 ? 'Safe' : `${danger}px`;
+  hud.score.textContent = String(state.score);
+  hud.coins.textContent = String(Number(profileState?.coins || 0) + state.coinsEarned);
+  hud.danger.parentElement.classList.toggle('bad', danger <= 36);
+  hud.danger.parentElement.classList.toggle('warn', danger > 36 && danger <= 80);
+  hud.danger.parentElement.classList.toggle('good', danger > 80);
+}
+
+function updateOverlay() {
+  if (state.mode === 'playing') {
+    overlay.classList.remove('show');
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Bubble Shooter';
+  let body = 'Aim, bank shots off the side rails, and match 3 bubbles of the same color before the ceiling pressure reaches the danger line.';
+  let primary = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'The current shot and board are paused.';
+    primary = 'Resume';
+  } else if (state.mode === 'won') {
+    title = 'Board Cleared';
+    body = `Cleared every bubble for ${state.score} points and earned ${state.coinsEarned} coins.`;
+    primary = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Pressure Reached';
+    body = `Popped ${state.popped} bubbles and scored ${state.score} before the line reached danger.`;
+    primary = 'Retry';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Use A/D or arrows to aim, Space to shoot, Q to swap, P to pause, R to restart, and F for fullscreen.</p>
+      <div class="row">
+        <button id="overlayStart" type="button">${primary}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayStart')?.addEventListener('click', startGame);
+  document.getElementById('overlayRestart')?.addEventListener('click', () => {
+    resetGame('playing');
+    rememberRecent('bubbleshooter');
+  });
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+  lastFrame = now;
+  if (!controlled) {
+    update(dt);
+    draw();
+    updateHud();
+    updateOverlay();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function bindHoldButton(id, name) {
+  const button = document.getElementById(id);
+  if (!button) return;
+  const set = (value) => {
+    hold[name] = value;
+  };
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    set(true);
+    button.setPointerCapture?.(event.pointerId);
+  });
+  button.addEventListener('pointerup', (event) => {
+    event.preventDefault();
+    set(false);
+  });
+  button.addEventListener('pointercancel', () => set(false));
+  button.addEventListener('pointerleave', () => set(false));
+}
+
+bindHoldButton('leftBtn', 'left');
+bindHoldButton('rightBtn', 'right');
+document.getElementById('shootBtn').addEventListener('click', shoot);
+document.getElementById('swapBtn').addEventListener('click', swapQueue);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', () => resetGame('playing'));
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+document.getElementById('centerBtn').addEventListener('click', () => setAim(0));
+
+canvas.addEventListener('pointerdown', (event) => {
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+  const angle = Math.atan2(y - SHOOTER.y, x - SHOOTER.x) * 180 / Math.PI;
+  setAim(angle + 90);
+  shoot();
+});
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', ' ', 'spacebar'].includes(key)) event.preventDefault();
+  if (key === ' ' || key === 'spacebar' || key === 'enter') shoot();
+  else if (key === 'q') swapQueue();
+  else if (key === 'p') pauseGame();
+  else if (key === 'r') resetGame('playing');
+  else if (key === 'f') toggleFullscreen();
+  keys.add(key);
+});
+
+window.addEventListener('keyup', (event) => {
+  keys.delete(event.key.toLowerCase());
+});
+
+function renderGameToText() {
+  const bubbles = [];
+  for (let row = 0; row < GRID_ROWS; row += 1) {
+    for (let col = 0; col < GRID_COLS; col += 1) {
+      const color = state.grid[row][col];
+      if (!color) continue;
+      const center = cellCenter(row, col);
+      bubbles.push({
+        row,
+        col,
+        color,
+        x: Number(center.x.toFixed(2)),
+        y: Number(center.y.toFixed(2)),
+      });
+    }
+  }
+
+  return JSON.stringify({
+    game: 'bubbleshooter',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. X increases right and Y increases down. Bubble grid rows start at y=58. Danger line is y=484.',
+    objective: {
+      action: 'aim and shoot bubbles to match 3 same-color bubbles before the grid reaches the danger line',
+      clear_remaining_bubbles: bubbleCount(),
+    },
+    launcher: {
+      x: SHOOTER.x,
+      y: SHOOTER.y,
+      aim_degrees: Number(state.aim.toFixed(2)),
+      next_colors: queueColorIds(),
+    },
+    active_shot: state.active ? {
+      x: Number(state.active.x.toFixed(2)),
+      y: Number(state.active.y.toFixed(2)),
+      vx: Number(state.active.vx.toFixed(2)),
+      vy: Number(state.active.vy.toFixed(2)),
+      color: state.active.color,
+    } : null,
+    resources: {
+      score: state.score,
+      shots_since_drop: state.shotsSinceDrop,
+      total_shots: state.totalShots,
+      rows_added: state.rowsAdded,
+      popped: state.popped,
+      dropped: state.dropped,
+      streak: state.streak,
+      danger_gap_px: Number(Math.max(0, DANGER_Y - lowestBubbleY()).toFixed(2)),
+      coins_earned: state.coinsEarned,
+    },
+    bubbles,
+    recent_events: state.logs,
+    result: state.result,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  updateHud();
+  updateOverlay();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+resetGame('menu');
+draw();
+updateHud();
+updateOverlay();
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+mountGameFeedback({ gameSlug: 'bubbleshooter', gameName: 'Bubble Shooter' });
+</script>
+</body>
+</html>

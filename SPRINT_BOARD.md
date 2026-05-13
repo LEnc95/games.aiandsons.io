@@ -357,3 +357,6 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-05-07] Key PR links: none merged for this date.
 - [nightly 2026-05-08] Tracked changes: 1 commit(s) - Add Tangle Tuner and refresh site metadata.
 - [nightly 2026-05-08] Key PR links: none merged for this date.
+
+- [nightly 2026-05-12] No repository commits found for this date.
+- [nightly 2026-05-12] Key PR links: none merged for this date.

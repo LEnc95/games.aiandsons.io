@@ -108,5 +108,6 @@
 - game/ribboncapture
 - game/tangletuner
 - game/sundialsprint
+- game/bubbleshooter
 
 Generated from `src/meta/feedback.js`.

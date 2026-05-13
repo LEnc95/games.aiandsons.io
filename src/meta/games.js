@@ -92,5 +92,6 @@ export const GAMES = [
   { slug:'ribboncapture',  name:'Ribbon Capture',      emoji:'\u{1F397}\uFE0F', scoreHint:'claimed', url:'/ribboncapture', desc:'Draw safe ribbons through open space, seal territory, and avoid moving hazards while claiming the grid.', earnsCoins:true },
   { slug:'tangletuner',    name:'Tangle Tuner',        emoji:'\u{1F500}', scoreHint:'untangled',  url:'/tangletuner',   desc:'Swap receiver sockets, untangle crossing signal lines, and tune every pulse board before the timer expires.', earnsCoins:true },
   { slug:'sundialsprint',  name:'Sundial Sprint',      emoji:'\u23F3',    scoreHint:'shards',     url:'/sundialsprint', desc:'Race across a living sundial, collect hourglass shards, and dash through rotating shadows before your light runs out.', earnsCoins:true },
+  { slug:'bubbleshooter',  name:'Bubble Shooter',      emoji:'\u{1FAE7}', scoreHint:'score',      url:'/bubbleshooter', desc:'Aim, bank shots, and match colorful bubbles before the ceiling pressure reaches the danger line.', earnsCoins:true },
 ];
 

@@ -2722,3 +2722,28 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs` also failed at Node test-runner worker launch with `spawn EPERM`, while the same modules passed when executed directly in-process.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated gameplay screenshots.
+
+## 2026-05-13 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Chosen game: Bubble Shooter (`/bubbleshooter`), a canvas bubble-matching shooter with bank shots, match-3 popping, floating bubble drops, and pressure rows.
+- Initial integration changes:
+  - Added `bubbleshooter/index.html` with keyboard/touch controls, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Bubble Shooter in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata regenerated with Bubble Shooter included.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for both module scripts after SEO injection.
+  - Metadata import check: pass; `GAMES` reports 94 games including Bubble Shooter.
+  - `node tests/unit/games.test.mjs`: pass.
+  - `node tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/bubbleshooter/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, fired the opening shot, popped 11 bubbles, updated score to 580, and kept finite text state.
+  - `git diff --check` on Bubble Shooter integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced to inspect.
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4182` failed at the same Chromium launch step with `spawn EPERM`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated gameplay screenshots.
