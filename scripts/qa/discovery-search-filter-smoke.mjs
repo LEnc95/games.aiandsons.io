@@ -33,6 +33,10 @@ function assert(condition, message) {
   }
 }
 
+function assertJsonEqual(actual, expected, message) {
+  assert(JSON.stringify(actual) === JSON.stringify(expected), message);
+}
+
 async function resetState(page) {
   await page.evaluate(() => {
     const keys = [];
@@ -81,6 +85,123 @@ async function main() {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await resetState(page);
     await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelector("#homepageMusicToggle")?.textContent?.trim() === "Music Off");
+    const musicInitialState = await page.evaluate(() => {
+      const media = document.querySelector("#homepageMusic");
+      const source = media?.querySelector("source");
+      const toggle = document.querySelector("#homepageMusicToggle");
+      const volume = document.querySelector("#homepageMusicVolume");
+      const status = document.querySelector("#homepageMusicStatus");
+      return {
+        mediaTag: media?.tagName || "",
+        source: source?.getAttribute("src") || "",
+        loop: Boolean(media?.loop),
+        preload: media?.getAttribute("preload") || "",
+        paused: Boolean(media?.paused),
+        toggleText: (toggle?.textContent || "").trim(),
+        pressed: toggle?.getAttribute("aria-pressed") || "",
+        volumeValue: volume?.value || "",
+        statusAriaLive: status?.getAttribute("aria-live") || "",
+        stored: localStorage.getItem("cadegames:v1:homepageMusic"),
+      };
+    });
+    assert(musicInitialState.mediaTag === "VIDEO", "Expected homepage music media element to render.");
+    assert(
+      musicInitialState.source === "/public/mp3/Overclocked_Playthrough.mp4",
+      "Expected homepage music source to use the Overclocked MP4.",
+    );
+    assert(musicInitialState.loop === true, "Expected homepage music media to loop.");
+    assert(musicInitialState.preload === "none", "Expected homepage music media to avoid preloading.");
+    assert(musicInitialState.paused === true, "Expected homepage music to start paused.");
+    assert(musicInitialState.toggleText === "Music Off", "Expected homepage music toggle to default to Music Off.");
+    assert(musicInitialState.pressed === "false", "Expected homepage music toggle to default to aria-pressed=false.");
+    assert(musicInitialState.volumeValue === "35", "Expected homepage music volume to default to 35.");
+    assert(musicInitialState.statusAriaLive === "polite", "Expected homepage music status to be polite.");
+    assert(musicInitialState.stored === null, "Expected homepage music to avoid storing enabled state on first load.");
+
+    await page.locator("#homepageMusicVolume").evaluate((input) => {
+      input.value = "58";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.waitForFunction(() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("cadegames:v1:homepageMusic") || "{}");
+        return stored.volume === 58 && !("enabled" in stored);
+      } catch {
+        return false;
+      }
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelector("#homepageMusicToggle")?.textContent?.trim() === "Music Off");
+    const musicReloadedState = await page.evaluate(() => {
+      const media = document.querySelector("#homepageMusic");
+      const toggle = document.querySelector("#homepageMusicToggle");
+      const volume = document.querySelector("#homepageMusicVolume");
+      const stored = JSON.parse(localStorage.getItem("cadegames:v1:homepageMusic") || "{}");
+      return {
+        paused: Boolean(media?.paused),
+        toggleText: (toggle?.textContent || "").trim(),
+        pressed: toggle?.getAttribute("aria-pressed") || "",
+        volumeValue: volume?.value || "",
+        mediaVolume: media?.volume,
+        stored,
+      };
+    });
+    assert(musicReloadedState.paused === true, "Expected homepage music to stay paused after reload.");
+    assert(musicReloadedState.toggleText === "Music Off", "Expected homepage music to remain off after reload.");
+    assert(musicReloadedState.pressed === "false", "Expected homepage music aria-pressed to remain false after reload.");
+    assert(musicReloadedState.volumeValue === "58", "Expected homepage music slider to restore saved volume.");
+    assert(musicReloadedState.mediaVolume === 0.58, "Expected homepage music element volume to restore saved volume.");
+    assertJsonEqual(musicReloadedState.stored, { volume: 58 }, "Expected homepage music storage to persist volume only.");
+
+    await page.evaluate(() => {
+      const media = document.querySelector("#homepageMusic");
+      window.__homepageMusicPlaying = false;
+      Object.defineProperty(media, "play", {
+        configurable: true,
+        value: () => {
+          window.__homepageMusicPlaying = true;
+          return Promise.resolve();
+        },
+      });
+      Object.defineProperty(media, "pause", {
+        configurable: true,
+        value: () => {
+          window.__homepageMusicPlaying = false;
+        },
+      });
+    });
+    await page.click("#homepageMusicToggle");
+    await page.waitForFunction(() => document.querySelector("#homepageMusicToggle")?.getAttribute("aria-pressed") === "true");
+    const musicEnabledState = await page.evaluate(() => ({
+      playing: Boolean(window.__homepageMusicPlaying),
+      toggleText: (document.querySelector("#homepageMusicToggle")?.textContent || "").trim(),
+      pressed: document.querySelector("#homepageMusicToggle")?.getAttribute("aria-pressed") || "",
+      stored: JSON.parse(localStorage.getItem("cadegames:v1:homepageMusic") || "{}"),
+    }));
+    assert(musicEnabledState.playing === true, "Expected homepage music play() to run after toggle.");
+    assert(musicEnabledState.toggleText === "Music On", "Expected homepage music toggle to show Music On.");
+    assert(musicEnabledState.pressed === "true", "Expected homepage music toggle to set aria-pressed=true.");
+    assertJsonEqual(musicEnabledState.stored, { volume: 58 }, "Expected enabling music not to persist enabled state.");
+
+    await page.click("#homepageMusicToggle");
+    await page.waitForFunction(() => document.querySelector("#homepageMusicToggle")?.getAttribute("aria-pressed") === "false");
+    const musicDisabledState = await page.evaluate(() => ({
+      playing: Boolean(window.__homepageMusicPlaying),
+      toggleText: (document.querySelector("#homepageMusicToggle")?.textContent || "").trim(),
+      pressed: document.querySelector("#homepageMusicToggle")?.getAttribute("aria-pressed") || "",
+      stored: JSON.parse(localStorage.getItem("cadegames:v1:homepageMusic") || "{}"),
+    }));
+    assert(musicDisabledState.playing === false, "Expected homepage music pause() to run after disabling.");
+    assert(musicDisabledState.toggleText === "Music Off", "Expected homepage music toggle to return to Music Off.");
+    assert(musicDisabledState.pressed === "false", "Expected homepage music toggle to set aria-pressed=false.");
+    assertJsonEqual(musicDisabledState.stored, { volume: 58 }, "Expected disabling music not to persist enabled state.");
+    summary.checks.push({
+      name: "home_music_controls",
+      pass: true,
+      data: { musicInitialState, musicReloadedState, musicEnabledState, musicDisabledState },
+    });
+
     await page.fill("#gameSearchInput", "tetris");
     await page.waitForFunction(() => {
       try {

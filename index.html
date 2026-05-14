@@ -77,6 +77,31 @@
       color: #fbbf24;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
+    .music-controls {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 8px;
+      border:2px solid var(--card-border);
+      border-radius:20px;
+      background:rgba(255,255,255,0.06);
+    }
+    .music-toggle[aria-pressed="true"] {
+      background:rgba(251,191,36,0.22);
+      border-color:rgba(251,191,36,0.5);
+      color:#fef3c7;
+    }
+    .music-volume-wrap { display:flex; align-items:center; gap:6px; color:#dbeafe; font-size:12px; font-weight:700; }
+    .music-volume { width:90px; accent-color:var(--accent); cursor:pointer; }
+    .music-status { color:#fed7aa; font-size:12px; font-weight:600; max-width:160px; }
+    .homepage-music-media {
+      position:absolute;
+      width:1px;
+      height:1px;
+      left:-9999px;
+      opacity:0;
+      pointer-events:none;
+    }
     .topbar-btn {
       padding: 8px 16px;
       background: var(--card-bg);
@@ -253,6 +278,7 @@
       .game-card { min-height:clamp(180px, 20vh, 220px); }
       .topbar { flex-direction:column; align-items:stretch; }
       .topbar-left, .topbar-right { justify-content:center; }
+      .music-controls { justify-content:center; width:100%; }
     }
   </style>
 
@@ -297,6 +323,14 @@
         <span>&#129689;</span>
         <span id="coins">0</span>
       </div>
+      <div class="music-controls" aria-label="Homepage music controls">
+        <button class="topbar-btn music-toggle" id="homepageMusicToggle" type="button" aria-pressed="false" aria-label="Enable homepage music">Music Off</button>
+        <label class="music-volume-wrap" for="homepageMusicVolume">
+          <span class="music-volume-label">Vol</span>
+          <input class="music-volume" id="homepageMusicVolume" type="range" min="0" max="100" step="1" value="35" aria-label="Homepage music volume" />
+        </label>
+        <span class="music-status" id="homepageMusicStatus" aria-live="polite"></span>
+      </div>
       <a href="/shop.html" class="topbar-btn">Shop</a>
       <a href="/pricing.html" class="topbar-btn">Plans</a>
       <a href="/school-license.html" class="topbar-btn">School Plans</a>
@@ -308,6 +342,9 @@
       <button class="topbar-btn" id="badgesBtn" aria-label="View collected Badges">Badges</button>
     </div>
   </div>
+  <video id="homepageMusic" class="homepage-music-media" loop preload="none" playsinline aria-hidden="true" tabindex="-1">
+    <source src="/public/mp3/Overclocked_Playthrough.mp4" type="video/mp4">
+  </video>
 
   <div class="wrap">
     <header>
@@ -943,6 +980,7 @@
       import { getPremiumChallengeTrack } from './src/prog/premium-challenges.js';
       import { loadAndApplyAccessibility } from './src/core/accessibility.js';
       import { trackKpiEvent } from './src/core/metrics.js';
+      import { get as getStoredValue, set as setStoredValue } from './src/core/storage.js';
       import { mountAccountWidget } from './src/auth/embed.js';
       import { getOnboardingState, setOnboardingState, skipOnboarding, selectOnboardingRole } from './src/core/onboarding.js';
 
@@ -980,6 +1018,10 @@
     const showOnboardingBtn = document.getElementById('showOnboardingBtn');
     const parentPathLink = document.getElementById('parentPathLink');
     const teacherPathLink = document.getElementById('teacherPathLink');
+    const homepageMusicEl = document.getElementById('homepageMusic');
+    const homepageMusicToggleEl = document.getElementById('homepageMusicToggle');
+    const homepageMusicVolumeEl = document.getElementById('homepageMusicVolume');
+    const homepageMusicStatusEl = document.getElementById('homepageMusicStatus');
 
     const escapeHtml = (str) => {
       return String(str || '')
@@ -997,6 +1039,20 @@
     const normalizeCategoryFilter = (value) => (
       value === 'audio-only-blind-accessible' ? value : 'all'
     );
+    const HOMEPAGE_MUSIC_STORAGE_KEY = 'homepageMusic';
+    const DEFAULT_HOMEPAGE_MUSIC_VOLUME = 35;
+    const normalizeHomepageMusicVolume = (value) => {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return DEFAULT_HOMEPAGE_MUSIC_VOLUME;
+      return Math.min(100, Math.max(0, Math.round(numeric)));
+    };
+    const getHomepageMusicSettings = () => {
+      const stored = getStoredValue(HOMEPAGE_MUSIC_STORAGE_KEY, {});
+      const raw = stored && typeof stored === 'object' ? stored : {};
+      return {
+        volume: normalizeHomepageMusicVolume(raw.volume ?? DEFAULT_HOMEPAGE_MUSIC_VOLUME),
+      };
+    };
 
     // ⚡ Bolt: Precompute search haystack for games array once to prevent string
     // concatenation and replacement on every keystroke during render.
@@ -1022,6 +1078,57 @@
     let gameCoinFilter = 'all';
     let gameCategoryFilter = 'all';
     let lastFocusedElement = null;
+    let homepageMusicEnabled = false;
+
+    function applyHomepageMusicVolume(value) {
+      const volume = normalizeHomepageMusicVolume(value);
+      homepageMusicVolumeEl.value = String(volume);
+      homepageMusicEl.volume = volume / 100;
+      homepageMusicEl.muted = volume === 0;
+      return volume;
+    }
+
+    function saveHomepageMusicVolume(value) {
+      setStoredValue(HOMEPAGE_MUSIC_STORAGE_KEY, {
+        volume: normalizeHomepageMusicVolume(value),
+      });
+    }
+
+    function renderHomepageMusicControls() {
+      homepageMusicToggleEl.textContent = homepageMusicEnabled ? 'Music On' : 'Music Off';
+      homepageMusicToggleEl.setAttribute('aria-pressed', String(homepageMusicEnabled));
+      homepageMusicToggleEl.setAttribute(
+        'aria-label',
+        homepageMusicEnabled ? 'Disable homepage music' : 'Enable homepage music'
+      );
+    }
+
+    async function enableHomepageMusic() {
+      homepageMusicStatusEl.textContent = '';
+      applyHomepageMusicVolume(homepageMusicVolumeEl.value);
+      try {
+        await homepageMusicEl.play();
+        homepageMusicEnabled = true;
+      } catch {
+        homepageMusicEnabled = false;
+        homepageMusicEl.pause();
+        homepageMusicStatusEl.textContent = 'Music could not start. Try again.';
+      }
+      renderHomepageMusicControls();
+    }
+
+    function disableHomepageMusic() {
+      homepageMusicEl.pause();
+      homepageMusicEnabled = false;
+      homepageMusicStatusEl.textContent = '';
+      renderHomepageMusicControls();
+    }
+
+    function initializeHomepageMusic() {
+      const settings = getHomepageMusicSettings();
+      applyHomepageMusicVolume(settings.volume);
+      disableHomepageMusic();
+    }
 
     function renderOnboarding() {
       const onboarding = getOnboardingState();
@@ -1542,6 +1649,23 @@
       if (!ctaLink) return;
       trackKpiEvent('premium_upgrade_cta_clicked', { source: 'home_premium_track' });
     });
+    homepageMusicToggleEl.addEventListener('click', () => {
+      if (homepageMusicEnabled) {
+        disableHomepageMusic();
+        return;
+      }
+      enableHomepageMusic();
+    });
+    homepageMusicVolumeEl.addEventListener('input', () => {
+      const volume = applyHomepageMusicVolume(homepageMusicVolumeEl.value);
+      saveHomepageMusicVolume(volume);
+      homepageMusicStatusEl.textContent = '';
+    });
+    homepageMusicEl.addEventListener('error', () => {
+      homepageMusicEnabled = false;
+      homepageMusicStatusEl.textContent = 'Music could not load.';
+      renderHomepageMusicControls();
+    });
     // ⚡ Bolt: Debounce helper to prevent unnecessary rapid executions
     // Impact: Prevents updating the entire UI (and tracking KPI) on every keystroke.
     // Reduces re-renders and analytic spam by ~80% for fast typers.
@@ -1610,6 +1734,7 @@
         .catch(() => { /* keep default */ });
     })();
 
+    initializeHomepageMusic();
     updateUI();
 
     if (state.profile.firstRun && typeof maybeUnlock === 'function') {
