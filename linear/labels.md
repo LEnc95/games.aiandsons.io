@@ -109,5 +109,6 @@
 - game/tangletuner
 - game/sundialsprint
 - game/bubbleshooter
+- game/mosaicmatch
 
 Generated from `src/meta/feedback.js`.

@@ -2747,3 +2747,27 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4182` failed at the same Chromium launch step with `spawn EPERM`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated gameplay screenshots.
+
+## 2026-05-14 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Chosen game: Mosaic Match (`/mosaicmatch`), a canvas target-pattern painting puzzle where players copy color mosaics under a timer and mismatch limit.
+- Initial implementation:
+  - Added `mosaicmatch/index.html` with canvas rendering, keyboard/pointer/touch controls, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Mosaic Match in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Mosaic Match.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for both Mosaic Match module scripts after SEO injection.
+  - Metadata import check: pass; `GAMES` reports 95 games including Mosaic Match and no duplicate slugs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/mosaicmatch/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, painted correct cells, advanced deterministic time, completed all five mosaics via real hint input handlers, reached `won`, awarded 12 coins, and `render_game_to_text()` reported 100% match.
+  - `git diff --check` on Mosaic Match integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/mosaicmatch/` behind a temporary Node server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:4185` reached the same route and failed at the same Chromium launch step with `spawn EPERM`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated gameplay screenshots.
