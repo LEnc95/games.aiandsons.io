@@ -97,6 +97,7 @@
 - game/cloudclimber
 - game/reefrunner
 - game/codebreaker
+- game/sudokusprint
 - game/potionpantry
 - game/marblecircuit
 - game/switchyard

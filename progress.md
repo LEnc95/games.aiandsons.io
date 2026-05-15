@@ -2771,3 +2771,28 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:4185` reached the same route and failed at the same Chromium launch step with `spawn EPERM`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated gameplay screenshots.
+
+## 2026-05-15 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Chosen game: Sudoku Sprint (`/sudokusprint`), a standalone canvas Sudoku challenge with notes, hints, mistake pressure, coins, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial repo check: no existing Sudoku route or metadata entry found.
+- Initial implementation:
+  - Added `sudokusprint/index.html` with canvas Sudoku rendering, keyboard/pointer/touch controls, notes, hints, fullscreen, score/coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Sudoku Sprint in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Sudoku Sprint.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for both Sudoku Sprint module scripts after SEO injection and the final HUD label edit.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 96 games including Sudoku Sprint with no duplicate slugs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/sudokusprint/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, selected cells through real pointer handlers, entered all solutions through real keyboard handlers, solved all three puzzles, reached `won`, and awarded 41 coins.
+  - `git diff --check` on Sudoku Sprint integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary local route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4188` failed at the same Chromium launch step with `spawn EPERM`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Sudoku Sprint screenshots.
