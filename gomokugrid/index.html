@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Gomoku Grid | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #10202c;
+  background:
+    linear-gradient(135deg, #f3ead5 0%, #d5b16e 31%, #4c8a8d 62%, #24324f 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 32 / 21;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffff8a;
+  background: #ead2a0;
+  box-shadow: 0 20px 52px #17243f99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 690px;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  background: #fffffff2;
+  box-shadow: 0 18px 38px #1a284780;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  color: #10202c;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+}
+p {
+  margin: 0 0 10px;
+  color: #445363;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #ffffff99;
+  background: #275e72;
+  color: #f8feff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #172838f2;
+  color: #f7fbff;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c9dbec;
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #172838f2;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.primary-btn { background: #b75f38; }
+.utility-btn { background: #4b586b; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 580px) {
+  .stage { width: 98vw; max-height: 52dvh; }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .controls {
+    width: 98vw;
+    gap: 6px;
+    padding: 8px;
+  }
+  button { padding: 8px 7px; font-size: 13px; }
+  .chip { min-height: 42px; }
+  .back { top: 8px; left: 8px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Place stones on a 15 by 15 board, build five in a row, and outread the AI before the timer expires. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Gomoku Grid | AI and Sons Games">
+  <meta property="og:description" content="Place stones on a 15 by 15 board, build five in a row, and outread the AI before the timer expires. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/gomokugrid">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gomoku Grid | AI and Sons Games">
+  <meta name="twitter:description" content="Place stones on a 15 by 15 board, build five in a row, and outread the AI before the timer expires. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/gomokugrid">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Gomoku Grid","description":"Place stones on a 15 by 15 board, build five in a row, and outread the AI before the timer expires. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/gomokugrid","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Gomoku Grid board">
+    <canvas id="game" width="1024" height="672"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Turn</span><b id="turn">Black</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">4:00</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip"><span>Threat</span><b id="threat">0</b></div>
+    <div class="chip"><span>Hints</span><b id="hints">3</b></div>
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="placeBtn" type="button" class="primary-btn">Place</button>
+    <button id="hintBtn" type="button" class="primary-btn">Hint</button>
+    <button id="undoBtn" type="button" class="utility-btn">Undo</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  turn: document.getElementById('turn'),
+  time: document.getElementById('time'),
+  moves: document.getElementById('moves'),
+  threat: document.getElementById('threat'),
+  hints: document.getElementById('hints'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const SIZE = 15;
+const BOARD = { x: 58, y: 58, size: 548 };
+const CELL = BOARD.size / (SIZE - 1);
+const PANEL = { x: 652, y: 58, w: 316, h: 548 };
+const GAME_SECONDS = 240;
+const PLAYER = 1;
+const CPU = 2;
+const EMPTY = 0;
+const DIRS = [
+  [1, 0],
+  [0, 1],
+  [1, 1],
+  [1, -1],
+];
+
+let controlled = false;
+let raf = 0;
+let lastFrame = 0;
+
+const makeBoard = () => Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+
+const state = {
+  mode: 'menu',
+  board: makeBoard(),
+  cursor: { row: 7, col: 7 },
+  turn: PLAYER,
+  aiPending: false,
+  aiDelay: 0,
+  timeLeft: GAME_SECONDS,
+  score: 0,
+  hintsLeft: 3,
+  hint: null,
+  moves: [],
+  lastMove: null,
+  winner: EMPTY,
+  winLine: [],
+  result: '',
+  coinsEarned: 0,
+  pulse: 0,
+  logs: [],
+};
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function inside(row, col) {
+  return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+}
+
+function getCell(row, col) {
+  return inside(row, col) ? state.board[row][col] : null;
+}
+
+function setCell(row, col, player) {
+  if (inside(row, col)) state.board[row][col] = player;
+}
+
+function pushLog(message) {
+  state.logs = [message, ...state.logs].slice(0, 7);
+}
+
+function formatTime(seconds) {
+  const whole = Math.max(0, Math.ceil(seconds));
+  const m = Math.floor(whole / 60);
+  const s = String(whole % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function resetGame(mode = 'menu') {
+  state.mode = mode;
+  state.board = makeBoard();
+  state.cursor = { row: 7, col: 7 };
+  state.turn = PLAYER;
+  state.aiPending = false;
+  state.aiDelay = 0;
+  state.timeLeft = GAME_SECONDS;
+  state.score = 0;
+  state.hintsLeft = 3;
+  state.hint = null;
+  state.moves = [];
+  state.lastMove = null;
+  state.winner = EMPTY;
+  state.winLine = [];
+  state.result = '';
+  state.coinsEarned = 0;
+  state.pulse = 0;
+  state.logs = [];
+  if (mode === 'playing') pushLog('Opening move ready.');
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function startGame() {
+  resetGame('playing');
+  rememberRecent('gomokugrid');
+  maybeUnlock({ anyPlay: true });
+}
+
+function scoreSegment(row, col, player, dr, dc) {
+  let count = 1;
+  let open = 0;
+
+  let r = row + dr;
+  let c = col + dc;
+  while (getCell(r, c) === player) {
+    count += 1;
+    r += dr;
+    c += dc;
+  }
+  if (getCell(r, c) === EMPTY) open += 1;
+
+  r = row - dr;
+  c = col - dc;
+  while (getCell(r, c) === player) {
+    count += 1;
+    r -= dr;
+    c -= dc;
+  }
+  if (getCell(r, c) === EMPTY) open += 1;
+
+  return { count, open };
+}
+
+function potentialScore(row, col, player) {
+  if (!inside(row, col) || state.board[row][col] !== EMPTY) return -1;
+  let score = 0;
+  for (const [dr, dc] of DIRS) {
+    const { count, open } = scoreSegment(row, col, player, dr, dc);
+    if (count >= 5) score += 1200000;
+    else if (count === 4 && open === 2) score += 170000;
+    else if (count === 4 && open === 1) score += 48000;
+    else if (count === 3 && open === 2) score += 16000;
+    else if (count === 3 && open === 1) score += 2600;
+    else if (count === 2 && open === 2) score += 900;
+    else if (count === 2 && open === 1) score += 180;
+    else if (open > 0) score += 18;
+  }
+  const center = (SIZE - 1) / 2;
+  const distance = Math.abs(row - center) + Math.abs(col - center);
+  score += Math.max(0, 80 - distance * 8);
+  score += neighborCount(row, col) * 24;
+  return score;
+}
+
+function neighborCount(row, col) {
+  let count = 0;
+  for (let dr = -2; dr <= 2; dr += 1) {
+    for (let dc = -2; dc <= 2; dc += 1) {
+      if (dr === 0 && dc === 0) continue;
+      if (getCell(row + dr, col + dc) > EMPTY) count += 1;
+    }
+  }
+  return count;
+}
+
+function threatAt(row, col, player = PLAYER) {
+  if (!inside(row, col)) return 0;
+  let best = 0;
+  const occupied = state.board[row][col];
+  if (occupied !== EMPTY && occupied !== player) return 0;
+  const restore = occupied;
+  state.board[row][col] = player;
+  for (const [dr, dc] of DIRS) {
+    best = Math.max(best, scoreSegment(row, col, player, dr, dc).count);
+  }
+  state.board[row][col] = restore;
+  return best;
+}
+
+function candidateCells() {
+  if (state.moves.length === 0) return [{ row: 7, col: 7 }];
+  const seen = new Set();
+  const cells = [];
+  for (const move of state.moves) {
+    for (let dr = -2; dr <= 2; dr += 1) {
+      for (let dc = -2; dc <= 2; dc += 1) {
+        const row = move.row + dr;
+        const col = move.col + dc;
+        if (!inside(row, col) || state.board[row][col] !== EMPTY) continue;
+        const key = `${row},${col}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        cells.push({ row, col });
+      }
+    }
+  }
+  return cells.length ? cells : allEmptyCells();
+}
+
+function allEmptyCells() {
+  const cells = [];
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let col = 0; col < SIZE; col += 1) {
+      if (state.board[row][col] === EMPTY) cells.push({ row, col });
+    }
+  }
+  return cells;
+}
+
+function moveScore(row, col, player) {
+  const opponent = player === PLAYER ? CPU : PLAYER;
+  const attack = potentialScore(row, col, player);
+  const defense = potentialScore(row, col, opponent);
+  if (attack >= 1200000) return attack + 900000;
+  if (defense >= 1200000) return defense + 820000;
+  return attack + defense * 0.94;
+}
+
+function bestMove(player) {
+  let best = null;
+  let bestValue = -Infinity;
+  for (const cell of candidateCells()) {
+    const value = moveScore(cell.row, cell.col, player);
+    if (value > bestValue) {
+      best = cell;
+      bestValue = value;
+    }
+  }
+  return best ? { ...best, value: Math.round(bestValue) } : null;
+}
+
+function findWinFrom(row, col, player) {
+  if (!inside(row, col) || player === EMPTY) return [];
+  for (const [dr, dc] of DIRS) {
+    let startRow = row;
+    let startCol = col;
+    while (getCell(startRow - dr, startCol - dc) === player) {
+      startRow -= dr;
+      startCol -= dc;
+    }
+    const line = [];
+    let r = startRow;
+    let c = startCol;
+    while (getCell(r, c) === player) {
+      line.push({ row: r, col: c });
+      r += dr;
+      c += dc;
+    }
+    if (line.length >= 5) return line.slice(0, 5);
+  }
+  return [];
+}
+
+function boardIsFull() {
+  return state.moves.length >= SIZE * SIZE;
+}
+
+function placeStone(row, col, player) {
+  if (state.mode !== 'playing') return false;
+  if (!inside(row, col) || state.board[row][col] !== EMPTY) return false;
+  setCell(row, col, player);
+  state.moves.push({ row, col, player });
+  state.lastMove = { row, col, player };
+  state.cursor = { row, col };
+  state.hint = null;
+  const line = findWinFrom(row, col, player);
+  if (line.length) {
+    finishGame(player, line);
+    return true;
+  }
+  if (boardIsFull()) {
+    finishGame(EMPTY, []);
+    return true;
+  }
+  return true;
+}
+
+function playerPlace() {
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  if (state.aiPending || state.turn !== PLAYER) {
+    pushLog('Read the reply first.');
+    return;
+  }
+  if (placeStone(state.cursor.row, state.cursor.col, PLAYER)) {
+    state.score += 7 + Math.max(0, threatAt(state.cursor.row, state.cursor.col, PLAYER) - 1) * 5;
+    if (state.mode === 'playing') {
+      state.turn = CPU;
+      state.aiPending = true;
+      state.aiDelay = 0.34;
+      pushLog(`Black to ${gridName(state.cursor.row, state.cursor.col)}.`);
+    }
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function makeAiMove() {
+  if (state.mode !== 'playing') return;
+  const move = bestMove(CPU);
+  state.aiPending = false;
+  if (!move) {
+    finishGame(EMPTY, []);
+    return;
+  }
+  placeStone(move.row, move.col, CPU);
+  if (state.mode === 'playing') {
+    state.turn = PLAYER;
+    state.aiDelay = 0;
+    pushLog(`White to ${gridName(move.row, move.col)}.`);
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function finishGame(winner, line) {
+  state.winner = winner;
+  state.winLine = line;
+  state.aiPending = false;
+  state.turn = PLAYER;
+  if (winner === PLAYER) {
+    state.mode = 'won';
+    state.result = 'player_win';
+    state.score += 420 + Math.ceil(state.timeLeft) * 2;
+    const coins = Math.max(12, Math.min(45, 12 + Math.floor(state.score / 180)));
+    if (state.coinsEarned === 0) {
+      state.coinsEarned = coins;
+      addCoins(coins);
+    }
+    maybeUnlock({ anyPlay: true, gomoku: { score: state.score, moves: state.moves.length } });
+    pushLog(`Five in a row: ${coins} coins.`);
+  } else if (winner === CPU) {
+    state.mode = 'lost';
+    state.result = 'cpu_win';
+    pushLog('White completed five.');
+  } else {
+    state.mode = 'draw';
+    state.result = 'draw';
+    state.score += 100;
+    pushLog('Board filled without five.');
+  }
+}
+
+function useHint() {
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  if (state.aiPending) {
+    pushLog('Hint after the reply.');
+    return;
+  }
+  if (state.hintsLeft <= 0) {
+    pushLog('No hints left.');
+    return;
+  }
+  const move = bestMove(PLAYER);
+  if (!move) return;
+  state.hintsLeft -= 1;
+  state.hint = move;
+  state.cursor = { row: move.row, col: move.col };
+  state.score = Math.max(0, state.score - 12);
+  pushLog(`Hint marks ${gridName(move.row, move.col)}.`);
+  updateHud();
+  draw();
+}
+
+function undoMove() {
+  if (state.mode !== 'playing') return;
+  if (!state.moves.length) {
+    pushLog('No stones to undo.');
+    return;
+  }
+  const removeCount = state.aiPending ? 1 : Math.min(2, state.moves.length);
+  state.aiPending = false;
+  state.aiDelay = 0;
+  for (let i = 0; i < removeCount; i += 1) {
+    const move = state.moves.pop();
+    if (move) setCell(move.row, move.col, EMPTY);
+  }
+  state.lastMove = state.moves[state.moves.length - 1] || null;
+  state.cursor = state.lastMove ? { row: state.lastMove.row, col: state.lastMove.col } : { row: 7, col: 7 };
+  state.turn = PLAYER;
+  state.hint = null;
+  state.score = Math.max(0, state.score - 18);
+  pushLog('Last exchange undone.');
+  updateHud();
+  draw();
+}
+
+function pauseGame() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    pushLog('Paused.');
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    pushLog('Resumed.');
+  } else {
+    startGame();
+    return;
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function moveCursor(dr, dc) {
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  state.cursor = {
+    row: clamp(state.cursor.row + dr, 0, SIZE - 1),
+    col: clamp(state.cursor.col + dc, 0, SIZE - 1),
+  };
+  draw();
+  updateHud();
+}
+
+function update(dt) {
+  state.pulse += dt;
+  if (state.mode !== 'playing') return;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) {
+    state.mode = 'lost';
+    state.result = 'time_expired';
+    state.aiPending = false;
+    pushLog('Clock expired.');
+    return;
+  }
+  if (state.aiPending) {
+    state.aiDelay -= dt;
+    if (state.aiDelay <= 0) makeAiMove();
+  }
+}
+
+function updateHud() {
+  hud.mode.textContent = state.mode === 'menu' ? 'Menu' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  hud.turn.textContent = state.aiPending ? 'White thinking' : state.turn === PLAYER ? 'Black' : 'White';
+  hud.time.textContent = formatTime(state.timeLeft);
+  hud.moves.textContent = String(state.moves.length);
+  hud.threat.textContent = String(threatAt(state.cursor.row, state.cursor.col, PLAYER));
+  hud.hints.textContent = String(state.hintsLeft);
+  hud.score.textContent = String(state.score);
+  hud.coins.textContent = String(profileState.coins || 0);
+}
+
+function updateOverlay() {
+  const show = ['menu', 'paused', 'won', 'lost', 'draw'].includes(state.mode);
+  overlay.classList.toggle('show', show);
+  if (!show) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Gomoku Grid';
+  let body = 'Claim five connected stones on a 15 by 15 board before White outreads your shape.';
+  let primary = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'Your board is held exactly as-is.';
+    primary = 'Resume';
+  } else if (state.mode === 'won') {
+    title = 'Five Connected';
+    body = `Score ${state.score}. Moves ${state.moves.length}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = state.result === 'time_expired' ? 'Clock Expired' : 'White Connected Five';
+    body = `Final score ${state.score}. Your longest threat reached ${longestLine(PLAYER)}.`;
+    primary = 'Retry';
+  } else if (state.mode === 'draw') {
+    title = 'Grid Filled';
+    body = `No five-in-a-row landed. Score ${state.score}.`;
+    primary = 'Play Again';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: arrows/WASD move, Space or Enter place, H hint, U undo, P pause, R restart, F fullscreen.</p>
+      <div class="row">
+        <button id="overlayPrimary" type="button">${primary}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayPrimary')?.addEventListener('click', () => {
+    if (state.mode === 'paused') pauseGame();
+    else startGame();
+  });
+  document.getElementById('overlayRestart')?.addEventListener('click', () => resetGame('playing'));
+}
+
+function longestLine(player) {
+  let best = 0;
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let col = 0; col < SIZE; col += 1) {
+      if (state.board[row][col] !== player) continue;
+      for (const [dr, dc] of DIRS) {
+        best = Math.max(best, scoreSegment(row, col, player, dr, dc).count);
+      }
+    }
+  }
+  return best;
+}
+
+function gridName(row, col) {
+  return `${String.fromCharCode(65 + col)}${row + 1}`;
+}
+
+function stonePoint(row, col) {
+  return {
+    x: BOARD.x + col * CELL,
+    y: BOARD.y + row * CELL,
+  };
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke = '') {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawBoard();
+  drawPanel();
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#f5e4bc');
+  bg.addColorStop(0.55, '#8fb7aa');
+  bg.addColorStop(1, '#26314c');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 20; i += 1) {
+    const x = (i * 73 + 41) % W;
+    const y = (i * 109 + 29) % H;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.5 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBoard() {
+  drawRoundRect(28, 28, 608, 608, 8, '#e2bd78', '#fff2ce');
+  const grain = ctx.createLinearGradient(28, 28, 636, 636);
+  grain.addColorStop(0, '#f1d391');
+  grain.addColorStop(0.5, '#d3a35d');
+  grain.addColorStop(1, '#b57a41');
+  drawRoundRect(42, 42, 580, 580, 8, grain, '#714c27');
+
+  ctx.strokeStyle = '#59361d';
+  ctx.lineWidth = 1.4;
+  for (let i = 0; i < SIZE; i += 1) {
+    const x = BOARD.x + i * CELL;
+    const y = BOARD.y + i * CELL;
+    ctx.beginPath();
+    ctx.moveTo(BOARD.x, y);
+    ctx.lineTo(BOARD.x + BOARD.size, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, BOARD.y);
+    ctx.lineTo(x, BOARD.y + BOARD.size);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#49301a';
+  for (const [row, col] of [[3, 3], [3, 11], [7, 7], [11, 3], [11, 11]]) {
+    const p = stonePoint(row, col);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (state.hint) drawCellRing(state.hint.row, state.hint.col, '#f7e27b', 8, 0.8);
+  drawCellRing(state.cursor.row, state.cursor.col, '#fff9dd', 10, 0.95);
+
+  if (state.winLine.length) {
+    ctx.strokeStyle = state.winner === PLAYER ? '#20d08a' : '#f17661';
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    const first = stonePoint(state.winLine[0].row, state.winLine[0].col);
+    const last = stonePoint(state.winLine[state.winLine.length - 1].row, state.winLine[state.winLine.length - 1].col);
+    ctx.beginPath();
+    ctx.moveTo(first.x, first.y);
+    ctx.lineTo(last.x, last.y);
+    ctx.stroke();
+  }
+
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let col = 0; col < SIZE; col += 1) {
+      const value = state.board[row][col];
+      if (value !== EMPTY) drawStone(row, col, value);
+    }
+  }
+}
+
+function drawCellRing(row, col, color, pad, alpha) {
+  const p = stonePoint(row, col);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(p.x - CELL / 2 + pad, p.y - CELL / 2 + pad, CELL - pad * 2, CELL - pad * 2);
+  ctx.restore();
+}
+
+function drawStone(row, col, player) {
+  const p = stonePoint(row, col);
+  const radius = CELL * 0.38;
+  const gradient = ctx.createRadialGradient(p.x - radius * 0.35, p.y - radius * 0.38, 3, p.x, p.y, radius);
+  if (player === PLAYER) {
+    gradient.addColorStop(0, '#6d7889');
+    gradient.addColorStop(0.42, '#1d2632');
+    gradient.addColorStop(1, '#05080d');
+  } else {
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.52, '#e5ebef');
+    gradient.addColorStop(1, '#a8b0ba');
+  }
+  ctx.fillStyle = '#00000045';
+  ctx.beginPath();
+  ctx.ellipse(p.x + 3, p.y + 4, radius * 0.9, radius * 0.65, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = player === PLAYER ? '#000' : '#717b86';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  if (state.lastMove && state.lastMove.row === row && state.lastMove.col === col) {
+    ctx.strokeStyle = player === PLAYER ? '#f1d36a' : '#2b637a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius * 0.42, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawPanel() {
+  drawRoundRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h, 8, '#122331e8', '#ffffff70');
+  ctx.fillStyle = '#f8feff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.fillText('Gomoku Grid', PANEL.x + 24, PANEL.y + 42);
+
+  const status = state.mode === 'playing'
+    ? state.aiPending ? 'White is reading the board' : 'Black to move'
+    : state.mode === 'menu' ? 'Ready' : state.mode;
+  ctx.font = '700 15px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#c9dbec';
+  wrapText(status, PANEL.x + 24, PANEL.y + 72, PANEL.w - 48, 20);
+
+  drawPanelStat('Cursor', gridName(state.cursor.row, state.cursor.col), PANEL.y + 126);
+  drawPanelStat('Longest black line', String(longestLine(PLAYER)), PANEL.y + 178);
+  drawPanelStat('Longest white line', String(longestLine(CPU)), PANEL.y + 230);
+  drawPanelStat('Candidate threat', String(threatAt(state.cursor.row, state.cursor.col, PLAYER)), PANEL.y + 282);
+
+  const barX = PANEL.x + 24;
+  const barY = PANEL.y + 325;
+  const barW = PANEL.w - 48;
+  drawRoundRect(barX, barY, barW, 18, 8, '#ffffff1f');
+  const fillW = barW * clamp(state.timeLeft / GAME_SECONDS, 0, 1);
+  drawRoundRect(barX, barY, fillW, 18, 8, state.timeLeft < 45 ? '#f17661' : '#65d6a5');
+  ctx.fillStyle = '#eaf6ff';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillText(`Clock ${formatTime(state.timeLeft)}`, barX, barY + 39);
+
+  ctx.fillStyle = '#e9f4ff';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  const lines = state.logs.length ? state.logs : ['Make the first claim at center or a star point.'];
+  lines.slice(0, 5).forEach((line, index) => {
+    wrapText(line, PANEL.x + 24, PANEL.y + 400 + index * 27, PANEL.w - 48, 16);
+  });
+}
+
+function drawPanelStat(label, value, y) {
+  ctx.fillStyle = '#8fb1c8';
+  ctx.font = '800 11px "Trebuchet MS", sans-serif';
+  ctx.fillText(label.toUpperCase(), PANEL.x + 24, y);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 24px "Trebuchet MS", sans-serif';
+  ctx.fillText(value, PANEL.x + 24, y + 28);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, y);
+}
+
+function cellFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+  const col = Math.round((x - BOARD.x) / CELL);
+  const row = Math.round((y - BOARD.y) / CELL);
+  const p = stonePoint(row, col);
+  if (!inside(row, col) || Math.abs(x - p.x) > CELL * 0.5 || Math.abs(y - p.y) > CELL * 0.5) {
+    return null;
+  }
+  return { row, col };
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+canvas.addEventListener('pointermove', (event) => {
+  if (state.mode !== 'playing') return;
+  const cell = cellFromEvent(event);
+  if (!cell) return;
+  state.cursor = cell;
+  draw();
+  updateHud();
+});
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  const cell = cellFromEvent(event);
+  if (!cell) return;
+  state.cursor = cell;
+  playerPlace();
+});
+
+document.getElementById('placeBtn').addEventListener('click', playerPlace);
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('undoBtn').addEventListener('click', undoMove);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', () => resetGame('playing'));
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'spacebar'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') moveCursor(1, 0);
+  else if (key === ' ' || key === 'spacebar' || key === 'enter') playerPlace();
+  else if (key === 'h') useHint();
+  else if (key === 'u' || key === 'z') undoMove();
+  else if (key === 'p') pauseGame();
+  else if (key === 'r') resetGame('playing');
+  else if (key === 'f') toggleFullscreen();
+});
+
+function frame(now) {
+  const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000 || 0));
+  lastFrame = now;
+  if (!controlled) {
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function visibleStones() {
+  const stones = [];
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let col = 0; col < SIZE; col += 1) {
+      const value = state.board[row][col];
+      if (value !== EMPTY) {
+        stones.push({
+          row,
+          col,
+          coord: gridName(row, col),
+          player: value === PLAYER ? 'black' : 'white',
+        });
+      }
+    }
+  }
+  return stones;
+}
+
+function renderGameToText() {
+  const hint = state.hint || (!state.aiPending && state.mode === 'playing' ? bestMove(PLAYER) : null);
+  return JSON.stringify({
+    game: 'gomokugrid',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. X increases right and Y increases down. Board intersections are 15 rows by 15 columns, A1 at top-left and O15 at bottom-right.',
+    objective: 'place black stones to make five connected stones horizontally, vertically, or diagonally before white does',
+    turn: state.aiPending ? 'white_pending' : state.turn === PLAYER ? 'black' : 'white',
+    cursor: {
+      row: state.cursor.row,
+      col: state.cursor.col,
+      coord: gridName(state.cursor.row, state.cursor.col),
+      occupied: state.board[state.cursor.row][state.cursor.col] === EMPTY ? 'empty' : state.board[state.cursor.row][state.cursor.col] === PLAYER ? 'black' : 'white',
+      threat: threatAt(state.cursor.row, state.cursor.col, PLAYER),
+    },
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      score: state.score,
+      hints_left: state.hintsLeft,
+      moves: state.moves.length,
+      coins_earned: state.coinsEarned,
+      longest_black_line: longestLine(PLAYER),
+      longest_white_line: longestLine(CPU),
+    },
+    hint: hint ? { row: hint.row, col: hint.col, coord: gridName(hint.row, hint.col), value: hint.value } : null,
+    stones: visibleStones(),
+    win_line: state.winLine.map((cell) => ({ ...cell, coord: gridName(cell.row, cell.col) })),
+    recent_events: state.logs,
+    result: state.result,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+resetGame('menu');
+mountGameFeedback({ gameSlug: 'gomokugrid', gameName: 'Gomoku Grid' });
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+</body>
+</html>

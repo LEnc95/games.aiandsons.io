@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-05-15
+
+### Added
+- Added and wired four new games: `sundial-sprint`, `bubble-shooter`, `mosaic-match`, and `sudoku-sprint`.
+- Added homepage background music controls and smoke-test coverage for that surface.
+
+### Improved
+- Improved classroom lock gating performance by optimizing `isGameLockedByClassroom` lookups to O(1).
+- Improved mission progress lookup scaling by replacing repeated array membership checks with set-based checks.
+
+### Security
+- Removed insecure `Math.random` fallback paths for identifier/token generation and now require secure random support.
+
+### Operations
+- Key PRs: [#156](https://github.com/LEnc95/games.aiandsons.io/pull/156), [#154](https://github.com/LEnc95/games.aiandsons.io/pull/154), [#153](https://github.com/LEnc95/games.aiandsons.io/pull/153).
+
 ## [1.2.0] - 2026-05-08
 
 ### Added

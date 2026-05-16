@@ -2796,3 +2796,29 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4188` failed at the same Chromium launch step with `spawn EPERM`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Sudoku Sprint screenshots.
+
+## 2026-05-16 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Initial repo check: no existing Gomoku, Five-in-a-row, Mancala, or Domino route/metadata entry found.
+- Chosen game: Gomoku Grid (`/gomokugrid`), a canvas five-in-a-row board game with player stones, AI response turns, hints, undo, timer pressure, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `gomokugrid/index.html` with canvas rendering, player-vs-AI Gomoku logic, keyboard/pointer/touch controls, hints, undo, fullscreen, score/coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Gomoku Grid in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Gomoku Grid.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Gomoku Grid module script after SEO injection.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 97 games including Gomoku Grid with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/gomokugrid/`.
+  - Stubbed DOM/canvas runtime harness passed: started through pointer input, placed a stone, advanced the AI reply, used hint, placed the hinted move, undid the exchange, paused/resumed, and reached the deterministic time-loss state through `window.advanceTime(ms)`.
+  - `git diff --check` on Gomoku Grid integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary local route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step with `spawn EPERM`.
+  - In-app Browser tooling was not exposed by tool discovery in this session, so no alternate visual screenshot path was available.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Gomoku Grid screenshots.
