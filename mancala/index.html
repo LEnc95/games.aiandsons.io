@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Mancala | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #10242d;
+  background:
+    radial-gradient(28% 22% at 22% 16%, #ffe08f 0%, transparent 72%),
+    radial-gradient(30% 24% at 82% 18%, #81d6c6 0%, transparent 70%),
+    linear-gradient(135deg, #e57f57 0%, #31798c 48%, #22324b 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 27 / 16;
+  max-height: min(67dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #f2c77d;
+  box-shadow: 0 20px 52px #16233b99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 710px;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  background: #fffffff2;
+  box-shadow: 0 18px 38px #1a284780;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  color: #142331;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+}
+p {
+  margin: 0 0 10px;
+  color: #455568;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #ffffff99;
+  background: #23647b;
+  color: #f8feff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 42px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #142838f2;
+  color: #f7fbff;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c9dbec;
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.good b { color: #9af0bd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #142838f2;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.primary-btn { background: #b95738; }
+.utility-btn { background: #4b586b; }
+@media (max-width: 940px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 580px) {
+  .stage { width: 98vw; max-height: 49dvh; }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  button { min-height: 44px; padding: 9px 10px; }
+  .back { top: 8px; left: 8px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Sow stones around the board, chain extra turns, and capture across the rows to fill your store before the AI does. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Mancala | AI and Sons Games">
+  <meta property="og:description" content="Sow stones around the board, chain extra turns, and capture across the rows to fill your store before the AI does. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/mancala">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mancala | AI and Sons Games">
+  <meta name="twitter:description" content="Sow stones around the board, chain extra turns, and capture across the rows to fill your store before the AI does. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/mancala">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Mancala","description":"Sow stones around the board, chain extra turns, and capture across the rows to fill your store before the AI does. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/mancala","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Mancala board">
+    <canvas id="game" width="1080" height="640"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Turn</span><b id="turn">Player</b></div>
+    <div class="chip good"><span>Your Store</span><b id="playerStore">0</b></div>
+    <div class="chip bad"><span>AI Store</span><b id="aiStore">0</b></div>
+    <div class="chip"><span>Selected</span><b id="selected">Pit 1</b></div>
+    <div class="chip warn"><span>Best Move</span><b id="hint">Pit 1</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Mancala controls">
+    <button id="prevBtn" type="button" class="utility-btn">Prev</button>
+    <button id="nextBtn" type="button" class="utility-btn">Next</button>
+    <button id="sowBtn" type="button" class="primary-btn">Sow</button>
+    <button id="hintBtn" type="button" class="utility-btn">Hint</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  turn: document.getElementById('turn'),
+  playerStore: document.getElementById('playerStore'),
+  aiStore: document.getElementById('aiStore'),
+  selected: document.getElementById('selected'),
+  hint: document.getElementById('hint'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const PLAYER_STORE = 6;
+const AI_STORE = 13;
+const PLAYER_PITS = [0, 1, 2, 3, 4, 5];
+const AI_PITS = [7, 8, 9, 10, 11, 12];
+const PIT_COUNT = 6;
+const BOARD = { x: 68, y: 102, w: 944, h: 368 };
+const PLAYER_COLOR = '#1e6f85';
+const AI_COLOR = '#ab4f39';
+const EMPTY_BOARD = '#d89a54';
+const PIT_FILL = '#f1d29a';
+const PIT_SHADOW = '#8e562f';
+
+const state = {
+  mode: 'menu',
+  pits: freshPits(),
+  turn: 'player',
+  selected: 0,
+  aiPending: false,
+  aiDelay: 0,
+  moveCount: 0,
+  score: 0,
+  coinsEarned: 0,
+  result: '',
+  lastMove: null,
+  lastSown: null,
+  captured: 0,
+  extraTurn: false,
+  hint: null,
+  logs: [],
+  pulses: [],
+  clock: 0,
+};
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+
+function freshPits() {
+  return [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
+}
+
+function resetGame(mode = 'menu') {
+  state.mode = mode;
+  state.pits = freshPits();
+  state.turn = 'player';
+  state.selected = 0;
+  state.aiPending = false;
+  state.aiDelay = 0;
+  state.moveCount = 0;
+  state.score = 0;
+  state.coinsEarned = 0;
+  state.result = '';
+  state.lastMove = null;
+  state.lastSown = null;
+  state.captured = 0;
+  state.extraTurn = false;
+  state.hint = null;
+  state.logs = [];
+  state.pulses = [];
+  state.clock = 0;
+  if (mode === 'playing') {
+    rememberRecent('mancala');
+    maybeUnlock({ anyPlay: true });
+    pushLog('Choose one of your bottom pits.');
+  }
+  refreshHint();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function startGame() {
+  resetGame('playing');
+}
+
+function pushLog(message) {
+  state.logs = [message, ...state.logs].slice(0, 7);
+}
+
+function isPlayerPit(index) {
+  return index >= 0 && index <= 5;
+}
+
+function isAiPit(index) {
+  return index >= 7 && index <= 12;
+}
+
+function legalPits(turn = state.turn, pits = state.pits) {
+  const indexes = turn === 'player' ? PLAYER_PITS : AI_PITS;
+  return indexes.filter((index) => pits[index] > 0);
+}
+
+function sideEmpty(side, pits = state.pits) {
+  const indexes = side === 'player' ? PLAYER_PITS : AI_PITS;
+  return indexes.every((index) => pits[index] === 0);
+}
+
+function oppositePit(index) {
+  return 12 - index;
+}
+
+function storeFor(turn) {
+  return turn === 'player' ? PLAYER_STORE : AI_STORE;
+}
+
+function opponentStoreFor(turn) {
+  return turn === 'player' ? AI_STORE : PLAYER_STORE;
+}
+
+function ownPit(turn, index) {
+  return turn === 'player' ? isPlayerPit(index) : isAiPit(index);
+}
+
+function displayPit(index) {
+  if (isPlayerPit(index)) return `Pit ${index + 1}`;
+  if (isAiPit(index)) return `AI ${13 - index}`;
+  if (index === PLAYER_STORE) return 'Your store';
+  return 'AI store';
+}
+
+function nextSelectable(direction) {
+  const legal = legalPits('player');
+  if (!legal.length) return;
+  const current = legal.includes(state.selected) ? legal.indexOf(state.selected) : 0;
+  const next = (current + direction + legal.length) % legal.length;
+  state.selected = legal[next];
+  refreshHint();
+  updateHud();
+  draw();
+}
+
+function simulateMove(source, pitsInput, turnInput) {
+  const pits = pitsInput.slice();
+  const turn = turnInput;
+  let stones = pits[source];
+  let cursor = source;
+  let captured = 0;
+  pits[source] = 0;
+
+  while (stones > 0) {
+    cursor = (cursor + 1) % pits.length;
+    if (cursor === opponentStoreFor(turn)) continue;
+    pits[cursor] += 1;
+    stones -= 1;
+  }
+
+  const extraTurn = cursor === storeFor(turn);
+  if (!extraTurn && ownPit(turn, cursor) && pits[cursor] === 1) {
+    const opposite = oppositePit(cursor);
+    if (pits[opposite] > 0) {
+      captured = pits[opposite] + 1;
+      pits[storeFor(turn)] += captured;
+      pits[cursor] = 0;
+      pits[opposite] = 0;
+    }
+  }
+
+  let finished = false;
+  if (sideEmpty('player', pits) || sideEmpty('ai', pits)) {
+    finished = true;
+    const playerRemainder = PLAYER_PITS.reduce((sum, index) => sum + pits[index], 0);
+    const aiRemainder = AI_PITS.reduce((sum, index) => sum + pits[index], 0);
+    for (const index of PLAYER_PITS) pits[index] = 0;
+    for (const index of AI_PITS) pits[index] = 0;
+    pits[PLAYER_STORE] += playerRemainder;
+    pits[AI_STORE] += aiRemainder;
+  }
+
+  return {
+    pits,
+    lastSown: cursor,
+    captured,
+    extraTurn,
+    finished,
+    nextTurn: extraTurn ? turn : turn === 'player' ? 'ai' : 'player',
+  };
+}
+
+function applyMove(source, turn = state.turn) {
+  if (state.mode !== 'playing') {
+    startGame();
+    return false;
+  }
+  if (turn !== state.turn || state.aiPending) return false;
+  if (!legalPits(turn).includes(source)) {
+    pushLog(`${displayPit(source)} is empty.`);
+    updateHud();
+    draw();
+    return false;
+  }
+
+  const beforePlayerStore = state.pits[PLAYER_STORE];
+  const beforeAiStore = state.pits[AI_STORE];
+  const result = simulateMove(source, state.pits, turn);
+  state.pits = result.pits;
+  state.lastMove = { source, turn, stones: state.pits[storeFor(turn)] - (turn === 'player' ? beforePlayerStore : beforeAiStore) };
+  state.lastSown = result.lastSown;
+  state.captured = result.captured;
+  state.extraTurn = result.extraTurn;
+  state.moveCount += 1;
+  state.score = Math.max(0, state.pits[PLAYER_STORE] - state.pits[AI_STORE]) * 15 + state.pits[PLAYER_STORE] * 4;
+  state.pulses.push({ pit: source, age: 0, color: turn === 'player' ? PLAYER_COLOR : AI_COLOR });
+  state.pulses.push({ pit: result.lastSown, age: 0, color: result.extraTurn ? '#f5cf65' : '#ffffff' });
+  if (result.captured) {
+    state.pulses.push({ pit: storeFor(turn), age: 0, color: '#f5cf65' });
+  }
+
+  if (result.finished) {
+    finishGame();
+    return true;
+  }
+
+  const actor = turn === 'player' ? 'You' : 'AI';
+  const ending = result.extraTurn ? 'earned another turn' : `ended in ${displayPit(result.lastSown)}`;
+  const capture = result.captured ? ` and captured ${result.captured}` : '';
+  pushLog(`${actor} sowed ${displayPit(source)}${capture}, ${ending}.`);
+  state.turn = result.nextTurn;
+  if (state.turn === 'ai') {
+    state.aiPending = true;
+    state.aiDelay = 0.52;
+  } else {
+    state.selected = nearestLegalPlayerPit(state.selected);
+  }
+  refreshHint();
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function finishGame() {
+  const player = state.pits[PLAYER_STORE];
+  const ai = state.pits[AI_STORE];
+  state.aiPending = false;
+  if (player > ai) {
+    state.mode = 'won';
+    state.result = 'player_win';
+    const margin = player - ai;
+    state.score += 220 + margin * 25;
+    const coins = Math.max(10, Math.min(36, 10 + Math.floor(state.score / 110)));
+    state.coinsEarned = coins;
+    addCoins(coins);
+    maybeUnlock({ anyPlay: true, mancala: { score: state.score, margin, moves: state.moveCount } });
+    pushLog(`You won by ${margin}. ${coins} coins earned.`);
+  } else if (ai > player) {
+    state.mode = 'lost';
+    state.result = 'ai_win';
+    maybeUnlock({ anyPlay: true, mancala: { score: state.score, margin: player - ai, moves: state.moveCount } });
+    pushLog(`AI won by ${ai - player}.`);
+  } else {
+    state.mode = 'draw';
+    state.result = 'draw';
+    state.score += 80;
+    pushLog('Stores are tied.');
+  }
+  refreshHint();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function nearestLegalPlayerPit(seed) {
+  const legal = legalPits('player');
+  if (!legal.length) return 0;
+  if (legal.includes(seed)) return seed;
+  return legal.reduce((best, pit) => Math.abs(pit - seed) < Math.abs(best - seed) ? pit : best, legal[0]);
+}
+
+function rateMove(source, pits, turn) {
+  const beforeStore = pits[storeFor(turn)];
+  const beforeOppStore = pits[opponentStoreFor(turn)];
+  const result = simulateMove(source, pits, turn);
+  const storeGain = result.pits[storeFor(turn)] - beforeStore;
+  const oppGain = result.pits[opponentStoreFor(turn)] - beforeOppStore;
+  const ownSide = (turn === 'player' ? PLAYER_PITS : AI_PITS).reduce((sum, index) => sum + result.pits[index], 0);
+  let value = storeGain * 18 - oppGain * 8 + result.captured * 12 + ownSide * 0.8;
+  if (result.extraTurn) value += 34;
+  if (result.finished) {
+    const margin = result.pits[storeFor(turn)] - result.pits[opponentStoreFor(turn)];
+    value += margin * 35;
+  }
+  return { value, result };
+}
+
+function bestMove(turn = state.turn, pits = state.pits) {
+  const legal = legalPits(turn, pits);
+  let best = null;
+  for (const source of legal) {
+    const rated = rateMove(source, pits, turn);
+    let value = rated.value;
+    if (!rated.result.finished && !rated.result.extraTurn) {
+      const reply = legalPits(turn === 'player' ? 'ai' : 'player', rated.result.pits)
+        .map((pit) => rateMove(pit, rated.result.pits, turn === 'player' ? 'ai' : 'player').value)
+        .sort((a, b) => b - a)[0] || 0;
+      value -= reply * 0.34;
+    }
+    if (!best || value > best.value) {
+      best = { source, value: Math.round(value), captured: rated.result.captured, extra_turn: rated.result.extraTurn };
+    }
+  }
+  return best;
+}
+
+function refreshHint() {
+  state.hint = bestMove('player', state.pits);
+}
+
+function makeAiMove() {
+  if (state.mode !== 'playing' || state.turn !== 'ai') return;
+  const move = bestMove('ai', state.pits);
+  state.aiPending = false;
+  if (!move) {
+    finishGame();
+    return;
+  }
+  applyMove(move.source, 'ai');
+}
+
+function useHint() {
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  if (state.turn !== 'player' || state.aiPending) {
+    pushLog('Hint waits for your turn.');
+    updateHud();
+    return;
+  }
+  refreshHint();
+  if (state.hint) {
+    state.selected = state.hint.source;
+    pushLog(`Hint: sow ${displayPit(state.hint.source)}.`);
+  }
+  updateHud();
+  draw();
+}
+
+function pauseGame() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    pushLog('Paused.');
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    pushLog('Resumed.');
+  } else {
+    startGame();
+    return;
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function update(dt) {
+  state.clock += dt;
+  state.pulses.forEach((pulse) => { pulse.age += dt; });
+  state.pulses = state.pulses.filter((pulse) => pulse.age < 0.8);
+  if (state.mode !== 'playing') return;
+  if (state.aiPending) {
+    state.aiDelay -= dt;
+    if (state.aiDelay <= 0) makeAiMove();
+  }
+}
+
+function updateHud() {
+  hud.mode.textContent = state.mode === 'menu' ? 'Menu' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  hud.turn.textContent = state.aiPending ? 'AI thinking' : state.turn === 'player' ? 'Player' : 'AI';
+  hud.playerStore.textContent = String(state.pits[PLAYER_STORE]);
+  hud.aiStore.textContent = String(state.pits[AI_STORE]);
+  hud.selected.textContent = displayPit(state.selected);
+  hud.hint.textContent = state.hint ? displayPit(state.hint.source) : '-';
+  hud.score.textContent = String(state.score);
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+}
+
+function updateOverlay() {
+  const show = ['menu', 'paused', 'won', 'lost', 'draw'].includes(state.mode);
+  overlay.classList.toggle('show', show);
+  if (!show) {
+    overlay.innerHTML = '';
+    return;
+  }
+  let title = 'Mancala';
+  let body = 'Sow stones from your bottom row, land in your store for another turn, and capture across the board when your last stone lands in an empty pit.';
+  let primary = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'The board is held exactly as it is.';
+    primary = 'Resume';
+  } else if (state.mode === 'won') {
+    title = 'Store Secured';
+    body = `Your store ${state.pits[PLAYER_STORE]} to ${state.pits[AI_STORE]}. Score ${state.score}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'AI Took the Store';
+    body = `Final stores ${state.pits[PLAYER_STORE]} to ${state.pits[AI_STORE]}. Try setting up extra turns before captures.`;
+    primary = 'Retry';
+  } else if (state.mode === 'draw') {
+    title = 'Stores Tied';
+    body = `Both stores finished at ${state.pits[PLAYER_STORE]}. Score ${state.score}.`;
+    primary = 'Play Again';
+  }
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: arrows or A/D choose a pit, Space or Enter sows, H hints, P pauses, R restarts, F fullscreen. Touch a bottom pit to sow it.</p>
+      <div class="row">
+        <button id="overlayPrimary" type="button">${primary}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayPrimary')?.addEventListener('click', () => {
+    if (state.mode === 'paused') pauseGame();
+    else startGame();
+  });
+  document.getElementById('overlayRestart')?.addEventListener('click', () => resetGame('playing'));
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke = '') {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function pitLayout(index) {
+  if (index === PLAYER_STORE) return { x: BOARD.x + BOARD.w - 104, y: BOARD.y + 40, w: 72, h: 288, store: true };
+  if (index === AI_STORE) return { x: BOARD.x + 32, y: BOARD.y + 40, w: 72, h: 288, store: true };
+  const gap = 18;
+  const pitW = 104;
+  const pitH = 118;
+  const startX = BOARD.x + 146;
+  if (isPlayerPit(index)) {
+    return { x: startX + index * (pitW + gap), y: BOARD.y + 206, w: pitW, h: pitH, store: false };
+  }
+  const topPosition = 12 - index;
+  return { x: startX + topPosition * (pitW + gap), y: BOARD.y + 44, w: pitW, h: pitH, store: false };
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawBoard();
+  drawSidePanel();
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, W, H);
+  sky.addColorStop(0, '#f9e0ab');
+  sky.addColorStop(0.48, '#94d2c5');
+  sky.addColorStop(1, '#24344f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 24; i += 1) {
+    const x = (i * 131 + 41) % W;
+    const y = (i * 73 + 28) % H;
+    ctx.beginPath();
+    ctx.arc(x, y, 10 + (i % 4) * 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBoard() {
+  drawRoundRect(BOARD.x, BOARD.y, BOARD.w, BOARD.h, 8, EMPTY_BOARD, '#fff0c6');
+  const wood = ctx.createLinearGradient(BOARD.x, BOARD.y, BOARD.x + BOARD.w, BOARD.y + BOARD.h);
+  wood.addColorStop(0, '#f0ba6c');
+  wood.addColorStop(0.45, '#c8783d');
+  wood.addColorStop(1, '#865136');
+  drawRoundRect(BOARD.x + 18, BOARD.y + 18, BOARD.w - 36, BOARD.h - 36, 8, wood, '#74462e');
+
+  ctx.fillStyle = '#fff5db';
+  ctx.font = '900 30px "Trebuchet MS", sans-serif';
+  ctx.fillText('Mancala', BOARD.x + 386, BOARD.y - 28);
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#153044';
+  ctx.fillText('AI row', BOARD.x + 492, BOARD.y + 34);
+  ctx.fillText('Your row', BOARD.x + 482, BOARD.y + BOARD.h - 18);
+
+  for (let index = 0; index < state.pits.length; index += 1) {
+    drawPit(index);
+  }
+}
+
+function drawPit(index) {
+  const rect = pitLayout(index);
+  const selected = state.mode === 'playing' && state.turn === 'player' && index === state.selected && isPlayerPit(index);
+  const legal = state.mode === 'playing' && state.turn === 'player' && isPlayerPit(index) && state.pits[index] > 0;
+  const pulse = state.pulses.find((item) => item.pit === index);
+  const fill = rect.store ? '#e8be77' : PIT_FILL;
+  const stroke = selected ? '#ffffff' : legal ? '#f5cf65' : '#7a452b';
+  const glow = pulse ? 1 - pulse.age / 0.8 : 0;
+
+  ctx.save();
+  if (glow > 0) {
+    ctx.shadowColor = pulse.color;
+    ctx.shadowBlur = 24 * glow;
+  }
+  drawRoundRect(rect.x, rect.y, rect.w, rect.h, 8, fill, stroke);
+  ctx.restore();
+
+  ctx.fillStyle = PIT_SHADOW;
+  ctx.globalAlpha = 0.26;
+  ctx.beginPath();
+  ctx.ellipse(rect.x + rect.w / 2, rect.y + rect.h / 2 + (rect.store ? 20 : 10), rect.w * 0.36, rect.h * 0.34, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  drawStones(index, rect);
+
+  ctx.fillStyle = '#1f2f3c';
+  ctx.font = '900 26px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(state.pits[index]), rect.x + rect.w / 2, rect.y + rect.h / 2 + 9);
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = rect.store ? '#553322' : '#5c3d29';
+  ctx.fillText(displayPit(index), rect.x + rect.w / 2, rect.y + rect.h - 12);
+  ctx.textAlign = 'left';
+
+  if (state.lastSown === index) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(rect.x + 7, rect.y + 7, rect.w - 14, rect.h - 14);
+  }
+}
+
+function drawStones(index, rect) {
+  const count = state.pits[index];
+  const colors = ['#214d63', '#f0c85b', '#d85f48', '#f8eee0', '#3e997f'];
+  const maxVisible = Math.min(count, 18);
+  for (let i = 0; i < maxVisible; i += 1) {
+    const angle = i * 2.399 + index * 0.71;
+    const spreadX = rect.store ? rect.w * 0.23 : rect.w * 0.28;
+    const spreadY = rect.store ? rect.h * 0.36 : rect.h * 0.26;
+    const radius = Math.sqrt((i + 0.5) / Math.max(1, maxVisible));
+    const x = rect.x + rect.w / 2 + Math.cos(angle) * spreadX * radius;
+    const y = rect.y + rect.h / 2 + Math.sin(angle) * spreadY * radius;
+    ctx.fillStyle = colors[(i + index) % colors.length];
+    ctx.beginPath();
+    ctx.arc(x, y, rect.store ? 8 : 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#3a2b24a8';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function drawSidePanel() {
+  const x = 80;
+  const y = 500;
+  const w = 920;
+  drawRoundRect(x, y, w, 94, 8, '#132738e5', '#ffffff66');
+  ctx.fillStyle = '#f9fcff';
+  ctx.font = '900 20px "Trebuchet MS", sans-serif';
+  const status = state.mode === 'playing'
+    ? state.aiPending ? 'AI is choosing a sowing pit' : state.turn === 'player' ? `Choose ${displayPit(state.selected)}` : 'AI turn'
+    : state.mode === 'menu' ? 'Ready to sow' : state.mode;
+  ctx.fillText(status, x + 22, y + 32);
+  ctx.fillStyle = '#cfe1ef';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  const latest = state.logs.length ? state.logs.slice(0, 3) : ['Build store pressure with extra turns and cross-board captures.'];
+  latest.forEach((line, index) => {
+    ctx.fillText(line, x + 22, y + 58 + index * 18);
+  });
+
+  const playerShare = state.pits[PLAYER_STORE] / Math.max(1, state.pits[PLAYER_STORE] + state.pits[AI_STORE]);
+  const barX = x + 600;
+  const barY = y + 28;
+  drawRoundRect(barX, barY, 250, 18, 8, '#0c1b28', '#ffffff35');
+  drawRoundRect(barX, barY, 250 * playerShare, 18, 8, PLAYER_COLOR);
+  ctx.fillStyle = '#f8feff';
+  ctx.font = '900 13px "Trebuchet MS", sans-serif';
+  ctx.fillText(`Store share ${Math.round(playerShare * 100)}%`, barX + 70, barY + 14);
+}
+
+function pitFromPoint(x, y) {
+  for (let index = 0; index < state.pits.length; index += 1) {
+    const rect = pitLayout(index);
+    if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
+      return index;
+    }
+  }
+  return null;
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  const point = canvasPoint(event);
+  const pit = pitFromPoint(point.x, point.y);
+  if (pit == null) return;
+  if (state.turn === 'player' && isPlayerPit(pit)) {
+    state.selected = pit;
+    applyMove(pit, 'player');
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => nextSelectable(-1));
+document.getElementById('nextBtn').addEventListener('click', () => nextSelectable(1));
+document.getElementById('sowBtn').addEventListener('click', () => applyMove(state.selected, 'player'));
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', () => resetGame('playing'));
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', ' ', 'spacebar'].includes(key)) event.preventDefault();
+  if (key === 'arrowleft' || key === 'a') nextSelectable(-1);
+  else if (key === 'arrowright' || key === 'd') nextSelectable(1);
+  else if (key >= '1' && key <= '6') {
+    state.selected = Number(key) - 1;
+    updateHud();
+    draw();
+  } else if (key === ' ' || key === 'spacebar' || key === 'enter') {
+    applyMove(state.selected, 'player');
+  } else if (key === 'h') {
+    useHint();
+  } else if (key === 'p') {
+    pauseGame();
+  } else if (key === 'r') {
+    resetGame('playing');
+  } else if (key === 'f') {
+    toggleFullscreen();
+  }
+});
+
+function frame(now) {
+  if (!controlled) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000 || 0));
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  lastFrame = now;
+  raf = requestAnimationFrame(frame);
+}
+
+function renderGameToText() {
+  return JSON.stringify({
+    game: 'mancala',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. X increases right and Y increases down. Player pits are the bottom row indexed 0 through 5 from left to right. AI pits are the top row indexed 7 through 12 from right to left in sowing order.',
+    objective: 'collect more stones in your store than the AI by sowing bottom-row pits, earning extra turns, and capturing opposite stones',
+    turn: state.aiPending ? 'ai_pending' : state.turn,
+    selected: {
+      pit: state.selected,
+      label: displayPit(state.selected),
+      stones: state.pits[state.selected],
+      legal: legalPits('player').includes(state.selected),
+    },
+    stores: {
+      player: state.pits[PLAYER_STORE],
+      ai: state.pits[AI_STORE],
+      margin: state.pits[PLAYER_STORE] - state.pits[AI_STORE],
+    },
+    pits: {
+      player: PLAYER_PITS.map((index) => ({ index, label: displayPit(index), stones: state.pits[index] })),
+      ai: AI_PITS.map((index) => ({ index, label: displayPit(index), stones: state.pits[index] })),
+    },
+    resources: {
+      score: state.score,
+      move_count: state.moveCount,
+      coins_earned: state.coinsEarned,
+      legal_moves: legalPits(state.turn),
+    },
+    hint: state.hint,
+    last_move: state.lastMove,
+    last_sown: state.lastSown,
+    captured: state.captured,
+    extra_turn: state.extraTurn,
+    recent_events: state.logs,
+    result: state.result,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+resetGame('menu');
+mountGameFeedback({ gameSlug: 'mancala', gameName: 'Mancala' });
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+</body>
+</html>

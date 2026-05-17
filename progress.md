@@ -2822,3 +2822,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser tooling was not exposed by tool discovery in this session, so no alternate visual screenshot path was available.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Gomoku Grid screenshots.
+
+## 2026-05-17 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Existing automation memory file was missing; `progress.md` was read and preserved.
+- Initial repo check: no `/mancala` route or Mancala metadata entry found.
+- Chosen game: Mancala (`/mancala`), a standalone Kalah-style pit-sowing board game with player vs AI turns, captures, extra turns, coins, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `mancala/index.html` with canvas rendering, player-vs-AI Kalah rules, captures, extra turns, keyboard/pointer/touch controls, fullscreen, score/coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Mancala in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Mancala.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Mancala module script after SEO injection.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 98 games including Mancala with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/mancala/`.
+  - Stubbed DOM/canvas runtime harness passed: started the game through pointer input, sowed a player pit, advanced deterministic time through AI replies, confirmed `render_game_to_text()` state, and verified feedback mount context.
+  - `git diff --check` on Mancala integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary local route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step after route verification.
+- Local preview:
+  - Started a lightweight static server for manual review at `http://127.0.0.1:4201/mancala/` (PID 4860); route check returned HTTP 200.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Mancala screenshots.
