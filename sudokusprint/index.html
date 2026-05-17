@@ -353,6 +353,7 @@ const state = {
 let raf = 0;
 let lastFrame = 0;
 let controlled = false;
+let overlayRenderKey = '';
 
 function currentPuzzle() {
   return puzzles[state.puzzleIndex];
@@ -842,7 +843,12 @@ function updateHud() {
 
 function updateOverlay() {
   const show = state.mode === 'menu' || state.mode === 'paused' || state.mode === 'won' || state.mode === 'lost';
+  const key = show
+    ? `${state.mode}|${state.result}|${state.score}|${state.puzzleIndex}|${state.perfectPuzzles}|${state.coinsEarned}`
+    : 'hidden';
   overlay.classList.toggle('show', show);
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
   if (!show) {
     overlay.innerHTML = '';
     return;

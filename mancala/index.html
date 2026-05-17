@@ -294,6 +294,7 @@ const state = {
 let raf = 0;
 let lastFrame = 0;
 let controlled = false;
+let overlayRenderKey = '';
 
 function freshPits() {
   return [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
@@ -635,7 +636,12 @@ function updateHud() {
 
 function updateOverlay() {
   const show = ['menu', 'paused', 'won', 'lost', 'draw'].includes(state.mode);
+  const key = show
+    ? `${state.mode}|${state.result}|${state.score}|${state.coinsEarned}|${state.pits[PLAYER_STORE]}|${state.pits[AI_STORE]}`
+    : 'hidden';
   overlay.classList.toggle('show', show);
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
   if (!show) {
     overlay.innerHTML = '';
     return;

@@ -251,6 +251,7 @@ const COLORS = [
 let raf = 0;
 let lastFrame = 0;
 let controlled = false;
+let overlayRenderKey = '';
 let seed = 45673;
 const keys = new Set();
 const hold = { left: false, right: false };
@@ -794,11 +795,18 @@ function updateHud() {
 }
 
 function updateOverlay() {
+  const key = state.mode === 'playing'
+    ? 'hidden'
+    : `${state.mode}|${state.result}|${state.score}|${state.coinsEarned}|${state.popped}`;
   if (state.mode === 'playing') {
     overlay.classList.remove('show');
+    if (key === overlayRenderKey) return;
+    overlayRenderKey = key;
     overlay.innerHTML = '';
     return;
   }
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
 
   let title = 'Bubble Shooter';
   let body = 'Aim, bank shots off the side rails, and match 3 bubbles of the same color before the ceiling pressure reaches the danger line.';

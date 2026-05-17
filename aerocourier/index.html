@@ -319,6 +319,7 @@ function freshGame() {
 let game = freshGame();
 let lastTime = performance.now();
 let advancing = false;
+let overlayRenderKey = '';
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -829,11 +830,18 @@ function updateHud() {
 }
 
 function updateOverlay() {
+  const key = game.mode === 'playing'
+    ? 'hidden'
+    : `${game.mode}|${game.score}|${game.deliveries}|${game.coinsEarned}|${game.hull <= 0}|${game.time <= 0}`;
   if (game.mode === 'playing') {
     overlay.classList.remove('show');
+    if (key === overlayRenderKey) return;
+    overlayRenderKey = key;
     overlay.innerHTML = '';
     return;
   }
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
 
   let title = 'Aero Courier';
   let body = 'Collect each colored parcel from the depot, ride wind lanes, boost through rings, and deliver cargo to the matching rooftop pad before dusk.';

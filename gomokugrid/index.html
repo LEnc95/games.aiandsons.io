@@ -273,6 +273,7 @@ const DIRS = [
 let controlled = false;
 let raf = 0;
 let lastFrame = 0;
+let overlayRenderKey = '';
 
 const makeBoard = () => Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
 
@@ -700,7 +701,12 @@ function updateHud() {
 
 function updateOverlay() {
   const show = ['menu', 'paused', 'won', 'lost', 'draw'].includes(state.mode);
+  const key = show
+    ? `${state.mode}|${state.result}|${state.score}|${state.moves.length}|${state.coinsEarned}|${state.timeLeft <= 0}`
+    : 'hidden';
   overlay.classList.toggle('show', show);
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
   if (!show) {
     overlay.innerHTML = '';
     return;

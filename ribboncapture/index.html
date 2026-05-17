@@ -311,6 +311,7 @@ function freshGame() {
 let game = freshGame();
 let lastTime = performance.now();
 let advancing = false;
+let overlayRenderKey = '';
 
 function interiorCellCount() {
   return (COLS - 2) * (ROWS - 2);
@@ -777,11 +778,18 @@ function updateHud() {
 }
 
 function updateOverlay() {
+  const key = game.mode === 'playing'
+    ? 'hidden'
+    : `${game.mode}|${game.score}|${game.claimedPct}|${game.coinsEarned}|${game.time <= 0}|${game.shields}`;
   if (game.mode === 'playing') {
     overlay.classList.remove('show');
+    if (key === overlayRenderKey) return;
+    overlayRenderKey = key;
     overlay.innerHTML = '';
     return;
   }
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
 
   let title = 'Ribbon Capture';
   let body = `Claim ${TARGET_CLAIM}% of the grid by leaving safe territory, drawing a ribbon, and returning before a hazard crosses the active trail.`;
