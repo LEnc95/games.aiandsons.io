@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Peg Solitaire | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbf4;
+  background:
+    radial-gradient(34% 30% at 16% 18%, #d7f0a5 0%, transparent 70%),
+    radial-gradient(34% 26% at 86% 76%, #ef7d5b 0%, transparent 68%),
+    linear-gradient(135deg, #264c3e 0%, #34535c 48%, #27263f 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 27 / 17;
+  max-height: min(66dvh, 680px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff78;
+  background: #19362e;
+  box-shadow: 0 20px 52px #1018269c;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 710px;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  background: #101923f4;
+  box-shadow: 0 18px 38px #10182688;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+}
+p {
+  margin: 0 0 10px;
+  color: #d9e6df;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #ffffff99;
+  background: #2e705f;
+  color: #f8fffb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #121d27f2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cbd9d3;
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.good b { color: #a9f0ba; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #121d27f2;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.primary-btn { background: #b8643a; }
+.utility-btn { background: #4e5f73; }
+@media (max-width: 940px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 580px) {
+  .stage { width: 98vw; max-height: 47dvh; }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  button { min-height: 44px; padding: 9px 10px; }
+  .back { top: 8px; left: 8px; }
+}
+@media (max-width: 580px) and (max-height: 720px) {
+  .app { padding: 46px 6px 8px; gap: 6px; }
+  .stage { max-height: 30dvh; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Jump pegs over adjacent pegs into empty holes, clear each board, and chase the one-peg finish. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Peg Solitaire | AI and Sons Games">
+  <meta property="og:description" content="Jump pegs over adjacent pegs into empty holes, clear each board, and chase the one-peg finish. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pegsolitaire">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Peg Solitaire | AI and Sons Games">
+  <meta name="twitter:description" content="Jump pegs over adjacent pegs into empty holes, clear each board, and chase the one-peg finish. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pegsolitaire">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Peg Solitaire","description":"Jump pegs over adjacent pegs into empty holes, clear each board, and chase the one-peg finish. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/pegsolitaire","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Peg Solitaire board">
+    <canvas id="game" width="1080" height="680"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Board</span><b id="boardName">Classic</b></div>
+    <div class="chip good"><span>Pegs</span><b id="pegs">32</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip warn"><span>Legal</span><b id="legal">0</b></div>
+    <div class="chip"><span>Hints</span><b id="hints">0</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Peg Solitaire controls">
+    <button id="upBtn" type="button" class="utility-btn">Up</button>
+    <button id="leftBtn" type="button" class="utility-btn">Left</button>
+    <button id="selectBtn" type="button" class="primary-btn">Select</button>
+    <button id="rightBtn" type="button" class="utility-btn">Right</button>
+    <button id="downBtn" type="button" class="utility-btn">Down</button>
+    <button id="hintBtn" type="button" class="utility-btn">Hint</button>
+    <button id="undoBtn" type="button" class="utility-btn">Undo</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  boardName: document.getElementById('boardName'),
+  pegs: document.getElementById('pegs'),
+  moves: document.getElementById('moves'),
+  legal: document.getElementById('legal'),
+  hints: document.getElementById('hints'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const ROWS = 7;
+const COLS = 7;
+const INVALID = -1;
+const EMPTY = 0;
+const PEG = 1;
+const CELL = 72;
+const BOARD_X = 104;
+const BOARD_Y = 92;
+const PANEL_X = 664;
+const DIRS = [
+  { name: 'up', dr: -1, dc: 0 },
+  { name: 'down', dr: 1, dc: 0 },
+  { name: 'left', dr: 0, dc: -1 },
+  { name: 'right', dr: 0, dc: 1 },
+];
+
+const LAYOUTS = [
+  {
+    name: 'Classic Cross',
+    shortName: 'Classic',
+    empty: [{ r: 3, c: 3 }],
+    valid(r, c) {
+      return (r >= 2 && r <= 4) || (c >= 2 && c <= 4);
+    },
+  },
+  {
+    name: 'Diamond Field',
+    shortName: 'Diamond',
+    empty: [{ r: 3, c: 3 }],
+    valid(r, c) {
+      return Math.abs(r - 3) + Math.abs(c - 3) <= 3;
+    },
+  },
+  {
+    name: 'Wide Cross',
+    shortName: 'Wide',
+    empty: [{ r: 2, c: 3 }, { r: 3, c: 3 }],
+    valid(r, c) {
+      return (r >= 1 && r <= 5 && c >= 2 && c <= 4)
+        || (r >= 2 && r <= 4 && c >= 1 && c <= 5);
+    },
+  },
+];
+
+const state = {
+  mode: 'menu',
+  layoutIndex: 0,
+  board: [],
+  selected: null,
+  cursor: { r: 3, c: 3 },
+  history: [],
+  moves: 0,
+  hintsUsed: 0,
+  score: 0,
+  coinsEarned: 0,
+  awarded: false,
+  initialPegs: 0,
+  legalMoves: [],
+  hintMove: null,
+  result: '',
+  message: 'Jump pegs until one remains.',
+  log: [],
+  pulses: [],
+  clock: 0,
+};
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+let overlayKey = '';
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function cloneBoard(board = state.board) {
+  return board.map((row) => row.slice());
+}
+
+function sameCell(a, b) {
+  return Boolean(a && b && a.r === b.r && a.c === b.c);
+}
+
+function keyOf(cell) {
+  return `${cell.r},${cell.c}`;
+}
+
+function inBounds(r, c) {
+  return r >= 0 && r < ROWS && c >= 0 && c < COLS;
+}
+
+function isValidCell(r, c, board = state.board) {
+  return inBounds(r, c) && board[r][c] !== INVALID;
+}
+
+function cellValue(cell, board = state.board) {
+  return isValidCell(cell.r, cell.c, board) ? board[cell.r][cell.c] : INVALID;
+}
+
+function createBoard(layout) {
+  const emptyKeys = new Set(layout.empty.map(keyOf));
+  const board = [];
+  let pegs = 0;
+  for (let r = 0; r < ROWS; r += 1) {
+    const row = [];
+    for (let c = 0; c < COLS; c += 1) {
+      if (!layout.valid(r, c)) {
+        row.push(INVALID);
+      } else if (emptyKeys.has(`${r},${c}`)) {
+        row.push(EMPTY);
+      } else {
+        row.push(PEG);
+        pegs += 1;
+      }
+    }
+    board.push(row);
+  }
+  return { board, pegs };
+}
+
+function currentLayout() {
+  return LAYOUTS[state.layoutIndex % LAYOUTS.length];
+}
+
+function pushLog(message) {
+  state.log = [message, ...state.log].slice(0, 6);
+  state.message = message;
+}
+
+function countPegs(board = state.board) {
+  let count = 0;
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      if (board[r][c] === PEG) count += 1;
+    }
+  }
+  return count;
+}
+
+function computeLegalMoves(board = state.board) {
+  const moves = [];
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      if (board[r][c] !== PEG) continue;
+      for (const dir of DIRS) {
+        const over = { r: r + dir.dr, c: c + dir.dc };
+        const to = { r: r + dir.dr * 2, c: c + dir.dc * 2 };
+        if (!isValidCell(to.r, to.c, board) || !isValidCell(over.r, over.c, board)) continue;
+        if (board[over.r][over.c] === PEG && board[to.r][to.c] === EMPTY) {
+          moves.push({
+            from: { r, c },
+            over,
+            to,
+            direction: dir.name,
+          });
+        }
+      }
+    }
+  }
+  return moves;
+}
+
+function moveMatches(move, from, to) {
+  return sameCell(move.from, from) && sameCell(move.to, to);
+}
+
+function legalMoveFor(from, to) {
+  return state.legalMoves.find((move) => moveMatches(move, from, to)) || null;
+}
+
+function scoreBoardMove(move, board) {
+  const next = cloneBoard(board);
+  next[move.from.r][move.from.c] = EMPTY;
+  next[move.over.r][move.over.c] = EMPTY;
+  next[move.to.r][move.to.c] = PEG;
+  const nextMoves = computeLegalMoves(next).length;
+  const centerDistance = Math.abs(move.to.r - 3) + Math.abs(move.to.c - 3);
+  const edgePenalty = (move.to.r === 0 || move.to.r === 6 || move.to.c === 0 || move.to.c === 6) ? 1.2 : 0;
+  return nextMoves * 5 - centerDistance * 1.6 - edgePenalty;
+}
+
+function chooseHint() {
+  if (!state.legalMoves.length) return null;
+  return state.legalMoves
+    .map((move) => ({ ...move, value: scoreBoardMove(move, state.board) }))
+    .sort((a, b) => b.value - a.value)[0];
+}
+
+function recompute() {
+  state.legalMoves = computeLegalMoves(state.board);
+  if (state.hintMove && !legalMoveFor(state.hintMove.from, state.hintMove.to)) {
+    state.hintMove = null;
+  }
+  const pegsRemoved = Math.max(0, state.initialPegs - countPegs());
+  const paceBonus = Math.max(0, 120 - state.moves * 2);
+  const hintPenalty = state.hintsUsed * 18;
+  const winBonus = state.mode === 'won' ? 520 : 0;
+  state.score = Math.max(0, pegsRemoved * 42 + paceBonus - hintPenalty + winBonus);
+}
+
+function startLayout(index = state.layoutIndex) {
+  state.layoutIndex = (index + LAYOUTS.length) % LAYOUTS.length;
+  const layout = currentLayout();
+  const created = createBoard(layout);
+  state.mode = 'playing';
+  state.board = created.board;
+  state.selected = null;
+  state.cursor = layout.empty[0] || { r: 3, c: 3 };
+  state.history = [];
+  state.moves = 0;
+  state.hintsUsed = 0;
+  state.score = 0;
+  state.coinsEarned = 0;
+  state.awarded = false;
+  state.initialPegs = created.pegs;
+  state.hintMove = null;
+  state.result = '';
+  state.log = [];
+  state.pulses = [];
+  state.clock = 0;
+  pushLog(`Board started: ${layout.name}.`);
+  rememberRecent('pegsolitaire');
+  maybeUnlock({ anyPlay: true });
+  recompute();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function restartCurrent() {
+  startLayout(state.layoutIndex);
+}
+
+function nextLayout() {
+  startLayout(state.layoutIndex + 1);
+}
+
+function finishGame(result) {
+  if (state.mode === 'won') return;
+  state.mode = result;
+  state.result = result;
+  state.selected = null;
+  state.hintMove = null;
+  recompute();
+  if (result === 'won' && !state.awarded) {
+    const centerFinish = state.board[3][3] === PEG;
+    const coins = Math.max(12, Math.min(42, 14 + state.layoutIndex * 4 + (centerFinish ? 8 : 0) + Math.max(0, 30 - state.moves)));
+    state.coinsEarned = coins;
+    state.awarded = true;
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      pegsolitaire: {
+        result,
+        board: currentLayout().shortName,
+        moves: state.moves,
+        score: state.score,
+        center_finish: centerFinish,
+      },
+    });
+    pushLog(`Solved with ${state.moves} moves. ${coins} coins earned.`);
+  } else if (result === 'stuck') {
+    maybeUnlock({
+      anyPlay: true,
+      pegsolitaire: {
+        result,
+        board: currentLayout().shortName,
+        pegs: countPegs(),
+        moves: state.moves,
+      },
+    });
+    pushLog('No jumps remain. Undo or restart.');
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function checkEndState() {
+  recompute();
+  const pegs = countPegs();
+  if (pegs === 1) {
+    finishGame('won');
+    return;
+  }
+  if (state.legalMoves.length === 0) {
+    finishGame('stuck');
+    return;
+  }
+  updateHud();
+  updateOverlay();
+}
+
+function applyMove(move) {
+  if (state.mode !== 'playing') return false;
+  state.history.push({
+    board: cloneBoard(),
+    selected: state.selected ? { ...state.selected } : null,
+    cursor: { ...state.cursor },
+    moves: state.moves,
+    hintsUsed: state.hintsUsed,
+    message: state.message,
+    log: state.log.slice(),
+  });
+  state.board[move.from.r][move.from.c] = EMPTY;
+  state.board[move.over.r][move.over.c] = EMPTY;
+  state.board[move.to.r][move.to.c] = PEG;
+  state.selected = null;
+  state.cursor = { ...move.to };
+  state.moves += 1;
+  state.hintMove = null;
+  state.pulses.push({ cell: move.from, age: 0, color: '#ef7d5b' });
+  state.pulses.push({ cell: move.over, age: 0, color: '#ffe091' });
+  state.pulses.push({ cell: move.to, age: 0, color: '#a9f0ba' });
+  pushLog(`Jumped ${cellLabel(move.from)} ${move.direction} to ${cellLabel(move.to)}.`);
+  checkEndState();
+  draw();
+  return true;
+}
+
+function undoMove() {
+  if (state.mode === 'won') {
+    pushLog('Solved boards cannot be undone after coins are awarded.');
+    updateHud();
+    draw();
+    return;
+  }
+  const previous = state.history.pop();
+  if (!previous) {
+    pushLog('No moves to undo.');
+    updateHud();
+    draw();
+    return;
+  }
+  state.board = previous.board;
+  state.selected = previous.selected;
+  state.cursor = previous.cursor;
+  state.moves = previous.moves;
+  state.hintsUsed = previous.hintsUsed;
+  state.message = previous.message;
+  state.log = previous.log;
+  state.hintMove = null;
+  state.mode = 'playing';
+  state.result = '';
+  recompute();
+  pushLog('Last jump undone.');
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function selectOrJump(cell) {
+  if (state.mode === 'menu') {
+    startLayout();
+    return;
+  }
+  if (state.mode === 'paused') return;
+  if (state.mode !== 'playing') {
+    restartCurrent();
+    return;
+  }
+  if (!isValidCell(cell.r, cell.c)) return;
+  state.cursor = { ...cell };
+  const value = cellValue(cell);
+  if (state.selected) {
+    if (sameCell(state.selected, cell)) {
+      state.selected = null;
+      pushLog('Selection cleared.');
+    } else if (value === EMPTY) {
+      const move = legalMoveFor(state.selected, cell);
+      if (move) {
+        applyMove(move);
+        return;
+      }
+      pushLog('That empty slot is not a legal jump.');
+    } else if (value === PEG) {
+      state.selected = { ...cell };
+      pushLog(`Selected ${cellLabel(cell)}.`);
+    }
+  } else if (value === PEG) {
+    state.selected = { ...cell };
+    pushLog(`Selected ${cellLabel(cell)}.`);
+  } else {
+    pushLog('Choose a peg, then jump into an empty slot two spaces away.');
+  }
+  recompute();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function useHint() {
+  if (state.mode === 'menu') {
+    startLayout();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const hint = chooseHint();
+  if (!hint) {
+    pushLog('No legal jumps remain.');
+    updateHud();
+    draw();
+    return;
+  }
+  state.hintsUsed += 1;
+  state.hintMove = hint;
+  state.selected = { ...hint.from };
+  state.cursor = { ...hint.to };
+  pushLog(`Hint: jump ${cellLabel(hint.from)} ${hint.direction}.`);
+  recompute();
+  updateHud();
+  draw();
+}
+
+function togglePause() {
+  if (state.mode === 'menu') {
+    startLayout();
+    return;
+  }
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    pushLog('Paused.');
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    pushLog('Resumed.');
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function moveCursor(dr, dc) {
+  if (state.mode === 'menu') {
+    startLayout();
+    return;
+  }
+  if (!isValidCell(state.cursor.r, state.cursor.c)) {
+    state.cursor = firstPlayableCell();
+  }
+  let r = state.cursor.r;
+  let c = state.cursor.c;
+  for (let step = 0; step < 7; step += 1) {
+    r = clamp(r + dr, 0, ROWS - 1);
+    c = clamp(c + dc, 0, COLS - 1);
+    if (isValidCell(r, c)) {
+      state.cursor = { r, c };
+      updateHud();
+      draw();
+      return;
+    }
+  }
+}
+
+function firstPlayableCell() {
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      if (isValidCell(r, c)) return { r, c };
+    }
+  }
+  return { r: 3, c: 3 };
+}
+
+function cellLabel(cell) {
+  return `${String.fromCharCode(65 + cell.c)}${cell.r + 1}`;
+}
+
+function cellCenter(cell) {
+  return {
+    x: BOARD_X + cell.c * CELL + CELL / 2,
+    y: BOARD_Y + cell.r * CELL + CELL / 2,
+  };
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function cellFromPoint(x, y) {
+  const c = Math.floor((x - BOARD_X) / CELL);
+  const r = Math.floor((y - BOARD_Y) / CELL);
+  if (!isValidCell(r, c)) return null;
+  const center = cellCenter({ r, c });
+  const dist = Math.hypot(x - center.x, y - center.y);
+  return dist <= 34 ? { r, c } : null;
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+function update(dt) {
+  state.clock += dt;
+  state.pulses.forEach((pulse) => { pulse.age += dt; });
+  state.pulses = state.pulses.filter((pulse) => pulse.age < 0.72);
+}
+
+function updateHud() {
+  const pegs = countPegs();
+  hud.mode.textContent = state.mode === 'menu' ? 'Menu' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  hud.boardName.textContent = currentLayout().shortName;
+  hud.pegs.textContent = String(pegs);
+  hud.moves.textContent = String(state.moves);
+  hud.legal.textContent = String(state.legalMoves.length);
+  hud.hints.textContent = String(state.hintsUsed);
+  hud.score.textContent = String(Math.round(state.score));
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  hud.pegs.parentElement.classList.toggle('good', pegs <= 8);
+  hud.pegs.parentElement.classList.toggle('warn', pegs > 8 && pegs <= 16);
+  hud.pegs.parentElement.classList.toggle('bad', pegs > 16);
+}
+
+function updateOverlay() {
+  const show = ['menu', 'paused', 'won', 'stuck'].includes(state.mode);
+  const key = show ? `${state.mode}|${state.layoutIndex}|${state.score}|${state.coinsEarned}|${countPegs()}` : 'hidden';
+  overlay.classList.toggle('show', show);
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (!show) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Peg Solitaire';
+  let body = 'Jump one peg over another into an empty slot. The jumped peg is removed. Clear the board until only one peg remains.';
+  let primary = 'Start';
+  let primaryAction = 'start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'The board is held exactly as it is.';
+    primary = 'Resume';
+    primaryAction = 'resume';
+  } else if (state.mode === 'won') {
+    title = 'Board Cleared';
+    body = `Solved ${currentLayout().name} with ${state.moves} moves and ${state.hintsUsed} hints. Score ${Math.round(state.score)}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Next Board';
+    primaryAction = 'next';
+  } else if (state.mode === 'stuck') {
+    title = 'No Jumps Left';
+    body = `${countPegs()} pegs remain. Undo the last jump or restart this board.`;
+    primary = 'Undo';
+    primaryAction = 'undo';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: arrows move, Space or Enter selects and jumps, H hints, U undo, P pauses, R restarts, F fullscreen. Touch pegs and empty holes to play.</p>
+      <div class="row">
+        <button id="overlayPrimary" type="button" data-action="${primaryAction}">${primary}</button>
+        <button id="overlayRestart" type="button">Restart</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayPrimary')?.addEventListener('click', (event) => {
+    const action = event.currentTarget.dataset.action;
+    if (action === 'resume') togglePause();
+    else if (action === 'next') nextLayout();
+    else if (action === 'undo') undoMove();
+    else startLayout();
+  });
+  document.getElementById('overlayRestart')?.addEventListener('click', restartCurrent);
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke = '') {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#7aa56b');
+  bg.addColorStop(0.48, '#2e6b67');
+  bg.addColorStop(1, '#26304d');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 26; i += 1) {
+    const x = (i * 109 + 44) % W;
+    const y = (i * 67 + 82) % H;
+    ctx.beginPath();
+    ctx.arc(x, y, 8 + (i % 5) * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBoardBase() {
+  const boardW = COLS * CELL;
+  const boardH = ROWS * CELL;
+  drawRoundRect(BOARD_X - 36, BOARD_Y - 36, boardW + 72, boardH + 72, 8, '#6e462f', '#fff4c5');
+  const wood = ctx.createLinearGradient(BOARD_X, BOARD_Y, BOARD_X + boardW, BOARD_Y + boardH);
+  wood.addColorStop(0, '#d39755');
+  wood.addColorStop(0.5, '#9b5d34');
+  wood.addColorStop(1, '#583a2e');
+  drawRoundRect(BOARD_X - 18, BOARD_Y - 18, boardW + 36, boardH + 36, 8, wood, '#3a281f');
+
+  ctx.fillStyle = '#fff7d4';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.fillText('Peg Solitaire', BOARD_X + 122, BOARD_Y - 42);
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#ffe8af';
+  ctx.fillText(currentLayout().name, BOARD_X + 226, BOARD_Y + boardH + 50);
+}
+
+function drawBoardCells() {
+  const hintCells = new Set();
+  if (state.hintMove) {
+    hintCells.add(keyOf(state.hintMove.from));
+    hintCells.add(keyOf(state.hintMove.over));
+    hintCells.add(keyOf(state.hintMove.to));
+  }
+
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      if (!isValidCell(r, c)) continue;
+      const cell = { r, c };
+      const center = cellCenter(cell);
+      const selected = sameCell(state.selected, cell);
+      const cursor = sameCell(state.cursor, cell);
+      const hinted = hintCells.has(keyOf(cell));
+      const pulse = state.pulses.find((item) => sameCell(item.cell, cell));
+
+      ctx.save();
+      if (pulse) {
+        ctx.shadowColor = pulse.color;
+        ctx.shadowBlur = 26 * (1 - pulse.age / 0.72);
+      }
+      ctx.fillStyle = hinted ? '#f7d878' : '#2d221c';
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = cursor ? '#ffffff' : selected ? '#9df4ba' : '#120d0b';
+      ctx.lineWidth = cursor || selected ? 4 : 2;
+      ctx.stroke();
+      ctx.restore();
+
+      if (state.board[r][c] === PEG) {
+        drawPeg(center.x, center.y, selected, hinted);
+      } else {
+        ctx.fillStyle = '#00000055';
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, 17, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#ffe8af';
+      ctx.font = '800 11px "Trebuchet MS", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(cellLabel(cell), center.x, center.y + 44);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  if (state.hintMove) drawHintArrow(state.hintMove);
+}
+
+function drawPeg(x, y, selected, hinted) {
+  const r = selected ? 23 : 21;
+  const peg = ctx.createRadialGradient(x - 8, y - 10, 3, x, y, r + 9);
+  peg.addColorStop(0, '#fff8df');
+  peg.addColorStop(0.34, hinted ? '#f3c84f' : '#58b991');
+  peg.addColorStop(1, hinted ? '#a45a24' : '#173d39');
+  ctx.fillStyle = peg;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffffaa';
+  ctx.lineWidth = selected ? 3 : 2;
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff90';
+  ctx.beginPath();
+  ctx.arc(x - 7, y - 8, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawHintArrow(move) {
+  const from = cellCenter(move.from);
+  const to = cellCenter(move.to);
+  ctx.save();
+  ctx.strokeStyle = '#fff1a8';
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  ctx.fillStyle = '#fff1a8';
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(to.x - Math.cos(angle - 0.55) * 20, to.y - Math.sin(angle - 0.55) * 20);
+  ctx.lineTo(to.x - Math.cos(angle + 0.55) * 20, to.y - Math.sin(angle + 0.55) * 20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawSidePanel() {
+  drawRoundRect(PANEL_X, 88, 342, 500, 8, '#101923e8', '#ffffff66');
+  ctx.fillStyle = '#f7fbf4';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.fillText('Jump Plan', PANEL_X + 24, 132);
+
+  const pegs = countPegs();
+  const legal = state.legalMoves.length;
+  const selected = state.selected ? cellLabel(state.selected) : 'None';
+  const hint = state.hintMove ? `${cellLabel(state.hintMove.from)} to ${cellLabel(state.hintMove.to)}` : 'Press H';
+
+  const rows = [
+    ['Selected', selected],
+    ['Cursor', cellLabel(state.cursor)],
+    ['Pegs left', String(pegs)],
+    ['Legal jumps', String(legal)],
+    ['Best hint', hint],
+  ];
+  rows.forEach((row, index) => {
+    const y = 172 + index * 48;
+    ctx.fillStyle = '#cbd9d3';
+    ctx.font = '800 13px "Trebuchet MS", sans-serif';
+    ctx.fillText(row[0].toUpperCase(), PANEL_X + 26, y);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 20px "Trebuchet MS", sans-serif';
+    ctx.fillText(row[1], PANEL_X + 26, y + 24);
+  });
+
+  drawRoundRect(PANEL_X + 24, 424, 294, 118, 8, '#ffffff14', '#ffffff2f');
+  ctx.fillStyle = '#f4f8ef';
+  ctx.font = '900 17px "Trebuchet MS", sans-serif';
+  ctx.fillText(state.mode === 'playing' ? state.message : statusLine(), PANEL_X + 42, 456);
+  ctx.fillStyle = '#cbd9d3';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  const log = state.log.length ? state.log.slice(0, 3) : ['Select a peg, then an empty landing hole.'];
+  log.forEach((line, index) => {
+    ctx.fillText(line.slice(0, 36), PANEL_X + 42, 486 + index * 20);
+  });
+}
+
+function statusLine() {
+  if (state.mode === 'menu') return 'Ready to jump.';
+  if (state.mode === 'won') return 'Board cleared.';
+  if (state.mode === 'stuck') return 'No jumps remain.';
+  if (state.mode === 'paused') return 'Paused.';
+  return state.message;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawBoardBase();
+  drawBoardCells();
+  drawSidePanel();
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  const point = canvasPoint(event);
+  const cell = cellFromPoint(point.x, point.y);
+  if (cell) selectOrJump(cell);
+  else if (state.mode === 'menu') startLayout();
+});
+
+document.getElementById('upBtn').addEventListener('click', () => moveCursor(-1, 0));
+document.getElementById('downBtn').addEventListener('click', () => moveCursor(1, 0));
+document.getElementById('leftBtn').addEventListener('click', () => moveCursor(0, -1));
+document.getElementById('rightBtn').addEventListener('click', () => moveCursor(0, 1));
+document.getElementById('selectBtn').addEventListener('click', () => selectOrJump(state.cursor));
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('undoBtn').addEventListener('click', undoMove);
+document.getElementById('restartBtn').addEventListener('click', restartCurrent);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'spacebar'].includes(key)) event.preventDefault();
+  if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') moveCursor(1, 0);
+  else if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === ' ' || key === 'spacebar' || key === 'enter') selectOrJump(state.cursor);
+  else if (key === 'h') useHint();
+  else if (key === 'u' || key === 'backspace') undoMove();
+  else if (key === 'p') togglePause();
+  else if (key === 'r') restartCurrent();
+  else if (key === 'n') nextLayout();
+  else if (key === 'f') toggleFullscreen();
+});
+
+function frame(now) {
+  if (!controlled) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000 || 0));
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  lastFrame = now;
+  raf = requestAnimationFrame(frame);
+}
+
+function renderGameToText() {
+  const legal = state.legalMoves.map((move) => ({
+    from: cellLabel(move.from),
+    over: cellLabel(move.over),
+    to: cellLabel(move.to),
+    direction: move.direction,
+  }));
+  return JSON.stringify({
+    game: 'pegsolitaire',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. Board cells use rows 1-7 top to bottom and columns A-G left to right.',
+    objective: 'jump pegs orthogonally over adjacent pegs into empty holes until one peg remains',
+    board: {
+      layout: currentLayout().name,
+      layout_index: state.layoutIndex,
+      cells: state.board.map((row, r) => row.map((value, c) => ({
+        id: `${String.fromCharCode(65 + c)}${r + 1}`,
+        row: r,
+        col: c,
+        state: value === INVALID ? 'invalid' : value === PEG ? 'peg' : 'empty',
+        selected: state.selected ? sameCell(state.selected, { r, c }) : false,
+        cursor: sameCell(state.cursor, { r, c }),
+      }))),
+    },
+    resources: {
+      pegs_remaining: countPegs(),
+      moves: state.moves,
+      hints_used: state.hintsUsed,
+      legal_moves: legal.length,
+      score: Math.round(state.score),
+      coins_earned: state.coinsEarned,
+      history_depth: state.history.length,
+    },
+    selected: state.selected ? cellLabel(state.selected) : null,
+    cursor: cellLabel(state.cursor),
+    hint: state.hintMove ? {
+      from: cellLabel(state.hintMove.from),
+      over: cellLabel(state.hintMove.over),
+      to: cellLabel(state.hintMove.to),
+      direction: state.hintMove.direction,
+    } : null,
+    legal_moves: legal,
+    message: state.message,
+    recent_events: state.log,
+    result: state.result,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+const initial = createBoard(currentLayout());
+state.board = initial.board;
+state.initialPegs = initial.pegs;
+state.cursor = { ...currentLayout().empty[0] };
+recompute();
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'pegsolitaire', gameName: 'Peg Solitaire' });
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+</body>
+</html>

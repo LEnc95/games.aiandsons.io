@@ -252,6 +252,8 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Classroom mode PIN is currently local-only and not hard security.
 
 ## Current Sprint Notes
+- [nightly 2026-05-17] Tracked changes: Stabilize game overlays during animation frames; Fix game start modals and overlay clicks; Add Mancala game.
+- [nightly 2026-05-17] Key PR links: none merged.
 - Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
 - Sprint 2 (CG-201 through CG-203) is complete with teacher controls, preset packs, and expiry UX behavior.
 - Added follow-up delivery items: CG-204 launcher search/coin tags and CG-205 shop tag filtering (both complete).
@@ -368,4 +370,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-05-15] Key PR links: none merged for this date.
 - [nightly 2026-05-16] Tracked changes: 1 commit(s) - d13a43b Add Gomoku Grid game.
 - [nightly 2026-05-16] Key PR links: none merged for this date.
+
 

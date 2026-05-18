@@ -2850,3 +2850,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Started a lightweight static server for manual review at `http://127.0.0.1:4201/mancala/` (PID 4860); route check returned HTTP 200.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Mancala screenshots.
+
+## 2026-05-18 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; recent additions include Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/pegsolitaire` route or Peg Solitaire metadata entry found.
+- Chosen game: Peg Solitaire (`/pegsolitaire`), a classic jump-and-remove peg puzzle with undo, hints, multiple board layouts, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `pegsolitaire/index.html` with canvas rendering, keyboard/pointer/touch controls, undo, hints, multiple board layouts, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Peg Solitaire in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Peg Solitaire.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation in progress:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Peg Solitaire module script after SEO injection.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 99 games including Peg Solitaire with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke: local Node static server at `http://127.0.0.1:4203/pegsolitaire/` returned HTTP 200.
+  - Stubbed DOM/canvas runtime harness passed: started play, selected D2, jumped into D4, used hint, advanced deterministic time, undid the move, and verified feedback mount context.
+  - `git diff --check` on Peg Solitaire integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the Chromium launch step against `http://127.0.0.1:4203/pegsolitaire/` and failed with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:4203` failed at the same Chromium launch step with `spawn EPERM`.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+  - Attempts to leave a background local preview server running were cleaned up after shell command exit; the route was still verified during short-lived server checks.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Peg Solitaire screenshots.

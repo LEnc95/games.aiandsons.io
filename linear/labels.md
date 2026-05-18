@@ -97,6 +97,7 @@
 - game/cloudclimber
 - game/reefrunner
 - game/codebreaker
+- game/pegsolitaire
 - game/mancala
 - game/gomokugrid
 - game/sudokusprint
