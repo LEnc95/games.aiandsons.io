@@ -98,6 +98,7 @@
 - game/reefrunner
 - game/codebreaker
 - game/pegsolitaire
+- game/towerhanoi
 - game/mancala
 - game/gomokugrid
 - game/sudokusprint

@@ -2878,3 +2878,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Attempts to leave a background local preview server running were cleaned up after shell command exit; the route was still verified during short-lived server checks.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Peg Solitaire screenshots.
+
+## 2026-05-19 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; recent additions include Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/towerhanoi` route or Hanoi metadata entry found.
+- Chosen game: Tower of Hanoi (`/towerhanoi`), a classic disc-transfer puzzle with multiple disc counts, move/par timer pressure, undo, hint, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `towerhanoi/index.html` with canvas rendering, keyboard/pointer/touch controls, BFS-powered hints, undo, disc-count controls, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Tower of Hanoi in `src/meta/games.js`.
+- Runtime harness found and fixed an undo edge case: undo now restores the board to a neutral selection state instead of leaving a disc lifted.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Tower of Hanoi.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Tower of Hanoi module script after SEO injection and undo fix.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 100 games including Tower of Hanoi with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/towerhanoi/`.
+  - Stubbed DOM/canvas runtime harness passed: started a 3-disc puzzle, used hint, moved a disc, advanced deterministic time, undid cleanly, solved the tower in 7 moves, awarded 39 coins, and verified feedback mount context.
+  - `git diff --check` on Tower of Hanoi integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `node scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Tower of Hanoi screenshots.

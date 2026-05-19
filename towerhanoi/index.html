@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Tower of Hanoi | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(34% 28% at 15% 20%, #7cc7ff 0%, transparent 68%),
+    radial-gradient(30% 26% at 86% 74%, #ffb35c 0%, transparent 68%),
+    linear-gradient(135deg, #173b4f 0%, #2e345f 48%, #3c2448 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 27 / 17;
+  max-height: min(66dvh, 680px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff78;
+  background: #173b4f;
+  box-shadow: 0 20px 52px #1018269c;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  background: #111827f4;
+  box-shadow: 0 18px 38px #10182688;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+}
+p {
+  margin: 0 0 10px;
+  color: #dce9f7;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #ffffff99;
+  background: #2d75a0;
+  color: #f8fffb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.hud {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #121d27f2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cbd9e6;
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.good b { color: #a8f1ce; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #121d27f2;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.primary-btn { background: #b86f2d; }
+.utility-btn { background: #4e5f73; }
+@media (max-width: 980px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 580px) {
+  .stage { width: 98vw; max-height: 47dvh; }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  button { min-height: 44px; padding: 9px 10px; }
+  .back { top: 8px; left: 8px; }
+}
+@media (max-width: 580px) and (max-height: 720px) {
+  .app { padding: 46px 6px 8px; gap: 6px; }
+  .stage { max-height: 31dvh; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Move stacked discs across three rods, solve each tower in the fewest moves, and never place a larger disc on a smaller one. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Tower of Hanoi | AI and Sons Games">
+  <meta property="og:description" content="Move stacked discs across three rods, solve each tower in the fewest moves, and never place a larger disc on a smaller one. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/towerhanoi">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tower of Hanoi | AI and Sons Games">
+  <meta name="twitter:description" content="Move stacked discs across three rods, solve each tower in the fewest moves, and never place a larger disc on a smaller one. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/towerhanoi">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Tower of Hanoi","description":"Move stacked discs across three rods, solve each tower in the fewest moves, and never place a larger disc on a smaller one. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/towerhanoi","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Tower of Hanoi board">
+    <canvas id="game" width="1080" height="680"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip good"><span>Discs</span><b id="discs">4</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip warn"><span>Par</span><b id="par">15</b></div>
+    <div class="chip"><span>Time</span><b id="time">0:00</b></div>
+    <div class="chip"><span>Rod</span><b id="rod">A</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Tower of Hanoi controls">
+    <button id="rodABtn" type="button" class="primary-btn">Rod A</button>
+    <button id="rodBBtn" type="button" class="primary-btn">Rod B</button>
+    <button id="rodCBtn" type="button" class="primary-btn">Rod C</button>
+    <button id="selectBtn" type="button" class="primary-btn">Lift/Drop</button>
+    <button id="hintBtn" type="button" class="utility-btn">Hint</button>
+    <button id="undoBtn" type="button" class="utility-btn">Undo</button>
+    <button id="lessBtn" type="button" class="utility-btn">Fewer</button>
+    <button id="moreBtn" type="button" class="utility-btn">More</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  discs: document.getElementById('discs'),
+  moves: document.getElementById('moves'),
+  par: document.getElementById('par'),
+  time: document.getElementById('time'),
+  rod: document.getElementById('rod'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const MIN_DISCS = 3;
+const MAX_DISCS = 7;
+const ROD_LABELS = ['A', 'B', 'C'];
+const ROD_X = [210, 540, 870];
+const BASE_Y = 538;
+const ROD_TOP = 174;
+const DISC_H = 34;
+const DISC_GAP = 4;
+const DISC_COLORS = ['#78e0c4', '#ffd166', '#ef476f', '#7cc7ff', '#b48cff', '#f78c5c', '#a8f1ce'];
+
+const state = {
+  mode: 'menu',
+  discCount: 4,
+  rods: [],
+  cursorRod: 0,
+  selectedRod: null,
+  selectedDisc: null,
+  lifted: null,
+  moves: 0,
+  timer: 0,
+  hintsUsed: 0,
+  history: [],
+  score: 0,
+  coinsEarned: 0,
+  awarded: false,
+  result: '',
+  message: 'Move the whole tower from Rod A to Rod C.',
+  log: [],
+  hintMove: null,
+  pulses: [],
+  clock: 0,
+};
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+let overlayKey = '';
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function minMoves(discs = state.discCount) {
+  return (2 ** discs) - 1;
+}
+
+function parMoves(discs = state.discCount) {
+  return minMoves(discs) + discs + 2;
+}
+
+function cloneRods(rods = state.rods) {
+  return rods.map((rod) => rod.slice());
+}
+
+function serializeRods(rods) {
+  return rods.map((rod) => rod.join(',')).join('|');
+}
+
+function createRods(discs) {
+  const first = [];
+  for (let size = discs; size >= 1; size -= 1) first.push(size);
+  return [first, [], []];
+}
+
+function rodTop(rods, rod) {
+  const stack = rods[rod];
+  return stack.length ? stack[stack.length - 1] : null;
+}
+
+function canMove(rods, from, to) {
+  if (from === to) return false;
+  const moving = rodTop(rods, from);
+  if (!moving) return false;
+  const target = rodTop(rods, to);
+  return !target || moving < target;
+}
+
+function legalMoves(rods = state.rods) {
+  const moves = [];
+  for (let from = 0; from < 3; from += 1) {
+    for (let to = 0; to < 3; to += 1) {
+      if (canMove(rods, from, to)) {
+        moves.push({ from, to, disc: rodTop(rods, from) });
+      }
+    }
+  }
+  return moves;
+}
+
+function isSolved(rods = state.rods) {
+  return rods[2].length === state.discCount && rods[0].length === 0 && rods[1].length === 0;
+}
+
+function pushLog(message) {
+  state.log = [message, ...state.log].slice(0, 6);
+  state.message = message;
+}
+
+function moveLabel(move) {
+  return `${ROD_LABELS[move.from]} to ${ROD_LABELS[move.to]}`;
+}
+
+function recomputeScore() {
+  const minimum = minMoves();
+  const overPar = Math.max(0, state.moves - minimum);
+  const timePenalty = Math.floor(state.timer / 8);
+  const hintPenalty = state.hintsUsed * 18;
+  const efficiency = Math.max(0, 520 - overPar * 24 - timePenalty - hintPenalty);
+  const winBonus = state.mode === 'won' ? 400 + state.discCount * 60 : 0;
+  const progress = state.rods[2].reduce((sum, disc) => sum + disc, 0) * 18;
+  state.score = Math.max(0, Math.round(progress + efficiency + winBonus));
+}
+
+function startGame(discs = state.discCount) {
+  state.discCount = clamp(discs, MIN_DISCS, MAX_DISCS);
+  state.mode = 'playing';
+  state.rods = createRods(state.discCount);
+  state.cursorRod = 0;
+  state.selectedRod = null;
+  state.selectedDisc = null;
+  state.lifted = null;
+  state.moves = 0;
+  state.timer = 0;
+  state.hintsUsed = 0;
+  state.history = [];
+  state.score = 0;
+  state.coinsEarned = 0;
+  state.awarded = false;
+  state.result = '';
+  state.hintMove = null;
+  state.pulses = [];
+  state.clock = 0;
+  state.log = [];
+  pushLog(`Started ${state.discCount}-disc tower.`);
+  rememberRecent('towerhanoi');
+  maybeUnlock({ anyPlay: true });
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function restartCurrent() {
+  startGame(state.discCount);
+}
+
+function setDiscCount(discs) {
+  startGame(clamp(discs, MIN_DISCS, MAX_DISCS));
+}
+
+function finishGame() {
+  if (state.mode === 'won') return;
+  state.mode = 'won';
+  state.result = 'won';
+  state.selectedRod = null;
+  state.selectedDisc = null;
+  state.lifted = null;
+  state.hintMove = null;
+  recomputeScore();
+  if (!state.awarded) {
+    const minimum = minMoves();
+    const cleanBonus = state.moves === minimum ? 12 : 0;
+    const coins = Math.max(12, Math.min(60, 10 + state.discCount * 4 + cleanBonus + Math.max(0, parMoves() - state.moves)));
+    state.coinsEarned = coins;
+    state.awarded = true;
+    addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      towerhanoi: {
+        result: 'won',
+        discs: state.discCount,
+        moves: state.moves,
+        minimum_moves: minimum,
+        time: Math.round(state.timer),
+        score: state.score,
+      },
+    });
+    pushLog(`Solved in ${state.moves} moves. ${coins} coins earned.`);
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function pushHistory() {
+  state.history.push({
+    rods: cloneRods(),
+    cursorRod: state.cursorRod,
+    selectedRod: state.selectedRod,
+    selectedDisc: state.selectedDisc,
+    lifted: state.lifted ? { ...state.lifted } : null,
+    moves: state.moves,
+    timer: state.timer,
+    hintsUsed: state.hintsUsed,
+    message: state.message,
+    log: state.log.slice(),
+  });
+}
+
+function performMove(from, to) {
+  if (state.mode !== 'playing') return false;
+  if (!canMove(state.rods, from, to)) {
+    const moving = rodTop(state.rods, from);
+    const target = rodTop(state.rods, to);
+    pushLog(!moving ? `Rod ${ROD_LABELS[from]} is empty.` : `Disc ${moving} cannot sit on disc ${target}.`);
+    updateHud();
+    draw();
+    return false;
+  }
+  pushHistory();
+  const disc = state.rods[from].pop();
+  state.rods[to].push(disc);
+  state.cursorRod = to;
+  state.selectedRod = null;
+  state.selectedDisc = null;
+  state.lifted = null;
+  state.moves += 1;
+  state.hintMove = null;
+  state.pulses.push({ from, to, disc, age: 0 });
+  pushLog(`Moved disc ${disc} from Rod ${ROD_LABELS[from]} to Rod ${ROD_LABELS[to]}.`);
+  recomputeScore();
+  if (isSolved()) finishGame();
+  else {
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  return true;
+}
+
+function chooseRod(rod) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  state.cursorRod = clamp(rod, 0, 2);
+  if (state.selectedRod === null) {
+    const top = rodTop(state.rods, state.cursorRod);
+    if (!top) {
+      pushLog(`Rod ${ROD_LABELS[state.cursorRod]} is empty.`);
+    } else {
+      state.selectedRod = state.cursorRod;
+      state.selectedDisc = top;
+      state.lifted = { from: state.cursorRod, disc: top };
+      pushLog(`Lifted disc ${top} from Rod ${ROD_LABELS[state.cursorRod]}.`);
+    }
+  } else if (state.selectedRod === state.cursorRod) {
+    pushLog(`Disc ${state.selectedDisc} returned to Rod ${ROD_LABELS[state.cursorRod]}.`);
+    state.selectedRod = null;
+    state.selectedDisc = null;
+    state.lifted = null;
+  } else {
+    performMove(state.selectedRod, state.cursorRod);
+    return;
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function selectCurrentRod() {
+  chooseRod(state.cursorRod);
+}
+
+function moveCursor(delta) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  state.cursorRod = (state.cursorRod + delta + 3) % 3;
+  updateHud();
+  draw();
+}
+
+function undoMove() {
+  if (state.mode === 'won') {
+    pushLog('Solved towers cannot be undone after coins are awarded.');
+    updateHud();
+    draw();
+    return;
+  }
+  const previous = state.history.pop();
+  if (!previous) {
+    pushLog('No moves to undo.');
+    updateHud();
+    draw();
+    return;
+  }
+  state.rods = previous.rods;
+  state.cursorRod = previous.cursorRod;
+  state.selectedRod = null;
+  state.selectedDisc = null;
+  state.lifted = null;
+  state.moves = previous.moves;
+  state.timer = previous.timer;
+  state.hintsUsed = previous.hintsUsed;
+  state.message = previous.message;
+  state.log = previous.log;
+  state.mode = 'playing';
+  state.result = '';
+  state.hintMove = null;
+  recomputeScore();
+  pushLog('Last move undone.');
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function nextLevel() {
+  setDiscCount(state.discCount >= MAX_DISCS ? MIN_DISCS : state.discCount + 1);
+}
+
+function togglePause() {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    pushLog('Paused.');
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    pushLog('Resumed.');
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function findHintMove() {
+  const start = cloneRods();
+  const target = serializeRods([[], [], Array.from({ length: state.discCount }, (_, i) => state.discCount - i)]);
+  const startKey = serializeRods(start);
+  if (startKey === target) return null;
+  const queue = [{ rods: start, first: null }];
+  const seen = new Set([startKey]);
+  while (queue.length) {
+    const item = queue.shift();
+    for (const move of legalMoves(item.rods)) {
+      const next = cloneRods(item.rods);
+      const disc = next[move.from].pop();
+      next[move.to].push(disc);
+      const key = serializeRods(next);
+      if (seen.has(key)) continue;
+      const first = item.first || { from: move.from, to: move.to, disc };
+      if (key === target) return first;
+      seen.add(key);
+      queue.push({ rods: next, first });
+    }
+  }
+  return null;
+}
+
+function useHint() {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const hint = findHintMove();
+  if (!hint) {
+    pushLog('The tower is already solved.');
+    updateHud();
+    draw();
+    return;
+  }
+  state.hintsUsed += 1;
+  state.hintMove = hint;
+  state.cursorRod = hint.from;
+  state.selectedRod = null;
+  state.selectedDisc = null;
+  state.lifted = null;
+  pushLog(`Hint: move disc ${hint.disc} from Rod ${ROD_LABELS[hint.from]} to Rod ${ROD_LABELS[hint.to]}.`);
+  recomputeScore();
+  updateHud();
+  draw();
+}
+
+function formatTime(value) {
+  const total = Math.max(0, Math.floor(value));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function update(dt) {
+  state.clock += dt;
+  if (state.mode === 'playing') {
+    state.timer += dt;
+    recomputeScore();
+  }
+  state.pulses.forEach((pulse) => { pulse.age += dt; });
+  state.pulses = state.pulses.filter((pulse) => pulse.age < 0.72);
+}
+
+function updateHud() {
+  hud.mode.textContent = state.mode === 'menu' ? 'Menu' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  hud.discs.textContent = String(state.discCount);
+  hud.moves.textContent = String(state.moves);
+  hud.par.textContent = String(minMoves());
+  hud.time.textContent = formatTime(state.timer);
+  hud.rod.textContent = ROD_LABELS[state.cursorRod];
+  hud.score.textContent = String(Math.round(state.score));
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  hud.moves.parentElement.classList.toggle('good', state.moves <= minMoves());
+  hud.moves.parentElement.classList.toggle('warn', state.moves > minMoves() && state.moves <= parMoves());
+  hud.moves.parentElement.classList.toggle('bad', state.moves > parMoves());
+}
+
+function updateOverlay() {
+  const show = ['menu', 'paused', 'won'].includes(state.mode);
+  const key = show ? `${state.mode}|${state.discCount}|${state.moves}|${state.score}|${state.coinsEarned}` : 'hidden';
+  overlay.classList.toggle('show', show);
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (!show) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Tower of Hanoi';
+  let body = 'Move the full stack from Rod A to Rod C. Lift one disc at a time, and never place a larger disc on a smaller one.';
+  let primary = 'Start';
+  let primaryAction = 'start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'The tower is held exactly as it is.';
+    primary = 'Resume';
+    primaryAction = 'resume';
+  } else if (state.mode === 'won') {
+    const minimum = minMoves();
+    const clean = state.moves === minimum ? 'Perfect solution.' : `${state.moves - minimum} moves over perfect.`;
+    title = 'Tower Complete';
+    body = `Solved the ${state.discCount}-disc tower in ${state.moves} moves and ${formatTime(state.timer)}. ${clean} Score ${Math.round(state.score)}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Next Tower';
+    primaryAction = 'next';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Desktop: Left/Right choose a rod, Space or Enter lifts and drops, H hints, U undo, P pauses, R restarts, +/- changes discs, F fullscreen. Touch rods or buttons to play.</p>
+      <div class="row">
+        <button id="overlayPrimary" type="button" data-action="${primaryAction}">${primary}</button>
+        <button id="overlayLess" type="button">Fewer Discs</button>
+        <button id="overlayMore" type="button">More Discs</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('overlayPrimary')?.addEventListener('click', (event) => {
+    const action = event.currentTarget.dataset.action;
+    if (action === 'resume') togglePause();
+    else if (action === 'next') nextLevel();
+    else startGame();
+  });
+  document.getElementById('overlayLess')?.addEventListener('click', () => setDiscCount(state.discCount - 1));
+  document.getElementById('overlayMore')?.addEventListener('click', () => setDiscCount(state.discCount + 1));
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke = '') {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#326c83');
+  bg.addColorStop(0.52, '#30396c');
+  bg.addColorStop(1, '#4c2b54');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 28; i += 1) {
+    const x = (i * 97 + 42) % W;
+    const y = (i * 61 + 88) % H;
+    ctx.beginPath();
+    ctx.arc(x, y, 5 + (i % 5) * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function discWidth(size) {
+  const max = 236;
+  const min = 86;
+  if (state.discCount <= 1) return max;
+  return min + ((size - 1) / (state.discCount - 1)) * (max - min);
+}
+
+function discPosition(rod, level) {
+  return {
+    x: ROD_X[rod],
+    y: BASE_Y - DISC_H / 2 - level * (DISC_H + DISC_GAP),
+  };
+}
+
+function drawRod(rod) {
+  const x = ROD_X[rod];
+  const selected = state.selectedRod === rod;
+  const cursor = state.cursorRod === rod;
+  const baseColor = cursor ? '#fff2b6' : '#d8c39f';
+  drawRoundRect(x - 132, BASE_Y + 8, 264, 26, 8, '#6c4a31', baseColor);
+  drawRoundRect(x - 13, ROD_TOP, 26, BASE_Y - ROD_TOP + 22, 8, selected ? '#ffe091' : '#b88959', '#3c2418');
+
+  if (cursor) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x - 146, ROD_TOP - 22, 292, BASE_Y - ROD_TOP + 70);
+  }
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 34px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Rod ${ROD_LABELS[rod]}`, x, BASE_Y + 72);
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#dce9f7';
+  const top = rodTop(state.rods, rod);
+  ctx.fillText(top ? `top disc ${top}` : 'empty', x, BASE_Y + 94);
+  ctx.textAlign = 'left';
+}
+
+function drawDisc(rod, disc, level) {
+  const pos = discPosition(rod, level);
+  const width = discWidth(disc);
+  const pulse = state.pulses.find((item) => item.disc === disc && item.to === rod && item.age < 0.72);
+  const isLifted = state.selectedRod === rod && state.selectedDisc === disc && level === state.rods[rod].length - 1;
+  const y = isLifted ? ROD_TOP - 44 : pos.y;
+  const color = DISC_COLORS[(disc - 1) % DISC_COLORS.length];
+
+  ctx.save();
+  if (pulse) {
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 28 * (1 - pulse.age / 0.72);
+  }
+  const grad = ctx.createLinearGradient(pos.x - width / 2, y - DISC_H / 2, pos.x + width / 2, y + DISC_H / 2);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.12, color);
+  grad.addColorStop(1, '#243045');
+  drawRoundRect(pos.x - width / 2, y - DISC_H / 2, width, DISC_H, 8, grad, isLifted ? '#ffffff' : '#141923');
+  ctx.fillStyle = '#111827';
+  ctx.font = '900 17px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(disc), pos.x, y + 6);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+function drawHint() {
+  if (!state.hintMove) return;
+  const from = { x: ROD_X[state.hintMove.from], y: ROD_TOP - 84 };
+  const to = { x: ROD_X[state.hintMove.to], y: ROD_TOP - 84 };
+  ctx.save();
+  ctx.strokeStyle = '#ffe091';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  ctx.fillStyle = '#ffe091';
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(to.x - Math.cos(angle - 0.55) * 24, to.y - Math.sin(angle - 0.55) * 24);
+  ctx.lineTo(to.x - Math.cos(angle + 0.55) * 24, to.y - Math.sin(angle + 0.55) * 24);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawSidePanel() {
+  drawRoundRect(52, 70, 976, 90, 8, '#101923d6', '#ffffff66');
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.fillText('Tower of Hanoi', 78, 113);
+  ctx.fillStyle = '#dce9f7';
+  ctx.font = '800 15px "Trebuchet MS", sans-serif';
+  const hint = state.hintMove ? `Hint: ${moveLabel(state.hintMove)}` : 'Move all discs to Rod C.';
+  ctx.fillText(`${state.message} ${hint}`, 78, 139);
+
+  drawRoundRect(770, 86, 224, 52, 8, '#ffffff14', '#ffffff30');
+  ctx.fillStyle = '#cbd9e6';
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  ctx.fillText('PERFECT MOVES', 792, 108);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 24px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${minMoves()} for ${state.discCount} discs`, 792, 132);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawSidePanel();
+  drawHint();
+  for (let rod = 0; rod < 3; rod += 1) drawRod(rod);
+  for (let rod = 0; rod < 3; rod += 1) {
+    state.rods[rod].forEach((disc, level) => drawDisc(rod, disc, level));
+  }
+
+  if (state.mode === 'paused') {
+    ctx.fillStyle = '#00000055';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function rodFromPoint(x) {
+  let best = 0;
+  let bestDist = Infinity;
+  ROD_X.forEach((rodX, index) => {
+    const dist = Math.abs(x - rodX);
+    if (dist < bestDist) {
+      best = index;
+      bestDist = dist;
+    }
+  });
+  return bestDist <= 170 ? best : null;
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    canvas.parentElement?.requestFullscreen?.();
+  }
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  const point = canvasPoint(event);
+  const rod = rodFromPoint(point.x);
+  if (rod !== null) chooseRod(rod);
+  else if (state.mode === 'menu') startGame();
+});
+
+document.getElementById('rodABtn').addEventListener('click', () => chooseRod(0));
+document.getElementById('rodBBtn').addEventListener('click', () => chooseRod(1));
+document.getElementById('rodCBtn').addEventListener('click', () => chooseRod(2));
+document.getElementById('selectBtn').addEventListener('click', selectCurrentRod);
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('undoBtn').addEventListener('click', undoMove);
+document.getElementById('lessBtn').addEventListener('click', () => setDiscCount(state.discCount - 1));
+document.getElementById('moreBtn').addEventListener('click', () => setDiscCount(state.discCount + 1));
+document.getElementById('restartBtn').addEventListener('click', restartCurrent);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', ' ', 'spacebar', '+', '-', '='].includes(key)) event.preventDefault();
+  if (key === 'arrowleft' || key === 'a') moveCursor(-1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(1);
+  else if (key === ' ' || key === 'spacebar' || key === 'enter') selectCurrentRod();
+  else if (key === '1') chooseRod(0);
+  else if (key === '2') chooseRod(1);
+  else if (key === '3') chooseRod(2);
+  else if (key === 'h') useHint();
+  else if (key === 'u' || key === 'backspace') undoMove();
+  else if (key === 'p') togglePause();
+  else if (key === 'r') restartCurrent();
+  else if (key === 'n') nextLevel();
+  else if (key === '+' || key === '=') setDiscCount(state.discCount + 1);
+  else if (key === '-' || key === '_') setDiscCount(state.discCount - 1);
+  else if (key === 'f') toggleFullscreen();
+});
+
+function frame(now) {
+  if (!controlled) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000 || 0));
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  lastFrame = now;
+  raf = requestAnimationFrame(frame);
+}
+
+function renderGameToText() {
+  const legal = legalMoves().map((move) => ({
+    from: ROD_LABELS[move.from],
+    to: ROD_LABELS[move.to],
+    disc: move.disc,
+  }));
+  return JSON.stringify({
+    game: 'towerhanoi',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. Rods A, B, C are arranged left to right. Rod arrays are listed bottom-to-top.',
+    objective: 'move every disc from Rod A to Rod C without placing a larger disc on a smaller one',
+    rods: state.rods.map((rod, index) => ({
+      id: ROD_LABELS[index],
+      index,
+      discs_bottom_to_top: rod.slice(),
+      top_disc: rodTop(state.rods, index),
+      selected: state.selectedRod === index,
+      cursor: state.cursorRod === index,
+    })),
+    selected: state.selectedRod === null ? null : {
+      rod: ROD_LABELS[state.selectedRod],
+      disc: state.selectedDisc,
+    },
+    resources: {
+      discs: state.discCount,
+      moves: state.moves,
+      minimum_moves: minMoves(),
+      par_moves: parMoves(),
+      time_seconds: Number(state.timer.toFixed(2)),
+      hints_used: state.hintsUsed,
+      score: Math.round(state.score),
+      coins_earned: state.coinsEarned,
+      history_depth: state.history.length,
+    },
+    legal_moves: legal,
+    hint: state.hintMove ? {
+      from: ROD_LABELS[state.hintMove.from],
+      to: ROD_LABELS[state.hintMove.to],
+      disc: state.hintMove.disc,
+    } : null,
+    message: state.message,
+    recent_events: state.log,
+    result: state.result,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+state.rods = createRods(state.discCount);
+recomputeScore();
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'towerhanoi', gameName: 'Tower of Hanoi' });
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+</body>
+</html>
