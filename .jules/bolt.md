@@ -52,3 +52,6 @@
 ## 2026-05-11 - Optimizing classroom game whitelist array lookups
 **Learning:** Checking an array with `.includes()` during a potentially repetitive verification logic (such as checking if a game is locked by classroom settings) adds unnecessary O(N) complexity for array sizes that scale.
 **Action:** When a set of simple strings like a game whitelist is verified inside a fast-path utility, memoize the normalized array into a `Set` to leverage O(1) membership lookups instead, but use lazy evaluation or reference checks to avoid constant initialization.
+## 2024-05-27 - Concurrency in Batch Processing Scripts
+**Learning:** In the nightly stripe reconcile script (`scripts/stripe/nightly-reconcile.mjs`), targets were being reconciled sequentially inside a `for...of` loop. This caused the script to execute very slowly. A simple `Promise.all` over all targets could overwhelm network limits or cause timeouts.
+**Action:** When running heavy asynchronous iterations over a potentially large list of items, slice the array into smaller chunks (batches) and use `Promise.all` on each chunk sequentially. This achieves safe concurrency and greatly speeds up execution time while remaining within rate limits.

@@ -198,38 +198,45 @@ export async function runNightlyBillingReconcile(options = {}) {
     withCustomerOnly: true,
   });
   const targets = buildTargetsFromProfiles(profiles, options.limit);
+  // ⚡ Bolt Optimization: Replace sequential execution with batched concurrency
+  // Impact: Reduces overall script execution time by processing up to 10 requests concurrently,
+  // avoiding N+1 blocking delays while respecting API rate limits.
+  const BATCH_SIZE = 10;
   const results = [];
 
-  for (const target of targets) {
-    const result = await callReconcile({
-      baseUrl,
-      adminToken: options.adminToken,
-      target,
-      dryRun: options.dryRun,
-      timeoutMs: options.timeoutMs,
-    });
-
-    if (!result.ok) {
-      results.push({
+  for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+    const batch = targets.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(batch.map(async (target) => {
+      const result = await callReconcile({
+        baseUrl,
+        adminToken: options.adminToken,
         target,
-        status: "failed",
-        httpStatus: result.status,
-        error: result.error,
+        dryRun: options.dryRun,
+        timeoutMs: options.timeoutMs,
       });
-      continue;
-    }
 
-    results.push({
-      target,
-      status: classifyReconcileResult(result.payload),
-      httpStatus: result.status,
-      changed: Boolean(result.payload.changed),
-      dryRun: Boolean(result.payload.dryRun),
-      customerId: result.payload.customerId || target.customerId || "",
-      userId: result.payload.userId || target.id,
-      activePlanId: result.payload.activePlanId || target.activePlanId || "",
-      entitlements: result.payload.entitlements || { familyPremium: false, schoolLicense: false },
-    });
+      if (!result.ok) {
+        return {
+          target,
+          status: "failed",
+          httpStatus: result.status,
+          error: result.error,
+        };
+      }
+
+      return {
+        target,
+        status: classifyReconcileResult(result.payload),
+        httpStatus: result.status,
+        changed: Boolean(result.payload.changed),
+        dryRun: Boolean(result.payload.dryRun),
+        customerId: result.payload.customerId || target.customerId || "",
+        userId: result.payload.userId || target.id,
+        activePlanId: result.payload.activePlanId || target.activePlanId || "",
+        entitlements: result.payload.entitlements || { familyPremium: false, schoolLicense: false },
+      };
+    }));
+    results.push(...batchResults);
   }
 
   const summary = summarizeNightlyResults(results);
