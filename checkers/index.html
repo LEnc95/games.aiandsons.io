@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Checkers | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(34% 28% at 18% 20%, #84d5bf 0%, transparent 68%),
+    radial-gradient(28% 24% at 82% 74%, #f0b257 0%, transparent 70%),
+    linear-gradient(135deg, #102a36 0%, #2e3e4a 54%, #4b2a35 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1060px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 706px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff78;
+  background: #0c2530;
+  box-shadow: 0 20px 52px #1018269c;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  background: #111827f4;
+  box-shadow: 0 18px 38px #10182688;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+}
+p {
+  margin: 0 0 10px;
+  color: #dce9f7;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #ffffff99;
+  background: #2f7182;
+  color: #f8fffb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.primary-btn { background: #b76535; }
+.utility-btn { background: #4e5f73; }
+.hud {
+  width: min(96vw, 1060px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #121d27f2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #cbd9e6;
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.good b { color: #a8f1ce; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffafa2; }
+.controls {
+  width: min(96vw, 1060px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #121d27f2;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+@media (max-width: 980px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 580px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  button { padding: 9px 8px; font-size: 13px; }
+  .back { top: 8px; left: 8px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Play red against an AI opponent with forced captures, multi-jumps, kinging, hints, and undo support. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Checkers | AI and Sons Games">
+  <meta property="og:description" content="Play red against an AI opponent with forced captures, multi-jumps, kinging, hints, and undo support. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/checkers">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Checkers | AI and Sons Games">
+  <meta name="twitter:description" content="Play red against an AI opponent with forced captures, multi-jumps, kinging, hints, and undo support. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/checkers">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Checkers","description":"Play red against an AI opponent with forced captures, multi-jumps, kinging, hints, and undo support. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/checkers","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="Checkers game">
+  <section class="stage">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Turn</span><b id="turn">Player</b></div>
+    <div class="chip good"><span>Your Men</span><b id="playerPieces">12</b></div>
+    <div class="chip bad"><span>AI Men</span><b id="aiPieces">12</b></div>
+    <div class="chip warn"><span>Rule</span><b id="rule">Capture</b></div>
+    <div class="chip"><span>Selected</span><b id="selected">None</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Checkers controls">
+    <button id="prevBtn" type="button" class="utility-btn">Prev</button>
+    <button id="nextBtn" type="button" class="utility-btn">Next</button>
+    <button id="playBtn" type="button" class="primary-btn">Select</button>
+    <button id="hintBtn" type="button" class="utility-btn">Hint</button>
+    <button id="undoBtn" type="button" class="utility-btn">Undo</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+    <button id="startBtn" type="button" class="primary-btn">Start</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  turn: document.getElementById('turn'),
+  playerPieces: document.getElementById('playerPieces'),
+  aiPieces: document.getElementById('aiPieces'),
+  rule: document.getElementById('rule'),
+  selected: document.getElementById('selected'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const BOARD = { x: 90, y: 58, size: 604 };
+const CELL = BOARD.size / 8;
+const PANEL = { x: 728, y: 58, w: 282, h: 604 };
+const LIGHT = '#e4c58f';
+const DARK = '#346e69';
+const DARK_ALT = '#27575d';
+const PLAYER = '#cc3d45';
+const PLAYER_DARK = '#7f2229';
+const AI = '#232b36';
+const AI_DARK = '#101620';
+const GOLD = '#f2c45b';
+const MOVE = '#91e6ff';
+const CAPTURE = '#ffdd70';
+const CURSOR = '#ffffff';
+const WIN_REWARD = 36;
+
+const state = {
+  mode: 'menu',
+  board: createInitialBoard(),
+  turn: 'player',
+  selected: null,
+  cursor: { r: 5, c: 0 },
+  lockedPiece: null,
+  aiPending: false,
+  aiDelay: 0,
+  moveCount: 0,
+  playerCaptures: 0,
+  aiCaptures: 0,
+  playerKings: 0,
+  aiKings: 0,
+  hintsUsed: 0,
+  score: 0,
+  coinsEarned: 0,
+  result: '',
+  message: 'Capture is forced. Reach the far row to crown a king.',
+  lastMove: null,
+  hint: null,
+  history: [],
+  logs: [],
+  sparks: [],
+  clock: 0,
+};
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+let overlayRenderKey = '';
+
+function createInitialBoard() {
+  const board = Array.from({ length: 8 }, () => Array(8).fill(null));
+  for (let r = 0; r < 8; r += 1) {
+    for (let c = 0; c < 8; c += 1) {
+      if ((r + c) % 2 === 0) continue;
+      if (r < 3) board[r][c] = { side: 'ai', king: false };
+      if (r > 4) board[r][c] = { side: 'player', king: false };
+    }
+  }
+  return board;
+}
+
+function cloneBoard(board = state.board) {
+  return board.map((row) => row.map((piece) => piece ? { ...piece } : null));
+}
+
+function clonePoint(point) {
+  return point ? { r: point.r, c: point.c } : null;
+}
+
+function pushLog(message) {
+  state.logs = [message, ...state.logs].slice(0, 8);
+}
+
+function squareName(point) {
+  if (!point) return 'none';
+  const file = String.fromCharCode(65 + point.c);
+  return `${file}${point.r + 1}`;
+}
+
+function inBounds(r, c) {
+  return r >= 0 && r < 8 && c >= 0 && c < 8;
+}
+
+function isDarkSquare(r, c) {
+  return inBounds(r, c) && (r + c) % 2 === 1;
+}
+
+function otherSide(side) {
+  return side === 'player' ? 'ai' : 'player';
+}
+
+function dirsFor(piece) {
+  if (!piece) return [];
+  if (piece.king) return [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  return piece.side === 'player' ? [[-1, -1], [-1, 1]] : [[1, -1], [1, 1]];
+}
+
+function makeMove(from, to, capture = null, board = state.board) {
+  const piece = board[from.r][from.c];
+  return {
+    from: { ...from },
+    to: { ...to },
+    capture: capture ? { ...capture } : null,
+    piece: piece ? { ...piece } : null,
+  };
+}
+
+function collectMoves(side, board = state.board, origin = null, capturesOnly = false) {
+  const captures = [];
+  const steps = [];
+  const starts = origin ? [origin] : [];
+  if (!origin) {
+    for (let r = 0; r < 8; r += 1) {
+      for (let c = 0; c < 8; c += 1) {
+        const piece = board[r][c];
+        if (piece?.side === side) starts.push({ r, c });
+      }
+    }
+  }
+
+  for (const from of starts) {
+    const piece = board[from.r]?.[from.c];
+    if (!piece || piece.side !== side) continue;
+    for (const [dr, dc] of dirsFor(piece)) {
+      const mid = { r: from.r + dr, c: from.c + dc };
+      const landing = { r: from.r + dr * 2, c: from.c + dc * 2 };
+      if (
+        inBounds(landing.r, landing.c)
+        && board[mid.r][mid.c]?.side === otherSide(side)
+        && !board[landing.r][landing.c]
+      ) {
+        captures.push(makeMove(from, landing, mid, board));
+      }
+      const to = { r: from.r + dr, c: from.c + dc };
+      if (!capturesOnly && inBounds(to.r, to.c) && !board[to.r][to.c]) {
+        steps.push(makeMove(from, to, null, board));
+      }
+    }
+  }
+
+  return captures.length > 0 ? captures : steps;
+}
+
+function legalMoves(side = state.turn, board = state.board, origin = null) {
+  if (origin) return collectMoves(side, board, origin, true);
+  const captures = collectMoves(side, board, null, true);
+  if (captures.length > 0) return captures;
+  return collectMoves(side, board, null, false);
+}
+
+function sideMustCapture(side = state.turn) {
+  return collectMoves(side, state.board, state.lockedPiece, true).length > 0;
+}
+
+function matchingMove(from, to) {
+  return legalMoves(state.turn, state.board, state.lockedPiece).find((move) => (
+    move.from.r === from.r
+    && move.from.c === from.c
+    && move.to.r === to.r
+    && move.to.c === to.c
+  )) || null;
+}
+
+function pieceCounts(board = state.board) {
+  const counts = {
+    player: 0,
+    ai: 0,
+    playerKings: 0,
+    aiKings: 0,
+  };
+  for (const row of board) {
+    for (const piece of row) {
+      if (!piece) continue;
+      counts[piece.side] += 1;
+      if (piece.king) counts[`${piece.side}Kings`] += 1;
+    }
+  }
+  return counts;
+}
+
+function snapshot() {
+  return {
+    board: cloneBoard(),
+    turn: state.turn,
+    selected: clonePoint(state.selected),
+    cursor: clonePoint(state.cursor),
+    lockedPiece: clonePoint(state.lockedPiece),
+    aiPending: state.aiPending,
+    aiDelay: state.aiDelay,
+    moveCount: state.moveCount,
+    playerCaptures: state.playerCaptures,
+    aiCaptures: state.aiCaptures,
+    playerKings: state.playerKings,
+    aiKings: state.aiKings,
+    hintsUsed: state.hintsUsed,
+    score: state.score,
+    coinsEarned: state.coinsEarned,
+    result: state.result,
+    message: state.message,
+    lastMove: state.lastMove ? JSON.parse(JSON.stringify(state.lastMove)) : null,
+    hint: state.hint ? JSON.parse(JSON.stringify(state.hint)) : null,
+    logs: state.logs.slice(),
+  };
+}
+
+function restoreSnapshot(snap) {
+  state.board = cloneBoard(snap.board);
+  state.turn = snap.turn;
+  state.selected = clonePoint(snap.selected);
+  state.cursor = clonePoint(snap.cursor);
+  state.lockedPiece = clonePoint(snap.lockedPiece);
+  state.aiPending = snap.aiPending;
+  state.aiDelay = snap.aiDelay;
+  state.moveCount = snap.moveCount;
+  state.playerCaptures = snap.playerCaptures;
+  state.aiCaptures = snap.aiCaptures;
+  state.playerKings = snap.playerKings;
+  state.aiKings = snap.aiKings;
+  state.hintsUsed = snap.hintsUsed;
+  state.score = snap.score;
+  state.coinsEarned = snap.coinsEarned;
+  state.result = snap.result;
+  state.message = snap.message;
+  state.lastMove = snap.lastMove;
+  state.hint = snap.hint;
+  state.logs = snap.logs.slice();
+  state.sparks = [];
+  refreshHint();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function recordHistory() {
+  state.history.push(snapshot());
+  if (state.history.length > 80) state.history.shift();
+}
+
+function resetGame(mode = 'menu') {
+  state.mode = mode;
+  state.board = createInitialBoard();
+  state.turn = 'player';
+  state.selected = null;
+  state.cursor = { r: 5, c: 0 };
+  state.lockedPiece = null;
+  state.aiPending = false;
+  state.aiDelay = 0;
+  state.moveCount = 0;
+  state.playerCaptures = 0;
+  state.aiCaptures = 0;
+  state.playerKings = 0;
+  state.aiKings = 0;
+  state.hintsUsed = 0;
+  state.score = 0;
+  state.coinsEarned = 0;
+  state.result = '';
+  state.message = 'Capture is forced. Reach the far row to crown a king.';
+  state.lastMove = null;
+  state.hint = null;
+  state.history = [];
+  state.logs = [];
+  state.sparks = [];
+  state.clock = 0;
+  if (mode === 'playing') {
+    rememberRecent('checkers');
+    maybeUnlock({ anyPlay: true });
+    pushLog('Game started. Red moves first from the bottom side.');
+  }
+  refreshHint();
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function startGame() {
+  resetGame('playing');
+}
+
+function moveDescriptor(move) {
+  if (!move) return 'none';
+  const action = move.capture ? 'captures' : 'moves';
+  return `${squareName(move.from)} ${action} to ${squareName(move.to)}`;
+}
+
+function wouldPromote(move) {
+  if (!move?.piece || move.piece.king) return false;
+  return (move.piece.side === 'player' && move.to.r === 0) || (move.piece.side === 'ai' && move.to.r === 7);
+}
+
+function applyMove(move, actor = state.turn) {
+  if (!move || state.mode !== 'playing') return false;
+  if (actor !== state.turn) return false;
+  recordHistory();
+
+  const piece = state.board[move.from.r][move.from.c];
+  if (!piece || piece.side !== actor) return false;
+
+  state.board[move.from.r][move.from.c] = null;
+  if (move.capture) {
+    const capturedPiece = state.board[move.capture.r][move.capture.c];
+    state.board[move.capture.r][move.capture.c] = null;
+    if (actor === 'player' && capturedPiece) state.playerCaptures += 1;
+    if (actor === 'ai' && capturedPiece) state.aiCaptures += 1;
+    addSpark(centerOfSquare(move.capture.r, move.capture.c), '#ffdf77');
+  }
+
+  const promoted = wouldPromote(move);
+  const movedPiece = { ...piece, king: piece.king || promoted };
+  state.board[move.to.r][move.to.c] = movedPiece;
+  state.cursor = { ...move.to };
+  state.selected = { ...move.to };
+  state.moveCount += 1;
+  if (promoted) {
+    if (actor === 'player') state.playerKings += 1;
+    if (actor === 'ai') state.aiKings += 1;
+    addSpark(centerOfSquare(move.to.r, move.to.c), '#f7d66a');
+  }
+
+  const continuedCaptures = move.capture && !promoted
+    ? collectMoves(actor, state.board, move.to, true)
+    : [];
+
+  state.lastMove = {
+    side: actor,
+    from: squareName(move.from),
+    to: squareName(move.to),
+    capture: move.capture ? squareName(move.capture) : null,
+    promoted,
+  };
+
+  if (continuedCaptures.length > 0) {
+    state.lockedPiece = { ...move.to };
+    state.turn = actor;
+    state.message = `${actor === 'player' ? 'You' : 'AI'} must keep jumping from ${squareName(move.to)}.`;
+    pushLog(`${actor === 'player' ? 'Player' : 'AI'} captured and must continue.`);
+  } else {
+    state.lockedPiece = null;
+    state.turn = otherSide(actor);
+    state.selected = null;
+    state.message = actor === 'player' ? 'AI is thinking.' : 'Your turn.';
+    pushLog(`${actor === 'player' ? 'Player' : 'AI'} ${moveDescriptor(move)}.`);
+  }
+
+  state.aiPending = false;
+  state.aiDelay = 0;
+  refreshHint();
+  checkEndState();
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function checkEndState() {
+  if (state.mode !== 'playing') return;
+  const counts = pieceCounts();
+  const playerMoves = legalMoves('player').length;
+  const aiMoves = legalMoves('ai').length;
+
+  if (counts.ai === 0 || aiMoves === 0) {
+    finishGame('won', counts);
+  } else if (counts.player === 0 || playerMoves === 0) {
+    finishGame('lost', counts);
+  } else if (state.moveCount >= 180) {
+    finishGame('draw', counts);
+  }
+}
+
+function finishGame(result, counts = pieceCounts()) {
+  if (state.mode !== 'playing') return;
+  state.mode = result;
+  state.result = result;
+  state.aiPending = false;
+  state.lockedPiece = null;
+  const margin = counts.player - counts.ai;
+  if (result === 'won') {
+    const coins = WIN_REWARD + state.playerCaptures * 2 + counts.playerKings * 3;
+    state.coinsEarned = coins;
+    addCoins(coins);
+    state.message = `You won by ${Math.max(1, margin)} pieces and earned ${coins} coins.`;
+    pushLog(`Win secured. ${coins} coins earned.`);
+  } else if (result === 'draw') {
+    state.coinsEarned = Math.max(8, Math.floor(state.playerCaptures * 1.5));
+    addCoins(state.coinsEarned);
+    state.message = `Draw by move limit. ${state.coinsEarned} coins earned.`;
+    pushLog('Draw by move limit.');
+  } else {
+    state.message = 'AI won this board. Restart to try a new line.';
+    pushLog('AI won the board.');
+  }
+  maybeUnlock({ anyPlay: true });
+}
+
+function simulateMove(board, move) {
+  const next = cloneBoard(board);
+  const piece = next[move.from.r][move.from.c];
+  next[move.from.r][move.from.c] = null;
+  if (move.capture) next[move.capture.r][move.capture.c] = null;
+  next[move.to.r][move.to.c] = {
+    ...piece,
+    king: piece.king || (piece.side === 'player' ? move.to.r === 0 : move.to.r === 7),
+  };
+  return next;
+}
+
+function isSquareThreatened(board, side, point) {
+  const opponent = otherSide(side);
+  return collectMoves(opponent, board, null, true).some((move) => (
+    move.capture?.r === point.r && move.capture?.c === point.c
+  ));
+}
+
+function evaluateMove(move, side, board = state.board) {
+  const next = simulateMove(board, move);
+  const counts = pieceCounts(next);
+  const piece = next[move.to.r][move.to.c];
+  let score = 0;
+  if (move.capture) score += 80;
+  if (piece?.king && !move.piece.king) score += 38;
+  score += side === 'player' ? (7 - move.to.r) * 4 : move.to.r * 4;
+  score += (3.5 - Math.abs(3.5 - move.to.c)) * 3;
+  score += (side === 'player' ? counts.player - counts.ai : counts.ai - counts.player) * 12;
+  const followUps = collectMoves(side, next, move.to, true).length;
+  score += followUps * 24;
+  if (isSquareThreatened(next, side, move.to)) score -= 34;
+  if ((move.to.c === 0 || move.to.c === 7) && !piece?.king) score += 8;
+  return score;
+}
+
+function chooseBestMove(side = state.turn) {
+  const moves = legalMoves(side, state.board, side === state.turn ? state.lockedPiece : null);
+  if (moves.length === 0) return null;
+  return moves
+    .map((move) => ({ move, value: evaluateMove(move, side) }))
+    .sort((a, b) => (
+      b.value - a.value
+      || a.move.from.r - b.move.from.r
+      || a.move.from.c - b.move.from.c
+      || a.move.to.r - b.move.to.r
+      || a.move.to.c - b.move.to.c
+    ))[0].move;
+}
+
+function refreshHint() {
+  state.hint = state.mode === 'playing' && state.turn === 'player'
+    ? chooseBestMove('player')
+    : null;
+}
+
+function useHint() {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing' || state.turn !== 'player') return;
+  const hint = chooseBestMove('player');
+  state.hint = hint;
+  state.hintsUsed += 1;
+  if (hint) {
+    state.selected = { ...hint.from };
+    state.cursor = { ...hint.to };
+    state.message = `Hint: ${moveDescriptor(hint)}.`;
+    pushLog(state.message);
+  }
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function undoMove() {
+  if (state.mode !== 'playing') {
+    state.message = 'Undo is available during an active board.';
+    updateHud();
+    updateOverlay();
+    draw();
+    return;
+  }
+  if (state.history.length === 0) {
+    state.message = 'No move to undo yet.';
+    updateHud();
+    updateOverlay();
+    draw();
+    return;
+  }
+  const snap = state.history.pop();
+  restoreSnapshot(snap);
+  state.message = 'Move undone.';
+  pushLog('Undo restored the previous board.');
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function nextSelectable(delta = 1) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing' || state.turn !== 'player') return;
+  const moves = legalMoves('player', state.board, state.lockedPiece);
+  const sources = [];
+  for (const move of moves) {
+    if (!sources.some((point) => point.r === move.from.r && point.c === move.from.c)) {
+      sources.push(move.from);
+    }
+  }
+  if (sources.length === 0) return;
+  const current = state.selected || state.cursor;
+  const index = Math.max(0, sources.findIndex((point) => point.r === current.r && point.c === current.c));
+  const next = sources[(index + delta + sources.length) % sources.length];
+  state.selected = { ...next };
+  state.cursor = { ...next };
+  refreshHint();
+  updateHud();
+  draw();
+}
+
+function moveCursor(dr, dc) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  let next = { r: state.cursor.r, c: state.cursor.c };
+  for (let i = 0; i < 8; i += 1) {
+    next = {
+      r: Math.max(0, Math.min(7, next.r + dr)),
+      c: Math.max(0, Math.min(7, next.c + dc)),
+    };
+    if (isDarkSquare(next.r, next.c)) break;
+  }
+  state.cursor = next;
+  updateHud();
+  draw();
+}
+
+function playSelectedOrCursor() {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing') {
+    resetGame('playing');
+    return;
+  }
+  if (state.turn !== 'player') return;
+  const piece = state.board[state.cursor.r][state.cursor.c];
+  if (!state.selected && piece?.side === 'player') {
+    state.selected = { ...state.cursor };
+    state.message = `Selected ${squareName(state.cursor)}.`;
+  } else if (state.selected) {
+    const move = matchingMove(state.selected, state.cursor);
+    if (move) applyMove(move, 'player');
+    else if (piece?.side === 'player') {
+      state.selected = { ...state.cursor };
+      state.message = `Selected ${squareName(state.cursor)}.`;
+    } else {
+      state.message = sideMustCapture('player')
+        ? 'A capture is available and must be played.'
+        : 'Choose a highlighted diagonal move.';
+    }
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function selectPoint(point) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (!point || !isDarkSquare(point.r, point.c)) return;
+  state.cursor = { ...point };
+  if (state.mode !== 'playing') {
+    resetGame('playing');
+    return;
+  }
+  if (state.turn !== 'player') return;
+  const piece = state.board[point.r][point.c];
+  if (state.selected) {
+    const move = matchingMove(state.selected, point);
+    if (move) {
+      applyMove(move, 'player');
+      return;
+    }
+  }
+  if (piece?.side === 'player') {
+    if (state.lockedPiece && (state.lockedPiece.r !== point.r || state.lockedPiece.c !== point.c)) {
+      state.message = `Continue jumping from ${squareName(state.lockedPiece)}.`;
+    } else {
+      state.selected = { ...point };
+      state.message = `Selected ${squareName(point)}.`;
+    }
+  } else if (state.selected) {
+    state.message = sideMustCapture('player')
+      ? 'A capture is available and must be played.'
+      : 'Choose a highlighted diagonal move.';
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function pauseGame() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    state.message = 'Paused.';
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    state.message = state.turn === 'player' ? 'Your turn.' : 'AI is thinking.';
+  } else if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function update(dt) {
+  state.clock += dt;
+  state.sparks = state.sparks
+    .map((spark) => ({ ...spark, life: spark.life - dt }))
+    .filter((spark) => spark.life > 0);
+
+  if (state.mode !== 'playing') return;
+  if (state.turn === 'ai') {
+    if (!state.aiPending) {
+      state.aiPending = true;
+      state.aiDelay = 0.35;
+      state.message = state.lockedPiece ? 'AI is continuing a jump.' : 'AI is thinking.';
+    }
+    state.aiDelay -= dt;
+    if (state.aiDelay <= 0) {
+      const move = chooseBestMove('ai');
+      if (move) applyMove(move, 'ai');
+      else checkEndState();
+    }
+  }
+}
+
+function recomputeScore() {
+  const counts = pieceCounts();
+  const material = counts.player * 20 + counts.playerKings * 18 - counts.ai * 8;
+  const capture = state.playerCaptures * 70;
+  const pacing = Math.max(0, 120 - state.moveCount) * 2;
+  const hintPenalty = state.hintsUsed * 10;
+  const resultBonus = state.result === 'won' ? 500 : state.result === 'draw' ? 120 : 0;
+  state.score = Math.max(0, Math.round(material + capture + pacing + resultBonus - hintPenalty));
+}
+
+function addSpark(point, color) {
+  state.sparks.push({ x: point.x, y: point.y, color, life: 0.45 });
+}
+
+function centerOfSquare(r, c) {
+  return {
+    x: BOARD.x + c * CELL + CELL / 2,
+    y: BOARD.y + r * CELL + CELL / 2,
+  };
+}
+
+function pointToSquare(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top) * (canvas.height / rect.height);
+  const c = Math.floor((x - BOARD.x) / CELL);
+  const r = Math.floor((y - BOARD.y) / CELL);
+  if (!inBounds(r, c)) return null;
+  return { r, c };
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke = null) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawPiece(piece, r, c, highlight = false) {
+  const center = centerOfSquare(r, c);
+  const radius = CELL * 0.34;
+  const grad = ctx.createRadialGradient(
+    center.x - radius * 0.35,
+    center.y - radius * 0.45,
+    radius * 0.18,
+    center.x,
+    center.y,
+    radius,
+  );
+  if (piece.side === 'player') {
+    grad.addColorStop(0, '#ff858a');
+    grad.addColorStop(0.62, PLAYER);
+    grad.addColorStop(1, PLAYER_DARK);
+  } else {
+    grad.addColorStop(0, '#8791a1');
+    grad.addColorStop(0.62, AI);
+    grad.addColorStop(1, AI_DARK);
+  }
+
+  ctx.save();
+  ctx.shadowColor = '#07101799';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 5;
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.lineWidth = highlight ? 5 : 3;
+  ctx.strokeStyle = highlight ? '#fff5b8' : '#ffffff80';
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#ffffff55';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius * 0.63, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if (piece.king) {
+    ctx.fillStyle = GOLD;
+    ctx.strokeStyle = '#6b3b18';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(center.x - 18, center.y + 10);
+    ctx.lineTo(center.x - 12, center.y - 8);
+    ctx.lineTo(center.x, center.y + 2);
+    ctx.lineTo(center.x + 12, center.y - 8);
+    ctx.lineTo(center.x + 18, center.y + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+function drawBoard() {
+  drawRoundRect(BOARD.x - 18, BOARD.y - 18, BOARD.size + 36, BOARD.size + 36, 8, '#162a34', '#ffffff68');
+  const moves = state.mode === 'playing' && state.turn === 'player'
+    ? legalMoves('player', state.board, state.lockedPiece)
+    : [];
+  const moveTargets = new Map(moves.map((move) => [`${move.to.r},${move.to.c}`, move]));
+  const moveSources = new Set(moves.map((move) => `${move.from.r},${move.from.c}`));
+
+  for (let r = 0; r < 8; r += 1) {
+    for (let c = 0; c < 8; c += 1) {
+      const x = BOARD.x + c * CELL;
+      const y = BOARD.y + r * CELL;
+      const dark = isDarkSquare(r, c);
+      ctx.fillStyle = dark ? ((r + Math.floor(state.clock * 0.8)) % 2 === 0 ? DARK : DARK_ALT) : LIGHT;
+      ctx.fillRect(x, y, CELL, CELL);
+      if (dark && moveSources.has(`${r},${c}`)) {
+        ctx.fillStyle = '#ffffff18';
+        ctx.fillRect(x + 6, y + 6, CELL - 12, CELL - 12);
+      }
+      const target = moveTargets.get(`${r},${c}`);
+      if (target) {
+        ctx.fillStyle = target.capture ? '#ffdf7066' : '#91e6ff55';
+        ctx.beginPath();
+        ctx.arc(x + CELL / 2, y + CELL / 2, CELL * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = target.capture ? CAPTURE : MOVE;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.strokeStyle = '#ffffff70';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(BOARD.x, BOARD.y, BOARD.size, BOARD.size);
+
+  if (state.selected) {
+    ctx.strokeStyle = '#ffe082';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(
+      BOARD.x + state.selected.c * CELL + 5,
+      BOARD.y + state.selected.r * CELL + 5,
+      CELL - 10,
+      CELL - 10,
+    );
+  }
+
+  if (state.lockedPiece) {
+    ctx.strokeStyle = '#ffb35c';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(
+      BOARD.x + state.lockedPiece.c * CELL + 9,
+      BOARD.y + state.lockedPiece.r * CELL + 9,
+      CELL - 18,
+      CELL - 18,
+    );
+  }
+
+  ctx.strokeStyle = CURSOR;
+  ctx.lineWidth = 3;
+  ctx.setLineDash([12, 7]);
+  ctx.strokeRect(
+    BOARD.x + state.cursor.c * CELL + 3,
+    BOARD.y + state.cursor.r * CELL + 3,
+    CELL - 6,
+    CELL - 6,
+  );
+  ctx.setLineDash([]);
+
+  for (let r = 0; r < 8; r += 1) {
+    for (let c = 0; c < 8; c += 1) {
+      const piece = state.board[r][c];
+      if (piece) {
+        const highlight = state.lastMove?.to === squareName({ r, c });
+        drawPiece(piece, r, c, highlight);
+      }
+    }
+  }
+
+  if (state.hint) {
+    const from = centerOfSquare(state.hint.from.r, state.hint.from.c);
+    const to = centerOfSquare(state.hint.to.r, state.hint.to.c);
+    ctx.strokeStyle = '#fff3a3';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 8]);
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  for (const spark of state.sparks) {
+    const alpha = Math.max(0, spark.life / 0.45);
+    ctx.fillStyle = spark.color;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(spark.x, spark.y, 28 * (1 - alpha) + 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawPanel() {
+  drawRoundRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h, 8, '#10222df0', '#ffffff58');
+  const counts = pieceCounts();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 34px "Trebuchet MS", sans-serif';
+  ctx.fillText('Checkers', PANEL.x + 24, PANEL.y + 48);
+  ctx.font = '700 15px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#cddce8';
+  ctx.fillText('Red moves upward. Captures are forced.', PANEL.x + 24, PANEL.y + 78);
+
+  const rows = [
+    ['Turn', state.aiPending ? 'AI thinking' : state.turn === 'player' ? 'Player' : 'AI'],
+    ['Player pieces', `${counts.player} (${counts.playerKings} kings)`],
+    ['AI pieces', `${counts.ai} (${counts.aiKings} kings)`],
+    ['Captures', `${state.playerCaptures} - ${state.aiCaptures}`],
+    ['Move', String(state.moveCount)],
+    ['Rule', sideMustCapture(state.turn) ? 'Must capture' : 'Open move'],
+  ];
+  let y = PANEL.y + 124;
+  for (const [label, value] of rows) {
+    drawRoundRect(PANEL.x + 22, y, PANEL.w - 44, 46, 8, '#ffffff12', '#ffffff22');
+    ctx.fillStyle = '#9fb2bf';
+    ctx.font = '800 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), PANEL.x + 38, y + 18);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, PANEL.x + 38, y + 38);
+    y += 56;
+  }
+
+  ctx.fillStyle = '#f7d66a';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.fillText('Last events', PANEL.x + 24, y + 10);
+  y += 30;
+  ctx.font = '700 13px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#d6e2ec';
+  const entries = state.logs.length > 0 ? state.logs.slice(0, 5) : ['Start a board to begin.'];
+  for (const line of entries) {
+    wrapText(line, PANEL.x + 24, y, PANEL.w - 48, 17);
+    y += 38;
+  }
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = String(text).split(' ');
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, y);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0f2c38');
+  bg.addColorStop(0.58, '#193d42');
+  bg.addColorStop(1, '#4a2a35');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff12';
+  for (let i = 0; i < 36; i += 1) {
+    const x = (i * 97 + Math.sin(state.clock + i) * 12) % W;
+    const y = (i * 53 + Math.cos(state.clock * 0.7 + i) * 10) % H;
+    ctx.fillRect(x, y, 2, 2);
+  }
+
+  drawBoard();
+  drawPanel();
+}
+
+function updateHud() {
+  const counts = pieceCounts();
+  hud.mode.textContent = state.mode === 'menu' ? 'Menu' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  hud.turn.textContent = state.aiPending ? 'AI...' : state.turn === 'player' ? 'Player' : 'AI';
+  hud.playerPieces.textContent = `${counts.player}/${counts.playerKings}`;
+  hud.aiPieces.textContent = `${counts.ai}/${counts.aiKings}`;
+  hud.rule.textContent = sideMustCapture(state.turn) ? 'Must jump' : 'Any move';
+  hud.selected.textContent = state.selected ? squareName(state.selected) : squareName(state.cursor);
+  hud.score.textContent = String(state.score);
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+}
+
+function updateOverlay() {
+  const show = state.mode !== 'playing';
+  overlay.classList.toggle('show', show);
+  const key = show ? `${state.mode}|${state.score}|${state.coinsEarned}|${state.message}` : 'hidden';
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
+  if (!show) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Checkers';
+  let body = 'Play red from the bottom side. Forced captures and multi-jumps are on, and pieces crown when they reach the far row.';
+  let button = 'Start Game';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'Resume when you are ready to continue the current board.';
+    button = 'Resume';
+  } else if (state.mode === 'won') {
+    title = 'You Won';
+    body = `${state.message} Final score ${state.score}.`;
+    button = 'New Board';
+  } else if (state.mode === 'lost') {
+    title = 'AI Wins';
+    body = `${state.message} Score ${state.score}.`;
+    button = 'Try Again';
+  } else if (state.mode === 'draw') {
+    title = 'Draw';
+    body = `${state.message} Score ${state.score}.`;
+    button = 'New Board';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Controls: click or tap pieces, arrows move the cursor, Space/Enter selects, H hints, U undo, P pause, R restart, F fullscreen.</p>
+      <div class="row">
+        <button type="button" id="overlayStart" class="primary-btn">${button}</button>
+        <button type="button" id="overlayFull" class="utility-btn">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  overlay.querySelector('#overlayStart').addEventListener('click', () => {
+    if (state.mode === 'paused') pauseGame();
+    else resetGame('playing');
+  });
+  overlay.querySelector('#overlayFull').addEventListener('click', toggleFullscreen);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  selectPoint(pointToSquare(event.clientX, event.clientY));
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => nextSelectable(-1));
+document.getElementById('nextBtn').addEventListener('click', () => nextSelectable(1));
+document.getElementById('playBtn').addEventListener('click', playSelectedOrCursor);
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('undoBtn').addEventListener('click', undoMove);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', () => resetGame('playing'));
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+document.getElementById('startBtn').addEventListener('click', startGame);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'spacebar'].includes(key)) event.preventDefault();
+  if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') moveCursor(1, 0);
+  else if (key === ' ' || key === 'spacebar' || key === 'enter') playSelectedOrCursor();
+  else if (key === 'h') useHint();
+  else if (key === 'u' || key === 'backspace') undoMove();
+  else if (key === 'p') pauseGame();
+  else if (key === 'r') resetGame('playing');
+  else if (key === 'f') toggleFullscreen();
+});
+
+function boardForText() {
+  return state.board.map((row, r) => row.map((piece, c) => {
+    if (!piece) return isDarkSquare(r, c) ? '.' : ' ';
+    if (piece.side === 'player') return piece.king ? 'P' : 'p';
+    return piece.king ? 'A' : 'a';
+  }).join(''));
+}
+
+function moveForText(move) {
+  return {
+    from: squareName(move.from),
+    to: squareName(move.to),
+    capture: move.capture ? squareName(move.capture) : null,
+    piece: move.piece ? `${move.piece.side}${move.piece.king ? '_king' : '_man'}` : null,
+  };
+}
+
+function renderGameToText() {
+  const counts = pieceCounts();
+  const legal = legalMoves(state.turn, state.board, state.lockedPiece).map(moveForText);
+  return JSON.stringify({
+    game: 'checkers',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. Board squares use row 1-8 from top to bottom and files A-H from left to right. Red/player starts at rows 6-8 and moves upward toward row 1.',
+    objective: 'capture all AI pieces or leave the AI with no legal move; captures are forced and multi-jumps must continue with the same piece',
+    turn: state.aiPending ? 'ai_pending' : state.turn,
+    board_rows: boardForText(),
+    selected: state.selected ? squareName(state.selected) : null,
+    cursor: squareName(state.cursor),
+    locked_piece: state.lockedPiece ? squareName(state.lockedPiece) : null,
+    capture_required: sideMustCapture(state.turn),
+    pieces: {
+      player: counts.player,
+      ai: counts.ai,
+      player_kings: counts.playerKings,
+      ai_kings: counts.aiKings,
+    },
+    resources: {
+      score: state.score,
+      move_count: state.moveCount,
+      player_captures: state.playerCaptures,
+      ai_captures: state.aiCaptures,
+      hints_used: state.hintsUsed,
+      coins_earned: state.coinsEarned,
+      history_depth: state.history.length,
+    },
+    legal_moves: legal,
+    hint: state.hint ? moveForText(state.hint) : null,
+    last_move: state.lastMove,
+    message: state.message,
+    recent_events: state.logs,
+    result: state.result,
+  });
+}
+
+function frame(now) {
+  if (!controlled) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000 || 0));
+    update(dt);
+    recomputeScore();
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  lastFrame = now;
+  raf = requestAnimationFrame(frame);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+resetGame('menu');
+mountGameFeedback({ gameSlug: 'checkers', gameName: 'Checkers' });
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+</body>
+</html>

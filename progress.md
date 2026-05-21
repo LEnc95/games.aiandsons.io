@@ -2906,3 +2906,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Tower of Hanoi screenshots.
+
+## 2026-05-20 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; most recent additions include Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/checkers` route or Checkers metadata entry found.
+- Chosen game: Checkers (`/checkers`), a standalone canvas player-vs-AI draughts game with forced captures, multi-jumps, kinging, hints, undo, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `checkers/index.html` with canvas rendering, player-vs-AI Checkers rules, forced captures, multi-jumps, kinging, keyboard/pointer/touch controls, hints, undo, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Checkers in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Checkers.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation in progress:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Checkers module script after SEO injection.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 101 games including Checkers with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - Stubbed DOM/canvas runtime harness passed: started play, selected A6, moved to B5 through real pointer handlers, advanced deterministic time through the AI reply, used hint, undid a move, and verified feedback mount context.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/checkers/`.
+  - `git diff --check` on Checkers integration files passed; only existing LF-to-CRLF warnings were printed.
+- Bug fixed during validation: undo is now restricted to active boards so a finished game cannot restore pre-win state after coin rewards have already been granted.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary `/checkers/` route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so no alternate browser screenshot path was available.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Checkers screenshots.

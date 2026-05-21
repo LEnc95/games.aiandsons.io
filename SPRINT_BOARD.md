@@ -372,5 +372,9 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-05-16] Key PR links: none merged for this date.
 - [nightly 2026-05-18] Tracked changes: 1 commit(s) - Add Peg Solitaire game.
 - [nightly 2026-05-18] Key PR links: none merged for this date.
+- [nightly 2026-05-19] Tracked changes: 1 commit(s) - Add Tower of Hanoi game.
+- [nightly 2026-05-19] Key PR links: none merged for this date.
+- [nightly 2026-05-20] No repository commits found for this date.
+- [nightly 2026-05-20] Key PR links: none merged for this date.
 
 
