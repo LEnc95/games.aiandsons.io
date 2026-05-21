@@ -266,7 +266,7 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
             </div>
           </div>
           <div class="cade-feedback-field">
-            <label for="cadeFeedbackKind">Feedback Type</label>
+            <label for="cadeFeedbackKind">Feedback Type <span aria-hidden="true" title="Required">*</span></label>
             <select id="cadeFeedbackKind" name="kind" required>
               <option value="bug">Bug report</option>
               <option value="feature">Idea or feature</option>
@@ -274,11 +274,11 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
             </select>
           </div>
           <div class="cade-feedback-field">
-            <label for="cadeFeedbackSummary">Short Summary</label>
+            <label for="cadeFeedbackSummary">Short Summary <span aria-hidden="true" title="Required">*</span></label>
             <input id="cadeFeedbackSummary" name="summary" type="text" maxlength="140" required placeholder="What happened or what should change?" />
           </div>
           <div class="cade-feedback-field">
-            <label for="cadeFeedbackDetails">Details</label>
+            <label for="cadeFeedbackDetails">Details <span aria-hidden="true" title="Required">*</span></label>
             <textarea id="cadeFeedbackDetails" name="details" required placeholder="What did you see, expect, or want?"></textarea>
           </div>
           <div class="cade-feedback-field">
