@@ -97,6 +97,7 @@
 - game/cloudclimber
 - game/reefrunner
 - game/codebreaker
+- game/reversi
 - game/checkers
 - game/pegsolitaire
 - game/towerhanoi

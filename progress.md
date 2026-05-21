@@ -2934,3 +2934,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so no alternate browser screenshot path was available.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Checkers screenshots.
+
+## 2026-05-21 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; most recent additions include Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/reversi` route or Reversi/Othello metadata entry found.
+- Chosen game: Reversi (`/reversi`), a classic black-vs-white disc-flipping board game with AI, legal move hints, undo, pass handling, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation in progress:
+  - Added `reversi/index.html` with canvas rendering, player-vs-AI Reversi rules, keyboard/pointer/touch controls, hints, undo, pass, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Reversi in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Reversi.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Reversi module script after SEO injection.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 102 games including Reversi with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/reversi/`.
+  - Stubbed DOM/canvas runtime harness passed: started from menu, placed the opening black move with keyboard, advanced deterministic time through the AI reply, used hint, undid the exchange, placed via pointer, and verified feedback mount context.
+  - `$develop-web-game` Playwright client passed against `/reversi/` on a temporary Node static server, producing screenshots and state snapshots in `output/web-game/reversi-run2`.
+  - Screenshot inspection confirmed the Reversi board, legal move markers, discs, side panel, HUD, controls, and feedback button are visible and readable.
+  - Direct Playwright browser pass covered start, keyboard placement, deterministic AI reply, hint, undo, pointer placement, screenshot capture, and final state export in `output/web-game/reversi-direct`.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` passed after Chromium launch was available.
+  - `git diff --check` on Reversi integration files passed; only existing LF-to-CRLF warnings were printed.
+- Follow-up TODO:
+  - None for Reversi validation at this point; the browser and feedback smoke checks have now passed locally.
