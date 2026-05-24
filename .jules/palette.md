@@ -31,3 +31,6 @@
 ## 2026-05-21 - Add explicit required field indicators to forms
 **Learning:** Native `required` attributes on inputs are great for validation and screen readers, but sighted users lack visual cues until they attempt to submit the form and hit a validation error.
 **Action:** Always add a clear visual indicator, such as `<span aria-hidden="true" title="Required">*</span>`, to the label of required fields. Ensure `aria-hidden="true"` is used to prevent redundant screen reader announcements, since the `required` attribute on the input already handles the semantic announcement.
+## 2026-05-22 - Screen Reader Handling of Live Balances
+**Learning:** Decorative emojis in live balance displays (like a coin counter) can cause screen readers to announce literal emoji names redundantly (e.g., "coin emoji zero"). Furthermore, dynamic numerical updates to these balances are completely invisible to screen reader users unless the container announces them.
+**Action:** Always add `aria-hidden="true"` to purely decorative icons/emojis in balance displays. Wrap the entire display in an element with `role="status"` and a descriptive `aria-label` (e.g., "Coins balance") to ensure dynamic updates are politely announced to assistive technology without user interaction.
