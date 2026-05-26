@@ -79,6 +79,7 @@
 - game/hexharvest
 - game/wordweave
 - game/diceforge
+- game/yachtdice
 - game/keystrike
 - game/pulseparry
 - game/magnetrail
@@ -97,6 +98,10 @@
 - game/cloudclimber
 - game/reefrunner
 - game/codebreaker
+- game/solitaire
+- game/fifteenpuzzle
+- game/battleship
+- game/dotsandboxes
 - game/reversi
 - game/checkers
 - game/pegsolitaire

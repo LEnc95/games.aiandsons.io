@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Battleship | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(30% 24% at 18% 14%, #d8c178 0%, transparent 72%),
+    radial-gradient(28% 26% at 82% 18%, #d96d67 0%, transparent 72%),
+    radial-gradient(26% 26% at 74% 84%, #60c7b5 0%, transparent 70%),
+    linear-gradient(135deg, #123b43 0%, #25565b 44%, #69414c 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #133940;
+  box-shadow: 0 20px 52px #10182699;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  background: #101923f4;
+  box-shadow: 0 18px 38px #10182688;
+  padding: 16px;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+}
+p {
+  margin: 0 0 10px;
+  color: #dce8f0;
+  font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.45;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+button {
+  border: 1px solid #ffffff99;
+  background: #236d73;
+  color: #f8feff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.primary-btn { background: #ad5d37; }
+.utility-btn { background: #4c596f; }
+.hud {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #111d28f2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 4px;
+}
+.chip span {
+  color: #c9d9e6;
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2.1vw, 18px);
+  line-height: 1.1;
+}
+.good b { color: #a7f2cd; }
+.warn b { color: #ffe091; }
+.bad b { color: #ffb3a6; }
+.controls {
+  width: min(96vw, 1080px);
+  border-radius: 8px;
+  border: 1px solid #ffffff66;
+  background: #111d28f2;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+@media (max-width: 980px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 580px) {
+  .stage { width: 98vw; max-height: 48dvh; }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  button { padding: 9px 8px; font-size: 13px; }
+  .back { top: 8px; left: 8px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fire across a hidden 10 by 10 fleet grid, track hits and misses, use limited scans, and sink every enemy ship before the AI finds yours. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Battleship | AI and Sons Games">
+  <meta property="og:description" content="Fire across a hidden 10 by 10 fleet grid, track hits and misses, use limited scans, and sink every enemy ship before the AI finds yours. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/battleship">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Battleship | AI and Sons Games">
+  <meta name="twitter:description" content="Fire across a hidden 10 by 10 fleet grid, track hits and misses, use limited scans, and sink every enemy ship before the AI finds yours. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/battleship">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Battleship","description":"Fire across a hidden 10 by 10 fleet grid, track hits and misses, use limited scans, and sink every enemy ship before the AI finds yours. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/battleship","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="Battleship game">
+  <section class="stage">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div id="overlay" class="overlay show"></div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Turn</span><b id="turn">Player</b></div>
+    <div class="chip good"><span>Your Fleet</span><b id="playerFleet">5</b></div>
+    <div class="chip bad"><span>Enemy Fleet</span><b id="enemyFleet">5</b></div>
+    <div class="chip warn"><span>Shots</span><b id="shots">0</b></div>
+    <div class="chip"><span>Accuracy</span><b id="accuracy">0%</b></div>
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Battleship controls">
+    <button id="prevBtn" type="button" class="utility-btn">Prev</button>
+    <button id="nextBtn" type="button" class="utility-btn">Next</button>
+    <button id="fireBtn" type="button" class="primary-btn">Fire</button>
+    <button id="scanBtn" type="button">Scan</button>
+    <button id="shuffleBtn" type="button" class="utility-btn">Shuffle</button>
+    <button id="pauseBtn" type="button" class="utility-btn">Pause</button>
+    <button id="restartBtn" type="button" class="utility-btn">Restart</button>
+    <button id="fullscreenBtn" type="button" class="utility-btn">Fullscreen</button>
+    <button id="startBtn" type="button" class="primary-btn">Start</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = {
+  mode: document.getElementById('mode'),
+  turn: document.getElementById('turn'),
+  playerFleet: document.getElementById('playerFleet'),
+  enemyFleet: document.getElementById('enemyFleet'),
+  shots: document.getElementById('shots'),
+  accuracy: document.getElementById('accuracy'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const BOARD_SIZE = 10;
+const PLAYER_BOARD = { x: 56, y: 122, size: 340 };
+const ENEMY_BOARD = { x: 438, y: 122, size: 340 };
+const CELL = PLAYER_BOARD.size / BOARD_SIZE;
+const PANEL = { x: 812, y: 86, w: 220, h: 554 };
+const FLEET = [
+  { name: 'Carrier', size: 5 },
+  { name: 'Battleship', size: 4 },
+  { name: 'Cruiser', size: 3 },
+  { name: 'Submarine', size: 3 },
+  { name: 'Destroyer', size: 2 },
+];
+const PLAYER = 'player';
+const AI = 'ai';
+const WATER = '#163f4c';
+const WATER_ALT = '#1b5360';
+const GRID = '#9cd7df78';
+const PLAYER_SHIP = '#d7c48e';
+const ENEMY_SHIP = '#c86962';
+const HIT = '#ff6f5f';
+const MISS = '#d7f3ff';
+const SCAN = '#ffe28b';
+const GOLD = '#f0c76b';
+const WIN_REWARD = 34;
+
+const state = {
+  mode: 'menu',
+  playerBoard: createEmptyBoard(),
+  enemyBoard: createEmptyBoard(),
+  playerFleet: createFleet(),
+  enemyFleet: createFleet(),
+  turn: PLAYER,
+  cursor: { r: 0, c: 0 },
+  aiPending: false,
+  aiDelay: 0,
+  targetQueue: [],
+  layoutIndex: 0,
+  rngSeed: 1,
+  shots: 0,
+  playerHits: 0,
+  aiShots: 0,
+  aiHits: 0,
+  playerSunk: 0,
+  aiSunk: 0,
+  scansUsed: 0,
+  score: 0,
+  coinsEarned: 0,
+  awarded: false,
+  result: '',
+  message: 'Find and sink all five hidden enemy ships before the AI sinks yours.',
+  lastShot: null,
+  scanMarks: [],
+  logs: [],
+  splashes: [],
+  clock: 0,
+};
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+let overlayRenderKey = '';
+
+function createEmptyBoard() {
+  return Array.from({ length: BOARD_SIZE }, () => (
+    Array.from({ length: BOARD_SIZE }, () => ({ shipId: null, shot: false }))
+  ));
+}
+
+function createFleet() {
+  return FLEET.map((ship, id) => ({
+    id,
+    name: ship.name,
+    size: ship.size,
+    cells: [],
+    sunk: false,
+  }));
+}
+
+function makeRng(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return value / 4294967296;
+  };
+}
+
+function randomIndex(max) {
+  state.rngSeed = (state.rngSeed * 1664525 + 1013904223) >>> 0;
+  return Math.floor((state.rngSeed / 4294967296) * max);
+}
+
+function inBounds(r, c) {
+  return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
+}
+
+function canPlace(board, size, r, c, vertical) {
+  for (let i = 0; i < size; i += 1) {
+    const rr = r + (vertical ? i : 0);
+    const cc = c + (vertical ? 0 : i);
+    if (!inBounds(rr, cc) || board[rr][cc].shipId !== null) return false;
+  }
+  return true;
+}
+
+function placeShip(board, ship, r, c, vertical) {
+  ship.cells = [];
+  for (let i = 0; i < ship.size; i += 1) {
+    const rr = r + (vertical ? i : 0);
+    const cc = c + (vertical ? 0 : i);
+    board[rr][cc].shipId = ship.id;
+    ship.cells.push({ r: rr, c: cc });
+  }
+}
+
+function placeFleet(seed) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const rng = makeRng(seed + attempt * 9973);
+    const board = createEmptyBoard();
+    const fleet = createFleet();
+    let ok = true;
+    for (const ship of fleet) {
+      let placed = false;
+      for (let tries = 0; tries < 300 && !placed; tries += 1) {
+        const vertical = rng() > 0.5;
+        const maxR = vertical ? BOARD_SIZE - ship.size : BOARD_SIZE - 1;
+        const maxC = vertical ? BOARD_SIZE - 1 : BOARD_SIZE - ship.size;
+        const r = Math.floor(rng() * (maxR + 1));
+        const c = Math.floor(rng() * (maxC + 1));
+        if (canPlace(board, ship.size, r, c, vertical)) {
+          placeShip(board, ship, r, c, vertical);
+          placed = true;
+        }
+      }
+      if (!placed) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return { board, fleet };
+  }
+  throw new Error('Unable to place fleet');
+}
+
+function shipFor(fleet, shipId) {
+  return fleet.find((ship) => ship.id === shipId) || null;
+}
+
+function shipHits(board, ship) {
+  return ship.cells.filter((cell) => board[cell.r][cell.c].shot).length;
+}
+
+function markShipIfSunk(board, fleet, shipId) {
+  const ship = shipFor(fleet, shipId);
+  if (!ship || ship.sunk) return null;
+  if (ship.cells.every((cell) => board[cell.r][cell.c].shot)) {
+    ship.sunk = true;
+    return ship;
+  }
+  return null;
+}
+
+function remainingShips(fleet) {
+  return fleet.filter((ship) => !ship.sunk).length;
+}
+
+function allShipsSunk(fleet) {
+  return fleet.every((ship) => ship.sunk);
+}
+
+function squareName(point) {
+  if (!point) return 'none';
+  return `${String.fromCharCode(65 + point.c)}${point.r + 1}`;
+}
+
+function pushLog(message) {
+  state.logs = [message, ...state.logs].slice(0, 8);
+}
+
+function addSplash(boardSide, point, hit) {
+  state.splashes.push({
+    board: boardSide,
+    r: point.r,
+    c: point.c,
+    hit,
+    age: 0,
+  });
+}
+
+function setupBoards() {
+  const player = placeFleet(39041 + state.layoutIndex * 719);
+  const enemy = placeFleet(84017 + state.layoutIndex * 977);
+  state.playerBoard = player.board;
+  state.playerFleet = player.fleet;
+  state.enemyBoard = enemy.board;
+  state.enemyFleet = enemy.fleet;
+}
+
+function resetGame(mode = 'playing') {
+  setupBoards();
+  state.mode = mode;
+  state.turn = PLAYER;
+  state.cursor = { r: 0, c: 0 };
+  state.aiPending = false;
+  state.aiDelay = 0;
+  state.targetQueue = [];
+  state.rngSeed = 12011 + state.layoutIndex * 193;
+  state.shots = 0;
+  state.playerHits = 0;
+  state.aiShots = 0;
+  state.aiHits = 0;
+  state.playerSunk = 0;
+  state.aiSunk = 0;
+  state.scansUsed = 0;
+  state.score = 0;
+  state.coinsEarned = 0;
+  state.awarded = false;
+  state.result = '';
+  state.message = 'Your turn. Fire on the enemy grid and watch for hit markers.';
+  state.lastShot = null;
+  state.scanMarks = [];
+  state.logs = [];
+  state.splashes = [];
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function startGame() {
+  resetGame('playing');
+  rememberRecent('battleship');
+  maybeUnlock({ anyPlay: true });
+}
+
+function pauseGame() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    state.message = 'Paused. Resume when ready.';
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    state.message = state.turn === PLAYER ? 'Your turn. Choose a target.' : 'AI turn is resolving.';
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function shuffleFleet() {
+  state.layoutIndex += 1;
+  const nextMode = state.mode === 'playing' ? 'playing' : 'menu';
+  resetGame(nextMode);
+  state.message = nextMode === 'menu'
+    ? 'Fleet shuffled. Start when ready.'
+    : 'Fleet shuffled and the battle restarted.';
+  pushLog('Fleet layout shuffled.');
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function recomputeScore() {
+  const accuracyBonus = Math.round((state.playerHits / Math.max(1, state.shots)) * 140);
+  state.score = Math.max(0,
+    state.playerHits * 110
+    + state.playerSunk * 320
+    + accuracyBonus
+    - state.aiHits * 45
+    - state.scansUsed * 20
+  );
+}
+
+function fireAt(point) {
+  if (state.mode === 'menu') {
+    startGame();
+    return false;
+  }
+  if (state.mode !== 'playing' || state.turn !== PLAYER || state.aiPending || !point) return false;
+  const cell = state.enemyBoard[point.r][point.c];
+  state.cursor = { r: point.r, c: point.c };
+  if (cell.shot) {
+    state.message = `${squareName(point)} has already been targeted. Choose open water.`;
+    pushLog(`Repeated target ${squareName(point)} ignored.`);
+    updateHud();
+    draw();
+    return false;
+  }
+
+  cell.shot = true;
+  state.shots += 1;
+  const hit = cell.shipId !== null;
+  state.lastShot = { side: PLAYER, square: squareName(point), result: hit ? 'hit' : 'miss' };
+  addSplash('enemy', point, hit);
+
+  if (hit) {
+    state.playerHits += 1;
+    const sunk = markShipIfSunk(state.enemyBoard, state.enemyFleet, cell.shipId);
+    if (sunk) {
+      state.playerSunk += 1;
+      state.lastShot.ship = sunk.name;
+      state.message = `Hit at ${squareName(point)}. Enemy ${sunk.name} sunk.`;
+      pushLog(`Enemy ${sunk.name} sunk.`);
+    } else {
+      const ship = shipFor(state.enemyFleet, cell.shipId);
+      state.lastShot.ship = ship ? ship.name : 'unknown';
+      state.message = `Hit at ${squareName(point)}. Keep bracketing that ship.`;
+      pushLog(`Hit enemy waterline at ${squareName(point)}.`);
+    }
+  } else {
+    state.message = `Miss at ${squareName(point)}. AI is firing back.`;
+    pushLog(`Shot at ${squareName(point)} missed.`);
+  }
+
+  state.scanMarks = state.scanMarks.filter((mark) => mark.r !== point.r || mark.c !== point.c);
+  recomputeScore();
+  if (allShipsSunk(state.enemyFleet)) {
+    finishGame('won');
+    return true;
+  }
+  state.turn = AI;
+  scheduleAI();
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function scheduleAI() {
+  state.aiPending = true;
+  state.aiDelay = 0.58;
+}
+
+function enqueueAiTargets(point) {
+  const dirs = [
+    { r: -1, c: 0 },
+    { r: 1, c: 0 },
+    { r: 0, c: -1 },
+    { r: 0, c: 1 },
+  ];
+  for (const dir of dirs) {
+    const next = { r: point.r + dir.r, c: point.c + dir.c };
+    if (!inBounds(next.r, next.c)) continue;
+    if (state.playerBoard[next.r][next.c].shot) continue;
+    if (state.targetQueue.some((queued) => queued.r === next.r && queued.c === next.c)) continue;
+    state.targetQueue.push(next);
+  }
+}
+
+function chooseAiShot() {
+  while (state.targetQueue.length) {
+    const queued = state.targetQueue.shift();
+    if (inBounds(queued.r, queued.c) && !state.playerBoard[queued.r][queued.c].shot) return queued;
+  }
+
+  const parity = [];
+  const all = [];
+  for (let r = 0; r < BOARD_SIZE; r += 1) {
+    for (let c = 0; c < BOARD_SIZE; c += 1) {
+      if (state.playerBoard[r][c].shot) continue;
+      const point = { r, c };
+      all.push(point);
+      if ((r + c + state.aiShots) % 2 === 0) parity.push(point);
+    }
+  }
+  const pool = parity.length ? parity : all;
+  return pool[randomIndex(pool.length)] || null;
+}
+
+function performAiShot() {
+  if (state.mode !== 'playing') return;
+  const point = chooseAiShot();
+  if (!point) {
+    finishGame('won');
+    return;
+  }
+  const cell = state.playerBoard[point.r][point.c];
+  cell.shot = true;
+  state.aiShots += 1;
+  const hit = cell.shipId !== null;
+  state.lastShot = { side: AI, square: squareName(point), result: hit ? 'hit' : 'miss' };
+  addSplash('player', point, hit);
+
+  if (hit) {
+    state.aiHits += 1;
+    enqueueAiTargets(point);
+    const sunk = markShipIfSunk(state.playerBoard, state.playerFleet, cell.shipId);
+    if (sunk) {
+      state.aiSunk += 1;
+      state.lastShot.ship = sunk.name;
+      state.message = `AI hit ${squareName(point)} and sunk your ${sunk.name}.`;
+      pushLog(`AI sunk your ${sunk.name}.`);
+      state.targetQueue = state.targetQueue.filter((target) => !state.playerBoard[target.r][target.c].shot);
+    } else {
+      const ship = shipFor(state.playerFleet, cell.shipId);
+      state.lastShot.ship = ship ? ship.name : 'unknown';
+      state.message = `AI hit ${squareName(point)}. Move quickly.`;
+      pushLog(`AI hit your fleet at ${squareName(point)}.`);
+    }
+  } else {
+    state.message = `AI missed ${squareName(point)}. Your turn.`;
+    pushLog(`AI missed at ${squareName(point)}.`);
+  }
+
+  recomputeScore();
+  if (allShipsSunk(state.playerFleet)) {
+    finishGame('lost');
+    return;
+  }
+  state.turn = PLAYER;
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function finishGame(result) {
+  if (state.mode !== 'playing') return;
+  state.mode = result;
+  state.result = result;
+  state.aiPending = false;
+  recomputeScore();
+  if (result === 'won') {
+    const shipsLeft = remainingShips(state.playerFleet);
+    const accuracy = state.playerHits / Math.max(1, state.shots);
+    const coins = Math.max(16, Math.min(72, WIN_REWARD + shipsLeft * 5 + Math.round(accuracy * 18) - state.scansUsed * 3));
+    state.coinsEarned = coins;
+    if (!state.awarded) {
+      state.awarded = true;
+      addCoins(coins);
+    }
+    state.message = `Enemy fleet sunk in ${state.shots} shots. ${coins} coins earned.`;
+    pushLog(`Victory with ${shipsLeft} friendly ships afloat.`);
+  } else {
+    state.message = 'Your fleet has been sunk. Use scan results to tighten the next run.';
+    pushLog('AI won the battle.');
+  }
+  maybeUnlock({
+    anyPlay: true,
+    battleship: {
+      result,
+      shots: state.shots,
+      hits: state.playerHits,
+      sunk: state.playerSunk,
+      score: state.score,
+    },
+  });
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function useScan() {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing' || state.turn !== PLAYER || state.aiPending) return;
+  if (state.scansUsed >= 3) {
+    state.message = 'All three scans have already been used.';
+    pushLog('No scans remaining.');
+    updateHud();
+    draw();
+    return;
+  }
+
+  let best = null;
+  for (let r = 0; r < BOARD_SIZE; r += 1) {
+    for (let c = 0; c < BOARD_SIZE; c += 1) {
+      const cells = [];
+      let score = 0;
+      for (let rr = r - 1; rr <= r + 1; rr += 1) {
+        for (let cc = c - 1; cc <= c + 1; cc += 1) {
+          if (!inBounds(rr, cc)) continue;
+          const cell = state.enemyBoard[rr][cc];
+          if (cell.shot) continue;
+          cells.push({ r: rr, c: cc });
+          if (cell.shipId !== null && !shipFor(state.enemyFleet, cell.shipId)?.sunk) score += 1;
+        }
+      }
+      if (!best || score > best.score || (score === best.score && cells.length > best.cells.length)) {
+        best = { r, c, score, cells };
+      }
+    }
+  }
+
+  state.scansUsed += 1;
+  state.scanMarks = (best?.cells || []).map((cell) => ({ ...cell, age: 0 }));
+  if (best && best.score > 0) {
+    state.cursor = { r: best.r, c: best.c };
+    state.message = `Scan contact strongest near ${squareName(best)}.`;
+    pushLog(`Scan marked ${best.cells.length} cells near ${squareName(best)}.`);
+  } else {
+    state.message = 'Scan found no clear contact; keep searching open water.';
+    pushLog('Scan found no strong contact.');
+  }
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function moveCursor(dr, dc) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  state.cursor = {
+    r: (state.cursor.r + dr + BOARD_SIZE) % BOARD_SIZE,
+    c: (state.cursor.c + dc + BOARD_SIZE) % BOARD_SIZE,
+  };
+  updateHud();
+  draw();
+}
+
+function nextTarget(delta) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  const targets = [];
+  for (let r = 0; r < BOARD_SIZE; r += 1) {
+    for (let c = 0; c < BOARD_SIZE; c += 1) {
+      if (!state.enemyBoard[r][c].shot) targets.push({ r, c });
+    }
+  }
+  if (!targets.length) return;
+  let index = targets.findIndex((target) => target.r === state.cursor.r && target.c === state.cursor.c);
+  if (index < 0) index = 0;
+  const next = targets[(index + delta + targets.length) % targets.length];
+  state.cursor = { r: next.r, c: next.c };
+  updateHud();
+  draw();
+}
+
+function pointInRect(x, y, rect) {
+  return x >= rect.x && x <= rect.x + rect.size && y >= rect.y && y <= rect.y + rect.size;
+}
+
+function cellFromCanvasPoint(x, y, rect) {
+  return {
+    r: Math.min(BOARD_SIZE - 1, Math.max(0, Math.floor((y - rect.y) / CELL))),
+    c: Math.min(BOARD_SIZE - 1, Math.max(0, Math.floor((x - rect.x) / CELL))),
+  };
+}
+
+function pointToBoard(clientX, clientY) {
+  const bounds = canvas.getBoundingClientRect();
+  const x = (clientX - bounds.left) * (W / bounds.width);
+  const y = (clientY - bounds.top) * (H / bounds.height);
+  if (pointInRect(x, y, ENEMY_BOARD)) {
+    return { board: 'enemy', ...cellFromCanvasPoint(x, y, ENEMY_BOARD) };
+  }
+  if (pointInRect(x, y, PLAYER_BOARD)) {
+    return { board: 'player', ...cellFromCanvasPoint(x, y, PLAYER_BOARD) };
+  }
+  return null;
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function update(dt) {
+  state.clock += dt;
+  for (const splash of state.splashes) splash.age += dt;
+  state.splashes = state.splashes.filter((splash) => splash.age < 0.9);
+  for (const mark of state.scanMarks) mark.age += dt;
+  if (state.mode === 'playing' && state.aiPending) {
+    state.aiDelay -= dt;
+    if (state.aiDelay <= 0) {
+      state.aiPending = false;
+      performAiShot();
+    }
+  }
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#123b43');
+  bg.addColorStop(0.46, '#25565b');
+  bg.addColorStop(1, '#69414c');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff13';
+  for (let i = 0; i < 42; i += 1) {
+    const x = (i * 131 + Math.sin(state.clock * 0.8 + i) * 18) % W;
+    const y = (i * 59 + Math.cos(state.clock * 0.7 + i) * 12) % H;
+    ctx.fillRect(x, y, 2, 2);
+  }
+}
+
+function drawCellMarker(x, y, hit) {
+  const cx = x + CELL / 2;
+  const cy = y + CELL / 2;
+  if (hit) {
+    ctx.strokeStyle = HIT;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x + 8, y + 8);
+    ctx.lineTo(x + CELL - 8, y + CELL - 8);
+    ctx.moveTo(x + CELL - 8, y + 8);
+    ctx.lineTo(x + 8, y + CELL - 8);
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = MISS;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, CELL * 0.22, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawBoard(rect, board, fleet, owner, title) {
+  ctx.fillStyle = '#0d2730cc';
+  ctx.fillRect(rect.x - 18, rect.y - 58, rect.size + 36, rect.size + 84);
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 23px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(title, rect.x, rect.y - 30);
+  ctx.font = '700 13px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#cfe8eb';
+  const subtitle = owner === 'player' ? 'Your visible fleet' : 'Enemy waters';
+  ctx.fillText(subtitle, rect.x, rect.y - 10);
+
+  for (let i = 0; i < BOARD_SIZE; i += 1) {
+    ctx.fillStyle = '#dceff3';
+    ctx.font = '800 11px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String.fromCharCode(65 + i), rect.x + i * CELL + CELL / 2, rect.y - 4);
+    ctx.fillText(String(i + 1), rect.x - 10, rect.y + i * CELL + CELL / 2 + 4);
+  }
+
+  for (let r = 0; r < BOARD_SIZE; r += 1) {
+    for (let c = 0; c < BOARD_SIZE; c += 1) {
+      const x = rect.x + c * CELL;
+      const y = rect.y + r * CELL;
+      const cell = board[r][c];
+      const hasShip = cell.shipId !== null;
+      const ship = hasShip ? shipFor(fleet, cell.shipId) : null;
+      const scanned = owner === 'enemy' && state.scanMarks.some((mark) => mark.r === r && mark.c === c);
+      ctx.fillStyle = (r + c) % 2 === 0 ? WATER : WATER_ALT;
+      ctx.fillRect(x, y, CELL, CELL);
+      if (scanned && !cell.shot) {
+        ctx.fillStyle = '#ffe28b55';
+        ctx.fillRect(x + 3, y + 3, CELL - 6, CELL - 6);
+      }
+      if (hasShip && (owner === 'player' || ship?.sunk || cell.shot)) {
+        ctx.fillStyle = owner === 'player' ? PLAYER_SHIP : ENEMY_SHIP;
+        ctx.fillRect(x + 5, y + 5, CELL - 10, CELL - 10);
+        ctx.fillStyle = '#10222d55';
+        ctx.fillRect(x + 9, y + CELL / 2 - 3, CELL - 18, 6);
+      }
+      if (cell.shot) drawCellMarker(x, y, hasShip);
+      ctx.strokeStyle = GRID;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, CELL, CELL);
+    }
+  }
+
+  if (owner === 'enemy') {
+    const x = rect.x + state.cursor.c * CELL;
+    const y = rect.y + state.cursor.r * CELL;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x + 3, y + 3, CELL - 6, CELL - 6);
+  }
+}
+
+function drawSplashes() {
+  for (const splash of state.splashes) {
+    const rect = splash.board === 'enemy' ? ENEMY_BOARD : PLAYER_BOARD;
+    const x = rect.x + splash.c * CELL + CELL / 2;
+    const y = rect.y + splash.r * CELL + CELL / 2;
+    const radius = CELL * (0.2 + splash.age * 0.9);
+    ctx.strokeStyle = splash.hit ? '#ffb29caa' : '#d7f3ffaa';
+    ctx.lineWidth = Math.max(1, 5 - splash.age * 5);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
+  }
+  return y;
+}
+
+function drawFleetStatus(fleet, board, x, y, label, color) {
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 15px "Trebuchet MS", sans-serif';
+  ctx.fillText(label, x, y);
+  y += 22;
+  ctx.font = '700 13px "Trebuchet MS", sans-serif';
+  for (const ship of fleet) {
+    const hits = shipHits(board, ship);
+    ctx.fillStyle = ship.sunk ? '#ffb3a6' : color;
+    ctx.fillRect(x, y - 10, 10, 10);
+    ctx.fillStyle = '#dce8f0';
+    const status = ship.sunk ? 'sunk' : `${hits}/${ship.size}`;
+    ctx.fillText(`${ship.name}: ${status}`, x + 16, y);
+    y += 20;
+  }
+  return y;
+}
+
+function drawPanel() {
+  ctx.fillStyle = '#101923e8';
+  ctx.fillRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h);
+  ctx.strokeStyle = '#ffffff5c';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 25px "Trebuchet MS", sans-serif';
+  ctx.fillText('Command', PANEL.x + 18, PANEL.y + 36);
+
+  ctx.font = '700 14px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#dce8f0';
+  let y = wrapText(state.message, PANEL.x + 18, PANEL.y + 68, PANEL.w - 36, 19);
+
+  y += 10;
+  ctx.fillStyle = '#ffe091';
+  ctx.font = '900 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(`Target: ${squareName(state.cursor)}`, PANEL.x + 18, y);
+  y += 22;
+  ctx.fillStyle = '#dce8f0';
+  ctx.font = '700 13px "Trebuchet MS", sans-serif';
+  const last = state.lastShot
+    ? `${state.lastShot.side === PLAYER ? 'You' : 'AI'} ${state.lastShot.result} ${state.lastShot.square}${state.lastShot.ship ? ` (${state.lastShot.ship})` : ''}`
+    : 'No shots fired yet.';
+  y = wrapText(last, PANEL.x + 18, y, PANEL.w - 36, 18);
+
+  y += 14;
+  y = drawFleetStatus(state.enemyFleet, state.enemyBoard, PANEL.x + 18, y, 'Enemy fleet', '#ffb3a6');
+  y += 8;
+  y = drawFleetStatus(state.playerFleet, state.playerBoard, PANEL.x + 18, y, 'Your fleet', '#a7f2cd');
+
+  y += 12;
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 15px "Trebuchet MS", sans-serif';
+  ctx.fillText('Recent', PANEL.x + 18, y);
+  y += 22;
+  ctx.fillStyle = '#dce8f0';
+  ctx.font = '700 12px "Trebuchet MS", sans-serif';
+  const logs = state.logs.length ? state.logs.slice(0, 4) : ['Open with scans or parity shots to map the hidden fleet.'];
+  for (const item of logs) {
+    y = wrapText(`- ${item}`, PANEL.x + 18, y, PANEL.w - 36, 16);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawBoard(PLAYER_BOARD, state.playerBoard, state.playerFleet, 'player', 'Home Grid');
+  drawBoard(ENEMY_BOARD, state.enemyBoard, state.enemyFleet, 'enemy', 'Target Grid');
+  drawSplashes();
+  drawPanel();
+}
+
+function updateHud() {
+  const accuracy = Math.round((state.playerHits / Math.max(1, state.shots)) * 100);
+  hud.mode.textContent = state.mode === 'menu' ? 'Menu' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  hud.turn.textContent = state.aiPending ? 'AI...' : state.turn === PLAYER ? 'Player' : 'AI';
+  hud.playerFleet.textContent = String(remainingShips(state.playerFleet));
+  hud.enemyFleet.textContent = String(remainingShips(state.enemyFleet));
+  hud.shots.textContent = String(state.shots);
+  hud.accuracy.textContent = `${accuracy}%`;
+  hud.score.textContent = String(state.score);
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+}
+
+function updateOverlay() {
+  const show = state.mode !== 'playing';
+  overlay.classList.toggle('show', show);
+  const key = show ? `${state.mode}|${state.score}|${state.coinsEarned}|${state.message}` : 'hidden';
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
+  if (!show) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  let title = 'Battleship';
+  let body = 'Fire on the hidden enemy grid, read hit and miss markers, and sink all five ships before your own fleet goes under.';
+  let button = 'Start Battle';
+  let secondary = 'Shuffle Fleet';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = 'Resume the current battle when ready.';
+    button = 'Resume';
+    secondary = 'Restart';
+  } else if (state.mode === 'won') {
+    title = 'Victory';
+    body = `${state.message} Final score ${state.score}.`;
+    button = 'New Battle';
+  } else if (state.mode === 'lost') {
+    title = 'Fleet Lost';
+    body = `${state.message} Final score ${state.score}.`;
+    button = 'Try Again';
+  }
+
+  overlay.innerHTML = `
+    <div class="panel">
+      <h1>${title}</h1>
+      <p>${body}</p>
+      <p>Controls: click or tap the target grid, arrows move the reticle, Space/Enter fires, H scans, N/B changes target, P pauses, R restarts, F fullscreen.</p>
+      <div class="row">
+        <button type="button" id="overlayStart" class="primary-btn">${button}</button>
+        <button type="button" id="overlayShuffle" class="utility-btn">${secondary}</button>
+        <button type="button" id="overlayFull" class="utility-btn">Fullscreen</button>
+      </div>
+    </div>
+  `;
+  overlay.querySelector('#overlayStart').addEventListener('click', () => {
+    if (state.mode === 'paused') pauseGame();
+    else startGame();
+  });
+  overlay.querySelector('#overlayShuffle').addEventListener('click', () => {
+    if (state.mode === 'paused') startGame();
+    else shuffleFleet();
+  });
+  overlay.querySelector('#overlayFull').addEventListener('click', toggleFullscreen);
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  const target = pointToBoard(event.clientX, event.clientY);
+  if (!target) return;
+  if (target.board === 'enemy') {
+    fireAt({ r: target.r, c: target.c });
+  } else {
+    state.message = `Your ${squareName(target)} cell is visible for defense tracking. Fire on the target grid.`;
+    updateHud();
+    draw();
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => nextTarget(-1));
+document.getElementById('nextBtn').addEventListener('click', () => nextTarget(1));
+document.getElementById('fireBtn').addEventListener('click', () => fireAt(state.cursor));
+document.getElementById('scanBtn').addEventListener('click', useScan);
+document.getElementById('shuffleBtn').addEventListener('click', shuffleFleet);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('restartBtn').addEventListener('click', () => resetGame('playing'));
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+document.getElementById('startBtn').addEventListener('click', startGame);
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'spacebar'].includes(key)) event.preventDefault();
+  if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') {
+    if (event.shiftKey) useScan();
+    else moveCursor(1, 0);
+  } else if (key === ' ' || key === 'spacebar' || key === 'enter') fireAt(state.cursor);
+  else if (key === 'n') nextTarget(1);
+  else if (key === 'b') nextTarget(-1);
+  else if (key === 'h') useScan();
+  else if (key === 'p') pauseGame();
+  else if (key === 'r') resetGame('playing');
+  else if (key === 'f') toggleFullscreen();
+});
+
+function boardRowsForText(board, fleet, revealShips) {
+  const sunkIds = new Set(fleet.filter((ship) => ship.sunk).map((ship) => ship.id));
+  return board.map((row) => row.map((cell) => {
+    if (cell.shot && cell.shipId !== null) return sunkIds.has(cell.shipId) ? 'K' : 'X';
+    if (cell.shot) return 'o';
+    if (revealShips && cell.shipId !== null) return 'S';
+    return '.';
+  }).join(''));
+}
+
+function fleetForText(fleet, board) {
+  return fleet.map((ship) => ({
+    name: ship.name,
+    size: ship.size,
+    hits: shipHits(board, ship),
+    sunk: ship.sunk,
+    cells: ship.sunk ? ship.cells.map(squareName) : undefined,
+  }));
+}
+
+function availableTargetsForText() {
+  const targets = [];
+  for (let r = 0; r < BOARD_SIZE; r += 1) {
+    for (let c = 0; c < BOARD_SIZE; c += 1) {
+      if (!state.enemyBoard[r][c].shot) targets.push(squareName({ r, c }));
+      if (targets.length >= 14) return targets;
+    }
+  }
+  return targets;
+}
+
+function renderGameToText() {
+  const accuracy = Math.round((state.playerHits / Math.max(1, state.shots)) * 100);
+  return JSON.stringify({
+    game: 'battleship',
+    mode: state.mode,
+    coordinate_system: 'Canvas origin is top-left. Both 10 by 10 boards use files A-J left to right and rows 1-10 top to bottom. Fire only on the enemy target grid.',
+    objective: 'sink all five hidden enemy ships before the AI sinks the visible player fleet',
+    turn: state.aiPending ? 'ai_pending' : state.turn,
+    cursor: squareName(state.cursor),
+    player_board_rows: boardRowsForText(state.playerBoard, state.playerFleet, true),
+    enemy_board_rows: boardRowsForText(state.enemyBoard, state.enemyFleet, false),
+    player_fleet: fleetForText(state.playerFleet, state.playerBoard),
+    enemy_fleet: fleetForText(state.enemyFleet, state.enemyBoard),
+    resources: {
+      shots: state.shots,
+      hits: state.playerHits,
+      accuracy_percent: accuracy,
+      scans_used: state.scansUsed,
+      scans_remaining: Math.max(0, 3 - state.scansUsed),
+      score: state.score,
+      coins_earned: state.coinsEarned,
+      enemy_ships_remaining: remainingShips(state.enemyFleet),
+      player_ships_remaining: remainingShips(state.playerFleet),
+    },
+    last_shot: state.lastShot,
+    scan_marks: state.scanMarks.map((mark) => squareName(mark)),
+    available_targets_sample: availableTargetsForText(),
+    ai_target_queue: state.targetQueue.map(squareName),
+    message: state.message,
+    recent_events: state.logs,
+    result: state.result,
+  });
+}
+
+function frame(now) {
+  if (!controlled) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000 || 0));
+    update(dt);
+    recomputeScore();
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  lastFrame = now;
+  raf = requestAnimationFrame(frame);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  controlled = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  recomputeScore();
+  updateHud();
+  updateOverlay();
+  draw();
+  controlled = false;
+  lastFrame = performance.now();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+
+resetGame('menu');
+mountGameFeedback({ gameSlug: 'battleship', gameName: 'Battleship' });
+raf = requestAnimationFrame((now) => {
+  lastFrame = now;
+  frame(now);
+});
+window.addEventListener('beforeunload', () => cancelAnimationFrame(raf));
+</script>
+</body>
+</html>

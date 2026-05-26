@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Dots and Boxes | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f9fbff;
+  background:
+    radial-gradient(30% 24% at 18% 18%, #6cc1ff 0%, transparent 72%),
+    radial-gradient(26% 22% at 84% 16%, #ffba75 0%, transparent 68%),
+    radial-gradient(22% 24% at 70% 82%, #85d98c 0%, transparent 72%),
+    linear-gradient(135deg, #17324a 0%, #254454 46%, #48344f 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1080px);
+  aspect-ratio: 64 / 45;
+  max-height: min(68dvh, 720px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #f6f3e9;
+  box-shadow: 0 20px 52px #10182699;
+}
+.hud {
+  width: min(96vw, 1080px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff3f;
+  background: #071421b8;
+  padding: 7px 9px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  box-shadow: 0 8px 22px #00000040;
+}
+.chip span {
+  color: #bcd4e8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 2vw, 21px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9af0ac; }
+.chip.warn b { color: #ffd67a; }
+.controls {
+  width: min(96vw, 1080px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+button {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid #ffffff52;
+  background: #101d2ad9;
+  color: #f8fbff;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px #00000040;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #9be7ff;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #0e1824;
+  background: linear-gradient(135deg, #8ce4ff 0%, #a6ef8e 100%);
+  border-color: #ffffffb5;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 8px;
+  border: 1px solid #ffffff59;
+  background: #071421d9;
+  padding: clamp(18px, 4vw, 30px);
+  box-shadow: 0 22px 48px #00000073;
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 7vw, 62px);
+  line-height: .92;
+}
+.panel p {
+  margin: 9px auto;
+  max-width: 56ch;
+  color: #d8e8f7;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #aecadf;
+  font-size: 13px;
+}
+@media (max-width: 820px) {
+  .app {
+    padding-top: 58px;
+    justify-content: flex-start;
+  }
+  .stage {
+    width: min(96vw, 720px);
+    max-height: 60dvh;
+  }
+  .hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .chip {
+    min-height: 44px;
+  }
+  button {
+    flex: 1 1 42%;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Draw edges between dots, close boxes to keep the turn, and outscore the AI before the shared grid fills. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Dots and Boxes | AI and Sons Games">
+  <meta property="og:description" content="Draw edges between dots, close boxes to keep the turn, and outscore the AI before the shared grid fills. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/dotsandboxes">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dots and Boxes | AI and Sons Games">
+  <meta name="twitter:description" content="Draw edges between dots, close boxes to keep the turn, and outscore the AI before the shared grid fills. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/dotsandboxes">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Dots and Boxes","description":"Draw edges between dots, close boxes to keep the turn, and outscore the AI before the shared grid fills. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/dotsandboxes","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Dots and Boxes game board">
+    <canvas id="game" width="1024" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Dots and Boxes</h1>
+        <p>Draw lines between dots. Close a box to score it and keep the turn. Beat the AI by owning more boxes when the grid fills.</p>
+        <p class="mini">Mouse or touch chooses an edge. Arrow keys move the selector, Space draws, H hints, U undoes, F toggles fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Board</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip warn"><span>Turn</span><b id="turn">Player</b></div>
+    <div class="chip good"><span>You</span><b id="playerScore">0</b></div>
+    <div class="chip"><span>AI</span><b id="aiScore">0</b></div>
+    <div class="chip"><span>Open Edges</span><b id="openEdges">60</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="primary" id="newBtn" type="button">New Board</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  mode: document.getElementById('mode'),
+  turn: document.getElementById('turn'),
+  playerScore: document.getElementById('playerScore'),
+  aiScore: document.getElementById('aiScore'),
+  openEdges: document.getElementById('openEdges'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  start: document.getElementById('startBtn'),
+  newGame: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const BOXES = 5;
+const DOTS = BOXES + 1;
+const BOARD = { x: 78, y: 82, size: 560 };
+const CELL = BOARD.size / BOXES;
+const PANEL = { x: 700, y: 82, w: 250, h: 560 };
+const PLAYER = '#2077d4';
+const PLAYER_DARK = '#124777';
+const AI = '#d7663f';
+const AI_DARK = '#873822';
+const INK = '#1b2633';
+const GRID = '#b7c7d0';
+const PAPER = '#f7f2df';
+const GOLD = '#f0bd4e';
+const HINT = '#8be56d';
+const SELECT = '#ffffff';
+const WIN_REWARD = 34;
+
+const state = {
+  mode: 'menu',
+  turn: 'player',
+  lines: new Set(),
+  lineOwners: new Map(),
+  boxes: createBoxes(),
+  selectedEdge: null,
+  hintEdge: null,
+  lastMove: null,
+  moveCount: 0,
+  playerScore: 0,
+  aiScore: 0,
+  hintsUsed: 0,
+  coinsEarned: 0,
+  awarded: false,
+  aiPending: false,
+  aiDelay: 0,
+  message: 'Close boxes to keep the turn.',
+  result: '',
+  history: [],
+  logs: [],
+  sparks: [],
+  clock: 0,
+};
+
+let raf = 0;
+let lastFrame = 0;
+let controlled = false;
+let overlayRenderKey = '';
+
+function createBoxes() {
+  return Array.from({ length: BOXES }, () => Array(BOXES).fill(null));
+}
+
+function edgeKey(side, r, c) {
+  return `${side}-${r}-${c}`;
+}
+
+function parseEdge(key) {
+  if (!key) return null;
+  const [side, r, c] = String(key).split('-');
+  if ((side !== 'h' && side !== 'v') || r == null || c == null) return null;
+  return { side, r: Number(r), c: Number(c), key: edgeKey(side, Number(r), Number(c)) };
+}
+
+function cloneEdge(edge) {
+  return edge ? { side: edge.side, r: edge.r, c: edge.c, key: edge.key } : null;
+}
+
+function normalizeEdge(edge) {
+  if (!edge) return null;
+  const parsed = typeof edge === 'string' ? parseEdge(edge) : edge;
+  if (!parsed) return null;
+  if (parsed.side === 'h' && parsed.r >= 0 && parsed.r < DOTS && parsed.c >= 0 && parsed.c < BOXES) {
+    return { side: 'h', r: parsed.r, c: parsed.c, key: edgeKey('h', parsed.r, parsed.c) };
+  }
+  if (parsed.side === 'v' && parsed.r >= 0 && parsed.r < BOXES && parsed.c >= 0 && parsed.c < DOTS) {
+    return { side: 'v', r: parsed.r, c: parsed.c, key: edgeKey('v', parsed.r, parsed.c) };
+  }
+  return null;
+}
+
+function edgeName(edge) {
+  const item = normalizeEdge(edge);
+  if (!item) return 'none';
+  const col = String.fromCharCode(65 + item.c);
+  const row = item.r + 1;
+  return item.side === 'h' ? `H${row}-${col}` : `V${row}-${col}`;
+}
+
+function boxName(r, c) {
+  return `${String.fromCharCode(65 + c)}${r + 1}`;
+}
+
+function pushLog(message) {
+  state.logs = [message, ...state.logs].slice(0, 8);
+}
+
+function allEdges() {
+  const edges = [];
+  for (let r = 0; r < DOTS; r += 1) {
+    for (let c = 0; c < BOXES; c += 1) edges.push({ side: 'h', r, c, key: edgeKey('h', r, c) });
+  }
+  for (let r = 0; r < BOXES; r += 1) {
+    for (let c = 0; c < DOTS; c += 1) edges.push({ side: 'v', r, c, key: edgeKey('v', r, c) });
+  }
+  return edges;
+}
+
+const EDGES = allEdges();
+
+function legalEdges() {
+  return EDGES.filter((edge) => !state.lines.has(edge.key));
+}
+
+function boxEdges(r, c) {
+  return [
+    edgeKey('h', r, c),
+    edgeKey('h', r + 1, c),
+    edgeKey('v', r, c),
+    edgeKey('v', r, c + 1),
+  ];
+}
+
+function adjacentBoxes(edge) {
+  const item = normalizeEdge(edge);
+  if (!item) return [];
+  const boxes = [];
+  if (item.side === 'h') {
+    if (item.r > 0) boxes.push({ r: item.r - 1, c: item.c });
+    if (item.r < BOXES) boxes.push({ r: item.r, c: item.c });
+  } else {
+    if (item.c > 0) boxes.push({ r: item.r, c: item.c - 1 });
+    if (item.c < BOXES) boxes.push({ r: item.r, c: item.c });
+  }
+  return boxes;
+}
+
+function hasLine(key, pendingKey = '') {
+  return key === pendingKey || state.lines.has(key);
+}
+
+function sideCount(r, c, pendingKey = '') {
+  return boxEdges(r, c).reduce((count, key) => count + (hasLine(key, pendingKey) ? 1 : 0), 0);
+}
+
+function completedBoxesForEdge(edge) {
+  const item = normalizeEdge(edge);
+  if (!item || state.lines.has(item.key)) return [];
+  return adjacentBoxes(item).filter(({ r, c }) => !state.boxes[r][c] && sideCount(r, c, item.key) === 4);
+}
+
+function createdThirdSides(edge) {
+  const item = normalizeEdge(edge);
+  if (!item || state.lines.has(item.key)) return 0;
+  return adjacentBoxes(item).filter(({ r, c }) => !state.boxes[r][c] && sideCount(r, c, item.key) === 3).length;
+}
+
+function edgeGeometry(edge) {
+  const item = normalizeEdge(edge);
+  if (!item) return null;
+  if (item.side === 'h') {
+    const x1 = BOARD.x + item.c * CELL;
+    const y1 = BOARD.y + item.r * CELL;
+    return { x1, y1, x2: x1 + CELL, y2: y1, cx: x1 + CELL / 2, cy: y1 };
+  }
+  const x1 = BOARD.x + item.c * CELL;
+  const y1 = BOARD.y + item.r * CELL;
+  return { x1, y1, x2: x1, y2: y1 + CELL, cx: x1, cy: y1 + CELL / 2 };
+}
+
+function distanceToSegment(px, py, geo) {
+  const dx = geo.x2 - geo.x1;
+  const dy = geo.y2 - geo.y1;
+  const lenSq = dx * dx + dy * dy;
+  const t = lenSq ? Math.max(0, Math.min(1, ((px - geo.x1) * dx + (py - geo.y1) * dy) / lenSq)) : 0;
+  const x = geo.x1 + dx * t;
+  const y = geo.y1 + dy * t;
+  return Math.hypot(px - x, py - y);
+}
+
+function nearestLegalEdge(px, py, maxDistance = 28) {
+  let best = null;
+  let bestDistance = Infinity;
+  for (const edge of legalEdges()) {
+    const geo = edgeGeometry(edge);
+    const distance = distanceToSegment(px, py, geo);
+    if (distance < bestDistance) {
+      best = edge;
+      bestDistance = distance;
+    }
+  }
+  return best && bestDistance <= maxDistance ? cloneEdge(best) : null;
+}
+
+function bestEdgeFor(side) {
+  const legal = legalEdges();
+  if (!legal.length) return null;
+  const scored = legal.map((edge, index) => {
+    const completed = completedBoxesForEdge(edge).length;
+    const thirdSides = createdThirdSides(edge);
+    const geo = edgeGeometry(edge);
+    const centerBias = 1 - Math.min(1, Math.hypot(geo.cx - (BOARD.x + BOARD.size / 2), geo.cy - (BOARD.y + BOARD.size / 2)) / 430);
+    let score = completed * 120 - thirdSides * 28 + centerBias * 6;
+    if (side === 'ai' && completed === 0 && thirdSides > 0) score -= 8;
+    if (side === 'player' && completed > 0) score += 18;
+    return { edge, score, completed, thirdSides, index };
+  });
+  scored.sort((a, b) => b.score - a.score || b.completed - a.completed || a.thirdSides - b.thirdSides || a.index - b.index);
+  return cloneEdge(scored[0].edge);
+}
+
+function serialize() {
+  return {
+    lines: [...state.lines],
+    lineOwners: [...state.lineOwners.entries()],
+    boxes: state.boxes.map((row) => row.slice()),
+    selectedEdge: cloneEdge(state.selectedEdge),
+    hintEdge: cloneEdge(state.hintEdge),
+    lastMove: state.lastMove ? { ...state.lastMove } : null,
+    moveCount: state.moveCount,
+    playerScore: state.playerScore,
+    aiScore: state.aiScore,
+    hintsUsed: state.hintsUsed,
+    coinsEarned: state.coinsEarned,
+    awarded: state.awarded,
+    message: state.message,
+    result: state.result,
+    logs: state.logs.slice(),
+  };
+}
+
+function restore(snapshot) {
+  state.lines = new Set(snapshot.lines);
+  state.lineOwners = new Map(snapshot.lineOwners || []);
+  state.boxes = snapshot.boxes.map((row) => row.slice());
+  state.turn = 'player';
+  state.selectedEdge = cloneEdge(snapshot.selectedEdge) || firstLegalEdge();
+  state.hintEdge = cloneEdge(snapshot.hintEdge);
+  state.lastMove = snapshot.lastMove ? { ...snapshot.lastMove } : null;
+  state.moveCount = snapshot.moveCount;
+  state.playerScore = snapshot.playerScore;
+  state.aiScore = snapshot.aiScore;
+  state.hintsUsed = snapshot.hintsUsed;
+  state.coinsEarned = snapshot.coinsEarned;
+  state.awarded = snapshot.awarded;
+  state.message = 'Move undone. Choose the next edge.';
+  state.result = snapshot.result;
+  state.aiPending = false;
+  state.aiDelay = 0;
+  state.logs = ['Undo restored your last turn.', ...snapshot.logs].slice(0, 8);
+  state.sparks = [];
+  state.mode = 'play';
+}
+
+function firstLegalEdge() {
+  return cloneEdge(legalEdges()[0] || null);
+}
+
+function resetBoard() {
+  state.mode = 'play';
+  state.turn = 'player';
+  state.lines = new Set();
+  state.lineOwners = new Map();
+  state.boxes = createBoxes();
+  state.selectedEdge = firstLegalEdge();
+  state.hintEdge = null;
+  state.lastMove = null;
+  state.moveCount = 0;
+  state.playerScore = 0;
+  state.aiScore = 0;
+  state.hintsUsed = 0;
+  state.coinsEarned = 0;
+  state.awarded = false;
+  state.aiPending = false;
+  state.aiDelay = 0;
+  state.message = 'Choose an edge. Completing a box earns another move.';
+  state.result = '';
+  state.history = [];
+  state.logs = ['New board started.'];
+  state.sparks = [];
+  rememberRecent('dotsandboxes');
+  maybeUnlock({ anyPlay: true });
+  renderOverlay();
+}
+
+function addSparkForBox(r, c, owner) {
+  state.sparks.push({
+    x: BOARD.x + c * CELL + CELL / 2,
+    y: BOARD.y + r * CELL + CELL / 2,
+    owner,
+    age: 0,
+  });
+}
+
+function finishGame() {
+  if (state.mode === 'gameover') return;
+  state.mode = 'gameover';
+  state.turn = 'none';
+  state.aiPending = false;
+  state.aiDelay = 0;
+  const margin = state.playerScore - state.aiScore;
+  if (margin > 0) {
+    const coins = Math.max(14, Math.min(68, WIN_REWARD + margin * 2 - state.hintsUsed * 2));
+    state.coinsEarned = coins;
+    if (!state.awarded) {
+      state.awarded = true;
+      addCoins(coins);
+    }
+    state.result = `You won ${state.playerScore}-${state.aiScore}.`;
+    state.message = `${state.result} ${coins} coins earned.`;
+    pushLog(`Board won by ${margin}. ${coins} coins earned.`);
+  } else if (margin === 0) {
+    state.coinsEarned = 8;
+    if (!state.awarded) {
+      state.awarded = true;
+      addCoins(state.coinsEarned);
+    }
+    state.result = `Drawn board ${state.playerScore}-${state.aiScore}.`;
+    state.message = `${state.result} ${state.coinsEarned} coins earned.`;
+    pushLog('Drawn board. 8 coins earned.');
+  } else {
+    state.coinsEarned = 0;
+    state.result = `AI won ${state.aiScore}-${state.playerScore}.`;
+    state.message = `${state.result} Try to avoid giving away three-sided boxes.`;
+    pushLog('AI claimed more boxes.');
+  }
+  renderOverlay();
+}
+
+function applyMove(edge, side) {
+  const item = normalizeEdge(edge);
+  if (!item || state.mode !== 'play' || state.lines.has(item.key)) return false;
+  const completed = completedBoxesForEdge(item);
+  state.lines.add(item.key);
+  state.lineOwners.set(item.key, side);
+  for (const box of completed) {
+    state.boxes[box.r][box.c] = side;
+    addSparkForBox(box.r, box.c, side);
+  }
+  if (side === 'player') state.playerScore += completed.length;
+  if (side === 'ai') state.aiScore += completed.length;
+
+  state.moveCount += 1;
+  state.lastMove = {
+    side,
+    edge: edgeName(item),
+    completed: completed.map((box) => boxName(box.r, box.c)),
+  };
+  state.hintEdge = null;
+  state.selectedEdge = firstLegalEdge();
+  if (state.lines.size >= EDGES.length) {
+    finishGame();
+    return true;
+  }
+  if (completed.length) {
+    state.turn = side;
+    state.message = side === 'player'
+      ? `You closed ${completed.map((box) => boxName(box.r, box.c)).join(', ')}. Take another edge.`
+      : `AI closed ${completed.map((box) => boxName(box.r, box.c)).join(', ')} and keeps the turn.`;
+  } else {
+    state.turn = side === 'player' ? 'ai' : 'player';
+    state.message = side === 'player' ? 'AI is choosing an edge.' : 'Your turn. Find a safe line or close a box.';
+  }
+  pushLog(`${side === 'player' ? 'You' : 'AI'} drew ${edgeName(item)}${completed.length ? ` for ${completed.length} box${completed.length === 1 ? '' : 'es'}` : ''}.`);
+  return true;
+}
+
+function makePlayerMove(edge = state.selectedEdge) {
+  if (state.mode !== 'play' || state.turn !== 'player') return false;
+  const item = normalizeEdge(edge);
+  if (!item || state.lines.has(item.key)) return false;
+  state.history.push(serialize());
+  state.history = state.history.slice(-20);
+  return applyMove(item, 'player');
+}
+
+function makeAiMove() {
+  if (state.mode !== 'play' || state.turn !== 'ai') return false;
+  const edge = bestEdgeFor('ai');
+  if (!edge) {
+    finishGame();
+    return false;
+  }
+  return applyMove(edge, 'ai');
+}
+
+function showHint() {
+  if (state.mode !== 'play' || state.turn !== 'player') return;
+  const edge = bestEdgeFor('player');
+  if (!edge) return;
+  state.hintEdge = edge;
+  state.selectedEdge = cloneEdge(edge);
+  state.hintsUsed += 1;
+  state.message = `Hint: draw ${edgeName(edge)}.`;
+  pushLog(`Hint suggested ${edgeName(edge)}.`);
+}
+
+function undo() {
+  if (state.mode !== 'play') return;
+  const snapshot = state.history.pop();
+  if (!snapshot) {
+    state.message = 'No move to undo yet.';
+    return;
+  }
+  restore(snapshot);
+}
+
+function moveSelection(direction) {
+  if (state.mode !== 'play' || state.turn !== 'player') return;
+  const legal = legalEdges();
+  if (!legal.length) return;
+  const current = normalizeEdge(state.selectedEdge) || legal[0];
+  const currentGeo = edgeGeometry(current);
+  const candidates = legal
+    .filter((edge) => edge.key !== current.key)
+    .map((edge) => ({ edge, geo: edgeGeometry(edge) }))
+    .filter(({ geo }) => {
+      if (direction === 'left') return geo.cx < currentGeo.cx - 2;
+      if (direction === 'right') return geo.cx > currentGeo.cx + 2;
+      if (direction === 'up') return geo.cy < currentGeo.cy - 2;
+      if (direction === 'down') return geo.cy > currentGeo.cy + 2;
+      return false;
+    })
+    .map((item) => {
+      const dx = item.geo.cx - currentGeo.cx;
+      const dy = item.geo.cy - currentGeo.cy;
+      const primary = direction === 'left' || direction === 'right' ? Math.abs(dx) : Math.abs(dy);
+      const secondary = direction === 'left' || direction === 'right' ? Math.abs(dy) : Math.abs(dx);
+      return { ...item, rank: primary + secondary * 2 };
+    })
+    .sort((a, b) => a.rank - b.rank);
+  state.selectedEdge = cloneEdge((candidates[0] && candidates[0].edge) || legal[0]);
+  state.message = `Selected ${edgeName(state.selectedEdge)}.`;
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (state.mode !== 'play' || state.turn !== 'player') return;
+  const point = canvasPoint(event);
+  const edge = nearestLegalEdge(point.x, point.y);
+  if (!edge) {
+    state.message = 'Pick an open edge between two dots.';
+    return;
+  }
+  state.selectedEdge = edge;
+  makePlayerMove(edge);
+}
+
+function handlePointerMove(event) {
+  if (state.mode !== 'play' || state.turn !== 'player') return;
+  const point = canvasPoint(event);
+  const edge = nearestLegalEdge(point.x, point.y, 22);
+  if (edge) state.selectedEdge = edge;
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+function update(dt) {
+  state.clock += dt;
+  state.sparks = state.sparks
+    .map((spark) => ({ ...spark, age: spark.age + dt }))
+    .filter((spark) => spark.age < .8);
+  if (state.mode === 'play' && state.turn === 'ai') {
+    if (!state.aiPending) {
+      state.aiPending = true;
+      state.aiDelay = .34;
+    } else {
+      state.aiDelay -= dt;
+      if (state.aiDelay <= 0) {
+        state.aiPending = false;
+        makeAiMove();
+      }
+    }
+  }
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke = '') {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+  }
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, W, H);
+  sky.addColorStop(0, '#eaf6fb');
+  sky.addColorStop(.55, '#fff5dc');
+  sky.addColorStop(1, '#edf7e8');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalAlpha = .25;
+  ctx.fillStyle = '#6cc1ff';
+  ctx.beginPath();
+  ctx.arc(86, 86, 132, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#f7a85d';
+  ctx.beginPath();
+  ctx.arc(924, 104, 110, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#90d875';
+  ctx.beginPath();
+  ctx.arc(850, 640, 130, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawBoard() {
+  drawRoundRect(BOARD.x - 44, BOARD.y - 44, BOARD.size + 88, BOARD.size + 88, 8, '#fffaf0e8', '#d8caa5');
+  for (let r = 0; r < BOXES; r += 1) {
+    for (let c = 0; c < BOXES; c += 1) {
+      const owner = state.boxes[r][c];
+      const x = BOARD.x + c * CELL;
+      const y = BOARD.y + r * CELL;
+      ctx.fillStyle = owner === 'player' ? '#badcff' : owner === 'ai' ? '#ffd1bb' : PAPER;
+      ctx.fillRect(x + 9, y + 9, CELL - 18, CELL - 18);
+      ctx.strokeStyle = '#e0d6b6';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 9, y + 9, CELL - 18, CELL - 18);
+      if (owner) {
+        ctx.fillStyle = owner === 'player' ? PLAYER_DARK : AI_DARK;
+        ctx.font = '900 34px "Trebuchet MS", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(owner === 'player' ? 'YOU' : 'AI', x + CELL / 2, y + CELL / 2);
+      }
+    }
+  }
+
+  ctx.lineCap = 'round';
+  for (const edge of EDGES) {
+    if (!state.lines.has(edge.key)) continue;
+    const geo = edgeGeometry(edge);
+    const last = state.lastMove && state.lastMove.edge === edgeName(edge);
+    const owner = state.lineOwners.get(edge.key);
+    ctx.strokeStyle = owner === 'ai' ? AI : PLAYER;
+    ctx.lineWidth = last ? 14 : 10;
+    ctx.beginPath();
+    ctx.moveTo(geo.x1, geo.y1);
+    ctx.lineTo(geo.x2, geo.y2);
+    ctx.stroke();
+  }
+
+  const hint = normalizeEdge(state.hintEdge);
+  if (hint && !state.lines.has(hint.key)) {
+    const geo = edgeGeometry(hint);
+    ctx.strokeStyle = HINT;
+    ctx.lineWidth = 10;
+    ctx.setLineDash([12, 12]);
+    ctx.beginPath();
+    ctx.moveTo(geo.x1, geo.y1);
+    ctx.lineTo(geo.x2, geo.y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  const selected = normalizeEdge(state.selectedEdge);
+  if (state.mode === 'play' && state.turn === 'player' && selected && !state.lines.has(selected.key)) {
+    const geo = edgeGeometry(selected);
+    ctx.strokeStyle = SELECT;
+    ctx.lineWidth = 16;
+    ctx.shadowColor = '#1a5678';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(geo.x1, geo.y1);
+    ctx.lineTo(geo.x2, geo.y2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = completedBoxesForEdge(selected).length ? GOLD : PLAYER;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(geo.x1, geo.y1);
+    ctx.lineTo(geo.x2, geo.y2);
+    ctx.stroke();
+  }
+
+  for (let r = 0; r < DOTS; r += 1) {
+    for (let c = 0; c < DOTS; c += 1) {
+      const x = BOARD.x + c * CELL;
+      const y = BOARD.y + r * CELL;
+      ctx.fillStyle = '#fdfdf9';
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = INK;
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  for (const spark of state.sparks) {
+    const t = spark.age / .8;
+    ctx.globalAlpha = 1 - t;
+    ctx.strokeStyle = spark.owner === 'player' ? PLAYER : AI;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(spark.x, spark.y, 18 + t * 38, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawPanel() {
+  drawRoundRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h, 8, '#13263bdd', '#ffffff55');
+  ctx.fillStyle = '#f7fbff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = '900 29px "Trebuchet MS", sans-serif';
+  ctx.fillText('Board', PANEL.x + 22, PANEL.y + 20);
+
+  const rows = [
+    ['Turn', state.turn === 'player' ? 'You' : state.turn === 'ai' ? 'AI' : 'Done'],
+    ['Boxes', `${state.playerScore} - ${state.aiScore}`],
+    ['Open edges', String(EDGES.length - state.lines.size)],
+    ['Move', state.lastMove ? state.lastMove.edge : 'none'],
+    ['Hints', String(state.hintsUsed)],
+  ];
+
+  let y = PANEL.y + 78;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#aecadf';
+    ctx.font = '800 14px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), PANEL.x + 22, y);
+    ctx.fillStyle = label === 'Turn' && state.turn === 'player' ? '#a6ef8e' : '#fff3cf';
+    ctx.font = '900 26px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, PANEL.x + 22, y + 18);
+    y += 70;
+  }
+
+  drawRoundRect(PANEL.x + 20, PANEL.y + 410, PANEL.w - 40, 118, 8, '#07142199', '#ffffff30');
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  wrapText(state.message, PANEL.x + 38, PANEL.y + 428, PANEL.w - 76, 22, 4);
+
+  ctx.fillStyle = '#9ebbd0';
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  const lastLogs = state.logs.slice(0, 2);
+  lastLogs.forEach((line, index) => {
+    wrapText(line, PANEL.x + 24, PANEL.y + 548 + index * 28, PANEL.w - 48, 16, 1);
+  });
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = String(text || '').split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y + lines * lineHeight);
+      lines += 1;
+      line = word;
+      if (lines >= maxLines) return;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y + lines * lineHeight);
+}
+
+function renderOverlay() {
+  const key = `${state.mode}|${state.result}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayRenderKey) return;
+  overlayRenderKey = key;
+  if (state.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Dots and Boxes</h1>
+      <p>Draw lines between dots. Close a box to score it and keep the turn. Beat the AI by owning more boxes when the grid fills.</p>
+      <p class="mini">Mouse or touch chooses an edge. Arrow keys move the selector, Space draws, H hints, U undoes, F toggles fullscreen.</p>
+      <button class="primary" id="startBtn" type="button">Start Board</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', resetBoard);
+  } else if (state.mode === 'gameover') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>${state.playerScore >= state.aiScore ? 'Board Complete' : 'AI Wins'}</h1>
+      <p>${state.message}</p>
+      <p class="mini">Final boxes: You ${state.playerScore}, AI ${state.aiScore}. Hints used: ${state.hintsUsed}.</p>
+      <button class="primary" id="startBtn" type="button">Play Again</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', resetBoard);
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function renderHud() {
+  hud.mode.textContent = state.mode === 'gameover' ? 'Done' : state.mode === 'play' ? 'Playing' : 'Menu';
+  hud.turn.textContent = state.turn === 'player' ? 'Player' : state.turn === 'ai' ? 'AI' : 'Done';
+  hud.playerScore.textContent = String(state.playerScore);
+  hud.aiScore.textContent = String(state.aiScore);
+  hud.openEdges.textContent = String(EDGES.length - state.lines.size);
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  buttons.hint.disabled = state.mode !== 'play' || state.turn !== 'player';
+  buttons.undo.disabled = state.mode !== 'play' || state.history.length === 0;
+}
+
+function render() {
+  drawBackground();
+  drawBoard();
+  drawPanel();
+  renderHud();
+  renderOverlay();
+}
+
+function frame(ts) {
+  const dt = lastFrame ? Math.min(.05, (ts - lastFrame) / 1000) : 1 / 60;
+  lastFrame = ts;
+  if (!controlled) {
+    update(dt);
+    render();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function renderGameToText() {
+  const ownedBoxes = [];
+  for (let r = 0; r < BOXES; r += 1) {
+    for (let c = 0; c < BOXES; c += 1) {
+      if (state.boxes[r][c]) ownedBoxes.push({ r, c, name: boxName(r, c), owner: state.boxes[r][c] });
+    }
+  }
+  const legal = legalEdges();
+  const payload = {
+    coordinate_system: 'Canvas 1024x720. Dots-and-boxes grid uses box rows/cols from top-left; rows increase downward and cols increase rightward.',
+    mode: state.mode,
+    turn: state.turn,
+    score: { player: state.playerScore, ai: state.aiScore },
+    open_edges: legal.length,
+    selected_edge: edgeName(state.selectedEdge),
+    hint_edge: edgeName(state.hintEdge),
+    last_move: state.lastMove,
+    message: state.message,
+    ai_delay: Number(state.aiDelay.toFixed(3)),
+    hints_used: state.hintsUsed,
+    coins_earned: state.coinsEarned,
+    owned_boxes: ownedBoxes,
+    legal_edges_sample: legal.slice(0, 16).map(edgeName),
+    logs: state.logs.slice(0, 4),
+  };
+  return JSON.stringify(payload);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  controlled = false;
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { mode: state.mode, turn: state.turn };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('pointermove', handlePointerMove);
+buttons.start.addEventListener('click', resetBoard);
+buttons.newGame.addEventListener('click', resetBoard);
+buttons.hint.addEventListener('click', showHint);
+buttons.undo.addEventListener('click', undo);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'escape' && document.fullscreenElement) {
+    document.exitFullscreen?.().catch(() => {});
+    return;
+  }
+  if (state.mode !== 'play') {
+    if (key === 'enter' || key === ' ') {
+      event.preventDefault();
+      resetBoard();
+    }
+    return;
+  }
+  if (key === 'h') {
+    event.preventDefault();
+    showHint();
+  } else if (key === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'r' || key === 'n') {
+    event.preventDefault();
+    resetBoard();
+  } else if (key === 'enter' || key === ' ') {
+    event.preventDefault();
+    makePlayerMove();
+  } else if (key === 'arrowleft' || key === 'a') {
+    event.preventDefault();
+    moveSelection('left');
+  } else if (key === 'arrowright' || key === 'd') {
+    event.preventDefault();
+    moveSelection('right');
+  } else if (key === 'arrowup' || key === 'w') {
+    event.preventDefault();
+    moveSelection('up');
+  } else if (key === 'arrowdown' || key === 's') {
+    event.preventDefault();
+    moveSelection('down');
+  }
+});
+
+mountGameFeedback({ gameSlug: 'dotsandboxes', gameName: 'Dots and Boxes' });
+render();
+raf = requestAnimationFrame(frame);
+</script>
+</body>
+</html>

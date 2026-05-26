@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Fifteen Puzzle | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(24% 22% at 20% 18%, #ffd36c 0%, transparent 72%),
+    radial-gradient(22% 24% at 83% 17%, #7ed9c4 0%, transparent 68%),
+    radial-gradient(24% 24% at 78% 82%, #f28482 0%, transparent 72%),
+    linear-gradient(135deg, #233142 0%, #2d4f57 48%, #4f405d 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 1040px);
+  aspect-ratio: 64 / 45;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #172637;
+  box-shadow: 0 20px 52px #10182699;
+}
+.hud {
+  width: min(96vw, 1040px);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff3f;
+  background: #071421b8;
+  padding: 7px 9px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  box-shadow: 0 8px 22px #00000040;
+}
+.chip span {
+  color: #c5d8e8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #a9f3c1; }
+.chip.warn b { color: #ffe08a; }
+.controls {
+  width: min(96vw, 1040px);
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+button {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid #ffffff52;
+  background: #111f2fd9;
+  color: #f8fbff;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #9be7ff;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #111923;
+  background: linear-gradient(135deg, #ffd36c 0%, #89e7d3 100%);
+  border-color: #ffffffb5;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  background: #091624e8;
+  padding: clamp(18px, 4vw, 30px);
+  box-shadow: 0 22px 48px #00000073;
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 64px);
+  line-height: .92;
+}
+.panel p {
+  margin: 9px auto;
+  max-width: 58ch;
+  color: #d8e8f7;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #aecadf;
+  font-size: 13px;
+}
+@media (max-width: 880px) {
+  .app {
+    justify-content: flex-start;
+    padding-top: 58px;
+  }
+  .stage {
+    width: min(96vw, 720px);
+    max-height: 58dvh;
+  }
+  .hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .controls {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip {
+    min-height: 44px;
+  }
+  button {
+    min-height: 40px;
+    font-size: 13px;
+    padding: 9px 8px;
+  }
+  .back {
+    top: 8px;
+    left: 8px;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Slide numbered tiles into the empty space, restore the board in order, and chase lower move counts across 3x3, 4x4, and 5x5 puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Fifteen Puzzle | AI and Sons Games">
+  <meta property="og:description" content="Slide numbered tiles into the empty space, restore the board in order, and chase lower move counts across 3x3, 4x4, and 5x5 puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/fifteenpuzzle">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Fifteen Puzzle | AI and Sons Games">
+  <meta name="twitter:description" content="Slide numbered tiles into the empty space, restore the board in order, and chase lower move counts across 3x3, 4x4, and 5x5 puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/fifteenpuzzle">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Fifteen Puzzle","description":"Slide numbered tiles into the empty space, restore the board in order, and chase lower move counts across 3x3, 4x4, and 5x5 puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/fifteenpuzzle","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="Fifteen Puzzle game">
+  <section class="stage" aria-label="Sliding tile puzzle board">
+    <canvas id="game" width="1024" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Fifteen Puzzle</h1>
+        <p>Slide numbered tiles into the empty space until the board is back in order. Start small, then try the full 4 by 4 challenge.</p>
+        <p class="mini">Click or tap adjacent tiles. Arrow keys slide into the gap. U undoes, 3/4/5 changes size, F toggles fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Size</span><b id="size">4 x 4</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip"><span>Time</span><b id="time">0:00</b></div>
+    <div class="chip"><span>Best</span><b id="best">--</b></div>
+    <div class="chip warn"><span>Distance</span><b id="distance">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="primary" id="newBtn" type="button">New</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="size3Btn" type="button">3 x 3</button>
+    <button id="size4Btn" type="button">4 x 4</button>
+    <button id="size5Btn" type="button">5 x 5</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="solveBtn" type="button">Preview</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  mode: document.getElementById('mode'),
+  size: document.getElementById('size'),
+  moves: document.getElementById('moves'),
+  time: document.getElementById('time'),
+  best: document.getElementById('best'),
+  distance: document.getElementById('distance'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  newGame: document.getElementById('newBtn'),
+  undo: document.getElementById('undoBtn'),
+  size3: document.getElementById('size3Btn'),
+  size4: document.getElementById('size4Btn'),
+  size5: document.getElementById('size5Btn'),
+  hint: document.getElementById('hintBtn'),
+  solve: document.getElementById('solveBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const BOARD = { x: 72, y: 78, size: 564 };
+const PANEL = { x: 672, y: 78, w: 284, h: 564 };
+const WIN_REWARD = 18;
+const POINTER_RADIUS = 20;
+const palette = ['#ffca66', '#7ed9c4', '#f48f87', '#9bd17b', '#9fc5ff', '#d7a3ff'];
+
+const state = {
+  mode: 'menu',
+  size: 4,
+  tiles: [],
+  empty: 15,
+  selected: 0,
+  moves: 0,
+  elapsed: 0,
+  history: [],
+  preview: false,
+  hintTile: null,
+  message: 'Slide tiles into order.',
+  coinsEarned: 0,
+  lastMove: null,
+  best: readBest(4),
+  logs: ['Choose a board size, then slide tiles into the gap.'],
+  animations: [],
+};
+
+let lastFrame = 0;
+let controlled = false;
+let raf = 0;
+let overlayKey = '';
+
+function storageKey(size) {
+  return `cade:fifteenpuzzle:best:${size}`;
+}
+
+function readBest(size) {
+  try {
+    const raw = localStorage.getItem(storageKey(size));
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && Number.isFinite(parsed.moves) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeBest(size, best) {
+  try {
+    localStorage.setItem(storageKey(size), JSON.stringify(best));
+  } catch {}
+}
+
+function solvedTiles(size = state.size) {
+  return Array.from({ length: size * size }, (_, index) => index);
+}
+
+function indexToRowCol(index, size = state.size) {
+  return { row: Math.floor(index / size), col: index % size };
+}
+
+function rowColToIndex(row, col, size = state.size) {
+  return row * size + col;
+}
+
+function tileHome(tile, size = state.size) {
+  return indexToRowCol(tile, size);
+}
+
+function tileLabel(tile) {
+  return tile === state.size * state.size - 1 ? '' : String(tile + 1);
+}
+
+function pushLog(text) {
+  state.logs.unshift(text);
+  state.logs = state.logs.slice(0, 5);
+}
+
+function isSolved() {
+  return state.tiles.every((tile, index) => tile === index);
+}
+
+function inversions(tiles) {
+  const blank = tiles.length - 1;
+  const values = tiles.filter((tile) => tile !== blank);
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    for (let j = i + 1; j < values.length; j += 1) {
+      if (values[i] > values[j]) count += 1;
+    }
+  }
+  return count;
+}
+
+function isSolvable(tiles, size) {
+  const inv = inversions(tiles);
+  if (size % 2 === 1) return inv % 2 === 0;
+  const blankRowFromBottom = size - Math.floor(tiles.indexOf(size * size - 1) / size);
+  return blankRowFromBottom % 2 === 0 ? inv % 2 === 1 : inv % 2 === 0;
+}
+
+function shuffleTiles(size) {
+  const tiles = solvedTiles(size);
+  for (let i = tiles.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+  }
+  if (!isSolvable(tiles, size)) {
+    const a = tiles.findIndex((tile) => tile !== size * size - 1);
+    const b = tiles.findIndex((tile, index) => index !== a && tile !== size * size - 1);
+    [tiles[a], tiles[b]] = [tiles[b], tiles[a]];
+  }
+  if (tiles.every((tile, index) => tile === index)) {
+    const blank = tiles.length - 1;
+    [tiles[blank - 1], tiles[blank]] = [tiles[blank], tiles[blank - 1]];
+  }
+  return tiles;
+}
+
+function startPuzzle(size = state.size) {
+  state.mode = 'play';
+  state.size = size;
+  state.tiles = shuffleTiles(size);
+  state.empty = state.tiles.indexOf(size * size - 1);
+  state.selected = firstMovableIndex();
+  state.moves = 0;
+  state.elapsed = 0;
+  state.history = [];
+  state.preview = false;
+  state.hintTile = null;
+  state.message = 'Slide an adjacent tile into the empty space.';
+  state.coinsEarned = 0;
+  state.lastMove = null;
+  state.best = readBest(size);
+  state.animations = [];
+  state.logs = [`${size} by ${size} puzzle shuffled.`];
+  rememberRecent('fifteenpuzzle');
+  render();
+}
+
+function setSize(size) {
+  state.size = size;
+  state.best = readBest(size);
+  startPuzzle(size);
+}
+
+function adjacentIndices(index) {
+  const { row, col } = indexToRowCol(index);
+  const options = [];
+  if (row > 0) options.push(rowColToIndex(row - 1, col));
+  if (row < state.size - 1) options.push(rowColToIndex(row + 1, col));
+  if (col > 0) options.push(rowColToIndex(row, col - 1));
+  if (col < state.size - 1) options.push(rowColToIndex(row, col + 1));
+  return options;
+}
+
+function movableIndices() {
+  return adjacentIndices(state.empty).filter((index) => state.tiles[index] !== state.size * state.size - 1);
+}
+
+function firstMovableIndex() {
+  return movableIndices()[0] ?? 0;
+}
+
+function manhattanDistance() {
+  return state.tiles.reduce((sum, tile, index) => {
+    if (tile === state.size * state.size - 1) return sum;
+    const now = indexToRowCol(index);
+    const home = tileHome(tile);
+    return sum + Math.abs(now.row - home.row) + Math.abs(now.col - home.col);
+  }, 0);
+}
+
+function canSlide(index) {
+  return state.mode === 'play' && adjacentIndices(index).includes(state.empty);
+}
+
+function slideTile(index, source = 'player') {
+  if (!canSlide(index)) {
+    state.selected = index;
+    state.message = 'Only tiles next to the empty space can slide.';
+    state.hintTile = firstMovableIndex();
+    return false;
+  }
+  const tile = state.tiles[index];
+  const previousEmpty = state.empty;
+  state.history.push({
+    tiles: state.tiles.slice(),
+    empty: state.empty,
+    selected: state.selected,
+    moves: state.moves,
+    elapsed: state.elapsed,
+    lastMove: state.lastMove,
+  });
+  [state.tiles[index], state.tiles[state.empty]] = [state.tiles[state.empty], state.tiles[index]];
+  state.empty = index;
+  state.selected = previousEmpty;
+  state.moves += 1;
+  state.hintTile = null;
+  state.preview = false;
+  state.lastMove = { tile: tileLabel(tile), from: indexName(index), to: indexName(previousEmpty), source };
+  state.animations.push({ tile, from: tilePoint(index), to: tilePoint(previousEmpty), life: .16, age: 0 });
+  pushLog(`Moved ${tileLabel(tile)} into ${indexName(previousEmpty)}.`);
+  if (isSolved()) finishPuzzle();
+  else state.message = `${manhattanDistance()} total tile steps away.`;
+  return true;
+}
+
+function undo() {
+  const snapshot = state.history.pop();
+  if (!snapshot || state.mode !== 'play') return;
+  state.tiles = snapshot.tiles;
+  state.empty = snapshot.empty;
+  state.selected = snapshot.selected;
+  state.moves = snapshot.moves;
+  state.elapsed = snapshot.elapsed;
+  state.lastMove = snapshot.lastMove;
+  state.hintTile = null;
+  state.preview = false;
+  state.message = 'Last slide undone.';
+  pushLog('Undo restored the previous board.');
+}
+
+function finishPuzzle() {
+  state.mode = 'won';
+  state.message = `Solved in ${state.moves} moves and ${formatTime(state.elapsed)}.`;
+  const previousBest = readBest(state.size);
+  const current = { moves: state.moves, seconds: Math.round(state.elapsed) };
+  if (!previousBest || current.moves < previousBest.moves || (current.moves === previousBest.moves && current.seconds < previousBest.seconds)) {
+    writeBest(state.size, current);
+    state.best = current;
+    pushLog('New best score saved.');
+  }
+  const distanceBonus = state.size * 3;
+  const speedBonus = Math.max(0, Math.round((state.size * 90 - state.elapsed) / 18));
+  const movePenalty = Math.floor(state.moves / Math.max(2, state.size));
+  const coins = Math.max(10, Math.min(72, WIN_REWARD + distanceBonus + speedBonus - movePenalty));
+  state.coinsEarned = coins;
+  addCoins(coins);
+  pushLog(`${coins} coins earned.`);
+}
+
+function bestHintMove() {
+  const moves = movableIndices();
+  let best = moves[0] ?? null;
+  let bestDistance = Infinity;
+  for (const index of moves) {
+    const copy = state.tiles.slice();
+    [copy[index], copy[state.empty]] = [copy[state.empty], copy[index]];
+    const distance = copy.reduce((sum, tile, tileIndex) => {
+      if (tile === state.size * state.size - 1) return sum;
+      const now = indexToRowCol(tileIndex);
+      const home = tileHome(tile);
+      return sum + Math.abs(now.row - home.row) + Math.abs(now.col - home.col);
+    }, 0);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = index;
+    }
+  }
+  return best;
+}
+
+function showHint() {
+  if (state.mode !== 'play') return;
+  state.hintTile = bestHintMove();
+  state.selected = state.hintTile ?? state.selected;
+  state.message = state.hintTile == null ? 'No legal hint available.' : `Try sliding tile ${tileLabel(state.tiles[state.hintTile])}.`;
+  pushLog('Hint highlighted one adjacent slide.');
+}
+
+function togglePreview() {
+  state.preview = !state.preview;
+  state.message = state.preview ? 'Preview shows each tile home in the corner.' : 'Preview hidden.';
+}
+
+function moveSelection(direction) {
+  if (state.mode !== 'play') return;
+  const { row, col } = indexToRowCol(state.selected);
+  const target = {
+    left: { row, col: Math.max(0, col - 1) },
+    right: { row, col: Math.min(state.size - 1, col + 1) },
+    up: { row: Math.max(0, row - 1), col },
+    down: { row: Math.min(state.size - 1, row + 1), col },
+  }[direction];
+  const next = rowColToIndex(target.row, target.col);
+  state.selected = next;
+  if (canSlide(next)) state.message = `Tile ${tileLabel(state.tiles[next])} can slide.`;
+}
+
+function slideByArrow(direction) {
+  if (state.mode !== 'play') return;
+  const { row, col } = indexToRowCol(state.empty);
+  const source = {
+    left: col < state.size - 1 ? rowColToIndex(row, col + 1) : null,
+    right: col > 0 ? rowColToIndex(row, col - 1) : null,
+    up: row < state.size - 1 ? rowColToIndex(row + 1, col) : null,
+    down: row > 0 ? rowColToIndex(row - 1, col) : null,
+  }[direction];
+  if (source != null) slideTile(source, 'keyboard');
+}
+
+function tilePoint(index) {
+  const { row, col } = indexToRowCol(index);
+  const cell = BOARD.size / state.size;
+  return {
+    x: BOARD.x + col * cell + cell / 2,
+    y: BOARD.y + row * cell + cell / 2,
+  };
+}
+
+function indexName(index) {
+  const { row, col } = indexToRowCol(index);
+  return `r${row + 1}c${col + 1}`;
+}
+
+function pointerToBoard(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+  if (x < BOARD.x || y < BOARD.y || x > BOARD.x + BOARD.size || y > BOARD.y + BOARD.size) return null;
+  const cell = BOARD.size / state.size;
+  const col = Math.max(0, Math.min(state.size - 1, Math.floor((x - BOARD.x) / cell)));
+  const row = Math.max(0, Math.min(state.size - 1, Math.floor((y - BOARD.y) / cell)));
+  return rowColToIndex(row, col);
+}
+
+function handlePointer(event) {
+  const index = pointerToBoard(event);
+  if (index == null) return;
+  event.preventDefault();
+  if (state.mode !== 'play') {
+    startPuzzle(state.size);
+    return;
+  }
+  state.selected = index;
+  slideTile(index, 'pointer');
+}
+
+function update(dt) {
+  if (state.mode === 'play') state.elapsed += dt;
+  for (const animation of state.animations) animation.age += dt;
+  state.animations = state.animations.filter((animation) => animation.age < animation.life);
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#172637');
+  gradient.addColorStop(.55, '#243f4c');
+  gradient.addColorStop(1, '#493b57');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.globalAlpha = .22;
+  for (let i = 0; i < 26; i += 1) {
+    const x = (i * 137) % canvas.width;
+    const y = (i * 79) % canvas.height;
+    ctx.fillStyle = palette[i % palette.length];
+    drawRoundedRect(x - 26, y - 12, 52, 24, 7);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawBoard() {
+  const cell = BOARD.size / state.size;
+  ctx.save();
+  ctx.shadowColor = '#00000080';
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 10;
+  drawRoundedRect(BOARD.x - 16, BOARD.y - 16, BOARD.size + 32, BOARD.size + 32, 10);
+  ctx.fillStyle = '#0f1d2c';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#20364a';
+  drawRoundedRect(BOARD.x, BOARD.y, BOARD.size, BOARD.size, 8);
+  ctx.fill();
+
+  for (let index = 0; index < state.tiles.length; index += 1) {
+    const tile = state.tiles[index];
+    if (tile === state.size * state.size - 1) continue;
+    const { row, col } = indexToRowCol(index);
+    const x = BOARD.x + col * cell;
+    const y = BOARD.y + row * cell;
+    drawTile(tile, x, y, cell, index);
+  }
+
+  const { row, col } = indexToRowCol(state.empty);
+  const gapX = BOARD.x + col * cell + 7;
+  const gapY = BOARD.y + row * cell + 7;
+  drawRoundedRect(gapX, gapY, cell - 14, cell - 14, 8);
+  ctx.fillStyle = '#08131f';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff25';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawTile(tile, x, y, cell, index) {
+  const margin = Math.max(6, cell * .055);
+  const tx = x + margin;
+  const ty = y + margin;
+  const tw = cell - margin * 2;
+  const th = cell - margin * 2;
+  const home = tileHome(tile);
+  const hueColor = palette[(home.row + home.col) % palette.length];
+  const selected = index === state.selected;
+  const hinted = index === state.hintTile;
+  drawRoundedRect(tx, ty, tw, th, 8);
+  const gradient = ctx.createLinearGradient(tx, ty, tx + tw, ty + th);
+  gradient.addColorStop(0, hueColor);
+  gradient.addColorStop(1, '#f7f3df');
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  ctx.lineWidth = selected || hinted ? 5 : 2;
+  ctx.strokeStyle = hinted ? '#ffffff' : selected ? '#ffd36c' : '#ffffff7a';
+  ctx.stroke();
+
+  ctx.fillStyle = '#152234';
+  ctx.font = `900 ${Math.max(24, cell * .38)}px "Trebuchet MS", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(tileLabel(tile), tx + tw / 2, ty + th / 2 + 2);
+
+  if (state.preview) {
+    ctx.fillStyle = '#132235c9';
+    ctx.font = `900 ${Math.max(11, cell * .12)}px "Trebuchet MS", sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`home ${home.row + 1},${home.col + 1}`, tx + 10, ty + 8);
+  }
+}
+
+function drawPanel() {
+  drawRoundedRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h, 8);
+  ctx.fillStyle = '#091624dd';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff52';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Fifteen Puzzle', PANEL.x + 22, PANEL.y + 22);
+
+  ctx.fillStyle = '#bfd4e5';
+  ctx.font = '800 15px "Trebuchet MS", sans-serif';
+  wrapText(state.message, PANEL.x + 22, PANEL.y + 64, PANEL.w - 44, 20, 4);
+
+  const stats = [
+    ['Board', `${state.size} x ${state.size}`],
+    ['Moves', String(state.moves)],
+    ['Time', formatTime(state.elapsed)],
+    ['Distance', String(manhattanDistance())],
+    ['Empty', indexName(state.empty)],
+  ];
+  stats.forEach(([label, value], index) => {
+    const y = PANEL.y + 168 + index * 54;
+    ctx.fillStyle = '#ffffff18';
+    drawRoundedRect(PANEL.x + 20, y, PANEL.w - 40, 42, 8);
+    ctx.fill();
+    ctx.fillStyle = '#9fb6ca';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), PANEL.x + 34, y + 7);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, PANEL.x + 34, y + 22);
+  });
+
+  ctx.fillStyle = '#9fb6ca';
+  ctx.font = '900 12px "Trebuchet MS", sans-serif';
+  ctx.fillText('LOG', PANEL.x + 22, PANEL.y + 464);
+  ctx.fillStyle = '#dbe9f5';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  state.logs.slice(0, 3).forEach((line, index) => {
+    wrapText(line, PANEL.x + 22, PANEL.y + 486 + index * 24, PANEL.w - 44, 15, 1);
+  });
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = String(text || '').split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y + lines * lineHeight);
+      lines += 1;
+      line = word;
+      if (lines >= maxLines) return;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y + lines * lineHeight);
+}
+
+function formatTime(seconds) {
+  const whole = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(whole / 60);
+  const secs = whole % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function formatBest(best) {
+  return best ? `${best.moves} / ${formatTime(best.seconds)}` : '--';
+}
+
+function renderOverlay() {
+  const key = `${state.mode}|${state.message}|${state.size}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Fifteen Puzzle</h1>
+      <p>Slide numbered tiles into the empty space until the board is back in order. Start small, then try the full 4 by 4 challenge.</p>
+      <p class="mini">Click or tap adjacent tiles. Arrow keys slide into the gap. U undoes, 3/4/5 changes size, F toggles fullscreen.</p>
+      <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', () => startPuzzle(state.size));
+  } else if (state.mode === 'won') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Puzzle Solved</h1>
+      <p>${state.message} ${state.coinsEarned} coins earned.</p>
+      <p class="mini">Best for ${state.size} x ${state.size}: ${formatBest(state.best)}. Try a larger board or chase fewer moves.</p>
+      <button class="primary" id="startBtn" type="button">Play Again</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', () => startPuzzle(state.size));
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function renderHud() {
+  hud.mode.textContent = state.mode === 'play' ? 'Playing' : state.mode === 'won' ? 'Solved' : 'Menu';
+  hud.size.textContent = `${state.size} x ${state.size}`;
+  hud.moves.textContent = String(state.moves);
+  hud.time.textContent = formatTime(state.elapsed);
+  hud.best.textContent = formatBest(state.best);
+  hud.distance.textContent = String(manhattanDistance());
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  buttons.undo.disabled = state.mode !== 'play' || state.history.length === 0;
+  buttons.hint.disabled = state.mode !== 'play';
+  buttons.solve.disabled = state.mode === 'menu';
+}
+
+function render() {
+  drawBackground();
+  drawBoard();
+  drawPanel();
+  renderHud();
+  renderOverlay();
+}
+
+function frame(ts) {
+  const dt = lastFrame ? Math.min(.05, (ts - lastFrame) / 1000) : 1 / 60;
+  lastFrame = ts;
+  if (!controlled) {
+    update(dt);
+    render();
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function renderGameToText() {
+  const visibleTiles = state.tiles.map((tile, index) => ({
+    position: indexName(index),
+    row: indexToRowCol(index).row,
+    col: indexToRowCol(index).col,
+    tile: tileLabel(tile) || 'empty',
+    home: tile === state.size * state.size - 1 ? 'empty' : `${tileHome(tile).row},${tileHome(tile).col}`,
+    movable: canSlide(index),
+    selected: index === state.selected,
+    hinted: index === state.hintTile,
+  }));
+  const payload = {
+    coordinate_system: 'Canvas 1024x720. Puzzle board uses row/col from top-left; rows increase downward and cols increase rightward.',
+    mode: state.mode,
+    size: state.size,
+    moves: state.moves,
+    elapsed_seconds: Number(state.elapsed.toFixed(2)),
+    empty: indexName(state.empty),
+    selected: indexName(state.selected),
+    manhattan_distance: manhattanDistance(),
+    solved: isSolved(),
+    message: state.message,
+    last_move: state.lastMove,
+    preview_enabled: state.preview,
+    coins_earned: state.coinsEarned,
+    best: state.best,
+    legal_moves: movableIndices().map((index) => ({ position: indexName(index), tile: tileLabel(state.tiles[index]) })),
+    tiles: visibleTiles,
+    logs: state.logs.slice(0, 4),
+  };
+  return JSON.stringify(payload);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  controlled = false;
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { mode: state.mode, size: state.size };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+buttons.newGame.addEventListener('click', () => startPuzzle(state.size));
+buttons.undo.addEventListener('click', undo);
+buttons.size3.addEventListener('click', () => setSize(3));
+buttons.size4.addEventListener('click', () => setSize(4));
+buttons.size5.addEventListener('click', () => setSize(5));
+buttons.hint.addEventListener('click', showHint);
+buttons.solve.addEventListener('click', togglePreview);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'escape' && document.fullscreenElement) {
+    document.exitFullscreen?.().catch(() => {});
+    return;
+  }
+  if (state.mode !== 'play') {
+    if (key === 'enter' || key === ' ') {
+      event.preventDefault();
+      startPuzzle(state.size);
+    } else if (key === '3' || key === '4' || key === '5') {
+      event.preventDefault();
+      setSize(Number(key));
+    }
+    return;
+  }
+  if (key === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'h') {
+    event.preventDefault();
+    showHint();
+  } else if (key === 'r' || key === 'n') {
+    event.preventDefault();
+    startPuzzle(state.size);
+  } else if (key === '3' || key === '4' || key === '5') {
+    event.preventDefault();
+    setSize(Number(key));
+  } else if (key === 'enter' || key === ' ') {
+    event.preventDefault();
+    slideTile(state.selected, 'keyboard');
+  } else if (key === 'arrowleft' || key === 'a') {
+    event.preventDefault();
+    slideByArrow('left');
+  } else if (key === 'arrowright' || key === 'd') {
+    event.preventDefault();
+    slideByArrow('right');
+  } else if (key === 'arrowup' || key === 'w') {
+    event.preventDefault();
+    slideByArrow('up');
+  } else if (key === 'arrowdown' || key === 's') {
+    event.preventDefault();
+    slideByArrow('down');
+  } else if (key === 'tab') {
+    event.preventDefault();
+    const moves = movableIndices();
+    const pos = Math.max(0, moves.indexOf(state.selected));
+    state.selected = moves[(pos + 1) % moves.length] ?? firstMovableIndex();
+  }
+});
+
+mountGameFeedback({ gameSlug: 'fifteenpuzzle', gameName: 'Fifteen Puzzle' });
+render();
+raf = requestAnimationFrame(frame);
+</script>
+</body>
+</html>

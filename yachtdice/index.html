@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Yacht Dice | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f9fbf6;
+  background: linear-gradient(135deg, #14241d 0%, #2d2f3b 45%, #503429 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1120px);
+  aspect-ratio: 28 / 19;
+  max-height: min(66dvh, 760px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #173026;
+  box-shadow: 0 20px 52px #11151c99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #111823f2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 62px);
+  line-height: .95;
+}
+.panel p {
+  margin: 9px auto;
+  max-width: 60ch;
+  color: #dbe6dc;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b9cbbd;
+  font-size: 13px;
+}
+.hud {
+  width: min(97vw, 1120px);
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff3f;
+  background: #101722c9;
+  padding: 7px 9px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  box-shadow: 0 8px 22px #00000040;
+}
+.chip span {
+  color: #c9d7cc;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #a9f4c6; }
+.chip.warn b { color: #ffd981; }
+.chip.bad b { color: #ffad9d; }
+.controls {
+  width: min(97vw, 1120px);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+button {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid #ffffff52;
+  background: #162133e6;
+  color: #f9fbf6;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #f9e49b;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #121923;
+  background: linear-gradient(135deg, #ffd66d 0%, #8ee0b0 100%);
+  border-color: #ffffffb5;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+@media (max-width: 980px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 880px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip { min-height: 44px; }
+  button {
+    min-height: 40px;
+    font-size: 13px;
+    padding: 9px 8px;
+  }
+  .back {
+    top: 8px;
+    left: 8px;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Roll five dice, hold the best values, and fill a classic scorecard across upper bonus, straights, full house, yacht, and chance rows. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Yacht Dice | AI and Sons Games">
+  <meta property="og:description" content="Roll five dice, hold the best values, and fill a classic scorecard across upper bonus, straights, full house, yacht, and chance rows. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/yachtdice">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Yacht Dice | AI and Sons Games">
+  <meta name="twitter:description" content="Roll five dice, hold the best values, and fill a classic scorecard across upper bonus, straights, full house, yacht, and chance rows. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/yachtdice">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Yacht Dice","description":"Roll five dice, hold the best values, and fill a classic scorecard across upper bonus, straights, full house, yacht, and chance rows. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/yachtdice","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="Yacht Dice game">
+  <section class="stage" aria-label="Yacht Dice table">
+    <canvas id="game" width="1120" height="760"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Yacht Dice</h1>
+        <p>Roll five dice up to three times, hold the values you like, then score one category each round. Fill the scorecard and chase the upper bonus.</p>
+        <p class="mini">Tap dice to hold. Tap a score row to preview, tap it again to score. Keys: Space roll, 1-5 hold, arrows select, Enter score, H hint, U undo, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Rolling</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Round</span><b id="round">1 / 13</b></div>
+    <div class="chip warn"><span>Rolls</span><b id="rolls">3</b></div>
+    <div class="chip"><span>Upper</span><b id="upper">0 / 63</b></div>
+    <div class="chip good"><span>Bonus</span><b id="bonus">0</b></div>
+    <div class="chip"><span>Total</span><b id="total">0</b></div>
+    <div class="chip"><span>Hint</span><b id="hintText">Roll</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="primary" id="newBtn" type="button">New Game</button>
+    <button class="primary" id="rollBtn" type="button">Roll</button>
+    <button id="scoreBtn" type="button">Score Row</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="cancelBtn" type="button">Clear Hold</button>
+    <button id="fullBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+
+const els = {
+  mode: document.getElementById('mode'),
+  round: document.getElementById('round'),
+  rolls: document.getElementById('rolls'),
+  upper: document.getElementById('upper'),
+  bonus: document.getElementById('bonus'),
+  total: document.getElementById('total'),
+  hintText: document.getElementById('hintText'),
+  coins: document.getElementById('coins'),
+  startBtn: document.getElementById('startBtn'),
+  newBtn: document.getElementById('newBtn'),
+  rollBtn: document.getElementById('rollBtn'),
+  scoreBtn: document.getElementById('scoreBtn'),
+  hintBtn: document.getElementById('hintBtn'),
+  undoBtn: document.getElementById('undoBtn'),
+  cancelBtn: document.getElementById('cancelBtn'),
+  fullBtn: document.getElementById('fullBtn'),
+};
+
+const CATEGORIES = [
+  { id: 'ones', label: 'Ones', short: '1s', section: 'Upper', help: 'Sum of ones', score: dice => countFace(dice, 1) },
+  { id: 'twos', label: 'Twos', short: '2s', section: 'Upper', help: 'Sum of twos', score: dice => countFace(dice, 2) * 2 },
+  { id: 'threes', label: 'Threes', short: '3s', section: 'Upper', help: 'Sum of threes', score: dice => countFace(dice, 3) * 3 },
+  { id: 'fours', label: 'Fours', short: '4s', section: 'Upper', help: 'Sum of fours', score: dice => countFace(dice, 4) * 4 },
+  { id: 'fives', label: 'Fives', short: '5s', section: 'Upper', help: 'Sum of fives', score: dice => countFace(dice, 5) * 5 },
+  { id: 'sixes', label: 'Sixes', short: '6s', section: 'Upper', help: 'Sum of sixes', score: dice => countFace(dice, 6) * 6 },
+  { id: 'threeKind', label: 'Three Kind', short: '3K', section: 'Lower', help: 'Three matching dice: sum all', score: dice => maxCount(dice) >= 3 ? sumDice(dice) : 0 },
+  { id: 'fourKind', label: 'Four Kind', short: '4K', section: 'Lower', help: 'Four matching dice: sum all', score: dice => maxCount(dice) >= 4 ? sumDice(dice) : 0 },
+  { id: 'fullHouse', label: 'Full House', short: 'FH', section: 'Lower', help: 'Three plus two: 25', score: dice => isFullHouse(dice) ? 25 : 0 },
+  { id: 'smallStraight', label: 'Small Straight', short: 'SS', section: 'Lower', help: 'Four in a row: 30', score: dice => hasStraight(dice, 4) ? 30 : 0 },
+  { id: 'largeStraight', label: 'Large Straight', short: 'LS', section: 'Lower', help: 'Five in a row: 40', score: dice => hasStraight(dice, 5) ? 40 : 0 },
+  { id: 'yacht', label: 'Yacht', short: 'Y', section: 'Lower', help: 'Five matching dice: 50', score: dice => maxCount(dice) === 5 ? 50 : 0 },
+  { id: 'chance', label: 'Chance', short: 'C', section: 'Lower', help: 'Sum all dice', score: dice => sumDice(dice) },
+];
+
+const CATEGORY_BY_ID = new Map(CATEGORIES.map(category => [category.id, category]));
+const UPPER_IDS = new Set(CATEGORIES.filter(category => category.section === 'Upper').map(category => category.id));
+const BEST_KEY = 'cade:yachtdice:best';
+const LOGICAL_WIDTH = 1120;
+const LOGICAL_HEIGHT = 760;
+
+const state = {
+  mode: 'menu',
+  seed: pickSeed(),
+  dice: [1, 2, 3, 4, 5],
+  held: [false, false, false, false, false],
+  scores: emptyScores(),
+  selectedCategory: 'ones',
+  rollsLeft: 3,
+  rolledThisTurn: false,
+  round: 1,
+  total: 0,
+  upperSubtotal: 0,
+  upperBonus: 0,
+  lowerSubtotal: 0,
+  best: loadBest(),
+  coinsEarned: 0,
+  message: 'Roll to begin.',
+  hint: 'Roll first',
+  elapsed: 0,
+  rollAnimation: 0,
+  scoreFlash: 0,
+  lastScored: '',
+  undoStack: [],
+  diceRects: [],
+  categoryRects: [],
+};
+
+let lastFrame = 0;
+let manualStepping = false;
+
+function emptyScores() {
+  return Object.fromEntries(CATEGORIES.map(category => [category.id, null]));
+}
+
+function pickSeed() {
+  const querySeed = new URLSearchParams(location.search).get('seed');
+  const raw = Number(querySeed || window.__YACHT_DICE_SEED || 0);
+  if (Number.isFinite(raw) && raw > 0) return raw >>> 0;
+  return (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
+}
+
+function randomUnit() {
+  state.seed = (state.seed * 1664525 + 1013904223) >>> 0;
+  return state.seed / 0x100000000;
+}
+
+function randomDie() {
+  return 1 + Math.floor(randomUnit() * 6);
+}
+
+function countFace(dice, face) {
+  return dice.filter(value => value === face).length;
+}
+
+function counts(dice) {
+  const values = new Map();
+  dice.forEach(value => values.set(value, (values.get(value) || 0) + 1));
+  return [...values.values()].sort((a, b) => b - a);
+}
+
+function maxCount(dice) {
+  return counts(dice)[0] || 0;
+}
+
+function sumDice(dice) {
+  return dice.reduce((sum, value) => sum + value, 0);
+}
+
+function isFullHouse(dice) {
+  const tally = counts(dice);
+  return (tally[0] === 3 && tally[1] === 2) || tally[0] === 5;
+}
+
+function hasStraight(dice, length) {
+  const unique = [...new Set(dice)].sort((a, b) => a - b);
+  const runs = length === 5 ? [[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]] : [[1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]];
+  return runs.some(run => run.every(value => unique.includes(value)));
+}
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(BEST_KEY) || 0);
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest(total) {
+  if (total <= state.best) return;
+  state.best = total;
+  try {
+    localStorage.setItem(BEST_KEY, String(total));
+  } catch {
+    /* storage may be blocked */
+  }
+}
+
+function snapshot() {
+  return {
+    mode: state.mode,
+    seed: state.seed,
+    dice: [...state.dice],
+    held: [...state.held],
+    scores: { ...state.scores },
+    selectedCategory: state.selectedCategory,
+    rollsLeft: state.rollsLeft,
+    rolledThisTurn: state.rolledThisTurn,
+    round: state.round,
+    total: state.total,
+    upperSubtotal: state.upperSubtotal,
+    upperBonus: state.upperBonus,
+    lowerSubtotal: state.lowerSubtotal,
+    best: state.best,
+    coinsEarned: state.coinsEarned,
+    message: state.message,
+    hint: state.hint,
+    elapsed: state.elapsed,
+    lastScored: state.lastScored,
+  };
+}
+
+function pushUndo() {
+  if (state.mode !== 'playing') return;
+  state.undoStack.push(snapshot());
+  if (state.undoStack.length > 40) state.undoStack.shift();
+}
+
+function restoreSnapshot(saved) {
+  state.mode = saved.mode;
+  state.seed = saved.seed;
+  state.dice = [...saved.dice];
+  state.held = [...saved.held];
+  state.scores = { ...saved.scores };
+  state.selectedCategory = saved.selectedCategory;
+  state.rollsLeft = saved.rollsLeft;
+  state.rolledThisTurn = saved.rolledThisTurn;
+  state.round = saved.round;
+  state.total = saved.total;
+  state.upperSubtotal = saved.upperSubtotal;
+  state.upperBonus = saved.upperBonus;
+  state.lowerSubtotal = saved.lowerSubtotal;
+  state.best = saved.best;
+  state.coinsEarned = saved.coinsEarned;
+  state.message = saved.message;
+  state.hint = saved.hint;
+  state.elapsed = saved.elapsed;
+  state.lastScored = saved.lastScored;
+  state.rollAnimation = 0;
+  state.scoreFlash = 0;
+  updateDerived();
+}
+
+function updateDerived() {
+  let upperSubtotal = 0;
+  let lowerSubtotal = 0;
+  let filled = 0;
+  CATEGORIES.forEach(category => {
+    const value = state.scores[category.id];
+    if (value !== null) {
+      filled += 1;
+      if (UPPER_IDS.has(category.id)) upperSubtotal += value;
+      else lowerSubtotal += value;
+    }
+  });
+  state.upperSubtotal = upperSubtotal;
+  state.upperBonus = upperSubtotal >= 63 ? 35 : 0;
+  state.lowerSubtotal = lowerSubtotal;
+  state.total = upperSubtotal + lowerSubtotal + state.upperBonus;
+  state.round = Math.min(13, filled + 1);
+  if (!CATEGORY_BY_ID.has(state.selectedCategory) || state.scores[state.selectedCategory] !== null) {
+    state.selectedCategory = firstOpenCategory();
+  }
+  if (state.rolledThisTurn) {
+    const best = bestCategory();
+    state.hint = best ? `${best.label} for ${best.score}` : 'No open rows';
+  } else {
+    state.hint = 'Roll first';
+  }
+  updateHud();
+}
+
+function firstOpenCategory() {
+  return CATEGORIES.find(category => state.scores[category.id] === null)?.id || 'chance';
+}
+
+function bestCategory() {
+  if (!state.rolledThisTurn) return null;
+  const options = CATEGORIES
+    .filter(category => state.scores[category.id] === null)
+    .map(category => {
+      const score = category.score(state.dice);
+      let priority = score;
+      if (category.id === 'yacht' && score === 50) priority += 25;
+      if (category.id === 'largeStraight' && score === 40) priority += 14;
+      if (category.id === 'smallStraight' && score === 30) priority += 8;
+      if (category.id === 'fullHouse' && score === 25) priority += 6;
+      if (UPPER_IDS.has(category.id)) {
+        const face = CATEGORIES.indexOf(category) + 1;
+        const count = countFace(state.dice, face);
+        if (count >= 3) priority += face * 2;
+      }
+      if (score === 0) priority -= CATEGORIES.indexOf(category) / 20;
+      return { ...category, score, priority };
+    })
+    .sort((a, b) => b.priority - a.priority || b.score - a.score);
+  return options[0] || null;
+}
+
+function startGame() {
+  state.mode = 'playing';
+  state.seed = pickSeed();
+  state.dice = [1, 2, 3, 4, 5];
+  state.held = [false, false, false, false, false];
+  state.scores = emptyScores();
+  state.selectedCategory = 'ones';
+  state.rollsLeft = 3;
+  state.rolledThisTurn = false;
+  state.round = 1;
+  state.total = 0;
+  state.upperSubtotal = 0;
+  state.upperBonus = 0;
+  state.lowerSubtotal = 0;
+  state.coinsEarned = 0;
+  state.message = 'Roll all five dice.';
+  state.hint = 'Roll first';
+  state.rollAnimation = 0;
+  state.scoreFlash = 0;
+  state.lastScored = '';
+  state.undoStack = [];
+  rememberRecent('yachtdice');
+  updateDerived();
+  render();
+}
+
+function rollDice() {
+  if (state.mode === 'menu' || state.mode === 'gameover') {
+    startGame();
+    return;
+  }
+  if (state.rollsLeft <= 0) {
+    state.message = 'Score a row before rolling again.';
+    updateHud();
+    return;
+  }
+  if (state.rolledThisTurn && state.held.every(Boolean)) {
+    state.message = 'Unhold at least one die to reroll.';
+    updateHud();
+    return;
+  }
+  pushUndo();
+  for (let i = 0; i < state.dice.length; i += 1) {
+    if (!state.rolledThisTurn || !state.held[i]) {
+      state.dice[i] = randomDie();
+    }
+  }
+  state.rollsLeft -= 1;
+  state.rolledThisTurn = true;
+  state.rollAnimation = .32;
+  const best = bestCategory();
+  if (best) state.selectedCategory = best.id;
+  state.message = state.rollsLeft > 0 ? 'Hold dice or reroll.' : 'Last roll. Choose a score row.';
+  updateDerived();
+  render();
+}
+
+function toggleHold(index) {
+  if (state.mode !== 'playing') return;
+  if (!state.rolledThisTurn) {
+    state.message = 'Roll before holding dice.';
+    updateHud();
+    return;
+  }
+  pushUndo();
+  state.held[index] = !state.held[index];
+  state.message = state.held[index] ? `Holding die ${index + 1}.` : `Released die ${index + 1}.`;
+  updateHud();
+  render();
+}
+
+function clearHolds() {
+  if (state.mode !== 'playing') return;
+  if (!state.held.some(Boolean)) {
+    state.message = 'No dice are held.';
+    updateHud();
+    return;
+  }
+  pushUndo();
+  state.held = [false, false, false, false, false];
+  state.message = 'All dice released.';
+  updateHud();
+  render();
+}
+
+function selectCategory(id) {
+  if (state.mode !== 'playing') return;
+  if (state.scores[id] !== null) return;
+  const same = state.selectedCategory === id;
+  state.selectedCategory = id;
+  const category = CATEGORY_BY_ID.get(id);
+  const preview = state.rolledThisTurn ? category.score(state.dice) : 0;
+  state.message = state.rolledThisTurn
+    ? `${category.label} would score ${preview}. ${same ? 'Tap again or press Enter to lock it.' : ''}`.trim()
+    : 'Roll before scoring.';
+  updateHud();
+  render();
+}
+
+function scoreSelected() {
+  if (state.mode !== 'playing') return;
+  if (!state.rolledThisTurn) {
+    state.message = 'Roll before scoring a category.';
+    updateHud();
+    return;
+  }
+  const category = CATEGORY_BY_ID.get(state.selectedCategory);
+  if (!category || state.scores[category.id] !== null) return;
+  pushUndo();
+  const value = category.score(state.dice);
+  state.scores[category.id] = value;
+  state.lastScored = category.id;
+  state.scoreFlash = .45;
+  state.held = [false, false, false, false, false];
+  state.rollsLeft = 3;
+  state.rolledThisTurn = false;
+  state.message = `${category.label} locked for ${value}.`;
+  updateDerived();
+  if (CATEGORIES.every(row => state.scores[row.id] !== null)) {
+    finishGame();
+    return;
+  }
+  state.selectedCategory = firstOpenCategory();
+  updateDerived();
+  render();
+}
+
+function finishGame() {
+  state.mode = 'gameover';
+  const coins = Math.max(12, Math.round(state.total / 18) + (state.upperBonus ? 8 : 0) + (state.scores.yacht === 50 ? 12 : 0));
+  state.coinsEarned = coins;
+  addCoins(coins);
+  saveBest(state.total);
+  state.message = `Final score ${state.total}. Earned ${coins} coins.`;
+  updateHud();
+  showEndOverlay();
+  render();
+}
+
+function showHint() {
+  if (state.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  if (!state.rolledThisTurn) {
+    state.message = 'Roll first, then ask for a score hint.';
+    updateHud();
+    return;
+  }
+  const best = bestCategory();
+  if (!best) return;
+  state.selectedCategory = best.id;
+  state.message = `Hint: ${best.label} scores ${best.score}.`;
+  updateHud();
+  render();
+}
+
+function undo() {
+  if (state.mode !== 'playing') {
+    state.message = 'Undo is only available during an active scorecard.';
+    updateHud();
+    return;
+  }
+  const saved = state.undoStack.pop();
+  if (!saved) {
+    state.message = 'Nothing to undo.';
+    updateHud();
+    return;
+  }
+  restoreSnapshot(saved);
+  state.message = 'Undid the last move.';
+  updateHud();
+  render();
+}
+
+function update(dt) {
+  state.elapsed += dt;
+  state.rollAnimation = Math.max(0, state.rollAnimation - dt);
+  state.scoreFlash = Math.max(0, state.scoreFlash - dt);
+}
+
+function updateHud() {
+  els.mode.textContent = state.mode === 'gameover' ? 'Done' : state.mode === 'playing' ? 'Playing' : 'Menu';
+  els.round.textContent = `${state.round} / 13`;
+  els.rolls.textContent = String(state.rollsLeft);
+  els.upper.textContent = `${state.upperSubtotal} / 63`;
+  els.bonus.textContent = String(state.upperBonus);
+  els.total.textContent = String(state.total);
+  els.hintText.textContent = state.hint;
+  els.coins.textContent = String(profileState.coins);
+  els.rollBtn.disabled = state.mode === 'playing' && state.rollsLeft <= 0;
+  els.scoreBtn.disabled = state.mode !== 'playing' || !state.rolledThisTurn;
+  els.hintBtn.disabled = state.mode !== 'playing' || !state.rolledThisTurn;
+  els.undoBtn.disabled = state.mode !== 'playing' || state.undoStack.length === 0;
+  els.cancelBtn.disabled = state.mode !== 'playing' || !state.held.some(Boolean);
+  if (state.mode === 'playing') hideOverlay();
+  else if (state.mode === 'menu') showStartOverlay();
+}
+
+function showStartOverlay() {
+  overlayPanel.innerHTML = `
+    <h1>Yacht Dice</h1>
+    <p>Roll five dice up to three times, hold the values you like, then score one category each round. Fill the scorecard and chase the upper bonus.</p>
+    <p class="mini">Tap dice to hold. Tap a score row to preview, tap it again to score. Keys: Space roll, 1-5 hold, arrows select, Enter score, H hint, U undo, F fullscreen.</p>
+    <button class="primary" id="startAgainBtn" type="button">Start Rolling</button>
+  `;
+  document.getElementById('startAgainBtn').addEventListener('click', startGame);
+  overlay.classList.add('show');
+}
+
+function showEndOverlay() {
+  overlayPanel.innerHTML = `
+    <h1>Score ${state.total}</h1>
+    <p>${state.upperBonus ? 'Upper bonus earned.' : 'Upper bonus missed.'} Best score: ${state.best}. Coins earned: ${state.coinsEarned}.</p>
+    <p class="mini">Try again with cleaner upper-section choices and save zeroes for rows that are already weak.</p>
+    <button class="primary" id="startAgainBtn" type="button">New Scorecard</button>
+  `;
+  document.getElementById('startAgainBtn').addEventListener('click', startGame);
+  overlay.classList.add('show');
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function roundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  roundedRect(x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color, align = 'left', weight = 800) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawDie(x, y, size, value, held, index) {
+  const wobble = state.rollAnimation > 0 && !held ? Math.sin((state.elapsed * 42) + index) * 4 : 0;
+  const dx = x + wobble;
+  const dy = y - Math.abs(wobble) * .4;
+  const fill = held ? '#ffe19a' : '#f7faf0';
+  const stroke = held ? '#f5b942' : '#cbd7cf';
+  fillRoundRect(dx, dy, size, size, 14, fill, stroke, 3);
+  ctx.shadowColor = '#00000055';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 8;
+  roundedRect(dx, dy, size, size, 14);
+  ctx.strokeStyle = '#ffffff66';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  const pip = size * .09;
+  const spots = {
+    tl: [dx + size * .28, dy + size * .28],
+    tc: [dx + size * .5, dy + size * .28],
+    tr: [dx + size * .72, dy + size * .28],
+    ml: [dx + size * .28, dy + size * .5],
+    mc: [dx + size * .5, dy + size * .5],
+    mr: [dx + size * .72, dy + size * .5],
+    bl: [dx + size * .28, dy + size * .72],
+    bc: [dx + size * .5, dy + size * .72],
+    br: [dx + size * .72, dy + size * .72],
+  };
+  const pipSets = {
+    1: ['mc'],
+    2: ['tl', 'br'],
+    3: ['tl', 'mc', 'br'],
+    4: ['tl', 'tr', 'bl', 'br'],
+    5: ['tl', 'tr', 'mc', 'bl', 'br'],
+    6: ['tl', 'ml', 'bl', 'tr', 'mr', 'br'],
+  };
+  ctx.fillStyle = '#1d2430';
+  pipSets[value].forEach(key => {
+    const [px, py] = spots[key];
+    ctx.beginPath();
+    ctx.arc(px, py, pip, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  drawText(String(index + 1), dx + size - 13, dy + 14, 13, '#52606c', 'center', 900);
+  if (held) {
+    fillRoundRect(dx + 10, dy + size - 27, size - 20, 20, 6, '#203523d8');
+    drawText('HOLD', dx + size / 2, dy + size - 17, 12, '#f8ffe9', 'center', 900);
+  }
+}
+
+function drawScoreRow(category, x, y, w, h, index) {
+  const filled = state.scores[category.id] !== null;
+  const selected = state.selectedCategory === category.id;
+  const last = state.lastScored === category.id && state.scoreFlash > 0;
+  const preview = state.rolledThisTurn ? category.score(state.dice) : 0;
+  const fill = filled ? '#202d32' : selected ? '#334b43' : index % 2 ? '#17242b' : '#1c2a30';
+  const stroke = selected ? '#ffd86f' : '#ffffff20';
+  fillRoundRect(x, y, w, h, 7, last ? '#5a4b2f' : fill, stroke, selected ? 2 : 1);
+  drawText(category.label, x + 14, y + h / 2, 16, filled ? '#abb8ad' : '#f3f7ec', 'left', 900);
+  drawText(category.help, x + 176, y + h / 2, 12, filled ? '#7f8e87' : '#b4c4b9', 'left', 700);
+  const scoreText = filled ? String(state.scores[category.id]) : state.rolledThisTurn ? `+${preview}` : '-';
+  drawText(scoreText, x + w - 18, y + h / 2, 18, filled ? '#a8d5aa' : selected ? '#ffe08a' : '#dbe6dc', 'right', 900);
+}
+
+function render() {
+  state.diceRects = [];
+  state.categoryRects = [];
+  ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+  const table = ctx.createLinearGradient(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  table.addColorStop(0, '#234434');
+  table.addColorStop(.48, '#172c2f');
+  table.addColorStop(1, '#443027');
+  ctx.fillStyle = table;
+  ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+  ctx.globalAlpha = .12;
+  ctx.strokeStyle = '#f3efe2';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < LOGICAL_WIDTH; x += 56) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x - 220, LOGICAL_HEIGHT);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  fillRoundRect(28, 28, 1064, 704, 18, '#111820cc', '#ffffff38', 2);
+  drawText('Yacht Dice', 56, 62, 30, '#f7e7a6', 'left', 900);
+  drawText(state.message, 1064, 62, 17, '#d8e7dc', 'right', 800);
+
+  const dicePanel = { x: 56, y: 98, w: 456, h: 584 };
+  fillRoundRect(dicePanel.x, dicePanel.y, dicePanel.w, dicePanel.h, 14, '#101923cc', '#ffffff28', 2);
+  drawText('Dice tray', dicePanel.x + 24, dicePanel.y + 30, 18, '#cde6c9', 'left', 900);
+  drawText(`Rolls left: ${state.rollsLeft}`, dicePanel.x + dicePanel.w - 24, dicePanel.y + 30, 18, '#ffd981', 'right', 900);
+
+  const dieSize = 104;
+  const dieGap = 22;
+  const startX = dicePanel.x + 54;
+  const topY = dicePanel.y + 86;
+  const positions = [
+    [startX, topY],
+    [startX + dieSize + dieGap, topY],
+    [startX + (dieSize + dieGap) * 2, topY],
+    [startX + dieSize / 2 + dieGap / 2, topY + dieSize + 34],
+    [startX + dieSize * 1.5 + dieGap * 1.5, topY + dieSize + 34],
+  ];
+  positions.forEach(([x, y], index) => {
+    state.diceRects.push({ x, y, w: dieSize, h: dieSize, index });
+    drawDie(x, y, dieSize, state.dice[index], state.held[index], index);
+  });
+
+  fillRoundRect(dicePanel.x + 30, dicePanel.y + 352, dicePanel.w - 60, 104, 10, '#26343c', '#ffffff24');
+  drawText('Current dice', dicePanel.x + 50, dicePanel.y + 380, 14, '#aebeb2', 'left', 800);
+  drawText(state.dice.join('  '), dicePanel.x + dicePanel.w / 2, dicePanel.y + 418, 42, '#f8faf0', 'center', 900);
+  drawText(state.rolledThisTurn ? 'Score a row or reroll unheld dice.' : 'Press Roll to start this round.', dicePanel.x + dicePanel.w / 2, dicePanel.y + 490, 17, '#d5e3d9', 'center', 800);
+  drawText(`Best: ${state.best}`, dicePanel.x + 52, dicePanel.y + 548, 18, '#a9f4c6', 'left', 900);
+  drawText(`Coins: ${profileState.coins}`, dicePanel.x + dicePanel.w - 52, dicePanel.y + 548, 18, '#ffd981', 'right', 900);
+
+  const scorePanel = { x: 540, y: 98, w: 524, h: 584 };
+  fillRoundRect(scorePanel.x, scorePanel.y, scorePanel.w, scorePanel.h, 14, '#101923dd', '#ffffff28', 2);
+  drawText('Scorecard', scorePanel.x + 24, scorePanel.y + 30, 18, '#cde6c9', 'left', 900);
+  drawText(`Round ${state.round} of 13`, scorePanel.x + scorePanel.w - 24, scorePanel.y + 30, 18, '#ffd981', 'right', 900);
+
+  const rowX = scorePanel.x + 18;
+  const rowW = scorePanel.w - 36;
+  const rowH = 34;
+  let rowY = scorePanel.y + 60;
+  CATEGORIES.forEach((category, index) => {
+    if (index === 6) {
+      fillRoundRect(rowX, rowY, rowW, 28, 7, '#27352f');
+      drawText(`Upper ${state.upperSubtotal} + bonus ${state.upperBonus}`, rowX + 14, rowY + 14, 13, '#dce9d8', 'left', 900);
+      drawText(`Lower ${state.lowerSubtotal}`, rowX + rowW - 14, rowY + 14, 13, '#dce9d8', 'right', 900);
+      rowY += 34;
+    }
+    drawScoreRow(category, rowX, rowY, rowW, rowH, index);
+    state.categoryRects.push({ x: rowX, y: rowY, w: rowW, h: rowH, id: category.id });
+    rowY += rowH + 5;
+  });
+
+  fillRoundRect(rowX, scorePanel.y + scorePanel.h - 78, rowW, 56, 9, '#27352f', '#ffd98155', 2);
+  drawText('Total', rowX + 18, scorePanel.y + scorePanel.h - 50, 18, '#f8faf0', 'left', 900);
+  drawText(String(state.total), rowX + rowW - 18, scorePanel.y + scorePanel.h - 50, 30, '#ffd981', 'right', 900);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const client = event.touches?.[0] || event.changedTouches?.[0] || event;
+  return {
+    x: (client.clientX - rect.left) * (LOGICAL_WIDTH / rect.width),
+    y: (client.clientY - rect.top) * (LOGICAL_HEIGHT / rect.height),
+  };
+}
+
+function contains(rect, point) {
+  return point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h;
+}
+
+function handleCanvasPress(event) {
+  event.preventDefault();
+  const point = canvasPoint(event);
+  const die = state.diceRects.find(rect => contains(rect, point));
+  if (die) {
+    toggleHold(die.index);
+    return;
+  }
+  const row = state.categoryRects.find(rect => contains(rect, point));
+  if (row) {
+    const same = state.selectedCategory === row.id;
+    selectCategory(row.id);
+    if (same && state.rolledThisTurn) scoreSelected();
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+    updateHud();
+  }
+}
+
+function selectedIndex() {
+  return Math.max(0, CATEGORIES.findIndex(category => category.id === state.selectedCategory));
+}
+
+function moveSelection(delta) {
+  if (state.mode !== 'playing') return;
+  let index = selectedIndex();
+  for (let step = 0; step < CATEGORIES.length; step += 1) {
+    index = (index + delta + CATEGORIES.length) % CATEGORIES.length;
+    const category = CATEGORIES[index];
+    if (state.scores[category.id] === null) {
+      selectCategory(category.id);
+      return;
+    }
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'arrowup', 'arrowdown', 'enter'].includes(key)) event.preventDefault();
+  if (key === ' ' || key === 'r') rollDice();
+  else if (key >= '1' && key <= '5') toggleHold(Number(key) - 1);
+  else if (key === 'arrowup') moveSelection(-1);
+  else if (key === 'arrowdown') moveSelection(1);
+  else if (key === 'enter') scoreSelected();
+  else if (key === 'h') showHint();
+  else if (key === 'u') undo();
+  else if (key === 'c' || key === 'escape') clearHolds();
+  else if (key === 'n') startGame();
+  else if (key === 'f') toggleFullscreen();
+}
+
+function renderGameToText() {
+  const scorecard = Object.fromEntries(CATEGORIES.map(category => [category.id, state.scores[category.id]]));
+  const previewScores = Object.fromEntries(CATEGORIES
+    .filter(category => state.scores[category.id] === null)
+    .map(category => [category.id, state.rolledThisTurn ? category.score(state.dice) : null]));
+  return JSON.stringify({
+    coordinate_system: 'Canvas coordinates use origin at top-left, x increases right, y increases down.',
+    mode: state.mode,
+    round: state.round,
+    rolls_left: state.rollsLeft,
+    dice: state.dice.map((value, index) => ({ index, value, held: state.held[index] })),
+    rolled_this_turn: state.rolledThisTurn,
+    selected_category: state.selectedCategory,
+    selected_preview: state.rolledThisTurn && CATEGORY_BY_ID.has(state.selectedCategory)
+      ? CATEGORY_BY_ID.get(state.selectedCategory).score(state.dice)
+      : null,
+    scorecard,
+    preview_scores: previewScores,
+    upper_subtotal: state.upperSubtotal,
+    upper_bonus: state.upperBonus,
+    lower_subtotal: state.lowerSubtotal,
+    total: state.total,
+    best: state.best,
+    coins_earned: state.coinsEarned,
+    hint: state.hint,
+    message: state.message,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  manualStepping = false;
+  return renderGameToText();
+};
+
+function loop(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+els.startBtn.addEventListener('click', startGame);
+els.newBtn.addEventListener('click', startGame);
+els.rollBtn.addEventListener('click', rollDice);
+els.scoreBtn.addEventListener('click', scoreSelected);
+els.hintBtn.addEventListener('click', showHint);
+els.undoBtn.addEventListener('click', undo);
+els.cancelBtn.addEventListener('click', clearHolds);
+els.fullBtn.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handleCanvasPress);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+mountGameFeedback({ gameSlug: 'yachtdice', gameName: 'Yacht Dice' });
+updateDerived();
+render();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

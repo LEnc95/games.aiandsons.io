@@ -2961,3 +2961,141 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `git diff --check` on Reversi integration files passed; only existing LF-to-CRLF warnings were printed.
 - Follow-up TODO:
   - None for Reversi validation at this point; the browser and feedback smoke checks have now passed locally.
+
+## 2026-05-22 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory file was missing at `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; continuing from `progress.md` recent run notes.
+- Initial repo check: no `/battleship` route or Battleship metadata entry found.
+- Chosen game: Battleship (`/battleship`), a player-vs-AI naval grid game with hidden enemy fleet, hit/miss turns, AI hunt/target logic, scans, shuffled fleets, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `battleship/index.html` with canvas rendering, player-vs-AI turns, hidden enemy fleet, visible player fleet, hit/miss/sunk tracking, AI target queue logic, limited scans, fleet shuffle, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Battleship in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Battleship.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Battleship module script after SEO injection.
+  - Metadata checks: pass; `GAMES` and `FEEDBACK_GAMES` report 103 games including Battleship with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/battleship/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, fired on the enemy grid through pointer input, advanced deterministic time through the AI reply, used scan, fired again through button controls, verified `render_game_to_text()` state, and verified feedback mount context.
+  - `git diff --check` on Battleship integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary `/battleship/` route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so no alternate browser screenshot path was available.
+- Local preview:
+  - Temporary route smoke returned HTTP 200 for `/battleship/`.
+  - A detached preview server attempt briefly served `http://127.0.0.1:4210/battleship/` but did not persist after the launcher exited in this sandbox, so no live preview URL is available from this run.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Battleship screenshots.
+
+## 2026-05-23 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; file produced no prior content in this run, so continuing from recent `progress.md` automation notes.
+- Initial repo check: no `/dotsandboxes` route or Dots and Boxes metadata entry found.
+- Chosen game: Dots and Boxes (`/dotsandboxes`), a classic grid line-drawing game with player-vs-AI turns, completed box scoring, hints, undo, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `dotsandboxes/index.html` with canvas rendering, player-vs-AI Dots and Boxes rules, box completion extra turns, AI edge selection, hints, undo, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+  - Registered Dots and Boxes in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Dots and Boxes.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Dots and Boxes module script after SEO injection.
+  - Metadata checks: pass; `GAMES` reports 104 games including Dots and Boxes with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/dotsandboxes/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, placed lines through keyboard and pointer handlers, advanced deterministic time through AI replies, used hint, undid a move, verified `render_game_to_text()` state, and verified feedback mount context.
+  - `git diff --check` on Dots and Boxes integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the temporary `/dotsandboxes/` route but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so no alternate browser screenshot path was available.
+- Local preview:
+  - Node static preview server returned HTTP 200 for `http://127.0.0.1:4173/dotsandboxes/` immediately after launch, but the detached process did not persist after the launcher command exited in this sandbox.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Dots and Boxes screenshots.
+
+## 2026-05-24 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Dots and Boxes, Battleship, Reversi, Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/fifteenpuzzle` route or Fifteen Puzzle metadata entry found.
+- Chosen game: Fifteen Puzzle (`/fifteenpuzzle`), a sliding numbered-tile puzzle with 3x3, 4x4, and 5x5 boards, keyboard/pointer/touch controls, undo, hints, preview labels, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `fifteenpuzzle/index.html` with canvas rendering, solvable shuffles, legal adjacent tile slides, move/time/best tracking, coin rewards, responsive HUD/controls, shared feedback context, and deterministic test hooks.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Fifteen Puzzle.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass for the Fifteen Puzzle module script after SEO injection and the local best-score storage robustness patch.
+  - Metadata checks: pass; `GAMES` reports 105 games including Fifteen Puzzle with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/fifteenpuzzle/`.
+  - Stubbed DOM/canvas runtime harness passed: started play, slid an adjacent tile through pointer input, used hint, undid the move, switched to 3x3, toggled preview, advanced deterministic time, verified `render_game_to_text()` state, and verified feedback mount context.
+  - `git diff --check` on Fifteen Puzzle integration files passed; only existing LF-to-CRLF warnings were printed.
+- Sandbox/browser blockers:
+  - The repo-documented Python static server command could not run because `python` is not installed in this environment; reran browser attempts with a temporary Node static server instead.
+  - Required `$develop-web-game` Playwright client reached `/fifteenpuzzle/` but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Fifteen Puzzle screenshots.
+
+## 2026-05-25 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; file produced no prior content in this run, so recent choices were checked from this handoff file.
+- Initial repo check found Peg Solitaire but no `/solitaire` route, Klondike metadata, or card-solitaire page.
+- Chosen game: Klondike Solitaire (`/solitaire`), a classic card tableau game with stock/waste draw, tableau runs, foundations, hints, undo, auto-foundation, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `solitaire/index.html` with canvas rendering, responsive HUD/controls, pointer/touch/keyboard controls, fullscreen, coin rewards on win, shared feedback context, and deterministic test hooks.
+  - Registered Klondike Solitaire in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Klondike Solitaire.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass after SEO injection and whitespace fix.
+  - Metadata checks: pass; `GAMES` reports 106 games including Klondike Solitaire with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/solitaire/`.
+  - Stubbed DOM/canvas runtime harness passed: started a seeded deal, drew/moved via real game handlers, produced a hint, undid, advanced deterministic time, verified `render_game_to_text()` state, and verified feedback mount context.
+  - `git diff --check` on tracked Klondike integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `solitaire/index.html`, `src/meta/games.js`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/solitaire/` but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so no alternate browser screenshot path was available.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Klondike Solitaire screenshots.
+
+## 2026-05-26 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Initial `$CODEX_HOME` memory lookup returned empty in this shell, so recent choices were checked from this handoff file and the live game registry. An explicit read of `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md` later confirmed the 2026-05-25 Klondike Solitaire run.
+- Initial repo check: no `/yachtdice` route or Yacht Dice metadata entry found; Dice Forge exists but is an arcade dice-drafting game, not a classic scorecard dice game.
+- Chosen game: Yacht Dice (`/yachtdice`), a five-dice scorecard game with hold/reroll turns, thirteen scoring categories, hints, undo, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `yachtdice/index.html` with canvas rendering, 13 category scorecard rules, hold/reroll flow, hints, undo, fullscreen, coin rewards, shared feedback context, and deterministic test hooks.
+  - Registered Yacht Dice in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Yacht Dice.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass after SEO injection.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node harness returned HTTP 200 for `/yachtdice/`.
+  - Stubbed DOM/canvas runtime harness passed: started from overlay, rolled dice, held a die with keyboard, used hint, scored a row, undid the score, filled all 13 scorecard rows, awarded coins, advanced deterministic time, and verified shared feedback mount context.
+  - `git diff --check` on Yacht Dice integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `yachtdice/index.html`, `src/meta/games.js`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/yachtdice/` but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Yacht Dice screenshots.

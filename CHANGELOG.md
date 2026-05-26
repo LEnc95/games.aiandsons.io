@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-05-22
+
+### Added
+- Added and wired six new games: `gomoku-grid`, `mancala`, `peg-solitaire`, `tower-of-hanoi`, `checkers`, and `reversi`.
+
+### Improved
+- Improved game shell interaction stability by fixing start-modal and overlay click handling and stabilizing overlays during animation frames.
+- Improved homepage accessibility compliance by aligning music controls with WCAG 2.5.3 label-in-name requirements.
+
+### Operations
+- Optimized nightly Stripe reconcile processing with batched concurrency.
+- Key PRs: [#160](https://github.com/LEnc95/games.aiandsons.io/pull/160), [#158](https://github.com/LEnc95/games.aiandsons.io/pull/158), [#157](https://github.com/LEnc95/games.aiandsons.io/pull/157).
+
 ## [1.3.0] - 2026-05-15
 
 ### Added

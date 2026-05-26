@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Klondike Solitaire | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(26% 22% at 16% 18%, #f2c46d 0%, transparent 70%),
+    radial-gradient(24% 22% at 83% 16%, #67c3b0 0%, transparent 68%),
+    radial-gradient(28% 28% at 76% 84%, #b96d8f 0%, transparent 72%),
+    linear-gradient(135deg, #152842 0%, #254b3f 52%, #422d4d 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(98vw, 1180px);
+  aspect-ratio: 55 / 38;
+  max-height: min(68dvh, 790px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #12372f;
+  box-shadow: 0 20px 52px #10182699;
+}
+.hud {
+  width: min(98vw, 1180px);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ffffff3f;
+  background: #071421b8;
+  padding: 7px 9px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  box-shadow: 0 8px 22px #00000040;
+}
+.chip span {
+  color: #c5d8e8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #a9f3c1; }
+.chip.warn b { color: #ffe08a; }
+.controls {
+  width: min(98vw, 1180px);
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+button {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid #ffffff52;
+  background: #111f2fd9;
+  color: #f8fbff;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #9be7ff;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #111923;
+  background: linear-gradient(135deg, #ffd36c 0%, #7ee0c4 100%);
+  border-color: #ffffffb5;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  background: #091624e8;
+  padding: clamp(18px, 4vw, 30px);
+  box-shadow: 0 22px 48px #00000073;
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 64px);
+  line-height: .92;
+}
+.panel p {
+  margin: 9px auto;
+  max-width: 58ch;
+  color: #d8e8f7;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #aecadf;
+  font-size: 13px;
+}
+@media (max-width: 920px) {
+  .app {
+    justify-content: flex-start;
+    padding-top: 58px;
+  }
+  .stage {
+    width: min(98vw, 820px);
+    max-height: 57dvh;
+  }
+  .hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .controls {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .stage {
+    width: 99vw;
+    max-height: 48dvh;
+  }
+  .hud {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip {
+    min-height: 44px;
+  }
+  button {
+    min-height: 40px;
+    font-size: 13px;
+    padding: 9px 8px;
+  }
+  .back {
+    top: 8px;
+    left: 8px;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Deal a classic Klondike tableau, draw through the stock, stack alternating colors, and build each suit foundation from ace to king. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Klondike Solitaire | AI and Sons Games">
+  <meta property="og:description" content="Deal a classic Klondike tableau, draw through the stock, stack alternating colors, and build each suit foundation from ace to king. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/solitaire">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Klondike Solitaire | AI and Sons Games">
+  <meta name="twitter:description" content="Deal a classic Klondike tableau, draw through the stock, stack alternating colors, and build each suit foundation from ace to king. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/solitaire">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Klondike Solitaire","description":"Deal a classic Klondike tableau, draw through the stock, stack alternating colors, and build each suit foundation from ace to king. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/solitaire","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="Klondike Solitaire game">
+  <section class="stage" aria-label="Solitaire card table">
+    <canvas id="game" width="1100" height="760"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Klondike Solitaire</h1>
+        <p>Build each foundation from ace to king. Stack tableau cards in descending order with alternating colors, then clear every card.</p>
+        <p class="mini">Tap stock to draw. Tap a face-up card to select a run, then tap a tableau column or foundation. Keys: D draw, H hint, A auto, U undo, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Deal Cards</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip"><span>Time</span><b id="time">0:00</b></div>
+    <div class="chip warn"><span>Stock</span><b id="stock">24</b></div>
+    <div class="chip"><span>Foundations</span><b id="foundation">0 / 52</b></div>
+    <div class="chip"><span>Hint</span><b id="hintText">Deal</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="primary" id="newBtn" type="button">New Deal</button>
+    <button id="drawBtn" type="button">Draw</button>
+    <button id="autoBtn" type="button">Auto</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="cancelBtn" type="button">Cancel</button>
+    <button id="recycleBtn" type="button">Recycle</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  mode: document.getElementById('mode'),
+  moves: document.getElementById('moves'),
+  time: document.getElementById('time'),
+  stock: document.getElementById('stock'),
+  foundation: document.getElementById('foundation'),
+  hint: document.getElementById('hintText'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  newGame: document.getElementById('newBtn'),
+  draw: document.getElementById('drawBtn'),
+  auto: document.getElementById('autoBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  cancel: document.getElementById('cancelBtn'),
+  recycle: document.getElementById('recycleBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const CARD_W = 82;
+const CARD_H = 118;
+const CARD_R = 9;
+const TOP_Y = 70;
+const TABLEAU_Y = 240;
+const LEFT_X = 56;
+const GAP_X = 64;
+const FACE_DOWN_GAP = 18;
+const FACE_UP_GAP = 34;
+const suits = ['S', 'H', 'D', 'C'];
+const foundationOrder = ['S', 'H', 'D', 'C'];
+const suitNames = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' };
+const suitColors = { S: '#172033', C: '#172033', H: '#be385c', D: '#be385c' };
+const cardBack = ['#24446c', '#7a4b8b'];
+const WIN_REWARD = 42;
+
+const layout = {
+  stock: { x: LEFT_X, y: TOP_Y, w: CARD_W, h: CARD_H },
+  waste: { x: LEFT_X + CARD_W + 22, y: TOP_Y, w: CARD_W, h: CARD_H },
+  foundations: foundationOrder.map((suit, index) => ({
+    suit,
+    x: 578 + index * (CARD_W + 24),
+    y: TOP_Y,
+    w: CARD_W,
+    h: CARD_H,
+  })),
+  tableau: Array.from({ length: 7 }, (_, index) => ({
+    column: index,
+    x: LEFT_X + index * (CARD_W + GAP_X),
+    y: TABLEAU_Y,
+    w: CARD_W,
+    h: CARD_H,
+  })),
+};
+
+const state = {
+  mode: 'menu',
+  seed: 0,
+  stock: [],
+  waste: [],
+  foundations: { S: [], H: [], D: [], C: [] },
+  tableau: Array.from({ length: 7 }, () => []),
+  selected: null,
+  hint: null,
+  moves: 0,
+  elapsed: 0,
+  recycles: 0,
+  coinsEarned: 0,
+  lastMove: null,
+  message: 'Deal a fresh Klondike layout.',
+  logs: ['Deal cards, then build four foundations by suit.'],
+  history: [],
+  animations: [],
+};
+
+let lastFrame = 0;
+let controlled = false;
+let overlayKey = '';
+
+function cardName(card) {
+  if (!card) return 'none';
+  return `${rankLabel(card.rank)}${card.suit}`;
+}
+
+function rankLabel(rank) {
+  return { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' }[rank] || String(rank);
+}
+
+function cardColor(card) {
+  return card.suit === 'H' || card.suit === 'D' ? 'red' : 'black';
+}
+
+function makeDeck() {
+  const deck = [];
+  let id = 0;
+  for (const suit of suits) {
+    for (let rank = 1; rank <= 13; rank += 1) {
+      deck.push({ id: id += 1, suit, rank, faceUp: false });
+    }
+  }
+  return deck;
+}
+
+function seedFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = Number(params.get('seed'));
+  if (Number.isFinite(raw) && raw > 0) return Math.floor(raw);
+  return Math.floor(Date.now() % 2147483647) || 12345;
+}
+
+function rng(seed) {
+  let value = seed % 2147483647;
+  if (value <= 0) value += 2147483646;
+  return () => {
+    value = value * 16807 % 2147483647;
+    return (value - 1) / 2147483646;
+  };
+}
+
+function shuffle(deck, seed) {
+  const random = rng(seed);
+  const copy = deck.slice();
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function startGame(seed = seedFromUrl()) {
+  const deck = shuffle(makeDeck(), seed);
+  state.mode = 'play';
+  state.seed = seed;
+  state.stock = [];
+  state.waste = [];
+  state.foundations = { S: [], H: [], D: [], C: [] };
+  state.tableau = Array.from({ length: 7 }, () => []);
+  state.selected = null;
+  state.hint = null;
+  state.moves = 0;
+  state.elapsed = 0;
+  state.recycles = 0;
+  state.coinsEarned = 0;
+  state.lastMove = null;
+  state.message = 'Draw from stock or move a face-up tableau card.';
+  state.logs = [`Deal seed ${seed}.`];
+  state.history = [];
+  state.animations = [];
+  for (let col = 0; col < 7; col += 1) {
+    for (let row = 0; row <= col; row += 1) {
+      const card = deck.pop();
+      card.faceUp = row === col;
+      state.tableau[col].push(card);
+    }
+  }
+  state.stock = deck.map((card) => ({ ...card, faceUp: false }));
+  rememberRecent('solitaire');
+  render();
+}
+
+function snapshot() {
+  return {
+    stock: cloneCards(state.stock),
+    waste: cloneCards(state.waste),
+    foundations: Object.fromEntries(foundationOrder.map((suit) => [suit, cloneCards(state.foundations[suit])])),
+    tableau: state.tableau.map(cloneCards),
+    selected: state.selected ? { ...state.selected } : null,
+    hint: state.hint ? { ...state.hint } : null,
+    moves: state.moves,
+    elapsed: state.elapsed,
+    recycles: state.recycles,
+    coinsEarned: state.coinsEarned,
+    lastMove: state.lastMove ? { ...state.lastMove } : null,
+    message: state.message,
+    logs: state.logs.slice(),
+  };
+}
+
+function restore(snapshotValue) {
+  state.stock = cloneCards(snapshotValue.stock);
+  state.waste = cloneCards(snapshotValue.waste);
+  state.foundations = Object.fromEntries(foundationOrder.map((suit) => [suit, cloneCards(snapshotValue.foundations[suit])]));
+  state.tableau = snapshotValue.tableau.map(cloneCards);
+  state.selected = snapshotValue.selected ? { ...snapshotValue.selected } : null;
+  state.hint = snapshotValue.hint ? { ...snapshotValue.hint } : null;
+  state.moves = snapshotValue.moves;
+  state.elapsed = snapshotValue.elapsed;
+  state.recycles = snapshotValue.recycles;
+  state.coinsEarned = snapshotValue.coinsEarned;
+  state.lastMove = snapshotValue.lastMove ? { ...snapshotValue.lastMove } : null;
+  state.message = snapshotValue.message;
+  state.logs = snapshotValue.logs.slice();
+}
+
+function cloneCards(cards) {
+  return cards.map((card) => ({ ...card }));
+}
+
+function pushHistory() {
+  state.history.push(snapshot());
+  if (state.history.length > 80) state.history.shift();
+}
+
+function pushLog(text) {
+  state.logs.unshift(text);
+  state.logs = state.logs.slice(0, 5);
+}
+
+function finishAction(text) {
+  state.moves += 1;
+  state.hint = null;
+  state.message = text;
+  pushLog(text);
+  checkWin();
+}
+
+function topCard(cards) {
+  return cards[cards.length - 1] || null;
+}
+
+function drawStock() {
+  if (state.mode !== 'play') {
+    startGame();
+    return;
+  }
+  if (state.stock.length === 0) {
+    recycleWaste();
+    return;
+  }
+  pushHistory();
+  const card = state.stock.pop();
+  card.faceUp = true;
+  state.waste.push(card);
+  state.selected = null;
+  state.lastMove = { type: 'draw', card: cardName(card) };
+  finishAction(`Drew ${cardName(card)} from the stock.`);
+}
+
+function recycleWaste() {
+  if (state.mode !== 'play' || state.stock.length > 0 || state.waste.length === 0) return;
+  pushHistory();
+  state.stock = state.waste.reverse().map((card) => ({ ...card, faceUp: false }));
+  state.waste = [];
+  state.selected = null;
+  state.recycles += 1;
+  state.lastMove = { type: 'recycle' };
+  finishAction('Recycled the waste pile back into stock.');
+}
+
+function selectWaste() {
+  const card = topCard(state.waste);
+  if (!card) return;
+  state.selected = { zone: 'waste', count: 1, card: cardName(card) };
+  state.message = `${cardName(card)} selected. Tap a foundation or tableau column.`;
+}
+
+function selectTableau(column, index) {
+  const stack = state.tableau[column];
+  const card = stack[index];
+  if (!card) return;
+  if (!card.faceUp) {
+    state.message = 'Only face-up cards can move.';
+    return;
+  }
+  state.selected = {
+    zone: 'tableau',
+    column,
+    index,
+    count: stack.length - index,
+    card: cardName(card),
+  };
+  state.message = `${cardName(card)} run selected from column ${column + 1}.`;
+}
+
+function selectFoundation(suit) {
+  const card = topCard(state.foundations[suit]);
+  if (!card) {
+    state.message = `${suitNames[suit]} foundation starts with an ace.`;
+    return;
+  }
+  state.selected = { zone: 'foundation', suit, count: 1, card: cardName(card) };
+  state.message = `${cardName(card)} selected from ${suitNames[suit]} foundation.`;
+}
+
+function clearSelection() {
+  state.selected = null;
+  state.hint = null;
+  state.message = 'Selection cleared.';
+}
+
+function selectedCards() {
+  if (!state.selected) return [];
+  if (state.selected.zone === 'waste') {
+    const card = topCard(state.waste);
+    return card ? [card] : [];
+  }
+  if (state.selected.zone === 'tableau') {
+    return state.tableau[state.selected.column].slice(state.selected.index);
+  }
+  if (state.selected.zone === 'foundation') {
+    const card = topCard(state.foundations[state.selected.suit]);
+    return card ? [card] : [];
+  }
+  return [];
+}
+
+function removeSelected() {
+  if (state.selected.zone === 'waste') return [state.waste.pop()];
+  if (state.selected.zone === 'tableau') {
+    return state.tableau[state.selected.column].splice(state.selected.index);
+  }
+  if (state.selected.zone === 'foundation') return [state.foundations[state.selected.suit].pop()];
+  return [];
+}
+
+function flipExposedTableau(column) {
+  const stack = state.tableau[column];
+  const card = topCard(stack);
+  if (card && !card.faceUp) {
+    card.faceUp = true;
+    return card;
+  }
+  return null;
+}
+
+function canMoveToTableau(cards, column) {
+  if (cards.length === 0) return false;
+  const moving = cards[0];
+  const target = topCard(state.tableau[column]);
+  if (!target) return moving.rank === 13;
+  return target.faceUp && target.rank === moving.rank + 1 && cardColor(target) !== cardColor(moving);
+}
+
+function canMoveToFoundation(card, suit) {
+  if (!card || card.suit !== suit) return false;
+  const pile = state.foundations[suit];
+  const target = topCard(pile);
+  if (!target) return card.rank === 1;
+  return card.rank === target.rank + 1;
+}
+
+function moveSelectedToTableau(column) {
+  const cards = selectedCards();
+  if (!canMoveToTableau(cards, column)) {
+    state.message = 'That stack does not fit on the target column.';
+    return false;
+  }
+  pushHistory();
+  const from = describeSelection();
+  const moved = removeSelected();
+  state.tableau[column].push(...moved);
+  if (state.selected.zone === 'tableau') flipExposedTableau(state.selected.column);
+  state.lastMove = { type: 'tableau', from, to: `column ${column + 1}`, cards: moved.map(cardName).join(', ') };
+  state.selected = null;
+  finishAction(`Moved ${cardName(moved[0])}${moved.length > 1 ? ` run (${moved.length})` : ''} to column ${column + 1}.`);
+  return true;
+}
+
+function moveSelectedToFoundation(suit) {
+  const cards = selectedCards();
+  if (cards.length !== 1 || !canMoveToFoundation(cards[0], suit)) {
+    state.message = `Only the next ${suitNames[suit]} card can move there.`;
+    return false;
+  }
+  pushHistory();
+  const from = describeSelection();
+  const [card] = removeSelected();
+  state.foundations[suit].push(card);
+  if (state.selected.zone === 'tableau') flipExposedTableau(state.selected.column);
+  state.lastMove = { type: 'foundation', from, to: suitNames[suit], card: cardName(card) };
+  state.selected = null;
+  finishAction(`Moved ${cardName(card)} to ${suitNames[suit]} foundation.`);
+  return true;
+}
+
+function describeSelection() {
+  if (!state.selected) return 'none';
+  if (state.selected.zone === 'waste') return 'waste';
+  if (state.selected.zone === 'foundation') return `${suitNames[state.selected.suit]} foundation`;
+  return `column ${state.selected.column + 1}`;
+}
+
+function autoFoundation() {
+  if (state.mode !== 'play') return;
+  let moved = 0;
+  let changed = true;
+  pushHistory();
+  while (changed) {
+    changed = false;
+    const waste = topCard(state.waste);
+    if (waste && canMoveToFoundation(waste, waste.suit)) {
+      state.foundations[waste.suit].push(state.waste.pop());
+      moved += 1;
+      changed = true;
+      continue;
+    }
+    for (let col = 0; col < 7; col += 1) {
+      const card = topCard(state.tableau[col]);
+      if (card && card.faceUp && canMoveToFoundation(card, card.suit)) {
+        state.foundations[card.suit].push(state.tableau[col].pop());
+        flipExposedTableau(col);
+        moved += 1;
+        changed = true;
+      }
+    }
+  }
+  if (moved === 0) {
+    state.history.pop();
+    state.message = 'No safe foundation move is available.';
+    return;
+  }
+  state.selected = null;
+  state.lastMove = { type: 'auto-foundation', cards: moved };
+  finishAction(`Moved ${moved} card${moved === 1 ? '' : 's'} to foundations.`);
+}
+
+function undo() {
+  if (state.mode !== 'play' || state.history.length === 0) return;
+  const previous = state.history.pop();
+  restore(previous);
+  state.message = 'Last move undone.';
+  state.selected = null;
+  pushLog('Undo restored the previous layout.');
+}
+
+function foundationCount() {
+  return foundationOrder.reduce((sum, suit) => sum + state.foundations[suit].length, 0);
+}
+
+function checkWin() {
+  if (foundationCount() !== 52) return;
+  state.mode = 'won';
+  const timeBonus = Math.max(0, 40 - Math.floor(state.elapsed / 12));
+  const moveBonus = Math.max(0, 30 - Math.floor(state.moves / 5));
+  const recyclePenalty = state.recycles * 3;
+  const coins = Math.max(24, WIN_REWARD + timeBonus + moveBonus - recyclePenalty);
+  state.coinsEarned = coins;
+  addCoins(coins);
+  state.message = `Cleared all foundations in ${state.moves} moves.`;
+  pushLog(`${coins} coins earned.`);
+}
+
+function findHint() {
+  const waste = topCard(state.waste);
+  if (waste && canMoveToFoundation(waste, waste.suit)) {
+    return { type: 'foundation', source: 'waste', card: cardName(waste), target: suitNames[waste.suit] };
+  }
+  for (let col = 0; col < 7; col += 1) {
+    const card = topCard(state.tableau[col]);
+    if (card && card.faceUp && canMoveToFoundation(card, card.suit)) {
+      return { type: 'foundation', source: `column ${col + 1}`, column: col, index: state.tableau[col].length - 1, card: cardName(card), target: suitNames[card.suit] };
+    }
+  }
+  if (waste) {
+    for (let col = 0; col < 7; col += 1) {
+      if (canMoveToTableau([waste], col)) {
+        return { type: 'tableau', source: 'waste', targetColumn: col, card: cardName(waste) };
+      }
+    }
+  }
+  for (let from = 0; from < 7; from += 1) {
+    const stack = state.tableau[from];
+    for (let index = 0; index < stack.length; index += 1) {
+      const card = stack[index];
+      if (!card.faceUp) continue;
+      const cards = stack.slice(index);
+      for (let to = 0; to < 7; to += 1) {
+        if (to !== from && canMoveToTableau(cards, to)) {
+          return { type: 'tableau', source: `column ${from + 1}`, column: from, index, targetColumn: to, card: cardName(card), count: cards.length };
+        }
+      }
+    }
+  }
+  if (state.stock.length > 0) return { type: 'draw', source: 'stock', card: 'next card' };
+  if (state.waste.length > 0) return { type: 'recycle', source: 'waste' };
+  return { type: 'none', source: 'none' };
+}
+
+function showHint() {
+  if (state.mode !== 'play') return;
+  const hint = findHint();
+  state.hint = hint;
+  if (hint.type === 'foundation') {
+    state.message = `Hint: move ${hint.card} from ${hint.source} to ${hint.target}.`;
+  } else if (hint.type === 'tableau') {
+    state.message = `Hint: move ${hint.card} from ${hint.source} to column ${hint.targetColumn + 1}.`;
+  } else if (hint.type === 'draw') {
+    state.message = 'Hint: draw from the stock.';
+  } else if (hint.type === 'recycle') {
+    state.message = 'Hint: recycle the waste pile.';
+  } else {
+    state.message = 'No legal move found.';
+  }
+}
+
+function clickCard(hit) {
+  if (state.mode !== 'play') {
+    startGame();
+    return;
+  }
+  if (hit.zone === 'stock') {
+    drawStock();
+    return;
+  }
+  if (hit.zone === 'waste') {
+    if (state.selected?.zone === 'waste') clearSelection();
+    else selectWaste();
+    return;
+  }
+  if (hit.zone === 'foundation') {
+    if (state.selected) moveSelectedToFoundation(hit.suit);
+    else selectFoundation(hit.suit);
+    return;
+  }
+  if (hit.zone === 'tableau') {
+    if (state.selected) {
+      if (!moveSelectedToTableau(hit.column)) {
+        const stack = state.tableau[hit.column];
+        const index = hit.index == null ? stack.length - 1 : hit.index;
+        if (index >= 0) selectTableau(hit.column, index);
+      }
+    } else if (hit.index != null) {
+      selectTableau(hit.column, hit.index);
+    } else {
+      state.message = 'Empty columns only accept kings.';
+    }
+  }
+}
+
+function hitTest(canvasX, canvasY) {
+  if (pointInRect(canvasX, canvasY, layout.stock)) return { zone: 'stock' };
+  if (pointInRect(canvasX, canvasY, layout.waste)) return { zone: 'waste' };
+  for (const foundation of layout.foundations) {
+    if (pointInRect(canvasX, canvasY, foundation)) return { zone: 'foundation', suit: foundation.suit };
+  }
+  for (const columnRect of layout.tableau) {
+    const stack = state.tableau[columnRect.column];
+    const height = Math.max(CARD_H, stackHeight(stack));
+    if (
+      canvasX >= columnRect.x &&
+      canvasX <= columnRect.x + CARD_W &&
+      canvasY >= columnRect.y &&
+      canvasY <= columnRect.y + height
+    ) {
+      if (stack.length === 0) return { zone: 'tableau', column: columnRect.column, index: null };
+      let y = columnRect.y;
+      for (let i = 0; i < stack.length; i += 1) {
+        const gap = stack[i].faceUp ? FACE_UP_GAP : FACE_DOWN_GAP;
+        const nextY = i === stack.length - 1 ? y + CARD_H : y + gap;
+        if (canvasY >= y && canvasY <= nextY) return { zone: 'tableau', column: columnRect.column, index: i };
+        y += gap;
+      }
+      return { zone: 'tableau', column: columnRect.column, index: stack.length - 1 };
+    }
+  }
+  return null;
+}
+
+function pointerToCanvas(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function pointInRect(x, y, rect) {
+  return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+}
+
+function stackHeight(stack) {
+  if (stack.length === 0) return CARD_H;
+  return stack.reduce((height, card, index) => {
+    if (index === stack.length - 1) return height + CARD_H;
+    return height + (card.faceUp ? FACE_UP_GAP : FACE_DOWN_GAP);
+  }, 0);
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  const point = pointerToCanvas(event);
+  const hit = hitTest(point.x, point.y);
+  if (hit) clickCard(hit);
+}
+
+function update(dt) {
+  if (state.mode === 'play') state.elapsed += dt;
+  for (const animation of state.animations) animation.age += dt;
+  state.animations = state.animations.filter((animation) => animation.age < animation.life);
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#17334b');
+  gradient.addColorStop(.48, '#19513f');
+  gradient.addColorStop(1, '#463359');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.globalAlpha = .16;
+  ctx.strokeStyle = '#f8fbff';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 18; i += 1) {
+    const y = 42 + i * 42;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.bezierCurveTo(250, y + 28, 580, y - 28, 1100, y + 14);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSlot(rect, label, active = false) {
+  drawRoundedRect(rect.x, rect.y, rect.w, rect.h, CARD_R);
+  ctx.fillStyle = active ? '#ffffff24' : '#ffffff14';
+  ctx.fill();
+  ctx.strokeStyle = active ? '#ffd36c' : '#ffffff48';
+  ctx.lineWidth = active ? 4 : 2;
+  ctx.stroke();
+  ctx.fillStyle = '#d6e5ef99';
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, rect.x + rect.w / 2, rect.y + rect.h / 2);
+}
+
+function drawCard(card, x, y, options = {}) {
+  ctx.save();
+  ctx.shadowColor = '#0000006b';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+  drawRoundedRect(x, y, CARD_W, CARD_H, CARD_R);
+  if (!card.faceUp) {
+    const back = ctx.createLinearGradient(x, y, x + CARD_W, y + CARD_H);
+    back.addColorStop(0, cardBack[0]);
+    back.addColorStop(1, cardBack[1]);
+    ctx.fillStyle = back;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#ffffff9c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff2c';
+    for (let i = 0; i < 4; i += 1) {
+      drawRoundedRect(x + 14 + i * 12, y + 18 + i * 17, 28, 44, 6);
+      ctx.fill();
+    }
+    ctx.restore();
+    return;
+  }
+  ctx.fillStyle = '#fff8e9';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = options.highlight ? '#ffd36c' : '#122035';
+  ctx.lineWidth = options.highlight ? 4 : 2;
+  ctx.stroke();
+
+  const color = suitColors[card.suit];
+  ctx.fillStyle = color;
+  ctx.font = '900 19px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(rankLabel(card.rank), x + 9, y + 8);
+  ctx.fillText(card.suit, x + 9, y + 30);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 36px "Trebuchet MS", sans-serif';
+  ctx.fillText(card.suit, x + CARD_W / 2, y + CARD_H / 2 + 3);
+  ctx.save();
+  ctx.translate(x + CARD_W - 9, y + CARD_H - 8);
+  ctx.rotate(Math.PI);
+  ctx.font = '900 17px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(rankLabel(card.rank), 0, 0);
+  ctx.fillText(card.suit, 0, 22);
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawHeader() {
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Klondike Solitaire', LEFT_X, 20);
+  ctx.fillStyle = '#d4e4f0';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(state.message, LEFT_X + 300, 30);
+}
+
+function drawPiles() {
+  const stockActive = state.hint?.type === 'draw' || state.hint?.type === 'recycle';
+  drawSlot(layout.stock, state.stock.length ? String(state.stock.length) : 'Empty', stockActive);
+  if (state.stock.length) drawCard({ faceUp: false }, layout.stock.x, layout.stock.y);
+  const wasteCard = topCard(state.waste);
+  drawSlot(layout.waste, 'Waste', state.selected?.zone === 'waste');
+  if (wasteCard) drawCard(wasteCard, layout.waste.x, layout.waste.y, { highlight: state.selected?.zone === 'waste' || state.hint?.source === 'waste' });
+  for (const foundation of layout.foundations) {
+    const card = topCard(state.foundations[foundation.suit]);
+    const active = state.hint?.target === suitNames[foundation.suit] ||
+      (state.selected?.zone === 'foundation' && state.selected.suit === foundation.suit);
+    drawSlot(foundation, foundation.suit, active);
+    if (card) drawCard(card, foundation.x, foundation.y, { highlight: active });
+  }
+}
+
+function drawTableau() {
+  for (const columnRect of layout.tableau) {
+    const stack = state.tableau[columnRect.column];
+    const activeTarget = state.hint?.targetColumn === columnRect.column;
+    if (stack.length === 0) drawSlot(columnRect, 'K', activeTarget);
+    let y = columnRect.y;
+    for (let index = 0; index < stack.length; index += 1) {
+      const card = stack[index];
+      const selected = state.selected?.zone === 'tableau' &&
+        state.selected.column === columnRect.column &&
+        index >= state.selected.index;
+      const hinted = state.hint?.column === columnRect.column && state.hint?.index === index;
+      drawCard(card, columnRect.x, y, { highlight: selected || hinted || activeTarget && index === stack.length - 1 });
+      y += index === stack.length - 1 ? 0 : card.faceUp ? FACE_UP_GAP : FACE_DOWN_GAP;
+    }
+  }
+}
+
+function drawSidePanel() {
+  const x = 926;
+  const y = 238;
+  const w = 136;
+  const h = 408;
+  drawRoundedRect(x, y, w, h, 8);
+  ctx.fillStyle = '#091624d5';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff4a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 19px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Table', x + 14, y + 16);
+  const rows = [
+    ['Moves', String(state.moves)],
+    ['Time', formatTime(state.elapsed)],
+    ['Stock', String(state.stock.length)],
+    ['Waste', String(state.waste.length)],
+    ['Recycle', String(state.recycles)],
+    ['Done', `${foundationCount()}/52`],
+  ];
+  rows.forEach(([label, value], index) => {
+    const rowY = y + 58 + index * 42;
+    ctx.fillStyle = '#ffffff14';
+    drawRoundedRect(x + 12, rowY, w - 24, 32, 7);
+    ctx.fill();
+    ctx.fillStyle = '#9fb6ca';
+    ctx.font = '900 10px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 22, rowY + 5);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 15px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, x + 22, rowY + 17);
+  });
+  ctx.fillStyle = '#9fb6ca';
+  ctx.font = '900 10px "Trebuchet MS", sans-serif';
+  ctx.fillText('LOG', x + 14, y + 330);
+  ctx.fillStyle = '#dbe9f5';
+  ctx.font = '800 11px "Trebuchet MS", sans-serif';
+  state.logs.slice(0, 3).forEach((line, index) => {
+    wrapText(line, x + 14, y + 350 + index * 17, w - 28, 13, 1);
+  });
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = String(text || '').split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y + lines * lineHeight);
+      lines += 1;
+      line = word;
+      if (lines >= maxLines) return;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y + lines * lineHeight);
+}
+
+function formatTime(seconds) {
+  const whole = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(whole / 60);
+  const secs = whole % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function renderHud() {
+  hud.mode.textContent = state.mode === 'play' ? 'Playing' : state.mode === 'won' ? 'Won' : 'Menu';
+  hud.moves.textContent = String(state.moves);
+  hud.time.textContent = formatTime(state.elapsed);
+  hud.stock.textContent = `${state.stock.length} / ${state.waste.length}`;
+  hud.foundation.textContent = `${foundationCount()} / 52`;
+  hud.hint.textContent = state.hint ? state.hint.type : 'Ready';
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  buttons.undo.disabled = state.mode !== 'play' || state.history.length === 0;
+  buttons.auto.disabled = state.mode !== 'play';
+  buttons.hint.disabled = state.mode !== 'play';
+  buttons.cancel.disabled = !state.selected && !state.hint;
+  buttons.recycle.disabled = state.mode !== 'play' || state.stock.length > 0 || state.waste.length === 0;
+}
+
+function renderOverlay() {
+  const key = `${state.mode}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Klondike Solitaire</h1>
+      <p>Build each foundation from ace to king. Stack tableau cards in descending order with alternating colors, then clear every card.</p>
+      <p class="mini">Tap stock to draw. Tap a face-up card to select a run, then tap a tableau column or foundation. Keys: D draw, H hint, A auto, U undo, F fullscreen.</p>
+      <button class="primary" id="startBtn" type="button">Deal Cards</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', () => startGame());
+  } else if (state.mode === 'won') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Table Cleared</h1>
+      <p>${state.message} ${state.coinsEarned} coins earned.</p>
+      <p class="mini">Try a faster clear, fewer stock recycles, or a new seed.</p>
+      <button class="primary" id="startBtn" type="button">New Deal</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', () => startGame(seedFromUrl() + state.moves + 1));
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function render() {
+  drawBackground();
+  drawHeader();
+  drawPiles();
+  drawTableau();
+  drawSidePanel();
+  renderHud();
+  renderOverlay();
+}
+
+function frame(ts) {
+  const dt = lastFrame ? Math.min(.05, (ts - lastFrame) / 1000) : 1 / 60;
+  lastFrame = ts;
+  if (!controlled) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+function compactCard(card) {
+  if (!card) return null;
+  return { card: cardName(card), suit: card.suit, rank: card.rank, face_up: !!card.faceUp, color: cardColor(card) };
+}
+
+function legalMovesSummary() {
+  const moves = [];
+  const waste = topCard(state.waste);
+  if (waste) {
+    if (canMoveToFoundation(waste, waste.suit)) moves.push({ from: 'waste', to: `${waste.suit} foundation`, card: cardName(waste) });
+    for (let col = 0; col < 7; col += 1) {
+      if (canMoveToTableau([waste], col)) moves.push({ from: 'waste', to: `column ${col + 1}`, card: cardName(waste) });
+    }
+  }
+  for (let from = 0; from < 7; from += 1) {
+    const stack = state.tableau[from];
+    stack.forEach((card, index) => {
+      if (!card.faceUp) return;
+      const cards = stack.slice(index);
+      if (cards.length === 1 && canMoveToFoundation(card, card.suit)) {
+        moves.push({ from: `column ${from + 1}`, to: `${card.suit} foundation`, card: cardName(card) });
+      }
+      for (let to = 0; to < 7; to += 1) {
+        if (to !== from && canMoveToTableau(cards, to)) {
+          moves.push({ from: `column ${from + 1}`, to: `column ${to + 1}`, card: cardName(card), count: cards.length });
+        }
+      }
+    });
+  }
+  if (state.stock.length > 0) moves.push({ from: 'stock', to: 'waste', action: 'draw' });
+  else if (state.waste.length > 0) moves.push({ from: 'waste', to: 'stock', action: 'recycle' });
+  return moves.slice(0, 20);
+}
+
+function renderGameToText() {
+  const payload = {
+    coordinate_system: 'Canvas 1100x760. Cards use x/y from top-left; tableau columns are numbered 1-7 left to right.',
+    mode: state.mode,
+    seed: state.seed,
+    moves: state.moves,
+    elapsed_seconds: Number(state.elapsed.toFixed(2)),
+    stock_count: state.stock.length,
+    waste_count: state.waste.length,
+    waste_top: compactCard(topCard(state.waste)),
+    recycles: state.recycles,
+    foundation_count: foundationCount(),
+    foundations: Object.fromEntries(foundationOrder.map((suit) => [suit, compactCard(topCard(state.foundations[suit]))])),
+    tableau: state.tableau.map((stack, index) => ({
+      column: index + 1,
+      face_down: stack.filter((card) => !card.faceUp).length,
+      visible: stack.filter((card) => card.faceUp).map(compactCard),
+      top: compactCard(topCard(stack)),
+    })),
+    selected: state.selected,
+    hint: state.hint,
+    legal_moves: legalMovesSummary(),
+    message: state.message,
+    last_move: state.lastMove,
+    coins_earned: state.coinsEarned,
+    logs: state.logs.slice(0, 4),
+  };
+  return JSON.stringify(payload);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  controlled = false;
+};
+window.__solitaireDebug = {
+  startGame,
+  drawStock,
+  autoFoundation,
+  showHint,
+  undo,
+  clickCard,
+  state,
+  layout,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { mode: state.mode, moves: state.moves };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+buttons.newGame.addEventListener('click', () => startGame(seedFromUrl() + state.moves + state.recycles + 1));
+buttons.draw.addEventListener('click', drawStock);
+buttons.auto.addEventListener('click', autoFoundation);
+buttons.hint.addEventListener('click', showHint);
+buttons.undo.addEventListener('click', undo);
+buttons.cancel.addEventListener('click', clearSelection);
+buttons.recycle.addEventListener('click', recycleWaste);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'escape') {
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    clearSelection();
+    return;
+  }
+  if (state.mode !== 'play') {
+    if (key === 'enter' || key === ' ') {
+      event.preventDefault();
+      startGame();
+    }
+    return;
+  }
+  if (key === 'd' || key === ' ') {
+    event.preventDefault();
+    drawStock();
+  } else if (key === 'a') {
+    event.preventDefault();
+    autoFoundation();
+  } else if (key === 'h') {
+    event.preventDefault();
+    showHint();
+  } else if (key === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'n' || key === 'r') {
+    event.preventDefault();
+    startGame(seedFromUrl() + state.moves + 1);
+  } else if (key === 'w') {
+    event.preventDefault();
+    selectWaste();
+  } else if (key >= '1' && key <= '7') {
+    event.preventDefault();
+    const column = Number(key) - 1;
+    const stack = state.tableau[column];
+    if (state.selected) moveSelectedToTableau(column);
+    else {
+      const index = Math.max(0, stack.findIndex((card) => card.faceUp));
+      selectTableau(column, stack.length ? index : null);
+    }
+  }
+});
+
+mountGameFeedback({ gameSlug: 'solitaire', gameName: 'Klondike Solitaire' });
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
