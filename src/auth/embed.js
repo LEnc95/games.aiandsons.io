@@ -388,7 +388,7 @@ function createFamilySection() {
     </div>
     <p class="cade-account-status">Loading family details...</p>
     <div class="cade-family-form" hidden>
-      <input class="cade-family-input" type="email" placeholder="familymember@example.com" inputmode="email" autocomplete="email" />
+      <input class="cade-family-input" type="email" placeholder="familymember@example.com" inputmode="email" autocomplete="email" aria-label="Family member email address" />
       <div class="cade-family-actions">
         <button type="button" class="cade-family-btn">Send invite</button>
         <button type="button" class="cade-family-btn" hidden>Accept invite</button>
@@ -1112,6 +1112,13 @@ export function mountAccountWidget() {
 
   billingSection.plansBtn.addEventListener("click", () => {
     window.location.assign("/pricing.html");
+  });
+
+  familySection.emailInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      familySection.inviteBtn.click();
+    }
   });
 
   familySection.inviteBtn.addEventListener("click", async () => {

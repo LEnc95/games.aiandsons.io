@@ -34,3 +34,6 @@
 ## 2026-05-22 - Screen Reader Handling of Live Balances
 **Learning:** Decorative emojis in live balance displays (like a coin counter) can cause screen readers to announce literal emoji names redundantly (e.g., "coin emoji zero"). Furthermore, dynamic numerical updates to these balances are completely invisible to screen reader users unless the container announces them.
 **Action:** Always add `aria-hidden="true"` to purely decorative icons/emojis in balance displays. Wrap the entire display in an element with `role="status"` and a descriptive `aria-label` (e.g., "Coins balance") to ensure dynamic updates are politely announced to assistive technology without user interaction.
+## 2026-05-27 - ARIA Labels and Native Enter Form Submission on non-form inputs
+**Learning:** Inputs nested in non-form wrapper containers (like the `cade-family-input`) miss out on native `Enter` key form submission and screen reader visibility if they lack a `<label>`.
+**Action:** Always ensure non-form inputs have an `aria-label` and a `keydown` event listener attached that natively simulates submission by listening for `Enter` and clicking the target button. This restores native form behavior and ensures WCAG compliance.
