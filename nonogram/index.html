@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Nonogram | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background: linear-gradient(135deg, #17324a 0%, #25403a 48%, #514124 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff7a;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 980px);
+  aspect-ratio: 13 / 10;
+  max-height: min(67dvh, 740px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #eaf1ef;
+  box-shadow: 0 22px 54px #10141d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 710px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #12202af2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce9ea;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.mini {
+  font-size: 13px;
+  color: #b9cbd0;
+}
+.hud, .controls {
+  width: min(97vw, 980px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff50;
+  background: #102638d9;
+  color: #f7fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff24;
+}
+.chip span {
+  font-size: 12px;
+  color: #b8d0d8;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #ffd66e; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 10px;
+  box-shadow: inset 0 1px 0 #ffffff20, 0 8px 18px #00000024;
+}
+button:hover { background: #163650; }
+button:disabled {
+  opacity: .46;
+  cursor: default;
+}
+.primary {
+  background: #ffd05c;
+  border-color: #ffe6a3;
+  color: #142433;
+}
+.primary:hover { background: #ffe08d; }
+button.active {
+  background: #5fc4a1;
+  color: #071a1f;
+  border-color: #bfffe9;
+}
+@media (max-width: 820px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(96vw, 720px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 520px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Solve picture-logic grids by reading row and column clues, filling hidden squares, and marking safe empty cells. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Nonogram | AI and Sons Games">
+  <meta property="og:description" content="Solve picture-logic grids by reading row and column clues, filling hidden squares, and marking safe empty cells. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/nonogram">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nonogram | AI and Sons Games">
+  <meta name="twitter:description" content="Solve picture-logic grids by reading row and column clues, filling hidden squares, and marking safe empty cells. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/nonogram">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Nonogram","description":"Solve picture-logic grids by reading row and column clues, filling hidden squares, and marking safe empty cells. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/nonogram","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Nonogram game board">
+    <canvas id="game" width="1040" height="800"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Nonogram</h1>
+        <p>Read the row and column clues, fill the hidden picture, and mark cells you know are empty.</p>
+        <p class="mini">Click cells to use the active tool. Right click marks. Keyboard: arrows move, Space fills, X marks, H hints, U undo, N new, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleName">Lantern</b></div>
+    <div class="chip"><span>Mode</span><b id="modeText">Fill</b></div>
+    <div class="chip"><span>Filled</span><b id="filledText">0 / 0</b></div>
+    <div class="chip"><span>Mistakes</span><b id="mistakesText">0</b></div>
+    <div class="chip"><span>Best</span><b id="bestText">--</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="active" id="fillBtn" type="button">Fill</button>
+    <button id="markBtn" type="button">Mark</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="checkBtn" type="button">Check</button>
+    <button id="newBtn" type="button">New</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  puzzleName: document.getElementById('puzzleName'),
+  modeText: document.getElementById('modeText'),
+  filledText: document.getElementById('filledText'),
+  mistakesText: document.getElementById('mistakesText'),
+  bestText: document.getElementById('bestText'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  start: document.getElementById('startBtn'),
+  fill: document.getElementById('fillBtn'),
+  mark: document.getElementById('markBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  check: document.getElementById('checkBtn'),
+  new: document.getElementById('newBtn'),
+};
+
+const STORAGE_PREFIX = 'cade:nonogram:best:';
+const EMPTY = 0;
+const FILLED = 1;
+const MARKED = 2;
+const PUZZLES = [
+  {
+    id: 'lantern',
+    name: 'Lantern',
+    difficulty: 'Warmup',
+    grid: [
+      '0011100',
+      '0111110',
+      '0101010',
+      '0111110',
+      '0011100',
+      '0010100',
+      '0111110',
+    ],
+  },
+  {
+    id: 'rocket',
+    name: 'Rocket',
+    difficulty: 'Classic',
+    grid: [
+      '0001000',
+      '0011100',
+      '0111110',
+      '0101010',
+      '0111110',
+      '0011100',
+      '0101010',
+    ],
+  },
+  {
+    id: 'crown',
+    name: 'Crown',
+    difficulty: 'Sharp',
+    grid: [
+      '1000001',
+      '1101011',
+      '1111111',
+      '0111110',
+      '0011100',
+      '0011100',
+      '0111110',
+    ],
+  },
+  {
+    id: 'anchor',
+    name: 'Anchor',
+    difficulty: 'Harbor',
+    grid: [
+      '0011100',
+      '0001000',
+      '1111111',
+      '0001000',
+      '0101010',
+      '0111110',
+      '0011100',
+    ],
+  },
+];
+
+const state = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  puzzle: PUZZLES[0],
+  solution: [],
+  rowClues: [],
+  colClues: [],
+  board: [],
+  cursor: { row: 0, col: 0 },
+  tool: 'fill',
+  moves: 0,
+  mistakes: 0,
+  elapsed: 0,
+  history: [],
+  message: 'Choose Start Puzzle.',
+  hint: null,
+  complete: false,
+  coinsEarned: 0,
+  best: null,
+  boardRect: null,
+  clueRects: [],
+  celebrants: [],
+  lastAction: null,
+};
+
+let manualStepping = false;
+let lastFrame = 0;
+let overlayKey = '';
+
+function parseSolution(puzzle) {
+  return puzzle.grid.map(row => row.split('').map(value => value === '1'));
+}
+
+function cluesForLine(values) {
+  const clues = [];
+  let run = 0;
+  values.forEach((filled) => {
+    if (filled) run += 1;
+    else if (run > 0) {
+      clues.push(run);
+      run = 0;
+    }
+  });
+  if (run > 0) clues.push(run);
+  return clues.length ? clues : [0];
+}
+
+function buildClues(solution) {
+  const rows = solution.map(row => cluesForLine(row));
+  const cols = [];
+  for (let col = 0; col < solution[0].length; col += 1) {
+    cols.push(cluesForLine(solution.map(row => row[col])));
+  }
+  return { rows, cols };
+}
+
+function storageKey(puzzleId) {
+  return `${STORAGE_PREFIX}${puzzleId}`;
+}
+
+function loadBest(puzzleId) {
+  try {
+    const raw = localStorage.getItem(storageKey(puzzleId));
+    const value = raw ? Number(raw) : null;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(puzzleId, seconds) {
+  const current = loadBest(puzzleId);
+  if (current !== null && current <= seconds) return current;
+  try {
+    localStorage.setItem(storageKey(puzzleId), String(seconds));
+  } catch {
+    // Local storage can be unavailable in private browsing.
+  }
+  return seconds;
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '--';
+  const minutes = Math.floor(seconds / 60);
+  const rest = Math.floor(seconds % 60);
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function cloneBoard(board) {
+  return board.map(row => row.slice());
+}
+
+function snapshot(label) {
+  state.history.push({
+    label,
+    board: cloneBoard(state.board),
+    cursor: { ...state.cursor },
+    moves: state.moves,
+    mistakes: state.mistakes,
+    complete: state.complete,
+    message: state.message,
+    hint: state.hint ? { ...state.hint } : null,
+    lastAction: state.lastAction ? { ...state.lastAction } : null,
+  });
+  if (state.history.length > 80) state.history.shift();
+}
+
+function restore(snapshotValue) {
+  state.board = cloneBoard(snapshotValue.board);
+  state.cursor = { ...snapshotValue.cursor };
+  state.moves = snapshotValue.moves;
+  state.mistakes = snapshotValue.mistakes;
+  state.complete = snapshotValue.complete;
+  state.message = snapshotValue.message;
+  state.hint = snapshotValue.hint ? { ...snapshotValue.hint } : null;
+  state.lastAction = snapshotValue.lastAction ? { ...snapshotValue.lastAction } : null;
+}
+
+function startPuzzle(index = state.puzzleIndex) {
+  state.mode = 'playing';
+  state.puzzleIndex = (index + PUZZLES.length) % PUZZLES.length;
+  state.puzzle = PUZZLES[state.puzzleIndex];
+  state.solution = parseSolution(state.puzzle);
+  const clues = buildClues(state.solution);
+  state.rowClues = clues.rows;
+  state.colClues = clues.cols;
+  state.board = state.solution.map(row => row.map(() => EMPTY));
+  state.cursor = { row: 0, col: 0 };
+  state.tool = 'fill';
+  state.moves = 0;
+  state.mistakes = 0;
+  state.elapsed = 0;
+  state.history = [];
+  state.message = `${state.puzzle.name}: fill the picture from the clues.`;
+  state.hint = null;
+  state.complete = false;
+  state.coinsEarned = 0;
+  state.best = loadBest(state.puzzle.id);
+  state.celebrants = [];
+  state.lastAction = null;
+  overlay.classList.remove('show');
+  rememberRecent('nonogram');
+  updateHud();
+  render();
+}
+
+function nextPuzzle() {
+  startPuzzle(state.puzzleIndex + 1);
+}
+
+function targetCount() {
+  return state.solution.flat().filter(Boolean).length;
+}
+
+function filledCount() {
+  return state.board.flat().filter(value => value === FILLED).length;
+}
+
+function correctFilledCount() {
+  let count = 0;
+  state.board.forEach((row, rowIndex) => {
+    row.forEach((value, colIndex) => {
+      if (value === FILLED && state.solution[rowIndex][colIndex]) count += 1;
+    });
+  });
+  return count;
+}
+
+function wrongCells() {
+  const cells = [];
+  state.board.forEach((row, rowIndex) => {
+    row.forEach((value, colIndex) => {
+      const filled = state.solution[rowIndex][colIndex];
+      if ((value === FILLED && !filled) || (value === MARKED && filled)) {
+        cells.push({ row: rowIndex, col: colIndex, value, should_fill: filled });
+      }
+    });
+  });
+  return cells;
+}
+
+function isSolved() {
+  return state.solution.every((row, rowIndex) => row.every((filled, colIndex) => {
+    const value = state.board[rowIndex][colIndex];
+    return filled ? value === FILLED : value !== FILLED;
+  }));
+}
+
+function setTool(tool) {
+  state.tool = tool;
+  state.message = tool === 'fill' ? 'Fill mode: add picture squares.' : 'Mark mode: mark known empty squares.';
+  updateHud();
+  render();
+}
+
+function cycleCell(row, col, requestedTool = state.tool) {
+  if (state.mode !== 'playing' || state.complete) return;
+  if (!state.board[row] || typeof state.board[row][col] !== 'number') return;
+  const current = state.board[row][col];
+  let next = current;
+  if (requestedTool === 'fill') next = current === FILLED ? EMPTY : FILLED;
+  else if (requestedTool === 'mark') next = current === MARKED ? EMPTY : MARKED;
+  if (next === current) return;
+  snapshot(requestedTool);
+  state.board[row][col] = next;
+  state.cursor = { row, col };
+  state.moves += 1;
+  const correct = state.solution[row][col];
+  const wrong = (next === FILLED && !correct) || (next === MARKED && correct);
+  if (wrong) state.mistakes += 1;
+  state.lastAction = { row, col, tool: requestedTool, value: next, correct: !wrong };
+  state.hint = null;
+  state.message = wrong ? 'That square conflicts with the hidden picture.' : 'Good move.';
+  if (isSolved()) finishPuzzle();
+  updateHud();
+  render();
+}
+
+function undo() {
+  if (state.mode !== 'playing' || state.history.length === 0) return;
+  const previous = state.history.pop();
+  restore(previous);
+  state.message = `Undid ${previous.label}.`;
+  updateHud();
+  render();
+}
+
+function revealHint() {
+  if (state.mode !== 'playing' || state.complete) return;
+  const mistakes = wrongCells();
+  if (mistakes.length) {
+    const first = mistakes[0];
+    state.cursor = { row: first.row, col: first.col };
+    state.hint = { type: 'mistake', row: first.row, col: first.col, should_fill: first.should_fill };
+    state.message = `Check row ${first.row + 1}, column ${first.col + 1}.`;
+    updateHud();
+    render();
+    return;
+  }
+  for (let row = 0; row < state.solution.length; row += 1) {
+    for (let col = 0; col < state.solution[row].length; col += 1) {
+      const shouldFill = state.solution[row][col];
+      const current = state.board[row][col];
+      if ((shouldFill && current !== FILLED) || (!shouldFill && current === EMPTY)) {
+        state.cursor = { row, col };
+        state.hint = { type: shouldFill ? 'fill' : 'empty', row, col, should_fill: shouldFill };
+        state.message = shouldFill
+          ? `Row ${row + 1}, column ${col + 1} should be filled.`
+          : `Row ${row + 1}, column ${col + 1} is safe to mark empty.`;
+        updateHud();
+        render();
+        return;
+      }
+    }
+  }
+}
+
+function checkBoard() {
+  if (state.mode !== 'playing') return;
+  const mistakes = wrongCells();
+  if (mistakes.length === 0) {
+    state.message = isSolved()
+      ? 'Puzzle complete.'
+      : `${correctFilledCount()} correct filled squares so far.`;
+  } else {
+    const first = mistakes[0];
+    state.cursor = { row: first.row, col: first.col };
+    state.message = `${mistakes.length} conflict${mistakes.length === 1 ? '' : 's'} found.`;
+    state.hint = { type: 'mistake', row: first.row, col: first.col, should_fill: first.should_fill };
+  }
+  updateHud();
+  render();
+}
+
+function finishPuzzle() {
+  if (state.complete) return;
+  state.complete = true;
+  state.mode = 'complete';
+  const seconds = Math.max(1, Math.floor(state.elapsed));
+  state.best = saveBest(state.puzzle.id, seconds);
+  const cleanBonus = Math.max(0, 20 - state.mistakes * 3);
+  const speedBonus = Math.max(0, 18 - Math.floor(seconds / 20));
+  const coins = Math.max(18, 24 + cleanBonus + speedBonus);
+  state.coinsEarned = coins;
+  state.message = `Solved ${state.puzzle.name} in ${state.moves} moves.`;
+  addCoins(coins);
+  state.celebrants = Array.from({ length: 22 }, (_, index) => ({
+    x: 170 + (index * 37) % 700,
+    y: 140 + (index * 71) % 470,
+    r: 4 + (index % 4),
+    t: index * .08,
+    c: ['#ffd05c', '#5fc4a1', '#4d8dff', '#f47c7c'][index % 4],
+  }));
+  showOverlay();
+}
+
+function showOverlay() {
+  const key = `${state.mode}|${state.puzzle.id}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'complete') {
+    overlayPanel.innerHTML = `
+      <h1>${state.puzzle.name} Solved</h1>
+      <p>${state.message} Best time: ${formatTime(state.best)}. Coins earned: ${state.coinsEarned}.</p>
+      <p class="mini">Try the next picture or replay with fewer mistakes.</p>
+      <button class="primary" id="nextPuzzleBtn" type="button">Next Puzzle</button>
+    `;
+    overlay.classList.add('show');
+    document.getElementById('nextPuzzleBtn').addEventListener('click', nextPuzzle);
+    return;
+  }
+  if (state.mode === 'menu') {
+    overlay.classList.add('show');
+    return;
+  }
+  overlay.classList.remove('show');
+}
+
+function updateHud() {
+  hud.puzzleName.textContent = `${state.puzzle.name} (${state.puzzle.difficulty})`;
+  hud.modeText.textContent = state.tool === 'fill' ? 'Fill' : 'Mark';
+  hud.filledText.textContent = `${correctFilledCount()} / ${targetCount()}`;
+  hud.mistakesText.textContent = String(state.mistakes);
+  hud.bestText.textContent = formatTime(state.best);
+  hud.coins.textContent = String(profileState.coins);
+  buttons.fill.classList.toggle('active', state.tool === 'fill');
+  buttons.mark.classList.toggle('active', state.tool === 'mark');
+  buttons.undo.disabled = state.history.length === 0 || state.mode !== 'playing';
+  buttons.hint.disabled = state.mode !== 'playing';
+  buttons.check.disabled = state.mode !== 'playing';
+}
+
+function fitCanvas() {
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(320, Math.round(rect.width * ratio));
+  const height = Math.max(240, Math.round(rect.height * ratio));
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+}
+
+function drawText(text, x, y, size, color = '#102638', align = 'center', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawCross(x, y, size, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(2, size * .08);
+  ctx.lineCap = 'round';
+  const pad = size * .26;
+  ctx.beginPath();
+  ctx.moveTo(x + pad, y + pad);
+  ctx.lineTo(x + size - pad, y + size - pad);
+  ctx.moveTo(x + size - pad, y + pad);
+  ctx.lineTo(x + pad, y + size - pad);
+  ctx.stroke();
+}
+
+function clueComplete(clues, values) {
+  const actual = cluesForLine(values.map(value => value === FILLED));
+  return actual.length === clues.length && actual.every((value, index) => value === clues[index]);
+}
+
+function render() {
+  fitCanvas();
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#e8f3f2');
+  bg.addColorStop(.55, '#f9f4df');
+  bg.addColorStop(1, '#d9e9f8');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  const size = state.solution.length || 7;
+  const margin = Math.max(18, Math.min(w, h) * .035);
+  const panelTop = margin;
+  const titleH = Math.max(70, h * .11);
+  const available = Math.min(w - margin * 2, h - titleH - margin * 2);
+  const clueSpace = available * .28;
+  const cellSize = Math.floor((available - clueSpace) / size);
+  const boardSize = cellSize * size;
+  const boardX = Math.round((w - (boardSize + clueSpace)) / 2 + clueSpace);
+  const boardY = Math.round(titleH + (h - titleH - boardSize - clueSpace) / 2 + clueSpace);
+  const rowClueX = boardX - clueSpace;
+  const colClueY = boardY - clueSpace;
+  state.boardRect = { x: boardX, y: boardY, cell: cellSize, size };
+
+  drawText('Nonogram', w / 2, panelTop + 20, Math.max(26, w * .038), '#102638', 'center', 900);
+  drawText(state.message, w / 2, panelTop + 54, Math.max(15, w * .017), '#34515a', 'center', 800);
+
+  drawRoundedRect(rowClueX - 12, colClueY - 12, boardSize + clueSpace + 24, boardSize + clueSpace + 24, 8, '#ffffffba', '#78909c', 2);
+  drawRoundedRect(boardX, boardY, boardSize, boardSize, 4, '#f9fbff', '#334b55', 3);
+
+  for (let row = 0; row < size; row += 1) {
+    const y = boardY + row * cellSize;
+    const rowValues = state.board[row] || [];
+    const rowDone = clueComplete(state.rowClues[row], rowValues);
+    drawRoundedRect(rowClueX, y + 3, clueSpace - 8, cellSize - 6, 5, rowDone ? '#dff4df' : '#edf2f0');
+    drawText(state.rowClues[row].join(' '), boardX - 18, y + cellSize / 2, Math.max(14, cellSize * .32), rowDone ? '#237147' : '#263a44', 'right', 900);
+  }
+
+  for (let col = 0; col < size; col += 1) {
+    const x = boardX + col * cellSize;
+    const colValues = state.board.map(row => row[col]);
+    const colDone = clueComplete(state.colClues[col], colValues);
+    drawRoundedRect(x + 3, colClueY, cellSize - 6, clueSpace - 8, 5, colDone ? '#dff4df' : '#edf2f0');
+    const clues = state.colClues[col];
+    clues.forEach((clue, index) => {
+      const offset = (index - (clues.length - 1) / 2) * Math.max(17, cellSize * .32);
+      drawText(String(clue), x + cellSize / 2, boardY - 19 + offset, Math.max(14, cellSize * .32), colDone ? '#237147' : '#263a44', 'center', 900);
+    });
+  }
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const x = boardX + col * cellSize;
+      const y = boardY + row * cellSize;
+      const value = state.board[row][col];
+      const isCursor = state.cursor.row === row && state.cursor.col === col;
+      const isHint = state.hint && state.hint.row === row && state.hint.col === col;
+      ctx.fillStyle = value === FILLED ? '#183544' : '#f8fbff';
+      ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+      if (value === MARKED) drawCross(x, y, cellSize, '#d2674f');
+      if (isHint) {
+        ctx.fillStyle = '#ffd05c70';
+        ctx.fillRect(x + 3, y + 3, cellSize - 6, cellSize - 6);
+      }
+      if (isCursor) {
+        ctx.strokeStyle = '#4d8dff';
+        ctx.lineWidth = Math.max(3, cellSize * .08);
+        ctx.strokeRect(x + 4, y + 4, cellSize - 8, cellSize - 8);
+      }
+    }
+  }
+
+  ctx.strokeStyle = '#526773';
+  for (let i = 0; i <= size; i += 1) {
+    ctx.lineWidth = i % 5 === 0 || i === 0 || i === size ? 3 : 1;
+    ctx.beginPath();
+    ctx.moveTo(boardX + i * cellSize, boardY);
+    ctx.lineTo(boardX + i * cellSize, boardY + boardSize);
+    ctx.moveTo(boardX, boardY + i * cellSize);
+    ctx.lineTo(boardX + boardSize, boardY + i * cellSize);
+    ctx.stroke();
+  }
+
+  const footerY = boardY + boardSize + Math.max(34, h * .055);
+  drawText(`Moves ${state.moves}  |  Time ${formatTime(state.elapsed)}  |  ${state.tool === 'fill' ? 'Fill squares' : 'Mark empty squares'}`, w / 2, footerY, Math.max(15, w * .017), '#243f49', 'center', 900);
+  if (state.complete) {
+    state.celebrants.forEach((dot) => {
+      const bob = Math.sin(state.elapsed * 5 + dot.t * 10) * 7;
+      ctx.fillStyle = dot.c;
+      ctx.beginPath();
+      ctx.arc(dot.x / 980 * w, dot.y / 760 * h + bob, dot.r * (w / 980), 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function cellFromPoint(point) {
+  const rect = state.boardRect;
+  if (!rect) return null;
+  const col = Math.floor((point.x - rect.x) / rect.cell);
+  const row = Math.floor((point.y - rect.y) / rect.cell);
+  if (row < 0 || col < 0 || row >= rect.size || col >= rect.size) return null;
+  return { row, col };
+}
+
+function handlePointer(event) {
+  if (state.mode !== 'playing') return;
+  event.preventDefault();
+  const cell = cellFromPoint(pointFromEvent(event));
+  if (!cell) return;
+  const tool = event.button === 2 || event.ctrlKey ? 'mark' : state.tool;
+  cycleCell(cell.row, cell.col, tool);
+}
+
+function moveCursor(deltaRow, deltaCol) {
+  if (state.mode !== 'playing') return;
+  const size = state.solution.length;
+  state.cursor = {
+    row: (state.cursor.row + deltaRow + size) % size,
+    col: (state.cursor.col + deltaCol + size) % size,
+  };
+  render();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+    render();
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) event.preventDefault();
+  if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') moveCursor(1, 0);
+  else if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === ' ' || key === 'enter') cycleCell(state.cursor.row, state.cursor.col, 'fill');
+  else if (key === 'x' || key === 'm') cycleCell(state.cursor.row, state.cursor.col, 'mark');
+  else if (key === '1') setTool('fill');
+  else if (key === '2') setTool('mark');
+  else if (key === 'h') revealHint();
+  else if (key === 'u') undo();
+  else if (key === 'c') checkBoard();
+  else if (key === 'n') nextPuzzle();
+  else if (key === 'f') toggleFullscreen();
+}
+
+function update(dt) {
+  if (state.mode === 'playing') state.elapsed += dt;
+  if (state.complete && state.celebrants.length) state.elapsed += dt * .15;
+  showOverlay();
+}
+
+function visibleCells() {
+  return state.board.map((row, rowIndex) => row.map((value, colIndex) => ({
+    row: rowIndex,
+    col: colIndex,
+    value: value === FILLED ? 'filled' : value === MARKED ? 'marked' : 'empty',
+    clue_target: state.solution[rowIndex][colIndex] ? 'filled' : 'empty',
+  }))).flat();
+}
+
+function renderGameToText() {
+  const payload = {
+    coordinate_system: 'Canvas coordinates use origin at top-left, x increases right, y increases down. Board coordinates use zero-based row and column.',
+    mode: state.mode,
+    puzzle: {
+      id: state.puzzle.id,
+      name: state.puzzle.name,
+      difficulty: state.puzzle.difficulty,
+      size: state.solution.length,
+    },
+    tool: state.tool,
+    cursor: { ...state.cursor },
+    row_clues: state.rowClues,
+    column_clues: state.colClues,
+    board_cells: visibleCells(),
+    filled_correct: correctFilledCount(),
+    filled_total: filledCount(),
+    target_total: targetCount(),
+    mistakes: state.mistakes,
+    wrong_cells: wrongCells(),
+    moves: state.moves,
+    elapsed_seconds: Math.floor(state.elapsed),
+    best_seconds: state.best,
+    hint: state.hint,
+    complete: state.complete,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    last_action: state.lastAction,
+  };
+  return JSON.stringify(payload);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__NONOGRAM_GAME__ = {
+  startPuzzle,
+  nextPuzzle,
+  setTool,
+  cycleCell,
+  revealHint,
+  checkBoard,
+  undo,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'nonogram', mode: state.mode };
+  }
+};
+
+buttons.start.addEventListener('click', () => startPuzzle(0));
+buttons.new.addEventListener('click', nextPuzzle);
+buttons.fill.addEventListener('click', () => setTool('fill'));
+buttons.mark.addEventListener('click', () => setTool('mark'));
+buttons.hint.addEventListener('click', revealHint);
+buttons.undo.addEventListener('click', undo);
+buttons.check.addEventListener('click', checkBoard);
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'nonogram', gameName: 'Nonogram' });
+state.solution = parseSolution(state.puzzle);
+const clues = buildClues(state.solution);
+state.rowClues = clues.rows;
+state.colClues = clues.cols;
+state.board = state.solution.map(row => row.map(() => EMPTY));
+state.best = loadBest(state.puzzle.id);
+updateHud();
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

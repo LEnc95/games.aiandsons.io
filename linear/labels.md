@@ -122,5 +122,6 @@
 - game/sundialsprint
 - game/bubbleshooter
 - game/mosaicmatch
+- game/nonogram
 
 Generated from `src/meta/feedback.js`.

@@ -3099,3 +3099,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Yacht Dice screenshots.
+
+## 2026-05-27 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Yacht Dice, Klondike Solitaire, Fifteen Puzzle, Dots and Boxes, Battleship, Reversi, Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/nonogram` route and no Nonogram/Picross metadata entry found.
+- Chosen game: Nonogram (`/nonogram`), a picture-logic puzzle with row/column clues, fill/mark tools, hints, undo, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `nonogram/index.html` with canvas rendering, four 7x7 picture puzzles, fill/mark tools, row/column clue highlighting, keyboard/pointer controls, hints, undo, completion coin rewards, shared feedback context, and deterministic test hooks.
+  - Registered Nonogram in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Nonogram.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse with `vm.SourceTextModule`: pass after SEO injection.
+  - Metadata checks: pass; `GAMES` reports 108 games including Nonogram with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/nonogram/`.
+  - Stubbed DOM/canvas runtime harness passed: started Lantern, filled a target cell, marked an empty cell, used hint, undid, solved all target cells, awarded coins, advanced deterministic time, verified `render_game_to_text()` state, and verified shared feedback mount context.
+  - `git diff --check` on Nonogram integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `nonogram/index.html`, `src/meta/games.js`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached the local command path but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:4173` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Nonogram screenshots.
