@@ -55,3 +55,6 @@
 ## 2024-05-27 - Concurrency in Batch Processing Scripts
 **Learning:** In the nightly stripe reconcile script (`scripts/stripe/nightly-reconcile.mjs`), targets were being reconciled sequentially inside a `for...of` loop. This caused the script to execute very slowly. A simple `Promise.all` over all targets could overwhelm network limits or cause timeouts.
 **Action:** When running heavy asynchronous iterations over a potentially large list of items, slice the array into smaller chunks (batches) and use `Promise.all` on each chunk sequentially. This achieves safe concurrency and greatly speeds up execution time while remaining within rate limits.
+## 2024-05-24 - O(1) Account Member Lookup in Memory Store
+**Learning:** O(N) array lookups (like `.includes()`) in high-traffic getters can cause unnecessary overhead when querying objects repeatedly. The `getFamilyAccountForUser` in `api/stripe/_family-store.js` recreated normalized objects even when the memory cache had a valid entry, which slowed down iterations.
+**Action:** Attach a hidden `_memberUserIdsSet` via `Object.defineProperty` on the normalized family account object, enabling O(1) membership checks while retaining the public object shape.
