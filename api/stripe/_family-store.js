@@ -122,7 +122,7 @@ function normalizeFamilyAccount(source, fallbackOwnerUserId = "") {
   const createdAt = normalizeTimestampMillis(raw.createdAt);
   const updatedAt = normalizeTimestampMillis(raw.updatedAt);
 
-  return {
+  const account = {
     id: normalizeText(raw.id, 120),
     ownerUserId,
     ownerEmail,
@@ -137,6 +137,15 @@ function normalizeFamilyAccount(source, fallbackOwnerUserId = "") {
     createdAt,
     updatedAt,
   };
+
+  Object.defineProperty(account, "_memberUserIdsSet", {
+    value: new Set(memberUserIds),
+    enumerable: false,
+    writable: false,
+    configurable: true,
+  });
+
+  return account;
 }
 
 function normalizeFamilyInvite(source) {
@@ -252,8 +261,8 @@ async function getFamilyAccountForUser(userId) {
   }
 
   for (const rawAccount of memoryState.accounts.values()) {
-    const account = normalizeFamilyAccount(rawAccount);
-    if (account.memberUserIds.includes(normalizedUserId)) {
+    const account = getMemoryAccountById(rawAccount.id) || normalizeFamilyAccount(rawAccount);
+    if (account._memberUserIdsSet ? account._memberUserIdsSet.has(normalizedUserId) : account.memberUserIds.includes(normalizedUserId)) {
       return account;
     }
   }
