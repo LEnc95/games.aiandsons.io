@@ -44,3 +44,7 @@
 **Vulnerability:** The `randomToken()` and `makeMessageId()` fallback mechanisms in `src/core/entitlements.js` and `src/net/multiplayerClient.js` relied on the predictable `Math.random()` when `globalThis.crypto.randomUUID` or `globalThis.crypto.getRandomValues` was unavailable.
 **Learning:** Hardcoded dev secrets and insecure randomness can easily leak into production environments due to configuration drift or missing environment variables, resulting in predictability and hijacking risks in scenarios like session ID generation or identifiers.
 **Prevention:** In environments lacking native web crypto support, the application must explicitly throw an error if the required secure randomness APIs are missing rather than quietly falling back to weak or predictable Math.random() defaults.
+## 2026-04-28 - [DOM Clearing XSS Defense]
+**Vulnerability:** Clearing DOM elements using `.innerHTML = ''` triggers static analysis blocking flags for DOM-based XSS, even when assigning an empty string.
+**Learning:** Found 18 game index files using `.innerHTML = ''` or `.innerHTML = ""` instead of the codebase standard `.textContent = ""`.
+**Prevention:** Apply `.textContent = ""` universally for clearing elements to ensure security scanners pass and to enforce strict vanilla JS safety patterns.
