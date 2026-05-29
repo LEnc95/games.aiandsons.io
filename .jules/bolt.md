@@ -58,3 +58,6 @@
 ## 2024-05-24 - O(1) Account Member Lookup in Memory Store
 **Learning:** O(N) array lookups (like `.includes()`) in high-traffic getters can cause unnecessary overhead when querying objects repeatedly. The `getFamilyAccountForUser` in `api/stripe/_family-store.js` recreated normalized objects even when the memory cache had a valid entry, which slowed down iterations.
 **Action:** Attach a hidden `_memberUserIdsSet` via `Object.defineProperty` on the normalized family account object, enabling O(1) membership checks while retaining the public object shape.
+## 2025-05-18 - Avoid redundant array traversals inside Set-guarded conditions
+**Learning:** Using helper functions like `addUnique` (which internally call `Array.prototype.includes`) inside a code block that is already guarded by a `Set.has()` check results in redundant O(N) array traversals, defeating the purpose of the O(1) Set optimization.
+**Action:** When a loop relies on a `Set` for O(1) membership checks to guard array insertions, append directly to the array instead of using defensive insertion helpers that perform their own O(N) validation.

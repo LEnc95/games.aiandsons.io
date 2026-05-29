@@ -27,12 +27,6 @@ const clampProgress = (value, target) => {
   return Math.max(0, Math.min(target, Math.floor(n)));
 };
 
-const addUnique = (list, value) => {
-  if (!Array.isArray(list)) return [value];
-  if (list.includes(value)) return list;
-  return [...list, value];
-};
-
 const hashString = (input) => {
   let hash = 2166136261;
   for (let i = 0; i < input.length; i += 1) {
@@ -362,14 +356,16 @@ const applyProgress = (bucket, entries, byId, payload) => {
     }
 
     if (next >= entry.target && !bucketCompletedSet.has(entry.id)) {
-      bucket.completed = addUnique(bucket.completed, entry.id);
+      // ⚡ Bolt: Removed redundant O(N) includes check since bucketCompletedSet provides an O(1) guard
+      bucket.completed = Array.isArray(bucket.completed) ? [...bucket.completed, entry.id] : [entry.id];
       bucketCompletedSet.add(entry.id);
       completedNow.push(entry.id);
       changed = true;
     }
 
     if (bucketCompletedSet.has(entry.id) && !bucketRewardedSet.has(entry.id)) {
-      bucket.rewarded = addUnique(bucket.rewarded, entry.id);
+      // ⚡ Bolt: Removed redundant O(N) includes check since bucketRewardedSet provides an O(1) guard
+      bucket.rewarded = Array.isArray(bucket.rewarded) ? [...bucket.rewarded, entry.id] : [entry.id];
       bucketRewardedSet.add(entry.id);
       state.coins = Math.max(0, state.coins + entry.rewardCoins);
       rewardsNow.push({ id: entry.id, coins: entry.rewardCoins });
