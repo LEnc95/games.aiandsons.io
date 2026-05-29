@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Mahjong Solitaire | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background: linear-gradient(135deg, #19354a 0%, #23483d 42%, #5a3d36 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff75;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1040px);
+  aspect-ratio: 14 / 9;
+  max-height: min(67dvh, 730px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff80;
+  background: #173142;
+  box-shadow: 0 24px 60px #10141daa;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #14222df2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dfecef;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.mini {
+  font-size: 13px;
+  color: #bed1d8;
+}
+.hud, .controls {
+  width: min(97vw, 1040px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff50;
+  background: #102638d9;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff24;
+}
+.chip span {
+  font-size: 12px;
+  color: #b9d0d8;
+  font-weight: 800;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+}
+.chip.good b { color: #ffd36d; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff28, 0 10px 22px #00000038;
+}
+button.primary {
+  background: linear-gradient(180deg, #f5bf63, #b96a35);
+  color: #21130b;
+  border-color: #ffe0a6;
+}
+button.active {
+  border-color: #ffe0a6;
+  background: #5b3322;
+}
+button:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+@media (max-width: 760px) {
+  .app {
+    justify-content: flex-start;
+    padding-top: 56px;
+  }
+  .stage {
+    width: 98vw;
+    max-height: 57dvh;
+  }
+  .hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .chip, button {
+    min-height: 40px;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Match free Mahjong tiles across layered solitaire layouts, using hints, shuffles, and undo to clear the table. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Mahjong Solitaire | AI and Sons Games">
+  <meta property="og:description" content="Match free Mahjong tiles across layered solitaire layouts, using hints, shuffles, and undo to clear the table. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/mahjongsolitaire">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mahjong Solitaire | AI and Sons Games">
+  <meta name="twitter:description" content="Match free Mahjong tiles across layered solitaire layouts, using hints, shuffles, and undo to clear the table. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/mahjongsolitaire">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Mahjong Solitaire","description":"Match free Mahjong tiles across layered solitaire layouts, using hints, shuffles, and undo to clear the table. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/mahjongsolitaire","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Mahjong Solitaire board">
+    <canvas id="game" width="1120" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Mahjong Solitaire</h1>
+        <p>Remove matching free tiles. A tile is free when nothing covers it and at least one long side is open.</p>
+        <p class="mini">Click or tap two matching free tiles. Keyboard: arrows move focus, Enter selects, H hints, S shuffles, U undoes, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Bridge</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-live="polite">
+    <div class="chip"><span>Layout</span><b id="layoutName">Bridge</b></div>
+    <div class="chip"><span>Tiles</span><b id="tilesLeft">0 / 0</b></div>
+    <div class="chip"><span>Free</span><b id="freeTiles">0</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip"><span>Best</span><b id="bestTime">--</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="newBtn" class="primary" type="button">New</button>
+    <button id="layoutBtn" type="button">Layout</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="shuffleBtn" type="button">Shuffle</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  layoutName: document.getElementById('layoutName'),
+  tilesLeft: document.getElementById('tilesLeft'),
+  freeTiles: document.getElementById('freeTiles'),
+  moves: document.getElementById('moves'),
+  bestTime: document.getElementById('bestTime'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  start: document.getElementById('startBtn'),
+  new: document.getElementById('newBtn'),
+  layout: document.getElementById('layoutBtn'),
+  hint: document.getElementById('hintBtn'),
+  shuffle: document.getElementById('shuffleBtn'),
+  undo: document.getElementById('undoBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const STORAGE_PREFIX = 'cade:mahjongsolitaire:best:';
+const TILE_W = 78;
+const TILE_H = 96;
+const STEP_X = 66;
+const STEP_Y = 82;
+const LAYER_X = 9;
+const LAYER_Y = 10;
+const SYMBOL_BANK = [
+  ...Array.from({ length: 9 }, (_, index) => ({ id: `D${index + 1}`, family: 'Dot', label: `D${index + 1}`, color: '#c64639' })),
+  ...Array.from({ length: 9 }, (_, index) => ({ id: `B${index + 1}`, family: 'Bam', label: `B${index + 1}`, color: '#2a8d5d' })),
+  ...Array.from({ length: 9 }, (_, index) => ({ id: `C${index + 1}`, family: 'Crak', label: `C${index + 1}`, color: '#2d5fa8' })),
+  { id: 'N', family: 'Wind', label: 'N', color: '#34566f' },
+  { id: 'E', family: 'Wind', label: 'E', color: '#34566f' },
+  { id: 'S', family: 'Wind', label: 'S', color: '#34566f' },
+  { id: 'W', family: 'Wind', label: 'W', color: '#34566f' },
+  { id: 'RD', family: 'Dragon', label: 'RD', color: '#b3352c' },
+  { id: 'GD', family: 'Dragon', label: 'GD', color: '#2c8a55' },
+  { id: 'WD', family: 'Dragon', label: 'WD', color: '#597085' },
+  { id: 'SP', family: 'Season', label: 'SP', color: '#9a5a2d' },
+  { id: 'SU', family: 'Season', label: 'SU', color: '#b68522' },
+  { id: 'AU', family: 'Season', label: 'AU', color: '#a14f35' },
+  { id: 'WI', family: 'Season', label: 'WI', color: '#4d7894' },
+];
+const SYMBOL_BY_ID = new Map(SYMBOL_BANK.map(symbol => [symbol.id, symbol]));
+
+const LAYOUTS = [
+  {
+    id: 'bridge',
+    name: 'Bridge',
+    difficulty: 'Warmup',
+    positions: makeBridgePositions(),
+  },
+  {
+    id: 'gate',
+    name: 'Dragon Gate',
+    difficulty: 'Classic',
+    positions: makeGatePositions(),
+  },
+  {
+    id: 'lantern',
+    name: 'Lantern Stack',
+    difficulty: 'Layered',
+    positions: makeLanternPositions(),
+  },
+];
+
+const state = {
+  mode: 'menu',
+  layoutIndex: 0,
+  layout: LAYOUTS[0],
+  tiles: [],
+  selectedId: null,
+  cursorId: null,
+  hintIds: [],
+  history: [],
+  moves: 0,
+  matches: 0,
+  shuffles: 0,
+  elapsed: 0,
+  seed: 1337,
+  best: null,
+  coinsEarned: 0,
+  message: 'Choose Start Bridge.',
+  deadlocked: false,
+  lastAction: null,
+  celebrants: [],
+  geometry: null,
+};
+
+let manualStepping = false;
+let lastFrame = 0;
+let overlayKey = '';
+
+function makeBridgePositions() {
+  const positions = [];
+  for (let y = 0; y < 4; y += 1) {
+    for (let x = 0; x < 8; x += 1) positions.push({ x, y, z: 0 });
+  }
+  for (let y = 1; y <= 2; y += 1) {
+    for (let x = 2; x <= 5; x += 1) positions.push({ x, y, z: 1 });
+  }
+  positions.push({ x: 3, y: 1, z: 2 }, { x: 4, y: 1, z: 2 });
+  return withIds(positions);
+}
+
+function makeGatePositions() {
+  const positions = [];
+  for (let y = 0; y < 4; y += 1) {
+    for (let x = 0; x < 9; x += 1) positions.push({ x, y, z: 0 });
+  }
+  for (let y = 1; y <= 2; y += 1) {
+    for (let x = 2; x <= 6; x += 1) positions.push({ x, y, z: 1 });
+  }
+  positions.push({ x: 3, y: 1, z: 2 }, { x: 4, y: 1, z: 2 });
+  return withIds(positions);
+}
+
+function makeLanternPositions() {
+  const positions = [];
+  const rows = [
+    { y: 0, from: 2, to: 5 },
+    { y: 1, from: 1, to: 6 },
+    { y: 2, from: 0, to: 7 },
+    { y: 3, from: 1, to: 6 },
+    { y: 4, from: 2, to: 5 },
+  ];
+  rows.forEach(row => {
+    for (let x = row.from; x <= row.to; x += 1) positions.push({ x, y: row.y, z: 0 });
+  });
+  [
+    { y: 1, from: 2, to: 5 },
+    { y: 2, from: 1, to: 6 },
+    { y: 3, from: 2, to: 5 },
+  ].forEach(row => {
+    for (let x = row.from; x <= row.to; x += 1) positions.push({ x, y: row.y, z: 1 });
+  });
+  positions.push({ x: 3, y: 2, z: 2 }, { x: 4, y: 2, z: 2 });
+  return withIds(positions);
+}
+
+function withIds(positions) {
+  return positions.map((position, index) => ({
+    ...position,
+    id: `tile-${index}`,
+  }));
+}
+
+function mulberry32(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value += 0x6D2B79F5;
+    let t = value;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle(values, rng) {
+  const copy = values.slice();
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(rng() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+  return copy;
+}
+
+function storageKey(layoutId) {
+  return `${STORAGE_PREFIX}${layoutId}`;
+}
+
+function loadBest(layoutId) {
+  try {
+    const raw = localStorage.getItem(storageKey(layoutId));
+    const value = raw ? Number(raw) : null;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(layoutId, seconds) {
+  const current = loadBest(layoutId);
+  if (current !== null && current <= seconds) return current;
+  try {
+    localStorage.setItem(storageKey(layoutId), String(seconds));
+  } catch {
+    // Local storage can be unavailable in private browsing.
+  }
+  return seconds;
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '--';
+  const minutes = Math.floor(seconds / 60);
+  const rest = Math.floor(seconds % 60);
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function unitRectsOverlap(a, b) {
+  return a.x < b.x + 1 && a.x + 1 > b.x && a.y < b.y + 1 && a.y + 1 > b.y;
+}
+
+function rangesOverlap(a1, a2, b1, b2) {
+  return a1 < b2 && a2 > b1;
+}
+
+function isFreeInSet(tile, activeIds, positions) {
+  const covered = positions.some(other => (
+    other.id !== tile.id
+    && activeIds.has(other.id)
+    && other.z > tile.z
+    && unitRectsOverlap(tile, other)
+  ));
+  if (covered) return false;
+  const leftBlocked = positions.some(other => (
+    other.id !== tile.id
+    && activeIds.has(other.id)
+    && other.z === tile.z
+    && other.x === tile.x - 1
+    && rangesOverlap(tile.y, tile.y + 1, other.y, other.y + 1)
+  ));
+  const rightBlocked = positions.some(other => (
+    other.id !== tile.id
+    && activeIds.has(other.id)
+    && other.z === tile.z
+    && other.x === tile.x + 1
+    && rangesOverlap(tile.y, tile.y + 1, other.y, other.y + 1)
+  ));
+  return !leftBlocked || !rightBlocked;
+}
+
+function pairSymbolsForCount(pairCount, rng) {
+  const bank = shuffle(SYMBOL_BANK, rng);
+  const pairs = [];
+  while (pairs.length < pairCount) {
+    pairs.push(bank[pairs.length % bank.length]);
+  }
+  return pairs;
+}
+
+function assignSolvableSymbols(positions, rng, pairSymbols = null) {
+  const ids = new Set(positions.map(position => position.id));
+  const assignments = new Map();
+  const symbols = pairSymbols
+    ? shuffle(pairSymbols, rng)
+    : pairSymbolsForCount(positions.length / 2, rng);
+  let pairIndex = 0;
+  while (ids.size > 0) {
+    const free = shuffle(
+      positions.filter(position => ids.has(position.id) && isFreeInSet(position, ids, positions)),
+      rng,
+    );
+    if (free.length < 2 || pairIndex >= symbols.length) return null;
+    const first = free[0];
+    const second = free[1];
+    assignments.set(first.id, symbols[pairIndex]);
+    assignments.set(second.id, symbols[pairIndex]);
+    ids.delete(first.id);
+    ids.delete(second.id);
+    pairIndex += 1;
+  }
+  return assignments;
+}
+
+function buildTiles(layout, seed) {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const rng = mulberry32(seed + attempt * 9973);
+    const assignments = assignSolvableSymbols(layout.positions, rng);
+    if (assignments) {
+      return layout.positions.map(position => ({
+        ...position,
+        symbol: assignments.get(position.id),
+        removed: false,
+        flash: 0,
+      }));
+    }
+  }
+  const fallbackSymbols = pairSymbolsForCount(layout.positions.length / 2, mulberry32(seed));
+  return layout.positions.map((position, index) => ({
+    ...position,
+    symbol: fallbackSymbols[Math.floor(index / 2)],
+    removed: false,
+    flash: 0,
+  }));
+}
+
+function cloneTiles() {
+  return state.tiles.map(tile => ({
+    ...tile,
+    symbol: SYMBOL_BY_ID.get(tile.symbol.id) || tile.symbol,
+  }));
+}
+
+function snapshot(label) {
+  state.history.push({
+    label,
+    tiles: cloneTiles(),
+    selectedId: state.selectedId,
+    cursorId: state.cursorId,
+    hintIds: state.hintIds.slice(),
+    moves: state.moves,
+    matches: state.matches,
+    shuffles: state.shuffles,
+    elapsed: state.elapsed,
+    message: state.message,
+    deadlocked: state.deadlocked,
+    lastAction: state.lastAction ? { ...state.lastAction } : null,
+  });
+  if (state.history.length > 80) state.history.shift();
+}
+
+function restore(snapshotValue) {
+  state.tiles = snapshotValue.tiles.map(tile => ({
+    ...tile,
+    symbol: SYMBOL_BY_ID.get(tile.symbol.id) || tile.symbol,
+  }));
+  state.selectedId = snapshotValue.selectedId;
+  state.cursorId = snapshotValue.cursorId;
+  state.hintIds = snapshotValue.hintIds.slice();
+  state.moves = snapshotValue.moves;
+  state.matches = snapshotValue.matches;
+  state.shuffles = snapshotValue.shuffles;
+  state.elapsed = snapshotValue.elapsed;
+  state.message = snapshotValue.message;
+  state.deadlocked = snapshotValue.deadlocked;
+  state.lastAction = snapshotValue.lastAction ? { ...snapshotValue.lastAction } : null;
+}
+
+function activeTiles() {
+  return state.tiles.filter(tile => !tile.removed);
+}
+
+function activeIdSet() {
+  return new Set(activeTiles().map(tile => tile.id));
+}
+
+function isFree(tile) {
+  return !tile.removed && isFreeInSet(tile, activeIdSet(), state.tiles);
+}
+
+function freeTiles() {
+  return activeTiles().filter(isFree);
+}
+
+function sameSymbol(a, b) {
+  return a && b && a.symbol.id === b.symbol.id;
+}
+
+function availablePairs() {
+  const free = freeTiles();
+  const pairs = [];
+  for (let i = 0; i < free.length; i += 1) {
+    for (let j = i + 1; j < free.length; j += 1) {
+      if (sameSymbol(free[i], free[j])) {
+        pairs.push([free[i], free[j]]);
+      }
+    }
+  }
+  return pairs;
+}
+
+function setCursorToFirstFree() {
+  const first = freeTiles().sort(sortTilesForInput)[0] || activeTiles().sort(sortTilesForInput)[0] || null;
+  state.cursorId = first ? first.id : null;
+}
+
+function prepareLayout(index, seed) {
+  state.layoutIndex = (index + LAYOUTS.length) % LAYOUTS.length;
+  state.layout = LAYOUTS[state.layoutIndex];
+  state.seed = Math.floor(Number(seed) || Date.now()) % 2147483647;
+  state.tiles = buildTiles(state.layout, state.seed);
+  state.selectedId = null;
+  state.hintIds = [];
+  state.history = [];
+  state.moves = 0;
+  state.matches = 0;
+  state.shuffles = 0;
+  state.elapsed = 0;
+  state.best = loadBest(state.layout.id);
+  state.coinsEarned = 0;
+  state.deadlocked = false;
+  state.celebrants = [];
+  state.message = `Match free pairs on ${state.layout.name}.`;
+  state.lastAction = { type: 'prepare', layout: state.layout.id };
+  setCursorToFirstFree();
+  checkDeadlock();
+  updateHud();
+}
+
+function startLayout(index = state.layoutIndex, seed = Date.now()) {
+  prepareLayout(index, seed);
+  state.mode = 'playing';
+  state.message = `Find matching free tiles on ${state.layout.name}.`;
+  state.lastAction = { type: 'start', layout: state.layout.id };
+  rememberRecent('mahjongsolitaire');
+  showOverlay();
+  render();
+}
+
+function cycleLayout() {
+  startLayout(state.layoutIndex + 1);
+}
+
+function tileById(id) {
+  return state.tiles.find(tile => tile.id === id) || null;
+}
+
+function selectTileById(id) {
+  const tile = tileById(id);
+  if (!tile || tile.removed || state.mode !== 'playing') return false;
+  state.cursorId = tile.id;
+  state.hintIds = [];
+  if (!isFree(tile)) {
+    state.message = `${tile.symbol.label} is blocked. Choose a tile with an open side.`;
+    state.lastAction = { type: 'blocked', tile: tile.id, symbol: tile.symbol.id };
+    render();
+    return false;
+  }
+  if (!state.selectedId) {
+    state.selectedId = tile.id;
+    state.message = `${tile.symbol.label} selected. Pick its free match.`;
+    state.lastAction = { type: 'select', tile: tile.id, symbol: tile.symbol.id };
+    render();
+    return true;
+  }
+  if (state.selectedId === tile.id) {
+    state.selectedId = null;
+    state.message = 'Selection cleared.';
+    state.lastAction = { type: 'deselect', tile: tile.id };
+    render();
+    return true;
+  }
+  const first = tileById(state.selectedId);
+  if (!first || first.removed || !isFree(first)) {
+    state.selectedId = tile.id;
+    state.message = `${tile.symbol.label} selected. Pick its free match.`;
+    render();
+    return true;
+  }
+  if (!sameSymbol(first, tile)) {
+    state.moves += 1;
+    state.selectedId = tile.id;
+    state.message = `${first.symbol.label} does not match ${tile.symbol.label}.`;
+    state.lastAction = {
+      type: 'mismatch',
+      first: first.id,
+      second: tile.id,
+      symbols: [first.symbol.id, tile.symbol.id],
+    };
+    render();
+    return false;
+  }
+  snapshot('match');
+  first.removed = true;
+  tile.removed = true;
+  first.flash = .35;
+  tile.flash = .35;
+  state.selectedId = null;
+  state.moves += 1;
+  state.matches += 1;
+  state.message = `Matched ${tile.symbol.label}.`;
+  state.lastAction = {
+    type: 'match',
+    first: first.id,
+    second: tile.id,
+    symbol: tile.symbol.id,
+  };
+  setCursorToFirstFree();
+  checkAfterMove();
+  render();
+  return true;
+}
+
+function checkAfterMove() {
+  if (activeTiles().length === 0) {
+    finishGame();
+    return;
+  }
+  checkDeadlock();
+}
+
+function checkDeadlock() {
+  const remaining = activeTiles().length;
+  const pairs = availablePairs();
+  state.deadlocked = state.mode === 'playing' && remaining > 0 && pairs.length === 0;
+  if (state.deadlocked) {
+    state.message = 'No free matching pairs. Shuffle the remaining tiles.';
+    state.lastAction = { type: 'deadlock', remaining };
+  }
+  return state.deadlocked;
+}
+
+function showHint() {
+  if (state.mode === 'menu') {
+    startLayout(state.layoutIndex);
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const pairs = availablePairs();
+  if (!pairs.length) {
+    state.hintIds = [];
+    state.deadlocked = true;
+    state.message = 'No free matching pairs. Shuffle the remaining tiles.';
+    state.lastAction = { type: 'hint', found: false };
+    render();
+    return;
+  }
+  const pair = pairs[0];
+  state.hintIds = pair.map(tile => tile.id);
+  state.cursorId = pair[0].id;
+  state.message = `Hint: match ${pair[0].symbol.label}.`;
+  state.lastAction = {
+    type: 'hint',
+    found: true,
+    tiles: state.hintIds.slice(),
+    symbol: pair[0].symbol.id,
+  };
+  render();
+}
+
+function shuffleRemaining() {
+  if (state.mode !== 'playing') return false;
+  const active = activeTiles();
+  if (active.length < 4) {
+    state.message = 'Too few tiles left to shuffle.';
+    render();
+    return false;
+  }
+  const counts = new Map();
+  active.forEach(tile => counts.set(tile.symbol.id, (counts.get(tile.symbol.id) || 0) + 1));
+  const pairSymbols = [];
+  for (const [symbolId, count] of counts) {
+    const symbol = SYMBOL_BY_ID.get(symbolId);
+    for (let index = 0; index < Math.floor(count / 2); index += 1) {
+      pairSymbols.push(symbol);
+    }
+  }
+  if (pairSymbols.length * 2 !== active.length) {
+    state.message = 'Shuffle needs complete pairs.';
+    render();
+    return false;
+  }
+  const activePositions = active.map(tile => ({
+    id: tile.id,
+    x: tile.x,
+    y: tile.y,
+    z: tile.z,
+  }));
+  let assignments = null;
+  for (let attempt = 0; attempt < 80 && !assignments; attempt += 1) {
+    assignments = assignSolvableSymbols(activePositions, mulberry32(state.seed + state.shuffles * 811 + attempt), pairSymbols);
+  }
+  if (!assignments) {
+    state.message = 'Shuffle could not find a stable arrangement.';
+    render();
+    return false;
+  }
+  snapshot('shuffle');
+  active.forEach(tile => {
+    tile.symbol = assignments.get(tile.id);
+  });
+  state.selectedId = null;
+  state.hintIds = [];
+  state.shuffles += 1;
+  state.deadlocked = false;
+  state.message = 'Remaining tiles shuffled into a solvable order.';
+  state.lastAction = { type: 'shuffle', remaining: active.length };
+  setCursorToFirstFree();
+  checkDeadlock();
+  render();
+  return true;
+}
+
+function undo() {
+  if (state.mode !== 'playing' || !state.history.length) return false;
+  const previous = state.history.pop();
+  restore(previous);
+  state.message = `Undid ${previous.label}.`;
+  state.lastAction = { type: 'undo', label: previous.label };
+  updateHud();
+  render();
+  return true;
+}
+
+function finishGame() {
+  if (state.mode === 'complete') return;
+  state.mode = 'complete';
+  state.deadlocked = false;
+  state.selectedId = null;
+  state.hintIds = [];
+  const seconds = Math.max(1, Math.floor(state.elapsed));
+  state.best = saveBest(state.layout.id, seconds);
+  const layoutBonus = state.layout.positions.length;
+  const shufflePenalty = state.shuffles * 5;
+  const speedBonus = Math.max(0, 24 - Math.floor(seconds / 12));
+  const coins = Math.max(24, Math.round(layoutBonus * .8) + speedBonus - shufflePenalty);
+  state.coinsEarned = coins;
+  state.message = `Cleared ${state.layout.name} in ${state.moves} moves.`;
+  state.lastAction = { type: 'complete', layout: state.layout.id, seconds, coins };
+  addCoins(coins);
+  state.celebrants = Array.from({ length: 28 }, (_, index) => ({
+    x: 90 + (index * 137) % 920,
+    y: 90 + (index * 79) % 520,
+    r: 4 + (index % 4),
+    t: index * .07,
+    c: ['#ffd36d', '#6ed0a4', '#6ba5ff', '#ef7b68'][index % 4],
+  }));
+  showOverlay();
+}
+
+function fitCanvas() {
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(360, Math.round(rect.width * ratio));
+  const height = Math.max(260, Math.round(rect.height * ratio));
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+}
+
+function boardBounds() {
+  const positions = state.tiles.length ? state.tiles : state.layout.positions;
+  const minX = Math.min(...positions.map(tile => tile.x));
+  const maxX = Math.max(...positions.map(tile => tile.x));
+  const minY = Math.min(...positions.map(tile => tile.y));
+  const maxY = Math.max(...positions.map(tile => tile.y));
+  const maxZ = Math.max(...positions.map(tile => tile.z));
+  return { minX, maxX, minY, maxY, maxZ };
+}
+
+function updateGeometry() {
+  const bounds = boardBounds();
+  const marginX = 58;
+  const marginTop = 90;
+  const marginBottom = 42;
+  const rawW = (bounds.maxX - bounds.minX) * STEP_X + TILE_W + bounds.maxZ * LAYER_X;
+  const rawH = (bounds.maxY - bounds.minY) * STEP_Y + TILE_H + bounds.maxZ * LAYER_Y;
+  const scale = Math.min(
+    1.26,
+    (canvas.width - marginX * 2) / rawW,
+    (canvas.height - marginTop - marginBottom) / rawH,
+  );
+  const tileW = TILE_W * scale;
+  const tileH = TILE_H * scale;
+  const stepX = STEP_X * scale;
+  const stepY = STEP_Y * scale;
+  const layerX = LAYER_X * scale;
+  const layerY = LAYER_Y * scale;
+  const boardW = (bounds.maxX - bounds.minX) * stepX + tileW + bounds.maxZ * layerX;
+  const boardH = (bounds.maxY - bounds.minY) * stepY + tileH + bounds.maxZ * layerY;
+  const left = (canvas.width - boardW) / 2;
+  const top = marginTop + (canvas.height - marginTop - marginBottom - boardH) / 2;
+  state.geometry = {
+    bounds,
+    tileW,
+    tileH,
+    stepX,
+    stepY,
+    layerX,
+    layerY,
+    left,
+    top,
+  };
+  state.tiles.forEach(tile => {
+    tile.screenX = left + (tile.x - bounds.minX) * stepX + tile.z * layerX;
+    tile.screenY = top + bounds.maxZ * layerY + (tile.y - bounds.minY) * stepY - tile.z * layerY;
+    tile.screenW = tileW;
+    tile.screenH = tileH;
+  });
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color = '#102638', align = 'center', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#17364c');
+  gradient.addColorStop(.45, '#24503f');
+  gradient.addColorStop(1, '#6b4231');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.globalAlpha = .2;
+  for (let index = 0; index < 9; index += 1) {
+    const x = (index * 137) % canvas.width;
+    const y = 44 + (index % 3) * 32;
+    drawRoundedRect(x - 28, y, 110, 10, 5, '#ffe0a6');
+  }
+  ctx.restore();
+
+  const tableX = canvas.width * .08;
+  const tableY = canvas.height * .18;
+  const tableW = canvas.width * .84;
+  const tableH = canvas.height * .72;
+  drawRoundedRect(tableX, tableY, tableW, tableH, 18, '#17332e', '#d6b06a', Math.max(2, canvas.width * .003));
+  ctx.save();
+  ctx.globalAlpha = .18;
+  for (let line = 0; line < 7; line += 1) {
+    ctx.strokeStyle = line % 2 ? '#6ed0a4' : '#ffd36d';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(tableX + 30, tableY + 42 + line * 54);
+    ctx.lineTo(tableX + tableW - 30, tableY + 24 + line * 50);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSymbol(tile, free) {
+  const { screenX: x, screenY: y, screenW: w, screenH: h, symbol } = tile;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const accent = free ? symbol.color : '#6b7580';
+  const small = Math.max(10, w * .14);
+  const large = Math.max(18, w * .3);
+
+  ctx.save();
+  ctx.globalAlpha = free ? 1 : .72;
+  if (symbol.family === 'Dot') {
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(cx, y + h * .38, w * .14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(2, w * .03);
+    ctx.stroke();
+  } else if (symbol.family === 'Bam') {
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = Math.max(3, w * .055);
+    [-.16, 0, .16].forEach(offset => {
+      ctx.beginPath();
+      ctx.moveTo(cx + w * offset, y + h * .24);
+      ctx.lineTo(cx + w * offset, y + h * .52);
+      ctx.stroke();
+    });
+  } else if (symbol.family === 'Crak') {
+    drawRoundedRect(cx - w * .16, y + h * .22, w * .32, h * .28, 6, '#f2d8c0', accent, Math.max(2, w * .035));
+  } else if (symbol.family === 'Dragon') {
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = Math.max(3, w * .05);
+    ctx.beginPath();
+    ctx.moveTo(cx - w * .17, y + h * .43);
+    ctx.lineTo(cx, y + h * .23);
+    ctx.lineTo(cx + w * .17, y + h * .43);
+    ctx.lineTo(cx, y + h * .53);
+    ctx.closePath();
+    ctx.stroke();
+  } else if (symbol.family === 'Wind') {
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = Math.max(3, w * .045);
+    ctx.beginPath();
+    ctx.arc(cx, y + h * .38, w * .17, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, y + h * .2);
+    ctx.lineTo(cx, y + h * .56);
+    ctx.moveTo(cx - w * .18, y + h * .38);
+    ctx.lineTo(cx + w * .18, y + h * .38);
+    ctx.stroke();
+  } else {
+    drawRoundedRect(cx - w * .18, y + h * .26, w * .36, h * .2, 5, accent);
+  }
+  drawText(symbol.label, cx, cy + h * .18, large, accent);
+  drawText(symbol.family, cx, y + h * .82, small, '#58636d', 'center', 800);
+  ctx.restore();
+}
+
+function drawTile(tile) {
+  if (tile.removed) return;
+  const free = isFree(tile);
+  const selected = state.selectedId === tile.id;
+  const cursor = state.cursorId === tile.id;
+  const hint = state.hintIds.includes(tile.id);
+  const x = tile.screenX;
+  const y = tile.screenY;
+  const w = tile.screenW;
+  const h = tile.screenH;
+  const side = Math.max(4, w * .08);
+  const lineWidth = selected || hint ? Math.max(4, w * .055) : Math.max(1.5, w * .022);
+  const stroke = selected ? '#ffd36d' : hint ? '#6ed0a4' : cursor ? '#ffffffcc' : '#8d765c';
+  const face = free ? '#fff5df' : '#e2dfd6';
+
+  ctx.save();
+  ctx.globalAlpha = tile.flash > 0 ? .52 : 1;
+  drawRoundedRect(x + side, y + side, w, h, 9, '#6b4d37');
+  drawRoundedRect(x + side * .48, y + side * .48, w, h, 9, '#a97849');
+  drawRoundedRect(x, y, w, h, 9, face, stroke, lineWidth);
+  ctx.save();
+  ctx.globalAlpha = .22;
+  drawRoundedRect(x + w * .08, y + h * .07, w * .84, h * .13, 7, '#ffffff');
+  ctx.restore();
+  drawSymbol(tile, free);
+  if (!free) {
+    ctx.save();
+    ctx.globalAlpha = .18;
+    drawRoundedRect(x + 4, y + 4, w - 8, h - 8, 7, '#26313b');
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawHeader() {
+  const pairs = availablePairs().length;
+  drawText('Mahjong Solitaire', canvas.width / 2, 34, Math.max(24, canvas.width * .034), '#fff8df');
+  drawText(
+    state.message,
+    canvas.width / 2,
+    70,
+    Math.max(13, canvas.width * .017),
+    state.deadlocked ? '#ffd36d' : '#dfecef',
+    'center',
+    800,
+  );
+  const badgeText = `${state.layout.name} | ${activeTiles().length} tiles | ${pairs} matches open`;
+  drawRoundedRect(canvas.width - 278, 18, 238, 34, 8, '#00000055', '#ffffff36');
+  drawText(badgeText, canvas.width - 159, 35, 13, '#f8fbff', 'center', 800);
+}
+
+function drawCelebration(dt) {
+  if (!state.celebrants.length) return;
+  ctx.save();
+  state.celebrants.forEach(piece => {
+    const pulse = (Math.sin((state.elapsed + piece.t) * 5) + 1) / 2;
+    ctx.globalAlpha = .45 + pulse * .45;
+    ctx.fillStyle = piece.c;
+    ctx.beginPath();
+    ctx.arc(piece.x, piece.y + Math.sin(state.elapsed * 2 + piece.t) * 10, piece.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function sortTilesForDraw(a, b) {
+  return a.z - b.z || a.y - b.y || a.x - b.x;
+}
+
+function sortTilesForInput(a, b) {
+  return b.z - a.z || a.y - b.y || a.x - b.x;
+}
+
+function render() {
+  fitCanvas();
+  updateGeometry();
+  drawBackground();
+  drawHeader();
+  state.tiles.slice().sort(sortTilesForDraw).forEach(drawTile);
+  drawCelebration();
+  updateHud();
+}
+
+function updateHud() {
+  const remaining = activeTiles().length;
+  const total = state.layout.positions.length;
+  const free = freeTiles().length;
+  hud.layoutName.textContent = `${state.layout.name} (${state.layout.difficulty})`;
+  hud.tilesLeft.textContent = `${remaining} / ${total}`;
+  hud.freeTiles.textContent = String(free);
+  hud.moves.textContent = `${state.moves}`;
+  hud.bestTime.textContent = formatTime(state.best);
+  hud.coins.textContent = String(profileState.coins);
+  buttons.hint.disabled = state.mode !== 'playing' || remaining === 0;
+  buttons.shuffle.disabled = state.mode !== 'playing' || remaining < 4;
+  buttons.undo.disabled = state.mode !== 'playing' || state.history.length === 0;
+  buttons.layout.textContent = state.mode === 'playing' ? 'Next Layout' : 'Layout';
+}
+
+function showOverlay() {
+  const key = `${state.mode}|${state.layout.id}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'complete') {
+    overlayPanel.innerHTML = `
+      <h1>${state.layout.name} Cleared</h1>
+      <p>${state.message} Best time: ${formatTime(state.best)}. Coins earned: ${state.coinsEarned}.</p>
+      <p class="mini">Try another layout or replay with fewer shuffles.</p>
+      <button class="primary" id="nextLayoutBtn" type="button">Next Layout</button>
+    `;
+    overlay.classList.add('show');
+    document.getElementById('nextLayoutBtn').addEventListener('click', cycleLayout);
+    return;
+  }
+  if (state.mode === 'menu') {
+    overlayPanel.innerHTML = `
+      <h1>Mahjong Solitaire</h1>
+      <p>Remove matching free tiles. A tile is free when nothing covers it and at least one long side is open.</p>
+      <p class="mini">Click or tap two matching free tiles. Keyboard: arrows move focus, Enter selects, H hints, S shuffles, U undoes, F fullscreen.</p>
+      <button class="primary" id="startBtn" type="button">Start ${state.layout.name}</button>
+    `;
+    overlay.classList.add('show');
+    document.getElementById('startBtn').addEventListener('click', () => startLayout(state.layoutIndex));
+    return;
+  }
+  overlay.classList.remove('show');
+}
+
+function pointForEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function hitTest(point) {
+  return activeTiles()
+    .sort(sortTilesForInput)
+    .find(tile => (
+      point.x >= tile.screenX
+      && point.x <= tile.screenX + tile.screenW
+      && point.y >= tile.screenY
+      && point.y <= tile.screenY + tile.screenH
+    )) || null;
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (state.mode === 'menu') {
+    startLayout(state.layoutIndex);
+    return;
+  }
+  const tile = hitTest(pointForEvent(event));
+  if (tile) selectTileById(tile.id);
+}
+
+function moveCursor(step) {
+  if (state.mode !== 'playing') return;
+  const candidates = activeTiles().sort(sortTilesForInput);
+  if (!candidates.length) return;
+  let index = candidates.findIndex(tile => tile.id === state.cursorId);
+  if (index < 0) index = 0;
+  const next = candidates[(index + step + candidates.length) % candidates.length];
+  state.cursorId = next.id;
+  state.message = `${next.symbol.label} focused${isFree(next) ? ' and free' : ' but blocked'}.`;
+  render();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+    render();
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter'].includes(key)) event.preventDefault();
+  if (key === 'arrowright' || key === 'arrowdown') moveCursor(1);
+  else if (key === 'arrowleft' || key === 'arrowup') moveCursor(-1);
+  else if (key === ' ' || key === 'enter') {
+    if (state.mode === 'menu') startLayout(state.layoutIndex);
+    else if (state.cursorId) selectTileById(state.cursorId);
+  } else if (key === 'h') showHint();
+  else if (key === 'u') undo();
+  else if (key === 'n') startLayout(state.layoutIndex);
+  else if (key === 'l') cycleLayout();
+  else if (key === 's') shuffleRemaining();
+  else if (key === 'f') toggleFullscreen();
+}
+
+function update(dt) {
+  if (state.mode === 'playing') state.elapsed += dt;
+  state.tiles.forEach(tile => {
+    if (tile.flash > 0) tile.flash = Math.max(0, tile.flash - dt);
+  });
+  if (state.mode === 'complete' && state.celebrants.length) state.elapsed += dt * .12;
+  showOverlay();
+}
+
+function tileState(tile) {
+  const topBlockers = activeTiles().filter(other => (
+    other.id !== tile.id && other.z > tile.z && unitRectsOverlap(tile, other)
+  ));
+  const leftBlocked = activeTiles().some(other => (
+    other.id !== tile.id && other.z === tile.z && other.x === tile.x - 1 && rangesOverlap(tile.y, tile.y + 1, other.y, other.y + 1)
+  ));
+  const rightBlocked = activeTiles().some(other => (
+    other.id !== tile.id && other.z === tile.z && other.x === tile.x + 1 && rangesOverlap(tile.y, tile.y + 1, other.y, other.y + 1)
+  ));
+  return {
+    id: tile.id,
+    symbol: tile.symbol.id,
+    label: tile.symbol.label,
+    grid: { x: tile.x, y: tile.y, layer: tile.z },
+    screen: {
+      x: Math.round(tile.screenX || 0),
+      y: Math.round(tile.screenY || 0),
+      w: Math.round(tile.screenW || 0),
+      h: Math.round(tile.screenH || 0),
+    },
+    free: isFree(tile),
+    selected: state.selectedId === tile.id,
+    focused: state.cursorId === tile.id,
+    hint: state.hintIds.includes(tile.id),
+    blocked_by: {
+      top: topBlockers.map(other => other.id),
+      left: leftBlocked,
+      right: rightBlocked,
+    },
+  };
+}
+
+function renderGameToText() {
+  if (!state.geometry) {
+    fitCanvas();
+    updateGeometry();
+  }
+  const pairs = availablePairs();
+  const payload = {
+    coordinate_system: 'Canvas coordinates use origin at top-left, x increases right, y increases down. Tile grid coordinates use x, y, and layer, where higher layers cover lower overlapping tiles.',
+    mode: state.mode,
+    layout: {
+      id: state.layout.id,
+      name: state.layout.name,
+      difficulty: state.layout.difficulty,
+      total_tiles: state.layout.positions.length,
+    },
+    remaining_tiles: activeTiles().length,
+    free_tiles: freeTiles().length,
+    deadlocked: state.deadlocked,
+    selected_tile: state.selectedId,
+    focused_tile: state.cursorId,
+    active_tiles: activeTiles().sort(sortTilesForInput).map(tileState),
+    available_pairs: pairs.slice(0, 10).map(pair => ({
+      symbol: pair[0].symbol.id,
+      tiles: pair.map(tile => tile.id),
+    })),
+    moves: state.moves,
+    matches: state.matches,
+    shuffles: state.shuffles,
+    elapsed_seconds: Math.floor(state.elapsed),
+    best_seconds: state.best,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    last_action: state.lastAction,
+  };
+  return JSON.stringify(payload);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let index = 0; index < steps; index += 1) update(1 / 60);
+  render();
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__MAHJONG_SOLITAIRE_GAME__ = {
+  startLayout,
+  cycleLayout,
+  selectTileById,
+  showHint,
+  shuffleRemaining,
+  undo,
+  availablePairs: () => availablePairs().map(pair => pair.map(tile => tile.id)),
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'mahjongsolitaire', mode: state.mode };
+  }
+};
+
+buttons.start.addEventListener('click', () => startLayout(state.layoutIndex));
+buttons.new.addEventListener('click', () => startLayout(state.layoutIndex));
+buttons.layout.addEventListener('click', cycleLayout);
+buttons.hint.addEventListener('click', showHint);
+buttons.shuffle.addEventListener('click', shuffleRemaining);
+buttons.undo.addEventListener('click', undo);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'mahjongsolitaire', gameName: 'Mahjong Solitaire' });
+prepareLayout(0, 7331);
+state.mode = 'menu';
+state.message = 'Choose Start Bridge.';
+updateHud();
+showOverlay();
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

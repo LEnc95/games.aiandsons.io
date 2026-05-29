@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Word Search | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background: linear-gradient(135deg, #10363f 0%, #283b54 45%, #564322 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff7a;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1040px);
+  aspect-ratio: 13 / 10;
+  max-height: min(68dvh, 800px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #edf4f2;
+  box-shadow: 0 22px 54px #10141d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #11242ff2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce9ea;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.mini {
+  font-size: 13px;
+  color: #b9cbd0;
+}
+.hud, .controls {
+  width: min(97vw, 1040px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff50;
+  background: #102638d9;
+  color: #f7fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff24;
+}
+.chip span {
+  font-size: 12px;
+  color: #b8d0d8;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #ffd66e; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 10px;
+  box-shadow: inset 0 1px 0 #ffffff20, 0 8px 18px #00000024;
+}
+button:hover { background: #163650; }
+button:disabled {
+  opacity: .46;
+  cursor: default;
+}
+.primary {
+  background: #ffd05c;
+  border-color: #ffe6a3;
+  color: #142433;
+}
+.primary:hover { background: #ffe08d; }
+@media (max-width: 820px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(96vw, 760px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 520px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Trace hidden words across themed letter grids with hints, undo, and diagonal searches. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Word Search | AI and Sons Games">
+  <meta property="og:description" content="Trace hidden words across themed letter grids with hints, undo, and diagonal searches. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/wordsearch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Word Search | AI and Sons Games">
+  <meta name="twitter:description" content="Trace hidden words across themed letter grids with hints, undo, and diagonal searches. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/wordsearch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Word Search","description":"Trace hidden words across themed letter grids with hints, undo, and diagonal searches. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/wordsearch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Word Search game board">
+    <canvas id="game" width="1040" height="800"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Word Search</h1>
+        <p>Find every hidden word by tracing straight lines through the letter grid.</p>
+        <p class="mini">Drag across letters or use arrows, Space, and Enter. H hints, U undo, N new puzzle, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleName">Space Lab</b></div>
+    <div class="chip"><span>Found</span><b id="foundText">0 / 0</b></div>
+    <div class="chip"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip"><span>Hints</span><b id="hintsText">0</b></div>
+    <div class="chip"><span>Best</span><b id="bestText">--</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="submitBtn" type="button">Submit</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="newBtn" type="button">Restart</button>
+    <button id="nextBtn" type="button">Next</button>
+    <button id="fullBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+
+const hud = {
+  puzzleName: document.getElementById('puzzleName'),
+  foundText: document.getElementById('foundText'),
+  timeText: document.getElementById('timeText'),
+  hintsText: document.getElementById('hintsText'),
+  bestText: document.getElementById('bestText'),
+  coins: document.getElementById('coins'),
+};
+
+const buttons = {
+  start: document.getElementById('startBtn'),
+  submit: document.getElementById('submitBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  new: document.getElementById('newBtn'),
+  next: document.getElementById('nextBtn'),
+  full: document.getElementById('fullBtn'),
+};
+
+const COLORS = ['#58c7b1', '#ffd05c', '#eb6f6f', '#7cb7ff', '#c793ff', '#92d96d', '#ff9a62', '#6fe0ff', '#f2a7c7'];
+const FILLERS = 'QUIZBRIGHTPLANETFORESTOCEANKITCHENSPARKCADEGAMES';
+
+const PUZZLES = [
+  {
+    id: 'space-lab',
+    name: 'Space Lab',
+    difficulty: 'Easy',
+    size: 12,
+    fill: 'STARDUSTGALAXYNEBULAROCKETLASERORBITCOMETNOVA',
+    words: [
+      { id: 'orbit', label: 'ORBIT', row: 0, col: 0, dr: 0, dc: 1 },
+      { id: 'comet', label: 'COMET', row: 1, col: 11, dr: 0, dc: -1 },
+      { id: 'laser', label: 'LASER', row: 3, col: 0, dr: 0, dc: 1 },
+      { id: 'rocket', label: 'ROCKET', row: 5, col: 0, dr: 0, dc: 1 },
+      { id: 'lunar', label: 'LUNAR', row: 7, col: 2, dr: 0, dc: 1 },
+      { id: 'nebula', label: 'NEBULA', row: 10, col: 0, dr: 0, dc: 1 },
+      { id: 'astro', label: 'ASTRO', row: 0, col: 6, dr: 1, dc: 0 },
+      { id: 'galaxy', label: 'GALAXY', row: 11, col: 11, dr: 0, dc: -1 },
+    ],
+  },
+  {
+    id: 'forest-trail',
+    name: 'Forest Trail',
+    difficulty: 'Medium',
+    size: 12,
+    fill: 'CEDARBROOKPINEFIELDSTONECAMPTRAILMOSSLEAF',
+    words: [
+      { id: 'trail', label: 'TRAIL', row: 0, col: 1, dr: 0, dc: 1 },
+      { id: 'river', label: 'RIVER', row: 2, col: 11, dr: 0, dc: -1 },
+      { id: 'moss', label: 'MOSS', row: 4, col: 0, dr: 0, dc: 1 },
+      { id: 'maple', label: 'MAPLE', row: 6, col: 2, dr: 0, dc: 1 },
+      { id: 'acorn', label: 'ACORN', row: 8, col: 0, dr: 0, dc: 1 },
+      { id: 'creek', label: 'CREEK', row: 10, col: 4, dr: 0, dc: 1 },
+      { id: 'fern', label: 'FERN', row: 1, col: 5, dr: 1, dc: 0 },
+      { id: 'birch', label: 'BIRCH', row: 11, col: 11, dr: 0, dc: -1 },
+    ],
+  },
+  {
+    id: 'ocean-map',
+    name: 'Ocean Map',
+    difficulty: 'Medium',
+    size: 12,
+    fill: 'CURRENTTIDALREEFPEARLSHELLANCHORWAVE',
+    words: [
+      { id: 'coral', label: 'CORAL', row: 0, col: 0, dr: 0, dc: 1 },
+      { id: 'tide', label: 'TIDE', row: 2, col: 2, dr: 0, dc: 1 },
+      { id: 'wave', label: 'WAVE', row: 4, col: 11, dr: 0, dc: -1 },
+      { id: 'pearl', label: 'PEARL', row: 6, col: 1, dr: 0, dc: 1 },
+      { id: 'reef', label: 'REEF', row: 8, col: 0, dr: 0, dc: 1 },
+      { id: 'diver', label: 'DIVER', row: 10, col: 7, dr: 0, dc: 1 },
+      { id: 'kelp', label: 'KELP', row: 1, col: 0, dr: 1, dc: 0 },
+      { id: 'anchor', label: 'ANCHOR', row: 5, col: 11, dr: 1, dc: 0 },
+      { id: 'shore', label: 'SHORE', row: 11, col: 0, dr: 0, dc: 1 },
+    ],
+  },
+  {
+    id: 'kitchen-rush',
+    name: 'Kitchen Rush',
+    difficulty: 'Hard',
+    size: 12,
+    fill: 'PANTRYDINNERSPICEBAKEFLOURSAUCEOVENTIMER',
+    words: [
+      { id: 'spoon', label: 'SPOON', row: 0, col: 0, dr: 0, dc: 1 },
+      { id: 'plate', label: 'PLATE', row: 2, col: 11, dr: 0, dc: -1 },
+      { id: 'sugar', label: 'SUGAR', row: 4, col: 1, dr: 0, dc: 1 },
+      { id: 'flour', label: 'FLOUR', row: 6, col: 6, dr: 0, dc: 1 },
+      { id: 'oven', label: 'OVEN', row: 8, col: 0, dr: 0, dc: 1 },
+      { id: 'sauce', label: 'SAUCE', row: 10, col: 3, dr: 0, dc: 1 },
+      { id: 'knife', label: 'KNIFE', row: 1, col: 0, dr: 1, dc: 0 },
+      { id: 'timer', label: 'TIMER', row: 11, col: 11, dr: 0, dc: -1 },
+    ],
+  },
+];
+
+const state = {
+  mode: 'intro',
+  puzzleIndex: 0,
+  puzzle: null,
+  grid: [],
+  boardRect: null,
+  foundIds: new Set(),
+  selection: [],
+  cursor: { row: 0, col: 0 },
+  keyboardAnchor: null,
+  pointerAnchor: null,
+  activePointerId: null,
+  undoStack: [],
+  moves: 0,
+  mistakes: 0,
+  hintsUsed: 0,
+  elapsed: 0,
+  best: null,
+  coinsEarned: 0,
+  hint: null,
+  sparkles: [],
+  flash: 0,
+  message: 'Find every hidden word.',
+  lastAction: null,
+};
+
+let lastFrame = 0;
+let manualStepping = false;
+let overlayKey = '';
+
+function cleanLabel(label) {
+  return String(label || '').toUpperCase().replace(/[^A-Z]/g, '');
+}
+
+function computePath(word, size) {
+  const letters = cleanLabel(word.label);
+  return [...letters].map((_, index) => {
+    const row = word.row + word.dr * index;
+    const col = word.col + word.dc * index;
+    if (row < 0 || col < 0 || row >= size || col >= size) {
+      throw new Error(`Word ${word.label} is outside the puzzle grid.`);
+    }
+    return { row, col };
+  });
+}
+
+function preparePuzzle(base) {
+  const grid = Array.from({ length: base.size }, () => Array.from({ length: base.size }, () => ''));
+  const words = base.words.map((word, index) => ({
+    ...word,
+    label: cleanLabel(word.label),
+    color: COLORS[index % COLORS.length],
+    path: computePath(word, base.size),
+  }));
+  words.forEach((word) => {
+    [...word.label].forEach((letter, index) => {
+      const cell = word.path[index];
+      const existing = grid[cell.row][cell.col];
+      if (existing && existing !== letter) {
+        throw new Error(`Word ${word.label} conflicts at ${cell.row},${cell.col}.`);
+      }
+      grid[cell.row][cell.col] = letter;
+    });
+  });
+  const fill = cleanLabel(base.fill || FILLERS) + FILLERS;
+  let fillIndex = 0;
+  for (let row = 0; row < base.size; row += 1) {
+    for (let col = 0; col < base.size; col += 1) {
+      if (!grid[row][col]) {
+        const offset = (row * 7 + col * 5 + fillIndex) % fill.length;
+        grid[row][col] = fill[offset];
+        fillIndex += 1;
+      }
+    }
+  }
+  return { ...base, words, grid };
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '--';
+  const whole = Math.floor(seconds);
+  const mins = Math.floor(whole / 60);
+  const secs = String(whole % 60).padStart(2, '0');
+  return `${mins}:${secs}`;
+}
+
+function bestKey(puzzleId) {
+  return `cade-wordsearch-best-${puzzleId}`;
+}
+
+function loadBest(puzzleId) {
+  try {
+    const value = Number(localStorage.getItem(bestKey(puzzleId)));
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(puzzleId, seconds) {
+  try {
+    localStorage.setItem(bestKey(puzzleId), String(seconds));
+  } catch {
+    // Local storage can be unavailable in private contexts.
+  }
+}
+
+function resetPuzzle(index, mode = 'playing') {
+  const normalizedIndex = (index + PUZZLES.length) % PUZZLES.length;
+  state.puzzleIndex = normalizedIndex;
+  state.puzzle = preparePuzzle(PUZZLES[normalizedIndex]);
+  state.grid = state.puzzle.grid;
+  state.mode = mode;
+  state.foundIds = new Set();
+  state.selection = [];
+  state.cursor = { row: 0, col: 0 };
+  state.keyboardAnchor = null;
+  state.pointerAnchor = null;
+  state.activePointerId = null;
+  state.undoStack = [];
+  state.moves = 0;
+  state.mistakes = 0;
+  state.hintsUsed = 0;
+  state.elapsed = 0;
+  state.best = loadBest(state.puzzle.id);
+  state.coinsEarned = 0;
+  state.hint = null;
+  state.sparkles = [];
+  state.flash = 0;
+  state.message = mode === 'intro' ? 'Find every hidden word.' : `Find ${state.puzzle.words.length} hidden words.`;
+  state.lastAction = { type: 'load', puzzle: state.puzzle.id, mode };
+  if (mode === 'playing') rememberRecent('wordsearch');
+  updateHud();
+  showOverlay();
+  render();
+}
+
+function startPuzzle(index = state.puzzleIndex) {
+  resetPuzzle(index, 'playing');
+}
+
+function nextPuzzle() {
+  startPuzzle(state.puzzleIndex + 1);
+}
+
+function foundCount() {
+  return state.foundIds.size;
+}
+
+function isComplete() {
+  return state.puzzle && foundCount() === state.puzzle.words.length;
+}
+
+function wordById(id) {
+  return state.puzzle.words.find(word => word.id === id) || null;
+}
+
+function cellKey(cell) {
+  return `${cell.row},${cell.col}`;
+}
+
+function samePath(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  return a.every((cell, index) => cell.row === b[index].row && cell.col === b[index].col);
+}
+
+function reversedPath(path) {
+  return [...path].reverse();
+}
+
+function selectionLetters(selection = state.selection) {
+  return selection.map(cell => state.grid[cell.row]?.[cell.col] || '').join('');
+}
+
+function matchingWord(selection = state.selection) {
+  return state.puzzle.words.find((word) => {
+    if (state.foundIds.has(word.id)) return false;
+    return samePath(selection, word.path) || samePath(selection, reversedPath(word.path));
+  }) || null;
+}
+
+function selectedWordAlreadyFound(selection = state.selection) {
+  return state.puzzle.words.find((word) => {
+    if (!state.foundIds.has(word.id)) return false;
+    return samePath(selection, word.path) || samePath(selection, reversedPath(word.path));
+  }) || null;
+}
+
+function lineSelection(start, rawEnd) {
+  if (!start || !rawEnd || !state.puzzle) return [];
+  const size = state.puzzle.size;
+  const dr = rawEnd.row - start.row;
+  const dc = rawEnd.col - start.col;
+  if (dr === 0 && dc === 0) return [{ ...start }];
+  const absRow = Math.abs(dr);
+  const absCol = Math.abs(dc);
+  let end = rawEnd;
+  if (!(dr === 0 || dc === 0 || absRow === absCol)) {
+    const rowSign = Math.sign(dr);
+    const colSign = Math.sign(dc);
+    if (absRow > absCol * 1.75) end = { row: rawEnd.row, col: start.col };
+    else if (absCol > absRow * 1.75) end = { row: start.row, col: rawEnd.col };
+    else {
+      const steps = Math.max(absRow, absCol);
+      end = {
+        row: Math.max(0, Math.min(size - 1, start.row + rowSign * steps)),
+        col: Math.max(0, Math.min(size - 1, start.col + colSign * steps)),
+      };
+    }
+  }
+  const stepRow = Math.sign(end.row - start.row);
+  const stepCol = Math.sign(end.col - start.col);
+  const steps = Math.max(Math.abs(end.row - start.row), Math.abs(end.col - start.col));
+  const cells = [];
+  for (let index = 0; index <= steps; index += 1) {
+    const row = start.row + stepRow * index;
+    const col = start.col + stepCol * index;
+    if (row < 0 || col < 0 || row >= size || col >= size) break;
+    cells.push({ row, col });
+  }
+  return cells;
+}
+
+function clearSelection() {
+  state.selection = [];
+  state.keyboardAnchor = null;
+  state.pointerAnchor = null;
+}
+
+function addSparklesForWord(word) {
+  word.path.forEach((cell, index) => {
+    state.sparkles.push({
+      row: cell.row,
+      col: cell.col,
+      color: word.color,
+      age: 0,
+      life: .7 + index * .035,
+    });
+  });
+}
+
+function submitSelection() {
+  if (state.mode !== 'playing') return;
+  if (state.selection.length < 2) {
+    state.message = 'Select at least two letters in a straight line.';
+    state.lastAction = { type: 'short-selection' };
+    updateHud();
+    render();
+    return;
+  }
+  state.moves += 1;
+  const word = matchingWord();
+  if (word) {
+    state.foundIds.add(word.id);
+    state.undoStack.push(word.id);
+    state.hint = null;
+    state.flash = .18;
+    addSparklesForWord(word);
+    state.message = `Found ${word.label}.`;
+    state.lastAction = { type: 'found', word: word.id, letters: word.label };
+    if (isComplete()) completePuzzle();
+  } else {
+    const foundWord = selectedWordAlreadyFound();
+    state.mistakes += foundWord ? 0 : 1;
+    state.message = foundWord ? `${foundWord.label} is already found.` : `${selectionLetters()} is not on the word list.`;
+    state.lastAction = { type: foundWord ? 'already-found' : 'miss', letters: selectionLetters() };
+  }
+  clearSelection();
+  updateHud();
+  showOverlay();
+  render();
+}
+
+function completePuzzle() {
+  if (state.mode === 'won') return;
+  state.mode = 'won';
+  const seconds = Math.max(1, Math.floor(state.elapsed));
+  if (!state.best || seconds < state.best) {
+    state.best = seconds;
+    saveBest(state.puzzle.id, seconds);
+  }
+  const speedBonus = Math.max(0, 10 - Math.floor(seconds / 45));
+  const cleanBonus = Math.max(0, 12 - state.mistakes * 2 - state.hintsUsed * 3);
+  const coins = Math.max(20, 24 + speedBonus + cleanBonus + state.puzzle.words.length);
+  state.coinsEarned = coins;
+  state.message = `Puzzle solved in ${formatTime(seconds)}.`;
+  state.lastAction = { type: 'complete', puzzle: state.puzzle.id, seconds, coins };
+  addCoins(coins);
+  updateHud();
+}
+
+function revealHint() {
+  if (state.mode !== 'playing') return;
+  const word = state.puzzle.words.find(item => !state.foundIds.has(item.id));
+  if (!word) return;
+  state.hintsUsed += 1;
+  state.hint = {
+    wordId: word.id,
+    ttl: 4,
+    path: word.path.map(cell => ({ ...cell })),
+  };
+  state.message = `Hint: trace ${word.label}.`;
+  state.lastAction = { type: 'hint', word: word.id };
+  updateHud();
+  render();
+}
+
+function undo() {
+  if (state.mode !== 'playing') return;
+  const id = state.undoStack.pop();
+  if (!id) {
+    state.message = 'No found word to undo.';
+    state.lastAction = { type: 'undo-empty' };
+    render();
+    return;
+  }
+  state.foundIds.delete(id);
+  const word = wordById(id);
+  state.message = word ? `Undid ${word.label}.` : 'Undid last word.';
+  state.lastAction = { type: 'undo', word: id };
+  updateHud();
+  render();
+}
+
+function updateHud() {
+  if (!state.puzzle) return;
+  hud.puzzleName.textContent = state.puzzle.name;
+  hud.foundText.textContent = `${foundCount()} / ${state.puzzle.words.length}`;
+  hud.timeText.textContent = formatTime(state.elapsed);
+  hud.hintsText.textContent = String(state.hintsUsed);
+  hud.bestText.textContent = state.best ? formatTime(state.best) : '--';
+  hud.coins.textContent = String(profileState.coins);
+  buttons.submit.disabled = state.mode !== 'playing' || state.selection.length < 2;
+  buttons.hint.disabled = state.mode !== 'playing' || isComplete();
+  buttons.undo.disabled = state.mode !== 'playing' || state.undoStack.length === 0;
+}
+
+function showOverlay() {
+  const key = `${state.mode}|${state.puzzle?.id}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'intro') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Word Search</h1>
+      <p>Find every hidden word by tracing straight lines through the letter grid.</p>
+      <p class="mini">Drag across letters or use arrows, Space, and Enter. H hints, U undo, N new puzzle, F fullscreen.</p>
+      <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+    `;
+    buttons.start = document.getElementById('startBtn');
+    buttons.start.addEventListener('click', () => startPuzzle(state.puzzleIndex));
+  } else if (state.mode === 'won') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>${state.puzzle.name} Solved</h1>
+      <p>${state.message} Best time: ${formatTime(state.best)}. Coins earned: ${state.coinsEarned}.</p>
+      <p class="mini">Choose the next word hunt or restart this puzzle to chase a faster solve.</p>
+      <button class="primary" id="startBtn" type="button">Next Puzzle</button>
+    `;
+    buttons.start = document.getElementById('startBtn');
+    buttons.start.addEventListener('click', nextPuzzle);
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function foundCellColor(row, col) {
+  for (const word of state.puzzle.words) {
+    if (!state.foundIds.has(word.id)) continue;
+    if (word.path.some(cell => cell.row === row && cell.col === col)) return word.color;
+  }
+  return null;
+}
+
+function pathHasCell(path, row, col) {
+  return Array.isArray(path) && path.some(cell => cell.row === row && cell.col === col);
+}
+
+function drawText(text, x, y, size, color = '#102638', align = 'left', weight = 800) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawBackground(w, h) {
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, '#e9f7f2');
+  gradient.addColorStop(.45, '#d7e9f4');
+  gradient.addColorStop(1, '#f9e8c6');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#16344d10';
+  for (let i = 0; i < 18; i += 1) {
+    const x = (i * 97 + 41) % w;
+    const y = (i * 53 + 69) % h;
+    ctx.beginPath();
+    ctx.arc(x, y, 18 + (i % 5) * 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBoard(w, h) {
+  const size = state.puzzle.size;
+  const boardSize = Math.min(h * .68, w * .55);
+  const boardX = Math.max(36, w * .055);
+  const boardY = Math.max(86, h * .13);
+  const cell = boardSize / size;
+  state.boardRect = { x: boardX, y: boardY, size: boardSize, cell, rows: size, cols: size };
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(boardX - 10, boardY - 10, boardSize + 20, boardSize + 20);
+  ctx.strokeStyle = '#244659';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(boardX - 10, boardY - 10, boardSize + 20, boardSize + 20);
+
+  const selected = new Set(state.selection.map(cellKey));
+  const hinted = state.hint ? new Set(state.hint.path.map(cellKey)) : new Set();
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const x = boardX + col * cell;
+      const y = boardY + row * cell;
+      const foundColor = foundCellColor(row, col);
+      ctx.fillStyle = foundColor ? `${foundColor}66` : '#f8fbff';
+      ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+      if (hinted.has(`${row},${col}`)) {
+        ctx.fillStyle = '#ffd05c90';
+        ctx.fillRect(x + 4, y + 4, cell - 8, cell - 8);
+      }
+      if (selected.has(`${row},${col}`)) {
+        ctx.fillStyle = '#1f8bff59';
+        ctx.fillRect(x + 4, y + 4, cell - 8, cell - 8);
+      }
+      if (state.cursor.row === row && state.cursor.col === col && state.mode === 'playing') {
+        ctx.strokeStyle = '#102638';
+        ctx.lineWidth = Math.max(2, cell * .055);
+        ctx.strokeRect(x + 5, y + 5, cell - 10, cell - 10);
+      }
+      drawText(state.grid[row][col], x + cell / 2, y + cell / 2 + 1, Math.max(18, cell * .45), '#162d3a', 'center', 900);
+    }
+  }
+
+  ctx.strokeStyle = '#8ba0a9';
+  for (let i = 0; i <= size; i += 1) {
+    ctx.lineWidth = i === 0 || i === size ? 3 : 1;
+    ctx.beginPath();
+    ctx.moveTo(boardX + i * cell, boardY);
+    ctx.lineTo(boardX + i * cell, boardY + boardSize);
+    ctx.moveTo(boardX, boardY + i * cell);
+    ctx.lineTo(boardX + boardSize, boardY + i * cell);
+    ctx.stroke();
+  }
+}
+
+function drawWordList(w, h) {
+  const rect = state.boardRect;
+  const panelX = rect.x + rect.size + Math.max(32, w * .035);
+  const panelY = rect.y - 10;
+  const panelW = Math.max(280, w - panelX - 42);
+  const panelH = rect.size + 20;
+  ctx.fillStyle = '#102638e8';
+  ctx.fillRect(panelX, panelY, panelW, panelH);
+  ctx.strokeStyle = '#ffffff55';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(panelX, panelY, panelW, panelH);
+
+  drawText(state.puzzle.name, panelX + 20, panelY + 36, 26, '#ffffff', 'left', 900);
+  drawText(`${state.puzzle.difficulty} puzzle`, panelX + 20, panelY + 66, 15, '#b8d0d8', 'left', 800);
+  const columns = panelW > 360 ? 2 : 1;
+  const rowGap = Math.min(42, (panelH - 128) / Math.ceil(state.puzzle.words.length / columns));
+  state.puzzle.words.forEach((word, index) => {
+    const col = columns === 2 ? index % 2 : 0;
+    const row = columns === 2 ? Math.floor(index / 2) : index;
+    const x = panelX + 22 + col * (panelW / 2);
+    const y = panelY + 112 + row * rowGap;
+    const found = state.foundIds.has(word.id);
+    ctx.fillStyle = found ? `${word.color}35` : '#ffffff12';
+    ctx.fillRect(x - 7, y - 16, columns === 2 ? panelW / 2 - 22 : panelW - 34, 31);
+    drawText(word.label, x, y, 19, found ? '#ffffff' : '#dce9ea', 'left', 900);
+    if (found) {
+      ctx.strokeStyle = word.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x, y + 2);
+      ctx.lineTo(x + Math.min(96, word.label.length * 14), y + 2);
+      ctx.stroke();
+    }
+  });
+
+  const statusY = panelY + panelH - 54;
+  drawText(state.message, panelX + panelW / 2, statusY, 17, '#ffd981', 'center', 900);
+  const letters = selectionLetters();
+  if (state.selection.length > 1) {
+    drawText(`Selected: ${letters}`, panelX + panelW / 2, statusY + 26, 15, '#c9f3ff', 'center', 800);
+  } else {
+    drawText('Straight lines can run forward, backward, vertical, or diagonal.', panelX + panelW / 2, statusY + 26, 14, '#b8d0d8', 'center', 800);
+  }
+}
+
+function drawSparkles() {
+  const rect = state.boardRect;
+  if (!rect) return;
+  for (const dot of state.sparkles) {
+    const progress = dot.age / dot.life;
+    const alpha = Math.max(0, 1 - progress);
+    const x = rect.x + (dot.col + .5) * rect.cell;
+    const y = rect.y + (dot.row + .5) * rect.cell - progress * rect.cell * .45;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = dot.color;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(3, rect.cell * .11) * alpha, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function render() {
+  if (!state.puzzle) return;
+  const w = canvas.width;
+  const h = canvas.height;
+  drawBackground(w, h);
+  drawText('Word Search', w * .055, 46, 34, '#122c3a', 'left', 900);
+  drawText(`Moves ${state.moves}  |  Misses ${state.mistakes}  |  Found ${foundCount()} of ${state.puzzle.words.length}`, w * .055, 78, 17, '#365060', 'left', 800);
+  drawBoard(w, h);
+  drawWordList(w, h);
+  drawSparkles();
+  if (state.flash > 0) {
+    ctx.globalAlpha = Math.min(.25, state.flash);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function cellFromPoint(point) {
+  const rect = state.boardRect;
+  if (!rect) return null;
+  const col = Math.floor((point.x - rect.x) / rect.cell);
+  const row = Math.floor((point.y - rect.y) / rect.cell);
+  if (row < 0 || col < 0 || row >= rect.rows || col >= rect.cols) return null;
+  return { row, col };
+}
+
+function setSelectionFromCell(cell) {
+  const anchor = state.pointerAnchor || state.keyboardAnchor || cell;
+  state.selection = lineSelection(anchor, cell);
+  state.cursor = { ...cell };
+  updateHud();
+  render();
+}
+
+function handlePointerDown(event) {
+  if (state.mode !== 'playing') return;
+  const cell = cellFromPoint(pointFromEvent(event));
+  if (!cell) return;
+  event.preventDefault();
+  state.activePointerId = event.pointerId;
+  state.pointerAnchor = cell;
+  state.keyboardAnchor = null;
+  state.selection = [{ ...cell }];
+  state.cursor = { ...cell };
+  try {
+    canvas.setPointerCapture(event.pointerId);
+  } catch {
+    // Pointer capture is not available in every embedded browser.
+  }
+  updateHud();
+  render();
+}
+
+function handlePointerMove(event) {
+  if (state.mode !== 'playing' || state.activePointerId !== event.pointerId) return;
+  const cell = cellFromPoint(pointFromEvent(event));
+  if (!cell) return;
+  event.preventDefault();
+  setSelectionFromCell(cell);
+}
+
+function handlePointerUp(event) {
+  if (state.mode !== 'playing' || state.activePointerId !== event.pointerId) return;
+  event.preventDefault();
+  const cell = cellFromPoint(pointFromEvent(event));
+  if (cell) setSelectionFromCell(cell);
+  state.activePointerId = null;
+  submitSelection();
+}
+
+function moveCursor(deltaRow, deltaCol) {
+  if (state.mode !== 'playing') return;
+  const size = state.puzzle.size;
+  state.cursor = {
+    row: (state.cursor.row + deltaRow + size) % size,
+    col: (state.cursor.col + deltaCol + size) % size,
+  };
+  if (state.keyboardAnchor) state.selection = lineSelection(state.keyboardAnchor, state.cursor);
+  updateHud();
+  render();
+}
+
+function toggleKeyboardSelection() {
+  if (state.mode !== 'playing') return;
+  if (!state.keyboardAnchor) {
+    state.keyboardAnchor = { ...state.cursor };
+    state.pointerAnchor = null;
+    state.selection = [{ ...state.cursor }];
+    state.message = 'Move to the last letter, then press Enter.';
+  } else {
+    submitSelection();
+    return;
+  }
+  updateHud();
+  render();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+    render();
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter'].includes(key)) event.preventDefault();
+  if (state.mode !== 'playing' && (key === 'enter' || key === ' ')) {
+    if (state.mode === 'won') nextPuzzle();
+    else startPuzzle(state.puzzleIndex);
+    return;
+  }
+  if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') moveCursor(1, 0);
+  else if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === ' ') toggleKeyboardSelection();
+  else if (key === 'enter') submitSelection();
+  else if (key === 'escape') {
+    clearSelection();
+    updateHud();
+    render();
+  } else if (key === 'h') revealHint();
+  else if (key === 'u') undo();
+  else if (key === 'n') startPuzzle(state.puzzleIndex);
+  else if (key === 'f') toggleFullscreen();
+}
+
+function update(dt) {
+  if (state.mode === 'playing') state.elapsed += dt;
+  if (state.hint) {
+    state.hint.ttl -= dt;
+    if (state.hint.ttl <= 0) state.hint = null;
+  }
+  state.flash = Math.max(0, state.flash - dt);
+  state.sparkles = state.sparkles
+    .map(dot => ({ ...dot, age: dot.age + dt }))
+    .filter(dot => dot.age < dot.life);
+  updateHud();
+  showOverlay();
+}
+
+function visibleWords() {
+  return state.puzzle.words.map(word => ({
+    id: word.id,
+    label: word.label,
+    found: state.foundIds.has(word.id),
+    path: word.path.map(cell => ({ ...cell })),
+  }));
+}
+
+function selectionPayload() {
+  return {
+    cells: state.selection.map(cell => ({ ...cell })),
+    letters: selectionLetters(),
+    length: state.selection.length,
+  };
+}
+
+function renderGameToText() {
+  const payload = {
+    coordinate_system: 'Canvas coordinates use origin at top-left, x increases right, y increases down. Grid coordinates use zero-based row and column.',
+    mode: state.mode,
+    puzzle: {
+      id: state.puzzle.id,
+      name: state.puzzle.name,
+      difficulty: state.puzzle.difficulty,
+      size: state.puzzle.size,
+    },
+    grid_rows: state.grid.map(row => row.join('')),
+    words: visibleWords(),
+    found_count: foundCount(),
+    total_words: state.puzzle.words.length,
+    cursor: { ...state.cursor },
+    keyboard_anchor: state.keyboardAnchor ? { ...state.keyboardAnchor } : null,
+    selection: selectionPayload(),
+    active_hint: state.hint ? {
+      word_id: state.hint.wordId,
+      path: state.hint.path.map(cell => ({ ...cell })),
+      seconds_remaining: Number(state.hint.ttl.toFixed(2)),
+    } : null,
+    moves: state.moves,
+    mistakes: state.mistakes,
+    hints_used: state.hintsUsed,
+    elapsed_seconds: Math.floor(state.elapsed),
+    best_seconds: state.best,
+    coins: profileState.coins,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    last_action: state.lastAction,
+  };
+  return JSON.stringify(payload);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__WORDSEARCH_GAME__ = {
+  startPuzzle,
+  nextPuzzle,
+  revealHint,
+  undo,
+  submitSelection,
+  lineSelection,
+  renderGameToText,
+  selectPathForWord(wordId) {
+    const word = wordById(wordId);
+    if (!word) return false;
+    state.selection = word.path.map(cell => ({ ...cell }));
+    submitSelection();
+    return true;
+  },
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'wordsearch', mode: state.mode };
+  }
+};
+
+buttons.start.addEventListener('click', () => startPuzzle(state.puzzleIndex));
+buttons.submit.addEventListener('click', submitSelection);
+buttons.hint.addEventListener('click', revealHint);
+buttons.undo.addEventListener('click', undo);
+buttons.new.addEventListener('click', () => startPuzzle(state.puzzleIndex));
+buttons.next.addEventListener('click', nextPuzzle);
+buttons.full.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', handlePointerUp);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'wordsearch', gameName: 'Word Search' });
+resetPuzzle(0, 'intro');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

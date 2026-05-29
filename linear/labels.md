@@ -78,6 +78,7 @@
 - game/gemswap
 - game/hexharvest
 - game/wordweave
+- game/wordsearch
 - game/diceforge
 - game/yachtdice
 - game/keystrike
@@ -122,6 +123,7 @@
 - game/sundialsprint
 - game/bubbleshooter
 - game/mosaicmatch
+- game/mahjongsolitaire
 - game/nonogram
 
 Generated from `src/meta/feedback.js`.

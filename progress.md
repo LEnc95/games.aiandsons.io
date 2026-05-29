@@ -3126,3 +3126,58 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Nonogram screenshots.
+
+## 2026-05-28 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Nonogram, Yacht Dice, Klondike Solitaire, Fifteen Puzzle, Dots and Boxes, Battleship, Reversi, Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/mahjongsolitaire` route and no Mahjong Solitaire metadata entry found.
+- Chosen game: Mahjong Solitaire (`/mahjongsolitaire`), a tile-matching solitaire puzzle with free-tile rules, hints, shuffle, undo, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `mahjongsolitaire/index.html` with canvas rendering, three layered layouts, solvable tile assignment, free-tile matching, hint, shuffle, undo, fullscreen, coin rewards, shared feedback context, and deterministic test hooks.
+  - Registered Mahjong Solitaire in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Mahjong Solitaire.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse after SEO: pass.
+  - Metadata checks: pass; `GAMES` reports 109 games including Mahjong Solitaire with no duplicate slugs or URLs.
+  - Stubbed DOM/canvas runtime harness passed: started Bridge, matched a free pair, used hint, undid, shuffled remaining tiles, advanced deterministic time, solved the full layout, awarded coins, verified `render_game_to_text()` state, and verified shared feedback mount context.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/mahjongsolitaire/`.
+  - `git diff --check` on tracked Mahjong integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `mahjongsolitaire/index.html`, `src/meta/games.js`, `progress.md`, `linear/labels.md`, `linear/game-issues.csv`, `sitemap.xml`, or `index.html`.
+- Sandbox/browser blockers:
+  - `python -m http.server` could not be used because `python` is not on PATH and the Windows Store `py` launcher returned access denied; a temporary Node static server was used instead.
+  - Required `$develop-web-game` Playwright client reached `/mahjongsolitaire/` but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose the in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Mahjong Solitaire screenshots.
+
+## 2026-05-29 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Mahjong Solitaire, Nonogram, Yacht Dice, Klondike Solitaire, Fifteen Puzzle, Dots and Boxes, Battleship, Reversi, Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/wordsearch` route and no Word Search metadata entry found.
+- Chosen game: Word Search (`/wordsearch`), a classic word-finding puzzle with pointer/touch drag selection, keyboard selection, hints, undo, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `wordsearch/index.html` with canvas rendering, four themed 12x12 word-search boards, pointer/touch drag selection, keyboard selection, hints, undo, fullscreen, completion coin rewards, shared feedback context, and deterministic test hooks.
+  - Registered Word Search in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Word Search.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Browser module parse after SEO: pass.
+  - Metadata checks: pass; `GAMES` reports 110 games including Word Search with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/wordsearch/`.
+  - Stubbed DOM/canvas runtime harness passed: started Space Lab, activated a hint, selected ORBIT through the game test API, undid it, solved all eight words, awarded coins, advanced deterministic time, and verified shared feedback context.
+  - `git diff --check` on tracked Word Search integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `wordsearch/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/wordsearch/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no gameplay screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` against a temporary server at `http://127.0.0.1:4173` failed at the same Chromium launch step.
+  - Tool discovery did not expose an in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Word Search screenshots.
