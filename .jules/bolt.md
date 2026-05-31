@@ -61,3 +61,6 @@
 ## 2025-05-18 - Avoid redundant array traversals inside Set-guarded conditions
 **Learning:** Using helper functions like `addUnique` (which internally call `Array.prototype.includes`) inside a code block that is already guarded by a `Set.has()` check results in redundant O(N) array traversals, defeating the purpose of the O(1) Set optimization.
 **Action:** When a loop relies on a `Set` for O(1) membership checks to guard array insertions, append directly to the array instead of using defensive insertion helpers that perform their own O(N) validation.
+## 2024-05-31 - Replace O(N) array includes with O(1) Set membership lookups in module scope
+**Learning:** Functions doing inner array membership checks with `.includes()` against static exported constant arrays (like `ACCESSIBILITY_COLOR_PROFILES`, `SCHOOL_LICENSE_REQUEST_STATUSES`, and `ONBOARDING_ROLES`) inside state normalizers can cause repetitive, unnecessary O(N) lookups on the critical path, as these arrays do not change.
+**Action:** When working with static constant validation arrays that are heavily referenced during state reads/normalization, instantiate a local module-scoped `Set` from the array during module load, and use `Set.has()` (O(1)) instead of `Array.prototype.includes()` (O(N)) within the functions.
