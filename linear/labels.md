@@ -125,5 +125,6 @@
 - game/mosaicmatch
 - game/mahjongsolitaire
 - game/nonogram
+- game/rushhour
 
 Generated from `src/meta/feedback.js`.

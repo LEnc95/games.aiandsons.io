@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-05-30
+
+### Added
+- Added and wired three new games: `yacht-dice`, `nonogram`, and `word-search`.
+
+### Improved
+- Improved account lookup performance in the in-memory store by moving account-member checks to O(1) lookups.
+- Improved accessibility across key surfaces by adding explicit required indicators for billing email fields, adding accessible labels to coin displays, and adding ARIA labeling plus Enter-key support for family invite input.
+- Refreshed site metadata to include newly added games.
+
+### Security
+- Replaced remaining DOM-clearing patterns with `.textContent = ''` across game surfaces.
+
+### Operations
+- Key PRs: [#164](https://github.com/LEnc95/games.aiandsons.io/pull/164), [#162](https://github.com/LEnc95/games.aiandsons.io/pull/162), [#161](https://github.com/LEnc95/games.aiandsons.io/pull/161).
+
 ## [1.4.0] - 2026-05-22
 
 ### Added

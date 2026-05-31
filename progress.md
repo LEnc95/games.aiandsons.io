@@ -3181,3 +3181,29 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose an in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Word Search screenshots.
+
+## 2026-05-30 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Word Search, Mahjong Solitaire, Nonogram, Yacht Dice, Klondike Solitaire, Fifteen Puzzle, Dots and Boxes, Battleship, Reversi, Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/rushhour` route and no Rush Hour or Traffic Jam metadata entry found.
+- Chosen game: Rush Hour (`/rushhour`), a 6x6 sliding-block traffic puzzle with multiple boards, car selection/dragging, hints, undo, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation:
+  - Added `rushhour/index.html` with canvas rendering, four traffic-jam puzzles, pointer drag and keyboard controls, hints, undo, fullscreen, coin rewards, shared feedback context, deterministic test hooks, and a small test API.
+  - Registered Rush Hour in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Rush Hour.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Metadata uniqueness check passed; `GAMES` reports 111 games including Rush Hour with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/rushhour/`.
+  - Stubbed DOM/canvas runtime harness passed: started Depot Dash, solved it through real movement calls, undid after win, solved all four puzzles through the game API, advanced deterministic time, and verified shared feedback context.
+  - `git diff --check` on tracked Rush Hour integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `rushhour/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/rushhour/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` against the same temporary server failed at the same Chromium launch step.
+  - Tool discovery did not expose an in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Rush Hour screenshots.

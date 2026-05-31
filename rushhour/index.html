@@ -1,0 +1,1175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Rush Hour | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background: linear-gradient(135deg, #143747 0%, #2f3e43 48%, #59452a 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff7a;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1000px);
+  aspect-ratio: 5 / 4;
+  max-height: min(67dvh, 760px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #eef4ed;
+  box-shadow: 0 22px 54px #10141d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #132832f2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce9ea;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.mini {
+  font-size: 13px;
+  color: #b9cbd0;
+}
+.hud, .controls {
+  width: min(97vw, 1000px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff50;
+  background: #102638d9;
+  color: #f7fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff24;
+}
+.chip span {
+  font-size: 12px;
+  color: #b8d0d8;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #ffd66e; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 10px;
+  box-shadow: inset 0 1px 0 #ffffff20, 0 8px 18px #00000024;
+}
+button:hover { background: #163650; }
+button:disabled {
+  opacity: .46;
+  cursor: default;
+}
+.primary {
+  background: #ffd05c;
+  border-color: #ffe6a3;
+  color: #142433;
+}
+.primary:hover { background: #ffe08d; }
+@media (max-width: 820px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(96vw, 760px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 520px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Slide cars and trucks through a 6 by 6 traffic jam, clearing blockers so the red car can reach the exit. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Rush Hour | AI and Sons Games">
+  <meta property="og:description" content="Slide cars and trucks through a 6 by 6 traffic jam, clearing blockers so the red car can reach the exit. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/rushhour">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rush Hour | AI and Sons Games">
+  <meta name="twitter:description" content="Slide cars and trucks through a 6 by 6 traffic jam, clearing blockers so the red car can reach the exit. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/rushhour">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Rush Hour","description":"Slide cars and trucks through a 6 by 6 traffic jam, clearing blockers so the red car can reach the exit. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/rushhour","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Rush Hour sliding traffic puzzle">
+    <canvas id="game" width="1000" height="800"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Rush Hour</h1>
+        <p>Slide vehicles in their lanes and clear a path for the red car to escape.</p>
+        <p class="mini">Drag cars or use Tab to select, arrows to move, H hint, U undo, R restart, N next, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleName">Depot Dash</b></div>
+    <div class="chip"><span>Moves</span><b id="movesText">0</b></div>
+    <div class="chip"><span>Par</span><b id="parText">0</b></div>
+    <div class="chip"><span>Selected</span><b id="selectedText">Red</b></div>
+    <div class="chip"><span>Best</span><b id="bestText">--</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="restartBtn" type="button">Restart</button>
+    <button id="nextBtn" type="button">Next</button>
+    <button id="cycleBtn" type="button">Select</button>
+    <button id="fullBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+
+const hud = {
+  puzzleName: document.getElementById('puzzleName'),
+  movesText: document.getElementById('movesText'),
+  parText: document.getElementById('parText'),
+  selectedText: document.getElementById('selectedText'),
+  bestText: document.getElementById('bestText'),
+  coins: document.getElementById('coins'),
+};
+
+const buttons = {
+  start: document.getElementById('startBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  restart: document.getElementById('restartBtn'),
+  next: document.getElementById('nextBtn'),
+  cycle: document.getElementById('cycleBtn'),
+  full: document.getElementById('fullBtn'),
+};
+
+const GRID = 6;
+const TARGET_ID = 'X';
+const VEHICLE_NAMES = {
+  X: 'Red Car',
+  A: 'Taxi',
+  B: 'Bus',
+  C: 'Van',
+  D: 'Truck',
+  E: 'Coupe',
+  F: 'Loader',
+  G: 'Shuttle',
+  H: 'Wagon',
+  J: 'Cart',
+};
+
+const PUZZLES = [
+  {
+    id: 'depot-dash',
+    name: 'Depot Dash',
+    difficulty: 'Warmup',
+    par: 5,
+    vehicles: [
+      { id: 'X', row: 2, col: 0, len: 2, dir: 'h', color: '#e84545' },
+      { id: 'A', row: 0, col: 2, len: 3, dir: 'v', color: '#6a9cff' },
+      { id: 'B', row: 0, col: 3, len: 2, dir: 'h', color: '#f2b84b' },
+      { id: 'C', row: 3, col: 4, len: 2, dir: 'v', color: '#69c49a' },
+      { id: 'D', row: 4, col: 0, len: 2, dir: 'h', color: '#b889ff' },
+      { id: 'E', row: 5, col: 3, len: 2, dir: 'h', color: '#f47c9d' },
+    ],
+  },
+  {
+    id: 'market-lock',
+    name: 'Market Lock',
+    difficulty: 'Easy',
+    par: 6,
+    vehicles: [
+      { id: 'X', row: 2, col: 1, len: 2, dir: 'h', color: '#e84545' },
+      { id: 'A', row: 1, col: 3, len: 3, dir: 'v', color: '#6a9cff' },
+      { id: 'B', row: 0, col: 0, len: 2, dir: 'h', color: '#ffd05c' },
+      { id: 'C', row: 0, col: 4, len: 2, dir: 'v', color: '#62c68f' },
+      { id: 'D', row: 4, col: 1, len: 2, dir: 'h', color: '#bd8cff' },
+      { id: 'E', row: 5, col: 0, len: 3, dir: 'h', color: '#f07d68' },
+      { id: 'F', row: 4, col: 5, len: 2, dir: 'v', color: '#69cde8' },
+    ],
+  },
+  {
+    id: 'terminal-tangle',
+    name: 'Terminal Tangle',
+    difficulty: 'Medium',
+    par: 8,
+    vehicles: [
+      { id: 'X', row: 2, col: 0, len: 2, dir: 'h', color: '#e84545' },
+      { id: 'A', row: 1, col: 2, len: 3, dir: 'v', color: '#6a9cff' },
+      { id: 'B', row: 0, col: 4, len: 3, dir: 'v', color: '#69c49a' },
+      { id: 'C', row: 0, col: 0, len: 2, dir: 'v', color: '#ffd05c' },
+      { id: 'D', row: 0, col: 5, len: 2, dir: 'v', color: '#bd8cff' },
+      { id: 'E', row: 3, col: 0, len: 2, dir: 'h', color: '#f47c9d' },
+      { id: 'F', row: 4, col: 0, len: 2, dir: 'h', color: '#62c68f' },
+      { id: 'G', row: 5, col: 0, len: 2, dir: 'h', color: '#69cde8' },
+    ],
+  },
+  {
+    id: 'express-grid',
+    name: 'Express Grid',
+    difficulty: 'Tricky',
+    par: 9,
+    vehicles: [
+      { id: 'X', row: 2, col: 1, len: 2, dir: 'h', color: '#e84545' },
+      { id: 'A', row: 0, col: 3, len: 3, dir: 'v', color: '#6a9cff' },
+      { id: 'B', row: 1, col: 5, len: 3, dir: 'v', color: '#69c49a' },
+      { id: 'C', row: 0, col: 0, len: 2, dir: 'h', color: '#ffd05c' },
+      { id: 'D', row: 0, col: 2, len: 2, dir: 'v', color: '#bd8cff' },
+      { id: 'E', row: 3, col: 0, len: 2, dir: 'h', color: '#f07d68' },
+      { id: 'F', row: 4, col: 0, len: 2, dir: 'h', color: '#69cde8' },
+      { id: 'G', row: 5, col: 0, len: 2, dir: 'h', color: '#f47c9d' },
+    ],
+  },
+];
+
+const state = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  puzzle: PUZZLES[0],
+  vehicles: cloneVehicles(PUZZLES[0].vehicles),
+  selectedId: TARGET_ID,
+  moves: 0,
+  elapsed: 0,
+  hintsUsed: 0,
+  history: [],
+  best: null,
+  coinsEarned: 0,
+  message: 'Choose Start Puzzle.',
+  boardRect: null,
+  drag: null,
+  hint: null,
+  sparks: [],
+  exitPulse: 0,
+  lastAction: null,
+};
+
+let manualStepping = false;
+let lastFrame = 0;
+let overlayKey = '';
+
+function cloneVehicles(vehicles) {
+  return vehicles.map(vehicle => ({ ...vehicle }));
+}
+
+function targetVehicle() {
+  return state.vehicles.find(vehicle => vehicle.id === TARGET_ID);
+}
+
+function selectedVehicle() {
+  return state.vehicles.find(vehicle => vehicle.id === state.selectedId) || targetVehicle();
+}
+
+function vehicleName(id) {
+  return VEHICLE_NAMES[id] || `Vehicle ${id}`;
+}
+
+function cellsFor(vehicle, row = vehicle.row, col = vehicle.col) {
+  return Array.from({ length: vehicle.len }, (_, index) => ({
+    row: row + (vehicle.dir === 'v' ? index : 0),
+    col: col + (vehicle.dir === 'h' ? index : 0),
+  }));
+}
+
+function cellKey(row, col) {
+  return `${row},${col}`;
+}
+
+function occupiedMap(skipId = null) {
+  const map = new Map();
+  state.vehicles.forEach((vehicle) => {
+    if (vehicle.id === skipId) return;
+    cellsFor(vehicle).forEach(cell => map.set(cellKey(cell.row, cell.col), vehicle.id));
+  });
+  return map;
+}
+
+function validatePuzzle(puzzle) {
+  const seen = new Map();
+  puzzle.vehicles.forEach((vehicle) => {
+    cellsFor(vehicle).forEach((cell) => {
+      if (cell.row < 0 || cell.col < 0 || cell.row >= GRID || cell.col >= GRID) {
+        throw new Error(`${puzzle.id}: ${vehicle.id} is outside the board.`);
+      }
+      const key = cellKey(cell.row, cell.col);
+      if (seen.has(key)) throw new Error(`${puzzle.id}: ${vehicle.id} overlaps ${seen.get(key)} at ${key}.`);
+      seen.set(key, vehicle.id);
+    });
+  });
+}
+
+PUZZLES.forEach(validatePuzzle);
+
+function storageKey(puzzleId) {
+  return `cade:rushhour:best:${puzzleId}`;
+}
+
+function loadBest(puzzleId) {
+  try {
+    const raw = localStorage.getItem(storageKey(puzzleId));
+    const value = raw ? Number(raw) : null;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(puzzleId, moves) {
+  const current = loadBest(puzzleId);
+  if (current !== null && current <= moves) return current;
+  try {
+    localStorage.setItem(storageKey(puzzleId), String(moves));
+  } catch {
+    // Local storage can be blocked in embedded or private browsing.
+  }
+  return moves;
+}
+
+function formatBest(value) {
+  return value ? `${value} moves` : '--';
+}
+
+function snapshot(label) {
+  state.history.push({
+    label,
+    vehicles: cloneVehicles(state.vehicles),
+    selectedId: state.selectedId,
+    moves: state.moves,
+    hintsUsed: state.hintsUsed,
+    message: state.message,
+    hint: state.hint ? { ...state.hint } : null,
+    lastAction: state.lastAction ? { ...state.lastAction } : null,
+  });
+  if (state.history.length > 80) state.history.shift();
+}
+
+function restore(previous) {
+  state.vehicles = cloneVehicles(previous.vehicles);
+  state.selectedId = previous.selectedId;
+  state.moves = previous.moves;
+  state.hintsUsed = previous.hintsUsed;
+  state.message = previous.message;
+  state.hint = previous.hint ? { ...previous.hint } : null;
+  state.lastAction = previous.lastAction ? { ...previous.lastAction } : null;
+}
+
+function startPuzzle(index = state.puzzleIndex) {
+  const normalized = (index + PUZZLES.length) % PUZZLES.length;
+  state.mode = 'playing';
+  state.puzzleIndex = normalized;
+  state.puzzle = PUZZLES[normalized];
+  state.vehicles = cloneVehicles(state.puzzle.vehicles);
+  state.selectedId = TARGET_ID;
+  state.moves = 0;
+  state.elapsed = 0;
+  state.hintsUsed = 0;
+  state.history = [];
+  state.best = loadBest(state.puzzle.id);
+  state.coinsEarned = 0;
+  state.message = 'Clear the exit lane for the red car.';
+  state.drag = null;
+  state.hint = null;
+  state.sparks = [];
+  state.exitPulse = 0;
+  state.lastAction = { type: 'start', puzzle: state.puzzle.id };
+  overlay.classList.remove('show');
+  overlayKey = '';
+  rememberRecent('rushhour');
+  updateHud();
+  render();
+}
+
+function restartPuzzle() {
+  startPuzzle(state.puzzleIndex);
+}
+
+function nextPuzzle() {
+  startPuzzle(state.puzzleIndex + 1);
+}
+
+function canMoveOne(vehicle, direction) {
+  const map = occupiedMap(vehicle.id);
+  if (vehicle.dir === 'h') {
+    const col = direction > 0 ? vehicle.col + vehicle.len : vehicle.col - 1;
+    if (col < 0 || col >= GRID) return false;
+    return !map.has(cellKey(vehicle.row, col));
+  }
+  const row = direction > 0 ? vehicle.row + vehicle.len : vehicle.row - 1;
+  if (row < 0 || row >= GRID) return false;
+  return !map.has(cellKey(row, vehicle.col));
+}
+
+function canMove(vehicle, delta) {
+  if (!vehicle || delta === 0) return false;
+  const direction = Math.sign(delta);
+  const saved = { row: vehicle.row, col: vehicle.col };
+  for (let step = 0; step < Math.abs(delta); step += 1) {
+    if (!canMoveOne(vehicle, direction)) {
+      vehicle.row = saved.row;
+      vehicle.col = saved.col;
+      return false;
+    }
+    if (vehicle.dir === 'h') vehicle.col += direction;
+    else vehicle.row += direction;
+  }
+  vehicle.row = saved.row;
+  vehicle.col = saved.col;
+  return true;
+}
+
+function moveLimits(vehicle) {
+  if (!vehicle) return { negative: 0, positive: 0 };
+  const saved = { row: vehicle.row, col: vehicle.col };
+  let negative = 0;
+  while (canMoveOne(vehicle, -1)) {
+    if (vehicle.dir === 'h') vehicle.col -= 1;
+    else vehicle.row -= 1;
+    negative -= 1;
+  }
+  vehicle.row = saved.row;
+  vehicle.col = saved.col;
+  let positive = 0;
+  while (canMoveOne(vehicle, 1)) {
+    if (vehicle.dir === 'h') vehicle.col += 1;
+    else vehicle.row += 1;
+    positive += 1;
+  }
+  vehicle.row = saved.row;
+  vehicle.col = saved.col;
+  return { negative, positive };
+}
+
+function clampDelta(vehicle, delta) {
+  const limits = moveLimits(vehicle);
+  return Math.max(limits.negative, Math.min(limits.positive, delta));
+}
+
+function isSolved() {
+  const red = targetVehicle();
+  return red && red.col + red.len === GRID;
+}
+
+function addWinSparks() {
+  state.sparks = Array.from({ length: 28 }, (_, index) => ({
+    x: 710 + (index * 19) % 220,
+    y: 290 + (index * 47) % 170,
+    vx: -70 + (index % 7) * 24,
+    vy: -110 + (index % 5) * 18,
+    age: 0,
+    life: .9 + (index % 5) * .08,
+    color: ['#ffd05c', '#ffffff', '#69c49a', '#6a9cff'][index % 4],
+  }));
+}
+
+function finishPuzzle() {
+  if (state.mode === 'won') return;
+  state.mode = 'won';
+  state.best = saveBest(state.puzzle.id, state.moves);
+  const parBonus = Math.max(0, state.puzzle.par - state.moves + 5);
+  const hintPenalty = state.hintsUsed * 2;
+  const coins = Math.max(18, 28 + parBonus - hintPenalty);
+  state.coinsEarned = coins;
+  state.message = `Escaped in ${state.moves} moves.`;
+  state.lastAction = { type: 'won', puzzle: state.puzzle.id, moves: state.moves, coins };
+  addCoins(coins);
+  addWinSparks();
+  showOverlay();
+  updateHud();
+  render();
+}
+
+function moveVehicle(id = state.selectedId, delta = 0, options = {}) {
+  if (state.mode !== 'playing' && !options.force) return false;
+  const vehicle = state.vehicles.find(item => item.id === id);
+  if (!vehicle) return false;
+  const wholeDelta = Math.trunc(Number(delta) || 0);
+  if (wholeDelta === 0) return false;
+  const allowedDelta = options.clamp ? clampDelta(vehicle, wholeDelta) : wholeDelta;
+  if (allowedDelta === 0 || !canMove(vehicle, allowedDelta)) {
+    state.selectedId = vehicle.id;
+    state.message = `${vehicleName(vehicle.id)} cannot move ${wholeDelta > 0 ? 'forward' : 'back'} from there.`;
+    state.lastAction = { type: 'blocked', vehicle: vehicle.id, requested_delta: wholeDelta };
+    updateHud();
+    render();
+    return false;
+  }
+  if (!options.skipHistory) snapshot(`move ${vehicle.id}`);
+  if (vehicle.dir === 'h') vehicle.col += allowedDelta;
+  else vehicle.row += allowedDelta;
+  state.selectedId = vehicle.id;
+  state.moves += options.countMove === false ? 0 : 1;
+  state.hint = null;
+  state.exitPulse = vehicle.id === TARGET_ID ? .8 : Math.max(state.exitPulse, .25);
+  state.message = `${vehicleName(vehicle.id)} moved ${Math.abs(allowedDelta)} space${Math.abs(allowedDelta) === 1 ? '' : 's'}.`;
+  state.lastAction = { type: 'move', vehicle: vehicle.id, delta: allowedDelta, moves: state.moves };
+  if (isSolved()) finishPuzzle();
+  else {
+    updateHud();
+    render();
+  }
+  return true;
+}
+
+function undo() {
+  if (!state.history.length) {
+    state.message = 'No moves to undo.';
+    state.lastAction = { type: 'undo-empty' };
+    render();
+    return false;
+  }
+  const previous = state.history.pop();
+  if (state.mode === 'won') state.mode = 'playing';
+  restore(previous);
+  state.message = `Undid ${previous.label}.`;
+  state.lastAction = { type: 'undo', label: previous.label };
+  overlay.classList.remove('show');
+  updateHud();
+  render();
+  return true;
+}
+
+function selectVehicle(id) {
+  if (state.vehicles.some(vehicle => vehicle.id === id)) {
+    state.selectedId = id;
+    state.message = `${vehicleName(id)} selected.`;
+    state.lastAction = { type: 'select', vehicle: id };
+    updateHud();
+    render();
+    return true;
+  }
+  return false;
+}
+
+function cycleSelection() {
+  const ids = state.vehicles.map(vehicle => vehicle.id);
+  const index = ids.indexOf(state.selectedId);
+  const next = ids[(index + 1 + ids.length) % ids.length];
+  return selectVehicle(next);
+}
+
+function blockersForTargetPath() {
+  const red = targetVehicle();
+  if (!red) return [];
+  const map = occupiedMap(TARGET_ID);
+  const blockers = [];
+  for (let col = red.col + red.len; col < GRID; col += 1) {
+    const id = map.get(cellKey(red.row, col));
+    if (id && !blockers.includes(id)) blockers.push(id);
+  }
+  return blockers.map(id => state.vehicles.find(vehicle => vehicle.id === id)).filter(Boolean);
+}
+
+function clearanceAdvice(vehicle) {
+  const red = targetVehicle();
+  if (!vehicle || !red) return null;
+  if (vehicle.dir === 'v' && vehicle.row <= red.row && red.row < vehicle.row + vehicle.len) {
+    const down = red.row - vehicle.row + 1;
+    const up = vehicle.row + vehicle.len - red.row;
+    if (canMove(vehicle, down)) return { delta: down, text: `Move ${vehicleName(vehicle.id)} down ${down}.` };
+    if (canMove(vehicle, -up)) return { delta: -up, text: `Move ${vehicleName(vehicle.id)} up ${up}.` };
+  }
+  const limits = moveLimits(vehicle);
+  if (limits.positive > 0) return { delta: limits.positive, text: `Move ${vehicleName(vehicle.id)} forward.` };
+  if (limits.negative < 0) return { delta: limits.negative, text: `Move ${vehicleName(vehicle.id)} back.` };
+  return null;
+}
+
+function revealHint() {
+  if (state.mode !== 'playing') return;
+  state.hintsUsed += 1;
+  const blockers = blockersForTargetPath();
+  if (blockers.length === 0) {
+    const red = targetVehicle();
+    const spaces = GRID - (red.col + red.len);
+    state.hint = { type: 'exit-open', vehicle: TARGET_ID, delta: spaces };
+    state.message = 'The lane is open. Move the red car right to the exit.';
+    state.lastAction = { type: 'hint', hint: state.hint };
+    updateHud();
+    render();
+    return;
+  }
+  const blocker = blockers[0];
+  const advice = clearanceAdvice(blocker);
+  state.selectedId = blocker.id;
+  state.hint = {
+    type: 'blocker',
+    vehicle: blocker.id,
+    row: blocker.row,
+    col: blocker.col,
+    delta: advice ? advice.delta : 0,
+  };
+  state.message = advice ? advice.text : `${vehicleName(blocker.id)} blocks the exit lane. Free space around it.`;
+  state.lastAction = { type: 'hint', hint: state.hint };
+  updateHud();
+  render();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+    render();
+  }
+}
+
+function updateHud() {
+  const selected = selectedVehicle();
+  hud.puzzleName.textContent = `${state.puzzle.name} (${state.puzzle.difficulty})`;
+  hud.movesText.textContent = String(state.moves);
+  hud.parText.textContent = String(state.puzzle.par);
+  hud.selectedText.textContent = selected ? selected.id : '--';
+  hud.bestText.textContent = formatBest(state.best);
+  hud.coins.textContent = String(profileState.coins);
+  buttons.undo.disabled = state.history.length === 0;
+  buttons.hint.disabled = state.mode !== 'playing';
+}
+
+function drawText(text, x, y, size, color = '#102638', align = 'left', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawBackground(w, h) {
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#edf7f2');
+  bg.addColorStop(.58, '#dceaf1');
+  bg.addColorStop(1, '#f4e7c7');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#18384812';
+  for (let i = 0; i < 14; i += 1) {
+    const x = (i * 83 + 67) % w;
+    const y = (i * 59 + 93) % h;
+    drawRoundedRect(x, y, 120 + (i % 3) * 34, 18, 8, '#18384810');
+  }
+}
+
+function layoutBoard(w, h) {
+  const size = Math.min(h * .68, w * .57);
+  const x = Math.max(44, w * .055);
+  const y = Math.max(96, h * .15);
+  return {
+    x,
+    y,
+    size,
+    cell: size / GRID,
+    exitX: x + size,
+    exitY: y + targetVehicle().row * (size / GRID),
+  };
+}
+
+function drawBoard(w, h) {
+  const rect = layoutBoard(w, h);
+  state.boardRect = rect;
+  const road = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.size, rect.y + rect.size);
+  road.addColorStop(0, '#53636c');
+  road.addColorStop(1, '#33444f');
+  drawRoundedRect(rect.x - 16, rect.y - 16, rect.size + 32, rect.size + 32, 8, '#1e3341', '#ffffff70', 2);
+  ctx.fillStyle = road;
+  ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
+
+  ctx.strokeStyle = '#ffffff22';
+  for (let i = 1; i < GRID; i += 1) {
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(rect.x + i * rect.cell, rect.y);
+    ctx.lineTo(rect.x + i * rect.cell, rect.y + rect.size);
+    ctx.moveTo(rect.x, rect.y + i * rect.cell);
+    ctx.lineTo(rect.x + rect.size, rect.y + i * rect.cell);
+    ctx.stroke();
+  }
+
+  const red = targetVehicle();
+  const exitY = rect.y + red.row * rect.cell;
+  ctx.fillStyle = `rgba(255, 208, 92, ${.28 + Math.sin(state.exitPulse * 12) * .08})`;
+  ctx.fillRect(rect.x + rect.size - 2, exitY + rect.cell * .16, rect.cell * .76, rect.cell * .68);
+  ctx.strokeStyle = '#ffd05c';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(rect.x + rect.size + 4, exitY + rect.cell * .25);
+  ctx.lineTo(rect.x + rect.size + 44, exitY + rect.cell * .25);
+  ctx.moveTo(rect.x + rect.size + 4, exitY + rect.cell * .75);
+  ctx.lineTo(rect.x + rect.size + 44, exitY + rect.cell * .75);
+  ctx.stroke();
+  drawText('EXIT', rect.x + rect.size + 54, exitY + rect.cell / 2, 18, '#925e11', 'left', 900);
+}
+
+function vehicleRect(vehicle) {
+  const rect = state.boardRect;
+  const pad = rect.cell * .09;
+  const x = rect.x + vehicle.col * rect.cell + pad;
+  const y = rect.y + vehicle.row * rect.cell + pad;
+  const w = (vehicle.dir === 'h' ? vehicle.len : 1) * rect.cell - pad * 2;
+  const h = (vehicle.dir === 'v' ? vehicle.len : 1) * rect.cell - pad * 2;
+  return { x, y, w, h };
+}
+
+function drawVehicle(vehicle) {
+  const rect = vehicleRect(vehicle);
+  const selected = vehicle.id === state.selectedId;
+  const hinted = state.hint && state.hint.vehicle === vehicle.id;
+  const shadow = selected ? '#0000006b' : '#00000042';
+  drawRoundedRect(rect.x + 4, rect.y + 6, rect.w, rect.h, 8, shadow);
+  drawRoundedRect(rect.x, rect.y, rect.w, rect.h, 8, vehicle.color, selected ? '#ffffff' : '#26343d', selected ? 4 : 2);
+  if (hinted) {
+    ctx.strokeStyle = '#ffd05c';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([10, 7]);
+    ctx.strokeRect(rect.x - 5, rect.y - 5, rect.w + 10, rect.h + 10);
+    ctx.setLineDash([]);
+  }
+
+  const stripeColor = vehicle.id === TARGET_ID ? '#ffe4e4' : '#ffffffb8';
+  ctx.fillStyle = stripeColor;
+  if (vehicle.dir === 'h') {
+    ctx.fillRect(rect.x + rect.w * .18, rect.y + rect.h * .2, rect.w * .22, rect.h * .18);
+    ctx.fillRect(rect.x + rect.w * .58, rect.y + rect.h * .2, rect.w * .22, rect.h * .18);
+    ctx.fillStyle = '#172631c8';
+    ctx.fillRect(rect.x + rect.w * .18, rect.y + rect.h * .68, rect.w * .18, rect.h * .16);
+    ctx.fillRect(rect.x + rect.w * .64, rect.y + rect.h * .68, rect.w * .18, rect.h * .16);
+  } else {
+    ctx.fillRect(rect.x + rect.w * .2, rect.y + rect.h * .16, rect.w * .2, rect.h * .24);
+    ctx.fillRect(rect.x + rect.w * .6, rect.y + rect.h * .16, rect.w * .2, rect.h * .24);
+    ctx.fillStyle = '#172631c8';
+    ctx.fillRect(rect.x + rect.w * .2, rect.y + rect.h * .68, rect.w * .2, rect.h * .18);
+    ctx.fillRect(rect.x + rect.w * .6, rect.y + rect.h * .68, rect.w * .2, rect.h * .18);
+  }
+  drawText(vehicle.id, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1, Math.max(22, state.boardRect.cell * .36), '#ffffff', 'center', 900);
+}
+
+function drawSidePanel(w, h) {
+  const rect = state.boardRect;
+  const x = rect.x + rect.size + Math.max(46, w * .05);
+  const y = rect.y - 4;
+  const panelW = Math.max(270, w - x - 44);
+  const panelH = rect.size + 8;
+  drawRoundedRect(x, y, panelW, panelH, 8, '#102638e8', '#ffffff55', 2);
+  drawText('Rush Hour', x + 20, y + 36, 30, '#ffffff', 'left', 900);
+  drawText(`${state.puzzle.name} - ${state.puzzle.difficulty}`, x + 20, y + 68, 16, '#b8d0d8', 'left', 800);
+  drawText(state.message, x + panelW / 2, y + 110, 17, '#ffd981', 'center', 900);
+
+  const blockers = blockersForTargetPath().map(vehicle => vehicle.id);
+  drawText(blockers.length ? `Exit blockers: ${blockers.join(', ')}` : 'Exit lane is open.', x + 20, y + 148, 16, blockers.length ? '#ffb8a8' : '#bff0c8', 'left', 900);
+
+  const selected = selectedVehicle();
+  const limits = moveLimits(selected);
+  drawText(`Selected: ${selected.id} ${vehicleName(selected.id)}`, x + 20, y + 188, 17, '#ffffff', 'left', 900);
+  drawText(`Lane moves: ${limits.negative} to ${limits.positive}`, x + 20, y + 216, 15, '#c9f3ff', 'left', 800);
+  drawText('Goal', x + 20, y + 266, 16, '#ffd981', 'left', 900);
+  drawText('Move the red car to the yellow exit.', x + 20, y + 294, 15, '#dce9ea', 'left', 800);
+  drawText('Keyboard', x + 20, y + 344, 16, '#ffd981', 'left', 900);
+  drawText('Tab selects. Arrows slide. Enter starts.', x + 20, y + 372, 15, '#dce9ea', 'left', 800);
+
+  const footerY = y + panelH - 42;
+  drawText(`Moves ${state.moves} / Par ${state.puzzle.par}`, x + 20, footerY, 16, '#ffffff', 'left', 900);
+  drawText(`Hints ${state.hintsUsed}`, x + panelW - 20, footerY, 16, '#ffffff', 'right', 900);
+}
+
+function drawSparks(dt = 0) {
+  state.sparks.forEach((spark) => {
+    ctx.globalAlpha = Math.max(0, 1 - spark.age / spark.life);
+    ctx.fillStyle = spark.color;
+    ctx.beginPath();
+    ctx.arc(spark.x, spark.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    spark.x += spark.vx * dt;
+    spark.y += spark.vy * dt;
+    spark.vy += 140 * dt;
+    spark.age += dt;
+  });
+  state.sparks = state.sparks.filter(spark => spark.age < spark.life);
+}
+
+function render(dt = 0) {
+  const w = canvas.width;
+  const h = canvas.height;
+  drawBackground(w, h);
+  drawText('Rush Hour', w * .055, 48, 36, '#122c3a', 'left', 900);
+  drawText('Slide vehicles only along their painted lanes.', w * .055, 82, 17, '#365060', 'left', 800);
+  drawBoard(w, h);
+  state.vehicles.forEach(drawVehicle);
+  drawSidePanel(w, h);
+  drawSparks(dt);
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function cellFromPoint(point) {
+  const rect = state.boardRect;
+  if (!rect) return null;
+  const col = Math.floor((point.x - rect.x) / rect.cell);
+  const row = Math.floor((point.y - rect.y) / rect.cell);
+  if (row < 0 || col < 0 || row >= GRID || col >= GRID) return null;
+  return { row, col };
+}
+
+function vehicleAtCell(cell) {
+  if (!cell) return null;
+  return state.vehicles.find(vehicle => cellsFor(vehicle).some(item => item.row === cell.row && item.col === cell.col)) || null;
+}
+
+function handlePointerDown(event) {
+  if (state.mode !== 'playing') return;
+  const point = pointFromEvent(event);
+  const cell = cellFromPoint(point);
+  const vehicle = vehicleAtCell(cell);
+  if (!vehicle) return;
+  event.preventDefault();
+  selectVehicle(vehicle.id);
+  state.drag = {
+    id: vehicle.id,
+    startPoint: point,
+    startCell: cell,
+  };
+  try {
+    canvas.setPointerCapture(event.pointerId);
+  } catch {
+    // Pointer capture is not available in every embedded browser.
+  }
+}
+
+function handlePointerMove(event) {
+  if (!state.drag) return;
+  event.preventDefault();
+}
+
+function handlePointerUp(event) {
+  if (!state.drag) return;
+  event.preventDefault();
+  const vehicle = state.vehicles.find(item => item.id === state.drag.id);
+  const point = pointFromEvent(event);
+  const dx = point.x - state.drag.startPoint.x;
+  const dy = point.y - state.drag.startPoint.y;
+  const rawDelta = vehicle.dir === 'h' ? Math.round(dx / state.boardRect.cell) : Math.round(dy / state.boardRect.cell);
+  state.drag = null;
+  if (rawDelta !== 0) moveVehicle(vehicle.id, rawDelta, { clamp: true });
+  else render();
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'tab', 'enter'].includes(key)) event.preventDefault();
+  if (state.mode !== 'playing') {
+    if (key === 'enter' || key === ' ') {
+      if (state.mode === 'won') nextPuzzle();
+      else startPuzzle(state.puzzleIndex);
+    }
+    return;
+  }
+  const selected = selectedVehicle();
+  if (key === 'tab') cycleSelection();
+  else if (key === 'arrowleft' || key === 'a') moveVehicle(selected.id, selected.dir === 'h' ? -1 : 0);
+  else if (key === 'arrowright' || key === 'd') moveVehicle(selected.id, selected.dir === 'h' ? 1 : 0);
+  else if (key === 'arrowup' || key === 'w') moveVehicle(selected.id, selected.dir === 'v' ? -1 : 0);
+  else if (key === 'arrowdown' || key === 's') moveVehicle(selected.id, selected.dir === 'v' ? 1 : 0);
+  else if (key === 'h') revealHint();
+  else if (key === 'u') undo();
+  else if (key === 'r') restartPuzzle();
+  else if (key === 'n') nextPuzzle();
+  else if (key === 'f') toggleFullscreen();
+}
+
+function update(dt) {
+  if (state.mode === 'playing') state.elapsed += dt;
+  state.exitPulse = Math.max(0, state.exitPulse - dt);
+  showOverlay();
+  updateHud();
+}
+
+function showOverlay() {
+  const key = `${state.mode}|${state.puzzle.id}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'won') {
+    overlayPanel.innerHTML = `
+      <h1>${state.puzzle.name} Cleared</h1>
+      <p>${state.message} Best: ${formatBest(state.best)}. Coins earned: ${state.coinsEarned}.</p>
+      <p class="mini">Try the next traffic puzzle or replay this one to beat par.</p>
+      <button class="primary" id="startBtn" type="button">Next Puzzle</button>
+    `;
+    overlay.classList.add('show');
+    document.getElementById('startBtn').addEventListener('click', nextPuzzle);
+  } else if (state.mode === 'menu') {
+    overlay.classList.add('show');
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function occupiedCellsPayload() {
+  return state.vehicles.flatMap(vehicle => cellsFor(vehicle).map(cell => ({
+    row: cell.row,
+    col: cell.col,
+    vehicle: vehicle.id,
+  })));
+}
+
+function possibleMovesPayload(vehicle = selectedVehicle()) {
+  const limits = moveLimits(vehicle);
+  return {
+    vehicle: vehicle.id,
+    orientation: vehicle.dir === 'h' ? 'horizontal' : 'vertical',
+    negative_delta: limits.negative,
+    positive_delta: limits.positive,
+  };
+}
+
+function stateToObject() {
+  const red = targetVehicle();
+  return {
+    coordinate_system: 'Canvas coordinates use origin at top-left, x increases right, y increases down. Board coordinates use zero-based row and column.',
+    mode: state.mode,
+    puzzle: {
+      id: state.puzzle.id,
+      name: state.puzzle.name,
+      difficulty: state.puzzle.difficulty,
+      par: state.puzzle.par,
+      grid_size: GRID,
+    },
+    exit: {
+      row: red.row,
+      col_after_last_cell: GRID,
+      open: blockersForTargetPath().length === 0,
+      blockers: blockersForTargetPath().map(vehicle => vehicle.id),
+    },
+    vehicles: state.vehicles.map(vehicle => ({
+      id: vehicle.id,
+      name: vehicleName(vehicle.id),
+      row: vehicle.row,
+      col: vehicle.col,
+      length: vehicle.len,
+      orientation: vehicle.dir === 'h' ? 'horizontal' : 'vertical',
+      cells: cellsFor(vehicle),
+      target: vehicle.id === TARGET_ID,
+    })),
+    occupied_cells: occupiedCellsPayload(),
+    selected_vehicle: state.selectedId,
+    selected_possible_moves: possibleMovesPayload(),
+    moves: state.moves,
+    elapsed_seconds: Math.floor(state.elapsed),
+    hints_used: state.hintsUsed,
+    best_moves: state.best,
+    coins: profileState.coins,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    hint: state.hint,
+    last_action: state.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrentPuzzle() {
+  const guard = 30;
+  let loops = 0;
+  while (state.mode === 'playing' && loops < guard) {
+    const blockers = blockersForTargetPath();
+    if (!blockers.length) {
+      const red = targetVehicle();
+      moveVehicle(TARGET_ID, GRID - (red.col + red.len), { clamp: true });
+      break;
+    }
+    const blocker = blockers[0];
+    const advice = clearanceAdvice(blocker);
+    if (!advice || !moveVehicle(blocker.id, advice.delta, { clamp: true })) break;
+    loops += 1;
+  }
+  return state.mode === 'won';
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render(1 / 60);
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__RUSHHOUR_GAME__ = {
+  startPuzzle,
+  restartPuzzle,
+  nextPuzzle,
+  selectVehicle,
+  cycleSelection,
+  moveVehicle,
+  revealHint,
+  undo,
+  solveCurrentPuzzle,
+  stateToObject,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'rushhour', mode: state.mode };
+  }
+};
+
+buttons.start.addEventListener('click', () => startPuzzle(state.puzzleIndex));
+buttons.hint.addEventListener('click', revealHint);
+buttons.undo.addEventListener('click', undo);
+buttons.restart.addEventListener('click', restartPuzzle);
+buttons.next.addEventListener('click', nextPuzzle);
+buttons.cycle.addEventListener('click', cycleSelection);
+buttons.full.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', () => { state.drag = null; });
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render(dt);
+  }
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'rushhour', gameName: 'Rush Hour' });
+state.best = loadBest(state.puzzle.id);
+updateHud();
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
