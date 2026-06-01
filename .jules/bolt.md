@@ -61,3 +61,6 @@
 ## 2025-05-18 - Avoid redundant array traversals inside Set-guarded conditions
 **Learning:** Using helper functions like `addUnique` (which internally call `Array.prototype.includes`) inside a code block that is already guarded by a `Set.has()` check results in redundant O(N) array traversals, defeating the purpose of the O(1) Set optimization.
 **Action:** When a loop relies on a `Set` for O(1) membership checks to guard array insertions, append directly to the array instead of using defensive insertion helpers that perform their own O(N) validation.
+## 2025-05-18 - Avoid redundant normalization loops on memory caches
+**Learning:** Functions that search an entire memory cache (like `getFamilyAccountForUser` traversing `memoryState.accounts`) can cause massive CPU spikes if they run expensive object deep-cloning or normalization routines (like `normalizeFamilyAccount`) *before* checking if the entry matches the search criteria.
+**Action:** When filtering a cached memory store map or array, perform the fast-path lookup assertions (e.g. `_memberUserIdsSet.has(userId)`) against the raw object first, and only execute the expensive extraction/normalization logic on the matching result.
