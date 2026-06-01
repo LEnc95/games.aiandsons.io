@@ -126,5 +126,6 @@
 - game/mahjongsolitaire
 - game/nonogram
 - game/rushhour
+- game/jigsaw
 
 Generated from `src/meta/feedback.js`.

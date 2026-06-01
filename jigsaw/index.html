@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Jigsaw Puzzle | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background: linear-gradient(135deg, #12333c 0%, #37505a 42%, #5a4e36 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 25 / 19;
+  max-height: min(68dvh, 820px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #ecf2ea;
+  box-shadow: 0 22px 54px #10141d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 710px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #122735f2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce9ea;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.mini {
+  font-size: 13px;
+  color: #b9cbd0;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff50;
+  background: #102638d9;
+  color: #f7fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff24;
+}
+.chip span {
+  font-size: 12px;
+  color: #b8d0d8;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #ffd66e; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 10px;
+  box-shadow: inset 0 1px 0 #ffffff20, 0 8px 18px #00000024;
+}
+button:hover { background: #163650; }
+button:disabled {
+  opacity: .46;
+  cursor: default;
+}
+.primary {
+  background: #ffd05c;
+  border-color: #ffe6a3;
+  color: #142433;
+}
+.primary:hover { background: #ffe08d; }
+@media (max-width: 840px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(96vw, 760px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 520px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Drag picture pieces into a ghost preview, snap them into place, and complete colorful jigsaw scenes with hints, shuffle, and undo. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Jigsaw Puzzle | AI and Sons Games">
+  <meta property="og:description" content="Drag picture pieces into a ghost preview, snap them into place, and complete colorful jigsaw scenes with hints, shuffle, and undo. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/jigsaw">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Jigsaw Puzzle | AI and Sons Games">
+  <meta name="twitter:description" content="Drag picture pieces into a ghost preview, snap them into place, and complete colorful jigsaw scenes with hints, shuffle, and undo. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/jigsaw">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Jigsaw Puzzle","description":"Drag picture pieces into a ghost preview, snap them into place, and complete colorful jigsaw scenes with hints, shuffle, and undo. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/jigsaw","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Jigsaw puzzle board">
+    <canvas id="game" width="1000" height="760"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1>Jigsaw Puzzle</h1>
+        <p>Drag pieces into the ghost image. Pieces snap when they are close to the right spot.</p>
+        <p class="mini">Drag with mouse or touch. Tab selects pieces, arrows nudge, H hint, U undo, S shuffle, N next, R restart, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleName">Harbor Glow</b></div>
+    <div class="chip"><span>Locked</span><b id="lockedText">0 / 9</b></div>
+    <div class="chip"><span>Moves</span><b id="movesText">0</b></div>
+    <div class="chip"><span>Best</span><b id="bestText">--</b></div>
+    <div class="chip"><span>Selected</span><b id="selectedText">--</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="shuffleBtn" type="button">Shuffle</button>
+    <button id="restartBtn" type="button">Restart</button>
+    <button id="nextBtn" type="button">Next</button>
+    <button id="fullBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+
+const hud = {
+  puzzleName: document.getElementById('puzzleName'),
+  lockedText: document.getElementById('lockedText'),
+  movesText: document.getElementById('movesText'),
+  bestText: document.getElementById('bestText'),
+  selectedText: document.getElementById('selectedText'),
+  coins: document.getElementById('coins'),
+};
+
+const buttons = {
+  start: document.getElementById('startBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  shuffle: document.getElementById('shuffleBtn'),
+  restart: document.getElementById('restartBtn'),
+  next: document.getElementById('nextBtn'),
+  full: document.getElementById('fullBtn'),
+};
+
+const PUZZLES = [
+  { id: 'harbor-glow', name: 'Harbor Glow', difficulty: 'Warmup', cols: 3, rows: 3, par: 18, art: 'harbor' },
+  { id: 'mountain-mail', name: 'Mountain Mail', difficulty: 'Easy', cols: 4, rows: 3, par: 28, art: 'mountain' },
+  { id: 'garden-lanterns', name: 'Garden Lanterns', difficulty: 'Medium', cols: 4, rows: 4, par: 40, art: 'garden' },
+  { id: 'orbit-workshop', name: 'Orbit Workshop', difficulty: 'Tricky', cols: 5, rows: 4, par: 58, art: 'orbit' },
+];
+
+const state = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  puzzle: PUZZLES[0],
+  pieces: [],
+  selectedId: '',
+  moves: 0,
+  elapsed: 0,
+  hintsUsed: 0,
+  history: [],
+  best: null,
+  coinsEarned: 0,
+  message: 'Choose Start Puzzle.',
+  board: null,
+  tray: null,
+  drag: null,
+  hint: null,
+  celebrate: 0,
+  pulse: 0,
+  seed: 1,
+  lastAction: null,
+};
+
+let manualStepping = false;
+let lastFrame = 0;
+let overlayKey = '';
+
+function mulberry32(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value += 0x6D2B79F5;
+    let t = value;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function puzzlePieceCount(puzzle = state.puzzle) {
+  return puzzle.cols * puzzle.rows;
+}
+
+function storageKey(puzzleId) {
+  return `cade:jigsaw:best:${puzzleId}`;
+}
+
+function loadBest(puzzleId) {
+  try {
+    const raw = localStorage.getItem(storageKey(puzzleId));
+    const value = raw ? Number(raw) : null;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(puzzleId, moves) {
+  const current = loadBest(puzzleId);
+  if (current !== null && current <= moves) return current;
+  try {
+    localStorage.setItem(storageKey(puzzleId), String(moves));
+  } catch {
+    // Local storage can be blocked in embedded or private browsing.
+  }
+  return moves;
+}
+
+function formatBest(value) {
+  return value ? `${value} moves` : '--';
+}
+
+function snapshot(label) {
+  state.history.push({
+    label,
+    pieces: state.pieces.map(piece => ({
+      id: piece.id,
+      x: piece.x,
+      y: piece.y,
+      locked: piece.locked,
+      z: piece.z,
+    })),
+    selectedId: state.selectedId,
+    moves: state.moves,
+    hintsUsed: state.hintsUsed,
+    message: state.message,
+    hint: state.hint ? { ...state.hint } : null,
+    lastAction: state.lastAction ? { ...state.lastAction } : null,
+  });
+  if (state.history.length > 120) state.history.shift();
+}
+
+function restore(previous) {
+  const byId = new Map(previous.pieces.map(piece => [piece.id, piece]));
+  state.pieces.forEach((piece) => {
+    const saved = byId.get(piece.id);
+    if (!saved) return;
+    piece.x = saved.x;
+    piece.y = saved.y;
+    piece.locked = saved.locked;
+    piece.z = saved.z;
+  });
+  state.selectedId = previous.selectedId;
+  state.moves = previous.moves;
+  state.hintsUsed = previous.hintsUsed;
+  state.message = previous.message;
+  state.hint = previous.hint ? { ...previous.hint } : null;
+  state.lastAction = previous.lastAction ? { ...previous.lastAction } : null;
+}
+
+function selectedPiece() {
+  return state.pieces.find(piece => piece.id === state.selectedId) || state.pieces.find(piece => !piece.locked) || state.pieces[0] || null;
+}
+
+function lockedCount() {
+  return state.pieces.filter(piece => piece.locked).length;
+}
+
+function isSolved() {
+  return state.pieces.length > 0 && lockedCount() === state.pieces.length;
+}
+
+function targetPosition(piece) {
+  const cellW = state.board.w / state.puzzle.cols;
+  const cellH = state.board.h / state.puzzle.rows;
+  return {
+    x: state.board.x + piece.col * cellW,
+    y: state.board.y + piece.row * cellH,
+    w: cellW,
+    h: cellH,
+  };
+}
+
+function pieceRect(piece) {
+  const target = targetPosition(piece);
+  return {
+    x: piece.x,
+    y: piece.y,
+    w: target.w,
+    h: target.h,
+  };
+}
+
+function distanceToHome(piece) {
+  const target = targetPosition(piece);
+  return Math.hypot(piece.x - target.x, piece.y - target.y);
+}
+
+function bringToFront(piece) {
+  const maxZ = state.pieces.reduce((max, item) => Math.max(max, item.z), 0);
+  piece.z = maxZ + 1;
+}
+
+function createPieces(puzzle) {
+  const rng = mulberry32(hashString(puzzle.id));
+  const pieceCount = puzzlePieceCount(puzzle);
+  const pieces = [];
+  for (let row = 0; row < puzzle.rows; row += 1) {
+    for (let col = 0; col < puzzle.cols; col += 1) {
+      const id = `p${row}-${col}`;
+      pieces.push({
+        id,
+        row,
+        col,
+        x: 0,
+        y: 0,
+        locked: false,
+        z: pieces.length + 1,
+        tabs: {
+          top: row === 0 ? 0 : (row + col) % 2 === 0 ? 1 : -1,
+          right: col === puzzle.cols - 1 ? 0 : (row * 3 + col) % 2 === 0 ? 1 : -1,
+          bottom: row === puzzle.rows - 1 ? 0 : (row + col) % 2 === 1 ? 1 : -1,
+          left: col === 0 ? 0 : (row * 3 + col - 1) % 2 === 0 ? -1 : 1,
+        },
+      });
+    }
+  }
+
+  pieces.forEach((piece, index) => {
+    const target = {
+      w: state.board.w / puzzle.cols,
+      h: state.board.h / puzzle.rows,
+    };
+    const trayLeft = state.tray.x + 18;
+    const trayTop = state.tray.y + 58;
+    const trayW = Math.max(1, state.tray.w - target.w - 36);
+    const trayH = Math.max(1, state.tray.h - target.h - 78);
+    piece.x = trayLeft + rng() * trayW;
+    piece.y = trayTop + rng() * trayH;
+    piece.z = index + 1;
+  });
+
+  // Force one easy opening piece near the board for deterministic smoke tests.
+  if (pieces[0]) {
+    const target = targetPosition(pieces[0]);
+    pieces[0].x = target.x + target.w * .34;
+    pieces[0].y = target.y + target.h * .22;
+    pieces[0].z = pieceCount + 3;
+  }
+  return pieces;
+}
+
+function setLayout() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const maxBoardW = Math.min(w * .58, h * .78 * (state.puzzle.cols / state.puzzle.rows));
+  const boardW = Math.max(360, maxBoardW);
+  const boardH = boardW * state.puzzle.rows / state.puzzle.cols;
+  const boardX = Math.max(38, w * .055);
+  const boardY = Math.max(96, (h - boardH) * .56);
+  state.board = { x: boardX, y: boardY, w: boardW, h: boardH };
+  const trayX = boardX + boardW + Math.max(40, w * .045);
+  state.tray = {
+    x: trayX,
+    y: boardY - 4,
+    w: Math.max(260, w - trayX - 38),
+    h: boardH + 8,
+  };
+}
+
+function startPuzzle(index = state.puzzleIndex) {
+  const normalized = (index + PUZZLES.length) % PUZZLES.length;
+  state.mode = 'playing';
+  state.puzzleIndex = normalized;
+  state.puzzle = PUZZLES[normalized];
+  state.moves = 0;
+  state.elapsed = 0;
+  state.hintsUsed = 0;
+  state.history = [];
+  state.best = loadBest(state.puzzle.id);
+  state.coinsEarned = 0;
+  state.message = 'Drag pieces into the ghost image.';
+  state.drag = null;
+  state.hint = null;
+  state.celebrate = 0;
+  state.pulse = 0;
+  state.seed = hashString(state.puzzle.id);
+  state.lastAction = { type: 'start', puzzle: state.puzzle.id };
+  setLayout();
+  state.pieces = createPieces(state.puzzle);
+  state.selectedId = state.pieces[0]?.id || '';
+  overlay.classList.remove('show');
+  overlayKey = '';
+  rememberRecent('jigsaw');
+  updateHud();
+  render();
+}
+
+function restartPuzzle() {
+  startPuzzle(state.puzzleIndex);
+}
+
+function nextPuzzle() {
+  startPuzzle(state.puzzleIndex + 1);
+}
+
+function lockPiece(piece) {
+  const target = targetPosition(piece);
+  piece.x = target.x;
+  piece.y = target.y;
+  piece.locked = true;
+  piece.z = 1000 + piece.row * state.puzzle.cols + piece.col;
+}
+
+function finishPuzzle() {
+  if (state.mode === 'won') return;
+  state.mode = 'won';
+  state.best = saveBest(state.puzzle.id, state.moves);
+  const parBonus = Math.max(0, state.puzzle.par - state.moves);
+  const coins = Math.max(20, 24 + parBonus - state.hintsUsed * 2);
+  state.coinsEarned = coins;
+  state.message = `${state.puzzle.name} completed in ${state.moves} moves.`;
+  state.lastAction = { type: 'won', puzzle: state.puzzle.id, moves: state.moves, coins };
+  state.celebrate = 1.8;
+  addCoins(coins);
+  showOverlay();
+  updateHud();
+  render();
+}
+
+function trySnap(piece, options = {}) {
+  if (!piece || piece.locked) return false;
+  const threshold = Math.max(30, Math.min(state.board.w / state.puzzle.cols, state.board.h / state.puzzle.rows) * .36);
+  if (distanceToHome(piece) > threshold && !options.force) return false;
+  lockPiece(piece);
+  state.message = `Piece ${piece.row + 1},${piece.col + 1} snapped into place.`;
+  state.lastAction = { type: 'snap', piece: piece.id, locked: lockedCount() };
+  if (isSolved()) finishPuzzle();
+  return true;
+}
+
+function movePiece(piece, x, y, options = {}) {
+  if (!piece || piece.locked) return false;
+  const maxX = canvas.width - targetPosition(piece).w - 12;
+  const maxY = canvas.height - targetPosition(piece).h - 12;
+  piece.x = clamp(x, 12, maxX);
+  piece.y = clamp(y, 76, maxY);
+  if (!options.skipMoveCount) state.moves += 1;
+  state.hint = null;
+  state.lastAction = { type: 'move', piece: piece.id, x: Math.round(piece.x), y: Math.round(piece.y), moves: state.moves };
+  const snapped = trySnap(piece);
+  if (!snapped) {
+    state.message = `Moved piece ${piece.row + 1},${piece.col + 1}.`;
+  }
+  updateHud();
+  render();
+  return true;
+}
+
+function nudgeSelected(dx, dy) {
+  if (state.mode !== 'playing') return false;
+  const piece = selectedPiece();
+  if (!piece || piece.locked) return false;
+  snapshot(`nudge ${piece.id}`);
+  return movePiece(piece, piece.x + dx, piece.y + dy);
+}
+
+function placePiece(pieceId, options = {}) {
+  const piece = state.pieces.find(item => item.id === pieceId);
+  if (!piece || piece.locked) return false;
+  if (!options.skipHistory) snapshot(`place ${piece.id}`);
+  state.selectedId = piece.id;
+  bringToFront(piece);
+  const target = targetPosition(piece);
+  piece.x = target.x + (options.offsetX || 0);
+  piece.y = target.y + (options.offsetY || 0);
+  state.moves += options.countMove === false ? 0 : 1;
+  trySnap(piece, { force: true });
+  updateHud();
+  render();
+  return true;
+}
+
+function solveCurrentPuzzle() {
+  if (state.mode !== 'playing') return false;
+  snapshot('solve puzzle');
+  state.pieces
+    .filter(piece => !piece.locked)
+    .forEach((piece) => {
+      state.selectedId = piece.id;
+      lockPiece(piece);
+    });
+  state.moves += 1;
+  finishPuzzle();
+  return true;
+}
+
+function shuffleLoosePieces() {
+  if (state.mode !== 'playing') return;
+  const loose = state.pieces.filter(piece => !piece.locked);
+  if (!loose.length) return;
+  snapshot('shuffle');
+  const rng = mulberry32(state.seed + state.moves + state.hintsUsed + 97);
+  loose.forEach((piece, index) => {
+    const rect = pieceRect(piece);
+    const trayLeft = state.tray.x + 18;
+    const trayTop = state.tray.y + 58;
+    const trayW = Math.max(1, state.tray.w - rect.w - 36);
+    const trayH = Math.max(1, state.tray.h - rect.h - 78);
+    piece.x = trayLeft + rng() * trayW;
+    piece.y = trayTop + rng() * trayH;
+    piece.z = index + 1;
+  });
+  state.moves += 1;
+  state.hint = null;
+  state.message = 'Loose pieces shuffled back into the tray.';
+  state.lastAction = { type: 'shuffle', loose: loose.length, moves: state.moves };
+  updateHud();
+  render();
+}
+
+function nearestLoosePiece() {
+  const loose = state.pieces.filter(piece => !piece.locked);
+  if (!loose.length) return null;
+  return loose
+    .map(piece => ({ piece, distance: distanceToHome(piece) }))
+    .sort((a, b) => a.distance - b.distance || a.piece.row - b.piece.row || a.piece.col - b.piece.col)[0].piece;
+}
+
+function revealHint() {
+  if (state.mode !== 'playing') return;
+  const piece = nearestLoosePiece();
+  if (!piece) return;
+  state.hintsUsed += 1;
+  state.selectedId = piece.id;
+  bringToFront(piece);
+  const target = targetPosition(piece);
+  state.hint = {
+    piece: piece.id,
+    row: piece.row,
+    col: piece.col,
+    target_x: Math.round(target.x),
+    target_y: Math.round(target.y),
+  };
+  state.message = `Hint: piece ${piece.row + 1},${piece.col + 1} belongs in the highlighted space.`;
+  state.lastAction = { type: 'hint', hint: state.hint };
+  updateHud();
+  render();
+}
+
+function undo() {
+  if (!state.history.length) {
+    state.message = 'No move to undo.';
+    state.lastAction = { type: 'undo-empty' };
+    updateHud();
+    render();
+    return false;
+  }
+  const previous = state.history.pop();
+  restore(previous);
+  state.mode = 'playing';
+  overlay.classList.remove('show');
+  overlayKey = '';
+  state.message = `Undid ${previous.label}.`;
+  state.lastAction = { type: 'undo', label: previous.label };
+  updateHud();
+  render();
+  return true;
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+    render();
+  }
+}
+
+function updateHud() {
+  const selected = selectedPiece();
+  hud.puzzleName.textContent = `${state.puzzle.name} (${state.puzzle.difficulty})`;
+  hud.lockedText.textContent = `${lockedCount()} / ${puzzlePieceCount()}`;
+  hud.movesText.textContent = String(state.moves);
+  hud.bestText.textContent = formatBest(state.best);
+  hud.selectedText.textContent = selected ? `${selected.row + 1},${selected.col + 1}` : '--';
+  hud.coins.textContent = String(profileState.coins);
+  buttons.undo.disabled = state.history.length === 0;
+  buttons.hint.disabled = state.mode !== 'playing';
+  buttons.shuffle.disabled = state.mode !== 'playing';
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color = '#102638', align = 'left', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawSceneArt(art, x, y, w, h) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  const sky = ctx.createLinearGradient(x, y, x, y + h);
+  if (art === 'mountain') {
+    sky.addColorStop(0, '#8dd6f4');
+    sky.addColorStop(.55, '#f7d38a');
+    sky.addColorStop(1, '#5b8a7a');
+  } else if (art === 'garden') {
+    sky.addColorStop(0, '#99d2ed');
+    sky.addColorStop(.52, '#f8d99f');
+    sky.addColorStop(1, '#557f5b');
+  } else if (art === 'orbit') {
+    sky.addColorStop(0, '#25284f');
+    sky.addColorStop(.52, '#445b7d');
+    sky.addColorStop(1, '#c1785a');
+  } else {
+    sky.addColorStop(0, '#70c9f1');
+    sky.addColorStop(.58, '#ffe0a3');
+    sky.addColorStop(1, '#4d8c83');
+  }
+  ctx.fillStyle = sky;
+  ctx.fillRect(x, y, w, h);
+
+  if (art === 'mountain') {
+    drawMountainLayer(x, y + h * .28, w, h * .44, '#f7f5ea');
+    drawMountainLayer(x - w * .08, y + h * .38, w * 1.2, h * .5, '#657c73');
+    ctx.fillStyle = '#2e6754';
+    ctx.fillRect(x, y + h * .72, w, h * .28);
+    drawTrail(x + w * .48, y + h * .68, w * .14, h * .34, '#d8b579');
+    drawSun(x + w * .82, y + h * .18, w * .08);
+  } else if (art === 'garden') {
+    drawSun(x + w * .2, y + h * .18, w * .07);
+    ctx.fillStyle = '#3f7651';
+    ctx.fillRect(x, y + h * .62, w, h * .38);
+    for (let i = 0; i < 9; i += 1) {
+      drawFlower(x + w * (.12 + (i % 5) * .18), y + h * (.72 + Math.floor(i / 5) * .13), w * .03, ['#f77a98', '#ffd05c', '#8fe0ff'][i % 3]);
+    }
+    drawTrail(x + w * .5, y + h * .62, w * .2, h * .38, '#d7ba80');
+    drawLantern(x + w * .72, y + h * .38, w * .12, h * .28);
+  } else if (art === 'orbit') {
+    for (let i = 0; i < 30; i += 1) {
+      ctx.fillStyle = i % 3 === 0 ? '#ffd985' : '#d8f7ff';
+      ctx.globalAlpha = .45 + (i % 5) * .08;
+      ctx.beginPath();
+      ctx.arc(x + ((i * 47) % 100) / 100 * w, y + ((i * 83) % 100) / 100 * h, 1.5 + (i % 3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    drawPlanet(x + w * .24, y + h * .48, w * .16, '#e98764');
+    drawPlanet(x + w * .72, y + h * .3, w * .1, '#71c8dd');
+    drawWorkshop(x + w * .4, y + h * .58, w * .34, h * .25);
+  } else {
+    drawSun(x + w * .78, y + h * .2, w * .08);
+    ctx.fillStyle = '#3d8078';
+    ctx.fillRect(x, y + h * .62, w, h * .38);
+    ctx.fillStyle = '#2f677d';
+    ctx.fillRect(x, y + h * .58, w, h * .18);
+    drawBoat(x + w * .22, y + h * .53, w * .2, h * .13);
+    drawBoat(x + w * .62, y + h * .56, w * .18, h * .11);
+    for (let i = 0; i < 5; i += 1) {
+      drawHouse(x + w * (.12 + i * .16), y + h * (.48 - (i % 2) * .04), w * .1, h * .14, ['#e56760', '#f6b85d', '#7cc5d8'][i % 3]);
+    }
+  }
+
+  ctx.strokeStyle = '#ffffff55';
+  ctx.lineWidth = Math.max(2, w * .006);
+  ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+  ctx.restore();
+}
+
+function drawSun(x, y, r) {
+  const glow = ctx.createRadialGradient(x, y, r * .1, x, y, r * 1.8);
+  glow.addColorStop(0, '#fff5b8');
+  glow.addColorStop(.42, '#ffd05c');
+  glow.addColorStop(1, '#ffd05c00');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff0a0';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMountainLayer(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  ctx.lineTo(x + w * .18, y + h * .34);
+  ctx.lineTo(x + w * .32, y + h * .72);
+  ctx.lineTo(x + w * .5, y + h * .18);
+  ctx.lineTo(x + w * .7, y + h * .68);
+  ctx.lineTo(x + w * .86, y + h * .32);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawTrail(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x - w * .5, y + h);
+  ctx.quadraticCurveTo(x + w * .7, y + h * .55, x, y);
+  ctx.quadraticCurveTo(x + w * 1.2, y + h * .55, x + w * .9, y + h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawFlower(x, y, r, color) {
+  ctx.fillStyle = color;
+  for (let i = 0; i < 5; i += 1) {
+    const a = i * Math.PI * 2 / 5;
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r, r * .7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ffe68b';
+  ctx.beginPath();
+  ctx.arc(x, y, r * .55, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawLantern(x, y, w, h) {
+  ctx.strokeStyle = '#274046';
+  ctx.lineWidth = Math.max(2, w * .08);
+  ctx.beginPath();
+  ctx.moveTo(x + w * .5, y);
+  ctx.lineTo(x + w * .5, y + h);
+  ctx.stroke();
+  drawRoundedRect(x + w * .18, y + h * .18, w * .64, h * .32, 8, '#ffd05c', '#5f3d1f', 2);
+}
+
+function drawPlanet(x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff99';
+  ctx.lineWidth = Math.max(2, r * .12);
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 1.65, r * .42, -.3, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawWorkshop(x, y, w, h) {
+  drawRoundedRect(x, y + h * .2, w, h * .58, 8, '#d4d7d0', '#365060', 3);
+  ctx.fillStyle = '#355b6b';
+  ctx.beginPath();
+  ctx.moveTo(x + w * .05, y + h * .2);
+  ctx.lineTo(x + w * .5, y);
+  ctx.lineTo(x + w * .95, y + h * .2);
+  ctx.closePath();
+  ctx.fill();
+  for (let i = 0; i < 3; i += 1) {
+    drawRoundedRect(x + w * (.18 + i * .23), y + h * .36, w * .12, h * .18, 4, '#ffd05c', '#365060', 2);
+  }
+}
+
+function drawBoat(x, y, w, h) {
+  ctx.fillStyle = '#6d3f2f';
+  ctx.beginPath();
+  ctx.moveTo(x, y + h * .62);
+  ctx.lineTo(x + w, y + h * .62);
+  ctx.lineTo(x + w * .8, y + h);
+  ctx.lineTo(x + w * .18, y + h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#fff1ce';
+  ctx.beginPath();
+  ctx.moveTo(x + w * .48, y);
+  ctx.lineTo(x + w * .48, y + h * .58);
+  ctx.lineTo(x + w * .16, y + h * .58);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#f58d60';
+  ctx.beginPath();
+  ctx.moveTo(x + w * .52, y + h * .1);
+  ctx.lineTo(x + w * .82, y + h * .58);
+  ctx.lineTo(x + w * .52, y + h * .58);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawHouse(x, y, w, h, color) {
+  drawRoundedRect(x, y + h * .35, w, h * .65, 3, color, '#ffffff88', 1);
+  ctx.fillStyle = '#663b35';
+  ctx.beginPath();
+  ctx.moveTo(x - w * .06, y + h * .35);
+  ctx.lineTo(x + w * .5, y);
+  ctx.lineTo(x + w * 1.06, y + h * .35);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffe7a3';
+  ctx.fillRect(x + w * .36, y + h * .55, w * .24, h * .28);
+}
+
+function drawPiecePath(piece, x, y, w, h) {
+  const knob = Math.min(w, h) * .18;
+  const midX = x + w / 2;
+  const midY = y + h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  if (piece.tabs.top === 0) ctx.lineTo(x + w, y);
+  else {
+    ctx.lineTo(midX - knob, y);
+    ctx.bezierCurveTo(midX - knob, y - piece.tabs.top * knob, midX + knob, y - piece.tabs.top * knob, midX + knob, y);
+    ctx.lineTo(x + w, y);
+  }
+  if (piece.tabs.right === 0) ctx.lineTo(x + w, y + h);
+  else {
+    ctx.lineTo(x + w, midY - knob);
+    ctx.bezierCurveTo(x + w + piece.tabs.right * knob, midY - knob, x + w + piece.tabs.right * knob, midY + knob, x + w, midY + knob);
+    ctx.lineTo(x + w, y + h);
+  }
+  if (piece.tabs.bottom === 0) ctx.lineTo(x, y + h);
+  else {
+    ctx.lineTo(midX + knob, y + h);
+    ctx.bezierCurveTo(midX + knob, y + h + piece.tabs.bottom * knob, midX - knob, y + h + piece.tabs.bottom * knob, midX - knob, y + h);
+    ctx.lineTo(x, y + h);
+  }
+  if (piece.tabs.left === 0) ctx.lineTo(x, y);
+  else {
+    ctx.lineTo(x, midY + knob);
+    ctx.bezierCurveTo(x - piece.tabs.left * knob, midY + knob, x - piece.tabs.left * knob, midY - knob, x, midY - knob);
+    ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+function drawBackground(w, h) {
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#eaf7f4');
+  bg.addColorStop(.58, '#dceaf1');
+  bg.addColorStop(1, '#f3dfba');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#18384812';
+  for (let i = 0; i < 14; i += 1) {
+    const x = (i * 83 + 67) % w;
+    const y = (i * 59 + 93) % h;
+    drawRoundedRect(x, y, 120 + (i % 3) * 34, 18, 8, '#18384810');
+  }
+}
+
+function drawBoard() {
+  const board = state.board;
+  drawRoundedRect(board.x - 16, board.y - 16, board.w + 32, board.h + 32, 8, '#142f3f', '#ffffff70', 2);
+  ctx.save();
+  ctx.globalAlpha = .24;
+  drawSceneArt(state.puzzle.art, board.x, board.y, board.w, board.h);
+  ctx.restore();
+  ctx.strokeStyle = '#ffffff55';
+  ctx.lineWidth = 2;
+  for (let c = 1; c < state.puzzle.cols; c += 1) {
+    const x = board.x + c * board.w / state.puzzle.cols;
+    ctx.beginPath();
+    ctx.moveTo(x, board.y);
+    ctx.lineTo(x, board.y + board.h);
+    ctx.stroke();
+  }
+  for (let r = 1; r < state.puzzle.rows; r += 1) {
+    const y = board.y + r * board.h / state.puzzle.rows;
+    ctx.beginPath();
+    ctx.moveTo(board.x, y);
+    ctx.lineTo(board.x + board.w, y);
+    ctx.stroke();
+  }
+  if (state.hint) {
+    const piece = state.pieces.find(item => item.id === state.hint.piece);
+    if (piece) {
+      const target = targetPosition(piece);
+      ctx.strokeStyle = '#ffd05c';
+      ctx.lineWidth = 5;
+      ctx.setLineDash([12, 8]);
+      ctx.strokeRect(target.x + 5, target.y + 5, target.w - 10, target.h - 10);
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+function drawTray() {
+  const tray = state.tray;
+  drawRoundedRect(tray.x, tray.y, tray.w, tray.h, 8, '#102638e8', '#ffffff55', 2);
+  drawText('Jigsaw Puzzle', tray.x + 20, tray.y + 36, 30, '#ffffff', 'left', 900);
+  drawText(`${state.puzzle.name} - ${state.puzzle.difficulty}`, tray.x + 20, tray.y + 68, 16, '#b8d0d8', 'left', 800);
+  drawText(state.message, tray.x + tray.w / 2, tray.y + 106, 16, '#ffd981', 'center', 900);
+  drawText(`Pieces locked: ${lockedCount()} of ${puzzlePieceCount()}`, tray.x + 20, tray.y + 146, 16, '#c9f3ff', 'left', 900);
+  drawText(`Moves ${state.moves} / Par ${state.puzzle.par}`, tray.x + 20, tray.y + 174, 15, '#ffffff', 'left', 800);
+  drawText('Preview', tray.x + 20, tray.y + tray.h - 154, 16, '#ffd981', 'left', 900);
+  const previewW = Math.min(210, tray.w - 40);
+  const previewH = previewW * state.puzzle.rows / state.puzzle.cols;
+  drawSceneArt(state.puzzle.art, tray.x + 20, tray.y + tray.h - 126, previewW, previewH);
+}
+
+function drawPiece(piece) {
+  const rect = pieceRect(piece);
+  const target = targetPosition(piece);
+  const selected = piece.id === state.selectedId;
+  ctx.save();
+  ctx.shadowColor = piece.locked ? '#00000026' : '#0000007a';
+  ctx.shadowBlur = selected ? 16 : 10;
+  ctx.shadowOffsetY = piece.locked ? 2 : 8;
+  drawPiecePath(piece, rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+  ctx.translate(rect.x - target.x, rect.y - target.y);
+  drawSceneArt(state.puzzle.art, state.board.x, state.board.y, state.board.w, state.board.h);
+  ctx.restore();
+
+  drawPiecePath(piece, rect.x, rect.y, rect.w, rect.h);
+  ctx.strokeStyle = selected ? '#fff5b8' : piece.locked ? '#ffffff88' : '#173143';
+  ctx.lineWidth = selected ? 5 : 2;
+  ctx.stroke();
+
+  if (!piece.locked) {
+    ctx.fillStyle = '#00000026';
+    ctx.font = `900 ${Math.max(14, rect.w * .18)}px "Trebuchet MS", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${piece.row + 1}-${piece.col + 1}`, rect.x + rect.w / 2, rect.y + rect.h / 2);
+  }
+}
+
+function drawCelebration(dt = 0) {
+  if (state.celebrate <= 0) return;
+  ctx.save();
+  const w = canvas.width;
+  const h = canvas.height;
+  const alpha = Math.min(.9, state.celebrate / 1.8);
+  for (let i = 0; i < 34; i += 1) {
+    const t = (state.celebrate * 260 + i * 41) % h;
+    const x = (i * 73 + Math.sin(state.celebrate * 7 + i) * 40) % w;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = ['#ffd05c', '#8fe0ff', '#f77a98', '#b8f0a2'][i % 4];
+    ctx.fillRect(x, t, 7, 17);
+  }
+  ctx.restore();
+  state.celebrate = Math.max(0, state.celebrate - dt);
+}
+
+function render(dt = 0) {
+  setLayout();
+  const w = canvas.width;
+  const h = canvas.height;
+  drawBackground(w, h);
+  drawText('Jigsaw Puzzle', w * .055, 48, 36, '#122c3a', 'left', 900);
+  drawText('Assemble the picture by snapping each loose piece into the ghost image.', w * .055, 82, 17, '#365060', 'left', 800);
+  drawBoard();
+  drawTray();
+  [...state.pieces].sort((a, b) => a.z - b.z).forEach(drawPiece);
+  drawCelebration(dt);
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function pieceAtPoint(point) {
+  return [...state.pieces]
+    .sort((a, b) => b.z - a.z)
+    .find((piece) => {
+      const rect = pieceRect(piece);
+      return point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h;
+    }) || null;
+}
+
+function handlePointerDown(event) {
+  if (state.mode !== 'playing') return;
+  const point = pointFromEvent(event);
+  const piece = pieceAtPoint(point);
+  if (!piece || piece.locked) return;
+  event.preventDefault();
+  snapshot(`drag ${piece.id}`);
+  state.selectedId = piece.id;
+  bringToFront(piece);
+  state.drag = {
+    id: piece.id,
+    offsetX: point.x - piece.x,
+    offsetY: point.y - piece.y,
+    moved: false,
+  };
+  try {
+    canvas.setPointerCapture(event.pointerId);
+  } catch {
+    // Pointer capture is not available in every embedded browser.
+  }
+  updateHud();
+  render();
+}
+
+function handlePointerMove(event) {
+  if (!state.drag) return;
+  event.preventDefault();
+  const piece = state.pieces.find(item => item.id === state.drag.id);
+  if (!piece || piece.locked) return;
+  const point = pointFromEvent(event);
+  piece.x = clamp(point.x - state.drag.offsetX, 12, canvas.width - pieceRect(piece).w - 12);
+  piece.y = clamp(point.y - state.drag.offsetY, 76, canvas.height - pieceRect(piece).h - 12);
+  state.drag.moved = true;
+  state.lastAction = { type: 'dragging', piece: piece.id };
+  render();
+}
+
+function handlePointerUp(event) {
+  if (!state.drag) return;
+  event.preventDefault();
+  const piece = state.pieces.find(item => item.id === state.drag.id);
+  const moved = state.drag.moved;
+  state.drag = null;
+  if (!piece) return;
+  if (moved) {
+    state.moves += 1;
+    const snapped = trySnap(piece);
+    if (!snapped) {
+      state.message = `Dropped piece ${piece.row + 1},${piece.col + 1}.`;
+      state.lastAction = { type: 'drop', piece: piece.id, x: Math.round(piece.x), y: Math.round(piece.y), moves: state.moves };
+    }
+  } else {
+    state.message = `Piece ${piece.row + 1},${piece.col + 1} selected.`;
+    state.lastAction = { type: 'select', piece: piece.id };
+  }
+  updateHud();
+  render();
+}
+
+function cycleSelection() {
+  const loose = state.pieces.filter(piece => !piece.locked).sort((a, b) => a.row - b.row || a.col - b.col);
+  if (!loose.length) return false;
+  const currentIndex = loose.findIndex(piece => piece.id === state.selectedId);
+  const next = loose[(currentIndex + 1 + loose.length) % loose.length];
+  state.selectedId = next.id;
+  bringToFront(next);
+  state.message = `Piece ${next.row + 1},${next.col + 1} selected.`;
+  state.lastAction = { type: 'select', piece: next.id };
+  updateHud();
+  render();
+  return true;
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'tab', 'enter'].includes(key)) event.preventDefault();
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (state.mode !== 'playing') {
+    if (key === 'enter' || key === ' ') {
+      if (state.mode === 'won') nextPuzzle();
+      else startPuzzle(state.puzzleIndex);
+    }
+    return;
+  }
+  const step = event.shiftKey ? 30 : 12;
+  if (key === 'tab') cycleSelection();
+  else if (key === 'arrowleft' || key === 'a') nudgeSelected(-step, 0);
+  else if (key === 'arrowright' || key === 'd') nudgeSelected(step, 0);
+  else if (key === 'arrowup' || key === 'w') nudgeSelected(0, -step);
+  else if (key === 'arrowdown' || key === 's') {
+    if (key === 's' && !event.shiftKey) shuffleLoosePieces();
+    else nudgeSelected(0, step);
+  } else if (key === 'h') revealHint();
+  else if (key === 'u') undo();
+  else if (key === 'r') restartPuzzle();
+  else if (key === 'n') nextPuzzle();
+  else if (key === 'enter' || key === ' ') {
+    const piece = selectedPiece();
+    if (piece) placePiece(piece.id);
+  }
+}
+
+function update(dt) {
+  if (state.mode === 'playing') state.elapsed += dt;
+  state.pulse += dt;
+  showOverlay();
+  updateHud();
+}
+
+function showOverlay() {
+  const key = `${state.mode}|${state.puzzle.id}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'won') {
+    overlayPanel.innerHTML = `
+      <h1>${state.puzzle.name} Complete</h1>
+      <p>${state.message} Best: ${formatBest(state.best)}. Coins earned: ${state.coinsEarned}.</p>
+      <p class="mini">Try the next picture or replay this one to beat par.</p>
+      <button class="primary" id="startBtn" type="button">Next Puzzle</button>
+    `;
+    overlay.classList.add('show');
+    document.getElementById('startBtn').addEventListener('click', nextPuzzle);
+  } else if (state.mode === 'menu') {
+    overlay.classList.add('show');
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function piecesPayload() {
+  return state.pieces.map((piece) => {
+    const target = targetPosition(piece);
+    return {
+      id: piece.id,
+      row: piece.row,
+      col: piece.col,
+      x: Math.round(piece.x),
+      y: Math.round(piece.y),
+      target_x: Math.round(target.x),
+      target_y: Math.round(target.y),
+      locked: piece.locked,
+      selected: piece.id === state.selectedId,
+      distance_to_target: Math.round(distanceToHome(piece)),
+    };
+  });
+}
+
+function stateToObject() {
+  const selected = selectedPiece();
+  return {
+    coordinate_system: 'Canvas coordinates use origin at top-left, x increases right, y increases down. Puzzle grid uses zero-based row and column.',
+    mode: state.mode,
+    puzzle: {
+      id: state.puzzle.id,
+      name: state.puzzle.name,
+      difficulty: state.puzzle.difficulty,
+      rows: state.puzzle.rows,
+      cols: state.puzzle.cols,
+      piece_count: puzzlePieceCount(),
+      par: state.puzzle.par,
+    },
+    board: state.board ? {
+      x: Math.round(state.board.x),
+      y: Math.round(state.board.y),
+      w: Math.round(state.board.w),
+      h: Math.round(state.board.h),
+    } : null,
+    tray: state.tray ? {
+      x: Math.round(state.tray.x),
+      y: Math.round(state.tray.y),
+      w: Math.round(state.tray.w),
+      h: Math.round(state.tray.h),
+    } : null,
+    selected_piece: selected ? selected.id : '',
+    locked_count: lockedCount(),
+    loose_count: state.pieces.length - lockedCount(),
+    pieces: piecesPayload(),
+    moves: state.moves,
+    elapsed_seconds: Math.floor(state.elapsed),
+    hints_used: state.hintsUsed,
+    best_moves: state.best,
+    coins: profileState.coins,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    hint: state.hint,
+    last_action: state.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render(1 / 60);
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__JIGSAW_GAME__ = {
+  startPuzzle,
+  restartPuzzle,
+  nextPuzzle,
+  revealHint,
+  shuffleLoosePieces,
+  undo,
+  cycleSelection,
+  placePiece,
+  solveCurrentPuzzle,
+  stateToObject,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'jigsaw', mode: state.mode };
+  }
+};
+
+buttons.start.addEventListener('click', () => startPuzzle(state.puzzleIndex));
+buttons.hint.addEventListener('click', revealHint);
+buttons.undo.addEventListener('click', undo);
+buttons.shuffle.addEventListener('click', shuffleLoosePieces);
+buttons.restart.addEventListener('click', restartPuzzle);
+buttons.next.addEventListener('click', nextPuzzle);
+buttons.full.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', () => { state.drag = null; });
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render(dt);
+  }
+  requestAnimationFrame(frame);
+}
+
+setLayout();
+state.best = loadBest(state.puzzle.id);
+updateHud();
+render();
+mountGameFeedback({ gameSlug: 'jigsaw', gameName: 'Jigsaw Puzzle' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -110,4 +110,5 @@ export const GAMES = [
   { slug:'mahjongsolitaire', name:'Mahjong Solitaire', emoji:'\u{1F004}', scoreHint:'tiles',      url:'/mahjongsolitaire', desc:'Match free Mahjong tiles across layered solitaire layouts, using hints, shuffles, and undo to clear the table.', earnsCoins:true },
   { slug:'nonogram',       name:'Nonogram',            emoji:'\u{1F5BC}\uFE0F', scoreHint:'solves', url:'/nonogram',     desc:'Solve picture-logic grids by reading row and column clues, filling hidden squares, and marking safe empty cells.', earnsCoins:true },
   { slug:'rushhour',       name:'Rush Hour',           emoji:'\u{1F697}', scoreHint:'moves',      url:'/rushhour',     desc:'Slide cars and trucks through a 6 by 6 traffic jam, clearing blockers so the red car can reach the exit.', earnsCoins:true },
+  { slug:'jigsaw',         name:'Jigsaw Puzzle',       emoji:'\u{1F5BC}\uFE0F', scoreHint:'pieces', url:'/jigsaw',       desc:'Drag picture pieces into a ghost preview, snap them into place, and complete colorful jigsaw scenes with hints, shuffle, and undo.', earnsCoins:true },
 ];

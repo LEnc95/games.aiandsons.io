@@ -3207,3 +3207,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose an in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Rush Hour screenshots.
+
+## 2026-05-31 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Rush Hour, Word Search, Mahjong Solitaire, Nonogram, Yacht Dice, Klondike Solitaire, Fifteen Puzzle, Dots and Boxes, Battleship, Reversi, Checkers, Tower of Hanoi, Peg Solitaire, Mancala, Gomoku Grid, Sudoku Sprint, Mosaic Match, Bubble Shooter, Sundial Sprint, Tangle Tuner, Ribbon Capture, and Aero Courier.
+- Initial repo check: no `/jigsaw` route and no Jigsaw metadata entry found.
+- Chosen game: Jigsaw Puzzle (`/jigsaw`), a canvas picture-assembly puzzle with drag/snap pieces, hints, shuffle, undo, fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and a small test API.
+- Initial implementation:
+  - Added `jigsaw/index.html` with four generated picture puzzles, pointer/touch drag controls, keyboard selection/nudge controls, snap-to-target logic, coin rewards, shared feedback context, deterministic hooks, and visual preview art.
+  - Registered Jigsaw Puzzle in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Jigsaw Puzzle.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Metadata uniqueness check passed; `GAMES` reports 112 games including Jigsaw Puzzle with no duplicate slugs or URLs.
+  - `npm run feedback:check-daily`: pass.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 66 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/jigsaw/`.
+  - Stubbed DOM/canvas runtime harness passed: started Harbor Glow, produced a hint, placed and snapped a piece, undid, shuffled loose pieces, solved the puzzle, awarded coins, advanced deterministic time, and verified shared feedback context.
+  - `git diff --check` on tracked Jigsaw integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `jigsaw/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/jigsaw/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - Tool discovery did not expose an in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Jigsaw Puzzle screenshots.
