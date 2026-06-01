@@ -127,5 +127,6 @@
 - game/nonogram
 - game/rushhour
 - game/jigsaw
+- game/kakuro
 
 Generated from `src/meta/feedback.js`.

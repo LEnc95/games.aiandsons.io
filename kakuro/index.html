@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Kakuro | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background: linear-gradient(135deg, #133044 0%, #1f4d4a 48%, #59482b 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff7a;
+  padding: 8px 12px;
+  background: #00000066;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1040px);
+  aspect-ratio: 26 / 19;
+  max-height: min(68dvh, 760px);
+  position: relative;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #f3efe4;
+  box-shadow: 0 22px 54px #10141d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  background: #12222df2;
+  box-shadow: 0 22px 48px #00000073;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 6vw, 52px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce9ea;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.mini {
+  font-size: 13px;
+  color: #bfd2d7;
+}
+.hud, .controls {
+  width: min(97vw, 1040px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff50;
+  background: #102638d9;
+  color: #f7fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff24;
+}
+.chip span {
+  font-size: 12px;
+  color: #b8d0d8;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #ffd66e; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff20, 0 8px 18px #00000024;
+}
+button:hover { background: #163650; }
+button:disabled {
+  opacity: .46;
+  cursor: default;
+}
+.primary {
+  background: #ffd05c;
+  border-color: #ffe6a3;
+  color: #142433;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe08d; }
+button.active {
+  background: #62c7a7;
+  color: #071a1f;
+  border-color: #bfffe9;
+}
+@media (max-width: 920px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(96vw, 820px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  button { font-size: 13px; padding: 0 4px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill crossword-style number grids by matching clue sums, avoiding duplicate digits, and using pencil notes, hints, and undo. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Kakuro | AI and Sons Games">
+  <meta property="og:description" content="Fill crossword-style number grids by matching clue sums, avoiding duplicate digits, and using pencil notes, hints, and undo. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/kakuro">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Kakuro | AI and Sons Games">
+  <meta name="twitter:description" content="Fill crossword-style number grids by matching clue sums, avoiding duplicate digits, and using pencil notes, hints, and undo. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/kakuro">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Kakuro","description":"Fill crossword-style number grids by matching clue sums, avoiding duplicate digits, and using pencil notes, hints, and undo. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/kakuro","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Kakuro game board">
+    <canvas id="game" width="1040" height="760"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1 id="overlayTitle">Kakuro</h1>
+        <p id="overlayText">Fill every white square with digits 1 through 9. Each run must add to its clue, and digits cannot repeat within a run.</p>
+        <p class="mini">Keyboard: arrows move, 1-9 enter, P pencil, H hint, U undo, Backspace clear, N new, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleName">Market Sums</b></div>
+    <div class="chip"><span>Selected</span><b id="selectedText">--</b></div>
+    <div class="chip"><span>Filled</span><b id="filledText">0 / 0</b></div>
+    <div class="chip"><span>Mistakes</span><b id="mistakesText">0</b></div>
+    <div class="chip"><span>Best</span><b id="bestText">--</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Kakuro controls">
+    <button data-digit="1" type="button">1</button>
+    <button data-digit="2" type="button">2</button>
+    <button data-digit="3" type="button">3</button>
+    <button data-digit="4" type="button">4</button>
+    <button data-digit="5" type="button">5</button>
+    <button data-digit="6" type="button">6</button>
+    <button data-digit="7" type="button">7</button>
+    <button data-digit="8" type="button">8</button>
+    <button data-digit="9" type="button">9</button>
+    <button id="pencilBtn" type="button">Pencil</button>
+    <button id="clearBtn" type="button">Clear</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="checkBtn" type="button">Check</button>
+    <button id="newBtn" type="button">New</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const hud = {
+  puzzleName: document.getElementById('puzzleName'),
+  selectedText: document.getElementById('selectedText'),
+  filledText: document.getElementById('filledText'),
+  mistakesText: document.getElementById('mistakesText'),
+  bestText: document.getElementById('bestText'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  start: document.getElementById('startBtn'),
+  pencil: document.getElementById('pencilBtn'),
+  clear: document.getElementById('clearBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  check: document.getElementById('checkBtn'),
+  next: document.getElementById('newBtn'),
+  digits: [...document.querySelectorAll('[data-digit]')],
+};
+
+const STORAGE_PREFIX = 'cade:kakuro:best:';
+const BLACK = 0;
+const WHITE = 1;
+const PUZZLES = [
+  {
+    id: 'market-sums',
+    name: 'Market Sums',
+    difficulty: 'Warmup',
+    par: 24,
+    grid: [
+      '.......',
+      '.12.34.',
+      '.34.56.',
+      '.......',
+      '.45.67.',
+      '.67.89.',
+      '.......',
+    ],
+  },
+  {
+    id: 'harbor-ledger',
+    name: 'Harbor Ledger',
+    difficulty: 'Easy',
+    par: 42,
+    grid: [
+      '........',
+      '.219.347',
+      '.438.561',
+      '.657.782',
+      '........',
+      '.345.219',
+      '.561.438',
+      '.782.657',
+    ],
+  },
+  {
+    id: 'lantern-books',
+    name: 'Lantern Books',
+    difficulty: 'Medium',
+    par: 52,
+    grid: [
+      '.........',
+      '.314.259.',
+      '.527.681.',
+      '.869.743.',
+      '.........',
+      '.456.132.',
+      '.798.465.',
+      '.231.897.',
+      '.........',
+    ],
+  },
+  {
+    id: 'summit-vault',
+    name: 'Summit Vault',
+    difficulty: 'Medium',
+    par: 56,
+    grid: [
+      '.........',
+      '.672.481.',
+      '.195.236.',
+      '.348.759.',
+      '.........',
+      '.261.594.',
+      '.584.317.',
+      '.937.628.',
+      '.........',
+    ],
+  },
+];
+
+let lastFrame = 0;
+let manualStepping = false;
+const state = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  puzzle: null,
+  selected: null,
+  pencil: false,
+  moves: 0,
+  mistakes: 0,
+  hintsUsed: 0,
+  elapsed: 0,
+  best: null,
+  coinsEarned: 0,
+  undoStack: [],
+  message: 'Select a white square, then enter a digit.',
+  lastAction: { type: 'init' },
+  checkedCells: new Set(),
+  checkFlash: 0,
+  celebrate: 0,
+  layout: {
+    board: { x: 38, y: 68, size: 620, cell: 88 },
+    panel: { x: 700, y: 68, w: 300, h: 620 },
+  },
+};
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function keyOf(row, col) {
+  return `${row},${col}`;
+}
+
+function isDigit(char) {
+  return /^[1-9]$/.test(char);
+}
+
+function makeCell(char, row, col) {
+  if (isDigit(char)) {
+    return {
+      type: WHITE,
+      row,
+      col,
+      solution: Number(char),
+      value: 0,
+      notes: new Set(),
+      acrossId: '',
+      downId: '',
+    };
+  }
+  return {
+    type: BLACK,
+    row,
+    col,
+    across: null,
+    down: null,
+  };
+}
+
+function scanRun(cells, row, col, dir) {
+  const runCells = [];
+  let sum = 0;
+  let r = row;
+  let c = col;
+  while (r >= 0 && c >= 0 && r < cells.length && c < cells[0].length && cells[r][c].type === WHITE) {
+    runCells.push({ row: r, col: c });
+    sum += cells[r][c].solution;
+    if (dir === 'across') c += 1;
+    else r += 1;
+  }
+  return { sum, cells: runCells };
+}
+
+function buildPuzzle(spec) {
+  const rows = spec.grid.length;
+  const cols = spec.grid[0].length;
+  const cells = spec.grid.map((line, row) => {
+    if (line.length !== cols) throw new Error(`Invalid Kakuro grid width for ${spec.id}`);
+    return [...line].map((char, col) => makeCell(char, row, col));
+  });
+  const runs = [];
+  const runsById = new Map();
+  const whiteCells = [];
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      if (cells[row][col].type === WHITE) {
+        whiteCells.push(cells[row][col]);
+      }
+    }
+  }
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const cell = cells[row][col];
+      if (cell.type !== BLACK) continue;
+
+      if (col + 1 < cols && cells[row][col + 1].type === WHITE) {
+        const run = scanRun(cells, row, col + 1, 'across');
+        const id = `A${runs.filter(item => item.dir === 'across').length + 1}`;
+        const payload = { id, dir: 'across', clueRow: row, clueCol: col, sum: run.sum, cells: run.cells };
+        cell.across = { id, sum: run.sum, length: run.cells.length };
+        runs.push(payload);
+        runsById.set(id, payload);
+        for (const item of run.cells) cells[item.row][item.col].acrossId = id;
+      }
+
+      if (row + 1 < rows && cells[row + 1][col].type === WHITE) {
+        const run = scanRun(cells, row + 1, col, 'down');
+        const id = `D${runs.filter(item => item.dir === 'down').length + 1}`;
+        const payload = { id, dir: 'down', clueRow: row, clueCol: col, sum: run.sum, cells: run.cells };
+        cell.down = { id, sum: run.sum, length: run.cells.length };
+        runs.push(payload);
+        runsById.set(id, payload);
+        for (const item of run.cells) cells[item.row][item.col].downId = id;
+      }
+    }
+  }
+
+  return {
+    ...spec,
+    rows,
+    cols,
+    cells,
+    whiteCells,
+    runs,
+    runsById,
+  };
+}
+
+function loadBest(id) {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}${id}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Number.isFinite(parsed.moves)) return null;
+    return {
+      moves: Math.max(0, Math.floor(parsed.moves)),
+      seconds: Math.max(0, Math.floor(Number(parsed.seconds) || 0)),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(id, moves, seconds) {
+  const previous = loadBest(id);
+  const next = {
+    moves: Math.max(0, Math.floor(moves)),
+    seconds: Math.max(0, Math.floor(seconds)),
+  };
+  if (!previous || next.moves < previous.moves || (next.moves === previous.moves && next.seconds < previous.seconds)) {
+    try {
+      localStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(next));
+    } catch {
+      // Local storage can be unavailable in privacy modes.
+    }
+    return next;
+  }
+  return previous;
+}
+
+function selectedCell() {
+  if (!state.selected || !state.puzzle) return null;
+  return state.puzzle.cells[state.selected.row]?.[state.selected.col] || null;
+}
+
+function firstWhiteCell(puzzle = state.puzzle) {
+  return puzzle?.whiteCells[0] || null;
+}
+
+function getCell(row, col) {
+  return state.puzzle?.cells[row]?.[col] || null;
+}
+
+function setPuzzle(index) {
+  const normalizedIndex = ((index % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  state.puzzleIndex = normalizedIndex;
+  state.puzzle = buildPuzzle(PUZZLES[normalizedIndex]);
+  const first = firstWhiteCell(state.puzzle);
+  state.selected = first ? { row: first.row, col: first.col } : null;
+  state.pencil = false;
+  state.moves = 0;
+  state.mistakes = 0;
+  state.hintsUsed = 0;
+  state.elapsed = 0;
+  state.best = loadBest(state.puzzle.id);
+  state.coinsEarned = 0;
+  state.undoStack = [];
+  state.message = `${state.puzzle.name}: ${state.puzzle.difficulty}.`;
+  state.lastAction = { type: 'load', puzzle: state.puzzle.id };
+  state.checkedCells = new Set();
+  state.checkFlash = 0;
+  state.celebrate = 0;
+}
+
+function startPuzzle(index = state.puzzleIndex) {
+  setPuzzle(index);
+  state.mode = 'playing';
+  overlay.classList.remove('show');
+  rememberRecent('kakuro');
+  state.lastAction = { type: 'start', puzzle: state.puzzle.id };
+  updateHud();
+  render();
+}
+
+function nextPuzzle() {
+  startPuzzle(state.puzzleIndex + 1);
+}
+
+function restartCurrentPuzzle() {
+  startPuzzle(state.puzzleIndex);
+}
+
+function runValues(run) {
+  return run.cells.map(({ row, col }) => getCell(row, col).value || 0);
+}
+
+function runStatus(run) {
+  const values = runValues(run);
+  const filled = values.filter(Boolean);
+  const sum = filled.reduce((total, value) => total + value, 0);
+  const duplicates = new Set();
+  const seen = new Set();
+  for (const value of filled) {
+    if (seen.has(value)) duplicates.add(value);
+    seen.add(value);
+  }
+  return {
+    id: run.id,
+    dir: run.dir,
+    target: run.sum,
+    sum,
+    filled: filled.length,
+    length: run.cells.length,
+    complete: filled.length === run.cells.length,
+    valid: duplicates.size === 0 && sum <= run.sum && (filled.length < run.cells.length || sum === run.sum),
+    duplicates: [...duplicates],
+  };
+}
+
+function conflictKeys({ revealWrong = false } = {}) {
+  const keys = new Set();
+  if (!state.puzzle) return keys;
+  for (const run of state.puzzle.runs) {
+    const status = runStatus(run);
+    const values = runValues(run);
+    const seen = new Map();
+    values.forEach((value, index) => {
+      if (!value) return;
+      const cellRef = run.cells[index];
+      if (seen.has(value)) {
+        keys.add(keyOf(cellRef.row, cellRef.col));
+        const previous = seen.get(value);
+        keys.add(keyOf(previous.row, previous.col));
+      } else {
+        seen.set(value, cellRef);
+      }
+    });
+    if (status.sum > status.target || (status.complete && status.sum !== status.target)) {
+      for (const cellRef of run.cells) keys.add(keyOf(cellRef.row, cellRef.col));
+    }
+  }
+  if (revealWrong) {
+    for (const cell of state.puzzle.whiteCells) {
+      if (cell.value && cell.value !== cell.solution) keys.add(keyOf(cell.row, cell.col));
+    }
+  }
+  return keys;
+}
+
+function wrongEntryCount() {
+  if (!state.puzzle) return 0;
+  return state.puzzle.whiteCells.filter(cell => cell.value && cell.value !== cell.solution).length;
+}
+
+function filledCount() {
+  if (!state.puzzle) return 0;
+  return state.puzzle.whiteCells.filter(cell => cell.value > 0).length;
+}
+
+function correctCount() {
+  if (!state.puzzle) return 0;
+  return state.puzzle.whiteCells.filter(cell => cell.value === cell.solution).length;
+}
+
+function isSolved() {
+  return state.puzzle.whiteCells.every(cell => cell.value === cell.solution);
+}
+
+function pushUndo(cell) {
+  if (!cell || cell.type !== WHITE) return;
+  state.undoStack.push({
+    row: cell.row,
+    col: cell.col,
+    value: cell.value,
+    notes: [...cell.notes],
+    moves: state.moves,
+    mistakes: state.mistakes,
+    hintsUsed: state.hintsUsed,
+    mode: state.mode,
+  });
+  if (state.undoStack.length > 80) state.undoStack.shift();
+}
+
+function setMessage(message) {
+  state.message = message;
+}
+
+function selectCell(row, col, options = {}) {
+  const cell = getCell(row, col);
+  if (!cell || cell.type !== WHITE) return false;
+  state.selected = { row, col };
+  state.lastAction = { type: 'select', row, col };
+  if (!options.silent) setMessage(`Selected row ${row + 1}, column ${col + 1}.`);
+  updateHud();
+  render();
+  return true;
+}
+
+function moveSelection(dr, dc) {
+  if (!state.selected) {
+    const first = firstWhiteCell();
+    if (first) return selectCell(first.row, first.col);
+    return false;
+  }
+  let row = state.selected.row + dr;
+  let col = state.selected.col + dc;
+  while (row >= 0 && col >= 0 && row < state.puzzle.rows && col < state.puzzle.cols) {
+    const cell = getCell(row, col);
+    if (cell?.type === WHITE) return selectCell(row, col, { silent: true });
+    row += dr;
+    col += dc;
+  }
+  return false;
+}
+
+function setPencilMode(value = !state.pencil) {
+  state.pencil = Boolean(value);
+  state.lastAction = { type: 'pencil', enabled: state.pencil };
+  setMessage(state.pencil ? 'Pencil mode: notes only.' : 'Entry mode: digits fill cells.');
+  updateHud();
+  render();
+}
+
+function enterDigit(digit, options = {}) {
+  const value = Number(digit);
+  if (!Number.isInteger(value) || value < 1 || value > 9) return false;
+  if (state.mode === 'menu') startPuzzle(state.puzzleIndex);
+  if (state.mode !== 'playing') return false;
+  const cell = selectedCell();
+  if (!cell || cell.type !== WHITE) return false;
+
+  pushUndo(cell);
+  state.checkedCells = new Set();
+  state.checkFlash = 0;
+  if (state.pencil || options.note) {
+    if (cell.value) cell.value = 0;
+    if (cell.notes.has(value)) cell.notes.delete(value);
+    else cell.notes.add(value);
+    state.moves += 1;
+    state.lastAction = { type: 'note', row: cell.row, col: cell.col, digit: value, notes: [...cell.notes].sort((a, b) => a - b) };
+    setMessage(`Toggled note ${value}.`);
+  } else {
+    const wasWrong = cell.value && cell.value !== cell.solution;
+    cell.value = value;
+    cell.notes.clear();
+    state.moves += 1;
+    if (value !== cell.solution && !wasWrong) state.mistakes += 1;
+    state.lastAction = {
+      type: 'enter',
+      row: cell.row,
+      col: cell.col,
+      digit: value,
+      correct: value === cell.solution,
+    };
+    const conflicts = conflictKeys({ revealWrong: false });
+    const key = keyOf(cell.row, cell.col);
+    if (conflicts.has(key)) {
+      state.checkedCells = conflicts;
+      state.checkFlash = 1.4;
+      setMessage('That run has a duplicate or an impossible sum.');
+    } else {
+      setMessage(value === cell.solution ? 'Good entry.' : 'Entry placed. Use Check when ready.');
+    }
+  }
+
+  if (isSolved()) finishPuzzle();
+  updateHud();
+  render();
+  return true;
+}
+
+function clearCell() {
+  if (state.mode !== 'playing') return false;
+  const cell = selectedCell();
+  if (!cell || cell.type !== WHITE || (!cell.value && cell.notes.size === 0)) return false;
+  pushUndo(cell);
+  cell.value = 0;
+  cell.notes.clear();
+  state.moves += 1;
+  state.checkedCells = new Set();
+  state.checkFlash = 0;
+  state.lastAction = { type: 'clear', row: cell.row, col: cell.col };
+  setMessage('Cell cleared.');
+  updateHud();
+  render();
+  return true;
+}
+
+function revealHint() {
+  if (state.mode === 'menu') startPuzzle(state.puzzleIndex);
+  if (state.mode !== 'playing') return false;
+  let cell = selectedCell();
+  if (!cell || cell.type !== WHITE || cell.value === cell.solution) {
+    cell = state.puzzle.whiteCells.find(item => item.value !== item.solution) || null;
+  }
+  if (!cell) return false;
+  pushUndo(cell);
+  state.selected = { row: cell.row, col: cell.col };
+  cell.value = cell.solution;
+  cell.notes.clear();
+  state.moves += 1;
+  state.hintsUsed += 1;
+  state.checkedCells = new Set([keyOf(cell.row, cell.col)]);
+  state.checkFlash = 1.1;
+  state.lastAction = { type: 'hint', row: cell.row, col: cell.col, digit: cell.solution };
+  setMessage(`Hint filled row ${cell.row + 1}, column ${cell.col + 1}.`);
+  if (isSolved()) finishPuzzle();
+  updateHud();
+  render();
+  return true;
+}
+
+function undo() {
+  const entry = state.undoStack.pop();
+  if (!entry) {
+    setMessage('Nothing to undo.');
+    render();
+    return false;
+  }
+  const cell = getCell(entry.row, entry.col);
+  if (!cell || cell.type !== WHITE) return false;
+  cell.value = entry.value;
+  cell.notes = new Set(entry.notes);
+  state.selected = { row: entry.row, col: entry.col };
+  state.moves = entry.moves;
+  state.mistakes = entry.mistakes;
+  state.hintsUsed = entry.hintsUsed;
+  state.mode = entry.mode === 'won' ? 'playing' : entry.mode;
+  state.checkedCells = new Set();
+  state.checkFlash = 0;
+  state.lastAction = { type: 'undo', row: entry.row, col: entry.col };
+  setMessage('Undid the last cell change.');
+  overlay.classList.remove('show');
+  updateHud();
+  render();
+  return true;
+}
+
+function checkBoard() {
+  if (state.mode !== 'playing') return false;
+  const conflicts = conflictKeys({ revealWrong: true });
+  state.checkedCells = conflicts;
+  state.checkFlash = conflicts.size ? 2.2 : 1.0;
+  const empty = state.puzzle.whiteCells.length - filledCount();
+  state.lastAction = { type: 'check', conflicts: conflicts.size, empty };
+  if (conflicts.size) {
+    state.mistakes += 1;
+    setMessage(`${conflicts.size} square${conflicts.size === 1 ? '' : 's'} need another look.`);
+  } else if (empty) {
+    setMessage(`${empty} square${empty === 1 ? '' : 's'} left to fill.`);
+  } else {
+    finishPuzzle();
+    return true;
+  }
+  updateHud();
+  render();
+  return conflicts.size === 0;
+}
+
+function finishPuzzle() {
+  if (state.mode === 'won') return;
+  state.mode = 'won';
+  state.best = saveBest(state.puzzle.id, state.moves, state.elapsed);
+  const parBonus = Math.max(0, Math.floor((state.puzzle.par - state.moves) / 2));
+  const timeBonus = Math.max(0, 8 - Math.floor(state.elapsed / 45));
+  const coins = Math.max(18, 22 + parBonus + timeBonus - state.hintsUsed * 2);
+  state.coinsEarned = coins;
+  state.celebrate = 1.8;
+  state.lastAction = { type: 'won', puzzle: state.puzzle.id, moves: state.moves, coins };
+  setMessage(`${state.puzzle.name} solved in ${state.moves} moves.`);
+  addCoins(coins);
+  showOverlay();
+  updateHud();
+  render();
+}
+
+function solveCurrentPuzzle() {
+  if (state.mode === 'menu') startPuzzle(state.puzzleIndex);
+  let changed = 0;
+  for (const cell of state.puzzle.whiteCells) {
+    if (cell.value !== cell.solution) changed += 1;
+    cell.value = cell.solution;
+    cell.notes.clear();
+  }
+  state.moves += changed;
+  state.lastAction = { type: 'solve_test_api', changed };
+  finishPuzzle();
+  return true;
+}
+
+function showOverlay() {
+  if (state.mode === 'won') {
+    overlayTitle.textContent = 'Solved';
+    overlayText.textContent = `${state.puzzle.name} is complete. You earned ${state.coinsEarned} coins.`;
+    buttons.start.textContent = 'Next Puzzle';
+  } else {
+    overlayTitle.textContent = 'Kakuro';
+    overlayText.textContent = 'Fill every white square with digits 1 through 9. Each run must add to its clue, and digits cannot repeat within a run.';
+    buttons.start.textContent = 'Start Puzzle';
+  }
+  overlay.classList.add('show');
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function updateHud() {
+  if (!state.puzzle) return;
+  const selected = selectedCell();
+  hud.puzzleName.textContent = state.puzzle.name;
+  hud.selectedText.textContent = selected ? `R${selected.row + 1} C${selected.col + 1}` : '--';
+  hud.filledText.textContent = `${filledCount()} / ${state.puzzle.whiteCells.length}`;
+  hud.mistakesText.textContent = String(state.mistakes);
+  hud.bestText.textContent = state.best ? `${state.best.moves} moves` : '--';
+  hud.coins.textContent = String(profileState.coins);
+  buttons.pencil.classList.toggle('active', state.pencil);
+  buttons.undo.disabled = state.undoStack.length === 0;
+}
+
+function setLayout() {
+  const boardSize = Math.floor(Math.min(650, canvas.height - 112, canvas.width * .64));
+  const x = 38;
+  const y = Math.floor((canvas.height - boardSize) / 2);
+  state.layout.board = {
+    x,
+    y,
+    size: boardSize,
+    cell: boardSize / state.puzzle.cols,
+  };
+  state.layout.panel = {
+    x: x + boardSize + 30,
+    y,
+    w: canvas.width - (x + boardSize + 68),
+    h: boardSize,
+  };
+}
+
+function roundRect(context, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  context.beginPath();
+  context.moveTo(x + radius, y);
+  context.lineTo(x + w - radius, y);
+  context.quadraticCurveTo(x + w, y, x + w, y + radius);
+  context.lineTo(x + w, y + h - radius);
+  context.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  context.lineTo(x + radius, y + h);
+  context.quadraticCurveTo(x, y + h, x, y + h - radius);
+  context.lineTo(x, y + radius);
+  context.quadraticCurveTo(x, y, x + radius, y);
+  context.closePath();
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, '#ecf6f2');
+  grad.addColorStop(.48, '#f5e6c9');
+  grad.addColorStop(1, '#d7edf5');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.globalAlpha = .18;
+  ctx.strokeStyle = '#2e5960';
+  ctx.lineWidth = 2;
+  for (let x = -80; x < canvas.width + 80; x += 58) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 220, canvas.height);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBlackCell(cell, x, y, size) {
+  ctx.fillStyle = '#142631';
+  ctx.fillRect(x, y, size, size);
+  const hasClue = cell.across || cell.down;
+  if (hasClue) {
+    const grad = ctx.createLinearGradient(x, y, x + size, y + size);
+    grad.addColorStop(0, '#1d4050');
+    grad.addColorStop(1, '#10202b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+    ctx.strokeStyle = '#d6ebf466';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 7, y + size - 7);
+    ctx.lineTo(x + size - 7, y + 7);
+    ctx.stroke();
+    ctx.fillStyle = '#f6d36d';
+    ctx.font = `900 ${Math.max(12, Math.floor(size * .18))}px "Trebuchet MS", sans-serif`;
+    ctx.textBaseline = 'middle';
+    if (cell.down) {
+      ctx.textAlign = 'left';
+      ctx.fillText(String(cell.down.sum), x + size * .12, y + size * .70);
+    }
+    if (cell.across) {
+      ctx.textAlign = 'right';
+      ctx.fillText(String(cell.across.sum), x + size * .88, y + size * .30);
+    }
+  }
+}
+
+function drawNotes(cell, x, y, size) {
+  const notes = [...cell.notes].sort((a, b) => a - b);
+  if (!notes.length) return;
+  ctx.fillStyle = '#49616b';
+  ctx.font = `800 ${Math.max(9, Math.floor(size * .15))}px "Trebuchet MS", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const note of notes) {
+    const index = note - 1;
+    const nx = x + size * (.22 + (index % 3) * .28);
+    const ny = y + size * (.22 + Math.floor(index / 3) * .28);
+    ctx.fillText(String(note), nx, ny);
+  }
+}
+
+function drawWhiteCell(cell, x, y, size, selected, selectedRunIds, conflictSet) {
+  const key = keyOf(cell.row, cell.col);
+  const inSelectedRun = selectedRunIds.has(cell.acrossId) || selectedRunIds.has(cell.downId);
+  ctx.fillStyle = inSelectedRun ? '#fff7d4' : '#fffaf0';
+  if (state.checkFlash > 0 && conflictSet.has(key)) ctx.fillStyle = '#ffd8d8';
+  if (selected) ctx.fillStyle = '#ffe28a';
+  ctx.fillRect(x, y, size, size);
+
+  if (cell.value) {
+    const wrongKnown = state.checkFlash > 0 && conflictSet.has(key);
+    ctx.fillStyle = wrongKnown ? '#9e2732' : '#152a34';
+    ctx.font = `900 ${Math.floor(size * .52)}px "Trebuchet MS", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(cell.value), x + size / 2, y + size / 2 + size * .03);
+  } else {
+    drawNotes(cell, x, y, size);
+  }
+
+  if (selected) {
+    ctx.strokeStyle = '#142631';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
+  }
+}
+
+function drawBoard() {
+  const { board } = state.layout;
+  const { x, y, size, cell: cellSize } = board;
+  const selected = selectedCell();
+  const selectedRunIds = new Set();
+  if (selected) {
+    if (selected.acrossId) selectedRunIds.add(selected.acrossId);
+    if (selected.downId) selectedRunIds.add(selected.downId);
+  }
+  const conflictSet = state.checkFlash > 0 ? state.checkedCells : new Set();
+
+  ctx.save();
+  roundRect(ctx, x - 12, y - 12, size + 24, size + 24, 8);
+  ctx.fillStyle = '#ffffff9f';
+  ctx.fill();
+  ctx.strokeStyle = '#1c3540';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  for (let row = 0; row < state.puzzle.rows; row += 1) {
+    for (let col = 0; col < state.puzzle.cols; col += 1) {
+      const cell = state.puzzle.cells[row][col];
+      const px = x + col * cellSize;
+      const py = y + row * cellSize;
+      if (cell.type === BLACK) drawBlackCell(cell, px, py, cellSize);
+      else drawWhiteCell(
+        cell,
+        px,
+        py,
+        cellSize,
+        selected && selected.row === row && selected.col === col,
+        selectedRunIds,
+        conflictSet,
+      );
+      ctx.strokeStyle = '#26424c';
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(px, py, cellSize, cellSize);
+    }
+  }
+  ctx.strokeStyle = '#0f2029';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x, y, size, size);
+  ctx.restore();
+}
+
+function drawProgressBar(x, y, w, h, ratio, fill) {
+  roundRect(ctx, x, y, w, h, h / 2);
+  ctx.fillStyle = '#10263833';
+  ctx.fill();
+  roundRect(ctx, x, y, Math.max(h, w * clamp(ratio, 0, 1)), h, h / 2);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff55';
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, w, h, h / 2);
+  ctx.stroke();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (ctx.measureText(next).width <= maxWidth || !line) {
+      line = next;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  for (let i = 0; i < Math.min(lines.length, maxLines); i += 1) {
+    ctx.fillText(lines[i], x, y + i * lineHeight);
+  }
+}
+
+function selectedRunSummaries() {
+  const cell = selectedCell();
+  if (!cell) return [];
+  return [cell.acrossId, cell.downId]
+    .filter(Boolean)
+    .map(id => runStatus(state.puzzle.runsById.get(id)));
+}
+
+function drawSidePanel() {
+  const { panel } = state.layout;
+  roundRect(ctx, panel.x, panel.y, panel.w, panel.h, 8);
+  ctx.fillStyle = '#102638e6';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff5f';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.fillText('Kakuro', panel.x + 22, panel.y + 22);
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#b9d5dc';
+  ctx.fillText(`${state.puzzle.name} - ${state.puzzle.difficulty}`, panel.x + 22, panel.y + 56);
+
+  const progress = correctCount() / state.puzzle.whiteCells.length;
+  drawProgressBar(panel.x + 22, panel.y + 88, panel.w - 44, 14, progress, '#65d6aa');
+
+  ctx.font = '900 15px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#f8fbff';
+  ctx.fillText(`Moves ${state.moves}`, panel.x + 22, panel.y + 120);
+  ctx.fillText(`Time ${formatTime(state.elapsed)}`, panel.x + 142, panel.y + 120);
+  ctx.fillText(`Hints ${state.hintsUsed}`, panel.x + 22, panel.y + 148);
+  ctx.fillText(`Mode ${state.pencil ? 'Pencil' : 'Entry'}`, panel.x + 142, panel.y + 148);
+
+  const runs = selectedRunSummaries();
+  let y = panel.y + 194;
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#ffd66e';
+  ctx.fillText('Selected runs', panel.x + 22, y);
+  y += 28;
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  if (!runs.length) {
+    ctx.fillStyle = '#c3d3d7';
+    ctx.fillText('Choose a white square.', panel.x + 22, y);
+    y += 24;
+  } else {
+    for (const run of runs) {
+      const label = run.dir === 'across' ? 'Across' : 'Down';
+      ctx.fillStyle = run.valid ? '#dce9ea' : '#ffb7b7';
+      ctx.fillText(`${label} ${run.id}: ${run.sum} / ${run.target}`, panel.x + 22, y);
+      y += 22;
+    }
+  }
+
+  y += 14;
+  ctx.fillStyle = '#ffd66e';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.fillText('Status', panel.x + 22, y);
+  y += 28;
+  ctx.fillStyle = '#dce9ea';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText(state.message, panel.x + 22, y, panel.w - 44, 20, 5);
+
+  ctx.fillStyle = '#9eb7be';
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  ctx.fillText('Clue cell format: lower-left is down, upper-right is across.', panel.x + 22, panel.y + panel.h - 58);
+  ctx.fillText('Use Check to reveal conflicts without solving the board.', panel.x + 22, panel.y + panel.h - 36);
+}
+
+function drawCelebration() {
+  if (state.celebrate <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = clamp(state.celebrate / 1.8, 0, 1);
+  for (let i = 0; i < 36; i += 1) {
+    const angle = (i / 36) * Math.PI * 2;
+    const radius = (1.9 - state.celebrate) * 170 + 40;
+    const x = canvas.width / 2 + Math.cos(angle) * radius;
+    const y = canvas.height / 2 + Math.sin(angle) * radius * .62;
+    ctx.fillStyle = i % 2 ? '#ffd66e' : '#62c7a7';
+    ctx.beginPath();
+    ctx.arc(x, y, 4 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function render() {
+  if (!state.puzzle) return;
+  setLayout();
+  drawBackground();
+  drawBoard();
+  drawSidePanel();
+  drawCelebration();
+}
+
+function update(dt) {
+  if (state.mode === 'playing') state.elapsed += dt;
+  if (state.checkFlash > 0) state.checkFlash = Math.max(0, state.checkFlash - dt);
+  if (state.celebrate > 0) state.celebrate = Math.max(0, state.celebrate - dt);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * sx,
+    y: (event.clientY - rect.top) * sy,
+  };
+}
+
+function cellFromPoint(point) {
+  const { board } = state.layout;
+  if (
+    point.x < board.x ||
+    point.y < board.y ||
+    point.x > board.x + board.size ||
+    point.y > board.y + board.size
+  ) {
+    return null;
+  }
+  const col = Math.floor((point.x - board.x) / board.cell);
+  const row = Math.floor((point.y - board.y) / board.cell);
+  return getCell(row, col);
+}
+
+function handlePointerDown(event) {
+  event.preventDefault();
+  if (state.mode === 'menu') startPuzzle(state.puzzleIndex);
+  const cell = cellFromPoint(canvasPoint(event));
+  if (!cell) return;
+  if (cell.type === WHITE) {
+    selectCell(cell.row, cell.col);
+  } else if (cell.across || cell.down) {
+    const parts = [];
+    if (cell.across) parts.push(`across ${cell.across.sum}`);
+    if (cell.down) parts.push(`down ${cell.down.sum}`);
+    setMessage(`Clue: ${parts.join(', ')}.`);
+    state.lastAction = { type: 'clue', row: cell.row, col: cell.col, clues: parts };
+    render();
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  let handled = true;
+  if (/^[1-9]$/.test(key)) enterDigit(Number(key));
+  else if (key === 'arrowup') moveSelection(-1, 0);
+  else if (key === 'arrowdown') moveSelection(1, 0);
+  else if (key === 'arrowleft') moveSelection(0, -1);
+  else if (key === 'arrowright') moveSelection(0, 1);
+  else if (key === 'backspace' || key === 'delete' || key === '0') clearCell();
+  else if (key === 'p') setPencilMode();
+  else if (key === 'h') revealHint();
+  else if (key === 'u') undo();
+  else if (key === 'c') checkBoard();
+  else if (key === 'n') nextPuzzle();
+  else if (key === 'r') restartCurrentPuzzle();
+  else if (key === 'f') toggleFullscreen();
+  else handled = false;
+  if (handled) event.preventDefault();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function cellsPayload() {
+  return state.puzzle.whiteCells.map(cell => ({
+    row: cell.row,
+    col: cell.col,
+    value: cell.value || 0,
+    notes: [...cell.notes].sort((a, b) => a - b),
+    across: cell.acrossId,
+    down: cell.downId,
+  }));
+}
+
+function cluesPayload() {
+  return state.puzzle.runs.map(run => ({
+    id: run.id,
+    dir: run.dir,
+    clue: { row: run.clueRow, col: run.clueCol },
+    target: run.sum,
+    cells: run.cells,
+    status: runStatus(run),
+  }));
+}
+
+function stateToObject() {
+  const selected = selectedCell();
+  return {
+    game: 'kakuro',
+    coordinate_system: 'grid row and column are zero-based from top-left; canvas x/y origin is top-left',
+    mode: state.mode,
+    puzzle: {
+      id: state.puzzle.id,
+      name: state.puzzle.name,
+      difficulty: state.puzzle.difficulty,
+      rows: state.puzzle.rows,
+      cols: state.puzzle.cols,
+    },
+    selected: selected ? { row: selected.row, col: selected.col, value: selected.value || 0 } : null,
+    pencil_mode: state.pencil,
+    cells: cellsPayload(),
+    clues: cluesPayload(),
+    conflicts: [...conflictKeys({ revealWrong: true })],
+    filled: filledCount(),
+    correct: correctCount(),
+    total_cells: state.puzzle.whiteCells.length,
+    wrong_entries: wrongEntryCount(),
+    moves: state.moves,
+    mistakes: state.mistakes,
+    elapsed_seconds: Math.floor(state.elapsed),
+    hints_used: state.hintsUsed,
+    best_moves: state.best?.moves || null,
+    coins: profileState.coins,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    last_action: state.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__KAKURO_GAME__ = {
+  startPuzzle,
+  nextPuzzle,
+  restartCurrentPuzzle,
+  selectCell,
+  enterDigit,
+  clearCell,
+  setPencilMode,
+  revealHint,
+  undo,
+  checkBoard,
+  solveCurrentPuzzle,
+  stateToObject,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'kakuro', mode: state.mode };
+  }
+};
+
+buttons.start.addEventListener('click', () => {
+  if (state.mode === 'won') nextPuzzle();
+  else startPuzzle(state.puzzleIndex);
+});
+buttons.digits.forEach(button => {
+  button.addEventListener('click', () => enterDigit(Number(button.dataset.digit)));
+});
+buttons.pencil.addEventListener('click', () => setPencilMode());
+buttons.clear.addEventListener('click', clearCell);
+buttons.hint.addEventListener('click', revealHint);
+buttons.undo.addEventListener('click', undo);
+buttons.check.addEventListener('click', checkBoard);
+buttons.next.addEventListener('click', nextPuzzle);
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', render);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+setPuzzle(0);
+updateHud();
+render();
+mountGameFeedback({ gameSlug: 'kakuro', gameName: 'Kakuro' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

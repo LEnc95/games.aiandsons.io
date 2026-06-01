@@ -23,6 +23,9 @@ export const SCHOOL_LICENSE_REQUEST_STATUSES = Object.freeze({
   ACTIVE: 'active',
 });
 
+// ⚡ Bolt: Cache array into a Set for O(1) membership lookups instead of O(N) includes
+const SCHOOL_LICENSE_REQUEST_STATUSES_SET = new Set(Object.values(SCHOOL_LICENSE_REQUEST_STATUSES));
+
 export const DEFAULT_SCHOOL_LICENSE_REQUEST = Object.freeze({
   status: SCHOOL_LICENSE_REQUEST_STATUSES.IDLE,
   requestId: '',
@@ -184,7 +187,7 @@ const schoolRequestId = () => {
 export const normalizeSchoolLicenseRequest = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
   const rawStatus = typeof raw.status === 'string' ? raw.status.trim().toLowerCase() : SCHOOL_LICENSE_REQUEST_STATUSES.IDLE;
-  const status = Object.values(SCHOOL_LICENSE_REQUEST_STATUSES).includes(rawStatus)
+  const status = SCHOOL_LICENSE_REQUEST_STATUSES_SET.has(rawStatus)
     ? rawStatus
     : SCHOOL_LICENSE_REQUEST_STATUSES.IDLE;
   return {
