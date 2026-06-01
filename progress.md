@@ -3234,3 +3234,29 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose an in-app Browser navigation/screenshot tool in this session, so there was no alternate browser screenshot path.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium launch is allowed, then inspect generated Jigsaw Puzzle screenshots.
+
+## 2026-06-01 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Jigsaw Puzzle, Rush Hour, Word Search, Mahjong Solitaire, Nonogram, Yacht Dice, Klondike Solitaire, and the earlier classic board/puzzle additions.
+- Initial repo check: no `/kakuro` route and no Kakuro metadata entry found.
+- Chosen game: Kakuro (`/kakuro`), a crossword-style number puzzle with sum clues, digit entry, pencil marks, hints, undo, fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and a small test API.
+- Initial implementation:
+  - Added `kakuro/index.html` with four clue-sum boards, canvas rendering, digit entry, pencil notes, sum/duplicate conflict checks, hints, undo, fullscreen, coin rewards, shared feedback context, deterministic hooks, and a test API.
+  - Registered Kakuro in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Kakuro.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Metadata uniqueness check passed; `GAMES` reports 113 games including Kakuro with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 66 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/kakuro/`.
+  - Stubbed DOM/canvas runtime harness passed: started Market Sums, entered and checked a wrong digit, undid, toggled pencil notes, used a hint, advanced deterministic time, solved the board, awarded coins, and verified shared feedback context.
+  - `git diff --check` on tracked Kakuro integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `kakuro/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/kakuro/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no Playwright screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` against `http://127.0.0.1:4173` failed at the same Chromium launch step.
+  - In-app Browser fallback was attempted through the Browser plugin, but the Node-backed browser kernel exited during sandbox setup with `windows sandbox failed: spawn setup refresh`, so no alternate visual screenshot was available.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Kakuro screenshots.
