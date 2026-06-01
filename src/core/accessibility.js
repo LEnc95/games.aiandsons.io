@@ -7,6 +7,9 @@ export const ACCESSIBILITY_COLOR_PROFILES = Object.freeze([
   'tritanopia',
 ]);
 
+// ⚡ Bolt: Cache array into a Set for O(1) membership lookups instead of O(N) includes
+const ACCESSIBILITY_COLOR_PROFILES_SET = new Set(ACCESSIBILITY_COLOR_PROFILES);
+
 export const DEFAULT_ACCESSIBILITY_SETTINGS = Object.freeze({
   colorProfile: 'standard',
   largeUi: false,
@@ -17,7 +20,7 @@ export const DEFAULT_ACCESSIBILITY_SETTINGS = Object.freeze({
 export const normalizeAccessibilitySettings = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
   const colorProfileRaw = typeof raw.colorProfile === 'string' ? raw.colorProfile.trim().toLowerCase() : 'standard';
-  const colorProfile = ACCESSIBILITY_COLOR_PROFILES.includes(colorProfileRaw) ? colorProfileRaw : 'standard';
+  const colorProfile = ACCESSIBILITY_COLOR_PROFILES_SET.has(colorProfileRaw) ? colorProfileRaw : 'standard';
   return {
     colorProfile,
     largeUi: Boolean(raw.largeUi),

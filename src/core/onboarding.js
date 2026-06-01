@@ -2,6 +2,9 @@ import { get, set } from './storage.js';
 
 export const ONBOARDING_ROLES = Object.freeze(['', 'parent', 'teacher']);
 
+// ⚡ Bolt: Cache array into a Set for O(1) membership lookups instead of O(N) includes
+const ONBOARDING_ROLES_SET = new Set(ONBOARDING_ROLES);
+
 export const DEFAULT_ONBOARDING_STATE = Object.freeze({
   skipped: false,
   selectedRole: '',
@@ -11,7 +14,7 @@ export const DEFAULT_ONBOARDING_STATE = Object.freeze({
 export const normalizeOnboardingState = (source) => {
   const raw = source && typeof source === 'object' ? source : {};
   const selectedRoleRaw = typeof raw.selectedRole === 'string' ? raw.selectedRole.trim().toLowerCase() : '';
-  const selectedRole = ONBOARDING_ROLES.includes(selectedRoleRaw) ? selectedRoleRaw : '';
+  const selectedRole = ONBOARDING_ROLES_SET.has(selectedRoleRaw) ? selectedRoleRaw : '';
   return {
     skipped: Boolean(raw.skipped),
     selectedRole,
@@ -39,6 +42,6 @@ export const skipOnboarding = () => {
 
 export const selectOnboardingRole = (role) => {
   const normalizedRole = typeof role === 'string' ? role.trim().toLowerCase() : '';
-  if (!ONBOARDING_ROLES.includes(normalizedRole) || !normalizedRole) return getOnboardingState();
+  if (!ONBOARDING_ROLES_SET.has(normalizedRole) || !normalizedRole) return getOnboardingState();
   return setOnboardingState({ skipped: false, selectedRole: normalizedRole });
 };
