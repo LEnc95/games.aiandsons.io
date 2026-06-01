@@ -37,3 +37,6 @@
 ## 2026-05-27 - ARIA Labels and Native Enter Form Submission on non-form inputs
 **Learning:** Inputs nested in non-form wrapper containers (like the `cade-family-input`) miss out on native `Enter` key form submission and screen reader visibility if they lack a `<label>`.
 **Action:** Always ensure non-form inputs have an `aria-label` and a `keydown` event listener attached that natively simulates submission by listening for `Enter` and clicking the target button. This restores native form behavior and ensures WCAG compliance.
+## 2026-05-30 - Input Element Screen Reader Accessibility in Forms
+**Learning:** Inputs nested in forms in standalone experiments (like Club Penguin World) miss out on screen reader visibility if they lack a `<label>` or `aria-label`. Sighted users rely on the placeholder text, but this is an accessibility violation for screen readers.
+**Action:** Always ensure that any input element that doesn't have an explicit, visually paired `<label>` element includes a descriptive `aria-label` attribute to expose its purpose to assistive technologies.
