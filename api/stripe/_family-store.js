@@ -261,9 +261,9 @@ async function getFamilyAccountForUser(userId) {
   }
 
   for (const rawAccount of memoryState.accounts.values()) {
-    const account = getMemoryAccountById(rawAccount.id) || normalizeFamilyAccount(rawAccount);
-    if (account._memberUserIdsSet ? account._memberUserIdsSet.has(normalizedUserId) : account.memberUserIds.includes(normalizedUserId)) {
-      return account;
+    // ⚡ Bolt Optimization: Avoid expensive O(N) normalizeFamilyAccount on read path
+    if (rawAccount._memberUserIdsSet ? rawAccount._memberUserIdsSet.has(normalizedUserId) : rawAccount.memberUserIds.includes(normalizedUserId)) {
+      return getMemoryAccountById(rawAccount.id) || normalizeFamilyAccount(rawAccount);
     }
   }
   return null;
