@@ -94,8 +94,15 @@
   </div>
 
   <script type="module">
-    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
     window.addCoins = addCoinsFn;
+    const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
+    window.breakoutShopCosmetics = {
+      auroraBricks: inventory.has('breakout-aurora'),
+      infernoBricks: inventory.has('breakout-inferno'),
+      cometBall: inventory.has('breakout-comet-ball'),
+      crystalWall: inventory.has('breakout-crystal-wall'),
+    };
     rememberRecent('breakout');
   </script>
   <script>
@@ -109,6 +116,7 @@
 
     // Detect touch device
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const shopCosmetics = window.breakoutShopCosmetics || {};
 
     // Canvas setup
     const canvas = document.getElementById("game");
@@ -162,7 +170,13 @@
       state.bricks = [];
       const startX = (canvas.width - (cfg.brick.cols * (cfg.brick.w + cfg.brick.spacing) - cfg.brick.spacing)) / 2;
       const startY = 60;
-      const colors = ['#fa4', '#5ad', '#4af', '#a5f', '#f5a'];
+      const colors = shopCosmetics.crystalWall
+        ? ['#bae6fd', '#c4b5fd', '#e0f2fe', '#ddd6fe', '#93c5fd']
+        : shopCosmetics.infernoBricks
+          ? ['#7f1d1d', '#dc2626', '#f97316', '#facc15', '#fb7185']
+        : shopCosmetics.auroraBricks
+          ? ['#60a5fa', '#a855f7', '#34d399', '#22d3ee', '#f472b6']
+        : ['#fa4', '#5ad', '#4af', '#a5f', '#f5a'];
       
       for (let row = 0; row < cfg.brick.rows; row++) {
         for (let col = 0; col < cfg.brick.cols; col++) {
@@ -356,7 +370,15 @@
       // Draw bricks
       state.bricks.forEach(brick => {
         if (brick.alive) {
-          ctx.fillStyle = brick.color;
+          if (shopCosmetics.crystalWall) {
+            const grad = ctx.createLinearGradient(brick.x, brick.y, brick.x + brick.w, brick.y + brick.h);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.35, brick.color);
+            grad.addColorStop(1, '#7dd3fc');
+            ctx.fillStyle = grad;
+          } else {
+            ctx.fillStyle = brick.color;
+          }
           ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
           ctx.strokeStyle = '#192544';
           ctx.lineWidth = 2;
@@ -369,9 +391,17 @@
       ctx.fillRect(state.paddle.x, state.paddle.y, cfg.paddle.w, cfg.paddle.h);
 
       // Draw ball
+      if (shopCosmetics.cometBall) {
+        const tail = ctx.createLinearGradient(state.ball.x - 58, state.ball.y, state.ball.x, state.ball.y);
+        tail.addColorStop(0, 'rgba(251,146,60,0)');
+        tail.addColorStop(0.6, 'rgba(251,146,60,0.38)');
+        tail.addColorStop(1, 'rgba(254,243,199,0.85)');
+        ctx.fillStyle = tail;
+        ctx.fillRect(state.ball.x - 58, state.ball.y - 4, 58, 8);
+      }
       ctx.beginPath();
       ctx.arc(state.ball.x, state.ball.y, cfg.ball.r, 0, Math.PI * 2);
-      ctx.fillStyle = "#fa4";
+      ctx.fillStyle = shopCosmetics.cometBall ? "#fde68a" : "#fa4";
       ctx.fill();
 
       // Game over overlay

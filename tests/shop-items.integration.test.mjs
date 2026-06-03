@@ -128,6 +128,24 @@ test('every inventory item has a known game-prefix mapping', () => {
   );
 });
 
+test('every inventory item is implemented outside shop and entitlement metadata', () => {
+  const implementedSource = [...allProjectTexts.entries()]
+    .filter(([file]) => !file.endsWith(path.join('src', 'core', 'entitlements.js')))
+    .map(([, source]) => source)
+    .join('\n');
+
+  const missing = items
+    .filter((item) => item.type === 'inventory')
+    .filter((item) => !implementedSource.includes(item.id))
+    .map((item) => item.id);
+
+  assert.deepEqual(
+    missing,
+    [],
+    `Inventory shop items missing game implementation references: ${missing.join(', ')}`,
+  );
+});
+
 test('game metadata includes real emoji values (no placeholder question marks)', () => {
   const invalid = GAMES
     .filter((game) => typeof game.emoji !== 'string' || game.emoji.trim().length === 0)
@@ -166,5 +184,17 @@ test('badge definitions include real icon values (no placeholder question marks)
     placeholders,
     [],
     `Badge definitions include placeholder/corrupt icon values: ${placeholders.join(', ')}`,
+  );
+});
+
+test('badge definitions have unique IDs and a broad earnable catalog', () => {
+  const badgeIds = [...achievementsSource.matchAll(/id:'([^']+)'/g)].map((match) => match[1]);
+  assert.ok(badgeIds.length >= 150, `Expected at least 150 badge definitions, found ${badgeIds.length}.`);
+
+  const duplicates = badgeIds.filter((id, index) => badgeIds.indexOf(id) !== index);
+  assert.deepEqual(
+    [...new Set(duplicates)],
+    [],
+    `Duplicate badge definition IDs found: ${[...new Set(duplicates)].join(', ')}`,
   );
 });

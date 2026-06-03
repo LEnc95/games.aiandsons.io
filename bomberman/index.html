@@ -211,6 +211,8 @@
     const COSMETICS = {
       emberBlast: hasInventory && profileState.inventory.has('bomberman-ember-blast'),
       jadeMaze: hasInventory && profileState.inventory.has('bomberman-jade-maze'),
+      confettiBombs: hasInventory && profileState.inventory.has('bomberman-confetti-bombs'),
+      shadowArena: hasInventory && profileState.inventory.has('bomberman-shadow-arena'),
     };
 
     const scoreEl = document.getElementById('score');
@@ -489,7 +491,7 @@
 
       state.flames.push(...hitCells.map((cell) => ({ x: cell.x, y: cell.y, timer: FLAME_TIME })));
       triggerShake(COSMETICS.emberBlast ? 8 : 6, 0.18);
-      spawnParticles(bomb.x, bomb.y, COSMETICS.emberBlast ? '#ff7f5f' : '#ffd074', 14);
+      spawnParticles(bomb.x, bomb.y, COSMETICS.confettiBombs ? '#f472b6' : (COSMETICS.emberBlast ? '#ff7f5f' : '#ffd074'), COSMETICS.confettiBombs ? 24 : 14);
       markEnemyHits(hitCells);
       markPlayerHit(hitCells);
       emitUnlocks();
@@ -634,18 +636,18 @@
     }
 
     function drawBoard() {
-      ctx.fillStyle = COSMETICS.jadeMaze ? '#0f2319' : '#0d1d16';
+      ctx.fillStyle = COSMETICS.shadowArena ? '#090918' : (COSMETICS.jadeMaze ? '#0f2319' : '#0d1d16');
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       for (let y = 0; y < ROWS; y += 1) {
         for (let x = 0; x < COLS; x += 1) {
           const tile = state.grid[y][x];
           if (tile === '#') {
-            drawTile(x, y, COSMETICS.jadeMaze ? '#21593f' : '#335f4c');
-            ctx.fillStyle = COSMETICS.jadeMaze ? '#37a06d' : '#406f5a';
+            drawTile(x, y, COSMETICS.shadowArena ? '#312e81' : (COSMETICS.jadeMaze ? '#21593f' : '#335f4c'));
+            ctx.fillStyle = COSMETICS.shadowArena ? '#6d28d9' : (COSMETICS.jadeMaze ? '#37a06d' : '#406f5a');
             ctx.fillRect(x * TILE + 5, y * TILE + 5, TILE - 10, TILE - 10);
           } else {
-            drawTile(x, y, COSMETICS.jadeMaze ? '#123227' : '#13261e');
+            drawTile(x, y, COSMETICS.shadowArena ? '#111124' : (COSMETICS.jadeMaze ? '#123227' : '#13261e'));
             if (tile === 'c') {
               ctx.fillStyle = COSMETICS.jadeMaze ? '#1f8e63' : '#8a6742';
               ctx.fillRect(x * TILE + 4, y * TILE + 4, TILE - 8, TILE - 8);
@@ -670,11 +672,11 @@
         const cx = bomb.x * TILE + TILE / 2;
         const cy = bomb.y * TILE + TILE / 2;
         const pulse = 0.85 + 0.15 * Math.sin(performance.now() * 0.02);
-        ctx.fillStyle = COSMETICS.emberBlast ? '#3a2020' : '#26313a';
+        ctx.fillStyle = COSMETICS.shadowArena ? '#18122d' : (COSMETICS.emberBlast ? '#3a2020' : '#26313a');
         ctx.beginPath();
         ctx.arc(cx, cy, TILE * 0.28 * pulse, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = COSMETICS.emberBlast ? '#ff9f68' : '#f8d46d';
+        ctx.fillStyle = COSMETICS.confettiBombs ? '#f9a8d4' : (COSMETICS.emberBlast ? '#ff9f68' : '#f8d46d');
         ctx.fillRect(cx - 3, cy - TILE * 0.34, 6, 10);
       }
     }
@@ -821,6 +823,8 @@
         cosmetics: {
           ember_blast: COSMETICS.emberBlast,
           jade_maze: COSMETICS.jadeMaze,
+          confetti_bombs: COSMETICS.confettiBombs,
+          shadow_arena: COSMETICS.shadowArena,
         },
         crates_destroyed: state.cratesDestroyed,
         move_cooldown: Number(state.moveCooldown.toFixed(3)),

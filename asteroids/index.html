@@ -206,6 +206,8 @@
     const COSMETICS = {
       plasmaLaser: hasInventory && profileState.inventory.has('asteroids-plasma-laser'),
       nebulaDrift: hasInventory && profileState.inventory.has('asteroids-nebula-drift'),
+      crystalField: hasInventory && profileState.inventory.has('asteroids-crystal-field'),
+      solarSail: hasInventory && profileState.inventory.has('asteroids-solar-sail'),
     };
 
     const scoreEl = document.getElementById('score');
@@ -404,7 +406,7 @@
         vx: ship.vx + Math.cos(ship.angle) * speed,
         vy: ship.vy + Math.sin(ship.angle) * speed,
         life: 1.1,
-        color: COSMETICS.plasmaLaser ? '#ff63df' : '#ffec9d',
+        color: COSMETICS.solarSail ? '#fbbf24' : (COSMETICS.plasmaLaser ? '#ff63df' : '#ffec9d'),
       });
       state.fireCooldown = 0.16;
     }
@@ -529,7 +531,7 @@
         state.bullets.splice(bi, 1);
         state.asteroids.splice(hitIndex, 1);
         state.asteroids.push(...splitAsteroid(asteroid));
-        spawnExplosion(asteroid.x, asteroid.y, COSMETICS.plasmaLaser ? '#ff7be4' : '#ffbf7f', 16);
+        spawnExplosion(asteroid.x, asteroid.y, COSMETICS.crystalField ? '#7dd3fc' : (COSMETICS.plasmaLaser ? '#ff7be4' : '#ffbf7f'), 16);
         triggerShake(asteroid.size === 3 ? 4 : 2.2, 0.14);
 
         const scoreBySize = asteroid.size === 3 ? 20 : asteroid.size === 2 ? 50 : 100;
@@ -552,17 +554,17 @@
     }
 
     function drawStars() {
-      if (COSMETICS.nebulaDrift) {
+      if (COSMETICS.nebulaDrift || COSMETICS.crystalField) {
         const nebula = ctx.createRadialGradient(W * 0.28, H * 0.24, 40, W * 0.28, H * 0.24, W * 0.7);
-        nebula.addColorStop(0, '#47206d');
-        nebula.addColorStop(0.45, '#1b2d63');
+        nebula.addColorStop(0, COSMETICS.crystalField ? '#164e63' : '#47206d');
+        nebula.addColorStop(0.45, COSMETICS.crystalField ? '#1e3a8a' : '#1b2d63');
         nebula.addColorStop(1, '#050b17');
         ctx.fillStyle = nebula;
       } else {
         ctx.fillStyle = '#050b17';
       }
       ctx.fillRect(0, 0, W, H);
-      for (let i = 0; i < (COSMETICS.nebulaDrift ? 95 : 70); i += 1) {
+      for (let i = 0; i < ((COSMETICS.nebulaDrift || COSMETICS.crystalField) ? 95 : 70); i += 1) {
         const x = (i * 137.53) % W;
         const y = (i * 91.11) % H;
         const twinkle = 0.5 + 0.5 * Math.sin(performance.now() * 0.0018 + i * 3.1);
@@ -618,10 +620,11 @@
           else ctx.lineTo(p.x, p.y);
         });
         ctx.closePath();
-        if (COSMETICS.nebulaDrift) {
-          ctx.fillStyle = 'rgba(118,137,201,0.18)';
+        if (COSMETICS.nebulaDrift || COSMETICS.crystalField) {
+          ctx.fillStyle = COSMETICS.crystalField ? 'rgba(125,211,252,0.24)' : 'rgba(118,137,201,0.18)';
           ctx.fill();
         }
+        if (COSMETICS.crystalField) ctx.strokeStyle = '#bae6fd';
         ctx.stroke();
         ctx.restore();
       }
@@ -630,9 +633,9 @@
     function drawBullets() {
       for (const bullet of state.bullets) {
         ctx.fillStyle = bullet.color || '#ffec9d';
-        if (COSMETICS.plasmaLaser) {
+        if (COSMETICS.plasmaLaser || COSMETICS.solarSail) {
           ctx.shadowBlur = 10;
-          ctx.shadowColor = bullet.color;
+          ctx.shadowColor = COSMETICS.solarSail ? '#fbbf24' : bullet.color;
         }
         ctx.beginPath();
         ctx.arc(bullet.x, bullet.y, 2.7, 0, Math.PI * 2);
@@ -733,6 +736,8 @@
         cosmetics: {
           plasma_laser: COSMETICS.plasmaLaser,
           nebula_drift: COSMETICS.nebulaDrift,
+          crystal_field: COSMETICS.crystalField,
+          solar_sail: COSMETICS.solarSail,
         },
         ship: state.ship ? {
           x: Number(state.ship.x.toFixed(2)),

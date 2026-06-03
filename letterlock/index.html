@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Letter Lock | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #16202a;
+  background: linear-gradient(135deg, #f6ead7 0%, #d8eef0 46%, #f4d9df 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff80;
+  padding: 8px 12px;
+  background: #1d2b3ccc;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffcc;
+  background: #f7f2e8;
+  box-shadow: 0 22px 54px #4b3e3e59;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd6;
+  background: #203040f5;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #1f2a3659;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 6vw, 52px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce7ec;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bfd2d8;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #203040df;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bed4dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #95ecc0; }
+.chip.warn b { color: #ffd66e; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3b41502e;
+}
+button:hover { background: #2c465e; }
+button:focus-visible {
+  outline: 3px solid #142331;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd35d;
+  border-color: #ffe8a8;
+  color: #16202a;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe089; }
+.utility { background: #3a516b; }
+.action { background: #2e716f; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 860px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Crack five-letter lock words by reading green, gold, and gray tile clues before six guesses run out. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Letter Lock | AI and Sons Games">
+  <meta property="og:description" content="Crack five-letter lock words by reading green, gold, and gray tile clues before six guesses run out. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/letterlock">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Letter Lock | AI and Sons Games">
+  <meta name="twitter:description" content="Crack five-letter lock words by reading green, gold, and gray tile clues before six guesses run out. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/letterlock">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Letter Lock","description":"Crack five-letter lock words by reading green, gold, and gray tile clues before six guesses run out. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/letterlock","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Letter Lock game board">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1 id="overlayTitle">Letter Lock</h1>
+        <p id="overlayText">Guess the five-letter lock word in six tries. Green letters are fixed, gold letters are in the word, and gray letters are out.</p>
+        <p class="mini">Keyboard: type letters, Enter submits, Backspace edits, Esc pauses. Use the canvas keyboard for touch play.</p>
+        <button class="primary" id="startBtn" type="button">Start Lock</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="puzzleText">1 / 14</b></div>
+    <div class="chip"><span>Guesses</span><b id="guessText">0 / 6</b></div>
+    <div class="chip warn"><span>Streak</span><b id="streakText">0</b></div>
+    <div class="chip"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Letter Lock controls">
+    <button id="newBtn" type="button" class="action">New Puzzle</button>
+    <button id="hintBtn" type="button" class="utility">Reveal Clue</button>
+    <button id="backBtn" type="button" class="utility">Backspace</button>
+    <button id="enterBtn" type="button" class="action">Enter</button>
+    <button id="pauseBtn" type="button" class="utility">Pause</button>
+    <button id="fullscreenBtn" type="button" class="utility">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+
+const hud = {
+  mode: document.getElementById('modeText'),
+  puzzle: document.getElementById('puzzleText'),
+  guesses: document.getElementById('guessText'),
+  streak: document.getElementById('streakText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+};
+
+const buttons = {
+  newPuzzle: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  back: document.getElementById('backBtn'),
+  enter: document.getElementById('enterBtn'),
+  pause: document.getElementById('pauseBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WORD_LENGTH = 5;
+const MAX_GUESSES = 6;
+const WON_KEY = 'cadegames:letterlock:wonPuzzles';
+const BEST_KEY = 'cadegames:letterlock:bestScore';
+const KEY_ROWS = [
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK'],
+];
+const STATUS_RANK = { unknown: 0, absent: 1, present: 2, correct: 3 };
+const STATUS_COLORS = {
+  unknown: { fill: '#f8f6ee', border: '#acb4bb', text: '#1d2b36' },
+  draft: { fill: '#fffdf7', border: '#29384b', text: '#1d2b36' },
+  absent: { fill: '#66727c', border: '#55616b', text: '#ffffff' },
+  present: { fill: '#d9a63b', border: '#c79022', text: '#171c20' },
+  correct: { fill: '#2f9a72', border: '#258463', text: '#ffffff' },
+};
+
+const WORD_BANK = [
+  { answer: 'CRANE', clue: 'A machine that lifts heavy loads.' },
+  { answer: 'PLANT', clue: 'A living thing with roots and leaves.' },
+  { answer: 'CIDER', clue: 'A crisp drink made from apples.' },
+  { answer: 'GLIDE', clue: 'To move smoothly without much effort.' },
+  { answer: 'SHORE', clue: 'The land along the edge of water.' },
+  { answer: 'BRICK', clue: 'A small block used for building walls.' },
+  { answer: 'MANGO', clue: 'A sweet orange tropical fruit.' },
+  { answer: 'RIVER', clue: 'A natural stream flowing across land.' },
+  { answer: 'CLOCK', clue: 'A tool that keeps track of time.' },
+  { answer: 'SWIRL', clue: 'A twisting or spiraling movement.' },
+  { answer: 'CLOUD', clue: 'A floating mass of tiny water drops.' },
+  { answer: 'STONE', clue: 'A hard piece of rock.' },
+  { answer: 'LIGHT', clue: 'Something that makes things visible.' },
+  { answer: 'TRAIL', clue: 'A path through a park or forest.' },
+];
+
+function loadWonPuzzles() {
+  try {
+    const raw = localStorage.getItem(WON_KEY);
+    const parsed = JSON.parse(raw || '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter(value => typeof value === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveWonPuzzles() {
+  try {
+    localStorage.setItem(WON_KEY, JSON.stringify([...game.wonPuzzles]));
+  } catch {
+    // Local storage may be unavailable in restricted test environments.
+  }
+}
+
+function loadBestScore() {
+  try {
+    const parsed = Number(localStorage.getItem(BEST_KEY) || 0);
+    return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBestScore(score) {
+  try {
+    localStorage.setItem(BEST_KEY, String(Math.max(0, Math.floor(score))));
+  } catch {
+    // Local storage may be unavailable in restricted test environments.
+  }
+}
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  guesses: [],
+  draft: '',
+  keys: {},
+  hintUsed: false,
+  message: 'Press Start Lock to begin.',
+  score: 0,
+  bestScore: loadBestScore(),
+  streak: 0,
+  coinsEarned: 0,
+  lastWinCoins: 0,
+  elapsed: 0,
+  pulse: 0,
+  wonPuzzles: loadWonPuzzles(),
+  lastAction: 'loaded',
+};
+
+let keyHitboxes = [];
+let manualStepping = false;
+let lastFrame = performance.now();
+
+function currentPuzzle() {
+  const index = ((game.puzzleIndex % WORD_BANK.length) + WORD_BANK.length) % WORD_BANK.length;
+  return WORD_BANK[index];
+}
+
+function normalizePuzzleIndex(index) {
+  const number = Number(index);
+  if (!Number.isFinite(number)) return 0;
+  return ((Math.floor(number) % WORD_BANK.length) + WORD_BANK.length) % WORD_BANK.length;
+}
+
+function roundRect(x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawText(text, x, y, size, color, align = 'center', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function updateHud() {
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.puzzle.textContent = `${game.puzzleIndex + 1} / ${WORD_BANK.length}`;
+  hud.guesses.textContent = `${game.guesses.length} / ${MAX_GUESSES}`;
+  hud.streak.textContent = String(game.streak);
+  hud.score.textContent = String(game.score);
+  hud.coins.textContent = String(profileState.coins);
+  buttons.hint.disabled = game.mode !== 'playing' || game.hintUsed;
+  buttons.back.disabled = game.mode !== 'playing' || game.draft.length === 0;
+  buttons.enter.disabled = game.mode !== 'playing';
+  buttons.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function updateOverlay() {
+  const puzzle = currentPuzzle();
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Letter Lock';
+    overlayText.textContent = 'Guess the five-letter lock word in six tries. Green letters are fixed, gold letters are in the word, and gray letters are out.';
+    startBtn.textContent = 'Start Lock';
+    startBtn.hidden = false;
+    overlay.classList.add('show');
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'The lock is waiting. Resume when you are ready.';
+    startBtn.textContent = 'Resume';
+    startBtn.hidden = false;
+    overlay.classList.add('show');
+  } else if (game.mode === 'won') {
+    overlayTitle.textContent = 'Lock Opened';
+    overlayText.textContent = `Solved ${puzzle.answer} in ${game.guesses.length} ${game.guesses.length === 1 ? 'guess' : 'guesses'}. Score ${game.score}. Coins earned ${game.lastWinCoins}.`;
+    startBtn.textContent = 'Next Lock';
+    startBtn.hidden = false;
+    overlay.classList.add('show');
+  } else if (game.mode === 'lost') {
+    overlayTitle.textContent = 'Lock Jammed';
+    overlayText.textContent = `The word was ${puzzle.answer}. ${puzzle.clue}`;
+    startBtn.textContent = 'Next Lock';
+    startBtn.hidden = false;
+    overlay.classList.add('show');
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function resetForPuzzle(index) {
+  game.puzzleIndex = normalizePuzzleIndex(index);
+  game.guesses = [];
+  game.draft = '';
+  game.keys = {};
+  game.hintUsed = false;
+  game.message = 'Type any five-letter guess.';
+  game.score = 0;
+  game.lastWinCoins = 0;
+  game.elapsed = 0;
+  game.lastAction = 'start';
+}
+
+function startGame(index = game.puzzleIndex) {
+  resetForPuzzle(index);
+  game.mode = 'playing';
+  rememberRecent('letterlock');
+  maybeUnlock({ anyPlay: true, letterlock: { started: true } });
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function nextPuzzle() {
+  startGame(game.puzzleIndex + 1);
+  game.lastAction = 'next_puzzle';
+}
+
+function restartPuzzle() {
+  startGame(game.puzzleIndex);
+  game.lastAction = 'restart';
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+    game.lastAction = 'pause';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Back to the lock.';
+    game.lastAction = 'resume';
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function revealHint() {
+  if (game.mode !== 'playing' || game.hintUsed) return;
+  game.hintUsed = true;
+  game.message = `Clue: ${currentPuzzle().clue}`;
+  game.lastAction = 'hint';
+  updateHud();
+  draw();
+}
+
+function updateKeyStatus(letter, status) {
+  const current = game.keys[letter] || 'unknown';
+  if (STATUS_RANK[status] > STATUS_RANK[current]) {
+    game.keys[letter] = status;
+  }
+}
+
+function evaluateGuess(guess, answer) {
+  const result = Array.from({ length: WORD_LENGTH }, () => 'absent');
+  const remaining = {};
+  for (let i = 0; i < WORD_LENGTH; i += 1) {
+    if (guess[i] === answer[i]) {
+      result[i] = 'correct';
+    } else {
+      remaining[answer[i]] = (remaining[answer[i]] || 0) + 1;
+    }
+  }
+  for (let i = 0; i < WORD_LENGTH; i += 1) {
+    if (result[i] === 'correct') continue;
+    const letter = guess[i];
+    if (remaining[letter] > 0) {
+      result[i] = 'present';
+      remaining[letter] -= 1;
+    }
+  }
+  return result;
+}
+
+function scoreCurrentWin() {
+  const attemptPenalty = Math.max(0, game.guesses.length - 1) * 140;
+  const timePenalty = Math.floor(game.elapsed * 3);
+  const hintPenalty = game.hintUsed ? 120 : 0;
+  return Math.max(100, 1100 - attemptPenalty - timePenalty - hintPenalty + game.streak * 20);
+}
+
+function awardWin() {
+  const puzzle = currentPuzzle();
+  const puzzleKey = `${game.puzzleIndex}:${puzzle.answer}`;
+  game.score = scoreCurrentWin();
+  game.bestScore = Math.max(game.bestScore, game.score);
+  saveBestScore(game.bestScore);
+  let coins = 0;
+  if (!game.wonPuzzles.has(puzzleKey)) {
+    coins = Math.max(5, Math.min(20, Math.round(game.score / 120)));
+    game.wonPuzzles.add(puzzleKey);
+    saveWonPuzzles();
+    addCoins(coins);
+    game.coinsEarned += coins;
+  }
+  game.lastWinCoins = coins;
+  maybeUnlock({
+    anyPlay: true,
+    letterlock: {
+      score: game.score,
+      guesses: game.guesses.length,
+      streak: game.streak,
+      hintUsed: game.hintUsed,
+    },
+  });
+}
+
+function submitGuess() {
+  if (game.mode !== 'playing') return;
+  if (game.draft.length < WORD_LENGTH) {
+    game.message = `Need ${WORD_LENGTH - game.draft.length} more ${WORD_LENGTH - game.draft.length === 1 ? 'letter' : 'letters'}.`;
+    game.lastAction = 'short_guess';
+    draw();
+    return;
+  }
+  const puzzle = currentPuzzle();
+  const guess = game.draft.toUpperCase();
+  const evaluation = evaluateGuess(guess, puzzle.answer);
+  game.guesses.push({ word: guess, evaluation });
+  for (let i = 0; i < guess.length; i += 1) updateKeyStatus(guess[i], evaluation[i]);
+  game.draft = '';
+  if (guess === puzzle.answer) {
+    game.mode = 'won';
+    game.streak += 1;
+    game.message = `Opened in ${game.guesses.length}.`;
+    game.lastAction = 'win';
+    awardWin();
+  } else if (game.guesses.length >= MAX_GUESSES) {
+    game.mode = 'lost';
+    game.streak = 0;
+    game.message = `The answer was ${puzzle.answer}.`;
+    game.lastAction = 'loss';
+  } else {
+    game.message = `${MAX_GUESSES - game.guesses.length} ${MAX_GUESSES - game.guesses.length === 1 ? 'try' : 'tries'} left.`;
+    game.lastAction = 'submit';
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function inputLetter(letter) {
+  if (game.mode !== 'playing') return;
+  const normalized = String(letter || '').toUpperCase();
+  if (!/^[A-Z]$/.test(normalized) || game.draft.length >= WORD_LENGTH) return;
+  game.draft += normalized;
+  game.message = 'Build a five-letter guess.';
+  game.lastAction = `letter_${normalized}`;
+  updateHud();
+  draw();
+}
+
+function backspace() {
+  if (game.mode !== 'playing' || game.draft.length === 0) return;
+  game.draft = game.draft.slice(0, -1);
+  game.message = 'Edited guess.';
+  game.lastAction = 'backspace';
+  updateHud();
+  draw();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    game.message = 'Fullscreen is unavailable here.';
+  }
+  draw();
+}
+
+function colorForCell(rowIndex, colIndex) {
+  if (game.guesses[rowIndex]) {
+    return STATUS_COLORS[game.guesses[rowIndex].evaluation[colIndex]];
+  }
+  if (rowIndex === game.guesses.length && game.draft[colIndex]) {
+    return STATUS_COLORS.draft;
+  }
+  return STATUS_COLORS.unknown;
+}
+
+function letterForCell(rowIndex, colIndex) {
+  if (game.guesses[rowIndex]) return game.guesses[rowIndex].word[colIndex] || '';
+  if (rowIndex === game.guesses.length) return game.draft[colIndex] || '';
+  return '';
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#fff7e8');
+  gradient.addColorStop(.48, '#dff4f2');
+  gradient.addColorStop(1, '#f7dde5');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#203040';
+  roundRect(30, 28, canvas.width - 60, 78, 8);
+  ctx.fill();
+
+  ctx.strokeStyle = '#ffffff70';
+  ctx.lineWidth = 2;
+  for (let x = 55; x < canvas.width - 55; x += 54) {
+    ctx.beginPath();
+    ctx.moveTo(x, 122);
+    ctx.lineTo(x + 22, 690);
+    ctx.stroke();
+  }
+}
+
+function drawHeader() {
+  drawText('Letter Lock', 66, 67, 28, '#f8fbff', 'left', 900);
+  drawText(game.message, canvas.width / 2, 67, 23, '#f8fbff', 'center', 900);
+  const bestText = game.bestScore > 0 ? `Best ${game.bestScore}` : 'Best --';
+  drawText(bestText, canvas.width - 70, 67, 20, '#ffd66e', 'right', 900);
+}
+
+function drawBoard() {
+  const tile = 68;
+  const gap = 10;
+  const boardWidth = WORD_LENGTH * tile + (WORD_LENGTH - 1) * gap;
+  const x0 = Math.round((canvas.width - boardWidth) / 2);
+  const y0 = 126;
+  for (let row = 0; row < MAX_GUESSES; row += 1) {
+    for (let col = 0; col < WORD_LENGTH; col += 1) {
+      const x = x0 + col * (tile + gap);
+      const y = y0 + row * (tile + gap);
+      const colors = colorForCell(row, col);
+      ctx.fillStyle = colors.fill;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = row === game.guesses.length && game.mode === 'playing' ? 4 : 2;
+      roundRect(x, y, tile, tile, 8);
+      ctx.fill();
+      ctx.stroke();
+      const letter = letterForCell(row, col);
+      if (letter) drawText(letter, x + tile / 2, y + tile / 2 + 1, 34, colors.text, 'center', 900);
+    }
+  }
+}
+
+function drawClueBanner() {
+  const puzzle = currentPuzzle();
+  const visible = game.hintUsed || game.mode === 'won' || game.mode === 'lost';
+  const text = visible ? puzzle.clue : 'Need a clue? Use Reveal Clue. Any five letters can test the lock.';
+  ctx.fillStyle = visible ? '#fff0c8' : '#ffffffc2';
+  ctx.strokeStyle = visible ? '#d9a63b' : '#acb4bb';
+  ctx.lineWidth = 2;
+  roundRect(110, 472, canvas.width - 220, 42, 8);
+  ctx.fill();
+  ctx.stroke();
+  drawText(text, canvas.width / 2, 493, 18, '#253241', 'center', 900);
+}
+
+function keyStatus(letter) {
+  if (!/^[A-Z]$/.test(letter)) return 'special';
+  return game.keys[letter] || 'unknown';
+}
+
+function drawKeyboard() {
+  keyHitboxes = [];
+  const keyH = 46;
+  const gap = 8;
+  let y = 534;
+  for (const row of KEY_ROWS) {
+    const widths = row.map(key => key.length > 1 ? 92 : 54);
+    const totalWidth = widths.reduce((sum, value) => sum + value, 0) + gap * (row.length - 1);
+    let x = Math.round((canvas.width - totalWidth) / 2);
+    row.forEach((key, index) => {
+      const width = widths[index];
+      const status = keyStatus(key);
+      const colors = status === 'special'
+        ? { fill: '#3a516b', border: '#203040', text: '#ffffff' }
+        : STATUS_COLORS[status];
+      ctx.fillStyle = colors.fill;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 2;
+      roundRect(x, y, width, keyH, 8);
+      ctx.fill();
+      ctx.stroke();
+      drawText(key, x + width / 2, y + keyH / 2 + 1, key.length > 1 ? 15 : 21, colors.text, 'center', 900);
+      keyHitboxes.push({ key, x, y, width, height: keyH });
+      x += width + gap;
+    });
+    y += keyH + 10;
+  }
+}
+
+function draw() {
+  drawBackground();
+  drawHeader();
+  drawBoard();
+  drawClueBanner();
+  drawKeyboard();
+}
+
+function update(dt) {
+  game.pulse = (game.pulse + dt) % 1;
+  if (game.mode === 'playing') game.elapsed += dt;
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function keyAtPoint(point) {
+  return keyHitboxes.find(box =>
+    point.x >= box.x &&
+    point.x <= box.x + box.width &&
+    point.y >= box.y &&
+    point.y <= box.y + box.height
+  ) || null;
+}
+
+function handleCanvasPointer(event) {
+  event.preventDefault();
+  const hit = keyAtPoint(canvasPoint(event));
+  if (!hit) {
+    if (game.mode === 'menu') startGame();
+    return;
+  }
+  if (hit.key === 'ENTER') submitGuess();
+  else if (hit.key === 'BACK') backspace();
+  else inputLetter(hit.key);
+}
+
+function handleKey(event) {
+  const key = event.key;
+  if (key === 'Enter') {
+    event.preventDefault();
+    if (game.mode === 'menu') startGame();
+    else if (game.mode === 'won' || game.mode === 'lost') nextPuzzle();
+    else if (game.mode === 'paused') togglePause();
+    else submitGuess();
+    return;
+  }
+  if (key === 'Backspace') {
+    event.preventDefault();
+    backspace();
+    return;
+  }
+  if (key === 'Escape') {
+    if (game.mode === 'playing' || game.mode === 'paused') {
+      event.preventDefault();
+      togglePause();
+    }
+    return;
+  }
+  if (key.toLowerCase() === 'f' && game.mode !== 'playing') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (/^[a-zA-Z]$/.test(key)) {
+    event.preventDefault();
+    inputLetter(key);
+  }
+}
+
+function stateToObject() {
+  const puzzle = currentPuzzle();
+  const ended = game.mode === 'won' || game.mode === 'lost';
+  return {
+    game: 'letterlock',
+    coordinate_system: 'canvas origin top-left, x increases right, y increases down; board rows and columns are zero-based',
+    mode: game.mode,
+    puzzle: {
+      index: game.puzzleIndex,
+      count: WORD_BANK.length,
+      word_length: WORD_LENGTH,
+      clue_visible: game.hintUsed || ended,
+      clue: game.hintUsed || ended ? puzzle.clue : null,
+      answer: ended ? puzzle.answer : null,
+    },
+    guesses: game.guesses.map((guess, row) => ({
+      row,
+      word: guess.word,
+      evaluation: guess.evaluation,
+    })),
+    current_row: game.guesses.length,
+    draft: game.draft,
+    attempts_remaining: Math.max(0, MAX_GUESSES - game.guesses.length),
+    keyboard: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => ({
+      letter,
+      status: game.keys[letter] || 'unknown',
+    })),
+    score: game.score,
+    best_score: game.bestScore,
+    streak: game.streak,
+    elapsed_seconds: Math.floor(game.elapsed),
+    hint_used: game.hintUsed,
+    coins: profileState.coins,
+    coins_earned_this_session: game.coinsEarned,
+    last_win_coins: game.lastWinCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+window.__LETTER_LOCK_GAME__ = {
+  startGame,
+  nextPuzzle,
+  restartPuzzle,
+  revealHint,
+  inputLetter,
+  backspace,
+  submitGuess,
+  togglePause,
+  setPuzzle(index) {
+    startGame(index);
+    return stateToObject();
+  },
+  solveCurrentPuzzle() {
+    if (game.mode !== 'playing') startGame(game.puzzleIndex);
+    game.draft = currentPuzzle().answer;
+    submitGuess();
+    return stateToObject();
+  },
+  getAnswer() {
+    return currentPuzzle().answer;
+  },
+  stateToObject,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'letterlock', mode: game.mode };
+  }
+};
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'won' || game.mode === 'lost') nextPuzzle();
+  else startGame(game.puzzleIndex);
+});
+buttons.newPuzzle.addEventListener('click', nextPuzzle);
+buttons.hint.addEventListener('click', revealHint);
+buttons.back.addEventListener('click', backspace);
+buttons.enter.addEventListener('click', submitGuess);
+buttons.pause.addEventListener('click', togglePause);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handleCanvasPointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'letterlock', gameName: 'Letter Lock' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

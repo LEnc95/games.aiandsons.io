@@ -50,6 +50,22 @@ const PREMIUM_SHOP_ITEM_ID_LIST = Object.freeze([
   'tetris-aurora-stack',
   'asteroids-nebula-drift',
   'bomberman-jade-maze',
+  'tictactoe-candy-marks',
+  'rps-cyber-throw',
+  'memory-rainbow-match',
+  'breakout-crystal-wall',
+  'connect4-royal-frame',
+  'minesweeper-moonfield',
+  'flappy-rainbow-pipes',
+  'dino-night-runner',
+  'spaceinvaders-starfield',
+  'frogger-golden-logs',
+  'ski-northern-lights',
+  '2048-galaxy-numbers',
+  'tetris-meteor-well',
+  'asteroids-solar-sail',
+  'bomberman-shadow-arena',
+  'colorcatch-rainbow-bucket',
 ]);
 
 const PREMIUM_SHOP_ITEM_IDS = new Set(PREMIUM_SHOP_ITEM_ID_LIST);

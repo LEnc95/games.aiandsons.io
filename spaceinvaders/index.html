@@ -108,6 +108,8 @@
   const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
   const hasRainbowLaser = inventory.has('spaceinvaders-rainbow');
   const hasOmegaCannon = inventory.has('spaceinvaders-omega');
+  const hasLaserBloom = inventory.has('spaceinvaders-laser-bloom');
+  const hasStarfieldDeluxe = inventory.has('spaceinvaders-starfield');
 
   function resize() {
     canvas.width = Math.floor(window.innerWidth * DPR);
@@ -221,7 +223,7 @@
   }
 
   function togglePause(){ if(GAME.state!=='playing' && GAME.state!=='paused') return; GAME.state = (GAME.state==='playing')?'paused':'playing'; }
-  function tryShoot(ts){ if(!GAME.player||!GAME.keys.shoot) return; if(ts - GAME.lastShotAt < GAME.player.cooldown) return; GAME.lastShotAt=ts; const bulletSpeed = hasOmegaCannon ? -660 : -520; const bulletX = GAME.player.x + GAME.player.w/2 - (hasOmegaCannon ? 3 : 1.5); GAME.playerBullets.push(new Bullet(bulletX, GAME.player.y - 10, bulletSpeed, true, { rainbow: hasRainbowLaser, omega: hasOmegaCannon })); }
+  function tryShoot(ts){ if(!GAME.player||!GAME.keys.shoot) return; if(ts - GAME.lastShotAt < GAME.player.cooldown) return; GAME.lastShotAt=ts; const bulletSpeed = hasOmegaCannon ? -660 : -520; const bulletX = GAME.player.x + GAME.player.w/2 - (hasOmegaCannon ? 3 : 1.5); GAME.playerBullets.push(new Bullet(bulletX, GAME.player.y - 10, bulletSpeed, true, { rainbow: hasRainbowLaser || hasLaserBloom, omega: hasOmegaCannon })); }
   function enemyFire(ts){ if(ts - GAME.lastEnemyFire < GAME.enemyFireInterval) return; GAME.lastEnemyFire=ts; const alive=GAME.invaders.filter(i=>i.alive); if(!alive.length) return; const byCol=new Map(); for(const inv of alive){ const col=Math.round(inv.x/50); if(!byCol.has(col) || byCol.get(col).y<inv.y) byCol.set(col, inv); } const choices=Array.from(byCol.values()); const shooter=choices[randInt(0, choices.length-1)]; GAME.invaderBullets.push(new Bullet(shooter.x + shooter.w/2 - 1.5, shooter.y + shooter.h + 4, 240, false)); }
 
   let last=performance.now(); requestAnimationFrame(loop);
@@ -240,7 +242,7 @@
     if(!GAME.invaders.some(i=>i.alive)){ GAME.level+=1; createWave(GAME.level); }
   }
 
-  function drawBackground(){ const W=canvas.width/DPR, H=canvas.height/DPR; ctx.save(); ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b0f14'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=0.75; for(let i=0;i<80;i++){ const x=(i*73)%W, y=(i*97)%H, s=(i%3)+1; ctx.fillStyle = i%7===0 ? '#6ae0ff' : '#e8f0ff'; ctx.fillRect(x,y,s,s); } ctx.restore(); }
+  function drawBackground(){ const W=canvas.width/DPR, H=canvas.height/DPR; ctx.save(); ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b0f14'; ctx.fillRect(0,0,W,H); if(hasStarfieldDeluxe){ const nebula=ctx.createRadialGradient(W*0.7,H*0.25,20,W*0.7,H*0.25,W*0.55); nebula.addColorStop(0,'rgba(244,114,182,0.24)'); nebula.addColorStop(0.45,'rgba(34,211,238,0.12)'); nebula.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=nebula; ctx.fillRect(0,0,W,H); } ctx.globalAlpha=hasStarfieldDeluxe?0.9:0.75; const starCount=hasStarfieldDeluxe?140:80; for(let i=0;i<starCount;i++){ const x=(i*73)%W, y=(i*97)%H, s=hasStarfieldDeluxe?((i%4)+1):((i%3)+1); ctx.fillStyle = i%7===0 ? (hasStarfieldDeluxe ? '#fbbf24' : '#6ae0ff') : '#e8f0ff'; ctx.fillRect(x,y,s,s); } ctx.restore(); }
   function draw(){ drawBackground(); for(const inv of GAME.invaders) inv.draw(); for(const b of GAME.playerBullets) b.draw(); for(const b of GAME.invaderBullets) b.draw(); GAME.player.draw(); }
   function drawPause(){ const W=canvas.width/DPR,H=canvas.height/DPR; ctx.save(); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#ffffff'; ctx.font='bold 28px system-ui'; ctx.textAlign='center'; ctx.fillText('Paused — Press P to resume', W/2, H/2); ctx.restore(); }
   function endGame(won=false){

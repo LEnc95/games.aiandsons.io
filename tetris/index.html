@@ -205,6 +205,8 @@
     const COSMETICS = {
       neonGrid: hasInventory && profileState.inventory.has('tetris-neon-grid'),
       auroraStack: hasInventory && profileState.inventory.has('tetris-aurora-stack'),
+      candyStack: hasInventory && profileState.inventory.has('tetris-candy-stack'),
+      meteorWell: hasInventory && profileState.inventory.has('tetris-meteor-well'),
     };
     const PIECES = {
       I: { color: '#4de4ff', cells:[[-1,0],[0,0],[1,0],[2,0]] },
@@ -516,7 +518,13 @@
     }
 
     function drawBoardGrid() {
-      if (COSMETICS.auroraStack) {
+      if (COSMETICS.meteorWell) {
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#111827');
+        g.addColorStop(0.55, '#7c2d12');
+        g.addColorStop(1, '#f97316');
+        ctx.fillStyle = g;
+      } else if (COSMETICS.auroraStack) {
         const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
         g.addColorStop(0, '#111a3a');
         g.addColorStop(0.4, '#101a35');
@@ -555,9 +563,13 @@
       const px = x * TILE;
       const py = y * TILE;
       ctx.globalAlpha = alpha;
-      if (COSMETICS.neonGrid || COSMETICS.auroraStack) {
+      if (COSMETICS.candyStack) {
+        const candy = ['#f9a8d4', '#fde68a', '#a7f3d0', '#bfdbfe'];
+        color = candy[(x + y) % candy.length];
+      }
+      if (COSMETICS.neonGrid || COSMETICS.auroraStack || COSMETICS.meteorWell) {
         ctx.shadowBlur = 10;
-        ctx.shadowColor = color;
+        ctx.shadowColor = COSMETICS.meteorWell ? '#fb923c' : color;
       }
       ctx.fillStyle = color;
       ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
@@ -676,6 +688,8 @@
         cosmetics: {
           neon_grid: COSMETICS.neonGrid,
           aurora_stack: COSMETICS.auroraStack,
+          candy_stack: COSMETICS.candyStack,
+          meteor_well: COSMETICS.meteorWell,
         },
         current_piece: state.current ? {
           type: state.current.type,

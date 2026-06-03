@@ -3260,3 +3260,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback was attempted through the Browser plugin, but the Node-backed browser kernel exited during sandbox setup with `windows sandbox failed: spawn setup refresh`, so no alternate visual screenshot was available.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Kakuro screenshots.
+
+## 2026-06-02 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory later confirmed existing at `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; recent entries include Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, Word Search, and other recent additions, so this run avoided repeating them.
+- Chosen game: Letter Lock (`/letterlock`), a canvas-based five-letter deduction game distinct from the existing word, logic, and puzzle routes.
+- Plan: add desktop keyboard and pointer/touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback, coin rewards on wins, metadata registration, SEO refresh, Linear seed refresh, and Playwright smoke validation.
+- Initial implementation:
+  - Added `letterlock/index.html` with six-guess word deduction, canvas board and touch keyboard, keyboard controls, clue reveal, pause/resume, fullscreen button, coin rewards, shared feedback context, deterministic hooks, and a test API.
+  - Registered Letter Lock in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Letter Lock.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation started:
+  - Metadata uniqueness check passed; `GAMES` reports 114 games including Letter Lock with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:shop`: pass, 67 tests.
+  - `npm run test:feedback`: pass, 31 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/letterlock/`.
+  - Stubbed DOM/canvas runtime harness passed: started the first puzzle, typed letters, backspaced, rejected a short guess, revealed the clue, submitted a guess, solved CRANE, awarded coins, advanced deterministic time, and verified shared feedback context.
+  - `git diff --check` on tracked Letter Lock integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `letterlock/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, `progress.md`, or `clubpenguin-world/public/index.html`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/letterlock/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` against `http://127.0.0.1:4173` failed at the same Chromium launch step.
+  - In-app Browser fallback was attempted through the Browser plugin, but the Node-backed browser kernel exited during sandbox setup with `windows sandbox failed: spawn setup refresh`, so no alternate visual screenshot was available.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Letter Lock screenshots.

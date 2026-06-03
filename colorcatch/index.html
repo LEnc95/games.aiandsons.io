@@ -250,6 +250,8 @@
       const COSMETICS = {
         prismTrail: hasInventory && profileState.inventory.has('colorcatch-prism-trail'),
         celestialSky: hasInventory && profileState.inventory.has('colorcatch-celestial-sky'),
+        pastelDrops: hasInventory && profileState.inventory.has('colorcatch-pastel-drops'),
+        rainbowBucket: hasInventory && profileState.inventory.has('colorcatch-rainbow-bucket'),
       };
 
       const STAGES = [
@@ -633,9 +635,20 @@
         const p = state.paddle;
         const palette = COLOR_SET[p.colorIndex];
         ctx.save();
-        ctx.shadowColor = COSMETICS.prismTrail ? '#f6d2ff' : palette.glow;
-        ctx.shadowBlur = COSMETICS.prismTrail ? 30 : 22;
-        ctx.fillStyle = palette.fill;
+        ctx.shadowColor = COSMETICS.rainbowBucket ? '#fde68a' : (COSMETICS.prismTrail ? '#f6d2ff' : palette.glow);
+        ctx.shadowBlur = COSMETICS.rainbowBucket ? 34 : (COSMETICS.prismTrail ? 30 : 22);
+        if (COSMETICS.rainbowBucket) {
+          const g = ctx.createLinearGradient(p.x - p.halfW, p.y, p.x + p.halfW, p.y);
+          g.addColorStop(0, '#ef4444');
+          g.addColorStop(0.2, '#f97316');
+          g.addColorStop(0.4, '#facc15');
+          g.addColorStop(0.6, '#22c55e');
+          g.addColorStop(0.8, '#3b82f6');
+          g.addColorStop(1, '#a855f7');
+          ctx.fillStyle = g;
+        } else {
+          ctx.fillStyle = palette.fill;
+        }
         roundRect(ctx, p.x - p.halfW, p.y - p.h * 0.5, p.halfW * 2, p.h, 12);
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -655,8 +668,8 @@
         const yNudge = Math.sin(d.wobble * 1.5) * 2;
         const x = d.x;
         const y = d.y + yNudge;
-        let fill = color.fill;
-        let glow = color.glow;
+        let fill = COSMETICS.pastelDrops ? ['#f9a8d4', '#bfdbfe', '#a7f3d0'][d.colorIndex % 3] : color.fill;
+        let glow = COSMETICS.pastelDrops ? '#ffffff' : color.glow;
         if (d.kind === 'star') {
           fill = '#ffe06d';
           glow = '#fff3b7';

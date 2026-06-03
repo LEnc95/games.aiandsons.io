@@ -68,7 +68,7 @@
   </div>
 
   <script type="module">
-    import { addCoins, rememberRecent } from '../src/core/state.js';
+    import { addCoins, rememberRecent, state as appState } from '../src/core/state.js';
     import { maybeUnlock } from '../src/prog/achievements.js';
     rememberRecent('frogger');
 
@@ -83,6 +83,11 @@
     const ROWS = 12;
     const CELL = canvas.width / COLS;
     const STORAGE_KEY = 'hs:frogger';
+    const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
+    const shopCosmetics = {
+      riverLanterns: inventory.has('frogger-river-lanterns'),
+      goldenLogs: inventory.has('frogger-golden-logs'),
+    };
 
     let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
     let score = 0;
@@ -219,6 +224,18 @@
         ctx.fillStyle = fill;
         ctx.fillRect(0, r * CELL, canvas.width, CELL);
       }
+      if (shopCosmetics.riverLanterns) {
+        for (let i = 0; i < 8; i++) {
+          const x = ((i * 1.6 + performance.now() / 3000) % COLS) * CELL;
+          const y = (3.35 + (i % 3)) * CELL;
+          ctx.fillStyle = 'rgba(251,191,36,0.32)';
+          ctx.beginPath();
+          ctx.arc(x, y, CELL * 0.22, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fde68a';
+          ctx.fillRect(x - 5, y - 6, 10, 12);
+        }
+      }
 
       for (const lane of lanes) {
         for (const obs of lane.obstacles) {
@@ -229,7 +246,7 @@
               const cy = (lane.row + 0.5) * CELL;
               const r = CELL * 0.38;
               // Main pad
-              ctx.fillStyle = '#22c55e';
+              ctx.fillStyle = shopCosmetics.goldenLogs ? '#fbbf24' : '#22c55e';
               ctx.beginPath();
               ctx.arc(cx, cy, r, 0, Math.PI * 2);
               ctx.fill();
@@ -241,7 +258,7 @@
               ctx.closePath();
               ctx.fill();
               // Veins radiating from center
-              ctx.strokeStyle = '#15803d';
+              ctx.strokeStyle = shopCosmetics.goldenLogs ? '#f59e0b' : '#15803d';
               ctx.lineWidth = 1.5;
               const angles = [Math.PI * 0.5, Math.PI * 0.83, Math.PI * 1.17, Math.PI * 1.5, Math.PI * 1.83];
               for (const a of angles) {

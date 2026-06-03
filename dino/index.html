@@ -166,6 +166,8 @@
     const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
     const hasMeteorTrail = inventory.has(DINO_TRAIL_ITEM_ID);
     const hasLightningTrail = inventory.has(DINO_LIGHTNING_ITEM_ID);
+    const hasCactusParty = inventory.has('dino-cactus-party');
+    const hasNightRunner = inventory.has('dino-night-runner');
 
     const scoreEl = document.getElementById('score');
     const highEl = document.getElementById('high');
@@ -526,8 +528,15 @@
 
     function draw(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
+      if (hasNightRunner) {
+        const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+        sky.addColorStop(0, '#020617');
+        sky.addColorStop(1, '#1e1b4b');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, canvas.width, GROUND_Y);
+      }
       // ground
-      ctx.fillStyle = '#1a253f';
+      ctx.fillStyle = hasNightRunner ? '#334155' : '#1a253f';
       ctx.fillRect(0, GROUND_Y+1, canvas.width, 3);
       // parallax dots
       ctx.globalAlpha=0.2; ctx.fillStyle='#9fb3d6';
@@ -538,9 +547,16 @@
       ctx.fillStyle = '#2a7a2a';
       for(const o of state.obs){
         if(o.type==='cactus'){
+          ctx.fillStyle = hasNightRunner ? '#86efac' : '#2a7a2a';
           ctx.fillRect(o.x, o.y, o.w, o.h);
           ctx.fillRect(o.x-6, o.y+o.h-20, 6, 20);
           ctx.fillRect(o.x+o.w, o.y+o.h-26, 6, 26);
+          if (hasCactusParty) {
+            ctx.fillStyle = '#f472b6';
+            ctx.fillRect(o.x + o.w * 0.25, o.y - 8, o.w * 0.5, 6);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(o.x + o.w * 0.38, o.y - 15, o.w * 0.24, 7);
+          }
         } else {
           // bird: body + flapping wings
           ctx.fillStyle = '#cfcf22';

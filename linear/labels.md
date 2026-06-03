@@ -78,6 +78,7 @@
 - game/gemswap
 - game/hexharvest
 - game/wordweave
+- game/letterlock
 - game/wordsearch
 - game/diceforge
 - game/yachtdice

@@ -127,8 +127,15 @@
   </div>
 
   <script type="module">
-    import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
+    import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
     window.addCoins = addCoinsFn;
+    const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
+    window.flappyShopCosmetics = {
+      sunsetWorld: inventory.has('flappy-sunset'),
+      auroraWorld: inventory.has('flappy-aurora'),
+      cloudBoost: inventory.has('flappy-cloud-boost'),
+      rainbowPipes: inventory.has('flappy-rainbow-pipes'),
+    };
     rememberRecent('flappy');
   </script>
   <script>
@@ -140,6 +147,7 @@
     
     // Difficulty multipliers
     const diff = { 1: { gap: 1.15, speed: 0.85 }, 2: { gap: 1.0, speed: 1.0 }, 3: { gap: 0.85, speed: 1.2 } };
+    const shopCosmetics = window.flappyShopCosmetics || {};
     
     // Worlds (background colors, ground, parallax elements)
     const worlds = {
@@ -147,6 +155,8 @@
       dusk: { sky: ['#FF6B6B', '#FF8E53', '#FFA07A'], ground: '#6B4423', cloud: '#FFD89B' },
       night: { sky: ['#191970', '#000033', '#0a0a2e'], ground: '#2F2F2F', cloud: '#4a4a6a' }
     };
+    if (shopCosmetics?.sunsetWorld) worlds.dusk.sky = ['#f97316', '#fb7185', '#7c3aed'];
+    if (shopCosmetics?.auroraWorld) worlds.night.sky = ['#020617', '#14532d', '#2563eb', '#7c3aed'];
     
     // Bird skins (colors)
     const skins = {
@@ -646,6 +656,20 @@
         const gapTop = pipe.gapY - pipe.gapSize / 2;
         const gapBottom = pipe.gapY + pipe.gapSize / 2;
 
+        if (shopCosmetics.rainbowPipes) {
+          const pipeGradient = ctx.createLinearGradient(px, 0, px + cfg.pipe.width, 0);
+          pipeGradient.addColorStop(0, '#ef4444');
+          pipeGradient.addColorStop(0.25, '#facc15');
+          pipeGradient.addColorStop(0.5, '#22c55e');
+          pipeGradient.addColorStop(0.75, '#3b82f6');
+          pipeGradient.addColorStop(1, '#a855f7');
+          ctx.fillStyle = pipeGradient;
+          ctx.strokeStyle = '#fef3c7';
+        } else {
+          ctx.fillStyle = '#2a7a2a';
+          ctx.strokeStyle = '#1a5a1a';
+        }
+
         // Top pipe
         ctx.fillRect(px, 0, cfg.pipe.width, gapTop);
         ctx.strokeRect(px, 0, cfg.pipe.width, gapTop);
@@ -671,6 +695,19 @@
 
       // Bird
       const bird = state.bird; const br = cfg.bird.radius;
+      if (shopCosmetics.cloudBoost) {
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 3; i++) {
+          const puffX = bird.x - 26 - i * 14;
+          const puffY = bird.y + Math.sin(performance.now() / 180 + i) * 5;
+          ctx.beginPath();
+          ctx.arc(puffX, puffY, 8 + i * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
       ctx.save();
       ctx.translate(bird.x, bird.y);
       ctx.rotate(bird.angle);
