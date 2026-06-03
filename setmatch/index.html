@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Set Match | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #17202a;
+  background: linear-gradient(135deg, #e8f3ef 0%, #f7d9c8 48%, #c9d9f2 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff80;
+  padding: 8px 12px;
+  background: #17324acc;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffcc;
+  background: #f5f1e8;
+  box-shadow: 0 24px 58px #3848574d;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd6;
+  background: #17324af2;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #27364861;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 6vw, 52px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #d9e7ee;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bfd2d8;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #17324adf;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bed4dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #96efbe; }
+.chip.warn b { color: #ffd36c; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3848572e;
+}
+button:hover { background: #25465e; }
+button:focus-visible {
+  outline: 3px solid #17202a;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd35d;
+  border-color: #ffe8a8;
+  color: #17202a;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe089; }
+.utility { background: #3b5068; }
+.action { background: #2f7163; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 860px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Find three-card pattern sets where every feature is all matching or all different before the round timer expires. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Set Match | AI and Sons Games">
+  <meta property="og:description" content="Find three-card pattern sets where every feature is all matching or all different before the round timer expires. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/setmatch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Set Match | AI and Sons Games">
+  <meta name="twitter:description" content="Find three-card pattern sets where every feature is all matching or all different before the round timer expires. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/setmatch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Set Match","description":"Find three-card pattern sets where every feature is all matching or all different before the round timer expires. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/setmatch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Set Match game board">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1 id="overlayTitle">Set Match</h1>
+        <p id="overlayText">Pick three cards where each feature is all the same or all different: color, shape, fill, and count.</p>
+        <p class="mini">Keyboard: arrows move focus, Space selects, H hints, S shuffles, P pauses, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Round</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Sets</span><b id="setsText">0 / 9</b></div>
+    <div class="chip"><span>Deck</span><b id="deckText">81</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">3:00</b></div>
+    <div class="chip"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Set Match controls">
+    <button id="newBtn" type="button" class="action">New Round</button>
+    <button id="hintBtn" type="button" class="utility">Hint</button>
+    <button id="shuffleBtn" type="button" class="utility">Shuffle Board</button>
+    <button id="clearBtn" type="button" class="utility">Clear Picks</button>
+    <button id="pauseBtn" type="button" class="utility">Pause</button>
+    <button id="fullscreenBtn" type="button" class="utility">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+
+const hud = {
+  mode: document.getElementById('modeText'),
+  sets: document.getElementById('setsText'),
+  deck: document.getElementById('deckText'),
+  time: document.getElementById('timeText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+};
+
+const buttons = {
+  newRound: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  shuffle: document.getElementById('shuffleBtn'),
+  clear: document.getElementById('clearBtn'),
+  pause: document.getElementById('pauseBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const COLORS = [
+  { id: 'red', value: '#d94d4d' },
+  { id: 'green', value: '#248765' },
+  { id: 'blue', value: '#3d63c9' },
+];
+const SHAPES = ['oval', 'diamond', 'wave'];
+const FILLS = ['open', 'striped', 'solid'];
+const COUNTS = [1, 2, 3];
+const ATTRIBUTES = ['color', 'shape', 'fill', 'count'];
+const TARGET_SETS = 9;
+const ROUND_SECONDS = 180;
+const BEST_KEY = 'cade:setmatch:bestScore';
+const ROUND_KEY = 'cade:setmatch:roundsWon';
+
+const cardRects = [];
+let lastFrame = 0;
+let manualStepping = false;
+
+const game = {
+  mode: 'menu',
+  round: loadNumber(ROUND_KEY, 0),
+  seed: 0,
+  randomState: 0,
+  deck: [],
+  board: [],
+  selected: [],
+  focusIndex: 0,
+  hintIndices: [],
+  hintTimer: 0,
+  setsFound: 0,
+  targetSets: TARGET_SETS,
+  score: 0,
+  bestScore: loadNumber(BEST_KEY, 0),
+  streak: 0,
+  bestStreak: 0,
+  mistakes: 0,
+  hintsUsed: 0,
+  shuffles: 0,
+  elapsed: 0,
+  message: 'Pick three cards that make a set.',
+  lastAction: null,
+  coinsEarned: 0,
+  lastWinCoins: 0,
+};
+
+function loadNumber(key, fallback = 0) {
+  try {
+    const parsed = Number(localStorage.getItem(key) || fallback);
+    return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveNumber(key, value) {
+  try {
+    localStorage.setItem(key, String(Math.max(0, Math.floor(value))));
+  } catch {
+    // Local storage is optional in embedded test harnesses.
+  }
+}
+
+function createDeck() {
+  const deck = [];
+  for (const color of COLORS) {
+    for (const shape of SHAPES) {
+      for (const fill of FILLS) {
+        for (const count of COUNTS) {
+          deck.push({
+            id: `${color.id}-${shape}-${fill}-${count}`,
+            color: color.id,
+            colorValue: color.value,
+            shape,
+            fill,
+            count,
+          });
+        }
+      }
+    }
+  }
+  return deck;
+}
+
+function nextRandom() {
+  game.randomState = (game.randomState + 0x6D2B79F5) >>> 0;
+  let value = game.randomState;
+  value = Math.imul(value ^ (value >>> 15), value | 1);
+  value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+  return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+}
+
+function shuffleInPlace(items) {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(nextRandom() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+}
+
+function startRound(roundOffset = 1) {
+  game.round = Math.max(1, game.round + roundOffset);
+  saveNumber(ROUND_KEY, game.round);
+  game.seed = (0x51f15e7 ^ Math.imul(game.round, 2654435761)) >>> 0;
+  game.randomState = game.seed;
+  game.deck = shuffleInPlace(createDeck());
+  game.board = game.deck.splice(0, 12);
+  game.selected = [];
+  game.focusIndex = 0;
+  game.hintIndices = [];
+  game.hintTimer = 0;
+  game.setsFound = 0;
+  game.score = 0;
+  game.streak = 0;
+  game.bestStreak = 0;
+  game.mistakes = 0;
+  game.hintsUsed = 0;
+  game.shuffles = 0;
+  game.elapsed = 0;
+  game.mode = 'playing';
+  game.message = 'Find 9 valid sets before time runs out.';
+  game.coinsEarned = 0;
+  game.lastWinCoins = 0;
+  game.lastAction = { type: 'start', round: game.round };
+  rememberRecent('setmatch');
+  maybeUnlock({ anyPlay: true });
+  ensurePlayableBoard();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function restartRound() {
+  startRound(0);
+}
+
+function remainingSeconds() {
+  return Math.max(0, Math.ceil(ROUND_SECONDS - game.elapsed));
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(safe / 60);
+  const secs = String(safe % 60).padStart(2, '0');
+  return `${mins}:${secs}`;
+}
+
+function getLayoutColumns() {
+  if (game.board.length <= 12) return 4;
+  if (game.board.length <= 15) return 5;
+  return 6;
+}
+
+function updateHud() {
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.sets.textContent = `${game.setsFound} / ${game.targetSets}`;
+  hud.deck.textContent = String(game.deck.length);
+  hud.time.textContent = formatTime(remainingSeconds());
+  hud.score.textContent = String(game.score);
+  hud.coins.textContent = String(profileState.coins);
+  buttons.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function updateOverlay() {
+  const visible = game.mode !== 'playing';
+  overlay.classList.toggle('show', visible);
+
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Set Match';
+    overlayText.textContent = 'Pick three cards where color, shape, fill, and count are each all the same or all different.';
+    startBtn.textContent = 'Start Round';
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'Resume when you are ready to keep searching for valid sets.';
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'won') {
+    overlayTitle.textContent = 'Round Complete';
+    overlayText.textContent = `You found ${game.setsFound} sets, scored ${game.score}, and earned ${game.lastWinCoins} coins.`;
+    startBtn.textContent = 'Next Round';
+  } else if (game.mode === 'lost') {
+    overlayTitle.textContent = 'Time Up';
+    overlayText.textContent = `You found ${game.setsFound} sets. Try again and use hints when the board stalls.`;
+    startBtn.textContent = 'Try Again';
+  }
+}
+
+function allSameOrAllDifferent(values) {
+  const unique = new Set(values);
+  return unique.size === 1 || unique.size === values.length;
+}
+
+function isSet(cards) {
+  if (!Array.isArray(cards) || cards.length !== 3) return false;
+  return ATTRIBUTES.every(attr => allSameOrAllDifferent(cards.map(card => card[attr])));
+}
+
+function findAllSets() {
+  const sets = [];
+  for (let a = 0; a < game.board.length - 2; a += 1) {
+    for (let b = a + 1; b < game.board.length - 1; b += 1) {
+      for (let c = b + 1; c < game.board.length; c += 1) {
+        const cards = [game.board[a], game.board[b], game.board[c]];
+        if (isSet(cards)) sets.push([a, b, c]);
+      }
+    }
+  }
+  return sets;
+}
+
+function findFirstSet() {
+  return findAllSets()[0] || null;
+}
+
+function dealThreeCards() {
+  const amount = Math.min(3, game.deck.length);
+  for (let i = 0; i < amount; i += 1) {
+    game.board.push(game.deck.shift());
+  }
+}
+
+function ensurePlayableBoard() {
+  if (game.mode !== 'playing') return;
+  let set = findFirstSet();
+  while (!set && game.deck.length > 0 && game.board.length < 18) {
+    dealThreeCards();
+    set = findFirstSet();
+  }
+
+  let guard = 0;
+  while (!set && game.deck.length > 0 && guard < 81) {
+    const idx = guard % Math.max(1, game.board.length);
+    const oldCard = game.board[idx];
+    game.board[idx] = game.deck.shift();
+    game.deck.push(oldCard);
+    guard += 1;
+    set = findFirstSet();
+  }
+
+  if (!set && game.deck.length === 0) {
+    winRound('No sets remain on the board.');
+  }
+}
+
+function clearSelection(message = 'Selection cleared.') {
+  game.selected = [];
+  game.hintIndices = [];
+  game.hintTimer = 0;
+  game.message = message;
+  game.lastAction = { type: 'clear' };
+  updateHud();
+  draw();
+}
+
+function toggleCard(index) {
+  if (game.mode !== 'playing' || index < 0 || index >= game.board.length) return;
+  game.focusIndex = index;
+  const existing = game.selected.indexOf(index);
+  if (existing >= 0) {
+    game.selected.splice(existing, 1);
+    game.message = 'Card removed from the selection.';
+  } else if (game.selected.length < 3) {
+    game.selected.push(index);
+    game.message = game.selected.length === 3 ? 'Checking selected cards.' : `${game.selected.length} of 3 cards selected.`;
+  }
+  game.hintIndices = [];
+  game.hintTimer = 0;
+  game.lastAction = { type: 'select', index, selected: [...game.selected] };
+  if (game.selected.length === 3) {
+    evaluateSelection();
+  }
+  updateHud();
+  draw();
+}
+
+function evaluateSelection() {
+  const selected = [...game.selected].sort((a, b) => a - b);
+  const cards = selected.map(index => game.board[index]);
+  if (isSet(cards)) {
+    const speedBonus = Math.max(0, Math.floor(remainingSeconds() / 10));
+    const streakBonus = game.streak * 35;
+    const points = 120 + speedBonus + streakBonus;
+    game.score += points;
+    game.streak += 1;
+    game.bestStreak = Math.max(game.bestStreak, game.streak);
+    game.setsFound += 1;
+    game.message = `Set accepted for ${points} points.`;
+    game.lastAction = { type: 'set', indices: selected, cards: cards.map(card => card.id), points };
+    removeSelectedCards(selected);
+    if (game.setsFound >= game.targetSets) {
+      winRound('Target sets reached.');
+    } else {
+      ensurePlayableBoard();
+    }
+  } else {
+    game.mistakes += 1;
+    game.streak = 0;
+    game.score = Math.max(0, game.score - 25);
+    game.message = 'Not a set. One feature has exactly two matching cards.';
+    game.lastAction = { type: 'miss', indices: selected, cards: cards.map(card => card.id) };
+    game.selected = [];
+  }
+}
+
+function removeSelectedCards(indices) {
+  const sorted = [...indices].sort((a, b) => b - a);
+  for (const index of sorted) {
+    if (game.deck.length > 0) {
+      game.board[index] = game.deck.shift();
+    } else {
+      game.board.splice(index, 1);
+    }
+  }
+  game.selected = [];
+  game.hintIndices = [];
+  game.hintTimer = 0;
+  game.focusIndex = Math.min(game.focusIndex, Math.max(0, game.board.length - 1));
+}
+
+function useHint() {
+  if (game.mode !== 'playing') return;
+  const set = findFirstSet();
+  if (!set) {
+    game.message = 'No visible set. Dealing new cards.';
+    ensurePlayableBoard();
+    return;
+  }
+  game.hintIndices = set;
+  game.hintTimer = 3.2;
+  game.hintsUsed += 1;
+  game.score = Math.max(0, game.score - 10);
+  game.message = 'Hint shown. The highlighted trio is a valid set.';
+  game.lastAction = { type: 'hint', indices: set };
+  updateHud();
+  draw();
+}
+
+function shuffleBoard() {
+  if (game.mode !== 'playing') return;
+  shuffleInPlace(game.board);
+  game.selected = [];
+  game.hintIndices = [];
+  game.hintTimer = 0;
+  game.shuffles += 1;
+  game.score = Math.max(0, game.score - 5);
+  game.message = 'Board shuffled.';
+  game.lastAction = { type: 'shuffle', board: game.board.map(card => card.id) };
+  ensurePlayableBoard();
+  updateHud();
+  draw();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+    game.lastAction = { type: 'pause' };
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Round resumed.';
+    game.lastAction = { type: 'resume' };
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function winRound(reason) {
+  if (game.mode === 'won') return;
+  game.mode = 'won';
+  const timeBonus = Math.max(0, remainingSeconds());
+  game.score += timeBonus;
+  game.bestScore = Math.max(game.bestScore, game.score);
+  saveNumber(BEST_KEY, game.bestScore);
+  const coins = Math.max(15, Math.min(35, 18 + game.setsFound * 2 + Math.floor(timeBonus / 20) - game.hintsUsed));
+  game.lastWinCoins = coins;
+  game.coinsEarned += coins;
+  game.message = reason;
+  game.lastAction = { type: 'won', reason, sets: game.setsFound, score: game.score, coins };
+  addCoins(coins);
+  maybeUnlock({
+    anyPlay: true,
+    setmatch: {
+      result: 'won',
+      sets: game.setsFound,
+      score: game.score,
+      mistakes: game.mistakes,
+      hintsUsed: game.hintsUsed,
+      bestStreak: game.bestStreak,
+    },
+  });
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function loseRound(reason = 'Time expired.') {
+  if (game.mode !== 'playing') return;
+  game.mode = 'lost';
+  game.bestScore = Math.max(game.bestScore, game.score);
+  saveNumber(BEST_KEY, game.bestScore);
+  game.message = reason;
+  game.lastAction = { type: 'lost', reason, sets: game.setsFound, score: game.score };
+  maybeUnlock({
+    anyPlay: true,
+    setmatch: {
+      result: 'lost',
+      sets: game.setsFound,
+      score: game.score,
+      mistakes: game.mistakes,
+      hintsUsed: game.hintsUsed,
+      bestStreak: game.bestStreak,
+    },
+  });
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function update(dt) {
+  if (game.mode !== 'playing') return;
+  game.elapsed += Math.max(0, dt);
+  if (game.hintTimer > 0) {
+    game.hintTimer = Math.max(0, game.hintTimer - dt);
+    if (game.hintTimer === 0) game.hintIndices = [];
+  }
+  if (remainingSeconds() <= 0) {
+    loseRound();
+  }
+}
+
+function roundedRect(x, y, w, h, r = 8) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+}
+
+function draw() {
+  const width = canvas.width;
+  const height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+
+  const bg = ctx.createLinearGradient(0, 0, width, height);
+  bg.addColorStop(0, '#f7efe2');
+  bg.addColorStop(0.48, '#e8f4ef');
+  bg.addColorStop(1, '#d6e0f5');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  drawHeader();
+  drawBoard();
+  drawFooter();
+}
+
+function drawHeader() {
+  ctx.save();
+  roundedRect(36, 24, canvas.width - 72, 68, 8);
+  ctx.fillStyle = '#17324a';
+  ctx.fill();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 32px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Set Match', 58, 58);
+
+  ctx.font = '800 18px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#cfe0e8';
+  ctx.fillText(game.message, 255, 58);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = remainingSeconds() <= 20 && game.mode === 'playing' ? '#ffd36c' : '#f8fbff';
+  ctx.fillText(`${game.setsFound}/${game.targetSets} sets  |  ${formatTime(remainingSeconds())}`, canvas.width - 58, 58);
+  ctx.restore();
+}
+
+function drawBoard() {
+  cardRects.length = 0;
+  const cols = getLayoutColumns();
+  const rows = Math.max(3, Math.ceil(Math.max(game.board.length, 1) / cols));
+  const gap = 16;
+  const left = 44;
+  const right = 44;
+  const top = 116;
+  const bottom = 86;
+  const areaW = canvas.width - left - right;
+  const areaH = canvas.height - top - bottom;
+  const cardW = Math.min(190, (areaW - gap * (cols - 1)) / cols);
+  const cardH = Math.min(150, (areaH - gap * (rows - 1)) / rows);
+  const startX = left + (areaW - (cardW * cols + gap * (cols - 1))) / 2;
+  const startY = top + (areaH - (cardH * rows + gap * (rows - 1))) / 2;
+
+  for (let index = 0; index < game.board.length; index += 1) {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    const rect = {
+      x: startX + col * (cardW + gap),
+      y: startY + row * (cardH + gap),
+      w: cardW,
+      h: cardH,
+    };
+    cardRects[index] = rect;
+    drawCard(game.board[index], rect, {
+      selected: game.selected.includes(index),
+      focused: game.focusIndex === index && game.mode === 'playing',
+      hinted: game.hintIndices.includes(index),
+      index,
+    });
+  }
+
+  if (game.board.length === 0) {
+    ctx.save();
+    ctx.fillStyle = '#17324a';
+    ctx.font = '900 34px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Board cleared', canvas.width / 2, canvas.height / 2);
+    ctx.restore();
+  }
+}
+
+function drawCard(card, rect, flags) {
+  ctx.save();
+  const shadow = flags.selected ? '#2f716388' : '#3947574d';
+  ctx.shadowColor = shadow;
+  ctx.shadowBlur = flags.selected ? 18 : 12;
+  ctx.shadowOffsetY = 8;
+  roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
+  ctx.fillStyle = '#fffdf7';
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
+  ctx.lineWidth = flags.selected ? 6 : 3;
+  ctx.strokeStyle = flags.selected ? '#2f7163' : '#d8cfc1';
+  ctx.stroke();
+  if (flags.hinted) {
+    roundedRect(rect.x + 7, rect.y + 7, rect.w - 14, rect.h - 14, 8);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#ffd35d';
+    ctx.stroke();
+  }
+  if (flags.focused) {
+    roundedRect(rect.x + 13, rect.y + 13, rect.w - 26, rect.h - 26, 8);
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 7]);
+    ctx.strokeStyle = '#17324a';
+    ctx.stroke();
+  }
+  drawCardSymbols(card, rect);
+  ctx.fillStyle = '#7c8992';
+  ctx.font = '800 12px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(String(flags.index + 1), rect.x + rect.w - 12, rect.y + rect.h - 10);
+  ctx.restore();
+}
+
+function drawCardSymbols(card, rect) {
+  const symbolW = Math.min(78, rect.w * 0.42);
+  const symbolH = Math.min(34, rect.h * 0.23);
+  const totalH = card.count * symbolH + (card.count - 1) * 11;
+  const startY = rect.y + rect.h / 2 - totalH / 2 + symbolH / 2;
+
+  for (let i = 0; i < card.count; i += 1) {
+    const cx = rect.x + rect.w / 2;
+    const cy = startY + i * (symbolH + 11);
+    drawSymbol(card, cx, cy, symbolW, symbolH);
+  }
+}
+
+function drawSymbol(card, cx, cy, width, height) {
+  ctx.save();
+  buildSymbolPath(card.shape, cx, cy, width, height);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = card.colorValue;
+
+  if (card.fill === 'solid') {
+    ctx.fillStyle = card.colorValue;
+    ctx.globalAlpha = 0.88;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.stroke();
+  } else if (card.fill === 'striped') {
+    ctx.save();
+    ctx.clip();
+    ctx.strokeStyle = card.colorValue;
+    ctx.globalAlpha = 0.65;
+    ctx.lineWidth = 2;
+    for (let x = cx - width; x <= cx + width; x += 9) {
+      ctx.beginPath();
+      ctx.moveTo(x, cy + height);
+      ctx.lineTo(x + height * 1.6, cy - height);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+    buildSymbolPath(card.shape, cx, cy, width, height);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = card.colorValue;
+    ctx.stroke();
+  } else {
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function buildSymbolPath(shape, cx, cy, width, height) {
+  ctx.beginPath();
+  if (shape === 'oval') {
+    ctx.ellipse(cx, cy, width / 2, height / 2, 0, 0, Math.PI * 2);
+  } else if (shape === 'diamond') {
+    ctx.moveTo(cx, cy - height / 2);
+    ctx.lineTo(cx + width / 2, cy);
+    ctx.lineTo(cx, cy + height / 2);
+    ctx.lineTo(cx - width / 2, cy);
+    ctx.closePath();
+  } else {
+    const x = cx - width / 2;
+    const y = cy - height / 2;
+    ctx.moveTo(x + width * 0.08, y + height * 0.72);
+    ctx.bezierCurveTo(x + width * 0.24, y - height * 0.05, x + width * 0.68, y + height * 0.04, x + width * 0.9, y + height * 0.28);
+    ctx.bezierCurveTo(x + width * 1.05, y + height * 0.48, x + width * 0.75, y + height * 1.1, x + width * 0.32, y + height * 0.82);
+    ctx.bezierCurveTo(x + width * 0.2, y + height * 0.74, x + width * 0.12, y + height * 0.72, x + width * 0.08, y + height * 0.72);
+    ctx.closePath();
+  }
+}
+
+function drawFooter() {
+  ctx.save();
+  roundedRect(36, canvas.height - 68, canvas.width - 72, 44, 8);
+  ctx.fillStyle = '#ffffffbd';
+  ctx.fill();
+  ctx.fillStyle = '#17324a';
+  ctx.font = '900 16px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Tap cards or use arrows plus Space. H shows a set, S shuffles, P pauses, F toggles fullscreen.', 58, canvas.height - 46);
+  ctx.textAlign = 'right';
+  ctx.fillText(`Best ${game.bestScore} | Streak ${game.streak}`, canvas.width - 58, canvas.height - 46);
+  ctx.restore();
+}
+
+function pointToCanvas(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+    y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+  };
+}
+
+function cardAtPoint(point) {
+  for (let i = 0; i < cardRects.length; i += 1) {
+    const rect = cardRects[i];
+    if (!rect) continue;
+    if (point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function handlePointer(event) {
+  if (game.mode !== 'playing') return;
+  const index = cardAtPoint(pointToCanvas(event));
+  if (index >= 0) {
+    event.preventDefault();
+    toggleCard(index);
+  }
+}
+
+function moveFocus(dx, dy) {
+  if (game.mode !== 'playing' || game.board.length === 0) return;
+  const cols = getLayoutColumns();
+  const current = Math.max(0, Math.min(game.focusIndex, game.board.length - 1));
+  const row = Math.floor(current / cols);
+  const col = current % cols;
+  const rows = Math.ceil(game.board.length / cols);
+  const nextRow = Math.max(0, Math.min(rows - 1, row + dy));
+  const nextCol = Math.max(0, Math.min(cols - 1, col + dx));
+  game.focusIndex = Math.min(game.board.length - 1, nextRow * cols + nextCol);
+  game.lastAction = { type: 'focus', index: game.focusIndex };
+  draw();
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p' || event.key === 'Escape') {
+    event.preventDefault();
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing') {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (game.mode === 'paused') togglePause();
+      else if (game.mode === 'won') startRound(1);
+      else if (game.mode === 'lost') restartRound();
+      else startRound(1);
+    }
+    return;
+  }
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    moveFocus(-1, 0);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    moveFocus(1, 0);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    moveFocus(0, -1);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    moveFocus(0, 1);
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    event.preventDefault();
+    toggleCard(game.focusIndex);
+  } else if (key === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (key === 's') {
+    event.preventDefault();
+    shuffleBoard();
+  } else if (key === 'c' || key === 'backspace') {
+    event.preventDefault();
+    clearSelection();
+  } else if (key === 'r') {
+    event.preventDefault();
+    restartRound();
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+  game.lastAction = { type: 'fullscreen' };
+  setTimeout(draw, 80);
+}
+
+function stateToObject() {
+  const visibleSets = findAllSets();
+  return {
+    game: 'setmatch',
+    coordinate_system: 'canvas origin top-left, x increases right, y increases down; board indices are zero-based row-major order',
+    mode: game.mode,
+    round: game.round,
+    seed: game.seed,
+    target_sets: game.targetSets,
+    sets_found: game.setsFound,
+    score: game.score,
+    best_score: game.bestScore,
+    streak: game.streak,
+    best_streak: game.bestStreak,
+    mistakes: game.mistakes,
+    hints_used: game.hintsUsed,
+    shuffles: game.shuffles,
+    elapsed_seconds: Math.floor(game.elapsed),
+    remaining_seconds: remainingSeconds(),
+    deck_count: game.deck.length,
+    selected_indices: [...game.selected],
+    focused_index: game.focusIndex,
+    hint_indices: [...game.hintIndices],
+    visible_set_count: visibleSets.length,
+    first_visible_set: visibleSets[0] || null,
+    board: game.board.map((card, index) => ({
+      index,
+      id: card.id,
+      color: card.color,
+      shape: card.shape,
+      fill: card.fill,
+      count: card.count,
+      selected: game.selected.includes(index),
+      hinted: game.hintIndices.includes(index),
+    })),
+    coins: profileState.coins,
+    coins_earned_this_session: game.coinsEarned,
+    last_win_coins: game.lastWinCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__SET_MATCH_GAME__ = {
+  startRound,
+  restartRound,
+  toggleCard,
+  clearSelection,
+  useHint,
+  shuffleBoard,
+  findAllSets,
+  findFirstSet,
+  isSet,
+  stateToObject,
+  renderGameToText,
+  solveOneSet() {
+    if (game.mode !== 'playing') startRound(1);
+    const set = findFirstSet();
+    if (!set) return stateToObject();
+    for (const index of set) toggleCard(index);
+    return stateToObject();
+  },
+  solveTarget() {
+    if (game.mode !== 'playing') startRound(1);
+    let guard = 0;
+    while (game.mode === 'playing' && game.setsFound < game.targetSets && guard < 30) {
+      const set = findFirstSet();
+      if (!set) break;
+      for (const index of set) toggleCard(index);
+      guard += 1;
+    }
+    return stateToObject();
+  },
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'setmatch', mode: game.mode };
+  }
+};
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'won') startRound(1);
+  else if (game.mode === 'lost') restartRound();
+  else startRound(1);
+});
+buttons.newRound.addEventListener('click', () => startRound(1));
+buttons.hint.addEventListener('click', useHint);
+buttons.shuffle.addEventListener('click', shuffleBoard);
+buttons.clear.addEventListener('click', clearSelection);
+buttons.pause.addEventListener('click', togglePause);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'setmatch', gameName: 'Set Match' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -80,6 +80,7 @@
 - game/wordweave
 - game/letterlock
 - game/wordsearch
+- game/setmatch
 - game/diceforge
 - game/yachtdice
 - game/keystrike

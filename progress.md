@@ -3287,3 +3287,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback was attempted through the Browser plugin, but the Node-backed browser kernel exited during sandbox setup with `windows sandbox failed: spawn setup refresh`, so no alternate visual screenshot was available.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Letter Lock screenshots.
+
+## 2026-06-03 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Word Search, Mahjong Solitaire, Nonogram, Yacht Dice, and Klondike Solitaire.
+- Initial repo check: no `/setmatch` route and no Set Match metadata entry found.
+- Chosen game: Set Match (`/setmatch`), a canvas-based SET-style pattern matching card game with pointer/touch and keyboard card selection, hints, shuffle, pause, fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and a small test API.
+- Initial implementation:
+  - Added `setmatch/index.html` with generated card-deck art, all-same/all-different set validation, touch/pointer and keyboard controls, deterministic deck shuffling, hints, board shuffle, pause, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__SET_MATCH_GAME__`.
+  - Registered Set Match in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap and managed SEO metadata now include Set Match.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Metadata uniqueness check passed; `GAMES` reports 115 games including Set Match with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/setmatch/`.
+  - Stubbed DOM/canvas runtime harness passed: started a round, found a valid set, used a hint, shuffled the board, advanced deterministic time, solved the 9-set target, awarded coins, and verified shared feedback context.
+  - `git diff --check` on tracked Set Match integration files passed; only existing LF-to-CRLF warnings were printed. `rg -n "[ \t]+$"` found no trailing whitespace in `setmatch/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/setmatch/` on temporary Node static servers but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` against `http://127.0.0.1:4173` failed at the same Chromium launch step.
+  - Tool discovery did not expose a dedicated in-app Browser navigation/screenshot API in this session; a persistent hidden Node static server launch was also blocked by local execution policy.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Set Match screenshots.
