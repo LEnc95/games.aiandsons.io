@@ -251,6 +251,8 @@ function injectStyles() {
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
+    .cade-family-label { color: var(--fg, #fff); font-size: 14px; display: block; }
+    .cade-family-required { color: #ef4444; margin-left: 4px; }
     .cade-family-form {
       display: grid;
       gap: 10px;
@@ -388,7 +390,8 @@ function createFamilySection() {
     </div>
     <p class="cade-account-status">Loading family details...</p>
     <div class="cade-family-form" hidden>
-      <input class="cade-family-input" type="email" placeholder="familymember@example.com" inputmode="email" autocomplete="email" aria-label="Family member email address" />
+      <label for="cadeFamilyEmail" class="cade-family-label">Family member email <span aria-hidden="true" title="Required" class="cade-family-required">*</span></label>
+      <input id="cadeFamilyEmail" class="cade-family-input" type="email" placeholder="familymember@example.com" inputmode="email" autocomplete="email" aria-label="Family member email address" required />
       <div class="cade-family-actions">
         <button type="button" class="cade-family-btn">Send invite</button>
         <button type="button" class="cade-family-btn" hidden>Accept invite</button>
