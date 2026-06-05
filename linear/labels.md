@@ -82,6 +82,7 @@
 - game/wordsearch
 - game/setmatch
 - game/flowlines
+- game/tripeaks
 - game/diceforge
 - game/yachtdice
 - game/keystrike

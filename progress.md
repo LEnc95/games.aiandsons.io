@@ -3344,3 +3344,28 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Flow Lines screenshots.
+
+## 2026-06-05 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, Word Search, Yacht Dice, and Klondike Solitaire.
+- Initial repo check: no `/tripeaks` route and no Tri Peaks metadata entry found.
+- Chosen game: Tri Peaks Solitaire (`/tripeaks`), a canvas card game where players clear three overlapping peaks by playing rank-adjacent available cards onto the waste pile.
+- Initial implementation:
+  - Added `tripeaks/index.html` with canvas-rendered Tri Peaks tableau, rank-adjacent card play, stock/waste flow, keyboard and pointer controls, hints, undo, pause, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__TRI_PEAKS_GAME__`.
+  - Registered Tri Peaks Solitaire in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Tri Peaks SEO metadata now include `/tripeaks`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Tri Peaks module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata and feedback coverage passed: `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`.
+  - `npm run feedback:check-daily`, `npm run test:feedback`, and `npm run test:shop` passed.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started Harbor Peaks, played a valid card, undid, used a hint, solved the deal through `window.__TRI_PEAKS_GAME__`, awarded coins, advanced deterministic time, and verified `window.__CADE_FEEDBACK_CONTEXT__`.
+  - Static route smoke with a temporary in-process Node server returned HTTP 200 for `/tripeaks/`.
+  - `git diff --check` passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found none in touched Tri Peaks integration files.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/tripeaks/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` reached the same server and failed at the same Chromium launch step.
+  - Tool discovery did not expose a dedicated in-app Browser navigation/screenshot API, only the Node REPL path that depends on browser launch.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Tri Peaks screenshots.

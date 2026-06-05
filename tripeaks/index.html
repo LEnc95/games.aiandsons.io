@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Tri Peaks Solitaire | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #17222d;
+  background: linear-gradient(135deg, #d6ece2 0%, #f6e1b9 46%, #cfdef1 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f9fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff8a;
+  padding: 8px 12px;
+  background: #17314bd9;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1100px);
+  aspect-ratio: 55 / 38;
+  max-height: min(66dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffd4;
+  background: #f6faf9;
+  box-shadow: 0 24px 58px #35475a4d;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd8;
+  background: #17314bf2;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #28384761;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(31px, 6vw, 54px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dbe8ef;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bfd1dc;
+}
+.hud, .controls {
+  width: min(97vw, 1100px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #17314bdf;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bfd1dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #94efba; }
+.chip.warn b { color: #ffd36c; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #35475a2e;
+}
+button:hover { background: #25455d; }
+button:focus-visible {
+  outline: 3px solid #17222d;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd361;
+  border-color: #ffe7a3;
+  color: #17222d;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe08b; }
+.utility { background: #40566b; }
+.action { background: #287061; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Clear three overlapping card peaks by playing available cards one rank above or below the waste pile before the stock runs dry. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Tri Peaks Solitaire | AI and Sons Games">
+  <meta property="og:description" content="Clear three overlapping card peaks by playing available cards one rank above or below the waste pile before the stock runs dry. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/tripeaks">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tri Peaks Solitaire | AI and Sons Games">
+  <meta name="twitter:description" content="Clear three overlapping card peaks by playing available cards one rank above or below the waste pile before the stock runs dry. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/tripeaks">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Tri Peaks Solitaire","description":"Clear three overlapping card peaks by playing available cards one rank above or below the waste pile before the stock runs dry. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/tripeaks","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Tri Peaks Solitaire table">
+    <canvas id="game" width="1100" height="760"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1 id="overlayTitle">Tri Peaks Solitaire</h1>
+        <p id="overlayText">Clear all three peaks by playing available cards one rank above or below the waste pile.</p>
+        <p class="mini">Click cards or use arrows to choose a playable card. Space plays, D draws, H hints, U undo, P pause, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Deal</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Deal</span><b id="dealText">1 / 4</b></div>
+    <div class="chip"><span>Cleared</span><b id="clearedText">0 / 28</b></div>
+    <div class="chip warn"><span>Stock</span><b id="stockText">23</b></div>
+    <div class="chip"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="primary" id="newDealBtn" type="button">New Deal</button>
+    <button class="action" id="drawBtn" type="button">Draw Stock</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button class="utility" id="undoBtn" type="button">Undo</button>
+    <button class="utility" id="pauseBtn" type="button">Pause</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  deal: document.getElementById('dealText'),
+  cleared: document.getElementById('clearedText'),
+  stock: document.getElementById('stockText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  newDeal: document.getElementById('newDealBtn'),
+  draw: document.getElementById('drawBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const CARD_W = 74;
+const CARD_H = 104;
+const CARD_GAP = 6;
+const STOCK_RECT = { x: 410, y: 548, w: CARD_W, h: CARD_H };
+const WASTE_RECT = { x: 510, y: 548, w: CARD_W, h: CARD_H };
+const REMOVAL_ORDER = [
+  18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+  9, 10, 11, 12, 13, 14, 15, 16, 17,
+  3, 4, 5, 6, 7, 8,
+  0, 1, 2,
+];
+const SLOTS = [
+  { index: 0, row: 0, x: 266, y: 76 }, { index: 1, row: 0, x: 506, y: 76 }, { index: 2, row: 0, x: 746, y: 76 },
+  { index: 3, row: 1, x: 226, y: 151 }, { index: 4, row: 1, x: 306, y: 151 }, { index: 5, row: 1, x: 466, y: 151 }, { index: 6, row: 1, x: 546, y: 151 }, { index: 7, row: 1, x: 706, y: 151 }, { index: 8, row: 1, x: 786, y: 151 },
+  { index: 9, row: 2, x: 186, y: 226 }, { index: 10, row: 2, x: 266, y: 226 }, { index: 11, row: 2, x: 346, y: 226 }, { index: 12, row: 2, x: 426, y: 226 }, { index: 13, row: 2, x: 506, y: 226 }, { index: 14, row: 2, x: 586, y: 226 }, { index: 15, row: 2, x: 666, y: 226 }, { index: 16, row: 2, x: 746, y: 226 }, { index: 17, row: 2, x: 826, y: 226 },
+  { index: 18, row: 3, x: 146, y: 301 }, { index: 19, row: 3, x: 226, y: 301 }, { index: 20, row: 3, x: 306, y: 301 }, { index: 21, row: 3, x: 386, y: 301 }, { index: 22, row: 3, x: 466, y: 301 }, { index: 23, row: 3, x: 546, y: 301 }, { index: 24, row: 3, x: 626, y: 301 }, { index: 25, row: 3, x: 706, y: 301 }, { index: 26, row: 3, x: 786, y: 301 }, { index: 27, row: 3, x: 866, y: 301 },
+];
+const CHILDREN = {
+  0: [3, 4], 1: [5, 6], 2: [7, 8],
+  3: [9, 10], 4: [10, 11], 5: [12, 13], 6: [13, 14], 7: [15, 16], 8: [16, 17],
+  9: [18, 19], 10: [19, 20], 11: [20, 21], 12: [21, 22], 13: [22, 23], 14: [23, 24], 15: [24, 25], 16: [25, 26], 17: [26, 27],
+};
+const SUITS = [
+  { id: 'spades', symbol: '\u2660', color: '#1a2633' },
+  { id: 'hearts', symbol: '\u2665', color: '#b3263d' },
+  { id: 'clubs', symbol: '\u2663', color: '#1a2633' },
+  { id: 'diamonds', symbol: '\u2666', color: '#b3263d' },
+];
+const DEALS = [
+  { name: 'Harbor Peaks', startRank: 6, step: 1, seed: 7101 },
+  { name: 'Canyon Descent', startRank: 11, step: -1, seed: 8429 },
+  { name: 'Market Rise', startRank: 3, step: 1, seed: 9367 },
+  { name: 'Starlit Drop', startRank: 1, step: -1, seed: 10531 },
+];
+
+let manualStepping = false;
+let lastFrame = 0;
+let overlayKey = '';
+
+const state = {
+  mode: 'menu',
+  dealIndex: 0,
+  dealName: DEALS[0].name,
+  tableau: [],
+  stock: [],
+  waste: [],
+  solutionOrder: [],
+  undoStack: [],
+  focusIndex: null,
+  hintIndex: null,
+  hintStock: false,
+  moves: 0,
+  score: 0,
+  bestScore: loadBestScore(),
+  streak: 0,
+  hintsUsed: 0,
+  elapsed: 0,
+  coinsEarned: 0,
+  lastWinCoins: 0,
+  wonAwarded: false,
+  message: 'Start a deal to clear the three peaks.',
+  lastAction: null,
+};
+
+function loadBestScore() {
+  try {
+    return Math.max(0, Number(localStorage.getItem('cade:tripeaks:best') || 0) || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function saveBestScore() {
+  try {
+    localStorage.setItem('cade:tripeaks:best', String(state.bestScore));
+  } catch {
+    // Storage can be unavailable in private contexts.
+  }
+}
+
+function rankLabel(rank) {
+  return ({ 1: 'A', 11: 'J', 12: 'Q', 13: 'K' })[rank] || String(rank);
+}
+
+function cardName(card) {
+  if (!card) return 'none';
+  return `${rankLabel(card.rank)}${card.symbol}`;
+}
+
+function wrapRank(rank) {
+  return ((rank - 1 + 13) % 13) + 1;
+}
+
+function makeDeck() {
+  const deck = [];
+  for (const suit of SUITS) {
+    for (let rank = 1; rank <= 13; rank += 1) {
+      deck.push({
+        id: `${suit.id}-${rank}`,
+        suit: suit.id,
+        symbol: suit.symbol,
+        color: suit.color,
+        rank,
+      });
+    }
+  }
+  return deck;
+}
+
+function takeRank(deck, rank) {
+  const index = deck.findIndex(card => card.rank === rank);
+  if (index < 0) throw new Error(`No card left for rank ${rank}`);
+  return deck.splice(index, 1)[0];
+}
+
+function mulberry32(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value += 0x6D2B79F5;
+    let t = value;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle(cards, seed) {
+  const rng = mulberry32(seed);
+  const output = cards.map(card => ({ ...card }));
+  for (let i = output.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [output[i], output[j]] = [output[j], output[i]];
+  }
+  return output;
+}
+
+function generateDeal(index) {
+  const normalized = ((index % DEALS.length) + DEALS.length) % DEALS.length;
+  const pattern = DEALS[normalized];
+  const deck = makeDeck();
+  const wasteStart = takeRank(deck, pattern.startRank);
+  const tableau = SLOTS.map(slot => ({ ...slot, card: null, removed: false }));
+  let rank = pattern.startRank;
+  for (const slotIndex of REMOVAL_ORDER) {
+    rank = wrapRank(rank + pattern.step);
+    const slot = tableau[slotIndex];
+    slot.card = takeRank(deck, rank);
+  }
+  return {
+    dealIndex: normalized,
+    name: pattern.name,
+    tableau,
+    stock: shuffle(deck, pattern.seed + normalized * 37),
+    waste: [wasteStart],
+    solutionOrder: REMOVAL_ORDER.slice(),
+  };
+}
+
+function topWaste() {
+  return state.waste[state.waste.length - 1] || null;
+}
+
+function isAdjacent(card, waste) {
+  if (!card || !waste) return false;
+  const diff = Math.abs(card.rank - waste.rank);
+  return diff === 1 || diff === 12;
+}
+
+function isAvailable(index) {
+  const slot = state.tableau[index];
+  if (!slot || slot.removed) return false;
+  const blockers = CHILDREN[index] || [];
+  return blockers.every(child => state.tableau[child]?.removed);
+}
+
+function availableIndexes() {
+  return state.tableau
+    .filter(slot => isAvailable(slot.index))
+    .map(slot => slot.index);
+}
+
+function clearedCount() {
+  return state.tableau.filter(slot => slot.removed).length;
+}
+
+function findPlayableIndex() {
+  const waste = topWaste();
+  const playable = availableIndexes().find(index => isAdjacent(state.tableau[index].card, waste));
+  return Number.isInteger(playable) ? playable : null;
+}
+
+function setFocus(preferred = null) {
+  const available = availableIndexes();
+  if (!available.length) {
+    state.focusIndex = null;
+    return;
+  }
+  if (Number.isInteger(preferred) && available.includes(preferred)) {
+    state.focusIndex = preferred;
+    return;
+  }
+  const playable = findPlayableIndex();
+  state.focusIndex = Number.isInteger(playable) ? playable : available[0];
+}
+
+function pushUndo() {
+  state.undoStack.push(createSnapshot());
+  if (state.undoStack.length > 60) state.undoStack.shift();
+}
+
+function cloneCard(card) {
+  return card ? { ...card } : null;
+}
+
+function createSnapshot() {
+  return {
+    mode: state.mode,
+    dealIndex: state.dealIndex,
+    dealName: state.dealName,
+    tableau: state.tableau.map(slot => ({ ...slot, card: cloneCard(slot.card) })),
+    stock: state.stock.map(cloneCard),
+    waste: state.waste.map(cloneCard),
+    solutionOrder: state.solutionOrder.slice(),
+    focusIndex: state.focusIndex,
+    hintIndex: state.hintIndex,
+    hintStock: state.hintStock,
+    moves: state.moves,
+    score: state.score,
+    bestScore: state.bestScore,
+    streak: state.streak,
+    hintsUsed: state.hintsUsed,
+    elapsed: state.elapsed,
+    coinsEarned: state.coinsEarned,
+    lastWinCoins: state.lastWinCoins,
+    wonAwarded: state.wonAwarded,
+    message: state.message,
+    lastAction: state.lastAction ? { ...state.lastAction } : null,
+  };
+}
+
+function restoreSnapshot(snapshot) {
+  const undoStack = state.undoStack;
+  Object.assign(state, snapshot);
+  state.undoStack = undoStack;
+  setFocus(state.focusIndex);
+  state.message = 'Undid the last move.';
+  state.lastAction = { type: 'undo' };
+}
+
+function startGame(dealIndex = state.dealIndex) {
+  const deal = generateDeal(dealIndex);
+  Object.assign(state, {
+    mode: 'playing',
+    dealIndex: deal.dealIndex,
+    dealName: deal.name,
+    tableau: deal.tableau,
+    stock: deal.stock,
+    waste: deal.waste,
+    solutionOrder: deal.solutionOrder,
+    undoStack: [],
+    focusIndex: null,
+    hintIndex: null,
+    hintStock: false,
+    moves: 0,
+    score: 0,
+    streak: 0,
+    hintsUsed: 0,
+    elapsed: 0,
+    coinsEarned: 0,
+    lastWinCoins: 0,
+    wonAwarded: false,
+    message: 'Play available cards one rank above or below the waste.',
+    lastAction: { type: 'start', deal: deal.name },
+  });
+  rememberRecent('tripeaks');
+  setFocus();
+  updateHud();
+  renderOverlay();
+  draw();
+  return stateToObject();
+}
+
+function startNextDeal() {
+  return startGame(state.dealIndex + 1);
+}
+
+function playCardAt(index, options = {}) {
+  if (state.mode !== 'playing') return false;
+  const slot = state.tableau[index];
+  if (!slot || slot.removed) {
+    state.message = 'That space is already clear.';
+    return false;
+  }
+  if (!isAvailable(index)) {
+    state.focusIndex = index;
+    state.message = `${cardName(slot.card)} is still covered by lower cards.`;
+    return false;
+  }
+  const waste = topWaste();
+  if (!isAdjacent(slot.card, waste)) {
+    state.focusIndex = index;
+    state.message = `${cardName(slot.card)} must be one rank from ${cardName(waste)}.`;
+    return false;
+  }
+  if (!options.skipUndo) pushUndo();
+  slot.removed = true;
+  state.waste.push(cloneCard(slot.card));
+  state.moves += 1;
+  const streakBonus = Math.min(220, state.streak * 20);
+  state.score += 100 + streakBonus;
+  state.streak += 1;
+  state.hintIndex = null;
+  state.hintStock = false;
+  state.lastAction = { type: 'play', card: cardName(slot.card), slot: index, scoreGain: 100 + streakBonus };
+  state.message = `Played ${cardName(slot.card)}. Streak ${state.streak}.`;
+  setFocus();
+  checkEnd();
+  updateHud();
+  draw();
+  return true;
+}
+
+function drawStock(options = {}) {
+  if (state.mode !== 'playing') return false;
+  if (!state.stock.length) {
+    state.message = 'Stock is empty.';
+    checkEnd();
+    updateHud();
+    draw();
+    return false;
+  }
+  if (!options.skipUndo) pushUndo();
+  const card = state.stock.pop();
+  state.waste.push(card);
+  state.moves += 1;
+  state.streak = 0;
+  state.score = Math.max(0, state.score - 5);
+  state.hintIndex = null;
+  state.hintStock = false;
+  state.lastAction = { type: 'draw', card: cardName(card), stockRemaining: state.stock.length };
+  state.message = `Drew ${cardName(card)} from the stock.`;
+  setFocus();
+  checkEnd();
+  updateHud();
+  draw();
+  return true;
+}
+
+function undo() {
+  if (!state.undoStack.length || state.mode === 'won') return false;
+  const snapshot = state.undoStack.pop();
+  restoreSnapshot(snapshot);
+  updateHud();
+  renderOverlay();
+  draw();
+  return true;
+}
+
+function useHint() {
+  if (state.mode !== 'playing') return false;
+  const playable = findPlayableIndex();
+  state.hintsUsed += 1;
+  state.score = Math.max(0, state.score - 10);
+  if (Number.isInteger(playable)) {
+    state.hintIndex = playable;
+    state.hintStock = false;
+    state.focusIndex = playable;
+    state.message = `Hint: play ${cardName(state.tableau[playable].card)}.`;
+    state.lastAction = { type: 'hint', target: playable };
+  } else if (state.stock.length) {
+    state.hintIndex = null;
+    state.hintStock = true;
+    state.message = 'Hint: draw from the stock.';
+    state.lastAction = { type: 'hint', target: 'stock' };
+  } else {
+    state.hintIndex = null;
+    state.hintStock = false;
+    state.message = 'No moves remain.';
+    state.lastAction = { type: 'hint', target: 'none' };
+    checkEnd();
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function checkEnd() {
+  if (clearedCount() === state.tableau.length) {
+    completeWin();
+    return;
+  }
+  if (!Number.isInteger(findPlayableIndex()) && state.stock.length === 0) {
+    state.mode = 'lost';
+    state.streak = 0;
+    state.message = 'No rank-adjacent moves remain. Try a fresh deal.';
+    state.lastAction = { type: 'lost', score: state.score };
+    renderOverlay();
+  }
+}
+
+function completeWin() {
+  if (state.wonAwarded) return;
+  state.mode = 'won';
+  state.wonAwarded = true;
+  const timeBonus = Math.max(0, 210 - Math.floor(state.elapsed));
+  const stockBonus = state.stock.length * 8;
+  const moveBonus = Math.max(0, 42 - state.moves) * 3;
+  const hintPenalty = state.hintsUsed * 3;
+  state.score += timeBonus + stockBonus + moveBonus;
+  state.bestScore = Math.max(state.bestScore, state.score);
+  saveBestScore();
+  const coins = Math.max(22, Math.min(45, 24 + Math.floor(stockBonus / 12) + Math.floor(timeBonus / 35) - state.hintsUsed));
+  state.lastWinCoins = coins;
+  state.coinsEarned += coins;
+  addCoins(coins);
+  state.message = `${state.dealName} cleared for ${coins} coins.`;
+  state.lastAction = { type: 'won', deal: state.dealName, score: state.score, coins };
+  renderOverlay();
+}
+
+function togglePause() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    state.message = 'Paused.';
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    state.message = 'Play available cards one rank above or below the waste.';
+  }
+  updateHud();
+  renderOverlay();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+function cycleFocus(direction) {
+  const available = availableIndexes();
+  if (!available.length) {
+    state.focusIndex = null;
+    return;
+  }
+  const current = available.indexOf(state.focusIndex);
+  const next = current < 0
+    ? 0
+    : (current + direction + available.length) % available.length;
+  state.focusIndex = available[next];
+  state.message = `${cardName(state.tableau[state.focusIndex].card)} selected.`;
+  draw();
+}
+
+function update(dt) {
+  if (state.mode === 'playing') {
+    state.elapsed += dt;
+  }
+}
+
+function updateHud() {
+  hud.mode.textContent = state.mode.toUpperCase();
+  hud.deal.textContent = `${state.dealIndex + 1} / ${DEALS.length}`;
+  hud.cleared.textContent = `${clearedCount()} / ${state.tableau.length || 28}`;
+  hud.stock.textContent = String(state.stock.length);
+  hud.score.textContent = String(state.score);
+  hud.coins.textContent = String(Number(profileState.coins || 0));
+  buttons.pause.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function renderOverlay() {
+  const key = `${state.mode}|${state.dealIndex}|${state.message}|${state.coinsEarned}`;
+  if (overlayKey === key) return;
+  overlayKey = key;
+  if (state.mode === 'menu') {
+    overlayTitle.textContent = 'Tri Peaks Solitaire';
+    overlayText.textContent = 'Clear all three peaks by playing available cards one rank above or below the waste pile.';
+    startBtn.textContent = 'Start Deal';
+    overlay.classList.add('show');
+  } else if (state.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'Resume when you are ready to keep clearing the peaks.';
+    startBtn.textContent = 'Resume';
+    overlay.classList.add('show');
+  } else if (state.mode === 'won') {
+    overlayTitle.textContent = 'Peaks Cleared';
+    overlayText.textContent = `${state.message} Best score: ${state.bestScore}.`;
+    startBtn.textContent = 'Next Deal';
+    overlay.classList.add('show');
+  } else if (state.mode === 'lost') {
+    overlayTitle.textContent = 'No Moves Left';
+    overlayText.textContent = `${state.message} Score: ${state.score}.`;
+    startBtn.textContent = 'Try Next Deal';
+    overlay.classList.add('show');
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function drawRoundRect(x, y, w, h, radius) {
+  const r = Math.min(radius, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(x, y, w, h, radius, fill, stroke = null, lineWidth = 2) {
+  drawRoundRect(x, y, w, h, radius);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color, align = 'left', weight = '900') {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawCard(card, x, y, options = {}) {
+  const available = Boolean(options.available);
+  const blocked = Boolean(options.blocked);
+  ctx.save();
+  ctx.shadowColor = '#17222d3d';
+  ctx.shadowBlur = available ? 14 : 8;
+  ctx.shadowOffsetY = available ? 6 : 4;
+  fillRoundRect(x, y, CARD_W, CARD_H, 8, '#fffdf7', available ? '#fff1a7' : '#cfd8df', available ? 3 : 2);
+  ctx.shadowColor = 'transparent';
+  if (options.focus) {
+    drawRoundRect(x - 5, y - 5, CARD_W + 10, CARD_H + 10, 10);
+    ctx.strokeStyle = '#17222d';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
+  if (options.hint) {
+    drawRoundRect(x - 8, y - 8, CARD_W + 16, CARD_H + 16, 12);
+    ctx.strokeStyle = '#ffcf4e';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+  }
+  drawText(rankLabel(card.rank), x + 12, y + 17, 18, card.color, 'left');
+  drawText(card.symbol, x + CARD_W - 12, y + 18, 18, card.color, 'right');
+  drawText(card.symbol, x + CARD_W / 2, y + CARD_H / 2 + 1, 34, card.color, 'center');
+  drawText(rankLabel(card.rank), x + CARD_W / 2, y + CARD_H - 20, 18, card.color, 'center');
+  if (blocked) {
+    fillRoundRect(x, y, CARD_W, CARD_H, 8, '#1c2d3e5e', null);
+  }
+  ctx.restore();
+}
+
+function drawCardBack(x, y, count, highlighted = false) {
+  ctx.save();
+  ctx.shadowColor = '#17222d3a';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+  fillRoundRect(x, y, CARD_W, CARD_H, 8, '#244d71', highlighted ? '#ffcf4e' : '#d4e9f9', highlighted ? 4 : 2);
+  ctx.shadowColor = 'transparent';
+  fillRoundRect(x + 10, y + 10, CARD_W - 20, CARD_H - 20, 6, '#315f86', '#ffffff55', 1);
+  drawText(count > 0 ? String(count) : '0', x + CARD_W / 2, y + CARD_H / 2, 28, '#f8fbff', 'center');
+  drawText('STOCK', x + CARD_W / 2, y + CARD_H - 18, 11, '#cde5f7', 'center');
+  ctx.restore();
+}
+
+function drawEmptyWaste(x, y) {
+  fillRoundRect(x, y, CARD_W, CARD_H, 8, '#ffffff80', '#b7c6d0', 2);
+  drawText('Waste', x + CARD_W / 2, y + CARD_H / 2, 15, '#607080', 'center');
+}
+
+function drawTable() {
+  fillRoundRect(34, 38, 1032, 444, 8, '#eaf6f1', '#ffffff8a', 2);
+  drawText(state.dealName, 56, 64, 26, '#17222d', 'left');
+  drawText(`${clearedCount()} of 28 cleared`, 1040, 64, 20, '#31495d', 'right');
+  for (const slot of state.tableau) {
+    if (!slot.card || slot.removed) continue;
+    const available = isAvailable(slot.index);
+    drawCard(slot.card, slot.x, slot.y, {
+      available,
+      blocked: !available,
+      focus: state.focusIndex === slot.index && state.mode === 'playing',
+      hint: state.hintIndex === slot.index,
+    });
+  }
+}
+
+function drawStockAndWaste() {
+  fillRoundRect(346, 518, 340, 158, 8, '#edf6f9', '#ffffff92', 2);
+  drawText('Draw', STOCK_RECT.x + CARD_W / 2, STOCK_RECT.y - 16, 15, '#324d60', 'center');
+  drawText('Waste', WASTE_RECT.x + CARD_W / 2, WASTE_RECT.y - 16, 15, '#324d60', 'center');
+  drawCardBack(STOCK_RECT.x, STOCK_RECT.y, state.stock.length, state.hintStock);
+  const waste = topWaste();
+  if (waste) drawCard(waste, WASTE_RECT.x, WASTE_RECT.y, { available: true });
+  else drawEmptyWaste(WASTE_RECT.x, WASTE_RECT.y);
+  const playable = Number.isInteger(findPlayableIndex());
+  const status = playable ? 'A card can be played' : state.stock.length ? 'Draw to find a match' : 'No moves remain';
+  drawText(status, 670, 622, 17, playable ? '#23644f' : '#7a4c18', 'left');
+}
+
+function drawSidePanel() {
+  fillRoundRect(720, 518, 346, 158, 8, '#17314be8', '#ffffff8a', 2);
+  drawText('Rank-adjacent clears', 744, 548, 22, '#f8fbff', 'left');
+  drawText(`Waste: ${cardName(topWaste())}`, 744, 584, 18, '#d9e8f0', 'left');
+  drawText(`Streak: ${state.streak}`, 744, 614, 18, '#ffd36c', 'left');
+  drawText(`Best: ${state.bestScore}`, 744, 644, 18, '#94efba', 'left');
+}
+
+function drawMessage() {
+  fillRoundRect(34, 694, 1032, 40, 8, '#ffffffcc', '#c9d7df', 2);
+  drawText(state.message, 550, 714, 18, '#17222d', 'center');
+}
+
+function drawBackground() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#f7fbff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#d6ece2';
+  ctx.fillRect(0, 0, canvas.width, 245);
+  ctx.fillStyle = '#f2dfbd';
+  ctx.fillRect(0, 245, canvas.width, 250);
+  ctx.fillStyle = '#d8e3f2';
+  ctx.fillRect(0, 495, canvas.width, 265);
+  for (let i = 0; i < 22; i += 1) {
+    const x = (i * 97 + 31) % 1100;
+    const y = 24 + ((i * 53) % 430);
+    ctx.beginPath();
+    ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 ? '#ffffff80' : '#17314b1c';
+    ctx.fill();
+  }
+}
+
+function draw() {
+  drawBackground();
+  drawTable();
+  drawStockAndWaste();
+  drawSidePanel();
+  drawMessage();
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function contains(rect, point) {
+  return point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h;
+}
+
+function hitTableau(point) {
+  for (let i = state.tableau.length - 1; i >= 0; i -= 1) {
+    const slot = state.tableau[i];
+    if (slot.removed) continue;
+    if (contains({ x: slot.x, y: slot.y, w: CARD_W, h: CARD_H }, point)) return slot.index;
+  }
+  return null;
+}
+
+function handlePointer(event) {
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'paused' || state.mode === 'won' || state.mode === 'lost') return;
+  const point = pointFromEvent(event);
+  if (contains(STOCK_RECT, point)) {
+    drawStock();
+    return;
+  }
+  const index = hitTableau(point);
+  if (Number.isInteger(index)) {
+    playCardAt(index);
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'escape') {
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    if (state.mode === 'playing') togglePause();
+    return;
+  }
+  if (state.mode !== 'playing') {
+    if (key === 'enter' || key === ' ') {
+      event.preventDefault();
+      if (state.mode === 'paused') togglePause();
+      else if (state.mode === 'won' || state.mode === 'lost') startNextDeal();
+      else startGame();
+    }
+    if (key === 'p' && state.mode === 'paused') togglePause();
+    return;
+  }
+  if (key === 'arrowleft' || key === 'arrowup') {
+    event.preventDefault();
+    cycleFocus(-1);
+  } else if (key === 'arrowright' || key === 'arrowdown') {
+    event.preventDefault();
+    cycleFocus(1);
+  } else if (key === 'enter' || key === ' ') {
+    event.preventDefault();
+    if (Number.isInteger(state.focusIndex)) playCardAt(state.focusIndex);
+  } else if (key === 'd') {
+    event.preventDefault();
+    drawStock();
+  } else if (key === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (key === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'p') {
+    event.preventDefault();
+    togglePause();
+  } else if (key === 'n' || key === 'r') {
+    event.preventDefault();
+    startNextDeal();
+  }
+}
+
+function compactCard(card) {
+  if (!card) return null;
+  return {
+    card: cardName(card),
+    rank: card.rank,
+    suit: card.suit,
+    color: card.color === '#b3263d' ? 'red' : 'black',
+  };
+}
+
+function stateToObject() {
+  const waste = topWaste();
+  return {
+    game: 'tripeaks',
+    coordinate_system: 'Canvas 1100x760 origin top-left, x increases right, y increases down. Tableau slots are numbered 0-27 from top row to bottom row.',
+    mode: state.mode,
+    deal_index: state.dealIndex,
+    deal_name: state.dealName,
+    elapsed_seconds: Number(state.elapsed.toFixed(2)),
+    moves: state.moves,
+    score: state.score,
+    best_score: state.bestScore,
+    streak: state.streak,
+    hints_used: state.hintsUsed,
+    cleared: clearedCount(),
+    total_tableau: state.tableau.length,
+    stock_count: state.stock.length,
+    waste_count: state.waste.length,
+    waste_top: compactCard(waste),
+    available_slots: availableIndexes(),
+    playable_slots: availableIndexes().filter(index => isAdjacent(state.tableau[index].card, waste)),
+    focus_slot: state.focusIndex,
+    hint_slot: state.hintIndex,
+    hint_stock: state.hintStock,
+    tableau: state.tableau.map(slot => ({
+      slot: slot.index,
+      row: slot.row,
+      x: slot.x,
+      y: slot.y,
+      removed: slot.removed,
+      available: isAvailable(slot.index),
+      card: compactCard(slot.card),
+    })),
+    solution_next_slot: state.solutionOrder.find(index => !state.tableau[index]?.removed) ?? null,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: state.coinsEarned,
+    last_win_coins: state.lastWinCoins,
+    message: state.message,
+    last_action: state.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrentDeal() {
+  if (state.mode !== 'playing') startGame(state.dealIndex);
+  let guard = 0;
+  while (state.mode === 'playing' && guard < 80) {
+    const nextSlot = state.solutionOrder.find(index => !state.tableau[index]?.removed);
+    if (!Number.isInteger(nextSlot)) break;
+    if (!playCardAt(nextSlot, { skipUndo: true })) {
+      const playable = findPlayableIndex();
+      if (Number.isInteger(playable)) playCardAt(playable, { skipUndo: true });
+      else if (state.stock.length) drawStock({ skipUndo: true });
+      else break;
+    }
+    guard += 1;
+  }
+  updateHud();
+  renderOverlay();
+  draw();
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  renderOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+window.__TRI_PEAKS_GAME__ = {
+  startGame,
+  startNextDeal,
+  playCardAt,
+  drawStock,
+  useHint,
+  undo,
+  solveCurrentDeal,
+  findPlayableIndex,
+  availableIndexes,
+  stateToObject,
+  renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'tripeaks', mode: state.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+buttons.newDeal.addEventListener('click', startNextDeal);
+buttons.draw.addEventListener('click', drawStock);
+buttons.hint.addEventListener('click', useHint);
+buttons.undo.addEventListener('click', undo);
+buttons.pause.addEventListener('click', togglePause);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+startBtn.addEventListener('click', () => {
+  if (state.mode === 'paused') togglePause();
+  else if (state.mode === 'won' || state.mode === 'lost') startNextDeal();
+  else startGame();
+});
+document.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    renderOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+renderOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'tripeaks', gameName: 'Tri Peaks Solitaire' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
