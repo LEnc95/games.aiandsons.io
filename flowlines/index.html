@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Flow Lines | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #10263a;
+  background:
+    linear-gradient(120deg, #e7f2ec 0%, #f7e7c6 48%, #d3e4f7 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff94;
+  padding: 8px 12px;
+  background: #183449d9;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(96vw, 900px);
+  aspect-ratio: 1 / 1;
+  max-height: min(68dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffd9;
+  background: #f7fbff;
+  box-shadow: 0 24px 56px #243a4a45;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 700px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd6;
+  background: #173247f4;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #28384859;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 7vw, 56px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dbe9f0;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bed0dc;
+}
+.hud, .controls {
+  width: min(96vw, 900px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #183449df;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bfd3dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #95efbc; }
+.chip.warn b { color: #ffd36c; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3448582b;
+}
+button:hover { background: #28475e; }
+button:focus-visible {
+  outline: 3px solid #10263a;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd65e;
+  border-color: #ffe9a5;
+  color: #162333;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe48b; }
+.utility { background: #435a70; }
+.action { background: #24745f; }
+@media (max-width: 840px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 740px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Connect matching color terminals, fill every grid tile, and keep every flowing path from crossing. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Flow Lines | AI and Sons Games">
+  <meta property="og:description" content="Connect matching color terminals, fill every grid tile, and keep every flowing path from crossing. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/flowlines">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Flow Lines | AI and Sons Games">
+  <meta name="twitter:description" content="Connect matching color terminals, fill every grid tile, and keep every flowing path from crossing. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/flowlines">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Flow Lines","description":"Connect matching color terminals, fill every grid tile, and keep every flowing path from crossing. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/flowlines","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Flow Lines puzzle board">
+    <canvas id="game" width="900" height="900"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel" id="overlayPanel">
+        <h1 id="overlayTitle">Flow Lines</h1>
+        <p id="overlayText">Connect matching color terminals, cover every tile, and keep paths from crossing.</p>
+        <p class="mini">Drag from a color dot, or use arrows to move focus and Space to start or extend a path. H hints, U undo, P pause, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="puzzleText">1 / 5</b></div>
+    <div class="chip"><span>Filled</span><b id="filledText">0%</b></div>
+    <div class="chip warn"><span>Moves</span><b id="movesText">0</b></div>
+    <div class="chip"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Flow Lines controls">
+    <button class="action" id="newBtn" type="button">New Puzzle</button>
+    <button class="utility" id="hintBtn" type="button">Hint</button>
+    <button class="utility" id="undoBtn" type="button">Undo</button>
+    <button class="utility" id="clearBtn" type="button">Clear Color</button>
+    <button class="utility" id="pauseBtn" type="button">Pause</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+import { loadProfile, saveProfile } from '/src/core/state.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  puzzle: document.getElementById('puzzleText'),
+  filled: document.getElementById('filledText'),
+  moves: document.getElementById('movesText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  newPuzzle: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  clear: document.getElementById('clearBtn'),
+  pause: document.getElementById('pauseBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const COLORS = {
+  red: '#e24b55',
+  blue: '#2f80ed',
+  yellow: '#f4c644',
+  green: '#36a873',
+  purple: '#9a64db',
+  orange: '#f08a37',
+};
+const COLOR_ORDER = ['red', 'blue', 'yellow', 'green', 'purple', 'orange'];
+const EMPTY = null;
+
+const PUZZLES = [
+  {
+    name: 'Harbor Loops',
+    size: 5,
+    pairs: {
+      red: [[0, 0], [4, 0]],
+      blue: [[0, 1], [4, 1]],
+      yellow: [[0, 2], [4, 2]],
+      green: [[0, 3], [4, 3]],
+      purple: [[0, 4], [4, 4]],
+    },
+    solution: {
+      red: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]],
+      blue: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]],
+      yellow: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]],
+      green: [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3]],
+      purple: [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4]],
+    },
+  },
+  {
+    name: 'Market Weave',
+    size: 5,
+    pairs: {
+      red: [[0, 0], [0, 4]],
+      blue: [[1, 0], [1, 4]],
+      yellow: [[2, 0], [2, 4]],
+      green: [[3, 0], [3, 4]],
+      purple: [[4, 0], [4, 4]],
+    },
+    solution: {
+      red: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]],
+      blue: [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4]],
+      yellow: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]],
+      green: [[3, 0], [3, 1], [3, 2], [3, 3], [3, 4]],
+      purple: [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4]],
+    },
+  },
+  {
+    name: 'Signal Blocks',
+    size: 6,
+    pairs: {
+      red: [[0, 0], [5, 0]],
+      blue: [[0, 1], [5, 1]],
+      yellow: [[0, 2], [5, 2]],
+      green: [[0, 3], [5, 3]],
+      purple: [[0, 4], [5, 4]],
+      orange: [[0, 5], [5, 5]],
+    },
+    solution: {
+      red: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]],
+      blue: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1]],
+      yellow: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2]],
+      green: [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3]],
+      purple: [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4]],
+      orange: [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5]],
+    },
+  },
+  {
+    name: 'Pier Switchback',
+    size: 6,
+    pairs: {
+      red: [[0, 0], [0, 5]],
+      blue: [[1, 0], [1, 5]],
+      yellow: [[2, 0], [2, 5]],
+      green: [[3, 0], [3, 5]],
+      purple: [[4, 0], [4, 5]],
+      orange: [[5, 0], [5, 5]],
+    },
+    solution: {
+      red: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5]],
+      blue: [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5]],
+      yellow: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5]],
+      green: [[3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5]],
+      purple: [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [4, 5]],
+      orange: [[5, 0], [5, 1], [5, 2], [5, 3], [5, 4], [5, 5]],
+    },
+  },
+  {
+    name: 'Sky Grid',
+    size: 7,
+    pairs: {
+      red: [[0, 0], [6, 0]],
+      blue: [[0, 1], [6, 1]],
+      yellow: [[0, 2], [6, 2]],
+      green: [[0, 3], [6, 3]],
+      purple: [[0, 4], [6, 4]],
+      orange: [[0, 5], [0, 6]],
+    },
+    solution: {
+      red: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]],
+      blue: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1]],
+      yellow: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2]],
+      green: [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3]],
+      purple: [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4]],
+      orange: [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6]],
+    },
+  },
+];
+
+let profileState = loadProfile();
+let lastFrame = performance.now();
+let manualStepping = false;
+let pointerDrawing = false;
+let dragPath = [];
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  puzzle: PUZZLES[0],
+  size: PUZZLES[0].size,
+  cells: [],
+  paths: {},
+  activeColor: null,
+  focus: { x: 0, y: 0 },
+  history: [],
+  moves: 0,
+  score: 0,
+  bestScore: Number(localStorage.getItem('flowlinesBestScore') || 0),
+  hintsUsed: 0,
+  elapsed: 0,
+  message: 'Connect each matching color without crossing paths.',
+  wonPuzzles: new Set(),
+  coinsEarned: 0,
+  lastWinCoins: 0,
+  pulse: 0,
+  shake: 0,
+  lastAction: { type: 'load' },
+};
+
+function keyOf(x, y) {
+  return `${x},${y}`;
+}
+
+function sameCell(a, b) {
+  return a && b && a[0] === b[0] && a[1] === b[1];
+}
+
+function clonePath(path) {
+  return path.map(([x, y]) => [x, y]);
+}
+
+function activeColors() {
+  return COLOR_ORDER.filter(color => game.puzzle.pairs[color]);
+}
+
+function createEmptyCells(size) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => ({
+    terminal: null,
+    color: EMPTY,
+  })));
+}
+
+function resetPathsToStarts() {
+  game.paths = {};
+  for (const color of activeColors()) {
+    const [start] = game.puzzle.pairs[color];
+    game.paths[color] = [[start[0], start[1]]];
+  }
+}
+
+function rebuildCells() {
+  game.cells = createEmptyCells(game.size);
+  for (const color of activeColors()) {
+    const [start, end] = game.puzzle.pairs[color];
+    game.cells[start[1]][start[0]].terminal = color;
+    game.cells[end[1]][end[0]].terminal = color;
+  }
+  for (const color of activeColors()) {
+    for (const [x, y] of game.paths[color]) {
+      game.cells[y][x].color = color;
+    }
+  }
+}
+
+function loadPuzzle(index = 0) {
+  game.puzzleIndex = ((index % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  game.puzzle = PUZZLES[game.puzzleIndex];
+  game.size = game.puzzle.size;
+  resetPathsToStarts();
+  game.activeColor = activeColors()[0];
+  const [fx, fy] = game.puzzle.pairs[game.activeColor][0];
+  game.focus = { x: fx, y: fy };
+  game.history = [];
+  game.moves = 0;
+  game.hintsUsed = 0;
+  game.elapsed = 0;
+  game.message = `${game.puzzle.name}: connect matching terminals.`;
+  game.mode = 'playing';
+  pointerDrawing = false;
+  dragPath = [];
+  game.lastAction = { type: 'load_puzzle', index: game.puzzleIndex + 1, name: game.puzzle.name };
+  rebuildCells();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function startGame() {
+  loadPuzzle(game.puzzleIndex);
+}
+
+function saveHistory() {
+  game.history.push({
+    paths: Object.fromEntries(Object.entries(game.paths).map(([color, path]) => [color, clonePath(path)])),
+    moves: game.moves,
+    activeColor: game.activeColor,
+    focus: { ...game.focus },
+    message: game.message,
+  });
+  if (game.history.length > 80) game.history.shift();
+}
+
+function restoreSnapshot(snapshot) {
+  game.paths = Object.fromEntries(Object.entries(snapshot.paths).map(([color, path]) => [color, clonePath(path)]));
+  game.moves = snapshot.moves;
+  game.activeColor = snapshot.activeColor;
+  game.focus = { ...snapshot.focus };
+  game.message = snapshot.message;
+  rebuildCells();
+}
+
+function undo() {
+  if (game.mode === 'menu') return;
+  const snapshot = game.history.pop();
+  if (!snapshot) {
+    game.message = 'No moves to undo.';
+    game.lastAction = { type: 'undo_empty' };
+    return;
+  }
+  restoreSnapshot(snapshot);
+  if (game.mode === 'won') game.mode = 'playing';
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function isTerminalFor(color, x, y) {
+  return game.puzzle.pairs[color]?.some(cell => sameCell(cell, [x, y])) || false;
+}
+
+function terminalColorAt(x, y) {
+  return game.cells[y]?.[x]?.terminal || null;
+}
+
+function pathIncludes(path, x, y) {
+  return path.some(cell => cell[0] === x && cell[1] === y);
+}
+
+function canOccupy(color, x, y) {
+  if (x < 0 || y < 0 || x >= game.size || y >= game.size) return false;
+  const terminal = terminalColorAt(x, y);
+  return !terminal || terminal === color;
+}
+
+function trimConflictingPaths(color, x, y) {
+  for (const other of activeColors()) {
+    if (other === color) continue;
+    const index = game.paths[other].findIndex(cell => cell[0] === x && cell[1] === y);
+    if (index > -1) {
+      const [start] = game.puzzle.pairs[other];
+      game.paths[other] = game.paths[other].slice(0, Math.max(1, index));
+      if (!game.paths[other].length) game.paths[other] = [start];
+    }
+  }
+}
+
+function clearColor(color = game.activeColor, recordHistory = true) {
+  if (!color || game.mode === 'menu') return;
+  if (recordHistory) saveHistory();
+  const [start] = game.puzzle.pairs[color];
+  game.paths[color] = [start];
+  game.activeColor = color;
+  game.focus = { x: start[0], y: start[1] };
+  game.moves += recordHistory ? 1 : 0;
+  game.message = `${color} path cleared.`;
+  game.lastAction = { type: 'clear_color', color };
+  rebuildCells();
+  checkWin();
+  updateHud();
+  draw();
+}
+
+function beginPathAt(x, y, recordHistory = true) {
+  if (game.mode !== 'playing') return false;
+  const terminal = terminalColorAt(x, y);
+  const cellColor = game.cells[y]?.[x]?.color;
+  const color = terminal || cellColor;
+  if (!color) {
+    game.message = 'Start from an endpoint or an existing path.';
+    game.lastAction = { type: 'begin_empty', x, y };
+    return false;
+  }
+  if (recordHistory) saveHistory();
+  game.activeColor = color;
+  const path = game.paths[color];
+  const index = path.findIndex(cell => cell[0] === x && cell[1] === y);
+  if (terminal) {
+    game.paths[color] = [[x, y]];
+  } else if (index > -1) {
+    game.paths[color] = path.slice(0, index + 1);
+  } else {
+    const [start] = game.puzzle.pairs[color];
+    game.paths[color] = [[start[0], start[1]]];
+  }
+  game.focus = { x, y };
+  game.message = `Drawing ${color}.`;
+  game.lastAction = { type: 'begin_path', color, x, y };
+  rebuildCells();
+  return true;
+}
+
+function extendPathTo(x, y, recordMove = true) {
+  if (game.mode !== 'playing' || !game.activeColor) return false;
+  if (!canOccupy(game.activeColor, x, y)) {
+    game.message = 'Paths cannot cross other color endpoints.';
+    game.shake = .18;
+    game.lastAction = { type: 'blocked_terminal', color: game.activeColor, x, y };
+    return false;
+  }
+  const path = game.paths[game.activeColor];
+  const last = path[path.length - 1];
+  if (!last) return false;
+  const dx = Math.abs(x - last[0]);
+  const dy = Math.abs(y - last[1]);
+  if (dx + dy !== 1) {
+    return false;
+  }
+  if (path.length > 1 && path[path.length - 2][0] === x && path[path.length - 2][1] === y) {
+    path.pop();
+    game.focus = { x, y };
+    game.moves += recordMove ? 1 : 0;
+    game.message = `Backtracked ${game.activeColor}.`;
+    game.lastAction = { type: 'backtrack', color: game.activeColor, x, y };
+    rebuildCells();
+    checkWin();
+    return true;
+  }
+  const currentIndex = path.findIndex(cell => cell[0] === x && cell[1] === y);
+  if (currentIndex > -1) {
+    game.paths[game.activeColor] = path.slice(0, currentIndex + 1);
+    game.focus = { x, y };
+    game.moves += recordMove ? 1 : 0;
+    game.message = `Trimmed ${game.activeColor}.`;
+    game.lastAction = { type: 'trim_path', color: game.activeColor, x, y };
+    rebuildCells();
+    checkWin();
+    return true;
+  }
+  if (isTerminalFor(game.activeColor, last[0], last[1]) && path.length > 1) {
+    game.message = 'A connected endpoint stops that path.';
+    game.shake = .18;
+    game.lastAction = { type: 'blocked_after_endpoint', color: game.activeColor, x, y };
+    return false;
+  }
+  const occupied = game.cells[y][x].color;
+  if (occupied && occupied !== game.activeColor) {
+    trimConflictingPaths(game.activeColor, x, y);
+  }
+  game.paths[game.activeColor].push([x, y]);
+  game.focus = { x, y };
+  game.moves += recordMove ? 1 : 0;
+  const terminal = terminalColorAt(x, y);
+  game.message = terminal === game.activeColor ? `${game.activeColor} connected.` : `Extended ${game.activeColor}.`;
+  game.lastAction = { type: 'extend_path', color: game.activeColor, x, y };
+  rebuildCells();
+  checkWin();
+  return true;
+}
+
+function drawSolutionStep(color = game.activeColor) {
+  if (game.mode !== 'playing') return false;
+  const colors = color ? [color] : activeColors();
+  for (const candidate of colors) {
+    const solution = game.puzzle.solution[candidate];
+    const path = game.paths[candidate];
+    const last = path[path.length - 1];
+    const targetIndex = solution.findIndex(cell => cell[0] === last[0] && cell[1] === last[1]);
+    if (targetIndex > -1 && targetIndex < solution.length - 1) {
+      saveHistory();
+      game.activeColor = candidate;
+      const [x, y] = solution[targetIndex + 1];
+      extendPathTo(x, y);
+      game.hintsUsed += 1;
+      game.message = `Hint extended ${candidate}.`;
+      game.lastAction = { type: 'hint_step', color: candidate, x, y };
+      return true;
+    }
+  }
+  for (const candidate of activeColors()) {
+    const solution = game.puzzle.solution[candidate];
+    if (game.paths[candidate].length < solution.length) {
+      saveHistory();
+      game.activeColor = candidate;
+      game.paths[candidate] = [solution[0]];
+      game.focus = { x: solution[0][0], y: solution[0][1] };
+      extendPathTo(solution[1][0], solution[1][1]);
+      game.hintsUsed += 1;
+      game.message = `Hint restarted ${candidate}.`;
+      game.lastAction = { type: 'hint_restart', color: candidate };
+      return true;
+    }
+  }
+  game.message = 'All solution paths are already complete.';
+  game.lastAction = { type: 'hint_complete' };
+  return false;
+}
+
+function filledCount() {
+  let count = 0;
+  for (let y = 0; y < game.size; y += 1) {
+    for (let x = 0; x < game.size; x += 1) {
+      if (game.cells[y][x].color) count += 1;
+    }
+  }
+  return count;
+}
+
+function isConnected(color) {
+  const path = game.paths[color];
+  const [start, end] = game.puzzle.pairs[color];
+  return path.some(cell => sameCell(cell, start)) && path.some(cell => sameCell(cell, end));
+}
+
+function completionInfo() {
+  const total = game.size * game.size;
+  const filled = filledCount();
+  const connected = activeColors().filter(isConnected).length;
+  const allConnected = connected === activeColors().length;
+  return {
+    total,
+    filled,
+    percent: Math.round((filled / total) * 100),
+    connected,
+    allConnected,
+    complete: filled === total && allConnected,
+  };
+}
+
+function checkWin() {
+  const info = completionInfo();
+  if (game.mode === 'playing' && info.complete) {
+    game.mode = 'won';
+    const par = game.size * activeColors().length;
+    const efficiency = Math.max(40, 160 - Math.max(0, game.moves - par) * 4 - game.hintsUsed * 12);
+    const timeBonus = Math.max(0, 120 - Math.floor(game.elapsed));
+    const scoreGain = efficiency + timeBonus + game.size * 20;
+    game.score += scoreGain;
+    game.bestScore = Math.max(game.bestScore, game.score);
+    localStorage.setItem('flowlinesBestScore', String(game.bestScore));
+    const puzzleKey = `${game.puzzle.name}-${game.puzzleIndex}`;
+    game.lastWinCoins = 0;
+    if (!game.wonPuzzles.has(puzzleKey)) {
+      game.wonPuzzles.add(puzzleKey);
+      game.lastWinCoins = 8 + game.size;
+      game.coinsEarned += game.lastWinCoins;
+      profileState.coins = Number(profileState.coins || 0) + game.lastWinCoins;
+      saveProfile(profileState);
+    }
+    game.message = `Solved ${game.puzzle.name}.`;
+    game.lastAction = { type: 'win', puzzle: game.puzzle.name, scoreGain, coins: game.lastWinCoins };
+    updateOverlay();
+  }
+}
+
+function nextPuzzle() {
+  loadPuzzle(game.puzzleIndex + 1);
+}
+
+function togglePause() {
+  if (game.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'won') return;
+  game.mode = game.mode === 'paused' ? 'playing' : 'paused';
+  game.message = game.mode === 'paused' ? 'Paused.' : `Back to ${game.puzzle.name}.`;
+  game.lastAction = { type: 'pause_toggle', mode: game.mode };
+  updateOverlay();
+  updateHud();
+  draw();
+}
+
+function moveFocus(dx, dy) {
+  if (game.mode !== 'playing') return;
+  const nextX = Math.max(0, Math.min(game.size - 1, game.focus.x + dx));
+  const nextY = Math.max(0, Math.min(game.size - 1, game.focus.y + dy));
+  if (nextX === game.focus.x && nextY === game.focus.y) return;
+  if (game.activeColor) {
+    saveHistory();
+    if (!extendPathTo(nextX, nextY)) {
+      game.focus = { x: nextX, y: nextY };
+    }
+  } else {
+    game.focus = { x: nextX, y: nextY };
+  }
+  game.lastAction = { type: 'focus_move', x: game.focus.x, y: game.focus.y };
+  updateHud();
+  draw();
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p' || event.key === 'Escape') {
+    event.preventDefault();
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing') {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (game.mode === 'won') nextPuzzle();
+      else startGame();
+    }
+    return;
+  }
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    moveFocus(-1, 0);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    moveFocus(1, 0);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    moveFocus(0, -1);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    moveFocus(0, 1);
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    event.preventDefault();
+    const { x, y } = game.focus;
+    if (!beginPathAt(x, y)) {
+      const color = game.cells[y]?.[x]?.color || game.activeColor;
+      if (color) {
+        game.activeColor = color;
+        game.message = `Selected ${color}.`;
+      }
+    }
+    updateHud();
+    draw();
+  } else if (key === 'h') {
+    event.preventDefault();
+    drawSolutionStep();
+  } else if (key === 'u' || key === 'z' || key === 'backspace') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'c') {
+    event.preventDefault();
+    clearColor();
+  } else if (key === 'n' || key === 'r') {
+    event.preventDefault();
+    loadPuzzle(game.puzzleIndex);
+  }
+}
+
+function boardMetrics() {
+  const margin = 58;
+  const size = Math.min(canvas.width, canvas.height) - margin * 2;
+  const cell = size / game.size;
+  return { margin, size, cell };
+}
+
+function pointToCanvas(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+    y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+  };
+}
+
+function cellAtPoint(point) {
+  const metrics = boardMetrics();
+  const x = Math.floor((point.x - metrics.margin) / metrics.cell);
+  const y = Math.floor((point.y - metrics.margin) / metrics.cell);
+  if (x < 0 || y < 0 || x >= game.size || y >= game.size) return null;
+  return { x, y };
+}
+
+function pointerDown(event) {
+  if (game.mode !== 'playing') return;
+  const cell = cellAtPoint(pointToCanvas(event));
+  if (!cell) return;
+  event.preventDefault();
+  const started = beginPathAt(cell.x, cell.y);
+  if (started) {
+    pointerDrawing = true;
+    dragPath = [[cell.x, cell.y]];
+    canvas.setPointerCapture?.(event.pointerId);
+  }
+  updateHud();
+  draw();
+}
+
+function pointerMove(event) {
+  if (!pointerDrawing || game.mode !== 'playing') return;
+  const cell = cellAtPoint(pointToCanvas(event));
+  if (!cell) return;
+  const last = dragPath[dragPath.length - 1];
+  if (last && last[0] === cell.x && last[1] === cell.y) return;
+  if (extendPathTo(cell.x, cell.y)) {
+    dragPath.push([cell.x, cell.y]);
+    updateHud();
+    draw();
+  }
+}
+
+function pointerUp(event) {
+  if (!pointerDrawing) return;
+  pointerDrawing = false;
+  dragPath = [];
+  canvas.releasePointerCapture?.(event.pointerId);
+  checkWin();
+  updateHud();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+  game.lastAction = { type: 'fullscreen' };
+  setTimeout(draw, 80);
+}
+
+function update(dt) {
+  game.pulse += dt;
+  if (game.shake > 0) game.shake = Math.max(0, game.shake - dt);
+  if (game.mode === 'playing') game.elapsed += dt;
+}
+
+function updateHud() {
+  const info = completionInfo();
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  hud.filled.textContent = `${info.percent}%`;
+  hud.moves.textContent = String(game.moves);
+  hud.score.textContent = String(game.score);
+  hud.coins.textContent = String(Number(profileState.coins || 0));
+}
+
+function updateOverlay() {
+  if (game.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Flow Lines';
+    overlayText.textContent = 'Connect matching color terminals, cover every tile, and keep paths from crossing.';
+    startBtn.textContent = 'Start Puzzle';
+  } else if (game.mode === 'paused') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = game.message;
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'won') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Puzzle Solved';
+    overlayText.textContent = `${game.puzzle.name} is complete. Earned ${game.lastWinCoins} coins this solve.`;
+    startBtn.textContent = game.puzzleIndex === PUZZLES.length - 1 ? 'Replay First Puzzle' : 'Next Puzzle';
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function draw() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, '#f8fcff');
+  gradient.addColorStop(.42, '#edf8f2');
+  gradient.addColorStop(1, '#fff2d8');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  if (game.shake > 0) {
+    const amount = Math.sin(game.pulse * 70) * 5 * (game.shake / .18);
+    ctx.translate(amount, -amount * .5);
+  }
+
+  const { margin, size, cell } = boardMetrics();
+  drawRoundedRect(margin - 18, margin - 18, size + 36, size + 36, 8);
+  ctx.fillStyle = '#ffffffcc';
+  ctx.fill();
+  ctx.strokeStyle = '#1f3a5040';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  for (let y = 0; y < game.size; y += 1) {
+    for (let x = 0; x < game.size; x += 1) {
+      const px = margin + x * cell;
+      const py = margin + y * cell;
+      ctx.fillStyle = (x + y) % 2 === 0 ? '#f7fbff' : '#ecf3f8';
+      ctx.fillRect(px, py, cell, cell);
+      ctx.strokeStyle = '#1f3a5022';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, cell, cell);
+    }
+  }
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const color of activeColors()) {
+    const path = game.paths[color];
+    if (path.length < 2) continue;
+    ctx.beginPath();
+    for (let i = 0; i < path.length; i += 1) {
+      const [x, y] = path[i];
+      const cx = margin + x * cell + cell / 2;
+      const cy = margin + y * cell + cell / 2;
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    }
+    ctx.strokeStyle = COLORS[color];
+    ctx.lineWidth = Math.max(10, cell * .23);
+    ctx.globalAlpha = .92;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  for (const color of activeColors()) {
+    const [start, end] = game.puzzle.pairs[color];
+    for (const [x, y] of [start, end]) {
+      const cx = margin + x * cell + cell / 2;
+      const cy = margin + y * cell + cell / 2;
+      const radius = cell * .3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#20354840';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS[color];
+      ctx.fill();
+      ctx.strokeStyle = '#ffffffcc';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      if (isConnected(color)) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * .45, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffffcc';
+        ctx.fill();
+      }
+    }
+  }
+
+  if (game.mode === 'playing') {
+    const fx = margin + game.focus.x * cell;
+    const fy = margin + game.focus.y * cell;
+    ctx.strokeStyle = '#10263a';
+    ctx.lineWidth = 4;
+    drawRoundedRect(fx + 5, fy + 5, cell - 10, cell - 10, 8);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  const info = completionInfo();
+  ctx.fillStyle = '#10263a';
+  ctx.font = '900 24px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(game.puzzle.name, 58, 34);
+  ctx.textAlign = 'right';
+  ctx.fillText(`${info.connected}/${activeColors().length} links`, w - 58, 34);
+  ctx.textAlign = 'center';
+  ctx.font = '800 18px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#315066';
+  ctx.fillText(game.message, w / 2, h - 24);
+}
+
+function stateToObject() {
+  const info = completionInfo();
+  return {
+    game: 'flowlines',
+    coordinate_system: 'canvas origin top-left, x increases right, y increases down; grid cells are zero-based x,y pairs from top-left',
+    mode: game.mode,
+    puzzle_index: game.puzzleIndex,
+    puzzle_name: game.puzzle.name,
+    size: game.size,
+    active_color: game.activeColor,
+    focus: { ...game.focus },
+    moves: game.moves,
+    score: game.score,
+    best_score: game.bestScore,
+    hints_used: game.hintsUsed,
+    elapsed_seconds: Math.floor(game.elapsed),
+    filled_cells: info.filled,
+    total_cells: info.total,
+    filled_percent: info.percent,
+    connected_paths: info.connected,
+    complete: info.complete,
+    endpoints: Object.fromEntries(Object.entries(game.puzzle.pairs).map(([color, pair]) => [color, clonePath(pair)])),
+    paths: Object.fromEntries(Object.entries(game.paths).map(([color, path]) => [color, clonePath(path)])),
+    solution_next_steps: Object.fromEntries(activeColors().map((color) => {
+      const path = game.paths[color];
+      const solution = game.puzzle.solution[color];
+      const last = path[path.length - 1];
+      const index = solution.findIndex(cell => cell[0] === last[0] && cell[1] === last[1]);
+      return [color, index > -1 && index < solution.length - 1 ? solution[index + 1] : null];
+    })),
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_win_coins: game.lastWinCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__FLOW_LINES_GAME__ = {
+  startGame,
+  loadPuzzle,
+  nextPuzzle,
+  beginPathAt,
+  extendPathTo,
+  clearColor,
+  undo,
+  drawSolutionStep,
+  stateToObject,
+  renderGameToText,
+  solveActive() {
+    if (game.mode !== 'playing') startGame();
+    let guard = 0;
+    while (game.mode === 'playing' && !completionInfo().complete && guard < 90) {
+      const color = activeColors().find(candidate => !isConnected(candidate)) || activeColors().find(candidate => game.paths[candidate].length < game.puzzle.solution[candidate].length);
+      game.activeColor = color;
+      drawSolutionStep(color);
+      guard += 1;
+    }
+    return stateToObject();
+  },
+  solveAllPuzzles() {
+    for (let i = 0; i < PUZZLES.length; i += 1) {
+      loadPuzzle(i);
+      this.solveActive();
+    }
+    return stateToObject();
+  },
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'flowlines', mode: game.mode };
+  }
+};
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'won') nextPuzzle();
+  else startGame();
+});
+buttons.newPuzzle.addEventListener('click', () => loadPuzzle(game.puzzleIndex));
+buttons.hint.addEventListener('click', () => drawSolutionStep());
+buttons.undo.addEventListener('click', undo);
+buttons.clear.addEventListener('click', () => clearColor());
+buttons.pause.addEventListener('click', togglePause);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', pointerDown);
+canvas.addEventListener('pointermove', pointerMove);
+canvas.addEventListener('pointerup', pointerUp);
+canvas.addEventListener('pointercancel', pointerUp);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+resetPathsToStarts();
+game.activeColor = activeColors()[0];
+{
+  const [initialX, initialY] = game.puzzle.pairs[game.activeColor][0];
+  game.focus = { x: initialX, y: initialY };
+}
+rebuildCells();
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'flowlines', gameName: 'Flow Lines' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

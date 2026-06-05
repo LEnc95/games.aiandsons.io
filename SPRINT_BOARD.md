@@ -254,6 +254,8 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 ## Current Sprint Notes
 - [nightly 2026-05-17] Tracked changes: Stabilize game overlays during animation frames; Fix game start modals and overlay clicks; Add Mancala game.
 - [nightly 2026-05-17] Key PR links: none merged.
+- [nightly 2026-06-03] Tracked changes: 1 commit(s) - 2d17d5e Add Set Match to the arcade site.
+- [nightly 2026-06-03] Key PR links: none merged for this date.
 - Sprint 1 (CG-101 through CG-106) is complete, including deterministic home/shop smoke automation.
 - Sprint 2 (CG-201 through CG-203) is complete with teacher controls, preset packs, and expiry UX behavior.
 - Added follow-up delivery items: CG-204 launcher search/coin tags and CG-205 shop tag filtering (both complete).
@@ -403,3 +405,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-01] Key PR links: none merged for this date.
 - [nightly 2026-06-02] No repository commits found for this date.
 - [nightly 2026-06-02] Key PR links: none merged for this date.
+- [nightly 2026-06-04] No repository commits found for this date.
+- [nightly 2026-06-04] Key PR links: none merged for this date.

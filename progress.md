@@ -3314,3 +3314,33 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose a dedicated in-app Browser navigation/screenshot API in this session; a persistent hidden Node static server launch was also blocked by local execution policy.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Set Match screenshots.
+
+## 2026-06-04 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was requested first through `$CODEX_HOME`, but that environment variable was unset in this PowerShell session and returned no content; repo progress history was used to avoid recent additions, and the explicit memory file at `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md` was updated before closeout.
+- Initial repo check: no `/flowlines` route and no Flow Lines metadata entry found.
+- Chosen game: Flow Lines (`/flowlines`), a canvas grid path puzzle where players connect matching color terminals, cover every tile, and avoid crossing paths.
+- Initial implementation:
+  - Added `flowlines/index.html` with pointer/touch dragging, keyboard path drawing, hints, undo, clear-color, pause, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__FLOW_LINES_GAME__`.
+  - Registered Flow Lines in `src/meta/games.js`.
+- Path logic review tightened endpoint handling so a completed endpoint stops the current line, while either matching terminal can still be used as a redraw start.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Flow Lines SEO metadata now include `/flowlines`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation started:
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/flowlines/`.
+  - Stubbed DOM/canvas runtime harness initially caught startup path initialization before paths were seeded; fixed by initializing all color paths before the first `rebuildCells()` call.
+  - Stubbed DOM/canvas runtime harness passed after the fix: started Harbor Loops, connected and undid a red path, used a hint, solved the first puzzle, solved the 7x7 Sky Grid puzzle, advanced deterministic time, and verified shared feedback context.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/flowlines/` after the startup fix.
+  - `git diff --check` on tracked Flow Lines integration files passed; only existing LF-to-CRLF warnings were printed.
+  - `rg -n "[ \t]+$"` found no trailing whitespace in `flowlines/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/flowlines/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no Playwright screenshots were produced or inspected.
+  - Browser plugin fallback was attempted through the in-app Browser workflow, but the Node-backed browser kernel exited during sandbox setup with `windows sandbox failed: spawn setup refresh`, so no alternate visual screenshot was available.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Flow Lines screenshots.

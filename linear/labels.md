@@ -81,6 +81,7 @@
 - game/letterlock
 - game/wordsearch
 - game/setmatch
+- game/flowlines
 - game/diceforge
 - game/yachtdice
 - game/keystrike
