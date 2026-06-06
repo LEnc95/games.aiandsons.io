@@ -64,3 +64,6 @@
 ## 2025-05-18 - Avoid redundant normalization loops on memory caches
 **Learning:** Functions that search an entire memory cache (like `getFamilyAccountForUser` traversing `memoryState.accounts`) can cause massive CPU spikes if they run expensive object deep-cloning or normalization routines (like `normalizeFamilyAccount`) *before* checking if the entry matches the search criteria.
 **Action:** When filtering a cached memory store map or array, perform the fast-path lookup assertions (e.g. `_memberUserIdsSet.has(userId)`) against the raw object first, and only execute the expensive extraction/normalization logic on the matching result.
+## 2026-06-06 - Replacing chained mapping and filtering with simple loops prevents O(N) allocation
+**Learning:** Re-assigning variables via push rather than direct declaration without initializing to an empty array creates a crash. Checking normalization via property access must be done exactly matching database schema, or normalized properties will not correctly represent records.
+**Action:** When replacing chained maps/filters with loops, ensure the target variables are initialized to an empty array before the loop begins, and confirm the normalization properties and raw objects match safely.

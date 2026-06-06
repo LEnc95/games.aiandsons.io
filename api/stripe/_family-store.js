@@ -369,9 +369,13 @@ async function listFamilyInvitesForAccount(familyAccountId) {
       .get();
     invites = snapshot.docs.map((doc) => normalizeFamilyInvite(doc.data()));
   } else {
-    invites = [...memoryState.invites.values()]
-      .map((entry) => normalizeFamilyInvite(entry))
-      .filter((invite) => invite.familyAccountId === normalizedAccountId);
+    // ⚡ Bolt Optimization: Avoid O(N) allocation and redundant normalizations
+    invites = [];
+    for (const raw of memoryState.invites.values()) {
+      if (raw.familyAccountId === normalizedAccountId) {
+        invites.push(normalizeFamilyInvite(raw));
+      }
+    }
   }
 
   return invites.sort((left, right) => right.createdAt - left.createdAt);
@@ -557,15 +561,20 @@ async function listEmailDeliveries({
       deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
     }
   } else {
-    deliveries = [...memoryState.emails.values()]
-      .map((entry) => normalizeEmailDelivery(entry))
-      .filter((entry) => {
-        if (normalizedAccountId && entry.familyAccountId !== normalizedAccountId) return false;
-        if (normalizedUserId && entry.userId !== normalizedUserId) return false;
-        if (normalizedCustomerId && entry.customerId !== normalizedCustomerId) return false;
-        if (normalizedInvoiceId && entry.invoiceId !== normalizedInvoiceId) return false;
-        return normalizedAccountId || normalizedUserId || normalizedCustomerId || normalizedInvoiceId;
-      });
+    // ⚡ Bolt Optimization: Avoid O(N) allocation and redundant normalizations
+    deliveries = [];
+    for (const raw of memoryState.emails.values()) {
+      let isMatch = true;
+      if (normalizedAccountId && raw.familyAccountId !== normalizedAccountId) isMatch = false;
+      else if (normalizedUserId && raw.userId !== normalizedUserId) isMatch = false;
+      else if (normalizedCustomerId && raw.customerId !== normalizedCustomerId) isMatch = false;
+      else if (normalizedInvoiceId && raw.invoiceId !== normalizedInvoiceId) isMatch = false;
+      else if (!normalizedAccountId && !normalizedUserId && !normalizedCustomerId && !normalizedInvoiceId) isMatch = false;
+
+      if (isMatch) {
+        deliveries.push(normalizeEmailDelivery(raw));
+      }
+    }
   }
 
   return deliveries
