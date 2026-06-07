@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-06-05
+
+### Added
+- Added and wired seven new games: `rushhour`, `jigsaw`, `kakuro`, `letterlock`, `setmatch`, `flowlines`, and `tripeaks`.
+- Expanded the badge catalog and added shop metadata coverage checks.
+
+### Improved
+- Improved accessibility across classroom and game UI surfaces by adding visible labels, ARIA labels, and Enter-key submission support for modal inputs.
+- Improved state-normalizer and Stripe family-account lookup performance by replacing repeated O(N) membership checks with O(1) set-based lookups and a faster account-member fast path.
+
+### Operations
+- Key PRs: [#171](https://github.com/LEnc95/games.aiandsons.io/pull/171), [#170](https://github.com/LEnc95/games.aiandsons.io/pull/170), [#169](https://github.com/LEnc95/games.aiandsons.io/pull/169), [#168](https://github.com/LEnc95/games.aiandsons.io/pull/168), [#167](https://github.com/LEnc95/games.aiandsons.io/pull/167), [#166](https://github.com/LEnc95/games.aiandsons.io/pull/166).
+
 ## [1.5.0] - 2026-05-30
 
 ### Added

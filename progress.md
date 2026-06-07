@@ -3369,3 +3369,28 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Tool discovery did not expose a dedicated in-app Browser navigation/screenshot API, only the Node REPL path that depends on browser launch.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Tri Peaks screenshots.
+
+## 2026-06-06 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, Word Search, Yacht Dice, and Klondike Solitaire.
+- Initial repo check: no `/missilecommand` route and no Missile Command metadata entry found.
+- Chosen game: Missile Command (`/missilecommand`), a canvas arcade defense game where players launch interceptors into expanding blast clouds to protect six cities from escalating missile waves.
+- Initial implementation:
+  - Added `missilecommand/index.html` with canvas rendering, enemy missile spawning, splitter missiles, three ammo-limited batteries, city destruction, wave-clear scoring, coin rewards, pointer/touch firing, keyboard reticle and lane targeting, pause, fullscreen, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__MISSILE_COMMAND_GAME__`.
+  - Registered Missile Command in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Missile Command SEO metadata now include `/missilecommand`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Missile Command module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata and feedback coverage passed: `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`.
+  - `npm run feedback:check-daily`, `npm run test:feedback`, and `npm run test:shop` passed.
+  - Static route smoke with a temporary in-process Node server returned HTTP 200 for `/missilecommand/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started a run, spawned an enemy missile, launched an interceptor, advanced deterministic time, cleared the wave through the test API, awarded coins, and verified `window.__CADE_FEEDBACK_CONTEXT__`.
+  - `git diff --check` passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found none in touched Missile Command integration files.
+- Sandbox/browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/missilecommand/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - Browser plugin fallback was attempted through the in-app Browser workflow, but the browser connection failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` reached the temporary server and failed at the same Chromium launch step.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Missile Command screenshots.

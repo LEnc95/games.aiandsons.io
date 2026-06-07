@@ -407,3 +407,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-02] Key PR links: none merged for this date.
 - [nightly 2026-06-04] No repository commits found for this date.
 - [nightly 2026-06-04] Key PR links: none merged for this date.
+- [nightly 2026-06-05] Tracked changes: 1 commit(s) - 10b9725 Add Tri Peaks Solitaire game.
+- [nightly 2026-06-05] Key PR links: none merged for this date.

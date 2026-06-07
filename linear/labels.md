@@ -44,6 +44,7 @@
 - game/pokemon
 - game/tetris
 - game/asteroids
+- game/missilecommand
 - game/bomberman
 - game/treasuremaze
 - game/echolabyrinth
