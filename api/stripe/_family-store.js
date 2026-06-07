@@ -1,6 +1,9 @@
 const crypto = require("crypto");
 
-const { getFirestore, isFirebaseAdminConfigured } = require("../_firebase-admin");
+const {
+  getFirestore,
+  isFirebaseAdminConfigured,
+} = require("../_firebase-admin");
 
 const FIRESTORE_ACCOUNTS_COLLECTION = "familyAccounts";
 const FIRESTORE_INVITES_COLLECTION = "familyInvites";
@@ -27,7 +30,9 @@ function makeId(prefix) {
 }
 
 function normalizeText(value, maxLength = 200) {
-  return String(value || "").trim().slice(0, maxLength);
+  return String(value || "")
+    .trim()
+    .slice(0, maxLength);
 }
 
 function normalizeEmail(value) {
@@ -95,7 +100,10 @@ function normalizeFamilyAccount(source, fallbackOwnerUserId = "") {
     members.push(member);
   }
 
-  const ownerUserId = normalizeText(raw.ownerUserId || fallback.ownerUserId, 160);
+  const ownerUserId = normalizeText(
+    raw.ownerUserId || fallback.ownerUserId,
+    160,
+  );
   const ownerEmail = normalizeEmail(raw.ownerEmail);
   const ownerDisplayName = normalizeText(raw.ownerDisplayName, 160);
   if (ownerUserId && !seenUserIds.has(ownerUserId)) {
@@ -110,14 +118,27 @@ function normalizeFamilyAccount(source, fallbackOwnerUserId = "") {
     seenUserIds.add(ownerUserId);
   }
 
-  const normalizedMembers = sortMembers(members.map((member) => {
-    if (member.userId === ownerUserId) {
-      return { ...member, role: "owner", email: member.email || ownerEmail, displayName: member.displayName || ownerDisplayName };
-    }
-    return { ...member, role: member.role === "owner" ? "member" : member.role };
-  }));
+  const normalizedMembers = sortMembers(
+    members.map((member) => {
+      if (member.userId === ownerUserId) {
+        return {
+          ...member,
+          role: "owner",
+          email: member.email || ownerEmail,
+          displayName: member.displayName || ownerDisplayName,
+        };
+      }
+      return {
+        ...member,
+        role: member.role === "owner" ? "member" : member.role,
+      };
+    }),
+  );
   const memberUserIds = normalizedMembers.map((member) => member.userId);
-  const seatLimit = Math.max(DEFAULT_FAMILY_MAX_MEMBERS, normalizeCount(raw.seatLimit) || DEFAULT_FAMILY_MAX_MEMBERS);
+  const seatLimit = Math.max(
+    DEFAULT_FAMILY_MAX_MEMBERS,
+    normalizeCount(raw.seatLimit) || DEFAULT_FAMILY_MAX_MEMBERS,
+  );
   const pendingInviteCount = normalizeCount(raw.pendingInviteCount);
   const createdAt = normalizeTimestampMillis(raw.createdAt);
   const updatedAt = normalizeTimestampMillis(raw.updatedAt);
@@ -215,7 +236,9 @@ async function getFamilyAccount(accountId) {
   if (!normalizedId) return null;
 
   if (isFirestoreFamilyStoreEnabled()) {
-    const snapshot = await getFamilyCollections().accounts.doc(normalizedId).get();
+    const snapshot = await getFamilyCollections()
+      .accounts.doc(normalizedId)
+      .get();
     if (!snapshot.exists) return null;
     return normalizeFamilyAccount(snapshot.data());
   }
@@ -224,9 +247,12 @@ async function getFamilyAccount(accountId) {
 }
 
 async function saveFamilyAccount(accountId, patch = {}) {
-  const normalizedId = normalizeText(accountId || patch.id, 120) || makeId("fam");
+  const normalizedId =
+    normalizeText(accountId || patch.id, 120) || makeId("fam");
   const existing = await getFamilyAccount(normalizedId);
-  const base = existing || createDefaultFamilyAccount(normalizeText(patch.ownerUserId, 160));
+  const base =
+    existing ||
+    createDefaultFamilyAccount(normalizeText(patch.ownerUserId, 160));
   const next = normalizeFamilyAccount(
     {
       ...base,
@@ -239,7 +265,9 @@ async function saveFamilyAccount(accountId, patch = {}) {
   );
 
   if (isFirestoreFamilyStoreEnabled()) {
-    await getFamilyCollections().accounts.doc(normalizedId).set(next, { merge: true });
+    await getFamilyCollections()
+      .accounts.doc(normalizedId)
+      .set(next, { merge: true });
   } else {
     memoryState.accounts.set(normalizedId, next);
   }
@@ -252,8 +280,8 @@ async function getFamilyAccountForUser(userId) {
   if (!normalizedUserId) return null;
 
   if (isFirestoreFamilyStoreEnabled()) {
-    const snapshot = await getFamilyCollections().accounts
-      .where("memberUserIds", "array-contains", normalizedUserId)
+    const snapshot = await getFamilyCollections()
+      .accounts.where("memberUserIds", "array-contains", normalizedUserId)
       .limit(1)
       .get();
     if (snapshot.empty) return null;
@@ -262,15 +290,24 @@ async function getFamilyAccountForUser(userId) {
 
   for (const rawAccount of memoryState.accounts.values()) {
     // ⚡ Bolt Optimization: Avoid expensive O(N) normalizeFamilyAccount on read path
-    if (rawAccount._memberUserIdsSet ? rawAccount._memberUserIdsSet.has(normalizedUserId) : rawAccount.memberUserIds.includes(normalizedUserId)) {
-      return getMemoryAccountById(rawAccount.id) || normalizeFamilyAccount(rawAccount);
+    if (
+      rawAccount._memberUserIdsSet
+        ? rawAccount._memberUserIdsSet.has(normalizedUserId)
+        : rawAccount.memberUserIds.includes(normalizedUserId)
+    ) {
+      return (
+        getMemoryAccountById(rawAccount.id) ||
+        normalizeFamilyAccount(rawAccount)
+      );
     }
   }
   return null;
 }
 
 function getDefaultFamilySeatLimit() {
-  const configured = Number(process.env.FAMILY_PLAN_MAX_MEMBERS || DEFAULT_FAMILY_MAX_MEMBERS);
+  const configured = Number(
+    process.env.FAMILY_PLAN_MAX_MEMBERS || DEFAULT_FAMILY_MAX_MEMBERS,
+  );
   if (!Number.isFinite(configured) || configured < 2) {
     return DEFAULT_FAMILY_MAX_MEMBERS;
   }
@@ -291,35 +328,46 @@ async function ensureFamilyAccountForOwner({
   }
 
   const existing = await getFamilyAccountForUser(normalizedOwnerUserId);
-  const existingMembers = Array.isArray(existing?.members) ? existing.members : [];
-  const ownerMember = existingMembers.find((member) => member.userId === normalizedOwnerUserId);
+  const existingMembers = Array.isArray(existing?.members)
+    ? existing.members
+    : [];
+  const ownerMember = existingMembers.find(
+    (member) => member.userId === normalizedOwnerUserId,
+  );
 
   return saveFamilyAccount(existing?.id, {
     ownerUserId: normalizedOwnerUserId,
     ownerEmail: ownerEmail || existing?.ownerEmail || ownerMember?.email || "",
-    ownerDisplayName: ownerDisplayName || existing?.ownerDisplayName || ownerMember?.displayName || "",
+    ownerDisplayName:
+      ownerDisplayName ||
+      existing?.ownerDisplayName ||
+      ownerMember?.displayName ||
+      "",
     status,
     planId,
     seatLimit,
-    members: existingMembers.length > 0
-      ? existingMembers.map((member) => (
-        member.userId === normalizedOwnerUserId
-          ? {
-            ...member,
-            email: ownerEmail || member.email,
-            displayName: ownerDisplayName || member.displayName,
-            role: "owner",
-          }
-          : member
-      ))
-      : [{
-        userId: normalizedOwnerUserId,
-        email: ownerEmail,
-        displayName: ownerDisplayName,
-        role: "owner",
-        invitedByUserId: "",
-        joinedAt: Date.now(),
-      }],
+    members:
+      existingMembers.length > 0
+        ? existingMembers.map((member) =>
+            member.userId === normalizedOwnerUserId
+              ? {
+                  ...member,
+                  email: ownerEmail || member.email,
+                  displayName: ownerDisplayName || member.displayName,
+                  role: "owner",
+                }
+              : member,
+          )
+        : [
+            {
+              userId: normalizedOwnerUserId,
+              email: ownerEmail,
+              displayName: ownerDisplayName,
+              role: "owner",
+              invitedByUserId: "",
+              joinedAt: Date.now(),
+            },
+          ],
   });
 }
 
@@ -328,7 +376,9 @@ async function getFamilyInviteByToken(token) {
   if (!normalizedToken) return null;
 
   if (isFirestoreFamilyStoreEnabled()) {
-    const snapshot = await getFamilyCollections().invites.doc(normalizedToken).get();
+    const snapshot = await getFamilyCollections()
+      .invites.doc(normalizedToken)
+      .get();
     if (!snapshot.exists) return null;
     return normalizeFamilyInvite(snapshot.data());
   }
@@ -338,7 +388,8 @@ async function getFamilyInviteByToken(token) {
 }
 
 async function saveFamilyInvite(token, patch = {}) {
-  const normalizedToken = normalizeText(token || patch.token || patch.id, 120) || makeId("finv");
+  const normalizedToken =
+    normalizeText(token || patch.token || patch.id, 120) || makeId("finv");
   const existing = await getFamilyInviteByToken(normalizedToken);
   const next = normalizeFamilyInvite({
     ...existing,
@@ -350,7 +401,9 @@ async function saveFamilyInvite(token, patch = {}) {
   });
 
   if (isFirestoreFamilyStoreEnabled()) {
-    await getFamilyCollections().invites.doc(normalizedToken).set(next, { merge: true });
+    await getFamilyCollections()
+      .invites.doc(normalizedToken)
+      .set(next, { merge: true });
   } else {
     memoryState.invites.set(normalizedToken, next);
   }
@@ -363,15 +416,17 @@ async function listFamilyInvitesForAccount(familyAccountId) {
 
   let invites = [];
   if (isFirestoreFamilyStoreEnabled()) {
-    const snapshot = await getFamilyCollections().invites
-      .where("familyAccountId", "==", normalizedAccountId)
+    const snapshot = await getFamilyCollections()
+      .invites.where("familyAccountId", "==", normalizedAccountId)
       .limit(50)
       .get();
     invites = snapshot.docs.map((doc) => normalizeFamilyInvite(doc.data()));
   } else {
-    invites = [...memoryState.invites.values()]
-      .map((entry) => normalizeFamilyInvite(entry))
-      .filter((invite) => invite.familyAccountId === normalizedAccountId);
+    // ⚡ Bolt Optimization: Replace O(N) array allocation and redundant normalizations with a single pass
+    for (const raw of memoryState.invites.values()) {
+      if (raw.familyAccountId !== normalizedAccountId) continue;
+      invites.push(normalizeFamilyInvite(raw));
+    }
   }
 
   return invites.sort((left, right) => right.createdAt - left.createdAt);
@@ -408,7 +463,10 @@ async function acceptFamilyInvite({
   if (!invite) {
     throw new Error("family_invite_not_found");
   }
-  if (invite.status === "accepted" && invite.claimedByUserId === normalizeText(claimedByUserId, 160)) {
+  if (
+    invite.status === "accepted" &&
+    invite.claimedByUserId === normalizeText(claimedByUserId, 160)
+  ) {
     const account = await getFamilyAccount(invite.familyAccountId);
     return { invite, account, alreadyAccepted: true };
   }
@@ -429,7 +487,9 @@ async function acceptFamilyInvite({
   }
 
   const normalizedUserId = normalizeText(claimedByUserId, 160);
-  const alreadyMember = account.members.find((member) => member.userId === normalizedUserId);
+  const alreadyMember = account.members.find(
+    (member) => member.userId === normalizedUserId,
+  );
   if (!alreadyMember && account.members.length >= account.seatLimit) {
     throw new Error("family_no_available_seats");
   }
@@ -437,18 +497,20 @@ async function acceptFamilyInvite({
   const nextMembers = alreadyMember
     ? account.members
     : [
-      ...account.members,
-      {
-        userId: normalizedUserId,
-        email: normalizeEmail(claimedByEmail),
-        displayName: normalizeText(claimedByDisplayName, 160),
-        role: "member",
-        invitedByUserId: invite.createdByUserId,
-        joinedAt: Date.now(),
-      },
-    ];
+        ...account.members,
+        {
+          userId: normalizedUserId,
+          email: normalizeEmail(claimedByEmail),
+          displayName: normalizeText(claimedByDisplayName, 160),
+          role: "member",
+          invitedByUserId: invite.createdByUserId,
+          joinedAt: Date.now(),
+        },
+      ];
 
-  const savedAccount = await saveFamilyAccount(account.id, { members: nextMembers });
+  const savedAccount = await saveFamilyAccount(account.id, {
+    members: nextMembers,
+  });
   const savedInvite = await saveFamilyInvite(invite.token, {
     status: "accepted",
     claimedByUserId: normalizedUserId,
@@ -470,11 +532,16 @@ async function removeFamilyMember({ familyAccountId, memberUserId } = {}) {
   }
 
   const normalizedMemberUserId = normalizeText(memberUserId, 160);
-  if (!normalizedMemberUserId || normalizedMemberUserId === account.ownerUserId) {
+  if (
+    !normalizedMemberUserId ||
+    normalizedMemberUserId === account.ownerUserId
+  ) {
     throw new Error("family_member_remove_invalid");
   }
 
-  const nextMembers = account.members.filter((member) => member.userId !== normalizedMemberUserId);
+  const nextMembers = account.members.filter(
+    (member) => member.userId !== normalizedMemberUserId,
+  );
   if (nextMembers.length === account.members.length) {
     return account;
   }
@@ -503,10 +570,14 @@ async function updateEmailDeliveryRecord(id, patch = {}) {
   if (!normalizedId) return null;
   const existing = isFirestoreFamilyStoreEnabled()
     ? await (async () => {
-      const snapshot = await getFamilyCollections().emails.doc(normalizedId).get();
-      return snapshot.exists ? normalizeEmailDelivery(snapshot.data()) : null;
-    })()
-    : (memoryState.emails.has(normalizedId) ? normalizeEmailDelivery(memoryState.emails.get(normalizedId)) : null);
+        const snapshot = await getFamilyCollections()
+          .emails.doc(normalizedId)
+          .get();
+        return snapshot.exists ? normalizeEmailDelivery(snapshot.data()) : null;
+      })()
+    : memoryState.emails.has(normalizedId)
+      ? normalizeEmailDelivery(memoryState.emails.get(normalizedId))
+      : null;
 
   const next = normalizeEmailDelivery({
     ...existing,
@@ -516,7 +587,9 @@ async function updateEmailDeliveryRecord(id, patch = {}) {
     createdAt: existing?.createdAt || Date.now(),
   });
   if (isFirestoreFamilyStoreEnabled()) {
-    await getFamilyCollections().emails.doc(normalizedId).set(next, { merge: true });
+    await getFamilyCollections()
+      .emails.doc(normalizedId)
+      .set(next, { merge: true });
   } else {
     memoryState.emails.set(normalizedId, next);
   }
@@ -544,28 +617,57 @@ async function listEmailDeliveries({
   if (isFirestoreFamilyStoreEnabled()) {
     const collection = getFamilyCollections().emails;
     if (normalizedAccountId) {
-      const snapshot = await collection.where("familyAccountId", "==", normalizedAccountId).limit(normalizedLimit).get();
-      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+      const snapshot = await collection
+        .where("familyAccountId", "==", normalizedAccountId)
+        .limit(normalizedLimit)
+        .get();
+      deliveries = snapshot.docs.map((doc) =>
+        normalizeEmailDelivery(doc.data()),
+      );
     } else if (normalizedUserId) {
-      const snapshot = await collection.where("userId", "==", normalizedUserId).limit(normalizedLimit).get();
-      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+      const snapshot = await collection
+        .where("userId", "==", normalizedUserId)
+        .limit(normalizedLimit)
+        .get();
+      deliveries = snapshot.docs.map((doc) =>
+        normalizeEmailDelivery(doc.data()),
+      );
     } else if (normalizedCustomerId) {
-      const snapshot = await collection.where("customerId", "==", normalizedCustomerId).limit(normalizedLimit).get();
-      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+      const snapshot = await collection
+        .where("customerId", "==", normalizedCustomerId)
+        .limit(normalizedLimit)
+        .get();
+      deliveries = snapshot.docs.map((doc) =>
+        normalizeEmailDelivery(doc.data()),
+      );
     } else if (normalizedInvoiceId) {
-      const snapshot = await collection.where("invoiceId", "==", normalizedInvoiceId).limit(normalizedLimit).get();
-      deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
+      const snapshot = await collection
+        .where("invoiceId", "==", normalizedInvoiceId)
+        .limit(normalizedLimit)
+        .get();
+      deliveries = snapshot.docs.map((doc) =>
+        normalizeEmailDelivery(doc.data()),
+      );
     }
   } else {
-    deliveries = [...memoryState.emails.values()]
-      .map((entry) => normalizeEmailDelivery(entry))
-      .filter((entry) => {
-        if (normalizedAccountId && entry.familyAccountId !== normalizedAccountId) return false;
-        if (normalizedUserId && entry.userId !== normalizedUserId) return false;
-        if (normalizedCustomerId && entry.customerId !== normalizedCustomerId) return false;
-        if (normalizedInvoiceId && entry.invoiceId !== normalizedInvoiceId) return false;
-        return normalizedAccountId || normalizedUserId || normalizedCustomerId || normalizedInvoiceId;
-      });
+    // ⚡ Bolt Optimization: Replace O(N) array allocation and redundant normalizations with a single pass
+    const hasFilter =
+      normalizedAccountId ||
+      normalizedUserId ||
+      normalizedCustomerId ||
+      normalizedInvoiceId;
+    if (hasFilter) {
+      for (const raw of memoryState.emails.values()) {
+        if (normalizedAccountId && raw.familyAccountId !== normalizedAccountId)
+          continue;
+        if (normalizedUserId && raw.userId !== normalizedUserId) continue;
+        if (normalizedCustomerId && raw.customerId !== normalizedCustomerId)
+          continue;
+        if (normalizedInvoiceId && raw.invoiceId !== normalizedInvoiceId)
+          continue;
+        deliveries.push(normalizeEmailDelivery(raw));
+      }
+    }
   }
 
   return deliveries
