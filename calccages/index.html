@@ -1,0 +1,1288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Calc Cages | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #172231;
+  background: linear-gradient(135deg, #e7f0ec 0%, #f6dcc7 47%, #ccdff0 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff91;
+  padding: 8px 12px;
+  background: #173048df;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffd7;
+  background: #f8fbff;
+  box-shadow: 0 24px 58px #2637474a;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd8;
+  background: #173048f3;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #28384861;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(31px, 6vw, 54px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce8f0;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bdd1df;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #173048df;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bfd3dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #95efbc; }
+.chip.warn b { color: #ffd36c; }
+.chip.danger b { color: #ff9aa5; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3448582b;
+}
+button:hover { background: #294761; }
+button:focus-visible {
+  outline: 3px solid #172231;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd45f;
+  border-color: #ffe8a5;
+  color: #172231;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe38a; }
+.action { background: #25705e; }
+.utility { background: #425b72; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill arithmetic cages with nonrepeating row and column digits while matching every cage target. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Calc Cages | AI and Sons Games">
+  <meta property="og:description" content="Fill arithmetic cages with nonrepeating row and column digits while matching every cage target. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/calccages">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Calc Cages | AI and Sons Games">
+  <meta name="twitter:description" content="Fill arithmetic cages with nonrepeating row and column digits while matching every cage target. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/calccages">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Calc Cages","description":"Fill arithmetic cages with nonrepeating row and column digits while matching every cage target. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/calccages","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Calc Cages puzzle board">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Calc Cages</h1>
+        <p id="overlayText">Fill each row and column with 1 through the grid size. Every cage must match its arithmetic target.</p>
+        <p class="mini">Keyboard: arrows move, digits fill, N notes, H hint, Backspace clear, P pause, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="puzzleText">Harbor 4</b></div>
+    <div class="chip"><span>Filled</span><b id="filledText">0 / 16</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">6:00</b></div>
+    <div class="chip danger"><span>Issues</span><b id="issuesText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Calc Cages controls">
+    <button class="primary" id="newBtn" type="button">New Puzzle</button>
+    <button class="action" id="hintBtn" type="button">Hint</button>
+    <button class="utility" id="notesBtn" type="button">Notes Off</button>
+    <button class="utility" id="clearBtn" type="button">Clear Cell</button>
+    <button class="utility" id="undoBtn" type="button">Undo</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  puzzle: document.getElementById('puzzleText'),
+  filled: document.getElementById('filledText'),
+  time: document.getElementById('timeText'),
+  issues: document.getElementById('issuesText'),
+  coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  newPuzzle: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  notes: document.getElementById('notesBtn'),
+  clear: document.getElementById('clearBtn'),
+  undo: document.getElementById('undoBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const BEST_KEY = 'cade:calccages:best';
+const COMPLETE_KEY = 'cade:calccages:completed';
+const digitRects = [];
+let lastFrame = nowMs();
+let manualStepping = false;
+
+const PUZZLES = [
+  {
+    id: 'harbor-4',
+    name: 'Harbor 4',
+    size: 4,
+    timeLimit: 360,
+    solution: [
+      [1, 2, 3, 4],
+      [3, 4, 1, 2],
+      [2, 1, 4, 3],
+      [4, 3, 2, 1],
+    ],
+    cages: [
+      { id: 'A', target: 3, op: '+', cells: [[0, 0], [0, 1]] },
+      { id: 'B', target: 4, op: '+', cells: [[0, 2], [1, 2]] },
+      { id: 'C', target: 2, op: '/', cells: [[0, 3], [1, 3]] },
+      { id: 'D', target: 1, op: '-', cells: [[1, 0], [2, 0]] },
+      { id: 'E', target: 4, op: '/', cells: [[1, 1], [2, 1]] },
+      { id: 'F', target: 7, op: '+', cells: [[2, 2], [2, 3]] },
+      { id: 'G', target: 7, op: '+', cells: [[3, 0], [3, 1]] },
+      { id: 'H', target: 1, op: '-', cells: [[3, 2], [3, 3]] },
+    ],
+  },
+  {
+    id: 'beacon-5',
+    name: 'Beacon 5',
+    size: 5,
+    timeLimit: 480,
+    solution: [
+      [1, 2, 3, 4, 5],
+      [3, 4, 5, 1, 2],
+      [5, 1, 2, 3, 4],
+      [2, 3, 4, 5, 1],
+      [4, 5, 1, 2, 3],
+    ],
+    cages: [
+      { id: 'A', target: 3, op: '+', cells: [[0, 0], [0, 1]] },
+      { id: 'B', target: 15, op: 'x', cells: [[0, 2], [1, 2]] },
+      { id: 'C', target: 9, op: '+', cells: [[0, 3], [0, 4]] },
+      { id: 'D', target: 2, op: '-', cells: [[1, 0], [2, 0]] },
+      { id: 'E', target: 4, op: '/', cells: [[1, 1], [2, 1]] },
+      { id: 'F', target: 2, op: '/', cells: [[1, 3], [1, 4]] },
+      { id: 'G', target: 24, op: 'x', cells: [[2, 2], [2, 3], [2, 4]] },
+      { id: 'H', target: 5, op: '+', cells: [[3, 0], [3, 1]] },
+      { id: 'I', target: 4, op: '/', cells: [[3, 2], [4, 2]] },
+      { id: 'J', target: 7, op: '+', cells: [[3, 3], [4, 3]] },
+      { id: 'K', target: 3, op: '/', cells: [[3, 4], [4, 4]] },
+      { id: 'L', target: 20, op: 'x', cells: [[4, 0], [4, 1]] },
+    ],
+  },
+  {
+    id: 'summit-5',
+    name: 'Summit 5',
+    size: 5,
+    timeLimit: 510,
+    solution: [
+      [2, 5, 1, 3, 4],
+      [5, 1, 3, 4, 2],
+      [1, 3, 4, 2, 5],
+      [3, 4, 2, 5, 1],
+      [4, 2, 5, 1, 3],
+    ],
+    cages: [
+      { id: 'A', target: 10, op: 'x', cells: [[0, 0], [0, 1]] },
+      { id: 'B', target: 4, op: '+', cells: [[0, 2], [0, 3]] },
+      { id: 'C', target: 2, op: '-', cells: [[0, 4], [1, 4]] },
+      { id: 'D', target: 7, op: '+', cells: [[1, 0], [1, 1], [2, 0]] },
+      { id: 'E', target: 12, op: 'x', cells: [[1, 2], [1, 3]] },
+      { id: 'F', target: 12, op: 'x', cells: [[2, 1], [2, 2]] },
+      { id: 'G', target: 3, op: '-', cells: [[2, 3], [3, 3]] },
+      { id: 'H', target: 6, op: '+', cells: [[2, 4], [3, 4]] },
+      { id: 'I', target: 7, op: '+', cells: [[3, 0], [3, 1]] },
+      { id: 'J', target: 10, op: 'x', cells: [[3, 2], [4, 2]] },
+      { id: 'K', target: 6, op: '+', cells: [[4, 0], [4, 1]] },
+      { id: 'L', target: 4, op: '+', cells: [[4, 3], [4, 4]] },
+    ],
+  },
+];
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  values: [],
+  notes: [],
+  selected: { r: 0, c: 0 },
+  noteMode: false,
+  elapsed: 0,
+  score: 0,
+  bestScore: loadNumber(BEST_KEY, 0),
+  completedCount: loadNumber(COMPLETE_KEY, 0),
+  mistakes: 0,
+  hintsUsed: 0,
+  undoStack: [],
+  message: 'Select a cell, then enter a digit that satisfies each cage.',
+  lastAction: { type: 'load' },
+  lastCoins: 0,
+  coinsEarned: 0,
+};
+
+function nowMs() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+}
+
+function loadNumber(key, fallback = 0) {
+  try {
+    const value = Number(localStorage.getItem(key) || fallback);
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveNumber(key, value) {
+  try {
+    localStorage.setItem(key, String(Math.max(0, Math.floor(value))));
+  } catch {
+    // Local storage is optional in test harnesses.
+  }
+}
+
+function puzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function createMatrix(size, value) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => value));
+}
+
+function createNotes(size) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => new Set()));
+}
+
+function cellKey(r, c) {
+  return `${r},${c}`;
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  game.puzzleIndex = ((Math.floor(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  const active = puzzle();
+  game.values = createMatrix(active.size, 0);
+  game.notes = createNotes(active.size);
+  game.selected = { r: 0, c: 0 };
+  game.noteMode = false;
+  game.elapsed = 0;
+  game.score = 0;
+  game.mistakes = 0;
+  game.hintsUsed = 0;
+  game.undoStack = [];
+  game.mode = 'playing';
+  game.message = `${active.name}: fill rows, columns, and arithmetic cages.`;
+  game.lastAction = { type: 'start', puzzle: active.id };
+  game.lastCoins = 0;
+  rememberRecent('calccages');
+  maybeUnlock({ anyPlay: true });
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function restartPuzzle() {
+  return startPuzzle(game.puzzleIndex);
+}
+
+function nextPuzzle() {
+  return startPuzzle(game.puzzleIndex + 1);
+}
+
+function remainingSeconds() {
+  const active = puzzle();
+  return Math.max(0, Math.ceil(active.timeLimit - game.elapsed));
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(safe / 60);
+  const secs = String(safe % 60).padStart(2, '0');
+  return `${mins}:${secs}`;
+}
+
+function filledCount() {
+  return game.values.flat().filter(Boolean).length;
+}
+
+function snapshot() {
+  return {
+    values: game.values.map(row => [...row]),
+    notes: game.notes.map(row => row.map(set => [...set])),
+    selected: { ...game.selected },
+    noteMode: game.noteMode,
+    mistakes: game.mistakes,
+    hintsUsed: game.hintsUsed,
+    message: game.message,
+  };
+}
+
+function restoreSnapshot(snap) {
+  const size = puzzle().size;
+  game.values = snap.values.map(row => [...row]);
+  game.notes = snap.notes.map(row => row.map(items => new Set(items)));
+  game.selected = {
+    r: Math.max(0, Math.min(size - 1, snap.selected.r)),
+    c: Math.max(0, Math.min(size - 1, snap.selected.c)),
+  };
+  game.noteMode = Boolean(snap.noteMode);
+  game.mistakes = snap.mistakes;
+  game.hintsUsed = snap.hintsUsed;
+  game.message = snap.message || 'Undo applied.';
+}
+
+function pushUndo() {
+  game.undoStack.push(snapshot());
+  if (game.undoStack.length > 80) game.undoStack.shift();
+}
+
+function undo() {
+  if (game.mode !== 'playing' || game.undoStack.length === 0) return stateToObject();
+  const snap = game.undoStack.pop();
+  restoreSnapshot(snap);
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function selectCell(r, c) {
+  const size = puzzle().size;
+  game.selected = {
+    r: Math.max(0, Math.min(size - 1, Math.floor(r))),
+    c: Math.max(0, Math.min(size - 1, Math.floor(c))),
+  };
+  game.lastAction = { type: 'select', cell: { ...game.selected } };
+  draw();
+}
+
+function moveSelection(dr, dc) {
+  selectCell(game.selected.r + dr, game.selected.c + dc);
+}
+
+function selectedValue() {
+  return game.values[game.selected.r]?.[game.selected.c] || 0;
+}
+
+function enterDigit(digit, r = game.selected.r, c = game.selected.c) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return stateToObject();
+  const active = puzzle();
+  const value = Math.floor(Number(digit));
+  const row = Math.max(0, Math.min(active.size - 1, Math.floor(r)));
+  const col = Math.max(0, Math.min(active.size - 1, Math.floor(c)));
+  if (value < 1 || value > active.size) return stateToObject();
+  pushUndo();
+  game.selected = { r: row, c: col };
+
+  if (game.noteMode) {
+    const notes = game.notes[row][col];
+    if (game.values[row][col] === 0) {
+      if (notes.has(value)) notes.delete(value);
+      else notes.add(value);
+      game.message = `Note ${value} ${notes.has(value) ? 'added' : 'removed'}.`;
+      game.lastAction = { type: 'note', cell: { r: row, c: col }, digit: value, notes: [...notes] };
+    }
+  } else {
+    game.values[row][col] = value;
+    game.notes[row][col].clear();
+    const validation = validateState();
+    if (validation.conflictKeys.has(cellKey(row, col)) || validation.invalidCages.some(item => item.cells.some(([rr, cc]) => rr === row && cc === col))) {
+      game.mistakes += 1;
+      game.message = `Digit ${value} creates a row, column, or cage issue.`;
+    } else {
+      game.message = `Placed ${value}.`;
+    }
+    game.lastAction = { type: 'digit', cell: { r: row, c: col }, digit: value };
+    checkSolved();
+  }
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function clearCell(r = game.selected.r, c = game.selected.c) {
+  if (game.mode !== 'playing') return stateToObject();
+  const active = puzzle();
+  const row = Math.max(0, Math.min(active.size - 1, Math.floor(r)));
+  const col = Math.max(0, Math.min(active.size - 1, Math.floor(c)));
+  if (!game.values[row][col] && game.notes[row][col].size === 0) return stateToObject();
+  pushUndo();
+  game.values[row][col] = 0;
+  game.notes[row][col].clear();
+  game.selected = { r: row, c: col };
+  game.message = 'Cell cleared.';
+  game.lastAction = { type: 'clear', cell: { r: row, c: col } };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function toggleNoteMode(force = null) {
+  game.noteMode = force == null ? !game.noteMode : Boolean(force);
+  game.message = game.noteMode ? 'Note mode on.' : 'Note mode off.';
+  game.lastAction = { type: 'note_mode', enabled: game.noteMode };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function cageByCell() {
+  const map = new Map();
+  for (const cage of puzzle().cages) {
+    for (const [r, c] of cage.cells) map.set(cellKey(r, c), cage);
+  }
+  return map;
+}
+
+function validateCage(cage, values) {
+  const filled = values.filter(Boolean);
+  const complete = filled.length === values.length;
+  if (filled.length === 0) return { complete, possible: true, valid: false };
+  if (cage.op === '+') {
+    const sum = filled.reduce((total, item) => total + item, 0);
+    return { complete, possible: sum <= cage.target, valid: complete && sum === cage.target };
+  }
+  if (cage.op === 'x') {
+    const product = filled.reduce((total, item) => total * item, 1);
+    return { complete, possible: product <= cage.target && cage.target % product === 0, valid: complete && product === cage.target };
+  }
+  if (cage.op === '-') {
+    if (!complete) return { complete, possible: true, valid: false };
+    const sorted = [...filled].sort((a, b) => b - a);
+    return { complete, possible: Math.abs(sorted[0] - sorted[1]) === cage.target, valid: Math.abs(sorted[0] - sorted[1]) === cage.target };
+  }
+  if (cage.op === '/') {
+    if (!complete) return { complete, possible: true, valid: false };
+    const sorted = [...filled].sort((a, b) => b - a);
+    const ok = sorted[1] !== 0 && sorted[0] % sorted[1] === 0 && sorted[0] / sorted[1] === cage.target;
+    return { complete, possible: ok, valid: ok };
+  }
+  const ok = complete && filled[0] === cage.target;
+  return { complete, possible: !complete || filled[0] === cage.target, valid: ok };
+}
+
+function validateState() {
+  const active = puzzle();
+  const conflictKeys = new Set();
+  const rowConflicts = [];
+  const colConflicts = [];
+
+  for (let r = 0; r < active.size; r += 1) {
+    const seen = new Map();
+    for (let c = 0; c < active.size; c += 1) {
+      const value = game.values[r][c];
+      if (!value) continue;
+      const list = seen.get(value) || [];
+      list.push([r, c]);
+      seen.set(value, list);
+    }
+    for (const [value, cells] of seen) {
+      if (cells.length > 1) {
+        rowConflicts.push({ row: r, value, cells });
+        for (const [rr, cc] of cells) conflictKeys.add(cellKey(rr, cc));
+      }
+    }
+  }
+
+  for (let c = 0; c < active.size; c += 1) {
+    const seen = new Map();
+    for (let r = 0; r < active.size; r += 1) {
+      const value = game.values[r][c];
+      if (!value) continue;
+      const list = seen.get(value) || [];
+      list.push([r, c]);
+      seen.set(value, list);
+    }
+    for (const [value, cells] of seen) {
+      if (cells.length > 1) {
+        colConflicts.push({ column: c, value, cells });
+        for (const [rr, cc] of cells) conflictKeys.add(cellKey(rr, cc));
+      }
+    }
+  }
+
+  const cageStatuses = active.cages.map((cage) => {
+    const values = cage.cells.map(([r, c]) => game.values[r][c]);
+    const result = validateCage(cage, values);
+    const status = result.valid ? 'valid' : result.complete || !result.possible ? 'invalid' : 'partial';
+    return {
+      id: cage.id,
+      target: cage.target,
+      op: cage.op,
+      cells: cage.cells.map(cell => [...cell]),
+      values,
+      complete: result.complete,
+      possible: result.possible,
+      valid: result.valid,
+      status,
+    };
+  });
+  const invalidCages = cageStatuses.filter(item => item.status === 'invalid');
+  return { conflictKeys, rowConflicts, colConflicts, cageStatuses, invalidCages };
+}
+
+function checkSolved() {
+  if (game.mode !== 'playing') return false;
+  const active = puzzle();
+  const validation = validateState();
+  const full = filledCount() === active.size * active.size;
+  const matchesSolution = active.solution.every((row, r) => row.every((value, c) => game.values[r][c] === value));
+  if (full && matchesSolution && validation.conflictKeys.size === 0 && validation.invalidCages.length === 0) {
+    finishPuzzle();
+    return true;
+  }
+  return false;
+}
+
+function useHint() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return stateToObject();
+  const active = puzzle();
+  let target = { ...game.selected };
+  if (game.values[target.r][target.c] === active.solution[target.r][target.c]) {
+    target = null;
+    for (let r = 0; r < active.size && !target; r += 1) {
+      for (let c = 0; c < active.size; c += 1) {
+        if (game.values[r][c] !== active.solution[r][c]) {
+          target = { r, c };
+          break;
+        }
+      }
+    }
+  }
+  if (!target) return stateToObject();
+  pushUndo();
+  game.selected = target;
+  game.values[target.r][target.c] = active.solution[target.r][target.c];
+  game.notes[target.r][target.c].clear();
+  game.hintsUsed += 1;
+  game.message = `Hint filled row ${target.r + 1}, column ${target.c + 1}.`;
+  game.lastAction = { type: 'hint', cell: target, digit: game.values[target.r][target.c] };
+  checkSolved();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function currentScoreEstimate() {
+  const active = puzzle();
+  const base = active.size * active.size * 22;
+  const timeBonus = remainingSeconds();
+  const penalties = game.hintsUsed * 35 + game.mistakes * 12;
+  return Math.max(0, base + timeBonus - penalties);
+}
+
+function finishPuzzle() {
+  const active = puzzle();
+  game.mode = 'solved';
+  game.score = Math.max(40, currentScoreEstimate());
+  game.bestScore = Math.max(game.bestScore, game.score);
+  saveNumber(BEST_KEY, game.bestScore);
+  game.completedCount += 1;
+  saveNumber(COMPLETE_KEY, game.completedCount);
+  const coins = Math.max(12, Math.min(42, 10 + active.size * 4 + Math.floor(remainingSeconds() / 60) - game.hintsUsed));
+  game.lastCoins = coins;
+  game.coinsEarned += coins;
+  addCoins(coins);
+  maybeUnlock({
+    anyPlay: true,
+    calccages: {
+      result: 'solved',
+      size: active.size,
+      hintsUsed: game.hintsUsed,
+      mistakes: game.mistakes,
+      score: game.score,
+    },
+  });
+  game.message = `${active.name} solved for ${game.score} points.`;
+  game.lastAction = { type: 'solved', puzzle: active.id, score: game.score, coins };
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function losePuzzle() {
+  if (game.mode !== 'playing') return;
+  game.mode = 'lost';
+  game.score = currentScoreEstimate();
+  game.message = 'Time expired. Restart or move to the next puzzle.';
+  game.lastAction = { type: 'lost', puzzle: puzzle().id, score: game.score };
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function togglePause() {
+  if (game.mode === 'menu') {
+    startPuzzle(game.puzzleIndex);
+    return stateToObject();
+  }
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = `${puzzle().name} resumed.`;
+  }
+  game.lastAction = { type: 'pause_toggle', mode: game.mode };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+  game.lastAction = { type: 'fullscreen' };
+  setTimeout(draw, 80);
+}
+
+function update(dt) {
+  if (game.mode !== 'playing') return;
+  game.elapsed += Math.max(0, dt);
+  if (remainingSeconds() <= 0) losePuzzle();
+}
+
+function updateHud() {
+  const active = puzzle();
+  const validation = validateStateSafe();
+  const issues = validation.conflictKeys.size + validation.invalidCages.length;
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.puzzle.textContent = active.name;
+  hud.filled.textContent = `${filledCount()} / ${active.size * active.size}`;
+  hud.time.textContent = formatTime(remainingSeconds());
+  hud.issues.textContent = String(issues);
+  hud.coins.textContent = String(Number(profileState.coins || 0));
+  buttons.notes.textContent = game.noteMode ? 'Notes On' : 'Notes Off';
+  startBtn.textContent = game.mode === 'paused' ? 'Resume' : game.mode === 'solved' ? 'Next Puzzle' : game.mode === 'lost' ? 'Try Again' : 'Start Puzzle';
+}
+
+function validateStateSafe() {
+  if (!game.values.length) {
+    return { conflictKeys: new Set(), rowConflicts: [], colConflicts: [], cageStatuses: [], invalidCages: [] };
+  }
+  return validateState();
+}
+
+function updateOverlay() {
+  if (game.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Calc Cages';
+    overlayText.textContent = 'Fill the grid with nonrepeating row and column digits while making every arithmetic cage target true.';
+  } else if (game.mode === 'paused') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'Resume when you are ready to keep solving the current cage puzzle.';
+  } else if (game.mode === 'solved') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Puzzle Solved';
+    overlayText.textContent = `${game.message} Earned ${game.lastCoins} coins. Best score ${game.bestScore}.`;
+  } else if (game.mode === 'lost') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Time Up';
+    overlayText.textContent = `${game.message} You filled ${filledCount()} cells.`;
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function boardRect() {
+  return { x: 58, y: 112, size: 548 };
+}
+
+function cellRect(r, c) {
+  const rect = boardRect();
+  const cell = rect.size / puzzle().size;
+  return {
+    x: rect.x + c * cell,
+    y: rect.y + r * cell,
+    w: cell,
+    h: cell,
+  };
+}
+
+function drawRoundRect(x, y, w, h, radius) {
+  const r = Math.min(radius, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(x, y, w, h, r, fill, stroke = null, lineWidth = 2) {
+  drawRoundRect(x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color, align = 'left', weight = '900') {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#f8fbff');
+  bg.addColorStop(.5, '#edf4ea');
+  bg.addColorStop(1, '#e7d9cb');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  drawHeader();
+  drawBoard();
+  drawSidePanel();
+  drawFooter();
+}
+
+function drawHeader() {
+  fillRoundRect(36, 24, W - 72, 64, 8, '#173048', '#ffffff99', 2);
+  drawText('Calc Cages', 58, 55, 31, '#f8fbff');
+  drawText(game.message, 260, 55, 17, '#dce8f0', 'left', '800');
+  drawText(`${puzzle().name} | ${formatTime(remainingSeconds())}`, W - 58, 55, 18, '#ffd45f', 'right');
+}
+
+function drawBoard() {
+  if (!game.values.length) {
+    const size = puzzle().size;
+    game.values = createMatrix(size, 0);
+    game.notes = createNotes(size);
+  }
+  const active = puzzle();
+  const rect = boardRect();
+  const cell = rect.size / active.size;
+  const validation = validateStateSafe();
+  const conflicts = validation.conflictKeys;
+  const cageMap = cageByCell();
+  fillRoundRect(rect.x - 10, rect.y - 10, rect.size + 20, rect.size + 20, 8, '#ffffffb5', '#ffffffd6', 2);
+
+  for (let r = 0; r < active.size; r += 1) {
+    for (let c = 0; c < active.size; c += 1) {
+      const cr = cellRect(r, c);
+      const key = cellKey(r, c);
+      const selected = game.selected.r === r && game.selected.c === c;
+      const cage = cageMap.get(key);
+      const cageStatus = validation.cageStatuses.find(item => item.id === cage?.id);
+      ctx.fillStyle = selected ? '#ffe5a3' : conflicts.has(key) || cageStatus?.status === 'invalid' ? '#ffd9d9' : '#fffdf8';
+      ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+      ctx.strokeStyle = '#d8d1c7';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cr.x, cr.y, cr.w, cr.h);
+      drawCellContent(r, c, cr);
+      if (selected) {
+        ctx.strokeStyle = '#25705e';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(cr.x + 3, cr.y + 3, cr.w - 6, cr.h - 6);
+      }
+    }
+  }
+  drawCageLabels(cageMap, cell);
+  drawCageBorders(cageMap, cell);
+}
+
+function drawCellContent(r, c, rect) {
+  const value = game.values[r][c];
+  if (value) {
+    drawText(String(value), rect.x + rect.w / 2, rect.y + rect.h / 2 + 6, Math.floor(rect.h * .46), '#173048', 'center');
+    return;
+  }
+  const notes = [...game.notes[r][c]].sort((a, b) => a - b);
+  if (!notes.length) return;
+  const cols = Math.ceil(Math.sqrt(puzzle().size));
+  const noteSize = Math.max(12, Math.floor(rect.h * .14));
+  for (let i = 0; i < notes.length; i += 1) {
+    const x = rect.x + rect.w * .24 + (i % cols) * rect.w * .23;
+    const y = rect.y + rect.h * .44 + Math.floor(i / cols) * rect.h * .21;
+    drawText(String(notes[i]), x, y, noteSize, '#6a7885', 'center', '800');
+  }
+}
+
+function cageLabel(cage) {
+  return `${cage.target}${cage.op || ''}`;
+}
+
+function drawCageLabels(cageMap, cell) {
+  const drawn = new Set();
+  for (const cage of puzzle().cages) {
+    if (drawn.has(cage.id)) continue;
+    const first = cage.cells
+      .map(([r, c]) => ({ r, c }))
+      .sort((a, b) => a.r - b.r || a.c - b.c)[0];
+    const rect = cellRect(first.r, first.c);
+    fillRoundRect(rect.x + 5, rect.y + 5, Math.min(48, cell * .46), 22, 5, '#f7ecd2cc');
+    drawText(cageLabel(cage), rect.x + 10, rect.y + 16, 14, '#173048', 'left', '900');
+    drawn.add(cage.id);
+  }
+}
+
+function drawCageBorders(cageMap) {
+  const active = puzzle();
+  ctx.save();
+  ctx.strokeStyle = '#173048';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'square';
+  for (let r = 0; r < active.size; r += 1) {
+    for (let c = 0; c < active.size; c += 1) {
+      const cage = cageMap.get(cellKey(r, c));
+      const rect = cellRect(r, c);
+      const same = (rr, cc) => cageMap.get(cellKey(rr, cc))?.id === cage?.id;
+      if (!same(r - 1, c)) drawLine(rect.x, rect.y, rect.x + rect.w, rect.y);
+      if (!same(r + 1, c)) drawLine(rect.x, rect.y + rect.h, rect.x + rect.w, rect.y + rect.h);
+      if (!same(r, c - 1)) drawLine(rect.x, rect.y, rect.x, rect.y + rect.h);
+      if (!same(r, c + 1)) drawLine(rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + rect.h);
+    }
+  }
+  ctx.restore();
+}
+
+function drawLine(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function drawSidePanel() {
+  const active = puzzle();
+  const validation = validateStateSafe();
+  digitRects.length = 0;
+  fillRoundRect(650, 112, 374, 548, 8, '#173048e8', '#ffffff9f', 2);
+  drawText('Digits', 680, 148, 26, '#f8fbff');
+  drawText(game.noteMode ? 'Note mode' : 'Entry mode', 995, 148, 16, game.noteMode ? '#ffd45f' : '#95efbc', 'right');
+
+  const startX = 682;
+  const startY = 182;
+  const gap = 14;
+  const size = 58;
+  for (let i = 1; i <= active.size; i += 1) {
+    const col = (i - 1) % 3;
+    const row = Math.floor((i - 1) / 3);
+    const rect = { x: startX + col * (size + gap), y: startY + row * (size + gap), w: size, h: size, digit: i };
+    digitRects.push(rect);
+    const selected = selectedValue() === i;
+    fillRoundRect(rect.x, rect.y, rect.w, rect.h, 8, selected ? '#ffd45f' : '#f8fbff', '#ffffffb5', 2);
+    drawText(String(i), rect.x + rect.w / 2, rect.y + rect.h / 2 + 2, 27, '#173048', 'center');
+  }
+
+  const issues = validation.conflictKeys.size + validation.invalidCages.length;
+  const statusY = 392;
+  drawText('Status', 680, statusY, 24, '#f8fbff');
+  drawText(`Filled ${filledCount()} of ${active.size * active.size}`, 682, statusY + 38, 18, '#dce8f0', 'left', '800');
+  drawText(`Issues ${issues}`, 682, statusY + 70, 18, issues ? '#ff9aa5' : '#95efbc', 'left', '800');
+  drawText(`Hints ${game.hintsUsed}`, 682, statusY + 102, 18, '#dce8f0', 'left', '800');
+  drawText(`Score ${game.score || currentScoreEstimate()}`, 682, statusY + 134, 18, '#ffd45f', 'left', '800');
+  drawText(`Best ${game.bestScore}`, 682, statusY + 166, 18, '#dce8f0', 'left', '800');
+
+  const cell = game.selected;
+  const cage = cageByCell().get(cellKey(cell.r, cell.c));
+  if (cage) {
+    drawText(`Selected R${cell.r + 1} C${cell.c + 1}`, 995, statusY + 38, 17, '#dce8f0', 'right', '800');
+    drawText(`Cage ${cageLabel(cage)}`, 995, statusY + 70, 18, '#ffd45f', 'right', '900');
+    drawText(`${cage.cells.length} cells`, 995, statusY + 102, 17, '#dce8f0', 'right', '800');
+  }
+}
+
+function drawFooter() {
+  fillRoundRect(36, H - 58, W - 72, 36, 8, '#ffffffbd', '#ffffffb0', 2);
+  drawText('Tap a cell, then tap a digit. Rows and columns use each digit once; cage labels show target and operation.', 58, H - 40, 15, '#173048', 'left', '800');
+  drawText('N notes | H hint | U undo | F fullscreen', W - 58, H - 40, 15, '#173048', 'right', '800');
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function cellAtPoint(point) {
+  const rect = boardRect();
+  const active = puzzle();
+  if (point.x < rect.x || point.y < rect.y || point.x > rect.x + rect.size || point.y > rect.y + rect.size) return null;
+  const cell = rect.size / active.size;
+  return {
+    r: Math.max(0, Math.min(active.size - 1, Math.floor((point.y - rect.y) / cell))),
+    c: Math.max(0, Math.min(active.size - 1, Math.floor((point.x - rect.x) / cell))),
+  };
+}
+
+function digitAtPoint(point) {
+  return digitRects.find(rect => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h)?.digit || 0;
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode === 'solved') return;
+  const point = pointFromEvent(event);
+  const cell = cellAtPoint(point);
+  if (cell) {
+    selectCell(cell.r, cell.c);
+    return;
+  }
+  const digit = digitAtPoint(point);
+  if (digit) enterDigit(digit);
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p' || event.key === 'escape') {
+    event.preventDefault();
+    if (event.key === 'Escape' && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing') {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (game.mode === 'paused') togglePause();
+      else if (game.mode === 'solved') nextPuzzle();
+      else startPuzzle(game.puzzleIndex);
+    }
+    return;
+  }
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    moveSelection(0, -1);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    moveSelection(0, 1);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    moveSelection(-1, 0);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    moveSelection(1, 0);
+  } else if (/^[1-9]$/.test(key)) {
+    event.preventDefault();
+    enterDigit(Number(key));
+  } else if (key === 'n') {
+    event.preventDefault();
+    toggleNoteMode();
+  } else if (key === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (key === 'u' || key === 'z') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'backspace' || key === 'delete' || key === 'c') {
+    event.preventDefault();
+    clearCell();
+  } else if (key === 'r') {
+    event.preventDefault();
+    restartPuzzle();
+  }
+}
+
+function compactCell(r, c) {
+  return {
+    row: r,
+    column: c,
+    value: game.values[r][c],
+    notes: [...game.notes[r][c]].sort((a, b) => a - b),
+    selected: game.selected.r === r && game.selected.c === c,
+  };
+}
+
+function stateToObject() {
+  const active = puzzle();
+  const validation = validateStateSafe();
+  return {
+    game: 'calccages',
+    coordinate_system: 'Canvas 1080x720 origin top-left, x increases right, y increases down. Grid cells use zero-based row and column indices.',
+    mode: game.mode,
+    puzzle_id: active.id,
+    puzzle_name: active.name,
+    size: active.size,
+    elapsed_seconds: Number(game.elapsed.toFixed(2)),
+    remaining_seconds: remainingSeconds(),
+    filled_cells: filledCount(),
+    total_cells: active.size * active.size,
+    selected_cell: { ...game.selected },
+    note_mode: game.noteMode,
+    score: game.score || currentScoreEstimate(),
+    best_score: game.bestScore,
+    mistakes: game.mistakes,
+    hints_used: game.hintsUsed,
+    undo_count: game.undoStack.length,
+    conflict_cells: [...validation.conflictKeys],
+    invalid_cages: validation.invalidCages.map(item => item.id),
+    cage_statuses: validation.cageStatuses.map(item => ({
+      id: item.id,
+      target: item.target,
+      op: item.op,
+      cells: item.cells,
+      values: item.values,
+      status: item.status,
+    })),
+    board: Array.from({ length: active.size }, (_, r) => Array.from({ length: active.size }, (_, c) => compactCell(r, c))),
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  pushUndo();
+  const active = puzzle();
+  game.values = active.solution.map(row => [...row]);
+  game.notes = createNotes(active.size);
+  game.lastAction = { type: 'test_solve', puzzle: active.id };
+  checkSolved();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = nowMs();
+  return renderGameToText();
+};
+
+window.__CALC_CAGES_GAME__ = {
+  startPuzzle,
+  restartPuzzle,
+  nextPuzzle,
+  enterDigit,
+  clearCell,
+  toggleNoteMode,
+  useHint,
+  undo,
+  solveCurrent,
+  validateState,
+  stateToObject,
+  renderGameToText,
+  puzzleIds: () => PUZZLES.map(item => item.id),
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'calccages', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'solved') nextPuzzle();
+  else if (game.mode === 'lost') restartPuzzle();
+  else startPuzzle(game.puzzleIndex);
+});
+buttons.newPuzzle.addEventListener('click', nextPuzzle);
+buttons.hint.addEventListener('click', useHint);
+buttons.notes.addEventListener('click', () => toggleNoteMode());
+buttons.clear.addEventListener('click', () => clearCell());
+buttons.undo.addEventListener('click', undo);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+const initialSize = puzzle().size;
+game.values = createMatrix(initialSize, 0);
+game.notes = createNotes(initialSize);
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'calccages', gameName: 'Calc Cages' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

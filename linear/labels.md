@@ -133,5 +133,6 @@
 - game/rushhour
 - game/jigsaw
 - game/kakuro
+- game/calccages
 
 Generated from `src/meta/feedback.js`.

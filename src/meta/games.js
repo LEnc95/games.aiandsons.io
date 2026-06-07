@@ -117,4 +117,5 @@ export const GAMES = [
   { slug:'rushhour',       name:'Rush Hour',           emoji:'\u{1F697}', scoreHint:'moves',      url:'/rushhour',     desc:'Slide cars and trucks through a 6 by 6 traffic jam, clearing blockers so the red car can reach the exit.', earnsCoins:true },
   { slug:'jigsaw',         name:'Jigsaw Puzzle',       emoji:'\u{1F5BC}\uFE0F', scoreHint:'pieces', url:'/jigsaw',       desc:'Drag picture pieces into a ghost preview, snap them into place, and complete colorful jigsaw scenes with hints, shuffle, and undo.', earnsCoins:true },
   { slug:'kakuro',         name:'Kakuro',              emoji:'\u2795',    scoreHint:'solves',     url:'/kakuro',       desc:'Fill crossword-style number grids by matching clue sums, avoiding duplicate digits, and using pencil notes, hints, and undo.', earnsCoins:true },
+  { slug:'calccages',      name:'Calc Cages',          emoji:'\u{1F522}', scoreHint:'solves',     url:'/calccages',    desc:'Fill arithmetic cages with nonrepeating row and column digits while matching every cage target.', earnsCoins:true },
 ];

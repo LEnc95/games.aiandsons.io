@@ -3394,3 +3394,33 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` reached the temporary server and failed at the same Chromium launch step.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Missile Command screenshots.
+
+## 2026-06-07 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Missile Command, Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, and Word Search.
+- Initial repo check: no `/calccages` route and no Calc Cages metadata entry found.
+- Chosen game: Calc Cages (`/calccages`), a KenKen-style arithmetic cage puzzle using an unbranded name to avoid adding a branded route.
+- Implementation started: adding a canvas puzzle with row/column uniqueness, cage target validation, digit and note entry, hints, undo, pause, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and a small test API.
+- Initial implementation:
+  - Added `calccages/index.html` with three arithmetic cage puzzles, pointer/touch and keyboard controls, note mode, hints, undo, timeout/solve states, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__CALC_CAGES_GAME__`.
+  - Registered Calc Cages in `src/meta/games.js`.
+- Fixed `Summit 5` puzzle data after the stubbed harness caught an invalid Latin solution and mismatched cage targets.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Calc Cages SEO metadata now include `/calccages`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation started:
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started Calc Cages, entered a digit, toggled notes, undid, used a hint, solved all three puzzles through `window.__CALC_CAGES_GAME__`, awarded coins, and verified shared feedback context.
+  - Metadata and feedback coverage passed: `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/calccages/`.
+  - `git diff --check` on tracked Calc Cages integration files passed; only existing LF-to-CRLF warnings were printed.
+  - `rg -n "[ \t]+$"` found no trailing whitespace in `calccages/index.html`, `src/meta/games.js`, `index.html`, `sitemap.xml`, `linear/labels.md`, `linear/game-issues.csv`, or `progress.md`.
+- Browser/server notes:
+  - `python` was unavailable for a persistent `python -m http.server` launch. Hidden Node static-server attempts returned HTTP 200 while the launch command was active but did not stay alive after the tool command exited, so no persistent local server was left running.
+  - Required `$develop-web-game` Playwright client reached the launch step against `/calccages/` but failed with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:<temp>` failed at the same Chromium launch step.
+  - In-app Browser/Node REPL fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Calc Cages screenshots.
