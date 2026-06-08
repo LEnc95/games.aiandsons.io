@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Cavern Crush | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f6fbff;
+  background: linear-gradient(135deg, #233a3f 0%, #6b5a3d 48%, #214558 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f6fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #f6fbff91;
+  padding: 8px 12px;
+  background: #13252de8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1060px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #f7f5e7d6;
+  background: #10202a;
+  box-shadow: 0 24px 58px #14212d66;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #fff3d6d8;
+  background: #172a32f2;
+  color: #f6fbff;
+  box-shadow: 0 18px 42px #1226316e;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 6vw, 56px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #d8e8ee;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bdd2db;
+}
+.hud, .controls, .dpad {
+  width: min(97vw, 1060px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.dpad {
+  display: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #f6fbff8f;
+  background: #152c36df;
+  color: #f6fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bad1dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #9ff0b4; }
+.chip.warn b { color: #ffd66f; }
+.chip.danger b { color: #ff9da6; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #182d352e;
+}
+button:hover { background: #2c4d58; }
+button:focus-visible {
+  outline: 3px solid #f7d777;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd66f;
+  border-color: #ffe8a8;
+  color: #14222b;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe391; }
+.action { background: #24715f; }
+.utility { background: #49606b; }
+.move { background: #345b6a; }
+.empty-pad {
+  visibility: hidden;
+}
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 55dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dpad { display: grid; }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 45dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .dpad { gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Dig through cave dirt, collect enough gems to open the exit, and avoid loose falling rocks. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Cavern Crush | AI and Sons Games">
+  <meta property="og:description" content="Dig through cave dirt, collect enough gems to open the exit, and avoid loose falling rocks. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/caverncrush">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cavern Crush | AI and Sons Games">
+  <meta name="twitter:description" content="Dig through cave dirt, collect enough gems to open the exit, and avoid loose falling rocks. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/caverncrush">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Cavern Crush","description":"Dig through cave dirt, collect enough gems to open the exit, and avoid loose falling rocks. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/caverncrush","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Cavern Crush cave board">
+    <canvas id="game" width="1060" height="706"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Cavern Crush</h1>
+        <p id="overlayText">Dig dirt, collect gems, open the exit, and keep out from under loose rocks.</p>
+        <p class="mini">Keyboard: arrows or WASD move, Space waits, P pause, R restart, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Run</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Cave</span><b id="levelText">Ruby Gate</b></div>
+    <div class="chip"><span>Gems</span><b id="gemsText">0 / 4</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">2:30</b></div>
+    <div class="chip danger"><span>Lives</span><b id="livesText">3</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Cavern Crush controls">
+    <button class="primary" id="newBtn" type="button">New Cave</button>
+    <button class="action" id="waitBtn" type="button">Wait</button>
+    <button class="utility" id="pauseBtn" type="button">Pause</button>
+    <button class="utility" id="restartBtn" type="button">Restart</button>
+    <button class="utility" id="hintBtn" type="button">Hint</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+  <section class="dpad" aria-label="Touch movement controls">
+    <button class="empty-pad" type="button" tabindex="-1">Blank</button>
+    <button class="move" data-move="up" type="button">Up</button>
+    <button class="empty-pad" type="button" tabindex="-1">Blank</button>
+    <button class="move" data-move="left" type="button">Left</button>
+    <button class="move" data-move="down" type="button">Down</button>
+    <button class="move" data-move="right" type="button">Right</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const ui = {
+  mode: document.getElementById('modeText'),
+  level: document.getElementById('levelText'),
+  gems: document.getElementById('gemsText'),
+  time: document.getElementById('timeText'),
+  lives: document.getElementById('livesText'),
+  coins: document.getElementById('coinsText'),
+  pause: document.getElementById('pauseBtn'),
+};
+
+const LEVELS = [
+  {
+    id: 'ruby-gate',
+    name: 'Ruby Gate',
+    time: 150,
+    target: 4,
+    map: [
+      '################',
+      '#P....G....R..E#',
+      '#..####..###...#',
+      '#....R....G....#',
+      '#..#...#.......#',
+      '#..#G..#..R....#',
+      '#......#.......#',
+      '#..R......####.#',
+      '#....G.........#',
+      '#......R.......#',
+      '#..............#',
+      '################',
+    ],
+  },
+  {
+    id: 'amber-drop',
+    name: 'Amber Drop',
+    time: 165,
+    target: 5,
+    map: [
+      '################',
+      '#P...R....G...E#',
+      '#..####..###...#',
+      '#..G...R....R..#',
+      '#......#.......#',
+      '#.R.#..#..G....#',
+      '#...#..####....#',
+      '#...G.....R....#',
+      '#..###.........#',
+      '#......R...G...#',
+      '#..............#',
+      '################',
+    ],
+  },
+  {
+    id: 'crystal-fall',
+    name: 'Crystal Fall',
+    time: 180,
+    target: 6,
+    map: [
+      '################',
+      '#P..R....G..R.E#',
+      '#..####....##..#',
+      '#..G....R......#',
+      '#......#..G....#',
+      '#.R.#..#..###..#',
+      '#...#..G.......#',
+      '#...###....R...#',
+      '#..G.......#...#',
+      '#....R...G.....#',
+      '#..............#',
+      '################',
+    ],
+  },
+];
+
+const TILE = {
+  EMPTY: ' ',
+  WALL: '#',
+  DIRT: '.',
+  ROCK: 'R',
+  GEM: 'G',
+  EXIT: 'E',
+};
+
+const DIRS = {
+  up: { x: 0, y: -1 },
+  down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+};
+
+const buttons = {
+  new: document.getElementById('newBtn'),
+  wait: document.getElementById('waitBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  hint: document.getElementById('hintBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const game = {
+  mode: 'menu',
+  levelIndex: 0,
+  grid: [],
+  player: { x: 1, y: 1 },
+  spawn: { x: 1, y: 1 },
+  exit: { x: 14, y: 1 },
+  gemsCollected: 0,
+  gemsAvailable: 0,
+  score: 0,
+  lives: 3,
+  timeLeft: LEVELS[0].time,
+  physicsTimer: 0,
+  message: 'Press Start Run.',
+  lastAction: { type: 'init' },
+  falling: new Set(),
+  particles: [],
+  moveCount: 0,
+  coinsEarned: 0,
+  lastCoins: 0,
+  hintPath: [],
+  hurtFlash: 0,
+};
+
+let lastFrame = 0;
+let manualStepping = false;
+let profileTouched = false;
+
+function cloneGrid(rows) {
+  return rows.map(row => row.split(''));
+}
+
+function level() {
+  return LEVELS[game.levelIndex];
+}
+
+function parseLevel(index) {
+  const active = LEVELS[index];
+  const grid = cloneGrid(active.map);
+  let gems = 0;
+  for (let y = 0; y < grid.length; y += 1) {
+    for (let x = 0; x < grid[y].length; x += 1) {
+      if (grid[y][x] === 'P') {
+        game.player = { x, y };
+        game.spawn = { x, y };
+        grid[y][x] = TILE.EMPTY;
+      } else if (grid[y][x] === TILE.EXIT) {
+        game.exit = { x, y };
+      } else if (grid[y][x] === TILE.GEM) {
+        gems += 1;
+      }
+    }
+  }
+  game.grid = grid;
+  game.gemsAvailable = gems;
+  game.gemsCollected = 0;
+  game.timeLeft = active.time;
+  game.physicsTimer = 0;
+  game.falling.clear();
+  game.particles = [];
+  game.hintPath = [];
+  game.hurtFlash = 0;
+}
+
+function touchProfile() {
+  if (profileTouched) return;
+  profileTouched = true;
+  rememberRecent('caverncrush');
+  maybeUnlock({ anyPlay: true });
+}
+
+function startLevel(index = game.levelIndex, keepLives = false) {
+  game.levelIndex = ((index % LEVELS.length) + LEVELS.length) % LEVELS.length;
+  if (!keepLives) {
+    game.lives = 3;
+    game.score = 0;
+    game.coinsEarned = 0;
+    game.lastCoins = 0;
+  }
+  parseLevel(game.levelIndex);
+  game.mode = 'playing';
+  game.message = `Collect ${level().target} gems and reach the exit.`;
+  game.lastAction = { type: 'start_level', level: level().id };
+  touchProfile();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function restartLevel() {
+  startLevel(game.levelIndex, true);
+  game.lastAction = { type: 'restart_level', level: level().id };
+}
+
+function nextLevel() {
+  startLevel(game.levelIndex + 1, true);
+  game.lastAction = { type: 'next_level', level: level().id };
+}
+
+function inBounds(x, y) {
+  return y >= 0 && y < game.grid.length && x >= 0 && x < game.grid[0].length;
+}
+
+function tileAt(x, y) {
+  if (!inBounds(x, y)) return TILE.WALL;
+  return game.grid[y][x];
+}
+
+function setTile(x, y, value) {
+  if (inBounds(x, y)) game.grid[y][x] = value;
+}
+
+function isPlayerAt(x, y) {
+  return game.player.x === x && game.player.y === y;
+}
+
+function isRoundTile(tile) {
+  return tile === TILE.ROCK || tile === TILE.GEM;
+}
+
+function isFreeForFalling(x, y) {
+  return inBounds(x, y) && tileAt(x, y) === TILE.EMPTY && !isPlayerAt(x, y);
+}
+
+function exitOpen() {
+  return game.gemsCollected >= level().target;
+}
+
+function addParticle(x, y, color, text = '') {
+  game.particles.push({
+    x: x + .5,
+    y: y + .5,
+    color,
+    text,
+    age: 0,
+    ttl: .85,
+    vx: (Math.random() - .5) * .25,
+    vy: -0.7 - Math.random() * .35,
+  });
+}
+
+function awardCoins(amount, reason) {
+  const reward = Math.max(0, Math.floor(amount));
+  if (reward <= 0) return;
+  addCoins(reward);
+  game.coinsEarned += reward;
+  game.lastCoins = reward;
+  game.message = `${reason} +${reward} coins`;
+}
+
+function recordRun(result) {
+  maybeUnlock({
+    anyPlay: true,
+    caverncrush: {
+      result,
+      level: game.levelIndex + 1,
+      gems: game.gemsCollected,
+      score: game.score,
+      lives: game.lives,
+    },
+  });
+}
+
+function completeLevel() {
+  const finalLevel = game.levelIndex >= LEVELS.length - 1;
+  game.score += 400 + game.gemsCollected * 50 + Math.max(0, Math.ceil(game.timeLeft)) * 2;
+  awardCoins(finalLevel ? 30 : 16, finalLevel ? 'Caves cleared' : 'Cave cleared');
+  game.lastAction = { type: finalLevel ? 'game_won' : 'level_complete', level: level().id };
+  recordRun(finalLevel ? 'won' : 'level_complete');
+  game.mode = finalLevel ? 'won' : 'levelComplete';
+  game.message = finalLevel ? 'Every cave is secure.' : 'Exit reached. Next cave unlocked.';
+  updateHud();
+  updateOverlay();
+}
+
+function loseLife(reason = 'crushed') {
+  game.lives = Math.max(0, game.lives - 1);
+  game.hurtFlash = .5;
+  game.lastAction = { type: 'life_lost', reason, lives: game.lives };
+  if (game.lives <= 0) {
+    game.mode = 'lost';
+    game.message = reason === 'timeout' ? 'Time ran out.' : 'The cave got you.';
+    recordRun('lost');
+  } else {
+    parseLevel(game.levelIndex);
+    game.mode = 'playing';
+    game.message = reason === 'timeout' ? 'Time slipped away. Try again.' : 'A falling rock hit you. Try again.';
+  }
+  updateHud();
+  updateOverlay();
+}
+
+function collectGem(x, y) {
+  setTile(x, y, TILE.EMPTY);
+  game.gemsCollected += 1;
+  game.score += 100 + game.gemsCollected * 10;
+  addParticle(x, y, '#90f3ff', '+gem');
+  if (exitOpen()) {
+    game.message = 'Exit open. Head for the gate.';
+  } else {
+    game.message = 'Gem pocket cleared.';
+  }
+}
+
+function canMoveInto(tile) {
+  return tile === TILE.EMPTY || tile === TILE.DIRT || tile === TILE.GEM || tile === TILE.EXIT;
+}
+
+function movePlayer(direction) {
+  if (game.mode !== 'playing') return false;
+  const dir = DIRS[direction];
+  if (!dir) return false;
+  const next = { x: game.player.x + dir.x, y: game.player.y + dir.y };
+  const tile = tileAt(next.x, next.y);
+  game.hintPath = [];
+
+  if (tile === TILE.EXIT) {
+    if (exitOpen()) {
+      game.player = next;
+      game.moveCount += 1;
+      completeLevel();
+      return true;
+    }
+    game.message = `${Math.max(0, level().target - game.gemsCollected)} more gems needed.`;
+    game.lastAction = { type: 'blocked_exit', needed: Math.max(0, level().target - game.gemsCollected) };
+    updateHud();
+    draw();
+    return false;
+  }
+
+  if (tile === TILE.ROCK && dir.y === 0) {
+    const beyond = { x: next.x + dir.x, y: next.y };
+    if (tileAt(beyond.x, beyond.y) === TILE.EMPTY && !isPlayerAt(beyond.x, beyond.y)) {
+      setTile(beyond.x, beyond.y, TILE.ROCK);
+      setTile(next.x, next.y, TILE.EMPTY);
+      game.player = next;
+      game.moveCount += 1;
+      game.score += 2;
+      game.message = 'Rock pushed.';
+      game.lastAction = { type: 'push_rock', direction };
+      stepGravity();
+      updateHud();
+      draw();
+      return true;
+    }
+    game.message = 'That rock will not budge.';
+    game.lastAction = { type: 'blocked_rock', direction };
+    updateHud();
+    draw();
+    return false;
+  }
+
+  if (!canMoveInto(tile)) {
+    game.message = 'Solid cave wall.';
+    game.lastAction = { type: 'blocked', direction, tile };
+    updateHud();
+    draw();
+    return false;
+  }
+
+  if (tile === TILE.GEM) {
+    collectGem(next.x, next.y);
+  } else if (tile === TILE.DIRT) {
+    setTile(next.x, next.y, TILE.EMPTY);
+    game.score += 5;
+    game.message = 'Dirt cleared.';
+  } else {
+    game.message = 'Moved.';
+  }
+
+  game.player = next;
+  game.moveCount += 1;
+  game.lastAction = { type: 'move', direction, x: next.x, y: next.y };
+  stepGravity();
+  updateHud();
+  draw();
+  return true;
+}
+
+function waitTurn() {
+  if (game.mode !== 'playing') return;
+  game.lastAction = { type: 'wait' };
+  game.message = 'You wait and listen to the cave shift.';
+  stepGravity();
+  updateHud();
+  draw();
+}
+
+function fallTile(x, y, toX, toY, tile) {
+  setTile(x, y, TILE.EMPTY);
+  if (isPlayerAt(toX, toY)) {
+    loseLife(tile === TILE.ROCK ? 'crushed_by_rock' : 'crushed_by_gem');
+    return true;
+  }
+  setTile(toX, toY, tile);
+  game.falling.add(`${toX},${toY}`);
+  if (tile === TILE.GEM) addParticle(toX, toY, '#6ee7ff');
+  return false;
+}
+
+function stepGravity() {
+  if (game.mode !== 'playing') return false;
+  game.falling.clear();
+  let moved = false;
+  for (let y = game.grid.length - 2; y >= 1; y -= 1) {
+    for (let x = 1; x < game.grid[y].length - 1; x += 1) {
+      const tile = tileAt(x, y);
+      if (!isRoundTile(tile)) continue;
+      const below = tileAt(x, y + 1);
+      if (isPlayerAt(x, y + 1) || below === TILE.EMPTY) {
+        if (fallTile(x, y, x, y + 1, tile)) return true;
+        moved = true;
+        continue;
+      }
+      if (isRoundTile(below) || below === TILE.WALL) {
+        const order = x % 2 === 0 ? [-1, 1] : [1, -1];
+        for (const dx of order) {
+          if (isFreeForFalling(x + dx, y) && (isFreeForFalling(x + dx, y + 1) || isPlayerAt(x + dx, y + 1))) {
+            if (fallTile(x, y, x + dx, y + 1, tile)) return true;
+            moved = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (moved) game.message = 'Loose stones shift.';
+  return moved;
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+    game.lastAction = { type: 'pause' };
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Back in the cave.';
+    game.lastAction = { type: 'resume' };
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function findPathToGoal() {
+  const goalTiles = [];
+  if (exitOpen()) goalTiles.push(game.exit);
+  else {
+    for (let y = 0; y < game.grid.length; y += 1) {
+      for (let x = 0; x < game.grid[y].length; x += 1) {
+        if (tileAt(x, y) === TILE.GEM) goalTiles.push({ x, y });
+      }
+    }
+  }
+  const goalKeys = new Set(goalTiles.map(item => `${item.x},${item.y}`));
+  const queue = [{ x: game.player.x, y: game.player.y, path: [] }];
+  const seen = new Set([`${game.player.x},${game.player.y}`]);
+  while (queue.length) {
+    const node = queue.shift();
+    if (goalKeys.has(`${node.x},${node.y}`) && node.path.length > 0) return node.path;
+    for (const [name, dir] of Object.entries(DIRS)) {
+      const nx = node.x + dir.x;
+      const ny = node.y + dir.y;
+      const key = `${nx},${ny}`;
+      if (seen.has(key)) continue;
+      const tile = tileAt(nx, ny);
+      if (!canMoveInto(tile)) continue;
+      if (tile === TILE.EXIT && !exitOpen()) continue;
+      seen.add(key);
+      queue.push({ x: nx, y: ny, path: [...node.path, { x: nx, y: ny, direction: name }] });
+    }
+  }
+  return [];
+}
+
+function showHint() {
+  if (game.mode !== 'playing') return;
+  game.hintPath = findPathToGoal().slice(0, 12);
+  if (game.hintPath.length) {
+    game.message = exitOpen() ? 'Hint path points to the open exit.' : 'Hint path points to the nearest gem.';
+    game.lastAction = { type: 'hint', steps: game.hintPath.length };
+  } else {
+    game.message = 'No safe hint path found.';
+    game.lastAction = { type: 'hint_failed' };
+  }
+  updateHud();
+  draw();
+}
+
+function formatTime(value) {
+  const total = Math.max(0, Math.ceil(value));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function tileCounts() {
+  const counts = { dirt: 0, rocks: 0, gems: 0, exit: exitOpen() ? 'open' : 'closed' };
+  for (const row of game.grid) {
+    for (const tile of row) {
+      if (tile === TILE.DIRT) counts.dirt += 1;
+      else if (tile === TILE.ROCK) counts.rocks += 1;
+      else if (tile === TILE.GEM) counts.gems += 1;
+    }
+  }
+  return counts;
+}
+
+function stateToObject() {
+  const active = level();
+  const gems = [];
+  const rocks = [];
+  for (let y = 0; y < game.grid.length; y += 1) {
+    for (let x = 0; x < game.grid[y].length; x += 1) {
+      const tile = tileAt(x, y);
+      if (tile === TILE.GEM) gems.push({ x, y });
+      if (tile === TILE.ROCK) rocks.push({ x, y, falling: game.falling.has(`${x},${y}`) });
+    }
+  }
+  return {
+    game: 'caverncrush',
+    coordinate_system: 'grid origin top-left, x right, y down',
+    mode: game.mode,
+    level_index: game.levelIndex,
+    level_id: active.id,
+    level_name: active.name,
+    player: { x: game.player.x, y: game.player.y },
+    exit: { x: game.exit.x, y: game.exit.y, open: exitOpen() },
+    gems_collected: game.gemsCollected,
+    gems_required: active.target,
+    gems_remaining: gems,
+    rocks: rocks.slice(0, 24),
+    tile_counts: tileCounts(),
+    score: game.score,
+    lives: game.lives,
+    time_left_seconds: Number(game.timeLeft.toFixed(2)),
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    message: game.message,
+    last_action: game.lastAction,
+    grid: game.grid.map((row, y) => row.map((tile, x) => isPlayerAt(x, y) ? 'P' : tile).join('')),
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startLevel(game.levelIndex, true);
+  game.gemsCollected = level().target;
+  for (let y = 0; y < game.grid.length; y += 1) {
+    for (let x = 0; x < game.grid[y].length; x += 1) {
+      if (tileAt(x, y) === TILE.GEM) setTile(x, y, TILE.EMPTY);
+    }
+  }
+  game.player = { ...game.exit };
+  completeLevel();
+  draw();
+  return stateToObject();
+}
+
+function update(dt) {
+  if (game.mode !== 'playing') {
+    updateParticles(dt);
+    return;
+  }
+  game.timeLeft -= dt;
+  if (game.timeLeft <= 0) {
+    loseLife('timeout');
+    return;
+  }
+  game.physicsTimer += dt;
+  while (game.physicsTimer >= .22 && game.mode === 'playing') {
+    game.physicsTimer -= .22;
+    stepGravity();
+  }
+  if (game.hurtFlash > 0) game.hurtFlash = Math.max(0, game.hurtFlash - dt);
+  updateParticles(dt);
+}
+
+function updateParticles(dt) {
+  for (const particle of game.particles) {
+    particle.age += dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+  }
+  game.particles = game.particles.filter(particle => particle.age < particle.ttl);
+}
+
+function updateHud() {
+  ui.mode.textContent = game.mode.toUpperCase();
+  ui.level.textContent = level().name;
+  ui.gems.textContent = `${game.gemsCollected} / ${level().target}`;
+  ui.time.textContent = formatTime(game.timeLeft);
+  ui.lives.textContent = String(game.lives);
+  ui.coins.textContent = String(profileState.coins || 0);
+  ui.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function updateOverlay() {
+  const show = game.mode !== 'playing';
+  overlay.classList.toggle('show', show);
+  if (!show) return;
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Cavern Crush';
+    overlayText.textContent = 'Dig dirt, collect gems, open the exit, and keep out from under loose rocks.';
+    startBtn.textContent = 'Start Run';
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'Loose rocks wait until you resume.';
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'levelComplete') {
+    overlayTitle.textContent = 'Cave Clear';
+    overlayText.textContent = 'You reached the gate with enough gems.';
+    startBtn.textContent = 'Next Cave';
+  } else if (game.mode === 'won') {
+    overlayTitle.textContent = 'Caves Secured';
+    overlayText.textContent = 'Every gate is open and every gem vein is mapped.';
+    startBtn.textContent = 'Play Again';
+  } else if (game.mode === 'lost') {
+    overlayTitle.textContent = 'Run Lost';
+    overlayText.textContent = game.message;
+    startBtn.textContent = 'Try Again';
+  }
+}
+
+function layout() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cols = game.grid[0]?.length || 16;
+  const rows = game.grid.length || 12;
+  const sidebar = w >= 860 ? 250 : 0;
+  const availableW = w - sidebar - 42;
+  const availableH = h - 52;
+  const size = Math.floor(Math.min(availableW / cols, availableH / rows));
+  const gridW = size * cols;
+  const gridH = size * rows;
+  const x = Math.floor((availableW - gridW) / 2) + 18;
+  const y = Math.floor((h - gridH) / 2);
+  return { x, y, size, cols, rows, sidebarX: x + gridW + 28 };
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#0f2530');
+  gradient.addColorStop(.45, '#2c3d36');
+  gradient.addColorStop(1, '#65442c');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ffffff0a';
+  for (let i = 0; i < 36; i += 1) {
+    const x = (i * 83 + 27) % canvas.width;
+    const y = (i * 47 + 59) % canvas.height;
+    ctx.beginPath();
+    ctx.arc(x, y, 2 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawTile(tile, px, py, size, x, y) {
+  if (tile === TILE.WALL) {
+    ctx.fillStyle = '#513a2a';
+    ctx.fillRect(px, py, size, size);
+    ctx.fillStyle = '#76543a';
+    ctx.fillRect(px + 2, py + 2, size - 4, size - 4);
+    ctx.fillStyle = '#463123';
+    ctx.fillRect(px + size * .55, py, 2, size);
+    ctx.fillRect(px, py + size * .45, size, 2);
+  } else if (tile === TILE.DIRT) {
+    ctx.fillStyle = '#7a5634';
+    ctx.fillRect(px, py, size, size);
+    ctx.fillStyle = '#9b7145';
+    for (let i = 0; i < 4; i += 1) {
+      const sx = px + ((x * 13 + y * 17 + i * 11) % Math.max(1, size - 8)) + 4;
+      const sy = py + ((x * 19 + y * 7 + i * 13) % Math.max(1, size - 8)) + 4;
+      ctx.fillRect(sx, sy, 3, 3);
+    }
+  } else if (tile === TILE.ROCK) {
+    const grd = ctx.createRadialGradient(px + size * .35, py + size * .3, 2, px + size * .5, py + size * .55, size * .55);
+    grd.addColorStop(0, '#d1d2c5');
+    grd.addColorStop(.55, '#888a80');
+    grd.addColorStop(1, '#4e534e');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(px + size / 2, py + size / 2, size * .38, 0, Math.PI * 2);
+    ctx.fill();
+    if (game.falling.has(`${x},${y}`)) {
+      ctx.strokeStyle = '#ffe08a';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  } else if (tile === TILE.GEM) {
+    const grd = ctx.createLinearGradient(px, py, px + size, py + size);
+    grd.addColorStop(0, '#e7ffff');
+    grd.addColorStop(.45, '#6ee7ff');
+    grd.addColorStop(1, '#2673d8');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(px + size * .5, py + size * .16);
+    ctx.lineTo(px + size * .8, py + size * .42);
+    ctx.lineTo(px + size * .63, py + size * .82);
+    ctx.lineTo(px + size * .37, py + size * .82);
+    ctx.lineTo(px + size * .2, py + size * .42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#d8ffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if (tile === TILE.EXIT) {
+    ctx.fillStyle = exitOpen() ? '#61d48a' : '#5b6970';
+    ctx.fillRect(px + size * .18, py + size * .14, size * .64, size * .72);
+    ctx.fillStyle = exitOpen() ? '#123a26' : '#24313a';
+    ctx.fillRect(px + size * .31, py + size * .27, size * .38, size * .59);
+    ctx.fillStyle = exitOpen() ? '#e8ffe5' : '#c2c8cc';
+    ctx.fillRect(px + size * .57, py + size * .55, size * .08, size * .08);
+  }
+}
+
+function drawPlayer(bounds) {
+  const { x, y, size } = bounds;
+  const px = x + game.player.x * size;
+  const py = y + game.player.y * size;
+  ctx.save();
+  ctx.translate(px + size / 2, py + size / 2);
+  const flash = game.hurtFlash > 0 && Math.floor(game.hurtFlash * 16) % 2 === 0;
+  ctx.fillStyle = flash ? '#ff8c8c' : '#ffe58c';
+  ctx.beginPath();
+  ctx.arc(0, 0, size * .34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#24313a';
+  ctx.fillRect(-size * .13, -size * .04, size * .09, size * .09);
+  ctx.fillRect(size * .04, -size * .04, size * .09, size * .09);
+  ctx.strokeStyle = '#24313a';
+  ctx.lineWidth = Math.max(2, size * .06);
+  ctx.beginPath();
+  ctx.arc(0, size * .08, size * .12, 0, Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGrid() {
+  const bounds = layout();
+  const { x, y, size, cols, rows } = bounds;
+  ctx.fillStyle = '#07141a';
+  ctx.fillRect(x - 6, y - 6, cols * size + 12, rows * size + 12);
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const px = x + col * size;
+      const py = y + row * size;
+      ctx.fillStyle = '#12272f';
+      ctx.fillRect(px, py, size, size);
+      drawTile(tileAt(col, row), px, py, size, col, row);
+      ctx.strokeStyle = '#ffffff12';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px, py, size, size);
+    }
+  }
+  drawHint(bounds);
+  drawPlayer(bounds);
+  drawParticles(bounds);
+  return bounds;
+}
+
+function drawHint(bounds) {
+  if (!game.hintPath.length) return;
+  const { x, y, size } = bounds;
+  ctx.strokeStyle = '#ffef88';
+  ctx.lineWidth = Math.max(3, size * .09);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + (game.player.x + .5) * size, y + (game.player.y + .5) * size);
+  for (const step of game.hintPath) {
+    ctx.lineTo(x + (step.x + .5) * size, y + (step.y + .5) * size);
+  }
+  ctx.stroke();
+}
+
+function drawParticles(bounds) {
+  const { x, y, size } = bounds;
+  ctx.save();
+  ctx.font = `${Math.max(12, size * .32)}px "Trebuchet MS", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const particle of game.particles) {
+    const alpha = Math.max(0, 1 - particle.age / particle.ttl);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = particle.color;
+    const px = x + particle.x * size;
+    const py = y + particle.y * size;
+    if (particle.text) {
+      ctx.fillText(particle.text, px, py);
+    } else {
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(2, size * .08), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawSidebar(bounds) {
+  if (bounds.sidebarX + 210 > canvas.width) return;
+  const x = bounds.sidebarX;
+  const y = bounds.y;
+  const counts = tileCounts();
+  ctx.fillStyle = '#0d1d25cc';
+  ctx.fillRect(x, y, 218, bounds.rows * bounds.size);
+  ctx.strokeStyle = '#f6fbff33';
+  ctx.strokeRect(x, y, 218, bounds.rows * bounds.size);
+  ctx.fillStyle = '#f6fbff';
+  ctx.font = '900 26px "Trebuchet MS", sans-serif';
+  ctx.fillText('Cavern Crush', x + 18, y + 42);
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  const lines = [
+    `Cave: ${level().name}`,
+    `Gems: ${game.gemsCollected}/${level().target}`,
+    `Exit: ${exitOpen() ? 'open' : 'closed'}`,
+    `Rocks: ${counts.rocks}`,
+    `Time: ${formatTime(game.timeLeft)}`,
+    `Score: ${game.score}`,
+  ];
+  lines.forEach((line, i) => {
+    ctx.fillStyle = i === 2 && exitOpen() ? '#9ff0b4' : '#d8e8ee';
+    ctx.fillText(line, x + 18, y + 82 + i * 30);
+  });
+  ctx.fillStyle = '#bfd2dc';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText(game.message, x + 18, y + bounds.rows * bounds.size - 74, 184, 20);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = String(text || '').split(/\s+/);
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, y);
+}
+
+function draw() {
+  drawBackground();
+  if (!game.grid.length) parseLevel(game.levelIndex);
+  const bounds = drawGrid();
+  drawSidebar(bounds);
+  if (game.mode !== 'playing') {
+    ctx.fillStyle = '#07141a75';
+    ctx.fillRect(bounds.x - 6, bounds.y - 6, bounds.cols * bounds.size + 12, bounds.rows * bounds.size + 12);
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  const map = {
+    arrowup: 'up',
+    w: 'up',
+    arrowdown: 'down',
+    s: 'down',
+    arrowleft: 'left',
+    a: 'left',
+    arrowright: 'right',
+    d: 'right',
+  };
+  if (map[key]) {
+    event.preventDefault();
+    if (game.mode === 'menu') startLevel(0);
+    movePlayer(map[key]);
+  } else if (key === ' ' || key === 'enter') {
+    event.preventDefault();
+    if (game.mode === 'menu') startLevel(0);
+    else if (game.mode === 'levelComplete') nextLevel();
+    else if (game.mode === 'won' || game.mode === 'lost') startLevel(0);
+    else waitTurn();
+  } else if (key === 'p') {
+    event.preventDefault();
+    togglePause();
+  } else if (key === 'r') {
+    event.preventDefault();
+    startLevel(game.levelIndex, true);
+  } else if (key === 'h') {
+    event.preventDefault();
+    showHint();
+  } else if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+  } else if (key === 'escape' && document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+}
+
+function cellFromPointer(event) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const px = (event.clientX - rect.left) * sx;
+  const py = (event.clientY - rect.top) * sy;
+  const bounds = layout();
+  const x = Math.floor((px - bounds.x) / bounds.size);
+  const y = Math.floor((py - bounds.y) / bounds.size);
+  if (!inBounds(x, y)) return null;
+  return { x, y };
+}
+
+function handlePointer(event) {
+  const cell = cellFromPointer(event);
+  if (!cell) return;
+  event.preventDefault();
+  if (game.mode === 'menu') startLevel(0);
+  const dx = cell.x - game.player.x;
+  const dy = cell.y - game.player.y;
+  if (Math.abs(dx) + Math.abs(dy) !== 1) {
+    game.hintPath = [{ x: cell.x, y: cell.y }];
+    game.message = 'Tap an adjacent tile to move.';
+    updateHud();
+    draw();
+    return;
+  }
+  if (dx === 1) movePlayer('right');
+  else if (dx === -1) movePlayer('left');
+  else if (dy === 1) movePlayer('down');
+  else if (dy === -1) movePlayer('up');
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__CAVERN_CRUSH_GAME__ = {
+  startLevel,
+  restartLevel,
+  nextLevel,
+  movePlayer,
+  waitTurn,
+  showHint,
+  stepGravity,
+  solveCurrent,
+  stateToObject,
+  renderGameToText,
+  levelIds: () => LEVELS.map(item => item.id),
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'caverncrush', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'levelComplete') nextLevel();
+  else if (game.mode === 'won' || game.mode === 'lost') startLevel(0);
+  else startLevel(game.levelIndex);
+});
+buttons.new.addEventListener('click', () => startLevel((game.levelIndex + 1) % LEVELS.length));
+buttons.wait.addEventListener('click', waitTurn);
+buttons.pause.addEventListener('click', togglePause);
+buttons.restart.addEventListener('click', () => startLevel(game.levelIndex, true));
+buttons.hint.addEventListener('click', showHint);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+for (const button of document.querySelectorAll('[data-move]')) {
+  button.addEventListener('click', () => {
+    if (game.mode === 'menu') startLevel(0);
+    movePlayer(button.dataset.move);
+  });
+}
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+parseLevel(game.levelIndex);
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'caverncrush', gameName: 'Cavern Crush' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

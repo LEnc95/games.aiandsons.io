@@ -3424,3 +3424,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser/Node REPL fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Calc Cages screenshots.
+
+## 2026-06-08 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Calc Cages, Missile Command, Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, and Word Search.
+- Initial repo check: no `/caverncrush` route or Cavern Crush metadata entry found.
+- Chosen game: Cavern Crush (`/caverncrush`), a Boulder Dash-style falling-rock cave game where players dig dirt, collect gems, open exits, and avoid falling rocks.
+- Plan: add a standalone canvas game with desktop and touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, coin rewards, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+- Initial implementation:
+  - Added `caverncrush/index.html` with three cave maps, grid digging, gem collection, rock pushing, falling-rock physics, exit progression, lives/timer scoring, hints, pause/restart/fullscreen, touch D-pad controls, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__CAVERN_CRUSH_GAME__`.
+  - Registered Cavern Crush in `src/meta/games.js`.
+- Early validation passed: Cavern Crush script parse check, level-map dimension check, and `node --test tests/unit/games.test.mjs`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Cavern Crush SEO metadata now include `/caverncrush`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Metadata and feedback coverage passed: `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/caverncrush/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started a run, moved to collect a gem, used a hint, advanced deterministic time, solved all three caves through `window.__CAVERN_CRUSH_GAME__`, awarded coins, and verified shared feedback context.
+  - `git diff --check` passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found none in Cavern Crush integration files.
+- Browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/caverncrush/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `npm run test:feedback-smoke:raw` reached the temporary server and failed at the same Chromium launch step.
+  - In-app Browser fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Cavern Crush screenshots.
