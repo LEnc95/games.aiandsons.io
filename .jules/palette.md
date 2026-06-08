@@ -41,3 +41,6 @@
 ## 2026-06-03 - Explicit Labels for Accessible Form Inputs
 **Learning:** Depending entirely on `placeholder` attributes or hidden `aria-label`s for form field identification creates an accessibility failure and poor UX for sighted users. The WCAG requires visible `<label>` elements explicitly linked to their inputs via `for` and `id` attributes.
 **Action:** Always provide a clear, visible `<label>` paired with every `<input>`. Do not rely solely on placeholders or `aria-label` when a visible label can be provided. Make sure to visually mark required fields.
+## 2026-06-08 - Button Disabled States Need Visual Indicators
+**Learning:** Setting `disabled = true` on buttons via JavaScript natively prevents interaction, but without explicit CSS styling (like `opacity: 0.58` and `cursor: not-allowed`), users receive no visual feedback that the button is disabled. This is especially confusing during async operations (like form submissions) where buttons appear active but do not respond.
+**Action:** Whenever a button can be programmatically disabled, ensure there is a corresponding `:disabled` CSS rule that provides a clear visual cue that interaction is prevented.

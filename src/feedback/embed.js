@@ -171,6 +171,10 @@ function injectStyles() {
       font: 700 14px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       cursor: pointer;
     }
+    .cade-feedback-btn:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
     .cade-feedback-btn.primary {
       background: linear-gradient(135deg, #67cbff 0%, #8bf4da 100%);
       border-color: rgba(255,255,255,0.34);
