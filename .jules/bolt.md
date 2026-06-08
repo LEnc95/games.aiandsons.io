@@ -64,3 +64,6 @@
 ## 2025-05-18 - Avoid redundant normalization loops on memory caches
 **Learning:** Functions that search an entire memory cache (like `getFamilyAccountForUser` traversing `memoryState.accounts`) can cause massive CPU spikes if they run expensive object deep-cloning or normalization routines (like `normalizeFamilyAccount`) *before* checking if the entry matches the search criteria.
 **Action:** When filtering a cached memory store map or array, perform the fast-path lookup assertions (e.g. `_memberUserIdsSet.has(userId)`) against the raw object first, and only execute the expensive extraction/normalization logic on the matching result.
+## 2026-06-08 - Avoid redundant map+filter allocations on memory caches
+**Learning:** When querying in-memory caches (like `memoryState.invites.values()`), chaining `.map(normalize).filter(check)` pipelines creates unnecessary O(N) intermediate array allocations and causes redundant expensive normalizations for every entry before the filter rejects them.
+**Action:** Replace chained `.map().filter()` array operations on memory collections with a single `for...of` loop. Apply the filter assertions directly to the raw properties first and only push/normalize items that successfully match.
