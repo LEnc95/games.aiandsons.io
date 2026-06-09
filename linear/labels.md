@@ -19,6 +19,7 @@
 - game/audioagar
 - game/2048
 - game/pong
+- game/airhockey
 - game/snake
 - game/tictactoe
 - game/rps

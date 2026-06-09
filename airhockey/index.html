@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Air Hockey | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background: linear-gradient(135deg, #1c3440 0%, #2f6d74 46%, #26374e 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #f7fbff91;
+  padding: 8px 12px;
+  background: #122631d9;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 54 / 35;
+  max-height: min(66dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #d7f6ffdb;
+  background: #0b2631;
+  box-shadow: 0 24px 58px #08182082;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #d8f8ffdd;
+  background: #142936f4;
+  color: #f7fbff;
+  box-shadow: 0 18px 42px #0719228a;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 6vw, 56px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #d4e8ee;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #b9d5de;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #e2fbff8f;
+  background: #142b37df;
+  color: #f7fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #b9d2da;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #8ef0c1; }
+.chip.warn b { color: #ffd972; }
+.chip.danger b { color: #ffa4b0; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #10273436;
+}
+button:hover { background: #225060; }
+button:focus-visible {
+  outline: 3px solid #f7d777;
+  outline-offset: 2px;
+}
+.primary {
+  background: #72e2ff;
+  border-color: #b9f4ff;
+  color: #0c2631;
+  min-width: 190px;
+}
+.primary:hover { background: #a5eeff; }
+.action { background: #247461; }
+.utility { background: #486371; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 55dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 46dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Drag your striker, bank the puck, and beat the table AI to seven goals. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Air Hockey | AI and Sons Games">
+  <meta property="og:description" content="Drag your striker, bank the puck, and beat the table AI to seven goals. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/airhockey">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Air Hockey | AI and Sons Games">
+  <meta name="twitter:description" content="Drag your striker, bank the puck, and beat the table AI to seven goals. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/airhockey">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Air Hockey","description":"Drag your striker, bank the puck, and beat the table AI to seven goals. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/airhockey","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Air Hockey table">
+    <canvas id="game" width="1080" height="700"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Air Hockey</h1>
+        <p id="overlayText">Drag your striker, bank the puck, and beat the table AI to seven goals.</p>
+        <p class="mini">Mouse or touch: drag the blue striker. Keyboard: arrows or WASD move, Space serves, P pause, R restart, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Match</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0 - 0</b></div>
+    <div class="chip warn"><span>Rally</span><b id="rallyText">0</b></div>
+    <div class="chip"><span>Target</span><b id="targetText">7</b></div>
+    <div class="chip"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Air Hockey controls">
+    <button class="primary" id="newBtn" type="button">New Match</button>
+    <button class="action" id="serveBtn" type="button">Serve</button>
+    <button class="utility" id="aimBtn" type="button">Aim Line</button>
+    <button class="utility" id="pauseBtn" type="button">Pause</button>
+    <button class="utility" id="restartBtn" type="button">Restart</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const ui = {
+  mode: document.getElementById('modeText'),
+  score: document.getElementById('scoreText'),
+  rally: document.getElementById('rallyText'),
+  target: document.getElementById('targetText'),
+  time: document.getElementById('timeText'),
+  coins: document.getElementById('coinsText'),
+  pause: document.getElementById('pauseBtn'),
+};
+const buttons = {
+  new: document.getElementById('newBtn'),
+  serve: document.getElementById('serveBtn'),
+  aim: document.getElementById('aimBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const TABLE = {
+  x: 70,
+  y: 42,
+  w: 940,
+  h: 610,
+  rail: 26,
+  goalW: 260,
+  centerY: 347,
+};
+const TARGET_SCORE = 7;
+const PLAYER_LIMIT = TABLE.centerY + 30;
+const AI_LIMIT = TABLE.centerY - 30;
+const PADDLE_RADIUS = 40;
+const PUCK_RADIUS = 18;
+const MAX_PUCK_SPEED = 980;
+const PLAYER_SPEED = 640;
+const AI_SPEED_BASE = 410;
+
+const keys = new Set();
+const pointer = {
+  active: false,
+  id: -1,
+  x: 540,
+  y: 520,
+};
+
+const game = {
+  mode: 'menu',
+  previousMode: 'menu',
+  targetScore: TARGET_SCORE,
+  playerScore: 0,
+  aiScore: 0,
+  rally: 0,
+  bestRally: 0,
+  matchTime: 0,
+  serveOwner: 'player',
+  serveDelay: 0,
+  message: 'Press Start Match.',
+  lastAction: { type: 'init' },
+  coinsEarned: 0,
+  lastCoins: 0,
+  player: makePaddle(540, 540, PADDLE_RADIUS, '#6ee7ff'),
+  ai: makePaddle(540, 160, PADDLE_RADIUS, '#ff8fa6'),
+  puck: { x: 540, y: 468, vx: 0, vy: 0, r: PUCK_RADIUS, spin: 0 },
+  particles: [],
+  aimTimer: 0,
+  hitFlash: 0,
+};
+
+let lastFrame = 0;
+let manualStepping = false;
+let profileTouched = false;
+
+function makePaddle(x, y, r, color) {
+  return { x, y, px: x, py: y, vx: 0, vy: 0, r, color };
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function formatTime(totalSeconds) {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  return `${min}:${String(sec).padStart(2, '0')}`;
+}
+
+function touchProfile() {
+  if (profileTouched) return;
+  profileTouched = true;
+  rememberRecent('airhockey');
+  maybeUnlock({ anyPlay: true });
+}
+
+function resetPaddles() {
+  game.player.x = 540;
+  game.player.y = 540;
+  game.player.px = game.player.x;
+  game.player.py = game.player.y;
+  game.player.vx = 0;
+  game.player.vy = 0;
+  game.ai.x = 540;
+  game.ai.y = 160;
+  game.ai.px = game.ai.x;
+  game.ai.py = game.ai.y;
+  game.ai.vx = 0;
+  game.ai.vy = 0;
+  pointer.x = game.player.x;
+  pointer.y = game.player.y;
+}
+
+function setPuckForServe(owner = game.serveOwner) {
+  const y = owner === 'player' ? TABLE.y + TABLE.h * .7 : TABLE.y + TABLE.h * .3;
+  game.puck.x = 540;
+  game.puck.y = y;
+  game.puck.vx = 0;
+  game.puck.vy = 0;
+  game.puck.spin = 0;
+}
+
+function startMatch() {
+  game.mode = 'serving';
+  game.previousMode = 'serving';
+  game.playerScore = 0;
+  game.aiScore = 0;
+  game.rally = 0;
+  game.bestRally = 0;
+  game.matchTime = 0;
+  game.serveOwner = 'player';
+  game.serveDelay = 0;
+  game.message = 'Player serve. Drag behind the puck or press Serve.';
+  game.coinsEarned = 0;
+  game.lastCoins = 0;
+  game.particles = [];
+  game.aimTimer = 0;
+  game.lastAction = { type: 'start_match' };
+  resetPaddles();
+  setPuckForServe('player');
+  touchProfile();
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function restartPoint() {
+  if (game.mode === 'menu') return startMatch();
+  game.mode = 'serving';
+  game.serveDelay = game.serveOwner === 'ai' ? .75 : 0;
+  game.rally = 0;
+  game.message = game.serveOwner === 'player' ? 'Player serve.' : 'AI serve incoming.';
+  game.lastAction = { type: 'restart_point', serveOwner: game.serveOwner };
+  resetPaddles();
+  setPuckForServe(game.serveOwner);
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function awardCoins(amount, reason) {
+  const reward = Math.max(0, Math.floor(amount));
+  if (reward <= 0) return;
+  addCoins(reward);
+  game.coinsEarned += reward;
+  game.lastCoins = reward;
+  game.message = `${reason} +${reward} coins`;
+}
+
+function recordMatch(result) {
+  maybeUnlock({
+    anyPlay: true,
+    airhockey: {
+      result,
+      playerScore: game.playerScore,
+      aiScore: game.aiScore,
+      bestRally: game.bestRally,
+      matchTime: Math.round(game.matchTime),
+    },
+  });
+}
+
+function addParticle(x, y, color, text = '') {
+  game.particles.push({
+    x,
+    y,
+    color,
+    text,
+    age: 0,
+    ttl: text ? 1 : .45,
+    r: 4 + Math.random() * 9,
+    vx: (Math.random() - .5) * 180,
+    vy: -70 - Math.random() * 160,
+  });
+}
+
+function servePuck(owner = game.serveOwner) {
+  if (game.mode === 'menu') startMatch();
+  if (game.mode !== 'serving' && game.mode !== 'point') return false;
+  game.mode = 'playing';
+  game.serveOwner = owner;
+  game.serveDelay = 0;
+  game.rally = 0;
+  const side = owner === 'player' ? -1 : 1;
+  const dx = owner === 'player' ? (game.player.x - game.puck.x) * .9 : (game.ai.x - game.puck.x) * .8;
+  game.puck.vx = clamp(dx, -260, 260) + (owner === 'player' ? 90 : -70);
+  game.puck.vy = side * 520;
+  game.puck.spin = clamp(game.puck.vx / 400, -1, 1);
+  game.message = owner === 'player' ? 'Serve sent. Guard the rebound.' : 'AI serve. Read the angle.';
+  game.lastAction = { type: 'serve', owner };
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function scorePoint(winner) {
+  if (winner === 'player') {
+    game.playerScore += 1;
+    game.serveOwner = 'ai';
+    awardCoins(2, 'Goal scored');
+    addParticle(540, TABLE.y + 38, '#8ef0c1', '+goal');
+  } else {
+    game.aiScore += 1;
+    game.serveOwner = 'player';
+    addParticle(540, TABLE.y + TABLE.h - 38, '#ff9dac', 'goal');
+  }
+
+  game.bestRally = Math.max(game.bestRally, game.rally);
+  game.rally = 0;
+  game.hitFlash = .35;
+
+  if (game.playerScore >= game.targetScore || game.aiScore >= game.targetScore) {
+    const playerWon = game.playerScore > game.aiScore;
+    game.mode = playerWon ? 'playerWin' : 'aiWin';
+    if (playerWon) awardCoins(24, 'Match won');
+    else if (game.playerScore >= 3) awardCoins(6, 'Close match');
+    recordMatch(playerWon ? 'won' : 'lost');
+    game.message = playerWon ? 'Table cleared. Match won.' : 'AI wins this table.';
+    game.lastAction = { type: 'match_over', winner, playerScore: game.playerScore, aiScore: game.aiScore };
+  } else {
+    game.mode = 'point';
+    game.serveDelay = game.serveOwner === 'ai' ? 1.05 : 0;
+    game.message = winner === 'player' ? 'Goal. AI serves next.' : 'AI goal. Your serve.';
+    game.lastAction = { type: 'point', winner, playerScore: game.playerScore, aiScore: game.aiScore };
+  }
+
+  resetPaddles();
+  setPuckForServe(game.serveOwner);
+  updateHud();
+  updateOverlay();
+  return stateToObject();
+}
+
+function constrainPlayer(paddle) {
+  paddle.x = clamp(paddle.x, TABLE.x + paddle.r, TABLE.x + TABLE.w - paddle.r);
+  paddle.y = clamp(paddle.y, PLAYER_LIMIT + paddle.r, TABLE.y + TABLE.h - paddle.r);
+}
+
+function constrainAi(paddle) {
+  paddle.x = clamp(paddle.x, TABLE.x + paddle.r, TABLE.x + TABLE.w - paddle.r);
+  paddle.y = clamp(paddle.y, TABLE.y + paddle.r, AI_LIMIT - paddle.r);
+}
+
+function movePaddleToward(paddle, targetX, targetY, maxDistance, constrain) {
+  paddle.px = paddle.x;
+  paddle.py = paddle.y;
+  const dx = targetX - paddle.x;
+  const dy = targetY - paddle.y;
+  const len = Math.hypot(dx, dy);
+  if (len > 0) {
+    const step = Math.min(maxDistance, len);
+    paddle.x += (dx / len) * step;
+    paddle.y += (dy / len) * step;
+  }
+  constrain(paddle);
+  paddle.vx = (paddle.x - paddle.px) * 60;
+  paddle.vy = (paddle.y - paddle.py) * 60;
+}
+
+function updatePlayer(dt) {
+  if (pointer.active) {
+    movePaddleToward(game.player, pointer.x, pointer.y, PLAYER_SPEED * 1.25 * dt, constrainPlayer);
+    return;
+  }
+
+  let dx = 0;
+  let dy = 0;
+  if (keys.has('arrowleft') || keys.has('a')) dx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) dx += 1;
+  if (keys.has('arrowup') || keys.has('w')) dy -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) dy += 1;
+  game.player.px = game.player.x;
+  game.player.py = game.player.y;
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy);
+    game.player.x += (dx / len) * PLAYER_SPEED * dt;
+    game.player.y += (dy / len) * PLAYER_SPEED * dt;
+  }
+  constrainPlayer(game.player);
+  game.player.vx = (game.player.x - game.player.px) / Math.max(dt, 1 / 60);
+  game.player.vy = (game.player.y - game.player.py) / Math.max(dt, 1 / 60);
+}
+
+function predictPuckX(targetY) {
+  if (Math.abs(game.puck.vy) < 1) return game.puck.x;
+  const time = (targetY - game.puck.y) / game.puck.vy;
+  if (time <= 0 || time > 1.3) return game.puck.x;
+  let x = game.puck.x + game.puck.vx * time;
+  const minX = TABLE.x + game.puck.r;
+  const maxX = TABLE.x + TABLE.w - game.puck.r;
+  const span = maxX - minX;
+  let offset = ((x - minX) % (span * 2) + (span * 2)) % (span * 2);
+  if (offset > span) offset = span * 2 - offset;
+  return minX + offset;
+}
+
+function updateAi(dt) {
+  const difficulty = clamp(.72 + game.aiScore * .025 - game.playerScore * .015, .62, .88);
+  const guardY = TABLE.y + TABLE.h * .23;
+  let targetX = 540;
+  let targetY = guardY;
+  if (game.mode === 'serving' && game.serveOwner === 'ai') {
+    targetX = game.puck.x - 32;
+    targetY = game.puck.y - 58;
+  } else if (game.puck.y < TABLE.centerY + 80 || game.puck.vy < -120) {
+    targetX = predictPuckX(TABLE.y + TABLE.h * .27);
+    targetY = clamp(game.puck.y - 30, TABLE.y + game.ai.r + 8, AI_LIMIT - game.ai.r - 4);
+  }
+  targetX = targetX * difficulty + 540 * (1 - difficulty);
+  const speed = (AI_SPEED_BASE + game.aiScore * 12) * (game.mode === 'serving' ? .85 : 1);
+  movePaddleToward(game.ai, targetX, targetY, speed * dt, constrainAi);
+}
+
+function collidePaddle(paddle, label) {
+  const puck = game.puck;
+  const dx = puck.x - paddle.x;
+  const dy = puck.y - paddle.y;
+  const minDist = puck.r + paddle.r;
+  const dist = Math.hypot(dx, dy) || .001;
+  if (dist >= minDist) return false;
+
+  const nx = dx / dist;
+  const ny = dy / dist;
+  puck.x = paddle.x + nx * minDist;
+  puck.y = paddle.y + ny * minDist;
+  const relVx = puck.vx - paddle.vx;
+  const relVy = puck.vy - paddle.vy;
+  const separating = relVx * nx + relVy * ny;
+  if (separating < 0) {
+    puck.vx -= (1.72 * separating) * nx;
+    puck.vy -= (1.72 * separating) * ny;
+  }
+  puck.vx += paddle.vx * .34 + nx * 120;
+  puck.vy += paddle.vy * .34 + ny * 120;
+  puck.spin = clamp(puck.spin + paddle.vx / 800, -1.6, 1.6);
+  limitPuckSpeed();
+  game.rally += 1;
+  game.bestRally = Math.max(game.bestRally, game.rally);
+  game.hitFlash = .18;
+  game.lastAction = { type: 'puck_hit', by: label, rally: game.rally };
+  addParticle(puck.x, puck.y, label === 'player' ? '#8ef0c1' : '#ff9dac');
+  return true;
+}
+
+function limitPuckSpeed() {
+  const speed = Math.hypot(game.puck.vx, game.puck.vy);
+  if (speed > MAX_PUCK_SPEED) {
+    game.puck.vx = game.puck.vx / speed * MAX_PUCK_SPEED;
+    game.puck.vy = game.puck.vy / speed * MAX_PUCK_SPEED;
+  } else if (speed < 120 && game.mode === 'playing') {
+    const angle = Math.atan2(game.puck.vy || -1, game.puck.vx || .2);
+    game.puck.vx = Math.cos(angle) * 120;
+    game.puck.vy = Math.sin(angle) * 120;
+  }
+}
+
+function updatePuck(dt) {
+  const puck = game.puck;
+  puck.vx += puck.spin * 18 * dt;
+  puck.x += puck.vx * dt;
+  puck.y += puck.vy * dt;
+  puck.vx *= .9985;
+  puck.vy *= .9985;
+  puck.spin *= .993;
+
+  const left = TABLE.x + puck.r;
+  const right = TABLE.x + TABLE.w - puck.r;
+  const top = TABLE.y + puck.r;
+  const bottom = TABLE.y + TABLE.h - puck.r;
+  const goalLeft = TABLE.x + TABLE.w / 2 - TABLE.goalW / 2;
+  const goalRight = TABLE.x + TABLE.w / 2 + TABLE.goalW / 2;
+
+  if (puck.x < left) {
+    puck.x = left;
+    puck.vx = Math.abs(puck.vx) * .96;
+    puck.spin *= -.7;
+  } else if (puck.x > right) {
+    puck.x = right;
+    puck.vx = -Math.abs(puck.vx) * .96;
+    puck.spin *= -.7;
+  }
+
+  if (puck.y < top) {
+    if (puck.x > goalLeft && puck.x < goalRight) {
+      scorePoint('player');
+      return;
+    }
+    puck.y = top;
+    puck.vy = Math.abs(puck.vy) * .94;
+  } else if (puck.y > bottom) {
+    if (puck.x > goalLeft && puck.x < goalRight) {
+      scorePoint('ai');
+      return;
+    }
+    puck.y = bottom;
+    puck.vy = -Math.abs(puck.vy) * .94;
+  }
+
+  collidePaddle(game.player, 'player');
+  collidePaddle(game.ai, 'ai');
+}
+
+function updateParticles(dt) {
+  game.particles = game.particles.filter((particle) => {
+    particle.age += dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vy += 180 * dt;
+    return particle.age < particle.ttl;
+  });
+}
+
+function update(dt) {
+  if (game.mode === 'menu' || game.mode === 'paused' || game.mode === 'playerWin' || game.mode === 'aiWin') {
+    updateParticles(dt);
+    return;
+  }
+
+  updatePlayer(dt);
+  updateAi(dt);
+  game.aimTimer = Math.max(0, game.aimTimer - dt);
+  game.hitFlash = Math.max(0, game.hitFlash - dt);
+
+  if (game.mode === 'serving' || game.mode === 'point') {
+    setPuckForServe(game.serveOwner);
+    if (game.serveOwner === 'ai') {
+      game.serveDelay = Math.max(0, game.serveDelay - dt);
+      if (game.serveDelay <= 0) servePuck('ai');
+    }
+    updateParticles(dt);
+    return;
+  }
+
+  game.matchTime += dt;
+  updatePuck(dt);
+  updateParticles(dt);
+}
+
+function tableToCanvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) / rect.width * canvas.width,
+    y: (event.clientY - rect.top) / rect.height * canvas.height,
+  };
+}
+
+function setPlayerPosition(x, y) {
+  game.player.px = game.player.x;
+  game.player.py = game.player.y;
+  game.player.x = x;
+  game.player.y = y;
+  constrainPlayer(game.player);
+  pointer.x = game.player.x;
+  pointer.y = game.player.y;
+  game.player.vx = (game.player.x - game.player.px) * 60;
+  game.player.vy = (game.player.y - game.player.py) * 60;
+  return stateToObject();
+}
+
+function handlePointerDown(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') startMatch();
+  const point = tableToCanvasPoint(event);
+  pointer.active = true;
+  pointer.id = event.pointerId;
+  pointer.x = point.x;
+  pointer.y = point.y;
+  canvas.setPointerCapture?.(event.pointerId);
+  setPlayerPosition(point.x, point.y);
+}
+
+function handlePointerMove(event) {
+  if (!pointer.active || pointer.id !== event.pointerId) return;
+  event.preventDefault();
+  const point = tableToCanvasPoint(event);
+  pointer.x = clamp(point.x, TABLE.x + PADDLE_RADIUS, TABLE.x + TABLE.w - PADDLE_RADIUS);
+  pointer.y = clamp(point.y, PLAYER_LIMIT + PADDLE_RADIUS, TABLE.y + TABLE.h - PADDLE_RADIUS);
+}
+
+function handlePointerUp(event) {
+  if (pointer.id !== event.pointerId) return;
+  pointer.active = false;
+  pointer.id = -1;
+}
+
+function togglePause() {
+  if (game.mode === 'menu') {
+    startMatch();
+    return stateToObject();
+  }
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode === 'paused' ? 'serving' : game.previousMode;
+    game.message = game.mode === 'playing' ? 'Resume. Watch the rebound.' : 'Resume. Serve when ready.';
+  } else if (['playing', 'serving', 'point'].includes(game.mode)) {
+    game.previousMode = game.mode;
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  }
+  game.lastAction = { type: 'toggle_pause', mode: game.mode };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function showAimLine() {
+  if (game.mode === 'menu') startMatch();
+  game.aimTimer = 2.8;
+  game.message = 'Aim line showing current puck path.';
+  game.lastAction = { type: 'aim_line' };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === ' ') {
+    servePuck(game.serveOwner);
+    return;
+  }
+  if (key === 'enter') {
+    if (game.mode === 'menu' || game.mode === 'playerWin' || game.mode === 'aiWin') startMatch();
+    else servePuck(game.serveOwner);
+    return;
+  }
+  if (key === 'p') {
+    togglePause();
+    return;
+  }
+  if (key === 'r') {
+    startMatch();
+    return;
+  }
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  keys.add(key);
+}
+
+function handleKeyUp(event) {
+  keys.delete(event.key.toLowerCase());
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke = '') {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
+}
+
+function drawTable() {
+  const t = TABLE;
+  const flash = game.hitFlash > 0 ? game.hitFlash : 0;
+  const railColor = flash ? '#7ce9ff' : '#bcefff';
+  const gradient = ctx.createLinearGradient(t.x, t.y, t.x, t.y + t.h);
+  gradient.addColorStop(0, '#113644');
+  gradient.addColorStop(.48, '#1b6773');
+  gradient.addColorStop(.52, '#1a5363');
+  gradient.addColorStop(1, '#102f40');
+  drawRoundedRect(t.x - t.rail, t.y - t.rail, t.w + t.rail * 2, t.h + t.rail * 2, 34, '#071923', railColor);
+  drawRoundedRect(t.x, t.y, t.w, t.h, 18, gradient, '#d9fbff');
+
+  const goalLeft = t.x + t.w / 2 - t.goalW / 2;
+  const goalRight = t.x + t.w / 2 + t.goalW / 2;
+  ctx.fillStyle = '#071923';
+  ctx.fillRect(goalLeft, t.y - t.rail - 1, t.goalW, t.rail + 6);
+  ctx.fillRect(goalLeft, t.y + t.h - 5, t.goalW, t.rail + 8);
+  ctx.strokeStyle = '#ffffffb8';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(t.x + 24, t.centerY);
+  ctx.lineTo(t.x + t.w - 24, t.centerY);
+  ctx.stroke();
+
+  ctx.globalAlpha = .28;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(t.x + t.w / 2, t.centerY, 92, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(t.x + t.w / 2, t.y + 94, 74, 0, Math.PI * 2);
+  ctx.arc(t.x + t.w / 2, t.y + t.h - 94, 74, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = '#8fefff5c';
+  ctx.lineWidth = 1;
+  for (let x = t.x + 70; x < t.x + t.w; x += 70) {
+    ctx.beginPath();
+    ctx.moveTo(x, t.y + 18);
+    ctx.lineTo(x, t.y + t.h - 18);
+    ctx.stroke();
+  }
+}
+
+function drawAim() {
+  if (game.aimTimer <= 0 && game.mode !== 'serving') return;
+  const puck = game.puck;
+  let x = puck.x;
+  let y = puck.y;
+  let vx = puck.vx || (game.serveOwner === 'player' ? 80 : -80);
+  let vy = puck.vy || (game.serveOwner === 'player' ? -520 : 520);
+  ctx.save();
+  ctx.setLineDash([13, 10]);
+  ctx.strokeStyle = '#ffe47bdd';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  for (let i = 0; i < 70; i += 1) {
+    x += vx * .025;
+    y += vy * .025;
+    if (x < TABLE.x + PUCK_RADIUS || x > TABLE.x + TABLE.w - PUCK_RADIUS) vx *= -1;
+    ctx.lineTo(clamp(x, TABLE.x + PUCK_RADIUS, TABLE.x + TABLE.w - PUCK_RADIUS), y);
+    if (y < TABLE.y + 20 || y > TABLE.y + TABLE.h - 20) break;
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPaddle(paddle, label) {
+  const grad = ctx.createRadialGradient(paddle.x - 12, paddle.y - 14, 6, paddle.x, paddle.y, paddle.r + 10);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(.28, paddle.color);
+  grad.addColorStop(1, label === 'player' ? '#175769' : '#702b3a');
+  ctx.shadowColor = label === 'player' ? '#69e7ff99' : '#ff8fa688';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(paddle.x, paddle.y, paddle.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#ffffffcf';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.fillStyle = '#09212b';
+  ctx.globalAlpha = .24;
+  ctx.beginPath();
+  ctx.arc(paddle.x, paddle.y, paddle.r * .48, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawPuck() {
+  const p = game.puck;
+  ctx.shadowColor = '#ffffff9a';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = '#f7fbff';
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#1f4050';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = '#1a3c4a';
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.r * .42, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawParticles() {
+  for (const particle of game.particles) {
+    const alpha = clamp(1 - particle.age / particle.ttl, 0, 1);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = particle.color;
+    if (particle.text) {
+      ctx.font = '900 26px "Trebuchet MS", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(particle.text, particle.x, particle.y);
+    } else {
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.r * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawScoreboard() {
+  ctx.save();
+  ctx.fillStyle = '#071923b8';
+  drawRoundedRect(398, 298, 284, 96, 8, '#071923c4', '#bcefff6f');
+  ctx.fillStyle = '#f7fbff';
+  ctx.textAlign = 'center';
+  ctx.font = '900 48px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${game.playerScore}  -  ${game.aiScore}`, 540, 356);
+  ctx.font = '900 14px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#b8d7df';
+  ctx.fillText('PLAYER        AI', 540, 382);
+  ctx.restore();
+}
+
+function drawStatusText() {
+  ctx.save();
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 20px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  const status = game.mode === 'playing'
+    ? `Rally ${game.rally}`
+    : game.message;
+  ctx.fillText(status, 540, 32);
+  ctx.font = '900 15px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#c7e1e8';
+  ctx.fillText(`First to ${game.targetScore} goals`, 540, 684);
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bg.addColorStop(0, '#071923');
+  bg.addColorStop(1, '#102c3a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawTable();
+  drawAim();
+  drawParticles();
+  drawPaddle(game.ai, 'ai');
+  drawPaddle(game.player, 'player');
+  drawPuck();
+  drawScoreboard();
+  drawStatusText();
+}
+
+function updateHud() {
+  ui.mode.textContent = game.mode.toUpperCase();
+  ui.score.textContent = `${game.playerScore} - ${game.aiScore}`;
+  ui.rally.textContent = `${game.rally}`;
+  ui.target.textContent = `${game.targetScore}`;
+  ui.time.textContent = formatTime(game.matchTime);
+  ui.coins.textContent = `${profileState.coins}`;
+  ui.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function updateOverlay() {
+  const shown = ['menu', 'paused', 'playerWin', 'aiWin'].includes(game.mode);
+  overlay.classList.toggle('show', shown);
+  if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'Resume when you are ready to defend the rebound.';
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'playerWin') {
+    overlayTitle.textContent = 'Match Won';
+    overlayText.textContent = `You beat the AI ${game.playerScore} - ${game.aiScore}. Best rally: ${game.bestRally}.`;
+    startBtn.textContent = 'Play Again';
+  } else if (game.mode === 'aiWin') {
+    overlayTitle.textContent = 'AI Wins';
+    overlayText.textContent = `Final score ${game.playerScore} - ${game.aiScore}. Try sharper bank shots next match.`;
+    startBtn.textContent = 'Rematch';
+  } else {
+    overlayTitle.textContent = 'Air Hockey';
+    overlayText.textContent = 'Drag your striker, bank the puck, and beat the table AI to seven goals.';
+    startBtn.textContent = 'Start Match';
+  }
+}
+
+function stateToObject() {
+  return {
+    game: 'airhockey',
+    mode: game.mode,
+    coordinateSystem: 'canvas pixels; origin top-left; x right; y down',
+    score: {
+      player: game.playerScore,
+      ai: game.aiScore,
+      target: game.targetScore,
+    },
+    puck: {
+      x: Math.round(game.puck.x),
+      y: Math.round(game.puck.y),
+      vx: Math.round(game.puck.vx),
+      vy: Math.round(game.puck.vy),
+      r: game.puck.r,
+    },
+    player: {
+      x: Math.round(game.player.x),
+      y: Math.round(game.player.y),
+      vx: Math.round(game.player.vx),
+      vy: Math.round(game.player.vy),
+      r: game.player.r,
+    },
+    ai: {
+      x: Math.round(game.ai.x),
+      y: Math.round(game.ai.y),
+      vx: Math.round(game.ai.vx),
+      vy: Math.round(game.ai.vy),
+      r: game.ai.r,
+    },
+    serveOwner: game.serveOwner,
+    rally: game.rally,
+    bestRally: game.bestRally,
+    matchTime: Number(game.matchTime.toFixed(2)),
+    message: game.message,
+    coinsEarned: game.coinsEarned,
+    lastAction: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__AIR_HOCKEY_GAME__ = {
+  startMatch,
+  restartPoint,
+  servePuck,
+  setPlayerPosition,
+  showAimLine,
+  togglePause,
+  scorePoint,
+  forceWin() {
+    if (game.mode === 'menu') startMatch();
+    while (game.playerScore < game.targetScore) scorePoint('player');
+    return stateToObject();
+  },
+  stateToObject,
+  renderGameToText,
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'airhockey', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', handlePointerUp);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', handleKey);
+document.addEventListener('keyup', handleKeyUp);
+window.addEventListener('resize', draw);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else startMatch();
+});
+buttons.new.addEventListener('click', startMatch);
+buttons.serve.addEventListener('click', () => servePuck(game.serveOwner));
+buttons.aim.addEventListener('click', showAimLine);
+buttons.pause.addEventListener('click', togglePause);
+buttons.restart.addEventListener('click', restartPoint);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'airhockey', gameName: 'Air Hockey' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

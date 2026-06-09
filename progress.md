@@ -3452,3 +3452,32 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Cavern Crush screenshots.
+
+## 2026-06-09 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Cavern Crush, Calc Cages, Missile Command, Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, and Word Search.
+- Initial repo check: no `/airhockey` route or Air Hockey metadata entry found.
+- Chosen game: Air Hockey (`/airhockey`), a canvas tabletop sports game with player paddle control, AI goalie, puck physics, rebounds, scoring to seven, touch/mouse/keyboard controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, coin rewards, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+- Initial implementation:
+  - Added `airhockey/index.html` with canvas rink rendering, player striker drag and keyboard controls, AI defense, puck rebounds and goal scoring, serve/pause/restart/aim/fullscreen actions, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__AIR_HOCKEY_GAME__`.
+  - Registered Air Hockey in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Air Hockey SEO metadata now include `/airhockey`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Fixed the AI puck-wall prediction after code review so reflected target positions use the correct triangular bounce calculation.
+- Validation:
+  - Air Hockey module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata uniqueness check passed; `GAMES` reports 121 games with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/airhockey/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started a match, served the puck, advanced deterministic time, scored a player goal, showed aim line, paused/resumed, forced a match win, awarded coins, and verified shared feedback context.
+  - `git diff --check` passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches in Air Hockey integration files.
+- Browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/airhockey/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs http://127.0.0.1:4173` reached the launch step and failed with the same Chromium `spawn EPERM`.
+  - In-app Browser fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Air Hockey screenshots.
