@@ -64,3 +64,6 @@
 ## 2025-05-18 - Avoid redundant normalization loops on memory caches
 **Learning:** Functions that search an entire memory cache (like `getFamilyAccountForUser` traversing `memoryState.accounts`) can cause massive CPU spikes if they run expensive object deep-cloning or normalization routines (like `normalizeFamilyAccount`) *before* checking if the entry matches the search criteria.
 **Action:** When filtering a cached memory store map or array, perform the fast-path lookup assertions (e.g. `_memberUserIdsSet.has(userId)`) against the raw object first, and only execute the expensive extraction/normalization logic on the matching result.
+## 2024-06-10 - Optimize in-memory collection queries to reduce normalization allocations
+**Learning:** In `api/stripe/_family-store.js`, chained map/filter pipelines on in-memory collections resulted in O(N) intermediate array allocations and called expensive normalization functions on every object before filtering.
+**Action:** Replace map/filter chains with imperative `for...of` loops that filter against raw properties first and only normalize matching items to avoid redundant allocations.
