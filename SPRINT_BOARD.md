@@ -278,6 +278,8 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 7 release item CG-703 is complete (`test:policy-gate` now validates `RELEASE_NOTES.md` required sections for risk register + rollback plan before tag workflows continue).
 - Sprint 7 operational reliability scope (CG-701 through CG-705, plus CG-702/CG-703 follow-ups) is complete.
 - Sprint 8 kickoff item CG-801 is complete (admin-token-protected Stripe entitlement reconcile endpoint with dry-run and durable-store refresh support).
+- [nightly 2026-06-09] Tracked changes: 1 commit(s) - 5a22bb1 Add Air Hockey game and update site metadata.
+- [nightly 2026-06-09] Key PR links: none merged for this date.
 - Sprint 8 follow-up item CG-802 is complete (`STRIPE_INCIDENT_RUNBOOK.md` added with outage detection, reconcile recovery, rollback, and comms template).
 - Sprint 8 closing item CG-803 is complete (`scripts/stripe/reconcile-audit.mjs` bulk reconcile/audit CLI with deterministic helper tests and summary output).
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.

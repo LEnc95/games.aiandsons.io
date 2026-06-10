@@ -87,6 +87,7 @@
 - game/tripeaks
 - game/diceforge
 - game/yachtdice
+- game/shutthebox
 - game/keystrike
 - game/pulseparry
 - game/magnetrail

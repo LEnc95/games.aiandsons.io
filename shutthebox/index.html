@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Shut the Box | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbf7;
+  background: linear-gradient(135deg, #12343d 0%, #27646a 46%, #4f3f55 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbf7;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff85;
+  padding: 8px 12px;
+  background: #0d242bd9;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 25 / 16;
+  max-height: min(66dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #dff7f3cc;
+  background: #14343b;
+  box-shadow: 0 22px 54px #07171d8f;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(700px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #eaf7f1b8;
+  background: #102d35f2;
+  box-shadow: 0 18px 46px #07151b99;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: .98;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 62ch;
+  color: #d5e8e6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b7d0d0;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #e5ffff6b;
+  background: #102832e8;
+  color: #f8fbf7;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff2e;
+}
+.chip span {
+  color: #acc9ca;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9ff0c5; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffb19e; }
+button {
+  cursor: pointer;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 9px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #07171d4d;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102832;
+  background: linear-gradient(135deg, #ffe08a 0%, #91efd1 100%);
+  border-color: #ffffffb8;
+}
+button.utility { background: #2b4c61; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 920px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 13px; padding: 0 7px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Roll dice, close numbered tiles that match each sum, and chase the lowest remaining score across three box layouts. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Shut the Box | AI and Sons Games">
+  <meta property="og:description" content="Roll dice, close numbered tiles that match each sum, and chase the lowest remaining score across three box layouts. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/shutthebox">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shut the Box | AI and Sons Games">
+  <meta name="twitter:description" content="Roll dice, close numbered tiles that match each sum, and chase the lowest remaining score across three box layouts. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/shutthebox">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Shut the Box","description":"Roll dice, close numbered tiles that match each sum, and chase the lowest remaining score across three box layouts. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/shutthebox","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage">
+    <canvas id="game" width="1000" height="640" tabindex="0" aria-label="Shut the Box game board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Board</span><b id="boardName">Classic Nine</b></div>
+    <div class="chip warn"><span>Roll</span><b id="rollTotal">-</b></div>
+    <div class="chip"><span>Pick</span><b id="pickSum">0</b></div>
+    <div class="chip bad"><span>Open</span><b id="openScore">45</b></div>
+    <div class="chip good"><span>Best</span><b id="bestScore">-</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="submitBtn" type="button">Close Tiles</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="nextBtn" type="button">Next Box</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  boardName: document.getElementById('boardName'),
+  rollTotal: document.getElementById('rollTotal'),
+  pickSum: document.getElementById('pickSum'),
+  openScore: document.getElementById('openScore'),
+  bestScore: document.getElementById('bestScore'),
+  coins: document.getElementById('coins'),
+  primaryBtn: document.getElementById('primaryBtn'),
+  submitBtn: document.getElementById('submitBtn'),
+  hintBtn: document.getElementById('hintBtn'),
+  undoBtn: document.getElementById('undoBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  pauseBtn: document.getElementById('pauseBtn'),
+  fullBtn: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 640;
+const STORAGE_KEY = 'cade:shutthebox:bests';
+const BOARDS = [
+  {
+    name: 'Classic Nine',
+    tileCount: 9,
+    target: 10,
+    desc: 'Nine numbered flaps, short rounds, and a clear zero-score target.',
+  },
+  {
+    name: 'Harbor Ten',
+    tileCount: 10,
+    target: 14,
+    desc: 'A wider box with tile 10 adding new sum choices.',
+  },
+  {
+    name: 'Summit Twelve',
+    tileCount: 12,
+    target: 18,
+    desc: 'Twelve flaps and tougher late-round dice traps.',
+  },
+];
+const TILE_FILL = '#f7d982';
+const TILE_STROKE = '#8d6035';
+const TILE_SELECTED = '#91efd1';
+const TILE_CLOSED = '#28444e';
+
+function loadBests() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBests() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.bests));
+  } catch {
+    // Best scores are optional local polish.
+  }
+}
+
+function createRng(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value = (value + 0x6d2b79f5) >>> 0;
+    let t = value;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function pickSeed() {
+  const querySeed = new URLSearchParams(location.search).get('seed');
+  const raw = Number(querySeed || window.__SHUT_THE_BOX_SEED || 0);
+  if (Number.isFinite(raw) && raw > 0) return raw >>> 0;
+  return (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
+}
+
+const state = {
+  mode: 'title',
+  previousMode: 'ready',
+  boardIndex: 0,
+  open: [],
+  selected: new Set(),
+  dice: [0, 0],
+  rollTotal: 0,
+  rolls: 0,
+  closedCount: 0,
+  history: [],
+  bests: loadBests(),
+  seed: pickSeed(),
+  rng: createRng(1),
+  focusTile: 1,
+  elapsed: 0,
+  message: 'Roll dice, pick open tiles that match the sum, then close them.',
+  hint: 'Start a box',
+  lastCombos: [],
+  coinsEarned: 0,
+  lastCoins: 0,
+  noMove: false,
+};
+
+let regions = [];
+let manualStepping = false;
+let lastTime = performance.now();
+let profileTouched = false;
+
+function board() {
+  return BOARDS[state.boardIndex];
+}
+
+function openNumbers() {
+  const values = [];
+  for (let i = 0; i < state.open.length; i += 1) {
+    if (state.open[i]) values.push(i + 1);
+  }
+  return values;
+}
+
+function closedNumbers() {
+  const values = [];
+  for (let i = 0; i < state.open.length; i += 1) {
+    if (!state.open[i]) values.push(i + 1);
+  }
+  return values;
+}
+
+function selectedNumbers() {
+  return [...state.selected].sort((a, b) => a - b);
+}
+
+function selectionSum() {
+  return selectedNumbers().reduce((sum, value) => sum + value, 0);
+}
+
+function remainingScore() {
+  return openNumbers().reduce((sum, value) => sum + value, 0);
+}
+
+function currentBest() {
+  const best = state.bests[board().name];
+  return Number.isFinite(best) ? best : null;
+}
+
+function legalCombos(total = state.rollTotal) {
+  if (total <= 0) return [];
+  const values = openNumbers();
+  const combos = [];
+  function search(start, sum, combo) {
+    if (sum === total) {
+      combos.push([...combo]);
+      return;
+    }
+    if (sum > total) return;
+    for (let i = start; i < values.length; i += 1) {
+      combo.push(values[i]);
+      search(i + 1, sum + values[i], combo);
+      combo.pop();
+    }
+  }
+  search(0, 0, []);
+  combos.sort((a, b) => b.length - a.length || Math.max(...b) - Math.max(...a));
+  return combos;
+}
+
+function markProfilePlay() {
+  if (profileTouched) return;
+  profileTouched = true;
+  rememberRecent('shutthebox');
+  maybeUnlock({ anyPlay: true });
+}
+
+function resetForBoard(index = state.boardIndex) {
+  state.boardIndex = Math.max(0, Math.min(BOARDS.length - 1, index));
+  const active = board();
+  state.open = Array.from({ length: active.tileCount }, () => true);
+  state.selected = new Set();
+  state.dice = [0, 0];
+  state.rollTotal = 0;
+  state.rolls = 0;
+  state.closedCount = 0;
+  state.history = [];
+  state.rng = createRng((state.seed + (state.boardIndex + 1) * 2654435761) >>> 0);
+  state.focusTile = 1;
+  state.elapsed = 0;
+  state.noMove = false;
+  state.lastCombos = [];
+  state.lastCoins = 0;
+  state.message = `${active.name}: roll to open the first choice.`;
+  state.hint = 'Roll dice';
+}
+
+function startGame(index = state.boardIndex) {
+  markProfilePlay();
+  resetForBoard(index);
+  state.mode = 'ready';
+  state.coinsEarned = 0;
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus({ preventScroll: true });
+}
+
+function snapshot() {
+  return {
+    mode: state.mode,
+    open: [...state.open],
+    selected: selectedNumbers(),
+    dice: [...state.dice],
+    rollTotal: state.rollTotal,
+    rolls: state.rolls,
+    closedCount: state.closedCount,
+    focusTile: state.focusTile,
+    message: state.message,
+    hint: state.hint,
+    lastCombos: state.lastCombos.map((combo) => [...combo]),
+    noMove: state.noMove,
+  };
+}
+
+function restore(saved) {
+  state.mode = saved.mode;
+  state.open = [...saved.open];
+  state.selected = new Set(saved.selected);
+  state.dice = [...saved.dice];
+  state.rollTotal = saved.rollTotal;
+  state.rolls = saved.rolls;
+  state.closedCount = saved.closedCount;
+  state.focusTile = saved.focusTile;
+  state.message = saved.message;
+  state.hint = saved.hint;
+  state.lastCombos = saved.lastCombos.map((combo) => [...combo]);
+  state.noMove = saved.noMove;
+}
+
+function rollDie() {
+  return Math.floor(state.rng() * 6) + 1;
+}
+
+function rollDice(forcedDice = null) {
+  if (state.mode === 'title' || state.mode === 'roundover' || state.mode === 'won') {
+    startGame(state.boardIndex);
+    return true;
+  }
+  if (state.mode !== 'ready') return false;
+  markProfilePlay();
+  state.dice = forcedDice ? [...forcedDice] : [rollDie(), rollDie()];
+  state.rollTotal = state.dice[0] + state.dice[1];
+  state.rolls += 1;
+  state.selected.clear();
+  state.lastCombos = legalCombos();
+  state.noMove = state.lastCombos.length === 0;
+  if (state.noMove) {
+    finishRound(false, `No open tiles add to ${state.rollTotal}.`);
+    return false;
+  }
+  state.mode = 'selecting';
+  state.hint = `Try ${state.lastCombos[0].join(' + ')}`;
+  state.message = `Rolled ${state.rollTotal}. Close tiles that add exactly to it.`;
+  updateHud();
+  draw();
+  return true;
+}
+
+function toggleTile(value) {
+  if (state.mode !== 'selecting') return false;
+  if (!Number.isInteger(value) || value < 1 || value > state.open.length) return false;
+  if (!state.open[value - 1]) return false;
+  state.focusTile = value;
+  if (state.selected.has(value)) {
+    state.selected.delete(value);
+    state.message = `Removed ${value} from the pick.`;
+  } else {
+    const nextSum = selectionSum() + value;
+    if (nextSum > state.rollTotal) {
+      state.message = `${value} would pass the roll total.`;
+      updateHud();
+      draw();
+      return false;
+    }
+    state.selected.add(value);
+    state.message = nextSum === state.rollTotal ? 'Exact sum. Close the selected tiles.' : `Pick sum is ${nextSum}.`;
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function submitSelection() {
+  if (state.mode !== 'selecting') return false;
+  const sum = selectionSum();
+  if (sum !== state.rollTotal) {
+    state.message = `Selected tiles add to ${sum}, not ${state.rollTotal}.`;
+    updateHud();
+    draw();
+    return false;
+  }
+  state.history.push(snapshot());
+  for (const value of state.selected) {
+    if (state.open[value - 1]) {
+      state.open[value - 1] = false;
+      state.closedCount += 1;
+    }
+  }
+  const closed = selectedNumbers().join(', ');
+  state.selected.clear();
+  state.rollTotal = 0;
+  state.dice = [0, 0];
+  state.lastCombos = [];
+  if (remainingScore() === 0) {
+    finishRound(true, `Closed ${closed} and shut the box.`);
+  } else {
+    state.mode = 'ready';
+    state.hint = 'Roll dice';
+    state.message = `Closed ${closed}. Remaining score ${remainingScore()}.`;
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function useHint() {
+  if (state.mode !== 'selecting') {
+    state.message = 'Roll before asking for a tile set.';
+    updateHud();
+    draw();
+    return false;
+  }
+  const combos = legalCombos();
+  if (!combos.length) {
+    state.message = 'No legal tile set remains for this roll.';
+    updateHud();
+    draw();
+    return false;
+  }
+  state.selected = new Set(combos[0]);
+  state.focusTile = combos[0][0] || state.focusTile;
+  state.hint = `Hint ${combos[0].join(' + ')}`;
+  state.message = `Hint selected ${combos[0].join(' + ')}.`;
+  updateHud();
+  draw();
+  return true;
+}
+
+function undo() {
+  if (!state.history.length || state.mode === 'title') {
+    state.message = 'No tile close to undo.';
+    updateHud();
+    draw();
+    return false;
+  }
+  const saved = state.history.pop();
+  restore(saved);
+  state.message = 'Undid the last tile close.';
+  hideOverlay();
+  updateHud();
+  draw();
+  return true;
+}
+
+function saveBestIfNeeded(score) {
+  const best = currentBest();
+  if (best === null || score < best) {
+    state.bests[board().name] = score;
+    saveBests();
+  }
+}
+
+function awardForFinish(won, score) {
+  let reward = 0;
+  if (won) {
+    reward = 34 + state.boardIndex * 8 + Math.max(0, board().tileCount - state.rolls) * 2;
+  } else if (score <= board().target) {
+    reward = 12 + state.boardIndex * 3 + Math.max(0, board().target - score);
+  } else {
+    reward = Math.max(2, Math.floor(state.closedCount / 2));
+  }
+  state.lastCoins = reward;
+  state.coinsEarned += reward;
+  addCoins(reward);
+  return reward;
+}
+
+function finishRound(won, reason) {
+  const score = remainingScore();
+  state.mode = won ? 'won' : 'roundover';
+  state.selected.clear();
+  state.lastCombos = [];
+  state.noMove = !won;
+  saveBestIfNeeded(score);
+  const reward = awardForFinish(won, score);
+  state.hint = won ? 'Box shut' : score <= board().target ? 'Strong finish' : 'Try again';
+  state.message = `${reason} Score ${score}. Earned ${reward} coins.`;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function nextBoard() {
+  const next = (state.boardIndex + 1) % BOARDS.length;
+  startGame(next);
+}
+
+function restartBoard() {
+  startGame(state.boardIndex);
+}
+
+function pauseToggle() {
+  if (state.mode === 'title' || state.mode === 'roundover' || state.mode === 'won') return;
+  if (state.mode === 'paused') {
+    state.mode = state.previousMode;
+    hideOverlay();
+  } else {
+    state.previousMode = state.mode;
+    state.mode = 'paused';
+    showOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function forceRoll(totalOrDice) {
+  if (state.mode !== 'ready') return false;
+  if (Array.isArray(totalOrDice)) return rollDice(totalOrDice);
+  const total = Number(totalOrDice);
+  if (!Number.isFinite(total) || total < 2 || total > 12) return false;
+  const first = Math.max(1, Math.min(6, total - 1));
+  const second = total - first;
+  if (second < 1 || second > 6) return false;
+  return rollDice([first, second]);
+}
+
+function solveBoard() {
+  if (state.mode === 'title') startGame(state.boardIndex);
+  state.open = state.open.map(() => false);
+  state.selected.clear();
+  state.rollTotal = 0;
+  state.dice = [0, 0];
+  state.closedCount = board().tileCount;
+  finishRound(true, 'Solved by the test harness.');
+}
+
+function showOverlay() {
+  let html = '';
+  if (state.mode === 'title') {
+    html = `
+      <h1>Shut the Box</h1>
+      <p>Roll the dice, close open number tiles that match the sum, and chase the lowest remaining score.</p>
+      <p class="mini">Desktop: number keys, arrows, Enter, R, H, U, P, F. Touch: tap tiles and buttons.</p>
+      <button id="overlayPrimary" class="primary" type="button">Start Classic Nine</button>
+    `;
+  } else if (state.mode === 'paused') {
+    html = `
+      <h1>Paused</h1>
+      <p>${state.message}</p>
+      <button id="overlayPrimary" class="primary" type="button">Resume</button>
+    `;
+  } else {
+    const won = state.mode === 'won';
+    const best = currentBest();
+    html = `
+      <h1>${won ? 'Box Shut' : 'Round Over'}</h1>
+      <p>${state.message}</p>
+      <p class="mini">Best on ${board().name}: ${best === null ? '-' : best}. Coins this box: ${state.coinsEarned}.</p>
+      <button id="overlayPrimary" class="primary" type="button">${won ? 'Next Box' : 'Try Again'}</button>
+    `;
+  }
+  overlayPanel.innerHTML = html;
+  overlay.classList.add('show');
+  const button = document.getElementById('overlayPrimary');
+  if (button) {
+    button.addEventListener('click', () => {
+      if (state.mode === 'paused') pauseToggle();
+      else if (state.mode === 'won') nextBoard();
+      else startGame(state.boardIndex);
+    });
+  }
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function updateHud() {
+  const best = currentBest();
+  const pick = selectionSum();
+  els.boardName.textContent = board().name;
+  els.rollTotal.textContent = state.rollTotal > 0 ? `${state.dice[0]} + ${state.dice[1]} = ${state.rollTotal}` : '-';
+  els.pickSum.textContent = state.mode === 'selecting' ? `${pick} / ${state.rollTotal}` : '0';
+  els.openScore.textContent = String(remainingScore());
+  els.bestScore.textContent = best === null ? '-' : String(best);
+  els.coins.textContent = String(profileState.coins);
+  els.primaryBtn.textContent = state.mode === 'ready'
+    ? 'Roll Dice'
+    : state.mode === 'selecting'
+      ? 'Close Tiles'
+      : state.mode === 'paused'
+        ? 'Resume'
+        : 'Start';
+  els.submitBtn.disabled = state.mode !== 'selecting' || selectionSum() !== state.rollTotal;
+  els.hintBtn.disabled = state.mode !== 'selecting';
+  els.undoBtn.disabled = !state.history.length;
+  els.nextBtn.disabled = state.mode !== 'won' && state.mode !== 'roundover';
+  els.pauseBtn.disabled = state.mode === 'title' || state.mode === 'won' || state.mode === 'roundover';
+  els.pauseBtn.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function roundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(x, y, w, h, r, fill, stroke = null, line = 2) {
+  roundedRect(x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.lineWidth = line;
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color, align = 'left', weight = 800) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawDie(x, y, value) {
+  fillRoundRect(x, y, 74, 74, 12, '#f6f2df', '#21404a', 3);
+  ctx.fillStyle = '#132f38';
+  const pips = {
+    1: [[.5, .5]],
+    2: [[.28, .28], [.72, .72]],
+    3: [[.28, .28], [.5, .5], [.72, .72]],
+    4: [[.28, .28], [.72, .28], [.28, .72], [.72, .72]],
+    5: [[.28, .28], [.72, .28], [.5, .5], [.28, .72], [.72, .72]],
+    6: [[.28, .24], [.72, .24], [.28, .5], [.72, .5], [.28, .76], [.72, .76]],
+  }[value] || [];
+  for (const [px, py] of pips) {
+    ctx.beginPath();
+    ctx.arc(x + px * 74, y + py * 74, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function tileLayout() {
+  const active = board();
+  const cols = active.tileCount <= 10 ? 5 : 6;
+  const rows = Math.ceil(active.tileCount / cols);
+  const tileW = active.tileCount <= 10 ? 128 : 112;
+  const tileH = 112;
+  const gap = 14;
+  const totalW = cols * tileW + (cols - 1) * gap;
+  const startX = (WIDTH - totalW) / 2;
+  const startY = rows === 1 ? 334 : 300;
+  return { cols, tileW, tileH, gap, startX, startY };
+}
+
+function drawBoard() {
+  const layout = tileLayout();
+  regions = [];
+  const boxW = layout.cols * layout.tileW + (layout.cols - 1) * layout.gap + 50;
+  const rows = Math.ceil(board().tileCount / layout.cols);
+  const boxH = rows * layout.tileH + (rows - 1) * layout.gap + 54;
+  fillRoundRect((WIDTH - boxW) / 2, layout.startY - 28, boxW, boxH, 22, '#173740', '#b6dcd8', 3);
+  fillRoundRect((WIDTH - boxW) / 2 + 18, layout.startY - 10, boxW - 36, boxH - 34, 14, '#23555a', '#0f2931', 2);
+  for (let i = 0; i < board().tileCount; i += 1) {
+    const value = i + 1;
+    const col = i % layout.cols;
+    const row = Math.floor(i / layout.cols);
+    const x = layout.startX + col * (layout.tileW + layout.gap);
+    const y = layout.startY + row * (layout.tileH + layout.gap);
+    const open = state.open[i];
+    const selected = state.selected.has(value);
+    const focused = state.focusTile === value && state.mode === 'selecting';
+    const fill = !open ? TILE_CLOSED : selected ? TILE_SELECTED : TILE_FILL;
+    const stroke = focused ? '#ffffff' : open ? TILE_STROKE : '#5b7a7f';
+    fillRoundRect(x, y, layout.tileW, layout.tileH, 12, fill, stroke, focused ? 5 : 3);
+    ctx.fillStyle = open ? '#68462b' : '#9bb9bc';
+    ctx.fillRect(x + 18, y + 10, layout.tileW - 36, 6);
+    drawText(String(value), x + layout.tileW / 2, y + layout.tileH / 2 + 6, 48, open ? '#172b2f' : '#17343b', 'center', 900);
+    if (!open) {
+      ctx.strokeStyle = '#b7d0d0';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x + 24, y + layout.tileH - 22);
+      ctx.lineTo(x + layout.tileW - 24, y + 24);
+      ctx.stroke();
+    }
+    regions.push({ type: 'tile', value, x, y, w: layout.tileW, h: layout.tileH });
+  }
+}
+
+function drawInfoPanel() {
+  fillRoundRect(62, 104, 238, 142, 16, '#0f2831d9', '#82bbb7', 2);
+  drawText('Open score', 86, 136, 18, '#b7d0d0', 'left', 900);
+  drawText(String(remainingScore()), 260, 136, 34, '#ffe08a', 'right', 900);
+  drawText('Rolls', 86, 180, 18, '#b7d0d0', 'left', 900);
+  drawText(String(state.rolls), 260, 180, 28, '#f8fbf7', 'right', 900);
+  drawText(`Target ${board().target} or less`, 86, 220, 17, '#9ff0c5', 'left', 800);
+
+  fillRoundRect(700, 104, 238, 142, 16, '#0f2831d9', '#82bbb7', 2);
+  drawText('Legal choices', 724, 136, 18, '#b7d0d0', 'left', 900);
+  const combos = state.mode === 'selecting' ? legalCombos().slice(0, 3) : [];
+  if (combos.length) {
+    combos.forEach((combo, index) => {
+      drawText(combo.join(' + '), 724, 174 + index * 26, 19, index === 0 ? '#ffe08a' : '#d5e8e6', 'left', 900);
+    });
+  } else {
+    drawText(state.mode === 'ready' ? 'Roll first' : 'No move', 724, 184, 21, state.noMove ? '#ffb19e' : '#d5e8e6', 'left', 900);
+  }
+}
+
+function draw() {
+  const grd = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  grd.addColorStop(0, '#12313a');
+  grd.addColorStop(.48, '#1f5a5f');
+  grd.addColorStop(1, '#34345a');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = '#ffffff12';
+  for (let i = 0; i < 8; i += 1) {
+    ctx.beginPath();
+    ctx.arc(92 + i * 132, 604 + Math.sin(state.elapsed + i) * 8, 56, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawText('Shut the Box', WIDTH / 2, 48, 42, '#f8fbf7', 'center', 900);
+  drawText(board().desc, WIDTH / 2, 84, 18, '#d5e8e6', 'center', 800);
+  drawInfoPanel();
+  drawDie(398, 122, state.dice[0]);
+  drawDie(528, 122, state.dice[1]);
+  drawText(state.rollTotal ? String(state.rollTotal) : '-', WIDTH / 2, 228, 34, '#ffe08a', 'center', 900);
+  drawBoard();
+
+  const pick = selectionSum();
+  const pickColor = state.mode === 'selecting' && pick === state.rollTotal ? '#9ff0c5' : '#ffe08a';
+  drawText(state.message, WIDTH / 2, 590, 20, '#f8fbf7', 'center', 900);
+  if (state.mode === 'selecting') {
+    drawText(`Selected ${pick} of ${state.rollTotal}`, WIDTH / 2, 554, 20, pickColor, 'center', 900);
+  } else {
+    const best = currentBest();
+    drawText(`Best ${best === null ? '-' : best}   Coins ${profileState.coins}`, WIDTH / 2, 554, 18, '#d5e8e6', 'center', 800);
+  }
+}
+
+function update(dt) {
+  if (state.mode !== 'paused') state.elapsed += dt;
+}
+
+function primaryAction() {
+  if (state.mode === 'ready') rollDice();
+  else if (state.mode === 'selecting') submitSelection();
+  else if (state.mode === 'paused') pauseToggle();
+  else startGame(state.boardIndex);
+}
+
+function handlePointer(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * (WIDTH / rect.width);
+  const y = (event.clientY - rect.top) * (HEIGHT / rect.height);
+  const hit = regions.find((region) => x >= region.x && x <= region.x + region.w && y >= region.y && y <= region.y + region.h);
+  if (hit?.type === 'tile') {
+    toggleTile(hit.value);
+  } else if (state.mode === 'title') {
+    startGame(state.boardIndex);
+  }
+}
+
+function keyToTile(key) {
+  if (/^[1-9]$/.test(key)) return Number(key);
+  if (key === '0') return 10;
+  if (key === '-') return 11;
+  if (key === '=') return 12;
+  return null;
+}
+
+function handleKey(event) {
+  const key = event.key;
+  if (key.toLowerCase() === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key.toLowerCase() === 'p') {
+    event.preventDefault();
+    pauseToggle();
+    return;
+  }
+  if (key.toLowerCase() === 'h') {
+    event.preventDefault();
+    useHint();
+    return;
+  }
+  if (key.toLowerCase() === 'u') {
+    event.preventDefault();
+    undo();
+    return;
+  }
+  if (key.toLowerCase() === 'n' && (state.mode === 'won' || state.mode === 'roundover')) {
+    event.preventDefault();
+    nextBoard();
+    return;
+  }
+  if (key.toLowerCase() === 'r') {
+    event.preventDefault();
+    if (state.mode === 'ready') rollDice();
+    else restartBoard();
+    return;
+  }
+  if (key === 'ArrowLeft' || key === 'ArrowRight') {
+    event.preventDefault();
+    const delta = key === 'ArrowLeft' ? -1 : 1;
+    state.focusTile = ((state.focusTile - 1 + delta + board().tileCount) % board().tileCount) + 1;
+    draw();
+    return;
+  }
+  if (key === 'ArrowUp' || key === 'ArrowDown') {
+    event.preventDefault();
+    const cols = board().tileCount <= 10 ? 5 : 6;
+    const delta = key === 'ArrowUp' ? -cols : cols;
+    state.focusTile = ((state.focusTile - 1 + delta + board().tileCount * 3) % board().tileCount) + 1;
+    draw();
+    return;
+  }
+  if (key === 'Enter') {
+    event.preventDefault();
+    if (state.mode === 'selecting') toggleTile(state.focusTile);
+    else primaryAction();
+    return;
+  }
+  if (key === ' ') {
+    event.preventDefault();
+    primaryAction();
+    return;
+  }
+  const tile = keyToTile(key);
+  if (tile !== null) {
+    event.preventDefault();
+    toggleTile(tile);
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function renderGameToText() {
+  const payload = {
+    coordinate_system: 'canvas 1000x640, origin top-left, x increases right, y increases down',
+    mode: state.mode,
+    board: {
+      index: state.boardIndex,
+      name: board().name,
+      tile_count: board().tileCount,
+      target_score: board().target,
+    },
+    dice: [...state.dice],
+    roll_total: state.rollTotal,
+    selected_tiles: selectedNumbers(),
+    selection_sum: selectionSum(),
+    open_tiles: openNumbers(),
+    closed_tiles: closedNumbers(),
+    legal_combos: state.mode === 'selecting' ? legalCombos().slice(0, 5) : [],
+    rolls: state.rolls,
+    remaining_score: remainingScore(),
+    best_score: currentBest(),
+    focus_tile: state.focusTile,
+    no_move: state.noMove,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+    hint: state.hint,
+  };
+  return JSON.stringify(payload);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  updateHud();
+  lastTime = performance.now();
+  manualStepping = false;
+};
+
+window.__SHUT_THE_BOX_GAME__ = {
+  startGame,
+  rollDice,
+  forceRoll,
+  toggleTile,
+  submitSelection,
+  useHint,
+  undo,
+  nextBoard,
+  restartBoard,
+  solveBoard,
+  getState: () => JSON.parse(renderGameToText()),
+};
+
+els.primaryBtn.addEventListener('click', primaryAction);
+els.submitBtn.addEventListener('click', submitSelection);
+els.hintBtn.addEventListener('click', useHint);
+els.undoBtn.addEventListener('click', undo);
+els.nextBtn.addEventListener('click', nextBoard);
+els.pauseBtn.addEventListener('click', pauseToggle);
+els.fullBtn.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    update(dt);
+    draw();
+  }
+  lastTime = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'shutthebox', gameName: 'Shut the Box' });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

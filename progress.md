@@ -3481,3 +3481,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Air Hockey screenshots.
+
+## 2026-06-10 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Air Hockey, Cavern Crush, Calc Cages, Missile Command, Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, and Word Search.
+- Initial registry check found 121 games and no `shutthebox` route or Shut the Box metadata entry.
+- Chosen game: Shut the Box (`/shutthebox`), a dice-and-number strategy game distinct from the recent arcade, card-solitaire, grid-routing, and arithmetic-cage additions.
+- Initial implementation:
+  - Added `shutthebox/index.html` with canvas rendering, three board sizes, dice rolling, legal combination detection, tile selection, hints, undo, pause, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__SHUT_THE_BOX_GAME__`.
+- Registered Shut the Box in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Shut the Box SEO metadata now include `/shutthebox`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Script parse passed before and after SEO injection.
+  - Metadata uniqueness check passed; `GAMES` reports 122 games with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/shutthebox/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started a box, forced dice, closed tiles, undid, used a hint, solved Summit Twelve, awarded coins, advanced deterministic time, and verified shared feedback context.
+  - `git diff --check` on Shut the Box integration files passed with only LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/shutthebox/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs` reached the temporary server but failed at the same Chromium launch step.
+  - In-app Browser fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Shut the Box screenshots.
