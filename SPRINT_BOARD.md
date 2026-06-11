@@ -11,6 +11,8 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 5: May 4, 2026 to May 15, 2026
 - Sprint 6: May 18, 2026 to Jun 5, 2026
 - Sprint 7: Jun 8, 2026 to Jun 19, 2026
+- Sprint 8: Stripe production hardening follow-up
+- Sprint 9: iOS App Store readiness
 
 ## Sprint 1 - Compliance + Classroom Foundation
 
@@ -246,10 +248,48 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
   - Script outputs summary counts for repaired, unchanged, and unbound records.
   - Script is documented and included in release/ops validation checks.
 
+## Sprint 9 - iOS App Store Launch Readiness
+
+### CG-901 iOS Shell Decision + Prototype (Status: TODO)
+- Description: Choose the iOS packaging approach and prove the arcade can load in an iPhone/iPad app shell.
+- Acceptance criteria:
+  - Packaging decision is recorded in `IOS_LAUNCH_SPRINT_PLAN.md`.
+  - Prototype loads the launcher in iPhone and iPad simulator or documents the blocker.
+  - Shell plan covers safe areas, external links, storage, and local/static asset loading.
+
+### CG-902 iPhone/iPad Gameplay Readiness Audit (Status: TODO)
+- Description: Validate representative games for mobile controls, viewport behavior, orientation, and touch ergonomics.
+- Acceptance criteria:
+  - Audit covers canvas, keyboard-heavy, touch-heavy, audio, and progression flows.
+  - Blocking touch/viewport issues are fixed or tracked with owners.
+  - Device smoke notes list tested models, OS versions, and orientation coverage.
+
+### CG-903 Apple Auth, Payments, and Policy Mapping (Status: TODO)
+- Description: Map current auth, premium, school licensing, feedback, and privacy flows to Apple review expectations.
+- Acceptance criteria:
+  - Sign in with Apple requirement is accepted, rejected, or deferred with rationale.
+  - Premium and school purchase paths are mapped against Apple payment policy.
+  - Any iOS-specific privacy, account, or billing differences are reflected in release docs.
+
+### CG-904 App Store Metadata Pack (Status: TODO)
+- Description: Prepare App Store copy, screenshots, review notes, age rating inputs, and privacy label source notes.
+- Acceptance criteria:
+  - Metadata draft includes app name, subtitle, description, keywords, support URL, marketing URL, and review notes.
+  - Screenshot checklist covers required iPhone and iPad sizes.
+  - Child-safety, school, and monetization language matches the policy pages.
+
+### CG-905 TestFlight Launch Gate (Status: TODO)
+- Description: Add the final iOS validation checklist for TestFlight and App Review submission readiness.
+- Acceptance criteria:
+  - Checklist covers install, first launch, login/session behavior, game launch, classroom lock, shop gating, pricing path, and feedback path.
+  - Passing web QA and iOS device smoke are required before App Review submission.
+  - Known issues and release blockers are recorded before TestFlight distribution.
+
 ## Risks and Dependencies
 - External payment/legal integration for premium and school licensing.
 - Policy review before enabling any remote tracking or ad stack.
 - Classroom mode PIN is currently local-only and not hard security.
+- Apple App Review, payment policy, Sign in with Apple parity, and iOS WebView behavior are gating dependencies for native launch.
 
 ## Current Sprint Notes
 - [nightly 2026-05-17] Tracked changes: Stabilize game overlays during animation frames; Fix game start modals and overlay clicks; Add Mancala game.
@@ -283,6 +323,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - Sprint 8 follow-up item CG-802 is complete (`STRIPE_INCIDENT_RUNBOOK.md` added with outage detection, reconcile recovery, rollback, and comms template).
 - Sprint 8 closing item CG-803 is complete (`scripts/stripe/reconcile-audit.mjs` bulk reconcile/audit CLI with deterministic helper tests and summary output).
 - Sprint 8 Stripe production-hardening scope (CG-801 through CG-803) is complete.
+- Sprint 9 iOS launch readiness backlog is defined in `IOS_LAUNCH_SPRINT_PLAN.md` and CG-901 through CG-905.
 - [nightly 2026-03-13] Tracked changes: 2 commit(s) - c593230 Add new game without emoji changes; 7fe8a6c Add favicon links across pages.
 - [nightly 2026-03-13] Key PR links: none merged for this date.
 - [nightly 2026-03-28] No repository commits found for this date.
@@ -417,3 +458,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-07] Key PR links: none merged for this date.
 - [nightly 2026-06-08] Tracked changes: 1 commit(s) - 0242e63 Add Cavern Crush game and update site metadata.
 - [nightly 2026-06-08] Key PR links: none merged for this date.
+- [nightly 2026-06-11] No repository commits found for this date.
+- [nightly 2026-06-11] Key PR links: none merged for this date.

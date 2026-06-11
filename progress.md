@@ -3509,3 +3509,33 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback failed during sandbox setup with `windows sandbox failed: spawn setup refresh`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Shut the Box screenshots.
+
+## 2026-06-11 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory at `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md` was empty or missing at run start; repo `progress.md` history was used to avoid recent additions including Shut the Box, Air Hockey, Cavern Crush, Calc Cages, Missile Command, Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, and Word Search.
+- Initial registry check found no FreeCell route or metadata entry. Sokoban was skipped because existing Box Quest already covers box-pushing crate puzzles.
+- Chosen game: FreeCell Solitaire (`/freecell`), a distinct open-tableau solitaire game with free cells, foundations, legal run movement, undo, hints, auto-foundation, deterministic test hooks, shared feedback context, and coin rewards.
+- Initial implementation:
+  - Added `freecell/index.html` with canvas-rendered FreeCell, four free cells, four foundations, eight open tableau columns, legal alternating run movement with FreeCell capacity rules, pointer/touch and keyboard controls, undo, hints, auto-foundation, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__FREECELL_GAME__`.
+  - Registered FreeCell Solitaire in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and FreeCell SEO metadata now include `/freecell`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - FreeCell module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata uniqueness check passed; `GAMES` reports 123 games with no duplicate slugs or URLs.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/freecell/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started a deterministic deal, moved a tableau card to a free cell, undid it, generated a hint, forced a win, awarded coins, advanced deterministic time, and verified shared feedback context.
+  - `git diff --check` on FreeCell integration files passed with only LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Local manual test server:
+  - A hidden static server briefly served `http://127.0.0.1:4173/freecell/` and returned HTTP 200, but a final status check showed the detached process had exited; no persistent local server is left running.
+- Browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/freecell/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - Direct `scripts/qa/feedback-smoke.mjs` reached a temporary local server but failed at the same Chromium launch step.
+  - In-app Browser fallback failed during setup with `EPERM: operation not permitted, lstat 'C:\Users\Luke\AppData'`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated FreeCell screenshots.

@@ -107,6 +107,7 @@
 - game/reefrunner
 - game/codebreaker
 - game/solitaire
+- game/freecell
 - game/fifteenpuzzle
 - game/battleship
 - game/dotsandboxes

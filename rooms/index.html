@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Race Friends | AI and Sons Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1a0b2e;
+      --fg: #ffffff;
+      --muted: #a7b8df;
+      --accent: #f472b6;
+      --gold: #fbbf24;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: 'Fredoka', system-ui, sans-serif; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+    a.back { color: var(--muted); text-decoration: none; font-size: 14px; }
+    h1 { font-size: clamp(26px, 5vw, 36px); margin: 12px 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+    .handle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+    .handle-chip { padding: 8px 14px; border-radius: 999px; border: 2px solid rgba(251,191,36,0.45); background: rgba(251,191,36,0.15); color: var(--gold); font-weight: 700; }
+    .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; padding: 18px; }
+    .card h2 { margin: 0 0 12px; font-size: 18px; color: var(--gold); }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+    select, input[type="text"] {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--card-border);
+      background: rgba(0,0,0,0.3); color: var(--fg); font-family: inherit; font-size: 15px;
+    }
+    input.code-input { font-size: 24px; letter-spacing: 8px; text-align: center; font-weight: 700; }
+    button {
+      cursor: pointer; font-family: inherit; font-weight: 700; font-size: 15px;
+      padding: 11px 18px; border-radius: 12px; border: 2px solid rgba(251,191,36,0.5);
+      background: rgba(251,191,36,0.2); color: #fef3c7; margin-top: 14px; width: 100%;
+    }
+    button:hover:not(:disabled) { background: rgba(251,191,36,0.35); }
+    button:disabled { opacity: 0.5; cursor: default; }
+    button.secondary { border-color: var(--card-border); background: rgba(255,255,255,0.08); color: var(--fg); }
+    .room-view { display: none; }
+    .room-code-display { font-size: clamp(48px, 12vw, 80px); font-weight: 700; letter-spacing: 14px; color: var(--gold); text-align: center; margin: 8px 0; text-shadow: 0 0 30px rgba(251,191,36,0.4); }
+    .room-meta { text-align: center; color: var(--muted); margin-bottom: 16px; }
+    .timer { text-align: center; font-size: 28px; font-weight: 700; color: var(--accent); margin: 10px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--card-border); font-size: 15px; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    tr.me td { color: var(--gold); font-weight: 700; }
+    .medal { width: 28px; }
+    .status-msg { color: var(--muted); font-size: 14px; text-align: center; margin-top: 10px; min-height: 20px; }
+    .error-msg { color: #f87171; font-size: 14px; margin-top: 8px; min-height: 18px; }
+    .actions-row { display: flex; gap: 10px; }
+    .actions-row button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← All games</a>
+    <h1>🏁 Race Friends</h1>
+    <p class="sub">Same game, same clock. Highest score wins. Share the 4-digit code!</p>
+
+    <div class="handle-row">
+      <span>You are</span>
+      <span class="handle-chip" id="handleChip">…</span>
+      <button class="secondary" id="rerollBtn" style="width:auto;margin:0;padding:8px 12px;font-size:13px;">🎲 New name</button>
+    </div>
+
+    <div id="setupView" class="cards">
+      <div class="card">
+        <h2>Host a race</h2>
+        <label for="gameSelect">Game</label>
+        <select id="gameSelect">
+          <option value="snake">🐍 Snake</option>
+          <option value="tetris">🧩 Tetris</option>
+          <option value="flappy">🐦 Flappy Bird</option>
+          <option value="dino">🦖 Dino Run</option>
+          <option value="2048">🔢 2048</option>
+          <option value="pacman">🟡 Pac-Man</option>
+        </select>
+        <label for="durationSelect">Race length</label>
+        <select id="durationSelect">
+          <option value="60">1 minute</option>
+          <option value="120" selected>2 minutes</option>
+          <option value="180">3 minutes</option>
+          <option value="300">5 minutes</option>
+        </select>
+        <button id="createBtn">Create room</button>
+        <div class="error-msg" id="createError"></div>
+      </div>
+      <div class="card">
+        <h2>Join a race</h2>
+        <label for="codeInput">Room code</label>
+        <input type="text" id="codeInput" class="code-input" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+        <button id="joinBtn">Join room</button>
+        <div class="error-msg" id="joinError"></div>
+      </div>
+    </div>
+
+    <div id="roomView" class="room-view">
+      <div class="card">
+        <div class="room-meta" id="roomGameLabel"></div>
+        <div class="room-code-display" id="roomCodeDisplay"></div>
+        <div class="room-meta">Friends join at <strong>games.aiandsons.io/rooms</strong> with this code</div>
+        <div class="timer" id="timerDisplay"></div>
+        <table aria-label="Scoreboard">
+          <thead><tr><th class="medal"></th><th>Player</th><th>Score</th></tr></thead>
+          <tbody id="scoreboardBody"></tbody>
+        </table>
+        <div class="status-msg" id="statusMsg"></div>
+        <div class="actions-row">
+          <button id="startBtn" style="display:none;">🚦 Start race</button>
+          <button id="playBtn" style="display:none;">🎮 Play now</button>
+          <button class="secondary" id="leaveBtn">Leave</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      createRoom, ensurePlayer, fetchRoomState, getLocalPlayer,
+      joinRoom, rerollHandle, startRoom,
+    } from '../src/social/client.js';
+
+    const GAME_NAMES = {
+      snake: '🐍 Snake', tetris: '🧩 Tetris', flappy: '🐦 Flappy Bird',
+      dino: '🦖 Dino Run', 2048: '🔢 2048', pacman: '🟡 Pac-Man',
+    };
+    const MEDALS = ['🥇', '🥈', '🥉'];
+
+    const el = (id) => document.getElementById(id);
+    let currentRoom = null;
+    let pollTimer = null;
+    let playerId = '';
+
+    const setHandleChip = () => {
+      const player = getLocalPlayer();
+      el('handleChip').textContent = player ? player.handle : '…';
+    };
+
+    const showRoom = (room) => {
+      currentRoom = room;
+      el('setupView').style.display = 'none';
+      el('roomView').style.display = 'block';
+      el('roomCodeDisplay').textContent = room.code;
+      el('roomGameLabel').textContent = GAME_NAMES[room.gameSlug] || room.gameSlug;
+      renderRoom(room);
+      startPolling();
+      const url = new URL(window.location.href);
+      url.searchParams.set('code', room.code);
+      window.history.replaceState({}, '', url);
+    };
+
+    const renderRoom = (room) => {
+      currentRoom = room;
+      const isHost = room.hostPlayerId === playerId;
+      const tbody = el('scoreboardBody');
+      tbody.innerHTML = '';
+      room.players.forEach((player, index) => {
+        const row = document.createElement('tr');
+        if (player.playerId === playerId) row.className = 'me';
+        const showScores = room.status !== 'lobby';
+        row.innerHTML = `
+          <td class="medal">${showScores ? (MEDALS[index] || '') : ''}</td>
+          <td>${player.handle}${player.playerId === room.hostPlayerId ? ' 👑' : ''}</td>
+          <td>${showScores ? player.score : (player.finished ? '✅' : '—')}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      const startBtn = el('startBtn');
+      const playBtn = el('playBtn');
+      const statusMsg = el('statusMsg');
+      const timer = el('timerDisplay');
+
+      if (room.status === 'lobby') {
+        timer.textContent = '';
+        startBtn.style.display = isHost ? 'block' : 'none';
+        playBtn.style.display = 'none';
+        statusMsg.textContent = isHost
+          ? `${room.players.length} player${room.players.length === 1 ? '' : 's'} in. Start when ready!`
+          : 'Waiting for the host to start…';
+      } else if (room.status === 'racing') {
+        startBtn.style.display = 'none';
+        playBtn.style.display = 'block';
+        const msLeft = Math.max(0, room.endsAt - room.serverNow);
+        const seconds = Math.ceil(msLeft / 1000);
+        timer.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+        statusMsg.textContent = 'Race is on! Hit Play, finish a run, your score posts automatically.';
+      } else {
+        startBtn.style.display = 'none';
+        playBtn.style.display = 'none';
+        timer.textContent = '🏁 Finished!';
+        const winner = room.players[0];
+        statusMsg.textContent = winner && winner.score > 0
+          ? `${winner.handle} wins with ${winner.score}!`
+          : 'Race over.';
+      }
+    };
+
+    const startPolling = () => {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        if (!currentRoom) return;
+        try {
+          const data = await fetchRoomState(currentRoom.code);
+          renderRoom(data.room);
+          if (data.room.status === 'finished') clearInterval(pollTimer);
+        } catch { /* keep polling */ }
+      }, 2000);
+    };
+
+    el('createBtn').addEventListener('click', async () => {
+      el('createError').textContent = '';
+      el('createBtn').disabled = true;
+      try {
+        const data = await createRoom({
+          gameSlug: el('gameSelect').value,
+          durationSeconds: Number(el('durationSelect').value),
+        });
+        showRoom(data.room);
+      } catch (error) {
+        el('createError').textContent = error.message || 'Could not create room.';
+      } finally {
+        el('createBtn').disabled = false;
+      }
+    });
+
+    el('joinBtn').addEventListener('click', () => attemptJoin(el('codeInput').value.trim()));
+    el('codeInput').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') attemptJoin(el('codeInput').value.trim());
+    });
+
+    async function attemptJoin(code) {
+      if (!/^\d{4}$/.test(code)) {
+        el('joinError').textContent = 'Enter the 4-digit code.';
+        return;
+      }
+      el('joinError').textContent = '';
+      el('joinBtn').disabled = true;
+      try {
+        const data = await joinRoom(code);
+        showRoom(data.room);
+      } catch (error) {
+        el('joinError').textContent = error.message || 'Could not join room.';
+      } finally {
+        el('joinBtn').disabled = false;
+      }
+    }
+
+    el('startBtn').addEventListener('click', async () => {
+      el('startBtn').disabled = true;
+      try {
+        const data = await startRoom(currentRoom.code);
+        renderRoom(data.room);
+      } catch { /* re-enabled below */ }
+      el('startBtn').disabled = false;
+    });
+
+    el('playBtn').addEventListener('click', () => {
+      if (!currentRoom) return;
+      window.open(`/${currentRoom.gameSlug}?room=${encodeURIComponent(currentRoom.code)}`, '_blank');
+    });
+
+    el('leaveBtn').addEventListener('click', () => {
+      if (pollTimer) clearInterval(pollTimer);
+      currentRoom = null;
+      el('roomView').style.display = 'none';
+      el('setupView').style.display = 'grid';
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url);
+    });
+
+    el('rerollBtn').addEventListener('click', async () => {
+      el('rerollBtn').disabled = true;
+      try {
+        await rerollHandle();
+        setHandleChip();
+      } catch { /* keep old handle */ }
+      el('rerollBtn').disabled = false;
+    });
+
+    (async () => {
+      try {
+        const player = await ensurePlayer();
+        playerId = player.id;
+        setHandleChip();
+      } catch {
+        el('handleChip').textContent = 'offline';
+      }
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code && /^\d{4}$/.test(code)) {
+        attemptJoin(code);
+      }
+    })();
+  </script>
+</body>
+</html>

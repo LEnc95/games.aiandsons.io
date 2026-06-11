@@ -1,0 +1,1419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>FreeCell Solitaire | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(28% 24% at 12% 18%, #e3b24a 0%, transparent 68%),
+    radial-gradient(24% 22% at 86% 16%, #56bdb0 0%, transparent 70%),
+    radial-gradient(24% 26% at 80% 84%, #c56f78 0%, transparent 72%),
+    linear-gradient(135deg, #102436 0%, #23513f 52%, #3b2f46 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #06121fb8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(98vw, 1180px);
+  aspect-ratio: 55 / 38;
+  max-height: min(68dvh, 790px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffff82;
+  background: #12372f;
+  box-shadow: 0 20px 52px #07111f99;
+}
+.hud, .controls {
+  width: min(98vw, 1180px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff45;
+  background: #071421c7;
+  color: #f8fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 9px;
+  box-shadow: 0 8px 22px #00000040;
+}
+.chip span {
+  color: #c5d8e8;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #a9f3c1; }
+.chip.warn b { color: #ffe08a; }
+button {
+  cursor: pointer;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102131;
+  background: linear-gradient(135deg, #ffd36c 0%, #83e3c4 100%);
+  border-color: #ffffffb5;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  background: #091624ed;
+  padding: clamp(18px, 4vw, 30px);
+  box-shadow: 0 22px 48px #00000073;
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 64px);
+  line-height: .92;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 9px auto;
+  max-width: 60ch;
+  color: #d8e8f7;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #aecadf;
+  font-size: 13px;
+}
+@media (max-width: 920px) {
+  .app {
+    justify-content: flex-start;
+    padding-top: 58px;
+  }
+  .stage {
+    width: min(98vw, 820px);
+    max-height: 57dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back {
+    top: 8px;
+    left: 8px;
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+  .app {
+    padding: 54px 8px 10px;
+    gap: 7px;
+  }
+  .stage {
+    width: 99vw;
+    max-height: 48dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip, button { min-height: 40px; }
+  button {
+    font-size: 13px;
+    padding: 9px 8px;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Use four free cells to rearrange an open tableau, build alternating runs, and complete every suit foundation from ace to king. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="FreeCell Solitaire | AI and Sons Games">
+  <meta property="og:description" content="Use four free cells to rearrange an open tableau, build alternating runs, and complete every suit foundation from ace to king. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/freecell">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FreeCell Solitaire | AI and Sons Games">
+  <meta name="twitter:description" content="Use four free cells to rearrange an open tableau, build alternating runs, and complete every suit foundation from ace to king. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/freecell">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"FreeCell Solitaire","description":"Use four free cells to rearrange an open tableau, build alternating runs, and complete every suit foundation from ace to king. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/freecell","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="FreeCell Solitaire game">
+  <section class="stage" aria-label="FreeCell card table">
+    <canvas id="game" width="1100" height="760" tabindex="0" aria-label="FreeCell Solitaire canvas"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+    <div class="chip"><span>Time</span><b id="time">0:00</b></div>
+    <div class="chip warn"><span>Free Cells</span><b id="cells">4 / 4</b></div>
+    <div class="chip"><span>Foundations</span><b id="foundation">0 / 52</b></div>
+    <div class="chip"><span>Hint</span><b id="hintText">Deal</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="newBtn" class="primary" type="button">New Deal</button>
+    <button id="autoBtn" type="button">Auto</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="cancelBtn" type="button">Cancel</button>
+    <button id="restartBtn" type="button">Restart</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  mode: document.getElementById('mode'),
+  moves: document.getElementById('moves'),
+  time: document.getElementById('time'),
+  cells: document.getElementById('cells'),
+  foundation: document.getElementById('foundation'),
+  hint: document.getElementById('hintText'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  newGame: document.getElementById('newBtn'),
+  auto: document.getElementById('autoBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  cancel: document.getElementById('cancelBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WIDTH = 1100;
+const HEIGHT = 760;
+const CARD_W = 78;
+const CARD_H = 112;
+const CARD_R = 9;
+const TOP_Y = 74;
+const TABLEAU_Y = 232;
+const LEFT_X = 50;
+const TABLEAU_GAP = 56;
+const CARD_GAP = 31;
+const SUITS = ['S', 'H', 'D', 'C'];
+const FOUNDATION_ORDER = ['S', 'H', 'D', 'C'];
+const SUIT_NAMES = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' };
+const SUIT_COLORS = { S: '#172033', C: '#172033', H: '#bd3455', D: '#bd3455' };
+const STORAGE_KEY = 'cade:freecell:bests';
+
+const layout = {
+  freecells: Array.from({ length: 4 }, (_, index) => ({
+    zone: 'freecell',
+    cell: index,
+    x: LEFT_X + index * (CARD_W + 20),
+    y: TOP_Y,
+    w: CARD_W,
+    h: CARD_H,
+  })),
+  foundations: FOUNDATION_ORDER.map((suit, index) => ({
+    zone: 'foundation',
+    suit,
+    x: 654 + index * (CARD_W + 20),
+    y: TOP_Y,
+    w: CARD_W,
+    h: CARD_H,
+  })),
+  tableau: Array.from({ length: 8 }, (_, index) => ({
+    zone: 'tableau',
+    column: index,
+    x: LEFT_X + index * (CARD_W + TABLEAU_GAP),
+    y: TABLEAU_Y,
+    w: CARD_W,
+    h: CARD_H,
+  })),
+};
+
+const state = {
+  mode: 'menu',
+  seed: 0,
+  originalSeed: 0,
+  freecells: [null, null, null, null],
+  foundations: { S: [], H: [], D: [], C: [] },
+  tableau: Array.from({ length: 8 }, () => []),
+  selected: null,
+  hint: null,
+  moves: 0,
+  elapsed: 0,
+  coinsEarned: 0,
+  bests: loadBests(),
+  message: 'Deal every card face-up, then use free cells to build each suit foundation.',
+  lastMove: null,
+  history: [],
+  logs: ['Move cards to the four foundations from ace to king.'],
+  effects: [],
+};
+
+let lastFrame = 0;
+let controlled = false;
+let overlayKey = '';
+
+function loadBests() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBests() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.bests));
+  } catch {
+    // Local bests are optional.
+  }
+}
+
+function rankLabel(rank) {
+  return { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' }[rank] || String(rank);
+}
+
+function cardName(card) {
+  if (!card) return 'none';
+  return `${rankLabel(card.rank)}${card.suit}`;
+}
+
+function cardColor(card) {
+  return card.suit === 'H' || card.suit === 'D' ? 'red' : 'black';
+}
+
+function makeDeck() {
+  const deck = [];
+  let id = 0;
+  for (const suit of SUITS) {
+    for (let rank = 1; rank <= 13; rank += 1) {
+      id += 1;
+      deck.push({ id, suit, rank, faceUp: true });
+    }
+  }
+  return deck;
+}
+
+function seedFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const forced = Number(params.get('seed') || window.__FREECELL_SEED || 0);
+  if (Number.isFinite(forced) && forced > 0) return Math.floor(forced);
+  return Math.floor(Date.now() % 2147483647) || 4242;
+}
+
+function rng(seed) {
+  let value = seed % 2147483647;
+  if (value <= 0) value += 2147483646;
+  return () => {
+    value = value * 16807 % 2147483647;
+    return (value - 1) / 2147483646;
+  };
+}
+
+function shuffle(deck, seed) {
+  const random = rng(seed);
+  const copy = deck.slice();
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function startGame(seed = seedFromUrl()) {
+  const deck = shuffle(makeDeck(), seed);
+  state.mode = 'play';
+  state.seed = seed;
+  state.originalSeed = seed;
+  state.freecells = [null, null, null, null];
+  state.foundations = { S: [], H: [], D: [], C: [] };
+  state.tableau = Array.from({ length: 8 }, () => []);
+  state.selected = null;
+  state.hint = null;
+  state.moves = 0;
+  state.elapsed = 0;
+  state.coinsEarned = 0;
+  state.message = 'Move aces to foundations, park single cards in free cells, and build alternating runs.';
+  state.lastMove = null;
+  state.history = [];
+  state.logs = [`Deal seed ${seed}.`];
+  state.effects = [];
+  deck.forEach((card, index) => {
+    state.tableau[index % 8].push({ ...card, faceUp: true });
+  });
+  rememberRecent('freecell');
+  maybeUnlock({ anyPlay: true });
+  canvas.focus({ preventScroll: true });
+  render();
+}
+
+function cloneCard(card) {
+  return card ? { ...card } : null;
+}
+
+function cloneCards(cards) {
+  return cards.map(cloneCard);
+}
+
+function snapshot() {
+  return {
+    freecells: state.freecells.map(cloneCard),
+    foundations: Object.fromEntries(FOUNDATION_ORDER.map((suit) => [suit, cloneCards(state.foundations[suit])])),
+    tableau: state.tableau.map(cloneCards),
+    selected: state.selected ? { ...state.selected } : null,
+    hint: state.hint ? { ...state.hint } : null,
+    moves: state.moves,
+    elapsed: state.elapsed,
+    coinsEarned: state.coinsEarned,
+    message: state.message,
+    lastMove: state.lastMove ? { ...state.lastMove } : null,
+    logs: state.logs.slice(),
+  };
+}
+
+function restore(saved) {
+  state.freecells = saved.freecells.map(cloneCard);
+  state.foundations = Object.fromEntries(FOUNDATION_ORDER.map((suit) => [suit, cloneCards(saved.foundations[suit])]));
+  state.tableau = saved.tableau.map(cloneCards);
+  state.selected = saved.selected ? { ...saved.selected } : null;
+  state.hint = saved.hint ? { ...saved.hint } : null;
+  state.moves = saved.moves;
+  state.elapsed = saved.elapsed;
+  state.coinsEarned = saved.coinsEarned;
+  state.message = saved.message;
+  state.lastMove = saved.lastMove ? { ...saved.lastMove } : null;
+  state.logs = saved.logs.slice();
+}
+
+function pushHistory() {
+  state.history.push(snapshot());
+  if (state.history.length > 120) state.history.shift();
+}
+
+function pushLog(text) {
+  state.logs.unshift(text);
+  state.logs = state.logs.slice(0, 5);
+}
+
+function topCard(cards) {
+  return cards[cards.length - 1] || null;
+}
+
+function foundationCount() {
+  return FOUNDATION_ORDER.reduce((sum, suit) => sum + state.foundations[suit].length, 0);
+}
+
+function freeCellCount() {
+  return state.freecells.filter((card) => !card).length;
+}
+
+function emptyColumnCount(exclude = new Set()) {
+  return state.tableau.filter((stack, index) => stack.length === 0 && !exclude.has(index)).length;
+}
+
+function bestKey() {
+  return 'default';
+}
+
+function bestMoves() {
+  const best = state.bests[bestKey()];
+  return Number.isFinite(best) ? best : null;
+}
+
+function canBuildDescending(cards) {
+  if (!cards.length) return false;
+  for (let i = 0; i < cards.length - 1; i += 1) {
+    const upper = cards[i];
+    const lower = cards[i + 1];
+    if (upper.rank !== lower.rank + 1 || cardColor(upper) === cardColor(lower)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function movableCapacity(targetColumn) {
+  const exclude = new Set([targetColumn]);
+  if (state.selected?.zone === 'tableau') exclude.add(state.selected.column);
+  const cells = freeCellCount() + (state.selected?.zone === 'freecell' ? 1 : 0);
+  const columns = emptyColumnCount(exclude);
+  return Math.max(1, (cells + 1) * (2 ** columns));
+}
+
+function canMoveToTableau(cards, targetColumn) {
+  if (!cards.length || !canBuildDescending(cards)) return false;
+  if (cards.length > movableCapacity(targetColumn)) return false;
+  const target = topCard(state.tableau[targetColumn]);
+  if (!target) return true;
+  const moving = cards[0];
+  return target.rank === moving.rank + 1 && cardColor(target) !== cardColor(moving);
+}
+
+function canMoveToFoundation(card, suit) {
+  if (!card || card.suit !== suit) return false;
+  const target = topCard(state.foundations[suit]);
+  if (!target) return card.rank === 1;
+  return card.rank === target.rank + 1;
+}
+
+function selectedCards() {
+  if (!state.selected) return [];
+  if (state.selected.zone === 'freecell') {
+    const card = state.freecells[state.selected.cell];
+    return card ? [card] : [];
+  }
+  if (state.selected.zone === 'foundation') {
+    const card = topCard(state.foundations[state.selected.suit]);
+    return card ? [card] : [];
+  }
+  if (state.selected.zone === 'tableau') {
+    return state.tableau[state.selected.column].slice(state.selected.index);
+  }
+  return [];
+}
+
+function describeSelection(selection = state.selected) {
+  if (!selection) return 'nothing';
+  if (selection.zone === 'freecell') return `free cell ${selection.cell + 1}`;
+  if (selection.zone === 'foundation') return `${SUIT_NAMES[selection.suit]} foundation`;
+  if (selection.zone === 'tableau') return `column ${selection.column + 1}`;
+  return selection.zone;
+}
+
+function removeSelected() {
+  if (state.selected.zone === 'freecell') {
+    const card = state.freecells[state.selected.cell];
+    state.freecells[state.selected.cell] = null;
+    return card ? [card] : [];
+  }
+  if (state.selected.zone === 'foundation') {
+    const card = state.foundations[state.selected.suit].pop();
+    return card ? [card] : [];
+  }
+  if (state.selected.zone === 'tableau') {
+    return state.tableau[state.selected.column].splice(state.selected.index);
+  }
+  return [];
+}
+
+function finishAction(text, lastMove) {
+  state.moves += 1;
+  state.hint = null;
+  state.selected = null;
+  state.message = text;
+  state.lastMove = lastMove;
+  pushLog(text);
+  checkWin();
+  render();
+  return true;
+}
+
+function selectFreecell(cell) {
+  const card = state.freecells[cell];
+  if (!card) {
+    state.message = `Free cell ${cell + 1} is empty.`;
+    render();
+    return false;
+  }
+  state.selected = { zone: 'freecell', cell, count: 1, card: cardName(card) };
+  state.message = `${cardName(card)} selected from free cell ${cell + 1}.`;
+  render();
+  return true;
+}
+
+function selectFoundation(suit) {
+  const card = topCard(state.foundations[suit]);
+  if (!card) {
+    state.message = `${SUIT_NAMES[suit]} foundation starts with an ace.`;
+    render();
+    return false;
+  }
+  state.selected = { zone: 'foundation', suit, count: 1, card: cardName(card) };
+  state.message = `${cardName(card)} selected from ${SUIT_NAMES[suit]} foundation.`;
+  render();
+  return true;
+}
+
+function selectTableau(column, index = null) {
+  const stack = state.tableau[column];
+  if (!stack.length) {
+    state.message = 'Empty columns can receive any valid card or run.';
+    render();
+    return false;
+  }
+  const cardIndex = index == null ? stack.length - 1 : Math.max(0, Math.min(stack.length - 1, index));
+  const cards = stack.slice(cardIndex);
+  if (!canBuildDescending(cards)) {
+    state.message = 'Select a descending alternating run.';
+    render();
+    return false;
+  }
+  state.selected = {
+    zone: 'tableau',
+    column,
+    index: cardIndex,
+    count: cards.length,
+    card: cardName(cards[0]),
+  };
+  state.message = `${cardName(cards[0])}${cards.length > 1 ? ` run (${cards.length})` : ''} selected from column ${column + 1}.`;
+  render();
+  return true;
+}
+
+function moveSelectedToFreecell(cell) {
+  if (!state.selected) return false;
+  if (state.freecells[cell]) {
+    state.message = `Free cell ${cell + 1} is occupied.`;
+    render();
+    return false;
+  }
+  const cards = selectedCards();
+  if (cards.length !== 1) {
+    state.message = 'Only one card can park in a free cell.';
+    render();
+    return false;
+  }
+  pushHistory();
+  const from = describeSelection();
+  const [card] = removeSelected();
+  state.freecells[cell] = card;
+  return finishAction(`Moved ${cardName(card)} from ${from} to free cell ${cell + 1}.`, {
+    type: 'freecell',
+    from,
+    to: `free cell ${cell + 1}`,
+    cards: cardName(card),
+  });
+}
+
+function moveSelectedToFoundation(suit) {
+  if (!state.selected) return false;
+  const cards = selectedCards();
+  if (cards.length !== 1 || !canMoveToFoundation(cards[0], suit)) {
+    state.message = `Only the next ${SUIT_NAMES[suit]} card can move there.`;
+    render();
+    return false;
+  }
+  pushHistory();
+  const from = describeSelection();
+  const [card] = removeSelected();
+  state.foundations[suit].push(card);
+  state.effects.push({ type: 'spark', x: foundationRect(suit).x + CARD_W / 2, y: TOP_Y + CARD_H / 2, age: 0, life: .5 });
+  return finishAction(`Moved ${cardName(card)} from ${from} to ${SUIT_NAMES[suit]} foundation.`, {
+    type: 'foundation',
+    from,
+    to: `${SUIT_NAMES[suit]} foundation`,
+    cards: cardName(card),
+  });
+}
+
+function moveSelectedToTableau(column) {
+  if (!state.selected) return false;
+  const cards = selectedCards();
+  if (!canMoveToTableau(cards, column)) {
+    state.message = `That run does not fit on column ${column + 1}. Capacity is ${movableCapacity(column)}.`;
+    render();
+    return false;
+  }
+  pushHistory();
+  const from = describeSelection();
+  const moved = removeSelected();
+  state.tableau[column].push(...moved);
+  return finishAction(`Moved ${cardName(moved[0])}${moved.length > 1 ? ` run (${moved.length})` : ''} to column ${column + 1}.`, {
+    type: 'tableau',
+    from,
+    to: `column ${column + 1}`,
+    cards: moved.map(cardName).join(', '),
+  });
+}
+
+function clearSelection() {
+  state.selected = null;
+  state.hint = null;
+  state.message = 'Selection cleared.';
+  render();
+}
+
+function undo() {
+  if (!state.history.length || state.mode !== 'play') {
+    state.message = 'No move to undo.';
+    render();
+    return false;
+  }
+  restore(state.history.pop());
+  state.message = 'Undid the last move.';
+  pushLog('Undid the last move.');
+  render();
+  return true;
+}
+
+function findAutoMove() {
+  for (let cell = 0; cell < state.freecells.length; cell += 1) {
+    const card = state.freecells[cell];
+    if (card && canMoveToFoundation(card, card.suit)) {
+      return { type: 'foundation', source: 'freecell', cell, suit: card.suit, card: cardName(card) };
+    }
+  }
+  for (let column = 0; column < state.tableau.length; column += 1) {
+    const card = topCard(state.tableau[column]);
+    if (card && canMoveToFoundation(card, card.suit)) {
+      return { type: 'foundation', source: 'tableau', column, index: state.tableau[column].length - 1, suit: card.suit, card: cardName(card) };
+    }
+  }
+  return null;
+}
+
+function autoFoundation() {
+  if (state.mode !== 'play') {
+    startGame();
+    return false;
+  }
+  const move = findAutoMove();
+  if (!move) {
+    state.message = 'No foundation move is currently available.';
+    render();
+    return false;
+  }
+  if (move.source === 'freecell') {
+    state.selected = { zone: 'freecell', cell: move.cell, count: 1, card: move.card };
+  } else {
+    state.selected = { zone: 'tableau', column: move.column, index: move.index, count: 1, card: move.card };
+  }
+  return moveSelectedToFoundation(move.suit);
+}
+
+function moveAllSafeFoundations(limit = 52) {
+  let moved = 0;
+  while (moved < limit && findAutoMove()) {
+    if (!autoFoundation()) break;
+    moved += 1;
+  }
+  return moved;
+}
+
+function findHint() {
+  const auto = findAutoMove();
+  if (auto) return auto;
+  for (let cell = 0; cell < state.freecells.length; cell += 1) {
+    const card = state.freecells[cell];
+    if (!card) continue;
+    for (let column = 0; column < 8; column += 1) {
+      if (canMoveToTableau([card], column)) {
+        return { type: 'tableau', source: `free cell ${cell + 1}`, cell, targetColumn: column, card: cardName(card), count: 1 };
+      }
+    }
+  }
+  for (let from = 0; from < 8; from += 1) {
+    const stack = state.tableau[from];
+    for (let index = 0; index < stack.length; index += 1) {
+      const cards = stack.slice(index);
+      if (!canBuildDescending(cards)) continue;
+      for (let to = 0; to < 8; to += 1) {
+        if (to !== from && canMoveToTableau(cards, to)) {
+          return { type: 'tableau', source: `column ${from + 1}`, column: from, index, targetColumn: to, card: cardName(cards[0]), count: cards.length };
+        }
+      }
+    }
+  }
+  const emptyCell = state.freecells.findIndex((card) => !card);
+  if (emptyCell >= 0) {
+    for (let column = 0; column < 8; column += 1) {
+      const card = topCard(state.tableau[column]);
+      if (card) return { type: 'freecell', source: `column ${column + 1}`, column, index: state.tableau[column].length - 1, cell: emptyCell, card: cardName(card), count: 1 };
+    }
+  }
+  return { type: 'none' };
+}
+
+function showHint() {
+  if (state.mode !== 'play') return;
+  const hint = findHint();
+  state.hint = hint;
+  if (hint.type === 'foundation') {
+    state.message = `Hint: move ${hint.card} from ${hint.source === 'freecell' ? `free cell ${hint.cell + 1}` : `column ${hint.column + 1}`} to ${SUIT_NAMES[hint.suit]} foundation.`;
+  } else if (hint.type === 'tableau') {
+    state.message = `Hint: move ${hint.card} from ${hint.source} to column ${hint.targetColumn + 1}.`;
+  } else if (hint.type === 'freecell') {
+    state.message = `Hint: park ${hint.card} in free cell ${hint.cell + 1}.`;
+  } else {
+    state.message = 'No legal move found.';
+  }
+  render();
+}
+
+function checkWin() {
+  if (foundationCount() !== 52 || state.mode === 'won') return false;
+  state.mode = 'won';
+  const currentBest = bestMoves();
+  if (currentBest === null || state.moves < currentBest) {
+    state.bests[bestKey()] = state.moves;
+    saveBests();
+  }
+  const timeBonus = Math.max(0, 18 - Math.floor(state.elapsed / 30));
+  const moveBonus = Math.max(0, 34 - Math.floor(state.moves / 5));
+  const reward = 42 + timeBonus + moveBonus;
+  state.coinsEarned += reward;
+  addCoins(reward);
+  maybeUnlock({ anyPlay: true, freecell: { result: 'won', moves: state.moves, score: 52 } });
+  state.message = `Foundation complete in ${state.moves} moves. Earned ${reward} coins.`;
+  pushLog(state.message);
+  return true;
+}
+
+function forceWin() {
+  if (state.mode === 'menu') startGame(1);
+  state.freecells = [null, null, null, null];
+  state.tableau = Array.from({ length: 8 }, () => []);
+  state.foundations = { S: [], H: [], D: [], C: [] };
+  for (const suit of FOUNDATION_ORDER) {
+    for (let rank = 1; rank <= 13; rank += 1) {
+      state.foundations[suit].push({ id: `${suit}${rank}`, suit, rank, faceUp: true });
+    }
+  }
+  checkWin();
+  render();
+}
+
+function foundationRect(suit) {
+  return layout.foundations.find((rect) => rect.suit === suit);
+}
+
+function clickHit(hit) {
+  if (state.mode !== 'play') {
+    startGame();
+    return;
+  }
+  if (hit.zone === 'freecell') {
+    if (state.selected) {
+      if (!moveSelectedToFreecell(hit.cell) && state.freecells[hit.cell]) selectFreecell(hit.cell);
+    } else {
+      selectFreecell(hit.cell);
+    }
+    return;
+  }
+  if (hit.zone === 'foundation') {
+    if (state.selected) moveSelectedToFoundation(hit.suit);
+    else selectFoundation(hit.suit);
+    return;
+  }
+  if (hit.zone === 'tableau') {
+    if (state.selected) {
+      if (!moveSelectedToTableau(hit.column)) {
+        const stack = state.tableau[hit.column];
+        if (stack.length) selectTableau(hit.column, hit.index);
+      }
+    } else {
+      selectTableau(hit.column, hit.index);
+    }
+  }
+}
+
+function pointInRect(x, y, rect) {
+  return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+}
+
+function stackHeight(stack) {
+  if (!stack.length) return CARD_H;
+  return CARD_H + Math.max(0, stack.length - 1) * CARD_GAP;
+}
+
+function hitTest(x, y) {
+  for (const cell of layout.freecells) {
+    if (pointInRect(x, y, cell)) return { zone: 'freecell', cell: cell.cell };
+  }
+  for (const foundation of layout.foundations) {
+    if (pointInRect(x, y, foundation)) return { zone: 'foundation', suit: foundation.suit };
+  }
+  for (const columnRect of layout.tableau) {
+    const stack = state.tableau[columnRect.column];
+    const height = Math.max(CARD_H, stackHeight(stack));
+    if (x < columnRect.x || x > columnRect.x + CARD_W || y < columnRect.y || y > columnRect.y + height) {
+      continue;
+    }
+    if (!stack.length) return { zone: 'tableau', column: columnRect.column, index: null };
+    const relative = y - columnRect.y;
+    const index = Math.min(stack.length - 1, Math.max(0, Math.floor(relative / CARD_GAP)));
+    return { zone: 'tableau', column: columnRect.column, index };
+  }
+  return null;
+}
+
+function pointerToCanvas(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (WIDTH / rect.width),
+    y: (event.clientY - rect.top) * (HEIGHT / rect.height),
+  };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  const point = pointerToCanvas(event);
+  const hit = hitTest(point.x, point.y);
+  if (hit) clickHit(hit);
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'escape') {
+    event.preventDefault();
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    clearSelection();
+    return;
+  }
+  if (state.mode !== 'play') {
+    if (key === 'enter' || key === ' ') {
+      event.preventDefault();
+      startGame();
+    }
+    return;
+  }
+  if (key === 'a') {
+    event.preventDefault();
+    autoFoundation();
+  } else if (key === 'h') {
+    event.preventDefault();
+    showHint();
+  } else if (key === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'r' || key === 'n') {
+    event.preventDefault();
+    startGame(key === 'r' ? state.originalSeed : seedFromUrl() + state.moves + 1);
+  } else if (key >= '1' && key <= '8') {
+    event.preventDefault();
+    const column = Number(key) - 1;
+    if (state.selected) moveSelectedToTableau(column);
+    else selectTableau(column);
+  } else if ('qwer'.includes(key)) {
+    event.preventDefault();
+    const cell = 'qwer'.indexOf(key);
+    if (state.selected) moveSelectedToFreecell(cell);
+    else selectFreecell(cell);
+  } else if ('asdf'.includes(key)) {
+    event.preventDefault();
+    const suit = FOUNDATION_ORDER['asdf'.indexOf(key)];
+    if (state.selected) moveSelectedToFoundation(suit);
+    else selectFoundation(suit);
+  } else if (key === ' ') {
+    event.preventDefault();
+    autoFoundation();
+  }
+}
+
+function update(dt) {
+  if (state.mode === 'play') state.elapsed += dt;
+  for (const effect of state.effects) effect.age += dt;
+  state.effects = state.effects.filter((effect) => effect.age < effect.life);
+}
+
+function drawRoundRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  gradient.addColorStop(0, '#17334b');
+  gradient.addColorStop(.5, '#19513f');
+  gradient.addColorStop(1, '#463359');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.save();
+  ctx.globalAlpha = .15;
+  ctx.strokeStyle = '#f8fbff';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 18; i += 1) {
+    const y = 40 + i * 42;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.bezierCurveTo(230, y + 24, 580, y - 30, WIDTH, y + 14);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSlot(rect, label, active = false) {
+  drawRoundRect(rect.x, rect.y, rect.w, rect.h, CARD_R);
+  ctx.fillStyle = active ? '#ffffff24' : '#ffffff14';
+  ctx.fill();
+  ctx.strokeStyle = active ? '#ffd36c' : '#ffffff48';
+  ctx.lineWidth = active ? 4 : 2;
+  ctx.stroke();
+  ctx.fillStyle = '#d6e5ef99';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, rect.x + rect.w / 2, rect.y + rect.h / 2);
+}
+
+function drawCard(card, x, y, options = {}) {
+  ctx.save();
+  ctx.shadowColor = '#0000006b';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+  drawRoundRect(x, y, CARD_W, CARD_H, CARD_R);
+  ctx.fillStyle = '#fff8e9';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = options.highlight ? '#ffd36c' : '#122035';
+  ctx.lineWidth = options.highlight ? 4 : 2;
+  ctx.stroke();
+  const color = SUIT_COLORS[card.suit];
+  ctx.fillStyle = color;
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(rankLabel(card.rank), x + 8, y + 8);
+  ctx.fillText(card.suit, x + 8, y + 30);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 34px "Trebuchet MS", sans-serif';
+  ctx.fillText(card.suit, x + CARD_W / 2, y + CARD_H / 2 + 3);
+  ctx.save();
+  ctx.translate(x + CARD_W - 8, y + CARD_H - 8);
+  ctx.rotate(Math.PI);
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(rankLabel(card.rank), 0, 0);
+  ctx.fillText(card.suit, 0, 21);
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawHeader() {
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('FreeCell Solitaire', LEFT_X, 22);
+  ctx.fillStyle = '#d4e4f0';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(state.message, LEFT_X + 330, 32);
+}
+
+function drawTopRow() {
+  for (const cell of layout.freecells) {
+    const active = state.selected?.zone === 'freecell' && state.selected.cell === cell.cell ||
+      state.hint?.cell === cell.cell;
+    drawSlot(cell, `Cell ${cell.cell + 1}`, active);
+    const card = state.freecells[cell.cell];
+    if (card) drawCard(card, cell.x, cell.y, { highlight: active });
+  }
+  for (const foundation of layout.foundations) {
+    const active = state.selected?.zone === 'foundation' && state.selected.suit === foundation.suit ||
+      state.hint?.suit === foundation.suit;
+    drawSlot(foundation, foundation.suit, active);
+    const card = topCard(state.foundations[foundation.suit]);
+    if (card) drawCard(card, foundation.x, foundation.y, { highlight: active });
+  }
+  ctx.fillStyle = '#b7cce0';
+  ctx.font = '900 12px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('FREE CELLS', LEFT_X, TOP_Y - 18);
+  ctx.fillText('FOUNDATIONS', 654, TOP_Y - 18);
+}
+
+function drawTableau() {
+  for (const columnRect of layout.tableau) {
+    const stack = state.tableau[columnRect.column];
+    const target = state.hint?.targetColumn === columnRect.column;
+    if (!stack.length) drawSlot(columnRect, 'Open', target);
+    let y = columnRect.y;
+    for (let index = 0; index < stack.length; index += 1) {
+      const card = stack[index];
+      const selected = state.selected?.zone === 'tableau' &&
+        state.selected.column === columnRect.column &&
+        index >= state.selected.index;
+      const hinted = state.hint?.column === columnRect.column && state.hint?.index === index;
+      drawCard(card, columnRect.x, y, { highlight: selected || hinted || (target && index === stack.length - 1) });
+      y += CARD_GAP;
+    }
+    ctx.fillStyle = '#d6e5ef';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(String(columnRect.column + 1), columnRect.x + CARD_W / 2, columnRect.y - 20);
+  }
+}
+
+function drawSidePanel() {
+  const x = 958;
+  const y = 232;
+  const w = 102;
+  const h = 408;
+  drawRoundRect(x, y, w, h, 8);
+  ctx.fillStyle = '#091624d5';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff4a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 17px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Table', x + 12, y + 14);
+  const rows = [
+    ['Moves', String(state.moves)],
+    ['Time', formatTime(state.elapsed)],
+    ['Cells', String(freeCellCount())],
+    ['Caps', String(maxMoveCapacity())],
+    ['Done', `${foundationCount()}/52`],
+  ];
+  rows.forEach(([label, value], index) => {
+    const rowY = y + 54 + index * 42;
+    ctx.fillStyle = '#ffffff14';
+    drawRoundRect(x + 10, rowY, w - 20, 32, 7);
+    ctx.fill();
+    ctx.fillStyle = '#9fb6ca';
+    ctx.font = '900 9px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 18, rowY + 5);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 14px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, x + 18, rowY + 17);
+  });
+  ctx.fillStyle = '#9fb6ca';
+  ctx.font = '900 9px "Trebuchet MS", sans-serif';
+  ctx.fillText('LOG', x + 12, y + 292);
+  ctx.fillStyle = '#dbe9f5';
+  ctx.font = '800 10px "Trebuchet MS", sans-serif';
+  state.logs.slice(0, 4).forEach((line, index) => {
+    wrapText(line, x + 12, y + 310 + index * 19, w - 24, 12, 2);
+  });
+}
+
+function maxMoveCapacity() {
+  const columns = emptyColumnCount(new Set());
+  return (freeCellCount() + 1) * (2 ** columns);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 2) {
+  const words = String(text || '').split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y + lines * lineHeight);
+      lines += 1;
+      line = word;
+      if (lines >= maxLines) return;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y + lines * lineHeight);
+}
+
+function drawEffects() {
+  for (const effect of state.effects) {
+    const t = effect.age / effect.life;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - t);
+    ctx.strokeStyle = '#ffe08a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(effect.x, effect.y, 18 + t * 34, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function formatTime(seconds) {
+  const whole = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(whole / 60);
+  const secs = whole % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function renderHud() {
+  hud.mode.textContent = state.mode === 'play' ? 'Playing' : state.mode === 'won' ? 'Won' : 'Menu';
+  hud.moves.textContent = String(state.moves);
+  hud.time.textContent = formatTime(state.elapsed);
+  hud.cells.textContent = `${freeCellCount()} / 4`;
+  hud.foundation.textContent = `${foundationCount()} / 52`;
+  hud.hint.textContent = state.hint ? state.hint.type : 'Ready';
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  buttons.auto.disabled = state.mode !== 'play';
+  buttons.hint.disabled = state.mode !== 'play';
+  buttons.undo.disabled = state.mode !== 'play' || state.history.length === 0;
+  buttons.cancel.disabled = !state.selected && !state.hint;
+  buttons.restart.disabled = state.mode === 'menu';
+}
+
+function renderOverlay() {
+  const key = `${state.mode}|${state.message}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>FreeCell Solitaire</h1>
+      <p>Deal every card face-up. Use four free cells as temporary storage while building each suit foundation from ace to king.</p>
+      <p class="mini">Tap a card or run, then tap a destination. Keys: 1-8 columns, QWER cells, ASDF foundations, A auto, H hint, U undo, F fullscreen.</p>
+      <button class="primary" id="startBtn" type="button">Deal FreeCell</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', () => startGame());
+  } else if (state.mode === 'won') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Foundations Full</h1>
+      <p>${state.message}</p>
+      <p class="mini">Best clear: ${bestMoves() ?? '-'} moves. Try a new seed or beat this move count.</p>
+      <button class="primary" id="startBtn" type="button">New Deal</button>
+    `;
+    overlayPanel.querySelector('#startBtn')?.addEventListener('click', () => startGame(seedFromUrl() + state.moves + 1));
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function render() {
+  drawBackground();
+  drawHeader();
+  drawTopRow();
+  drawTableau();
+  drawSidePanel();
+  drawEffects();
+  renderHud();
+  renderOverlay();
+}
+
+function frame(ts) {
+  const dt = lastFrame ? Math.min(.05, (ts - lastFrame) / 1000) : 1 / 60;
+  lastFrame = ts;
+  if (!controlled) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+function compactCard(card) {
+  if (!card) return null;
+  return {
+    card: cardName(card),
+    suit: card.suit,
+    rank: card.rank,
+    color: cardColor(card),
+    face_up: !!card.faceUp,
+  };
+}
+
+function legalMovesSummary() {
+  const moves = [];
+  for (let cell = 0; cell < 4; cell += 1) {
+    const card = state.freecells[cell];
+    if (!card) continue;
+    if (canMoveToFoundation(card, card.suit)) moves.push({ from: `free cell ${cell + 1}`, to: `${card.suit} foundation`, card: cardName(card) });
+    for (let column = 0; column < 8; column += 1) {
+      if (canMoveToTableau([card], column)) moves.push({ from: `free cell ${cell + 1}`, to: `column ${column + 1}`, card: cardName(card) });
+    }
+  }
+  for (let from = 0; from < 8; from += 1) {
+    const stack = state.tableau[from];
+    stack.forEach((card, index) => {
+      const cards = stack.slice(index);
+      if (!canBuildDescending(cards)) return;
+      if (cards.length === 1 && canMoveToFoundation(card, card.suit)) {
+        moves.push({ from: `column ${from + 1}`, to: `${card.suit} foundation`, card: cardName(card) });
+      }
+      for (let to = 0; to < 8; to += 1) {
+        if (to !== from && canMoveToTableau(cards, to)) {
+          moves.push({ from: `column ${from + 1}`, to: `column ${to + 1}`, card: cardName(card), count: cards.length });
+        }
+      }
+    });
+    if (freeCellCount() > 0 && stack.length) {
+      moves.push({ from: `column ${from + 1}`, to: 'free cell', card: cardName(topCard(stack)), count: 1 });
+    }
+  }
+  return moves.slice(0, 24);
+}
+
+function renderGameToText() {
+  const payload = {
+    coordinate_system: 'Canvas 1100x760. Origin top-left. Tableau columns are 1-8 left to right; free cells are 1-4 left to right.',
+    mode: state.mode,
+    seed: state.seed,
+    moves: state.moves,
+    elapsed_seconds: Number(state.elapsed.toFixed(2)),
+    freecells: state.freecells.map(compactCard),
+    free_cells_open: freeCellCount(),
+    foundations: Object.fromEntries(FOUNDATION_ORDER.map((suit) => [suit, {
+      count: state.foundations[suit].length,
+      top: compactCard(topCard(state.foundations[suit])),
+    }])),
+    foundation_count: foundationCount(),
+    tableau: state.tableau.map((stack, index) => ({
+      column: index + 1,
+      count: stack.length,
+      cards: stack.map(compactCard),
+      top: compactCard(topCard(stack)),
+    })),
+    selected: state.selected,
+    hint: state.hint,
+    max_move_capacity: maxMoveCapacity(),
+    legal_moves: legalMovesSummary(),
+    message: state.message,
+    last_move: state.lastMove,
+    coins_earned: state.coinsEarned,
+    best_moves: bestMoves(),
+    logs: state.logs.slice(0, 4),
+  };
+  return JSON.stringify(payload);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  controlled = false;
+};
+window.__FREECELL_GAME__ = {
+  startGame,
+  selectTableau,
+  selectFreecell,
+  selectFoundation,
+  moveSelectedToTableau,
+  moveSelectedToFreecell,
+  moveSelectedToFoundation,
+  autoFoundation,
+  moveAllSafeFoundations,
+  showHint,
+  undo,
+  clearSelection,
+  forceWin,
+  getState: () => JSON.parse(renderGameToText()),
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { mode: state.mode, moves: state.moves };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+document.addEventListener('keydown', handleKey);
+buttons.newGame.addEventListener('click', () => startGame(seedFromUrl() + state.moves + 1));
+buttons.auto.addEventListener('click', autoFoundation);
+buttons.hint.addEventListener('click', showHint);
+buttons.undo.addEventListener('click', undo);
+buttons.cancel.addEventListener('click', clearSelection);
+buttons.restart.addEventListener('click', () => startGame(state.originalSeed || seedFromUrl()));
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+mountGameFeedback({ gameSlug: 'freecell', gameName: 'FreeCell Solitaire' });
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

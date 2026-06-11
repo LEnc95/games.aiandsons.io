@@ -128,7 +128,10 @@
 
   <script type="module">
     import { addCoins as addCoinsFn, rememberRecent, state as appState } from '../src/core/state.js';
+    import { initSocial, reportScore } from '../src/social/embed.js';
     window.addCoins = addCoinsFn;
+    window.cadeReportScore = reportScore;
+    initSocial({ slug: 'flappy' });
     const inventory = appState.inventory instanceof Set ? appState.inventory : new Set();
     window.flappyShopCosmetics = {
       sunsetWorld: inventory.has('flappy-sunset'),
@@ -562,6 +565,7 @@
       updateStartButton();
       setHint(isNewHigh ? `🎉 New High Score! ${state.score} Tap PLAY AGAIN.` : `Game Over! Score: ${state.score} Tap PLAY AGAIN.`);
       announce(isNewHigh ? `New high score ${state.score}.` : `Game over. Score ${state.score}.`, { assertive: true, speak: true });
+      if (typeof window.cadeReportScore === 'function') window.cadeReportScore(state.score);
     }
 
     function update(dt) {
