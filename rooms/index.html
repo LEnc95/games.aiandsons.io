@@ -112,6 +112,7 @@
           <tbody id="scoreboardBody"></tbody>
         </table>
         <div class="status-msg" id="statusMsg"></div>
+        <div class="error-msg" id="roomError"></div>
         <div class="actions-row">
           <button id="startBtn" style="display:none;">🚦 Start race</button>
           <button id="playBtn" style="display:none;">🎮 Play now</button>
@@ -138,17 +139,29 @@
     let pollTimer = null;
     let playerId = '';
 
-    const setHandleChip = () => {
+    const setRoomError = (message = '') => {
+      el('roomError').textContent = message;
+    };
+
+    const syncLocalPlayer = () => {
       const player = getLocalPlayer();
-      el('handleChip').textContent = player ? player.handle : '…';
+      if (player) {
+        playerId = player.id;
+        el('handleChip').textContent = player.handle;
+      } else {
+        playerId = '';
+        el('handleChip').textContent = '…';
+      }
     };
 
     const showRoom = (room) => {
+      syncLocalPlayer();
       currentRoom = room;
       el('setupView').style.display = 'none';
       el('roomView').style.display = 'block';
       el('roomCodeDisplay').textContent = room.code;
       el('roomGameLabel').textContent = GAME_NAMES[room.gameSlug] || room.gameSlug;
+      setRoomError('');
       renderRoom(room);
       startPolling();
       const url = new URL(window.location.href);
@@ -209,9 +222,12 @@
         if (!currentRoom) return;
         try {
           const data = await fetchRoomState(currentRoom.code);
+          setRoomError('');
           renderRoom(data.room);
           if (data.room.status === 'finished') clearInterval(pollTimer);
-        } catch { /* keep polling */ }
+        } catch {
+          setRoomError('Connection lost. Refresh the room or create a new race.');
+        }
       }, 2000);
     };
 
@@ -254,12 +270,17 @@
     }
 
     el('startBtn').addEventListener('click', async () => {
+      if (!currentRoom) return;
+      setRoomError('');
       el('startBtn').disabled = true;
       try {
         const data = await startRoom(currentRoom.code);
         renderRoom(data.room);
-      } catch { /* re-enabled below */ }
-      el('startBtn').disabled = false;
+      } catch (error) {
+        setRoomError(error.message || 'Could not start the race. Refresh the room and try again.');
+      } finally {
+        el('startBtn').disabled = false;
+      }
     });
 
     el('playBtn').addEventListener('click', () => {
@@ -270,6 +291,7 @@
     el('leaveBtn').addEventListener('click', () => {
       if (pollTimer) clearInterval(pollTimer);
       currentRoom = null;
+      setRoomError('');
       el('roomView').style.display = 'none';
       el('setupView').style.display = 'grid';
       const url = new URL(window.location.href);
@@ -281,7 +303,7 @@
       el('rerollBtn').disabled = true;
       try {
         await rerollHandle();
-        setHandleChip();
+        syncLocalPlayer();
       } catch { /* keep old handle */ }
       el('rerollBtn').disabled = false;
     });
@@ -290,7 +312,7 @@
       try {
         const player = await ensurePlayer();
         playerId = player.id;
-        setHandleChip();
+        syncLocalPlayer();
       } catch {
         el('handleChip').textContent = 'offline';
       }

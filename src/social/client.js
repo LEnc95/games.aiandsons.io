@@ -1,5 +1,5 @@
 // Client for /api/social/* — player identity, scores, challenges, rooms.
-import { get, set } from '../core/storage.js';
+import { del, get, set } from '../core/storage.js';
 
 const PLAYER_STORAGE_KEY = 'socialPlayer';
 
@@ -53,6 +53,28 @@ const storePlayer = (player) => {
   cachedPlayer = player;
 };
 
+const clearStoredPlayer = () => {
+  del(PLAYER_STORAGE_KEY);
+  cachedPlayer = null;
+  registerPromise = null;
+};
+
+const isStalePlayerError = (error) =>
+  error && ['invalid_player_token', 'unknown_player'].includes(error.code);
+
+const postJsonWithPlayer = async (route, buildPayload) => {
+  let player = await ensurePlayer();
+  try {
+    return { data: await postJson(route, buildPayload(player)), player };
+  } catch (error) {
+    if (!isStalePlayerError(error)) throw error;
+  }
+
+  clearStoredPlayer();
+  player = await ensurePlayer();
+  return { data: await postJson(route, buildPayload(player)), player };
+};
+
 export const getLocalPlayer = () => {
   if (!cachedPlayer) cachedPlayer = loadStoredPlayer();
   return cachedPlayer;
@@ -77,71 +99,81 @@ export const ensurePlayer = async () => {
 };
 
 export const rerollHandle = async () => {
-  const player = await ensurePlayer();
-  const data = await postJson('handle-reroll', { playerId: player.id, token: player.token });
+  const { data, player } = await postJsonWithPlayer('handle-reroll', (current) => ({
+    playerId: current.id,
+    token: current.token,
+  }));
   const next = { ...player, handle: data.player.handle };
   storePlayer(next);
   return next;
 };
 
 export const submitScore = async ({ gameSlug, score, challengeId = '', roomCode = '' }) => {
-  const player = await ensurePlayer();
-  return postJson('score-submit', {
+  const { data } = await postJsonWithPlayer('score-submit', (player) => ({
     playerId: player.id,
     token: player.token,
     gameSlug,
     score,
     challengeId,
     roomCode,
-  });
+  }));
+  return data;
 };
 
 export const fetchLeaderboard = (gameSlug, period = 'daily') =>
   getJson('leaderboard', { game: gameSlug, period });
 
 export const createChallenge = async ({ gameSlug, score }) => {
-  const player = await ensurePlayer();
-  return postJson('challenge-create', {
+  const { data } = await postJsonWithPlayer('challenge-create', (player) => ({
     playerId: player.id,
     token: player.token,
     gameSlug,
     score,
-  });
+  }));
+  return data;
 };
 
 export const fetchChallenge = (challengeId) => getJson('challenge-get', { id: challengeId });
 
 export const createRoom = async ({ gameSlug, durationSeconds }) => {
-  const player = await ensurePlayer();
-  return postJson('room-create', {
+  const { data } = await postJsonWithPlayer('room-create', (player) => ({
     playerId: player.id,
     token: player.token,
     gameSlug,
     durationSeconds,
-  });
+  }));
+  return data;
 };
 
 export const joinRoom = async (code) => {
-  const player = await ensurePlayer();
-  return postJson('room-join', { playerId: player.id, token: player.token, code });
+  const { data } = await postJsonWithPlayer('room-join', (player) => ({
+    playerId: player.id,
+    token: player.token,
+    code,
+  }));
+  return data;
 };
 
 export const startRoom = async (code) => {
-  const player = await ensurePlayer();
-  return postJson('room-start', { playerId: player.id, token: player.token, code });
+  const { data } = await postJsonWithPlayer('room-start', (player) => ({
+    playerId: player.id,
+    token: player.token,
+    code,
+  }));
+  return data;
 };
 
 export const fetchRoomState = (code) => getJson('room-state', { code });
 
 export const submitRoomScore = async ({ code, score, finished = false }) => {
-  const player = await ensurePlayer();
-  return postJson('room-score', {
+  const { data } = await postJsonWithPlayer('room-score', (player) => ({
     playerId: player.id,
     token: player.token,
     code,
     score,
     finished,
-  });
+  }));
+  return data;
 };
 
 export const getChallengeIdFromUrl = () => {
