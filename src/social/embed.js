@@ -275,6 +275,14 @@ const renderResultPanel = ({ score, result }) => {
     }
   }
 
+  if (context.roomCode) {
+    if (result.room) {
+      lines.push('<div class="cade-social-result-win">Room score posted.</div>');
+    } else {
+      lines.push('<div class="cade-social-result-lose">Room score was not posted. The race may be over.</div>');
+    }
+  }
+
   lines.push('<div class="cade-social-actions">');
   lines.push('<button class="cade-social-btn" data-action="challenge">⚔️ Challenge a friend</button>');
   if (context.roomCode) {
