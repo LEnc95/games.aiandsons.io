@@ -64,3 +64,6 @@
 ## 2025-05-18 - Avoid redundant normalization loops on memory caches
 **Learning:** Functions that search an entire memory cache (like `getFamilyAccountForUser` traversing `memoryState.accounts`) can cause massive CPU spikes if they run expensive object deep-cloning or normalization routines (like `normalizeFamilyAccount`) *before* checking if the entry matches the search criteria.
 **Action:** When filtering a cached memory store map or array, perform the fast-path lookup assertions (e.g. `_memberUserIdsSet.has(userId)`) against the raw object first, and only execute the expensive extraction/normalization logic on the matching result.
+## 2024-05-19 - Avoid redundant O(N) object allocations in memory fallback queries
+**Learning:** Chained array methods like `[...map.values()].map(normalize).filter(...)` force O(N) memory allocations and unnecessary data normalization for records that don't match the filter. In Firebase memory fallbacks, this creates significant overhead.
+**Action:** When querying in-memory state collections, replace array chains with a single `for...of` pass. Apply filters against raw properties *before* normalizing matching items to avoid redundant allocations and processing overhead.

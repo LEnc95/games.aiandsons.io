@@ -369,9 +369,12 @@ async function listFamilyInvitesForAccount(familyAccountId) {
       .get();
     invites = snapshot.docs.map((doc) => normalizeFamilyInvite(doc.data()));
   } else {
-    invites = [...memoryState.invites.values()]
-      .map((entry) => normalizeFamilyInvite(entry))
-      .filter((invite) => invite.familyAccountId === normalizedAccountId);
+    invites = [];
+    for (const raw of memoryState.invites.values()) {
+      if (raw.familyAccountId === normalizedAccountId) {
+        invites.push(normalizeFamilyInvite(raw));
+      }
+    }
   }
 
   return invites.sort((left, right) => right.createdAt - left.createdAt);
@@ -557,15 +560,15 @@ async function listEmailDeliveries({
       deliveries = snapshot.docs.map((doc) => normalizeEmailDelivery(doc.data()));
     }
   } else {
-    deliveries = [...memoryState.emails.values()]
-      .map((entry) => normalizeEmailDelivery(entry))
-      .filter((entry) => {
-        if (normalizedAccountId && entry.familyAccountId !== normalizedAccountId) return false;
-        if (normalizedUserId && entry.userId !== normalizedUserId) return false;
-        if (normalizedCustomerId && entry.customerId !== normalizedCustomerId) return false;
-        if (normalizedInvoiceId && entry.invoiceId !== normalizedInvoiceId) return false;
-        return normalizedAccountId || normalizedUserId || normalizedCustomerId || normalizedInvoiceId;
-      });
+    deliveries = [];
+    for (const raw of memoryState.emails.values()) {
+      if (normalizedAccountId && raw.familyAccountId !== normalizedAccountId) continue;
+      if (normalizedUserId && raw.userId !== normalizedUserId) continue;
+      if (normalizedCustomerId && raw.customerId !== normalizedCustomerId) continue;
+      if (normalizedInvoiceId && raw.invoiceId !== normalizedInvoiceId) continue;
+      if (!(normalizedAccountId || normalizedUserId || normalizedCustomerId || normalizedInvoiceId)) continue;
+      deliveries.push(normalizeEmailDelivery(raw));
+    }
   }
 
   return deliveries
