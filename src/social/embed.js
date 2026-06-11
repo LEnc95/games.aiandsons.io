@@ -8,6 +8,7 @@ import {
   createChallenge,
   ensurePlayer,
   fetchChallenge,
+  fetchLeaderboard,
   getChallengeIdFromUrl,
   getLocalPlayer,
   getRoomCodeFromUrl,
@@ -48,6 +49,15 @@ const injectStyles = () => {
       font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,0.45); max-width: 92vw;
     }
     .cade-social-banner .cade-social-banner-sub { font-weight: 500; font-size: 12px; color: #a7b8df; }
+    .cade-social-dock {
+      position: fixed; top: 64px; right: 12px; z-index: 9989;
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+      max-width: min(320px, 92vw); font-family: system-ui, sans-serif;
+    }
+    .cade-social-dock-inline {
+      position: static; justify-content: center; margin: 10px auto 0;
+      max-width: 100%;
+    }
     .cade-social-panel {
       position: fixed; right: 12px; bottom: 12px; z-index: 9991;
       background: rgba(26, 11, 46, 0.97); color: #fff;
@@ -69,11 +79,17 @@ const injectStyles = () => {
       font-size: 12px; padding: 7px 10px; font-family: inherit;
     }
     .cade-social-btn:hover { background: rgba(251,191,36,0.32); }
+    .cade-social-btn:disabled { opacity: 0.65; cursor: default; }
     .cade-social-close {
       position: absolute; top: 6px; right: 10px; cursor: pointer; background: none;
       border: none; color: #a7b8df; font-size: 16px; font-weight: 700;
     }
     .cade-social-handle { font-size: 11px; color: #a7b8df; margin-top: 8px; }
+    .cade-social-empty { color: #a7b8df; margin: 8px 0; }
+    @media (max-width: 640px) {
+      .cade-social-dock:not(.cade-social-dock-inline) { top: auto; right: 10px; bottom: 10px; max-width: calc(100vw - 20px); }
+      .cade-social-panel { right: 10px; bottom: 64px; width: min(280px, calc(100vw - 20px)); }
+    }
   `;
   document.head.appendChild(style);
 };
@@ -116,6 +132,109 @@ const copyText = async (text) => {
   } catch {
     return false;
   }
+};
+
+const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
+  injectStyles();
+  removeNode('cade-social-panel');
+
+  const panel = document.createElement('div');
+  panel.id = 'cade-social-panel';
+  panel.className = 'cade-social-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-label', 'Leaderboard');
+
+  const title = period === 'daily' ? "Today's leaderboard" : 'Leaderboard';
+  const top = Array.isArray(board.top) ? board.top.slice(0, 10) : [];
+  const player = getLocalPlayer();
+  const handle = player ? player.handle : '';
+  const lines = [
+    '<button class="cade-social-close" aria-label="Close">×</button>',
+    `<h3>\u{1F3C6} ${title}</h3>`,
+  ];
+
+  if (top.length) {
+    lines.push('<ol>');
+    for (const entry of top) {
+      const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
+      lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+    }
+    lines.push('</ol>');
+  } else {
+    lines.push('<div class="cade-social-empty">No scores yet. Finish a run to claim the board.</div>');
+  }
+
+  lines.push('<div class="cade-social-actions">');
+  lines.push('<button class="cade-social-btn" data-action="refresh-leaderboard">\u{1F504} Refresh</button>');
+  lines.push(`<a class="cade-social-btn" href="/rooms" style="text-decoration:none">\u{1F3C1} Race friends</a>`);
+  lines.push('</div>');
+
+  if (handle) {
+    lines.push(`<div class="cade-social-handle">Playing as ${handle}</div>`);
+  }
+
+  panel.innerHTML = lines.join('');
+  document.body.appendChild(panel);
+
+  panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
+  panel.querySelector('[data-action="refresh-leaderboard"]').addEventListener('click', () => showLeaderboard());
+};
+
+const showLeaderboard = async () => {
+  if (!context.slug) return;
+  injectStyles();
+  const button = document.querySelector('#cade-social-dock [data-action="leaderboard"]');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Loading...';
+  }
+  try {
+    const board = await fetchLeaderboard(context.slug, 'daily');
+    renderLeaderboardPanel({ board, period: 'daily' });
+  } catch {
+    removeNode('cade-social-panel');
+    const panel = document.createElement('div');
+    panel.id = 'cade-social-panel';
+    panel.className = 'cade-social-panel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Leaderboard unavailable');
+    panel.innerHTML = [
+      '<button class="cade-social-close" aria-label="Close">×</button>',
+      '<h3>\u{1F3C6} Leaderboard</h3>',
+      '<div class="cade-social-empty">Leaderboard is unavailable right now.</div>',
+    ].join('');
+    document.body.appendChild(panel);
+    panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = '\u{1F3C6} Leaderboard';
+    }
+  }
+};
+
+const mountSocialDock = () => {
+  injectStyles();
+  if (document.getElementById('cade-social-dock')) return;
+
+  const dock = document.createElement('div');
+  dock.id = 'cade-social-dock';
+  dock.className = 'cade-social-dock';
+  dock.setAttribute('aria-label', 'Social game tools');
+  dock.innerHTML = [
+    '<button class="cade-social-btn" data-action="leaderboard">\u{1F3C6} Leaderboard</button>',
+    '<a class="cade-social-btn" href="/rooms" style="text-decoration:none">\u{1F3C1} Race friends</a>',
+  ].join('');
+
+  const inlineHost = document.querySelector('[data-cade-social-host]') || document.querySelector('.hud');
+  if (inlineHost) {
+    dock.classList.add('cade-social-dock-inline');
+    inlineHost.appendChild(dock);
+  } else {
+    document.body.appendChild(dock);
+  }
+
+  dock.querySelector('[data-action="leaderboard"]').addEventListener('click', showLeaderboard);
 };
 
 const renderResultPanel = ({ score, result }) => {
@@ -193,6 +312,8 @@ export const initSocial = ({ slug }) => {
   context.slug = String(slug || '').trim();
   context.challengeId = getChallengeIdFromUrl();
   context.roomCode = getRoomCodeFromUrl();
+
+  mountSocialDock();
 
   // Register lazily so first reportScore is fast.
   ensurePlayer().catch(() => {});
