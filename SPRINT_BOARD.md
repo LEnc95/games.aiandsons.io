@@ -458,5 +458,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-07] Key PR links: none merged for this date.
 - [nightly 2026-06-08] Tracked changes: 1 commit(s) - 0242e63 Add Cavern Crush game and update site metadata.
 - [nightly 2026-06-08] Key PR links: none merged for this date.
-- [nightly 2026-06-11] No repository commits found for this date.
+- [nightly 2026-06-11] Tracked changes: 4 commit(s) - Add social score reporting and iOS launch sprint plan; Show social leaderboards in games; Fix Race Friends stale player recovery; Clarify Race Friends score updates.
 - [nightly 2026-06-11] Key PR links: none merged for this date.

@@ -46,6 +46,7 @@
 - game/tetris
 - game/asteroids
 - game/missilecommand
+- game/skyjoust
 - game/bomberman
 - game/treasuremaze
 - game/echolabyrinth

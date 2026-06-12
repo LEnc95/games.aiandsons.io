@@ -3539,3 +3539,32 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback failed during setup with `EPERM: operation not permitted, lstat 'C:\Users\Luke\AppData'`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated FreeCell screenshots.
+
+## 2026-06-12 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory at `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md` was empty or missing at run start; repo `progress.md` history was used to avoid recent additions including FreeCell, Shut the Box, Air Hockey, Cavern Crush, Calc Cages, Missile Command, Tri Peaks Solitaire, Flow Lines, Set Match, Letter Lock, Kakuro, Jigsaw Puzzle, Rush Hour, Nonogram, Mahjong Solitaire, and Word Search.
+- Initial registry check found no `/skyjoust` route or Sky Joust metadata entry.
+- Chosen game: Sky Joust (`/skyjoust`), a side-view arcade arena where players flap, steer, and defeat rival drones by striking from above through escalating waves.
+- Plan: add a standalone canvas game with desktop and touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, coin rewards, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+- Initial implementation:
+  - Added `skyjoust/index.html` with canvas rendering, arena platforms, flap/dive flight physics, rival wave AI, above-strike collision rules, lives, score combos, wave clear and champion states, coin rewards, desktop and touch controls, pause/restart/fullscreen, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__SKY_JOUST_GAME__`.
+  - Registered Sky Joust in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Sky Joust SEO metadata now include `/skyjoust`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Sky Joust module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata uniqueness check passed; `GAMES` reports 124 games with no duplicate URLs and includes Sky Joust.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/skyjoust/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started a deterministic match, verified above-strike scoring, advanced deterministic time, progressed waves, forced a champion win, awarded coins, and verified shared feedback context.
+  - `git diff --check` passed on Sky Joust integration files with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Browser blockers:
+  - Required `$develop-web-game` Playwright client reached `/skyjoust/` on a temporary Node static server but failed at Chromium launch with `browserType.launch: spawn EPERM`; no screenshots were produced or inspected.
+  - `scripts/qa/feedback-smoke.mjs` reached the temporary server but failed at the same Chromium launch step.
+  - In-app Browser fallback connected to the browser service but could not create an inspectable tab: `Timed out waiting for the Browser webview to attach for this browser-use page`.
+- Follow-up TODO:
+  - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Sky Joust screenshots.

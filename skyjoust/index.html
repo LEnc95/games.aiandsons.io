@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Sky Joust | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(28% 24% at 12% 18%, #ffd56e 0%, transparent 70%),
+    radial-gradient(25% 26% at 88% 16%, #5ed3d0 0%, transparent 72%),
+    radial-gradient(28% 26% at 82% 86%, #e17365 0%, transparent 74%),
+    linear-gradient(135deg, #123b55 0%, #244f69 45%, #40335d 100%);
+}
+.back {
+  position: fixed;
+  z-index: 30;
+  top: 12px;
+  left: 12px;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #07192abf;
+  box-shadow: 0 8px 22px #00000040;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(98vw, 1120px);
+  aspect-ratio: 16 / 10;
+  max-height: min(68dvh, 760px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffff85;
+  background: #1f5b79;
+  box-shadow: 0 22px 54px #06111f99;
+}
+.hud,
+.controls,
+.touchpad {
+  width: min(98vw, 1120px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.touchpad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff45;
+  background: #07192ad4;
+  color: #f8fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 9px;
+  box-shadow: 0 8px 22px #00000040;
+}
+.chip span {
+  color: #bbd3e7;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #a8f4c7; }
+.chip.warn b { color: #ffe18a; }
+button {
+  cursor: pointer;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe18a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102233;
+  background: linear-gradient(135deg, #ffd56e 0%, #7ee9d6 100%);
+  border-color: #ffffffb5;
+}
+button.hold {
+  background: #0b2740e0;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  background: #07192af0;
+  padding: clamp(18px, 4vw, 30px);
+  box-shadow: 0 22px 48px #00000073;
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(36px, 7vw, 66px);
+  line-height: .92;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 9px auto;
+  max-width: 62ch;
+  color: #d9e9f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #afc9df;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .app {
+    justify-content: flex-start;
+    padding-top: 58px;
+  }
+  .stage {
+    width: min(98vw, 880px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls,
+  .touchpad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back {
+    top: 8px;
+    left: 8px;
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+  .app {
+    padding: 54px 8px 10px;
+    gap: 7px;
+  }
+  .stage {
+    width: 99vw;
+    max-height: 44dvh;
+  }
+  .hud,
+  .controls,
+  .touchpad {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip,
+  button { min-height: 40px; }
+  button {
+    font-size: 13px;
+    padding: 9px 8px;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Flap through a sky arena, strike rival drones from above, and clear six escalating joust waves. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Sky Joust | AI and Sons Games">
+  <meta property="og:description" content="Flap through a sky arena, strike rival drones from above, and clear six escalating joust waves. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/skyjoust">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sky Joust | AI and Sons Games">
+  <meta name="twitter:description" content="Flap through a sky arena, strike rival drones from above, and clear six escalating joust waves. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/skyjoust">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Sky Joust","description":"Flap through a sky arena, strike rival drones from above, and clear six escalating joust waves. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/skyjoust","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app" aria-label="Sky Joust game">
+  <section class="stage" aria-label="Sky Joust arena">
+    <canvas id="game" width="960" height="600" tabindex="0" aria-label="Sky Joust canvas"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status" aria-live="polite">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip warn"><span>Wave</span><b id="wave">1</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Lives</span><b id="lives">3</b></div>
+    <div class="chip"><span>Targets</span><b id="targets">0</b></div>
+    <div class="chip"><span>Combo</span><b id="combo">x1</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">New Match</button>
+    <button id="pauseBtn" type="button">Pause</button>
+    <button id="restartBtn" type="button">Restart</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+  <section class="touchpad" aria-label="Touch flight controls">
+    <button class="hold" type="button" data-hold="left">Left</button>
+    <button class="hold" type="button" data-hold="flap">Flap</button>
+    <button class="hold" type="button" data-hold="right">Right</button>
+    <button class="hold" type="button" data-hold="dive">Dive</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const hud = {
+  mode: document.getElementById('mode'),
+  wave: document.getElementById('wave'),
+  score: document.getElementById('score'),
+  lives: document.getElementById('lives'),
+  targets: document.getElementById('targets'),
+  combo: document.getElementById('combo'),
+  coins: document.getElementById('coins'),
+};
+const buttons = {
+  start: document.getElementById('startBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WIDTH = 960;
+const HEIGHT = 600;
+const ARENA = { left: 42, right: 918, top: 30, bottom: 548 };
+const PLAYER_W = 58;
+const PLAYER_H = 34;
+const ENEMY_W = 54;
+const ENEMY_H = 32;
+const GRAVITY = 690;
+const MAX_WAVE = 6;
+const STORAGE_KEY = 'cade:skyjoust:bests';
+
+const platforms = [
+  { x: 82, y: 492, w: 180, h: 18, label: 'west deck' },
+  { x: 350, y: 422, w: 260, h: 18, label: 'center deck' },
+  { x: 704, y: 492, w: 174, h: 18, label: 'east deck' },
+  { x: 166, y: 308, w: 170, h: 16, label: 'upper west' },
+  { x: 626, y: 302, w: 170, h: 16, label: 'upper east' },
+];
+
+const state = {
+  mode: 'menu',
+  seed: 1,
+  wave: 1,
+  score: 0,
+  lives: 3,
+  combo: 1,
+  elapsed: 0,
+  waveClearTimer: 0,
+  coinsEarned: 0,
+  bestScore: loadBest(),
+  message: 'Strike rivals from above and stay clear of their lances.',
+  player: makePlayer(),
+  enemies: [],
+  effects: [],
+  logs: ['Flap to gain height. Hit rival drones from above.'],
+};
+
+const keys = new Set();
+const held = { left: false, right: false, flap: false, dive: false };
+let random = seededRandom(1);
+let enemyId = 0;
+let lastFrame = 0;
+let controlled = false;
+let overlayKey = '';
+let canvasPointerId = null;
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || 0);
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (state.score <= state.bestScore) return;
+  state.bestScore = state.score;
+  try {
+    localStorage.setItem(STORAGE_KEY, String(state.bestScore));
+  } catch {
+    // Local bests are optional.
+  }
+}
+
+function seedFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const forced = Number(params.get('seed') || window.__SKY_JOUST_SEED || 0);
+  if (Number.isFinite(forced) && forced > 0) return Math.floor(forced);
+  return Math.floor(Date.now() % 2147483647) || 73571;
+}
+
+function seededRandom(seed) {
+  let value = seed % 2147483647;
+  if (value <= 0) value += 2147483646;
+  return () => {
+    value = value * 16807 % 2147483647;
+    return (value - 1) / 2147483646;
+  };
+}
+
+function rand(min, max) {
+  return min + (max - min) * random();
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function makePlayer() {
+  return {
+    x: WIDTH / 2,
+    y: 470,
+    w: PLAYER_W,
+    h: PLAYER_H,
+    vx: 0,
+    vy: 0,
+    facing: 1,
+    flapCooldown: 0,
+    invulnerable: 0,
+    onPlatform: false,
+    lastSafeX: WIDTH / 2,
+    lastSafeY: 470,
+  };
+}
+
+function makeEnemy(wave, index, forced = {}) {
+  const side = index % 2 === 0 ? -1 : 1;
+  const baseY = 150 + (index % 3) * 70;
+  const speed = 88 + wave * 11 + index * 4;
+  return {
+    id: forced.id || `rival-${++enemyId}`,
+    x: forced.x ?? rand(130, 830),
+    y: forced.y ?? baseY + rand(-24, 26),
+    w: ENEMY_W,
+    h: ENEMY_H,
+    vx: forced.vx ?? side * speed,
+    vy: forced.vy ?? rand(-55, 20),
+    facing: side,
+    flapCooldown: rand(.12, .44),
+    stunned: 0,
+    scoreValue: 140 + wave * 25,
+    color: index % 3 === 0 ? '#ff8f70' : index % 3 === 1 ? '#d773ff' : '#ffce5c',
+  };
+}
+
+function startGame(seed = seedFromUrl()) {
+  state.mode = 'play';
+  state.seed = seed;
+  random = seededRandom(seed);
+  enemyId = 0;
+  state.wave = 1;
+  state.score = 0;
+  state.lives = 3;
+  state.combo = 1;
+  state.elapsed = 0;
+  state.waveClearTimer = 0;
+  state.coinsEarned = 0;
+  state.message = 'Wave 1: take the high lane and strike from above.';
+  state.player = makePlayer();
+  state.enemies = [];
+  state.effects = [];
+  state.logs = [`Seed ${seed}. Wave 1 launched.`];
+  spawnWave();
+  rememberRecent('skyjoust');
+  maybeUnlock({ anyPlay: true });
+  canvas.focus({ preventScroll: true });
+  render();
+}
+
+function spawnWave() {
+  const count = Math.min(7, 2 + state.wave);
+  state.mode = 'play';
+  state.waveClearTimer = 0;
+  state.enemies = Array.from({ length: count }, (_, index) => makeEnemy(state.wave, index));
+  state.player.x = WIDTH / 2;
+  state.player.y = 458;
+  state.player.vx = 0;
+  state.player.vy = -90;
+  state.player.invulnerable = Math.max(state.player.invulnerable, 1.1);
+  pushLog(`Wave ${state.wave}: ${count} rivals entered the arena.`);
+  state.message = `Wave ${state.wave}: strike ${count} rivals from above.`;
+  render();
+}
+
+function pushLog(text) {
+  state.logs.unshift(text);
+  state.logs = state.logs.slice(0, 5);
+}
+
+function awardCoins(amount, reason) {
+  const reward = Math.max(0, Math.floor(amount));
+  if (!reward) return;
+  state.coinsEarned += reward;
+  addCoins(reward);
+  pushLog(`${reason}: ${reward} coins.`);
+}
+
+function activeInput(name) {
+  if (held[name]) return true;
+  if (name === 'left') return keys.has('arrowleft') || keys.has('a');
+  if (name === 'right') return keys.has('arrowright') || keys.has('d');
+  if (name === 'flap') return keys.has('arrowup') || keys.has('w') || keys.has(' ');
+  if (name === 'dive') return keys.has('arrowdown') || keys.has('s');
+  return false;
+}
+
+function update(dt) {
+  updateEffects(dt);
+  if (state.mode === 'waveClear') {
+    state.waveClearTimer -= dt;
+    if (state.waveClearTimer <= 0) {
+      state.wave += 1;
+      spawnWave();
+    }
+    return;
+  }
+  if (state.mode !== 'play') return;
+  state.elapsed += dt;
+  updatePlayer(dt);
+  updateEnemies(dt);
+  resolvePlayerEnemyCollisions();
+  if (state.mode === 'play' && state.enemies.length === 0) {
+    completeWave();
+  }
+}
+
+function updateEffects(dt) {
+  for (const effect of state.effects) effect.age += dt;
+  state.effects = state.effects.filter((effect) => effect.age < effect.life);
+}
+
+function updatePlayer(dt) {
+  const p = state.player;
+  const left = activeInput('left');
+  const right = activeInput('right');
+  const flap = activeInput('flap');
+  const dive = activeInput('dive');
+  const direction = (right ? 1 : 0) - (left ? 1 : 0);
+  p.onPlatform = false;
+  p.flapCooldown = Math.max(0, p.flapCooldown - dt);
+  p.invulnerable = Math.max(0, p.invulnerable - dt);
+  if (direction !== 0) {
+    p.vx += direction * 780 * dt;
+    p.facing = direction;
+  } else {
+    p.vx *= Math.pow(.12, dt);
+  }
+  if (flap && p.flapCooldown <= 0) {
+    p.vy = Math.min(p.vy, 20) - 275;
+    p.flapCooldown = .18;
+    addEffect(p.x - p.facing * 18, p.y + 14, 'flap');
+  }
+  if (dive) {
+    p.vy += 620 * dt;
+  }
+  p.vx = clamp(p.vx, -285, 285);
+  p.vy = clamp(p.vy + GRAVITY * dt, -420, 510);
+  moveBodyWithPlatforms(p, dt, true);
+  if (p.onPlatform) {
+    p.lastSafeX = p.x;
+    p.lastSafeY = p.y;
+  }
+}
+
+function updateEnemies(dt) {
+  const p = state.player;
+  for (const enemy of state.enemies) {
+    enemy.stunned = Math.max(0, enemy.stunned - dt);
+    enemy.flapCooldown = Math.max(0, enemy.flapCooldown - dt);
+    const chase = Math.sign(p.x - enemy.x) || enemy.facing;
+    enemy.vx += chase * (180 + state.wave * 12) * dt;
+    enemy.facing = enemy.vx >= 0 ? 1 : -1;
+    const wantsHeight = p.y < enemy.y - 22 || enemy.y > 390 || enemy.vy > 235;
+    if (wantsHeight && enemy.flapCooldown <= 0) {
+      enemy.vy = Math.min(enemy.vy, 30) - (238 + state.wave * 9);
+      enemy.flapCooldown = rand(.38, .72);
+      addEffect(enemy.x, enemy.y + 13, 'enemyFlap', enemy.color);
+    }
+    if (enemy.stunned > 0) {
+      enemy.vx *= Math.pow(.25, dt);
+    }
+    enemy.vx = clamp(enemy.vx, -210 - state.wave * 13, 210 + state.wave * 13);
+    enemy.vy = clamp(enemy.vy + GRAVITY * .78 * dt, -360, 450);
+    moveBodyWithPlatforms(enemy, dt, false);
+  }
+}
+
+function moveBodyWithPlatforms(body, dt, isPlayer) {
+  const previousBottom = body.y + body.h / 2;
+  body.x += body.vx * dt;
+  body.y += body.vy * dt;
+  if (body.x - body.w / 2 < ARENA.left) {
+    body.x = ARENA.left + body.w / 2;
+    body.vx = Math.abs(body.vx) * .72;
+  } else if (body.x + body.w / 2 > ARENA.right) {
+    body.x = ARENA.right - body.w / 2;
+    body.vx = -Math.abs(body.vx) * .72;
+  }
+  if (body.y - body.h / 2 < ARENA.top) {
+    body.y = ARENA.top + body.h / 2;
+    body.vy = Math.max(30, -body.vy * .35);
+  }
+  for (const platform of platforms) {
+    const horizontal = body.x + body.w / 2 > platform.x && body.x - body.w / 2 < platform.x + platform.w;
+    const nextBottom = body.y + body.h / 2;
+    if (horizontal && body.vy >= 0 && previousBottom <= platform.y + 5 && nextBottom >= platform.y) {
+      body.y = platform.y - body.h / 2;
+      body.vy = 0;
+      if (isPlayer) body.onPlatform = true;
+    }
+  }
+  if (body.y + body.h / 2 > ARENA.bottom) {
+    body.y = ARENA.bottom - body.h / 2;
+    body.vy = 0;
+    if (isPlayer) body.onPlatform = true;
+  }
+}
+
+function resolvePlayerEnemyCollisions() {
+  const p = state.player;
+  const defeated = [];
+  for (const enemy of state.enemies) {
+    if (!overlap(p, enemy)) continue;
+    const playerAbove = p.y < enemy.y - 7 || p.vy > enemy.vy + 120;
+    if (playerAbove) {
+      defeated.push(enemy.id);
+      const points = enemy.scoreValue * state.combo;
+      state.score += points;
+      state.combo = Math.min(6, state.combo + 1);
+      p.vy = Math.min(p.vy, 0) - 230;
+      p.invulnerable = Math.max(p.invulnerable, .35);
+      state.message = `Clean strike for ${points} points.`;
+      pushLog(`Defeated ${enemy.id} from above.`);
+      addEffect(enemy.x, enemy.y, 'burst', enemy.color);
+    } else if (p.invulnerable <= 0) {
+      hurtPlayer(enemy);
+      break;
+    }
+  }
+  if (defeated.length) {
+    const defeatedSet = new Set(defeated);
+    state.enemies = state.enemies.filter((enemy) => !defeatedSet.has(enemy.id));
+  }
+}
+
+function overlap(a, b) {
+  return Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
+    Math.abs(a.y - b.y) < (a.h + b.h) / 2;
+}
+
+function hurtPlayer(enemy) {
+  const p = state.player;
+  state.lives -= 1;
+  state.combo = 1;
+  addEffect(p.x, p.y, 'hurt', '#ff6f7a');
+  pushLog(`Hit by ${enemy.id}.`);
+  if (state.lives <= 0) {
+    state.mode = 'gameOver';
+    state.message = `Arena lost on wave ${state.wave}. Final score ${state.score}.`;
+    saveBest();
+    maybeUnlock({ anyPlay: true, skyjoust: { result: 'lost', wave: state.wave, score: state.score } });
+    render();
+    return;
+  }
+  p.x = p.lastSafeX;
+  p.y = p.lastSafeY - 26;
+  p.vx = -Math.sign(enemy.x - p.x || 1) * 150;
+  p.vy = -245;
+  p.invulnerable = 2.1;
+  state.message = `Armor clipped. ${state.lives} lives left.`;
+}
+
+function completeWave() {
+  saveBest();
+  const reward = 6 + state.wave * 3 + Math.max(0, state.combo - 1);
+  awardCoins(reward, `Wave ${state.wave} clear`);
+  maybeUnlock({ anyPlay: true, skyjoust: { result: 'wave', wave: state.wave, score: state.score } });
+  if (state.wave >= MAX_WAVE) {
+    winGame();
+    return;
+  }
+  state.mode = 'waveClear';
+  state.waveClearTimer = 1.45;
+  state.message = `Wave ${state.wave} clear. Next wave incoming.`;
+  state.combo = Math.min(6, state.combo + 1);
+}
+
+function winGame() {
+  saveBest();
+  const timeBonus = Math.max(0, 60 - Math.floor(state.elapsed / 4));
+  const lifeBonus = state.lives * 14;
+  const reward = 55 + timeBonus + lifeBonus;
+  awardCoins(reward, 'Sky Joust champion');
+  state.mode = 'won';
+  state.message = `Champion run complete with ${state.score} points.`;
+  maybeUnlock({ anyPlay: true, skyjoust: { result: 'won', wave: state.wave, score: state.score, lives: state.lives } });
+}
+
+function addEffect(x, y, type, color = '#ffe18a') {
+  state.effects.push({ x, y, type, color, age: 0, life: type === 'burst' ? .55 : .38 });
+  if (state.effects.length > 36) state.effects.shift();
+}
+
+function formatMode() {
+  if (state.mode === 'waveClear') return 'Clear';
+  if (state.mode === 'gameOver') return 'Game Over';
+  if (state.mode === 'won') return 'Won';
+  return state.mode.charAt(0).toUpperCase() + state.mode.slice(1);
+}
+
+function renderHud() {
+  hud.mode.textContent = formatMode();
+  hud.wave.textContent = `${Math.min(state.wave, MAX_WAVE)} / ${MAX_WAVE}`;
+  hud.score.textContent = String(state.score);
+  hud.lives.textContent = String(state.lives);
+  hud.targets.textContent = String(state.enemies.length);
+  hud.combo.textContent = `x${state.combo}`;
+  hud.coins.textContent = String(state.coinsEarned || profileState.coins || 0);
+  buttons.pause.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  buttons.pause.disabled = !['play', 'paused'].includes(state.mode);
+  buttons.restart.disabled = state.mode === 'menu';
+}
+
+function renderOverlay() {
+  const key = `${state.mode}|${state.message}|${state.score}|${state.wave}|${state.coinsEarned}`;
+  if (key === overlayKey) return;
+  overlayKey = key;
+  if (state.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Sky Joust</h1>
+      <p>Flap through the arena, keep the high lane, and strike rival drones from above to clear six waves.</p>
+      <p class="mini">Desktop: arrows or WASD to fly, Space to flap, Down/S to dive, P pause, R restart, F fullscreen. Touch: use the four flight buttons.</p>
+      <button class="primary" id="overlayStart" type="button">Start Match</button>
+    `;
+    overlayPanel.querySelector('#overlayStart')?.addEventListener('click', () => startGame());
+  } else if (state.mode === 'paused') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Paused</h1>
+      <p>${state.message}</p>
+      <p class="mini">Resume when ready. Keep above rivals before making contact.</p>
+      <button class="primary" id="overlayResume" type="button">Resume</button>
+    `;
+    overlayPanel.querySelector('#overlayResume')?.addEventListener('click', togglePause);
+  } else if (state.mode === 'waveClear') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Wave Clear</h1>
+      <p>${state.message}</p>
+      <p class="mini">Score ${state.score}. Next wave starts automatically.</p>
+    `;
+  } else if (state.mode === 'gameOver') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Game Over</h1>
+      <p>${state.message}</p>
+      <p class="mini">Best score: ${state.bestScore}. Try using platforms to reset your height before each pass.</p>
+      <button class="primary" id="overlayRestart" type="button">New Match</button>
+    `;
+    overlayPanel.querySelector('#overlayRestart')?.addEventListener('click', () => startGame());
+  } else if (state.mode === 'won') {
+    overlay.classList.add('show');
+    overlayPanel.innerHTML = `
+      <h1>Champion</h1>
+      <p>${state.message}</p>
+      <p class="mini">Coins earned this run: ${state.coinsEarned}. Best score: ${state.bestScore}.</p>
+      <button class="primary" id="overlayAgain" type="button">Fly Again</button>
+    `;
+    overlayPanel.querySelector('#overlayAgain')?.addEventListener('click', () => startGame(seedFromUrl() + state.score + 1));
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function render() {
+  drawBackground();
+  drawArena();
+  drawPlatforms();
+  drawEnemies();
+  drawPlayer();
+  drawEffects();
+  drawCanvasHud();
+  renderHud();
+  renderOverlay();
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  gradient.addColorStop(0, '#59b2d3');
+  gradient.addColorStop(.42, '#4f8fb5');
+  gradient.addColorStop(1, '#28406b');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = .34;
+  drawCloud(124, 118, 1.2);
+  drawCloud(770, 92, .95);
+  drawCloud(506, 204, .8);
+  ctx.globalAlpha = .18;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 32; i += 1) {
+    const x = (i * 137 + state.seed * 3) % WIDTH;
+    const y = 36 + ((i * 71 + state.seed) % 250);
+    ctx.beginPath();
+    ctx.arc(x, y, 1.4 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawCloud(x, y, scale) {
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(x, y, 46 * scale, 20 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + 38 * scale, y + 4 * scale, 58 * scale, 24 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(x - 44 * scale, y + 6 * scale, 38 * scale, 18 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawArena() {
+  ctx.save();
+  ctx.strokeStyle = '#dff8ff8c';
+  ctx.lineWidth = 3;
+  roundRect(ARENA.left, ARENA.top, ARENA.right - ARENA.left, ARENA.bottom - ARENA.top, 14);
+  ctx.stroke();
+  ctx.globalAlpha = .14;
+  ctx.fillStyle = '#ffffff';
+  for (let x = ARENA.left + 48; x < ARENA.right; x += 72) {
+    ctx.fillRect(x, ARENA.top + 16, 2, ARENA.bottom - ARENA.top - 32);
+  }
+  ctx.restore();
+}
+
+function drawPlatforms() {
+  for (const platform of platforms) {
+    const grad = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.h);
+    grad.addColorStop(0, '#ffdf8a');
+    grad.addColorStop(1, '#c77c52');
+    roundRect(platform.x, platform.y, platform.w, platform.h, 8);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#5e3141';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff7d8';
+    ctx.globalAlpha = .28;
+    ctx.fillRect(platform.x + 10, platform.y + 4, platform.w - 20, 3);
+    ctx.globalAlpha = 1;
+  }
+  const floorGrad = ctx.createLinearGradient(0, ARENA.bottom, 0, HEIGHT);
+  floorGrad.addColorStop(0, '#354866');
+  floorGrad.addColorStop(1, '#16233c');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, ARENA.bottom, WIDTH, HEIGHT - ARENA.bottom);
+  ctx.strokeStyle = '#ffe18a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ARENA.left, ARENA.bottom);
+  ctx.lineTo(ARENA.right, ARENA.bottom);
+  ctx.stroke();
+}
+
+function drawPlayer() {
+  const p = state.player;
+  const flicker = p.invulnerable > 0 && Math.floor(p.invulnerable * 12) % 2 === 0;
+  if (flicker) return;
+  drawRider(p.x, p.y, p.facing, '#6ff2c4', '#173c55', true);
+}
+
+function drawEnemies() {
+  for (const enemy of state.enemies) {
+    drawRider(enemy.x, enemy.y, enemy.facing, enemy.color, '#331b3f', false);
+  }
+}
+
+function drawRider(x, y, facing, accent, base, isPlayer) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(facing, 1);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.strokeStyle = '#f7fbff';
+  ctx.lineWidth = isPlayer ? 5 : 4;
+  ctx.beginPath();
+  ctx.moveTo(18, -3);
+  ctx.lineTo(46, -11);
+  ctx.stroke();
+  ctx.fillStyle = '#f7fbff';
+  ctx.beginPath();
+  ctx.moveTo(49, -12);
+  ctx.lineTo(62, -8);
+  ctx.lineTo(49, -4);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = base;
+  roundRect(-27, -15, 48, 30, 14);
+  ctx.fill();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.moveTo(-20, -7);
+  ctx.quadraticCurveTo(-4, -30, 22, -14);
+  ctx.quadraticCurveTo(5, -6, -20, -7);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-22, 6);
+  ctx.quadraticCurveTo(-2, 28, 22, 12);
+  ctx.quadraticCurveTo(4, 6, -22, 6);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(5, -4, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.arc(7, -4, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawEffects() {
+  for (const effect of state.effects) {
+    const t = effect.age / effect.life;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - t);
+    if (effect.type === 'burst' || effect.type === 'hurt') {
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 8; i += 1) {
+        const angle = i * Math.PI / 4;
+        const inner = 12 + t * 18;
+        const outer = 24 + t * 44;
+        ctx.beginPath();
+        ctx.moveTo(effect.x + Math.cos(angle) * inner, effect.y + Math.sin(angle) * inner);
+        ctx.lineTo(effect.x + Math.cos(angle) * outer, effect.y + Math.sin(angle) * outer);
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = effect.color;
+      ctx.beginPath();
+      ctx.ellipse(effect.x, effect.y + t * 20, 24 + t * 12, 8 + t * 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawCanvasHud() {
+  ctx.save();
+  roundRect(58, 46, 330, 58, 8);
+  ctx.fillStyle = '#07192ab8';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff3d';
+  ctx.stroke();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 24px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Sky Joust', 76, 58);
+  ctx.fillStyle = '#d4e9f8';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillText(state.message, 76, 86);
+
+  roundRect(742, 46, 158, 58, 8);
+  ctx.fillStyle = '#07192ab8';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff3d';
+  ctx.stroke();
+  ctx.fillStyle = '#ffe18a';
+  ctx.font = '900 22px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Wave ${Math.min(state.wave, MAX_WAVE)}`, 821, 57);
+  ctx.fillStyle = '#d4e9f8';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${state.enemies.length} targets`, 821, 85);
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function togglePause() {
+  if (state.mode === 'play') {
+    state.mode = 'paused';
+    state.message = 'Paused. Resume with P or the button.';
+  } else if (state.mode === 'paused') {
+    state.mode = 'play';
+    state.message = `Wave ${state.wave}: keep the high lane.`;
+    canvas.focus({ preventScroll: true });
+  }
+  render();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+function handleKeyDown(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p') {
+    event.preventDefault();
+    togglePause();
+    return;
+  }
+  if (key === 'r') {
+    event.preventDefault();
+    startGame(state.seed || seedFromUrl());
+    return;
+  }
+  if ((key === 'enter' || key === ' ') && ['menu', 'gameOver', 'won'].includes(state.mode)) {
+    event.preventDefault();
+    startGame();
+    return;
+  }
+  keys.add(key);
+}
+
+function handleKeyUp(event) {
+  keys.delete(event.key.toLowerCase());
+}
+
+function pointerToCanvas(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (WIDTH / rect.width),
+    y: (event.clientY - rect.top) * (HEIGHT / rect.height),
+  };
+}
+
+function handleCanvasPointerDown(event) {
+  event.preventDefault();
+  if (state.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'play') return;
+  const point = pointerToCanvas(event);
+  canvasPointerId = event.pointerId;
+  canvas.setPointerCapture?.(event.pointerId);
+  held.left = point.x < state.player.x - 30;
+  held.right = point.x > state.player.x + 30;
+  held.flap = true;
+  held.dive = point.y > state.player.y + 90;
+}
+
+function handleCanvasPointerMove(event) {
+  if (canvasPointerId !== event.pointerId || state.mode !== 'play') return;
+  event.preventDefault();
+  const point = pointerToCanvas(event);
+  held.left = point.x < state.player.x - 30;
+  held.right = point.x > state.player.x + 30;
+  held.dive = point.y > state.player.y + 90;
+}
+
+function releaseCanvasPointer(event) {
+  if (canvasPointerId !== event.pointerId) return;
+  canvasPointerId = null;
+  held.left = false;
+  held.right = false;
+  held.flap = false;
+  held.dive = false;
+}
+
+function bindHoldButtons() {
+  for (const button of document.querySelectorAll('[data-hold]')) {
+    const name = button.getAttribute('data-hold');
+    const set = (value, event) => {
+      event?.preventDefault();
+      held[name] = value;
+      if (value && state.mode === 'menu') startGame();
+      if (value) canvas.focus({ preventScroll: true });
+    };
+    button.addEventListener('pointerdown', (event) => {
+      button.setPointerCapture?.(event.pointerId);
+      set(true, event);
+    });
+    button.addEventListener('pointerup', (event) => set(false, event));
+    button.addEventListener('pointercancel', (event) => set(false, event));
+    button.addEventListener('lostpointercapture', () => { held[name] = false; });
+  }
+}
+
+function frame(ts) {
+  const dt = lastFrame ? Math.min(.05, (ts - lastFrame) / 1000) : 1 / 60;
+  lastFrame = ts;
+  if (!controlled) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+function compactBody(body) {
+  return {
+    x: Number(body.x.toFixed(1)),
+    y: Number(body.y.toFixed(1)),
+    vx: Number(body.vx.toFixed(1)),
+    vy: Number(body.vy.toFixed(1)),
+    facing: body.facing,
+  };
+}
+
+function renderGameToText() {
+  const payload = {
+    coordinate_system: 'Canvas 960x600. Origin top-left. X increases right, Y increases down. Player and enemies use center coordinates.',
+    mode: state.mode,
+    seed: state.seed,
+    wave: state.wave,
+    max_wave: MAX_WAVE,
+    score: state.score,
+    lives: state.lives,
+    combo: state.combo,
+    elapsed_seconds: Number(state.elapsed.toFixed(2)),
+    player: {
+      ...compactBody(state.player),
+      invulnerable_seconds: Number(state.player.invulnerable.toFixed(2)),
+      on_platform: state.player.onPlatform,
+    },
+    enemies: state.enemies.map((enemy) => ({
+      id: enemy.id,
+      ...compactBody(enemy),
+      score_value: enemy.scoreValue,
+      color: enemy.color,
+    })),
+    platforms: platforms.map((platform) => ({
+      label: platform.label,
+      x: platform.x,
+      y: platform.y,
+      w: platform.w,
+      h: platform.h,
+    })),
+    objective: state.mode === 'play'
+      ? 'Defeat enemies by overlapping them from above; avoid side or lower contact.'
+      : state.message,
+    active_inputs: {
+      left: activeInput('left'),
+      right: activeInput('right'),
+      flap: activeInput('flap'),
+      dive: activeInput('dive'),
+    },
+    wave_clear_timer: Number(state.waveClearTimer.toFixed(2)),
+    coins_earned: state.coinsEarned,
+    best_score: state.bestScore,
+    message: state.message,
+    logs: state.logs.slice(0, 4),
+  };
+  return JSON.stringify(payload);
+}
+
+function forceWaveClear() {
+  if (state.mode === 'menu') startGame(42);
+  state.enemies = [];
+  if (state.mode === 'play') completeWave();
+  render();
+}
+
+function forceWin() {
+  if (state.mode === 'menu') startGame(42);
+  state.mode = 'play';
+  state.wave = MAX_WAVE;
+  state.score += 1800;
+  state.enemies = [];
+  winGame();
+  render();
+}
+
+function spawnTestEnemy(x = state.player.x, y = state.player.y + 56) {
+  if (state.mode === 'menu') startGame(42);
+  const enemy = makeEnemy(state.wave, state.enemies.length, { x, y, vx: 0, vy: 0 });
+  state.enemies.push(enemy);
+  render();
+  return enemy.id;
+}
+
+function setPlayerPosition(x, y, vx = 0, vy = 0) {
+  state.player.x = clamp(Number(x), ARENA.left + PLAYER_W / 2, ARENA.right - PLAYER_W / 2);
+  state.player.y = clamp(Number(y), ARENA.top + PLAYER_H / 2, ARENA.bottom - PLAYER_H / 2);
+  state.player.vx = Number(vx) || 0;
+  state.player.vy = Number(vy) || 0;
+  state.player.invulnerable = 0;
+  render();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  controlled = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  controlled = false;
+};
+window.__SKY_JOUST_GAME__ = {
+  startGame,
+  togglePause,
+  forceWaveClear,
+  forceWin,
+  spawnTestEnemy,
+  setPlayerPosition,
+  setInput: (next) => Object.assign(held, next || {}),
+  getState: () => JSON.parse(renderGameToText()),
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { mode: state.mode, wave: state.wave, score: state.score };
+  }
+};
+
+canvas.addEventListener('pointerdown', handleCanvasPointerDown);
+canvas.addEventListener('pointermove', handleCanvasPointerMove);
+canvas.addEventListener('pointerup', releaseCanvasPointer);
+canvas.addEventListener('pointercancel', releaseCanvasPointer);
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+buttons.start.addEventListener('click', () => startGame());
+buttons.pause.addEventListener('click', togglePause);
+buttons.restart.addEventListener('click', () => startGame(state.seed || seedFromUrl()));
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+bindHoldButtons();
+
+mountGameFeedback({ gameSlug: 'skyjoust', gameName: 'Sky Joust' });
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
