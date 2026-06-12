@@ -119,8 +119,8 @@ const showChallengeBanner = (challenge) => {
   banner.id = 'cade-social-banner';
   banner.className = 'cade-social-banner';
   banner.setAttribute('role', 'status');
-  banner.innerHTML = `⚔️ Beat ${escapeHtml(challenge.handle)}\'s score of ${escapeHtml(challenge.score)}!`
-    + `<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`;
+  banner.textContent = '';
+  banner.insertAdjacentHTML('beforeend', `⚔️ Beat ${escapeHtml(challenge.handle)}'s score of ${escapeHtml(challenge.score)}!<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`);
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 12000);
 };
@@ -132,8 +132,8 @@ const showRoomBanner = (roomCode) => {
   banner.id = 'cade-social-banner';
   banner.className = 'cade-social-banner';
   banner.setAttribute('role', 'status');
-  banner.innerHTML = `\u{1F3C1} Racing in room ${escapeHtml(roomCode)}!`
-    + `<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`;
+  banner.textContent = '';
+  banner.insertAdjacentHTML('beforeend', `\u{1F3C1} Racing in room ${escapeHtml(roomCode)}!<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`);
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 9000);
 };
