@@ -94,6 +94,19 @@ const injectStyles = () => {
   document.head.appendChild(style);
 };
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (m) => {
+    switch (m) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#39;";
+      default: return m;
+    }
+  });
+}
+
 const removeNode = (id) => {
   const node = document.getElementById(id);
   if (node) node.remove();
@@ -106,7 +119,7 @@ const showChallengeBanner = (challenge) => {
   banner.id = 'cade-social-banner';
   banner.className = 'cade-social-banner';
   banner.setAttribute('role', 'status');
-  banner.innerHTML = `⚔️ Beat ${challenge.handle}'s score of ${challenge.score}!`
+  banner.innerHTML = `⚔️ Beat ${escapeHtml(challenge.handle)}\'s score of ${escapeHtml(challenge.score)}!`
     + `<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 12000);
@@ -119,7 +132,7 @@ const showRoomBanner = (roomCode) => {
   banner.id = 'cade-social-banner';
   banner.className = 'cade-social-banner';
   banner.setAttribute('role', 'status');
-  banner.innerHTML = `\u{1F3C1} Racing in room ${roomCode}!`
+  banner.innerHTML = `\u{1F3C1} Racing in room ${escapeHtml(roomCode)}!`
     + `<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 9000);
@@ -157,7 +170,7 @@ const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
     lines.push('<ol>');
     for (const entry of top) {
       const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
-      lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+      lines.push(`<li${cls}>${escapeHtml(entry.handle)} — ${escapeHtml(entry.score)}</li>`);
     }
     lines.push('</ol>');
   } else {
@@ -170,7 +183,7 @@ const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
   lines.push('</div>');
 
   if (handle) {
-    lines.push(`<div class="cade-social-handle">Playing as ${handle}</div>`);
+    lines.push(`<div class="cade-social-handle">Playing as ${escapeHtml(handle)}</div>`);
   }
 
   panel.innerHTML = lines.join('');
@@ -256,9 +269,9 @@ const renderResultPanel = ({ score, result }) => {
 
   if (result.challenge) {
     if (result.challenge.beaten) {
-      lines.push(`<div class="cade-social-result-win">You beat ${result.challenge.targetHandle}'s ${result.challenge.targetScore}!</div>`);
+      lines.push(`<div class="cade-social-result-win">You beat ${escapeHtml(result.challenge.targetHandle)}\'s ${escapeHtml(result.challenge.targetScore)}!</div>`);
     } else {
-      lines.push(`<div class="cade-social-result-lose">${result.challenge.targetHandle}'s ${result.challenge.targetScore} still stands. Try again!</div>`);
+      lines.push(`<div class="cade-social-result-lose">${escapeHtml(result.challenge.targetHandle)}\'s ${escapeHtml(result.challenge.targetScore)} still stands. Try again!</div>`);
     }
   }
 
@@ -269,7 +282,7 @@ const renderResultPanel = ({ score, result }) => {
       lines.push('<ol>');
       for (const entry of top) {
         const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
-        lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+        lines.push(`<li${cls}>${escapeHtml(entry.handle)} — ${escapeHtml(entry.score)}</li>`);
       }
       lines.push('</ol>');
     }
@@ -290,7 +303,7 @@ const renderResultPanel = ({ score, result }) => {
   }
   lines.push('</div>');
   if (handle) {
-    lines.push(`<div class="cade-social-handle">Playing as ${handle}</div>`);
+    lines.push(`<div class="cade-social-handle">Playing as ${escapeHtml(handle)}</div>`);
   }
 
   panel.innerHTML = lines.join('');
