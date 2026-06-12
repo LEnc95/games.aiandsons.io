@@ -41,3 +41,6 @@
 ## 2026-06-03 - Explicit Labels for Accessible Form Inputs
 **Learning:** Depending entirely on `placeholder` attributes or hidden `aria-label`s for form field identification creates an accessibility failure and poor UX for sighted users. The WCAG requires visible `<label>` elements explicitly linked to their inputs via `for` and `id` attributes.
 **Action:** Always provide a clear, visible `<label>` paired with every `<input>`. Do not rely solely on placeholders or `aria-label` when a visible label can be provided. Make sure to visually mark required fields.
+## 2026-06-03 - Native Enter Key Submission for All Inputs
+**Learning:** Inputs nested outside of `<form>` elements (such as `pinInput` and `durationInput` in the teacher dashboard, or `adminTokenInput` in ops/feedback) do not naturally submit on `Enter` press, violating keyboard accessibility expectations.
+**Action:** Always manually implement a `keydown` listener on such inputs that intercepts `Enter` to `event.preventDefault()` and `.click()` the related submit button, matching standard form submission behavior.
