@@ -11,6 +11,7 @@ Operational command reference for contributors and automations in this repositor
 - Regenerate sitemap and inject SEO metadata: `npm run seo`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
+- Run social API integration tests: `npm run test:social`
 - Run Audioagar client integration tests: `npm run test:audioagar`
 - Run Audioagar server Go tests: `npm run test:audioagar:server`
 - Run combined QA gate: `npm run test:qa`
