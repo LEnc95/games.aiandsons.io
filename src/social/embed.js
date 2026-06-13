@@ -120,8 +120,8 @@ const showChallengeBanner = (challenge) => {
   banner.id = 'cade-social-banner';
   banner.className = 'cade-social-banner';
   banner.setAttribute('role', 'status');
-  banner.innerHTML = `⚔️ Beat ${escapeHtml(challenge.handle)}'s score of ${escapeHtml(challenge.score)}!`
-    + `<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`;
+  banner.textContent = '';
+  banner.insertAdjacentHTML('beforeend', `⚔️ Beat ${escapeHtml(challenge.handle)}'s score of ${escapeHtml(challenge.score)}!\n<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`);
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 12000);
 };
@@ -133,8 +133,8 @@ const showRoomBanner = (roomCode) => {
   banner.id = 'cade-social-banner';
   banner.className = 'cade-social-banner';
   banner.setAttribute('role', 'status');
-  banner.innerHTML = `\u{1F3C1} Racing in room ${escapeHtml(roomCode)}!`
-    + `<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`;
+  banner.textContent = '';
+  banner.insertAdjacentHTML('beforeend', `\u{1F3C1} Racing in room ${escapeHtml(roomCode)}!\n<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`);
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 9000);
 };
@@ -187,7 +187,8 @@ const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
     lines.push(`<div class="cade-social-handle">Playing as ${escapeHtml(handle)}</div>`);
   }
 
-  panel.innerHTML = lines.join('');
+  panel.textContent = '';
+  panel.insertAdjacentHTML('beforeend', lines.join(''));
   document.body.appendChild(panel);
 
   panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
@@ -212,11 +213,12 @@ const showLeaderboard = async () => {
     panel.className = 'cade-social-panel';
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', 'Leaderboard unavailable');
-    panel.innerHTML = [
+    panel.textContent = '';
+    panel.insertAdjacentHTML('beforeend', [
       '<button class="cade-social-close" aria-label="Close">×</button>',
       '<h3>\u{1F3C6} Leaderboard</h3>',
       '<div class="cade-social-empty">Leaderboard is unavailable right now.</div>',
-    ].join('');
+    ].join(''));
     document.body.appendChild(panel);
     panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
   } finally {
@@ -235,10 +237,11 @@ const mountSocialDock = () => {
   dock.id = 'cade-social-dock';
   dock.className = 'cade-social-dock';
   dock.setAttribute('aria-label', 'Social game tools');
-  dock.innerHTML = [
+  dock.textContent = '';
+  dock.insertAdjacentHTML('beforeend', [
     '<button class="cade-social-btn" data-action="leaderboard">\u{1F3C6} Leaderboard</button>',
     '<a class="cade-social-btn" href="/rooms" style="text-decoration:none">\u{1F3C1} Race friends</a>',
-  ].join('');
+  ].join(''));
 
   const inlineHost = document.querySelector('[data-cade-social-host]') || document.querySelector('.hud');
   if (inlineHost) {
@@ -307,7 +310,8 @@ const renderResultPanel = ({ score, result }) => {
     lines.push(`<div class="cade-social-handle">Playing as ${escapeHtml(handle)}</div>`);
   }
 
-  panel.innerHTML = lines.join('');
+  panel.textContent = '';
+  panel.insertAdjacentHTML('beforeend', lines.join(''));
   document.body.appendChild(panel);
 
   panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
