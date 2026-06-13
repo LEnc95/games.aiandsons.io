@@ -48,3 +48,7 @@
 **Vulnerability:** Clearing DOM elements using `.innerHTML = ''` triggers static analysis blocking flags for DOM-based XSS, even when assigning an empty string.
 **Learning:** Found 18 game index files using `.innerHTML = ''` or `.innerHTML = ""` instead of the codebase standard `.textContent = ""`.
 **Prevention:** Apply `.textContent = ""` universally for clearing elements to ensure security scanners pass and to enforce strict vanilla JS safety patterns.
+## 2026-06-13 - [Fix DOM XSS in Social Embed]
+**Vulnerability:** DOM-based Cross-Site Scripting (XSS) in `src/social/embed.js` caused by insecurely interpolating user-controlled data like `challenge.handle` into `.innerHTML` string assignments.
+**Learning:** When generating dynamic HTML snippets for social challenge links or leaderboards, player usernames and handles can contain malicious payloads and must never be inserted directly into `.innerHTML`.
+**Prevention:** Use an `escapeHtml()` string replacement utility to sanitize all user-controlled data when appending raw HTML, or use `.textContent` on specific DOM nodes instead.
