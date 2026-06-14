@@ -176,6 +176,10 @@ function injectStyles() {
       border-color: rgba(255,255,255,0.34);
       color: #08111f;
     }
+    .cade-feedback-btn:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
     .cade-feedback-status {
       min-height: 20px;
       margin-top: 6px;
