@@ -3,7 +3,7 @@
 //   import { initSocial, reportScore } from '../src/social/embed.js';
 //   initSocial({ slug: 'snake' });
 //   ... at game over: reportScore(finalScore);
-import { get, set } from '../core/storage.js';
+import { get, set } from "../core/storage.js";
 import {
   createChallenge,
   ensurePlayer,
@@ -13,32 +13,41 @@ import {
   getLocalPlayer,
   getRoomCodeFromUrl,
   submitScore,
-} from './client.js';
+} from "./client.js";
 
-const BEST_SCORES_KEY = 'bestScores';
+const escapeHtml = (str) => {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+const BEST_SCORES_KEY = "bestScores";
 
 const context = {
-  slug: '',
-  challengeId: '',
+  slug: "",
+  challengeId: "",
   challenge: null,
-  roomCode: '',
+  roomCode: "",
   initialized: false,
 };
 
 const recordLocalBest = (slug, score) => {
   const stored = get(BEST_SCORES_KEY, {});
-  const best = stored && typeof stored === 'object' ? stored : {};
-  if (typeof best[slug] !== 'number' || score > best[slug]) {
+  const best = stored && typeof stored === "object" ? stored : {};
+  if (typeof best[slug] !== "number" || score > best[slug]) {
     best[slug] = score;
     set(BEST_SCORES_KEY, best);
   }
 };
 
-const STYLE_ID = 'cade-social-style';
+const STYLE_ID = "cade-social-style";
 
 const injectStyles = () => {
   if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
     .cade-social-banner {
@@ -101,26 +110,28 @@ const removeNode = (id) => {
 
 const showChallengeBanner = (challenge) => {
   injectStyles();
-  removeNode('cade-social-banner');
-  const banner = document.createElement('div');
-  banner.id = 'cade-social-banner';
-  banner.className = 'cade-social-banner';
-  banner.setAttribute('role', 'status');
-  banner.innerHTML = `⚔️ Beat ${challenge.handle}'s score of ${challenge.score}!`
-    + `<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`;
+  removeNode("cade-social-banner");
+  const banner = document.createElement("div");
+  banner.id = "cade-social-banner";
+  banner.className = "cade-social-banner";
+  banner.setAttribute("role", "status");
+  banner.innerHTML =
+    `⚔️ Beat ${escapeHtml(challenge.handle)}'s score of ${challenge.score}!` +
+    `<div class="cade-social-banner-sub">Finish a run to take the crown.</div>`;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 12000);
 };
 
 const showRoomBanner = (roomCode) => {
   injectStyles();
-  removeNode('cade-social-banner');
-  const banner = document.createElement('div');
-  banner.id = 'cade-social-banner';
-  banner.className = 'cade-social-banner';
-  banner.setAttribute('role', 'status');
-  banner.innerHTML = `\u{1F3C1} Racing in room ${roomCode}!`
-    + `<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`;
+  removeNode("cade-social-banner");
+  const banner = document.createElement("div");
+  banner.id = "cade-social-banner";
+  banner.className = "cade-social-banner";
+  banner.setAttribute("role", "status");
+  banner.innerHTML =
+    `\u{1F3C1} Racing in room ${escapeHtml(roomCode)}!` +
+    `<div class="cade-social-banner-sub">Your score posts to the room scoreboard automatically.</div>`;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 9000);
 };
@@ -134,121 +145,141 @@ const copyText = async (text) => {
   }
 };
 
-const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
+const renderLeaderboardPanel = ({ board, period = "daily" }) => {
   injectStyles();
-  removeNode('cade-social-panel');
+  removeNode("cade-social-panel");
 
-  const panel = document.createElement('div');
-  panel.id = 'cade-social-panel';
-  panel.className = 'cade-social-panel';
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', 'Leaderboard');
+  const panel = document.createElement("div");
+  panel.id = "cade-social-panel";
+  panel.className = "cade-social-panel";
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-label", "Leaderboard");
 
-  const title = period === 'daily' ? "Today's leaderboard" : 'Leaderboard';
+  const title = period === "daily" ? "Today's leaderboard" : "Leaderboard";
   const top = Array.isArray(board.top) ? board.top.slice(0, 10) : [];
   const player = getLocalPlayer();
-  const handle = player ? player.handle : '';
+  const handle = player ? player.handle : "";
   const lines = [
     '<button class="cade-social-close" aria-label="Close">×</button>',
     `<h3>\u{1F3C6} ${title}</h3>`,
   ];
 
   if (top.length) {
-    lines.push('<ol>');
+    lines.push("<ol>");
     for (const entry of top) {
-      const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
-      lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+      const cls = entry.handle === handle ? ' class="cade-social-me"' : "";
+      lines.push(`<li${cls}>${escapeHtml(entry.handle)} — ${entry.score}</li>`);
     }
-    lines.push('</ol>');
+    lines.push("</ol>");
   } else {
-    lines.push('<div class="cade-social-empty">No scores yet. Finish a run to claim the board.</div>');
+    lines.push(
+      '<div class="cade-social-empty">No scores yet. Finish a run to claim the board.</div>',
+    );
   }
 
   lines.push('<div class="cade-social-actions">');
-  lines.push('<button class="cade-social-btn" data-action="refresh-leaderboard">\u{1F504} Refresh</button>');
-  lines.push(`<a class="cade-social-btn" href="/rooms" style="text-decoration:none">\u{1F3C1} Race friends</a>`);
-  lines.push('</div>');
+  lines.push(
+    '<button class="cade-social-btn" data-action="refresh-leaderboard">\u{1F504} Refresh</button>',
+  );
+  lines.push(
+    `<a class="cade-social-btn" href="/rooms" style="text-decoration:none">\u{1F3C1} Race friends</a>`,
+  );
+  lines.push("</div>");
 
   if (handle) {
-    lines.push(`<div class="cade-social-handle">Playing as ${handle}</div>`);
+    lines.push(
+      `<div class="cade-social-handle">Playing as ${escapeHtml(handle)}</div>`,
+    );
   }
 
-  panel.innerHTML = lines.join('');
+  panel.innerHTML = lines.join("");
   document.body.appendChild(panel);
 
-  panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
-  panel.querySelector('[data-action="refresh-leaderboard"]').addEventListener('click', () => showLeaderboard());
+  panel
+    .querySelector(".cade-social-close")
+    .addEventListener("click", () => panel.remove());
+  panel
+    .querySelector('[data-action="refresh-leaderboard"]')
+    .addEventListener("click", () => showLeaderboard());
 };
 
 const showLeaderboard = async () => {
   if (!context.slug) return;
   injectStyles();
-  const button = document.querySelector('#cade-social-dock [data-action="leaderboard"]');
+  const button = document.querySelector(
+    '#cade-social-dock [data-action="leaderboard"]',
+  );
   if (button) {
     button.disabled = true;
-    button.textContent = 'Loading...';
+    button.textContent = "Loading...";
   }
   try {
-    const board = await fetchLeaderboard(context.slug, 'daily');
-    renderLeaderboardPanel({ board, period: 'daily' });
+    const board = await fetchLeaderboard(context.slug, "daily");
+    renderLeaderboardPanel({ board, period: "daily" });
   } catch {
-    removeNode('cade-social-panel');
-    const panel = document.createElement('div');
-    panel.id = 'cade-social-panel';
-    panel.className = 'cade-social-panel';
-    panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Leaderboard unavailable');
+    removeNode("cade-social-panel");
+    const panel = document.createElement("div");
+    panel.id = "cade-social-panel";
+    panel.className = "cade-social-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", "Leaderboard unavailable");
     panel.innerHTML = [
       '<button class="cade-social-close" aria-label="Close">×</button>',
-      '<h3>\u{1F3C6} Leaderboard</h3>',
+      "<h3>\u{1F3C6} Leaderboard</h3>",
       '<div class="cade-social-empty">Leaderboard is unavailable right now.</div>',
-    ].join('');
+    ].join("");
     document.body.appendChild(panel);
-    panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
+    panel
+      .querySelector(".cade-social-close")
+      .addEventListener("click", () => panel.remove());
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = '\u{1F3C6} Leaderboard';
+      button.textContent = "\u{1F3C6} Leaderboard";
     }
   }
 };
 
 const mountSocialDock = () => {
   injectStyles();
-  if (document.getElementById('cade-social-dock')) return;
+  if (document.getElementById("cade-social-dock")) return;
 
-  const dock = document.createElement('div');
-  dock.id = 'cade-social-dock';
-  dock.className = 'cade-social-dock';
-  dock.setAttribute('aria-label', 'Social game tools');
+  const dock = document.createElement("div");
+  dock.id = "cade-social-dock";
+  dock.className = "cade-social-dock";
+  dock.setAttribute("aria-label", "Social game tools");
   dock.innerHTML = [
     '<button class="cade-social-btn" data-action="leaderboard">\u{1F3C6} Leaderboard</button>',
     '<a class="cade-social-btn" href="/rooms" style="text-decoration:none">\u{1F3C1} Race friends</a>',
-  ].join('');
+  ].join("");
 
-  const inlineHost = document.querySelector('[data-cade-social-host]') || document.querySelector('.hud');
+  const inlineHost =
+    document.querySelector("[data-cade-social-host]") ||
+    document.querySelector(".hud");
   if (inlineHost) {
-    dock.classList.add('cade-social-dock-inline');
+    dock.classList.add("cade-social-dock-inline");
     inlineHost.appendChild(dock);
   } else {
     document.body.appendChild(dock);
   }
 
-  dock.querySelector('[data-action="leaderboard"]').addEventListener('click', showLeaderboard);
+  dock
+    .querySelector('[data-action="leaderboard"]')
+    .addEventListener("click", showLeaderboard);
 };
 
 const renderResultPanel = ({ score, result }) => {
   injectStyles();
-  removeNode('cade-social-panel');
+  removeNode("cade-social-panel");
 
-  const panel = document.createElement('div');
-  panel.id = 'cade-social-panel';
-  panel.className = 'cade-social-panel';
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', 'Score results');
+  const panel = document.createElement("div");
+  panel.id = "cade-social-panel";
+  panel.className = "cade-social-panel";
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-label", "Score results");
 
   const player = getLocalPlayer();
-  const handle = player ? player.handle : '';
+  const handle = player ? player.handle : "";
   const lines = [];
 
   lines.push(`<button class="cade-social-close" aria-label="Close">×</button>`);
@@ -256,59 +287,83 @@ const renderResultPanel = ({ score, result }) => {
 
   if (result.challenge) {
     if (result.challenge.beaten) {
-      lines.push(`<div class="cade-social-result-win">You beat ${result.challenge.targetHandle}'s ${result.challenge.targetScore}!</div>`);
+      lines.push(
+        `<div class="cade-social-result-win">You beat ${escapeHtml(result.challenge.targetHandle)}'s ${result.challenge.targetScore}!</div>`,
+      );
     } else {
-      lines.push(`<div class="cade-social-result-lose">${result.challenge.targetHandle}'s ${result.challenge.targetScore} still stands. Try again!</div>`);
+      lines.push(
+        `<div class="cade-social-result-lose">${escapeHtml(result.challenge.targetHandle)}'s ${result.challenge.targetScore} still stands. Try again!</div>`,
+      );
     }
   }
 
   if (result.daily) {
-    lines.push(`<div>Today's rank: <strong>#${result.daily.rank}</strong></div>`);
-    const top = Array.isArray(result.daily.top) ? result.daily.top.slice(0, 5) : [];
+    lines.push(
+      `<div>Today's rank: <strong>#${result.daily.rank}</strong></div>`,
+    );
+    const top = Array.isArray(result.daily.top)
+      ? result.daily.top.slice(0, 5)
+      : [];
     if (top.length) {
-      lines.push('<ol>');
+      lines.push("<ol>");
       for (const entry of top) {
-        const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
-        lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+        const cls = entry.handle === handle ? ' class="cade-social-me"' : "";
+        lines.push(
+          `<li${cls}>${escapeHtml(entry.handle)} — ${entry.score}</li>`,
+        );
       }
-      lines.push('</ol>');
+      lines.push("</ol>");
     }
   }
 
   if (context.roomCode) {
     if (result.room) {
-      lines.push('<div class="cade-social-result-win">Room score posted.</div>');
+      lines.push(
+        '<div class="cade-social-result-win">Room score posted.</div>',
+      );
     } else {
-      lines.push('<div class="cade-social-result-lose">Room score was not posted. The race may be over.</div>');
+      lines.push(
+        '<div class="cade-social-result-lose">Room score was not posted. The race may be over.</div>',
+      );
     }
   }
 
   lines.push('<div class="cade-social-actions">');
-  lines.push('<button class="cade-social-btn" data-action="challenge">⚔️ Challenge a friend</button>');
+  lines.push(
+    '<button class="cade-social-btn" data-action="challenge">⚔️ Challenge a friend</button>',
+  );
   if (context.roomCode) {
-    lines.push(`<a class="cade-social-btn" href="/rooms?code=${encodeURIComponent(context.roomCode)}" style="text-decoration:none">\u{1F3C1} Back to room</a>`);
+    lines.push(
+      `<a class="cade-social-btn" href="/rooms?code=${encodeURIComponent(context.roomCode)}" style="text-decoration:none">\u{1F3C1} Back to room</a>`,
+    );
   }
-  lines.push('</div>');
+  lines.push("</div>");
   if (handle) {
-    lines.push(`<div class="cade-social-handle">Playing as ${handle}</div>`);
+    lines.push(
+      `<div class="cade-social-handle">Playing as ${escapeHtml(handle)}</div>`,
+    );
   }
 
-  panel.innerHTML = lines.join('');
+  panel.innerHTML = lines.join("");
   document.body.appendChild(panel);
 
-  panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
+  panel
+    .querySelector(".cade-social-close")
+    .addEventListener("click", () => panel.remove());
 
   const challengeButton = panel.querySelector('[data-action="challenge"]');
-  challengeButton.addEventListener('click', async () => {
+  challengeButton.addEventListener("click", async () => {
     challengeButton.disabled = true;
-    challengeButton.textContent = 'Creating link…';
+    challengeButton.textContent = "Creating link…";
     try {
       const data = await createChallenge({ gameSlug: context.slug, score });
       const url = `${window.location.origin}${data.challenge.url}`;
-      const copied = await copyText(`Beat my score of ${score} in ${context.slug}! ${url}`);
-      challengeButton.textContent = copied ? '✅ Link copied!' : url;
+      const copied = await copyText(
+        `Beat my score of ${score} in ${context.slug}! ${url}`,
+      );
+      challengeButton.textContent = copied ? "✅ Link copied!" : url;
     } catch {
-      challengeButton.textContent = 'Could not create link';
+      challengeButton.textContent = "Could not create link";
       challengeButton.disabled = false;
     }
   });
@@ -317,7 +372,7 @@ const renderResultPanel = ({ score, result }) => {
 export const initSocial = ({ slug }) => {
   if (context.initialized) return;
   context.initialized = true;
-  context.slug = String(slug || '').trim();
+  context.slug = String(slug || "").trim();
   context.challengeId = getChallengeIdFromUrl();
   context.roomCode = getRoomCodeFromUrl();
 
@@ -333,10 +388,12 @@ export const initSocial = ({ slug }) => {
           context.challenge = data.challenge;
           showChallengeBanner(data.challenge);
         } else {
-          context.challengeId = '';
+          context.challengeId = "";
         }
       })
-      .catch(() => { context.challengeId = ''; });
+      .catch(() => {
+        context.challengeId = "";
+      });
   } else if (context.roomCode) {
     showRoomBanner(context.roomCode);
   }
