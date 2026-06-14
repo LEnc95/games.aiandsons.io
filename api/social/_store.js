@@ -12,6 +12,7 @@ const {
 } = require("./_shared");
 
 const PLAYERS_COLLECTION = "socialPlayers";
+const RATE_LIMITS_COLLECTION = "socialRateLimits";
 const SCORES_COLLECTION = "socialScores";
 const CHALLENGES_COLLECTION = "socialChallenges";
 const ROOMS_COLLECTION = "socialRooms";
@@ -26,6 +27,7 @@ const memoryState = (() => {
       challenges: new Map(),
       rooms: new Map(),
       saves: new Map(),
+      rateLimits: new Map(),
     };
   }
   return globalThis.__cadeSocialMemoryStore;
