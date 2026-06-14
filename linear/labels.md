@@ -20,6 +20,7 @@
 - game/2048
 - game/pong
 - game/airhockey
+- game/skeeball
 - game/snake
 - game/tictactoe
 - game/rps
@@ -46,6 +47,7 @@
 - game/tetris
 - game/asteroids
 - game/missilecommand
+- game/towerdefense
 - game/skyjoust
 - game/bomberman
 - game/treasuremaze

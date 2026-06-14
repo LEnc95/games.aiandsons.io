@@ -3568,3 +3568,65 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - In-app Browser fallback connected to the browser service but could not create an inspectable tab: `Timed out waiting for the Browser webview to attach for this browser-use page`.
 - Follow-up TODO:
   - Re-run the Playwright gameplay loop and feedback smoke in an environment where Chromium or the in-app Browser sandbox can launch, then inspect generated Sky Joust screenshots.
+
+## 2026-06-13 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding the latest addition, Sky Joust, plus other recent automation additions.
+- Initial registry check found no `/towerdefense` route and no Tower Defense metadata entry.
+- Chosen game: Tower Defense (`/towerdefense`), a grid-path defense game where players place and upgrade towers to stop enemy waves before the keep falls.
+- Plan: add a standalone canvas game with tower placement/upgrades, wave spawning, desktop and touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, coin rewards, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+- Initial implementation:
+  - Added `towerdefense/index.html` with a seven-wave path defense loop, Bolt/Frost/Mortar tower placement, upgrades, selling, targeting, projectiles, slows, splash damage, leaks, win/loss states, keyboard and pointer controls, fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__TOWER_DEFENSE_GAME__`.
+  - Registered Tower Defense in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Tower Defense SEO metadata now include `/towerdefense`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Early validation passed: Tower Defense module-script syntax check, metadata uniqueness check with 125 games, generated SEO/Linear entry checks, and `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`.
+- Fixed victory best-score bookkeeping so the saved best includes final life and gold bonuses.
+- Validation:
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started Tower Defense, placed Bolt/Frost/Mortar towers, upgraded a tower, started a wave, advanced deterministic time, confirmed kills, forced a leak, forced a win, awarded coins, and verified feedback context.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Node server returned HTTP 200 for `/towerdefense/`.
+  - `$WEB_GAME_CLIENT` passed against `/towerdefense/`, producing screenshots and state snapshots in `output/web-game/towerdefense-smoke`; no `errors-*.json` files were emitted.
+  - Screenshot inspection confirmed visible path, keep, HUD, enemies, tower range, wave progression, and build-phase clear state.
+  - Custom Playwright visual check passed with Bolt, Frost, and upgraded Mortar towers rendered in `output/web-game/towerdefense-all-towers.png`; state JSON confirmed active wave, Frost slow effect, projectiles, kills, and zero console/page errors.
+  - In-app Browser route check reached `/towerdefense/` with HTTP 200 and the correct title, but its page runtime did not expose `window.render_game_to_text`; Playwright remained the authoritative browser validation path.
+  - `git diff --check` on Tower Defense integration files passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Browser/server notes:
+  - Direct `scripts/qa/feedback-smoke.mjs http://127.0.0.1:4173` completed all functional checks but failed its zero-console-errors gate because existing mobile Tetris logs a 404 for `/api/social?route=player-register` under the raw static server.
+  - No persistent local server is left running.
+- Follow-up TODO:
+  - Investigate the existing raw-static-server `/api/social?route=player-register` 404 so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.
+
+## 2026-06-14 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding the latest additions Sky Joust and Tower Defense plus recent automation games.
+- Initial registry check found no `/skeeball` route and no Skee-Ball metadata entry.
+- Chosen game: Skee-Ball (`/skeeball`), an arcade lane game where players aim, charge, and roll nine balls into scoring rings with banking physics and bonus targets.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, coin rewards, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+- Initial implementation:
+  - Added `skeeball/index.html` with canvas lane rendering, nine-ball aiming and power controls, pointer drag/release, keyboard controls, bank/target physics, scoring rings, streak bonuses, pause/restart/fullscreen, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__SKEE_BALL_GAME__`.
+  - Registered Skee-Ball in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Skee-Ball SEO metadata now include `/skeeball`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Skee-Ball module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata uniqueness check passed; `GAMES` reports 126 games with no duplicate slugs or URLs and includes Skee-Ball.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Python static server returned HTTP 200 for `/skeeball/`.
+  - Stubbed DOM/canvas runtime harness passed: mounted shared feedback, started Skee-Ball, scored a live deterministic physics roll, forced a 100 pocket, forced a miss, paused/resumed, forced game over, awarded coins, and verified shared feedback context.
+  - `$WEB_GAME_CLIENT` passed against `/skeeball/`, producing screenshots and state snapshots in `output/web-game/skeeball-smoke`; no `errors-*.json` files were emitted.
+  - Screenshot inspection confirmed visible lane, scoring board, pockets, aim line, ball, score banner, HUD, and readable status text.
+  - Custom Playwright visual check passed with forced high-score game over in `output/web-game/skeeball-forced-win.png`; state JSON confirmed score 820, best pocket 100, 17 coins earned, and zero console/page errors.
+  - In-app Browser route check reached `/skeeball/` with HTTP 200, correct title, visible canvas, feedback root, and zero browser error logs; its isolated evaluate context did not expose `window.render_game_to_text`, matching the prior Tower Defense browser note.
+  - `git diff --check` on Skee-Ball integration files passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Browser/server notes:
+  - Direct `scripts/qa/feedback-smoke.mjs http://127.0.0.1:4173` completed all functional checks but reported `success: false` because mobile Tetris attempted a POST against `python -m http.server`, which returned 501. This is the existing raw-static-server feedback-smoke caveat, not a Skee-Ball page error.
+  - No persistent local server is left running.
+- Follow-up TODO:
+  - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.

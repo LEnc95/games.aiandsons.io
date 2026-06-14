@@ -1,0 +1,1120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Skee-Ball | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #fffaf0;
+  background:
+    linear-gradient(90deg, #1b1c27 0 14px, #222636 14px 28px),
+    linear-gradient(135deg, #2f1f31 0%, #17445a 50%, #4b3a20 100%);
+}
+.back {
+  position: fixed;
+  z-index: 30;
+  top: 12px;
+  left: 12px;
+  color: #fffaf0;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #fff2c980;
+  padding: 8px 12px;
+  background: #1c1721d9;
+  box-shadow: 0 8px 22px #00000040;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(98vw, 1040px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffe7a0a8;
+  background: #1d2430;
+  box-shadow: 0 24px 58px #08070d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92%);
+  border-radius: 8px;
+  border: 1px solid #ffe7a0d8;
+  background: #1e1728f2;
+  box-shadow: 0 18px 42px #06040b99;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 6vw, 58px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #f2dfb8;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #d6c6ad;
+}
+.hud,
+.controls {
+  width: min(98vw, 1040px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.chip,
+button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #fff2c959;
+  background: #1e1728dd;
+  color: #fffaf0;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 9px;
+  box-shadow: 0 8px 20px #00000038;
+}
+.chip span {
+  color: #d6c6ad;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #8be0ff; }
+.chip.warn b { color: #ffe27d; }
+button {
+  cursor: pointer;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe27d;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #241827;
+  background: linear-gradient(135deg, #ffe27d 0%, #76dbff 100%);
+  border-color: #ffffffcc;
+}
+button:disabled {
+  cursor: default;
+  opacity: .48;
+}
+@media (max-width: 760px) {
+  .stage { max-height: 58dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim, charge, and roll nine arcade balls into high-value scoring rings. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Skee-Ball | AI and Sons Games">
+  <meta property="og:description" content="Aim, charge, and roll nine arcade balls into high-value scoring rings. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/skeeball">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Skee-Ball | AI and Sons Games">
+  <meta name="twitter:description" content="Aim, charge, and roll nine arcade balls into high-value scoring rings. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/skeeball">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Skee-Ball","description":"Aim, charge, and roll nine arcade balls into high-value scoring rings. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/skeeball","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Skee-Ball lane">
+    <canvas id="game" width="960" height="640"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Skee-Ball</h1>
+        <p id="overlayText">Aim the lane, charge your roll, and bank nine balls into the high-value rings.</p>
+        <p class="mini">Keyboard: Left/Right aim, Up/Down power, Space roll, P pause, R restart, F fullscreen. Touch or mouse: drag from the launch lane and release.</p>
+        <button class="primary" id="startBtn" type="button">Start Game</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip"><span>Balls</span><b id="ballsText">9</b></div>
+    <div class="chip warn"><span>Aim</span><b id="aimText">0</b></div>
+    <div class="chip warn"><span>Power</span><b id="powerText">52</b></div>
+    <div class="chip"><span>Best</span><b id="bestText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Skee-Ball controls">
+    <button class="primary" id="newBtn" type="button">New Game</button>
+    <button id="leftBtn" type="button">Aim Left</button>
+    <button id="rightBtn" type="button">Aim Right</button>
+    <button id="powerBtn" type="button">Power</button>
+    <button class="primary" id="rollBtn" type="button">Roll</button>
+    <button id="pauseBtn" type="button">Pause</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  score: document.getElementById('scoreText'),
+  balls: document.getElementById('ballsText'),
+  aim: document.getElementById('aimText'),
+  power: document.getElementById('powerText'),
+  best: document.getElementById('bestText'),
+  coins: document.getElementById('coinsText'),
+  pause: document.getElementById('pauseBtn'),
+};
+const buttons = {
+  new: document.getElementById('newBtn'),
+  left: document.getElementById('leftBtn'),
+  right: document.getElementById('rightBtn'),
+  power: document.getElementById('powerBtn'),
+  roll: document.getElementById('rollBtn'),
+  pause: document.getElementById('pauseBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WIDTH = 960;
+const HEIGHT = 640;
+const BALLS_PER_GAME = 9;
+const AIM_LIMIT = 28;
+const BALL_RADIUS = 15;
+const START = { x: WIDTH / 2, y: 558 };
+const LANE = { x: 118, y: 56, w: 724, h: 540, rail: 42 };
+const TARGETS = [
+  { id: 'hundred', label: '100', score: 100, x: 480, y: 98, r: 34, color: '#ff5c8a' },
+  { id: 'left-fifty', label: '50', score: 50, x: 390, y: 126, r: 39, color: '#ffd86b' },
+  { id: 'right-fifty', label: '50', score: 50, x: 570, y: 126, r: 39, color: '#ffd86b' },
+  { id: 'forty', label: '40', score: 40, x: 480, y: 157, r: 43, color: '#72e1b5' },
+  { id: 'left-thirty', label: '30', score: 30, x: 335, y: 190, r: 46, color: '#76dbff' },
+  { id: 'right-thirty', label: '30', score: 30, x: 625, y: 190, r: 46, color: '#76dbff' },
+  { id: 'twenty', label: '20', score: 20, x: 480, y: 228, r: 50, color: '#b79cff' },
+  { id: 'left-ten', label: '10', score: 10, x: 270, y: 246, r: 52, color: '#ffad6b' },
+  { id: 'right-ten', label: '10', score: 10, x: 690, y: 246, r: 52, color: '#ffad6b' },
+];
+const SCORING_TARGETS = [...TARGETS].sort((a, b) => b.score - a.score);
+const keys = new Set();
+const pointer = { active: false, id: null, launched: false };
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function readBestScore() {
+  try {
+    return Math.max(0, Math.floor(Number(localStorage.getItem('cade:skeeball:best') || 0)));
+  } catch {
+    return 0;
+  }
+}
+
+function saveBestScore(value) {
+  try {
+    localStorage.setItem('cade:skeeball:best', String(Math.max(0, Math.floor(value))));
+  } catch {
+    // Local storage can be unavailable in embedded test contexts.
+  }
+}
+
+const game = {
+  mode: 'menu',
+  previousMode: 'aiming',
+  score: 0,
+  bestScore: readBestScore(),
+  ballsLeft: BALLS_PER_GAME,
+  rollNumber: 0,
+  aim: 0,
+  power: 52,
+  streak: 0,
+  bestPocket: 0,
+  totalTime: 0,
+  coinsEarned: 0,
+  lastCoins: 0,
+  message: 'Aim, set power, and roll nine balls.',
+  rollResult: null,
+  resultTimer: 0,
+  finishedAwarded: false,
+  ball: {
+    x: START.x,
+    y: START.y,
+    vx: 0,
+    vy: 0,
+    r: BALL_RADIUS,
+    active: false,
+  },
+  sparks: [],
+  scoredPockets: [],
+  lastAction: { type: 'init' },
+};
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function dist(a, b, x = b.x, y = b.y) {
+  return Math.hypot(a.x - x, a.y - y);
+}
+
+function formatAim(value) {
+  if (Math.abs(value) < .5) return '0';
+  return `${value > 0 ? 'R' : 'L'} ${Math.abs(Math.round(value))}`;
+}
+
+function resetBall() {
+  game.ball.x = START.x;
+  game.ball.y = START.y;
+  game.ball.vx = 0;
+  game.ball.vy = 0;
+  game.ball.active = false;
+}
+
+function touchProfile() {
+  rememberRecent('skeeball');
+  maybeUnlock({ anyPlay: true });
+}
+
+function startGame() {
+  game.mode = 'aiming';
+  game.previousMode = 'aiming';
+  game.score = 0;
+  game.ballsLeft = BALLS_PER_GAME;
+  game.rollNumber = 0;
+  game.aim = 0;
+  game.power = 52;
+  game.streak = 0;
+  game.bestPocket = 0;
+  game.totalTime = 0;
+  game.coinsEarned = 0;
+  game.lastCoins = 0;
+  game.message = 'Drag the lane or tune aim and power, then roll.';
+  game.rollResult = null;
+  game.resultTimer = 0;
+  game.finishedAwarded = false;
+  game.sparks = [];
+  game.scoredPockets = [];
+  game.lastAction = { type: 'start_game' };
+  resetBall();
+  touchProfile();
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function setAimPower(aim = game.aim, power = game.power) {
+  game.aim = clamp(Number(aim) || 0, -AIM_LIMIT, AIM_LIMIT);
+  game.power = clamp(Number(power) || 0, 18, 100);
+  game.lastAction = { type: 'set_aim_power', aim: Math.round(game.aim), power: Math.round(game.power) };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function adjustAim(delta) {
+  return setAimPower(game.aim + delta, game.power);
+}
+
+function adjustPower(delta) {
+  return setAimPower(game.aim, game.power + delta);
+}
+
+function addSpark(x, y, color, text = '') {
+  game.sparks.push({
+    x,
+    y,
+    vx: (Math.random() - .5) * 130,
+    vy: -40 - Math.random() * 120,
+    r: 3 + Math.random() * 6,
+    color,
+    text,
+    age: 0,
+    ttl: text ? 1.1 : .55,
+  });
+}
+
+function launchBall() {
+  if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+  if (game.mode === 'paused') return stateToObject();
+  if (game.mode === 'scored' && game.resultTimer > .15) return stateToObject();
+  if (game.mode !== 'aiming' && game.mode !== 'scored') return stateToObject();
+  if (game.ballsLeft <= 0) return finishGame();
+
+  resetBall();
+  const angle = game.aim * Math.PI / 180;
+  const speed = 470 + game.power * 5.9;
+  game.ball.vx = Math.sin(angle) * speed;
+  game.ball.vy = -Math.cos(angle) * speed;
+  game.ball.active = true;
+  game.mode = 'rolling';
+  game.rollNumber += 1;
+  game.ballsLeft -= 1;
+  game.rollResult = null;
+  game.resultTimer = 0;
+  game.message = `Ball ${game.rollNumber} rolling.`;
+  game.lastAction = {
+    type: 'launch',
+    roll: game.rollNumber,
+    aim: Number(game.aim.toFixed(1)),
+    power: Math.round(game.power),
+  };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function awardCoins(amount, reason) {
+  const reward = Math.max(0, Math.floor(amount));
+  if (reward <= 0) return 0;
+  addCoins(reward);
+  game.coinsEarned += reward;
+  game.lastCoins = reward;
+  game.message = `${reason}: +${reward} coins.`;
+  return reward;
+}
+
+function scorePocket(target) {
+  if (game.mode !== 'rolling') return stateToObject();
+  const hotStreak = target.score >= 40 ? game.streak + 1 : 0;
+  const streakBonus = hotStreak >= 2 ? hotStreak * 5 : 0;
+  const points = target.score + streakBonus;
+  game.score += points;
+  game.streak = target.score >= 40 ? hotStreak : 0;
+  game.bestPocket = Math.max(game.bestPocket, target.score);
+  game.rollResult = {
+    roll: game.rollNumber,
+    target: target.id,
+    label: target.label,
+    baseScore: target.score,
+    streakBonus,
+    points,
+    x: Math.round(game.ball.x),
+    y: Math.round(game.ball.y),
+  };
+  game.scoredPockets.push(game.rollResult);
+  game.ball.x = target.x;
+  game.ball.y = target.y;
+  game.ball.vx = 0;
+  game.ball.vy = 0;
+  game.ball.active = false;
+  game.mode = 'scored';
+  game.resultTimer = 1.05;
+  game.message = streakBonus > 0
+    ? `${target.label} pocket plus ${streakBonus} streak bonus.`
+    : `${target.label} pocket scored.`;
+  game.lastAction = { type: 'score_pocket', target: target.id, points };
+  for (let i = 0; i < 16; i += 1) addSpark(target.x, target.y, target.color, i === 0 ? `+${points}` : '');
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function scoreMiss(reason = 'miss') {
+  if (game.mode !== 'rolling') return stateToObject();
+  game.rollResult = {
+    roll: game.rollNumber,
+    target: 'gutter',
+    label: '0',
+    baseScore: 0,
+    streakBonus: 0,
+    points: 0,
+    reason,
+    x: Math.round(game.ball.x),
+    y: Math.round(game.ball.y),
+  };
+  game.streak = 0;
+  game.ball.vx = 0;
+  game.ball.vy = 0;
+  game.ball.active = false;
+  game.mode = 'scored';
+  game.resultTimer = .9;
+  game.message = reason === 'short' ? 'The ball came up short.' : 'Gutter ball. No points.';
+  game.lastAction = { type: 'miss', reason };
+  for (let i = 0; i < 8; i += 1) addSpark(game.ball.x, game.ball.y, '#d6c6ad');
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function finishGame() {
+  if (game.mode === 'gameover' && game.finishedAwarded) return stateToObject();
+  game.mode = 'gameover';
+  game.ball.active = false;
+  game.resultTimer = 0;
+  const previousBest = game.bestScore;
+  if (game.score > game.bestScore) {
+    game.bestScore = game.score;
+    saveBestScore(game.bestScore);
+  }
+  const highScoreBonus = game.score > previousBest && game.score > 0 ? 5 : 0;
+  const centuryBonus = game.bestPocket >= 100 ? 6 : 0;
+  const baseReward = Math.max(2, Math.floor(game.score / 120));
+  if (!game.finishedAwarded) {
+    awardCoins(baseReward + highScoreBonus + centuryBonus, 'Skee-Ball game complete');
+    game.finishedAwarded = true;
+  }
+  maybeUnlock({
+    anyPlay: true,
+    skeeball: {
+      result: 'finished',
+      score: game.score,
+      bestPocket: game.bestPocket,
+      balls: game.rollNumber,
+    },
+  });
+  game.message = `Final score ${game.score}. Best pocket ${game.bestPocket}.`;
+  game.lastAction = { type: 'finish_game', score: game.score, coinsEarned: game.coinsEarned };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function togglePause() {
+  if (game.mode === 'menu') return startGame();
+  if (game.mode === 'gameover') return stateToObject();
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode || 'aiming';
+    game.message = 'Resumed.';
+  } else {
+    game.previousMode = game.mode;
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  }
+  game.lastAction = { type: 'toggle_pause', mode: game.mode };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function leftRailAt(y) {
+  const t = clamp((y - LANE.y) / LANE.h, 0, 1);
+  return LANE.x + 92 - 48 * t;
+}
+
+function rightRailAt(y) {
+  const t = clamp((y - LANE.y) / LANE.h, 0, 1);
+  return LANE.x + LANE.w - 92 + 48 * t;
+}
+
+function updateBall(dt) {
+  if (game.mode !== 'rolling') return;
+  game.ball.x += game.ball.vx * dt;
+  game.ball.y += game.ball.vy * dt;
+
+  const left = leftRailAt(game.ball.y) + game.ball.r;
+  const right = rightRailAt(game.ball.y) - game.ball.r;
+  if (game.ball.x < left) {
+    game.ball.x = left;
+    game.ball.vx = Math.abs(game.ball.vx) * .82;
+    game.ball.vy *= .96;
+    addSpark(game.ball.x, game.ball.y, '#76dbff');
+  } else if (game.ball.x > right) {
+    game.ball.x = right;
+    game.ball.vx = -Math.abs(game.ball.vx) * .82;
+    game.ball.vy *= .96;
+    addSpark(game.ball.x, game.ball.y, '#76dbff');
+  }
+
+  if (game.ball.y < LANE.y + 24) {
+    game.ball.y = LANE.y + 24;
+    game.ball.vy = Math.abs(game.ball.vy) * .42;
+    game.ball.vx *= .78;
+    addSpark(game.ball.x, game.ball.y, '#ffe27d');
+  }
+
+  const friction = Math.pow(game.ball.y < 290 ? .966 : .987, dt * 60);
+  game.ball.vx *= friction;
+  game.ball.vy *= friction;
+
+  const speed = Math.hypot(game.ball.vx, game.ball.vy);
+  for (const target of SCORING_TARGETS) {
+    const holeRadius = target.r - 5;
+    if (game.ball.y < 286 && Math.hypot(game.ball.x - target.x, game.ball.y - target.y) <= holeRadius) {
+      scorePocket(target);
+      return;
+    }
+  }
+
+  if (game.ball.y > HEIGHT + 80) {
+    scoreMiss('gutter');
+    return;
+  }
+  if (game.ball.y > START.y + 12 && game.ball.vy > 20) {
+    scoreMiss('short');
+    return;
+  }
+  if (speed < 44 && game.ball.y < 326) {
+    scoreMiss('board');
+  }
+}
+
+function updateSparks(dt) {
+  for (const spark of game.sparks) {
+    spark.age += dt;
+    spark.x += spark.vx * dt;
+    spark.y += spark.vy * dt;
+    spark.vy += 160 * dt;
+  }
+  game.sparks = game.sparks.filter((spark) => spark.age < spark.ttl);
+}
+
+function update(dt) {
+  if (game.mode !== 'menu' && game.mode !== 'paused' && game.mode !== 'gameover') {
+    game.totalTime += dt;
+  }
+  if (keys.has('arrowleft') || keys.has('a')) adjustAim(-70 * dt);
+  if (keys.has('arrowright') || keys.has('d')) adjustAim(70 * dt);
+  if (keys.has('arrowup') || keys.has('w')) adjustPower(90 * dt);
+  if (keys.has('arrowdown') || keys.has('s')) adjustPower(-90 * dt);
+  updateBall(dt);
+  updateSparks(dt);
+  if (game.mode === 'scored') {
+    game.resultTimer -= dt;
+    if (game.resultTimer <= 0) {
+      if (game.ballsLeft > 0) {
+        game.mode = 'aiming';
+        game.message = 'Next ball ready.';
+        resetBall();
+      } else {
+        finishGame();
+      }
+    }
+  }
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawText(text, x, y, size = 18, color = '#fffaf0', align = 'center', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawLane() {
+  const wood = ctx.createLinearGradient(0, LANE.y, 0, LANE.y + LANE.h);
+  wood.addColorStop(0, '#b66c3a');
+  wood.addColorStop(.5, '#e2a64f');
+  wood.addColorStop(1, '#6f3d26');
+  ctx.fillStyle = wood;
+  ctx.beginPath();
+  ctx.moveTo(leftRailAt(LANE.y) - 56, LANE.y);
+  ctx.lineTo(rightRailAt(LANE.y) + 56, LANE.y);
+  ctx.lineTo(rightRailAt(LANE.y + LANE.h) + 56, LANE.y + LANE.h);
+  ctx.lineTo(leftRailAt(LANE.y + LANE.h) - 56, LANE.y + LANE.h);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#3b2130';
+  ctx.beginPath();
+  ctx.moveTo(leftRailAt(LANE.y) - 10, LANE.y);
+  ctx.lineTo(leftRailAt(LANE.y + LANE.h) - 10, LANE.y + LANE.h);
+  ctx.lineTo(leftRailAt(LANE.y + LANE.h) + 34, LANE.y + LANE.h);
+  ctx.lineTo(leftRailAt(LANE.y) + 34, LANE.y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(rightRailAt(LANE.y) + 10, LANE.y);
+  ctx.lineTo(rightRailAt(LANE.y + LANE.h) + 10, LANE.y + LANE.h);
+  ctx.lineTo(rightRailAt(LANE.y + LANE.h) - 34, LANE.y + LANE.h);
+  ctx.lineTo(rightRailAt(LANE.y) - 34, LANE.y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#ffe7a080';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 9; i += 1) {
+    const y = 326 + i * 28;
+    ctx.beginPath();
+    ctx.moveTo(leftRailAt(y) + 22, y);
+    ctx.lineTo(rightRailAt(y) - 22, y);
+    ctx.stroke();
+  }
+
+  const deck = ctx.createLinearGradient(0, 54, 0, 290);
+  deck.addColorStop(0, '#2c2b47');
+  deck.addColorStop(1, '#0f3444');
+  drawRoundedRect(174, 52, 612, 246, 34);
+  ctx.fillStyle = deck;
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#ffe7a0';
+  ctx.stroke();
+  drawText('SKEE-BALL', WIDTH / 2, 74, 24, '#ffe27d');
+}
+
+function drawTargets() {
+  for (const target of [...TARGETS].sort((a, b) => a.score - b.score)) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.r + 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#17111e';
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = target.color;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.r - 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#06050a';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff70';
+    ctx.stroke();
+    drawText(target.label, target.x, target.y, target.score === 100 ? 20 : 18, target.color);
+    ctx.restore();
+  }
+}
+
+function drawAimGuide() {
+  if (!['aiming', 'scored'].includes(game.mode)) return;
+  const angle = game.aim * Math.PI / 180;
+  const length = 160 + game.power * 2.3;
+  const endX = START.x + Math.sin(angle) * length;
+  const endY = START.y - Math.cos(angle) * length;
+  ctx.save();
+  ctx.setLineDash([12, 8]);
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#76dbff';
+  ctx.beginPath();
+  ctx.moveTo(START.x, START.y);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(endX, endY, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffe27d';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPowerMeter() {
+  drawRoundedRect(852, 96, 34, 414, 16);
+  ctx.fillStyle = '#17111ed0';
+  ctx.fill();
+  ctx.strokeStyle = '#fff2c970';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  const fill = clamp(game.power / 100, 0, 1);
+  const h = 388 * fill;
+  const grad = ctx.createLinearGradient(0, 510 - h, 0, 510);
+  grad.addColorStop(0, '#ff5c8a');
+  grad.addColorStop(.5, '#ffe27d');
+  grad.addColorStop(1, '#76dbff');
+  drawRoundedRect(858, 504 - h, 22, h, 10);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  drawText('POWER', 869, 538, 12, '#f2dfb8');
+}
+
+function drawBall() {
+  const ball = game.ball;
+  ctx.save();
+  ctx.shadowColor = '#00000080';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 8;
+  const grad = ctx.createRadialGradient(ball.x - 6, ball.y - 7, 3, ball.x, ball.y, ball.r + 2);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(.42, '#d8f7ff');
+  grad.addColorStop(1, '#4d94b7');
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#f8ffff';
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSparks() {
+  for (const spark of game.sparks) {
+    const alpha = clamp(1 - spark.age / spark.ttl, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (spark.text) {
+      drawText(spark.text, spark.x, spark.y, 24, spark.color);
+    } else {
+      ctx.beginPath();
+      ctx.arc(spark.x, spark.y, spark.r * alpha, 0, Math.PI * 2);
+      ctx.fillStyle = spark.color;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawResultBanner() {
+  if (!game.rollResult && game.mode !== 'gameover') return;
+  const text = game.mode === 'gameover'
+    ? `Final ${game.score}   Best ${game.bestScore}`
+    : game.rollResult.points > 0
+      ? `Roll ${game.rollResult.roll}: +${game.rollResult.points}`
+      : `Roll ${game.rollResult.roll}: 0`;
+  drawRoundedRect(260, 306, 440, 44, 8);
+  ctx.fillStyle = '#1e1728d8';
+  ctx.fill();
+  ctx.strokeStyle = '#ffe7a095';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  drawText(text, WIDTH / 2, 328, 21, '#fffaf0');
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#111526');
+  bg.addColorStop(.52, '#173a46');
+  bg.addColorStop(1, '#3d2d1e');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  drawLane();
+  drawTargets();
+  drawAimGuide();
+  drawPowerMeter();
+  drawBall();
+  drawSparks();
+  drawResultBanner();
+
+  drawText(`Balls ${game.ballsLeft}`, 92, 96, 19, '#f2dfb8', 'left');
+  drawText(`Score ${game.score}`, 92, 126, 19, '#8be0ff', 'left');
+  drawText(game.message, WIDTH / 2, 606, 18, '#fffaf0');
+}
+
+function updateHud() {
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.score.textContent = String(game.score);
+  hud.balls.textContent = String(game.ballsLeft);
+  hud.aim.textContent = formatAim(game.aim);
+  hud.power.textContent = String(Math.round(game.power));
+  hud.best.textContent = String(game.bestScore);
+  hud.coins.textContent = String(game.coinsEarned || profileState.coins || 0);
+  hud.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  buttons.roll.disabled = game.mode === 'rolling' || game.mode === 'paused';
+  buttons.left.disabled = game.mode === 'rolling' || game.mode === 'paused';
+  buttons.right.disabled = game.mode === 'rolling' || game.mode === 'paused';
+  buttons.power.disabled = game.mode === 'rolling' || game.mode === 'paused';
+}
+
+function updateOverlay() {
+  let show = false;
+  let title = 'Skee-Ball';
+  let text = 'Aim the lane, charge your roll, and bank nine balls into the high-value rings.';
+  let button = 'Start Game';
+
+  if (game.mode === 'menu') {
+    show = true;
+  } else if (game.mode === 'paused') {
+    show = true;
+    title = 'Paused';
+    text = 'Resume to continue the current nine-ball game.';
+    button = 'Resume';
+  } else if (game.mode === 'gameover') {
+    show = true;
+    title = 'Game Complete';
+    text = `Final score ${game.score}. Best pocket ${game.bestPocket}. Coins earned this run: ${game.coinsEarned}.`;
+    button = 'Play Again';
+  }
+
+  overlay.classList.toggle('show', show);
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  startBtn.textContent = button;
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function aimFromPoint(point) {
+  const dx = point.x - START.x;
+  const dy = Math.max(42, START.y - point.y);
+  const angle = Math.atan2(dx, dy) * 180 / Math.PI;
+  const power = clamp(Math.hypot(dx, dy) / 4.2, 18, 100);
+  setAimPower(angle, power);
+}
+
+function handlePointerDown(event) {
+  event.preventDefault();
+  if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+  if (game.mode !== 'aiming' && game.mode !== 'scored') return;
+  pointer.active = true;
+  pointer.id = event.pointerId;
+  pointer.launched = false;
+  canvas.setPointerCapture?.(event.pointerId);
+  aimFromPoint(canvasPoint(event));
+}
+
+function handlePointerMove(event) {
+  if (!pointer.active || pointer.id !== event.pointerId) return;
+  event.preventDefault();
+  if (game.mode === 'aiming' || game.mode === 'scored') aimFromPoint(canvasPoint(event));
+}
+
+function handlePointerUp(event) {
+  if (!pointer.active || pointer.id !== event.pointerId) return;
+  event.preventDefault();
+  canvas.releasePointerCapture?.(event.pointerId);
+  pointer.active = false;
+  pointer.id = null;
+  if (!pointer.launched && (game.mode === 'aiming' || game.mode === 'scored')) {
+    pointer.launched = true;
+    launchBall();
+  }
+}
+
+function handleKeyDown(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'spacebar'].includes(key)) event.preventDefault();
+  if (key === ' ' || key === 'spacebar') launchBall();
+  else if (key === 'enter') {
+    if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+    else launchBall();
+  } else if (key === 'p') togglePause();
+  else if (key === 'r') startGame();
+  else if (key === 'f') toggleFullscreen();
+  else keys.add(key);
+}
+
+function handleKeyUp(event) {
+  keys.delete(event.key.toLowerCase());
+}
+
+function stateToObject() {
+  return {
+    game: 'skeeball',
+    mode: game.mode,
+    coordinateSystem: 'canvas pixels; origin top-left; x right; y down',
+    score: game.score,
+    bestScore: game.bestScore,
+    ballsLeft: game.ballsLeft,
+    rollNumber: game.rollNumber,
+    aimDegrees: Number(game.aim.toFixed(1)),
+    power: Math.round(game.power),
+    streak: game.streak,
+    bestPocket: game.bestPocket,
+    ball: {
+      x: Math.round(game.ball.x),
+      y: Math.round(game.ball.y),
+      vx: Math.round(game.ball.vx),
+      vy: Math.round(game.ball.vy),
+      speed: Math.round(Math.hypot(game.ball.vx, game.ball.vy)),
+      r: game.ball.r,
+      active: game.ball.active,
+    },
+    visibleTargets: TARGETS.map((target) => ({
+      id: target.id,
+      score: target.score,
+      x: target.x,
+      y: target.y,
+      r: target.r,
+    })),
+    lastRoll: game.rollResult,
+    message: game.message,
+    coinsEarned: game.coinsEarned,
+    totalTime: Number(game.totalTime.toFixed(2)),
+    lastAction: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__SKEE_BALL_GAME__ = {
+  startGame,
+  launchBall,
+  setAimPower,
+  adjustAim,
+  adjustPower,
+  togglePause,
+  forcePocket(id = 'hundred') {
+    if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+    if (game.mode !== 'rolling') launchBall();
+    const target = TARGETS.find((item) => item.id === id) || TARGETS[0];
+    game.ball.x = target.x;
+    game.ball.y = target.y;
+    return scorePocket(target);
+  },
+  forceMiss() {
+    if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+    if (game.mode !== 'rolling') launchBall();
+    return scoreMiss('forced');
+  },
+  forceGameOver() {
+    if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+    while (game.ballsLeft > 0 || game.mode === 'rolling') {
+      if (game.mode !== 'rolling') launchBall();
+      scorePocket(TARGETS[0]);
+      if (game.ballsLeft > 0) {
+        game.mode = 'aiming';
+        resetBall();
+      }
+    }
+    return finishGame();
+  },
+  stateToObject,
+  renderGameToText,
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'skeeball', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', handlePointerUp);
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+window.addEventListener('resize', draw);
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else startGame();
+});
+buttons.new.addEventListener('click', startGame);
+buttons.left.addEventListener('click', () => adjustAim(-4));
+buttons.right.addEventListener('click', () => adjustAim(4));
+buttons.power.addEventListener('click', () => adjustPower(game.power >= 96 ? -70 : 12));
+buttons.roll.addEventListener('click', launchBall);
+buttons.pause.addEventListener('click', togglePause);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'skeeball', gameName: 'Skee-Ball' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

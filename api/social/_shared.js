@@ -3,6 +3,26 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const SCORE_MAX = 10_000_000;
+
+// Per-game plausibility ceilings. Scores above these are rejected as
+// implausible (anti-cheat). Default applies to any game not listed.
+const SCORE_CAP_DEFAULT = 1_000_000;
+const SCORE_CAPS = Object.freeze({
+  snake: 5_000,
+  tetris: 2_000_000,
+  flappy: 10_000,
+  dino: 100_000,
+  2048: 400_000,
+  pacman: 1_000_000,
+  breakout: 100_000,
+  spaceinvaders: 500_000,
+  doodlejump: 100_000,
+  frogger: 50_000,
+  pong: 1_000,
+  asteroids: 500_000,
+  whackamole: 50_000,
+  gemswap: 500_000,
+});
 const LEADERBOARD_PERIODS = new Set(["daily", "weekly", "alltime"]);
 const ROOM_STATUSES = new Set(["lobby", "racing", "finished"]);
 const ROOM_MAX_PLAYERS = 12;
@@ -157,6 +177,28 @@ async function isKnownGameSlug(slug) {
   }
 }
 
+function getScoreCap(slug) {
+  const normalized = normalizeSlug(slug);
+  const cap = SCORE_CAPS[normalized];
+  return Number.isFinite(cap) ? cap : SCORE_CAP_DEFAULT;
+}
+
+function getRequestIp(req) {
+  const forwardedFor = typeof req?.headers?.["x-forwarded-for"] === "string"
+    ? req.headers["x-forwarded-for"]
+    : "";
+  if (forwardedFor) {
+    return normalizeSingleLine(forwardedFor.split(",")[0], 160);
+  }
+  const realIp = typeof req?.headers?.["x-real-ip"] === "string"
+    ? req.headers["x-real-ip"]
+    : "";
+  if (realIp) {
+    return normalizeSingleLine(realIp, 160);
+  }
+  return normalizeSingleLine(req?.socket?.remoteAddress || "", 160);
+}
+
 function getQuery(req) {
   const requestUrl = req?.url || "/";
   const parsed = new URL(requestUrl, "http://localhost");
@@ -213,6 +255,8 @@ module.exports = {
   getDayKey,
   getPeriodKey,
   getQuery,
+  getRequestIp,
+  getScoreCap,
   getWeekKey,
   isKnownGameSlug,
   normalizeHandle,

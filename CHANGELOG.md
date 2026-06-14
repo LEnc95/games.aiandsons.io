@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-06-12
+
+### Added
+- Added and wired five new games: `missilecommand`, `calccages`, `caverncrush`, `airhockey`, and `skyjoust`.
+- Added social score reporting, cloud-save support, and embedded leaderboards for supported game surfaces.
+
+### Improved
+- Improved Race Friends multiplayer stability by recovering stale players more reliably.
+- Clarified Race Friends score-update messaging and refreshed site metadata coverage for newly added games.
+
+### Operations
+- Added the `npm run test:social` command to the contributor runbook in `AGENTS.md`.
+- Key PRs: not recorded in the local repo history for this release window.
+
 ## [1.6.0] - 2026-06-05
 
 ### Added

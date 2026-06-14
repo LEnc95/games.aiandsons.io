@@ -125,8 +125,11 @@
   <script type="module">
     import {
       createRoom, ensurePlayer, fetchRoomState, getLocalPlayer,
-      joinRoom, rerollHandle, startRoom,
+      handleEmoji, joinRoom, rerollHandle, startRoom,
     } from '../src/social/client.js';
+    import { trackKpiEvent } from '../src/core/metrics.js';
+
+    trackKpiEvent('social_rooms_page_view', {});
 
     const GAME_NAMES = {
       snake: '🐍 Snake', tetris: '🧩 Tetris', flappy: '🐦 Flappy Bird',
@@ -183,7 +186,7 @@
           : (player.finished ? '✅' : '—');
         row.innerHTML = `
           <td class="medal">${showScores ? (MEDALS[index] || '') : ''}</td>
-          <td>${player.handle}${player.playerId === room.hostPlayerId ? ' 👑' : ''}</td>
+          <td>${handleEmoji(player.handle)} ${player.handle}${player.playerId === room.hostPlayerId ? ' 👑' : ''}</td>
           <td>${scoreText}</td>
         `;
         tbody.appendChild(row);
@@ -242,6 +245,7 @@
           gameSlug: el('gameSelect').value,
           durationSeconds: Number(el('durationSelect').value),
         });
+        trackKpiEvent('social_room_created', { game: data.room.gameSlug });
         showRoom(data.room);
       } catch (error) {
         el('createError').textContent = error.message || 'Could not create room.';
@@ -264,6 +268,7 @@
       el('joinBtn').disabled = true;
       try {
         const data = await joinRoom(code);
+        trackKpiEvent('social_room_joined', { game: data.room.gameSlug, players: data.room.players.length });
         showRoom(data.room);
       } catch (error) {
         el('joinError').textContent = error.message || 'Could not join room.';
@@ -278,6 +283,7 @@
       el('startBtn').disabled = true;
       try {
         const data = await startRoom(currentRoom.code);
+        trackKpiEvent('social_room_started', { game: data.room.gameSlug, players: data.room.players.length });
         renderRoom(data.room);
       } catch (error) {
         setRoomError(error.message || 'Could not start the race. Refresh the room and try again.');

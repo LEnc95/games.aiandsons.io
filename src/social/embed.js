@@ -4,6 +4,7 @@
 //   initSocial({ slug: 'snake' });
 //   ... at game over: reportScore(finalScore);
 import { get, set } from '../core/storage.js';
+import { trackKpiEvent } from '../core/metrics.js';
 import {
   createChallenge,
   ensurePlayer,
@@ -12,10 +13,23 @@ import {
   getChallengeIdFromUrl,
   getLocalPlayer,
   getRoomCodeFromUrl,
+  handleEmoji,
   submitScore,
 } from './client.js';
 
 const BEST_SCORES_KEY = 'bestScores';
+const MY_CHALLENGES_KEY = 'myChallenges';
+const MY_CHALLENGES_LIMIT = 12;
+
+const rememberMyChallenge = ({ id, gameSlug, score }) => {
+  const stored = get(MY_CHALLENGES_KEY, []);
+  const list = Array.isArray(stored) ? stored : [];
+  const next = [
+    { id, gameSlug, score, createdAt: Date.now(), beatenSeen: false },
+    ...list.filter((entry) => entry && entry.id !== id),
+  ].slice(0, MY_CHALLENGES_LIMIT);
+  set(MY_CHALLENGES_KEY, next);
+};
 
 const context = {
   slug: '',
@@ -157,7 +171,7 @@ const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
     lines.push('<ol>');
     for (const entry of top) {
       const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
-      lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+      lines.push(`<li${cls}>${handleEmoji(entry.handle)} ${entry.handle} — ${entry.score}</li>`);
     }
     lines.push('</ol>');
   } else {
@@ -269,7 +283,7 @@ const renderResultPanel = ({ score, result }) => {
       lines.push('<ol>');
       for (const entry of top) {
         const cls = entry.handle === handle ? ' class="cade-social-me"' : '';
-        lines.push(`<li${cls}>${entry.handle} — ${entry.score}</li>`);
+        lines.push(`<li${cls}>${handleEmoji(entry.handle)} ${entry.handle} — ${entry.score}</li>`);
       }
       lines.push('</ol>');
     }
@@ -304,6 +318,8 @@ const renderResultPanel = ({ score, result }) => {
     challengeButton.textContent = 'Creating link…';
     try {
       const data = await createChallenge({ gameSlug: context.slug, score });
+      rememberMyChallenge({ id: data.challenge.id, gameSlug: context.slug, score });
+      trackKpiEvent('social_challenge_created', { game: context.slug, score });
       const url = `${window.location.origin}${data.challenge.url}`;
       const copied = await copyText(`Beat my score of ${score} in ${context.slug}! ${url}`);
       challengeButton.textContent = copied ? '✅ Link copied!' : url;
@@ -332,6 +348,7 @@ export const initSocial = ({ slug }) => {
         if (data.challenge.gameSlug === context.slug) {
           context.challenge = data.challenge;
           showChallengeBanner(data.challenge);
+          trackKpiEvent('social_challenge_opened', { game: context.slug });
         } else {
           context.challengeId = '';
         }
@@ -339,6 +356,7 @@ export const initSocial = ({ slug }) => {
       .catch(() => { context.challengeId = ''; });
   } else if (context.roomCode) {
     showRoomBanner(context.roomCode);
+    trackKpiEvent('social_room_game_opened', { game: context.slug, room: context.roomCode });
   }
 };
 
@@ -354,6 +372,17 @@ export const reportScore = async (score) => {
       challengeId: context.challengeId,
       roomCode: context.roomCode,
     });
+    trackKpiEvent('social_score_submitted', {
+      game: context.slug,
+      score: normalized,
+      rank: result.daily ? result.daily.rank : 0,
+    });
+    if (result.challenge) {
+      trackKpiEvent(
+        result.challenge.beaten ? 'social_challenge_beaten' : 'social_challenge_attempted',
+        { game: context.slug, score: normalized },
+      );
+    }
     renderResultPanel({ score: normalized, result });
     return result;
   } catch {

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A static browser arcade ("AI and Sons Games" / cade-games-arcade) deployed to Vercel with no build step or framework. ~120 games, each a self-contained folder with an `index.html`. Around the games sits a meta-layer: coin economy, cosmetics shop, daily/weekly missions, achievements, classroom mode for teachers, family/school premium subscriptions (Stripe), Firebase Google auth, and a feedback pipeline wired to Slack and Linear.
+A static browser arcade ("AI and Sons Games" / cade-games-arcade) deployed to Vercel with no build step or framework. ~126 games, each a self-contained folder with an `index.html`. Around the games sits a meta-layer: coin economy, cosmetics shop, daily/weekly missions, achievements, classroom mode for teachers, family/school premium subscriptions (Stripe), Firebase Google auth, and a feedback pipeline wired to Slack and Linear.
 
 ## Commands
 
