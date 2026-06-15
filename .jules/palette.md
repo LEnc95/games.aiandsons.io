@@ -41,3 +41,6 @@
 ## 2026-06-03 - Explicit Labels for Accessible Form Inputs
 **Learning:** Depending entirely on `placeholder` attributes or hidden `aria-label`s for form field identification creates an accessibility failure and poor UX for sighted users. The WCAG requires visible `<label>` elements explicitly linked to their inputs via `for` and `id` attributes.
 **Action:** Always provide a clear, visible `<label>` paired with every `<input>`. Do not rely solely on placeholders or `aria-label` when a visible label can be provided. Make sure to visually mark required fields.
+## 2026-06-07 - Native Enter Form Submission on Ops Billing Inputs
+**Learning:** In internal tools or standalone pages like `ops/billing/index.html`, fields are often constructed outside of standard `<form>` tags. This breaks the native browser behavior of pressing `Enter` to submit, causing friction for power users and keyboard-only navigators who expect standard form mechanics.
+**Action:** Always bind a `keydown` event listener to standalone inputs that lack a wrapping `<form>` element. Check for `event.key === "Enter"` to programmatically trigger the primary action button (e.g., `submitBtn.click()`), restoring native-like accessibility and speed.
