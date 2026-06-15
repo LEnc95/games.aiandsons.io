@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Backgammon | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #fff7e8;
+  background:
+    linear-gradient(135deg, #182737 0%, #482532 54%, #6f5530 100%);
+}
+.back {
+  position: fixed;
+  z-index: 40;
+  top: 12px;
+  left: 12px;
+  color: #fff7e8;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffe3a070;
+  padding: 8px 12px;
+  background: #171923e6;
+  box-shadow: 0 8px 22px #0000004a;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  position: relative;
+  width: min(98vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #f4c879bd;
+  background: #18212b;
+  box-shadow: 0 24px 56px #07070b9c;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92%);
+  border-radius: 8px;
+  border: 1px solid #ffd58fd8;
+  background: #171923f4;
+  box-shadow: 0 18px 42px #07070b99;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 6vw, 58px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #ead7b8;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #cbbda8;
+}
+.hud,
+.controls {
+  width: min(98vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.chip,
+button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffe3a059;
+  background: #171923df;
+  color: #fff7e8;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 9px;
+  box-shadow: 0 8px 20px #00000038;
+}
+.chip span {
+  color: #cbbda8;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #87e7ff; }
+.chip.warn b { color: #ffdc75; }
+button {
+  cursor: pointer;
+  font: 900 14px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 12px;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffdc75;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #171923;
+  background: linear-gradient(135deg, #ffdc75 0%, #7bdff7 100%);
+  border-color: #fff7e8cc;
+}
+button:disabled {
+  cursor: default;
+  opacity: .48;
+}
+@media (max-width: 800px) {
+  .stage { max-height: 58dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip,
+  button { min-height: 42px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Roll dice, hit exposed blots, enter from the bar, and bear off every checker before the AI does. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Backgammon | AI and Sons Games">
+  <meta property="og:description" content="Roll dice, hit exposed blots, enter from the bar, and bear off every checker before the AI does. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/backgammon">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Backgammon | AI and Sons Games">
+  <meta name="twitter:description" content="Roll dice, hit exposed blots, enter from the bar, and bear off every checker before the AI does. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/backgammon">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Backgammon","description":"Roll dice, hit exposed blots, enter from the bar, and bear off every checker before the AI does. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/backgammon","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Backgammon board">
+    <canvas id="game" width="960" height="640"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Backgammon</h1>
+        <p id="overlayText">Roll dice, move checkers around the board, hit exposed blots, enter from the bar, and bear off before the AI does.</p>
+        <p class="mini">Click or tap a checker, then a highlighted destination. Keyboard: Space roll/end turn, H hint, U undo, P pause, R restart, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Game</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Turn</span><b id="turnText">YOU</b></div>
+    <div class="chip warn"><span>Dice</span><b id="diceText">-</b></div>
+    <div class="chip"><span>Off</span><b id="offText">0-0</b></div>
+    <div class="chip"><span>Bar</span><b id="barText">0-0</b></div>
+    <div class="chip warn"><span>Pips</span><b id="pipText">167</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Backgammon controls">
+    <button class="primary" id="newBtn" type="button">New Game</button>
+    <button class="primary" id="rollBtn" type="button">Roll Dice</button>
+    <button id="bearBtn" type="button">Bear Off</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="pauseBtn" type="button">Pause</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  turn: document.getElementById('turnText'),
+  dice: document.getElementById('diceText'),
+  off: document.getElementById('offText'),
+  bar: document.getElementById('barText'),
+  pips: document.getElementById('pipText'),
+  coins: document.getElementById('coinsText'),
+  pause: document.getElementById('pauseBtn'),
+};
+const buttons = {
+  new: document.getElementById('newBtn'),
+  roll: document.getElementById('rollBtn'),
+  bear: document.getElementById('bearBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WIDTH = 960;
+const HEIGHT = 640;
+const BOARD = { x: 70, y: 72, w: 820, h: 492 };
+const BAR_W = 58;
+const COL_W = (BOARD.w - BAR_W) / 12;
+const MID_X = BOARD.x + 6 * COL_W + BAR_W / 2;
+const CHECKER_R = 21;
+const PLAYER = 1;
+const AI = -1;
+const TURN_NAMES = { 1: 'YOU', '-1': 'AI' };
+const keys = new Set();
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function readBest() {
+  try {
+    return Math.max(0, Math.floor(Number(localStorage.getItem('cade:backgammon:best') || 0)));
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest(value) {
+  try {
+    localStorage.setItem('cade:backgammon:best', String(Math.max(0, Math.floor(value))));
+  } catch {
+    // Storage can be unavailable in embedded tests.
+  }
+}
+
+function createInitialPoints() {
+  const points = Array(24).fill(0);
+  points[23] = 2;
+  points[12] = 5;
+  points[7] = 3;
+  points[5] = 5;
+  points[0] = -2;
+  points[11] = -5;
+  points[16] = -3;
+  points[18] = -5;
+  return points;
+}
+
+const game = {
+  mode: 'menu',
+  previousMode: 'playerRoll',
+  turn: PLAYER,
+  points: createInitialPoints(),
+  dice: [],
+  usedDice: [],
+  selected: null,
+  legalMoves: [],
+  history: [],
+  playerBar: 0,
+  aiBar: 0,
+  playerOff: 0,
+  aiOff: 0,
+  score: 0,
+  bestScore: readBest(),
+  totalTime: 0,
+  turnCount: 1,
+  hits: 0,
+  aiHits: 0,
+  coinsEarned: 0,
+  lastCoins: 0,
+  aiTimer: 0,
+  message: 'Roll first, then move each die.',
+  hint: null,
+  animations: [],
+  lastAction: { type: 'init' },
+};
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function pointLabel(index) {
+  return String(index + 1);
+}
+
+function diceText() {
+  if (!game.dice.length) return '-';
+  return game.dice.map((die) => game.usedDice.includes(die.id) ? `(${die.value})` : String(die.value)).join(' ');
+}
+
+function availableDice() {
+  return game.dice.filter((die) => !game.usedDice.includes(die.id));
+}
+
+function copyState() {
+  return {
+    points: [...game.points],
+    dice: game.dice.map((die) => ({ ...die })),
+    usedDice: [...game.usedDice],
+    playerBar: game.playerBar,
+    aiBar: game.aiBar,
+    playerOff: game.playerOff,
+    aiOff: game.aiOff,
+    turn: game.turn,
+    mode: game.mode,
+    turnCount: game.turnCount,
+    hits: game.hits,
+    aiHits: game.aiHits,
+    score: game.score,
+    message: game.message,
+  };
+}
+
+function restoreState(snapshot) {
+  game.points = [...snapshot.points];
+  game.dice = snapshot.dice.map((die) => ({ ...die }));
+  game.usedDice = [...snapshot.usedDice];
+  game.playerBar = snapshot.playerBar;
+  game.aiBar = snapshot.aiBar;
+  game.playerOff = snapshot.playerOff;
+  game.aiOff = snapshot.aiOff;
+  game.turn = snapshot.turn;
+  game.mode = snapshot.mode;
+  game.turnCount = snapshot.turnCount;
+  game.hits = snapshot.hits;
+  game.aiHits = snapshot.aiHits;
+  game.score = snapshot.score;
+  game.message = 'Move undone.';
+  game.selected = null;
+  game.legalMoves = [];
+  game.hint = null;
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function pushHistory() {
+  game.history.push(copyState());
+  if (game.history.length > 40) game.history.shift();
+}
+
+function rollDie() {
+  return 1 + Math.floor(Math.random() * 6);
+}
+
+function setDice(values) {
+  const list = values[0] === values[1]
+    ? [values[0], values[0], values[0], values[0]]
+    : values;
+  game.dice = list.map((value, index) => ({ id: `${game.turnCount}-${game.turn}-${index}-${value}`, value }));
+  game.usedDice = [];
+}
+
+function startGame() {
+  game.mode = 'playerRoll';
+  game.previousMode = 'playerRoll';
+  game.turn = PLAYER;
+  game.points = createInitialPoints();
+  game.dice = [];
+  game.usedDice = [];
+  game.selected = null;
+  game.legalMoves = [];
+  game.history = [];
+  game.playerBar = 0;
+  game.aiBar = 0;
+  game.playerOff = 0;
+  game.aiOff = 0;
+  game.score = 0;
+  game.totalTime = 0;
+  game.turnCount = 1;
+  game.hits = 0;
+  game.aiHits = 0;
+  game.coinsEarned = 0;
+  game.lastCoins = 0;
+  game.aiTimer = 0;
+  game.hint = null;
+  game.animations = [];
+  game.message = 'Your turn. Roll the dice.';
+  game.lastAction = { type: 'start_game' };
+  rememberRecent('backgammon');
+  maybeUnlock({ anyPlay: true });
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function pipCount(owner) {
+  let total = 0;
+  for (let i = 0; i < 24; i += 1) {
+    const count = game.points[i] * owner;
+    if (count <= 0) continue;
+    total += count * (owner === PLAYER ? i + 1 : 24 - i);
+  }
+  total += (owner === PLAYER ? game.playerBar : game.aiBar) * 25;
+  return total;
+}
+
+function computeScore() {
+  const lead = Math.max(0, pipCount(AI) - pipCount(PLAYER));
+  return game.playerOff * 35 + game.hits * 18 + lead;
+}
+
+function ownsPoint(index, owner) {
+  return game.points[index] * owner > 0;
+}
+
+function isBlocked(index, owner) {
+  if (index < 0 || index > 23) return false;
+  return game.points[index] * owner < -1;
+}
+
+function canBearOff(owner) {
+  if (owner === PLAYER && game.playerBar > 0) return false;
+  if (owner === AI && game.aiBar > 0) return false;
+  for (let i = 0; i < 24; i += 1) {
+    const count = game.points[i] * owner;
+    if (count <= 0) continue;
+    if (owner === PLAYER && i > 5) return false;
+    if (owner === AI && i < 18) return false;
+  }
+  return true;
+}
+
+function canBearOffFrom(index, dieValue, owner) {
+  if (!canBearOff(owner)) return false;
+  if (owner === PLAYER) {
+    const exact = index - dieValue === -1;
+    if (exact) return true;
+    if (dieValue <= index + 1) return false;
+    for (let i = index + 1; i <= 5; i += 1) {
+      if (game.points[i] > 0) return false;
+    }
+    return true;
+  }
+  const exact = index + dieValue === 24;
+  if (exact) return true;
+  if (dieValue <= 24 - index) return false;
+  for (let i = 18; i < index; i += 1) {
+    if (game.points[i] < 0) return false;
+  }
+  return true;
+}
+
+function dieDest(from, value, owner) {
+  if (from === 'bar') return owner === PLAYER ? 24 - value : value - 1;
+  return owner === PLAYER ? from - value : from + value;
+}
+
+function moveCandidatesForDie(from, die, owner) {
+  const value = die.value ?? die;
+  if (from === 'bar') {
+    const to = dieDest(from, value, owner);
+    if (!isBlocked(to, owner)) {
+      return [{ from, to, die, value, bearOff: false, hit: game.points[to] * owner === -1 }];
+    }
+    return [];
+  }
+  if (!Number.isInteger(from) || !ownsPoint(from, owner)) return [];
+  const to = dieDest(from, value, owner);
+  if (to < 0 || to > 23) {
+    if (canBearOffFrom(from, value, owner)) {
+      return [{ from, to: 'off', die, value, bearOff: true, hit: false }];
+    }
+    return [];
+  }
+  if (isBlocked(to, owner)) return [];
+  return [{ from, to, die, value, bearOff: false, hit: game.points[to] * owner === -1 }];
+}
+
+function legalMovesForSource(from, owner = game.turn) {
+  if (owner === PLAYER && game.playerBar > 0 && from !== 'bar') return [];
+  if (owner === AI && game.aiBar > 0 && from !== 'bar') return [];
+  const moves = [];
+  for (const die of availableDice()) {
+    moves.push(...moveCandidatesForDie(from, die, owner));
+  }
+  return moves;
+}
+
+function allLegalMoves(owner = game.turn) {
+  if (!availableDice().length) return [];
+  if (owner === PLAYER && game.playerBar > 0) return legalMovesForSource('bar', owner);
+  if (owner === AI && game.aiBar > 0) return legalMovesForSource('bar', owner);
+  const moves = [];
+  for (let i = 0; i < 24; i += 1) {
+    if (ownsPoint(i, owner)) moves.push(...legalMovesForSource(i, owner));
+  }
+  return moves;
+}
+
+function getMoveByDestination(to) {
+  return game.legalMoves.find((move) => move.to === to);
+}
+
+function applyMove(move, save = true) {
+  if (!move) return false;
+  if (save && game.turn === PLAYER) pushHistory();
+  const owner = game.turn;
+  if (move.from === 'bar') {
+    if (owner === PLAYER) game.playerBar -= 1;
+    else game.aiBar -= 1;
+  } else {
+    game.points[move.from] -= owner;
+  }
+  if (move.bearOff) {
+    if (owner === PLAYER) game.playerOff += 1;
+    else game.aiOff += 1;
+  } else {
+    const target = game.points[move.to];
+    if (target * owner === -1) {
+      if (owner === PLAYER) {
+        game.aiBar += 1;
+        game.hits += 1;
+      } else {
+        game.playerBar += 1;
+        game.aiHits += 1;
+      }
+      game.points[move.to] = owner;
+    } else {
+      game.points[move.to] += owner;
+    }
+  }
+  game.usedDice.push(move.die.id);
+  game.selected = null;
+  game.legalMoves = [];
+  game.hint = null;
+  game.score = computeScore();
+  game.message = move.bearOff
+    ? `${owner === PLAYER ? 'You' : 'AI'} bore off from ${pointLabel(move.from)}.`
+    : `${owner === PLAYER ? 'You' : 'AI'} moved ${move.value} to ${pointLabel(move.to)}${move.hit ? ' and hit a blot' : ''}.`;
+  game.lastAction = {
+    type: 'move',
+    owner: owner === PLAYER ? 'player' : 'ai',
+    from: move.from,
+    to: move.to,
+    die: move.value,
+    hit: move.hit,
+    bearOff: move.bearOff,
+  };
+  addMoveAnimation(move, owner);
+  checkGameEnd();
+  if (game.mode !== 'gameover') {
+    const moves = allLegalMoves(owner);
+    if (!availableDice().length || moves.length === 0) {
+      if (owner === PLAYER) {
+        if (moves.length === 0 && availableDice().length) game.message = 'No legal moves remain. AI turn.';
+        endPlayerTurn();
+      } else {
+        finishAiTurn();
+      }
+    }
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function checkGameEnd() {
+  if (game.playerOff >= 15) {
+    finishGame(PLAYER);
+  } else if (game.aiOff >= 15) {
+    finishGame(AI);
+  }
+}
+
+function awardCoins(amount, reason) {
+  const reward = Math.max(0, Math.floor(amount));
+  if (reward <= 0) return 0;
+  addCoins(reward);
+  game.coinsEarned += reward;
+  game.lastCoins = reward;
+  game.message = `${reason}: +${reward} coins.`;
+  return reward;
+}
+
+function finishGame(winner) {
+  if (game.mode === 'gameover') return stateToObject();
+  game.mode = 'gameover';
+  const won = winner === PLAYER;
+  game.score = computeScore() + (won ? 250 : 0);
+  if (game.score > game.bestScore) {
+    game.bestScore = game.score;
+    saveBest(game.bestScore);
+  }
+  if (won) {
+    const gammonBonus = game.aiOff === 0 ? 12 : 0;
+    const reward = 8 + Math.floor(game.score / 100) + gammonBonus;
+    awardCoins(reward, 'Backgammon win');
+  }
+  maybeUnlock({
+    anyPlay: true,
+    backgammon: {
+      result: won ? 'win' : 'loss',
+      score: game.score,
+      playerOff: game.playerOff,
+      aiOff: game.aiOff,
+      hits: game.hits,
+    },
+  });
+  game.message = won ? 'You bore off every checker first.' : 'AI bore off first.';
+  game.lastAction = { type: 'finish_game', winner: won ? 'player' : 'ai', score: game.score };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function rollForTurn(values = null) {
+  if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+  if (game.mode === 'paused') return stateToObject();
+  if (game.turn !== PLAYER || game.mode !== 'playerRoll') return stateToObject();
+  setDice(values || [rollDie(), rollDie()]);
+  game.mode = 'playerMove';
+  game.selected = game.playerBar > 0 ? 'bar' : null;
+  game.legalMoves = game.playerBar > 0 ? legalMovesForSource('bar', PLAYER) : [];
+  game.history = [];
+  game.message = `Rolled ${diceText().replace(/[()]/g, '')}. Move your checkers.`;
+  game.lastAction = { type: 'roll', owner: 'player', dice: game.dice.map((die) => die.value) };
+  if (allLegalMoves(PLAYER).length === 0) {
+    game.message = 'No legal moves from this roll. AI turn.';
+    endPlayerTurn();
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function endPlayerTurn() {
+  if (game.mode === 'gameover') return stateToObject();
+  game.aiTimer = 0;
+  game.turn = AI;
+  game.mode = 'aiThinking';
+  game.selected = null;
+  game.legalMoves = [];
+  game.turnCount += 1;
+  setDice([rollDie(), rollDie()]);
+  game.message = `AI rolled ${diceText().replace(/[()]/g, '')}.`;
+  game.lastAction = { type: 'roll', owner: 'ai', dice: game.dice.map((die) => die.value) };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function requestEndPlayerTurn() {
+  if (game.mode !== 'playerMove') return stateToObject();
+  if (availableDice().length && allLegalMoves(PLAYER).length) {
+    game.message = 'Use every legal die before ending the turn.';
+    showHint();
+    return stateToObject();
+  }
+  return endPlayerTurn();
+}
+
+function finishAiTurn() {
+  if (game.mode === 'gameover') return stateToObject();
+  game.turn = PLAYER;
+  game.mode = 'playerRoll';
+  game.dice = [];
+  game.usedDice = [];
+  game.selected = null;
+  game.legalMoves = [];
+  game.turnCount += 1;
+  game.message = 'Your turn. Roll the dice.';
+  game.lastAction = { type: 'turn_ready', owner: 'player' };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function aiChooseMove(moves) {
+  return moves
+    .map((move) => {
+      let score = move.value;
+      if (move.bearOff) score += 80;
+      if (move.hit) score += 55;
+      if (move.to !== 'off' && game.points[move.to] * AI > 0) score += 10;
+      if (move.from !== 'bar' && game.points[move.from] * AI === 1) score -= 8;
+      if (move.to !== 'off' && game.points[move.to] * AI === 1) score -= 6;
+      score += move.to === 'off' ? 0 : move.to;
+      return { move, score };
+    })
+    .sort((a, b) => b.score - a.score)[0]?.move || moves[0];
+}
+
+function stepAi() {
+  if (game.mode !== 'aiThinking') return;
+  const moves = allLegalMoves(AI);
+  if (!availableDice().length || moves.length === 0) {
+    finishAiTurn();
+    return;
+  }
+  applyMove(aiChooseMove(moves), false);
+}
+
+function selectSource(source) {
+  if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+  if (game.mode !== 'playerMove' || game.turn !== PLAYER) return stateToObject();
+  if (game.playerBar > 0 && source !== 'bar') {
+    game.message = 'Enter from the bar before moving board checkers.';
+    game.selected = 'bar';
+    game.legalMoves = legalMovesForSource('bar', PLAYER);
+    updateHud();
+    draw();
+    return stateToObject();
+  }
+  if (source !== 'bar' && !ownsPoint(source, PLAYER)) return stateToObject();
+  game.selected = source;
+  game.legalMoves = legalMovesForSource(source, PLAYER);
+  game.message = game.legalMoves.length
+    ? `Selected ${source === 'bar' ? 'bar' : pointLabel(source)}. Choose a highlighted destination.`
+    : `No legal move from ${source === 'bar' ? 'bar' : pointLabel(source)}.`;
+  game.lastAction = { type: 'select', source };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function chooseDestination(destination) {
+  if (game.mode !== 'playerMove' || game.turn !== PLAYER) return stateToObject();
+  const move = getMoveByDestination(destination);
+  if (!move) {
+    if (Number.isInteger(destination) && ownsPoint(destination, PLAYER)) return selectSource(destination);
+    game.message = 'Choose a highlighted destination.';
+    updateHud();
+    draw();
+    return stateToObject();
+  }
+  applyMove(move, true);
+  return stateToObject();
+}
+
+function bearOffSelected() {
+  if (game.mode !== 'playerMove' || game.turn !== PLAYER) return stateToObject();
+  const move = game.legalMoves.find((candidate) => candidate.bearOff);
+  if (move) applyMove(move, true);
+  else {
+    game.message = 'Selected checker cannot bear off with the remaining dice.';
+    updateHud();
+    draw();
+  }
+  return stateToObject();
+}
+
+function showHint() {
+  if (game.mode === 'playerRoll') {
+    game.message = 'Roll to see legal moves.';
+    updateHud();
+    draw();
+    return stateToObject();
+  }
+  const moves = allLegalMoves(PLAYER);
+  if (!moves.length) {
+    game.message = 'No legal moves available.';
+    updateHud();
+    draw();
+    return stateToObject();
+  }
+  const move = moves
+    .map((candidate) => {
+      let score = candidate.value;
+      if (candidate.bearOff) score += 90;
+      if (candidate.hit) score += 60;
+      if (candidate.to !== 'off' && game.points[candidate.to] > 0) score += 8;
+      if (candidate.from !== 'bar' && game.points[candidate.from] === 1) score -= 10;
+      score += candidate.to === 'off' ? 0 : 24 - candidate.to;
+      return { candidate, score };
+    })
+    .sort((a, b) => b.score - a.score)[0].candidate;
+  game.hint = move;
+  game.message = move.bearOff
+    ? `Hint: bear off ${pointLabel(move.from)} with ${move.value}.`
+    : `Hint: ${move.from === 'bar' ? 'bar' : pointLabel(move.from)} to ${pointLabel(move.to)} with ${move.value}.`;
+  game.lastAction = { type: 'hint', move: { from: move.from, to: move.to, die: move.value } };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function undoMove() {
+  if (game.turn !== PLAYER || game.mode !== 'playerMove' || !game.history.length) return stateToObject();
+  restoreState(game.history.pop());
+  return stateToObject();
+}
+
+function togglePause() {
+  if (game.mode === 'menu') return startGame();
+  if (game.mode === 'gameover') return stateToObject();
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode || 'playerRoll';
+    game.message = 'Resumed.';
+  } else {
+    game.previousMode = game.mode;
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  }
+  game.lastAction = { type: 'toggle_pause', mode: game.mode };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function pointColumnX(col) {
+  return BOARD.x + col * COL_W + (col >= 6 ? BAR_W : 0);
+}
+
+function pointToColumn(index) {
+  if (index <= 11) return index;
+  return 23 - index;
+}
+
+function pointCenter(index) {
+  const col = pointToColumn(index);
+  const x = pointColumnX(col) + COL_W / 2;
+  const top = index >= 12;
+  return { x, y: top ? BOARD.y : BOARD.y + BOARD.h, top };
+}
+
+function checkerPosition(index, stackIndex) {
+  const point = pointCenter(index);
+  const offset = CHECKER_R + 5 + stackIndex * (CHECKER_R * 1.62);
+  return {
+    x: point.x,
+    y: point.top ? point.y + offset : point.y - offset,
+  };
+}
+
+function barPosition(owner, stackIndex) {
+  return {
+    x: MID_X,
+    y: owner === PLAYER ? BOARD.y + BOARD.h - 36 - stackIndex * 30 : BOARD.y + 36 + stackIndex * 30,
+  };
+}
+
+function offPosition(owner, stackIndex) {
+  return {
+    x: owner === PLAYER ? BOARD.x - 34 : BOARD.x + BOARD.w + 34,
+    y: owner === PLAYER ? BOARD.y + BOARD.h - 36 - stackIndex * 15 : BOARD.y + 36 + stackIndex * 15,
+  };
+}
+
+function addMoveAnimation(move, owner) {
+  const from = move.from === 'bar'
+    ? barPosition(owner, owner === PLAYER ? game.playerBar : game.aiBar)
+    : checkerPosition(move.from, Math.max(0, Math.abs(game.points[move.from]) - 1));
+  const to = move.bearOff
+    ? offPosition(owner, owner === PLAYER ? game.playerOff : game.aiOff)
+    : checkerPosition(move.to, Math.max(0, Math.abs(game.points[move.to]) - 1));
+  game.animations.push({ from, to, age: 0, ttl: .28, owner });
+}
+
+function updateAnimations(dt) {
+  for (const animation of game.animations) animation.age += dt;
+  game.animations = game.animations.filter((animation) => animation.age < animation.ttl);
+}
+
+function update(dt) {
+  if (!['menu', 'paused', 'gameover'].includes(game.mode)) game.totalTime += dt;
+  updateAnimations(dt);
+  if (game.mode === 'aiThinking') {
+    game.aiTimer = (game.aiTimer || 0) + dt;
+    if (game.aiTimer >= .34) {
+      game.aiTimer = 0;
+      stepAi();
+    }
+  }
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawText(text, x, y, size = 18, color = '#fff7e8', align = 'center', weight = 900) {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function drawBoard() {
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#101923');
+  bg.addColorStop(.5, '#253642');
+  bg.addColorStop(1, '#4c2832');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  drawRoundedRect(BOARD.x - 22, BOARD.y - 22, BOARD.w + 44, BOARD.h + 44, 18);
+  ctx.fillStyle = '#5c3522';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#f4c879';
+  ctx.stroke();
+
+  drawRoundedRect(BOARD.x, BOARD.y, BOARD.w, BOARD.h, 8);
+  const felt = ctx.createLinearGradient(BOARD.x, BOARD.y, BOARD.x + BOARD.w, BOARD.y + BOARD.h);
+  felt.addColorStop(0, '#21405a');
+  felt.addColorStop(.52, '#20343b');
+  felt.addColorStop(1, '#684234');
+  ctx.fillStyle = felt;
+  ctx.fill();
+
+  ctx.fillStyle = '#3a241d';
+  ctx.fillRect(MID_X - BAR_W / 2, BOARD.y, BAR_W, BOARD.h);
+  ctx.strokeStyle = '#f4c87990';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(MID_X, BOARD.y);
+  ctx.lineTo(MID_X, BOARD.y + BOARD.h);
+  ctx.stroke();
+
+  for (let col = 0; col < 12; col += 1) {
+    const x = pointColumnX(col);
+    const topIndex = 23 - col;
+    const bottomIndex = col;
+    const colorA = col % 2 === 0 ? '#f4c879' : '#7bdff7';
+    const colorB = col % 2 === 0 ? '#c34e61' : '#ffdc75';
+    ctx.fillStyle = colorA;
+    ctx.beginPath();
+    ctx.moveTo(x + 5, BOARD.y);
+    ctx.lineTo(x + COL_W - 5, BOARD.y);
+    ctx.lineTo(x + COL_W / 2, BOARD.y + BOARD.h * .42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = colorB;
+    ctx.beginPath();
+    ctx.moveTo(x + 5, BOARD.y + BOARD.h);
+    ctx.lineTo(x + COL_W - 5, BOARD.y + BOARD.h);
+    ctx.lineTo(x + COL_W / 2, BOARD.y + BOARD.h * .58);
+    ctx.closePath();
+    ctx.fill();
+    drawText(pointLabel(topIndex), x + COL_W / 2, BOARD.y + 14, 11, '#171923');
+    drawText(pointLabel(bottomIndex), x + COL_W / 2, BOARD.y + BOARD.h - 14, 11, '#171923');
+  }
+
+  drawRoundedRect(20, BOARD.y + 72, 40, 134, 8);
+  ctx.fillStyle = '#171923d8';
+  ctx.fill();
+  drawText('YOU', 40, BOARD.y + 96, 13, '#7bdff7');
+  drawText(String(game.playerOff), 40, BOARD.y + 132, 24, '#fff7e8');
+  drawText('OFF', 40, BOARD.y + 170, 13, '#cbbda8');
+
+  drawRoundedRect(WIDTH - 60, BOARD.y + 72, 40, 134, 8);
+  ctx.fillStyle = '#171923d8';
+  ctx.fill();
+  drawText('AI', WIDTH - 40, BOARD.y + 96, 13, '#ffdc75');
+  drawText(String(game.aiOff), WIDTH - 40, BOARD.y + 132, 24, '#fff7e8');
+  drawText('OFF', WIDTH - 40, BOARD.y + 170, 13, '#cbbda8');
+}
+
+function drawHighlight(move) {
+  const point = move.bearOff
+    ? offPosition(PLAYER, game.playerOff)
+    : pointCenter(move.to);
+  ctx.save();
+  ctx.globalAlpha = .85;
+  ctx.strokeStyle = move.hit ? '#ff5c8a' : '#87e7ff';
+  ctx.fillStyle = move.hit ? '#ff5c8a33' : '#87e7ff33';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(point.x, point.y + (move.bearOff ? 0 : point.top ? 74 : -74), 27, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawChecker(x, y, owner, label = '') {
+  ctx.save();
+  ctx.shadowColor = '#00000080';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 5;
+  const grad = ctx.createRadialGradient(x - 8, y - 9, 4, x, y, CHECKER_R + 4);
+  if (owner === PLAYER) {
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(.58, '#e8f8ff');
+    grad.addColorStop(1, '#4ba4bf');
+  } else {
+    grad.addColorStop(0, '#fff0a6');
+    grad.addColorStop(.55, '#d08c33');
+    grad.addColorStop(1, '#622538');
+  }
+  ctx.beginPath();
+  ctx.arc(x, y, CHECKER_R, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = owner === PLAYER ? '#effcff' : '#ffd987';
+  ctx.stroke();
+  if (label) drawText(label, x, y + 1, 12, owner === PLAYER ? '#143642' : '#fff7e8');
+  ctx.restore();
+}
+
+function drawCheckers() {
+  for (const move of game.legalMoves) drawHighlight(move);
+  if (game.hint) {
+    ctx.save();
+    ctx.strokeStyle = '#ffdc75';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 8]);
+    const from = game.hint.from === 'bar'
+      ? barPosition(PLAYER, Math.max(0, game.playerBar - 1))
+      : checkerPosition(game.hint.from, Math.max(0, Math.abs(game.points[game.hint.from]) - 1));
+    const to = game.hint.bearOff
+      ? offPosition(PLAYER, game.playerOff)
+      : checkerPosition(game.hint.to, Math.max(0, Math.abs(game.points[game.hint.to])));
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+  for (let index = 0; index < 24; index += 1) {
+    const count = Math.abs(game.points[index]);
+    const owner = Math.sign(game.points[index]);
+    if (!count) continue;
+    const visible = Math.min(count, 5);
+    for (let stack = 0; stack < visible; stack += 1) {
+      const pos = checkerPosition(index, stack);
+      const overflow = stack === visible - 1 && count > visible ? String(count) : '';
+      drawChecker(pos.x, pos.y, owner, overflow);
+    }
+  }
+  for (let i = 0; i < Math.min(game.playerBar, 5); i += 1) {
+    const pos = barPosition(PLAYER, i);
+    drawChecker(pos.x, pos.y, PLAYER, i === 4 && game.playerBar > 5 ? String(game.playerBar) : '');
+  }
+  for (let i = 0; i < Math.min(game.aiBar, 5); i += 1) {
+    const pos = barPosition(AI, i);
+    drawChecker(pos.x, pos.y, AI, i === 4 && game.aiBar > 5 ? String(game.aiBar) : '');
+  }
+  if (game.selected !== null) {
+    const pos = game.selected === 'bar'
+      ? barPosition(PLAYER, Math.max(0, game.playerBar - 1))
+      : checkerPosition(game.selected, Math.max(0, Math.abs(game.points[game.selected]) - 1));
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, CHECKER_R + 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawDice() {
+  const x = WIDTH / 2 - game.dice.length * 24;
+  const y = HEIGHT - 42;
+  for (let i = 0; i < game.dice.length; i += 1) {
+    const die = game.dice[i];
+    const used = game.usedDice.includes(die.id);
+    drawRoundedRect(x + i * 50, y - 22, 42, 42, 8);
+    ctx.fillStyle = used ? '#5b5f67' : '#fff7e8';
+    ctx.fill();
+    ctx.strokeStyle = used ? '#92969d' : '#ffdc75';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawText(String(die.value), x + i * 50 + 21, y, 24, used ? '#17192399' : '#171923');
+  }
+}
+
+function drawMessage() {
+  drawRoundedRect(180, 18, 600, 40, 8);
+  ctx.fillStyle = '#171923d9';
+  ctx.fill();
+  ctx.strokeStyle = '#ffe3a066';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  drawText(game.message, WIDTH / 2, 38, 17, '#fff7e8');
+  drawText(`Pips: You ${pipCount(PLAYER)} | AI ${pipCount(AI)}`, WIDTH / 2, 598, 16, '#ead7b8');
+}
+
+function drawAnimations() {
+  for (const animation of game.animations) {
+    const t = clamp(animation.age / animation.ttl, 0, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const x = animation.from.x + (animation.to.x - animation.from.x) * ease;
+    const y = animation.from.y + (animation.to.y - animation.from.y) * ease - Math.sin(t * Math.PI) * 42;
+    drawChecker(x, y, animation.owner);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  drawBoard();
+  drawCheckers();
+  drawDice();
+  drawAnimations();
+  drawMessage();
+}
+
+function updateHud() {
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.turn.textContent = TURN_NAMES[game.turn];
+  hud.dice.textContent = diceText();
+  hud.off.textContent = `${game.playerOff}-${game.aiOff}`;
+  hud.bar.textContent = `${game.playerBar}-${game.aiBar}`;
+  hud.pips.textContent = `${pipCount(PLAYER)}-${pipCount(AI)}`;
+  hud.coins.textContent = String(game.coinsEarned || profileState.coins || 0);
+  hud.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  buttons.roll.textContent = game.mode === 'playerMove' ? 'End Turn' : 'Roll Dice';
+  buttons.roll.disabled = game.mode === 'aiThinking' || game.mode === 'paused' || game.mode === 'gameover';
+  buttons.bear.disabled = !game.legalMoves.some((move) => move.bearOff) || game.mode !== 'playerMove';
+  buttons.hint.disabled = !['playerRoll', 'playerMove'].includes(game.mode);
+  buttons.undo.disabled = game.mode !== 'playerMove' || !game.history.length;
+}
+
+function updateOverlay() {
+  let show = false;
+  let title = 'Backgammon';
+  let text = 'Roll dice, move checkers around the board, hit exposed blots, enter from the bar, and bear off before the AI does.';
+  let button = 'Start Game';
+  if (game.mode === 'menu') {
+    show = true;
+  } else if (game.mode === 'paused') {
+    show = true;
+    title = 'Paused';
+    text = 'Resume the current match.';
+    button = 'Resume';
+  } else if (game.mode === 'gameover') {
+    show = true;
+    title = game.playerOff >= 15 ? 'You Won' : 'AI Won';
+    text = `Score ${game.score}. Checkers off ${game.playerOff}-${game.aiOff}. Coins earned: ${game.coinsEarned}.`;
+    button = 'Play Again';
+  }
+  overlay.classList.toggle('show', show);
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  startBtn.textContent = button;
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function pointFromCanvas(point) {
+  if (point.x > MID_X - BAR_W / 2 && point.x < MID_X + BAR_W / 2 && point.y > BOARD.y && point.y < BOARD.y + BOARD.h) {
+    return 'bar';
+  }
+  if (point.x < BOARD.x || point.x > BOARD.x + BOARD.w || point.y < BOARD.y || point.y > BOARD.y + BOARD.h) return null;
+  let col = Math.floor((point.x - BOARD.x) / COL_W);
+  if (point.x > MID_X + BAR_W / 2) col = Math.floor((point.x - BOARD.x - BAR_W) / COL_W);
+  if (point.x >= MID_X - BAR_W / 2 && point.x <= MID_X + BAR_W / 2) return 'bar';
+  col = clamp(col, 0, 11);
+  if (point.y < BOARD.y + BOARD.h / 2) return 23 - col;
+  return col;
+}
+
+function handleCanvasPointer(event) {
+  event.preventDefault();
+  const hit = pointFromCanvas(canvasPoint(event));
+  if (hit === null) return;
+  if (hit === 'bar') {
+    if (game.playerBar > 0) selectSource('bar');
+    return;
+  }
+  if (game.selected !== null) chooseDestination(hit);
+  else selectSource(hit);
+}
+
+function handleKeyDown(event) {
+  const key = event.key.toLowerCase();
+  if ([' ', 'spacebar', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(key)) event.preventDefault();
+  if (key === ' ' || key === 'spacebar' || key === 'enter') {
+    if (game.mode === 'playerRoll') rollForTurn();
+    else if (game.mode === 'playerMove') requestEndPlayerTurn();
+    else if (game.mode === 'menu' || game.mode === 'gameover') startGame();
+  } else if (key === 'h') showHint();
+  else if (key === 'u') undoMove();
+  else if (key === 'p') togglePause();
+  else if (key === 'r') startGame();
+  else if (key === 'f') toggleFullscreen();
+  keys.add(key);
+}
+
+function handleKeyUp(event) {
+  keys.delete(event.key.toLowerCase());
+}
+
+function stateToObject() {
+  return {
+    game: 'backgammon',
+    mode: game.mode,
+    coordinateSystem: 'canvas pixels; origin top-left; x right; y down; points 1-24 map to array indexes 0-23',
+    turn: game.turn === PLAYER ? 'player' : 'ai',
+    dice: game.dice.map((die) => ({ value: die.value, used: game.usedDice.includes(die.id) })),
+    selected: game.selected,
+    legalMoves: game.legalMoves.map((move) => ({
+      from: move.from,
+      to: move.to,
+      die: move.value,
+      hit: move.hit,
+      bearOff: move.bearOff,
+    })),
+    points: game.points.map((count, index) => ({ point: index + 1, count })),
+    player: {
+      bar: game.playerBar,
+      off: game.playerOff,
+      pips: pipCount(PLAYER),
+    },
+    ai: {
+      bar: game.aiBar,
+      off: game.aiOff,
+      pips: pipCount(AI),
+    },
+    score: game.score,
+    bestScore: game.bestScore,
+    hits: game.hits,
+    aiHits: game.aiHits,
+    coinsEarned: game.coinsEarned,
+    totalTime: Number(game.totalTime.toFixed(2)),
+    message: game.message,
+    hint: game.hint ? { from: game.hint.from, to: game.hint.to, die: game.hint.value } : null,
+    lastAction: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__BACKGAMMON_GAME__ = {
+  startGame,
+  rollForTurn,
+  selectSource,
+  chooseDestination,
+  bearOffSelected,
+  showHint,
+  undoMove,
+  togglePause,
+  endPlayerTurn,
+  stateToObject,
+  renderGameToText,
+  setBoardForBearingOff() {
+    game.points = Array(24).fill(0);
+    game.points[0] = 2;
+    game.points[1] = 3;
+    game.points[2] = 4;
+    game.points[3] = 3;
+    game.points[4] = 2;
+    game.points[5] = 1;
+    game.playerOff = 0;
+    game.aiOff = 0;
+    game.playerBar = 0;
+    game.aiBar = 0;
+    game.turn = PLAYER;
+    game.mode = 'playerMove';
+    setDice([6, 1]);
+    game.usedDice = [];
+    game.selected = null;
+    game.legalMoves = [];
+    game.message = 'Bearing-off test board ready.';
+    updateHud();
+    updateOverlay();
+    draw();
+    return stateToObject();
+  },
+  setBoardForHitTest() {
+    game.points = Array(24).fill(0);
+    game.points[5] = 1;
+    game.points[4] = -1;
+    game.points[18] = -2;
+    game.playerOff = 13;
+    game.aiOff = 12;
+    game.playerBar = 0;
+    game.aiBar = 0;
+    game.turn = PLAYER;
+    game.mode = 'playerMove';
+    setDice([1, 3]);
+    game.usedDice = [];
+    game.selected = null;
+    game.legalMoves = [];
+    game.message = 'Hit test board ready.';
+    updateHud();
+    updateOverlay();
+    draw();
+    return stateToObject();
+  },
+  forcePlayerWin() {
+    game.playerOff = 15;
+    finishGame(PLAYER);
+    return stateToObject();
+  },
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'backgammon', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handleCanvasPointer);
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+window.addEventListener('resize', draw);
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else startGame();
+});
+buttons.new.addEventListener('click', startGame);
+buttons.roll.addEventListener('click', () => {
+  if (game.mode === 'playerRoll') rollForTurn();
+  else if (game.mode === 'playerMove') requestEndPlayerTurn();
+});
+buttons.bear.addEventListener('click', bearOffSelected);
+buttons.hint.addEventListener('click', showHint);
+buttons.undo.addEventListener('click', undoMove);
+buttons.pause.addEventListener('click', togglePause);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'backgammon', gameName: 'Backgammon' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

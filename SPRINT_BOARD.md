@@ -464,3 +464,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-12] Key PR links: none merged for this date.
 - [nightly 2026-06-13] No repository commits found for this date.
 - [nightly 2026-06-13] Key PR links: none merged for this date.
+- [nightly 2026-06-14] Tracked changes: 1 commit(s) - 6d78515 Add Skee-Ball and Tower Defense; harden social API with score caps and rate limiting.
+- [nightly 2026-06-14] Key PR links: none merged for this date.

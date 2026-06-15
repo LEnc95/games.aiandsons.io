@@ -3630,3 +3630,32 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - No persistent local server is left running.
 - Follow-up TODO:
   - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.
+
+## 2026-06-15 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions Sky Joust, Tower Defense, and Skee-Ball.
+- Initial registry/search check found no `/backgammon` route or Backgammon metadata entry.
+- Chosen game: Backgammon (`/backgammon`), a distinct dice board game with legal moves, hits/bar handling, bearing off, an AI opponent, coin rewards, shared feedback context, and deterministic test hooks.
+- Initial implementation added `backgammon/index.html` with a canvas board, desktop/touch selection controls, roll/end-turn/hint/undo/pause/fullscreen controls, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__BACKGAMMON_GAME__`.
+- Registered Backgammon in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Backgammon SEO metadata now include `/backgammon`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Backgammon module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata uniqueness check passed; `GAMES` reports 127 games with no duplicate slugs or URLs and includes Backgammon.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Python server returned HTTP 200 for `/backgammon/`.
+  - `$WEB_GAME_CLIENT` passed against `/backgammon/`, producing screenshots and state snapshots in `output/web-game/backgammon-smoke`; no `errors-*.json` files were emitted.
+  - Screenshot inspection confirmed the visible board, checkers, dice, hint path, HUD, and readable status text.
+  - Custom Playwright scenario passed for move + undo, hit-to-bar, bearing off, forced player win, coin reward, and zero Backgammon console/page errors; final screenshot/state written under `output/web-game/backgammon-forced-win.*`.
+  - In-app Browser route check reached `/backgammon/` with HTTP 200-equivalent page load, correct title, visible canvas, feedback button, menu HUD, and zero browser error logs; its isolated evaluate context did not expose `window.render_game_to_text`, matching prior route-check caveats.
+  - `git diff --check` passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Browser/server notes:
+  - `npm run test:feedback-smoke:raw` completed its functional checks but failed the zero-console-error gate because mobile Tetris attempted a POST against `python -m http.server`, which returned 501. This is the existing raw-static-server feedback-smoke caveat, not a Backgammon page error.
+  - No persistent local server is left running.
+- Follow-up TODO:
+  - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.
