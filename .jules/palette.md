@@ -44,3 +44,7 @@
 ## 2026-06-07 - Native Enter Form Submission on Ops Billing Inputs
 **Learning:** In internal tools or standalone pages like `ops/billing/index.html`, fields are often constructed outside of standard `<form>` tags. This breaks the native browser behavior of pressing `Enter` to submit, causing friction for power users and keyboard-only navigators who expect standard form mechanics.
 **Action:** Always bind a `keydown` event listener to standalone inputs that lack a wrapping `<form>` element. Check for `event.key === "Enter"` to programmatically trigger the primary action button (e.g., `submitBtn.click()`), restoring native-like accessibility and speed.
+
+## 2026-06-15 - Enter-key submission and aria-labels for standalone inputs
+**Learning:** Ad-hoc admin inputs outside native forms often miss keyboard submit handlers and explicit labels, which slows keyboard workflows and weakens accessibility.
+**Action:** For standalone configuration inputs and modal fields, wire Enter to the primary action and ensure unlabeled inputs expose an explicit `aria-label` or label text.
