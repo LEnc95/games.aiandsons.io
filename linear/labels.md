@@ -119,6 +119,7 @@
 - game/pegsolitaire
 - game/towerhanoi
 - game/mancala
+- game/backgammon
 - game/gomokugrid
 - game/sudokusprint
 - game/potionpantry
