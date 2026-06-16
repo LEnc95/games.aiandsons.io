@@ -3630,3 +3630,33 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - No persistent local server is left running.
 - Follow-up TODO:
   - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.
+
+## 2026-06-16 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Backgammon, Skee-Ball, Tower Defense, Sky Joust, FreeCell, Shut the Box, Air Hockey, Cavern Crush, Calc Cages, and other recent automation games.
+- Initial registry check found no `/darts` route or Darts metadata entry.
+- Chosen game: Darts 301 (`/darts`), a precision board game with standard dartboard scoring, three-dart rounds, bust handling, checkout hints, and double-out finishes.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, coin rewards, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+- Initial implementation:
+  - Added `darts/index.html` with canvas-rendered Darts 301, standard segment/ring scoring, three-dart rounds, bust and double-out checkout rules, checkout hints, undo, pause/restart/fullscreen, pointer/touch and keyboard controls, coin rewards, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__DARTS_GAME__`.
+  - Registered Darts 301 in `src/meta/games.js`.
+- Regenerated integration artifacts:
+  - `npm run seo`: pass; sitemap, homepage structured data, and Darts 301 SEO metadata now include `/darts`.
+  - `npm run feedback:sync-linear`: pass for local seed files; live Linear provisioning skipped because `LINEAR_API_KEY` and `LINEAR_TEAM_ID` are not configured.
+- Validation:
+  - Darts module-script syntax check passed after stripping static imports for parser-only validation.
+  - Metadata/generated-artifact check passed; `GAMES` reports 128 games with no duplicate slugs and includes Darts 301.
+  - `node --test tests/unit/games.test.mjs tests/feedback-coverage.integration.test.mjs`: pass, 9 tests.
+  - `npm run feedback:check-daily`: pass.
+  - `npm run test:feedback`: pass, 31 tests.
+  - `npm run test:shop`: pass, 68 tests.
+  - Static route smoke with a temporary Python static server returned HTTP 200 for `/darts/`.
+  - `$WEB_GAME_CLIENT` passed against `/darts/`, producing screenshots and state snapshots in `output/web-game/darts-smoke`; no `errors-*.json` files were emitted. Screenshot inspection confirmed a visible dartboard, landed darts, score panel, HUD, and synchronized text state.
+  - Custom Playwright scenario passed for start, button aim controls, hint, pause/resume, keyboard throw, undo, forced bust, forced double-out checkout, coin award, feedback context, and zero console/page errors. Screenshot inspected at `output/web-game/darts-forced-checkout.png`.
+  - In-app Browser route check reached `/darts/` with HTTP 200, correct title, one visible canvas, feedback button, and zero browser error logs; its isolated evaluate context did not expose page globals, matching prior repo browser notes.
+  - `git diff --check` on Darts integration files passed with only existing LF-to-CRLF warnings; targeted trailing-whitespace scan found no matches.
+- Browser/server notes:
+  - `npm run test:feedback-smoke:raw` completed functional checks but failed its zero-console-error gate because the mobile feedback path attempted a POST against `python -m http.server`, which returned 501. This matches the existing raw-static-server caveat and was not a Darts page error.
+  - No persistent local server is left running.
+- Follow-up TODO:
+  - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.

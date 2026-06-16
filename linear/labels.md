@@ -21,6 +21,7 @@
 - game/pong
 - game/airhockey
 - game/skeeball
+- game/darts
 - game/snake
 - game/tictactoe
 - game/rps

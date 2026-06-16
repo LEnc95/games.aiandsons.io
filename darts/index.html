@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Darts 301 | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7f2e8;
+  background:
+    linear-gradient(90deg, #16161b 0 16px, #202128 16px 32px),
+    linear-gradient(135deg, #142a33 0%, #3c2331 48%, #283820 100%);
+}
+.back {
+  position: fixed;
+  z-index: 30;
+  top: 12px;
+  left: 12px;
+  color: #f7f2e8;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #f0d18d80;
+  padding: 8px 12px;
+  background: #15171fd9;
+  box-shadow: 0 8px 22px #00000040;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(98vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #eecf8fa8;
+  background: #19202a;
+  box-shadow: 0 24px 58px #08070d99;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92%);
+  border-radius: 8px;
+  border: 1px solid #f0d18dcc;
+  background: #191922f2;
+  box-shadow: 0 18px 42px #06040b99;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 6vw, 58px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #e6d7bd;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #cbbca7;
+}
+.hud,
+.controls {
+  width: min(98vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.chip,
+button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #f0d18d59;
+  background: #181922dd;
+  color: #f7f2e8;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 9px;
+  box-shadow: 0 8px 20px #00000038;
+}
+.chip span {
+  color: #cab9a0;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: clamp(13px, 1.7vw, 20px);
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #86e5c0; }
+.chip.warn b { color: #ffd36e; }
+button {
+  cursor: pointer;
+  font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 10px 10px;
+  box-shadow: 0 10px 24px #00000040;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffd36e;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #1a1720;
+  background: linear-gradient(135deg, #ffd36e 0%, #86e5c0 100%);
+  border-color: #ffffffcc;
+}
+button:disabled {
+  cursor: default;
+  opacity: .48;
+}
+@media (max-width: 820px) {
+  .stage { max-height: 58dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip,
+  button { min-height: 42px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim steady throws, score standard dartboard rings, avoid busts, and finish 301 on a double-out checkout. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Darts 301 | AI and Sons Games">
+  <meta property="og:description" content="Aim steady throws, score standard dartboard rings, avoid busts, and finish 301 on a double-out checkout. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/darts">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Darts 301 | AI and Sons Games">
+  <meta name="twitter:description" content="Aim steady throws, score standard dartboard rings, avoid busts, and finish 301 on a double-out checkout. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/darts">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Darts 301","description":"Aim steady throws, score standard dartboard rings, avoid busts, and finish 301 on a double-out checkout. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/darts","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Darts 301 board">
+    <canvas id="game" width="960" height="640"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Darts 301</h1>
+        <p id="overlayText">Throw three-dart rounds, hit exact checkouts, and finish on a double or bull.</p>
+        <p class="mini">Keyboard: arrows or WASD aim, hold Space to charge and release to throw, H hint, U undo, P pause, R restart, F fullscreen. Touch or mouse: drag on the board and release.</p>
+        <button class="primary" id="startBtn" type="button">Start Match</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">301</b></div>
+    <div class="chip warn"><span>Darts</span><b id="dartsText">3</b></div>
+    <div class="chip"><span>Round</span><b id="roundText">1</b></div>
+    <div class="chip good"><span>Last</span><b id="lastText">-</b></div>
+    <div class="chip warn"><span>Checkout</span><b id="checkoutText">T20 T20 T20</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Darts controls">
+    <button class="primary" id="newBtn" type="button">New</button>
+    <button id="upBtn" type="button">Aim Up</button>
+    <button id="downBtn" type="button">Aim Down</button>
+    <button id="leftBtn" type="button">Aim Left</button>
+    <button id="rightBtn" type="button">Aim Right</button>
+    <button class="primary" id="throwBtn" type="button">Throw</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="pauseBtn" type="button">Pause</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  score: document.getElementById('scoreText'),
+  darts: document.getElementById('dartsText'),
+  round: document.getElementById('roundText'),
+  last: document.getElementById('lastText'),
+  checkout: document.getElementById('checkoutText'),
+  coins: document.getElementById('coinsText'),
+  pause: document.getElementById('pauseBtn'),
+};
+const buttons = {
+  new: document.getElementById('newBtn'),
+  up: document.getElementById('upBtn'),
+  down: document.getElementById('downBtn'),
+  left: document.getElementById('leftBtn'),
+  right: document.getElementById('rightBtn'),
+  throw: document.getElementById('throwBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+};
+
+const WIDTH = 960;
+const HEIGHT = 640;
+const BOARD = {
+  x: 390,
+  y: 318,
+  doubleOuter: 224,
+  doubleInner: 199,
+  tripleOuter: 139,
+  tripleInner: 113,
+  bullOuter: 35,
+  bullInner: 16,
+};
+const NUMBERS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+const DARTS_PER_ROUND = 3;
+const START_SCORE = 301;
+const AIM_STEP = 9;
+const keys = new Set();
+const pointer = { active: false, id: null };
+let lastFrame = performance.now();
+let manualStepping = false;
+
+const doubles = NUMBERS.map((number) => ({
+  label: `D${number}`,
+  value: number * 2,
+  isDouble: true,
+})).concat([{ label: 'Bull', value: 50, isDouble: true }]);
+const dartOptions = [];
+for (const number of NUMBERS) {
+  dartOptions.push({ label: `T${number}`, value: number * 3, isDouble: false });
+  dartOptions.push({ label: `D${number}`, value: number * 2, isDouble: true });
+  dartOptions.push({ label: `S${number}`, value: number, isDouble: false });
+}
+dartOptions.push({ label: 'Bull', value: 50, isDouble: true });
+dartOptions.push({ label: '25', value: 25, isDouble: false });
+dartOptions.push({ label: 'Miss', value: 0, isDouble: false });
+dartOptions.sort((a, b) => b.value - a.value);
+
+function readBestDarts() {
+  try {
+    const value = Math.floor(Number(localStorage.getItem('cade:darts:best-darts') || 0));
+    return value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBestDarts(value) {
+  try {
+    const best = readBestDarts();
+    if (!best || value < best) {
+      localStorage.setItem('cade:darts:best-darts', String(Math.max(1, Math.floor(value))));
+    }
+  } catch {
+    // Local storage can be unavailable in embedded test contexts.
+  }
+}
+
+const game = {
+  mode: 'menu',
+  previousMode: 'aiming',
+  score: START_SCORE,
+  roundStartScore: START_SCORE,
+  round: 1,
+  dartsLeft: DARTS_PER_ROUND,
+  totalThrown: 0,
+  turnScore: 0,
+  aim: { x: BOARD.x, y: BOARD.y - 176 },
+  power: .62,
+  powerDir: 1,
+  message: 'Aim at a segment, charge power, and finish exactly on a double.',
+  checkoutHint: '',
+  lastThrow: null,
+  roundThrows: [],
+  dartMarks: [],
+  history: [],
+  flight: null,
+  resultTimer: 0,
+  coinsEarned: 0,
+  lastCoins: 0,
+  bestDarts: readBestDarts(),
+  finishedAwarded: false,
+  seed: 3012026,
+  lastAction: { type: 'init' },
+};
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function nextRandom() {
+  game.seed = (game.seed * 1664525 + 1013904223) >>> 0;
+  return game.seed / 4294967296;
+}
+
+function distanceToBoard(x, y) {
+  return Math.hypot(x - BOARD.x, y - BOARD.y);
+}
+
+function segmentForPoint(x, y) {
+  const dx = x - BOARD.x;
+  const dy = y - BOARD.y;
+  const r = Math.hypot(dx, dy);
+  if (r > BOARD.doubleOuter) {
+    return {
+      label: 'Miss',
+      value: 0,
+      multiplier: 0,
+      number: 0,
+      region: 'miss',
+      isDouble: false,
+      x,
+      y,
+    };
+  }
+  if (r <= BOARD.bullInner) {
+    return {
+      label: 'Bull',
+      value: 50,
+      multiplier: 2,
+      number: 25,
+      region: 'inner_bull',
+      isDouble: true,
+      x,
+      y,
+    };
+  }
+  if (r <= BOARD.bullOuter) {
+    return {
+      label: '25',
+      value: 25,
+      multiplier: 1,
+      number: 25,
+      region: 'outer_bull',
+      isDouble: false,
+      x,
+      y,
+    };
+  }
+
+  const degrees = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+  const index = Math.floor(((degrees + 9) % 360) / 18);
+  const number = NUMBERS[index];
+  let multiplier = 1;
+  let region = 'single';
+  if (r >= BOARD.doubleInner && r <= BOARD.doubleOuter) {
+    multiplier = 2;
+    region = 'double';
+  } else if (r >= BOARD.tripleInner && r <= BOARD.tripleOuter) {
+    multiplier = 3;
+    region = 'triple';
+  }
+  return {
+    label: `${multiplier === 3 ? 'T' : multiplier === 2 ? 'D' : 'S'}${number}`,
+    value: number * multiplier,
+    multiplier,
+    number,
+    region,
+    isDouble: multiplier === 2,
+    x,
+    y,
+  };
+}
+
+function getCheckout(score) {
+  const target = Math.max(0, Math.floor(score));
+  if (target <= 1) return 'No checkout';
+  if (target > 170) return 'Set up 170';
+  for (const finish of doubles) {
+    if (finish.value === target) return finish.label;
+  }
+  for (const first of dartOptions) {
+    for (const finish of doubles) {
+      if (first.value + finish.value === target) return `${first.label} ${finish.label}`;
+    }
+  }
+  for (const first of dartOptions) {
+    for (const second of dartOptions) {
+      for (const finish of doubles) {
+        if (first.value + second.value + finish.value === target) {
+          return `${first.label} ${second.label} ${finish.label}`;
+        }
+      }
+    }
+  }
+  return 'No checkout';
+}
+
+function touchProfile() {
+  rememberRecent('darts');
+  maybeUnlock({ anyPlay: true });
+}
+
+function snapshot() {
+  return {
+    score: game.score,
+    roundStartScore: game.roundStartScore,
+    round: game.round,
+    dartsLeft: game.dartsLeft,
+    totalThrown: game.totalThrown,
+    turnScore: game.turnScore,
+    aim: { ...game.aim },
+    power: game.power,
+    message: game.message,
+    lastThrow: game.lastThrow ? { ...game.lastThrow } : null,
+    roundThrows: game.roundThrows.map((item) => ({ ...item })),
+    dartMarks: game.dartMarks.map((item) => ({ ...item })),
+    coinsEarned: game.coinsEarned,
+    lastCoins: game.lastCoins,
+    mode: game.mode,
+    finishedAwarded: game.finishedAwarded,
+    bestDarts: game.bestDarts,
+  };
+}
+
+function restore(snapshotData) {
+  Object.assign(game, {
+    score: snapshotData.score,
+    roundStartScore: snapshotData.roundStartScore,
+    round: snapshotData.round,
+    dartsLeft: snapshotData.dartsLeft,
+    totalThrown: snapshotData.totalThrown,
+    turnScore: snapshotData.turnScore,
+    aim: { ...snapshotData.aim },
+    power: snapshotData.power,
+    message: snapshotData.message,
+    lastThrow: snapshotData.lastThrow ? { ...snapshotData.lastThrow } : null,
+    roundThrows: snapshotData.roundThrows.map((item) => ({ ...item })),
+    dartMarks: snapshotData.dartMarks.map((item) => ({ ...item })),
+    coinsEarned: snapshotData.coinsEarned,
+    lastCoins: snapshotData.lastCoins,
+    mode: snapshotData.mode === 'flying' ? 'aiming' : snapshotData.mode,
+    finishedAwarded: snapshotData.finishedAwarded,
+    bestDarts: snapshotData.bestDarts,
+    flight: null,
+    resultTimer: 0,
+  });
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function pushHistory() {
+  game.history.push(snapshot());
+  if (game.history.length > 16) game.history.shift();
+}
+
+function startGame() {
+  game.mode = 'aiming';
+  game.previousMode = 'aiming';
+  game.score = START_SCORE;
+  game.roundStartScore = START_SCORE;
+  game.round = 1;
+  game.dartsLeft = DARTS_PER_ROUND;
+  game.totalThrown = 0;
+  game.turnScore = 0;
+  game.aim = { x: BOARD.x, y: BOARD.y - 176 };
+  game.power = .62;
+  game.powerDir = 1;
+  game.message = 'Round 1. Aim for a strong setup or checkout.';
+  game.checkoutHint = getCheckout(game.score);
+  game.lastThrow = null;
+  game.roundThrows = [];
+  game.dartMarks = [];
+  game.history = [];
+  game.flight = null;
+  game.resultTimer = 0;
+  game.coinsEarned = 0;
+  game.lastCoins = 0;
+  game.bestDarts = readBestDarts();
+  game.finishedAwarded = false;
+  game.seed = 3012026;
+  game.lastAction = { type: 'start_game' };
+  touchProfile();
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function startNextRound() {
+  game.round += 1;
+  game.roundStartScore = game.score;
+  game.dartsLeft = DARTS_PER_ROUND;
+  game.turnScore = 0;
+  game.roundThrows = [];
+  game.dartMarks = [];
+  game.mode = 'aiming';
+  game.message = `Round ${game.round}. ${getCheckout(game.score)} is the checkout plan.`;
+  game.lastAction = { type: 'next_round', round: game.round };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function setAim(x = game.aim.x, y = game.aim.y) {
+  game.aim.x = clamp(Number(x) || BOARD.x, BOARD.x - BOARD.doubleOuter - 28, BOARD.x + BOARD.doubleOuter + 28);
+  game.aim.y = clamp(Number(y) || BOARD.y, BOARD.y - BOARD.doubleOuter - 28, BOARD.y + BOARD.doubleOuter + 28);
+  game.lastAction = {
+    type: 'set_aim',
+    x: Math.round(game.aim.x),
+    y: Math.round(game.aim.y),
+  };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function setPower(power = game.power) {
+  game.power = clamp(Number(power) || .5, .15, 1);
+  game.lastAction = { type: 'set_power', power: Number(game.power.toFixed(2)) };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function adjustAim(dx, dy) {
+  return setAim(game.aim.x + dx, game.aim.y + dy);
+}
+
+function startCharging() {
+  if (game.mode === 'menu' || game.mode === 'won') startGame();
+  if (game.mode !== 'aiming' && game.mode !== 'scored' && game.mode !== 'roundover') return stateToObject();
+  if (game.dartsLeft <= 0) return startNextRound();
+  game.mode = 'charging';
+  game.powerDir = 1;
+  game.message = 'Release at steady power to reduce drift.';
+  game.lastAction = { type: 'start_charging' };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function landingFromAim(exactPoint = null) {
+  if (exactPoint) {
+    return { x: exactPoint.x, y: exactPoint.y };
+  }
+  const quality = clamp(1 - Math.abs(game.power - .72) / .55, 0, 1);
+  const spread = 10 + (1 - quality) * 54;
+  const angle = nextRandom() * Math.PI * 2;
+  const radius = Math.pow(nextRandom(), .7) * spread;
+  return {
+    x: game.aim.x + Math.cos(angle) * radius,
+    y: game.aim.y + Math.sin(angle) * radius,
+  };
+}
+
+function throwDart(exactPoint = null) {
+  if (game.mode === 'menu' || game.mode === 'won') startGame();
+  if (game.mode === 'paused') return stateToObject();
+  if (game.mode !== 'aiming' && game.mode !== 'charging' && game.mode !== 'scored') return stateToObject();
+  if (game.dartsLeft <= 0) return startNextRound();
+  pushHistory();
+  const landing = landingFromAim(exactPoint);
+  const result = segmentForPoint(landing.x, landing.y);
+  game.flight = {
+    sx: 775,
+    sy: 558,
+    x: 775,
+    y: 558,
+    targetX: landing.x,
+    targetY: landing.y,
+    t: 0,
+    result,
+  };
+  game.mode = 'flying';
+  game.message = 'Dart in flight.';
+  game.lastAction = {
+    type: exactPoint ? 'force_throw' : 'throw',
+    aimX: Math.round(game.aim.x),
+    aimY: Math.round(game.aim.y),
+    power: Number(game.power.toFixed(2)),
+    target: result.label,
+  };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function resolveThrow(result) {
+  const before = game.score;
+  const remaining = before - result.value;
+  const mark = {
+    label: result.label,
+    value: result.value,
+    x: Math.round(result.x),
+    y: Math.round(result.y),
+    isDouble: result.isDouble,
+    region: result.region,
+    scoreBefore: before,
+  };
+  game.totalThrown += 1;
+  game.lastThrow = mark;
+  game.roundThrows.push(mark);
+  game.dartMarks.push(mark);
+  if (game.dartMarks.length > 9) game.dartMarks.shift();
+
+  const bust = remaining < 0 || remaining === 1 || (remaining === 0 && !result.isDouble);
+  if (bust) {
+    mark.bust = true;
+    game.score = game.roundStartScore;
+    game.dartsLeft = 0;
+    game.turnScore = 0;
+    game.mode = 'bust';
+    game.resultTimer = 1.25;
+    game.message = `${result.label} busts. Score returns to ${game.score}.`;
+  } else {
+    game.score = remaining;
+    game.turnScore += result.value;
+    game.dartsLeft -= 1;
+    if (game.score === 0 && result.isDouble) {
+      mark.checkout = true;
+      finishMatch();
+    } else if (game.dartsLeft <= 0) {
+      game.mode = 'roundover';
+      game.resultTimer = 1;
+      game.message = `Round scored ${game.turnScore}. Next round starts at ${game.score}.`;
+    } else {
+      game.mode = 'scored';
+      game.resultTimer = .8;
+      game.message = `${result.label} for ${result.value}. ${game.score} left.`;
+    }
+  }
+  game.checkoutHint = getCheckout(game.score);
+  game.flight = null;
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function awardCoins(amount, reason) {
+  const reward = Math.max(0, Math.floor(amount));
+  if (reward <= 0) return 0;
+  addCoins(reward);
+  game.coinsEarned += reward;
+  game.lastCoins = reward;
+  game.message = `${reason}: +${reward} coins.`;
+  return reward;
+}
+
+function finishMatch() {
+  game.mode = 'won';
+  game.resultTimer = 0;
+  if (!game.finishedAwarded) {
+    const speedBonus = Math.max(0, 54 - game.totalThrown);
+    const checkoutBonus = game.lastThrow?.value === 50 ? 8 : 4;
+    awardCoins(12 + Math.floor(speedBonus / 2) + checkoutBonus, 'Checkout finish');
+    game.finishedAwarded = true;
+    saveBestDarts(game.totalThrown);
+    game.bestDarts = readBestDarts();
+  }
+  game.message = `Checked out in ${game.totalThrown} darts.`;
+  game.lastAction = { type: 'match_won', darts: game.totalThrown, coinsEarned: game.coinsEarned };
+  maybeUnlock({ anyPlay: true, darts: { checkout: true, darts: game.totalThrown } });
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function undoLast() {
+  if (!game.history.length || game.mode === 'won') return stateToObject();
+  return restore(game.history.pop());
+}
+
+function togglePause() {
+  if (game.mode === 'menu' || game.mode === 'won') return stateToObject();
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode || 'aiming';
+    game.message = 'Match resumed.';
+  } else {
+    game.previousMode = game.mode === 'flying' ? 'aiming' : game.mode;
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  }
+  game.lastAction = { type: 'toggle_pause', mode: game.mode };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function showHint() {
+  game.checkoutHint = getCheckout(game.score);
+  game.message = game.checkoutHint === 'No checkout'
+    ? 'Leave an even double-out number.'
+    : `Checkout path: ${game.checkoutHint}.`;
+  game.lastAction = { type: 'hint', checkout: game.checkoutHint };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function handleKeyDown(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === ' ' && !keys.has(key)) startCharging();
+  if (key === 'enter') {
+    if (game.mode === 'menu' || game.mode === 'won') startGame();
+    else throwDart();
+  }
+  if (key === 'p') togglePause();
+  if (key === 'r') startGame();
+  if (key === 'u') undoLast();
+  if (key === 'h') showHint();
+  if (key === 'f') toggleFullscreen();
+  if (key === 'escape' && document.fullscreenElement) document.exitFullscreen?.();
+  keys.add(key);
+}
+
+function handleKeyUp(event) {
+  const key = event.key.toLowerCase();
+  if (key === ' ' && game.mode === 'charging') {
+    event.preventDefault();
+    throwDart();
+  }
+  keys.delete(key);
+}
+
+function eventToCanvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function handlePointerDown(event) {
+  const point = eventToCanvasPoint(event);
+  pointer.active = true;
+  pointer.id = event.pointerId;
+  canvas.setPointerCapture?.(event.pointerId);
+  setAim(point.x, point.y);
+  startCharging();
+}
+
+function handlePointerMove(event) {
+  if (!pointer.active || pointer.id !== event.pointerId) return;
+  const point = eventToCanvasPoint(event);
+  setAim(point.x, point.y);
+}
+
+function handlePointerUp(event) {
+  if (!pointer.active || pointer.id !== event.pointerId) return;
+  pointer.active = false;
+  pointer.id = null;
+  canvas.releasePointerCapture?.(event.pointerId);
+  const point = eventToCanvasPoint(event);
+  setAim(point.x, point.y);
+  if (game.mode === 'charging') throwDart();
+}
+
+function update(dt) {
+  if (game.mode === 'paused' || game.mode === 'menu' || game.mode === 'won') return;
+  if (game.mode === 'aiming' || game.mode === 'charging' || game.mode === 'scored') {
+    const speed = (keys.has('shift') ? 2 : 1) * AIM_STEP * dt * 7;
+    let dx = 0;
+    let dy = 0;
+    if (keys.has('arrowleft') || keys.has('a')) dx -= speed;
+    if (keys.has('arrowright') || keys.has('d')) dx += speed;
+    if (keys.has('arrowup') || keys.has('w')) dy -= speed;
+    if (keys.has('arrowdown') || keys.has('s')) dy += speed;
+    if (dx || dy) setAim(game.aim.x + dx, game.aim.y + dy);
+  }
+  if (game.mode === 'charging') {
+    game.power += game.powerDir * dt * 1.25;
+    if (game.power >= 1) {
+      game.power = 1;
+      game.powerDir = -1;
+    }
+    if (game.power <= .15) {
+      game.power = .15;
+      game.powerDir = 1;
+    }
+  }
+  if (game.mode === 'flying' && game.flight) {
+    game.flight.t = Math.min(1, game.flight.t + dt / .32);
+    const t = easeOutCubic(game.flight.t);
+    const lift = Math.sin(t * Math.PI) * 95;
+    game.flight.x = game.flight.sx + (game.flight.targetX - game.flight.sx) * t;
+    game.flight.y = game.flight.sy + (game.flight.targetY - game.flight.sy) * t - lift;
+    if (game.flight.t >= 1) resolveThrow(game.flight.result);
+  }
+  if (game.mode === 'scored' || game.mode === 'roundover' || game.mode === 'bust') {
+    game.resultTimer = Math.max(0, game.resultTimer - dt);
+    if (game.resultTimer <= 0) {
+      if (game.mode === 'scored') {
+        game.mode = game.dartsLeft > 0 ? 'aiming' : 'roundover';
+      }
+      if (game.mode === 'roundover' || game.mode === 'bust') {
+        startNextRound();
+      }
+    }
+  }
+}
+
+function updateHud() {
+  game.checkoutHint = getCheckout(game.score);
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.score.textContent = String(game.score);
+  hud.darts.textContent = `${game.dartsLeft}/${DARTS_PER_ROUND}`;
+  hud.round.textContent = String(game.round);
+  hud.last.textContent = game.lastThrow ? `${game.lastThrow.label} ${game.lastThrow.value}` : '-';
+  hud.checkout.textContent = game.checkoutHint;
+  hud.coins.textContent = String(profileState.coins || 0);
+  hud.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  buttons.undo.disabled = game.history.length === 0 || game.mode === 'won';
+}
+
+function updateOverlay() {
+  if (game.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Darts 301';
+    overlayText.textContent = 'Throw three-dart rounds, hit exact checkouts, and finish on a double or bull.';
+    startBtn.textContent = 'Start Match';
+  } else if (game.mode === 'paused') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = game.message;
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'won') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Checkout!';
+    overlayText.textContent = `${game.message} Coins earned this match: ${game.coinsEarned}.`;
+    startBtn.textContent = 'Play Again';
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function drawRing(inner, outer, colors) {
+  const step = Math.PI * 2 / NUMBERS.length;
+  for (let i = 0; i < NUMBERS.length; i += 1) {
+    const start = -Math.PI / 2 - step / 2 + i * step;
+    const end = start + step;
+    ctx.beginPath();
+    ctx.arc(BOARD.x, BOARD.y, outer, start, end);
+    ctx.arc(BOARD.x, BOARD.y, inner, end, start, true);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = '#181512';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+}
+
+function drawBoard() {
+  ctx.save();
+  ctx.shadowColor = '#00000099';
+  ctx.shadowBlur = 22;
+  ctx.fillStyle = '#111015';
+  ctx.beginPath();
+  ctx.arc(BOARD.x, BOARD.y, BOARD.doubleOuter + 25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  drawRing(BOARD.doubleInner, BOARD.doubleOuter, ['#c33f35', '#2c9b63']);
+  drawRing(BOARD.tripleOuter, BOARD.doubleInner, ['#f4e7ca', '#202026']);
+  drawRing(BOARD.tripleInner, BOARD.tripleOuter, ['#2c9b63', '#c33f35']);
+  drawRing(BOARD.bullOuter, BOARD.tripleInner, ['#202026', '#f4e7ca']);
+
+  ctx.fillStyle = '#2c9b63';
+  ctx.beginPath();
+  ctx.arc(BOARD.x, BOARD.y, BOARD.bullOuter, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#c33f35';
+  ctx.beginPath();
+  ctx.arc(BOARD.x, BOARD.y, BOARD.bullInner, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#f4e7ca';
+  ctx.beginPath();
+  ctx.arc(BOARD.x, BOARD.y, BOARD.bullInner, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(BOARD.x, BOARD.y, BOARD.bullOuter, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 21px Trebuchet MS';
+  for (let i = 0; i < NUMBERS.length; i += 1) {
+    const angle = -Math.PI / 2 + i * Math.PI * 2 / NUMBERS.length;
+    const x = BOARD.x + Math.cos(angle) * (BOARD.doubleOuter + 15);
+    const y = BOARD.y + Math.sin(angle) * (BOARD.doubleOuter + 15);
+    ctx.fillStyle = '#f6ead3';
+    ctx.fillText(String(NUMBERS[i]), x, y);
+  }
+  ctx.restore();
+}
+
+function drawCrosshair() {
+  ctx.save();
+  const score = segmentForPoint(game.aim.x, game.aim.y);
+  const pulse = game.mode === 'charging' ? 7 + Math.sin(performance.now() / 80) * 2 : 7;
+  ctx.strokeStyle = game.mode === 'charging' ? '#ffd36e' : '#86e5c0';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(game.aim.x, game.aim.y, pulse, 0, Math.PI * 2);
+  ctx.moveTo(game.aim.x - 18, game.aim.y);
+  ctx.lineTo(game.aim.x - 7, game.aim.y);
+  ctx.moveTo(game.aim.x + 7, game.aim.y);
+  ctx.lineTo(game.aim.x + 18, game.aim.y);
+  ctx.moveTo(game.aim.x, game.aim.y - 18);
+  ctx.lineTo(game.aim.x, game.aim.y - 7);
+  ctx.moveTo(game.aim.x, game.aim.y + 7);
+  ctx.lineTo(game.aim.x, game.aim.y + 18);
+  ctx.stroke();
+  ctx.font = '900 14px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f7f2e8';
+  ctx.fillText(score.label, game.aim.x, game.aim.y - 26);
+  ctx.restore();
+}
+
+function drawDart(x, y, label, color = '#ffd36e') {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#1b1411';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -16);
+  ctx.lineTo(5, 5);
+  ctx.lineTo(0, 12);
+  ctx.lineTo(-5, 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.font = '900 12px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f7f2e8';
+  ctx.fillText(label, 0, 25);
+  ctx.restore();
+}
+
+function drawPanel() {
+  const x = 670;
+  const y = 88;
+  ctx.save();
+  ctx.fillStyle = '#11151dde';
+  ctx.strokeStyle = '#f0d18d80';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x, y, 238, 420, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#f7f2e8';
+  ctx.font = '900 28px Trebuchet MS';
+  ctx.fillText('Darts 301', x + 20, y + 42);
+  ctx.font = '900 62px Trebuchet MS';
+  ctx.fillStyle = game.score <= 60 ? '#ffd36e' : '#86e5c0';
+  ctx.fillText(String(game.score), x + 20, y + 108);
+  ctx.font = '900 16px Trebuchet MS';
+  ctx.fillStyle = '#cbbca7';
+  ctx.fillText(`Round ${game.round} | Darts ${game.dartsLeft}/${DARTS_PER_ROUND}`, x + 20, y + 142);
+  ctx.fillStyle = '#f7f2e8';
+  ctx.fillText(`Checkout: ${game.checkoutHint}`, x + 20, y + 174);
+  ctx.fillText(`Turn: ${game.turnScore}`, x + 20, y + 202);
+  ctx.fillText(`Best: ${game.bestDarts ? `${game.bestDarts} darts` : '-'}`, x + 20, y + 230);
+  ctx.fillStyle = '#cbbca7';
+  ctx.fillText('Last round', x + 20, y + 272);
+  for (let i = 0; i < DARTS_PER_ROUND; i += 1) {
+    const item = game.roundThrows[i];
+    const rowY = y + 304 + i * 32;
+    ctx.fillStyle = item?.bust ? '#ff8178' : '#f7f2e8';
+    ctx.fillText(item ? `${i + 1}. ${item.label}  ${item.value}` : `${i + 1}. -`, x + 28, rowY);
+  }
+  ctx.fillStyle = '#ffd36e';
+  ctx.font = '900 15px Trebuchet MS';
+  const message = game.message.length > 48 ? `${game.message.slice(0, 45)}...` : game.message;
+  ctx.fillText(message, x + 20, y + 402);
+  ctx.restore();
+}
+
+function drawPowerMeter() {
+  const x = 112;
+  const y = 578;
+  const w = 470;
+  const h = 19;
+  ctx.save();
+  ctx.fillStyle = '#0f1218';
+  ctx.strokeStyle = '#f0d18d80';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 8);
+  ctx.fill();
+  ctx.stroke();
+  const fill = clamp((game.power - .15) / .85, 0, 1);
+  const grad = ctx.createLinearGradient(x, y, x + w, y);
+  grad.addColorStop(0, '#ff8178');
+  grad.addColorStop(.62, '#86e5c0');
+  grad.addColorStop(1, '#ffd36e');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(x + 3, y + 3, Math.max(4, (w - 6) * fill), h - 6, 6);
+  ctx.fill();
+  ctx.font = '900 13px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f7f2e8';
+  ctx.fillText(`Power ${Math.round(game.power * 100)}%`, x + w / 2, y - 8);
+  ctx.restore();
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  grad.addColorStop(0, '#203a3f');
+  grad.addColorStop(.54, '#2e2833');
+  grad.addColorStop(1, '#22351d');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#ffffff08';
+  for (let x = 0; x < WIDTH; x += 48) {
+    ctx.fillRect(x, 0, 2, HEIGHT);
+  }
+  ctx.fillStyle = '#00000025';
+  ctx.fillRect(0, 528, WIDTH, 112);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  drawBackground();
+  drawBoard();
+  for (const mark of game.dartMarks) {
+    drawDart(mark.x, mark.y, mark.label, mark.bust ? '#ff8178' : '#ffd36e');
+  }
+  if (game.flight) {
+    drawDart(game.flight.x, game.flight.y, game.flight.result.label, '#86e5c0');
+  }
+  drawCrosshair();
+  drawPowerMeter();
+  drawPanel();
+}
+
+function stateToObject() {
+  return {
+    game: 'darts',
+    coordinateSystem: 'Canvas 960x640; origin top-left; x increases right; y increases down.',
+    mode: game.mode,
+    score: game.score,
+    roundStartScore: game.roundStartScore,
+    round: game.round,
+    dartsLeft: game.dartsLeft,
+    totalThrown: game.totalThrown,
+    turnScore: game.turnScore,
+    aim: {
+      x: Math.round(game.aim.x),
+      y: Math.round(game.aim.y),
+      power: Number(game.power.toFixed(2)),
+      aimedSegment: segmentForPoint(game.aim.x, game.aim.y).label,
+    },
+    board: {
+      center: { x: BOARD.x, y: BOARD.y },
+      rings: {
+        innerBull: BOARD.bullInner,
+        outerBull: BOARD.bullOuter,
+        tripleInner: BOARD.tripleInner,
+        tripleOuter: BOARD.tripleOuter,
+        doubleInner: BOARD.doubleInner,
+        doubleOuter: BOARD.doubleOuter,
+      },
+      numbers: NUMBERS,
+    },
+    checkoutHint: game.checkoutHint,
+    lastThrow: game.lastThrow,
+    roundThrows: game.roundThrows,
+    visibleDarts: game.dartMarks,
+    flight: game.flight ? {
+      x: Math.round(game.flight.x),
+      y: Math.round(game.flight.y),
+      targetX: Math.round(game.flight.targetX),
+      targetY: Math.round(game.flight.targetY),
+      result: game.flight.result.label,
+    } : null,
+    message: game.message,
+    coinsEarned: game.coinsEarned,
+    bestDarts: game.bestDarts,
+    lastAction: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__DARTS_GAME__ = {
+  startGame,
+  setAim,
+  setPower,
+  throwDart,
+  forceThrow(x, y) {
+    if (game.mode === 'menu' || game.mode === 'won') startGame();
+    return throwDart({ x: Number(x), y: Number(y) });
+  },
+  forceCheckout() {
+    if (game.mode === 'menu' || game.mode === 'won') startGame();
+    game.score = 40;
+    game.roundStartScore = 40;
+    game.round = 1;
+    game.dartsLeft = 1;
+    game.turnScore = 0;
+    game.totalThrown = 0;
+    game.roundThrows = [];
+    game.dartMarks = [];
+    game.history = [];
+    game.lastThrow = null;
+    game.coinsEarned = 0;
+    game.lastCoins = 0;
+    game.finishedAwarded = false;
+    game.mode = 'aiming';
+    return throwDart({ x: BOARD.x, y: BOARD.y - (BOARD.doubleInner + 10) });
+  },
+  forceBust() {
+    if (game.mode === 'menu' || game.mode === 'won') startGame();
+    game.score = 20;
+    game.roundStartScore = 20;
+    game.round = 1;
+    game.dartsLeft = 1;
+    game.turnScore = 0;
+    game.roundThrows = [];
+    game.dartMarks = [];
+    game.history = [];
+    game.lastThrow = null;
+    game.mode = 'aiming';
+    return throwDart({ x: BOARD.x, y: BOARD.y - (BOARD.tripleInner + 10) });
+  },
+  undoLast,
+  togglePause,
+  showHint,
+  segmentForPoint,
+  stateToObject,
+  renderGameToText,
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'darts', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', handlePointerUp);
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+window.addEventListener('resize', draw);
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else startGame();
+});
+buttons.new.addEventListener('click', startGame);
+buttons.up.addEventListener('click', () => adjustAim(0, -AIM_STEP));
+buttons.down.addEventListener('click', () => adjustAim(0, AIM_STEP));
+buttons.left.addEventListener('click', () => adjustAim(-AIM_STEP, 0));
+buttons.right.addEventListener('click', () => adjustAim(AIM_STEP, 0));
+buttons.throw.addEventListener('click', () => {
+  if (game.mode === 'charging') throwDart();
+  else {
+    setPower(.72);
+    throwDart();
+  }
+});
+buttons.hint.addEventListener('click', showHint);
+buttons.undo.addEventListener('click', undoLast);
+buttons.pause.addEventListener('click', togglePause);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'darts', gameName: 'Darts 301' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
