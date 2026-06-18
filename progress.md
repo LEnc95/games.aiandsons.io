@@ -3631,6 +3631,22 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Follow-up TODO:
   - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.
 
+## 2026-06-18 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory and the 128-game registry were reviewed; recent additions and the previously planned but unimplemented Twenty-One Table were excluded.
+- Chosen game: Chess (`/chess`), a complete board game against a deterministic AI with legal move enforcement, check/checkmate/stalemate, castling, en passant, promotion, undo, hints, touch/keyboard controls, rewards, feedback, and deterministic test hooks.
+- Implemented `chess/index.html` with a canvas board, deterministic tactical AI, complete special-move rules, illegal-check filtering, move notation/logging, hints, full-turn undo, pause/restart/fullscreen, pointer/touch and keyboard controls, a 30-coin checkmate reward, shared feedback context, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__CHESS_GAME__` test scenarios.
+- Registered Chess in `src/meta/games.js`; `npm run seo` added route metadata, sitemap, and homepage structured data, while `npm run feedback:sync-linear` refreshed local labels and baseline issues. Live Linear provisioning skipped because its credentials are unset.
+- Validation passed: module parse, 129-game uniqueness, feedback coverage, daily feedback guard, 31 feedback tests, 68 shop tests, 9 focused catalog/coverage tests, static HTTP 200, two `$WEB_GAME_CLIENT` runs, and custom Playwright checks for pointer movement, AI reply, undo, hint, pause, castling, en passant, promotion, checkmate, coins, feedback context, mobile controls, illegal castle-through-check, pinned en-passant rejection, and stalemate. Screenshots were inspected and no Chess console/page errors were found.
+- Known repository caveat: `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching prior runs.
+
+## 2026-06-17 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; repo history is being used to avoid recent additions through Darts 301.
+- Initial registry check found no `/twentyone` route or Twenty-One Table metadata entry.
+- Chosen game: Twenty-One Table (`/twentyone`), a non-gambling blackjack-style card game with hit/stand/double decisions, dealer resolution, streak scoring, hints, deterministic hooks, shared feedback context, and coin rewards.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
+
 ## 2026-06-16 Create a new game automation
 - New request: add a game we do not already have to the website using `$develop-web-game`.
 - Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Backgammon, Skee-Ball, Tower Defense, Sky Joust, FreeCell, Shut the Box, Air Hockey, Cavern Crush, Calc Cages, and other recent automation games.

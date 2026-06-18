@@ -121,6 +121,7 @@
 - game/towerhanoi
 - game/mancala
 - game/backgammon
+- game/chess
 - game/gomokugrid
 - game/sudokusprint
 - game/potionpantry

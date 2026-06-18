@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Chess | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; overflow: hidden; touch-action: none; font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif; color: #fff8e8; background: radial-gradient(circle at 50% -20%, #46675c 0%, #172b2b 46%, #0d171d 100%); }
+.back { position: fixed; z-index: 30; top: 12px; left: 12px; color: #fff8e8; text-decoration: none; font-size: 14px; font-weight: 900; border-radius: 8px; border: 1px solid #f4cf8d80; padding: 8px 12px; background: #101c22e8; box-shadow: 0 8px 22px #00000050; }
+.app { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 58px 10px 12px; }
+.stage { width: min(96vw, 960px); aspect-ratio: 4 / 3; max-height: min(72dvh, 720px); position: relative; }
+canvas { width: 100%; height: 100%; display: block; border-radius: 10px; border: 2px solid #e9c77a99; background: #142329; box-shadow: 0 24px 58px #00000099; }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .16s ease; }
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel { width: min(680px, 92%); border-radius: 10px; border: 1px solid #f4cf8dcc; background: #102128f2; box-shadow: 0 18px 42px #000000aa; padding: clamp(18px, 4vw, 30px); }
+.panel h1 { margin: 0 0 10px; font-size: clamp(34px, 7vw, 62px); }
+.panel p { margin: 8px 0; color: #dfe9dd; font-weight: 800; line-height: 1.45; }
+.mini { font-size: 13px; color: #bdcbbf; }
+.hud, .controls { width: min(96vw, 960px); display: grid; gap: 7px; }
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+.chip, button { min-height: 43px; border-radius: 8px; border: 1px solid #f4cf8d55; background: #122229e8; color: #fff8e8; }
+.chip { display: grid; align-content: center; gap: 2px; padding: 6px 9px; }
+.chip span { color: #aebfb7; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.chip b { font-size: clamp(12px, 1.7vw, 18px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.good b { color: #83e1b6; }
+.chip.warn b { color: #ffd476; }
+button { cursor: pointer; font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif; padding: 10px 8px; touch-action: manipulation; }
+button:hover, button:focus-visible { outline: 2px solid #ffd476; outline-offset: 2px; }
+button.primary { color: #132128; background: linear-gradient(135deg, #ffd476, #83e1b6); border-color: #ffffffbb; }
+button:disabled { opacity: .45; cursor: default; }
+@media (max-width: 760px) {
+  .stage { max-height: 58dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .chip, button { min-height: 40px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Play a complete chess match against a tactical AI with castling, en passant, promotion, hints, and undo. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Chess | AI and Sons Games">
+  <meta property="og:description" content="Play a complete chess match against a tactical AI with castling, en passant, promotion, hints, and undo. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/chess">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Chess | AI and Sons Games">
+  <meta name="twitter:description" content="Play a complete chess match against a tactical AI with castling, en passant, promotion, hints, and undo. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/chess">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Chess","description":"Play a complete chess match against a tactical AI with castling, en passant, promotion, hints, and undo. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/chess","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Chess board">
+    <canvas id="game" width="960" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Chess</h1>
+        <p id="overlayText">Command the ivory pieces and checkmate the emerald AI.</p>
+        <p class="mini">Select a piece, then a highlighted square. Keyboard: arrows move cursor, Enter selects, H hint, U undo, P pause, R restart, F fullscreen. Touch or mouse: tap squares.</p>
+        <button class="primary" id="startBtn" type="button">Start Match</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Turn</span><b id="turnText">WHITE</b></div>
+    <div class="chip warn"><span>Status</span><b id="statusText">READY</b></div>
+    <div class="chip"><span>Move</span><b id="moveText">1</b></div>
+    <div class="chip good"><span>Captured</span><b id="capturedText">0</b></div>
+    <div class="chip warn"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Chess controls">
+    <button class="primary" id="newBtn" type="button">New</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="pauseBtn" type="button">Pause</button>
+    <button id="upBtn" type="button">Up</button>
+    <button id="downBtn" type="button">Down</button>
+    <button id="leftBtn" type="button">Left</button>
+    <button id="rightBtn" type="button">Right</button>
+    <button id="selectBtn" type="button">Select</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'), turn: document.getElementById('turnText'),
+  status: document.getElementById('statusText'), move: document.getElementById('moveText'),
+  captured: document.getElementById('capturedText'), coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  new: document.getElementById('newBtn'), hint: document.getElementById('hintBtn'), undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'), up: document.getElementById('upBtn'), down: document.getElementById('downBtn'),
+  left: document.getElementById('leftBtn'), right: document.getElementById('rightBtn'), select: document.getElementById('selectBtn'), fullscreen: document.getElementById('fullscreenBtn'),
+};
+const WIDTH = 960;
+const HEIGHT = 720;
+const BOARD_X = 42;
+const BOARD_Y = 40;
+const CELL = 80;
+const FILES = 'abcdefgh';
+const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+const PIECE_GLYPHS = { K: '\u2654', Q: '\u2655', R: '\u2656', B: '\u2657', N: '\u2658', P: '\u2659', k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' };
+const VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+let manualStepping = false;
+let lastFrame = performance.now();
+let seed = 0x51c0ffee;
+
+function startingBoard() {
+  return [[...'rnbqkbnr'], [...'pppppppp'], [...'........'], [...'........'], [...'........'], [...'........'], [...'PPPPPPPP'], [...'RNBQKBNR']];
+}
+
+const game = {
+  board: startingBoard(), mode: 'menu', turn: 'w', selected: null, cursor: { r: 6, c: 4 }, legal: [],
+  rights: { wK: true, wQ: true, bK: true, bQ: true }, enPassant: null, captured: [], history: [], moveLog: [],
+  lastMove: null, hint: null, message: 'Ready to play.', aiTimer: 0, winner: null, coinsEarned: 0, awardGiven: false, pulse: 0,
+};
+
+function colorOf(piece) { return !piece || piece === '.' ? null : piece === piece.toUpperCase() ? 'w' : 'b'; }
+function other(color) { return color === 'w' ? 'b' : 'w'; }
+function inside(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+function cloneBoard(board = game.board) { return board.map((row) => row.slice()); }
+function squareName(r, c) { return `${FILES[c]}${8 - r}`; }
+function parseSquare(name) {
+  const c = FILES.indexOf(String(name || '').toLowerCase()[0]);
+  const r = 8 - Number(String(name || '')[1]);
+  return inside(r, c) ? { r, c } : null;
+}
+
+function isSquareAttacked(board, r, c, byColor) {
+  const pawn = byColor === 'w' ? 'P' : 'p';
+  const pawnRow = r - (byColor === 'w' ? -1 : 1);
+  for (const dc of [-1, 1]) if (inside(pawnRow, c + dc) && board[pawnRow][c + dc] === pawn) return true;
+  const knight = byColor === 'w' ? 'N' : 'n';
+  for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) {
+    if (inside(r + dr, c + dc) && board[r + dr][c + dc] === knight) return true;
+  }
+  const king = byColor === 'w' ? 'K' : 'k';
+  for (let dr = -1; dr <= 1; dr += 1) for (let dc = -1; dc <= 1; dc += 1) {
+    if ((dr || dc) && inside(r + dr, c + dc) && board[r + dr][c + dc] === king) return true;
+  }
+  const scan = (dirs, types) => {
+    for (const [dr, dc] of dirs) {
+      let rr = r + dr;
+      let cc = c + dc;
+      while (inside(rr, cc)) {
+        const piece = board[rr][cc];
+        if (piece !== '.') {
+          if (colorOf(piece) === byColor && types.includes(piece.toLowerCase())) return true;
+          break;
+        }
+        rr += dr;
+        cc += dc;
+      }
+    }
+    return false;
+  };
+  return scan([[-1,-1],[-1,1],[1,-1],[1,1]], ['b', 'q']) || scan([[-1,0],[1,0],[0,-1],[0,1]], ['r', 'q']);
+}
+
+function kingSquare(board, color) {
+  const king = color === 'w' ? 'K' : 'k';
+  for (let r = 0; r < 8; r += 1) for (let c = 0; c < 8; c += 1) if (board[r][c] === king) return { r, c };
+  return null;
+}
+function inCheck(board, color) {
+  const king = kingSquare(board, color);
+  return king ? isSquareAttacked(board, king.r, king.c, other(color)) : true;
+}
+
+function pushSlideMoves(board, moves, from, color, dirs) {
+  for (const [dr, dc] of dirs) {
+    let r = from.r + dr;
+    let c = from.c + dc;
+    while (inside(r, c)) {
+      const target = board[r][c];
+      if (target === '.') moves.push({ from, to: { r, c } });
+      else {
+        if (colorOf(target) !== color) moves.push({ from, to: { r, c }, captured: target });
+        break;
+      }
+      r += dr;
+      c += dc;
+    }
+  }
+}
+
+function pseudoMoves(board, r, c, color, rights = game.rights, enPassant = game.enPassant) {
+  const piece = board[r]?.[c];
+  if (!piece || colorOf(piece) !== color) return [];
+  const type = piece.toLowerCase();
+  const from = { r, c };
+  const moves = [];
+  if (type === 'p') {
+    const dir = color === 'w' ? -1 : 1;
+    const start = color === 'w' ? 6 : 1;
+    const promotion = color === 'w' ? 0 : 7;
+    if (inside(r + dir, c) && board[r + dir][c] === '.') {
+      moves.push({ from, to: { r: r + dir, c }, promotion: r + dir === promotion ? 'q' : null });
+      if (r === start && board[r + dir * 2][c] === '.') moves.push({ from, to: { r: r + dir * 2, c }, doublePawn: true });
+    }
+    for (const dc of [-1, 1]) {
+      const rr = r + dir;
+      const cc = c + dc;
+      if (!inside(rr, cc)) continue;
+      if (board[rr][cc] !== '.' && colorOf(board[rr][cc]) !== color) moves.push({ from, to: { r: rr, c: cc }, captured: board[rr][cc], promotion: rr === promotion ? 'q' : null });
+      else if (enPassant && enPassant.r === rr && enPassant.c === cc) moves.push({ from, to: { r: rr, c: cc }, captured: color === 'w' ? 'p' : 'P', enPassant: true });
+    }
+  } else if (type === 'n') {
+    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) {
+      const rr = r + dr;
+      const cc = c + dc;
+      if (inside(rr, cc) && colorOf(board[rr][cc]) !== color) moves.push({ from, to: { r: rr, c: cc }, captured: board[rr][cc] === '.' ? null : board[rr][cc] });
+    }
+  } else if (type === 'b') pushSlideMoves(board, moves, from, color, [[-1,-1],[-1,1],[1,-1],[1,1]]);
+  else if (type === 'r') pushSlideMoves(board, moves, from, color, [[-1,0],[1,0],[0,-1],[0,1]]);
+  else if (type === 'q') pushSlideMoves(board, moves, from, color, [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]]);
+  else if (type === 'k') {
+    for (let dr = -1; dr <= 1; dr += 1) for (let dc = -1; dc <= 1; dc += 1) {
+      const rr = r + dr;
+      const cc = c + dc;
+      if ((dr || dc) && inside(rr, cc) && colorOf(board[rr][cc]) !== color) moves.push({ from, to: { r: rr, c: cc }, captured: board[rr][cc] === '.' ? null : board[rr][cc] });
+    }
+    const home = color === 'w' ? 7 : 0;
+    const enemy = other(color);
+    if (r === home && c === 4 && !inCheck(board, color)) {
+      const kingRight = color === 'w' ? rights.wK : rights.bK;
+      const queenRight = color === 'w' ? rights.wQ : rights.bQ;
+      const rook = color === 'w' ? 'R' : 'r';
+      if (kingRight && board[home][5] === '.' && board[home][6] === '.' && board[home][7] === rook && !isSquareAttacked(board, home, 5, enemy) && !isSquareAttacked(board, home, 6, enemy)) moves.push({ from, to: { r: home, c: 6 }, castle: 'king' });
+      if (queenRight && board[home][1] === '.' && board[home][2] === '.' && board[home][3] === '.' && board[home][0] === rook && !isSquareAttacked(board, home, 3, enemy) && !isSquareAttacked(board, home, 2, enemy)) moves.push({ from, to: { r: home, c: 2 }, castle: 'queen' });
+    }
+  }
+  return moves;
+}
+
+function boardAfterMove(board, move) {
+  const next = cloneBoard(board);
+  const piece = next[move.from.r][move.from.c];
+  next[move.from.r][move.from.c] = '.';
+  if (move.enPassant) next[move.from.r][move.to.c] = '.';
+  next[move.to.r][move.to.c] = move.promotion ? (colorOf(piece) === 'w' ? move.promotion.toUpperCase() : move.promotion) : piece;
+  if (move.castle === 'king') { next[move.to.r][5] = next[move.to.r][7]; next[move.to.r][7] = '.'; }
+  else if (move.castle === 'queen') { next[move.to.r][3] = next[move.to.r][0]; next[move.to.r][0] = '.'; }
+  return next;
+}
+function legalMovesForPiece(board, r, c, color, rights = game.rights, enPassant = game.enPassant) {
+  return pseudoMoves(board, r, c, color, rights, enPassant).filter((move) => !inCheck(boardAfterMove(board, move), color));
+}
+function allLegalMoves(board, color, rights = game.rights, enPassant = game.enPassant) {
+  const moves = [];
+  for (let r = 0; r < 8; r += 1) for (let c = 0; c < 8; c += 1) moves.push(...legalMovesForPiece(board, r, c, color, rights, enPassant));
+  return moves;
+}
+
+function snapshot() {
+  return { board: cloneBoard(), turn: game.turn, rights: { ...game.rights }, enPassant: game.enPassant ? { ...game.enPassant } : null, captured: game.captured.slice(), moveLog: game.moveLog.slice(), lastMove: game.lastMove ? JSON.parse(JSON.stringify(game.lastMove)) : null, message: game.message };
+}
+function restore(snap) {
+  game.board = snap.board.map((row) => row.slice());
+  game.turn = snap.turn;
+  game.rights = { ...snap.rights };
+  game.enPassant = snap.enPassant ? { ...snap.enPassant } : null;
+  game.captured = snap.captured.slice();
+  game.moveLog = snap.moveLog.slice();
+  game.lastMove = snap.lastMove ? JSON.parse(JSON.stringify(snap.lastMove)) : null;
+  game.message = snap.message;
+  game.selected = null;
+  game.legal = [];
+  game.hint = null;
+  game.winner = null;
+  game.mode = game.turn === 'w' ? 'player' : 'ai';
+  game.aiTimer = game.turn === 'b' ? .5 : 0;
+}
+
+function updateRights(move, piece, captured) {
+  if (piece === 'K') { game.rights.wK = false; game.rights.wQ = false; }
+  if (piece === 'k') { game.rights.bK = false; game.rights.bQ = false; }
+  if (piece === 'R' && move.from.r === 7 && move.from.c === 7) game.rights.wK = false;
+  if (piece === 'R' && move.from.r === 7 && move.from.c === 0) game.rights.wQ = false;
+  if (piece === 'r' && move.from.r === 0 && move.from.c === 7) game.rights.bK = false;
+  if (piece === 'r' && move.from.r === 0 && move.from.c === 0) game.rights.bQ = false;
+  if (captured === 'R' && move.to.r === 7 && move.to.c === 7) game.rights.wK = false;
+  if (captured === 'R' && move.to.r === 7 && move.to.c === 0) game.rights.wQ = false;
+  if (captured === 'r' && move.to.r === 0 && move.to.c === 7) game.rights.bK = false;
+  if (captured === 'r' && move.to.r === 0 && move.to.c === 0) game.rights.bQ = false;
+}
+function notation(move, piece, captured, check, mate) {
+  if (move.castle === 'king') return 'O-O';
+  if (move.castle === 'queen') return 'O-O-O';
+  const type = piece.toLowerCase();
+  const lead = type === 'p' ? (captured ? FILES[move.from.c] : '') : type.toUpperCase();
+  return `${lead}${captured ? 'x' : ''}${squareName(move.to.r, move.to.c)}${move.promotion ? '=Q' : ''}${mate ? '#' : check ? '+' : ''}`;
+}
+function awardWin() {
+  if (game.awardGiven) return;
+  const reward = 30;
+  addCoins(reward);
+  game.coinsEarned += reward;
+  game.awardGiven = true;
+  maybeUnlock({ anyPlay: true, chess: { wins: 1, checkmate: true } });
+  game.message = `Checkmate! +${reward} coins.`;
+}
+
+function commitMove(move, actor = game.turn) {
+  if (!move || colorOf(game.board[move.from.r]?.[move.from.c]) !== actor) return false;
+  const legal = legalMovesForPiece(game.board, move.from.r, move.from.c, actor);
+  const selectedMove = legal.find((candidate) => candidate.to.r === move.to.r && candidate.to.c === move.to.c && (!move.promotion || candidate.promotion === move.promotion));
+  if (!selectedMove) return false;
+  game.history.push(snapshot());
+  const piece = game.board[selectedMove.from.r][selectedMove.from.c];
+  const captured = selectedMove.enPassant ? game.board[selectedMove.from.r][selectedMove.to.c] : game.board[selectedMove.to.r][selectedMove.to.c];
+  game.board = boardAfterMove(game.board, selectedMove);
+  updateRights(selectedMove, piece, captured === '.' ? null : captured);
+  if (captured && captured !== '.') game.captured.push(captured);
+  game.enPassant = selectedMove.doublePawn ? { r: (selectedMove.from.r + selectedMove.to.r) / 2, c: selectedMove.from.c } : null;
+  game.turn = other(actor);
+  const replies = allLegalMoves(game.board, game.turn);
+  const check = inCheck(game.board, game.turn);
+  const mate = check && replies.length === 0;
+  const label = notation(selectedMove, piece, captured && captured !== '.' ? captured : null, check, mate);
+  game.moveLog.push(label);
+  game.lastMove = { from: squareName(selectedMove.from.r, selectedMove.from.c), to: squareName(selectedMove.to.r, selectedMove.to.c), notation: label, actor, special: selectedMove.castle || (selectedMove.enPassant ? 'en-passant' : selectedMove.promotion ? 'promotion' : null) };
+  game.selected = null;
+  game.legal = [];
+  game.hint = null;
+  game.pulse = .45;
+  if (replies.length === 0) {
+    game.mode = 'won';
+    game.winner = check ? actor : 'draw';
+    if (game.winner === 'w') awardWin();
+    else game.message = game.winner === 'draw' ? 'Stalemate. The match is drawn.' : 'Checkmate. The emerald AI wins.';
+  } else {
+    game.mode = game.turn === 'w' ? 'player' : 'ai';
+    game.aiTimer = game.turn === 'b' ? .48 : 0;
+    game.message = check ? `${game.turn === 'w' ? 'White' : 'Black'} is in check.` : `${game.turn === 'w' ? 'Your' : 'AI'} turn.`;
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function moveScore(move, board, color) {
+  const captured = move.enPassant ? (color === 'w' ? 'p' : 'P') : board[move.to.r][move.to.c];
+  let score = captured && captured !== '.' ? VALUES[captured.toLowerCase()] * 100 : 0;
+  const moved = board[move.from.r][move.from.c];
+  const next = boardAfterMove(board, move);
+  if (inCheck(next, other(color))) score += 28;
+  if (move.castle) score += 32;
+  if (move.promotion) score += 700;
+  score += Math.round((3.5 - Math.abs(3.5 - move.to.c) + 3.5 - Math.abs(3.5 - move.to.r)) * 2);
+  if (isSquareAttacked(next, move.to.r, move.to.c, other(color))) score -= VALUES[moved.toLowerCase()] * 9;
+  return score;
+}
+function chooseMove(color) {
+  const moves = allLegalMoves(game.board, color);
+  if (!moves.length) return null;
+  let best = -Infinity;
+  let choices = [];
+  for (const move of moves) {
+    const score = moveScore(move, game.board, color);
+    if (score > best) { best = score; choices = [move]; }
+    else if (score === best) choices.push(move);
+  }
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return choices[seed % choices.length];
+}
+function performAiMove() {
+  if (game.mode !== 'ai' || game.turn !== 'b') return false;
+  const move = chooseMove('b');
+  return move ? commitMove(move, 'b') : false;
+}
+
+function startGame() {
+  game.board = startingBoard(); game.mode = 'player'; game.turn = 'w'; game.selected = null; game.cursor = { r: 6, c: 4 }; game.legal = [];
+  game.rights = { wK: true, wQ: true, bK: true, bQ: true }; game.enPassant = null; game.captured = []; game.history = []; game.moveLog = [];
+  game.lastMove = null; game.hint = null; game.message = 'Your turn. Select an ivory piece.'; game.aiTimer = 0; game.winner = null; game.coinsEarned = 0; game.awardGiven = false;
+  seed = 0x51c0ffee;
+  rememberRecent('chess');
+  maybeUnlock({ anyPlay: true });
+  updateHud(); updateOverlay(); draw();
+}
+function selectSquare(r, c) {
+  if (game.mode !== 'player' || game.turn !== 'w' || !inside(r, c)) return false;
+  game.cursor = { r, c };
+  if (game.selected) {
+    const move = game.legal.find((candidate) => candidate.to.r === r && candidate.to.c === c);
+    if (move) return commitMove(move, 'w');
+  }
+  if (colorOf(game.board[r][c]) === 'w') {
+    game.selected = { r, c };
+    game.legal = legalMovesForPiece(game.board, r, c, 'w');
+    game.message = game.legal.length ? `${PIECE_NAMES[game.board[r][c].toLowerCase()]} selected.` : 'That piece has no legal moves.';
+  } else {
+    game.selected = null;
+    game.legal = [];
+    game.message = 'Select one of your ivory pieces.';
+  }
+  game.hint = null;
+  updateHud(); draw();
+  return true;
+}
+function showHint() {
+  if (game.mode !== 'player') return null;
+  const move = chooseMove('w');
+  if (!move) return null;
+  game.hint = { from: { ...move.from }, to: { ...move.to } };
+  game.message = `Hint: ${squareName(move.from.r, move.from.c)} to ${squareName(move.to.r, move.to.c)}.`;
+  updateHud(); draw();
+  return game.hint;
+}
+function undoTurn() {
+  if (!game.history.length || game.mode === 'menu') return false;
+  let steps = game.turn === 'w' && game.history.length >= 2 ? 2 : 1;
+  let snap = null;
+  while (steps > 0 && game.history.length) { snap = game.history.pop(); steps -= 1; }
+  if (!snap) return false;
+  restore(snap);
+  if (game.turn === 'b' && game.history.length) restore(game.history.pop());
+  game.message = 'Last turn undone.';
+  updateHud(); updateOverlay(); draw();
+  return true;
+}
+function togglePause() {
+  if (game.mode === 'menu' || game.mode === 'won') return false;
+  if (game.mode === 'paused') { game.mode = game.turn === 'w' ? 'player' : 'ai'; game.message = game.turn === 'w' ? 'Your turn.' : 'AI thinking.'; }
+  else { game.mode = 'paused'; game.message = 'Match paused.'; }
+  updateHud(); updateOverlay(); draw();
+  return true;
+}
+function moveCursor(dr, dc) {
+  if (game.mode !== 'player') return;
+  game.cursor.r = Math.max(0, Math.min(7, game.cursor.r + dr));
+  game.cursor.c = Math.max(0, Math.min(7, game.cursor.c + dc));
+  draw();
+}
+function handleKeyDown(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright',' ','enter'].includes(key)) event.preventDefault();
+  if (key === 'arrowup' || key === 'w') moveCursor(-1, 0);
+  else if (key === 'arrowdown' || key === 's') moveCursor(1, 0);
+  else if (key === 'arrowleft' || key === 'a') moveCursor(0, -1);
+  else if (key === 'arrowright' || key === 'd') moveCursor(0, 1);
+  else if (key === 'enter' || key === ' ') selectSquare(game.cursor.r, game.cursor.c);
+  else if (key === 'h') showHint();
+  else if (key === 'u') undoTurn();
+  else if (key === 'p') togglePause();
+  else if (key === 'r') startGame();
+  else if (key === 'f') toggleFullscreen();
+  else if (key === 'escape' && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+function pointerSquare(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * WIDTH / rect.width;
+  const y = (event.clientY - rect.top) * HEIGHT / rect.height;
+  const c = Math.floor((x - BOARD_X) / CELL);
+  const r = Math.floor((y - BOARD_Y) / CELL);
+  return inside(r, c) ? { r, c } : null;
+}
+function handlePointer(event) { event.preventDefault(); const square = pointerSquare(event); if (square) selectSquare(square.r, square.c); }
+function toggleFullscreen() {
+  if (!document.fullscreenElement) canvas.parentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+}
+function update(dt) {
+  game.pulse = Math.max(0, game.pulse - dt);
+  if (game.mode === 'ai') { game.aiTimer -= dt; if (game.aiTimer <= 0) performAiMove(); }
+}
+function statusLabel() {
+  if (game.mode === 'won') return game.winner === 'draw' ? 'DRAW' : game.winner === 'w' ? 'CHECKMATE' : 'DEFEAT';
+  if (inCheck(game.board, game.turn)) return 'CHECK';
+  if (game.mode === 'paused') return 'PAUSED';
+  return game.message.startsWith('Hint') ? 'HINT' : 'PLAYING';
+}
+function updateHud() {
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.turn.textContent = game.turn === 'w' ? 'WHITE' : 'BLACK';
+  hud.status.textContent = statusLabel();
+  hud.move.textContent = Math.floor(game.moveLog.length / 2) + 1;
+  hud.captured.textContent = String(game.captured.length);
+  hud.coins.textContent = String(profileState.coins || 0);
+  buttons.undo.disabled = !game.history.length || game.mode === 'menu';
+  buttons.hint.disabled = game.mode !== 'player';
+  buttons.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+}
+function updateOverlay() {
+  overlay.classList.toggle('show', ['menu', 'paused', 'won'].includes(game.mode));
+  if (game.mode === 'menu') { overlayTitle.textContent = 'Chess'; overlayText.textContent = 'Command the ivory pieces and checkmate the emerald AI.'; startBtn.textContent = 'Start Match'; }
+  else if (game.mode === 'paused') { overlayTitle.textContent = 'Paused'; overlayText.textContent = 'The board is waiting exactly as you left it.'; startBtn.textContent = 'Resume'; }
+  else if (game.mode === 'won') { overlayTitle.textContent = game.winner === 'w' ? 'Checkmate!' : game.winner === 'b' ? 'AI Wins' : 'Stalemate'; overlayText.textContent = game.message; startBtn.textContent = 'Play Again'; }
+}
+
+function drawBoard() {
+  ctx.save();
+  ctx.fillStyle = '#0a1519';
+  ctx.fillRect(BOARD_X - 12, BOARD_Y - 12, CELL * 8 + 24, CELL * 8 + 24);
+  for (let r = 0; r < 8; r += 1) for (let c = 0; c < 8; c += 1) {
+    const x = BOARD_X + c * CELL;
+    const y = BOARD_Y + r * CELL;
+    ctx.fillStyle = (r + c) % 2 ? '#557b68' : '#e8dfbd';
+    ctx.fillRect(x, y, CELL, CELL);
+    if (game.lastMove && [game.lastMove.from, game.lastMove.to].includes(squareName(r, c))) { ctx.fillStyle = '#ffd45d78'; ctx.fillRect(x, y, CELL, CELL); }
+    if (game.hint && ((game.hint.from.r === r && game.hint.from.c === c) || (game.hint.to.r === r && game.hint.to.c === c))) { ctx.fillStyle = '#73eac780'; ctx.fillRect(x, y, CELL, CELL); }
+    if (game.selected?.r === r && game.selected?.c === c) { ctx.strokeStyle = '#fff29c'; ctx.lineWidth = 6; ctx.strokeRect(x + 3, y + 3, CELL - 6, CELL - 6); }
+    if (game.cursor.r === r && game.cursor.c === c && game.mode === 'player') { ctx.strokeStyle = '#ff9f72'; ctx.lineWidth = 3; ctx.strokeRect(x + 5, y + 5, CELL - 10, CELL - 10); }
+    if (game.legal.some((move) => move.to.r === r && move.to.c === c)) {
+      const occupied = game.board[r][c] !== '.' || game.legal.some((move) => move.to.r === r && move.to.c === c && move.enPassant);
+      ctx.strokeStyle = '#fff7b5dd'; ctx.fillStyle = '#fff7b5aa'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x + CELL / 2, y + CELL / 2, occupied ? CELL * .39 : 10, 0, Math.PI * 2); occupied ? ctx.stroke() : ctx.fill();
+    }
+    const piece = game.board[r][c];
+    if (piece !== '.') {
+      const white = colorOf(piece) === 'w';
+      ctx.font = '64px "Segoe UI Symbol", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 4;
+      ctx.strokeStyle = white ? '#3a3326' : '#071510'; ctx.fillStyle = white ? '#fff7df' : '#1b3f32';
+      ctx.strokeText(PIECE_GLYPHS[piece], x + CELL / 2, y + CELL / 2 + 3); ctx.fillText(PIECE_GLYPHS[piece], x + CELL / 2, y + CELL / 2 + 3);
+    }
+    ctx.fillStyle = (r + c) % 2 ? '#dce8d4cc' : '#315647cc'; ctx.font = '900 11px Trebuchet MS'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    if (c === 0) ctx.fillText(String(8 - r), x + 4, y + 3);
+    if (r === 7) { ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(FILES[c], x + CELL - 4, y + CELL - 3); }
+  }
+  const king = kingSquare(game.board, game.turn);
+  if (king && inCheck(game.board, game.turn)) { ctx.strokeStyle = '#ff5d5dcc'; ctx.lineWidth = 7; ctx.strokeRect(BOARD_X + king.c * CELL + 4, BOARD_Y + king.r * CELL + 4, CELL - 8, CELL - 8); }
+  ctx.restore();
+}
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let row = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) { ctx.fillText(line, x, y + row * lineHeight); row += 1; line = word; if (row >= maxLines - 1) break; }
+    else line = test;
+  }
+  if (row < maxLines) ctx.fillText(line, x, y + row * lineHeight);
+}
+function drawPanel() {
+  const x = 712;
+  ctx.save();
+  ctx.fillStyle = '#0c1a20dd'; ctx.strokeStyle = '#e9c77a66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x, 40, 218, 640, 10); ctx.fill(); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.fillStyle = '#ffd476'; ctx.font = '900 28px Trebuchet MS'; ctx.fillText('MATCH LOG', x + 18, 78);
+  ctx.fillStyle = '#d7e4dd'; ctx.font = '800 15px Trebuchet MS'; wrapText(game.message, x + 18, 112, 182, 21, 3);
+  ctx.fillStyle = '#83e1b6'; ctx.font = '900 13px Trebuchet MS'; ctx.fillText('RECENT MOVES', x + 18, 197);
+  ctx.font = '800 14px Consolas, monospace';
+  const start = Math.max(0, game.moveLog.length - 16);
+  for (let i = start; i < game.moveLog.length; i += 2) {
+    const row = Math.floor(i / 2) + 1;
+    const y = 226 + (i - start) / 2 * 24;
+    ctx.fillStyle = '#aebfb7'; ctx.fillText(`${String(row).padStart(2, ' ')}.`, x + 18, y);
+    ctx.fillStyle = '#fff8e8'; ctx.fillText((game.moveLog[i] || '').slice(0, 7), x + 50, y);
+    ctx.fillStyle = '#83e1b6'; ctx.fillText((game.moveLog[i + 1] || '').slice(0, 7), x + 122, y);
+  }
+  ctx.fillStyle = '#83e1b6'; ctx.font = '900 13px Trebuchet MS'; ctx.fillText('CAPTURED', x + 18, 448);
+  ctx.font = '30px "Segoe UI Symbol", serif';
+  let drawX = x + 20;
+  let drawY = 480;
+  for (const piece of game.captured.slice(-12)) {
+    ctx.fillStyle = colorOf(piece) === 'w' ? '#fff7df' : '#4f8b70'; ctx.fillText(PIECE_GLYPHS[piece], drawX, drawY); drawX += 31;
+    if (drawX > x + 185) { drawX = x + 20; drawY += 36; }
+  }
+  ctx.fillStyle = '#aebfb7'; ctx.font = '800 12px Trebuchet MS'; ctx.fillText('Ivory: You', x + 18, 620); ctx.fillText('Emerald: AI', x + 18, 643);
+  ctx.fillStyle = '#ffd476'; ctx.fillText(`Special: ${game.lastMove?.special || 'none'}`, x + 18, 666);
+  ctx.restore();
+}
+function draw() {
+  const grad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT); grad.addColorStop(0, '#29483f'); grad.addColorStop(.58, '#162b2d'); grad.addColorStop(1, '#0b171c');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, WIDTH, HEIGHT); ctx.fillStyle = '#ffffff08';
+  for (let x = 0; x < WIDTH; x += 40) ctx.fillRect(x, 0, 1, HEIGHT);
+  drawBoard(); drawPanel();
+}
+
+function stateToObject() {
+  const pieces = [];
+  for (let r = 0; r < 8; r += 1) for (let c = 0; c < 8; c += 1) {
+    const piece = game.board[r][c];
+    if (piece !== '.') pieces.push({ square: squareName(r, c), color: colorOf(piece) === 'w' ? 'white' : 'black', type: PIECE_NAMES[piece.toLowerCase()] });
+  }
+  return {
+    game: 'chess', coordinateSystem: 'Chess squares a1-h8; canvas 960x720 with origin top-left, x right, y down.', mode: game.mode,
+    turn: game.turn === 'w' ? 'white' : 'black', status: statusLabel().toLowerCase(), winner: game.winner === 'w' ? 'white' : game.winner === 'b' ? 'black' : game.winner,
+    board: game.board.map((row) => row.join('')), pieces, selected: game.selected ? squareName(game.selected.r, game.selected.c) : null,
+    cursor: squareName(game.cursor.r, game.cursor.c), legalDestinations: game.legal.map((move) => squareName(move.to.r, move.to.c)),
+    inCheck: inCheck(game.board, game.turn), legalMoveCount: game.mode === 'menu' ? 0 : allLegalMoves(game.board, game.turn).length,
+    castlingRights: { ...game.rights }, enPassant: game.enPassant ? squareName(game.enPassant.r, game.enPassant.c) : null,
+    captured: game.captured.map((piece) => `${colorOf(piece) === 'w' ? 'white' : 'black'} ${PIECE_NAMES[piece.toLowerCase()]}`),
+    lastMove: game.lastMove, moveLog: game.moveLog.slice(-12), hint: game.hint ? { from: squareName(game.hint.from.r, game.hint.from.c), to: squareName(game.hint.to.r, game.hint.to.c) } : null,
+    message: game.message, coinsEarned: game.coinsEarned,
+  };
+}
+function renderGameToText() { return JSON.stringify(stateToObject()); }
+function setPosition(rows, turn = 'w', options = {}) {
+  if (!Array.isArray(rows) || rows.length !== 8 || rows.some((row) => String(row).length !== 8)) throw new Error('Position requires eight rows of eight characters.');
+  game.board = rows.map((row) => [...String(row)]); game.turn = turn; game.mode = turn === 'w' ? 'player' : 'ai';
+  game.rights = { wK: false, wQ: false, bK: false, bQ: false, ...(options.rights || {}) }; game.enPassant = options.enPassant ? parseSquare(options.enPassant) : null;
+  game.selected = null; game.legal = []; game.cursor = { ...(parseSquare(options.cursor || 'e1') || { r: 7, c: 4 }) }; game.history = []; game.moveLog = [];
+  game.captured = []; game.lastMove = null; game.hint = null; game.winner = null; game.message = options.message || 'Test position loaded.'; game.aiTimer = turn === 'b' ? .48 : 0; game.awardGiven = false;
+  updateHud(); updateOverlay(); draw();
+  return stateToObject();
+}
+function forceScenario(name) {
+  if (name === 'castle') return setPosition(['....k...','........','........','........','........','........','........','R...K..R'], 'w', { rights: { wK: true, wQ: true }, cursor: 'e1', message: 'Castle on either side.' });
+  if (name === 'en-passant') return setPosition(['....k...','........','........','...pP...','........','........','........','....K...'], 'w', { enPassant: 'd6', cursor: 'e5', message: 'White can capture en passant on d6.' });
+  if (name === 'promotion') return setPosition(['.......k','P.......','........','........','........','........','........','.......K'], 'w', { cursor: 'a7', message: 'Promote the pawn on a8.' });
+  if (name === 'mate') return setPosition(['.......k','........','.....KQ.','........','........','........','........','........'], 'w', { cursor: 'g6', message: 'White can mate with Qg7.' });
+  throw new Error(`Unknown scenario: ${name}`);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud(); updateOverlay(); draw(); manualStepping = false; lastFrame = performance.now();
+  return renderGameToText();
+};
+window.__CHESS_GAME__ = {
+  startGame, selectSquare,
+  playMove(from, to) {
+    const a = parseSquare(from); const b = parseSquare(to);
+    if (!a || !b) return false;
+    const move = legalMovesForPiece(game.board, a.r, a.c, game.turn).find((candidate) => candidate.to.r === b.r && candidate.to.c === b.c);
+    return move ? commitMove(move, game.turn) : false;
+  },
+  showHint, undoTurn, togglePause, performAiMove, setPosition, forceScenario,
+  allLegalMoves: () => allLegalMoves(game.board, game.turn), inCheck: () => inCheck(game.board, game.turn), stateToObject, renderGameToText,
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try { return JSON.parse(renderGameToText()); }
+  catch { return { game: 'chess', mode: game.mode }; }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+document.addEventListener('keydown', handleKeyDown);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+startBtn.addEventListener('click', () => game.mode === 'paused' ? togglePause() : startGame());
+buttons.new.addEventListener('click', startGame);
+buttons.hint.addEventListener('click', showHint);
+buttons.undo.addEventListener('click', undoTurn);
+buttons.pause.addEventListener('click', togglePause);
+buttons.up.addEventListener('click', () => moveCursor(-1, 0));
+buttons.down.addEventListener('click', () => moveCursor(1, 0));
+buttons.left.addEventListener('click', () => moveCursor(0, -1));
+buttons.right.addEventListener('click', () => moveCursor(0, 1));
+buttons.select.addEventListener('click', () => selectSquare(game.cursor.r, game.cursor.c));
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp; update(dt); updateHud(); draw();
+  }
+  requestAnimationFrame(frame);
+}
+updateHud(); updateOverlay(); draw();
+mountGameFeedback({ gameSlug: 'chess', gameName: 'Chess' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
