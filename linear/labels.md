@@ -144,5 +144,6 @@
 - game/kakuro
 - game/caverncrush
 - game/calccages
+- game/wordladder
 
 Generated from `src/meta/feedback.js`.

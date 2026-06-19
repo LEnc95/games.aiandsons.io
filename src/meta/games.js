@@ -128,4 +128,5 @@ export const GAMES = [
   { slug:'kakuro',         name:'Kakuro',              emoji:'\u2795',    scoreHint:'solves',     url:'/kakuro',       desc:'Fill crossword-style number grids by matching clue sums, avoiding duplicate digits, and using pencil notes, hints, and undo.', earnsCoins:true },
   { slug:'caverncrush',    name:'Cavern Crush',        emoji:'\u26CF\uFE0F', scoreHint:'gems',    url:'/caverncrush',  desc:'Dig through cave dirt, collect enough gems to open the exit, and avoid loose falling rocks.', earnsCoins:true },
   { slug:'calccages',      name:'Calc Cages',          emoji:'\u{1F522}', scoreHint:'solves',     url:'/calccages',    desc:'Fill arithmetic cages with nonrepeating row and column digits while matching every cage target.', earnsCoins:true },
+  { slug:'wordladder',     name:'Word Ladder Sprint',  emoji:'\u{1FA9C}', scoreHint:'ladders',    url:'/wordladder',   desc:'Transform one word into another by changing a single letter at each valid vocabulary step.', earnsCoins:true },
 ];

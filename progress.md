@@ -3647,6 +3647,20 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Chosen game: Twenty-One Table (`/twentyone`), a non-gambling blackjack-style card game with hit/stand/double decisions, dealer resolution, streak scoring, hints, deterministic hooks, shared feedback context, and coin rewards.
 - Plan: add a standalone canvas game with desktop/touch controls, deterministic `window.advanceTime(ms)`, `window.render_game_to_text()`, shared feedback context, metadata registration, SEO refresh, Linear seed refresh, and focused smoke validation.
 
+## 2026-06-19 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- The clean worktree, automation memory (not yet created), recent history, and 129-game registry were reviewed; existing word games cover searching, tracing, typing, and Wordle-style deduction, but not word ladders.
+- Chosen game: Word Ladder Sprint (`/wordladder`), a curated vocabulary puzzle where each step changes exactly one letter to transform a start word into a target word.
+- Plan: add a standalone canvas game with native mobile/desktop word entry, dictionary validation, hints, undo, puzzle progression, timer and energy pressure, coin rewards, shared feedback, deterministic hooks, metadata registration, SEO/Linear regeneration, and focused browser validation.
+- Initial implementation completed in `wordladder/index.html` with six curated ladders, alternate valid routes, one-letter and dictionary validation, energy and timer loss conditions, hint/undo costs, puzzle and campaign completion, scoring, coins, responsive controls, fullscreen, shared feedback context, and deterministic testing APIs.
+- Registered Word Ladder Sprint in `src/meta/games.js`; `npm run seo` generated its metadata and sitemap route, and `npm run feedback:sync-linear` refreshed local Linear seeds (live provisioning skipped because credentials are unset).
+- Corrected keyboard routing so normal `H`, `F`, `P`, and `U` letters can be typed into the native word input without triggering game hotkeys.
+- Early validation passed: inline module syntax, 130-game slug/URL uniqueness, 9 focused catalog/feedback tests, daily feedback guard, 31 feedback tests, and 68 shop tests.
+- First required `$WEB_GAME_CLIENT` run produced synchronized gameplay state/screenshots with no console errors; screenshot review found one clipped control legend, now split across two lines for retest.
+- Final validation passed: a second `$WEB_GAME_CLIENT` run, inspected settled desktop/mobile screenshots, native mobile word entry, repeat/length/dictionary rejection, valid steps, undo, hints, pause/resume, timer loss, all six canonical solve paths, campaign completion, score/coin rewards, and shared feedback context. Word Ladder produced zero console/page errors.
+- `npm run test:feedback-smoke:raw` reached its functional checks but reported the known unrelated console error: mobile Tetris posts to `/api/social?route=player-register`, which the raw Python static server answers with HTTP 501.
+- Final diff and trailing-whitespace checks passed. The existing user change in `AGENTS.md` adding the Club Penguin World Go test command was left untouched. No local server remains running.
+
 ## 2026-06-16 Create a new game automation
 - New request: add a game we do not already have to the website using `$develop-web-game`.
 - Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Backgammon, Skee-Ball, Tower Defense, Sky Joust, FreeCell, Shut the Box, Air Hockey, Cavern Crush, Calc Cages, and other recent automation games.

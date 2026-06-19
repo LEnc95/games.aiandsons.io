@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Word Ladder Sprint | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #17304a;
+  background: linear-gradient(145deg, #dff5ed 0%, #fff0bd 48%, #d8e8ff 100%);
+}
+body { overflow-x: hidden; }
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f9fcff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 9px;
+  border: 1px solid #ffffff91;
+  padding: 8px 12px;
+  background: #173f5fef;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 58px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(65dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 12px;
+  border: 2px solid #fff;
+  background: #f9fcff;
+  box-shadow: 0 24px 60px #17304a38;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel {
+  width: min(700px, 92%);
+  border: 1px solid #ffffffc9;
+  border-radius: 14px;
+  padding: clamp(18px, 4vw, 32px);
+  background: #173f5ff4;
+  color: #fff;
+  box-shadow: 0 18px 44px #17304a52;
+}
+.panel h1 { margin: 0 0 10px; font-size: clamp(32px, 6vw, 56px); }
+.panel p { margin: 8px 0; color: #ddecf5; font-weight: 800; line-height: 1.45; }
+.panel .mini { color: #bcd3e1; font-size: 13px; }
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: minmax(160px, 2fr) repeat(5, minmax(0, 1fr)); }
+.chip, button, input {
+  min-height: 44px;
+  border-radius: 9px;
+  border: 1px solid #ffffffa8;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  color: #f9fcff;
+  background: #173f5fe9;
+  box-shadow: inset 0 1px 0 #ffffff38;
+}
+.chip span { font-size: 11px; color: #bed7e4; font-weight: 900; text-transform: uppercase; }
+.chip b { font-size: 15px; text-align: right; }
+.chip.good b { color: #91f0b9; }
+.chip.warn b { color: #ffe071; }
+.chip.danger b { color: #ff9fa8; }
+input {
+  width: 100%;
+  padding: 0 14px;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #17304a;
+  background: #fff;
+  outline: none;
+}
+input:focus { border-color: #173f5f; box-shadow: 0 0 0 3px #f0c94c; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  color: #fff;
+  background: #315e78;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 7px 16px #17304a20;
+}
+button:hover { filter: brightness(1.12); }
+button:focus-visible { outline: 3px solid #17304a; outline-offset: 2px; }
+button:disabled, input:disabled { cursor: not-allowed; opacity: .5; }
+.primary { background: #e3b92e; color: #17304a; border-color: #ffe275; }
+.action { background: #218164; }
+.danger-action { background: #a74652; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage { width: min(98vw, 900px); max-height: 55dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .word-entry { grid-column: span 2; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 52px 7px 10px; gap: 7px; }
+  .stage { width: 98vw; max-height: 46dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .word-entry { grid-column: span 2; }
+  button, input { min-height: 42px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Transform one word into another by changing a single letter at each valid vocabulary step. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Word Ladder Sprint | AI and Sons Games">
+  <meta property="og:description" content="Transform one word into another by changing a single letter at each valid vocabulary step. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/wordladder">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Word Ladder Sprint | AI and Sons Games">
+  <meta name="twitter:description" content="Transform one word into another by changing a single letter at each valid vocabulary step. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/wordladder">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Word Ladder Sprint","description":"Transform one word into another by changing a single letter at each valid vocabulary step. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/wordladder","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Word Ladder Sprint game board">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Word Ladder Sprint</h1>
+        <p id="overlayText">Change one letter at a time. Every step must be a real word. Reach the target before time or energy runs out.</p>
+        <p class="mini">Type a word and press Enter. Use the buttons for hints and undo; P pauses and F toggles fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Sprint</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleText">1 / 6</b></div>
+    <div class="chip good"><span>Goal</span><b id="goalText">CAT &rarr; DOG</b></div>
+    <div class="chip"><span>Steps</span><b id="stepsText">0 / 3</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">2:00</b></div>
+    <div class="chip danger"><span>Energy</span><b id="energyText">5</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Word Ladder controls">
+    <input class="word-entry" id="wordInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="5" aria-label="Next ladder word" placeholder="TYPE NEXT WORD" />
+    <button class="primary" id="submitBtn" type="button">Add Word</button>
+    <button class="action" id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button class="danger-action" id="restartBtn" type="button">Restart</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const wordInput = document.getElementById('wordInput');
+const controls = {
+  submit: document.getElementById('submitBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+const hud = {
+  puzzle: document.getElementById('puzzleText'),
+  goal: document.getElementById('goalText'),
+  steps: document.getElementById('stepsText'),
+  time: document.getElementById('timeText'),
+  energy: document.getElementById('energyText'),
+  coins: document.getElementById('coinsText'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const BEST_KEY = 'cade:wordladder:best';
+const COMPLETE_KEY = 'cade:wordladder:completed';
+const PUZZLES = [
+  {
+    id: 'cat-dog', start: 'CAT', target: 'DOG', par: 3, time: 105,
+    route: ['CAT', 'COT', 'DOT', 'DOG'],
+    words: ['CAT', 'COT', 'DOT', 'DOG', 'BAT', 'BOT', 'BAG', 'BOG', 'COG', 'CAN', 'CON', 'DON', 'DUG', 'DIG'],
+  },
+  {
+    id: 'lead-gold', start: 'LEAD', target: 'GOLD', par: 3, time: 115,
+    route: ['LEAD', 'LOAD', 'GOAD', 'GOLD'],
+    words: ['LEAD', 'LOAD', 'GOAD', 'GOLD', 'READ', 'ROAD', 'LEND', 'LAND', 'LORD', 'WORD', 'WOLD', 'GOOD'],
+  },
+  {
+    id: 'sand-wave', start: 'SAND', target: 'WAVE', par: 3, time: 120,
+    route: ['SAND', 'WAND', 'WANE', 'WAVE'],
+    words: ['SAND', 'WAND', 'WANE', 'WAVE', 'HAND', 'BAND', 'BEND', 'BANE', 'CANE', 'CAVE', 'SAVE', 'SANE'],
+  },
+  {
+    id: 'cold-warm', start: 'COLD', target: 'WARM', par: 4, time: 135,
+    route: ['COLD', 'CORD', 'CARD', 'WARD', 'WARM'],
+    words: ['COLD', 'CORD', 'CARD', 'WARD', 'WARM', 'GOLD', 'WORD', 'WORE', 'WARE', 'CORE', 'CARE', 'HARD', 'HARM'],
+  },
+  {
+    id: 'head-tail', start: 'HEAD', target: 'TAIL', par: 5, time: 150,
+    route: ['HEAD', 'HEAL', 'TEAL', 'TELL', 'TALL', 'TAIL'],
+    words: ['HEAD', 'HEAL', 'TEAL', 'TELL', 'TALL', 'TAIL', 'HEAR', 'FEAR', 'DEAL', 'REAL', 'PEAL', 'TEAM', 'TEAR', 'TILL'],
+  },
+  {
+    id: 'fool-sage', start: 'FOOL', target: 'SAGE', par: 6, time: 165,
+    route: ['FOOL', 'POOL', 'POLL', 'POLE', 'PALE', 'SALE', 'SAGE'],
+    words: ['FOOL', 'POOL', 'POLL', 'POLE', 'PALE', 'SALE', 'SAGE', 'COOL', 'TOOL', 'TOLL', 'TALL', 'TALE', 'GALE', 'GAGE', 'PAGE'],
+  },
+];
+
+let lastFrame = nowMs();
+let manualStepping = false;
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  chain: [PUZZLES[0].start],
+  elapsed: 0,
+  energy: 5,
+  hintsUsed: 0,
+  mistakes: 0,
+  score: 0,
+  totalScore: 0,
+  bestScore: loadNumber(BEST_KEY, 0),
+  completedCount: loadNumber(COMPLETE_KEY, 0),
+  message: 'Change exactly one letter to begin.',
+  messageTone: 'normal',
+  lastAction: { type: 'load' },
+  lastCoins: 0,
+  coinsEarned: 0,
+  flash: 0,
+};
+
+function nowMs() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+}
+
+function loadNumber(key, fallback = 0) {
+  try {
+    const value = Number(localStorage.getItem(key));
+    return Number.isFinite(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveNumber(key, value) {
+  try { localStorage.setItem(key, String(value)); } catch { /* Storage can be unavailable. */ }
+}
+
+function puzzle() { return PUZZLES[game.puzzleIndex]; }
+function stepsTaken() { return Math.max(0, game.chain.length - 1); }
+function remainingSeconds() { return Math.max(0, puzzle().time - game.elapsed); }
+
+function differingLetters(a, b) {
+  if (a.length !== b.length) return Infinity;
+  let changes = 0;
+  for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) changes += 1;
+  return changes;
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  game.puzzleIndex = Math.max(0, Math.min(PUZZLES.length - 1, Number(index) || 0));
+  const active = puzzle();
+  game.mode = 'playing';
+  game.chain = [active.start];
+  game.elapsed = 0;
+  game.energy = 5;
+  game.hintsUsed = 0;
+  game.mistakes = 0;
+  game.score = 0;
+  game.message = `Reach ${active.target}. Change one letter at a time.`;
+  game.messageTone = 'normal';
+  game.lastAction = { type: 'start', puzzle: active.id };
+  wordInput.value = '';
+  updateAll();
+  setTimeout(() => wordInput.focus(), 0);
+  return stateToObject();
+}
+
+function nextPuzzle() {
+  if (game.puzzleIndex >= PUZZLES.length - 1) {
+    game.puzzleIndex = 0;
+    game.totalScore = 0;
+  } else {
+    game.puzzleIndex += 1;
+  }
+  return startPuzzle(game.puzzleIndex);
+}
+
+function rejectWord(reason, word = '') {
+  game.energy = Math.max(0, game.energy - 1);
+  game.mistakes += 1;
+  game.message = reason;
+  game.messageTone = 'bad';
+  game.flash = .45;
+  game.lastAction = { type: 'reject', word, reason, energy: game.energy };
+  wordInput.select();
+  if (game.energy <= 0) losePuzzle('Out of energy. Restart and try a new route.');
+  updateAll();
+  return { ok: false, reason };
+}
+
+function submitWord(rawWord = wordInput.value, source = 'player') {
+  if (game.mode !== 'playing') return { ok: false, reason: 'Puzzle is not active.' };
+  const active = puzzle();
+  const word = String(rawWord || '').trim().toUpperCase().replace(/[^A-Z]/g, '');
+  const previous = game.chain.at(-1);
+  if (word.length !== active.start.length) return rejectWord(`Enter a ${active.start.length}-letter word.`, word);
+  if (game.chain.includes(word)) return rejectWord(`${word} is already on this ladder.`, word);
+  if (differingLetters(previous, word) !== 1) return rejectWord(`Change exactly one letter from ${previous}.`, word);
+  if (!active.words.includes(word)) return rejectWord(`${word} is not in this puzzle's word list.`, word);
+
+  game.chain.push(word);
+  game.message = word === active.target ? `Ladder complete: ${active.start} to ${active.target}!` : `${word} fits. Keep climbing toward ${active.target}.`;
+  game.messageTone = word === active.target ? 'good' : 'normal';
+  game.flash = .28;
+  game.lastAction = { type: 'accept', word, source, step: stepsTaken() };
+  wordInput.value = '';
+  if (word === active.target) completePuzzle();
+  updateAll();
+  return { ok: true, word, solved: word === active.target };
+}
+
+function bestHintWord() {
+  const active = puzzle();
+  const current = game.chain.at(-1);
+  const routeIndex = active.route.indexOf(current);
+  if (routeIndex >= 0 && routeIndex < active.route.length - 1) return active.route[routeIndex + 1];
+
+  const candidates = active.words.filter(word => !game.chain.includes(word) && differingLetters(current, word) === 1);
+  candidates.sort((a, b) => differingLetters(a, active.target) - differingLetters(b, active.target));
+  return candidates[0] || '';
+}
+
+function useHint() {
+  if (game.mode !== 'playing') return false;
+  const hintWord = bestHintWord();
+  if (!hintWord) {
+    game.message = 'No direct hint from here. Undo the last step.';
+    game.messageTone = 'bad';
+    game.lastAction = { type: 'hint_blocked' };
+    updateAll();
+    return false;
+  }
+  game.hintsUsed += 1;
+  game.elapsed = Math.min(puzzle().time, game.elapsed + 6);
+  const result = submitWord(hintWord, 'hint');
+  game.lastAction = { type: 'hint', word: hintWord, hintsUsed: game.hintsUsed };
+  game.message = `${hintWord} added. Hint cost: 6 seconds.`;
+  if (game.mode === 'solved' || game.mode === 'campaign_complete') game.message = `Hinted step ${hintWord} completed the ladder.`;
+  updateAll();
+  return result.ok;
+}
+
+function undo() {
+  if (game.mode !== 'playing' || game.chain.length <= 1) return false;
+  const removed = game.chain.pop();
+  game.elapsed = Math.min(puzzle().time, game.elapsed + 3);
+  game.message = `${removed} removed. Undo cost: 3 seconds.`;
+  game.messageTone = 'normal';
+  game.lastAction = { type: 'undo', word: removed };
+  updateAll();
+  wordInput.focus();
+  return true;
+}
+
+function calculateScore() {
+  const active = puzzle();
+  const efficiencyBonus = Math.max(0, 220 - Math.max(0, stepsTaken() - active.par) * 35);
+  return Math.max(100, 300 + Math.floor(remainingSeconds() * 5) + efficiencyBonus - game.hintsUsed * 80 - game.mistakes * 25);
+}
+
+function completePuzzle() {
+  if (game.mode !== 'playing') return;
+  const active = puzzle();
+  game.score = calculateScore();
+  game.totalScore += game.score;
+  game.completedCount += 1;
+  saveNumber(COMPLETE_KEY, game.completedCount);
+  game.bestScore = Math.max(game.bestScore, game.score);
+  saveNumber(BEST_KEY, game.bestScore);
+  const coins = Math.max(8, Math.min(28, 8 + Math.round(game.score / 100) - game.hintsUsed * 2));
+  game.lastCoins = coins;
+  game.coinsEarned += coins;
+  addCoins(coins);
+  rememberRecent?.('wordladder');
+  maybeUnlock({
+    anyPlay: true,
+    wordladder: { result: 'solved', puzzle: active.id, steps: stepsTaken(), par: active.par, hintsUsed: game.hintsUsed, score: game.score },
+  });
+  game.mode = game.puzzleIndex === PUZZLES.length - 1 ? 'campaign_complete' : 'solved';
+  game.lastAction = { type: 'complete', puzzle: active.id, score: game.score, coins };
+}
+
+function losePuzzle(message) {
+  game.mode = 'lost';
+  game.message = message;
+  game.messageTone = 'bad';
+  game.lastAction = { type: 'lost', reason: message };
+  updateAll();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') game.mode = 'paused';
+  else if (game.mode === 'paused') game.mode = 'playing';
+  else return false;
+  game.lastAction = { type: 'pause_toggle', mode: game.mode };
+  updateAll();
+  if (game.mode === 'playing') wordInput.focus();
+  return true;
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  else document.exitFullscreen?.().catch(() => {});
+  game.lastAction = { type: 'fullscreen' };
+  setTimeout(draw, 80);
+}
+
+function update(dt) {
+  if (game.mode !== 'playing') return;
+  game.elapsed += dt;
+  game.flash = Math.max(0, game.flash - dt);
+  if (game.elapsed >= puzzle().time) {
+    game.elapsed = puzzle().time;
+    losePuzzle('Time expired. Restart and build the ladder faster.');
+  }
+}
+
+function formatTime(seconds) {
+  const whole = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+}
+
+function updateHud() {
+  const active = puzzle();
+  hud.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  hud.goal.textContent = `${active.start} → ${active.target}`;
+  hud.steps.textContent = `${stepsTaken()} / ${active.par}`;
+  hud.time.textContent = formatTime(remainingSeconds());
+  hud.energy.textContent = String(game.energy);
+  hud.coins.textContent = String(Number(profileState.coins || 0));
+  const playable = game.mode === 'playing';
+  wordInput.disabled = !playable;
+  wordInput.maxLength = active.start.length;
+  controls.submit.disabled = !playable;
+  controls.hint.disabled = !playable;
+  controls.undo.disabled = !playable || game.chain.length <= 1;
+}
+
+function updateOverlay() {
+  const active = puzzle();
+  const visible = game.mode !== 'playing';
+  overlay.classList.toggle('show', visible);
+  if (!visible) return;
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Word Ladder Sprint';
+    overlayText.textContent = 'Change one letter at a time. Every step must be a real word. Reach the target before time or energy runs out.';
+    startBtn.textContent = 'Start Sprint';
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = `${active.start} to ${active.target}. Your ladder is waiting.`;
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'solved') {
+    overlayTitle.textContent = 'Ladder Complete';
+    overlayText.textContent = `${active.start} became ${active.target} in ${stepsTaken()} steps. Score ${game.score}, +${game.lastCoins} coins.`;
+    startBtn.textContent = 'Next Ladder';
+  } else if (game.mode === 'campaign_complete') {
+    overlayTitle.textContent = 'Sprint Complete';
+    overlayText.textContent = `All six ladders solved. Campaign score: ${game.totalScore}.`;
+    startBtn.textContent = 'Play Again';
+  } else {
+    overlayTitle.textContent = 'Sprint Stopped';
+    overlayText.textContent = game.message;
+    startBtn.textContent = 'Try Again';
+  }
+}
+
+function roundRect(x, y, w, h, r, fill, stroke = '', lineWidth = 1) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
+}
+
+function text(value, x, y, size, color, align = 'left', weight = '800') {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(value), x, y);
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, W, H);
+  gradient.addColorStop(0, '#dff6ef');
+  gradient.addColorStop(.52, '#fff2c8');
+  gradient.addColorStop(1, '#dbeaff');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = .16;
+  ctx.strokeStyle = '#26715f';
+  ctx.lineWidth = 2;
+  for (let x = -H; x < W; x += 54) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + H, H); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawLetterTiles(word, centerX, centerY, tileSize, compare = '', kind = 'normal') {
+  const gap = 10;
+  const total = word.length * tileSize + (word.length - 1) * gap;
+  let x = centerX - total / 2;
+  for (let i = 0; i < word.length; i += 1) {
+    const changed = compare && word[i] !== compare[i];
+    const fill = kind === 'target' ? '#f0c94c' : kind === 'start' ? '#55b99b' : changed ? '#f4c95d' : '#f9fcff';
+    const color = '#17304a';
+    roundRect(x, centerY - tileSize / 2, tileSize, tileSize, 9, fill, '#173f5f', 2);
+    text(word[i], x + tileSize / 2, centerY + 2, Math.round(tileSize * .52), color, 'center', '900');
+    x += tileSize + gap;
+  }
+}
+
+function drawChain() {
+  const active = puzzle();
+  const recent = game.chain.slice(-6);
+  const panelX = 56;
+  const panelW = 632;
+  roundRect(panelX, 104, panelW, 532, 18, '#ffffffdd', '#ffffff', 2);
+  text('YOUR LADDER', panelX + 30, 137, 18, '#397087', 'left', '900');
+  text(`${active.start} to ${active.target}`, panelX + panelW - 30, 137, 18, '#397087', 'right', '900');
+
+  const startY = 194;
+  const rowGap = recent.length > 5 ? 76 : 84;
+  ctx.strokeStyle = '#72b7a2';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  if (recent.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(panelX + 72, startY);
+    ctx.lineTo(panelX + 72, startY + (recent.length - 1) * rowGap);
+    ctx.stroke();
+  }
+  recent.forEach((word, index) => {
+    const absoluteIndex = game.chain.length - recent.length + index;
+    const y = startY + index * rowGap;
+    ctx.fillStyle = word === active.target ? '#e3b92e' : '#218164';
+    ctx.beginPath(); ctx.arc(panelX + 72, y, 18, 0, Math.PI * 2); ctx.fill();
+    text(String(absoluteIndex), panelX + 72, y + 1, 14, '#fff', 'center', '900');
+    drawLetterTiles(word, panelX + 330, y, 57, absoluteIndex > 0 ? game.chain[absoluteIndex - 1] : '', absoluteIndex === 0 ? 'start' : word === active.target ? 'target' : 'normal');
+  });
+}
+
+function drawMission() {
+  const active = puzzle();
+  const x = 720;
+  const w = 304;
+  roundRect(x, 104, w, 532, 18, '#173f5fee', '#ffffffc7', 2);
+  text('TARGET WORD', x + w / 2, 145, 17, '#bcd7e4', 'center', '900');
+  drawLetterTiles(active.target, x + w / 2, 211, 52, '', 'target');
+  text('Change one letter', x + w / 2, 276, 20, '#fff', 'center', '900');
+  text('Make a real word', x + w / 2, 307, 20, '#fff', 'center', '900');
+  text('Never repeat a word', x + w / 2, 338, 20, '#fff', 'center', '900');
+
+  roundRect(x + 22, 377, w - 44, 112, 12, game.messageTone === 'bad' ? '#7c3440' : game.messageTone === 'good' ? '#17664e' : '#285a73', '#ffffff57');
+  const words = wrapWords(game.message, 25);
+  words.slice(0, 3).forEach((line, i) => text(line, x + w / 2, 405 + i * 29, 17, '#fff', 'center', '800'));
+
+  text('PAR', x + 38, 534, 13, '#bcd7e4', 'left', '900');
+  text(String(active.par), x + 38, 566, 27, '#ffe071', 'left', '900');
+  text('BEST', x + w / 2, 534, 13, '#bcd7e4', 'center', '900');
+  text(String(game.bestScore), x + w / 2, 566, 27, '#91f0b9', 'center', '900');
+  text('HINTS', x + w - 38, 534, 13, '#bcd7e4', 'right', '900');
+  text(String(game.hintsUsed), x + w - 38, 566, 27, '#ffdc74', 'right', '900');
+  text('Enter adds | Buttons hint and undo', x + w / 2, 606, 11, '#bcd7e4', 'center', '800');
+  text('P pause | F fullscreen', x + w / 2, 623, 11, '#bcd7e4', 'center', '800');
+}
+
+function wrapWords(value, maxLength) {
+  const result = [];
+  let line = '';
+  for (const word of String(value).split(/\s+/)) {
+    if (line && `${line} ${word}`.length > maxLength) { result.push(line); line = word; }
+    else line = line ? `${line} ${word}` : word;
+  }
+  if (line) result.push(line);
+  return result;
+}
+
+function draw() {
+  drawBackground();
+  text('WORD LADDER SPRINT', 56, 54, 31, '#173f5f', 'left', '900');
+  text(`Puzzle ${game.puzzleIndex + 1} of ${PUZZLES.length}`, W - 56, 55, 17, '#397087', 'right', '900');
+  drawChain();
+  drawMission();
+  if (game.flash > 0) {
+    ctx.fillStyle = game.messageTone === 'bad' ? `rgba(255,83,99,${game.flash * .2})` : `rgba(55,210,151,${game.flash * .18})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  text('Type your next word below the board.', W / 2, H - 39, 16, '#30566c', 'center', '900');
+}
+
+function updateAll() {
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (event.target === wordInput) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      togglePause();
+    }
+    return;
+  }
+  if (key === 'f') { event.preventDefault(); toggleFullscreen(); return; }
+  if (key === 'p' || event.key === 'Escape') {
+    event.preventDefault();
+    if (event.key === 'Escape' && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing') {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (game.mode === 'paused') togglePause();
+      else if (game.mode === 'solved') nextPuzzle();
+      else if (game.mode === 'campaign_complete') { game.puzzleIndex = 0; game.totalScore = 0; startPuzzle(0); }
+      else startPuzzle(game.puzzleIndex);
+    }
+    return;
+  }
+  if (key === 'h') { event.preventDefault(); useHint(); }
+  else if (key === 'u') { event.preventDefault(); undo(); }
+}
+
+function stateToObject() {
+  const active = puzzle();
+  return {
+    game: 'wordladder',
+    coordinate_system: 'Canvas 1080x720 origin top-left, x increases right, y increases down. The ladder is listed from start to current word.',
+    mode: game.mode,
+    puzzle_id: active.id,
+    puzzle_number: game.puzzleIndex + 1,
+    puzzle_count: PUZZLES.length,
+    start_word: active.start,
+    target_word: active.target,
+    current_word: game.chain.at(-1),
+    word_length: active.start.length,
+    ladder: [...game.chain],
+    valid_next_words: game.mode === 'playing' ? active.words.filter(word => !game.chain.includes(word) && differingLetters(game.chain.at(-1), word) === 1) : [],
+    steps: stepsTaken(),
+    par: active.par,
+    remaining_seconds: Number(remainingSeconds().toFixed(2)),
+    energy: game.energy,
+    hints_used: game.hintsUsed,
+    mistakes: game.mistakes,
+    score: game.score,
+    total_score: game.totalScore,
+    best_score: game.bestScore,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() { return JSON.stringify(stateToObject()); }
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  const active = puzzle();
+  for (const word of active.route.slice(1)) {
+    if (game.mode !== 'playing') break;
+    submitWord(word, 'test');
+  }
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateAll();
+  manualStepping = false;
+  lastFrame = nowMs();
+  return renderGameToText();
+};
+
+window.__WORD_LADDER_GAME__ = {
+  startPuzzle,
+  nextPuzzle,
+  submitWord,
+  useHint,
+  undo,
+  togglePause,
+  solveCurrent,
+  stateToObject,
+  puzzleIds: () => PUZZLES.map(item => item.id),
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try { return JSON.parse(renderGameToText()); }
+  catch { return { game: 'wordladder', mode: game.mode }; }
+};
+
+wordInput.addEventListener('input', () => {
+  const active = puzzle();
+  wordInput.value = wordInput.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, active.start.length);
+});
+wordInput.addEventListener('keydown', event => {
+  if (event.key === 'Enter') { event.preventDefault(); submitWord(); }
+});
+document.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+controls.submit.addEventListener('click', () => submitWord());
+controls.hint.addEventListener('click', useHint);
+controls.undo.addEventListener('click', undo);
+controls.restart.addEventListener('click', () => startPuzzle(game.puzzleIndex));
+controls.fullscreen.addEventListener('click', toggleFullscreen);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'solved') nextPuzzle();
+  else if (game.mode === 'campaign_complete') { game.puzzleIndex = 0; game.totalScore = 0; startPuzzle(0); }
+  else startPuzzle(game.puzzleIndex);
+});
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateAll();
+mountGameFeedback({ gameSlug: 'wordladder', gameName: 'Word Ladder Sprint' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
