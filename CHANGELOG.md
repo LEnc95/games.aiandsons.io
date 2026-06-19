@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-06-19
+
+### Added
+- Added and wired six new games: `skeeball`, `towerdefense`, `backgammon`, `darts`, `chess`, and `wordladder`.
+- Added social gameplay telemetry, locally persisted challenge history, and player handle emojis in leaderboard lists.
+
+### Improved
+- Added Enter-key submission support to billing, feedback, and teacher inputs, plus clearer disabled states for feedback controls.
+- Reduced redundant normalization during in-memory family-account lookups.
+
+### Security
+- Added social score plausibility caps and rate-limit storage support, and hardened social embed rendering against DOM-based XSS.
+
+### Operations
+- Added the Club Penguin World server test command to the contributor runbook and refreshed game directory SEO metadata.
+- Key PRs: [#191](https://github.com/LEnc95/games.aiandsons.io/pull/191), [#190](https://github.com/LEnc95/games.aiandsons.io/pull/190).
+
 ## [1.7.0] - 2026-06-12
 
 ### Added
