@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Pocket Pool | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  overflow-x: hidden;
+  color: #f7f0dc;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 50% 10%, #375966 0%, #172d38 45%, #0b1820 100%);
+}
+.back {
+  position: fixed; top: 12px; left: 12px; z-index: 30;
+  padding: 8px 12px; border: 1px solid #f7e5b680; border-radius: 9px;
+  color: #fff7df; background: #10252eea; text-decoration: none; font-size: 14px; font-weight: 900;
+}
+.app {
+  min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 9px; padding: 58px 10px 15px;
+}
+.stage { width: min(98vw, 1100px); aspect-ratio: 5 / 3.1; position: relative; }
+canvas {
+  width: 100%; height: 100%; display: block; touch-action: none;
+  border: 2px solid #eed69c; border-radius: 15px; background: #173c37;
+  box-shadow: 0 24px 70px #0009, inset 0 1px 0 #fff5;
+}
+.overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 16px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .16s ease;
+  border-radius: 15px; background: #07151cab;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel {
+  width: min(650px, 94%); padding: clamp(18px, 4vw, 32px); border: 1px solid #f6dda68c;
+  border-radius: 16px; color: #fff9e8; background: #102932f2; box-shadow: 0 18px 48px #0009;
+}
+.panel h1 { margin: 0 0 10px; color: #ffd36a; font-size: clamp(34px, 6vw, 60px); letter-spacing: .02em; }
+.panel p { margin: 8px auto; max-width: 560px; color: #d9e8e6; font-weight: 800; line-height: 1.45; }
+.panel .mini { color: #a9c4c2; font-size: 13px; }
+.hud, .controls { width: min(98vw, 1100px); display: grid; gap: 7px; }
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button { min-height: 43px; border: 1px solid #f2d28e63; border-radius: 9px; }
+.chip {
+  display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 7px 9px;
+  background: #102932e8; box-shadow: inset 0 1px 0 #fff2;
+}
+.chip span { color: #9eb9b8; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.chip b { color: #fff8e6; font-size: 15px; text-align: right; }
+.chip.gold b { color: #ffd36a; }
+.chip.good b { color: #7ce1b4; }
+.chip.warn b { color: #ff9a76; }
+button {
+  cursor: pointer; padding: 0 7px; color: #fff8e8; background: #284d58;
+  font: 900 13px "Trebuchet MS", "Segoe UI", sans-serif; box-shadow: inset 0 1px 0 #fff3, 0 6px 14px #0003;
+}
+button:hover { filter: brightness(1.14); }
+button:focus-visible { outline: 3px solid #ffd36a; outline-offset: 2px; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+.primary { color: #17302f; background: #ffd36a; border-color: #fff1b6; }
+.action { background: #23805f; }
+.danger { background: #974952; }
+@media (max-width: 820px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 52px 6px 10px; gap: 6px; }
+  .stage { width: 99vw; max-height: 48dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .controls { gap: 5px; }
+  .chip, button { min-height: 40px; }
+  button { font-size: 12px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim cue shots, bank around the table, and clear three six-ball racks before your shots run out. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Pocket Pool | AI and Sons Games">
+  <meta property="og:description" content="Aim cue shots, bank around the table, and clear three six-ball racks before your shots run out. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pool">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pocket Pool | AI and Sons Games">
+  <meta name="twitter:description" content="Aim cue shots, bank around the table, and clear three six-ball racks before your shots run out. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pool">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Pocket Pool","description":"Aim cue shots, bank around the table, and clear three six-ball racks before your shots run out. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/pool","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Pocket Pool table">
+    <canvas id="game" width="1000" height="620"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Pocket Pool</h1>
+        <p id="overlayText">Clear three racks before your shots run out. Sink balls in any pocket, build a run bonus, and keep the cue ball on the felt.</p>
+        <p class="mini">Mouse/touch: point on the table, drag for power, release to shoot. Keyboard: arrows aim/power, Space shoots, P pauses, R restarts, F toggles fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Break Rack One</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip gold"><span>Rack</span><b id="rackText">1 / 3</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip"><span>Shots</span><b id="shotsText">10</b></div>
+    <div class="chip"><span>On Table</span><b id="ballsText">6</b></div>
+    <div class="chip"><span>Run</span><b id="runText">0</b></div>
+    <div class="chip gold"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Pool controls">
+    <button id="leftBtn" type="button">Aim Left</button>
+    <button id="rightBtn" type="button">Aim Right</button>
+    <button id="powerDownBtn" type="button">Power -</button>
+    <button id="powerUpBtn" type="button">Power +</button>
+    <button class="primary" id="shootBtn" type="button">Shoot</button>
+    <button class="action" id="pauseBtn" type="button">Pause</button>
+    <button class="danger" id="restartBtn" type="button">Restart</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  rack: document.getElementById('rackText'), score: document.getElementById('scoreText'),
+  shots: document.getElementById('shotsText'), balls: document.getElementById('ballsText'),
+  run: document.getElementById('runText'), coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  left: document.getElementById('leftBtn'), right: document.getElementById('rightBtn'),
+  powerDown: document.getElementById('powerDownBtn'), powerUp: document.getElementById('powerUpBtn'),
+  shoot: document.getElementById('shootBtn'), pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'), fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 620;
+const TABLE = { x: 70, y: 86, w: 860, h: 452 };
+const BALL_R = 12;
+const POCKET_R = 26;
+const MAX_RACKS = 3;
+const SHOTS_BY_RACK = [10, 9, 8];
+const BALL_COLORS = ['#f4f1dd', '#f2cb3c', '#3182ce', '#d33f49', '#7654c4', '#ef7a35', '#2e9c6f'];
+const POCKETS = [
+  { x: TABLE.x, y: TABLE.y }, { x: TABLE.x + TABLE.w / 2, y: TABLE.y - 2 },
+  { x: TABLE.x + TABLE.w, y: TABLE.y }, { x: TABLE.x, y: TABLE.y + TABLE.h },
+  { x: TABLE.x + TABLE.w / 2, y: TABLE.y + TABLE.h + 2 }, { x: TABLE.x + TABLE.w, y: TABLE.y + TABLE.h },
+];
+const keys = new Set();
+const pointer = { active: false, id: null };
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function readBest() {
+  try { return Math.max(0, Math.floor(Number(localStorage.getItem('cade:pool:best') || 0))); }
+  catch { return 0; }
+}
+
+const game = {
+  mode: 'menu', previousMode: 'aiming', rack: 1, score: 0, bestScore: readBest(),
+  shotsLeft: SHOTS_BY_RACK[0], run: 0, aimAngle: 0, power: 56, totalTime: 0,
+  balls: [], message: 'Clear three racks before your shots run out.',
+  shot: null, coinsEarned: 0, rewardGiven: false, lastAction: { type: 'init' },
+};
+game.balls = rackBalls();
+
+function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+function normalizeAngle(value) {
+  let angle = value;
+  while (angle <= -Math.PI) angle += Math.PI * 2;
+  while (angle > Math.PI) angle -= Math.PI * 2;
+  return angle;
+}
+function cueBall() { return game.balls.find((ball) => ball.id === 0); }
+function objectBalls() { return game.balls.filter((ball) => ball.id > 0 && ball.active); }
+function moving() { return game.balls.some((ball) => ball.active && Math.hypot(ball.vx, ball.vy) > 2); }
+
+function makeBall(id, x, y) {
+  return { id, number: id, color: BALL_COLORS[id], x, y, vx: 0, vy: 0, r: BALL_R, active: true };
+}
+
+function rackBalls() {
+  const balls = [makeBall(0, 280, TABLE.y + TABLE.h / 2)];
+  const apexX = 675;
+  const centerY = TABLE.y + TABLE.h / 2;
+  let id = 1;
+  for (let col = 0; col < 3; col += 1) {
+    for (let row = 0; row <= col && id <= 6; row += 1) {
+      balls.push(makeBall(id, apexX + col * 22, centerY + (row - col / 2) * 25));
+      id += 1;
+    }
+  }
+  return balls;
+}
+
+function touchProfile() {
+  rememberRecent('pool');
+  maybeUnlock({ anyPlay: true });
+}
+
+function beginGame() {
+  game.rack = 1;
+  game.score = 0;
+  game.run = 0;
+  game.coinsEarned = 0;
+  game.rewardGiven = false;
+  game.totalTime = 0;
+  game.aimAngle = 0;
+  game.power = 56;
+  beginRack();
+  touchProfile();
+  game.lastAction = { type: 'start_game' };
+  return stateToObject();
+}
+
+function beginRack() {
+  game.balls = rackBalls();
+  game.shotsLeft = SHOTS_BY_RACK[game.rack - 1];
+  game.mode = 'aiming';
+  game.previousMode = 'aiming';
+  game.shot = null;
+  game.message = game.rack === 1 ? 'Break the rack.' : `Rack ${game.rack}: keep the run alive.`;
+  game.lastAction = { type: 'begin_rack', rack: game.rack };
+  updateUi();
+  draw();
+  return stateToObject();
+}
+
+function setAim(angle = game.aimAngle, power = game.power) {
+  if (game.mode !== 'aiming') return stateToObject();
+  game.aimAngle = normalizeAngle(Number(angle) || 0);
+  game.power = clamp(Number(power) || 20, 18, 100);
+  game.lastAction = { type: 'set_aim', degrees: Math.round(game.aimAngle * 180 / Math.PI), power: Math.round(game.power) };
+  updateUi();
+  draw();
+  return stateToObject();
+}
+
+function shoot() {
+  if (game.mode !== 'aiming' || moving() || game.shotsLeft <= 0) return false;
+  const cue = cueBall();
+  if (!cue || !cue.active) spotCue();
+  const speed = 270 + game.power * 6.1;
+  cue.vx = Math.cos(game.aimAngle) * speed;
+  cue.vy = Math.sin(game.aimAngle) * speed;
+  game.shotsLeft -= 1;
+  game.mode = 'rolling';
+  game.shot = { pocketed: [], scratch: false, cushionHits: 0, elapsed: 0 };
+  game.message = 'Balls in motion.';
+  game.lastAction = { type: 'shoot', degrees: Math.round(game.aimAngle * 180 / Math.PI), power: Math.round(game.power) };
+  updateUi();
+  return true;
+}
+
+function pocketBall(ball, pocketIndex) {
+  if (!ball.active) return;
+  ball.active = false;
+  ball.vx = 0;
+  ball.vy = 0;
+  if (!game.shot) return;
+  if (ball.id === 0) {
+    game.shot.scratch = true;
+  } else if (!game.shot.pocketed.includes(ball.id)) {
+    game.shot.pocketed.push(ball.id);
+    game.lastAction = { type: 'pocket', ball: ball.id, pocket: pocketIndex + 1 };
+  }
+}
+
+function spotCue() {
+  let x = 280;
+  const y = TABLE.y + TABLE.h / 2;
+  while (game.balls.some((ball) => ball.id > 0 && ball.active && Math.hypot(ball.x - x, ball.y - y) < BALL_R * 2.2) && x > 150) x -= 28;
+  const cue = cueBall();
+  if (cue) {
+    cue.x = x; cue.y = y; cue.vx = 0; cue.vy = 0; cue.active = true;
+  }
+}
+
+function resolveShot() {
+  if (!game.shot) return;
+  const pocketed = game.shot.pocketed.length;
+  let earned = 0;
+  if (pocketed > 0) {
+    for (let i = 0; i < pocketed; i += 1) earned += 100 * game.rack + (game.run + i) * 25;
+    game.run += pocketed;
+    game.score += earned;
+  } else {
+    game.run = 0;
+  }
+  if (game.shot.scratch) {
+    game.score = Math.max(0, game.score - 75);
+    game.run = 0;
+    spotCue();
+  }
+  const remaining = objectBalls().length;
+  game.lastAction = {
+    type: 'shot_complete', pocketed: [...game.shot.pocketed], scratch: game.shot.scratch,
+    earned, remaining, shotsLeft: game.shotsLeft,
+  };
+  game.shot = null;
+  if (remaining === 0) {
+    if (game.rack >= MAX_RACKS) finishGame(true);
+    else {
+      game.mode = 'rack-clear';
+      game.message = `Rack ${game.rack} cleared with ${game.shotsLeft} shots left.`;
+    }
+  } else if (game.shotsLeft <= 0) {
+    finishGame(false);
+  } else {
+    game.mode = 'aiming';
+    game.message = game.lastAction.scratch ? 'Scratch. Cue ball spotted; 75 points lost.'
+      : pocketed ? `${pocketed} ball${pocketed === 1 ? '' : 's'} down for ${earned} points.` : 'No pocket. Line up the next shot.';
+  }
+  updateBest();
+  updateUi();
+  draw();
+}
+
+function updateBest() {
+  if (game.score <= game.bestScore) return;
+  game.bestScore = game.score;
+  try { localStorage.setItem('cade:pool:best', String(game.bestScore)); } catch { /* Storage may be unavailable. */ }
+}
+
+function awardWin() {
+  if (game.rewardGiven) return;
+  const reward = 18 + Math.min(18, Math.floor(game.score / 900));
+  game.rewardGiven = true;
+  game.coinsEarned = reward;
+  addCoins(reward);
+  maybeUnlock({ anyPlay: true, score: game.score });
+}
+
+function finishGame(won) {
+  game.mode = won ? 'won' : 'lost';
+  game.message = won ? `Three-rack run complete with ${game.score} points.` : `Out of shots with ${objectBalls().length} balls left.`;
+  if (won) awardWin();
+  updateBest();
+}
+
+function nextRack() {
+  if (game.mode !== 'rack-clear') return stateToObject();
+  game.rack += 1;
+  beginRack();
+  return stateToObject();
+}
+
+function togglePause() {
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode;
+    game.message = game.mode === 'rolling' ? 'Balls in motion.' : 'Take your shot.';
+  } else if (game.mode === 'aiming' || game.mode === 'rolling') {
+    game.previousMode = game.mode;
+    game.mode = 'paused';
+    game.message = 'Game paused.';
+  }
+  game.lastAction = { type: 'pause_toggle', mode: game.mode };
+  updateUi();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) stage.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function collideBalls(a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const distance = Math.hypot(dx, dy);
+  const minimum = a.r + b.r;
+  if (distance <= 0 || distance >= minimum) return;
+  const nx = dx / distance;
+  const ny = dy / distance;
+  const overlap = minimum - distance;
+  a.x -= nx * overlap / 2; a.y -= ny * overlap / 2;
+  b.x += nx * overlap / 2; b.y += ny * overlap / 2;
+  const relative = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+  if (relative >= 0) return;
+  const impulse = -relative * .96;
+  a.vx -= impulse * nx; a.vy -= impulse * ny;
+  b.vx += impulse * nx; b.vy += impulse * ny;
+}
+
+function physicsStep(dt) {
+  for (const ball of game.balls) {
+    if (!ball.active) continue;
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+    for (let i = 0; i < POCKETS.length; i += 1) {
+      const pocket = POCKETS[i];
+      if (Math.hypot(ball.x - pocket.x, ball.y - pocket.y) < POCKET_R - 2) {
+        pocketBall(ball, i);
+        break;
+      }
+    }
+    if (!ball.active) continue;
+    const minX = TABLE.x + BALL_R;
+    const maxX = TABLE.x + TABLE.w - BALL_R;
+    const minY = TABLE.y + BALL_R;
+    const maxY = TABLE.y + TABLE.h - BALL_R;
+    if (ball.x < minX) { ball.x = minX; ball.vx = Math.abs(ball.vx) * .86; if (game.shot) game.shot.cushionHits += 1; }
+    if (ball.x > maxX) { ball.x = maxX; ball.vx = -Math.abs(ball.vx) * .86; if (game.shot) game.shot.cushionHits += 1; }
+    if (ball.y < minY) { ball.y = minY; ball.vy = Math.abs(ball.vy) * .86; if (game.shot) game.shot.cushionHits += 1; }
+    if (ball.y > maxY) { ball.y = maxY; ball.vy = -Math.abs(ball.vy) * .86; if (game.shot) game.shot.cushionHits += 1; }
+  }
+  const active = game.balls.filter((ball) => ball.active);
+  for (let i = 0; i < active.length; i += 1) {
+    for (let j = i + 1; j < active.length; j += 1) collideBalls(active[i], active[j]);
+  }
+  const friction = Math.pow(.985, dt * 60);
+  for (const ball of active) {
+    ball.vx *= friction;
+    ball.vy *= friction;
+    if (Math.hypot(ball.vx, ball.vy) < 3) { ball.vx = 0; ball.vy = 0; }
+  }
+}
+
+function update(dt) {
+  if (game.mode !== 'paused' && game.mode !== 'menu') game.totalTime += dt;
+  if (game.mode === 'aiming') {
+    if (keys.has('arrowleft') || keys.has('a')) game.aimAngle -= dt * 1.45;
+    if (keys.has('arrowright') || keys.has('d')) game.aimAngle += dt * 1.45;
+    if (keys.has('arrowup') || keys.has('w')) game.power += dt * 45;
+    if (keys.has('arrowdown') || keys.has('s')) game.power -= dt * 45;
+    game.aimAngle = normalizeAngle(game.aimAngle);
+    game.power = clamp(game.power, 18, 100);
+  }
+  if (game.mode !== 'rolling') return;
+  let remaining = Math.min(dt, .12);
+  while (remaining > 0) {
+    const slice = Math.min(remaining, 1 / 120);
+    physicsStep(slice);
+    remaining -= slice;
+  }
+  if (game.shot) game.shot.elapsed += dt;
+  if (game.shot && game.shot.elapsed > .18 && !moving()) resolveShot();
+}
+
+function round(value) { return Math.round(value * 10) / 10; }
+function stateToObject() {
+  const cue = cueBall();
+  return {
+    coordinateSystem: 'Canvas pixels; origin top-left; x increases right; y increases down.',
+    mode: game.mode, rack: game.rack, racksTotal: MAX_RACKS, score: game.score, bestScore: game.bestScore,
+    shotsLeft: game.shotsLeft, run: game.run, power: Math.round(game.power),
+    aimDegrees: Math.round(game.aimAngle * 180 / Math.PI), message: game.message,
+    cueBall: cue ? { x: round(cue.x), y: round(cue.y), vx: round(cue.vx), vy: round(cue.vy), active: cue.active } : null,
+    objectBalls: objectBalls().map((ball) => ({ number: ball.number, x: round(ball.x), y: round(ball.y), vx: round(ball.vx), vy: round(ball.vy) })),
+    pockets: POCKETS.map((pocket, index) => ({ id: index + 1, x: pocket.x, y: pocket.y, radius: POCKET_R })),
+    currentShot: game.shot ? { pocketed: [...game.shot.pocketed], scratch: game.shot.scratch, cushionHits: game.shot.cushionHits } : null,
+    coinsEarned: game.coinsEarned, profileCoins: Number(profileState?.coins || 0), lastAction: game.lastAction,
+  };
+}
+
+function updateUi() {
+  hud.rack.textContent = `${game.rack} / ${MAX_RACKS}`;
+  hud.score.textContent = game.score.toLocaleString();
+  hud.shots.textContent = String(game.shotsLeft);
+  hud.balls.textContent = String(objectBalls().length);
+  hud.run.textContent = String(game.run);
+  hud.coins.textContent = String(game.coinsEarned || profileState?.coins || 0);
+  const canAim = game.mode === 'aiming';
+  buttons.left.disabled = !canAim; buttons.right.disabled = !canAim;
+  buttons.powerDown.disabled = !canAim; buttons.powerUp.disabled = !canAim; buttons.shoot.disabled = !canAim;
+  buttons.pause.disabled = !['aiming', 'rolling', 'paused'].includes(game.mode);
+  buttons.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  overlay.classList.toggle('show', ['menu', 'paused', 'rack-clear', 'won', 'lost'].includes(game.mode));
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Pocket Pool';
+    overlayText.textContent = 'Clear three racks before your shots run out. Sink balls in any pocket, build a run bonus, and keep the cue ball on the felt.';
+    startBtn.textContent = 'Break Rack One';
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused'; overlayText.textContent = 'The table is frozen until you resume.'; startBtn.textContent = 'Resume Game';
+  } else if (game.mode === 'rack-clear') {
+    overlayTitle.textContent = `Rack ${game.rack} Cleared`;
+    overlayText.textContent = `${game.shotsLeft} shots left. Your ${game.run}-ball run carries into the next rack.`;
+    startBtn.textContent = `Rack ${game.rack + 1}`;
+  } else if (game.mode === 'won') {
+    overlayTitle.textContent = 'Table Cleared';
+    overlayText.textContent = `${game.score.toLocaleString()} points and ${game.coinsEarned} coins. Best score: ${game.bestScore.toLocaleString()}.`;
+    startBtn.textContent = 'Play Again';
+  } else if (game.mode === 'lost') {
+    overlayTitle.textContent = 'Out of Shots';
+    overlayText.textContent = `${objectBalls().length} balls remained. Score: ${game.score.toLocaleString()}.`;
+    startBtn.textContent = 'Try Again';
+  }
+}
+
+function drawBall(ball) {
+  ctx.save();
+  ctx.translate(ball.x, ball.y);
+  ctx.beginPath(); ctx.arc(0, 0, ball.r, 0, Math.PI * 2);
+  const shine = ctx.createRadialGradient(-4, -5, 2, 0, 0, ball.r);
+  shine.addColorStop(0, '#fff'); shine.addColorStop(.2, ball.color); shine.addColorStop(1, '#07151c');
+  ctx.fillStyle = shine; ctx.fill();
+  ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1; ctx.stroke();
+  if (ball.id > 0) {
+    ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fillStyle = '#fff9e8'; ctx.fill();
+    ctx.fillStyle = '#10252e'; ctx.font = '900 8px Trebuchet MS'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(ball.number), 0, .5);
+  }
+  ctx.restore();
+}
+
+function drawAimGuide() {
+  if (game.mode !== 'aiming') return;
+  const cue = cueBall();
+  if (!cue?.active) return;
+  const length = 110 + game.power * 2.35;
+  const dx = Math.cos(game.aimAngle);
+  const dy = Math.sin(game.aimAngle);
+  ctx.save();
+  ctx.setLineDash([9, 9]); ctx.lineWidth = 2; ctx.strokeStyle = '#fff6c8cc';
+  ctx.beginPath(); ctx.moveTo(cue.x + dx * 18, cue.y + dy * 18); ctx.lineTo(cue.x + dx * length, cue.y + dy * length); ctx.stroke();
+  ctx.setLineDash([]); ctx.lineCap = 'round'; ctx.lineWidth = 7; ctx.strokeStyle = '#e5bd72';
+  ctx.beginPath(); ctx.moveTo(cue.x - dx * 28, cue.y - dy * 28); ctx.lineTo(cue.x - dx * (88 + game.power * .55), cue.y - dy * (88 + game.power * .55)); ctx.stroke();
+  ctx.lineWidth = 2; ctx.strokeStyle = '#58371f'; ctx.stroke();
+  ctx.restore();
+}
+
+function draw() {
+  const background = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  background.addColorStop(0, '#254956'); background.addColorStop(1, '#0c2028');
+  ctx.fillStyle = background; ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#ffd36a'; ctx.font = '900 28px Trebuchet MS'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('POCKET POOL', TABLE.x, 42);
+  ctx.fillStyle = '#bcd2cf'; ctx.font = '800 14px Trebuchet MS'; ctx.textAlign = 'right';
+  ctx.fillText(`BEST ${game.bestScore.toLocaleString()}`, TABLE.x + TABLE.w, 42);
+
+  ctx.fillStyle = '#6b3e21'; ctx.beginPath(); ctx.roundRect(TABLE.x - 30, TABLE.y - 30, TABLE.w + 60, TABLE.h + 60, 25); ctx.fill();
+  ctx.strokeStyle = '#e5bd72'; ctx.lineWidth = 5; ctx.stroke();
+  const felt = ctx.createRadialGradient(WIDTH / 2, HEIGHT / 2, 80, WIDTH / 2, HEIGHT / 2, 520);
+  felt.addColorStop(0, '#19835f'); felt.addColorStop(1, '#07513e');
+  ctx.fillStyle = felt; ctx.fillRect(TABLE.x, TABLE.y, TABLE.w, TABLE.h);
+  ctx.strokeStyle = '#ffffff15'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(310, TABLE.y); ctx.lineTo(310, TABLE.y + TABLE.h); ctx.stroke();
+  ctx.beginPath(); ctx.arc(310, TABLE.y + TABLE.h / 2, 63, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+  for (const pocket of POCKETS) {
+    const shadow = ctx.createRadialGradient(pocket.x, pocket.y, 4, pocket.x, pocket.y, POCKET_R + 7);
+    shadow.addColorStop(0, '#000'); shadow.addColorStop(.72, '#020708'); shadow.addColorStop(1, '#e5bd72');
+    ctx.fillStyle = shadow; ctx.beginPath(); ctx.arc(pocket.x, pocket.y, POCKET_R + 7, 0, Math.PI * 2); ctx.fill();
+  }
+  drawAimGuide();
+  for (const ball of game.balls) if (ball.active) drawBall(ball);
+  ctx.fillStyle = '#102932d9'; ctx.beginPath(); ctx.roundRect(170, 565, 660, 38, 11); ctx.fill();
+  ctx.fillStyle = '#eaf5ef'; ctx.font = '800 15px Trebuchet MS'; ctx.textAlign = 'center'; ctx.fillText(game.message, WIDTH / 2, 584);
+  if (game.mode === 'aiming') {
+    ctx.fillStyle = '#173a43'; ctx.fillRect(520, 58, 200, 12);
+    ctx.fillStyle = game.power > 80 ? '#ff8c68' : '#ffd36a'; ctx.fillRect(520, 58, 200 * game.power / 100, 12);
+    ctx.strokeStyle = '#fff7'; ctx.strokeRect(520, 58, 200, 12);
+    ctx.fillStyle = '#dceae7'; ctx.font = '900 11px Trebuchet MS'; ctx.textAlign = 'right'; ctx.fillText(`POWER ${Math.round(game.power)}`, 720, 51);
+  }
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: (event.clientX - rect.left) * WIDTH / rect.width, y: (event.clientY - rect.top) * HEIGHT / rect.height };
+}
+
+function pointAim(event) {
+  if (game.mode !== 'aiming') return;
+  const cue = cueBall();
+  const point = canvasPoint(event);
+  const dx = point.x - cue.x;
+  const dy = point.y - cue.y;
+  setAim(Math.atan2(dy, dx), clamp(Math.hypot(dx, dy) / 3.3, 18, 100));
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  if (game.mode !== 'aiming') return;
+  pointer.active = true; pointer.id = event.pointerId; canvas.setPointerCapture?.(event.pointerId); pointAim(event);
+});
+canvas.addEventListener('pointermove', (event) => { if (pointer.active && event.pointerId === pointer.id) pointAim(event); });
+canvas.addEventListener('pointerup', (event) => {
+  if (!pointer.active || event.pointerId !== pointer.id) return;
+  pointAim(event); pointer.active = false; pointer.id = null; shoot();
+});
+canvas.addEventListener('pointercancel', () => { pointer.active = false; pointer.id = null; });
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's'].includes(key)) event.preventDefault();
+  if (key === ' ' || key === 'enter') shoot();
+  else if (key === 'p') togglePause();
+  else if (key === 'r') beginGame();
+  else if (key === 'f') toggleFullscreen();
+  else keys.add(key);
+});
+document.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'rack-clear') nextRack();
+  else beginGame();
+});
+buttons.left.addEventListener('click', () => setAim(game.aimAngle - Math.PI / 36, game.power));
+buttons.right.addEventListener('click', () => setAim(game.aimAngle + Math.PI / 36, game.power));
+buttons.powerDown.addEventListener('click', () => setAim(game.aimAngle, game.power - 8));
+buttons.powerUp.addEventListener('click', () => setAim(game.aimAngle, game.power + 8));
+buttons.shoot.addEventListener('click', shoot);
+buttons.pause.addEventListener('click', togglePause);
+buttons.restart.addEventListener('click', beginGame);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  const dt = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
+  lastFrame = now;
+  if (!manualStepping) update(dt);
+  updateUi(); draw();
+  requestAnimationFrame(frame);
+}
+
+window.render_game_to_text = () => JSON.stringify(stateToObject());
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.ceil(Math.max(0, Number(ms) || 0) / (1000 / 60)));
+  const dt = Math.max(0, Number(ms) || 0) / 1000 / steps;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateUi(); draw(); manualStepping = false;
+  return stateToObject();
+};
+window.__POOL_GAME__ = {
+  state: game, start: beginGame, nextRack, setAim, shoot, pause: togglePause,
+  forcePocket(ballId, pocketIndex = 0) {
+    if (!game.shot) game.shot = { pocketed: [], scratch: false, cushionHits: 0, elapsed: 1 };
+    const ball = game.balls.find((item) => item.id === Number(ballId));
+    if (ball) pocketBall(ball, clamp(Number(pocketIndex) || 0, 0, POCKETS.length - 1));
+    return stateToObject();
+  },
+  settle() {
+    for (const ball of game.balls) { ball.vx = 0; ball.vy = 0; }
+    if (game.mode === 'rolling' && game.shot) { game.shot.elapsed = 1; resolveShot(); }
+    return stateToObject();
+  },
+  clearRack() {
+    if (game.mode !== 'rolling') {
+      game.mode = 'rolling'; game.shot = { pocketed: [], scratch: false, cushionHits: 0, elapsed: 1 };
+    }
+    for (const ball of objectBalls()) pocketBall(ball, 0);
+    for (const ball of game.balls) { ball.vx = 0; ball.vy = 0; }
+    resolveShot();
+    return stateToObject();
+  },
+  snapshot: stateToObject,
+};
+
+mountGameFeedback({ gameSlug: 'pool', gameName: 'Pocket Pool' });
+updateUi();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

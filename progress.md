@@ -3690,3 +3690,15 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - No persistent local server is left running.
 - Follow-up TODO:
   - Investigate the existing raw-static-server feedback smoke POST/API behavior so the shared feedback smoke can pass its console-error gate outside the full app/API runtime.
+- New request (2026-06-20): add a game not already on the website using `$develop-web-game`.
+- Read automation memory and reviewed the 130-game registry; recent additions through Word Ladder Sprint are excluded.
+- Chosen game: Pocket Pool (`/pool`), a six-pocket cue-sports challenge with three racks, aiming/power control, ball collisions, scratches, combo scoring, touch/keyboard support, rewards, feedback, and deterministic test hooks.
+- Next: implement the standalone canvas game, register metadata, regenerate SEO/feedback artifacts, then run and visually inspect Playwright gameplay scenarios.
+- Implemented `pool/index.html` with responsive canvas rendering, pointer/touch and keyboard aiming, adjustable power, deterministic ball/cushion/pocket physics, scratch handling, cue spotting, three racks, shot limits, run scoring, pause/restart/fullscreen, coin rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__POOL_GAME__` scenario helpers.
+- Registered Pocket Pool in `src/meta/games.js`; initial module syntax check passed.
+- Regenerated SEO/sitemap/home structured data and local Linear feedback seeds; live Linear provisioning skipped because its credentials are unset. Catalog/feedback metadata now covers 131 games.
+- Focused validation passed: 9 catalog/feedback coverage tests, daily feedback guard, 31 feedback tests, and 68 shop tests.
+- Required `$WEB_GAME_CLIENT` loop passed with six state/screenshot iterations and no error artifacts. Screenshot review found overlapping desktop power/best labels and a zero-ball menu HUD; both were corrected before the final browser rerun.
+- Final validation passed: second `$WEB_GAME_CLIENT` loop, module parse, static HTTP 200, 131-game metadata uniqueness, inspected menu/gameplay/win/mobile screenshots, real break collision movement, real pocket detection/scoring, real cue scratch/spotting, pause/resume, rack progression, win/reward, shot-limit loss, keyboard, pointer drag, and touch input. No Pocket Pool page or console errors were captured.
+- `npm run test:feedback-smoke:raw` completed all five functional checks but retained the known unrelated console-error failure: mobile Tetris POSTed to the Python static server and received HTTP 501. No persistent server should remain after this run.
+- TODO: none for Pocket Pool; future work may address the repository-wide raw-static feedback smoke POST behavior.

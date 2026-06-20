@@ -5,6 +5,7 @@ export const GAMES = [
   { slug:'pong',           name:'Pong',                emoji:'\u{1F3D3}', scoreHint:'returns',    url:'/pong',          desc:'Classic paddle game. Play against the computer!', earnsCoins:true },
   { slug:'airhockey',      name:'Air Hockey',          emoji:'\u{1F3D2}', scoreHint:'goals',      url:'/airhockey',     desc:'Drag your striker, bank the puck, and beat the table AI to seven goals.', earnsCoins:true },
   { slug:'skeeball',       name:'Skee-Ball',           emoji:'\u{1F3B3}', scoreHint:'score',      url:'/skeeball',      desc:'Aim, charge, and roll nine arcade balls into high-value scoring rings.', earnsCoins:true },
+  { slug:'pool',           name:'Pocket Pool',         emoji:'\u{1F3B1}', scoreHint:'score',      url:'/pool',          desc:'Aim cue shots, bank around the table, and clear three six-ball racks before your shots run out.', earnsCoins:true },
   { slug:'darts',          name:'Darts 301',           emoji:'\u{1F3AF}', scoreHint:'checkout',   url:'/darts',         desc:'Aim steady throws, score standard dartboard rings, avoid busts, and finish 301 on a double-out checkout.', earnsCoins:true },
   { slug:'snake',          name:'Snake',               emoji:'\u{1F40D}', scoreHint:'length',     url:'/snake',         desc:'Eat food, grow longer, avoid walls and yourself.', earnsCoins:true },
   { slug:'tictactoe',      name:'Tic-Tac-Toe',         emoji:'\u274C',    scoreHint:'wins',       url:'/tictactoe',     desc:'Play vs AI or local 2-player. Try to get 3 in a row!', earnsCoins:true },
