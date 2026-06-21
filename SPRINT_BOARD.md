@@ -472,3 +472,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-18] Key PR links: none merged for this date.
 - [nightly 2026-06-19] Tracked changes: 4 commit(s) - c8b8089 Add games telemetry and security improvements; c734b69 Update sitemap and add Club Penguin World test command; f809648 Update sprint board nightly commit log; 1422229 Update SEO game directory metadata.
 - [nightly 2026-06-19] Key PR links: none merged for this date.
+- [nightly 2026-06-20] Tracked changes: 1 commit(s) - 659817b Add Pocket Pool to the SEO game directory.
+- [nightly 2026-06-20] Key PR links: none merged for this date.

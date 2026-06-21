@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Mushroom March | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  overflow-x: hidden; color: #f9f5d7; font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 50% 8%, #334b66 0%, #14283b 42%, #09141e 100%);
+}
+.back {
+  position: fixed; top: 12px; left: 12px; z-index: 30; padding: 8px 12px;
+  border: 1px solid #d9f6a66b; border-radius: 9px; color: #f7ffe5;
+  background: #102331ec; text-decoration: none; font-size: 14px; font-weight: 900;
+}
+.app {
+  min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 56px 9px 14px;
+}
+.stage { width: min(98vw, 1060px); aspect-ratio: 48 / 31; position: relative; }
+canvas {
+  width: 100%; height: 100%; display: block; touch-action: none; border: 2px solid #9fd68b;
+  border-radius: 16px; background: #142c38; box-shadow: 0 24px 72px #000a, inset 0 1px 0 #fff4;
+}
+.overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 16px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .16s ease;
+  border-radius: 16px; background: #07141dcc;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+.panel {
+  width: min(650px, 94%); padding: clamp(18px, 4vw, 32px); border: 1px solid #c9f3a17a;
+  border-radius: 18px; color: #f9ffe9; background: #173142f2; box-shadow: 0 18px 52px #0009;
+}
+.panel h1 { margin: 0 0 9px; color: #f6ca65; font-size: clamp(35px, 6vw, 61px); letter-spacing: .02em; }
+.panel p { margin: 8px auto; max-width: 570px; color: #d7eadc; font-weight: 800; line-height: 1.45; }
+.panel .mini { color: #a9c8bc; font-size: 13px; }
+.hud, .controls { width: min(98vw, 1060px); display: grid; gap: 6px; }
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button { min-height: 42px; border: 1px solid #bfe99f55; border-radius: 9px; }
+.chip {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 7px 9px;
+  background: #132d3be8; box-shadow: inset 0 1px 0 #fff2;
+}
+.chip span { color: #9fc2b4; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.chip b { color: #f8ffe8; font-size: 15px; text-align: right; }
+.chip.gold b { color: #ffd46f; }
+.chip.good b { color: #a6ee91; }
+.chip.warn b { color: #ff9b78; }
+button {
+  cursor: pointer; padding: 0 7px; color: #f8ffe8; background: #28536a;
+  font: 900 13px "Trebuchet MS", "Segoe UI", sans-serif; box-shadow: inset 0 1px 0 #fff3, 0 6px 14px #0003;
+}
+button:hover { filter: brightness(1.14); }
+button:focus-visible { outline: 3px solid #ffd46f; outline-offset: 2px; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+.primary { color: #173224; background: #f6ca65; border-color: #fff0ac; }
+.action { background: #347c56; }
+.danger { background: #944d55; }
+@media (max-width: 820px) {
+  .app { justify-content: flex-start; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 51px 5px 10px; gap: 5px; }
+  .stage { width: 99vw; max-height: 50dvh; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .controls { gap: 4px; }
+  .chip, button { min-height: 39px; }
+  button { font-size: 12px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Defend a moonlit garden, break apart marching rootworms, and survive three mushroom-filled waves. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Mushroom March | AI and Sons Games">
+  <meta property="og:description" content="Defend a moonlit garden, break apart marching rootworms, and survive three mushroom-filled waves. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/mushroommarch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mushroom March | AI and Sons Games">
+  <meta name="twitter:description" content="Defend a moonlit garden, break apart marching rootworms, and survive three mushroom-filled waves. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <link rel="canonical" href="https://games.aiandsons.io/mushroommarch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Mushroom March","description":"Defend a moonlit garden, break apart marching rootworms, and survive three mushroom-filled waves. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/mushroommarch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Mushroom March game field">
+    <canvas id="game" width="960" height="620"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Mushroom March</h1>
+        <p id="overlayText">Protect the moon garden. Break the marching rootworm into pieces, clear every segment, and avoid the prowling beetle.</p>
+        <p class="mini">Move with arrows or WASD. Hold Space or Z to fire. On touch, drag on the garden and use Fire. P pauses, R restarts, and F toggles fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Defend the Garden</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip gold"><span>Wave</span><b id="waveText">1 / 3</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip warn"><span>Hearts</span><b id="livesText">3</b></div>
+    <div class="chip"><span>Segments</span><b id="segmentsText">10</b></div>
+    <div class="chip"><span>Shield</span><b id="shieldText">Ready</b></div>
+    <div class="chip gold"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Mushroom March controls">
+    <button id="leftBtn" type="button">Left</button>
+    <button id="upBtn" type="button">Up</button>
+    <button id="downBtn" type="button">Down</button>
+    <button id="rightBtn" type="button">Right</button>
+    <button class="primary" id="fireBtn" type="button">Fire</button>
+    <button class="action" id="pauseBtn" type="button">Pause</button>
+    <button class="danger" id="restartBtn" type="button">Restart</button>
+    <button id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  wave: document.getElementById('waveText'), score: document.getElementById('scoreText'),
+  lives: document.getElementById('livesText'), segments: document.getElementById('segmentsText'),
+  shield: document.getElementById('shieldText'), coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  left: document.getElementById('leftBtn'), up: document.getElementById('upBtn'),
+  down: document.getElementById('downBtn'), right: document.getElementById('rightBtn'),
+  fire: document.getElementById('fireBtn'), pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'), fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const WIDTH = 960;
+const HEIGHT = 620;
+const FIELD = { left: 34, right: 926, top: 58, bottom: 578 };
+const PLAYER_TOP = 438;
+const MAX_WAVES = 3;
+const SEGMENT_SPACING = 13;
+const keys = new Set();
+const touchDirections = new Set();
+const pointer = { active: false, id: null };
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function readBest() {
+  try { return Math.max(0, Math.floor(Number(localStorage.getItem('cade:mushroommarch:best') || 0))); }
+  catch { return 0; }
+}
+
+const game = {
+  mode: 'menu', previousMode: 'playing', wave: 1, score: 0, bestScore: readBest(), lives: 3,
+  coinsEarned: 0, rewardGiven: false, totalTime: 0, combo: 0, comboTimer: 0,
+  message: 'Protect the moon garden.', seed: 1847, killCount: 0,
+  player: { x: WIDTH / 2, y: 535, r: 16, speed: 270, cooldown: 0, shield: 0, invulnerable: 0 },
+  worm: null, mushrooms: [], bullets: [], spores: [], particles: [],
+  beetle: { active: false, x: -40, y: 510, vx: 120, phase: 0, respawn: 8 },
+  lastAction: { type: 'init' },
+};
+
+function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function random() {
+  game.seed = (game.seed * 1664525 + 1013904223) >>> 0;
+  return game.seed / 4294967296;
+}
+
+function makeMushrooms(count) {
+  const mushrooms = [];
+  let attempts = 0;
+  while (mushrooms.length < count && attempts < 500) {
+    attempts += 1;
+    const x = 72 + Math.floor(random() * 18) * 46;
+    const y = 110 + Math.floor(random() * 11) * 27;
+    if (y > PLAYER_TOP - 18) continue;
+    if (mushrooms.some((item) => Math.hypot(item.x - x, item.y - y) < 34)) continue;
+    mushrooms.push({ id: `m${game.wave}-${mushrooms.length}`, x, y, r: 13, hp: 2, maxHp: 2 });
+  }
+  return mushrooms;
+}
+
+function makeWorm(count) {
+  const head = { x: 72, y: 86, dir: 1, speed: 98 + game.wave * 18, turnCooldown: 0 };
+  const history = Array.from({ length: count * SEGMENT_SPACING + 30 }, (_, index) => ({ x: 72 - index * 2, y: 86 }));
+  return {
+    head, history,
+    segments: Array.from({ length: count }, (_, index) => ({ id: game.wave * 100 + index, x: 72 - index * 25, y: 86, r: index === 0 ? 14 : 13 })),
+  };
+}
+
+function touchProfile() {
+  rememberRecent('mushroommarch');
+  maybeUnlock({ anyPlay: true });
+}
+
+function beginGame() {
+  game.wave = 1; game.score = 0; game.lives = 3; game.coinsEarned = 0; game.rewardGiven = false;
+  game.totalTime = 0; game.combo = 0; game.comboTimer = 0; game.killCount = 0; game.seed = 1847;
+  game.player.x = WIDTH / 2; game.player.y = 535; game.player.cooldown = 0;
+  game.player.shield = 0; game.player.invulnerable = 0;
+  touchProfile();
+  beginWave();
+  game.lastAction = { type: 'start_game' };
+  return stateToObject();
+}
+
+function beginWave() {
+  game.mode = 'playing'; game.previousMode = 'playing';
+  game.bullets = []; game.spores = []; game.particles = [];
+  game.mushrooms = makeMushrooms(14 + game.wave * 4);
+  game.worm = makeWorm(8 + game.wave * 2);
+  game.beetle = { active: false, x: -40, y: 510, vx: 118 + game.wave * 18, phase: 0, respawn: Math.max(4, 9 - game.wave) };
+  game.message = game.wave === 1 ? 'The first rootworm is entering the garden.' : `Wave ${game.wave}: the march is faster now.`;
+  game.lastAction = { type: 'begin_wave', wave: game.wave, segments: game.worm.segments.length };
+  updateUi(); draw();
+  return stateToObject();
+}
+
+function nextWave() {
+  if (game.mode !== 'wave-clear') return stateToObject();
+  game.wave += 1;
+  beginWave();
+  return stateToObject();
+}
+
+function fire() {
+  if (game.mode !== 'playing' || game.player.cooldown > 0) return false;
+  game.bullets.push({ x: game.player.x, y: game.player.y - 20, vy: -510, r: 4 });
+  game.player.cooldown = game.player.shield > 0 ? .11 : .19;
+  game.lastAction = { type: 'fire', x: Math.round(game.player.x), y: Math.round(game.player.y) };
+  return true;
+}
+
+function spawnParticles(x, y, color, count = 8) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = random() * Math.PI * 2;
+    const speed = 38 + random() * 105;
+    game.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: .35 + random() * .35, color });
+  }
+}
+
+function hitSegment(index) {
+  const segment = game.worm?.segments[index];
+  if (!segment) return false;
+  game.worm.segments.splice(index, 1);
+  game.combo = game.comboTimer > 0 ? game.combo + 1 : 1;
+  game.comboTimer = 1.7;
+  game.killCount += 1;
+  const points = 100 + Math.min(8, game.combo - 1) * 20 + game.wave * 15;
+  game.score += points;
+  spawnParticles(segment.x, segment.y, '#ffbe55', 12);
+  if (segment.y < PLAYER_TOP - 18 && !game.mushrooms.some((item) => distance(item, segment) < 24)) {
+    game.mushrooms.push({ id: `grown-${game.killCount}`, x: segment.x, y: segment.y, r: 13, hp: 2, maxHp: 2 });
+  }
+  if (game.killCount % 6 === 0) game.spores.push({ x: segment.x, y: segment.y, vy: 54, r: 10, life: 9 });
+  game.message = game.combo > 1 ? `${game.combo} hit bloom combo!` : 'Rootworm segment cleared.';
+  game.lastAction = { type: 'segment_hit', id: segment.id, points, remaining: game.worm.segments.length };
+  if (game.worm.segments.length === 0) finishWave();
+  return true;
+}
+
+function finishWave() {
+  game.score += 400 * game.wave + game.lives * 75;
+  if (game.wave >= MAX_WAVES) finishGame(true);
+  else {
+    game.mode = 'wave-clear';
+    game.message = `Wave ${game.wave} cleared. The garden can breathe again.`;
+    game.lastAction = { type: 'wave_clear', wave: game.wave, score: game.score };
+  }
+  updateUi(); draw();
+}
+
+function finishGame(won) {
+  game.mode = won ? 'won' : 'lost';
+  if (won) game.score += game.lives * 350 + Math.round(game.player.shield * 25);
+  if (game.score > game.bestScore) {
+    game.bestScore = game.score;
+    try { localStorage.setItem('cade:mushroommarch:best', String(game.bestScore)); } catch { /* storage is optional */ }
+  }
+  if (!game.rewardGiven) {
+    const reward = Math.max(2, Math.min(30, (won ? 10 : 2) + Math.floor(game.score / 650)));
+    addCoins(reward); game.coinsEarned = reward; game.rewardGiven = true;
+  }
+  game.message = won ? 'All three rootworm marches are over.' : 'The rootworm reached the lantern bed.';
+  game.lastAction = { type: won ? 'game_won' : 'game_lost', score: game.score, reward: game.coinsEarned };
+  updateUi(); draw();
+}
+
+function loseLife(source = 'collision') {
+  if (game.mode !== 'playing' || game.player.invulnerable > 0) return false;
+  if (game.player.shield > 0) {
+    game.player.shield = 0;
+    game.player.invulnerable = 1;
+    game.message = 'The moon shield absorbed the hit.';
+    game.lastAction = { type: 'shield_block', source };
+    spawnParticles(game.player.x, game.player.y, '#8ee8ff', 16);
+    return true;
+  }
+  game.lives = Math.max(0, game.lives - 1);
+  game.player.invulnerable = 1.8;
+  game.player.x = WIDTH / 2; game.player.y = 535;
+  game.combo = 0; game.comboTimer = 0;
+  game.message = game.lives > 0 ? 'A lantern cracked. Keep defending!' : 'The garden lights went dark.';
+  game.lastAction = { type: 'life_lost', source, lives: game.lives };
+  spawnParticles(game.player.x, game.player.y, '#ff7e73', 18);
+  if (game.worm) {
+    game.worm.head.x = 72; game.worm.head.y = 86; game.worm.head.dir = 1;
+    game.worm.history = Array.from({ length: game.worm.segments.length * SEGMENT_SPACING + 30 }, () => ({ x: 72, y: 86 }));
+  }
+  if (game.lives <= 0) finishGame(false);
+  return true;
+}
+
+function togglePause() {
+  if (game.mode === 'playing') { game.previousMode = 'playing'; game.mode = 'paused'; game.message = 'The garden is paused.'; }
+  else if (game.mode === 'paused') { game.mode = game.previousMode; game.message = 'The march continues.'; }
+  else return stateToObject();
+  game.lastAction = { type: game.mode === 'paused' ? 'pause' : 'resume' };
+  updateUi(); draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) stage.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function updatePlayer(dt) {
+  let dx = 0; let dy = 0;
+  if (keys.has('arrowleft') || keys.has('a') || touchDirections.has('left')) dx -= 1;
+  if (keys.has('arrowright') || keys.has('d') || touchDirections.has('right')) dx += 1;
+  if (keys.has('arrowup') || keys.has('w') || touchDirections.has('up')) dy -= 1;
+  if (keys.has('arrowdown') || keys.has('s') || touchDirections.has('down')) dy += 1;
+  if (dx || dy) {
+    const scale = game.player.speed * dt / Math.hypot(dx, dy);
+    game.player.x = clamp(game.player.x + dx * scale, FIELD.left + 18, FIELD.right - 18);
+    game.player.y = clamp(game.player.y + dy * scale, PLAYER_TOP + 18, FIELD.bottom - 18);
+  }
+  if (keys.has(' ') || keys.has('z') || touchDirections.has('fire')) fire();
+}
+
+function wormHitsMushroom(head) {
+  return game.mushrooms.some((item) => item.hp > 0 && Math.abs(item.y - head.y) < 16 && Math.abs(item.x - (head.x + head.dir * 17)) < 19);
+}
+
+function updateWorm(dt) {
+  const worm = game.worm;
+  if (!worm || worm.segments.length === 0) return;
+  const head = worm.head;
+  head.turnCooldown = Math.max(0, head.turnCooldown - dt);
+  head.x += head.dir * head.speed * dt;
+  const atEdge = head.x < FIELD.left + 18 || head.x > FIELD.right - 18;
+  if (head.turnCooldown <= 0 && (atEdge || wormHitsMushroom(head))) {
+    head.x = clamp(head.x, FIELD.left + 18, FIELD.right - 18);
+    head.y += 28; head.dir *= -1; head.turnCooldown = .22;
+    if (head.y > FIELD.bottom - 18) head.y = PLAYER_TOP + 24;
+  }
+  worm.history.unshift({ x: head.x, y: head.y });
+  worm.history.length = Math.min(worm.history.length, worm.segments.length * SEGMENT_SPACING + 35);
+  worm.segments.forEach((segment, index) => {
+    const point = worm.history[Math.min(worm.history.length - 1, index * SEGMENT_SPACING)] || head;
+    segment.x = point.x; segment.y = point.y;
+    if (distance(segment, game.player) < segment.r + game.player.r) loseLife('rootworm');
+  });
+}
+
+function updateBullets(dt) {
+  for (let i = game.bullets.length - 1; i >= 0; i -= 1) {
+    const bullet = game.bullets[i];
+    bullet.y += bullet.vy * dt;
+    let consumed = bullet.y < FIELD.top;
+    if (!consumed && game.worm) {
+      const segmentIndex = game.worm.segments.findIndex((segment) => distance(segment, bullet) < segment.r + bullet.r);
+      if (segmentIndex >= 0) { hitSegment(segmentIndex); consumed = true; }
+    }
+    if (!consumed) {
+      const mushroom = game.mushrooms.find((item) => item.hp > 0 && distance(item, bullet) < item.r + bullet.r);
+      if (mushroom) {
+        mushroom.hp -= 1; consumed = true;
+        spawnParticles(bullet.x, bullet.y, '#d7f091', 5);
+        if (mushroom.hp <= 0) { game.score += 20; game.message = 'Mushroom path cleared.'; }
+      }
+    }
+    if (!consumed && game.beetle.active && distance(game.beetle, bullet) < 19) {
+      game.score += 250; consumed = true; game.beetle.active = false; game.beetle.respawn = 8;
+      game.message = 'Prowling beetle driven away!';
+      game.lastAction = { type: 'beetle_hit', points: 250 };
+      spawnParticles(game.beetle.x, game.beetle.y, '#aa69ff', 13);
+    }
+    if (consumed) game.bullets.splice(i, 1);
+  }
+  game.mushrooms = game.mushrooms.filter((item) => item.hp > 0);
+}
+
+function updateBeetle(dt) {
+  const beetle = game.beetle;
+  if (!beetle.active) {
+    beetle.respawn -= dt;
+    if (beetle.respawn <= 0) {
+      beetle.active = true; beetle.x = beetle.vx > 0 ? FIELD.left - 25 : FIELD.right + 25;
+      beetle.y = 500 + (random() - .5) * 70;
+    }
+    return;
+  }
+  beetle.phase += dt * 3.2;
+  beetle.x += beetle.vx * dt;
+  beetle.y = clamp(beetle.y + Math.sin(beetle.phase) * 55 * dt, PLAYER_TOP + 22, FIELD.bottom - 20);
+  if ((beetle.vx > 0 && beetle.x > FIELD.right + 35) || (beetle.vx < 0 && beetle.x < FIELD.left - 35)) {
+    beetle.vx *= -1; beetle.active = false; beetle.respawn = 4 + random() * 4;
+  }
+  if (beetle.active && distance(beetle, game.player) < 31) loseLife('beetle');
+}
+
+function updateSpores(dt) {
+  for (let i = game.spores.length - 1; i >= 0; i -= 1) {
+    const spore = game.spores[i];
+    spore.y += spore.vy * dt; spore.life -= dt;
+    if (distance(spore, game.player) < spore.r + game.player.r) {
+      game.player.shield = 7; game.score += 150; game.spores.splice(i, 1);
+      game.message = 'Moon spore shield charged!';
+      game.lastAction = { type: 'shield_collected', seconds: 7 };
+      continue;
+    }
+    if (spore.life <= 0 || spore.y > FIELD.bottom) game.spores.splice(i, 1);
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = game.particles.length - 1; i >= 0; i -= 1) {
+    const particle = game.particles[i];
+    particle.x += particle.vx * dt; particle.y += particle.vy * dt; particle.vy += 90 * dt; particle.life -= dt;
+    if (particle.life <= 0) game.particles.splice(i, 1);
+  }
+}
+
+function update(dt) {
+  const step = Math.min(.05, Math.max(0, Number(dt) || 0));
+  if (game.mode !== 'playing') { updateParticles(step); return; }
+  game.totalTime += step;
+  game.player.cooldown = Math.max(0, game.player.cooldown - step);
+  game.player.shield = Math.max(0, game.player.shield - step);
+  game.player.invulnerable = Math.max(0, game.player.invulnerable - step);
+  game.comboTimer = Math.max(0, game.comboTimer - step);
+  if (game.comboTimer <= 0) game.combo = 0;
+  updatePlayer(step); updateWorm(step); updateBullets(step); updateBeetle(step); updateSpores(step); updateParticles(step);
+}
+
+function stateToObject() {
+  return {
+    game: 'mushroommarch', mode: game.mode,
+    coordinate_system: '960x620 canvas; origin top-left; +x right, +y down; player zone y 438-578',
+    objective: 'Clear all rootworm segments in three waves while keeping at least one heart.',
+    wave: game.wave, max_waves: MAX_WAVES, score: game.score, best_score: game.bestScore,
+    lives: game.lives, combo: game.combo, coins_earned: game.coinsEarned,
+    player: {
+      x: Math.round(game.player.x), y: Math.round(game.player.y), r: game.player.r,
+      shield_seconds: Number(game.player.shield.toFixed(2)), invulnerable_seconds: Number(game.player.invulnerable.toFixed(2)),
+      fire_cooldown_seconds: Number(game.player.cooldown.toFixed(2)),
+    },
+    worm: {
+      direction: game.worm?.head.dir || 0, speed: game.worm?.head.speed || 0,
+      segments: (game.worm?.segments || []).map((item) => ({ id: item.id, x: Math.round(item.x), y: Math.round(item.y), r: item.r })),
+    },
+    mushrooms: game.mushrooms.map((item) => ({ x: Math.round(item.x), y: Math.round(item.y), hp: item.hp })),
+    bullets: game.bullets.map((item) => ({ x: Math.round(item.x), y: Math.round(item.y) })),
+    shield_spores: game.spores.map((item) => ({ x: Math.round(item.x), y: Math.round(item.y) })),
+    beetle: { active: game.beetle.active, x: Math.round(game.beetle.x), y: Math.round(game.beetle.y), respawn_seconds: Number(game.beetle.respawn.toFixed(2)) },
+    message: game.message, last_action: game.lastAction,
+  };
+}
+
+function updateUi() {
+  hud.wave.textContent = `${game.wave} / ${MAX_WAVES}`;
+  hud.score.textContent = game.score.toLocaleString();
+  hud.lives.textContent = String(game.lives);
+  hud.segments.textContent = String(game.worm?.segments.length || 0);
+  hud.shield.textContent = game.player.shield > 0 ? `${game.player.shield.toFixed(1)}s` : 'Ready';
+  hud.coins.textContent = String(Number(profileState?.coins || 0));
+  const playable = game.mode === 'playing';
+  for (const direction of ['left', 'up', 'down', 'right', 'fire']) buttons[direction].disabled = !playable;
+  buttons.pause.disabled = !['playing', 'paused'].includes(game.mode);
+  buttons.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  overlay.classList.toggle('show', ['menu', 'paused', 'wave-clear', 'won', 'lost'].includes(game.mode));
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Mushroom March';
+    overlayText.textContent = 'Protect the moon garden. Break the marching rootworm into pieces, clear every segment, and avoid the prowling beetle.';
+    startBtn.textContent = 'Defend the Garden';
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Garden Paused'; overlayText.textContent = 'The rootworm is holding still until you return.'; startBtn.textContent = 'Resume';
+  } else if (game.mode === 'wave-clear') {
+    overlayTitle.textContent = `Wave ${game.wave} Cleared`;
+    overlayText.textContent = `${game.score.toLocaleString()} points. The next rootworm is longer and faster.`;
+    startBtn.textContent = `Begin Wave ${game.wave + 1}`;
+  } else if (game.mode === 'won') {
+    overlayTitle.textContent = 'Garden Saved';
+    overlayText.textContent = `${game.score.toLocaleString()} points and ${game.coinsEarned} coins. Best score: ${game.bestScore.toLocaleString()}.`;
+    startBtn.textContent = 'Defend Again';
+  } else if (game.mode === 'lost') {
+    overlayTitle.textContent = 'Garden Overrun';
+    overlayText.textContent = `You reached wave ${game.wave} with ${game.score.toLocaleString()} points.`;
+    startBtn.textContent = 'Try Again';
+  }
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  sky.addColorStop(0, '#233f5a'); sky.addColorStop(.55, '#173b3d'); sky.addColorStop(1, '#122b24');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(820, 85, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#233f5a'; ctx.beginPath(); ctx.arc(806, 74, 34, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 26; i += 1) {
+    const x = (i * 137 + 71) % WIDTH; const y = 24 + (i * 67) % 180;
+    ctx.fillStyle = i % 3 === 0 ? '#dfffb0aa' : '#ffffff8a'; ctx.fillRect(x, y, 2, 2);
+  }
+  ctx.fillStyle = '#0f2c26';
+  for (let x = 0; x < WIDTH; x += 44) {
+    ctx.beginPath(); ctx.moveTo(x, PLAYER_TOP + 26); ctx.quadraticCurveTo(x + 18, PLAYER_TOP - 20 - (x % 4) * 4, x + 40, PLAYER_TOP + 26); ctx.fill();
+  }
+  ctx.fillStyle = '#17392c'; ctx.fillRect(FIELD.left, PLAYER_TOP, FIELD.right - FIELD.left, FIELD.bottom - PLAYER_TOP);
+  ctx.strokeStyle = '#9edb8150'; ctx.lineWidth = 2; ctx.strokeRect(FIELD.left, FIELD.top, FIELD.right - FIELD.left, FIELD.bottom - FIELD.top);
+  ctx.strokeStyle = '#c9f3a120'; ctx.setLineDash([8, 10]);
+  ctx.beginPath(); ctx.moveTo(FIELD.left, PLAYER_TOP); ctx.lineTo(FIELD.right, PLAYER_TOP); ctx.stroke(); ctx.setLineDash([]);
+}
+
+function drawMushroom(item) {
+  ctx.save(); ctx.translate(item.x, item.y);
+  ctx.fillStyle = '#e7d5a0'; ctx.beginPath(); ctx.roundRect(-4, 1, 8, 13, 3); ctx.fill();
+  const cap = ctx.createRadialGradient(-4, -7, 1, 0, -3, 16);
+  cap.addColorStop(0, '#ffdb78'); cap.addColorStop(.25, item.hp === 2 ? '#e95864' : '#9c4550'); cap.addColorStop(1, '#6c263b');
+  ctx.fillStyle = cap; ctx.beginPath(); ctx.arc(0, -2, 13, Math.PI, Math.PI * 2); ctx.lineTo(13, 1); ctx.lineTo(-13, 1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fff2c9'; ctx.beginPath(); ctx.arc(-5, -7, 2, 0, Math.PI * 2); ctx.arc(5, -4, 1.7, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawWormSegment(segment, index) {
+  ctx.save(); ctx.translate(segment.x, segment.y);
+  const head = index === 0;
+  const glow = ctx.createRadialGradient(-4, -5, 2, 0, 0, segment.r + 5);
+  glow.addColorStop(0, head ? '#fff2a8' : '#ffd46f'); glow.addColorStop(.42, head ? '#ef783f' : '#d95c45'); glow.addColorStop(1, '#692b42');
+  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, segment.r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#ffd68099'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#ffe496'; ctx.beginPath(); ctx.arc(-5, -8, 2.4, 0, Math.PI * 2); ctx.arc(5, -8, 2.4, 0, Math.PI * 2); ctx.fill();
+  if (head) {
+    ctx.fillStyle = '#162331'; ctx.beginPath(); ctx.arc(-5, -8, 1.1, 0, Math.PI * 2); ctx.arc(5, -8, 1.1, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawPlayer() {
+  const player = game.player;
+  if (player.invulnerable > 0 && Math.floor(player.invulnerable * 10) % 2 === 0) return;
+  ctx.save(); ctx.translate(player.x, player.y);
+  if (player.shield > 0) {
+    ctx.strokeStyle = '#8ee8ff'; ctx.lineWidth = 4; ctx.shadowBlur = 14; ctx.shadowColor = '#8ee8ff';
+    ctx.beginPath(); ctx.arc(0, 0, 25 + Math.sin(game.totalTime * 8) * 2, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+  }
+  ctx.fillStyle = '#3f8054'; ctx.beginPath(); ctx.roundRect(-15, -7, 30, 23, 8); ctx.fill();
+  ctx.fillStyle = '#b7e77d'; ctx.beginPath(); ctx.moveTo(-9, -5); ctx.quadraticCurveTo(-20, -25, -4, -25); ctx.quadraticCurveTo(4, -18, 0, -5); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(9, -5); ctx.quadraticCurveTo(20, -25, 4, -25); ctx.quadraticCurveTo(-4, -18, 0, -5); ctx.fill();
+  ctx.fillStyle = '#f6ca65'; ctx.fillRect(-4, -24, 8, 16);
+  ctx.fillStyle = '#d8f0c0'; ctx.beginPath(); ctx.arc(-6, 3, 2, 0, Math.PI * 2); ctx.arc(6, 3, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawBeetle() {
+  if (!game.beetle.active) return;
+  const beetle = game.beetle;
+  ctx.save(); ctx.translate(beetle.x, beetle.y); ctx.rotate(Math.sin(beetle.phase) * .18);
+  ctx.strokeStyle = '#221739'; ctx.lineWidth = 4;
+  for (const side of [-1, 1]) for (const y of [-10, 0, 10]) { ctx.beginPath(); ctx.moveTo(side * 7, y * .6); ctx.lineTo(side * 21, y); ctx.stroke(); }
+  const shell = ctx.createLinearGradient(-14, -14, 14, 14); shell.addColorStop(0, '#c974ff'); shell.addColorStop(1, '#592f91');
+  ctx.fillStyle = shell; ctx.beginPath(); ctx.ellipse(0, 0, 15, 20, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#f0b5ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -17); ctx.lineTo(0, 18); ctx.stroke();
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  ctx.fillStyle = '#f6ca65'; ctx.font = '900 25px Trebuchet MS'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('MUSHROOM MARCH', 44, 31);
+  ctx.fillStyle = '#c5ddcf'; ctx.font = '800 13px Trebuchet MS'; ctx.textAlign = 'right';
+  ctx.fillText(`BEST ${game.bestScore.toLocaleString()}`, 914, 31);
+  for (const mushroom of game.mushrooms) drawMushroom(mushroom);
+  for (let i = (game.worm?.segments.length || 0) - 1; i >= 0; i -= 1) drawWormSegment(game.worm.segments[i], i);
+  for (const bullet of game.bullets) {
+    ctx.shadowBlur = 10; ctx.shadowColor = '#f4ff9b'; ctx.fillStyle = '#f8ffb8';
+    ctx.beginPath(); ctx.ellipse(bullet.x, bullet.y, 3, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+  }
+  for (const spore of game.spores) {
+    ctx.shadowBlur = 14; ctx.shadowColor = '#8ee8ff'; ctx.fillStyle = '#b8f6ff';
+    ctx.beginPath(); ctx.arc(spore.x, spore.y, spore.r + Math.sin(game.totalTime * 8) * 1.5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+  }
+  drawBeetle(); drawPlayer();
+  for (const particle of game.particles) {
+    ctx.globalAlpha = clamp(particle.life * 2, 0, 1); ctx.fillStyle = particle.color;
+    ctx.fillRect(particle.x - 2, particle.y - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#0d202cdc'; ctx.beginPath(); ctx.roundRect(190, 583, 580, 27, 9); ctx.fill();
+  ctx.fillStyle = '#e5f3df'; ctx.font = '800 13px Trebuchet MS'; ctx.textAlign = 'center'; ctx.fillText(game.message, WIDTH / 2, 597);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: (event.clientX - rect.left) * WIDTH / rect.width, y: (event.clientY - rect.top) * HEIGHT / rect.height };
+}
+
+function movePlayerToPoint(event) {
+  if (game.mode !== 'playing') return;
+  const point = canvasPoint(event);
+  game.player.x = clamp(point.x, FIELD.left + 18, FIELD.right - 18);
+  game.player.y = clamp(point.y, PLAYER_TOP + 18, FIELD.bottom - 18);
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  if (game.mode !== 'playing') return;
+  pointer.active = true; pointer.id = event.pointerId; canvas.setPointerCapture?.(event.pointerId);
+  movePlayerToPoint(event); fire();
+});
+canvas.addEventListener('pointermove', (event) => { if (pointer.active && event.pointerId === pointer.id) movePlayerToPoint(event); });
+canvas.addEventListener('pointerup', (event) => { if (event.pointerId === pointer.id) { pointer.active = false; pointer.id = null; } });
+canvas.addEventListener('pointercancel', () => { pointer.active = false; pointer.id = null; });
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's', 'z'].includes(key)) event.preventDefault();
+  if (key === 'p') togglePause();
+  else if (key === 'r') beginGame();
+  else if (key === 'f') toggleFullscreen();
+  else keys.add(key);
+});
+document.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
+window.addEventListener('blur', () => keys.clear());
+
+function bindHold(button, action) {
+  button.addEventListener('pointerdown', (event) => { event.preventDefault(); touchDirections.add(action); if (action === 'fire') fire(); });
+  const release = () => touchDirections.delete(action);
+  button.addEventListener('pointerup', release); button.addEventListener('pointercancel', release); button.addEventListener('pointerleave', release);
+}
+for (const direction of ['left', 'up', 'down', 'right', 'fire']) bindHold(buttons[direction], direction);
+
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'wave-clear') nextWave();
+  else beginGame();
+});
+buttons.pause.addEventListener('click', togglePause);
+buttons.restart.addEventListener('click', beginGame);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  const dt = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
+  lastFrame = now;
+  if (!manualStepping) update(dt);
+  updateUi(); draw();
+  requestAnimationFrame(frame);
+}
+
+window.render_game_to_text = () => JSON.stringify(stateToObject());
+window.advanceTime = (ms = 16) => {
+  manualStepping = true;
+  const duration = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.ceil(duration / (1000 / 60)));
+  const dt = duration / 1000 / steps;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateUi(); draw(); manualStepping = false;
+  return stateToObject();
+};
+window.__MUSHROOM_MARCH_GAME__ = {
+  state: game, start: beginGame, beginWave, nextWave, fire, pause: togglePause,
+  setPlayer(x, y) { game.player.x = clamp(Number(x) || WIDTH / 2, FIELD.left + 18, FIELD.right - 18); game.player.y = clamp(Number(y) || 535, PLAYER_TOP + 18, FIELD.bottom - 18); return stateToObject(); },
+  hitSegment(index = 0) { return hitSegment(clamp(Math.floor(Number(index) || 0), 0, Math.max(0, (game.worm?.segments.length || 1) - 1))); },
+  clearWave() { while (game.mode === 'playing' && game.worm?.segments.length) hitSegment(0); return stateToObject(); },
+  damage(source = 'test') { game.player.invulnerable = 0; return loseLife(source); },
+  spawnShield(x = game.player.x, y = game.player.y) { game.spores.push({ x: Number(x), y: Number(y), vy: 0, r: 10, life: 9 }); return stateToObject(); },
+  activateBeetle() { game.beetle.active = true; game.beetle.x = 300; game.beetle.y = 510; game.beetle.vx = 130; return stateToObject(); },
+  snapshot: stateToObject,
+};
+
+mountGameFeedback({ gameSlug: 'mushroommarch', gameName: 'Mushroom March' });
+updateUi(); draw(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

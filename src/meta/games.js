@@ -20,6 +20,7 @@ export const GAMES = [
   { slug:'dino',           name:'Dino Run',            emoji:'\u{1F996}', scoreHint:'distance',   url:'/dino',          desc:'Endless runner with speed ramp and multipliers.', earnsCoins:true },
   { slug:'doodlejump',     name:'Doodle Jump',         emoji:'\u{1FA82}', scoreHint:'height',     url:'/doodlejump',    desc:'Hop between platforms, climb higher, and avoid falling off-screen.', earnsCoins:true },
   { slug:'spaceinvaders',  name:'Space Invaders',      emoji:'\u{1F47E}', scoreHint:'waves',      url:'/spaceinvaders', desc:'Classic shooter. Clear waves and dodge fire!', earnsCoins:true },
+  { slug:'mushroommarch',  name:'Mushroom March',       emoji:'\u{1F344}', scoreHint:'waves',      url:'/mushroommarch', desc:'Defend a moonlit garden, break apart marching rootworms, and survive three mushroom-filled waves.', earnsCoins:true },
   { slug:'frogger',        name:'Frogger',             emoji:'\u{1F438}', scoreHint:'crossings',  url:'/frogger',       desc:'Hop across traffic and rivers to reach safety.', earnsCoins:true },
   { slug:'minigolf',       name:'Pocket Mini Golf',    emoji:'\u26F3',    scoreHint:'low score',  url:'/minigolf',      desc:'Pull back and putt through hazards across 3 compact holes.', earnsCoins:false },
   { slug:'micro-mario',    name:'Micro Mario',         emoji:'\u{1F344}', scoreHint:'coins',      url:'/mario',         desc:'Tiny platformer. Collect coins and reach the flag.', earnsCoins:true },

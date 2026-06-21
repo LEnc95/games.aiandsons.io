@@ -36,6 +36,7 @@
 - game/dino
 - game/doodlejump
 - game/spaceinvaders
+- game/mushroommarch
 - game/frogger
 - game/minigolf
 - game/micro-mario

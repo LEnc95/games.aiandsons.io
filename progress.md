@@ -3702,3 +3702,17 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Final validation passed: second `$WEB_GAME_CLIENT` loop, module parse, static HTTP 200, 131-game metadata uniqueness, inspected menu/gameplay/win/mobile screenshots, real break collision movement, real pocket detection/scoring, real cue scratch/spotting, pause/resume, rack progression, win/reward, shot-limit loss, keyboard, pointer drag, and touch input. No Pocket Pool page or console errors were captured.
 - `npm run test:feedback-smoke:raw` completed all five functional checks but retained the known unrelated console-error failure: mobile Tetris POSTed to the Python static server and received HTTP 501. No persistent server should remain after this run.
 - TODO: none for Pocket Pool; future work may address the repository-wide raw-static feedback smoke POST behavior.
+- New request (2026-06-21): add a game not already on the website using `$develop-web-game`.
+- Reviewed the 131-game registry, recent automation additions through Pocket Pool, and existing gameplay categories.
+- Chosen game: Mushroom March (`/mushroommarch`), a garden-defense shooter where a segmented rootworm winds through destructible mushrooms while the player dodges a roaming beetle and collects shield spores across three waves.
+- Plan: build the standalone canvas game with desktop/touch controls, deterministic hooks, rewards and feedback; register metadata; regenerate SEO/Linear artifacts; then run focused tests and visually inspect Playwright screenshots.
+- Implemented `mushroommarch/index.html` with three escalating waves, segmented rootworm movement, destructible mushroom cover, a roaming beetle hazard, shield spore drops, scoring/combo/lives/rewards, keyboard/touch controls, pause/restart/fullscreen, shared feedback, deterministic hooks, and scenario helpers.
+- Registered Mushroom March in `src/meta/games.js`; module syntax and 132-game slug/URL uniqueness checks passed.
+- Ran `npm run seo` and `npm run feedback:sync-linear`; sitemap/home SEO/game metadata and local Linear feedback seeds now include Mushroom March. Live Linear provisioning skipped because credentials are unset.
+- Validation completed:
+  - Focused catalog/feedback coverage tests passed (9 tests), `npm run test:feedback` passed (31 tests), and `npm run test:shop` passed (68 tests).
+  - Required `$WEB_GAME_CLIENT` run produced six synchronized gameplay screenshots/state snapshots in `output/web-game/mushroommarch-smoke`; inspected early and late gameplay captures and found no console error artifacts.
+  - Custom Playwright scenarios verified keyboard movement, a real projectile/segment collision, shield collection and absorption, beetle damage, pause/resume, three wave transitions, victory/30-coin reward, zero-heart loss, mobile touch movement/fire, and fullscreen.
+  - Inspected settled desktop victory and mobile gameplay captures in `output/web-game/mushroommarch-scenarios`; overlays, canvas, HUD, and controls are readable with no clipping or browser errors.
+  - Static route check returned HTTP 200 with the correct title, canvas, and shared feedback mount.
+- TODO: none for Mushroom March.
