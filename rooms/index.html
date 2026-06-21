@@ -116,6 +116,7 @@
         <div class="actions-row">
           <button id="startBtn" style="display:none;">🚦 Start race</button>
           <button id="playBtn" style="display:none;">🎮 Play now</button>
+          <button id="shareBtn">🔗 Invite friends</button>
           <button class="secondary" id="leaveBtn">Leave</button>
         </div>
       </div>
@@ -128,6 +129,7 @@
       handleEmoji, joinRoom, rerollHandle, startRoom,
     } from '../src/social/client.js';
     import { trackKpiEvent } from '../src/core/metrics.js';
+    import { openShareSheet } from '../src/social/share.js';
 
     trackKpiEvent('social_rooms_page_view', {});
 
@@ -295,6 +297,17 @@
     el('playBtn').addEventListener('click', () => {
       if (!currentRoom) return;
       window.open(`/${currentRoom.gameSlug}?room=${encodeURIComponent(currentRoom.code)}`, '_blank');
+    });
+
+    el('shareBtn').addEventListener('click', () => {
+      if (!currentRoom) return;
+      const name = GAME_NAMES[currentRoom.gameSlug] || currentRoom.gameSlug;
+      openShareSheet({
+        title: 'Invite friends to race',
+        text: `Join my ${name} race! Room ${currentRoom.code}`,
+        url: `${window.location.origin}/race/${encodeURIComponent(currentRoom.code)}`,
+      });
+      trackKpiEvent('social_room_share_clicked', { game: currentRoom.gameSlug });
     });
 
     el('leaveBtn').addEventListener('click', () => {

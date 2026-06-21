@@ -205,6 +205,9 @@
     }
     .game-card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--accent); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); background: var(--card-hover-bg); }
     .game-card:active { transform: scale(0.96); box-shadow: 0 5px 10px rgba(0,0,0,0.2); transition: all 0.1s; }
+    .game-share { position:absolute; top:14px; right:14px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:2px solid var(--card-border); background:rgba(0,0,0,0.28); color:var(--fg); font-size:17px; cursor:pointer; line-height:1; opacity:0.82; transition:transform .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease; }
+    .game-share:hover, .game-share:focus-visible { background:var(--accent); border-color:var(--accent); transform:scale(1.08); opacity:1; outline:none; }
+    .game-card.locked .game-share { display:none; }
     .game-card.locked { opacity: 0.55; border-color: var(--card-border); pointer-events: none; filter: grayscale(0.5); }
     .game-card.locked .game-link { background: var(--card-border); border-color: var(--card-border); color: var(--muted); }
     
@@ -291,6 +294,8 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://games.aiandsons.io/">
   <meta property="og:image" content="https://games.aiandsons.io/assets/social-banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="AI and Sons Games">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
@@ -993,6 +998,7 @@
       import { get as getStoredValue, set as setStoredValue } from './src/core/storage.js';
       import { mountAccountWidget } from './src/auth/embed.js';
       import { initCloudSave, queueCloudPush } from './src/social/cloudsave.js';
+      import { openShareSheet } from './src/social/share.js';
       import { getOnboardingState, setOnboardingState, skipOnboarding, selectOnboardingRole } from './src/core/onboarding.js';
 
       loadAndApplyAccessibility();
@@ -1547,6 +1553,7 @@
           : escapeHtml(game.desc || `Play ${game.name}!`);
 
         card.innerHTML = `
+          ${locked ? '' : `<span class="game-share" role="button" tabindex="0" aria-label="Share ${escapeHtml(game.name)}" title="Share game">\u{1F517}</span>`}
           <div class="game-icon" aria-hidden="true">${escapeHtml(game.emoji)}</div>
           <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span>${categoryTagMarkup}${accessibilityTagMarkup}</div>
           <h2 class="game-title">${escapeHtml(game.name)}</h2>
@@ -1562,6 +1569,25 @@
           trackKpiEvent('game_launch_clicked', { slug: game.slug, source: 'grid' });
           rememberRecent(game.slug);
         };
+
+        const shareBtn = card.querySelector('.game-share');
+        if (shareBtn) {
+          const openShare = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openShareSheet({
+              title: `Share ${game.name}`,
+              text: `Play ${game.name} free on AI & Sons Arcade!`,
+              url: `${window.location.origin}/g/${game.slug}`,
+            });
+            trackKpiEvent('game_share_clicked', { slug: game.slug, source: 'grid' });
+          };
+          shareBtn.addEventListener('click', openShare);
+          shareBtn.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') openShare(event);
+          });
+        }
+
         gamesGrid.appendChild(card);
       });
     }

@@ -117,6 +117,8 @@ const gamePages = GAMES.map((game) => {
     title: `${game.name} | ${SITE_NAME}`,
     desc: `${game.desc || DEFAULT_DESC} Play for free on ${SITE_NAME}.`,
     gameName: game.name,
+    // Per-game share card pre-rendered by scripts/marketing/og-cards.mjs.
+    image: `${BASE_URL}/assets/og/${game.slug}.png`,
   };
 });
 
@@ -199,6 +201,7 @@ function renderSeoBlock(page) {
   const description = escapeHtmlAttr(page.desc);
   const title = escapeHtmlAttr(page.title);
   const canonicalUrl = `${BASE_URL}${page.url}`;
+  const image = escapeHtmlAttr(page.image || DEFAULT_IMAGE);
   const structuredData = JSON.stringify(buildStructuredData(page));
 
   return `
@@ -209,13 +212,15 @@ function renderSeoBlock(page) {
   <meta property="og:description" content="${description}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="${canonicalUrl}">
-  <meta property="og:image" content="${DEFAULT_IMAGE}">
+  <meta property="og:image" content="${image}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${DEFAULT_IMAGE}">
+  <meta name="twitter:image" content="${image}">
   <link rel="canonical" href="${canonicalUrl}">
   <script type="application/ld+json" data-seo-managed="true">${structuredData}</script>
   <!-- SEO:END -->

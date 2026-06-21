@@ -16,6 +16,12 @@ import {
   handleEmoji,
   submitScore,
 } from './client.js';
+import { openShareSheet } from './share.js';
+import { shareScoreCard } from './card.js';
+import { startRecording, finalizeRecording, shareClip } from './record.js';
+import { GAMES } from '../meta/games.js';
+
+const gameMeta = (slug) => GAMES.find((game) => game.slug === slug) || null;
 
 const BEST_SCORES_KEY = 'bestScores';
 const MY_CHALLENGES_KEY = 'myChallenges';
@@ -152,15 +158,6 @@ const showRoomBanner = (roomCode) => {
   setTimeout(() => banner.remove(), 9000);
 };
 
-const copyText = async (text) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const renderLeaderboardPanel = ({ board, period = 'daily' }) => {
   injectStyles();
   removeNode('cade-social-panel');
@@ -267,7 +264,7 @@ const mountSocialDock = () => {
   dock.querySelector('[data-action="leaderboard"]').addEventListener('click', showLeaderboard);
 };
 
-const renderResultPanel = ({ score, result }) => {
+const renderResultPanel = ({ score, result, clip = null }) => {
   injectStyles();
   removeNode('cade-social-panel');
 
@@ -315,6 +312,10 @@ const renderResultPanel = ({ score, result }) => {
 
   lines.push('<div class="cade-social-actions">');
   lines.push('<button class="cade-social-btn" data-action="challenge">⚔️ Challenge a friend</button>');
+  lines.push('<button class="cade-social-btn" data-action="scorecard">\u{1F5BC}️ Save score card</button>');
+  if (clip) {
+    lines.push('<button class="cade-social-btn" data-action="clip">\u{1F3A5} Save clip</button>');
+  }
   if (context.roomCode) {
     lines.push(`<a class="cade-social-btn" href="/rooms?code=${encodeURIComponent(context.roomCode)}" style="text-decoration:none">\u{1F3C1} Back to room</a>`);
   }
@@ -329,6 +330,9 @@ const renderResultPanel = ({ score, result }) => {
 
   panel.querySelector('.cade-social-close').addEventListener('click', () => panel.remove());
 
+  const meta = gameMeta(context.slug);
+  const gameLabel = meta ? meta.name : context.slug;
+
   const challengeButton = panel.querySelector('[data-action="challenge"]');
   challengeButton.addEventListener('click', async () => {
     challengeButton.disabled = true;
@@ -337,14 +341,64 @@ const renderResultPanel = ({ score, result }) => {
       const data = await createChallenge({ gameSlug: context.slug, score });
       rememberMyChallenge({ id: data.challenge.id, gameSlug: context.slug, score });
       trackKpiEvent('social_challenge_created', { game: context.slug, score });
-      const url = `${window.location.origin}${data.challenge.url}`;
-      const copied = await copyText(`Beat my score of ${score} in ${context.slug}! ${url}`);
-      challengeButton.textContent = copied ? '✅ Link copied!' : url;
+      // Share via the rich landing page (/challenge/:id) so it unfurls with a card.
+      const shareUrl = `${window.location.origin}/challenge/${encodeURIComponent(data.challenge.id)}`;
+      openShareSheet({
+        title: 'Challenge a friend',
+        text: `Beat my score of ${score} in ${gameLabel}!`,
+        url: shareUrl,
+      });
+      challengeButton.textContent = '⚔️ Challenge a friend';
+      challengeButton.disabled = false;
     } catch {
       challengeButton.textContent = 'Could not create link';
       challengeButton.disabled = false;
     }
   });
+
+  const scoreCardButton = panel.querySelector('[data-action="scorecard"]');
+  if (scoreCardButton) {
+    scoreCardButton.addEventListener('click', async () => {
+      scoreCardButton.disabled = true;
+      scoreCardButton.textContent = 'Building…';
+      try {
+        await shareScoreCard({
+          slug: context.slug,
+          name: gameLabel,
+          emoji: meta ? meta.emoji : '\u{1F3AE}',
+          score,
+          scoreHint: meta ? (meta.scoreHint || 'score') : 'score',
+          handle,
+        });
+        trackKpiEvent('social_scorecard_saved', { game: context.slug, score });
+        scoreCardButton.textContent = '✅ Saved!';
+      } catch {
+        scoreCardButton.textContent = '\u{1F5BC}️ Save score card';
+      } finally {
+        scoreCardButton.disabled = false;
+        setTimeout(() => {
+          scoreCardButton.textContent = '\u{1F5BC}️ Save score card';
+        }, 2500);
+      }
+    });
+  }
+
+  const clipButton = panel.querySelector('[data-action="clip"]');
+  if (clipButton && clip) {
+    clipButton.addEventListener('click', async () => {
+      clipButton.disabled = true;
+      clipButton.textContent = 'Saving…';
+      try {
+        await shareClip(clip, { slug: context.slug, name: gameLabel });
+        trackKpiEvent('social_clip_saved', { game: context.slug, score });
+        clipButton.textContent = '✅ Saved!';
+      } catch {
+        clipButton.textContent = '\u{1F3A5} Save clip';
+      } finally {
+        clipButton.disabled = false;
+      }
+    });
+  }
 };
 
 export const initSocial = ({ slug }) => {
@@ -355,6 +409,13 @@ export const initSocial = ({ slug }) => {
   context.roomCode = getRoomCodeFromUrl();
 
   mountSocialDock();
+
+  // Begin capturing the canvas for an optional shareable clip. Self-gates on
+  // support (no-op for DOM-based games) and never throws. Retry once in case
+  // the game creates its canvas a beat after initSocial.
+  if (!startRecording()) {
+    setTimeout(() => startRecording(), 1200);
+  }
 
   // Register lazily so first reportScore is fast.
   ensurePlayer().catch(() => {});
@@ -382,6 +443,14 @@ export const reportScore = async (score) => {
   if (!context.slug) return null;
   recordLocalBest(context.slug, normalized);
 
+  // Stop the gameplay clip at game over (null for DOM-based/unsupported games).
+  let clip = null;
+  try {
+    clip = await finalizeRecording();
+  } catch {
+    clip = null;
+  }
+
   try {
     const result = await submitScore({
       gameSlug: context.slug,
@@ -400,7 +469,7 @@ export const reportScore = async (score) => {
         { game: context.slug, score: normalized },
       );
     }
-    renderResultPanel({ score: normalized, result });
+    renderResultPanel({ score: normalized, result, clip });
     return result;
   } catch {
     // Offline or backend unavailable: stay silent, never break the game.
