@@ -494,9 +494,13 @@ async function findStripeBillingProfiles({
   for (const [key, value] of memoryState.values.entries()) {
     if (!String(key).startsWith(`${KEY_PREFIX}:user:`)) continue;
     try {
-      const parsed = normalizeBillingProfile(JSON.parse(String(value || "")));
-      if (parsed.customerEmail === normalizedCustomerEmail && parsed.userId) {
-        matches.push(parsed);
+      const raw = JSON.parse(String(value || ""));
+      // ⚡ Bolt Optimization: Avoid expensive normalizeBillingProfile for non-matching records
+      if (normalizeEmail(raw.customerEmail) === normalizedCustomerEmail) {
+        const parsed = normalizeBillingProfile(raw);
+        if (parsed.userId) {
+          matches.push(parsed);
+        }
       }
     } catch {
       // Ignore invalid cached values.
