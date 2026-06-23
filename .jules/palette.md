@@ -48,3 +48,6 @@
 ## 2026-06-15 - Enter-key submission and aria-labels for standalone inputs
 **Learning:** Ad-hoc admin inputs outside native forms often miss keyboard submit handlers and explicit labels, which slows keyboard workflows and weakens accessibility.
 **Action:** For standalone configuration inputs and modal fields, wire Enter to the primary action and ensure unlabeled inputs expose an explicit `aria-label` or label text.
+## $(date +%Y-%m-%d) - Add required indicator to ops/feedback admin token input
+**Learning:** Required form inputs without clear visual indicators can cause confusion, especially for internal ops tools where users might not realize a field is mandatory until they hit an error. This is a common pattern to address across the application.
+**Action:** Always add a clear visual indicator, such as `<span aria-hidden="true" title="Required">*</span>`, to the label of required fields. Ensure `aria-hidden="true"` is used to prevent redundant screen reader announcements, since the input semantics or surrounding text typically cover the requirement context.
