@@ -1,5 +1,29 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+- New automation request (2026-06-22): add a game the website does not already have.
+- Selected `/dominodraw`, a turn-based double-six domino game absent from the 132-game catalog.
+- Implemented Domino Draw with deterministic dealing, player/AI hands, left/right chain placement, boneyard draws, passes, blocked rounds, first-to-50 match scoring, coin rewards, pointer/keyboard controls, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Registered Domino Draw in `src/meta/games.js`.
+- Regenerated SEO/sitemap and local Linear feedback seeds; Domino Draw is catalog game 133.
+- Validation passed: 9 focused catalog/feedback tests, 31 full feedback tests, 68 shop/coin integration tests, static HTTP 200, required skill Playwright loop, desktop/mobile screenshot review, and deterministic draw/pass/blocked-round/AI/win-reward/pause/fullscreen scenarios. No Domino Draw browser errors were found.
+- Playwright artifacts: `output/web-game/dominodraw-loop`, `output/web-game/dominodraw-mobile.png`, and `output/web-game/dominodraw-mobile-gameplay.png`.
+- TODO: none for the requested game addition.
+
+## 2026-06-23 Create a new game automation
+- New request: add a game the website does not already have using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Domino Draw, Mushroom March, Pocket Pool, Word Ladder Sprint, Chess, Darts 301, Skee-Ball, Tower Defense, and Sky Joust.
+- Chosen game: Nim Grove (`/nimgrove`), a take-away strategy game with uneven stone piles, normal/misere rules, deterministic AI, hints, touch/keyboard controls, coins, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Plan: implement standalone canvas game, register metadata, regenerate SEO and Linear feedback seeds, then run focused tests and the required Playwright skill loop with screenshot inspection.
+- Initial implementation added `nimgrove/index.html` and registered Nim Grove in `src/meta/games.js`.
+- Ran `npm run seo` and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, and local Linear feedback seeds now include Nim Grove. Live Linear provisioning skipped because credentials are unset.
+- Early validation passed: module script syntax check, 9 focused catalog/feedback tests, and `npm run feedback:check-daily`.
+- Broader validation passed: `npm run test:feedback` (31 tests) and `npm run test:shop` (68 tests).
+- Required `$WEB_GAME_CLIENT` run passed against `/nimgrove/` with six synchronized state/screenshot iterations in `output/web-game/nimgrove-smoke`; no error artifacts were emitted.
+- Custom Playwright validation passed for desktop and mobile: start, hint, take/AI reply, pause/resume, normal last-stone win, misere last-stone loss, five-round match win, coin reward, shared feedback visibility, mobile touch controls, and no browser/page errors. Settled screenshots were inspected in `output/web-game/nimgrove-scenarios`.
+- `npm run test:feedback-smoke:raw` passed its five functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching prior known repository caveats rather than a Nim Grove issue.
+- Final hygiene: static HTTP 200 confirmed for `/nimgrove/`, catalog reports 134 unique games, `git diff --check` passed with only existing LF-to-CRLF warnings, and the temporary validation server was stopped.
+- TODO: none for Nim Grove; future work may address the repository-wide raw-static feedback smoke POST behavior.
+
 - Initialized Pac-Man implementation task.
 - Confirmed project structure uses per-game folders with `index.html` and shared metadata in `src/meta/games.js`.
 - Next: add `pacman/index.html`, integrate into game list, and validate with Playwright client + screenshots.

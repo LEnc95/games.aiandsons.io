@@ -121,6 +121,7 @@
 - game/checkers
 - game/pegsolitaire
 - game/towerhanoi
+- game/nimgrove
 - game/mancala
 - game/backgammon
 - game/chess
@@ -147,5 +148,6 @@
 - game/caverncrush
 - game/calccages
 - game/wordladder
+- game/dominodraw
 
 Generated from `src/meta/feedback.js`.

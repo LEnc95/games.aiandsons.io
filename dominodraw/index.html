@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Domino Draw | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{overflow-x:hidden;color:#fff8e5;font-family:"Trebuchet MS","Segoe UI",sans-serif;background:radial-gradient(circle at 50% 8%,#23645e 0%,#123e3b 46%,#082522 100%)}
+.back{position:fixed;top:12px;left:12px;z-index:30;padding:8px 12px;border:1px solid #efd99775;border-radius:9px;color:#fff9e4;background:#0b302eef;text-decoration:none;font-size:14px;font-weight:900}
+.app{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:56px 9px 14px}
+.stage{width:min(98vw,1100px);aspect-ratio:5/3;position:relative}
+canvas{width:100%;height:100%;display:block;touch-action:none;border:2px solid #d6b969;border-radius:16px;background:#164944;box-shadow:0 24px 72px #0009,inset 0 1px 0 #fff4}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;opacity:0;pointer-events:none;transition:opacity .16s;border-radius:16px;background:#061f1ed9}
+.overlay.show{opacity:1;pointer-events:auto}.panel{width:min(650px,94%);padding:clamp(18px,4vw,32px);border:1px solid #f0d88b70;border-radius:18px;background:#12413ef2;box-shadow:0 18px 52px #0008}
+.panel h1{margin:0 0 9px;color:#f4cf69;font-size:clamp(35px,6vw,61px)}.panel p{margin:8px auto;max-width:570px;color:#d8ece5;font-weight:800;line-height:1.45}.panel .mini{color:#a9cec5;font-size:13px}
+.hud,.controls{width:min(98vw,1100px);display:grid;gap:6px}.hud{grid-template-columns:repeat(6,minmax(0,1fr))}.controls{grid-template-columns:repeat(7,minmax(0,1fr))}
+.chip,button{min-height:42px;border:1px solid #ecd88955;border-radius:9px}.chip{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 9px;background:#103936e8;box-shadow:inset 0 1px 0 #fff2}
+.chip span{color:#a9cec5;font-size:10px;font-weight:900;text-transform:uppercase}.chip b{font-size:15px}.gold b{color:#f4cf69}.good b{color:#91e1b4}.warn b{color:#ffad7d}
+button{cursor:pointer;padding:0 7px;color:#fff9e8;background:#296762;font:900 13px "Trebuchet MS","Segoe UI",sans-serif;box-shadow:inset 0 1px 0 #fff3,0 6px 14px #0003}button:hover{filter:brightness(1.14)}button:focus-visible{outline:3px solid #f4cf69;outline-offset:2px}button:disabled{cursor:not-allowed;opacity:.42}
+.primary{color:#17352e;background:#f4cf69}.action{background:#3c8061}.danger{background:#95515a}
+@media(max-width:820px){.app{justify-content:flex-start}.hud{grid-template-columns:repeat(3,minmax(0,1fr))}.controls{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:520px){.back{font-size:12px;padding:7px 9px}.app{padding:51px 5px 10px;gap:5px}.stage{width:99vw;max-height:50dvh}.hud{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.controls{gap:4px}.chip,button{min-height:39px}button{font-size:11px}}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Match domino ends, draw from the boneyard, block the table AI, and race to 50 points. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Domino Draw | AI and Sons Games">
+  <meta property="og:description" content="Match domino ends, draw from the boneyard, block the table AI, and race to 50 points. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/dominodraw">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/dominodraw.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Domino Draw | AI and Sons Games">
+  <meta name="twitter:description" content="Match domino ends, draw from the boneyard, block the table AI, and race to 50 points. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/dominodraw.png">
+  <link rel="canonical" href="https://games.aiandsons.io/dominodraw">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Domino Draw","description":"Match domino ends, draw from the boneyard, block the table AI, and race to 50 points. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/dominodraw","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+ <section class="stage" aria-label="Domino Draw game table">
+  <canvas id="game" width="1000" height="600"></canvas>
+  <div class="overlay show" id="overlay"><div class="panel">
+   <h1 id="overlayTitle">Domino Draw</h1>
+   <p id="overlayText">Build a matching chain, empty your hand before the table AI, and race to 50 points.</p>
+   <p class="mini">Select a tile, then play left or right. Arrows select, Q/E place, D draws, P pauses, and F toggles fullscreen.</p>
+   <button class="primary" id="startBtn" type="button">Deal the Tiles</button>
+  </div></div>
+ </section>
+ <section class="hud" aria-label="Game status">
+  <div class="chip gold"><span>Round</span><b id="roundText">1</b></div>
+  <div class="chip good"><span>You</span><b id="playerScoreText">0 / 50</b></div>
+  <div class="chip warn"><span>AI</span><b id="aiScoreText">0 / 50</b></div>
+  <div class="chip"><span>Boneyard</span><b id="stockText">14</b></div>
+  <div class="chip"><span>Turn</span><b id="turnText">You</b></div>
+  <div class="chip gold"><span>Coins</span><b id="coinsText">0</b></div>
+ </section>
+ <section class="controls" aria-label="Domino Draw controls">
+  <button class="action" id="leftBtn" type="button">Play Left</button><button class="action" id="rightBtn" type="button">Play Right</button>
+  <button class="primary" id="drawBtn" type="button">Draw</button><button id="sortBtn" type="button">Sort Hand</button>
+  <button id="pauseBtn" type="button">Pause</button><button class="danger" id="restartBtn" type="button">New Match</button>
+  <button id="fullscreenBtn" type="button">Fullscreen</button>
+ </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const overlay=document.getElementById('overlay'),overlayTitle=document.getElementById('overlayTitle'),overlayText=document.getElementById('overlayText'),startBtn=document.getElementById('startBtn');
+const hud={round:document.getElementById('roundText'),player:document.getElementById('playerScoreText'),ai:document.getElementById('aiScoreText'),stock:document.getElementById('stockText'),turn:document.getElementById('turnText'),coins:document.getElementById('coinsText')};
+const buttons={left:document.getElementById('leftBtn'),right:document.getElementById('rightBtn'),draw:document.getElementById('drawBtn'),sort:document.getElementById('sortBtn'),pause:document.getElementById('pauseBtn'),restart:document.getElementById('restartBtn'),fullscreen:document.getElementById('fullscreenBtn')};
+const W=1000,H=600,TARGET=50,TILE_H=38;
+let lastFrame=performance.now(),manualStepping=false;
+
+function readBest(){try{return Math.max(0,Math.floor(Number(localStorage.getItem('cade:dominodraw:best')||0)))}catch{return 0}}
+const game={mode:'menu',round:1,playerScore:0,aiScore:0,bestMargin:readBest(),playerHand:[],aiHand:[],stock:[],chain:[],selected:0,turn:'player',aiDelay:0,seed:7262026,message:'Select a tile and build the chain.',lastAction:{type:'init'},roundResult:null,coinsEarned:0,rewardGiven:false,passes:0,playerDraws:0,aiDraws:0,matchNumber:0};
+function random(){game.seed=(game.seed*1664525+1013904223)>>>0;return game.seed/4294967296}
+function shuffle(list){for(let i=list.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[list[i],list[j]]=[list[j],list[i]]}return list}
+function makeSet(){const set=[];let id=0;for(let a=0;a<=6;a++)for(let b=a;b<=6;b++)set.push({id:'d'+game.matchNumber+'-'+id++,a,b});return shuffle(set)}
+function pips(t){return t.a+t.b}function handPips(h){return h.reduce((n,t)=>n+pips(t),0)}
+function leftEnd(){return game.chain.length?game.chain[0].a:null}function rightEnd(){return game.chain.length?game.chain.at(-1).b:null}
+function legalSides(t){if(!t)return[];if(!game.chain.length)return['left','right'];const s=[];if(t.a===leftEnd()||t.b===leftEnd())s.push('left');if(t.a===rightEnd()||t.b===rightEnd())s.push('right');return s}
+function legalTiles(h){return h.map((tile,index)=>({tile,index,sides:legalSides(tile)})).filter(v=>v.sides.length)}
+function updateAll(){updateUi();draw()}
+
+function startMatch(seed=7262026){game.seed=(Number(seed)>>>0)||7262026;game.matchNumber++;game.round=1;game.playerScore=0;game.aiScore=0;game.coinsEarned=0;game.rewardGiven=false;rememberRecent('dominodraw');maybeUnlock({anyPlay:true});return startRound()}
+function startRound(){const set=makeSet();game.playerHand=set.splice(0,7);game.aiHand=set.splice(0,7);game.stock=set;game.chain=[];game.selected=0;game.turn='player';game.aiDelay=0;game.passes=0;game.playerDraws=0;game.aiDraws=0;game.roundResult=null;game.mode='playing';game.message='Your turn. Any domino can open the round.';game.lastAction={type:'deal',round:game.round};updateAll();return stateToObject()}
+function selectTile(index){if(!game.playerHand.length)return false;game.selected=Math.max(0,Math.min(game.playerHand.length-1,Math.floor(Number(index)||0)));const t=game.playerHand[game.selected],s=legalSides(t);game.message=s.length?t.a+'|'+t.b+' can play '+s.join(' or ')+'.':t.a+'|'+t.b+' does not match either end.';game.lastAction={type:'select',index:game.selected,tile:[t.a,t.b],legalSides:s};updateAll();return true}
+function oriented(t,side){if(!game.chain.length)return{...t};if(side==='left')return t.b===leftEnd()?{...t}:{...t,a:t.b,b:t.a};return t.a===rightEnd()?{...t}:{...t,a:t.b,b:t.a}}
+function place(hand,index,side,actor){if(game.mode!=='playing'||game.turn!==actor)return false;const t=hand[index],s=legalSides(t);if(!t||!s.includes(side)){if(actor==='player')game.message='That tile does not match this end.';game.lastAction={type:'illegal_play',actor,side};updateAll();return false}const removed=hand.splice(index,1)[0],tile=oriented(removed,side);if(side==='left')game.chain.unshift(tile);else game.chain.push(tile);game.passes=0;game.message=(actor==='player'?'You play ':'AI plays ')+tile.a+'|'+tile.b+' on the '+side+'.';game.lastAction={type:'play',actor,side,tile:[tile.a,tile.b],chainEnds:[leftEnd(),rightEnd()]};if(!hand.length){finishRound(actor,'domino');return true}if(actor==='player'){game.selected=Math.max(0,Math.min(game.selected,game.playerHand.length-1));game.turn='ai';game.aiDelay=.6}else{game.turn='player';const legal=legalTiles(game.playerHand);game.message+=legal.length?' Your turn.':game.stock.length?' No match: draw from the boneyard.':' No match and the boneyard is empty.';if(!legal.length&&!game.stock.length)passTurn('player')}updateAll();return true}
+function playSelected(side='right'){return place(game.playerHand,game.selected,side,'player')}
+function drawPlayerTile(){if(game.mode!=='playing'||game.turn!=='player')return false;if(legalTiles(game.playerHand).length){game.message='You already have a playable tile.';game.lastAction={type:'draw_blocked',reason:'playable_tile'};updateAll();return false}if(!game.stock.length)return passTurn('player');const t=game.stock.pop();game.playerHand.push(t);game.playerDraws++;game.selected=game.playerHand.length-1;const s=legalSides(t);game.message=s.length?'You draw '+t.a+'|'+t.b+'. It can play '+s.join(' or ')+'.':'You draw '+t.a+'|'+t.b+'. Draw again.';game.lastAction={type:'draw',actor:'player',tile:[t.a,t.b],playable:!!s.length,stock:game.stock.length};updateAll();return true}
+function passTurn(actor){if(game.mode!=='playing'||game.turn!==actor)return false;game.passes++;game.lastAction={type:'pass',actor,consecutivePasses:game.passes};if(game.passes>=2){finishRound(null,'blocked');return true}if(actor==='player'){game.turn='ai';game.aiDelay=.45;game.message='You pass. The boneyard is empty.'}else{game.turn='player';game.message='AI passes. Your turn.'}updateAll();return true}
+function aiTurn(){if(game.mode!=='playing'||game.turn!=='ai')return false;let options=legalTiles(game.aiHand);while(!options.length&&game.stock.length){game.aiHand.push(game.stock.pop());game.aiDraws++;options=legalTiles(game.aiHand)}if(!options.length)return passTurn('ai');options.sort((a,b)=>(pips(b.tile)+(b.tile.a===b.tile.b?10:0))-(pips(a.tile)+(a.tile.a===a.tile.b?10:0)));const c=options[0],side=c.sides.includes('right')?'right':c.sides[0];return place(game.aiHand,c.index,side,'ai')}
+function finishRound(winner,reason){if(game.mode!=='playing')return false;const pp=handPips(game.playerHand),ap=handPips(game.aiHand);let roundWinner=winner,points=0;if(reason==='blocked'){if(pp<ap){roundWinner='player';points=ap-pp}else if(ap<pp){roundWinner='ai';points=pp-ap}}else if(winner==='player')points=ap;else if(winner==='ai')points=pp;if(roundWinner==='player')game.playerScore+=points;if(roundWinner==='ai')game.aiScore+=points;game.roundResult={winner:roundWinner||'tie',reason,points,playerPips:pp,aiPips:ap};game.lastAction={type:'round_end',...game.roundResult};if(game.playerScore>=TARGET||game.aiScore>=TARGET){finishMatch(game.playerScore>=TARGET?'player':'ai');return true}game.mode='round-over';game.message=roundWinner?(roundWinner==='player'?'You win':'AI wins')+' the round for '+points+' point'+(points===1?'':'s')+'.':'Blocked round: equal pips, no points.';updateAll();return true}
+function finishMatch(winner){game.mode=winner==='player'?'won':'lost';const margin=Math.abs(game.playerScore-game.aiScore);game.message=winner==='player'?'You win the match by '+margin+' points.':'The AI wins the match by '+margin+' points.';if(winner==='player'&&!game.rewardGiven){const coins=Math.max(12,Math.min(30,12+Math.floor(margin/4)));game.coinsEarned+=coins;game.rewardGiven=true;addCoins(coins);game.bestMargin=Math.max(game.bestMargin,margin);try{localStorage.setItem('cade:dominodraw:best',String(game.bestMargin))}catch{}maybeUnlock({anyPlay:true,dominodraw:{result:'won',margin,rounds:game.round}})}game.lastAction={type:'match_end',winner,margin,coins:game.coinsEarned};updateAll()}
+function nextRound(){if(game.mode!=='round-over')return false;game.round++;return startRound()}
+function sortHand(){if(!game.playerHand.length)return false;const id=game.playerHand[game.selected]?.id;game.playerHand.sort((a,b)=>Math.max(a.a,a.b)-Math.max(b.a,b.b)||Math.min(a.a,a.b)-Math.min(b.a,b.b));game.selected=Math.max(0,game.playerHand.findIndex(t=>t.id===id));game.message='Hand sorted by pip value.';game.lastAction={type:'sort'};updateAll();return true}
+function togglePause(){if(game.mode==='playing')game.mode='paused';else if(game.mode==='paused')game.mode='playing';else return false;game.lastAction={type:'pause_toggle',mode:game.mode};updateAll();return true}
+function toggleFullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});else document.exitFullscreen?.().catch(()=>{});game.lastAction={type:'fullscreen'};setTimeout(draw,80)}
+function update(dt){if(game.mode==='playing'&&game.turn==='ai'){game.aiDelay-=dt;if(game.aiDelay<=0)aiTurn()}}
+
+function rr(x,y,w,h,r,fill,stroke='',line=1){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=line;ctx.stroke()}}
+function text(v,x,y,size,color,align='left',weight='800'){ctx.fillStyle=color;ctx.font=weight+' '+size+'px Trebuchet MS, Segoe UI, sans-serif';ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(String(v),x,y)}
+const P={0:[],1:[[.5,.5]],2:[[.3,.3],[.7,.7]],3:[[.3,.3],[.5,.5],[.7,.7]],4:[[.3,.3],[.7,.3],[.3,.7],[.7,.7]],5:[[.3,.3],[.7,.3],[.5,.5],[.3,.7],[.7,.7]],6:[[.3,.24],[.7,.24],[.3,.5],[.7,.5],[.3,.76],[.7,.76]]};
+function drawPips(value,x,y,w,h,r){ctx.fillStyle='#173734';for(const pos of P[value]){ctx.beginPath();ctx.arc(x+w*pos[0],y+h*pos[1],r,0,Math.PI*2);ctx.fill()}}
+function domino(tile,x,y,w=72,h=TILE_H,opt={}){ctx.save();if(opt.selected){ctx.shadowBlur=18;ctx.shadowColor='#ffe17d'}rr(x,y,w,h,Math.max(4,h*.15),opt.hidden?'#173a3c':'#f7eed8',opt.selected?'#ffe17d':'#725d38',opt.selected?4:2);ctx.shadowBlur=0;if(opt.hidden){ctx.strokeStyle='#d1b862';ctx.strokeRect(x+7,y+6,w-14,h-12);ctx.fillStyle='#d1b86266';ctx.beginPath();ctx.arc(x+w/2,y+h/2,Math.max(3,h*.12),0,Math.PI*2);ctx.fill()}else{ctx.strokeStyle='#7c6747';ctx.lineWidth=Math.max(1,h*.04);ctx.beginPath();ctx.moveTo(x+w/2,y+4);ctx.lineTo(x+w/2,y+h-4);ctx.stroke();drawPips(tile.a,x+3,y+3,w/2-6,h-6,Math.max(1.5,h*.07));drawPips(tile.b,x+w/2+3,y+3,w/2-6,h-6,Math.max(1.5,h*.07))}ctx.restore()}
+function background(){const felt=ctx.createRadialGradient(W/2,H/2,30,W/2,H/2,610);felt.addColorStop(0,'#2b7168');felt.addColorStop(.66,'#185249');felt.addColorStop(1,'#0c3835');ctx.fillStyle=felt;ctx.fillRect(0,0,W,H);ctx.globalAlpha=.09;ctx.strokeStyle='#f8e3a0';for(let x=-H;x<W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+H,H);ctx.stroke()}ctx.globalAlpha=1;rr(24,20,W-48,H-40,28,'','#d6b96988',3);text('DOMINO DRAW',48,46,25,'#f4cf69','left','900');text('FIRST TO '+TARGET,W-48,46,14,'#bce0d5','right','900')}
+function aiHand(){text('TABLE AI  |  '+game.aiHand.length+' tiles',W/2,82,14,'#d4e9e2','center','800');const n=game.aiHand.length,gap=Math.min(46,600/Math.max(1,n)),start=W/2-((n-1)*gap+54)/2;for(let i=0;i<n;i++)domino(game.aiHand[i],start+i*gap,101,54,29,{hidden:true})}
+function stock(){for(let i=Math.min(4,game.stock.length)-1;i>=0;i--)domino({a:0,b:0},56+i*4,256-i*4,60,34,{hidden:true});text('BONEYARD',86,310,12,'#bce0d5','center','900');text(game.stock.length,86,332,18,'#f4cf69','center','900')}
+function chain(){const ax=145,aw=800;if(!game.chain.length){rr(250,224,500,112,18,'#0e403c99','#e6cf8266',2);text('OPEN THE ROUND',W/2,257,22,'#f4cf69','center','900');text('Any domino can start the chain.',W/2,292,15,'#d6ebe4','center','800');return}const n=game.chain.length,w=Math.max(29,Math.min(66,(aw-8)/n)),h=Math.max(24,w*.56),gap=2,total=n*w+(n-1)*gap,x=ax+(aw-total)/2,y=249;rr(ax-12,y-40,aw+24,h+80,20,'#0d403b88','#e6cf8248',2);text('LEFT END '+leftEnd(),ax,y-20,13,'#f4cf69','left','900');text('RIGHT END '+rightEnd(),ax+aw,y-20,13,'#f4cf69','right','900');game.chain.forEach((t,i)=>domino(t,x+i*(w+gap),y,w,h))}
+function handLayout(){const n=game.playerHand.length,w=Math.max(48,Math.min(72,820/Math.max(1,n))),gap=Math.min(10,Math.max(3,(900-n*w)/Math.max(1,n-1))),total=n*w+Math.max(0,n-1)*gap;return{w,gap,x:(W-total)/2,y:456}}
+function playerHand(){text('YOUR HAND  |  '+game.playerHand.length+' tiles  |  '+handPips(game.playerHand)+' pips',W/2,422,14,'#d4e9e2','center','900');const l=handLayout();game.playerHand.forEach((t,i)=>domino(t,l.x+i*(l.w+l.gap),l.y+(i===game.selected?-10:0),l.w,TILE_H,{selected:i===game.selected}));if(game.playerHand.length){const t=game.playerHand[game.selected],s=legalSides(t);text('Selected '+t.a+'|'+t.b+'  '+(s.length?'plays '+s.join(' / '):'no match'),W/2,521,14,s.length?'#f4cf69':'#ffad7d','center','900')}}
+function draw(){background();aiHand();stock();chain();playerHand();rr(145,548,710,30,10,'#092c2ad9','#d6b96944');text(game.message,W/2,563,13,'#eff9f5','center','800')}
+
+function updateUi(){hud.round.textContent=game.round;hud.player.textContent=game.playerScore+' / '+TARGET;hud.ai.textContent=game.aiScore+' / '+TARGET;hud.stock.textContent=game.stock.length;hud.turn.textContent=game.mode==='playing'?(game.turn==='player'?'You':'AI'):game.mode.replace('-',' ');hud.coins.textContent=Number(profileState?.coins||0);const t=game.playerHand[game.selected],s=game.mode==='playing'&&game.turn==='player'?legalSides(t):[];buttons.left.disabled=!s.includes('left');buttons.right.disabled=!s.includes('right');buttons.draw.disabled=game.mode!=='playing'||game.turn!=='player'||legalTiles(game.playerHand).length>0;buttons.sort.disabled=!game.playerHand.length;buttons.pause.disabled=!['playing','paused'].includes(game.mode);buttons.pause.textContent=game.mode==='paused'?'Resume':'Pause';overlay.classList.toggle('show',['menu','paused','round-over','won','lost'].includes(game.mode));if(game.mode==='menu'){overlayTitle.textContent='Domino Draw';overlayText.textContent='Build a matching chain, empty your hand before the table AI, and race to 50 points.';startBtn.textContent='Deal the Tiles'}else if(game.mode==='paused'){overlayTitle.textContent='Table Paused';overlayText.textContent='Your match is waiting exactly where you left it.';startBtn.textContent='Resume'}else if(game.mode==='round-over'){overlayTitle.textContent=game.roundResult?.winner==='player'?'Round Won':game.roundResult?.winner==='ai'?'AI Takes the Round':'Blocked Tie';overlayText.textContent=game.message+' Match score: you '+game.playerScore+', AI '+game.aiScore+'.';startBtn.textContent='Deal Round '+(game.round+1)}else if(game.mode==='won'){overlayTitle.textContent='Match Won';overlayText.textContent=game.message+' You earned '+game.coinsEarned+' coins. Best margin: '+game.bestMargin+'.';startBtn.textContent='Play Again'}else if(game.mode==='lost'){overlayTitle.textContent='AI Wins';overlayText.textContent=game.message+' Final score: you '+game.playerScore+', AI '+game.aiScore+'.';startBtn.textContent='Try Again'}}
+function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+canvas.addEventListener('pointerdown',e=>{if(game.mode!=='playing'||game.turn!=='player')return;const p=canvasPoint(e),l=handLayout();if(p.y>=l.y-20&&p.y<=l.y+TILE_H+10){for(let i=game.playerHand.length-1;i>=0;i--){const x=l.x+i*(l.w+l.gap);if(p.x>=x&&p.x<=x+l.w){selectTile(i);return}}}if(p.x>=45&&p.x<=135&&p.y>=225&&p.y<=350)drawPlayerTile()});
+document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowleft','arrowright','q','e','d','s','p','f','enter',' '].includes(k))e.preventDefault();if(k==='f')toggleFullscreen();else if(k==='p'||(e.key==='Escape'&&!document.fullscreenElement))togglePause();else if(game.mode!=='playing'){if(e.key==='Enter'||e.key===' '){if(game.mode==='paused')togglePause();else if(game.mode==='round-over')nextRound();else startMatch()}}else if(game.turn==='player'){if(k==='arrowleft')selectTile((game.selected-1+game.playerHand.length)%game.playerHand.length);else if(k==='arrowright')selectTile((game.selected+1)%game.playerHand.length);else if(k==='q')playSelected('left');else if(k==='e'||e.key==='Enter'||e.key===' ')playSelected('right');else if(k==='d')drawPlayerTile();else if(k==='s')sortHand()}});
+buttons.left.addEventListener('click',()=>playSelected('left'));buttons.right.addEventListener('click',()=>playSelected('right'));buttons.draw.addEventListener('click',drawPlayerTile);buttons.sort.addEventListener('click',sortHand);buttons.pause.addEventListener('click',togglePause);buttons.restart.addEventListener('click',()=>startMatch());buttons.fullscreen.addEventListener('click',toggleFullscreen);startBtn.addEventListener('click',()=>{if(game.mode==='paused')togglePause();else if(game.mode==='round-over')nextRound();else startMatch()});document.addEventListener('fullscreenchange',draw);window.addEventListener('resize',draw);
+function tileState(t){return t?{id:t.id,a:t.a,b:t.b,pips:pips(t)}:null}
+function stateToObject(){const t=game.playerHand[game.selected];return{game:'dominodraw',coordinate_system:'Canvas 1000x600 origin top-left, x increases right, y increases down. AI hand is at top, chain is centered left-to-right, player hand is at bottom.',mode:game.mode,round:game.round,target_score:TARGET,scores:{player:game.playerScore,ai:game.aiScore},turn:game.turn,chain_ends:game.chain.length?{left:leftEnd(),right:rightEnd()}:null,chain:game.chain.map(tileState),boneyard_count:game.stock.length,player_hand:game.playerHand.map((tile,index)=>({...tileState(tile),selected:index===game.selected,legal_sides:legalSides(tile)})),selected_index:game.selected,selected_tile:tileState(t),selected_legal_sides:legalSides(t),ai_hand_count:game.aiHand.length,player_pips:handPips(game.playerHand),ai_pips_hidden:handPips(game.aiHand),consecutive_passes:game.passes,draws:{player:game.playerDraws,ai:game.aiDraws},round_result:game.roundResult,message:game.message,coins_earned_this_match:game.coinsEarned,profile_coins:Number(profileState?.coins||0),best_margin:game.bestMargin,last_action:game.lastAction}}
+function setScenario({playerHand,aiHand,stock=[],chain=[],turn='player',playerScore=game.playerScore,aiScore=game.aiScore}={}){const norm=(tiles,prefix)=>(tiles||[]).map((t,i)=>({id:prefix+i,a:Number(t[0]),b:Number(t[1])}));game.playerHand=norm(playerHand||[[6,6]],'tp');game.aiHand=norm(aiHand||[[0,0]],'ta');game.stock=norm(stock,'ts');game.chain=norm(chain,'tc');game.turn=turn==='ai'?'ai':'player';game.playerScore=Number(playerScore)||0;game.aiScore=Number(aiScore)||0;game.selected=0;game.mode='playing';game.aiDelay=.01;game.passes=0;game.roundResult=null;game.message='Deterministic test scenario loaded.';game.lastAction={type:'test_scenario'};updateAll();return stateToObject()}
+window.render_game_to_text=()=>JSON.stringify(stateToObject());
+window.advanceTime=(ms=16)=>{manualStepping=true;const duration=Math.max(0,Number(ms)||0),steps=Math.max(1,Math.ceil(duration/(1000/60))),dt=duration/1000/steps;for(let i=0;i<steps;i++)update(dt);updateAll();manualStepping=false;lastFrame=performance.now();return stateToObject()};
+window.__DOMINO_DRAW_GAME__={state:game,startMatch,startRound,nextRound,selectTile,play:playSelected,draw:drawPlayerTile,pass:()=>passTurn('player'),aiTurn,sort:sortHand,pause:togglePause,setScenario,finishRound:(winner='player',reason='domino')=>finishRound(winner,reason),snapshot:stateToObject};
+window.__CADE_FEEDBACK_CONTEXT__=()=>stateToObject();
+function frame(now){const dt=Math.min(.05,Math.max(0,(now-lastFrame)/1000));lastFrame=now;if(!manualStepping)update(dt);updateUi();draw();requestAnimationFrame(frame)}
+mountGameFeedback({ gameSlug: 'dominodraw', gameName: 'Domino Draw' });
+updateAll();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

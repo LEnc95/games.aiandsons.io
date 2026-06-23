@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Nim Grove | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbef;
+  background: linear-gradient(135deg, #153a34 0%, #44546f 48%, #402b45 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbef;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff82;
+  padding: 8px 12px;
+  background: #0e2328dc;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 25 / 16;
+  max-height: min(66dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #edf7cfcc;
+  background: #18343c;
+  box-shadow: 0 22px 54px #07171d8f;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #f2ffe0bd;
+  background: #102830f2;
+  box-shadow: 0 18px 46px #07151b99;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: .98;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 64ch;
+  color: #dbe8d0;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #bed3c3;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #f4ffe56b;
+  background: #122a32e8;
+  color: #f7fbef;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff2e;
+}
+.chip span {
+  color: #b8cfca;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #a9f2bf; }
+.chip.warn b { color: #ffdf83; }
+.chip.bad b { color: #ffad9b; }
+button {
+  cursor: pointer;
+  font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #07171d4d;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffdf83;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #11242a;
+  background: linear-gradient(135deg, #ffdf83 0%, #9befc3 100%);
+  border-color: #ffffffb8;
+}
+button.utility { background: #34475e; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 940px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 12px; padding: 0 7px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Remove stones from one grove pile at a time, outwit a deterministic AI, and master normal or misere Nim. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Nim Grove | AI and Sons Games">
+  <meta property="og:description" content="Remove stones from one grove pile at a time, outwit a deterministic AI, and master normal or misere Nim. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/nimgrove">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/nimgrove.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nim Grove | AI and Sons Games">
+  <meta name="twitter:description" content="Remove stones from one grove pile at a time, outwit a deterministic AI, and master normal or misere Nim. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/nimgrove.png">
+  <link rel="canonical" href="https://games.aiandsons.io/nimgrove">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Nim Grove","description":"Remove stones from one grove pile at a time, outwit a deterministic AI, and master normal or misere Nim. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/nimgrove","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage">
+    <canvas id="game" width="1000" height="640" tabindex="0" aria-label="Nim Grove strategy board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Rule</span><b id="ruleset">Normal</b></div>
+    <div class="chip warn"><span>Round</span><b id="round">1 / 5</b></div>
+    <div class="chip"><span>Turn</span><b id="turn">You</b></div>
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Selected</span><b id="selected">Pile 1 x1</b></div>
+    <div class="chip good"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="lessBtn" type="button">- Stone</button>
+    <button id="moreBtn" type="button">+ Stone</button>
+    <button id="takeBtn" class="primary" type="button">Take</button>
+    <button id="maxBtn" type="button">Take Max</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="modeBtn" type="button">Misere</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  ruleset: document.getElementById('ruleset'),
+  round: document.getElementById('round'),
+  turn: document.getElementById('turn'),
+  score: document.getElementById('score'),
+  selected: document.getElementById('selected'),
+  coins: document.getElementById('coins'),
+  primaryBtn: document.getElementById('primaryBtn'),
+  lessBtn: document.getElementById('lessBtn'),
+  moreBtn: document.getElementById('moreBtn'),
+  takeBtn: document.getElementById('takeBtn'),
+  maxBtn: document.getElementById('maxBtn'),
+  hintBtn: document.getElementById('hintBtn'),
+  modeBtn: document.getElementById('modeBtn'),
+  pauseBtn: document.getElementById('pauseBtn'),
+  fullBtn: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 640;
+const ROUND_COUNT = 5;
+const ROUND_LAYOUTS = [
+  [3, 4, 5],
+  [1, 3, 5, 7],
+  [2, 6, 8],
+  [4, 4, 6, 9],
+  [1, 5, 6, 7, 9],
+];
+const STONE_RADIUS = 17;
+const STORAGE_KEY = 'cade:nimgrove:best';
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY));
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  try {
+    const best = Math.max(state.best, state.score);
+    state.best = best;
+    localStorage.setItem(STORAGE_KEY, String(best));
+  } catch {
+    state.best = Math.max(state.best, state.score);
+  }
+}
+
+function createRng(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value = (value + 0x6d2b79f5) >>> 0;
+    let t = value;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const rng = createRng(0x51c0ffee);
+const state = {
+  mode: 'menu',
+  previousMode: 'menu',
+  ruleset: 'normal',
+  round: 0,
+  piles: ROUND_LAYOUTS[0].slice(),
+  selectedPile: 0,
+  selectedCount: 1,
+  turn: 'player',
+  timer: 0,
+  message: '',
+  hint: null,
+  aiMove: null,
+  score: 0,
+  playerRounds: 0,
+  aiRounds: 0,
+  coinsEarned: 0,
+  rewardGiven: false,
+  startedAt: 0,
+  elapsed: 0,
+  best: loadBest(),
+  particles: [],
+  pileBoxes: [],
+};
+
+function totalStones(piles = state.piles) {
+  return piles.reduce((sum, pile) => sum + pile, 0);
+}
+
+function availablePileIndex(preferred = state.selectedPile) {
+  if (state.piles[preferred] > 0) return preferred;
+  return state.piles.findIndex((pile) => pile > 0);
+}
+
+function clampSelection() {
+  const pile = availablePileIndex();
+  state.selectedPile = pile < 0 ? 0 : pile;
+  const max = state.piles[state.selectedPile] || 0;
+  state.selectedCount = Math.min(Math.max(1, state.selectedCount || 1), Math.max(1, max));
+}
+
+function computeBestMove(piles, ruleset) {
+  const live = piles
+    .map((count, index) => ({ count, index }))
+    .filter((pile) => pile.count > 0);
+
+  if (live.length === 0) return { pile: 0, count: 0, reason: 'empty' };
+  if (live.length === 1) {
+    const only = live[0];
+    const count = ruleset === 'misere' && only.count > 1 ? only.count - 1 : only.count;
+    return { pile: only.index, count: Math.max(1, count), reason: 'finish' };
+  }
+
+  const big = live.filter((pile) => pile.count > 1);
+  if (ruleset === 'misere' && big.length <= 1) {
+    if (big.length === 0) {
+      return { pile: live[0].index, count: 1, reason: live.length % 2 === 0 ? 'parity' : 'forced' };
+    }
+    const targetOnes = live.length % 2 === 0 ? 1 : 0;
+    const bigPile = big[0];
+    return {
+      pile: bigPile.index,
+      count: Math.max(1, bigPile.count - targetOnes),
+      reason: 'misere parity',
+    };
+  }
+
+  const xor = piles.reduce((value, pile) => value ^ pile, 0);
+  if (xor !== 0) {
+    for (let i = 0; i < piles.length; i += 1) {
+      const target = piles[i] ^ xor;
+      if (target < piles[i]) {
+        return { pile: i, count: piles[i] - target, reason: 'nim sum' };
+      }
+    }
+  }
+
+  const largest = live.reduce((best, pile) => (pile.count > best.count ? pile : best), live[0]);
+  const count = largest.count > 2 ? Math.max(1, Math.floor(largest.count / 2)) : 1;
+  return { pile: largest.index, count, reason: 'pressure' };
+}
+
+function currentHint() {
+  return computeBestMove(state.piles, state.ruleset);
+}
+
+function isPlayerActionAllowed() {
+  return state.mode === 'playing' && state.turn === 'player' && totalStones() > 0;
+}
+
+function startGame() {
+  state.mode = 'playing';
+  state.previousMode = 'playing';
+  state.round = 0;
+  state.score = 0;
+  state.playerRounds = 0;
+  state.aiRounds = 0;
+  state.coinsEarned = 0;
+  state.rewardGiven = false;
+  state.startedAt = performance.now();
+  state.elapsed = 0;
+  state.message = state.ruleset === 'normal' ? 'Take the last stone to win.' : 'Leave the last stone for the AI.';
+  setupRound();
+  rememberRecent('nimgrove');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+  draw();
+}
+
+function setupRound() {
+  state.piles = ROUND_LAYOUTS[state.round].slice();
+  state.selectedPile = 0;
+  state.selectedCount = 1;
+  state.turn = 'player';
+  state.timer = 0;
+  state.hint = null;
+  state.aiMove = null;
+  state.message = `Round ${state.round + 1}: choose one pile and take at least one stone.`;
+  clampSelection();
+}
+
+function nextRound() {
+  state.round += 1;
+  if (state.round >= ROUND_COUNT) {
+    finishMatch();
+    return;
+  }
+  setupRound();
+  state.mode = 'playing';
+  hideOverlay();
+}
+
+function winnerAfterTake(taker) {
+  if (totalStones() > 0) return null;
+  if (state.ruleset === 'normal') return taker;
+  return taker === 'player' ? 'ai' : 'player';
+}
+
+function scoreRound(winner) {
+  const remaining = totalStones();
+  const roundBonus = 100 + (state.round + 1) * 25;
+  const speedBonus = Math.max(0, 60 - Math.floor(state.elapsed / 2));
+  if (winner === 'player') {
+    state.playerRounds += 1;
+    state.score += roundBonus + speedBonus + remaining * 4;
+  } else {
+    state.aiRounds += 1;
+    state.score = Math.max(0, state.score - 25);
+  }
+  saveBest();
+}
+
+function finishRound(winner) {
+  scoreRound(winner);
+  state.mode = 'round_over';
+  state.turn = 'none';
+  state.hint = null;
+  state.message = winner === 'player'
+    ? `You won round ${state.round + 1}.`
+    : `The AI won round ${state.round + 1}.`;
+  showOverlay();
+  updateHud();
+}
+
+function finishMatch() {
+  state.mode = 'game_over';
+  state.turn = 'none';
+  const won = state.playerRounds > state.aiRounds;
+  let coins = 0;
+  if (won && !state.rewardGiven) {
+    coins = 12 + state.playerRounds * 4 + (state.ruleset === 'misere' ? 4 : 0);
+    addCoins(coins);
+    state.coinsEarned += coins;
+    state.rewardGiven = true;
+  }
+  saveBest();
+  maybeUnlock({
+    anyPlay: true,
+    nimgrove: {
+      result: won ? 'win' : 'loss',
+      score: state.score,
+      rounds: state.playerRounds,
+    },
+  });
+  state.message = won
+    ? `Match won ${state.playerRounds}-${state.aiRounds}. ${coins} coins earned.`
+    : `Match lost ${state.playerRounds}-${state.aiRounds}. Try the parity trap again.`;
+  showOverlay();
+  updateHud();
+}
+
+function takeFromPile(actor, pile, count) {
+  if (state.piles[pile] <= 0 || count <= 0) return false;
+  const take = Math.min(count, state.piles[pile]);
+  state.piles[pile] -= take;
+  state.hint = null;
+  const box = state.pileBoxes[pile];
+  const originX = box ? box.x : 260 + pile * 120;
+  const originY = box ? box.y + box.h * 0.45 : 340;
+  burstStones(originX, originY, take, actor);
+  clampSelection();
+  const winner = winnerAfterTake(actor);
+  if (winner) {
+    finishRound(winner);
+    return true;
+  }
+  if (actor === 'player') {
+    state.turn = 'ai';
+    state.mode = 'ai_thinking';
+    state.timer = 0.48;
+    state.message = `You took ${take} from pile ${pile + 1}. AI is thinking.`;
+  } else {
+    state.turn = 'player';
+    state.mode = 'playing';
+    state.message = `AI took ${take} from pile ${pile + 1}.`;
+  }
+  updateHud();
+  return true;
+}
+
+function playerTake(count = state.selectedCount) {
+  if (!isPlayerActionAllowed()) return false;
+  clampSelection();
+  return takeFromPile('player', state.selectedPile, count);
+}
+
+function aiTake() {
+  if (state.mode !== 'ai_thinking' || state.turn !== 'ai') return false;
+  const move = computeBestMove(state.piles, state.ruleset);
+  state.aiMove = move;
+  return takeFromPile('ai', move.pile, move.count);
+}
+
+function selectPile(index) {
+  if (index < 0 || index >= state.piles.length || state.piles[index] <= 0) return;
+  state.selectedPile = index;
+  state.selectedCount = Math.min(Math.max(1, state.selectedCount), state.piles[index]);
+  state.hint = null;
+  updateHud();
+  draw();
+}
+
+function adjustSelection(delta) {
+  if (!isPlayerActionAllowed()) return;
+  const max = state.piles[state.selectedPile] || 1;
+  state.selectedCount = Math.min(max, Math.max(1, state.selectedCount + delta));
+  state.hint = null;
+  updateHud();
+  draw();
+}
+
+function takeMax() {
+  if (!isPlayerActionAllowed()) return;
+  state.selectedCount = state.piles[state.selectedPile] || 1;
+  playerTake(state.selectedCount);
+}
+
+function useHint() {
+  if (!isPlayerActionAllowed()) return;
+  const hint = currentHint();
+  state.hint = hint;
+  state.selectedPile = hint.pile;
+  state.selectedCount = Math.max(1, Math.min(hint.count, state.piles[hint.pile]));
+  state.message = `Hint: take ${state.selectedCount} from pile ${state.selectedPile + 1}.`;
+  updateHud();
+  draw();
+}
+
+function toggleRuleset() {
+  if (state.mode !== 'menu' && state.mode !== 'game_over') return;
+  state.ruleset = state.ruleset === 'normal' ? 'misere' : 'normal';
+  state.message = state.ruleset === 'normal'
+    ? 'Normal Nim: the player who takes the last stone wins.'
+    : 'Misere Nim: the player forced to take the last stone loses.';
+  setupRound();
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'game_over') {
+    startGame();
+  } else if (state.mode === 'round_over') {
+    nextRound();
+  } else if (state.mode === 'paused') {
+    resumeGame();
+  } else if (state.mode === 'playing' || state.mode === 'ai_thinking') {
+    startGame();
+  }
+}
+
+function pauseGame() {
+  if (state.mode !== 'playing' && state.mode !== 'ai_thinking') return;
+  state.previousMode = state.mode;
+  state.mode = 'paused';
+  state.message = 'Paused.';
+  showOverlay();
+  updateHud();
+}
+
+function resumeGame() {
+  if (state.mode !== 'paused') return;
+  state.mode = state.previousMode === 'ai_thinking' ? 'ai_thinking' : 'playing';
+  state.message = state.turn === 'ai' ? 'AI is thinking.' : 'Choose a pile and stone count.';
+  hideOverlay();
+  updateHud();
+}
+
+function pauseToggle() {
+  if (state.mode === 'paused') resumeGame();
+  else pauseGame();
+}
+
+function showOverlay() {
+  let title = 'Nim Grove';
+  let button = 'Start';
+  let copy = 'Remove stones from one pile each turn. Win three or more rounds against a deterministic AI.';
+  const rules = state.ruleset === 'normal'
+    ? 'Normal rule: whoever takes the last stone wins.'
+    : 'Misere rule: whoever takes the last stone loses.';
+
+  if (state.mode === 'round_over') {
+    title = state.message;
+    button = state.round + 1 >= ROUND_COUNT ? 'Finish' : 'Next Round';
+    copy = `${state.playerRounds}-${state.aiRounds} after ${state.round + 1} rounds.`;
+  } else if (state.mode === 'game_over') {
+    title = state.playerRounds > state.aiRounds ? 'Grove Cleared' : 'AI Holds the Grove';
+    button = 'Play Again';
+    copy = state.message;
+  } else if (state.mode === 'paused') {
+    title = 'Paused';
+    button = 'Resume';
+    copy = 'The board is frozen until you continue.';
+  }
+
+  overlayPanel.innerHTML = `
+    <h1>${title}</h1>
+    <p>${copy}</p>
+    <p>${rules}</p>
+    <p class="mini">Pointer or touch selects a pile. Arrows change pile, [ and ] change stones, Enter takes, H hints, P pauses, R restarts, F toggles fullscreen.</p>
+    <p><button class="primary" id="overlayPrimary" type="button">${button}</button></p>
+  `;
+  overlay.classList.add('show');
+  const overlayPrimary = document.getElementById('overlayPrimary');
+  overlayPrimary.addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function burstStones(x, y, count, actor) {
+  const color = actor === 'player' ? '#ffdf83' : '#9fd6ff';
+  const particles = Math.min(16, count * 5);
+  for (let i = 0; i < particles; i += 1) {
+    const angle = rng() * Math.PI * 2;
+    const speed = 80 + rng() * 160;
+    state.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 40,
+      life: 0.65 + rng() * 0.35,
+      maxLife: 1,
+      color,
+    });
+  }
+}
+
+function update(dt) {
+  if (state.mode === 'playing' || state.mode === 'ai_thinking') {
+    state.elapsed += dt;
+  }
+  if (state.mode === 'ai_thinking') {
+    state.timer -= dt;
+    if (state.timer <= 0) aiTake();
+  }
+  for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+    const p = state.particles[i];
+    p.life -= dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 260 * dt;
+    if (p.life <= 0) state.particles.splice(i, 1);
+  }
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  sky.addColorStop(0, '#203b52');
+  sky.addColorStop(0.5, '#1b5145');
+  sky.addColorStop(1, '#1c2a2e');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = '#24492f';
+  ctx.beginPath();
+  ctx.moveTo(0, 520);
+  ctx.bezierCurveTo(190, 465, 340, 570, 520, 510);
+  ctx.bezierCurveTo(700, 450, 820, 535, 1000, 486);
+  ctx.lineTo(1000, HEIGHT);
+  ctx.lineTo(0, HEIGHT);
+  ctx.closePath();
+  ctx.fill();
+
+  for (let i = 0; i < 36; i += 1) {
+    const x = (i * 83 + 47) % WIDTH;
+    const y = 78 + ((i * 41) % 290);
+    const alpha = 0.12 + ((i % 4) * 0.04);
+    ctx.fillStyle = `rgba(255, 239, 156, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.5 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawStone(x, y, radius, selected, ghost = false) {
+  const grad = ctx.createRadialGradient(x - radius * 0.4, y - radius * 0.45, radius * 0.2, x, y, radius);
+  grad.addColorStop(0, ghost ? '#e7f2d899' : '#f6e4b5');
+  grad.addColorStop(0.55, ghost ? '#adb7a499' : '#b7a078');
+  grad.addColorStop(1, ghost ? '#696f6899' : '#5e5e60');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(x, y, radius * 1.08, radius * 0.92, -0.14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = selected ? 4 : 2;
+  ctx.strokeStyle = selected ? '#ffdf83' : '#312f35';
+  ctx.stroke();
+  ctx.fillStyle = ghost ? '#ffffff26' : '#ffffff45';
+  ctx.beginPath();
+  ctx.ellipse(x - radius * 0.35, y - radius * 0.35, radius * 0.28, radius * 0.16, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawPiles() {
+  state.pileBoxes = [];
+  const pileCount = state.piles.length;
+  const gap = 28;
+  const areaW = 760;
+  const pileW = Math.min(150, (areaW - gap * (pileCount - 1)) / pileCount);
+  const startX = (WIDTH - (pileW * pileCount + gap * (pileCount - 1))) / 2;
+  const baseY = 500;
+
+  for (let i = 0; i < pileCount; i += 1) {
+    const count = state.piles[i];
+    const x = startX + i * (pileW + gap);
+    const box = { x, y: 165, w: pileW, h: 350 };
+    state.pileBoxes[i] = box;
+    const selected = i === state.selectedPile && isPlayerActionAllowed();
+    drawRoundedRect(x, 160, pileW, 365, 8, selected ? '#284a42c4' : '#142d34a8', selected ? '#ffdf83' : '#ffffff3d');
+
+    ctx.fillStyle = selected ? '#ffdf83' : '#dbe8d0';
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Pile ${i + 1}`, x + pileW / 2, 190);
+    ctx.font = '900 26px "Trebuchet MS", sans-serif';
+    ctx.fillText(String(count), x + pileW / 2, 222);
+
+    const cols = Math.max(2, Math.min(4, Math.ceil(Math.sqrt(Math.max(1, count)))));
+    for (let s = 0; s < count; s += 1) {
+      const row = Math.floor(s / cols);
+      const col = s % cols;
+      const rowCount = Math.min(cols, count - row * cols);
+      const clusterW = (rowCount - 1) * STONE_RADIUS * 1.65;
+      const sx = x + pileW / 2 - clusterW / 2 + col * STONE_RADIUS * 1.65;
+      const sy = baseY - row * STONE_RADIUS * 1.42;
+      const inSelection = selected && s >= count - state.selectedCount;
+      drawStone(sx, sy, STONE_RADIUS, inSelection);
+    }
+
+    if (count <= 0) {
+      ctx.fillStyle = '#9fb5a2';
+      ctx.font = '900 16px "Trebuchet MS", sans-serif';
+      ctx.fillText('cleared', x + pileW / 2, 348);
+    }
+  }
+}
+
+function drawSidebar() {
+  drawRoundedRect(36, 92, 198, 100, 8, '#0e232bd8', '#ffffff3d');
+  drawRoundedRect(766, 92, 198, 100, 8, '#0e232bd8', '#ffffff3d');
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#bed3c3';
+  ctx.font = '900 13px "Trebuchet MS", sans-serif';
+  ctx.fillText('MATCH', 58, 124);
+  ctx.fillStyle = '#f7fbef';
+  ctx.font = '900 26px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${state.playerRounds} - ${state.aiRounds}`, 58, 158);
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#dbe8d0';
+  ctx.fillText(`Best ${state.best}`, 58, 180);
+
+  ctx.fillStyle = '#bed3c3';
+  ctx.font = '900 13px "Trebuchet MS", sans-serif';
+  ctx.fillText('BOARD STATE', 788, 124);
+  ctx.fillStyle = '#f7fbef';
+  ctx.font = '900 20px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${totalStones()} stones left`, 788, 154);
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#dbe8d0';
+  const xor = state.piles.reduce((value, pile) => value ^ pile, 0);
+  ctx.fillText(`nim sum ${xor}`, 788, 180);
+
+  if (state.hint) {
+    drawRoundedRect(290, 96, 420, 62, 8, '#3a3148df', '#ffdf83');
+    ctx.fillStyle = '#ffdf83';
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Hint: take ${state.hint.count} from pile ${state.hint.pile + 1}`, 500, 134);
+  }
+}
+
+function drawMessage() {
+  drawRoundedRect(245, 548, 510, 56, 8, '#0e232bde', '#ffffff3d');
+  ctx.fillStyle = '#f7fbef';
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(state.message || 'Choose a pile.', 500, 582);
+}
+
+function drawParticles() {
+  for (const p of state.particles) {
+    const alpha = Math.max(0, Math.min(1, p.life / 0.75));
+    ctx.fillStyle = p.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4 + alpha * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  drawBackground();
+  drawSidebar();
+  drawPiles();
+  drawParticles();
+  drawMessage();
+}
+
+function updateHud() {
+  els.ruleset.textContent = state.ruleset === 'normal' ? 'Normal' : 'Misere';
+  els.round.textContent = `${Math.min(state.round + 1, ROUND_COUNT)} / ${ROUND_COUNT}`;
+  els.turn.textContent = state.turn === 'player' ? 'You' : state.turn === 'ai' ? 'AI' : '-';
+  els.score.textContent = String(state.score);
+  els.selected.textContent = `Pile ${state.selectedPile + 1} x${state.selectedCount}`;
+  els.coins.textContent = String(profileState.coins);
+  els.primaryBtn.textContent = state.mode === 'round_over'
+    ? (state.round + 1 >= ROUND_COUNT ? 'Finish' : 'Next')
+    : state.mode === 'paused'
+      ? 'Resume'
+      : state.mode === 'game_over'
+        ? 'Again'
+        : state.mode === 'menu'
+          ? 'Start'
+          : 'Restart';
+  els.modeBtn.textContent = state.ruleset === 'normal' ? 'Misere' : 'Normal';
+  els.pauseBtn.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  const canAct = isPlayerActionAllowed();
+  els.lessBtn.disabled = !canAct;
+  els.moreBtn.disabled = !canAct;
+  els.takeBtn.disabled = !canAct;
+  els.maxBtn.disabled = !canAct;
+  els.hintBtn.disabled = !canAct;
+  els.modeBtn.disabled = state.mode !== 'menu' && state.mode !== 'game_over';
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+  const clientY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+  return {
+    x: ((clientX - rect.left) / rect.width) * WIDTH,
+    y: ((clientY - rect.top) / rect.height) * HEIGHT,
+  };
+}
+
+function handlePointer(event) {
+  canvas.focus();
+  if (!isPlayerActionAllowed()) return;
+  const point = canvasPoint(event);
+  for (let i = 0; i < state.pileBoxes.length; i += 1) {
+    const box = state.pileBoxes[i];
+    if (!box) continue;
+    if (point.x >= box.x && point.x <= box.x + box.w && point.y >= box.y && point.y <= box.y + box.h) {
+      selectPile(i);
+      const pile = state.piles[i];
+      if (pile > 0 && point.y > 230) {
+        const ratio = Math.max(0, Math.min(1, (box.y + box.h - point.y) / (box.h - 105)));
+        state.selectedCount = Math.max(1, Math.min(pile, Math.ceil(ratio * pile)));
+        updateHud();
+        draw();
+      }
+      event.preventDefault();
+      return;
+    }
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    toggleFullscreen();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'r') {
+    startGame();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'p') {
+    pauseToggle();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'h') {
+    useHint();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'm') {
+    toggleRuleset();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'enter' || key === ' ') {
+    if (state.mode === 'menu' || state.mode === 'round_over' || state.mode === 'game_over' || state.mode === 'paused') {
+      primaryAction();
+    } else {
+      playerTake();
+    }
+    event.preventDefault();
+    return;
+  }
+  if (!isPlayerActionAllowed()) return;
+  if (key === 'arrowleft' || key === 'a') {
+    let next = state.selectedPile;
+    do {
+      next = (next + state.piles.length - 1) % state.piles.length;
+    } while (state.piles[next] <= 0 && next !== state.selectedPile);
+    selectPile(next);
+    event.preventDefault();
+  } else if (key === 'arrowright' || key === 'd') {
+    let next = state.selectedPile;
+    do {
+      next = (next + 1) % state.piles.length;
+    } while (state.piles[next] <= 0 && next !== state.selectedPile);
+    selectPile(next);
+    event.preventDefault();
+  } else if (key === 'arrowup' || key === ']' || key === 'w') {
+    adjustSelection(1);
+    event.preventDefault();
+  } else if (key === 'arrowdown' || key === '[' || key === 's') {
+    adjustSelection(-1);
+    event.preventDefault();
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+  }
+  setTimeout(draw, 60);
+}
+
+function renderGameToText() {
+  return JSON.stringify({
+    coordinate_system: 'canvas 1000x640, origin top-left, x right, y down',
+    mode: state.mode,
+    ruleset: state.ruleset,
+    round: state.round + 1,
+    rounds_total: ROUND_COUNT,
+    turn: state.turn,
+    piles: state.piles.map((stones, index) => ({ index, stones })),
+    selected: { pile: state.selectedPile, count: state.selectedCount },
+    hint: state.hint,
+    ai_move: state.aiMove,
+    score: state.score,
+    match: { player: state.playerRounds, ai: state.aiRounds },
+    coins_earned: state.coinsEarned,
+    total_stones: totalStones(),
+    message: state.message,
+  });
+}
+
+let lastTime = performance.now();
+let manualStepping = false;
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) {
+    update(1 / 60);
+  }
+  draw();
+  updateHud();
+  lastTime = performance.now();
+  manualStepping = false;
+};
+
+window.__NIM_GROVE_GAME__ = {
+  startGame,
+  selectPile,
+  adjustSelection,
+  playerTake,
+  takeMax,
+  useHint,
+  toggleRuleset,
+  pauseToggle,
+  forcePiles(piles) {
+    state.piles = piles.map((pile) => Math.max(0, Math.floor(pile)));
+    clampSelection();
+    state.mode = 'playing';
+    state.turn = 'player';
+    hideOverlay();
+    updateHud();
+    draw();
+  },
+  forceRoundWin() {
+    state.piles = [1];
+    state.selectedPile = 0;
+    state.selectedCount = 1;
+    state.mode = 'playing';
+    state.turn = 'player';
+    playerTake(1);
+  },
+  getState: () => JSON.parse(renderGameToText()),
+};
+
+els.primaryBtn.addEventListener('click', primaryAction);
+els.lessBtn.addEventListener('click', () => adjustSelection(-1));
+els.moreBtn.addEventListener('click', () => adjustSelection(1));
+els.takeBtn.addEventListener('click', () => playerTake());
+els.maxBtn.addEventListener('click', takeMax);
+els.hintBtn.addEventListener('click', useHint);
+els.modeBtn.addEventListener('click', toggleRuleset);
+els.pauseBtn.addEventListener('click', pauseToggle);
+els.fullBtn.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    update(dt);
+    draw();
+    updateHud();
+  }
+  lastTime = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'nimgrove', gameName: 'Nim Grove' });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

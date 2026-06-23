@@ -40,6 +40,8 @@ Other:
 
 ```sh
 npm run seo                  # regenerate sitemap + inject SEO meta (run after adding a game)
+npm run og                   # render social/OG card PNGs into assets/og/<slug>.png (run after adding a game; needs `npx playwright install chromium`)
+npm run marketing:clips      # capture bot-driven gameplay clips into output/marketing/ (Playwright; ffmpeg optional for mp4 exports)
 npm run test:policy-gate     # release gate; requires approval in release/policy-signoff.json
 npm run firebase:deploy:rules  # deploy firestore.rules + storage.rules
 ```
@@ -55,7 +57,7 @@ See `RELEASE_CHECKLIST.md`: before tagging, review `privacy.html` / `school-priv
 1. `<slug>/index.html` — the game itself (self-contained HTML/JS/CSS).
 2. `src/meta/games.js` — the `GAMES` registry array. This drives the homepage grid, discovery/search, missions, and reporting. Flags: `earnsCoins`, `scoreHint`, `category` (e.g. `'audio-only-blind-accessible'`), `accessibilityTags`.
 3. `vercel.json` — add a rewrite for `/slug` and `/slug/`, plus a no-cache header entry for `/slug/index.html` (the global default is 1-hour caching).
-4. `npm run seo` to regenerate the sitemap.
+4. `npm run seo` to regenerate the sitemap, then `npm run og` to render the game's share/OG card (without it the new game unfurls with the default banner instead of its own per-game card). Share infra: `src/social/share.js` (share sheet), `card.js` (client score card), `record.js` (canvas clip recorder), and `api/share.js` (`/challenge/:id`, `/race/:code`, `/g/:slug` OG landing pages).
 
 ### Shared client modules (`src/`)
 

@@ -474,3 +474,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-06-19] Key PR links: none merged for this date.
 - [nightly 2026-06-20] Tracked changes: 1 commit(s) - 659817b Add Pocket Pool to the SEO game directory.
 - [nightly 2026-06-20] Key PR links: none merged for this date.
+- [nightly 2026-06-21] Tracked changes: 2 commit(s) - 0260faf Update game content and integration flows; 90f59f2 Update SEO game directory and sprint log.
+- [nightly 2026-06-21] Key PR links: none merged for this date.
+- [nightly 2026-06-22] No repository commits found for this date.
+- [nightly 2026-06-22] Key PR links: none merged for this date.
