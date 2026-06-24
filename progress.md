@@ -3740,3 +3740,18 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
   - Inspected settled desktop victory and mobile gameplay captures in `output/web-game/mushroommarch-scenarios`; overlays, canvas, HUD, and controls are readable with no clipping or browser errors.
   - Static route check returned HTTP 200 with the correct title, canvas, and shared feedback mount.
 - TODO: none for Mushroom March.
+
+## 2026-06-24 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Nim Grove, Domino Draw, Mushroom March, Pocket Pool, Word Ladder Sprint, Chess, Darts 301, Skee-Ball, Tower Defense, and Sky Joust.
+- Reviewed the 134-game registry and selected Tent Trail (`/tenttrail`), a tents-and-trees logic puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas game with row/column clues, touch/keyboard controls, hints/checking, deterministic hooks, shared feedback, coin rewards, metadata registration, SEO/Linear regeneration, and focused Playwright validation.
+- Initial implementation added `tenttrail/index.html` with five logic boards, row/column clues, tent/grass/clear tools, hints, strict checking, scoring, coin rewards, pause/restart/fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__TENT_TRAIL_GAME__` helpers.
+- Registered Tent Trail in `src/meta/games.js`.
+- Ran `npm run seo` and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, and local Linear feedback seeds now include Tent Trail. Live Linear provisioning skipped because credentials are unset.
+- Early validation passed: inline module syntax, 135-game slug/URL uniqueness, 9 focused catalog/feedback tests, `npm run test:feedback` (31 tests), and `npm run test:shop` (68 tests).
+- Required `$WEB_GAME_CLIENT` validation passed after the mobile canvas polish rerun, producing screenshots and state snapshots in `output/web-game/tenttrail-smoke-rerun` with no error artifacts.
+- Custom Playwright scenarios passed in `output/web-game/tenttrail-scenarios-rerun`: first-puzzle solve via hint, strict check conflict markers, pause/resume, full campaign win and coin reward, shared feedback launcher, mobile layout/state update, and zero page/console errors.
+- Static route smoke returned HTTP 200 for `/tenttrail/`; `git diff --check` passed with only existing LF-to-CRLF warnings.
+- `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Tent Trail issue.
+- TODO: none for Tent Trail; future work may address the raw-static feedback smoke POST/API behavior.

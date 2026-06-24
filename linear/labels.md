@@ -142,6 +142,7 @@
 - game/mosaicmatch
 - game/mahjongsolitaire
 - game/nonogram
+- game/tenttrail
 - game/rushhour
 - game/jigsaw
 - game/kakuro

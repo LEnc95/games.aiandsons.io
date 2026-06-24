@@ -1,0 +1,1476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Tent Trail | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(34% 26% at 20% 18%, #ffd36e 0%, transparent 72%),
+    radial-gradient(28% 26% at 82% 12%, #83e5d3 0%, transparent 70%),
+    linear-gradient(135deg, #123941 0%, #2c5b55 48%, #35405f 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #0b1f28d8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ecffe2ad;
+  background: #e9f6e8;
+  box-shadow: 0 22px 54px #07171d91;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #f2ffe0bd;
+  background: #10252df4;
+  box-shadow: 0 18px 46px #07151b99;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 66ch;
+  color: #d6eadc;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b8d4c4;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #f4ffe56b;
+  background: #112934e8;
+  color: #f7fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff2e;
+}
+.chip span {
+  color: #b8cfca;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9cf1bf; }
+.chip.warn b { color: #ffdf83; }
+.chip.bad b { color: #ffad9b; }
+button {
+  cursor: pointer;
+  font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #07171d4d;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffdf83;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #11242a;
+  background: linear-gradient(135deg, #ffdf83 0%, #90efcf 100%);
+  border-color: #ffffffb8;
+}
+button.selected {
+  color: #10222a;
+  background: #bff4d4;
+  border-color: #ffffffd0;
+}
+button.utility { background: #34475e; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 12px; padding: 0 7px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Place tents beside trees, satisfy every row and column clue, and solve each trail without letting tents touch. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Tent Trail | AI and Sons Games">
+  <meta property="og:description" content="Place tents beside trees, satisfy every row and column clue, and solve each trail without letting tents touch. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/tenttrail">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/tenttrail.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tent Trail | AI and Sons Games">
+  <meta name="twitter:description" content="Place tents beside trees, satisfy every row and column clue, and solve each trail without letting tents touch. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/tenttrail.png">
+  <link rel="canonical" href="https://games.aiandsons.io/tenttrail">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Tent Trail","description":"Place tents beside trees, satisfy every row and column clue, and solve each trail without letting tents touch. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/tenttrail","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Tent Trail logic puzzle board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="level">1 / 5</b></div>
+    <div class="chip"><span>Tents</span><b id="tents">0 / 0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">0s</b></div>
+    <div class="chip bad"><span>Checks</span><b id="checks">0</b></div>
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Tent Trail controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="tentBtn" class="selected" type="button">Tent</button>
+    <button id="grassBtn" type="button">Grass</button>
+    <button id="clearBtn" type="button">Clear</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="checkBtn" type="button">Check</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('mode'),
+  level: document.getElementById('level'),
+  tents: document.getElementById('tents'),
+  time: document.getElementById('time'),
+  checks: document.getElementById('checks'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+  primaryBtn: document.getElementById('primaryBtn'),
+  tentBtn: document.getElementById('tentBtn'),
+  grassBtn: document.getElementById('grassBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  hintBtn: document.getElementById('hintBtn'),
+  checkBtn: document.getElementById('checkBtn'),
+  pauseBtn: document.getElementById('pauseBtn'),
+  restartBtn: document.getElementById('restartBtn'),
+  fullBtn: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const ERROR_LIMIT = 4;
+const MARK_EMPTY = 'empty';
+const MARK_TENT = 'tent';
+const MARK_GRASS = 'grass';
+const STORAGE_KEY = 'cade:tenttrail:best';
+
+const RAW_PUZZLES = [
+  {
+    name: 'Meadow Start',
+    seconds: 170,
+    trees: [[0, 0], [1, 5], [2, 0], [4, 4], [5, 4]],
+    tents: [[0, 1], [1, 4], [3, 0], [4, 3], [5, 5]],
+  },
+  {
+    name: 'Even Pines',
+    seconds: 180,
+    trees: [[0, 2], [1, 1], [2, 4], [3, 3], [4, 5], [5, 0]],
+    tents: [[0, 3], [1, 0], [2, 5], [3, 2], [4, 4], [5, 1]],
+  },
+  {
+    name: 'Split Orchard',
+    seconds: 205,
+    trees: [[1, 0], [0, 4], [2, 1], [1, 6], [5, 0], [4, 5], [6, 2]],
+    tents: [[0, 0], [0, 5], [2, 2], [2, 6], [4, 0], [4, 4], [6, 3]],
+  },
+  {
+    name: 'Ridge Count',
+    seconds: 225,
+    trees: [[0, 1], [1, 6], [3, 0], [2, 5], [4, 0], [3, 5], [6, 2], [5, 6]],
+    tents: [[0, 2], [0, 6], [2, 0], [2, 4], [4, 1], [4, 5], [6, 3], [6, 6]],
+  },
+  {
+    name: 'Camp Circuit',
+    seconds: 250,
+    trees: [[1, 1], [0, 4], [2, 7], [2, 2], [3, 1], [4, 7], [5, 3], [6, 5], [6, 0], [6, 7]],
+    tents: [[0, 1], [0, 5], [1, 7], [2, 3], [3, 0], [4, 6], [5, 2], [6, 4], [7, 0], [7, 7]],
+  },
+];
+
+function keyOf(row, col) {
+  return `${row},${col}`;
+}
+
+function inferSize(puzzle) {
+  const maxIndex = [...puzzle.trees, ...puzzle.tents]
+    .reduce((max, cell) => Math.max(max, cell[0], cell[1]), 0);
+  return maxIndex + 1;
+}
+
+function buildPuzzle(raw) {
+  const size = inferSize(raw);
+  const solutionKeys = new Set(raw.tents.map(([row, col]) => keyOf(row, col)));
+  const treeKeys = new Set(raw.trees.map(([row, col]) => keyOf(row, col)));
+  const rowClues = Array(size).fill(0);
+  const colClues = Array(size).fill(0);
+  for (const [row, col] of raw.tents) {
+    rowClues[row] += 1;
+    colClues[col] += 1;
+  }
+  return {
+    ...raw,
+    size,
+    solutionKeys,
+    treeKeys,
+    rowClues,
+    colClues,
+  };
+}
+
+const PUZZLES = RAW_PUZZLES.map(buildPuzzle);
+
+const state = {
+  mode: 'menu',
+  previousMode: 'menu',
+  levelIndex: 0,
+  marks: [],
+  cursor: { row: 0, col: 0 },
+  tool: MARK_TENT,
+  timeLeft: 0,
+  score: 0,
+  checksUsed: 0,
+  hintsUsed: 0,
+  mistakes: 0,
+  perfectLevels: 0,
+  coinsEarned: 0,
+  rewardGiven: false,
+  best: loadBest(),
+  message: 'Place tents beside trees without letting tents touch.',
+  conflicts: new Set(),
+  conflictTrees: new Set(),
+  particles: [],
+  boardRect: { x: 330, y: 120, cell: 56, total: 420 },
+};
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY));
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  try {
+    state.best = Math.max(state.best, state.score);
+    localStorage.setItem(STORAGE_KEY, String(state.best));
+  } catch {
+    state.best = Math.max(state.best, state.score);
+  }
+}
+
+function currentPuzzle() {
+  return PUZZLES[state.levelIndex];
+}
+
+function createMarks(size) {
+  return Array.from({ length: size }, () => Array(size).fill(MARK_EMPTY));
+}
+
+function resetLevel(keepCampaign = true) {
+  const puzzle = currentPuzzle();
+  state.marks = createMarks(puzzle.size);
+  state.cursor = { row: 0, col: 0 };
+  state.timeLeft = puzzle.seconds;
+  state.checksUsed = 0;
+  state.hintsUsed = 0;
+  state.mistakes = 0;
+  state.conflicts = new Set();
+  state.conflictTrees = new Set();
+  state.particles = [];
+  state.message = `${puzzle.name}: match the row and column tent clues.`;
+  if (!keepCampaign) {
+    state.score = 0;
+    state.perfectLevels = 0;
+    state.coinsEarned = 0;
+    state.rewardGiven = false;
+  }
+  updateHud();
+  draw();
+}
+
+function startGame() {
+  state.mode = 'playing';
+  state.previousMode = 'playing';
+  state.levelIndex = 0;
+  state.tool = MARK_TENT;
+  resetLevel(false);
+  rememberRecent('tenttrail');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+  draw();
+}
+
+function nextLevel() {
+  if (state.mode !== 'level_clear') return;
+  state.levelIndex += 1;
+  state.mode = 'playing';
+  state.previousMode = 'playing';
+  resetLevel(true);
+  hideOverlay();
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+  } else if (state.mode === 'level_clear') {
+    nextLevel();
+  } else if (state.mode === 'paused') {
+    resumeGame();
+  } else {
+    restartCampaign();
+  }
+}
+
+function restartCampaign() {
+  startGame();
+}
+
+function pauseGame() {
+  if (state.mode !== 'playing') return;
+  state.previousMode = state.mode;
+  state.mode = 'paused';
+  state.message = 'Paused.';
+  showOverlay();
+  updateHud();
+}
+
+function resumeGame() {
+  if (state.mode !== 'paused') return;
+  state.mode = 'playing';
+  state.message = `${currentPuzzle().name}: keep the clues balanced.`;
+  hideOverlay();
+  updateHud();
+}
+
+function pauseToggle() {
+  if (state.mode === 'paused') resumeGame();
+  else pauseGame();
+}
+
+function setTool(tool) {
+  state.tool = tool;
+  state.message = tool === MARK_TENT
+    ? 'Tent tool selected.'
+    : tool === MARK_GRASS
+      ? 'Grass marker selected.'
+      : 'Clear tool selected.';
+  updateHud();
+  draw();
+}
+
+function isTree(row, col) {
+  return currentPuzzle().treeKeys.has(keyOf(row, col));
+}
+
+function isSolutionTent(row, col) {
+  return currentPuzzle().solutionKeys.has(keyOf(row, col));
+}
+
+function isInBounds(row, col) {
+  const size = currentPuzzle().size;
+  return row >= 0 && row < size && col >= 0 && col < size;
+}
+
+function moveCursor(dr, dc) {
+  const size = currentPuzzle().size;
+  state.cursor.row = Math.min(size - 1, Math.max(0, state.cursor.row + dr));
+  state.cursor.col = Math.min(size - 1, Math.max(0, state.cursor.col + dc));
+  draw();
+}
+
+function setMark(row, col, mark) {
+  if (state.mode !== 'playing') {
+    if (state.mode === 'menu') startGame();
+    else return false;
+  }
+  if (!isInBounds(row, col) || isTree(row, col)) {
+    state.message = 'Trees are fixed clues.';
+    draw();
+    return false;
+  }
+  const next = mark === MARK_EMPTY ? MARK_EMPTY : mark;
+  if (state.marks[row][col] === next) return false;
+  state.marks[row][col] = next;
+  state.cursor = { row, col };
+  state.conflicts = new Set();
+  state.conflictTrees = new Set();
+  if (next === MARK_TENT && isSolutionTent(row, col)) {
+    const bonus = 8 + Math.max(0, Math.floor(state.timeLeft / 35));
+    state.score += bonus;
+    burst(row, col, '#ffdf83', `+${bonus}`);
+    state.message = 'Tent placed.';
+  } else if (next === MARK_TENT) {
+    state.message = 'Tent placed. Use Check if the clues look suspicious.';
+  } else if (next === MARK_GRASS) {
+    state.message = 'Grass marker placed.';
+  } else {
+    state.message = 'Cell cleared.';
+  }
+  if (isSolvedExact()) completeLevel();
+  updateHud();
+  draw();
+  return true;
+}
+
+function cycleCell(row = state.cursor.row, col = state.cursor.col) {
+  if (isTree(row, col)) {
+    state.message = 'Trees are fixed clues.';
+    draw();
+    return;
+  }
+  const current = state.marks[row][col];
+  const next = current === MARK_EMPTY ? MARK_TENT : current === MARK_TENT ? MARK_GRASS : MARK_EMPTY;
+  setMark(row, col, next);
+}
+
+function applyTool(row = state.cursor.row, col = state.cursor.col) {
+  const mark = state.tool === MARK_GRASS ? MARK_GRASS : state.tool === MARK_EMPTY ? MARK_EMPTY : MARK_TENT;
+  setMark(row, col, mark);
+}
+
+function countTents() {
+  let count = 0;
+  for (const row of state.marks) {
+    for (const mark of row) {
+      if (mark === MARK_TENT) count += 1;
+    }
+  }
+  return count;
+}
+
+function rowCounts() {
+  return state.marks.map((row) => row.filter((mark) => mark === MARK_TENT).length);
+}
+
+function colCounts() {
+  const puzzle = currentPuzzle();
+  const counts = Array(puzzle.size).fill(0);
+  for (let row = 0; row < puzzle.size; row += 1) {
+    for (let col = 0; col < puzzle.size; col += 1) {
+      if (state.marks[row][col] === MARK_TENT) counts[col] += 1;
+    }
+  }
+  return counts;
+}
+
+function neighbors4(row, col) {
+  return [
+    [row - 1, col],
+    [row + 1, col],
+    [row, col - 1],
+    [row, col + 1],
+  ].filter(([r, c]) => isInBounds(r, c));
+}
+
+function neighbors8(row, col) {
+  const cells = [];
+  for (let dr = -1; dr <= 1; dr += 1) {
+    for (let dc = -1; dc <= 1; dc += 1) {
+      if (dr === 0 && dc === 0) continue;
+      const r = row + dr;
+      const c = col + dc;
+      if (isInBounds(r, c)) cells.push([r, c]);
+    }
+  }
+  return cells;
+}
+
+function tentCells() {
+  const puzzle = currentPuzzle();
+  const cells = [];
+  for (let row = 0; row < puzzle.size; row += 1) {
+    for (let col = 0; col < puzzle.size; col += 1) {
+      if (state.marks[row][col] === MARK_TENT) cells.push({ row, col, key: keyOf(row, col) });
+    }
+  }
+  return cells;
+}
+
+function validateBoard(strict = false) {
+  const puzzle = currentPuzzle();
+  const conflicts = new Set();
+  const conflictTrees = new Set();
+  const issues = [];
+  const tents = tentCells();
+  const rows = rowCounts();
+  const cols = colCounts();
+
+  for (let row = 0; row < puzzle.size; row += 1) {
+    if (rows[row] > puzzle.rowClues[row]) {
+      issues.push(`Row ${row + 1} has too many tents.`);
+      for (const tent of tents.filter((cell) => cell.row === row)) conflicts.add(tent.key);
+    }
+  }
+  for (let col = 0; col < puzzle.size; col += 1) {
+    if (cols[col] > puzzle.colClues[col]) {
+      issues.push(`Column ${col + 1} has too many tents.`);
+      for (const tent of tents.filter((cell) => cell.col === col)) conflicts.add(tent.key);
+    }
+  }
+  for (const tent of tents) {
+    for (const [r, c] of neighbors8(tent.row, tent.col)) {
+      if (state.marks[r][c] === MARK_TENT) {
+        conflicts.add(tent.key);
+        conflicts.add(keyOf(r, c));
+        issues.push('Tents cannot touch each other.');
+      }
+    }
+    const touchesTree = neighbors4(tent.row, tent.col).some(([r, c]) => isTree(r, c));
+    if (!touchesTree) {
+      conflicts.add(tent.key);
+      issues.push('Every tent must touch a tree edge.');
+    }
+  }
+  for (const [row, col] of puzzle.trees) {
+    const touching = neighbors4(row, col).filter(([r, c]) => state.marks[r][c] === MARK_TENT);
+    if (touching.length > 1) {
+      conflictTrees.add(keyOf(row, col));
+      for (const [r, c] of touching) conflicts.add(keyOf(r, c));
+      issues.push('A tree can only claim one tent.');
+    }
+    if (strict && touching.length === 0) {
+      conflictTrees.add(keyOf(row, col));
+      issues.push('A tree still needs a tent.');
+    }
+  }
+  if (strict) {
+    for (const tent of tents) {
+      if (!puzzle.solutionKeys.has(tent.key)) {
+        conflicts.add(tent.key);
+        issues.push('At least one tent is not on the hidden solution.');
+      }
+    }
+    for (const key of puzzle.solutionKeys) {
+      const [row, col] = key.split(',').map(Number);
+      if (state.marks[row][col] !== MARK_TENT) {
+        issues.push('At least one required tent is missing.');
+        break;
+      }
+    }
+  }
+  return {
+    conflicts,
+    conflictTrees,
+    issues: [...new Set(issues)],
+  };
+}
+
+function checkBoard() {
+  if (state.mode !== 'playing') {
+    if (state.mode === 'menu') startGame();
+    return false;
+  }
+  if (isSolvedExact()) {
+    completeLevel();
+    return true;
+  }
+  const result = validateBoard(true);
+  state.conflicts = result.conflicts;
+  state.conflictTrees = result.conflictTrees;
+  state.checksUsed += 1;
+  if (result.issues.length) {
+    state.mistakes += 1;
+    state.score = Math.max(0, state.score - 10);
+    state.message = result.issues[0];
+    if (state.mistakes >= ERROR_LIMIT) {
+      finish(false, 'too_many_failed_checks');
+    }
+  } else {
+    state.score += 18;
+    state.message = 'The camp layout is consistent. Keep filling the trail.';
+  }
+  updateHud();
+  draw();
+  return false;
+}
+
+function useHint() {
+  if (state.mode !== 'playing') {
+    if (state.mode === 'menu') startGame();
+    return;
+  }
+  for (const key of currentPuzzle().solutionKeys) {
+    const [row, col] = key.split(',').map(Number);
+    if (state.marks[row][col] !== MARK_TENT) {
+      state.marks[row][col] = MARK_TENT;
+      state.cursor = { row, col };
+      state.hintsUsed += 1;
+      state.score = Math.max(0, state.score - 16);
+      state.conflicts = new Set();
+      state.conflictTrees = new Set();
+      state.message = `Hint placed a tent at row ${row + 1}, column ${col + 1}.`;
+      burst(row, col, '#96f2c8', 'Hint');
+      if (isSolvedExact()) completeLevel();
+      updateHud();
+      draw();
+      return;
+    }
+  }
+  for (const tent of tentCells()) {
+    if (!currentPuzzle().solutionKeys.has(tent.key)) {
+      state.marks[tent.row][tent.col] = MARK_GRASS;
+      state.hintsUsed += 1;
+      state.score = Math.max(0, state.score - 16);
+      state.message = `Hint removed a stray tent at row ${tent.row + 1}, column ${tent.col + 1}.`;
+      updateHud();
+      draw();
+      return;
+    }
+  }
+  checkBoard();
+}
+
+function isSolvedExact() {
+  const puzzle = currentPuzzle();
+  if (countTents() !== puzzle.solutionKeys.size) return false;
+  for (const key of puzzle.solutionKeys) {
+    const [row, col] = key.split(',').map(Number);
+    if (state.marks[row][col] !== MARK_TENT) return false;
+  }
+  return true;
+}
+
+function completeLevel() {
+  if (state.mode !== 'playing') return;
+  const timeBonus = Math.ceil(state.timeLeft) * 2;
+  const cleanBonus = Math.max(0, 120 - state.checksUsed * 18 - state.hintsUsed * 24 - state.mistakes * 30);
+  state.score += timeBonus + cleanBonus;
+  if (state.checksUsed === 0 && state.hintsUsed === 0 && state.mistakes === 0) {
+    state.perfectLevels += 1;
+  }
+  saveBest();
+  burstBoard('#ffdf83');
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    finish(true, 'all_trails_solved');
+    return;
+  }
+  state.mode = 'level_clear';
+  state.message = `${currentPuzzle().name} solved.`;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function finish(won, reason) {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  state.mode = won ? 'won' : 'lost';
+  if (won && !state.rewardGiven) {
+    const coins = Math.max(16, Math.min(54, 18 + Math.floor(state.score / 420) + state.perfectLevels * 4));
+    addCoins(coins);
+    state.coinsEarned += coins;
+    state.rewardGiven = true;
+    state.message = `Trail complete. ${coins} coins earned.`;
+  } else if (!won) {
+    state.message = reason === 'time_expired'
+      ? 'The timer ran out. Try a faster trail.'
+      : 'Too many failed checks. Rebuild the camp.';
+  }
+  saveBest();
+  maybeUnlock({
+    anyPlay: true,
+    tenttrail: {
+      result: won ? 'win' : 'loss',
+      score: state.score,
+      perfectLevels: state.perfectLevels,
+      level: state.levelIndex + 1,
+    },
+  });
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function update(dt) {
+  for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+    const particle = state.particles[i];
+    particle.life -= dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vy += 90 * dt;
+    if (particle.life <= 0) state.particles.splice(i, 1);
+  }
+  if (state.mode !== 'playing') return;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) finish(false, 'time_expired');
+}
+
+function boardMetrics() {
+  const puzzle = currentPuzzle();
+  if (isCompactCanvas()) {
+    const cell = Math.floor(Math.min(88, 540 / puzzle.size));
+    const total = cell * puzzle.size;
+    return {
+      x: Math.floor((WIDTH - total) / 2),
+      y: 88,
+      cell,
+      total,
+    };
+  }
+  const area = { x: 305, y: 112, w: 500, h: 500 };
+  const cell = Math.floor(Math.min(64, area.w / puzzle.size));
+  const total = cell * puzzle.size;
+  return {
+    x: area.x + Math.floor((area.w - total) / 2),
+    y: area.y + Math.floor((area.h - total) / 2),
+    cell,
+    total,
+  };
+}
+
+function isCompactCanvas() {
+  return canvas.clientWidth > 0 && canvas.clientWidth < 620;
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+  const clientY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+  return {
+    x: ((clientX - rect.left) / rect.width) * WIDTH,
+    y: ((clientY - rect.top) / rect.height) * HEIGHT,
+  };
+}
+
+function cellFromPoint(point) {
+  const { x, y, cell } = state.boardRect;
+  const col = Math.floor((point.x - x) / cell);
+  const row = Math.floor((point.y - y) / cell);
+  if (!isInBounds(row, col)) return null;
+  if (point.x < x || point.y < y || point.x > x + cell * currentPuzzle().size || point.y > y + cell * currentPuzzle().size) {
+    return null;
+  }
+  return { row, col };
+}
+
+function handlePointer(event) {
+  canvas.focus();
+  const point = canvasPoint(event);
+  const cell = cellFromPoint(point);
+  if (cell) {
+    event.preventDefault();
+    applyTool(cell.row, cell.col);
+  }
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'spacebar', 'enter'].includes(key)) {
+    event.preventDefault();
+  }
+  if (key === 'f') {
+    toggleFullscreen();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'p') {
+    pauseToggle();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'r') {
+    restartCampaign();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'h') {
+    useHint();
+    event.preventDefault();
+    return;
+  }
+  if (key === 'c') {
+    checkBoard();
+    event.preventDefault();
+    return;
+  }
+  if (key === 't' || key === '1') {
+    setTool(MARK_TENT);
+    return;
+  }
+  if (key === 'g' || key === '2') {
+    setTool(MARK_GRASS);
+    return;
+  }
+  if (key === 'x' || key === '0' || key === 'backspace' || key === 'delete') {
+    setTool(MARK_EMPTY);
+    if (key === 'backspace' || key === 'delete') applyTool();
+    return;
+  }
+  if (key === 'arrowleft' || key === 'a') {
+    moveCursor(0, -1);
+  } else if (key === 'arrowright' || key === 'd') {
+    moveCursor(0, 1);
+  } else if (key === 'arrowup' || key === 'w') {
+    moveCursor(-1, 0);
+  } else if (key === 'arrowdown' || key === 's') {
+    moveCursor(1, 0);
+  } else if (key === ' ' || key === 'spacebar') {
+    cycleCell();
+  } else if (key === 'enter') {
+    if (state.mode === 'menu' || state.mode === 'paused' || state.mode === 'level_clear' || state.mode === 'won' || state.mode === 'lost') {
+      primaryAction();
+    } else {
+      applyTool();
+    }
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    state.message = 'Fullscreen is unavailable in this browser.';
+  }
+  setTimeout(draw, 60);
+}
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  sky.addColorStop(0, '#dff5ec');
+  sky.addColorStop(0.52, '#a9d7c6');
+  sky.addColorStop(1, '#35545f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = '#24492f';
+  ctx.beginPath();
+  ctx.moveTo(0, 520);
+  ctx.bezierCurveTo(190, 455, 360, 548, 520, 498);
+  ctx.bezierCurveTo(705, 440, 812, 530, 1000, 474);
+  ctx.lineTo(1000, HEIGHT);
+  ctx.lineTo(0, HEIGHT);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff38';
+  for (let i = 0; i < 18; i += 1) {
+    const x = (i * 127 + 53) % WIDTH;
+    const y = 58 + ((i * 47) % 250);
+    ctx.beginPath();
+    ctx.arc(x, y, 12 + (i % 4) * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawPanel() {
+  const puzzle = currentPuzzle();
+  if (isCompactCanvas()) {
+    drawRoundedRect(222, 24, 556, 42, 8, '#10252de8', '#ffffff52');
+    ctx.fillStyle = '#f7fbff';
+    ctx.font = '900 24px "Trebuchet MS", sans-serif';
+    ctx.fillText('Tent Trail', 246, 53);
+    ctx.fillStyle = '#ffdf83';
+    drawFitText(puzzle.name, 390, 52, 350, 16);
+    return;
+  }
+  drawRoundedRect(34, 90, 238, 440, 8, '#10252ddf', '#ffffff52');
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 29px "Trebuchet MS", sans-serif';
+  ctx.fillText('Tent Trail', 56, 132);
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#ffdf83';
+  ctx.fillText(puzzle.name, 56, 164);
+  ctx.fillStyle = '#d7ebdc';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText('Place one tent next to every tree. Row and column clues show how many tents belong in each line.', 56, 198, 190, 20);
+
+  const rows = rowCounts();
+  const cols = colCounts();
+  const rowDone = rows.filter((count, index) => count === puzzle.rowClues[index]).length;
+  const colDone = cols.filter((count, index) => count === puzzle.colClues[index]).length;
+  drawRoundedRect(56, 328, 172, 76, 8, '#ffffff14', '#ffffff2d');
+  ctx.fillStyle = '#b8d4c4';
+  ctx.font = '900 12px "Trebuchet MS", sans-serif';
+  ctx.fillText('CLUES MATCHED', 74, 356);
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 22px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${rowDone}/${puzzle.size} rows`, 74, 382);
+  ctx.fillText(`${colDone}/${puzzle.size} cols`, 74, 406);
+
+  drawRoundedRect(56, 426, 172, 58, 8, '#ffffff14', '#ffffff2d');
+  ctx.fillStyle = '#b8d4c4';
+  ctx.font = '900 12px "Trebuchet MS", sans-serif';
+  ctx.fillText('BEST SCORE', 74, 454);
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 24px "Trebuchet MS", sans-serif';
+  ctx.fillText(String(state.best), 74, 480);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, y);
+}
+
+function drawFitText(text, x, y, maxWidth, startSize = 16, align = 'left') {
+  let size = startSize;
+  ctx.textAlign = align;
+  ctx.font = `900 ${size}px "Trebuchet MS", sans-serif`;
+  while (size > 10 && ctx.measureText(text).width > maxWidth) {
+    size -= 1;
+    ctx.font = `900 ${size}px "Trebuchet MS", sans-serif`;
+  }
+  ctx.fillText(text, x, y);
+  ctx.textAlign = 'left';
+}
+
+function drawBoard() {
+  const puzzle = currentPuzzle();
+  const rows = rowCounts();
+  const cols = colCounts();
+  state.boardRect = boardMetrics();
+  const { x, y, cell, total } = state.boardRect;
+
+  drawRoundedRect(x - 56, y - 56, total + 112, total + 112, 8, '#17303add', '#ffffff8a');
+  ctx.fillStyle = '#d7ebdc';
+  ctx.font = '900 20px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Column clues', x + total / 2, y - 34);
+  ctx.save();
+  ctx.translate(x - 36, y + total / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Row clues', 0, 0);
+  ctx.restore();
+
+  for (let col = 0; col < puzzle.size; col += 1) {
+    const clue = puzzle.colClues[col];
+    const count = cols[col];
+    const tone = count > clue ? '#ffad9b' : count === clue ? '#9cf1bf' : '#ffdf83';
+    drawRoundedRect(x + col * cell + 5, y - 28, cell - 10, 24, 6, '#0d222bb8', tone);
+    ctx.fillStyle = tone;
+    ctx.font = '900 16px "Trebuchet MS", sans-serif';
+    ctx.fillText(String(clue), x + col * cell + cell / 2, y - 10);
+  }
+
+  for (let row = 0; row < puzzle.size; row += 1) {
+    const clue = puzzle.rowClues[row];
+    const count = rows[row];
+    const tone = count > clue ? '#ffad9b' : count === clue ? '#9cf1bf' : '#ffdf83';
+    drawRoundedRect(x - 32, y + row * cell + 5, 24, cell - 10, 6, '#0d222bb8', tone);
+    ctx.fillStyle = tone;
+    ctx.font = '900 16px "Trebuchet MS", sans-serif';
+    ctx.fillText(String(clue), x - 20, y + row * cell + cell / 2 + 6);
+  }
+
+  for (let row = 0; row < puzzle.size; row += 1) {
+    for (let col = 0; col < puzzle.size; col += 1) {
+      const px = x + col * cell;
+      const py = y + row * cell;
+      const key = keyOf(row, col);
+      const isCursor = state.cursor.row === row && state.cursor.col === col;
+      const fill = (row + col) % 2 === 0 ? '#e8f3d8' : '#d8eac8';
+      ctx.fillStyle = fill;
+      ctx.fillRect(px, py, cell, cell);
+      ctx.strokeStyle = '#55746380';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px, py, cell, cell);
+      if (state.conflicts.has(key)) {
+        ctx.fillStyle = '#ff6d5f66';
+        ctx.fillRect(px + 3, py + 3, cell - 6, cell - 6);
+      }
+      if (isTree(row, col)) {
+        drawTree(px, py, cell, state.conflictTrees.has(key));
+      } else if (state.marks[row][col] === MARK_TENT) {
+        drawTent(px, py, cell);
+      } else if (state.marks[row][col] === MARK_GRASS) {
+        drawGrass(px, py, cell);
+      }
+      if (isCursor) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(px + 4, py + 4, cell - 8, cell - 8);
+        ctx.strokeStyle = '#20303f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + 8, py + 8, cell - 16, cell - 16);
+      }
+    }
+  }
+}
+
+function drawTree(x, y, cell, warn) {
+  const cx = x + cell / 2;
+  const cy = y + cell / 2;
+  ctx.fillStyle = warn ? '#7b321f' : '#6c442b';
+  drawRoundedRect(cx - cell * 0.08, cy + cell * 0.05, cell * 0.16, cell * 0.25, 3, ctx.fillStyle);
+  const canopy = ctx.createRadialGradient(cx - cell * 0.12, cy - cell * 0.18, cell * 0.08, cx, cy - cell * 0.1, cell * 0.32);
+  canopy.addColorStop(0, warn ? '#ffe07e' : '#9cf1bf');
+  canopy.addColorStop(1, warn ? '#d35f4b' : '#26764b');
+  ctx.fillStyle = canopy;
+  ctx.beginPath();
+  ctx.arc(cx, cy - cell * 0.08, cell * 0.29, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = warn ? '#ffdf83' : '#154b33';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawTent(x, y, cell) {
+  const cx = x + cell / 2;
+  const baseY = y + cell * 0.72;
+  ctx.fillStyle = '#ec675c';
+  ctx.beginPath();
+  ctx.moveTo(cx, y + cell * 0.2);
+  ctx.lineTo(x + cell * 0.18, baseY);
+  ctx.lineTo(x + cell * 0.82, baseY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#7a2e2d';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#ffd36e';
+  ctx.beginPath();
+  ctx.moveTo(cx, y + cell * 0.3);
+  ctx.lineTo(cx - cell * 0.12, baseY - 2);
+  ctx.lineTo(cx + cell * 0.12, baseY - 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#f6f0d6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, y + cell * 0.21);
+  ctx.lineTo(cx, baseY);
+  ctx.stroke();
+}
+
+function drawGrass(x, y, cell) {
+  ctx.strokeStyle = '#3c8d5d';
+  ctx.lineWidth = 3;
+  const base = y + cell * 0.68;
+  for (let i = 0; i < 4; i += 1) {
+    const gx = x + cell * (0.25 + i * 0.15);
+    ctx.beginPath();
+    ctx.moveTo(gx, base);
+    ctx.quadraticCurveTo(gx - cell * 0.06, base - cell * 0.17, gx + cell * 0.03, base - cell * 0.28);
+    ctx.stroke();
+  }
+}
+
+function drawStatusBar() {
+  if (isCompactCanvas()) {
+    drawRoundedRect(216, 598, 568, 38, 8, '#10252de8', '#ffffff52');
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f7fbff';
+    drawFitText(state.message, 500, 623, 520, 16, 'center');
+    return;
+  }
+  drawRoundedRect(302, 586, 506, 48, 8, '#10252de8', '#ffffff52');
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 17px "Trebuchet MS", sans-serif';
+  ctx.fillText(state.message, 555, 616);
+
+  drawRoundedRect(834, 132, 126, 260, 8, '#10252dde', '#ffffff52');
+  ctx.fillStyle = '#b8d4c4';
+  ctx.font = '900 12px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('ACTIVE TOOL', 856, 164);
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 25px "Trebuchet MS", sans-serif';
+  const label = state.tool === MARK_TENT ? 'Tent' : state.tool === MARK_GRASS ? 'Grass' : 'Clear';
+  ctx.fillText(label, 856, 196);
+  ctx.fillStyle = '#d7ebdc';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  wrapText('Click cells or use arrows plus Space. T chooses tent, G marks grass, X clears.', 856, 230, 88, 18);
+}
+
+function drawParticles() {
+  for (const particle of state.particles) {
+    const alpha = Math.max(0, Math.min(1, particle.life / 0.9));
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = particle.color;
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(particle.label, particle.x, particle.y);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  drawBackground();
+  drawPanel();
+  drawBoard();
+  drawStatusBar();
+  drawParticles();
+  ctx.textAlign = 'left';
+}
+
+function burst(row, col, color, label) {
+  const { x, y, cell } = state.boardRect;
+  state.particles.push({
+    x: x + col * cell + cell / 2,
+    y: y + row * cell + cell * 0.32,
+    vx: 0,
+    vy: -26,
+    life: 0.9,
+    color,
+    label,
+  });
+}
+
+function burstBoard(color) {
+  const puzzle = currentPuzzle();
+  for (let i = 0; i < puzzle.size; i += 1) {
+    state.particles.push({
+      x: state.boardRect.x + (i + 0.5) * state.boardRect.cell,
+      y: state.boardRect.y + state.boardRect.total / 2,
+      vx: (i - puzzle.size / 2) * 18,
+      vy: -55 - i * 3,
+      life: 1,
+      color,
+      label: 'Clear',
+    });
+  }
+}
+
+function updateHud() {
+  const puzzle = currentPuzzle();
+  els.mode.textContent = state.mode === 'level_clear' ? 'Clear' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  els.level.textContent = `${state.levelIndex + 1} / ${PUZZLES.length}`;
+  els.tents.textContent = `${countTents()} / ${puzzle.solutionKeys.size}`;
+  els.time.textContent = `${Math.ceil(state.timeLeft)}s`;
+  els.checks.textContent = `${state.mistakes} / ${ERROR_LIMIT}`;
+  els.score.textContent = String(state.score);
+  els.coins.textContent = String(profileState.coins);
+  els.primaryBtn.textContent = state.mode === 'level_clear'
+    ? 'Next'
+    : state.mode === 'paused'
+      ? 'Resume'
+      : state.mode === 'menu'
+        ? 'Start'
+        : state.mode === 'won' || state.mode === 'lost'
+          ? 'Again'
+          : 'Restart';
+  els.pauseBtn.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  els.tentBtn.classList.toggle('selected', state.tool === MARK_TENT);
+  els.grassBtn.classList.toggle('selected', state.tool === MARK_GRASS);
+  els.clearBtn.classList.toggle('selected', state.tool === MARK_EMPTY);
+  const canAct = state.mode === 'playing' || state.mode === 'menu';
+  els.hintBtn.disabled = !canAct;
+  els.checkBtn.disabled = !canAct;
+}
+
+function showOverlay() {
+  let title = 'Tent Trail';
+  let copy = 'Place tents next to trees. Match every row and column clue. Tents cannot touch, even diagonally.';
+  let primary = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    copy = 'The trail is frozen until you resume.';
+    primary = 'Resume';
+  } else if (state.mode === 'level_clear') {
+    title = `${currentPuzzle().name} Solved`;
+    copy = `Score ${state.score}. Perfect trails ${state.perfectLevels}.`;
+    primary = 'Next Trail';
+  } else if (state.mode === 'won') {
+    title = 'Camp Complete';
+    copy = `Final score ${state.score}. Perfect trails ${state.perfectLevels}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Trail Closed';
+    copy = `${state.message} Score ${state.score}.`;
+    primary = 'Retry';
+  }
+
+  overlayPanel.innerHTML = `
+    <h1>${title}</h1>
+    <p>${copy}</p>
+    <p class="mini">Desktop: arrows/WASD move, Space cycles a cell, T tent, G grass, X clear, H hint, C check, P pause, R restart, F fullscreen.</p>
+    <p><button class="primary" id="overlayPrimary" type="button">${primary}</button></p>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayPrimary').addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function renderGameToText() {
+  const puzzle = currentPuzzle();
+  const rows = rowCounts();
+  const cols = colCounts();
+  const cells = [];
+  for (let row = 0; row < puzzle.size; row += 1) {
+    for (let col = 0; col < puzzle.size; col += 1) {
+      const key = keyOf(row, col);
+      cells.push({
+        row,
+        col,
+        mark: isTree(row, col) ? 'tree' : state.marks[row][col],
+        conflict: state.conflicts.has(key) || state.conflictTrees.has(key),
+        solution_tent: puzzle.solutionKeys.has(key),
+      });
+    }
+  }
+  return JSON.stringify({
+    game: 'tenttrail',
+    coordinate_system: 'canvas 1000x660, origin top-left, x right, y down; board cells use zero-based row and column',
+    mode: state.mode,
+    level: {
+      index: state.levelIndex + 1,
+      total: PUZZLES.length,
+      name: puzzle.name,
+      size: puzzle.size,
+    },
+    cursor: {
+      row: state.cursor.row,
+      col: state.cursor.col,
+      tool: state.tool,
+    },
+    clues: {
+      rows: puzzle.rowClues,
+      cols: puzzle.colClues,
+      current_rows: rows,
+      current_cols: cols,
+    },
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      score: state.score,
+      checks_used: state.checksUsed,
+      failed_checks: state.mistakes,
+      hints_used: state.hintsUsed,
+      perfect_levels: state.perfectLevels,
+      coins_earned: state.coinsEarned,
+      tents_placed: countTents(),
+      tents_required: puzzle.solutionKeys.size,
+    },
+    cells,
+    message: state.message,
+  });
+}
+
+let lastTime = performance.now();
+let manualStepping = false;
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  updateHud();
+  lastTime = performance.now();
+  manualStepping = false;
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__TENT_TRAIL_GAME__ = {
+  startGame,
+  nextLevel,
+  setTool,
+  setMark,
+  cycleCell,
+  useHint,
+  checkBoard,
+  pauseToggle,
+  solveCurrent() {
+    if (state.mode === 'menu') startGame();
+    const puzzle = currentPuzzle();
+    for (const key of puzzle.solutionKeys) {
+      const [row, col] = key.split(',').map(Number);
+      state.marks[row][col] = MARK_TENT;
+    }
+    completeLevel();
+    updateHud();
+    draw();
+  },
+  forceWin() {
+    if (state.mode === 'menu') startGame();
+    while (state.levelIndex < PUZZLES.length - 1) {
+      this.solveCurrent();
+      if (state.mode === 'level_clear') nextLevel();
+    }
+    this.solveCurrent();
+  },
+  getState: () => JSON.parse(renderGameToText()),
+};
+
+els.primaryBtn.addEventListener('click', primaryAction);
+els.tentBtn.addEventListener('click', () => setTool(MARK_TENT));
+els.grassBtn.addEventListener('click', () => setTool(MARK_GRASS));
+els.clearBtn.addEventListener('click', () => setTool(MARK_EMPTY));
+els.hintBtn.addEventListener('click', useHint);
+els.checkBtn.addEventListener('click', checkBoard);
+els.pauseBtn.addEventListener('click', pauseToggle);
+els.restartBtn.addEventListener('click', restartCampaign);
+els.fullBtn.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    update(dt);
+    draw();
+    updateHud();
+  }
+  lastTime = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'tenttrail', gameName: 'Tent Trail' });
+resetLevel(false);
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
