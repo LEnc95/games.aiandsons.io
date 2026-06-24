@@ -25,7 +25,7 @@
 ## 2026-05-01 - Search Landmark Roles on Control Wrappers
 **Learning:** The application uses custom wrapper classes like `.search-controls` and `.shop-controls` for its primary search inputs. Without the `role="search"` landmark on these specific wrapper elements, screen reader users cannot quickly navigate to the main search areas using landmark shortcuts.
 **Action:** Always ensure that any container wrapping a global or primary search input (typically featuring the `.search-controls` or similar classes) explicitly includes the `role="search"` attribute to provide a standard navigation landmark.
-## $(date +%Y-%m-%d) - WCAG 2.5.3 (Label in Name) Adherence
+## 2026-06-24 - WCAG 2.5.3 (Label in Name) Adherence
 **Learning:** When assigning `aria-label`s to elements that already have visible text, failing to include that exact visible text breaks WCAG 2.5.3, which can cause severe navigation issues for users relying on voice control software.
 **Action:** Always ensure the text inside `aria-label` exactly matches or contains the visible text of the button.
 ## 2026-05-21 - Add explicit required field indicators to forms
@@ -48,3 +48,6 @@
 ## 2026-06-15 - Enter-key submission and aria-labels for standalone inputs
 **Learning:** Ad-hoc admin inputs outside native forms often miss keyboard submit handlers and explicit labels, which slows keyboard workflows and weakens accessibility.
 **Action:** For standalone configuration inputs and modal fields, wire Enter to the primary action and ensure unlabeled inputs expose an explicit `aria-label` or label text.
+## 2026-06-24 - Visual clarity for disabled buttons in admin tools
+**Learning:** Custom UI buttons without an explicit `:disabled` CSS state appear interactable even when programmatically disabled via JavaScript during async operations, causing user confusion and phantom clicks.
+**Action:** Always ensure that buttons have a visible disabled state (e.g., `opacity: 0.58; cursor: not-allowed;`) to clearly communicate when actions like "Search" or "Submit" are processing.
