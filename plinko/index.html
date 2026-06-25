@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Plinko Drop | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(32% 24% at 19% 16%, #ffd36c 0%, transparent 72%),
+    radial-gradient(30% 24% at 83% 15%, #61e4cb 0%, transparent 70%),
+    linear-gradient(135deg, #102a3d 0%, #21495a 45%, #43345d 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff75;
+  padding: 8px 12px;
+  background: #0b1d2bdc;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1060px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #f9eec2a3;
+  background: #0d2637;
+  box-shadow: 0 24px 56px #06131d8f;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(690px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #fff2bad1;
+  background: #0c2233f5;
+  box-shadow: 0 18px 48px #06131da1;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 64ch;
+  color: #d6e6f1;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #abc0cf;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1060px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff63;
+  background: #0f2b3ee8;
+  color: #f7fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff2e;
+}
+.chip span {
+  color: #adc7d5;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9ff0c0; }
+.chip.warn b { color: #ffe08a; }
+.chip.hot b { color: #ff9cb1; }
+button {
+  cursor: pointer;
+  font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #0717204f;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102234;
+  background: linear-gradient(135deg, #ffe08a 0%, #66e0c9 100%);
+  border-color: #ffffffb8;
+}
+button.selected {
+  color: #102234;
+  background: #ffd36c;
+  border-color: #fff8d4;
+}
+button.utility { background: #32435d; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls { gap: 6px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip, button { min-height: 39px; }
+  .chip b { font-size: 14px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim the chute, drop chips through a peg board, nudge falling discs, and beat the target score. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Plinko Drop | AI and Sons Games">
+  <meta property="og:description" content="Aim the chute, drop chips through a peg board, nudge falling discs, and beat the target score. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/plinko">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/plinko.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Plinko Drop | AI and Sons Games">
+  <meta name="twitter:description" content="Aim the chute, drop chips through a peg board, nudge falling discs, and beat the target score. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/plinko.png">
+  <link rel="canonical" href="https://games.aiandsons.io/plinko">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Plinko Drop","description":"Aim the chute, drop chips through a peg board, nudge falling discs, and beat the target score. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/plinko","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Arcade</a>
+<main class="app">
+  <section class="stage" aria-label="Plinko Drop game area">
+    <canvas id="game" width="1000" height="660"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip"><span>Score</span><b id="score">0</b></div>
+    <div class="chip good"><span>Target</span><b id="target">2200</b></div>
+    <div class="chip"><span>Chips</span><b id="chips">10</b></div>
+    <div class="chip warn"><span>Nudges</span><b id="nudges">3</b></div>
+    <div class="chip hot"><span>Best Slot</span><b id="bestSlot">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="leftBtn" type="button">Left</button>
+    <button id="rightBtn" type="button">Right</button>
+    <button id="dropBtn" type="button">Drop</button>
+    <button id="riskBtn" type="button">Risk: Classic</button>
+    <button id="pauseBtn" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('mode'),
+  score: document.getElementById('score'),
+  target: document.getElementById('target'),
+  chips: document.getElementById('chips'),
+  nudges: document.getElementById('nudges'),
+  bestSlot: document.getElementById('bestSlot'),
+  coins: document.getElementById('coins'),
+  primaryBtn: document.getElementById('primaryBtn'),
+  leftBtn: document.getElementById('leftBtn'),
+  rightBtn: document.getElementById('rightBtn'),
+  dropBtn: document.getElementById('dropBtn'),
+  riskBtn: document.getElementById('riskBtn'),
+  pauseBtn: document.getElementById('pauseBtn'),
+  restartBtn: document.getElementById('restartBtn'),
+  fullBtn: document.getElementById('fullBtn'),
+};
+
+const W = 1000;
+const H = 660;
+const BOARD = { left: 86, right: 914, top: 84, bottom: 604, slotTop: 536 };
+const CHIP_COUNT = 10;
+const CHIP_RADIUS = 12;
+const GRAVITY = 790;
+const RISK_MODES = [
+  {
+    name: 'Safe',
+    target: 1500,
+    values: [90, 115, 140, 170, 240, 170, 140, 115, 90],
+    colors: ['#5bd0f6', '#65dfd0', '#77e6a8', '#f0df70', '#ffe08a', '#f0df70', '#77e6a8', '#65dfd0', '#5bd0f6'],
+  },
+  {
+    name: 'Classic',
+    target: 2200,
+    values: [50, 100, 150, 300, 500, 300, 150, 100, 50],
+    colors: ['#6ac9ff', '#6fdfc8', '#a6e66f', '#ffda6e', '#ff8da9', '#ffda6e', '#a6e66f', '#6fdfc8', '#6ac9ff'],
+  },
+  {
+    name: 'Wild',
+    target: 2800,
+    values: [0, 40, 90, 250, 900, 250, 90, 40, 0],
+    colors: ['#6b7990', '#79b9ff', '#73e2cb', '#ffd55f', '#ff668e', '#ffd55f', '#73e2cb', '#79b9ff', '#6b7990'],
+  },
+];
+
+const state = {
+  mode: 'menu',
+  previousMode: 'playing',
+  riskIndex: 1,
+  dropX: W / 2,
+  score: 0,
+  bestSlot: 0,
+  bestScore: loadNumber('cade:plinko:best', 0),
+  chipsLeft: CHIP_COUNT,
+  chipNumber: 0,
+  chip: null,
+  settled: [],
+  slotHits: Array(9).fill(0),
+  nudges: 3,
+  centerHits: 0,
+  combo: 0,
+  message: 'Aim the chute, drop ten chips, and beat the target score.',
+  particles: [],
+  coinsEarned: 0,
+  rewardGiven: false,
+  started: false,
+};
+
+const pegs = buildPegs();
+
+function loadNumber(key, fallback) {
+  try {
+    const value = Number(localStorage.getItem(key));
+    return Number.isFinite(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveBestScore() {
+  if (state.score <= state.bestScore) return;
+  state.bestScore = state.score;
+  try {
+    localStorage.setItem('cade:plinko:best', String(state.bestScore));
+  } catch {}
+}
+
+function buildPegs() {
+  const rows = [];
+  const gapY = 50;
+  const gapX = 72;
+  const center = W / 2;
+  for (let row = 0; row < 8; row += 1) {
+    const count = row % 2 === 0 ? 8 : 9;
+    const y = 150 + row * gapY;
+    const firstX = center - ((count - 1) * gapX) / 2;
+    for (let col = 0; col < count; col += 1) {
+      rows.push({ x: firstX + col * gapX, y, r: 10, row, col });
+    }
+  }
+  return rows;
+}
+
+function activeRisk() {
+  return RISK_MODES[state.riskIndex];
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function resetRun(keepRisk = true) {
+  const risk = keepRisk ? state.riskIndex : 1;
+  state.mode = 'menu';
+  state.previousMode = 'playing';
+  state.riskIndex = risk;
+  state.dropX = W / 2;
+  state.score = 0;
+  state.bestSlot = 0;
+  state.chipsLeft = CHIP_COUNT;
+  state.chipNumber = 0;
+  state.chip = null;
+  state.settled = [];
+  state.slotHits = Array(9).fill(0);
+  state.nudges = 3;
+  state.centerHits = 0;
+  state.combo = 0;
+  state.message = 'Aim the chute, drop ten chips, and beat the target score.';
+  state.particles = [];
+  state.coinsEarned = 0;
+  state.rewardGiven = false;
+  state.started = false;
+  updateHud();
+  draw();
+  showOverlay();
+}
+
+function startRun() {
+  state.mode = 'playing';
+  state.previousMode = 'playing';
+  state.score = 0;
+  state.bestSlot = 0;
+  state.chipsLeft = CHIP_COUNT;
+  state.chipNumber = 0;
+  state.chip = null;
+  state.settled = [];
+  state.slotHits = Array(9).fill(0);
+  state.nudges = 3;
+  state.centerHits = 0;
+  state.combo = 0;
+  state.message = 'Move the chute with arrows or drag, then drop a chip.';
+  state.particles = [];
+  state.coinsEarned = 0;
+  state.rewardGiven = false;
+  state.started = true;
+  rememberRecent('plinko');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startRun();
+  } else if (state.mode === 'paused') {
+    resumeGame();
+  } else if (state.mode === 'playing') {
+    dropChip();
+  } else if (state.mode === 'dropping') {
+    state.message = 'Use left or right for a limited nudge while the chip is falling.';
+  }
+  updateHud();
+  draw();
+}
+
+function setDropX(x) {
+  if (state.chip) return;
+  state.dropX = clamp(x, BOARD.left + 22, BOARD.right - 22);
+  state.message = `Chute set to ${Math.round(state.dropX)}.`;
+  updateHud();
+  draw();
+}
+
+function moveAim(direction) {
+  if (state.mode === 'menu') {
+    startRun();
+  }
+  if (state.mode === 'dropping' && state.chip) {
+    nudgeChip(direction);
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  setDropX(state.dropX + direction * 34);
+}
+
+function dropChip() {
+  if (state.mode === 'menu') {
+    startRun();
+  }
+  if (state.mode !== 'playing' || state.chip || state.chipsLeft <= 0) return;
+  state.chipsLeft -= 1;
+  state.chipNumber += 1;
+  const offset = (state.dropX - W / 2) / (BOARD.right - BOARD.left);
+  state.chip = {
+    x: state.dropX,
+    y: BOARD.top + 8,
+    vx: offset * 70,
+    vy: 70,
+    r: CHIP_RADIUS,
+    index: state.chipNumber,
+    hits: 0,
+    trail: [],
+    age: 0,
+  };
+  state.nudges = 3;
+  state.mode = 'dropping';
+  state.message = `Chip ${state.chipNumber} is falling.`;
+  hideOverlay();
+  updateHud();
+}
+
+function nudgeChip(direction) {
+  if (!state.chip || state.mode !== 'dropping' || state.nudges <= 0) return;
+  state.chip.vx += direction * 118;
+  state.chip.vy = Math.max(state.chip.vy, 120);
+  state.nudges -= 1;
+  state.message = state.nudges > 0 ? `${state.nudges} nudges left for this chip.` : 'No nudges left for this chip.';
+  burst(state.chip.x - direction * 8, state.chip.y, direction > 0 ? '#8fe5ff' : '#ffd36c', direction > 0 ? '>' : '<', 6);
+  updateHud();
+}
+
+function cycleRisk() {
+  if (state.mode === 'dropping') return;
+  state.riskIndex = (state.riskIndex + 1) % RISK_MODES.length;
+  state.message = `${activeRisk().name} board target is ${activeRisk().target}.`;
+  if (state.mode === 'won' || state.mode === 'lost') {
+    resetRun(true);
+  }
+  updateHud();
+  draw();
+}
+
+function pauseGame() {
+  if (state.mode !== 'playing' && state.mode !== 'dropping') return;
+  state.previousMode = state.mode;
+  state.mode = 'paused';
+  state.message = 'Paused.';
+  showOverlay();
+  updateHud();
+}
+
+function resumeGame() {
+  if (state.mode !== 'paused') return;
+  state.mode = state.previousMode || 'playing';
+  hideOverlay();
+  updateHud();
+}
+
+function pauseToggle() {
+  if (state.mode === 'paused') {
+    resumeGame();
+  } else {
+    pauseGame();
+  }
+}
+
+function finishRun() {
+  const won = state.score >= activeRisk().target;
+  state.mode = won ? 'won' : 'lost';
+  state.message = won
+    ? `Target cleared by ${state.score - activeRisk().target} points.`
+    : `${activeRisk().target - state.score} points short of the target.`;
+  saveBestScore();
+  if (!state.rewardGiven) {
+    const base = Math.max(4, Math.floor(state.score / 250));
+    const bonus = won ? 12 + state.centerHits * 2 : Math.min(6, state.centerHits * 2);
+    const coins = Math.min(36, base + bonus);
+    state.coinsEarned = coins;
+    state.rewardGiven = true;
+    if (coins > 0) addCoins(coins);
+    maybeUnlock({
+      anyPlay: true,
+      score: state.score,
+      plinko: {
+        result: won ? 'won' : 'lost',
+        score: state.score,
+        centerHits: state.centerHits,
+        bestSlot: state.bestSlot,
+        risk: activeRisk().name,
+      },
+    });
+  }
+  showOverlay();
+  updateHud();
+}
+
+function update(dt) {
+  updateParticles(dt);
+  if (state.mode !== 'dropping' || !state.chip) return;
+  const chip = state.chip;
+  chip.age += dt;
+  chip.trail.push({ x: chip.x, y: chip.y, life: 0.35 });
+  if (chip.trail.length > 18) chip.trail.shift();
+
+  chip.vy += GRAVITY * dt;
+  chip.vx *= Math.pow(0.988, dt * 60);
+  chip.vy *= Math.pow(0.997, dt * 60);
+  chip.x += chip.vx * dt;
+  chip.y += chip.vy * dt;
+
+  if (chip.x < BOARD.left + chip.r) {
+    chip.x = BOARD.left + chip.r;
+    chip.vx = Math.abs(chip.vx) * 0.74 + 28;
+  } else if (chip.x > BOARD.right - chip.r) {
+    chip.x = BOARD.right - chip.r;
+    chip.vx = -Math.abs(chip.vx) * 0.74 - 28;
+  }
+
+  collidePegs(chip);
+  collideSlotDividers(chip);
+
+  if (chip.y > BOARD.bottom - 18 || chip.age > 9) {
+    settleChip(chip);
+  }
+}
+
+function collidePegs(chip) {
+  for (const peg of pegs) {
+    if (Math.abs(chip.y - peg.y) > chip.r + peg.r + 7) continue;
+    const dx = chip.x - peg.x;
+    const dy = chip.y - peg.y;
+    const minDist = chip.r + peg.r;
+    const distSq = dx * dx + dy * dy;
+    if (distSq <= 0 || distSq >= minDist * minDist) continue;
+    const dist = Math.sqrt(distSq);
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = minDist - dist + 0.3;
+    chip.x += nx * overlap;
+    chip.y += ny * overlap;
+    const vn = chip.vx * nx + chip.vy * ny;
+    if (vn < 70) {
+      chip.vx -= (1.62 * vn) * nx;
+      chip.vy -= (1.28 * vn) * ny;
+    }
+    const side = dx >= 0 ? 1 : -1;
+    const wobble = Math.sin((peg.row + 1) * 9.173 + chip.index * 5.317 + peg.col) * 21;
+    chip.vx += side * (34 + peg.row * 2.2) + wobble;
+    chip.vy = Math.max(90, chip.vy * 0.82 + 26);
+    chip.hits += 1;
+    if (chip.hits % 2 === 1) {
+      burst(peg.x, peg.y, activeRisk().colors[peg.row % activeRisk().colors.length], '+', 3);
+    }
+  }
+}
+
+function collideSlotDividers(chip) {
+  if (chip.y < BOARD.slotTop - 8) return;
+  const slotW = (BOARD.right - BOARD.left) / activeRisk().values.length;
+  for (let i = 1; i < activeRisk().values.length; i += 1) {
+    const x = BOARD.left + slotW * i;
+    const dx = chip.x - x;
+    if (Math.abs(dx) > chip.r + 4) continue;
+    chip.x = x + Math.sign(dx || 1) * (chip.r + 4);
+    chip.vx = Math.sign(dx || 1) * Math.max(70, Math.abs(chip.vx) * 0.72);
+    chip.vy *= 0.95;
+  }
+}
+
+function settleChip(chip) {
+  const slot = slotIndexForX(chip.x);
+  const value = activeRisk().values[slot];
+  const centerBonus = slot === 4 ? 1 : 0;
+  state.centerHits += centerBonus;
+  state.combo = slot === 4 ? state.combo + 1 : 0;
+  const comboBonus = state.combo > 1 ? 100 * (state.combo - 1) : 0;
+  const total = value + comboBonus;
+  state.score += total;
+  state.bestSlot = Math.max(state.bestSlot, total);
+  state.slotHits[slot] += 1;
+  state.settled.push({
+    x: BOARD.left + (slot + 0.5) * ((BOARD.right - BOARD.left) / activeRisk().values.length),
+    y: BOARD.bottom - 18 - Math.min(5, state.slotHits[slot] - 1) * 9,
+    slot,
+    value: total,
+    life: 4,
+  });
+  if (state.settled.length > 18) state.settled.shift();
+  burst(chip.x, BOARD.bottom - 36, activeRisk().colors[slot], `+${total}`, 12);
+  state.chip = null;
+  state.nudges = 3;
+  state.message = total > value
+    ? `Center streak scores ${total}.`
+    : `Slot ${slot + 1} scores ${value}.`;
+  if (state.chipsLeft <= 0) {
+    finishRun();
+  } else {
+    state.mode = 'playing';
+    updateHud();
+  }
+}
+
+function slotIndexForX(x) {
+  const slotW = (BOARD.right - BOARD.left) / activeRisk().values.length;
+  return clamp(Math.floor((x - BOARD.left) / slotW), 0, activeRisk().values.length - 1);
+}
+
+function updateParticles(dt) {
+  for (const p of state.particles) {
+    p.life -= dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 110 * dt;
+  }
+  state.particles = state.particles.filter((p) => p.life > 0);
+  for (const chip of state.settled) {
+    chip.life -= dt;
+  }
+}
+
+function burst(x, y, color, label, count) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = (Math.PI * 2 * i) / count;
+    const speed = 45 + (i % 4) * 18;
+    state.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 36,
+      life: 0.65 + (i % 3) * 0.08,
+      color,
+      label: i === 0 ? label : '',
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawBoard();
+  drawSlots();
+  drawPegs();
+  drawDropper();
+  drawSettled();
+  drawChip();
+  drawParticles();
+  drawMessage();
+}
+
+function drawBackground() {
+  const grd = ctx.createLinearGradient(0, 0, W, H);
+  grd.addColorStop(0, '#12334a');
+  grd.addColorStop(0.5, '#172c4d');
+  grd.addColorStop(1, '#342b52');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 0.18;
+  for (let i = 0; i < 32; i += 1) {
+    const x = (i * 137) % W;
+    const y = 35 + ((i * 91) % 570);
+    ctx.fillStyle = i % 3 === 0 ? '#ffe08a' : i % 3 === 1 ? '#66e0c9' : '#ff8da9';
+    ctx.beginPath();
+    ctx.arc(x, y, 1.6 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBoard() {
+  roundRect(BOARD.left - 32, BOARD.top - 18, BOARD.right - BOARD.left + 64, BOARD.bottom - BOARD.top + 34, 18);
+  ctx.fillStyle = '#0a1e2dea';
+  ctx.fill();
+  ctx.strokeStyle = '#f7d780a8';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.strokeStyle = '#ffffff18';
+  ctx.lineWidth = 1;
+  for (let y = BOARD.top + 44; y < BOARD.bottom - 8; y += 44) {
+    ctx.beginPath();
+    ctx.moveTo(BOARD.left - 18, y);
+    ctx.lineTo(BOARD.right + 18, y);
+    ctx.stroke();
+  }
+}
+
+function drawSlots() {
+  const values = activeRisk().values;
+  const colors = activeRisk().colors;
+  const slotW = (BOARD.right - BOARD.left) / values.length;
+  for (let i = 0; i < values.length; i += 1) {
+    const x = BOARD.left + i * slotW;
+    const hot = values[i] === Math.max(...values);
+    ctx.fillStyle = colors[i];
+    ctx.globalAlpha = hot ? 0.92 : 0.78;
+    roundRect(x + 3, BOARD.slotTop, slotW - 6, BOARD.bottom - BOARD.slotTop + 22, 8);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = hot ? '#29101a' : '#102234';
+    ctx.font = '900 22px Trebuchet MS, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(values[i]), x + slotW / 2, BOARD.slotTop + 35);
+    ctx.font = '900 13px Trebuchet MS, sans-serif';
+    ctx.fillText(`${state.slotHits[i]} hit${state.slotHits[i] === 1 ? '' : 's'}`, x + slotW / 2, BOARD.slotTop + 62);
+  }
+  ctx.strokeStyle = '#fff5b8bd';
+  ctx.lineWidth = 4;
+  for (let i = 0; i <= values.length; i += 1) {
+    const x = BOARD.left + i * slotW;
+    ctx.beginPath();
+    ctx.moveTo(x, BOARD.slotTop - 10);
+    ctx.lineTo(x, BOARD.bottom + 4);
+    ctx.stroke();
+  }
+}
+
+function drawPegs() {
+  for (const peg of pegs) {
+    const pulse = 0.5 + Math.sin(performance.now() / 320 + peg.row + peg.col) * 0.08;
+    ctx.fillStyle = '#eff8ff';
+    ctx.beginPath();
+    ctx.arc(peg.x + 2, peg.y + 3, peg.r + 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#06152199';
+    ctx.fill();
+    const pegGradient = ctx.createRadialGradient(peg.x - 4, peg.y - 4, 2, peg.x, peg.y, peg.r + 2);
+    pegGradient.addColorStop(0, '#ffffff');
+    pegGradient.addColorStop(0.45, '#e4f7ff');
+    pegGradient.addColorStop(1, pulse > 0.52 ? '#6eead2' : '#f7d780');
+    ctx.fillStyle = pegGradient;
+    ctx.beginPath();
+    ctx.arc(peg.x, peg.y, peg.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawDropper() {
+  ctx.save();
+  ctx.translate(state.dropX, BOARD.top - 10);
+  ctx.fillStyle = '#f8e49c';
+  ctx.strokeStyle = '#ffffffc8';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-34, -22);
+  ctx.lineTo(34, -22);
+  ctx.lineTo(19, 19);
+  ctx.lineTo(-19, 19);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#102234';
+  ctx.font = '900 14px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('DROP', 0, -3);
+  ctx.restore();
+
+  if (!state.chip && (state.mode === 'playing' || state.mode === 'menu')) {
+    ctx.strokeStyle = '#ffe08aa8';
+    ctx.setLineDash([8, 9]);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(state.dropX, BOARD.top + 18);
+    ctx.lineTo(state.dropX, BOARD.slotTop - 24);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function drawSettled() {
+  for (const chip of state.settled) {
+    ctx.globalAlpha = clamp(chip.life / 4, 0.35, 1);
+    drawDisc(chip.x, chip.y, CHIP_RADIUS, activeRisk().colors[chip.slot], '#fff8d6');
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawChip() {
+  if (!state.chip) return;
+  const chip = state.chip;
+  for (let i = 0; i < chip.trail.length; i += 1) {
+    const t = chip.trail[i];
+    ctx.globalAlpha = (i / chip.trail.length) * 0.28;
+    drawDisc(t.x, t.y, CHIP_RADIUS * 0.75, '#66e0c9', '#ffffff00');
+  }
+  ctx.globalAlpha = 1;
+  drawDisc(chip.x, chip.y, chip.r, '#ffd36c', '#ffffff');
+  ctx.fillStyle = '#102234';
+  ctx.font = '900 12px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(chip.index), chip.x, chip.y + 1);
+}
+
+function drawDisc(x, y, r, color, stroke) {
+  const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, 1, x, y, r);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.28, color);
+  g.addColorStop(1, '#d27546');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawParticles() {
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const p of state.particles) {
+    ctx.globalAlpha = clamp(p.life * 1.4, 0, 1);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.label ? 5 : 3, 0, Math.PI * 2);
+    ctx.fill();
+    if (p.label) {
+      ctx.font = '900 18px Trebuchet MS, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(p.label, p.x, p.y - 18);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawMessage() {
+  ctx.fillStyle = '#071521bd';
+  roundRect(160, 16, 680, 42, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff2e';
+  ctx.stroke();
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 17px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(state.message, W / 2, 38);
+
+  ctx.fillStyle = '#b7d0df';
+  ctx.font = '800 13px Trebuchet MS, sans-serif';
+  ctx.fillText(`Best run ${state.bestScore} - ${activeRisk().name} board`, W / 2, H - 20);
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function updateHud() {
+  const modeLabel = state.mode === 'won' ? 'Won' : state.mode === 'lost' ? 'Run Over' : state.mode[0].toUpperCase() + state.mode.slice(1);
+  els.mode.textContent = modeLabel;
+  els.score.textContent = String(state.score);
+  els.target.textContent = String(activeRisk().target);
+  els.chips.textContent = state.chip ? `${state.chipsLeft} + falling` : String(state.chipsLeft);
+  els.nudges.textContent = String(state.nudges);
+  els.bestSlot.textContent = String(state.bestSlot);
+  els.coins.textContent = String(profileState.coins);
+  els.primaryBtn.textContent = state.mode === 'paused'
+    ? 'Resume'
+    : state.mode === 'menu'
+      ? 'Start'
+      : state.mode === 'won' || state.mode === 'lost'
+        ? 'Again'
+        : state.mode === 'dropping'
+          ? 'Nudge'
+          : 'Drop';
+  els.pauseBtn.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  els.riskBtn.textContent = `Risk: ${activeRisk().name}`;
+  els.riskBtn.classList.toggle('selected', state.riskIndex === 2);
+  els.dropBtn.disabled = state.mode !== 'playing' || Boolean(state.chip);
+  els.leftBtn.disabled = state.mode === 'won' || state.mode === 'lost' || state.mode === 'paused';
+  els.rightBtn.disabled = els.leftBtn.disabled;
+}
+
+function showOverlay() {
+  let title = 'Plinko Drop';
+  let copy = 'Aim the chute, drop ten chips through the peg field, and chase the target score before the tray runs empty.';
+  let primary = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    copy = 'The board is frozen. Resume to keep the falling chip and your remaining chips.';
+    primary = 'Resume';
+  } else if (state.mode === 'won') {
+    title = 'Target Cleared';
+    copy = `Score ${state.score}. Center hits ${state.centerHits}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Run Complete';
+    copy = `Score ${state.score}. Best slot ${state.bestSlot}. Coins earned ${state.coinsEarned}.`;
+    primary = 'Try Again';
+  }
+
+  overlayPanel.innerHTML = `
+    <h1>${title}</h1>
+    <p>${copy}</p>
+    <p class="mini">Desktop: arrows/A-D move or nudge, Space/Enter drop, 1-3 risk, P pause, R restart, F fullscreen. Touch: drag or tap the top chute, then Drop.</p>
+    <p><button class="primary" id="overlayPrimary" type="button">${primary}</button></p>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayPrimary').addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlayPanel.innerHTML = '';
+}
+
+function pointerPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * W,
+    y: ((event.clientY - rect.top) / rect.height) * H,
+  };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  const point = pointerPoint(event);
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startRun();
+  }
+  if (state.mode === 'dropping' && state.chip) {
+    nudgeChip(point.x >= state.chip.x ? 1 : -1);
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  setDropX(point.x);
+  if (point.y < BOARD.top + 70) {
+    dropChip();
+  }
+}
+
+function handlePointerMove(event) {
+  if (state.mode !== 'playing' || state.chip) return;
+  if (event.buttons !== 1 && event.pointerType !== 'touch') return;
+  const point = pointerPoint(event);
+  setDropX(point.x);
+}
+
+function handleKey(event) {
+  if (['ArrowLeft', 'ArrowRight', ' ', 'Enter'].includes(event.key)) {
+    event.preventDefault();
+  }
+  const key = event.key.toLowerCase();
+  if (key === 'arrowleft' || key === 'a') moveAim(-1);
+  else if (key === 'arrowright' || key === 'd') moveAim(1);
+  else if (key === ' ' || key === 'enter') dropChip();
+  else if (key === '1') setRisk(0);
+  else if (key === '2') setRisk(1);
+  else if (key === '3') setRisk(2);
+  else if (key === 'p') pauseToggle();
+  else if (key === 'r') resetRun(true);
+  else if (key === 'f') toggleFullscreen();
+}
+
+function setRisk(index) {
+  if (state.mode === 'dropping') return;
+  state.riskIndex = clamp(index, 0, RISK_MODES.length - 1);
+  state.message = `${activeRisk().name} board selected.`;
+  updateHud();
+  draw();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    state.message = 'Fullscreen is not available in this browser.';
+  }
+  draw();
+}
+
+function renderGameToText() {
+  return JSON.stringify({
+    game: 'plinko',
+    coordinate_system: 'canvas 1000x660, origin top-left, x right, y down',
+    mode: state.mode,
+    risk: activeRisk().name,
+    target: activeRisk().target,
+    score: state.score,
+    best_score: state.bestScore,
+    chips_left: state.chipsLeft,
+    chip_number: state.chipNumber,
+    chute: { x: Math.round(state.dropX), y: BOARD.top - 10 },
+    active_chip: state.chip ? {
+      x: Number(state.chip.x.toFixed(1)),
+      y: Number(state.chip.y.toFixed(1)),
+      vx: Number(state.chip.vx.toFixed(1)),
+      vy: Number(state.chip.vy.toFixed(1)),
+      radius: state.chip.r,
+      nudges_left: state.nudges,
+      peg_hits: state.chip.hits,
+    } : null,
+    slots: activeRisk().values.map((value, index) => ({
+      index,
+      value,
+      hits: state.slotHits[index],
+      x1: Math.round(BOARD.left + index * ((BOARD.right - BOARD.left) / activeRisk().values.length)),
+      x2: Math.round(BOARD.left + (index + 1) * ((BOARD.right - BOARD.left) / activeRisk().values.length)),
+    })),
+    visible_pegs: pegs.map((peg) => ({ x: peg.x, y: peg.y, radius: peg.r, row: peg.row })),
+    resources: {
+      nudges_left: state.nudges,
+      center_hits: state.centerHits,
+      best_slot_score: state.bestSlot,
+      combo: state.combo,
+      coins_earned: state.coinsEarned,
+    },
+    message: state.message,
+  });
+}
+
+let lastTime = performance.now();
+let manualStepping = false;
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.ceil(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  updateHud();
+  lastTime = performance.now();
+  manualStepping = false;
+  return JSON.parse(renderGameToText());
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__PLINKO_GAME__ = {
+  state,
+  startRun,
+  resetRun,
+  setRisk,
+  setDropX,
+  dropChip,
+  nudgeChip,
+  pauseToggle,
+  forceScore(score = activeRisk().target) {
+    if (state.mode === 'menu') startRun();
+    state.score = score;
+    state.chipsLeft = 0;
+    state.chip = null;
+    finishRun();
+    draw();
+  },
+  forceSettle(slot = 4) {
+    if (state.mode === 'menu') startRun();
+    state.chip = {
+      x: BOARD.left + (slot + 0.5) * ((BOARD.right - BOARD.left) / activeRisk().values.length),
+      y: BOARD.bottom - 24,
+      vx: 0,
+      vy: 0,
+      r: CHIP_RADIUS,
+      index: state.chipNumber + 1,
+      hits: 0,
+      trail: [],
+      age: 0,
+    };
+    state.mode = 'dropping';
+    settleChip(state.chip);
+    draw();
+  },
+  getState: () => JSON.parse(renderGameToText()),
+};
+
+els.primaryBtn.addEventListener('click', primaryAction);
+els.leftBtn.addEventListener('click', () => moveAim(-1));
+els.rightBtn.addEventListener('click', () => moveAim(1));
+els.dropBtn.addEventListener('click', dropChip);
+els.riskBtn.addEventListener('click', cycleRisk);
+els.pauseBtn.addEventListener('click', pauseToggle);
+els.restartBtn.addEventListener('click', () => resetRun(true));
+els.fullBtn.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('pointermove', handlePointerMove);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    update(dt);
+    draw();
+    updateHud();
+  }
+  lastTime = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'plinko', gameName: 'Plinko Drop' });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

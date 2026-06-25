@@ -3755,3 +3755,20 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Static route smoke returned HTTP 200 for `/tenttrail/`; `git diff --check` passed with only existing LF-to-CRLF warnings.
 - `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Tent Trail issue.
 - TODO: none for Tent Trail; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-06-25 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Tent Trail, Nim Grove, Domino Draw, Mushroom March, Pocket Pool, Word Ladder Sprint, Chess, Darts 301, Skee-Ball, Tower Defense, and Sky Joust.
+- Registry search found no Plinko route or metadata entry.
+- Chosen game: Plinko Drop (`/plinko`), a peg-board arcade scoring game with aimed chip drops, bump physics, slots, limited chips, touch/keyboard controls, deterministic hooks, shared feedback, and coin rewards.
+- Plan: add a standalone canvas game, register metadata, regenerate SEO and Linear feedback artifacts, then run focused tests plus the required Playwright skill loop with screenshot inspection.
+- Initial implementation added `plinko/index.html` with deterministic peg and slot physics, three risk boards, ten-chip runs, limited nudges, score targets, coin rewards, pause/restart/fullscreen, pointer/touch and keyboard controls, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__PLINKO_GAME__` helpers.
+- Registered Plinko Drop in `src/meta/games.js`.
+- Ran `npm run seo` and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, and local Linear feedback seeds now include Plinko Drop. Live Linear provisioning skipped because credentials are unset.
+- Early validation passed: module script parse, 136-game slug/URL uniqueness, 9 focused catalog/feedback tests, and `npm run feedback:check-daily`.
+- Broader validation passed: `npm run test:feedback` (31 tests) and `npm run test:shop` (68 tests).
+- Required `$WEB_GAME_CLIENT` validation passed after an overlay-hide polish rerun, producing synchronized screenshots and state snapshots in `output/web-game/plinko-smoke-rerun` with no error artifacts.
+- Custom Playwright scenarios passed in `output/web-game/plinko-scenarios`: desktop start/drop/nudge/settle, pause/resume, Wild risk hotkey, forced win and coin reward, shared feedback launcher, mobile chute/touch drop with score update, and zero page/console errors. Screenshots were inspected and desktop/mobile layouts are readable.
+- Static route smoke returned HTTP 200 for `/plinko/`; `git diff --check` passed with only existing LF-to-CRLF warnings.
+- `npm run test:feedback-smoke:raw` failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Plinko issue.
+- TODO: none for Plinko Drop; future work may address the raw-static feedback smoke POST/API behavior.

@@ -22,6 +22,7 @@
 - game/airhockey
 - game/skeeball
 - game/pool
+- game/plinko
 - game/darts
 - game/snake
 - game/tictactoe
