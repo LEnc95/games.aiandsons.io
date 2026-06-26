@@ -9,6 +9,8 @@ Operational command reference for contributors and automations in this repositor
 - Install Playwright browser runtime for smoke tests: `npx playwright install --with-deps chromium`
 - Run local static server for raw smoke tests: `python -m http.server 4173`
 - Regenerate sitemap and inject SEO metadata: `npm run seo`
+- Render social/OG card PNGs: `npm run og`
+- Capture marketing gameplay clips: `npm run marketing:clips`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
 - Run social API integration tests: `npm run test:social`
@@ -70,6 +72,7 @@ Operational command reference for contributors and automations in this repositor
 
 ## Daily Game Checklist
 - Add the game route and update `src/meta/games.js`
+- Run `npm run seo` and `npm run og` after metadata/content changes
 - Mount `mountGameFeedback({ gameSlug, gameName })`
 - Run `npm run feedback:sync-linear`
 - Run `npm run test:feedback`

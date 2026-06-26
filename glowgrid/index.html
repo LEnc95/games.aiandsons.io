@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Glow Grid | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(30% 24% at 18% 16%, #ffd166 0%, transparent 72%),
+    radial-gradient(28% 24% at 84% 15%, #6fffe9 0%, transparent 70%),
+    linear-gradient(135deg, #10192c 0%, #20364b 43%, #3d2f56 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #081523dc;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #fff0a7a8;
+  background: #111a2b;
+  box-shadow: 0 22px 56px #05091494;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #fff1a9bd;
+  background: #0c1525f6;
+  box-shadow: 0 18px 48px #050914a3;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 66ch;
+  color: #dbe8f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b8cbe0;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101d31e8;
+  color: #f7fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b6c9dc;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9cf1c5; }
+.chip.warn b { color: #ffe28a; }
+.chip.bad b { color: #ffa0ad; }
+button {
+  cursor: pointer;
+  font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe28a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe28a 0%, #7ef8df 100%);
+  border-color: #ffffffc4;
+}
+button.selected {
+  color: #102033;
+  background: #ffd166;
+  border-color: #fff8d3;
+}
+button.utility { background: #37455f; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 12px; padding: 0 7px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Place bulbs, satisfy numbered wall clues, and light every corridor without crossing beams. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Glow Grid | AI and Sons Games">
+  <meta property="og:description" content="Place bulbs, satisfy numbered wall clues, and light every corridor without crossing beams. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/glowgrid">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/glowgrid.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Glow Grid | AI and Sons Games">
+  <meta name="twitter:description" content="Place bulbs, satisfy numbered wall clues, and light every corridor without crossing beams. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/glowgrid.png">
+  <link rel="canonical" href="https://games.aiandsons.io/glowgrid">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Glow Grid","description":"Place bulbs, satisfy numbered wall clues, and light every corridor without crossing beams. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/glowgrid","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" aria-label="Glow Grid game area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Glow Grid puzzle board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="mode">Menu</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="level">1 / 5</b></div>
+    <div class="chip"><span>Lit</span><b id="lit">0 / 0</b></div>
+    <div class="chip warn"><span>Time</span><b id="time">0s</b></div>
+    <div class="chip bad"><span>Issues</span><b id="issues">0</b></div>
+    <div class="chip good"><span>Score</span><b id="score">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coins">0</b></div>
+  </section>
+  <section class="controls" aria-label="Glow Grid controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="bulbBtn" class="selected" type="button">Bulb</button>
+    <button id="markBtn" type="button">Mark</button>
+    <button id="clearBtn" type="button">Clear</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="checkBtn" type="button">Check</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('mode'),
+  level: document.getElementById('level'),
+  lit: document.getElementById('lit'),
+  time: document.getElementById('time'),
+  issues: document.getElementById('issues'),
+  score: document.getElementById('score'),
+  coins: document.getElementById('coins'),
+  primaryBtn: document.getElementById('primaryBtn'),
+  bulbBtn: document.getElementById('bulbBtn'),
+  markBtn: document.getElementById('markBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  hintBtn: document.getElementById('hintBtn'),
+  checkBtn: document.getElementById('checkBtn'),
+  pauseBtn: document.getElementById('pauseBtn'),
+  restartBtn: document.getElementById('restartBtn'),
+  fullBtn: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const CELL_EMPTY = 'empty';
+const CELL_BULB = 'bulb';
+const CELL_MARK = 'mark';
+const TOOL_BULB = 'bulb';
+const TOOL_MARK = 'mark';
+const TOOL_CLEAR = 'clear';
+const STORAGE_KEY = 'cade:glowgrid:best';
+const ORTHO = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+const RAW_PUZZLES = [
+  {
+    name: 'First Spark',
+    seconds: 180,
+    rows: [
+      '.......',
+      '..00...',
+      '.......',
+      '.....0.',
+      '....1..',
+      '..#1.1.',
+      '.#.#.0.',
+    ],
+    solution: [[6, 2], [4, 6], [5, 4], [0, 5], [2, 4], [3, 1], [4, 0]],
+  },
+  {
+    name: 'Mirror Hall',
+    seconds: 195,
+    rows: [
+      '..#....',
+      '......#',
+      '......0',
+      '...#.1.',
+      '.......',
+      '#..0...',
+      '.10....',
+    ],
+    solution: [[6, 0], [0, 4], [6, 6], [4, 5], [1, 0], [2, 1], [3, 2]],
+  },
+  {
+    name: 'Copper Circuit',
+    seconds: 230,
+    rows: [
+      '..#.#2.1',
+      '..#1..2.',
+      '....#...',
+      '#...0..2',
+      '......1.',
+      '........',
+      '.....1..',
+      '.#...0..',
+    ],
+    solution: [[0, 3], [0, 6], [1, 5], [2, 7], [3, 6], [0, 1], [2, 0], [5, 7], [6, 6], [4, 0], [6, 2], [7, 3]],
+  },
+  {
+    name: 'Prism Court',
+    seconds: 245,
+    rows: [
+      '.00.1...',
+      '......##',
+      '.....#1.',
+      '#..#...1',
+      '.#....1.',
+      '........',
+      '.101..##',
+      '1.2.11..',
+    ],
+    solution: [[2, 7], [7, 1], [7, 3], [5, 7], [4, 0], [7, 6], [1, 0], [2, 3], [3, 2], [0, 5], [3, 4], [4, 5]],
+  },
+  {
+    name: 'Dawn Vault',
+    seconds: 270,
+    rows: [
+      '.01......',
+      '...2....1',
+      '...#.....',
+      '....100..',
+      '.1#.....1',
+      '...1.#01.',
+      '.......#.',
+      '#.#..#..1',
+      '.......1.',
+    ],
+    solution: [[8, 8], [5, 8], [7, 6], [2, 8], [0, 7], [1, 4], [4, 4], [6, 3], [5, 0], [8, 1], [3, 1], [1, 2]],
+  },
+];
+
+function keyOf(row, col) {
+  return `${row},${col}`;
+}
+
+function parseKey(key) {
+  return key.split(',').map(Number);
+}
+
+function isClue(ch) {
+  return /^[0-4]$/.test(ch);
+}
+
+function buildPuzzle(raw) {
+  const rows = raw.rows.map((row) => row.split(''));
+  const height = rows.length;
+  const width = rows[0].length;
+  const wallKeys = new Set();
+  const clueMap = new Map();
+  const whiteKeys = [];
+
+  for (let row = 0; row < height; row += 1) {
+    for (let col = 0; col < width; col += 1) {
+      const ch = rows[row][col];
+      const key = keyOf(row, col);
+      if (ch === '.') {
+        whiteKeys.push(key);
+      } else {
+        wallKeys.add(key);
+        if (isClue(ch)) clueMap.set(key, Number(ch));
+      }
+    }
+  }
+
+  return {
+    ...raw,
+    rows,
+    height,
+    width,
+    wallKeys,
+    clueMap,
+    whiteKeys,
+    solutionKeys: new Set(raw.solution.map(([row, col]) => keyOf(row, col))),
+  };
+}
+
+const PUZZLES = RAW_PUZZLES.map(buildPuzzle);
+
+const state = {
+  mode: 'menu',
+  levelIndex: 0,
+  selected: { row: 0, col: 0 },
+  tool: TOOL_BULB,
+  marks: [],
+  timeLeft: 0,
+  elapsed: 0,
+  score: 0,
+  checksUsed: 0,
+  mistakes: 0,
+  hintsUsed: 0,
+  perfectLevels: 0,
+  coinsEarned: 0,
+  rewardGiven: false,
+  message: 'Fill every corridor with light.',
+  best: loadBest(),
+  particles: [],
+  errorPulse: 0,
+  boardFlash: 0,
+};
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || '0');
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (state.score <= state.best) return;
+  state.best = state.score;
+  try {
+    localStorage.setItem(STORAGE_KEY, String(state.best));
+  } catch {
+    // Local storage is optional for embedded/private contexts.
+  }
+}
+
+function currentPuzzle() {
+  return PUZZLES[state.levelIndex];
+}
+
+function createMarks(puzzle) {
+  return Array.from({ length: puzzle.height }, () => Array(puzzle.width).fill(CELL_EMPTY));
+}
+
+function isWall(puzzle, row, col) {
+  return row < 0 || col < 0 || row >= puzzle.height || col >= puzzle.width || puzzle.wallKeys.has(keyOf(row, col));
+}
+
+function isWhite(puzzle, row, col) {
+  return row >= 0 && col >= 0 && row < puzzle.height && col < puzzle.width && !puzzle.wallKeys.has(keyOf(row, col));
+}
+
+function firstWhiteCell(puzzle) {
+  const [row, col] = parseKey(puzzle.whiteKeys[0]);
+  return { row, col };
+}
+
+function resetLevel({ resetCampaign = false } = {}) {
+  if (resetCampaign) {
+    state.levelIndex = 0;
+    state.score = 0;
+    state.checksUsed = 0;
+    state.mistakes = 0;
+    state.hintsUsed = 0;
+    state.perfectLevels = 0;
+    state.coinsEarned = 0;
+    state.rewardGiven = false;
+  }
+  const puzzle = currentPuzzle();
+  state.marks = createMarks(puzzle);
+  state.selected = firstWhiteCell(puzzle);
+  state.timeLeft = puzzle.seconds;
+  state.elapsed = 0;
+  state.message = `${puzzle.name}: place bulbs to light all open cells.`;
+  state.errorPulse = 0;
+  state.boardFlash = 0;
+  state.particles = [];
+}
+
+function startGame() {
+  resetLevel({ resetCampaign: true });
+  state.mode = 'playing';
+  rememberRecent('glowgrid');
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function restartCampaign() {
+  startGame();
+}
+
+function nextLevel() {
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    startGame();
+    return;
+  }
+  state.levelIndex += 1;
+  resetLevel();
+  state.mode = 'playing';
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function scanBoard() {
+  const puzzle = currentPuzzle();
+  const lit = new Set();
+  const bulbs = [];
+  const conflictSet = new Set();
+
+  for (let row = 0; row < puzzle.height; row += 1) {
+    for (let col = 0; col < puzzle.width; col += 1) {
+      if (state.marks[row]?.[col] === CELL_BULB) bulbs.push({ row, col, key: keyOf(row, col) });
+    }
+  }
+
+  for (const bulb of bulbs) {
+    lit.add(bulb.key);
+    for (const [dr, dc] of ORTHO) {
+      let row = bulb.row + dr;
+      let col = bulb.col + dc;
+      while (isWhite(puzzle, row, col)) {
+        const key = keyOf(row, col);
+        lit.add(key);
+        if (state.marks[row][col] === CELL_BULB) {
+          conflictSet.add(bulb.key);
+          conflictSet.add(key);
+        }
+        row += dr;
+        col += dc;
+      }
+    }
+  }
+
+  const unlit = puzzle.whiteKeys.filter((key) => !lit.has(key));
+  const clues = [];
+  for (const [key, required] of puzzle.clueMap.entries()) {
+    const [row, col] = parseKey(key);
+    let count = 0;
+    for (const [dr, dc] of ORTHO) {
+      const rr = row + dr;
+      const cc = col + dc;
+      if (rr >= 0 && cc >= 0 && rr < puzzle.height && cc < puzzle.width && state.marks[rr][cc] === CELL_BULB) {
+        count += 1;
+      }
+    }
+    clues.push({
+      row,
+      col,
+      required,
+      count,
+      status: count === required ? 'good' : count > required ? 'over' : 'short',
+    });
+  }
+
+  const clueErrors = clues.filter((clue) => clue.status !== 'good');
+  return {
+    bulbs,
+    lit,
+    unlit,
+    clues,
+    clueErrors,
+    conflictSet,
+    solved: unlit.length === 0 && clueErrors.length === 0 && conflictSet.size === 0,
+  };
+}
+
+function setTool(tool) {
+  state.tool = tool;
+  updateHud();
+  draw();
+}
+
+function applyTool(row, col) {
+  if (state.mode !== 'playing') return;
+  if (state.tool === TOOL_BULB) setCell(row, col, CELL_BULB);
+  if (state.tool === TOOL_MARK) setCell(row, col, CELL_MARK);
+  if (state.tool === TOOL_CLEAR) setCell(row, col, CELL_EMPTY);
+}
+
+function cycleCell(row, col) {
+  if (state.mode !== 'playing') return;
+  const puzzle = currentPuzzle();
+  if (!isWhite(puzzle, row, col)) return;
+  const current = state.marks[row][col];
+  const next = current === CELL_EMPTY ? CELL_BULB : current === CELL_BULB ? CELL_MARK : CELL_EMPTY;
+  setCell(row, col, next);
+}
+
+function setCell(row, col, value) {
+  const puzzle = currentPuzzle();
+  if (!isWhite(puzzle, row, col)) return false;
+  state.selected = { row, col };
+  const current = state.marks[row][col];
+  const next = current === value && value !== CELL_EMPTY ? CELL_EMPTY : value;
+  state.marks[row][col] = next;
+  state.errorPulse = 0;
+  if (next === CELL_BULB) {
+    state.message = `Bulb placed at row ${row + 1}, column ${col + 1}.`;
+    spawnCellParticles(row, col, '#ffe28a', 14);
+  } else if (next === CELL_MARK) {
+    state.message = `Marked row ${row + 1}, column ${col + 1}.`;
+  } else {
+    state.message = `Cleared row ${row + 1}, column ${col + 1}.`;
+  }
+  const scan = scanBoard();
+  if (scan.solved) completeLevel(scan);
+  updateHud();
+  draw();
+  return true;
+}
+
+function moveSelection(dr, dc) {
+  const puzzle = currentPuzzle();
+  let row = state.selected.row;
+  let col = state.selected.col;
+  for (let i = 0; i < Math.max(puzzle.width, puzzle.height); i += 1) {
+    row = Math.max(0, Math.min(puzzle.height - 1, row + dr));
+    col = Math.max(0, Math.min(puzzle.width - 1, col + dc));
+    if (isWhite(puzzle, row, col)) {
+      state.selected = { row, col };
+      updateHud();
+      draw();
+      return;
+    }
+  }
+}
+
+function checkBoard() {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    nextLevel();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const scan = scanBoard();
+  state.checksUsed += 1;
+  if (scan.solved) {
+    completeLevel(scan);
+    return;
+  }
+  state.mistakes += 1;
+  state.errorPulse = 2.4;
+  const parts = [];
+  if (scan.unlit.length > 0) parts.push(`${scan.unlit.length} dark`);
+  if (scan.conflictSet.size > 0) parts.push(`${scan.conflictSet.size} conflict`);
+  if (scan.clueErrors.length > 0) parts.push(`${scan.clueErrors.length} clue`);
+  state.message = `Check ${state.checksUsed}: ${parts.join(', ')} issue${parts.length === 1 ? '' : 's'} remain.`;
+  if (state.mistakes >= 6) {
+    finish(false, 'too_many_checks');
+    return;
+  }
+  updateHud();
+  draw();
+}
+
+function useHint() {
+  if (state.mode !== 'playing') return;
+  const puzzle = currentPuzzle();
+  state.hintsUsed += 1;
+  state.score = Math.max(0, state.score - 20);
+
+  for (let row = 0; row < puzzle.height; row += 1) {
+    for (let col = 0; col < puzzle.width; col += 1) {
+      if (state.marks[row][col] === CELL_BULB && !puzzle.solutionKeys.has(keyOf(row, col))) {
+        state.marks[row][col] = CELL_EMPTY;
+        state.selected = { row, col };
+        state.message = `Hint cleared a misplaced bulb at row ${row + 1}, column ${col + 1}.`;
+        state.errorPulse = 1.2;
+        updateHud();
+        draw();
+        return;
+      }
+    }
+  }
+
+  for (const key of puzzle.solutionKeys) {
+    const [row, col] = parseKey(key);
+    if (state.marks[row][col] !== CELL_BULB) {
+      state.marks[row][col] = CELL_BULB;
+      state.selected = { row, col };
+      state.message = `Hint placed a safe bulb at row ${row + 1}, column ${col + 1}.`;
+      spawnCellParticles(row, col, '#7ef8df', 18);
+      const scan = scanBoard();
+      if (scan.solved) completeLevel(scan);
+      updateHud();
+      draw();
+      return;
+    }
+  }
+
+  checkBoard();
+}
+
+function completeLevel(scan = scanBoard()) {
+  if (state.mode !== 'playing') return;
+  const puzzle = currentPuzzle();
+  const timeBonus = Math.max(0, Math.floor(state.timeLeft * 4));
+  const cleanBonus = state.mistakes === 0 && state.hintsUsed === 0 ? 350 : Math.max(80, 220 - state.mistakes * 30 - state.hintsUsed * 18);
+  const bulbBonus = Math.max(0, puzzle.solutionKeys.size * 35 - Math.max(0, scan.bulbs.length - puzzle.solutionKeys.size) * 18);
+  state.score += 650 + timeBonus + cleanBonus + bulbBonus;
+  if (state.mistakes === 0 && state.hintsUsed === 0) state.perfectLevels += 1;
+  state.boardFlash = 1;
+  saveBest();
+
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    finish(true, 'all_grids_lit');
+    return;
+  }
+
+  state.mode = 'level_clear';
+  state.message = `${puzzle.name} solved.`;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function finish(won, reason) {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  state.mode = won ? 'won' : 'lost';
+  if (won && !state.rewardGiven) {
+    const coins = Math.max(18, Math.min(60, 20 + Math.floor(state.score / 500) + state.perfectLevels * 4));
+    addCoins(coins);
+    state.coinsEarned += coins;
+    state.rewardGiven = true;
+    state.message = `Every grid is glowing. ${coins} coins earned.`;
+  } else if (!won) {
+    state.message = reason === 'time_expired'
+      ? 'The light faded before the grid was solved.'
+      : 'Too many failed checks. Rebuild the circuit.';
+  }
+  saveBest();
+  maybeUnlock({
+    anyPlay: true,
+    glowgrid: {
+      result: won ? 'win' : 'loss',
+      score: state.score,
+      perfectLevels: state.perfectLevels,
+      level: state.levelIndex + 1,
+    },
+  });
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function pauseToggle() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    state.message = 'Paused.';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    state.message = `${currentPuzzle().name}: continue lighting the grid.`;
+    hideOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') {
+    startGame();
+  } else if (state.mode === 'level_clear') {
+    nextLevel();
+  } else if (state.mode === 'paused') {
+    pauseToggle();
+  } else {
+    checkBoard();
+  }
+}
+
+function update(dt) {
+  for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+    const particle = state.particles[i];
+    particle.life -= dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    if (particle.life <= 0) state.particles.splice(i, 1);
+  }
+  state.errorPulse = Math.max(0, state.errorPulse - dt);
+  state.boardFlash = Math.max(0, state.boardFlash - dt * 1.8);
+  if (state.mode !== 'playing') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) finish(false, 'time_expired');
+}
+
+function currentLayout() {
+  const puzzle = currentPuzzle();
+  const boardMaxW = 590;
+  const boardMaxH = 540;
+  const cell = Math.floor(Math.min(boardMaxW / puzzle.width, boardMaxH / puzzle.height));
+  const boardW = cell * puzzle.width;
+  const boardH = cell * puzzle.height;
+  return {
+    cell,
+    boardW,
+    boardH,
+    boardX: 52,
+    boardY: Math.floor((HEIGHT - boardH) / 2) + 18,
+    sideX: 680,
+    sideY: 108,
+  };
+}
+
+function spawnCellParticles(row, col, color, count) {
+  const layout = currentLayout();
+  const cx = layout.boardX + col * layout.cell + layout.cell / 2;
+  const cy = layout.boardY + row * layout.cell + layout.cell / 2;
+  for (let i = 0; i < count; i += 1) {
+    const angle = (Math.PI * 2 * i) / count;
+    const speed = 45 + (i % 5) * 14;
+    state.particles.push({
+      x: cx,
+      y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      color,
+      life: 0.35 + (i % 3) * 0.08,
+    });
+  }
+}
+
+function drawBackground() {
+  const grd = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  grd.addColorStop(0, '#10192c');
+  grd.addColorStop(0.45, '#142f45');
+  grd.addColorStop(1, '#382950');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = 0.38;
+  for (let i = 0; i < 56; i += 1) {
+    const x = (i * 167 + 43) % WIDTH;
+    const y = (i * 91 + 29) % HEIGHT;
+    const r = 1 + (i % 3) * 0.7;
+    ctx.fillStyle = i % 4 === 0 ? '#ffe28a' : '#9ee7ff';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function fillRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function strokeRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function drawBulb(cx, cy, radius, conflict = false) {
+  const glow = ctx.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius * 1.85);
+  glow.addColorStop(0, conflict ? '#ff96a6cc' : '#fff0aacc');
+  glow.addColorStop(0.42, conflict ? '#ff697844' : '#ffe28a44');
+  glow.addColorStop(1, '#00000000');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = conflict ? '#ff6f85' : '#ffe28a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff9d6';
+  ctx.beginPath();
+  ctx.arc(cx - radius * 0.25, cy - radius * 0.28, radius * 0.32, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = conflict ? '#ffd3da' : '#6f4a00';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawBoard(scan) {
+  const puzzle = currentPuzzle();
+  const layout = currentLayout();
+  const { boardX, boardY, boardW, boardH, cell } = layout;
+
+  ctx.save();
+  ctx.shadowColor = '#050914';
+  ctx.shadowBlur = 22;
+  ctx.fillStyle = '#0b1221';
+  fillRoundRect(boardX - 16, boardY - 16, boardW + 32, boardH + 32, 8);
+  ctx.restore();
+
+  if (state.boardFlash > 0) {
+    ctx.save();
+    ctx.globalAlpha = state.boardFlash * 0.35;
+    ctx.fillStyle = '#fff1a9';
+    fillRoundRect(boardX - 16, boardY - 16, boardW + 32, boardH + 32, 8);
+    ctx.restore();
+  }
+
+  const clueByKey = new Map(scan.clues.map((clue) => [keyOf(clue.row, clue.col), clue]));
+  for (let row = 0; row < puzzle.height; row += 1) {
+    for (let col = 0; col < puzzle.width; col += 1) {
+      const x = boardX + col * cell;
+      const y = boardY + row * cell;
+      const key = keyOf(row, col);
+      const mark = state.marks[row][col];
+      const wall = puzzle.wallKeys.has(key);
+
+      if (wall) {
+        const clue = clueByKey.get(key);
+        ctx.fillStyle = '#161f32';
+        ctx.fillRect(x, y, cell, cell);
+        ctx.fillStyle = '#22314a';
+        ctx.fillRect(x + 4, y + 4, cell - 8, cell - 8);
+        if (clue) {
+          ctx.fillStyle = clue.status === 'good' ? '#9cf1c5' : clue.status === 'over' ? '#ffa0ad' : '#ffe28a';
+          ctx.font = `900 ${Math.floor(cell * 0.45)}px "Trebuchet MS", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(clue.required), x + cell / 2, y + cell / 2 + 1);
+        }
+      } else {
+        const lit = scan.lit.has(key);
+        const isUnlitError = state.errorPulse > 0 && !lit;
+        ctx.fillStyle = lit ? '#fff0ae' : '#25344c';
+        ctx.fillRect(x, y, cell, cell);
+        if (lit) {
+          ctx.fillStyle = '#ffe28a33';
+          ctx.fillRect(x + 4, y + 4, cell - 8, cell - 8);
+        }
+        if (isUnlitError) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.55, state.errorPulse / 2.4);
+          ctx.fillStyle = '#ff6f85';
+          ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
+          ctx.restore();
+        }
+        if (mark === CELL_MARK) {
+          ctx.strokeStyle = '#7ef8df';
+          ctx.lineWidth = Math.max(3, Math.floor(cell * 0.06));
+          ctx.beginPath();
+          ctx.moveTo(x + cell * 0.28, y + cell * 0.28);
+          ctx.lineTo(x + cell * 0.72, y + cell * 0.72);
+          ctx.moveTo(x + cell * 0.72, y + cell * 0.28);
+          ctx.lineTo(x + cell * 0.28, y + cell * 0.72);
+          ctx.stroke();
+        }
+        if (mark === CELL_BULB) {
+          drawBulb(x + cell / 2, y + cell / 2, cell * 0.22, scan.conflictSet.has(key));
+        }
+      }
+
+      ctx.strokeStyle = '#0b122188';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+
+      if (state.selected.row === row && state.selected.col === col && !wall) {
+        ctx.strokeStyle = '#7ef8df';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x + 4, y + 4, cell - 8, cell - 8);
+      }
+    }
+  }
+
+  ctx.strokeStyle = '#fff1a9';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(boardX, boardY, boardW, boardH);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function drawSidePanel(scan) {
+  const puzzle = currentPuzzle();
+  const layout = currentLayout();
+  const x = layout.sideX;
+  const y = layout.sideY;
+  const w = 268;
+
+  ctx.fillStyle = '#0b1221d8';
+  fillRoundRect(x, y, w, 392, 8);
+  ctx.strokeStyle = '#ffffff30';
+  ctx.lineWidth = 1;
+  strokeRoundRect(x, y, w, 392, 8);
+
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Glow Grid', x + 20, y + 18);
+
+  ctx.fillStyle = '#b8cbe0';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(puzzle.name, x + 20, y + 56);
+
+  const rows = [
+    ['Open cells', `${scan.lit.size} / ${puzzle.whiteKeys.length}`],
+    ['Bulbs', `${scan.bulbs.length} placed`],
+    ['Clues', `${puzzle.clueMap.size - scan.clueErrors.length} / ${puzzle.clueMap.size}`],
+    ['Conflicts', `${scan.conflictSet.size}`],
+    ['Best score', `${state.best}`],
+  ];
+
+  let yy = y + 92;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#17243a';
+    fillRoundRect(x + 18, yy, w - 36, 42, 8);
+    ctx.fillStyle = '#91a9c0';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 32, yy + 8);
+    ctx.fillStyle = label === 'Conflicts' && scan.conflictSet.size > 0 ? '#ffa0ad' : '#f7fbff';
+    ctx.font = '900 17px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, x + 32, yy + 22);
+    yy += 50;
+  }
+
+  ctx.fillStyle = '#dbe8f6';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText(state.message, x + 20, y + 354, w - 40, 20, 2);
+}
+
+function drawParticles() {
+  ctx.save();
+  for (const particle of state.particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / 0.42));
+    ctx.fillStyle = particle.color;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function draw() {
+  const scan = scanBoard();
+  drawBackground();
+
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`Puzzle ${state.levelIndex + 1}: ${currentPuzzle().name}`, 52, 30);
+  ctx.fillStyle = '#b8cbe0';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Origin is top-left; rows increase downward and columns increase rightward.', 54, 66);
+
+  drawBoard(scan);
+  drawSidePanel(scan);
+  drawParticles();
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const min = Math.floor(total / 60);
+  const sec = String(total % 60).padStart(2, '0');
+  return `${min}:${sec}`;
+}
+
+function modeLabel() {
+  if (state.mode === 'level_clear') return 'Clear';
+  return state.mode.charAt(0).toUpperCase() + state.mode.slice(1);
+}
+
+function updateHud() {
+  const puzzle = currentPuzzle();
+  const scan = scanBoard();
+  const issueCount = scan.unlit.length + scan.clueErrors.length + scan.conflictSet.size;
+  els.mode.textContent = modeLabel();
+  els.level.textContent = `${state.levelIndex + 1} / ${PUZZLES.length}`;
+  els.lit.textContent = `${scan.lit.size} / ${puzzle.whiteKeys.length}`;
+  els.time.textContent = formatTime(state.timeLeft);
+  els.issues.textContent = String(issueCount);
+  els.score.textContent = String(state.score);
+  els.coins.textContent = String(profileState.coins);
+  els.primaryBtn.textContent = state.mode === 'level_clear' ? 'Next' : state.mode === 'paused' ? 'Resume' : state.mode === 'playing' ? 'Check' : 'Start';
+  els.pauseBtn.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  els.bulbBtn.classList.toggle('selected', state.tool === TOOL_BULB);
+  els.markBtn.classList.toggle('selected', state.tool === TOOL_MARK);
+  els.clearBtn.classList.toggle('selected', state.tool === TOOL_CLEAR);
+  const canPlay = state.mode === 'playing';
+  els.bulbBtn.disabled = !canPlay;
+  els.markBtn.disabled = !canPlay;
+  els.clearBtn.disabled = !canPlay;
+  els.hintBtn.disabled = !canPlay;
+  els.checkBtn.disabled = state.mode !== 'playing';
+  els.pauseBtn.disabled = !(state.mode === 'playing' || state.mode === 'paused');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function showOverlay() {
+  let title = 'Glow Grid';
+  let copy = 'Place bulbs in open cells. Bulbs shine across rows and columns until a wall. Light every open cell, satisfy numbered walls, and keep bulbs out of each other path.';
+  let mini = 'Tap cells or use the buttons below. Arrow keys move the cursor; space applies the selected tool.';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    copy = 'The timer is stopped.';
+    mini = 'Resume when ready.';
+  } else if (state.mode === 'level_clear') {
+    title = 'Grid Lit';
+    copy = `${currentPuzzle().name} is solved.`;
+    mini = 'Advance to the next circuit.';
+  } else if (state.mode === 'won') {
+    title = 'Vault Bright';
+    copy = state.message;
+    mini = `Final score ${state.score}. Best score ${state.best}.`;
+  } else if (state.mode === 'lost') {
+    title = 'Lights Out';
+    copy = state.message;
+    mini = 'Restart for a fresh campaign.';
+  }
+  overlayPanel.innerHTML = `
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(copy)}</p>
+    <p class="mini">${escapeHtml(mini)}</p>
+    <p><button id="overlayAction" class="primary" type="button">${escapeHtml(state.mode === 'level_clear' ? 'Next Puzzle' : state.mode === 'paused' ? 'Resume' : 'Start')}</button></p>
+  `;
+  overlay.classList.add('show');
+  const action = document.getElementById('overlayAction');
+  action?.addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function canvasPointToCell(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * WIDTH;
+  const y = ((event.clientY - rect.top) / rect.height) * HEIGHT;
+  const layout = currentLayout();
+  const col = Math.floor((x - layout.boardX) / layout.cell);
+  const row = Math.floor((y - layout.boardY) / layout.cell);
+  return { row, col };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  canvas.focus();
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'paused') return;
+  const puzzle = currentPuzzle();
+  const { row, col } = canvasPointToCell(event);
+  if (!isWhite(puzzle, row, col)) return;
+  state.selected = { row, col };
+  applyTool(row, col);
+}
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const handled = [
+    'arrowup', 'arrowdown', 'arrowleft', 'arrowright',
+    ' ', 'enter', 'b', 'x', 'm', '0', 'backspace', 'delete',
+    'h', 'c', 'p', 'r', 'f',
+  ].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'r') {
+    restartCampaign();
+    return;
+  }
+  if (key === 'p') {
+    pauseToggle();
+    return;
+  }
+  if (key === 'h') {
+    useHint();
+    return;
+  }
+  if (key === 'c') {
+    checkBoard();
+    return;
+  }
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') {
+    if (key === ' ' || key === 'enter') startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    if (key === ' ' || key === 'enter') nextLevel();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+
+  if (key === 'arrowup') moveSelection(-1, 0);
+  if (key === 'arrowdown') moveSelection(1, 0);
+  if (key === 'arrowleft') moveSelection(0, -1);
+  if (key === 'arrowright') moveSelection(0, 1);
+  if (key === 'b') setTool(TOOL_BULB);
+  if (key === 'x' || key === 'm') setTool(TOOL_MARK);
+  if (key === '0' || key === 'backspace' || key === 'delete') setTool(TOOL_CLEAR);
+  if (key === ' ' || key === 'enter') applyTool(state.selected.row, state.selected.col);
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    // Fullscreen can be unavailable in embedded browser contexts.
+  }
+  setTimeout(draw, 80);
+}
+
+function renderGameToText() {
+  const puzzle = currentPuzzle();
+  const scan = scanBoard();
+  const bulbs = scan.bulbs.map(({ row, col }) => ({ row, col }));
+  const marks = [];
+  for (let row = 0; row < puzzle.height; row += 1) {
+    for (let col = 0; col < puzzle.width; col += 1) {
+      if (state.marks[row][col] === CELL_MARK) marks.push({ row, col });
+    }
+  }
+  return JSON.stringify({
+    game: 'Glow Grid',
+    coordinate_system: 'origin top-left; row increases downward; column increases rightward',
+    mode: state.mode,
+    puzzle: {
+      index: state.levelIndex,
+      number: state.levelIndex + 1,
+      total: PUZZLES.length,
+      name: puzzle.name,
+      rows: puzzle.height,
+      cols: puzzle.width,
+    },
+    selected: { ...state.selected },
+    tool: state.tool,
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      score: state.score,
+      checks_used: state.checksUsed,
+      failed_checks: state.mistakes,
+      hints_used: state.hintsUsed,
+      perfect_levels: state.perfectLevels,
+      coins_earned: state.coinsEarned,
+      lit_cells: scan.lit.size,
+      open_cells: puzzle.whiteKeys.length,
+      bulbs_placed: scan.bulbs.length,
+      bulbs_required_hint: puzzle.solutionKeys.size,
+    },
+    visible_state: {
+      bulbs,
+      marks,
+      unlit_cells: scan.unlit.map((key) => {
+        const [row, col] = parseKey(key);
+        return { row, col };
+      }),
+      conflicting_bulbs: Array.from(scan.conflictSet).map((key) => {
+        const [row, col] = parseKey(key);
+        return { row, col };
+      }),
+      unsatisfied_clues: scan.clueErrors.map(({ row, col, required, count, status }) => ({ row, col, required, count, status })),
+    },
+    message: state.message,
+  });
+}
+
+let lastTime = performance.now();
+let manualStepping = false;
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  updateHud();
+  lastTime = performance.now();
+  manualStepping = false;
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__GLOW_GRID_GAME__ = {
+  startGame,
+  nextLevel,
+  setTool,
+  setCell(row, col, value = CELL_BULB) {
+    if (state.mode === 'menu') startGame();
+    return setCell(row, col, value);
+  },
+  cycleCell(row, col) {
+    if (state.mode === 'menu') startGame();
+    return cycleCell(row, col);
+  },
+  useHint,
+  checkBoard,
+  pauseToggle,
+  solveCurrent() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    if (state.mode === 'level_clear') nextLevel();
+    const puzzle = currentPuzzle();
+    state.marks = createMarks(puzzle);
+    for (const key of puzzle.solutionKeys) {
+      const [row, col] = parseKey(key);
+      state.marks[row][col] = CELL_BULB;
+    }
+    completeLevel();
+    updateHud();
+    draw();
+  },
+  forceWin() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    while (state.levelIndex < PUZZLES.length - 1) {
+      this.solveCurrent();
+      if (state.mode === 'level_clear') nextLevel();
+    }
+    this.solveCurrent();
+  },
+  forceLoss() {
+    if (state.mode === 'menu') startGame();
+    finish(false, 'too_many_checks');
+  },
+  getState: () => JSON.parse(renderGameToText()),
+};
+
+els.primaryBtn.addEventListener('click', primaryAction);
+els.bulbBtn.addEventListener('click', () => setTool(TOOL_BULB));
+els.markBtn.addEventListener('click', () => setTool(TOOL_MARK));
+els.clearBtn.addEventListener('click', () => setTool(TOOL_CLEAR));
+els.hintBtn.addEventListener('click', useHint);
+els.checkBtn.addEventListener('click', checkBoard);
+els.pauseBtn.addEventListener('click', pauseToggle);
+els.restartBtn.addEventListener('click', restartCampaign);
+els.fullBtn.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    update(dt);
+    draw();
+    updateHud();
+  }
+  lastTime = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'glowgrid', gameName: 'Glow Grid' });
+resetLevel({ resetCampaign: true });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

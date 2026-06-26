@@ -62,6 +62,7 @@
 - game/colorcatch
 - game/orbitalrescue
 - game/lightsout
+- game/glowgrid
 - game/pinball
 - game/skywire
 - game/starfielddodger

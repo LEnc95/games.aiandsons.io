@@ -3772,3 +3772,15 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Static route smoke returned HTTP 200 for `/plinko/`; `git diff --check` passed with only existing LF-to-CRLF warnings.
 - `npm run test:feedback-smoke:raw` failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Plinko issue.
 - TODO: none for Plinko Drop; future work may address the raw-static feedback smoke POST/API behavior.
+- New request (2026-06-26): add a game not already on the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, Pocket Pool, Word Ladder Sprint, Chess, Darts 301, Skee-Ball, Tower Defense, and Sky Joust.
+- Chosen game: Glow Grid (`/glowgrid`), a Light Up/Akari-style logic puzzle with bulbs, numbered wall clues, no line-of-sight bulb conflicts, touch/keyboard controls, deterministic hooks, shared feedback, and coin rewards.
+- Plan: add a standalone canvas game, register metadata, regenerate SEO and Linear feedback artifacts, then run focused tests plus the required Playwright skill loop with screenshot inspection.
+- Initial implementation added `glowgrid/index.html` with five Light Up boards, bulb/mark/clear tools, numbered wall validation, conflict and dark-cell checks, hints, scoring, coin rewards, pause/restart/fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__GLOW_GRID_GAME__` helpers.
+- Registered Glow Grid in `src/meta/games.js`.
+- Ran `npm run seo` and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, and local Linear feedback seeds now include Glow Grid. Live Linear provisioning skipped because credentials are unset.
+- Ran `npm run og`; `assets/og/glowgrid.png` was generated and inspected successfully. The generator also filled missing OG cards for recent games.
+- Validation passed: Glow Grid module syntax check, 137-game slug/URL uniqueness and feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static HTTP 200, required `$WEB_GAME_CLIENT` run in `output/web-game/glowgrid-smoke`, and custom Playwright scenarios for keyboard placement/conflict, pause/resume, hint, level solve, full campaign win, coin reward, feedback launcher visibility, mobile touch placement, and screenshot review.
+- `npm run test:feedback-smoke:raw` passed its functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Glow Grid issue.
+- `git diff --check` passed with only existing LF-to-CRLF warnings.
+- TODO: none for Glow Grid; future work may address the raw-static feedback smoke POST/API behavior.
