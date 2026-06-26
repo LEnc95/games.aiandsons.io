@@ -67,3 +67,7 @@
 ## 2024-05-28 - Replace mapped array with specific memory checks
 **Learning:** Functions that return a subset of entries from an in-memory Map structure using `[...map.values()].map(normalize).filter(condition)` creates temporary arrays and calls an expensive normalize function on every single entry before dropping most of them.
 **Action:** Always refactor these sequential pipelines into an explicitly initialized empty array `[]` and a `for...of` loop over `map.values()` to check raw properties, then only `normalize` and `.push()` the entries that strictly pass the filtering condition.
+
+## 2024-05-30 - O(N*M) Deduplication using Array.includes()
+**Learning:** Functions doing inner array membership checks with \`.includes()\` within loops like \`.every()\` or \`for...of\` loops (like checking cosmetics ownership) lead to O(N*M) execution time as array sizes scale.
+**Action:** Always replace \`Array.prototype.includes()\` with a \`Set.has()\` mechanism (O(1) lookup) when performing lookups over arrays inside loops, dropping time complexity to linear O(N). When initializing expensive structures like a \`Set\` in the right-hand side of a short-circuit expression, wrap it in an IIFE to preserve lazy evaluation.
