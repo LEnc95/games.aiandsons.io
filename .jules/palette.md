@@ -48,3 +48,7 @@
 ## 2026-06-15 - Enter-key submission and aria-labels for standalone inputs
 **Learning:** Ad-hoc admin inputs outside native forms often miss keyboard submit handlers and explicit labels, which slows keyboard workflows and weakens accessibility.
 **Action:** For standalone configuration inputs and modal fields, wire Enter to the primary action and ensure unlabeled inputs expose an explicit `aria-label` or label text.
+
+## 2026-06-25 - Enter key submission for school license billing input
+**Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
+**Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
