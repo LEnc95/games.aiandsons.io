@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Pyramid Hopper | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f8fbff;
+  background:
+    radial-gradient(28% 24% at 18% 12%, #ffd36a 0%, transparent 70%),
+    radial-gradient(32% 26% at 82% 18%, #63e6be 0%, transparent 72%),
+    linear-gradient(135deg, #162032 0%, #24384d 48%, #3d3151 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #0d1726df;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #f6d58aa8;
+  background: #111c2d;
+  box-shadow: 0 22px 56px #05091494;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  width: min(700px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #f6d58abd;
+  background: #0e1727f7;
+  box-shadow: 0 18px 48px #050914a3;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 66ch;
+  color: #dce7f3;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b6c7d9;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101d31e8;
+  color: #f8fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b4c6d8;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9cf1c5; }
+.chip.warn b { color: #ffe28a; }
+.chip.bad b { color: #ffa0ad; }
+button {
+  cursor: pointer;
+  font: 900 13px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe28a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe28a 0%, #63e6be 100%);
+  border-color: #ffffffc4;
+}
+button.utility { background: #37455f; }
+button.move { background: #21496a; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 12px; padding: 0 7px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Hop across an isometric pyramid, light every cube, dodge rolling sparks, and clear three arcade boards. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Pyramid Hopper | AI and Sons Games">
+  <meta property="og:description" content="Hop across an isometric pyramid, light every cube, dodge rolling sparks, and clear three arcade boards. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pyramidhopper">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/pyramidhopper.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pyramid Hopper | AI and Sons Games">
+  <meta name="twitter:description" content="Hop across an isometric pyramid, light every cube, dodge rolling sparks, and clear three arcade boards. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/pyramidhopper.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pyramidhopper">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Pyramid Hopper","description":"Hop across an isometric pyramid, light every cube, dodge rolling sparks, and clear three arcade boards. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/pyramidhopper","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Pyramid Hopper game area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Pyramid Hopper pyramid board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div class="panel">
+        <h1 id="overlayTitle">Pyramid Hopper</h1>
+        <p id="overlayText">Hop across every cube, light the pyramid, and dodge rolling sparks.</p>
+        <p id="overlayMini" class="mini">Keys: Q/E hop upward, A/D hop downward. Arrow keys mirror those diagonals. Tap adjacent cubes or use the move buttons.</p>
+        <button id="overlayAction" class="primary" type="button">Start Run</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Board</span><b id="levelText">1 / 3</b></div>
+    <div class="chip good"><span>Tiles</span><b id="tilesText">0 / 0</b></div>
+    <div class="chip bad"><span>Hearts</span><b id="livesText">3</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Pyramid Hopper controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="upLeftBtn" class="move" type="button">Up Left</button>
+    <button id="upRightBtn" class="move" type="button">Up Right</button>
+    <button id="downLeftBtn" class="move" type="button">Down Left</button>
+    <button id="downRightBtn" class="move" type="button">Down Right</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+    <button id="clearBtn" class="utility" type="button">Center</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const overlayMini = document.getElementById('overlayMini');
+const overlayAction = document.getElementById('overlayAction');
+const els = {
+  mode: document.getElementById('modeText'),
+  level: document.getElementById('levelText'),
+  tiles: document.getElementById('tilesText'),
+  lives: document.getElementById('livesText'),
+  time: document.getElementById('timeText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  upLeft: document.getElementById('upLeftBtn'),
+  upRight: document.getElementById('upRightBtn'),
+  downLeft: document.getElementById('downLeftBtn'),
+  downRight: document.getElementById('downRightBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+  center: document.getElementById('clearBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const STORAGE_KEY = 'cade:pyramidhopper:best';
+const DIRS = {
+  upLeft: { dr: -1, dc: -1, label: 'up-left' },
+  upRight: { dr: -1, dc: 0, label: 'up-right' },
+  downLeft: { dr: 1, dc: 0, label: 'down-left' },
+  downRight: { dr: 1, dc: 1, label: 'down-right' },
+};
+const KEY_TO_DIR = new Map([
+  ['q', 'upLeft'],
+  ['arrowup', 'upLeft'],
+  ['e', 'upRight'],
+  ['arrowright', 'upRight'],
+  ['a', 'downLeft'],
+  ['arrowleft', 'downLeft'],
+  ['d', 'downRight'],
+  ['arrowdown', 'downRight'],
+]);
+const LEVELS = [
+  {
+    name: 'Amber Steps',
+    size: 4,
+    target: 1,
+    seconds: 100,
+    enemyDelay: 4.2,
+    enemyEvery: 4.0,
+    maxEnemies: 2,
+    bonusEvery: 8.0,
+    colors: ['#344154', '#ffd166'],
+  },
+  {
+    name: 'Prism Climb',
+    size: 5,
+    target: 2,
+    seconds: 130,
+    enemyDelay: 3.4,
+    enemyEvery: 3.25,
+    maxEnemies: 3,
+    bonusEvery: 7.2,
+    colors: ['#304258', '#64d2ff', '#ffe28a'],
+  },
+  {
+    name: 'Crown Run',
+    size: 6,
+    target: 2,
+    seconds: 160,
+    enemyDelay: 3.0,
+    enemyEvery: 2.8,
+    maxEnemies: 4,
+    bonusEvery: 6.5,
+    colors: ['#314052', '#a68bff', '#63e6be'],
+  },
+];
+
+let seed = 0x51f15e;
+let lastFrame = performance.now();
+let manualStepping = false;
+
+const game = {
+  mode: 'menu',
+  levelIndex: 0,
+  tiles: [],
+  player: { row: 0, col: 0, anim: null, invulnerable: 0 },
+  enemies: [],
+  bonus: null,
+  lives: 3,
+  score: 0,
+  best: loadBest(),
+  timeLeft: 0,
+  elapsed: 0,
+  moves: 0,
+  spawnTimer: 0,
+  bonusTimer: 0,
+  nextEnemyId: 1,
+  coinsEarned: 0,
+  rewardGiven: false,
+  levelClears: 0,
+  message: 'Light every cube on the pyramid.',
+  bump: 0,
+  flash: 0,
+};
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || '0');
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (game.score <= game.best) return;
+  game.best = game.score;
+  try {
+    localStorage.setItem(STORAGE_KEY, String(game.best));
+  } catch {
+    // Storage can be unavailable in private or embedded browsing contexts.
+  }
+}
+
+function random() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 0x100000000;
+}
+
+function currentLevel() {
+  return LEVELS[game.levelIndex];
+}
+
+function makeTiles(size) {
+  return Array.from({ length: size }, (_, row) => Array(row + 1).fill(0));
+}
+
+function isValid(row, col) {
+  const level = currentLevel();
+  return row >= 0 && row < level.size && col >= 0 && col <= row;
+}
+
+function totalTiles(level = currentLevel()) {
+  return (level.size * (level.size + 1)) / 2;
+}
+
+function tileCounts() {
+  const level = currentLevel();
+  let complete = 0;
+  let partial = 0;
+  for (let row = 0; row < level.size; row += 1) {
+    for (let col = 0; col <= row; col += 1) {
+      const value = game.tiles[row]?.[col] || 0;
+      if (value >= level.target) complete += 1;
+      else if (value > 0) partial += 1;
+    }
+  }
+  return { complete, partial, total: totalTiles(level) };
+}
+
+function incompleteTiles() {
+  const level = currentLevel();
+  const result = [];
+  for (let row = 0; row < level.size; row += 1) {
+    for (let col = 0; col <= row; col += 1) {
+      if ((game.tiles[row]?.[col] || 0) < level.target) result.push({ row, col });
+    }
+  }
+  return result;
+}
+
+function resetLevel({ resetCampaign = false } = {}) {
+  if (resetCampaign) {
+    game.levelIndex = 0;
+    game.lives = 3;
+    game.score = 0;
+    game.moves = 0;
+    game.coinsEarned = 0;
+    game.rewardGiven = false;
+    game.levelClears = 0;
+    seed = 0x51f15e;
+  }
+  const level = currentLevel();
+  game.tiles = makeTiles(level.size);
+  game.tiles[0][0] = Math.min(level.target, 1);
+  game.player = { row: 0, col: 0, anim: null, invulnerable: 1.0 };
+  game.enemies = [];
+  game.bonus = null;
+  game.timeLeft = level.seconds;
+  game.elapsed = 0;
+  game.spawnTimer = level.enemyDelay;
+  game.bonusTimer = level.bonusEvery;
+  game.nextEnemyId = 1;
+  game.bump = 0;
+  game.flash = 0;
+  game.message = `${level.name}: light every cube to level ${level.target}.`;
+}
+
+function startGame() {
+  resetLevel({ resetCampaign: true });
+  game.mode = 'playing';
+  rememberRecent('pyramidhopper');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function restartGame() {
+  startGame();
+}
+
+function nextLevel() {
+  if (game.mode !== 'level_clear') return;
+  game.levelIndex += 1;
+  resetLevel();
+  game.mode = 'playing';
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function stepTile(row, col) {
+  const level = currentLevel();
+  const before = game.tiles[row][col];
+  if (before >= level.target) {
+    game.score += 2;
+    return false;
+  }
+  game.tiles[row][col] = Math.min(level.target, before + 1);
+  game.score += 36 + game.levelIndex * 8 + game.tiles[row][col] * 8;
+  game.flash = 0.2;
+  return true;
+}
+
+function movePlayer(dirName) {
+  if (game.mode === 'menu' || game.mode === 'lost' || game.mode === 'won') {
+    startGame();
+    return true;
+  }
+  if (game.mode === 'level_clear') {
+    nextLevel();
+    return true;
+  }
+  if (game.mode !== 'playing') return false;
+  const dir = DIRS[dirName];
+  if (!dir) return false;
+  const fromRow = game.player.row;
+  const fromCol = game.player.col;
+  const row = fromRow + dir.dr;
+  const col = fromCol + dir.dc;
+  if (!isValid(row, col)) {
+    game.bump = 0.24;
+    game.message = `No cube ${dir.label} from here.`;
+    updateHud();
+    draw();
+    return false;
+  }
+
+  game.player.row = row;
+  game.player.col = col;
+  game.player.anim = { fromRow, fromCol, duration: 0.16, left: 0.16 };
+  game.moves += 1;
+  const changed = stepTile(row, col);
+  game.message = changed
+    ? `Cube ${row + 1}-${col + 1} lit.`
+    : `Cube ${row + 1}-${col + 1} is already bright.`;
+  collectBonus();
+  checkEnemyCollision();
+  if (game.mode === 'playing') checkLevelComplete();
+  updateHud();
+  draw();
+  return true;
+}
+
+function collectBonus() {
+  if (!game.bonus) return;
+  if (game.bonus.row !== game.player.row || game.bonus.col !== game.player.col) return;
+  game.score += 180 + game.levelIndex * 60;
+  game.enemies = [];
+  game.bonus = null;
+  game.bonusTimer = currentLevel().bonusEvery;
+  game.message = 'Star gem collected. Sparks cleared.';
+  game.flash = 0.45;
+}
+
+function checkLevelComplete() {
+  const counts = tileCounts();
+  if (counts.complete < counts.total) return false;
+  completeLevel();
+  return true;
+}
+
+function completeLevel() {
+  if (game.mode !== 'playing') return;
+  const level = currentLevel();
+  game.levelClears += 1;
+  const timeBonus = Math.max(0, Math.ceil(game.timeLeft)) * (4 + game.levelIndex);
+  game.score += 500 + timeBonus;
+  saveBest();
+  if (game.levelIndex >= LEVELS.length - 1) {
+    finish(true, 'campaign_complete');
+    return;
+  }
+  game.mode = 'level_clear';
+  game.message = `${level.name} cleared. Time bonus ${timeBonus}.`;
+  showOverlay();
+}
+
+function awardWin() {
+  if (game.rewardGiven) return;
+  const reward = 22 + Math.min(24, Math.floor(game.score / 650));
+  game.rewardGiven = true;
+  game.coinsEarned = reward;
+  addCoins(reward);
+}
+
+function finish(won, reason) {
+  game.mode = won ? 'won' : 'lost';
+  if (won) {
+    awardWin();
+    game.message = `Pyramid crown lit for ${game.score} points.`;
+  } else if (reason === 'time') {
+    game.message = 'The pyramid went dark when time expired.';
+  } else if (reason === 'spark') {
+    game.message = 'No hearts left after a spark collision.';
+  } else {
+    game.message = 'Run ended.';
+  }
+  saveBest();
+  maybeUnlock({
+    anyPlay: true,
+    pyramidhopper: {
+      result: won ? 'win' : 'lost',
+      score: game.score,
+      level: game.levelIndex + 1,
+      clears: game.levelClears,
+      moves: game.moves,
+    },
+  });
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function enemyLogicalTile(enemy) {
+  if (enemy.moving && enemy.progress >= 0.55) return { row: enemy.nextRow, col: enemy.nextCol };
+  return { row: enemy.row, col: enemy.col };
+}
+
+function checkEnemyCollision() {
+  if (game.mode !== 'playing' || game.player.invulnerable > 0) return false;
+  for (const enemy of game.enemies) {
+    if (enemy.safe > 0) continue;
+    const tile = enemyLogicalTile(enemy);
+    if (tile.row === game.player.row && tile.col === game.player.col) {
+      game.lives -= 1;
+      game.player.invulnerable = 1.25;
+      game.bump = 0.35;
+      game.score = Math.max(0, game.score - 80);
+      game.enemies = game.enemies.filter((item) => item !== enemy);
+      if (game.lives <= 0) {
+        finish(false, 'spark');
+      } else {
+        game.player.row = 0;
+        game.player.col = 0;
+        game.player.anim = null;
+        game.message = `Spark hit. ${game.lives} heart${game.lives === 1 ? '' : 's'} left.`;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+function chooseEnemyStep(enemy) {
+  const level = currentLevel();
+  if (enemy.row >= level.size - 1) {
+    enemy.remove = true;
+    return;
+  }
+  const goRight = random() > 0.48;
+  enemy.nextRow = enemy.row + 1;
+  enemy.nextCol = enemy.col + (goRight ? 1 : 0);
+  enemy.progress = 0;
+  enemy.moving = true;
+  enemy.speed = 0.58 - Math.min(0.18, game.levelIndex * 0.06) + random() * 0.16;
+}
+
+function spawnEnemy() {
+  const level = currentLevel();
+  if (game.enemies.length >= level.maxEnemies) return;
+  game.enemies.push({
+    id: game.nextEnemyId,
+    row: 0,
+    col: 0,
+    nextRow: 0,
+    nextCol: 0,
+    progress: 1,
+    moving: false,
+    wait: 0.2 + random() * 0.3,
+    speed: 0.58,
+    safe: 0.9,
+    remove: false,
+    hue: game.nextEnemyId % 2 === 0 ? '#ff7a90' : '#ffb86b',
+  });
+  game.nextEnemyId += 1;
+}
+
+function spawnBonus() {
+  const candidates = incompleteTiles().filter((tile) => tile.row !== game.player.row || tile.col !== game.player.col);
+  const pool = candidates.length > 0 ? candidates : [{ row: currentLevel().size - 1, col: 0 }];
+  const choice = pool[Math.floor(random() * pool.length)];
+  game.bonus = { row: choice.row, col: choice.col, time: 7.5 };
+}
+
+function updateEnemies(dt) {
+  for (const enemy of game.enemies) {
+    enemy.safe = Math.max(0, enemy.safe - dt);
+    if (enemy.moving) {
+      enemy.progress += dt / enemy.speed;
+      if (enemy.progress >= 1) {
+        enemy.row = enemy.nextRow;
+        enemy.col = enemy.nextCol;
+        enemy.progress = 1;
+        enemy.moving = false;
+        enemy.wait = 0.14 + random() * 0.28;
+      }
+    } else {
+      enemy.wait -= dt;
+      if (enemy.wait <= 0) chooseEnemyStep(enemy);
+    }
+  }
+  game.enemies = game.enemies.filter((enemy) => !enemy.remove);
+}
+
+function update(dt) {
+  game.bump = Math.max(0, game.bump - dt * 1.9);
+  game.flash = Math.max(0, game.flash - dt * 2.4);
+  if (game.player.anim) {
+    game.player.anim.left -= dt;
+    if (game.player.anim.left <= 0) game.player.anim = null;
+  }
+  game.player.invulnerable = Math.max(0, game.player.invulnerable - dt);
+
+  if (game.mode !== 'playing') return;
+  game.elapsed += dt;
+  game.timeLeft = Math.max(0, game.timeLeft - dt);
+  if (game.timeLeft <= 0) {
+    finish(false, 'time');
+    return;
+  }
+
+  const level = currentLevel();
+  game.spawnTimer -= dt;
+  if (game.spawnTimer <= 0) {
+    spawnEnemy();
+    game.spawnTimer = level.enemyEvery;
+  }
+  game.bonusTimer -= dt;
+  if (!game.bonus && game.bonusTimer <= 0) {
+    spawnBonus();
+    game.bonusTimer = level.bonusEvery;
+  }
+  if (game.bonus) {
+    game.bonus.time -= dt;
+    if (game.bonus.time <= 0) game.bonus = null;
+  }
+  updateEnemies(dt);
+  checkEnemyCollision();
+}
+
+function layoutForLevel() {
+  const level = currentLevel();
+  const tileW = level.size <= 4 ? 110 : level.size === 5 ? 98 : 88;
+  const tileH = tileW * 0.5;
+  return {
+    tileW,
+    tileH,
+    cubeH: tileW * 0.34,
+    cx: 405,
+    topY: level.size <= 4 ? 118 : 98,
+    panelX: 705,
+    panelY: 108,
+  };
+}
+
+function tilePoint(row, col) {
+  const layout = layoutForLevel();
+  return {
+    x: layout.cx + (col - row / 2) * layout.tileW,
+    y: layout.topY + row * layout.tileH,
+  };
+}
+
+function entityPoint(row, col) {
+  const layout = layoutForLevel();
+  const point = tilePoint(row, col);
+  return { x: point.x, y: point.y + layout.tileH * 0.42 };
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#172236');
+  bg.addColorStop(0.5, '#20394e');
+  bg.addColorStop(1, '#3d3151');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = 0.32;
+  for (let i = 0; i < 54; i += 1) {
+    const x = (i * 173 + 91) % WIDTH;
+    const y = (i * 79 + 47) % HEIGHT;
+    ctx.fillStyle = i % 3 === 0 ? '#ffe28a' : i % 3 === 1 ? '#63e6be' : '#b1d9ff';
+    ctx.beginPath();
+    ctx.arc(x, y, 1.4 + (i % 4) * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function shade(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.max(0, Math.min(255, ((n >> 16) & 255) + amount));
+  const g = Math.max(0, Math.min(255, ((n >> 8) & 255) + amount));
+  const b = Math.max(0, Math.min(255, (n & 255) + amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function topColor(value) {
+  const level = currentLevel();
+  const index = Math.min(level.colors.length - 1, Math.max(0, value));
+  return level.colors[index];
+}
+
+function drawDiamond(x, y, w, h) {
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w / 2, y + h / 2);
+  ctx.lineTo(x, y + h);
+  ctx.lineTo(x - w / 2, y + h / 2);
+  ctx.closePath();
+}
+
+function drawTile(row, col) {
+  const layout = layoutForLevel();
+  const { tileW: w, tileH: h, cubeH } = layout;
+  const p = tilePoint(row, col);
+  const value = game.tiles[row][col];
+  const base = topColor(value);
+  const selected = game.player.row === row && game.player.col === col;
+
+  const top = { x: p.x, y: p.y };
+  const right = { x: p.x + w / 2, y: p.y + h / 2 };
+  const bottom = { x: p.x, y: p.y + h };
+  const left = { x: p.x - w / 2, y: p.y + h / 2 };
+
+  ctx.fillStyle = shade(base, -62);
+  ctx.beginPath();
+  ctx.moveTo(left.x, left.y);
+  ctx.lineTo(bottom.x, bottom.y);
+  ctx.lineTo(bottom.x, bottom.y + cubeH);
+  ctx.lineTo(left.x, left.y + cubeH);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = shade(base, -86);
+  ctx.beginPath();
+  ctx.moveTo(right.x, right.y);
+  ctx.lineTo(bottom.x, bottom.y);
+  ctx.lineTo(bottom.x, bottom.y + cubeH);
+  ctx.lineTo(right.x, right.y + cubeH);
+  ctx.closePath();
+  ctx.fill();
+
+  const grd = ctx.createLinearGradient(p.x - w / 2, p.y, p.x + w / 2, p.y + h);
+  grd.addColorStop(0, shade(base, 28));
+  grd.addColorStop(0.55, base);
+  grd.addColorStop(1, shade(base, -18));
+  ctx.fillStyle = grd;
+  drawDiamond(p.x, p.y, w, h);
+  ctx.fill();
+
+  ctx.strokeStyle = selected ? '#f8fbff' : '#0b132199';
+  ctx.lineWidth = selected ? 4 : 1.5;
+  drawDiamond(p.x, p.y, w, h);
+  ctx.stroke();
+
+  if (game.flash > 0 && value >= currentLevel().target) {
+    ctx.save();
+    ctx.globalAlpha = game.flash * 0.5;
+    ctx.fillStyle = '#ffffff';
+    drawDiamond(p.x, p.y, w * 0.72, h * 0.72);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawPyramid() {
+  const level = currentLevel();
+  ctx.save();
+  if (game.bump > 0) {
+    const offset = Math.sin(game.bump * 60) * game.bump * 9;
+    ctx.translate(offset, 0);
+  }
+  for (let row = 0; row < level.size; row += 1) {
+    for (let col = 0; col <= row; col += 1) drawTile(row, col);
+  }
+  drawBonus();
+  drawEnemies();
+  drawPlayer();
+  ctx.restore();
+}
+
+function drawPlayer() {
+  let point = entityPoint(game.player.row, game.player.col);
+  if (game.player.anim) {
+    const from = entityPoint(game.player.anim.fromRow, game.player.anim.fromCol);
+    const t = 1 - Math.max(0, game.player.anim.left) / game.player.anim.duration;
+    point = {
+      x: from.x + (point.x - from.x) * t,
+      y: from.y + (point.y - from.y) * t - Math.sin(t * Math.PI) * 28,
+    };
+  }
+
+  ctx.save();
+  const flicker = game.player.invulnerable > 0 && Math.floor(game.player.invulnerable * 12) % 2 === 0;
+  ctx.globalAlpha = flicker ? 0.52 : 1;
+  ctx.fillStyle = '#07101e66';
+  ctx.beginPath();
+  ctx.ellipse(point.x, point.y + 24, 22, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const body = ctx.createRadialGradient(point.x - 7, point.y - 10, 2, point.x, point.y, 25);
+  body.addColorStop(0, '#ffffff');
+  body.addColorStop(0.22, '#7df9d0');
+  body.addColorStop(1, '#16758b');
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#e9fffb';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#122033';
+  ctx.beginPath();
+  ctx.arc(point.x - 7, point.y - 4, 3.5, 0, Math.PI * 2);
+  ctx.arc(point.x + 7, point.y - 4, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function enemyPoint(enemy) {
+  if (!enemy.moving) return entityPoint(enemy.row, enemy.col);
+  const from = entityPoint(enemy.row, enemy.col);
+  const to = entityPoint(enemy.nextRow, enemy.nextCol);
+  const t = Math.max(0, Math.min(1, enemy.progress));
+  return {
+    x: from.x + (to.x - from.x) * t,
+    y: from.y + (to.y - from.y) * t - Math.sin(t * Math.PI) * 18,
+  };
+}
+
+function drawEnemies() {
+  for (const enemy of game.enemies) {
+    const point = enemyPoint(enemy);
+    ctx.save();
+    ctx.fillStyle = '#07101e66';
+    ctx.beginPath();
+    ctx.ellipse(point.x, point.y + 20, 20, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const grd = ctx.createRadialGradient(point.x - 5, point.y - 6, 2, point.x, point.y, 20);
+    grd.addColorStop(0, '#fff0c8');
+    grd.addColorStop(0.3, enemy.hue);
+    grd.addColorStop(1, '#74263d');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 17, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd6df';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff7d0';
+    for (let i = 0; i < 6; i += 1) {
+      const a = (Math.PI * 2 * i) / 6 + enemy.progress * 4;
+      ctx.beginPath();
+      ctx.arc(point.x + Math.cos(a) * 24, point.y + Math.sin(a) * 12, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawBonus() {
+  if (!game.bonus) return;
+  const point = entityPoint(game.bonus.row, game.bonus.col);
+  const pulse = 1 + Math.sin(game.bonus.time * 8) * 0.08;
+  ctx.save();
+  ctx.translate(point.x, point.y - 10);
+  ctx.scale(pulse, pulse);
+  ctx.fillStyle = '#07101e66';
+  ctx.beginPath();
+  ctx.ellipse(0, 28, 19, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffe28a';
+  ctx.beginPath();
+  for (let i = 0; i < 10; i += 1) {
+    const r = i % 2 === 0 ? 18 : 8;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#fff7c6';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSidePanel() {
+  const layout = layoutForLevel();
+  const counts = tileCounts();
+  const x = layout.panelX;
+  const y = layout.panelY;
+  const w = 246;
+  ctx.fillStyle = '#0d1728d9';
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, 390, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff30';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Pyramid Hopper', x + 18, y + 18);
+  ctx.fillStyle = '#b6c7d9';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(currentLevel().name, x + 18, y + 55);
+
+  const rows = [
+    ['Lit cubes', `${counts.complete} / ${counts.total}`],
+    ['Partial cubes', `${counts.partial}`],
+    ['Sparks', `${game.enemies.length}`],
+    ['Best score', `${game.best}`],
+  ];
+  let yy = y + 92;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#17243a';
+    ctx.beginPath();
+    ctx.roundRect(x + 16, yy, w - 32, 44, 8);
+    ctx.fill();
+    ctx.fillStyle = '#91a9c0';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 30, yy + 8);
+    ctx.fillStyle = label === 'Sparks' && game.enemies.length > 0 ? '#ffa0ad' : '#f8fbff';
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, x + 30, yy + 22);
+    yy += 52;
+  }
+
+  ctx.fillStyle = '#dce7f3';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText(game.message, x + 18, y + 324, w - 36, 20, 3);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function drawHeader() {
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`Board ${game.levelIndex + 1}: ${currentLevel().name}`, 52, 30);
+  ctx.fillStyle = '#b6c7d9';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Coordinate system: row starts at the top cube; column increases left to right within each row.', 54, 66);
+}
+
+function draw() {
+  drawBackground();
+  drawHeader();
+  drawPyramid();
+  drawSidePanel();
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const min = Math.floor(total / 60);
+  const sec = String(total % 60).padStart(2, '0');
+  return `${min}:${sec}`;
+}
+
+function modeLabel() {
+  if (game.mode === 'level_clear') return 'Clear';
+  return game.mode.charAt(0).toUpperCase() + game.mode.slice(1);
+}
+
+function updateHud() {
+  const counts = tileCounts();
+  els.mode.textContent = modeLabel();
+  els.level.textContent = `${game.levelIndex + 1} / ${LEVELS.length}`;
+  els.tiles.textContent = `${counts.complete} / ${counts.total}`;
+  els.lives.textContent = String(game.lives);
+  els.time.textContent = formatTime(game.timeLeft);
+  els.score.textContent = String(game.score);
+  els.coins.textContent = String(profileState.coins);
+  const canPlay = game.mode === 'playing';
+  els.primary.textContent = game.mode === 'menu' ? 'Start' : game.mode === 'level_clear' ? 'Next' : game.mode === 'paused' ? 'Resume' : game.mode === 'playing' ? 'Playing' : 'Start';
+  els.primary.disabled = game.mode === 'playing';
+  els.upLeft.disabled = !canPlay;
+  els.upRight.disabled = !canPlay;
+  els.downLeft.disabled = !canPlay;
+  els.downRight.disabled = !canPlay;
+  els.pause.disabled = !(game.mode === 'playing' || game.mode === 'paused');
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function showOverlay() {
+  let title = 'Pyramid Hopper';
+  let text = 'Hop across every cube, light the pyramid, and dodge rolling sparks.';
+  let mini = 'Keys: Q/E hop upward, A/D hop downward. Arrow keys mirror those diagonals. Tap adjacent cubes or use the move buttons.';
+  let action = 'Start Run';
+  if (game.mode === 'paused') {
+    title = 'Paused';
+    text = 'The pyramid is frozen until you resume.';
+    mini = 'No timers or sparks move while paused.';
+    action = 'Resume';
+  } else if (game.mode === 'level_clear') {
+    title = 'Board Lit';
+    text = game.message;
+    mini = 'Advance to the next pyramid.';
+    action = 'Next Board';
+  } else if (game.mode === 'won') {
+    title = 'Crown Lit';
+    text = `${game.message} Coins earned: ${game.coinsEarned}.`;
+    mini = `Best score ${game.best}.`;
+    action = 'Play Again';
+  } else if (game.mode === 'lost') {
+    title = 'Run Ended';
+    text = game.message;
+    mini = `Score ${game.score}. Best score ${game.best}.`;
+    action = 'Try Again';
+  }
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  overlayMini.textContent = mini;
+  overlayAction.textContent = action;
+  overlay.classList.add('show');
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function primaryAction() {
+  if (game.mode === 'playing') {
+    return;
+  }
+  if (game.mode === 'paused') {
+    pauseToggle();
+  } else if (game.mode === 'level_clear') {
+    nextLevel();
+  } else {
+    startGame();
+  }
+}
+
+function pauseToggle() {
+  if (game.mode === 'paused') {
+    game.mode = 'playing';
+    hideOverlay();
+  } else if (game.mode === 'playing') {
+    game.mode = 'paused';
+    showOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await stage.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    // Fullscreen is optional in automated and embedded browser contexts.
+  }
+  setTimeout(draw, 80);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * HEIGHT,
+  };
+}
+
+function pointToTile(point) {
+  const level = currentLevel();
+  const layout = layoutForLevel();
+  for (let row = level.size - 1; row >= 0; row -= 1) {
+    for (let col = 0; col <= row; col += 1) {
+      const p = tilePoint(row, col);
+      const cx = p.x;
+      const cy = p.y + layout.tileH / 2;
+      const dx = Math.abs(point.x - cx) / (layout.tileW / 2);
+      const dy = Math.abs(point.y - cy) / (layout.tileH / 2);
+      if (dx + dy <= 1) return { row, col };
+    }
+  }
+  return null;
+}
+
+function dirToTile(row, col) {
+  for (const [name, dir] of Object.entries(DIRS)) {
+    if (game.player.row + dir.dr === row && game.player.col + dir.dc === col) return name;
+  }
+  return null;
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  canvas.focus();
+  if (game.mode === 'menu' || game.mode === 'lost' || game.mode === 'won') {
+    startGame();
+    return;
+  }
+  if (game.mode !== 'playing') return;
+  const tile = pointToTile(canvasPoint(event));
+  if (!tile) return;
+  const dir = dirToTile(tile.row, tile.col);
+  if (dir) movePlayer(dir);
+}
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const dir = KEY_TO_DIR.get(key);
+  const handled = Boolean(dir) || [' ', 'enter', 'p', 'r', 'f'].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'r') {
+    restartGame();
+    return;
+  }
+  if (key === 'p') {
+    pauseToggle();
+    return;
+  }
+  if (key === ' ' || key === 'enter') {
+    primaryAction();
+    return;
+  }
+  if (dir) movePlayer(dir);
+}
+
+function round(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function stateToObject() {
+  const counts = tileCounts();
+  const level = currentLevel();
+  return {
+    game: 'Pyramid Hopper',
+    coordinate_system: 'Triangular grid; row 0 is top; col 0 is leftmost cube in each row; canvas origin top-left with y downward.',
+    mode: game.mode,
+    level: {
+      index: game.levelIndex,
+      number: game.levelIndex + 1,
+      total: LEVELS.length,
+      name: level.name,
+      size: level.size,
+      target: level.target,
+    },
+    player: {
+      row: game.player.row,
+      col: game.player.col,
+      invulnerable: round(game.player.invulnerable),
+    },
+    resources: {
+      lives: game.lives,
+      time_left: round(game.timeLeft),
+      score: game.score,
+      best_score: game.best,
+      moves: game.moves,
+      coins_earned: game.coinsEarned,
+      completed_tiles: counts.complete,
+      partial_tiles: counts.partial,
+      total_tiles: counts.total,
+    },
+    visible_state: {
+      tiles: game.tiles.map((row, rowIndex) => row.map((value, colIndex) => ({ row: rowIndex, col: colIndex, value }))).flat(),
+      enemies: game.enemies.map((enemy) => {
+        const logical = enemyLogicalTile(enemy);
+        return {
+          id: enemy.id,
+          row: logical.row,
+          col: logical.col,
+          moving: enemy.moving,
+          safe: round(enemy.safe),
+        };
+      }),
+      bonus: game.bonus ? { row: game.bonus.row, col: game.bonus.col, time: round(game.bonus.time) } : null,
+    },
+    message: game.message,
+  };
+}
+
+window.render_game_to_text = () => JSON.stringify(stateToObject());
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return stateToObject();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(window.render_game_to_text());
+window.__PYRAMID_HOPPER_GAME__ = {
+  startGame,
+  move: movePlayer,
+  pauseToggle,
+  nextLevel,
+  clearEnemies() {
+    game.enemies = [];
+    updateHud();
+    draw();
+    return stateToObject();
+  },
+  forceCollision() {
+    if (game.mode === 'menu') startGame();
+    game.player.invulnerable = 0;
+    game.enemies.push({
+      id: game.nextEnemyId,
+      row: game.player.row,
+      col: game.player.col,
+      nextRow: game.player.row,
+      nextCol: game.player.col,
+      progress: 1,
+      moving: false,
+      wait: 1,
+      speed: 0.5,
+      safe: 0,
+      remove: false,
+      hue: '#ff7a90',
+    });
+    game.nextEnemyId += 1;
+    checkEnemyCollision();
+    updateHud();
+    draw();
+    return stateToObject();
+  },
+  forceCompleteLevel() {
+    if (game.mode === 'menu' || game.mode === 'lost' || game.mode === 'won') startGame();
+    const level = currentLevel();
+    for (let row = 0; row < level.size; row += 1) {
+      for (let col = 0; col <= row; col += 1) game.tiles[row][col] = level.target;
+    }
+    completeLevel();
+    updateHud();
+    draw();
+    return stateToObject();
+  },
+  forceWin() {
+    if (game.mode === 'menu' || game.mode === 'lost' || game.mode === 'won') startGame();
+    while (game.levelIndex < LEVELS.length - 1) {
+      this.forceCompleteLevel();
+      if (game.mode === 'level_clear') nextLevel();
+    }
+    this.forceCompleteLevel();
+    return stateToObject();
+  },
+  spawnBonusAt(row = game.player.row, col = game.player.col) {
+    if (game.mode === 'menu') startGame();
+    if (isValid(row, col)) game.bonus = { row, col, time: 7.5 };
+    updateHud();
+    draw();
+    return stateToObject();
+  },
+  getState: stateToObject,
+};
+
+overlayAction.addEventListener('click', primaryAction);
+els.primary.addEventListener('click', primaryAction);
+els.upLeft.addEventListener('click', () => movePlayer('upLeft'));
+els.upRight.addEventListener('click', () => movePlayer('upRight'));
+els.downLeft.addEventListener('click', () => movePlayer('downLeft'));
+els.downRight.addEventListener('click', () => movePlayer('downRight'));
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+els.center.addEventListener('click', () => {
+  game.message = 'Tap adjacent cubes or use Q/E/A/D to hop.';
+  updateHud();
+  draw();
+  canvas.focus();
+});
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'pyramidhopper', gameName: 'Pyramid Hopper' });
+resetLevel({ resetCampaign: true });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

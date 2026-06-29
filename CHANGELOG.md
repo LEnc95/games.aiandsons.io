@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-06-26
+
+### Added
+- Added and wired seven new games: `pool`, `mushroommarch`, `dominodraw`, `nimgrove`, `tenttrail`, `plinko`, and `glowgrid`.
+- Added social share routes, reusable share-card rendering, generated OG card assets, and integration coverage for share flows.
+
+### Improved
+- Refreshed game SEO metadata, sitemap entries, and homepage directory coverage for newly added games.
+- Added per-game social card metadata across the catalog and refreshed the changelog, pricing, onboarding, accessibility, and room pages with share-card metadata.
+
+### Operations
+- Added marketing/OG card generation scripts and documented the SEO/social card generation workflow.
+- Key PRs: not recorded in the local repo history for this release window.
+
 ## [1.8.0] - 2026-06-19
 
 ### Added

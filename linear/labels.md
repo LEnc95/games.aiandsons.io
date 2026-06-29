@@ -63,6 +63,7 @@
 - game/orbitalrescue
 - game/lightsout
 - game/glowgrid
+- game/pyramidhopper
 - game/pinball
 - game/skywire
 - game/starfielddodger
@@ -91,6 +92,7 @@
 - game/letterlock
 - game/wordsearch
 - game/setmatch
+- game/crazyeights
 - game/flowlines
 - game/tripeaks
 - game/diceforge

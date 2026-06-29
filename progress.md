@@ -3784,3 +3784,31 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `npm run test:feedback-smoke:raw` passed its functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Glow Grid issue.
 - `git diff --check` passed with only existing LF-to-CRLF warnings.
 - TODO: none for Glow Grid; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-06-27 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding recent additions including Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, Pocket Pool, Word Ladder Sprint, Chess, Darts 301, Skee-Ball, Tower Defense, and Sky Joust.
+- Reviewed the 137-game registry and selected Pyramid Hopper (`/pyramidhopper`), an isometric arcade board game not currently represented in the catalog.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic hooks, shared feedback, coin rewards, metadata registration, SEO/OG/Linear regeneration, and focused Playwright validation with screenshot inspection.
+- Initial implementation added `pyramidhopper/index.html` with a three-board isometric cube-hopping arcade game, rolling spark hazards, timed star bonuses, hearts, score/best score, coin rewards, keyboard/touch/pointer controls, pause/restart/fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__PYRAMID_HOPPER_GAME__` helpers.
+- Registered Pyramid Hopper in `src/meta/games.js`.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/pyramidhopper.png`, and local Linear feedback seeds now include Pyramid Hopper. Live Linear provisioning skipped because credentials are unset.
+- Early validation passed: Pyramid Hopper module-script parse, 138-game slug/URL uniqueness, 9 focused catalog/feedback tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), and `npm run test:shop` (68 tests).
+- Required `$WEB_GAME_CLIENT` validation passed against `/pyramidhopper/`, producing six synchronized screenshots/state snapshots in `output/web-game/pyramidhopper-smoke` with no error artifacts.
+- Custom Playwright scenarios passed in `output/web-game/pyramidhopper-scenarios`: desktop start/move/bonus/pause/resume/collision/level-clear/campaign-win/reward/feedback visibility, settled mobile touch movement, and zero Pyramid Hopper browser/page errors. Screenshots and `assets/og/pyramidhopper.png` were inspected.
+- Static route check returned HTTP 200 for `/pyramidhopper/`; final module parse and `git diff --check` passed with only existing LF-to-CRLF warnings.
+- `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Pyramid Hopper issue.
+- TODO: none for Pyramid Hopper; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-06-28 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was missing or empty; progress log was used to avoid recent additions through Pyramid Hopper.
+- Reviewed the 138-game registry and selected Crazy Eights (`/crazyeights`), a shedding card game not currently represented in the catalog.
+- Plan: add a standalone canvas card game with desktop/touch controls, deterministic hooks, shared feedback, coin rewards, metadata registration, SEO/OG/Linear regeneration, and focused Playwright validation with screenshot inspection.
+- Initial implementation added `crazyeights/index.html` with four-player Crazy Eights, AI turns, one-card draw/pass flow, wild suit calls, blocked-hand scoring, match scoring to 80, coin rewards, keyboard/touch/pointer controls, pause/restart/fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__CRAZY_EIGHTS_GAME__` helpers.
+- Registered Crazy Eights in `src/meta/games.js`.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/crazyeights.png`, and local Linear feedback seeds now include Crazy Eights. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: Crazy Eights module-script parse, 139-game catalog/feedback coverage tests, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), required `$WEB_GAME_CLIENT` rerun in `output/web-game/crazyeights-smoke-rerun`, custom Playwright scenarios in `output/web-game/crazyeights-scenarios-rerun`, static route HTTP 200, feedback launcher visibility, desktop/mobile screenshot inspection, generated OG inspection, and `git diff --check` with only existing LF-to-CRLF warnings.
+- Custom scenarios covered start, legal card play, no-playable-card draw/pass, wild-eight suit selection, pause/resume, forced match win, coin reward, and mobile touch card play with zero Crazy Eights browser/page errors.
+- `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Crazy Eights issue.
+- TODO: none for Crazy Eights; future work may address the raw-static feedback smoke POST/API behavior.

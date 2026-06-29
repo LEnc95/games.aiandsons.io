@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Crazy Eights | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(30% 24% at 14% 12%, #ffcf5f 0%, transparent 72%),
+    radial-gradient(28% 26% at 86% 18%, #66d9e8 0%, transparent 70%),
+    linear-gradient(135deg, #172238 0%, #21403d 48%, #302844 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff73;
+  padding: 8px 12px;
+  background: #0f1726e8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffe08a9c;
+  background: #0f1e27;
+  box-shadow: 0 22px 56px #05091494;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(5, 10, 20, 0.54);
+}
+.panel {
+  width: min(700px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #ffe08abd;
+  background: #0e1727;
+  box-shadow: 0 18px 48px #050914a3;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 66ch;
+  color: #dce7f3;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b8c8d8;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101d31e8;
+  color: #f7fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b4c6d8;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9cf1c5; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffa0ad; }
+button {
+  cursor: pointer;
+  font: 900 12px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe08a 0%, #6ee7b7 100%);
+  border-color: #ffffffc4;
+}
+button.utility { background: #37455f; }
+button.suit { background: #21496a; }
+button.suit.active {
+  color: #102033;
+  background: #ffe08a;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 11px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Match rank or suit, call wild eights, draw through the deck, and empty your hand before three table rivals. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Crazy Eights | AI and Sons Games">
+  <meta property="og:description" content="Match rank or suit, call wild eights, draw through the deck, and empty your hand before three table rivals. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/crazyeights">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/crazyeights.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Crazy Eights | AI and Sons Games">
+  <meta name="twitter:description" content="Match rank or suit, call wild eights, draw through the deck, and empty your hand before three table rivals. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/crazyeights.png">
+  <link rel="canonical" href="https://games.aiandsons.io/crazyeights">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Crazy Eights","description":"Match rank or suit, call wild eights, draw through the deck, and empty your hand before three table rivals. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/crazyeights","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Crazy Eights game area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Crazy Eights card table"></canvas>
+    <div id="overlay" class="overlay show">
+      <div class="panel">
+        <h1 id="overlayTitle">Crazy Eights</h1>
+        <p id="overlayText">Match the discard by suit or rank, use eights as wild cards, and empty your hand before the table AI.</p>
+        <p id="overlayMini" class="mini">Keys: arrows select, Enter plays, D draws, 1-4 choose a wild suit, P pauses.</p>
+        <button id="overlayAction" class="primary" type="button">Start Hand</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Turn</span><b id="turnText">You</b></div>
+    <div class="chip warn"><span>Suit</span><b id="suitText">-</b></div>
+    <div class="chip good"><span>Round</span><b id="roundText">1</b></div>
+    <div class="chip good"><span>Your Score</span><b id="scoreText">0</b></div>
+    <div class="chip bad"><span>Cards</span><b id="cardsText">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Crazy Eights controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="playBtn" class="primary" type="button">Play Card</button>
+    <button id="drawBtn" class="utility" type="button">Draw</button>
+    <button id="heartsBtn" class="suit" type="button">Hearts</button>
+    <button id="diamondsBtn" class="suit" type="button">Diamonds</button>
+    <button id="clubsBtn" class="suit" type="button">Clubs</button>
+    <button id="spadesBtn" class="suit" type="button">Spades</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const overlayMini = document.getElementById('overlayMini');
+const overlayAction = document.getElementById('overlayAction');
+const els = {
+  mode: document.getElementById('modeText'),
+  turn: document.getElementById('turnText'),
+  suit: document.getElementById('suitText'),
+  round: document.getElementById('roundText'),
+  score: document.getElementById('scoreText'),
+  cards: document.getElementById('cardsText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  play: document.getElementById('playBtn'),
+  draw: document.getElementById('drawBtn'),
+  hearts: document.getElementById('heartsBtn'),
+  diamonds: document.getElementById('diamondsBtn'),
+  clubs: document.getElementById('clubsBtn'),
+  spades: document.getElementById('spadesBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const HAND_SIZE = 5;
+const TARGET_SCORE = 80;
+const STORAGE_KEY = 'cade:crazyeights:best';
+const PLAYERS = ['You', 'North', 'East', 'West'];
+const SUITS = [
+  { key: 'H', name: 'Hearts', color: '#ef476f', light: '#ffd9e2' },
+  { key: 'D', name: 'Diamonds', color: '#f77f00', light: '#ffe0b8' },
+  { key: 'C', name: 'Clubs', color: '#0f8b62', light: '#c9f7e6' },
+  { key: 'S', name: 'Spades', color: '#31456a', light: '#d9e3f5' },
+];
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SUIT_NAMES = Object.fromEntries(SUITS.map((suit) => [suit.key, suit.name]));
+const SUIT_COLORS = Object.fromEntries(SUITS.map((suit) => [suit.key, suit.color]));
+
+let seed = 0x8e17ca;
+let lastFrame = performance.now();
+let manualStepping = false;
+let cardRects = [];
+
+const game = {
+  mode: 'menu',
+  round: 1,
+  turn: 0,
+  scores: [0, 0, 0, 0],
+  wins: [0, 0, 0, 0],
+  hands: [[], [], [], []],
+  deck: [],
+  discard: [],
+  currentSuit: 'H',
+  currentRank: 'A',
+  selectedIndex: 0,
+  playerSuitChoice: 'H',
+  passStreak: 0,
+  turnDelay: 0,
+  pulse: 0,
+  shake: 0,
+  message: 'Match rank or suit. Eights are wild.',
+  winner: null,
+  matchWinner: null,
+  coinsEarned: 0,
+  rewardGiven: false,
+  best: loadBest(),
+};
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || '0');
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (game.scores[0] <= game.best) return;
+  game.best = game.scores[0];
+  try {
+    localStorage.setItem(STORAGE_KEY, String(game.best));
+  } catch {
+    // Storage can be unavailable in private or embedded browsing contexts.
+  }
+}
+
+function random() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 0x100000000;
+}
+
+function makeDeck() {
+  const deck = [];
+  for (const suit of SUITS) {
+    for (const rank of RANKS) deck.push({ suit: suit.key, rank, id: `${rank}${suit.key}` });
+  }
+  for (let i = deck.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function startMatch() {
+  seed = 0x8e17ca;
+  game.round = 1;
+  game.turn = 0;
+  game.scores = [0, 0, 0, 0];
+  game.wins = [0, 0, 0, 0];
+  game.winner = null;
+  game.matchWinner = null;
+  game.coinsEarned = 0;
+  game.rewardGiven = false;
+  rememberRecent('crazyeights');
+  maybeUnlock({ anyPlay: true });
+  dealRound();
+}
+
+function dealRound() {
+  game.mode = 'playing';
+  game.hands = [[], [], [], []];
+  game.deck = makeDeck();
+  game.discard = [];
+  game.turn = 0;
+  game.selectedIndex = 0;
+  game.passStreak = 0;
+  game.turnDelay = 0;
+  game.pulse = 0.35;
+  game.shake = 0;
+  game.winner = null;
+  game.matchWinner = null;
+  for (let i = 0; i < HAND_SIZE; i += 1) {
+    for (let p = 0; p < PLAYERS.length; p += 1) game.hands[p].push(game.deck.pop());
+  }
+  let starter = game.deck.pop();
+  let guard = 0;
+  while (starter.rank === '8' && guard < 20) {
+    game.deck.unshift(starter);
+    starter = game.deck.pop();
+    guard += 1;
+  }
+  game.discard.push(starter);
+  game.currentSuit = starter.suit;
+  game.currentRank = starter.rank;
+  game.playerSuitChoice = strongestSuit(game.hands[0]);
+  game.message = `Round ${game.round}: match ${describeCard(starter)} by rank or suit.`;
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function restartGame() {
+  startMatch();
+}
+
+function describeCard(card) {
+  if (!card) return 'none';
+  return `${card.rank} of ${SUIT_NAMES[card.suit]}`;
+}
+
+function topDiscard() {
+  return game.discard[game.discard.length - 1] || null;
+}
+
+function cardValue(card) {
+  if (card.rank === '8') return 50;
+  if (['K', 'Q', 'J', '10'].includes(card.rank)) return 10;
+  if (card.rank === 'A') return 1;
+  return Number(card.rank) || 0;
+}
+
+function isPlayable(card) {
+  if (!card || game.mode !== 'playing') return false;
+  return card.rank === '8' || card.rank === game.currentRank || card.suit === game.currentSuit;
+}
+
+function playableIndexes(player = 0) {
+  return game.hands[player]
+    .map((card, index) => (isPlayable(card) ? index : -1))
+    .filter((index) => index >= 0);
+}
+
+function strongestSuit(hand) {
+  const counts = Object.fromEntries(SUITS.map((suit) => [suit.key, 0]));
+  for (const card of hand) counts[card.suit] = (counts[card.suit] || 0) + 1;
+  return SUITS.slice().sort((a, b) => counts[b.key] - counts[a.key] || a.name.localeCompare(b.name))[0].key;
+}
+
+function recycleDiscardIfNeeded() {
+  if (game.deck.length > 0 || game.discard.length <= 1) return;
+  const top = game.discard.pop();
+  game.deck = game.discard.splice(0);
+  for (let i = game.deck.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+  }
+  game.discard = [top];
+  game.message = 'Discard pile reshuffled into the draw deck.';
+}
+
+function drawOne(player) {
+  recycleDiscardIfNeeded();
+  if (game.deck.length === 0) return null;
+  const card = game.deck.pop();
+  game.hands[player].push(card);
+  return card;
+}
+
+function drawForPlayer() {
+  if (game.mode !== 'playing' || game.turn !== 0) return false;
+  if (playableIndexes(0).length > 0) {
+    game.message = 'You have a legal play. Play a card before drawing.';
+    game.shake = 0.22;
+    updateHud();
+    draw();
+    return false;
+  }
+  const card = drawOne(0);
+  if (!card) {
+    game.message = 'Draw deck is empty. You pass.';
+    passTurn(0);
+    return false;
+  }
+  game.selectedIndex = game.hands[0].length - 1;
+  if (isPlayable(card)) {
+    game.message = `Drew ${describeCard(card)}. You can play it.`;
+    game.passStreak = 0;
+  } else {
+    game.message = `Drew ${describeCard(card)} and passed.`;
+    passTurn(0);
+  }
+  updateHud();
+  draw();
+  return card;
+}
+
+function playSelected() {
+  if (game.mode !== 'playing' || game.turn !== 0) return false;
+  const hand = game.hands[0];
+  if (hand.length === 0) return false;
+  game.selectedIndex = clamp(game.selectedIndex, 0, hand.length - 1);
+  return playCard(0, game.selectedIndex, game.playerSuitChoice);
+}
+
+function playCard(player, index, chosenSuit = null) {
+  const hand = game.hands[player];
+  const card = hand[index];
+  if (!card || !isPlayable(card)) {
+    if (player === 0) {
+      game.message = card ? `${describeCard(card)} does not match ${SUIT_NAMES[game.currentSuit]} or ${game.currentRank}.` : 'No card selected.';
+      game.shake = 0.2;
+      updateHud();
+      draw();
+    }
+    return false;
+  }
+  hand.splice(index, 1);
+  game.discard.push(card);
+  game.currentRank = card.rank;
+  if (card.rank === '8') {
+    const suit = chosenSuit || strongestSuit(hand) || card.suit;
+    game.currentSuit = suit;
+    if (player === 0) game.playerSuitChoice = suit;
+    game.message = `${PLAYERS[player]} played ${describeCard(card)} wild for ${SUIT_NAMES[suit]}.`;
+  } else {
+    game.currentSuit = card.suit;
+    game.message = `${PLAYERS[player]} played ${describeCard(card)}.`;
+  }
+  game.passStreak = 0;
+  game.pulse = 0.42;
+  if (player === 0) game.selectedIndex = clamp(index, 0, Math.max(0, hand.length - 1));
+  if (hand.length === 0) {
+    finishRound(player, 'empty_hand');
+  } else {
+    advanceTurn();
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function passTurn(player) {
+  game.passStreak += 1;
+  if (game.passStreak >= PLAYERS.length) {
+    finishBlockedRound();
+    return;
+  }
+  game.message = `${PLAYERS[player]} passes.`;
+  advanceTurn();
+}
+
+function advanceTurn() {
+  game.turn = (game.turn + 1) % PLAYERS.length;
+  if (game.turn !== 0 && game.mode === 'playing') game.turnDelay = 0.45;
+}
+
+function aiTurn(player) {
+  if (game.mode !== 'playing' || game.turn !== player) return;
+  const options = playableIndexes(player);
+  if (options.length > 0) {
+    const index = chooseAiCard(player, options);
+    const card = game.hands[player][index];
+    const suit = card.rank === '8' ? strongestSuit(game.hands[player].filter((_, i) => i !== index)) : null;
+    playCard(player, index, suit);
+    return;
+  }
+  const drawn = drawOne(player);
+  if (drawn && isPlayable(drawn)) {
+    const index = game.hands[player].length - 1;
+    const suit = drawn.rank === '8' ? strongestSuit(game.hands[player].slice(0, -1)) : null;
+    game.message = `${PLAYERS[player]} drew and played.`;
+    playCard(player, index, suit);
+  } else {
+    game.message = drawn ? `${PLAYERS[player]} drew a card and passed.` : `${PLAYERS[player]} could not draw and passed.`;
+    passTurn(player);
+  }
+}
+
+function chooseAiCard(player, indexes) {
+  const hand = game.hands[player];
+  const nonEight = indexes.filter((index) => hand[index].rank !== '8');
+  const pool = nonEight.length > 0 ? nonEight : indexes;
+  return pool.slice().sort((a, b) => cardValue(hand[b]) - cardValue(hand[a]) || a - b)[0];
+}
+
+function finishBlockedRound() {
+  const totals = game.hands.map((hand) => hand.reduce((sum, card) => sum + cardValue(card), 0));
+  const low = Math.min(...totals);
+  const winner = totals.indexOf(low);
+  finishRound(winner, 'blocked');
+}
+
+function finishRound(winner, reason) {
+  game.winner = winner;
+  game.wins[winner] += 1;
+  const points = game.hands.reduce((sum, hand, player) => {
+    if (player === winner) return sum;
+    return sum + hand.reduce((total, card) => total + cardValue(card), 0);
+  }, 0);
+  game.scores[winner] += points;
+  saveBest();
+  const reasonText = reason === 'blocked' ? 'blocked table' : 'empty hand';
+  if (game.scores[winner] >= TARGET_SCORE) {
+    finishMatch(winner, reasonText, points);
+    return;
+  }
+  game.mode = 'round_over';
+  game.message = `${PLAYERS[winner]} wins the hand by ${reasonText} for ${points} points.`;
+  showOverlay();
+}
+
+function finishMatch(winner, reasonText, points) {
+  game.matchWinner = winner;
+  game.mode = winner === 0 ? 'won' : 'lost';
+  game.message = `${PLAYERS[winner]} wins the match by ${reasonText} and scores ${points}.`;
+  if (winner === 0) awardWin();
+  maybeUnlock({
+    anyPlay: true,
+    crazyeights: {
+      result: winner === 0 ? 'win' : 'lost',
+      score: game.scores[0],
+      rounds: game.round,
+      wins: game.wins[0],
+    },
+  });
+  showOverlay();
+}
+
+function awardWin() {
+  if (game.rewardGiven) return;
+  const reward = 24 + Math.min(30, Math.floor(game.scores[0] / 8));
+  game.rewardGiven = true;
+  game.coinsEarned = reward;
+  addCoins(reward);
+}
+
+function nextRound() {
+  if (game.mode !== 'round_over') return;
+  game.round += 1;
+  dealRound();
+}
+
+function primaryAction() {
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startMatch();
+  } else if (game.mode === 'round_over') {
+    nextRound();
+  } else if (game.mode === 'paused') {
+    pauseToggle();
+  }
+}
+
+function pauseToggle() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    showOverlay();
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    hideOverlay();
+    if (game.turn !== 0) game.turnDelay = Math.max(game.turnDelay, 0.25);
+  }
+  updateHud();
+  draw();
+}
+
+function setSuitChoice(suit) {
+  if (!SUIT_NAMES[suit]) return;
+  game.playerSuitChoice = suit;
+  game.message = `Wild eights will call ${SUIT_NAMES[suit]}.`;
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await stage.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    // Fullscreen is optional in automated and embedded browser contexts.
+  }
+  setTimeout(draw, 80);
+}
+
+function update(dt) {
+  game.pulse = Math.max(0, game.pulse - dt);
+  game.shake = Math.max(0, game.shake - dt);
+  if (game.mode !== 'playing') return;
+  if (game.turn !== 0) {
+    game.turnDelay -= dt;
+    if (game.turnDelay <= 0) aiTurn(game.turn);
+  }
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function selectDelta(delta) {
+  if (game.mode !== 'playing' || game.turn !== 0) return;
+  const hand = game.hands[0];
+  if (hand.length === 0) return;
+  game.selectedIndex = (game.selectedIndex + delta + hand.length) % hand.length;
+  updateHud();
+  draw();
+}
+
+function modeLabel() {
+  if (game.mode === 'round_over') return 'Hand Over';
+  return game.mode.charAt(0).toUpperCase() + game.mode.slice(1);
+}
+
+function updateHud() {
+  const playerHand = game.hands[0] || [];
+  game.selectedIndex = clamp(game.selectedIndex, 0, Math.max(0, playerHand.length - 1));
+  els.mode.textContent = modeLabel();
+  els.turn.textContent = game.mode === 'playing' ? PLAYERS[game.turn] : '-';
+  els.suit.textContent = `${SUIT_NAMES[game.currentSuit] || '-'} / ${game.currentRank || '-'}`;
+  els.round.textContent = String(game.round);
+  els.score.textContent = `${game.scores[0]} / ${TARGET_SCORE}`;
+  els.cards.textContent = String(playerHand.length);
+  els.coins.textContent = String(profileState.coins);
+  els.primary.textContent = game.mode === 'round_over' ? 'Next Hand' : game.mode === 'paused' ? 'Resume' : game.mode === 'playing' ? 'Playing' : 'Start';
+  els.primary.disabled = game.mode === 'playing';
+  els.play.disabled = !(game.mode === 'playing' && game.turn === 0 && playerHand.length > 0);
+  els.draw.disabled = !(game.mode === 'playing' && game.turn === 0);
+  els.pause.disabled = !(game.mode === 'playing' || game.mode === 'paused');
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  for (const [key, button] of [['H', els.hearts], ['D', els.diamonds], ['C', els.clubs], ['S', els.spades]]) {
+    button.classList.toggle('active', game.playerSuitChoice === key);
+  }
+}
+
+function showOverlay() {
+  let title = 'Crazy Eights';
+  let text = 'Match the discard by suit or rank, use eights as wild cards, and empty your hand before the table AI.';
+  let mini = 'Keys: arrows select, Enter plays, D draws, 1-4 choose a wild suit, P pauses.';
+  let action = 'Start Hand';
+  if (game.mode === 'paused') {
+    title = 'Paused';
+    text = 'The table is waiting for your next card.';
+    mini = 'Resume to continue the current hand.';
+    action = 'Resume';
+  } else if (game.mode === 'round_over') {
+    title = 'Hand Complete';
+    text = game.message;
+    mini = `Scores: You ${game.scores[0]}, North ${game.scores[1]}, East ${game.scores[2]}, West ${game.scores[3]}.`;
+    action = 'Next Hand';
+  } else if (game.mode === 'won') {
+    title = 'Match Won';
+    text = `${game.message} Coins earned: ${game.coinsEarned}.`;
+    mini = `Best Crazy Eights score: ${game.best}.`;
+    action = 'Play Again';
+  } else if (game.mode === 'lost') {
+    title = 'Match Lost';
+    text = game.message;
+    mini = `Your score: ${game.scores[0]}. Best: ${game.best}.`;
+    action = 'Try Again';
+  }
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  overlayMini.textContent = mini;
+  overlayAction.textContent = action;
+  overlay.classList.add('show');
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#16243b');
+  bg.addColorStop(0.48, '#0f543f');
+  bg.addColorStop(1, '#302844');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  for (let i = -220; i < WIDTH; i += 72) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + 300, HEIGHT);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  if (game.shake > 0) ctx.translate(Math.sin(game.shake * 70) * game.shake * 12, 0);
+  ctx.fillStyle = '#113f36e8';
+  ctx.beginPath();
+  ctx.ellipse(WIDTH / 2, 326, 420, 222, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffe08a70';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCard(x, y, w, h, card, options = {}) {
+  const { selected = false, back = false, small = false, playable = false } = options;
+  ctx.save();
+  ctx.translate(x, y);
+  if (selected) ctx.translate(0, -18);
+  ctx.fillStyle = selected ? '#ffe08a' : '#07101e66';
+  ctx.beginPath();
+  ctx.roundRect(-4, 6, w + 8, h + 8, 8);
+  ctx.fill();
+
+  if (back) {
+    const grd = ctx.createLinearGradient(0, 0, w, h);
+    grd.addColorStop(0, '#294b77');
+    grd.addColorStop(1, '#7a315b');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, w, h, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#f7fbffcc';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.strokeStyle = '#ffe08ab8';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+    ctx.fillStyle = '#f7fbff';
+    ctx.font = `900 ${small ? 18 : 26}px "Trebuchet MS", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('8', w / 2, h / 2);
+    ctx.restore();
+    return;
+  }
+
+  const suitColor = SUIT_COLORS[card.suit] || '#31456a';
+  ctx.fillStyle = '#fbfbf5';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, w, h, 8);
+  ctx.fill();
+  ctx.strokeStyle = selected ? '#102033' : playable ? '#6ee7b7' : '#d9dee8';
+  ctx.lineWidth = selected ? 4 : playable ? 3 : 2;
+  ctx.stroke();
+
+  ctx.fillStyle = suitColor;
+  ctx.font = `900 ${small ? 19 : 26}px "Trebuchet MS", sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(card.rank, 10, 8);
+  ctx.font = `900 ${small ? 15 : 20}px "Trebuchet MS", sans-serif`;
+  ctx.fillText(card.suit, 10, small ? 32 : 40);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${small ? 28 : 42}px "Trebuchet MS", sans-serif`;
+  ctx.fillText(card.rank, w / 2, h / 2 - 8);
+  ctx.font = `900 ${small ? 20 : 28}px "Trebuchet MS", sans-serif`;
+  ctx.fillText(card.suit, w / 2, h / 2 + 28);
+
+  if (card.rank === '8') {
+    ctx.fillStyle = '#102033';
+    ctx.font = `900 ${small ? 9 : 12}px "Trebuchet MS", sans-serif`;
+    ctx.fillText('WILD', w / 2, h - 18);
+  }
+  ctx.restore();
+}
+
+function drawDeckAndDiscard() {
+  const deckX = 390;
+  const deckY = 250;
+  const w = 92;
+  const h = 128;
+  drawCard(deckX, deckY, w, h, null, { back: true });
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(game.deck.length), deckX + w / 2, deckY + h + 26);
+  const discard = topDiscard();
+  if (discard) drawCard(520, deckY, w, h, discard, { playable: game.pulse > 0 });
+
+  ctx.fillStyle = '#0e1727e6';
+  ctx.beginPath();
+  ctx.roundRect(330, 408, 340, 72, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff30';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#b8c8d8';
+  ctx.font = '900 12px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('CURRENT MATCH', 350, 424);
+  ctx.fillStyle = SUIT_COLORS[game.currentSuit] || '#f7fbff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${SUIT_NAMES[game.currentSuit]} or ${game.currentRank}`, 350, 442);
+  ctx.fillStyle = '#dce7f3';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  wrapText(game.message, 350, 472, 300, 18, 2);
+}
+
+function drawOpponent(player, x, y, align = 'center') {
+  const count = game.hands[player].length;
+  ctx.save();
+  ctx.textAlign = align;
+  ctx.fillStyle = game.turn === player && game.mode === 'playing' ? '#ffe08a' : '#f7fbff';
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.fillText(PLAYERS[player], x, y);
+  ctx.fillStyle = '#b8c8d8';
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${count} cards  Score ${game.scores[player]}`, x, y + 22);
+  const start = align === 'center' ? x - Math.min(count, 7) * 14 : x - 36;
+  for (let i = 0; i < Math.min(count, 7); i += 1) {
+    drawCard(start + i * 28, y + 42, 48, 68, null, { back: true, small: true });
+  }
+  ctx.restore();
+}
+
+function drawPlayerHand() {
+  const hand = game.hands[0];
+  cardRects = [];
+  const available = 880;
+  const cardW = hand.length > 9 ? 66 : 78;
+  const cardH = hand.length > 9 ? 96 : 110;
+  const overlap = hand.length <= 1 ? 0 : Math.max(34, Math.min(cardW + 12, (available - cardW) / (hand.length - 1)));
+  const totalW = cardW + overlap * Math.max(0, hand.length - 1);
+  const startX = (WIDTH - totalW) / 2;
+  const y = 520;
+  for (let i = 0; i < hand.length; i += 1) {
+    const x = startX + i * overlap;
+    const selected = i === game.selectedIndex;
+    const playable = game.turn === 0 && game.mode === 'playing' && isPlayable(hand[i]);
+    drawCard(x, y, cardW, cardH, hand[i], { selected, playable });
+    cardRects.push({ x, y: selected ? y - 18 : y, w: cardW, h: cardH, index: i });
+  }
+  ctx.fillStyle = game.turn === 0 && game.mode === 'playing' ? '#ffe08a' : '#f7fbff';
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`You - Score ${game.scores[0]} / ${TARGET_SCORE}`, 52, 502);
+  ctx.fillStyle = '#b8c8d8';
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  ctx.fillText(`Wild suit choice: ${SUIT_NAMES[game.playerSuitChoice]}`, 52, 632);
+}
+
+function drawScorePanel() {
+  ctx.fillStyle = '#0e1727e6';
+  ctx.beginPath();
+  ctx.roundRect(710, 176, 222, 242, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff30';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 26px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Crazy Eights', 730, 198);
+  ctx.fillStyle = '#b8c8d8';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillText('First to 80 wins', 732, 228);
+  const rows = PLAYERS.map((name, index) => [name, game.scores[index], game.wins[index], game.hands[index].length]);
+  let y = 262;
+  for (const [name, score, wins, cards] of rows) {
+    ctx.fillStyle = name === PLAYERS[game.turn] && game.mode === 'playing' ? '#173b35' : '#17243a';
+    ctx.beginPath();
+    ctx.roundRect(730, y, 182, 34, 8);
+    ctx.fill();
+    ctx.fillStyle = '#f7fbff';
+    ctx.font = '900 14px "Trebuchet MS", sans-serif';
+    ctx.fillText(name, 742, y + 9);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffe08a';
+    ctx.fillText(`${score}`, 880, y + 9);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#91a9c0';
+    ctx.font = '800 10px "Trebuchet MS", sans-serif';
+    ctx.fillText(`${wins} hands, ${cards} cards`, 742, y + 23);
+    y += 42;
+  }
+}
+
+function drawHeader() {
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 30px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Crazy Eights', 52, 28);
+  ctx.fillStyle = '#b8c8d8';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Coordinate system: player hand cards run left to right along the bottom; center piles are draw then discard.', 54, 64);
+}
+
+function draw() {
+  drawBackground();
+  drawHeader();
+  drawOpponent(1, 500, 94, 'center');
+  drawOpponent(3, 118, 216, 'left');
+  drawOpponent(2, 884, 216, 'right');
+  drawDeckAndDiscard();
+  drawScorePanel();
+  drawPlayerHand();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * HEIGHT,
+  };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  canvas.focus();
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') {
+    startMatch();
+    return;
+  }
+  if (game.mode === 'round_over') {
+    nextRound();
+    return;
+  }
+  if (game.mode !== 'playing' || game.turn !== 0) return;
+  const point = canvasPoint(event);
+  for (let i = cardRects.length - 1; i >= 0; i -= 1) {
+    const rect = cardRects[i];
+    if (point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h) {
+      if (game.selectedIndex === rect.index && isPlayable(game.hands[0][rect.index])) {
+        playSelected();
+      } else {
+        game.selectedIndex = rect.index;
+        updateHud();
+        draw();
+      }
+      return;
+    }
+  }
+}
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const handled = ['arrowleft', 'arrowright', 'enter', ' ', 'd', 'p', 'r', 'f', '1', '2', '3', '4'].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+  if (key === 'f') {
+    toggleFullscreen();
+  } else if (key === 'r') {
+    restartGame();
+  } else if (key === 'p') {
+    pauseToggle();
+  } else if (key === 'arrowleft') {
+    selectDelta(-1);
+  } else if (key === 'arrowright') {
+    selectDelta(1);
+  } else if (key === 'enter' || key === ' ') {
+    if (game.mode === 'playing') playSelected();
+    else primaryAction();
+  } else if (key === 'd') {
+    drawForPlayer();
+  } else if (['1', '2', '3', '4'].includes(key)) {
+    setSuitChoice(SUITS[Number(key) - 1].key);
+  }
+}
+
+function cardToText(card) {
+  return card ? { rank: card.rank, suit: card.suit, name: describeCard(card), value: cardValue(card) } : null;
+}
+
+function stateToObject({ reveal = false } = {}) {
+  return {
+    game: 'Crazy Eights',
+    coordinate_system: 'Canvas origin is top-left with y downward. Player hand indexes run left to right at the bottom of the table.',
+    mode: game.mode,
+    round: game.round,
+    target_score: TARGET_SCORE,
+    turn: { index: game.turn, player: PLAYERS[game.turn] },
+    current_match: {
+      rank: game.currentRank,
+      suit: game.currentSuit,
+      suit_name: SUIT_NAMES[game.currentSuit],
+      top_discard: cardToText(topDiscard()),
+    },
+    player: {
+      score: game.scores[0],
+      hand: game.hands[0].map(cardToText),
+      selected_index: game.selectedIndex,
+      selected_card: cardToText(game.hands[0][game.selectedIndex]),
+      playable_indexes: playableIndexes(0),
+      wild_suit_choice: game.playerSuitChoice,
+      wild_suit_name: SUIT_NAMES[game.playerSuitChoice],
+    },
+    opponents: PLAYERS.slice(1).map((name, offset) => {
+      const index = offset + 1;
+      return {
+        index,
+        name,
+        score: game.scores[index],
+        cards: game.hands[index].length,
+        hand: reveal ? game.hands[index].map(cardToText) : undefined,
+      };
+    }),
+    deck_count: game.deck.length,
+    discard_count: game.discard.length,
+    pass_streak: game.passStreak,
+    winner: game.winner === null ? null : { index: game.winner, player: PLAYERS[game.winner] },
+    match_winner: game.matchWinner === null ? null : { index: game.matchWinner, player: PLAYERS[game.matchWinner] },
+    coins_earned: game.coinsEarned,
+    message: game.message,
+  };
+}
+
+window.render_game_to_text = () => JSON.stringify(stateToObject());
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return stateToObject();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(window.render_game_to_text());
+window.__CRAZY_EIGHTS_GAME__ = {
+  startMatch,
+  dealRound,
+  playSelected,
+  drawForPlayer,
+  select(index) {
+    game.selectedIndex = clamp(Number(index) || 0, 0, Math.max(0, game.hands[0].length - 1));
+    updateHud();
+    draw();
+    return stateToObject({ reveal: true });
+  },
+  chooseSuit: setSuitChoice,
+  pauseToggle,
+  getState(reveal = false) {
+    return stateToObject({ reveal });
+  },
+  forcePlayerPlayable() {
+    if (game.mode !== 'playing') startMatch();
+    game.turn = 0;
+    const suit = game.currentSuit;
+    game.hands[0].unshift({ rank: '5', suit, id: `5${suit}-forced` });
+    game.selectedIndex = 0;
+    updateHud();
+    draw();
+    return stateToObject({ reveal: true });
+  },
+  forcePlayerWild() {
+    if (game.mode !== 'playing') startMatch();
+    game.turn = 0;
+    game.hands[0].unshift({ rank: '8', suit: 'S', id: '8S-forced' });
+    game.selectedIndex = 0;
+    updateHud();
+    draw();
+    return stateToObject({ reveal: true });
+  },
+  forceDrawOnly({ drawnPlayable = false } = {}) {
+    if (game.mode !== 'playing') startMatch();
+    game.turn = 0;
+    game.discard = [{ rank: 'A', suit: 'H', id: 'AH-draw' }];
+    game.currentRank = 'A';
+    game.currentSuit = 'H';
+    game.hands[0] = [
+      { rank: '3', suit: 'C', id: '3C-draw' },
+      { rank: '5', suit: 'D', id: '5D-draw' },
+    ];
+    game.deck = [{ rank: '9', suit: drawnPlayable ? 'H' : 'S', id: '9-draw' }];
+    game.selectedIndex = 0;
+    game.passStreak = 0;
+    game.message = 'No legal card is available; draw to continue.';
+    updateHud();
+    draw();
+    return stateToObject({ reveal: true });
+  },
+  forcePlayerWin() {
+    if (game.mode !== 'playing') startMatch();
+    game.turn = 0;
+    game.scores[0] = TARGET_SCORE - 10;
+    game.hands = [
+      [{ rank: '8', suit: 'H', id: '8H-win' }],
+      [{ rank: 'K', suit: 'D', id: 'KD-win' }, { rank: 'Q', suit: 'C', id: 'QC-win' }],
+      [{ rank: '9', suit: 'S', id: '9S-win' }],
+      [{ rank: '7', suit: 'H', id: '7H-win' }],
+    ];
+    game.discard = [{ rank: '4', suit: 'H', id: '4H-win' }];
+    game.currentRank = '4';
+    game.currentSuit = 'H';
+    game.selectedIndex = 0;
+    playSelected();
+    return stateToObject({ reveal: true });
+  },
+};
+
+overlayAction.addEventListener('click', primaryAction);
+els.primary.addEventListener('click', primaryAction);
+els.play.addEventListener('click', playSelected);
+els.draw.addEventListener('click', drawForPlayer);
+els.hearts.addEventListener('click', () => setSuitChoice('H'));
+els.diamonds.addEventListener('click', () => setSuitChoice('D'));
+els.clubs.addEventListener('click', () => setSuitChoice('C'));
+els.spades.addEventListener('click', () => setSuitChoice('S'));
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'crazyeights', gameName: 'Crazy Eights' });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
