@@ -1,0 +1,1524 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Loop Trail | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #f7fbff;
+  background:
+    radial-gradient(28% 22% at 16% 14%, #ffd166 0%, transparent 70%),
+    radial-gradient(28% 24% at 84% 12%, #70f6d5 0%, transparent 72%),
+    linear-gradient(135deg, #11223c 0%, #174050 48%, #3a3155 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff75;
+  padding: 8px 12px;
+  background: #0d1728e8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffe08aab;
+  background: #0c1627;
+  box-shadow: 0 22px 56px #05091494;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(6, 12, 24, .54);
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #ffe08abd;
+  background: #0e1727f5;
+  box-shadow: 0 18px 48px #050914a3;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 66ch;
+  color: #dce8f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b8cadc;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101d31e8;
+  color: #f7fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b9cbdd;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9cf1c5; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffa0ad; }
+button {
+  cursor: pointer;
+  font: 900 12px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe08a 0%, #6ee7b7 100%);
+  border-color: #ffffffc4;
+}
+button.selected {
+  color: #102033;
+  background: #ffe08a;
+  border-color: #fff4c8;
+}
+button.utility { background: #37455f; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 11px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Draw one continuous loop around numbered cells, satisfy every edge clue, and avoid branches or broken trails. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Loop Trail | AI and Sons Games">
+  <meta property="og:description" content="Draw one continuous loop around numbered cells, satisfy every edge clue, and avoid branches or broken trails. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/looptrail">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/looptrail.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Loop Trail | AI and Sons Games">
+  <meta name="twitter:description" content="Draw one continuous loop around numbered cells, satisfy every edge clue, and avoid branches or broken trails. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/looptrail.png">
+  <link rel="canonical" href="https://games.aiandsons.io/looptrail">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Loop Trail","description":"Draw one continuous loop around numbered cells, satisfy every edge clue, and avoid branches or broken trails. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/looptrail","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Loop Trail game area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Loop Trail puzzle board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="levelText">1 / 5</b></div>
+    <div class="chip good"><span>Lines</span><b id="linesText">0</b></div>
+    <div class="chip bad"><span>Clues</span><b id="cluesText">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Loop Trail controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="lineBtn" class="selected" type="button">Line</button>
+    <button id="xBtn" type="button">X Mark</button>
+    <button id="clearBtn" type="button">Clear</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="checkBtn" type="button">Check</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('modeText'),
+  level: document.getElementById('levelText'),
+  lines: document.getElementById('linesText'),
+  clues: document.getElementById('cluesText'),
+  time: document.getElementById('timeText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  line: document.getElementById('lineBtn'),
+  x: document.getElementById('xBtn'),
+  clear: document.getElementById('clearBtn'),
+  hint: document.getElementById('hintBtn'),
+  check: document.getElementById('checkBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const TOOL_LINE = 'line';
+const TOOL_X = 'x';
+const TOOL_CLEAR = 'clear';
+const STORAGE_KEY = 'cade:looptrail:best';
+
+const RAW_PUZZLES = [
+  {
+    name: 'Courtyard Loop',
+    rows: 5,
+    cols: 5,
+    seconds: 210,
+    path: [[1, 1], [1, 4], [4, 4], [4, 1], [1, 1]],
+  },
+  {
+    name: 'Bridge Bend',
+    rows: 6,
+    cols: 6,
+    seconds: 230,
+    path: [[1, 1], [1, 5], [2, 5], [2, 6], [5, 6], [5, 2], [4, 2], [4, 1], [1, 1]],
+  },
+  {
+    name: 'Harbor Hook',
+    rows: 6,
+    cols: 7,
+    seconds: 250,
+    path: [[1, 2], [1, 6], [3, 6], [3, 5], [5, 5], [5, 1], [4, 1], [4, 0], [2, 0], [2, 2], [1, 2]],
+  },
+  {
+    name: 'Switchback Trail',
+    rows: 7,
+    cols: 7,
+    seconds: 270,
+    path: [[1, 1], [1, 6], [2, 6], [2, 7], [5, 7], [5, 5], [6, 5], [6, 2], [5, 2], [5, 0], [3, 0], [3, 1], [1, 1]],
+  },
+  {
+    name: 'Summit Circuit',
+    rows: 7,
+    cols: 8,
+    seconds: 300,
+    path: [[0, 2], [0, 7], [2, 7], [2, 8], [6, 8], [6, 5], [7, 5], [7, 1], [5, 1], [5, 0], [2, 0], [2, 2], [0, 2]],
+  },
+];
+
+function edgeKey(type, row, col) {
+  return `${type},${row},${col}`;
+}
+
+function parseEdge(key) {
+  const [type, row, col] = String(key).split(',');
+  return { type, row: Number(row), col: Number(col) };
+}
+
+function cellKey(row, col) {
+  return `${row},${col}`;
+}
+
+function parseCell(key) {
+  const [row, col] = String(key).split(',').map(Number);
+  return { row, col };
+}
+
+function buildAllEdges(rows, cols) {
+  const edges = [];
+  for (let row = 0; row <= rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) edges.push(edgeKey('h', row, col));
+  }
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col <= cols; col += 1) edges.push(edgeKey('v', row, col));
+  }
+  return edges;
+}
+
+function edgesFromPath(path) {
+  const edges = new Set();
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const [r1, c1] = path[i];
+    const [r2, c2] = path[i + 1];
+    if (r1 === r2) {
+      const start = Math.min(c1, c2);
+      const end = Math.max(c1, c2);
+      for (let col = start; col < end; col += 1) edges.add(edgeKey('h', r1, col));
+    } else if (c1 === c2) {
+      const start = Math.min(r1, r2);
+      const end = Math.max(r1, r2);
+      for (let row = start; row < end; row += 1) edges.add(edgeKey('v', row, c1));
+    } else {
+      throw new Error(`Loop Trail path segment is not orthogonal: ${JSON.stringify(path[i])} to ${JSON.stringify(path[i + 1])}`);
+    }
+  }
+  return edges;
+}
+
+function edgesAroundCell(row, col) {
+  return [
+    edgeKey('h', row, col),
+    edgeKey('v', row, col + 1),
+    edgeKey('h', row + 1, col),
+    edgeKey('v', row, col),
+  ];
+}
+
+function buildPuzzle(raw) {
+  const solutionEdges = edgesFromPath(raw.path);
+  const allEdges = buildAllEdges(raw.rows, raw.cols);
+  const clueMap = new Map();
+  for (let row = 0; row < raw.rows; row += 1) {
+    for (let col = 0; col < raw.cols; col += 1) {
+      const value = edgesAroundCell(row, col).filter((edge) => solutionEdges.has(edge)).length;
+      clueMap.set(cellKey(row, col), value);
+    }
+  }
+  return { ...raw, allEdges, solutionEdges, clueMap };
+}
+
+const PUZZLES = RAW_PUZZLES.map(buildPuzzle);
+
+const state = {
+  mode: 'menu',
+  levelIndex: 0,
+  marks: new Map(),
+  selectedEdge: null,
+  tool: TOOL_LINE,
+  timeLeft: 0,
+  elapsed: 0,
+  score: 0,
+  totalChecks: 0,
+  totalMistakes: 0,
+  totalHints: 0,
+  levelChecks: 0,
+  levelMistakes: 0,
+  levelHints: 0,
+  perfectLevels: 0,
+  coinsEarned: 0,
+  rewardGiven: false,
+  message: 'Draw one closed loop that satisfies every numbered cell.',
+  best: loadBest(),
+  checkPulse: 0,
+  boardFlash: 0,
+  particles: [],
+};
+
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || '0');
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (state.score <= state.best) return;
+  state.best = state.score;
+  try {
+    localStorage.setItem(STORAGE_KEY, String(state.best));
+  } catch {
+    // Storage is optional in private or embedded browser contexts.
+  }
+}
+
+function currentPuzzle() {
+  return PUZZLES[state.levelIndex];
+}
+
+function firstPlayableEdge(puzzle = currentPuzzle()) {
+  return Array.from(puzzle.solutionEdges)[0] || puzzle.allEdges[0];
+}
+
+function resetLevel({ resetCampaign = false } = {}) {
+  if (resetCampaign) {
+    state.levelIndex = 0;
+    state.score = 0;
+    state.totalChecks = 0;
+    state.totalMistakes = 0;
+    state.totalHints = 0;
+    state.perfectLevels = 0;
+    state.coinsEarned = 0;
+    state.rewardGiven = false;
+  }
+  const puzzle = currentPuzzle();
+  state.marks = new Map();
+  state.selectedEdge = firstPlayableEdge(puzzle);
+  state.timeLeft = puzzle.seconds;
+  state.elapsed = 0;
+  state.levelChecks = 0;
+  state.levelMistakes = 0;
+  state.levelHints = 0;
+  state.checkPulse = 0;
+  state.boardFlash = 0;
+  state.particles = [];
+  state.message = `${puzzle.name}: every number tells how many surrounding edges belong to the loop.`;
+}
+
+function startGame() {
+  resetLevel({ resetCampaign: true });
+  state.mode = 'playing';
+  rememberRecent('looptrail');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function restartGame() {
+  startGame();
+}
+
+function nextLevel() {
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    startGame();
+    return;
+  }
+  state.levelIndex += 1;
+  resetLevel();
+  state.mode = 'playing';
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function edgeVertices(key) {
+  const edge = parseEdge(key);
+  if (edge.type === 'h') {
+    return [cellKey(edge.row, edge.col), cellKey(edge.row, edge.col + 1)];
+  }
+  return [cellKey(edge.row, edge.col), cellKey(edge.row + 1, edge.col)];
+}
+
+function lineEdges() {
+  return Array.from(state.marks.entries())
+    .filter(([, value]) => value === TOOL_LINE)
+    .map(([key]) => key);
+}
+
+function xEdges() {
+  return Array.from(state.marks.entries())
+    .filter(([, value]) => value === TOOL_X)
+    .map(([key]) => key);
+}
+
+function scanBoard() {
+  const puzzle = currentPuzzle();
+  const lines = lineEdges();
+  const lineSet = new Set(lines);
+  const clues = [];
+  const clueErrors = [];
+  for (const [key, required] of puzzle.clueMap.entries()) {
+    const { row, col } = parseCell(key);
+    const count = edgesAroundCell(row, col).filter((edge) => lineSet.has(edge)).length;
+    const status = count === required ? 'good' : count > required ? 'over' : 'short';
+    const clue = { row, col, required, count, status };
+    clues.push(clue);
+    if (status !== 'good') clueErrors.push(clue);
+  }
+
+  const degree = new Map();
+  const adjacency = new Map();
+  for (const edge of lines) {
+    const [a, b] = edgeVertices(edge);
+    degree.set(a, (degree.get(a) || 0) + 1);
+    degree.set(b, (degree.get(b) || 0) + 1);
+    if (!adjacency.has(a)) adjacency.set(a, new Set());
+    if (!adjacency.has(b)) adjacency.set(b, new Set());
+    adjacency.get(a).add(b);
+    adjacency.get(b).add(a);
+  }
+
+  const degreeErrors = Array.from(degree.entries())
+    .filter(([, count]) => count !== 2)
+    .map(([key, count]) => ({ ...parseCell(key), degree: count }));
+
+  let componentCount = 0;
+  const visited = new Set();
+  for (const key of degree.keys()) {
+    if (visited.has(key)) continue;
+    componentCount += 1;
+    const stack = [key];
+    visited.add(key);
+    while (stack.length > 0) {
+      const next = stack.pop();
+      for (const neighbor of adjacency.get(next) || []) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          stack.push(neighbor);
+        }
+      }
+    }
+  }
+
+  const singleLoop = lines.length > 0 && degreeErrors.length === 0 && componentCount === 1;
+  const wrongLines = lines.filter((edge) => !puzzle.solutionEdges.has(edge));
+  const missingSolution = Array.from(puzzle.solutionEdges).filter((edge) => !lineSet.has(edge));
+  return {
+    lines,
+    xMarks: xEdges(),
+    clues,
+    clueErrors,
+    degreeErrors,
+    componentCount,
+    singleLoop,
+    solved: clueErrors.length === 0 && singleLoop,
+    wrongLines,
+    missingSolution,
+    solutionProgress: puzzle.solutionEdges.size - missingSolution.length,
+  };
+}
+
+function setTool(tool) {
+  state.tool = tool;
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function setEdgeMark(edgeKeyValue, value) {
+  const puzzle = currentPuzzle();
+  if (!puzzle.allEdges.includes(edgeKeyValue)) return false;
+  state.selectedEdge = edgeKeyValue;
+  const current = state.marks.get(edgeKeyValue) || TOOL_CLEAR;
+  if (value === TOOL_CLEAR || current === value) {
+    state.marks.delete(edgeKeyValue);
+  } else {
+    state.marks.set(edgeKeyValue, value);
+  }
+  state.message = markMessage(edgeKeyValue, state.marks.get(edgeKeyValue) || TOOL_CLEAR);
+  state.checkPulse = 0;
+  if (state.marks.get(edgeKeyValue) === TOOL_LINE) spawnEdgeParticles(edgeKeyValue, '#ffe08a', 8);
+  const scan = scanBoard();
+  if (scan.solved) completeLevel(scan);
+  updateHud();
+  draw();
+  return true;
+}
+
+function markMessage(edgeKeyValue, value) {
+  const edge = edgeToObject(edgeKeyValue);
+  const label = `${edge.orientation} edge at row ${edge.row + 1}, column ${edge.col + 1}`;
+  if (value === TOOL_LINE) return `Added loop line on ${label}.`;
+  if (value === TOOL_X) return `Marked ${label} as empty.`;
+  return `Cleared ${label}.`;
+}
+
+function applySelected() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+    return false;
+  }
+  if (state.mode === 'level_clear') {
+    nextLevel();
+    return false;
+  }
+  if (state.mode !== 'playing') return false;
+  return setEdgeMark(state.selectedEdge, state.tool);
+}
+
+function useHint() {
+  if (state.mode !== 'playing') return false;
+  const puzzle = currentPuzzle();
+  const scan = scanBoard();
+  state.totalHints += 1;
+  state.levelHints += 1;
+  state.score = Math.max(0, state.score - 18);
+
+  const wrong = scan.wrongLines[0];
+  if (wrong) {
+    state.marks.delete(wrong);
+    state.selectedEdge = wrong;
+    state.message = 'Hint cleared a line that cannot be part of this loop.';
+    state.checkPulse = 1.2;
+    updateHud();
+    draw();
+    return true;
+  }
+
+  const missing = scan.missingSolution[0];
+  if (missing) {
+    state.marks.set(missing, TOOL_LINE);
+    state.selectedEdge = missing;
+    state.message = 'Hint added one safe loop edge.';
+    spawnEdgeParticles(missing, '#6ee7b7', 12);
+    const nextScan = scanBoard();
+    if (nextScan.solved) completeLevel(nextScan);
+    updateHud();
+    draw();
+    return true;
+  }
+
+  const blankNonSolution = puzzle.allEdges.find((edge) => !puzzle.solutionEdges.has(edge) && !state.marks.has(edge));
+  if (blankNonSolution) {
+    state.marks.set(blankNonSolution, TOOL_X);
+    state.selectedEdge = blankNonSolution;
+    state.message = 'Hint marked one edge that should stay empty.';
+  } else {
+    state.message = 'All solution edges are already present. Check for loop structure.';
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function checkBoard() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    nextLevel();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const scan = scanBoard();
+  state.totalChecks += 1;
+  state.levelChecks += 1;
+  if (scan.solved) {
+    completeLevel(scan);
+    return;
+  }
+  state.totalMistakes += 1;
+  state.levelMistakes += 1;
+  state.checkPulse = 2.4;
+  const parts = [];
+  if (scan.clueErrors.length > 0) parts.push(`${scan.clueErrors.length} clue`);
+  if (scan.degreeErrors.length > 0) parts.push(`${scan.degreeErrors.length} branch/end`);
+  if (scan.componentCount > 1) parts.push(`${scan.componentCount} separate loops`);
+  if (scan.lines.length === 0) parts.push('no loop');
+  state.message = `Check ${state.levelChecks}: ${parts.join(', ')} issue${parts.length === 1 ? '' : 's'} remain.`;
+  if (state.levelMistakes >= 7) {
+    finish(false, 'too_many_checks');
+    return;
+  }
+  updateHud();
+  draw();
+}
+
+function completeLevel(scan = scanBoard()) {
+  if (state.mode !== 'playing') return;
+  const puzzle = currentPuzzle();
+  const timeBonus = Math.ceil(state.timeLeft * 1.7);
+  const clueBonus = scan.clues.length * 5;
+  const lineBonus = scan.lines.length * 8;
+  const penalty = state.levelHints * 22 + state.levelMistakes * 18 + Math.max(0, state.levelChecks - 1) * 5;
+  const gained = Math.max(100, timeBonus + clueBonus + lineBonus - penalty);
+  state.score += gained;
+  if (state.levelMistakes === 0 && state.levelHints === 0) state.perfectLevels += 1;
+  state.boardFlash = 1;
+  saveBest();
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    finish(true, 'campaign_clear');
+    return;
+  }
+  state.mode = 'level_clear';
+  state.message = `${puzzle.name} solved for ${gained} points.`;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function finish(won, reason) {
+  state.mode = won ? 'won' : 'lost';
+  if (won) {
+    awardWin();
+    maybeUnlock({
+      anyPlay: true,
+      looptrail: {
+        score: state.score,
+        perfectLevels: state.perfectLevels,
+        hints: state.totalHints,
+      },
+    });
+    state.message = `Campaign clear. Score ${state.score}. Coins earned ${state.coinsEarned}.`;
+  } else if (reason === 'time_expired') {
+    state.message = 'Time ran out before the loop closed.';
+  } else {
+    state.message = 'Too many failed checks. Restart for a fresh trail.';
+  }
+  saveBest();
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function awardWin() {
+  if (state.rewardGiven) return;
+  const coins = 32 + state.perfectLevels * 4 + Math.floor(state.score / 700);
+  state.coinsEarned += coins;
+  addCoins(coins);
+  state.rewardGiven = true;
+}
+
+function pauseToggle() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    hideOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function primaryAction() {
+  if (state.mode === 'playing') checkBoard();
+  else if (state.mode === 'level_clear') nextLevel();
+  else if (state.mode === 'paused') pauseToggle();
+  else startGame();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await stage.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    // Fullscreen is optional in embedded or automated contexts.
+  }
+  setTimeout(draw, 80);
+}
+
+function selectNext(delta) {
+  const puzzle = currentPuzzle();
+  const index = Math.max(0, puzzle.allEdges.indexOf(state.selectedEdge));
+  state.selectedEdge = puzzle.allEdges[(index + delta + puzzle.allEdges.length) % puzzle.allEdges.length];
+  state.message = 'Selected a different edge.';
+  updateHud();
+  draw();
+}
+
+function moveSelection(dx, dy) {
+  const puzzle = currentPuzzle();
+  const layout = currentLayout();
+  const current = edgeGeometry(state.selectedEdge, layout);
+  if (!current) {
+    state.selectedEdge = firstPlayableEdge(puzzle);
+    return;
+  }
+  const targetX = current.mx + dx * layout.cell;
+  const targetY = current.my + dy * layout.cell;
+  let best = null;
+  for (const edge of puzzle.allEdges) {
+    if (edge === state.selectedEdge) continue;
+    const geom = edgeGeometry(edge, layout);
+    if (dx < 0 && geom.mx >= current.mx - 1) continue;
+    if (dx > 0 && geom.mx <= current.mx + 1) continue;
+    if (dy < 0 && geom.my >= current.my - 1) continue;
+    if (dy > 0 && geom.my <= current.my + 1) continue;
+    const score = Math.hypot(geom.mx - targetX, geom.my - targetY) + (geom.type === current.type ? 0 : layout.cell * 0.18);
+    if (!best || score < best.score) best = { edge, score };
+  }
+  if (best) {
+    state.selectedEdge = best.edge;
+    state.message = 'Selected a different edge.';
+    updateHud();
+    draw();
+  } else {
+    selectNext(dx + dy > 0 ? 1 : -1);
+  }
+}
+
+function update(dt) {
+  for (let i = state.particles.length - 1; i >= 0; i -= 1) {
+    const particle = state.particles[i];
+    particle.life -= dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    if (particle.life <= 0) state.particles.splice(i, 1);
+  }
+  state.checkPulse = Math.max(0, state.checkPulse - dt);
+  state.boardFlash = Math.max(0, state.boardFlash - dt * 1.8);
+  if (state.mode !== 'playing') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) finish(false, 'time_expired');
+}
+
+function currentLayout() {
+  const puzzle = currentPuzzle();
+  const boardMaxW = 590;
+  const boardMaxH = 520;
+  const cell = Math.floor(Math.min(boardMaxW / puzzle.cols, boardMaxH / puzzle.rows));
+  const boardW = cell * puzzle.cols;
+  const boardH = cell * puzzle.rows;
+  return {
+    cell,
+    boardW,
+    boardH,
+    boardX: 54,
+    boardY: Math.floor((HEIGHT - boardH) / 2) + 20,
+    sideX: 686,
+    sideY: 104,
+  };
+}
+
+function vertexPoint(row, col, layout = currentLayout()) {
+  return {
+    x: layout.boardX + col * layout.cell,
+    y: layout.boardY + row * layout.cell,
+  };
+}
+
+function edgeGeometry(key, layout = currentLayout()) {
+  if (!key) return null;
+  const edge = parseEdge(key);
+  const a = vertexPoint(edge.row, edge.col, layout);
+  const b = edge.type === 'h'
+    ? vertexPoint(edge.row, edge.col + 1, layout)
+    : vertexPoint(edge.row + 1, edge.col, layout);
+  return {
+    ...edge,
+    x1: a.x,
+    y1: a.y,
+    x2: b.x,
+    y2: b.y,
+    mx: (a.x + b.x) / 2,
+    my: (a.y + b.y) / 2,
+  };
+}
+
+function edgeToObject(key) {
+  const edge = parseEdge(key);
+  return {
+    key,
+    orientation: edge.type === 'h' ? 'horizontal' : 'vertical',
+    row: edge.row,
+    col: edge.col,
+  };
+}
+
+function spawnEdgeParticles(edgeKeyValue, color, count) {
+  const geom = edgeGeometry(edgeKeyValue);
+  if (!geom) return;
+  for (let i = 0; i < count; i += 1) {
+    const angle = (Math.PI * 2 * i) / count;
+    const speed = 36 + (i % 4) * 12;
+    state.particles.push({
+      x: geom.mx,
+      y: geom.my,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      color,
+      life: 0.3 + (i % 3) * 0.08,
+    });
+  }
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#11223c');
+  bg.addColorStop(0.52, '#143d47');
+  bg.addColorStop(1, '#322a4e');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = '#f7fbff';
+  ctx.lineWidth = 2;
+  for (let x = -180; x < WIDTH; x += 82) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 260, HEIGHT);
+    ctx.stroke();
+  }
+  for (let y = 24; y < HEIGHT; y += 86) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(WIDTH, y + 70);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function fillRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function strokeRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function drawBoard(scan) {
+  const puzzle = currentPuzzle();
+  const layout = currentLayout();
+  const { boardX, boardY, boardW, boardH, cell } = layout;
+
+  ctx.save();
+  ctx.shadowColor = '#050914';
+  ctx.shadowBlur = 22;
+  ctx.fillStyle = '#0b1221';
+  fillRoundRect(boardX - 22, boardY - 22, boardW + 44, boardH + 44, 8);
+  ctx.restore();
+
+  if (state.boardFlash > 0) {
+    ctx.save();
+    ctx.globalAlpha = state.boardFlash * .32;
+    ctx.fillStyle = '#ffe08a';
+    fillRoundRect(boardX - 22, boardY - 22, boardW + 44, boardH + 44, 8);
+    ctx.restore();
+  }
+
+  const cluesByKey = new Map(scan.clues.map((clue) => [cellKey(clue.row, clue.col), clue]));
+  for (let row = 0; row < puzzle.rows; row += 1) {
+    for (let col = 0; col < puzzle.cols; col += 1) {
+      const x = boardX + col * cell;
+      const y = boardY + row * cell;
+      const clue = cluesByKey.get(cellKey(row, col));
+      const pulseError = state.checkPulse > 0 && clue?.status !== 'good';
+      ctx.fillStyle = (row + col) % 2 === 0 ? '#20314a' : '#243a4e';
+      ctx.fillRect(x, y, cell, cell);
+      if (pulseError) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(.55, state.checkPulse / 2.4);
+        ctx.fillStyle = clue.status === 'over' ? '#ff6f85' : '#ffd166';
+        ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
+        ctx.restore();
+      }
+      ctx.strokeStyle = '#0b122188';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + .5, y + .5, cell - 1, cell - 1);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `900 ${Math.floor(cell * .38)}px "Trebuchet MS", sans-serif`;
+      if (clue.status === 'good') ctx.fillStyle = '#9cf1c5';
+      else if (clue.status === 'over') ctx.fillStyle = '#ffa0ad';
+      else ctx.fillStyle = '#ffe08a';
+      ctx.fillText(String(clue.required), x + cell / 2, y + cell / 2 + 1);
+    }
+  }
+
+  drawSelectedEdge(layout);
+  for (const [edge, value] of state.marks.entries()) drawEdgeMark(edge, value, layout);
+
+  ctx.fillStyle = '#eaf4ff';
+  for (let row = 0; row <= puzzle.rows; row += 1) {
+    for (let col = 0; col <= puzzle.cols; col += 1) {
+      const p = vertexPoint(row, col, layout);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(4, cell * .075), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.strokeStyle = '#ffe08a';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(boardX, boardY, boardW, boardH);
+}
+
+function drawSelectedEdge(layout) {
+  const geom = edgeGeometry(state.selectedEdge, layout);
+  if (!geom) return;
+  ctx.save();
+  ctx.strokeStyle = '#70f6d5';
+  ctx.lineWidth = Math.max(10, layout.cell * .18);
+  ctx.lineCap = 'round';
+  ctx.globalAlpha = .58;
+  ctx.beginPath();
+  ctx.moveTo(geom.x1, geom.y1);
+  ctx.lineTo(geom.x2, geom.y2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#70f6d5';
+  ctx.beginPath();
+  ctx.arc(geom.mx, geom.my, Math.max(5, layout.cell * .09), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawEdgeMark(edge, value, layout) {
+  const geom = edgeGeometry(edge, layout);
+  if (!geom) return;
+  if (value === TOOL_LINE) {
+    ctx.save();
+    ctx.strokeStyle = '#07101e66';
+    ctx.lineWidth = Math.max(12, layout.cell * .18);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(geom.x1, geom.y1);
+    ctx.lineTo(geom.x2, geom.y2);
+    ctx.stroke();
+    const grad = ctx.createLinearGradient(geom.x1, geom.y1, geom.x2, geom.y2);
+    grad.addColorStop(0, '#ffe08a');
+    grad.addColorStop(1, '#6ee7b7');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = Math.max(6, layout.cell * .1);
+    ctx.beginPath();
+    ctx.moveTo(geom.x1, geom.y1);
+    ctx.lineTo(geom.x2, geom.y2);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  if (value === TOOL_X) {
+    const s = Math.max(8, layout.cell * .14);
+    ctx.save();
+    ctx.strokeStyle = '#ffa0ad';
+    ctx.lineWidth = Math.max(3, layout.cell * .04);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(geom.mx - s, geom.my - s);
+    ctx.lineTo(geom.mx + s, geom.my + s);
+    ctx.moveTo(geom.mx + s, geom.my - s);
+    ctx.lineTo(geom.mx - s, geom.my + s);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawSidePanel(scan) {
+  const layout = currentLayout();
+  const puzzle = currentPuzzle();
+  const x = layout.sideX;
+  const y = layout.sideY;
+  const w = 264;
+
+  ctx.fillStyle = '#0b1221da';
+  fillRoundRect(x, y, w, 396, 8);
+  ctx.strokeStyle = '#ffffff30';
+  ctx.lineWidth = 1;
+  strokeRoundRect(x, y, w, 396, 8);
+
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 30px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Loop Trail', x + 20, y + 18);
+
+  ctx.fillStyle = '#b9cbdd';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(puzzle.name, x + 22, y + 58);
+
+  const rows = [
+    ['Loop lines', `${scan.lines.length}`],
+    ['Clues solved', `${scan.clues.length - scan.clueErrors.length} / ${scan.clues.length}`],
+    ['Loop shape', scan.singleLoop ? 'single loop' : scan.lines.length ? 'open/branch' : 'not drawn'],
+    ['Hints used', `${state.totalHints}`],
+    ['Best score', `${state.best}`],
+  ];
+
+  let yy = y + 94;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#17243a';
+    fillRoundRect(x + 18, yy, w - 36, 42, 8);
+    ctx.fillStyle = '#91a9c0';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 32, yy + 8);
+    ctx.fillStyle = label === 'Loop shape' && !scan.singleLoop ? '#ffe08a' : '#f7fbff';
+    ctx.font = '900 17px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, x + 32, yy + 22);
+    yy += 50;
+  }
+
+  ctx.fillStyle = '#dce8f6';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText(state.message, x + 20, y + 356, w - 40, 20, 2);
+}
+
+function drawParticles() {
+  ctx.save();
+  for (const particle of state.particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / .38));
+    ctx.fillStyle = particle.color;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawHeader() {
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 32px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`Puzzle ${state.levelIndex + 1}: ${currentPuzzle().name}`, 52, 28);
+  ctx.fillStyle = '#b9cbdd';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Origin is top-left; numbered cells count selected edges around that cell.', 54, 64);
+}
+
+function draw() {
+  const scan = scanBoard();
+  drawBackground();
+  drawHeader();
+  drawBoard(scan);
+  drawSidePanel(scan);
+  drawParticles();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const min = Math.floor(total / 60);
+  const sec = String(total % 60).padStart(2, '0');
+  return `${min}:${sec}`;
+}
+
+function modeLabel() {
+  if (state.mode === 'level_clear') return 'Clear';
+  return state.mode.charAt(0).toUpperCase() + state.mode.slice(1);
+}
+
+function updateHud() {
+  const puzzle = currentPuzzle();
+  const scan = scanBoard();
+  els.mode.textContent = modeLabel();
+  els.level.textContent = `${state.levelIndex + 1} / ${PUZZLES.length}`;
+  els.lines.textContent = `${scan.lines.length} / ${puzzle.solutionEdges.size}`;
+  els.clues.textContent = `${scan.clueErrors.length}`;
+  els.time.textContent = formatTime(state.timeLeft);
+  els.score.textContent = String(state.score);
+  els.coins.textContent = String(profileState.coins);
+  els.primary.textContent = state.mode === 'playing' ? 'Check' : state.mode === 'level_clear' ? 'Next' : state.mode === 'paused' ? 'Resume' : 'Start';
+  els.pause.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  els.line.classList.toggle('selected', state.tool === TOOL_LINE);
+  els.x.classList.toggle('selected', state.tool === TOOL_X);
+  els.clear.classList.toggle('selected', state.tool === TOOL_CLEAR);
+  const canPlay = state.mode === 'playing';
+  els.line.disabled = !canPlay;
+  els.x.disabled = !canPlay;
+  els.clear.disabled = !canPlay;
+  els.hint.disabled = !canPlay;
+  els.check.disabled = !canPlay;
+  els.pause.disabled = !(state.mode === 'playing' || state.mode === 'paused');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function showOverlay() {
+  let title = 'Loop Trail';
+  let copy = 'Draw one continuous loop along the grid dots. Each numbered cell tells how many of its four surrounding edges belong to the loop.';
+  let mini = 'Tap edges, or use arrows to select. Space draws, X marks empty, C checks, H hints, P pauses.';
+  let action = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    copy = 'The timer is stopped and your current loop is saved.';
+    mini = 'Resume when ready.';
+    action = 'Resume';
+  } else if (state.mode === 'level_clear') {
+    title = 'Trail Closed';
+    copy = state.message;
+    mini = 'Advance to the next loop puzzle.';
+    action = 'Next Puzzle';
+  } else if (state.mode === 'won') {
+    title = 'Circuit Complete';
+    copy = state.message;
+    mini = `Best score ${state.best}. Perfect puzzles ${state.perfectLevels}.`;
+    action = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Trail Broken';
+    copy = state.message;
+    mini = 'Restart for a fresh campaign.';
+    action = 'Try Again';
+  }
+  overlayPanel.innerHTML = `
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(copy)}</p>
+    <p class="mini">${escapeHtml(mini)}</p>
+    <p><button id="overlayAction" class="primary" type="button">${escapeHtml(action)}</button></p>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * HEIGHT,
+  };
+}
+
+function distanceToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lengthSq = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lengthSq));
+  const x = x1 + t * dx;
+  const y = y1 + t * dy;
+  return Math.hypot(px - x, py - y);
+}
+
+function edgeFromPoint(point) {
+  const puzzle = currentPuzzle();
+  const layout = currentLayout();
+  const threshold = Math.max(14, layout.cell * .2);
+  let best = null;
+  for (const edge of puzzle.allEdges) {
+    const geom = edgeGeometry(edge, layout);
+    const distance = distanceToSegment(point.x, point.y, geom.x1, geom.y1, geom.x2, geom.y2);
+    if (distance <= threshold && (!best || distance < best.distance)) best = { edge, distance };
+  }
+  return best?.edge || null;
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  canvas.focus();
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    nextLevel();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const edge = edgeFromPoint(canvasPoint(event));
+  if (!edge) return;
+  state.selectedEdge = edge;
+  setEdgeMark(edge, state.tool);
+}
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const handled = [
+    'arrowup', 'arrowdown', 'arrowleft', 'arrowright',
+    ' ', 'enter', 'l', 'x', '0', 'backspace', 'delete',
+    'h', 'c', 'p', 'r', 'f', 'tab',
+  ].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'r') {
+    restartGame();
+    return;
+  }
+  if (key === 'p') {
+    pauseToggle();
+    return;
+  }
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    if (key === ' ' || key === 'enter') startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    if (key === ' ' || key === 'enter') nextLevel();
+    return;
+  }
+  if (key === 'h') {
+    useHint();
+    return;
+  }
+  if (key === 'c') {
+    checkBoard();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+
+  if (key === 'arrowup') moveSelection(0, -1);
+  else if (key === 'arrowdown') moveSelection(0, 1);
+  else if (key === 'arrowleft') moveSelection(-1, 0);
+  else if (key === 'arrowright') moveSelection(1, 0);
+  else if (key === 'tab') selectNext(1);
+  else if (key === 'l') setTool(TOOL_LINE);
+  else if (key === 'x') setTool(TOOL_X);
+  else if (key === '0' || key === 'backspace' || key === 'delete') setTool(TOOL_CLEAR);
+  else if (key === ' ' || key === 'enter') applySelected();
+}
+
+function renderGameToText() {
+  const puzzle = currentPuzzle();
+  const scan = scanBoard();
+  return JSON.stringify({
+    game: 'Loop Trail',
+    coordinate_system: 'Canvas origin is top-left with y increasing downward. Puzzle cells use zero-based row and column; horizontal edges use h,row,col and vertical edges use v,row,col.',
+    mode: state.mode,
+    puzzle: {
+      index: state.levelIndex,
+      number: state.levelIndex + 1,
+      total: PUZZLES.length,
+      name: puzzle.name,
+      rows: puzzle.rows,
+      cols: puzzle.cols,
+    },
+    selected_edge: edgeToObject(state.selectedEdge),
+    tool: state.tool,
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      score: state.score,
+      checks: state.totalChecks,
+      mistakes: state.totalMistakes,
+      hints: state.totalHints,
+      perfect_levels: state.perfectLevels,
+      coins_earned: state.coinsEarned,
+    },
+    visible_state: {
+      line_edges: scan.lines.map(edgeToObject),
+      x_edges: scan.xMarks.map(edgeToObject),
+      line_count: scan.lines.length,
+      expected_solution_line_count: puzzle.solutionEdges.size,
+      clue_errors: scan.clueErrors,
+      degree_errors: scan.degreeErrors,
+      component_count: scan.componentCount,
+      single_loop: scan.singleLoop,
+      solved: scan.solved,
+      solution_progress: scan.solutionProgress,
+      wrong_line_count: scan.wrongLines.length,
+    },
+    message: state.message,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return JSON.parse(renderGameToText());
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__LOOP_TRAIL_GAME__ = {
+  startGame,
+  nextLevel,
+  setTool,
+  setEdge(edge, value = TOOL_LINE) {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    return setEdgeMark(edge, value);
+  },
+  useHint,
+  checkBoard,
+  pauseToggle,
+  solveCurrent() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    if (state.mode === 'level_clear') nextLevel();
+    const puzzle = currentPuzzle();
+    state.marks = new Map();
+    for (const edge of puzzle.solutionEdges) state.marks.set(edge, TOOL_LINE);
+    state.selectedEdge = firstPlayableEdge(puzzle);
+    completeLevel();
+    updateHud();
+    draw();
+    return JSON.parse(renderGameToText());
+  },
+  forceWin() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    while (state.levelIndex < PUZZLES.length - 1) {
+      this.solveCurrent();
+      if (state.mode === 'level_clear') nextLevel();
+    }
+    return this.solveCurrent();
+  },
+  forceLoss() {
+    if (state.mode === 'menu') startGame();
+    state.levelMistakes = 6;
+    checkBoard();
+    return JSON.parse(renderGameToText());
+  },
+  getState() {
+    return JSON.parse(renderGameToText());
+  },
+  getSolutionEdges() {
+    return Array.from(currentPuzzle().solutionEdges);
+  },
+};
+
+els.primary.addEventListener('click', primaryAction);
+els.line.addEventListener('click', () => setTool(TOOL_LINE));
+els.x.addEventListener('click', () => setTool(TOOL_X));
+els.clear.addEventListener('click', () => setTool(TOOL_CLEAR));
+els.hint.addEventListener('click', useHint);
+els.check.addEventListener('click', checkBoard);
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'looptrail', gameName: 'Loop Trail' });
+resetLevel({ resetCampaign: true });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

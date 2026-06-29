@@ -3812,3 +3812,16 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Custom scenarios covered start, legal card play, no-playable-card draw/pass, wild-eight suit selection, pause/resume, forced match win, coin reward, and mobile touch card play with zero Crazy Eights browser/page errors.
 - `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Crazy Eights issue.
 - TODO: none for Crazy Eights; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-06-29 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was missing; progress log was used to avoid recent additions through Crazy Eights.
+- Reviewed the 139-game registry and selected Loop Trail (`/looptrail`), a Slitherlink-style loop-drawing puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas game with numbered edge clues, keyboard/touch controls, deterministic hooks, shared feedback, coin rewards, metadata registration, SEO/OG/Linear regeneration, and focused Playwright validation with screenshot inspection.
+- Initial implementation added `looptrail/index.html` with five generated loop puzzles, clue validation, single-loop detection, hint/check flow, score/coin rewards, keyboard/touch controls, pause/restart/fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__LOOP_TRAIL_GAME__` helpers.
+- Registered Loop Trail in `src/meta/games.js`; module-script parse and 140-game slug/URL uniqueness checks passed.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/looptrail.png`, and local Linear feedback seeds now include Loop Trail. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: focused catalog/feedback tests (9 tests), `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static HTTP 200, required `$WEB_GAME_CLIENT` loop, custom Playwright desktop/mobile scenarios, screenshot inspection, generated OG inspection, and `git diff --check` with only existing LF-to-CRLF warnings.
+- Custom scenarios covered keyboard edge drawing, hint, pause/resume, failed-check issue reporting, level clear, campaign win with coin reward, shared feedback modal, mobile touch edge drawing, and zero Loop Trail browser/page errors.
+- `npm run test:feedback-smoke:raw` passed all five functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Loop Trail issue.
+- TODO: none for Loop Trail; future work may address the raw-static feedback smoke POST/API behavior.

@@ -63,6 +63,7 @@
 - game/orbitalrescue
 - game/lightsout
 - game/glowgrid
+- game/looptrail
 - game/pyramidhopper
 - game/pinball
 - game/skywire
