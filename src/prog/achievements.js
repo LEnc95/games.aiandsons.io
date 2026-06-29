@@ -1,8 +1,11 @@
 import { state, save } from '../core/state.js';
 import { recordMissionProgress } from './missions.js';
 
-const hasResult = (ctx, key, results = ['win', 'won']) => {
+const DEFAULT_RESULTS_SET = new Set(['win', 'won']);
+
+const hasResult = (ctx, key, results = null) => {
   const value = ctx?.[key]?.result;
+  if (!results) return DEFAULT_RESULTS_SET.has(value);
   return results.includes(value);
 };
 
@@ -193,6 +196,11 @@ const addCosmeticOwnership = (reward) => {
   const list = Array.isArray(state.cosmeticsOwned?.[reward.category])
     ? state.cosmeticsOwned[reward.category]
     : [];
+
+  if (list.length === 0) {
+    state.cosmeticsOwned[reward.category] = [reward.value];
+    return true;
+  }
 
   if (list.includes(reward.value)) return false;
   state.cosmeticsOwned[reward.category] = [...list, reward.value];
