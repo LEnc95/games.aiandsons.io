@@ -494,9 +494,10 @@ async function findStripeBillingProfiles({
   for (const [key, value] of memoryState.values.entries()) {
     if (!String(key).startsWith(`${KEY_PREFIX}:user:`)) continue;
     try {
-      const parsed = normalizeBillingProfile(JSON.parse(String(value || "")));
+      const parsed = JSON.parse(String(value || ""));
+      // ⚡ Bolt Optimization: Avoid O(N) normalizeBillingProfile call by checking raw object
       if (parsed.customerEmail === normalizedCustomerEmail && parsed.userId) {
-        matches.push(parsed);
+        matches.push(normalizeBillingProfile(parsed));
       }
     } catch {
       // Ignore invalid cached values.
@@ -547,9 +548,10 @@ async function listStripeBillingProfiles({
   for (const [key, value] of memoryState.values.entries()) {
     if (!String(key).startsWith(`${KEY_PREFIX}:user:`)) continue;
     try {
-      const parsed = normalizeBillingProfile(JSON.parse(String(value || "")));
+      const parsed = JSON.parse(String(value || ""));
+      // ⚡ Bolt Optimization: Avoid O(N) normalizeBillingProfile call by checking raw object
       if (shouldIncludeListedProfile(parsed, { withCustomerOnly, activeOnly })) {
-        profiles.push(parsed);
+        profiles.push(normalizeBillingProfile(parsed));
       }
     } catch {
       // Ignore invalid cached values.

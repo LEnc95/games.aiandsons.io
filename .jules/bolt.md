@@ -67,3 +67,6 @@
 ## 2024-05-28 - Replace mapped array with specific memory checks
 **Learning:** Functions that return a subset of entries from an in-memory Map structure using `[...map.values()].map(normalize).filter(condition)` creates temporary arrays and calls an expensive normalize function on every single entry before dropping most of them.
 **Action:** Always refactor these sequential pipelines into an explicitly initialized empty array `[]` and a `for...of` loop over `map.values()` to check raw properties, then only `normalize` and `.push()` the entries that strictly pass the filtering condition.
+## 2024-05-29 - Avoid O(N) allocation and normalization on memory cache pipelines
+**Learning:** Returning a subset of entries from an in-memory Map structure using mapped pipelines that parse and normalize every item (e.g., \`.map(normalize).filter(condition)\`) creates unnecessary allocations and CPU spikes because the expensive \`normalize\` function is called for every entry before most are dropped. This was seen in \`findStripeBillingProfiles\` and \`listStripeBillingProfiles\`.
+**Action:** Always refactor sequential pipelines over memory caches into an explicit \`for...of\` loop that checks raw properties first, and only calls the \`normalize\` function and \`.push()\` for entries that pass the filtering condition.
