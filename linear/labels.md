@@ -64,6 +64,8 @@
 - game/lightsout
 - game/glowgrid
 - game/looptrail
+- game/vialsort
+- game/bridgeislands
 - game/pyramidhopper
 - game/pinball
 - game/skywire

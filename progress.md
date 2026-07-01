@@ -3825,3 +3825,29 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Custom scenarios covered keyboard edge drawing, hint, pause/resume, failed-check issue reporting, level clear, campaign win with coin reward, shared feedback modal, mobile touch edge drawing, and zero Loop Trail browser/page errors.
 - `npm run test:feedback-smoke:raw` passed all five functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Loop Trail issue.
 - TODO: none for Loop Trail; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-06-30 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Loop Trail and recent additions including Crazy Eights, Pyramid Hopper, Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, and Pocket Pool.
+- Reviewed the 140-game registry and selected Vial Sort (`/vialsort`), a color-sorting tube puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic hooks, shared feedback, coin rewards, metadata registration, SEO/OG/Linear regeneration, and focused Playwright validation with screenshot inspection.
+- Initial implementation added `vialsort/index.html` with five deterministic vial-sorting boards, pointer/touch and keyboard controls, undo/hints, pause/restart/fullscreen, coin rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__VIAL_SORT_GAME__` helpers.
+- Registered Vial Sort in `src/meta/games.js`.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/vialsort.png`, and local Linear feedback seeds now include Vial Sort. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: Vial Sort module-script parse, 141-game slug/URL uniqueness and feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/vialsort-smoke`, custom desktop/mobile Playwright scenarios in `output/web-game/vialsort-scenarios`, screenshot/OG inspection, and `git diff --check` with only existing LF-to-CRLF warnings.
+- Custom scenarios covered hint, legal pour, undo, pause/resume, stored solution replay, level clear, campaign win with coin reward, shared feedback modal, mobile touch pour, and zero Vial Sort browser/page errors.
+- `npm run test:feedback-smoke:raw` passed all five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Vial Sort issue.
+- TODO: none for Vial Sort; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-07-01 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was missing at the start of this run; progress history was used to avoid recent additions through Vial Sort.
+- Reviewed the 141-game registry and selected Bridge Islands (`/bridgeislands`), a Hashiwokakero-style bridge puzzle not currently represented in the catalog.
+- Implemented `bridgeislands/index.html` with five numbered-island bridge puzzles, keyboard/pointer/touch controls, hints/checking, pause/restart/fullscreen, coin rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__BRIDGE_ISLANDS_GAME__` helpers.
+- Registered Bridge Islands in `src/meta/games.js`.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/bridgeislands.png`, and local Linear feedback seeds now include Bridge Islands. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: module script parse, 142-game slug/URL uniqueness and derived artifact checks, `npm run feedback:check-daily`, `node --test tests/feedback-coverage.integration.test.mjs`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/bridgeislands-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/bridgeislands-scenarios-final`, screenshot/OG inspection, and `git diff --check` with only existing LF-to-CRLF warnings.
+- Custom scenarios covered keyboard bridge placement, hint/check issue reporting, pause/resume, level clear, full campaign win with 36-coin reward, shared feedback modal, mobile scaled pointer bridge placement, and zero Bridge Islands browser/page errors.
+- `npm run test:feedback-smoke:raw` passed its five functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Bridge Islands issue.
+- Run time recorded: 2026-07-01T07:18:57.4638792-04:00.
+- TODO: none for Bridge Islands; future work may address the raw-static feedback smoke POST/API behavior.

@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Vial Sort | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  color: #f6fbff;
+  background:
+    radial-gradient(30% 22% at 14% 14%, #ffd166 0%, transparent 70%),
+    radial-gradient(28% 22% at 84% 10%, #78f0d2 0%, transparent 72%),
+    radial-gradient(26% 24% at 76% 86%, #ff8ab3 0%, transparent 72%),
+    linear-gradient(135deg, #172236 0%, #153f4b 48%, #382d4d 100%);
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f6fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff75;
+  padding: 8px 12px;
+  background: #0b1424e8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #b7fff0aa;
+  background: #0b1424;
+  box-shadow: 0 22px 56px #05091496;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(6, 12, 24, .56);
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #b7fff0ba;
+  background: #0d1729f6;
+  box-shadow: 0 18px 48px #050914a6;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 68ch;
+  color: #dce8f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b7c9da;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101c31e8;
+  color: #f6fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b7c9da;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #95f4cf; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffa3b6; }
+button {
+  cursor: pointer;
+  font: 900 12px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe08a 0%, #78f0d2 100%);
+  border-color: #ffffffc4;
+}
+button.utility { background: #37455f; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 11px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Pour matching liquid layers between glass vials, sort every color into pure tubes, and clear five lab shelves. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Vial Sort | AI and Sons Games">
+  <meta property="og:description" content="Pour matching liquid layers between glass vials, sort every color into pure tubes, and clear five lab shelves. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/vialsort">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/vialsort.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vial Sort | AI and Sons Games">
+  <meta name="twitter:description" content="Pour matching liquid layers between glass vials, sort every color into pure tubes, and clear five lab shelves. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/vialsort.png">
+  <link rel="canonical" href="https://games.aiandsons.io/vialsort">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Vial Sort","description":"Pour matching liquid layers between glass vials, sort every color into pure tubes, and clear five lab shelves. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/vialsort","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Vial Sort game area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Vial Sort puzzle board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="levelText">1 / 5</b></div>
+    <div class="chip good"><span>Moves</span><b id="movesText">0</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip bad"><span>Hints</span><b id="hintsText">0</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Vial Sort controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="clearBtn" type="button">Clear Pick</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="levelBtn" type="button">Next Board</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('modeText'),
+  levelText: document.getElementById('levelText'),
+  moves: document.getElementById('movesText'),
+  time: document.getElementById('timeText'),
+  hints: document.getElementById('hintsText'),
+  score: document.getElementById('scoreText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  undo: document.getElementById('undoBtn'),
+  hint: document.getElementById('hintBtn'),
+  clear: document.getElementById('clearBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  levelBtn: document.getElementById('levelBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const CAPACITY = 4;
+const STORAGE_KEY = 'cade:vialsort:best';
+const COLOR_DEFS = {
+  coral: { name: 'Coral', color: '#ff6f7d', dark: '#7a2634' },
+  aqua: { name: 'Aqua', color: '#56d8ff', dark: '#14566f' },
+  gold: { name: 'Gold', color: '#ffd166', dark: '#75531b' },
+  violet: { name: 'Violet', color: '#b892ff', dark: '#49307b' },
+  mint: { name: 'Mint', color: '#75f0b0', dark: '#1b6b4c' },
+  ruby: { name: 'Ruby', color: '#ff4fa3', dark: '#782054' },
+  lime: { name: 'Lime', color: '#b8f55f', dark: '#4f6d1e' },
+};
+
+function mulberry32(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value += 0x6D2B79F5;
+    let next = value;
+    next = Math.imul(next ^ (next >>> 15), next | 1);
+    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function cloneTubes(tubes) {
+  return tubes.map((tube) => tube.slice());
+}
+
+function topColor(tube) {
+  return tube.length ? tube[tube.length - 1] : null;
+}
+
+function topRunLength(tube) {
+  if (!tube.length) return 0;
+  const color = topColor(tube);
+  let count = 0;
+  for (let i = tube.length - 1; i >= 0 && tube[i] === color; i -= 1) count += 1;
+  return count;
+}
+
+function isUniform(tube) {
+  return tube.length > 0 && tube.every((color) => color === tube[0]);
+}
+
+function isSolvedTubes(tubes) {
+  return tubes.every((tube) => tube.length === 0 || (tube.length === CAPACITY && isUniform(tube)));
+}
+
+function actualLegalMove(tubes, from, to) {
+  if (from === to) return null;
+  const source = tubes[from];
+  const target = tubes[to];
+  if (!source || !target || source.length === 0 || target.length >= CAPACITY) return null;
+  const color = topColor(source);
+  const targetColor = topColor(target);
+  if (targetColor && targetColor !== color) return null;
+  const amount = Math.min(topRunLength(source), CAPACITY - target.length);
+  if (amount <= 0) return null;
+  return { from, to, color, amount };
+}
+
+function applyActualMove(tubes, from, to) {
+  const move = actualLegalMove(tubes, from, to);
+  if (!move) return null;
+  for (let i = 0; i < move.amount; i += 1) {
+    tubes[to].push(tubes[from].pop());
+  }
+  return move;
+}
+
+function possibleMoves(tubes) {
+  const moves = [];
+  for (let from = 0; from < tubes.length; from += 1) {
+    for (let to = 0; to < tubes.length; to += 1) {
+      const move = actualLegalMove(tubes, from, to);
+      if (move) moves.push(move);
+    }
+  }
+  return moves;
+}
+
+function scramble(colors, emptyCount, seed, steps) {
+  let tubes = colors.map((color) => Array(CAPACITY).fill(color));
+  for (let i = 0; i < emptyCount; i += 1) tubes.push([]);
+  const rng = mulberry32(seed);
+  const solution = [];
+  let last = null;
+  for (let step = 0; step < steps; step += 1) {
+    const candidates = [];
+    for (let from = 0; from < tubes.length; from += 1) {
+      const source = tubes[from];
+      if (!source.length) continue;
+      const color = topColor(source);
+      const canReverseCleanly = source.length === 1 || source[source.length - 2] === color;
+      if (!canReverseCleanly) continue;
+      for (let to = 0; to < tubes.length; to += 1) {
+        if (from === to || tubes[to].length >= CAPACITY) continue;
+        if (topColor(tubes[to]) === color) continue;
+        if (last && last.from === to && last.to === from) continue;
+        candidates.push({ from, to, color });
+      }
+    }
+    if (!candidates.length) break;
+    const move = candidates[Math.floor(rng() * candidates.length)];
+    tubes[move.to].push(tubes[move.from].pop());
+    solution.unshift({ from: move.to, to: move.from });
+    last = move;
+  }
+  if (isSolvedTubes(tubes)) {
+    const lastTube = tubes.findIndex((tube) => tube.length);
+    const emptyTube = tubes.findIndex((tube) => tube.length === 0);
+    if (lastTube >= 0 && emptyTube >= 0) {
+      tubes[emptyTube].push(tubes[lastTube].pop());
+      solution.unshift({ from: emptyTube, to: lastTube });
+    }
+  }
+  return { tubes, solution };
+}
+
+function makePuzzle({ name, colors, emptyCount, seed, steps, seconds, par }) {
+  const mixed = scramble(colors, emptyCount, seed, steps);
+  return {
+    name,
+    colors,
+    tubeCount: colors.length + emptyCount,
+    seconds,
+    par,
+    tubes: mixed.tubes,
+    solution: mixed.solution,
+  };
+}
+
+const PUZZLES = [
+  makePuzzle({ name: 'Starter Rack', colors: ['coral', 'aqua', 'gold'], emptyCount: 2, seed: 731, steps: 18, seconds: 210, par: 11 }),
+  makePuzzle({ name: 'Cafe Shelf', colors: ['coral', 'aqua', 'gold', 'violet'], emptyCount: 2, seed: 1147, steps: 30, seconds: 240, par: 18 }),
+  makePuzzle({ name: 'Lab Bench', colors: ['coral', 'aqua', 'gold', 'violet', 'mint'], emptyCount: 2, seed: 2029, steps: 42, seconds: 270, par: 25 }),
+  makePuzzle({ name: 'Night Shift', colors: ['coral', 'aqua', 'gold', 'violet', 'mint', 'ruby'], emptyCount: 2, seed: 3911, steps: 56, seconds: 300, par: 34 }),
+  makePuzzle({ name: 'Prism Cabinet', colors: ['coral', 'aqua', 'gold', 'violet', 'mint', 'ruby', 'lime'], emptyCount: 2, seed: 5059, steps: 70, seconds: 330, par: 44 }),
+];
+
+const state = {
+  mode: 'menu',
+  levelIndex: 0,
+  tubes: cloneTubes(PUZZLES[0].tubes),
+  selectedTube: null,
+  cursorTube: 0,
+  hintMove: null,
+  undoStack: [],
+  moves: 0,
+  hints: 0,
+  score: 0,
+  best: loadBest(),
+  timeLeft: PUZZLES[0].seconds,
+  elapsed: 0,
+  coinsEarned: 0,
+  rewardGiven: false,
+  message: 'Sort every color into its own full vial.',
+  particles: [],
+  pulse: 0,
+};
+
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || '0');
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (state.score <= state.best) return;
+  state.best = state.score;
+  try {
+    localStorage.setItem(STORAGE_KEY, String(state.best));
+  } catch {
+    // Storage may be unavailable in some private browser contexts.
+  }
+}
+
+function currentPuzzle() {
+  return PUZZLES[state.levelIndex];
+}
+
+function resetLevel({ resetCampaign = false } = {}) {
+  if (resetCampaign) {
+    state.levelIndex = 0;
+    state.score = 0;
+    state.coinsEarned = 0;
+    state.rewardGiven = false;
+  }
+  const puzzle = currentPuzzle();
+  state.tubes = cloneTubes(puzzle.tubes);
+  state.selectedTube = null;
+  state.cursorTube = 0;
+  state.hintMove = null;
+  state.undoStack = [];
+  state.moves = 0;
+  state.hints = 0;
+  state.timeLeft = puzzle.seconds;
+  state.elapsed = 0;
+  state.particles = [];
+  state.pulse = 0;
+  state.message = `${puzzle.name}: pour matching top colors until each vial is pure.`;
+}
+
+function startGame() {
+  resetLevel({ resetCampaign: true });
+  state.mode = 'playing';
+  rememberRecent('vialsort');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function restartGame() {
+  startGame();
+}
+
+function nextLevel() {
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    startGame();
+    return;
+  }
+  state.levelIndex += 1;
+  resetLevel();
+  state.mode = 'playing';
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus();
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+  else if (state.mode === 'paused') pauseToggle();
+  else if (state.mode === 'level_clear') nextLevel();
+  else if (state.selectedTube !== null) clearPick();
+}
+
+function pauseToggle() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    hideOverlay();
+    canvas.focus();
+  }
+  updateHud();
+  draw();
+}
+
+function clearPick() {
+  state.selectedTube = null;
+  state.hintMove = null;
+  state.message = 'Pick a source vial, then a destination vial.';
+  updateHud();
+  draw();
+}
+
+function chooseTube(index) {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') {
+    startGame();
+    return false;
+  }
+  if (state.mode === 'level_clear') {
+    nextLevel();
+    return false;
+  }
+  if (state.mode !== 'playing') return false;
+  const tubeIndex = Math.max(0, Math.min(state.tubes.length - 1, index));
+  state.cursorTube = tubeIndex;
+  if (state.selectedTube === null) {
+    if (state.tubes[tubeIndex].length === 0) {
+      state.message = 'That vial is empty. Pick one with liquid first.';
+      pulseTube(tubeIndex, '#ffa3b6');
+      updateHud();
+      draw();
+      return false;
+    }
+    state.selectedTube = tubeIndex;
+    state.hintMove = null;
+    state.message = `Picked vial ${tubeIndex + 1}. Choose a matching or empty destination.`;
+    updateHud();
+    draw();
+    return true;
+  }
+  if (state.selectedTube === tubeIndex) {
+    clearPick();
+    return false;
+  }
+  return pour(state.selectedTube, tubeIndex);
+}
+
+function pour(from, to) {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+  if (state.mode === 'level_clear') nextLevel();
+  if (state.mode !== 'playing') return false;
+  const before = cloneTubes(state.tubes);
+  const move = applyActualMove(state.tubes, from, to);
+  state.cursorTube = Math.max(0, Math.min(state.tubes.length - 1, to));
+  if (!move) {
+    state.message = explainIllegalMove(from, to);
+    state.selectedTube = null;
+    pulseTube(to, '#ffa3b6');
+    updateHud();
+    draw();
+    return false;
+  }
+  state.undoStack.push({
+    tubes: before,
+    moves: state.moves,
+    hints: state.hints,
+    timeLeft: state.timeLeft,
+    message: state.message,
+  });
+  if (state.undoStack.length > 80) state.undoStack.shift();
+  state.moves += 1;
+  state.selectedTube = null;
+  state.hintMove = null;
+  state.message = `Poured ${move.amount} ${COLOR_DEFS[move.color].name.toLowerCase()} layer${move.amount === 1 ? '' : 's'} into vial ${to + 1}.`;
+  pulseTube(to, COLOR_DEFS[move.color].color);
+  spawnPourParticles(from, to, move.color, 8 + move.amount * 5);
+  if (isSolvedTubes(state.tubes)) completeLevel();
+  updateHud();
+  draw();
+  return true;
+}
+
+function explainIllegalMove(from, to) {
+  const source = state.tubes[from];
+  const target = state.tubes[to];
+  if (!source || source.length === 0) return 'Pick a vial with liquid before pouring.';
+  if (!target || target.length >= CAPACITY) return 'That destination vial is already full.';
+  const sourceColor = topColor(source);
+  const targetColor = topColor(target);
+  if (targetColor && targetColor !== sourceColor) {
+    return `${COLOR_DEFS[sourceColor].name} can only pour onto ${COLOR_DEFS[sourceColor].name} or an empty vial.`;
+  }
+  return 'That pour is not available right now.';
+}
+
+function undoMove() {
+  if (state.mode !== 'playing') return false;
+  const snapshot = state.undoStack.pop();
+  if (!snapshot) {
+    state.message = 'No moves to undo.';
+    updateHud();
+    draw();
+    return false;
+  }
+  state.tubes = cloneTubes(snapshot.tubes);
+  state.moves = snapshot.moves;
+  state.hints = snapshot.hints;
+  state.timeLeft = snapshot.timeLeft;
+  state.selectedTube = null;
+  state.hintMove = null;
+  state.message = 'Undid the last pour.';
+  updateHud();
+  draw();
+  return true;
+}
+
+function useHint() {
+  if (state.mode !== 'playing') return false;
+  const moves = possibleMoves(state.tubes);
+  if (!moves.length) {
+    state.message = 'No legal pour is available; undo or restart this board.';
+    updateHud();
+    draw();
+    return false;
+  }
+  const move = moves.find((candidate) => {
+    const source = state.tubes[candidate.from];
+    const target = state.tubes[candidate.to];
+    return target.length > 0 && topColor(target) === candidate.color && !isUniform(source);
+  }) || moves.find((candidate) => state.tubes[candidate.to].length === 0 && !isUniform(state.tubes[candidate.from])) || moves[0];
+  state.hints += 1;
+  state.score = Math.max(0, state.score - 10);
+  state.selectedTube = move.from;
+  state.cursorTube = move.to;
+  state.hintMove = move;
+  state.message = `Hint: pour vial ${move.from + 1} into vial ${move.to + 1}.`;
+  pulseTube(move.from, '#ffe08a');
+  pulseTube(move.to, '#78f0d2');
+  updateHud();
+  draw();
+  return true;
+}
+
+function completeLevel() {
+  const puzzle = currentPuzzle();
+  const moveBonus = Math.max(0, (puzzle.par + 8 - state.moves) * 8);
+  const timeBonus = Math.max(0, Math.ceil(state.timeLeft) * 2);
+  const hintPenalty = state.hints * 12;
+  const levelScore = Math.max(60, 220 + moveBonus + timeBonus - hintPenalty);
+  state.score += levelScore;
+  state.pulse = 1.2;
+  saveBest();
+  if (state.levelIndex >= PUZZLES.length - 1) {
+    finishCampaign(levelScore);
+    return;
+  }
+  state.mode = 'level_clear';
+  state.message = `${puzzle.name} sorted for ${levelScore} points.`;
+  showOverlay();
+}
+
+function finishCampaign(levelScore = 0) {
+  state.mode = 'won';
+  if (!state.rewardGiven) {
+    const moveEfficiency = Math.max(0, 10 - Math.floor(state.moves / 8));
+    const reward = 32 + moveEfficiency;
+    addCoins(reward);
+    state.coinsEarned += reward;
+    state.rewardGiven = true;
+    maybeUnlock({ anyPlay: true });
+  }
+  state.message = `Every vial is sorted. Final board scored ${levelScore} points and earned ${state.coinsEarned} coins.`;
+  saveBest();
+  showOverlay();
+}
+
+function loseGame() {
+  state.mode = 'lost';
+  state.selectedTube = null;
+  state.hintMove = null;
+  state.message = 'The shift timer expired before the shelf was sorted.';
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function update(dt) {
+  for (const particle of state.particles) {
+    particle.life -= dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vy += 180 * dt;
+  }
+  state.particles = state.particles.filter((particle) => particle.life > 0);
+  state.pulse = Math.max(0, state.pulse - dt * 2.4);
+  if (state.mode !== 'playing') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) loseGame();
+}
+
+function currentLayout() {
+  const puzzle = currentPuzzle();
+  const tubes = puzzle.tubeCount;
+  const rows = tubes <= 5 ? 1 : 2;
+  const topCount = rows === 1 ? tubes : Math.ceil(tubes / 2);
+  const bottomCount = rows === 1 ? 0 : tubes - topCount;
+  const tubeW = tubes >= 9 ? 62 : tubes >= 7 ? 68 : 76;
+  const tubeH = rows === 1 ? 292 : 236;
+  const gap = tubes >= 9 ? 18 : 24;
+  const boardW = Math.max(topCount, bottomCount) * tubeW + (Math.max(topCount, bottomCount) - 1) * gap + 56;
+  const boardX = 52;
+  const boardY = rows === 1 ? 148 : 112;
+  const sideX = 710;
+  return { rows, topCount, bottomCount, tubeW, tubeH, gap, boardW, boardX, boardY, sideX, rowGap: 52 };
+}
+
+function tubeGeometry(index, layout = currentLayout()) {
+  const isTop = index < layout.topCount;
+  const rowIndex = isTop ? 0 : 1;
+  const count = isTop ? layout.topCount : layout.bottomCount;
+  const indexInRow = isTop ? index : index - layout.topCount;
+  const rowW = count * layout.tubeW + Math.max(0, count - 1) * layout.gap;
+  const x = layout.boardX + (layout.boardW - rowW) / 2 + indexInRow * (layout.tubeW + layout.gap);
+  const y = layout.boardY + rowIndex * (layout.tubeH + layout.rowGap);
+  return { x, y, w: layout.tubeW, h: layout.tubeH, cx: x + layout.tubeW / 2, cy: y + layout.tubeH / 2 };
+}
+
+function getTubeAtPoint(point) {
+  for (let i = 0; i < state.tubes.length; i += 1) {
+    const g = tubeGeometry(i);
+    if (point.x >= g.x - 10 && point.x <= g.x + g.w + 10 && point.y >= g.y - 20 && point.y <= g.y + g.h + 18) return i;
+  }
+  return null;
+}
+
+function pulseTube(index, color) {
+  const g = tubeGeometry(index);
+  state.particles.push({
+    x: g.cx,
+    y: g.y + 16,
+    vx: 0,
+    vy: -18,
+    life: .42,
+    r: Math.max(g.w, 54),
+    color,
+    ring: true,
+  });
+}
+
+function spawnPourParticles(from, to, colorId, count) {
+  const start = tubeGeometry(from);
+  const end = tubeGeometry(to);
+  const color = COLOR_DEFS[colorId].color;
+  for (let i = 0; i < count; i += 1) {
+    const t = count <= 1 ? 0 : i / (count - 1);
+    state.particles.push({
+      x: start.cx + (end.cx - start.cx) * t + (Math.random() - .5) * 12,
+      y: start.y + 16 + Math.sin(t * Math.PI) * -34,
+      vx: (Math.random() - .5) * 34,
+      vy: -20 - Math.random() * 34,
+      life: .38 + Math.random() * .22,
+      r: 3 + Math.random() * 3,
+      color,
+    });
+  }
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#172236');
+  bg.addColorStop(.48, '#153f4b');
+  bg.addColorStop(1, '#382d4d');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = .16;
+  ctx.strokeStyle = '#f6fbff';
+  ctx.lineWidth = 2;
+  for (let x = -120; x < WIDTH; x += 82) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 180, HEIGHT);
+    ctx.stroke();
+  }
+  for (let y = 40; y < HEIGHT; y += 92) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(WIDTH, y + 44);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function fillRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function strokeRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function drawHeader() {
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#f6fbff';
+  ctx.font = '900 34px "Trebuchet MS", sans-serif';
+  ctx.fillText(`Puzzle ${state.levelIndex + 1}: ${currentPuzzle().name}`, 52, 28);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Origin is top-left. Click a source vial, then a matching or empty destination.', 54, 68);
+}
+
+function drawShelf() {
+  const layout = currentLayout();
+  const rows = layout.rows;
+  const shelfY1 = layout.boardY + layout.tubeH + 20;
+  const shelfY2 = layout.boardY + (layout.tubeH + layout.rowGap) * 2 - layout.rowGap + 20;
+  ctx.save();
+  ctx.shadowColor = '#050914';
+  ctx.shadowBlur = 22;
+  ctx.fillStyle = '#0b1424d8';
+  fillRoundRect(layout.boardX - 28, layout.boardY - 42, layout.boardW + 56, rows === 1 ? layout.tubeH + 92 : layout.tubeH * 2 + layout.rowGap + 92, 8);
+  ctx.restore();
+  ctx.fillStyle = '#26354c';
+  fillRoundRect(layout.boardX - 10, shelfY1, layout.boardW + 20, 18, 8);
+  if (rows > 1) fillRoundRect(layout.boardX - 10, shelfY2, layout.boardW + 20, 18, 8);
+}
+
+function drawTube(index) {
+  const tube = state.tubes[index];
+  const g = tubeGeometry(index);
+  const selected = state.selectedTube === index;
+  const cursor = state.cursorTube === index;
+  const hinted = state.hintMove && (state.hintMove.from === index || state.hintMove.to === index);
+  const innerX = g.x + 10;
+  const innerY = g.y + 30;
+  const innerW = g.w - 20;
+  const innerH = g.h - 44;
+  const segmentH = innerH / CAPACITY;
+
+  if (selected || cursor || hinted) {
+    ctx.save();
+    ctx.globalAlpha = selected ? .8 : hinted ? .62 : .38;
+    ctx.strokeStyle = selected ? '#ffe08a' : hinted ? '#78f0d2' : '#b7fff0';
+    ctx.lineWidth = selected ? 6 : 4;
+    strokeRoundRect(g.x - 8, g.y - 12, g.w + 16, g.h + 22, 8);
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.strokeStyle = '#dff9ffcc';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(g.x + 10, g.y + 8);
+  ctx.lineTo(g.x + 10, g.y + g.h - 24);
+  ctx.quadraticCurveTo(g.x + 10, g.y + g.h, g.cx, g.y + g.h);
+  ctx.quadraticCurveTo(g.x + g.w - 10, g.y + g.h, g.x + g.w - 10, g.y + g.h - 24);
+  ctx.lineTo(g.x + g.w - 10, g.y + 8);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffffff75';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(g.x + 6, g.y + 8);
+  ctx.lineTo(g.x + g.w - 6, g.y + 8);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(innerX, innerY, innerW, innerH, 14);
+  ctx.clip();
+  ctx.fillStyle = '#08111f78';
+  ctx.fillRect(innerX, innerY, innerW, innerH);
+  for (let i = 0; i < tube.length; i += 1) {
+    const colorId = tube[i];
+    const def = COLOR_DEFS[colorId];
+    const y = innerY + innerH - (i + 1) * segmentH;
+    const grad = ctx.createLinearGradient(innerX, y, innerX + innerW, y + segmentH);
+    grad.addColorStop(0, def.dark);
+    grad.addColorStop(.28, def.color);
+    grad.addColorStop(1, def.dark);
+    ctx.fillStyle = grad;
+    ctx.fillRect(innerX, y + 2, innerW, segmentH - 3);
+    ctx.globalAlpha = .3;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(innerX + 7, y + 6, Math.max(4, innerW * .18), segmentH - 12);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  ctx.fillStyle = '#eaf7ff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = '900 15px "Trebuchet MS", sans-serif';
+  ctx.fillText(String(index + 1), g.cx, g.y + g.h + 12);
+}
+
+function drawSidePanel() {
+  const x = 716;
+  const y = 104;
+  const w = 236;
+  ctx.fillStyle = '#0b1424dc';
+  fillRoundRect(x, y, w, 420, 8);
+  ctx.strokeStyle = '#ffffff32';
+  ctx.lineWidth = 1;
+  strokeRoundRect(x, y, w, 420, 8);
+
+  ctx.fillStyle = '#f6fbff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = '900 30px "Trebuchet MS", sans-serif';
+  ctx.fillText('Vial Sort', x + 18, y + 18);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(currentPuzzle().name, x + 20, y + 58);
+
+  const rows = [
+    ['Pure vials', `${pureTubeCount()} / ${currentPuzzle().colors.length}`],
+    ['Open space', `${emptyOrOpenCount()} slots`],
+    ['Par moves', `${currentPuzzle().par}`],
+    ['Undo stack', `${state.undoStack.length}`],
+    ['Best score', `${state.best}`],
+  ];
+  let yy = y + 94;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#16243a';
+    fillRoundRect(x + 16, yy, w - 32, 42, 8);
+    ctx.fillStyle = '#91a9c0';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 30, yy + 8);
+    ctx.fillStyle = '#f6fbff';
+    ctx.font = '900 17px "Trebuchet MS", sans-serif';
+    ctx.fillText(value, x + 30, yy + 22);
+    yy += 50;
+  }
+
+  ctx.fillStyle = '#dce8f6';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  wrapText(state.message, x + 18, y + 360, w - 36, 20, 3);
+}
+
+function drawParticles() {
+  ctx.save();
+  for (const particle of state.particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / .45));
+    ctx.strokeStyle = particle.color;
+    ctx.fillStyle = particle.color;
+    if (particle.ring) {
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.r * (1.1 - particle.life), 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawWinPulse() {
+  if (state.pulse <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = Math.min(.35, state.pulse * .28);
+  ctx.fillStyle = '#ffe08a';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  drawHeader();
+  drawShelf();
+  for (let i = 0; i < state.tubes.length; i += 1) drawTube(i);
+  drawSidePanel();
+  drawParticles();
+  drawWinPulse();
+}
+
+function pureTubeCount() {
+  return state.tubes.filter((tube) => tube.length === CAPACITY && isUniform(tube)).length;
+}
+
+function emptyOrOpenCount() {
+  return state.tubes.reduce((sum, tube) => sum + Math.max(0, CAPACITY - tube.length), 0);
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const min = Math.floor(total / 60);
+  const sec = String(total % 60).padStart(2, '0');
+  return `${min}:${sec}`;
+}
+
+function modeLabel() {
+  if (state.mode === 'level_clear') return 'Clear';
+  return state.mode.charAt(0).toUpperCase() + state.mode.slice(1);
+}
+
+function updateHud() {
+  els.mode.textContent = modeLabel();
+  els.levelText.textContent = `${state.levelIndex + 1} / ${PUZZLES.length}`;
+  els.moves.textContent = `${state.moves}`;
+  els.time.textContent = formatTime(state.timeLeft);
+  els.hints.textContent = `${state.hints}`;
+  els.score.textContent = String(state.score);
+  els.coins.textContent = String(profileState.coins);
+  els.primary.textContent = state.mode === 'playing' ? 'Clear Pick' : state.mode === 'level_clear' ? 'Next' : state.mode === 'paused' ? 'Resume' : 'Start';
+  els.pause.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  els.levelBtn.disabled = state.mode !== 'level_clear';
+  const canPlay = state.mode === 'playing';
+  els.undo.disabled = !canPlay || state.undoStack.length === 0;
+  els.hint.disabled = !canPlay;
+  els.clear.disabled = !canPlay;
+  els.pause.disabled = !(state.mode === 'playing' || state.mode === 'paused');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function showOverlay() {
+  let title = 'Vial Sort';
+  let copy = 'Sort each liquid color into its own full vial. You may pour only onto the same color or into an empty vial.';
+  let mini = 'Click or tap a source vial, then a destination. Keyboard: arrows move, Space selects, U undo, H hint, P pause, F fullscreen.';
+  let action = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    copy = 'The timer is stopped and your current shelf is preserved.';
+    mini = 'Resume when ready.';
+    action = 'Resume';
+  } else if (state.mode === 'level_clear') {
+    title = 'Board Sorted';
+    copy = state.message;
+    mini = 'Continue to the next vial shelf.';
+    action = 'Next Board';
+  } else if (state.mode === 'won') {
+    title = 'Cabinet Complete';
+    copy = state.message;
+    mini = `Best score ${state.best}. Campaign score ${state.score}.`;
+    action = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Shift Over';
+    copy = state.message;
+    mini = 'Restart for a fresh campaign.';
+    action = 'Try Again';
+  }
+  overlayPanel.innerHTML = `
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(copy)}</p>
+    <p class="mini">${escapeHtml(mini)}</p>
+    <p><button id="overlayAction" class="primary" type="button">${escapeHtml(action)}</button></p>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * HEIGHT,
+  };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  canvas.focus();
+  const tube = getTubeAtPoint(canvasPoint(event));
+  if (tube === null) {
+    if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') startGame();
+    return;
+  }
+  chooseTube(tube);
+}
+
+function moveCursor(delta) {
+  if (state.mode !== 'playing') return;
+  state.cursorTube = (state.cursorTube + delta + state.tubes.length) % state.tubes.length;
+  state.message = `Cursor on vial ${state.cursorTube + 1}.`;
+  updateHud();
+  draw();
+}
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const handled = ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'enter', 'u', 'h', 'p', 'r', 'f', 'escape', 'backspace', 'delete'].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'r') {
+    restartGame();
+    return;
+  }
+  if (key === 'p' || key === 'escape') {
+    pauseToggle();
+    return;
+  }
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    if (key === ' ' || key === 'enter') startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    if (key === ' ' || key === 'enter') nextLevel();
+    return;
+  }
+  if (key === 'u') {
+    undoMove();
+    return;
+  }
+  if (key === 'h') {
+    useHint();
+    return;
+  }
+  if (key === 'backspace' || key === 'delete') {
+    clearPick();
+    return;
+  }
+  if (key === 'arrowleft' || key === 'arrowup') moveCursor(-1);
+  else if (key === 'arrowright' || key === 'arrowdown') moveCursor(1);
+  else if (key === ' ' || key === 'enter') chooseTube(state.cursorTube);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+  setTimeout(draw, 60);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function tubeSummary(tube) {
+  return {
+    height: tube.length,
+    bottom_to_top: tube.slice(),
+    top: topColor(tube),
+    pure: tube.length === CAPACITY && isUniform(tube),
+  };
+}
+
+function renderGameToText() {
+  const legal = possibleMoves(state.tubes);
+  return JSON.stringify({
+    game: 'Vial Sort',
+    coordinate_system: 'Canvas origin is top-left with y increasing downward. Vials are zero-based indices left-to-right across the top row, then left-to-right across the lower row.',
+    mode: state.mode,
+    puzzle: {
+      index: state.levelIndex,
+      number: state.levelIndex + 1,
+      total: PUZZLES.length,
+      name: currentPuzzle().name,
+      par: currentPuzzle().par,
+      tube_count: state.tubes.length,
+      capacity: CAPACITY,
+    },
+    selection: {
+      cursor_tube: state.cursorTube,
+      selected_tube: state.selectedTube,
+      hinted_move: state.hintMove ? { from: state.hintMove.from, to: state.hintMove.to, color: state.hintMove.color, amount: state.hintMove.amount } : null,
+    },
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      moves: state.moves,
+      hints: state.hints,
+      score: state.score,
+      best: state.best,
+      coins_earned: state.coinsEarned,
+    },
+    visible_state: {
+      tubes: state.tubes.map(tubeSummary),
+      pure_tubes: pureTubeCount(),
+      open_slots: emptyOrOpenCount(),
+      legal_moves: legal.slice(0, 16).map((move) => ({ from: move.from, to: move.to, color: move.color, amount: move.amount })),
+      solved: isSolvedTubes(state.tubes),
+    },
+    message: state.message,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return JSON.parse(renderGameToText());
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__VIAL_SORT_GAME__ = {
+  startGame,
+  nextLevel,
+  pour,
+  chooseTube,
+  undoMove,
+  useHint,
+  pauseToggle,
+  resetLevel,
+  solveCurrent() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    if (state.mode === 'level_clear') nextLevel();
+    state.tubes = currentPuzzle().colors.map((color) => Array(CAPACITY).fill(color));
+    while (state.tubes.length < currentPuzzle().tubeCount) state.tubes.push([]);
+    state.moves += 1;
+    completeLevel();
+    updateHud();
+    draw();
+    return JSON.parse(renderGameToText());
+  },
+  replayStoredSolution() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    if (state.mode === 'level_clear') nextLevel();
+    for (const move of currentPuzzle().solution) {
+      if (state.mode !== 'playing') break;
+      pour(move.from, move.to);
+    }
+    return JSON.parse(renderGameToText());
+  },
+  forceWin() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    while (state.levelIndex < PUZZLES.length - 1) {
+      this.solveCurrent();
+      if (state.mode === 'level_clear') nextLevel();
+    }
+    return this.solveCurrent();
+  },
+  forceLoss() {
+    if (state.mode === 'menu') startGame();
+    state.timeLeft = 0;
+    loseGame();
+    return JSON.parse(renderGameToText());
+  },
+  getState() {
+    return JSON.parse(renderGameToText());
+  },
+  getPuzzleSolution() {
+    return currentPuzzle().solution.map((move) => ({ ...move }));
+  },
+};
+
+els.primary.addEventListener('click', primaryAction);
+els.undo.addEventListener('click', undoMove);
+els.hint.addEventListener('click', useHint);
+els.clear.addEventListener('click', clearPick);
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.levelBtn.addEventListener('click', nextLevel);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'vialsort', gameName: 'Vial Sort' });
+resetLevel({ resetCampaign: true });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
