@@ -26,7 +26,7 @@
       --card-active-bg: rgba(255, 255, 255, 0.18);
     }
     * { box-sizing: border-box; }
-    html,body { height:100%; margin:0; padding:0; background:transparent !important; color:var(--fg); font-family:'Fredoka',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow-y:auto; overflow-x:hidden; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg) !important; color:var(--fg); font-family:'Fredoka',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow-y:auto; overflow-x:hidden; }
     
     @keyframes bgGradient {
       0% { background-position: 0% 50%; }
@@ -118,16 +118,60 @@
     .topbar-btn:hover { background: var(--card-hover-bg); border-color: var(--accent); transform: translateY(-2px) scale(1.05); }
     .topbar-btn:active { transform: scale(0.95); background: var(--card-active-bg); transition: all 0.1s; }
     
-    .wrap { max-width:1200px; margin:0 auto; padding:clamp(20px, 5vh, 40px) clamp(16px, 4vw, 32px); min-height:100vh; display:flex; flex-direction:column; }
+    .wrap { max-width:1280px; margin:0 auto; padding:clamp(14px, 3vh, 28px) clamp(12px, 3vw, 28px); min-height:100vh; display:flex; flex-direction:column; }
     
-    header { text-align:center; margin-bottom:clamp(32px, 6vh, 48px); }
-    h1 { font-size:clamp(32px, 6vw, 48px); margin:0 0 clamp(8px, 1.5vh, 12px) 0; color:var(--fg); font-weight:700; }
-    .subtitle { font-size:clamp(14px, 2.5vw, 18px); color:var(--muted); margin:0; }
+    header { text-align:left; margin-bottom:16px; }
+    .launcher-header { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+    h1 { font-size:clamp(30px, 5vw, 44px); line-height:1; margin:0 0 8px 0; color:var(--fg); font-weight:700; }
+    .subtitle { font-size:clamp(14px, 2.4vw, 17px); color:var(--muted); margin:0; max-width:680px; }
+    .launcher-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
-    .search-controls { display:grid; grid-template-columns:minmax(0, 1fr) 220px 280px; gap:10px; margin-bottom:16px; }
+    .discovery-controls { position:sticky; top:82px; z-index:80; margin-bottom:16px; padding:12px; border:1px solid rgba(255,255,255,0.14); border-radius:8px; background:rgba(18,18,32,0.88); backdrop-filter:blur(14px); box-shadow:0 12px 28px rgba(0,0,0,0.22); }
+    .search-controls { display:grid; grid-template-columns:minmax(0, 1fr) 168px 210px; gap:10px; margin:0; }
     .search-controls input,
-    .search-controls select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; }
+    .search-controls select { width:100%; min-height:44px; padding:11px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.08); color:var(--fg); font-size:14px; font-family:inherit; }
     .search-count { grid-column:1 / -1; color:#b4ccf0; font-size:12px; text-align:left; }
+    .category-rail { display:flex; gap:8px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; padding:10px 0 2px; scrollbar-width:thin; }
+    .category-chip { flex:0 0 auto; min-height:38px; padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.07); color:#d8e8ff; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; scroll-snap-align:start; }
+    .category-chip:hover,
+    .category-chip:focus-visible { border-color:rgba(94,234,212,0.72); background:rgba(45,212,191,0.14); outline:none; }
+    .category-chip.active { color:#06251f; background:#5eead4; border-color:#99f6e4; }
+
+    .spotlight-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; margin-bottom:18px; }
+    .spotlight-card { min-height:190px; display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:stretch; gap:14px; padding:16px; border-radius:8px; border:1px solid rgba(255,255,255,0.16); color:var(--fg); text-decoration:none; background:linear-gradient(135deg, rgba(94,234,212,0.16), rgba(251,191,36,0.13) 48%, rgba(244,114,182,0.13)); box-shadow:0 16px 34px rgba(0,0,0,0.26); position:relative; overflow:hidden; touch-action:manipulation; }
+    .spotlight-card.week { background:linear-gradient(135deg, rgba(251,191,36,0.17), rgba(96,165,250,0.15) 55%, rgba(107,230,173,0.12)); }
+    .spotlight-card:hover,
+    .spotlight-card:focus-visible { border-color:#5eead4; transform:translateY(-2px); outline:none; }
+    .spotlight-card.locked { opacity:0.58; filter:grayscale(0.35); pointer-events:none; }
+    .spotlight-icon { width:72px; min-height:100%; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:42px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.12); }
+    .spotlight-content { min-width:0; display:flex; flex-direction:column; gap:8px; }
+    .spotlight-label { color:#9ff3e7; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; }
+    .spotlight-card.week .spotlight-label { color:#fde68a; }
+    .spotlight-title { margin:0; font-size:clamp(21px, 3vw, 28px); line-height:1.05; }
+    .spotlight-desc { margin:0; color:#d7e5fb; font-size:13px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .spotlight-meta { display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; }
+
+    .discovery-rows { display:flex; flex-direction:column; gap:18px; margin-bottom:18px; }
+    .discovery-section { margin-bottom:18px; }
+    .discovery-head,
+    .all-games-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .discovery-head h2,
+    .all-games-head h2 { margin:0; font-size:clamp(20px, 3vw, 24px); line-height:1.1; }
+    .discovery-meta,
+    .all-games-meta { color:#9ec3f4; font-size:12px; font-weight:700; }
+    .discovery-row { display:flex; gap:10px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; padding:2px 2px 8px; scrollbar-width:thin; }
+    .game-tile { flex:0 0 clamp(176px, 38vw, 232px); min-height:176px; display:flex; flex-direction:column; gap:8px; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.07); color:var(--fg); text-decoration:none; scroll-snap-align:start; touch-action:manipulation; box-shadow:0 8px 18px rgba(0,0,0,0.18); }
+    .game-tile:hover,
+    .game-tile:focus-visible { border-color:#5eead4; background:rgba(94,234,212,0.11); transform:translateY(-2px); outline:none; }
+    .game-tile.locked { opacity:0.55; filter:grayscale(0.35); pointer-events:none; }
+    .tile-top { display:flex; align-items:center; gap:10px; min-width:0; }
+    .tile-icon { width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:26px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.12); }
+    .tile-title { margin:0; font-size:16px; line-height:1.15; min-width:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    .tile-desc { margin:0; color:#b8cdee; font-size:12px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .tile-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:auto; }
+    .tile-tag { display:inline-flex; align-items:center; max-width:100%; padding:3px 7px; border-radius:999px; border:1px solid rgba(255,255,255,0.15); color:#d8e8ff; background:rgba(255,255,255,0.08); font-size:11px; font-weight:700; }
+    .tile-action { color:#5eead4; font-size:12px; font-weight:800; }
+    .all-games-section { margin-top:6px; }
     .onboarding-section { border:1px solid rgba(255,255,255,0.16); border-radius:14px; padding:14px; margin-bottom:16px; background:rgba(255,255,255,0.05); }
     .onboarding-section.hidden { display:none; }
     .onboarding-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
@@ -160,13 +204,13 @@
     .premium-cta a { color:#ffe0a6; font-weight:700; }
     .mission-reward { margin:0; font-size:11px; color:#ffe3a7; }
     
-    .recent-section { margin-bottom:clamp(24px,4vh,32px); }
-    .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0 0 16px 0; color:var(--fg); font-weight:600; }
-    .recent-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
-    .recent-card { background:linear-gradient(180deg, var(--card-bg) 0%, #150824 100%); border:3px solid var(--card-border); border-radius:16px; padding:20px; text-decoration:none; color:var(--fg); display:flex; align-items:flex-start; gap:12px; transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow:0 4px 12px rgba(0,0,0,0.2); touch-action:manipulation; cursor:pointer; }
-    .recent-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 8px 24px rgba(244,114,182,0.2); }
-    .recent-card:active { transform:scale(0.95); transition:all 0.1s; }
-    .recent-card.locked { opacity:0.5; pointer-events:none; }
+    .recent-section { margin-bottom:18px; }
+    .recent-section h2 { font-size:clamp(20px,3vw,24px); margin:0; color:var(--fg); font-weight:600; }
+    .recent-grid { display:flex; gap:10px; overflow-x:auto; padding:2px 2px 8px; scroll-snap-type:x proximity; }
+    .recent-card { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); border-radius:8px; padding:12px; text-decoration:none; color:var(--fg); display:flex; align-items:flex-start; gap:12px; transition:all 0.18s ease; box-shadow:0 8px 18px rgba(0,0,0,0.18); touch-action:manipulation; cursor:pointer; flex:0 0 clamp(176px, 38vw, 232px); scroll-snap-align:start; }
+    .recent-card:hover { border-color:#5eead4; transform:translateY(-2px); background:rgba(94,234,212,0.11); }
+    .recent-card:active { transform:scale(0.98); transition:all 0.1s; }
+    .recent-card.locked { opacity:0.55; pointer-events:none; filter:grayscale(0.35); }
     .recent-icon { font-size:32px; }
     .recent-content { display:flex; flex-direction:column; gap:4px; }
     .recent-title { font-weight:600; }
@@ -179,42 +223,42 @@
     .assignment-banner.complete { border-color:rgba(130,210,246,0.52); background:rgba(89,166,223,0.18); }
     .assignment-banner.hidden { display:none; }
     
-    .games-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(clamp(280px, 30vw, 350px), 1fr)); gap:clamp(20px, 3vw, 32px); margin-top:clamp(24px, 4vh, 32px); }
+    .games-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(clamp(210px, 24vw, 280px), 1fr)); gap:12px; margin-top:12px; }
     
     @keyframes cardIn {
       from { opacity: 0; transform: translateY(20px) scale(0.95); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    
-    .game-card { 
-      background: var(--card-bg); 
-      border: 3px solid var(--card-border); 
-      border-radius: 30px; 
-      padding: clamp(24px, 4vw, 32px); 
-      text-decoration: none; 
-      color: var(--fg); 
-      display: flex; 
-      flex-direction: column; 
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
-      min-height: clamp(240px, 30vh, 320px); 
-      cursor: pointer; 
-      touch-action: manipulation; 
+
+    .game-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px;
+      text-decoration: none;
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      min-height: 218px;
+      cursor: pointer;
+      touch-action: manipulation;
       box-shadow: 0 8px 24px rgba(0,0,0,0.2);
       animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
       position: relative;
     }
-    .game-card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--accent); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); background: var(--card-hover-bg); }
-    .game-card:active { transform: scale(0.96); box-shadow: 0 5px 10px rgba(0,0,0,0.2); transition: all 0.1s; }
-    .game-share { position:absolute; top:14px; right:14px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:2px solid var(--card-border); background:rgba(0,0,0,0.28); color:var(--fg); font-size:17px; cursor:pointer; line-height:1; opacity:0.82; transition:transform .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease; }
+    .game-card:hover { transform: translateY(-2px); border-color: #5eead4; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32); background: var(--card-hover-bg); }
+    .game-card:active { transform: scale(0.98); box-shadow: 0 5px 10px rgba(0,0,0,0.2); transition: all 0.1s; }
+    .game-share { position:absolute; top:10px; right:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--card-border); background:rgba(0,0,0,0.28); color:var(--fg); font-size:15px; cursor:pointer; line-height:1; opacity:0.82; transition:transform .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease; }
     .game-share:hover, .game-share:focus-visible { background:var(--accent); border-color:var(--accent); transform:scale(1.08); opacity:1; outline:none; }
     .game-card.locked .game-share { display:none; }
     .game-card.locked { opacity: 0.55; border-color: var(--card-border); pointer-events: none; filter: grayscale(0.5); }
     .game-card.locked .game-link { background: var(--card-border); border-color: var(--card-border); color: var(--muted); }
     
-    .game-icon { width:clamp(70px, 9vw, 90px); height:clamp(70px, 9vw, 90px); margin:0 auto clamp(16px, 2vh, 24px) auto; border-radius:22px; display:flex; align-items:center; justify-content:center; font-size:clamp(36px, 6vw, 54px); background:rgba(244,114,182,0.1); border:3px solid rgba(244,114,182,0.3); animation:floatCard 4s ease-in-out infinite alternate; box-shadow:0 8px 16px rgba(0,0,0,0.2); }
+    .game-icon { width:58px; height:58px; margin:0 auto 12px auto; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:34px; background:rgba(94,234,212,0.1); border:1px solid rgba(94,234,212,0.28); animation:floatCard 4s ease-in-out infinite alternate; box-shadow:0 8px 16px rgba(0,0,0,0.2); }
     
-    .game-title { font-size:clamp(24px, 3.5vw, 32px); font-weight:600; margin:0 0 clamp(8px, 1vh, 12px) 0; text-align:center; }
-    .game-desc { font-size:clamp(14px, 2vw, 16px); color:var(--muted); margin:0; text-align:center; line-height:1.5; flex-grow:1; }
+    .game-title { font-size:clamp(18px, 2.5vw, 22px); font-weight:600; margin:0 0 8px 0; text-align:center; line-height:1.12; }
+    .game-desc { font-size:13px; color:var(--muted); margin:0; text-align:center; line-height:1.4; flex-grow:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
     .game-meta { display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin:0 0 8px 0; }
     .economy-tag { display:inline-flex; align-items:center; justify-content:center; padding:4px 9px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); font-size:12px; font-weight:700; }
     .economy-tag.coin { color:#b9ffdf; border-color:rgba(107,230,173,0.55); background:rgba(85,205,145,0.18); }
@@ -223,8 +267,8 @@
     .accessibility-tag.category { border-color:rgba(130,205,255,0.55); color:#cde8ff; background:rgba(116,166,230,0.18); }
     .games-empty { border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:24px; color:#b7cdf0; text-align:center; font-size:15px; }
     
-    .game-link { margin-top:auto; padding:clamp(14px, 2vw, 18px); background:var(--accent); border:3px solid #fbcfe8; border-radius:16px; color:#500724; font-size:clamp(16px, 2.5vw, 18px); font-weight:700; text-align:center; transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow:0 4px 15px rgba(244,114,182,0.3); }
-    .game-card:hover .game-link { background:#fbcfe8; border-color:#fff; transform:scale(1.02); }
+    .game-link { margin-top:12px; padding:10px 12px; background:#5eead4; border:1px solid #99f6e4; border-radius:8px; color:#06251f; font-size:14px; font-weight:800; text-align:center; transition:all 0.18s ease; box-shadow:0 4px 15px rgba(45,212,191,0.18); }
+    .game-card:hover .game-link { background:#99f6e4; border-color:#ccfbf1; }
     
     footer { margin-top:auto; padding-top:clamp(32px, 5vh, 48px); text-align:center; color:var(--muted); font-size:clamp(12px, 2vw, 14px); display:flex; flex-direction:column; gap:10px; }
     .footer-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; }
@@ -277,12 +321,28 @@
     .badge-item p { margin:0; font-size:14px; color:var(--muted); }
     
     @media (max-width: 768px) {
+      .wrap { padding:12px 10px 24px; }
+      .launcher-header { align-items:flex-start; }
+      .launcher-actions { width:100%; }
+      .launcher-actions .topbar-btn { flex:1; text-align:center; }
+      .discovery-controls { position:relative; top:auto; padding:10px; margin-left:-2px; margin-right:-2px; }
       .search-controls { grid-template-columns:1fr; }
+      .spotlight-grid { grid-template-columns:1fr; }
+      .spotlight-card { min-height:164px; grid-template-columns:58px minmax(0, 1fr); padding:12px; }
+      .spotlight-icon { width:58px; font-size:34px; }
+      .game-tile,
+      .recent-card { flex-basis:78vw; max-width:280px; }
       .games-grid { grid-template-columns:1fr; }
-      .game-card { min-height:clamp(180px, 20vh, 220px); }
-      .topbar { flex-direction:column; align-items:stretch; }
-      .topbar-left, .topbar-right { justify-content:center; }
-      .music-controls { justify-content:center; width:100%; }
+      .game-card { min-height:190px; }
+      .topbar { flex-direction:row; align-items:center; flex-wrap:nowrap; overflow-x:auto; padding:8px 10px; gap:8px; }
+      .topbar-left { flex:0 0 auto; }
+      .topbar-right { flex:0 0 auto; flex-wrap:nowrap; justify-content:flex-start; }
+      .welcome-wrap { max-width:150px; }
+      .profile-badges { display:none; }
+      .coin-display { padding:6px 10px; font-size:13px; border-radius:8px; }
+      .topbar-btn { padding:7px 10px; border-radius:8px; font-size:12px; white-space:nowrap; }
+      .music-controls { justify-content:center; width:auto; flex:0 0 auto; border-radius:8px; }
+      .music-volume { width:64px; }
     }
   </style>
 
@@ -303,7 +363,7 @@
   <meta name="twitter:description" content="AI and Sons Games is the free browser arcade from AI and Sons. Play kid-friendly and classroom-ready games like Pong, Snake, 2048, and more.">
   <meta name="twitter:image" content="https://games.aiandsons.io/assets/social-banner.png">
   <link rel="canonical" href="https://games.aiandsons.io/">
-  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://games.aiandsons.io#organization","name":"AI and Sons","alternateName":["AI and Sons Games","Cade's Games"],"url":"https://games.aiandsons.io"},{"@type":"WebSite","@id":"https://games.aiandsons.io#website","name":"AI and Sons Games","alternateName":"Cade's Games","url":"https://games.aiandsons.io","inLanguage":"en-US","publisher":{"@id":"https://games.aiandsons.io#organization"}},{"@type":"ItemList","@id":"https://games.aiandsons.io#games","name":"AI and Sons Games Game Directory","numberOfItems":142,"itemListElement":[{"@type":"ListItem","position":1,"name":"Club Penguin World","url":"https://games.aiandsons.io/clubpenguin-world"},{"@type":"ListItem","position":2,"name":"Audio Agar","url":"https://games.aiandsons.io/audioagar"},{"@type":"ListItem","position":3,"name":"2048","url":"https://games.aiandsons.io/2048"},{"@type":"ListItem","position":4,"name":"Pong","url":"https://games.aiandsons.io/pong"},{"@type":"ListItem","position":5,"name":"Air Hockey","url":"https://games.aiandsons.io/airhockey"},{"@type":"ListItem","position":6,"name":"Skee-Ball","url":"https://games.aiandsons.io/skeeball"},{"@type":"ListItem","position":7,"name":"Pocket Pool","url":"https://games.aiandsons.io/pool"},{"@type":"ListItem","position":8,"name":"Plinko Drop","url":"https://games.aiandsons.io/plinko"},{"@type":"ListItem","position":9,"name":"Darts 301","url":"https://games.aiandsons.io/darts"},{"@type":"ListItem","position":10,"name":"Snake","url":"https://games.aiandsons.io/snake"},{"@type":"ListItem","position":11,"name":"Tic-Tac-Toe","url":"https://games.aiandsons.io/tictactoe"},{"@type":"ListItem","position":12,"name":"Rock Paper Scissors","url":"https://games.aiandsons.io/rps"},{"@type":"ListItem","position":13,"name":"Prisoner's Dilemma Lab","url":"https://games.aiandsons.io/prisonersdilemma"},{"@type":"ListItem","position":14,"name":"Memory","url":"https://games.aiandsons.io/memory"},{"@type":"ListItem","position":15,"name":"Hangman","url":"https://games.aiandsons.io/hangman"},{"@type":"ListItem","position":16,"name":"Breakout","url":"https://games.aiandsons.io/breakout"},{"@type":"ListItem","position":17,"name":"Connect 4","url":"https://games.aiandsons.io/connect4"},{"@type":"ListItem","position":18,"name":"Minesweeper","url":"https://games.aiandsons.io/minesweeper"},{"@type":"ListItem","position":19,"name":"Flappy Bird","url":"https://games.aiandsons.io/flappy"},{"@type":"ListItem","position":20,"name":"Dino Run","url":"https://games.aiandsons.io/dino"},{"@type":"ListItem","position":21,"name":"Doodle Jump","url":"https://games.aiandsons.io/doodlejump"},{"@type":"ListItem","position":22,"name":"Space Invaders","url":"https://games.aiandsons.io/spaceinvaders"},{"@type":"ListItem","position":23,"name":"Mushroom March","url":"https://games.aiandsons.io/mushroommarch"},{"@type":"ListItem","position":24,"name":"Frogger","url":"https://games.aiandsons.io/frogger"},{"@type":"ListItem","position":25,"name":"Pocket Mini Golf","url":"https://games.aiandsons.io/minigolf"},{"@type":"ListItem","position":26,"name":"Micro Mario","url":"https://games.aiandsons.io/mario"},{"@type":"ListItem","position":27,"name":"Retro Downhill Ski","url":"https://games.aiandsons.io/ski"},{"@type":"ListItem","position":28,"name":"Home Run Derby","url":"https://games.aiandsons.io/homerunderby"},{"@type":"ListItem","position":29,"name":"Micro RC Racer","url":"https://games.aiandsons.io/microrc"},{"@type":"ListItem","position":30,"name":"Oregon Trail","url":"https://games.aiandsons.io/oregontrail"},{"@type":"ListItem","position":31,"name":"Neon Rally","url":"https://games.aiandsons.io/neonrally"},{"@type":"ListItem","position":32,"name":"Pac-Man","url":"https://games.aiandsons.io/pacman"},{"@type":"ListItem","position":33,"name":"Pokemon","url":"https://games.aiandsons.io/pokemon"},{"@type":"ListItem","position":34,"name":"Tetris","url":"https://games.aiandsons.io/tetris"},{"@type":"ListItem","position":35,"name":"Asteroids","url":"https://games.aiandsons.io/asteroids"},{"@type":"ListItem","position":36,"name":"Missile Command","url":"https://games.aiandsons.io/missilecommand"},{"@type":"ListItem","position":37,"name":"Tower Defense","url":"https://games.aiandsons.io/towerdefense"},{"@type":"ListItem","position":38,"name":"Sky Joust","url":"https://games.aiandsons.io/skyjoust"},{"@type":"ListItem","position":39,"name":"Bomberman Lite","url":"https://games.aiandsons.io/bomberman"},{"@type":"ListItem","position":40,"name":"Treasure Maze","url":"https://games.aiandsons.io/treasuremaze"},{"@type":"ListItem","position":41,"name":"Echo Labyrinth","url":"https://games.aiandsons.io/echolabyrinth"},{"@type":"ListItem","position":42,"name":"Box Quest","url":"https://games.aiandsons.io/boxquest"},{"@type":"ListItem","position":43,"name":"Water Balloon Code Duel","url":"https://games.aiandsons.io/waterballoon"},{"@type":"ListItem","position":44,"name":"Whack-a-Mole Blitz","url":"https://games.aiandsons.io/whackamole"},{"@type":"ListItem","position":45,"name":"Color Catch Arcade","url":"https://games.aiandsons.io/colorcatch"},{"@type":"ListItem","position":46,"name":"Orbital Rescue","url":"https://games.aiandsons.io/orbitalrescue"},{"@type":"ListItem","position":47,"name":"Lights Out Lab","url":"https://games.aiandsons.io/lightsout"},{"@type":"ListItem","position":48,"name":"Glow Grid","url":"https://games.aiandsons.io/glowgrid"},{"@type":"ListItem","position":49,"name":"Loop Trail","url":"https://games.aiandsons.io/looptrail"},{"@type":"ListItem","position":50,"name":"Vial Sort","url":"https://games.aiandsons.io/vialsort"},{"@type":"ListItem","position":51,"name":"Bridge Islands","url":"https://games.aiandsons.io/bridgeislands"},{"@type":"ListItem","position":52,"name":"Pyramid Hopper","url":"https://games.aiandsons.io/pyramidhopper"},{"@type":"ListItem","position":53,"name":"Neon Pinball Rush","url":"https://games.aiandsons.io/pinball"},{"@type":"ListItem","position":54,"name":"Skywire Sprint","url":"https://games.aiandsons.io/skywire"},{"@type":"ListItem","position":55,"name":"Starfield Dodger","url":"https://games.aiandsons.io/starfielddodger"},{"@type":"ListItem","position":56,"name":"Simon Says Spectrum","url":"https://games.aiandsons.io/simonsays"},{"@type":"ListItem","position":57,"name":"Reaction Grid","url":"https://games.aiandsons.io/reactiongrid"},{"@type":"ListItem","position":58,"name":"Gravity Switch","url":"https://games.aiandsons.io/gravityswitch"},{"@type":"ListItem","position":59,"name":"Orb Burst","url":"https://games.aiandsons.io/orbburst"},{"@type":"ListItem","position":60,"name":"Laser Maze Dash","url":"https://games.aiandsons.io/lasermaze"},{"@type":"ListItem","position":61,"name":"Moon Lander Patrol","url":"https://games.aiandsons.io/moonlander"},{"@type":"ListItem","position":62,"name":"Comet Courier","url":"https://games.aiandsons.io/cometcourier"},{"@type":"ListItem","position":63,"name":"Rift Drifter","url":"https://games.aiandsons.io/riftdrifter"},{"@type":"ListItem","position":64,"name":"Circuit Path","url":"https://games.aiandsons.io/circuitpath"},{"@type":"ListItem","position":65,"name":"Signal Stack","url":"https://games.aiandsons.io/signalstack"},{"@type":"ListItem","position":66,"name":"Line Rider","url":"https://games.aiandsons.io/linerider"},{"@type":"ListItem","position":67,"name":"Vault Runner","url":"https://games.aiandsons.io/vaultrunner"},{"@type":"ListItem","position":68,"name":"Chrome Shift","url":"https://games.aiandsons.io/chromeshift"},{"@type":"ListItem","position":69,"name":"Trailblazer Grid","url":"https://games.aiandsons.io/trailblazer"},{"@type":"ListItem","position":70,"name":"Port Pilot","url":"https://games.aiandsons.io/portpilot"},{"@type":"ListItem","position":71,"name":"Beat Forge","url":"https://games.aiandsons.io/beatforge"},{"@type":"ListItem","position":72,"name":"Beat Rail","url":"https://games.aiandsons.io/beatrail"},{"@type":"ListItem","position":73,"name":"Byte Bloom","url":"https://games.aiandsons.io/bytebloom"},{"@type":"ListItem","position":74,"name":"Branching Audio Adventure","url":"https://games.aiandsons.io/branchingaudio"},{"@type":"ListItem","position":75,"name":"Gem Swap Blitz","url":"https://games.aiandsons.io/gemswap"},{"@type":"ListItem","position":76,"name":"Hex Harvest","url":"https://games.aiandsons.io/hexharvest"},{"@type":"ListItem","position":77,"name":"Word Weave","url":"https://games.aiandsons.io/wordweave"},{"@type":"ListItem","position":78,"name":"Letter Lock","url":"https://games.aiandsons.io/letterlock"},{"@type":"ListItem","position":79,"name":"Word Search","url":"https://games.aiandsons.io/wordsearch"},{"@type":"ListItem","position":80,"name":"Set Match","url":"https://games.aiandsons.io/setmatch"},{"@type":"ListItem","position":81,"name":"Crazy Eights","url":"https://games.aiandsons.io/crazyeights"},{"@type":"ListItem","position":82,"name":"Flow Lines","url":"https://games.aiandsons.io/flowlines"},{"@type":"ListItem","position":83,"name":"Tri Peaks Solitaire","url":"https://games.aiandsons.io/tripeaks"},{"@type":"ListItem","position":84,"name":"Dice Forge","url":"https://games.aiandsons.io/diceforge"},{"@type":"ListItem","position":85,"name":"Yacht Dice","url":"https://games.aiandsons.io/yachtdice"},{"@type":"ListItem","position":86,"name":"Shut the Box","url":"https://games.aiandsons.io/shutthebox"},{"@type":"ListItem","position":87,"name":"Keystrike Command","url":"https://games.aiandsons.io/keystrike"},{"@type":"ListItem","position":88,"name":"Pulse Parry","url":"https://games.aiandsons.io/pulseparry"},{"@type":"ListItem","position":89,"name":"Magnet Rail","url":"https://games.aiandsons.io/magnetrail"},{"@type":"ListItem","position":90,"name":"Loom Lock","url":"https://games.aiandsons.io/loomlock"},{"@type":"ListItem","position":91,"name":"Tide Tower","url":"https://games.aiandsons.io/tidetower"},{"@type":"ListItem","position":92,"name":"Star Lattice","url":"https://games.aiandsons.io/starlattice"},{"@type":"ListItem","position":93,"name":"Reactor Relay","url":"https://games.aiandsons.io/reactorrelay"},{"@type":"ListItem","position":94,"name":"Prism Pipeline","url":"https://games.aiandsons.io/prismpipeline"},{"@type":"ListItem","position":95,"name":"Glacier Guard","url":"https://games.aiandsons.io/glacierguard"},{"@type":"ListItem","position":96,"name":"Storm Vault","url":"https://games.aiandsons.io/stormvault"},{"@type":"ListItem","position":97,"name":"Drift Dredger","url":"https://games.aiandsons.io/driftdredger"},{"@type":"ListItem","position":98,"name":"Solar Skiff","url":"https://games.aiandsons.io/solarskiff"},{"@type":"ListItem","position":99,"name":"Cinder Crash","url":"https://games.aiandsons.io/cindercrash"},{"@type":"ListItem","position":100,"name":"Orbit Orchard","url":"https://games.aiandsons.io/orbitorchard"},{"@type":"ListItem","position":101,"name":"Ember Watch","url":"https://games.aiandsons.io/emberwatch"},{"@type":"ListItem","position":102,"name":"Cloud Climber","url":"https://games.aiandsons.io/cloudclimber"},{"@type":"ListItem","position":103,"name":"Reef Runner","url":"https://games.aiandsons.io/reefrunner"},{"@type":"ListItem","position":104,"name":"Codebreaker Grid","url":"https://games.aiandsons.io/codebreaker"},{"@type":"ListItem","position":105,"name":"Klondike Solitaire","url":"https://games.aiandsons.io/solitaire"},{"@type":"ListItem","position":106,"name":"FreeCell Solitaire","url":"https://games.aiandsons.io/freecell"},{"@type":"ListItem","position":107,"name":"Fifteen Puzzle","url":"https://games.aiandsons.io/fifteenpuzzle"},{"@type":"ListItem","position":108,"name":"Battleship","url":"https://games.aiandsons.io/battleship"},{"@type":"ListItem","position":109,"name":"Dots and Boxes","url":"https://games.aiandsons.io/dotsandboxes"},{"@type":"ListItem","position":110,"name":"Reversi","url":"https://games.aiandsons.io/reversi"},{"@type":"ListItem","position":111,"name":"Checkers","url":"https://games.aiandsons.io/checkers"},{"@type":"ListItem","position":112,"name":"Peg Solitaire","url":"https://games.aiandsons.io/pegsolitaire"},{"@type":"ListItem","position":113,"name":"Tower of Hanoi","url":"https://games.aiandsons.io/towerhanoi"},{"@type":"ListItem","position":114,"name":"Nim Grove","url":"https://games.aiandsons.io/nimgrove"},{"@type":"ListItem","position":115,"name":"Mancala","url":"https://games.aiandsons.io/mancala"},{"@type":"ListItem","position":116,"name":"Backgammon","url":"https://games.aiandsons.io/backgammon"},{"@type":"ListItem","position":117,"name":"Chess","url":"https://games.aiandsons.io/chess"},{"@type":"ListItem","position":118,"name":"Gomoku Grid","url":"https://games.aiandsons.io/gomokugrid"},{"@type":"ListItem","position":119,"name":"Sudoku Sprint","url":"https://games.aiandsons.io/sudokusprint"},{"@type":"ListItem","position":120,"name":"Potion Pantry","url":"https://games.aiandsons.io/potionpantry"},{"@type":"ListItem","position":121,"name":"Marble Circuit","url":"https://games.aiandsons.io/marblecircuit"},{"@type":"ListItem","position":122,"name":"Switchyard Shuffle","url":"https://games.aiandsons.io/switchyard"},{"@type":"ListItem","position":123,"name":"Canal Lock","url":"https://games.aiandsons.io/canallock"},{"@type":"ListItem","position":124,"name":"Skyline Stacker","url":"https://games.aiandsons.io/skylinestacker"},{"@type":"ListItem","position":125,"name":"Crane Cargo","url":"https://games.aiandsons.io/cranecargo"},{"@type":"ListItem","position":126,"name":"Nebula Curl","url":"https://games.aiandsons.io/nebulacurl"},{"@type":"ListItem","position":127,"name":"Aero Courier","url":"https://games.aiandsons.io/aerocourier"},{"@type":"ListItem","position":128,"name":"Ribbon Capture","url":"https://games.aiandsons.io/ribboncapture"},{"@type":"ListItem","position":129,"name":"Tangle Tuner","url":"https://games.aiandsons.io/tangletuner"},{"@type":"ListItem","position":130,"name":"Sundial Sprint","url":"https://games.aiandsons.io/sundialsprint"},{"@type":"ListItem","position":131,"name":"Bubble Shooter","url":"https://games.aiandsons.io/bubbleshooter"},{"@type":"ListItem","position":132,"name":"Mosaic Match","url":"https://games.aiandsons.io/mosaicmatch"},{"@type":"ListItem","position":133,"name":"Mahjong Solitaire","url":"https://games.aiandsons.io/mahjongsolitaire"},{"@type":"ListItem","position":134,"name":"Nonogram","url":"https://games.aiandsons.io/nonogram"},{"@type":"ListItem","position":135,"name":"Tent Trail","url":"https://games.aiandsons.io/tenttrail"},{"@type":"ListItem","position":136,"name":"Rush Hour","url":"https://games.aiandsons.io/rushhour"},{"@type":"ListItem","position":137,"name":"Jigsaw Puzzle","url":"https://games.aiandsons.io/jigsaw"},{"@type":"ListItem","position":138,"name":"Kakuro","url":"https://games.aiandsons.io/kakuro"},{"@type":"ListItem","position":139,"name":"Cavern Crush","url":"https://games.aiandsons.io/caverncrush"},{"@type":"ListItem","position":140,"name":"Calc Cages","url":"https://games.aiandsons.io/calccages"},{"@type":"ListItem","position":141,"name":"Word Ladder Sprint","url":"https://games.aiandsons.io/wordladder"},{"@type":"ListItem","position":142,"name":"Domino Draw","url":"https://games.aiandsons.io/dominodraw"}]}]}</script>
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://games.aiandsons.io#organization","name":"AI and Sons","alternateName":["AI and Sons Games","Cade's Games"],"url":"https://games.aiandsons.io"},{"@type":"WebSite","@id":"https://games.aiandsons.io#website","name":"AI and Sons Games","alternateName":"Cade's Games","url":"https://games.aiandsons.io","inLanguage":"en-US","publisher":{"@id":"https://games.aiandsons.io#organization"}},{"@type":"ItemList","@id":"https://games.aiandsons.io#games","name":"AI and Sons Games Game Directory","numberOfItems":143,"itemListElement":[{"@type":"ListItem","position":1,"name":"Club Penguin World","url":"https://games.aiandsons.io/clubpenguin-world"},{"@type":"ListItem","position":2,"name":"Audio Agar","url":"https://games.aiandsons.io/audioagar"},{"@type":"ListItem","position":3,"name":"2048","url":"https://games.aiandsons.io/2048"},{"@type":"ListItem","position":4,"name":"Pong","url":"https://games.aiandsons.io/pong"},{"@type":"ListItem","position":5,"name":"Air Hockey","url":"https://games.aiandsons.io/airhockey"},{"@type":"ListItem","position":6,"name":"Skee-Ball","url":"https://games.aiandsons.io/skeeball"},{"@type":"ListItem","position":7,"name":"Pocket Pool","url":"https://games.aiandsons.io/pool"},{"@type":"ListItem","position":8,"name":"Plinko Drop","url":"https://games.aiandsons.io/plinko"},{"@type":"ListItem","position":9,"name":"Darts 301","url":"https://games.aiandsons.io/darts"},{"@type":"ListItem","position":10,"name":"Snake","url":"https://games.aiandsons.io/snake"},{"@type":"ListItem","position":11,"name":"Tic-Tac-Toe","url":"https://games.aiandsons.io/tictactoe"},{"@type":"ListItem","position":12,"name":"Rock Paper Scissors","url":"https://games.aiandsons.io/rps"},{"@type":"ListItem","position":13,"name":"Prisoner's Dilemma Lab","url":"https://games.aiandsons.io/prisonersdilemma"},{"@type":"ListItem","position":14,"name":"Memory","url":"https://games.aiandsons.io/memory"},{"@type":"ListItem","position":15,"name":"Hangman","url":"https://games.aiandsons.io/hangman"},{"@type":"ListItem","position":16,"name":"Breakout","url":"https://games.aiandsons.io/breakout"},{"@type":"ListItem","position":17,"name":"Connect 4","url":"https://games.aiandsons.io/connect4"},{"@type":"ListItem","position":18,"name":"Minesweeper","url":"https://games.aiandsons.io/minesweeper"},{"@type":"ListItem","position":19,"name":"Flappy Bird","url":"https://games.aiandsons.io/flappy"},{"@type":"ListItem","position":20,"name":"Dino Run","url":"https://games.aiandsons.io/dino"},{"@type":"ListItem","position":21,"name":"Doodle Jump","url":"https://games.aiandsons.io/doodlejump"},{"@type":"ListItem","position":22,"name":"Space Invaders","url":"https://games.aiandsons.io/spaceinvaders"},{"@type":"ListItem","position":23,"name":"Mushroom March","url":"https://games.aiandsons.io/mushroommarch"},{"@type":"ListItem","position":24,"name":"Frogger","url":"https://games.aiandsons.io/frogger"},{"@type":"ListItem","position":25,"name":"Pocket Mini Golf","url":"https://games.aiandsons.io/minigolf"},{"@type":"ListItem","position":26,"name":"Micro Mario","url":"https://games.aiandsons.io/mario"},{"@type":"ListItem","position":27,"name":"Retro Downhill Ski","url":"https://games.aiandsons.io/ski"},{"@type":"ListItem","position":28,"name":"Home Run Derby","url":"https://games.aiandsons.io/homerunderby"},{"@type":"ListItem","position":29,"name":"Micro RC Racer","url":"https://games.aiandsons.io/microrc"},{"@type":"ListItem","position":30,"name":"Oregon Trail","url":"https://games.aiandsons.io/oregontrail"},{"@type":"ListItem","position":31,"name":"Neon Rally","url":"https://games.aiandsons.io/neonrally"},{"@type":"ListItem","position":32,"name":"Pac-Man","url":"https://games.aiandsons.io/pacman"},{"@type":"ListItem","position":33,"name":"Pokemon","url":"https://games.aiandsons.io/pokemon"},{"@type":"ListItem","position":34,"name":"Tetris","url":"https://games.aiandsons.io/tetris"},{"@type":"ListItem","position":35,"name":"Asteroids","url":"https://games.aiandsons.io/asteroids"},{"@type":"ListItem","position":36,"name":"Missile Command","url":"https://games.aiandsons.io/missilecommand"},{"@type":"ListItem","position":37,"name":"Tower Defense","url":"https://games.aiandsons.io/towerdefense"},{"@type":"ListItem","position":38,"name":"Sky Joust","url":"https://games.aiandsons.io/skyjoust"},{"@type":"ListItem","position":39,"name":"Bomberman Lite","url":"https://games.aiandsons.io/bomberman"},{"@type":"ListItem","position":40,"name":"Treasure Maze","url":"https://games.aiandsons.io/treasuremaze"},{"@type":"ListItem","position":41,"name":"Echo Labyrinth","url":"https://games.aiandsons.io/echolabyrinth"},{"@type":"ListItem","position":42,"name":"Box Quest","url":"https://games.aiandsons.io/boxquest"},{"@type":"ListItem","position":43,"name":"Water Balloon Code Duel","url":"https://games.aiandsons.io/waterballoon"},{"@type":"ListItem","position":44,"name":"Whack-a-Mole Blitz","url":"https://games.aiandsons.io/whackamole"},{"@type":"ListItem","position":45,"name":"Color Catch Arcade","url":"https://games.aiandsons.io/colorcatch"},{"@type":"ListItem","position":46,"name":"Orbital Rescue","url":"https://games.aiandsons.io/orbitalrescue"},{"@type":"ListItem","position":47,"name":"Lights Out Lab","url":"https://games.aiandsons.io/lightsout"},{"@type":"ListItem","position":48,"name":"Glow Grid","url":"https://games.aiandsons.io/glowgrid"},{"@type":"ListItem","position":49,"name":"Loop Trail","url":"https://games.aiandsons.io/looptrail"},{"@type":"ListItem","position":50,"name":"Vial Sort","url":"https://games.aiandsons.io/vialsort"},{"@type":"ListItem","position":51,"name":"Bridge Islands","url":"https://games.aiandsons.io/bridgeislands"},{"@type":"ListItem","position":52,"name":"SameGame","url":"https://games.aiandsons.io/samegame"},{"@type":"ListItem","position":53,"name":"Pyramid Hopper","url":"https://games.aiandsons.io/pyramidhopper"},{"@type":"ListItem","position":54,"name":"Neon Pinball Rush","url":"https://games.aiandsons.io/pinball"},{"@type":"ListItem","position":55,"name":"Skywire Sprint","url":"https://games.aiandsons.io/skywire"},{"@type":"ListItem","position":56,"name":"Starfield Dodger","url":"https://games.aiandsons.io/starfielddodger"},{"@type":"ListItem","position":57,"name":"Simon Says Spectrum","url":"https://games.aiandsons.io/simonsays"},{"@type":"ListItem","position":58,"name":"Reaction Grid","url":"https://games.aiandsons.io/reactiongrid"},{"@type":"ListItem","position":59,"name":"Gravity Switch","url":"https://games.aiandsons.io/gravityswitch"},{"@type":"ListItem","position":60,"name":"Orb Burst","url":"https://games.aiandsons.io/orbburst"},{"@type":"ListItem","position":61,"name":"Laser Maze Dash","url":"https://games.aiandsons.io/lasermaze"},{"@type":"ListItem","position":62,"name":"Moon Lander Patrol","url":"https://games.aiandsons.io/moonlander"},{"@type":"ListItem","position":63,"name":"Comet Courier","url":"https://games.aiandsons.io/cometcourier"},{"@type":"ListItem","position":64,"name":"Rift Drifter","url":"https://games.aiandsons.io/riftdrifter"},{"@type":"ListItem","position":65,"name":"Circuit Path","url":"https://games.aiandsons.io/circuitpath"},{"@type":"ListItem","position":66,"name":"Signal Stack","url":"https://games.aiandsons.io/signalstack"},{"@type":"ListItem","position":67,"name":"Line Rider","url":"https://games.aiandsons.io/linerider"},{"@type":"ListItem","position":68,"name":"Vault Runner","url":"https://games.aiandsons.io/vaultrunner"},{"@type":"ListItem","position":69,"name":"Chrome Shift","url":"https://games.aiandsons.io/chromeshift"},{"@type":"ListItem","position":70,"name":"Trailblazer Grid","url":"https://games.aiandsons.io/trailblazer"},{"@type":"ListItem","position":71,"name":"Port Pilot","url":"https://games.aiandsons.io/portpilot"},{"@type":"ListItem","position":72,"name":"Beat Forge","url":"https://games.aiandsons.io/beatforge"},{"@type":"ListItem","position":73,"name":"Beat Rail","url":"https://games.aiandsons.io/beatrail"},{"@type":"ListItem","position":74,"name":"Byte Bloom","url":"https://games.aiandsons.io/bytebloom"},{"@type":"ListItem","position":75,"name":"Branching Audio Adventure","url":"https://games.aiandsons.io/branchingaudio"},{"@type":"ListItem","position":76,"name":"Gem Swap Blitz","url":"https://games.aiandsons.io/gemswap"},{"@type":"ListItem","position":77,"name":"Hex Harvest","url":"https://games.aiandsons.io/hexharvest"},{"@type":"ListItem","position":78,"name":"Word Weave","url":"https://games.aiandsons.io/wordweave"},{"@type":"ListItem","position":79,"name":"Letter Lock","url":"https://games.aiandsons.io/letterlock"},{"@type":"ListItem","position":80,"name":"Word Search","url":"https://games.aiandsons.io/wordsearch"},{"@type":"ListItem","position":81,"name":"Set Match","url":"https://games.aiandsons.io/setmatch"},{"@type":"ListItem","position":82,"name":"Crazy Eights","url":"https://games.aiandsons.io/crazyeights"},{"@type":"ListItem","position":83,"name":"Flow Lines","url":"https://games.aiandsons.io/flowlines"},{"@type":"ListItem","position":84,"name":"Tri Peaks Solitaire","url":"https://games.aiandsons.io/tripeaks"},{"@type":"ListItem","position":85,"name":"Dice Forge","url":"https://games.aiandsons.io/diceforge"},{"@type":"ListItem","position":86,"name":"Yacht Dice","url":"https://games.aiandsons.io/yachtdice"},{"@type":"ListItem","position":87,"name":"Shut the Box","url":"https://games.aiandsons.io/shutthebox"},{"@type":"ListItem","position":88,"name":"Keystrike Command","url":"https://games.aiandsons.io/keystrike"},{"@type":"ListItem","position":89,"name":"Pulse Parry","url":"https://games.aiandsons.io/pulseparry"},{"@type":"ListItem","position":90,"name":"Magnet Rail","url":"https://games.aiandsons.io/magnetrail"},{"@type":"ListItem","position":91,"name":"Loom Lock","url":"https://games.aiandsons.io/loomlock"},{"@type":"ListItem","position":92,"name":"Tide Tower","url":"https://games.aiandsons.io/tidetower"},{"@type":"ListItem","position":93,"name":"Star Lattice","url":"https://games.aiandsons.io/starlattice"},{"@type":"ListItem","position":94,"name":"Reactor Relay","url":"https://games.aiandsons.io/reactorrelay"},{"@type":"ListItem","position":95,"name":"Prism Pipeline","url":"https://games.aiandsons.io/prismpipeline"},{"@type":"ListItem","position":96,"name":"Glacier Guard","url":"https://games.aiandsons.io/glacierguard"},{"@type":"ListItem","position":97,"name":"Storm Vault","url":"https://games.aiandsons.io/stormvault"},{"@type":"ListItem","position":98,"name":"Drift Dredger","url":"https://games.aiandsons.io/driftdredger"},{"@type":"ListItem","position":99,"name":"Solar Skiff","url":"https://games.aiandsons.io/solarskiff"},{"@type":"ListItem","position":100,"name":"Cinder Crash","url":"https://games.aiandsons.io/cindercrash"},{"@type":"ListItem","position":101,"name":"Orbit Orchard","url":"https://games.aiandsons.io/orbitorchard"},{"@type":"ListItem","position":102,"name":"Ember Watch","url":"https://games.aiandsons.io/emberwatch"},{"@type":"ListItem","position":103,"name":"Cloud Climber","url":"https://games.aiandsons.io/cloudclimber"},{"@type":"ListItem","position":104,"name":"Reef Runner","url":"https://games.aiandsons.io/reefrunner"},{"@type":"ListItem","position":105,"name":"Codebreaker Grid","url":"https://games.aiandsons.io/codebreaker"},{"@type":"ListItem","position":106,"name":"Klondike Solitaire","url":"https://games.aiandsons.io/solitaire"},{"@type":"ListItem","position":107,"name":"FreeCell Solitaire","url":"https://games.aiandsons.io/freecell"},{"@type":"ListItem","position":108,"name":"Fifteen Puzzle","url":"https://games.aiandsons.io/fifteenpuzzle"},{"@type":"ListItem","position":109,"name":"Battleship","url":"https://games.aiandsons.io/battleship"},{"@type":"ListItem","position":110,"name":"Dots and Boxes","url":"https://games.aiandsons.io/dotsandboxes"},{"@type":"ListItem","position":111,"name":"Reversi","url":"https://games.aiandsons.io/reversi"},{"@type":"ListItem","position":112,"name":"Checkers","url":"https://games.aiandsons.io/checkers"},{"@type":"ListItem","position":113,"name":"Peg Solitaire","url":"https://games.aiandsons.io/pegsolitaire"},{"@type":"ListItem","position":114,"name":"Tower of Hanoi","url":"https://games.aiandsons.io/towerhanoi"},{"@type":"ListItem","position":115,"name":"Nim Grove","url":"https://games.aiandsons.io/nimgrove"},{"@type":"ListItem","position":116,"name":"Mancala","url":"https://games.aiandsons.io/mancala"},{"@type":"ListItem","position":117,"name":"Backgammon","url":"https://games.aiandsons.io/backgammon"},{"@type":"ListItem","position":118,"name":"Chess","url":"https://games.aiandsons.io/chess"},{"@type":"ListItem","position":119,"name":"Gomoku Grid","url":"https://games.aiandsons.io/gomokugrid"},{"@type":"ListItem","position":120,"name":"Sudoku Sprint","url":"https://games.aiandsons.io/sudokusprint"},{"@type":"ListItem","position":121,"name":"Potion Pantry","url":"https://games.aiandsons.io/potionpantry"},{"@type":"ListItem","position":122,"name":"Marble Circuit","url":"https://games.aiandsons.io/marblecircuit"},{"@type":"ListItem","position":123,"name":"Switchyard Shuffle","url":"https://games.aiandsons.io/switchyard"},{"@type":"ListItem","position":124,"name":"Canal Lock","url":"https://games.aiandsons.io/canallock"},{"@type":"ListItem","position":125,"name":"Skyline Stacker","url":"https://games.aiandsons.io/skylinestacker"},{"@type":"ListItem","position":126,"name":"Crane Cargo","url":"https://games.aiandsons.io/cranecargo"},{"@type":"ListItem","position":127,"name":"Nebula Curl","url":"https://games.aiandsons.io/nebulacurl"},{"@type":"ListItem","position":128,"name":"Aero Courier","url":"https://games.aiandsons.io/aerocourier"},{"@type":"ListItem","position":129,"name":"Ribbon Capture","url":"https://games.aiandsons.io/ribboncapture"},{"@type":"ListItem","position":130,"name":"Tangle Tuner","url":"https://games.aiandsons.io/tangletuner"},{"@type":"ListItem","position":131,"name":"Sundial Sprint","url":"https://games.aiandsons.io/sundialsprint"},{"@type":"ListItem","position":132,"name":"Bubble Shooter","url":"https://games.aiandsons.io/bubbleshooter"},{"@type":"ListItem","position":133,"name":"Mosaic Match","url":"https://games.aiandsons.io/mosaicmatch"},{"@type":"ListItem","position":134,"name":"Mahjong Solitaire","url":"https://games.aiandsons.io/mahjongsolitaire"},{"@type":"ListItem","position":135,"name":"Nonogram","url":"https://games.aiandsons.io/nonogram"},{"@type":"ListItem","position":136,"name":"Tent Trail","url":"https://games.aiandsons.io/tenttrail"},{"@type":"ListItem","position":137,"name":"Rush Hour","url":"https://games.aiandsons.io/rushhour"},{"@type":"ListItem","position":138,"name":"Jigsaw Puzzle","url":"https://games.aiandsons.io/jigsaw"},{"@type":"ListItem","position":139,"name":"Kakuro","url":"https://games.aiandsons.io/kakuro"},{"@type":"ListItem","position":140,"name":"Cavern Crush","url":"https://games.aiandsons.io/caverncrush"},{"@type":"ListItem","position":141,"name":"Calc Cages","url":"https://games.aiandsons.io/calccages"},{"@type":"ListItem","position":142,"name":"Word Ladder Sprint","url":"https://games.aiandsons.io/wordladder"},{"@type":"ListItem","position":143,"name":"Domino Draw","url":"https://games.aiandsons.io/dominodraw"}]}]}</script>
   <!-- SEO:END -->
 </head>
 <body>
@@ -354,10 +414,49 @@
   </video>
 
   <div class="wrap">
-    <header>
-      <h1>AI and Sons Games</h1>
-      <p class="subtitle">Cade's Games browser arcade: choose a game to play</p>
+    <header class="launcher-header">
+      <div>
+        <h1>AI and Sons Games</h1>
+        <p class="subtitle">Quick picks, classics, puzzles, and classroom-ready games in one arcade.</p>
+      </div>
+      <div class="launcher-actions">
+        <a href="#allGamesSection" class="topbar-btn">Browse All</a>
+      </div>
     </header>
+
+    <div id="classroomBanner" class="classroom-banner hidden"></div>
+    <div id="assignmentBanner" class="assignment-banner hidden"></div>
+    <section class="discovery-controls" aria-label="Find games">
+      <div class="search-controls" role="search">
+        <input id="gameSearchInput" type="search" placeholder="Search games by name or description (Press '/')" aria-label="Search games" aria-keyshortcuts="/" />
+        <select id="gameCoinFilter" aria-label="Filter by coin rewards">
+          <option value="all">All games</option>
+          <option value="coins">Coin earning</option>
+          <option value="no-coins">No coin rewards</option>
+        </select>
+        <select id="gameCategoryFilter" aria-label="Filter by game category">
+          <option value="all">All categories</option>
+          <option value="audio-accessible">Audio Accessible</option>
+        </select>
+        <div id="gameSearchCount" class="search-count" aria-live="polite"></div>
+      </div>
+      <div id="categoryRail" class="category-rail" aria-label="Game categories"></div>
+    </section>
+
+    <section class="spotlight-grid" aria-label="Featured games">
+      <div id="gameOfDaySpotlight"></div>
+      <div id="gameOfWeekSpotlight"></div>
+    </section>
+
+    <section class="recent-section discovery-section" id="recentSection" style="display:none;">
+      <div class="discovery-head">
+        <h2>Continue Playing</h2>
+        <span class="discovery-meta">Saved on this device</span>
+      </div>
+      <div class="recent-grid" id="recentGrid"></div>
+    </section>
+
+    <div id="discoveryRows" class="discovery-rows"></div>
 
     <section id="onboardingSection" class="onboarding-section">
       <div class="onboarding-head">
@@ -382,22 +481,6 @@
       </div>
       <p id="onboardingStatus" class="onboarding-status" aria-live="polite"></p>
     </section>
-
-    <div id="classroomBanner" class="classroom-banner hidden"></div>
-    <div id="assignmentBanner" class="assignment-banner hidden"></div>
-    <div class="search-controls" role="search">
-      <input id="gameSearchInput" type="search" placeholder="Search games by name or description (Press '/')" aria-label="Search games" aria-keyshortcuts="/" />
-      <select id="gameCoinFilter" aria-label="Filter by coin rewards">
-        <option value="all">All games</option>
-        <option value="coins">Coin earning</option>
-        <option value="no-coins">No coin rewards</option>
-      </select>
-      <select id="gameCategoryFilter" aria-label="Filter by game category">
-        <option value="all">All categories</option>
-        <option value="audio-only-blind-accessible">Audio-Only &amp; Blind Accessible</option>
-      </select>
-      <div id="gameSearchCount" class="search-count" aria-live="polite"></div>
-    </div>
 
     <section class="missions-section" id="dailyMissionsSection">
       <div class="missions-head">
@@ -424,12 +507,12 @@
       <div id="premiumTrackList" class="missions-list"></div>
     </section>
 
-    <div class="recent-section" id="recentSection" style="display:none;">
-      <h2>Recently Played</h2>
-      <div class="recent-grid" id="recentGrid"></div>
-    </div>
-    
-    <div class="games-grid" id="gamesGrid" tabindex="-1">
+    <section id="allGamesSection" class="all-games-section" aria-labelledby="allGamesTitle">
+      <div class="all-games-head">
+        <h2 id="allGamesTitle">All Games</h2>
+        <span class="all-games-meta">Search and filters apply here</span>
+      </div>
+      <div class="games-grid" id="gamesGrid" tabindex="-1">
       <!-- Static fallback (replaced by JS if modules load) -->
       <a href="/clubpenguin-world/public/" class="game-card">
         <div class="game-icon" aria-hidden="true">CP</div>
@@ -905,7 +988,8 @@
         <p class="game-desc">Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings.</p>
         <div class="game-link">Play Nebula Curl &rarr;</div>
       </a>
-    </div>
+      </div>
+    </section>
     
     <footer>
       <p>Made for Cade</p>
@@ -987,14 +1071,14 @@
       getClassroomMinutesSinceEnd,
       wasClassroomSessionRecentlyEnded,
     } from './src/core/state.js';
-    import { GAMES } from './src/meta/games.js';
+    import { GAMES } from './src/meta/games.js?v=discovery-v1';
     import { listBadges, listOwnedBadges, maybeUnlock } from './src/prog/achievements.js';
     import { getActiveDailyMissions, getActiveWeeklyChallenges } from './src/prog/missions.js';
     import { getAssignmentBundleById } from './src/prog/assignments.js';
       import { getEntitlements } from './src/core/entitlements.js';
       import { getPremiumChallengeTrack } from './src/prog/premium-challenges.js';
       import { loadAndApplyAccessibility } from './src/core/accessibility.js';
-      import { trackKpiEvent } from './src/core/metrics.js';
+      import { getMetricsState, trackKpiEvent } from './src/core/metrics.js';
       import { get as getStoredValue, set as setStoredValue } from './src/core/storage.js';
       import { mountAccountWidget } from './src/auth/embed.js';
       import { initCloudSave, queueCloudPush } from './src/social/cloudsave.js';
@@ -1028,6 +1112,11 @@
     const gameCoinFilterEl = document.getElementById('gameCoinFilter');
     const gameCategoryFilterEl = document.getElementById('gameCategoryFilter');
     const gameSearchCountEl = document.getElementById('gameSearchCount');
+    const categoryRailEl = document.getElementById('categoryRail');
+    const gameOfDaySpotlightEl = document.getElementById('gameOfDaySpotlight');
+    const gameOfWeekSpotlightEl = document.getElementById('gameOfWeekSpotlight');
+    const discoveryRowsEl = document.getElementById('discoveryRows');
+    const allGamesSectionEl = document.getElementById('allGamesSection');
     const dailyMissionsListEl = document.getElementById('dailyMissionsList');
     const dailyMissionsMetaEl = document.getElementById('dailyMissionsMeta');
     const weeklyChallengesListEl = document.getElementById('weeklyChallengesList');
@@ -1060,10 +1149,26 @@
     const formatMinutes = (minutes) => `${minutes} minute${minutes === 1 ? '' : 's'}`;
     const sanitizePin = (value) => String(value || '').replace(/\D/g, '').slice(0, 8);
     const normalizeText = (value) => String(value || '').toLowerCase();
-    const economyLabel = (game) => game.earnsCoins === false ? 'No coin rewards' : 'Earns coins';
+    const GAME_DISCOVERY_CATEGORIES = Object.freeze([
+      { key: 'puzzle', label: 'Puzzle' },
+      { key: 'arcade', label: 'Arcade' },
+      { key: 'word', label: 'Word' },
+      { key: 'cards', label: 'Cards' },
+      { key: 'sports', label: 'Sports' },
+      { key: 'racing', label: 'Racing' },
+      { key: 'strategy', label: 'Strategy' },
+      { key: 'audio-accessible', label: 'Audio Accessible' },
+      { key: 'two-player', label: 'Two Player' },
+    ]);
+    const categoryLabels = new Map(GAME_DISCOVERY_CATEGORIES.map((category) => [category.key, category.label]));
+    const categoryKeys = new Set(GAME_DISCOVERY_CATEGORIES.map((category) => category.key));
+    const registryIndex = new Map(GAMES.map((game, index) => [game.slug, index]));
     const normalizeCategoryFilter = (value) => (
-      value === 'audio-only-blind-accessible' ? value : 'all'
+      value === 'audio-only-blind-accessible'
+        ? 'audio-accessible'
+        : (categoryKeys.has(value) ? value : 'all')
     );
+    const getCategoryLabel = (category) => categoryLabels.get(category) || 'Games';
     const HOMEPAGE_MUSIC_STORAGE_KEY = 'homepageMusic';
     const DEFAULT_HOMEPAGE_MUSIC_VOLUME = 35;
     const normalizeHomepageMusicVolume = (value) => {
@@ -1086,8 +1191,233 @@
       const accessibilityTags = Array.isArray(game.accessibilityTags)
         ? game.accessibilityTags.join(' ')
         : '';
-      game._searchHaystack = normalizeText(`${game.name} ${game.slug} ${game.desc || ''} ${game.scoreHint || ''} ${game.category || ''} ${accessibilityTags}`);
+      const categories = Array.isArray(game.categories) ? game.categories.join(' ') : '';
+      const modes = Array.isArray(game.modes) ? game.modes.join(' ') : '';
+      game._searchHaystack = normalizeText(`${game.name} ${game.slug} ${game.desc || ''} ${game.scoreHint || ''} ${game.category || ''} ${categories} ${modes} ${game.duration || ''} ${game.difficulty || ''} ${accessibilityTags}`);
     });
+    const gameMatchesCategory = (game, category) => {
+      if (category === 'all') return true;
+      const categories = Array.isArray(game.categories) ? game.categories : [];
+      if (categories.includes(category)) return true;
+      return category === 'audio-accessible' && game.category === 'audio-only-blind-accessible';
+    };
+    const formatMetaLabel = (value) => {
+      const text = String(value || '').replace(/-/g, ' ');
+      return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+    };
+    const getPrimaryCategory = (game) => {
+      const categories = Array.isArray(game.categories) ? game.categories : [];
+      return categories.find((category) => categoryLabels.has(category)) || 'arcade';
+    };
+    const getGameBadges = (game) => {
+      const badges = [getCategoryLabel(getPrimaryCategory(game))];
+      if (game.duration) badges.push(formatMetaLabel(game.duration));
+      if (Array.isArray(game.modes) && game.modes.includes('two-player')) badges.push('Two Player');
+      if (Array.isArray(game.modes) && game.modes.includes('multiplayer')) badges.push('Multiplayer');
+      return [...new Set(badges)].slice(0, 3);
+    };
+    const getLaunchCounts = () => {
+      const counts = {};
+      const metrics = getMetricsState();
+      const events = Array.isArray(metrics?.events) ? metrics.events : [];
+      for (const event of events) {
+        if (event?.name !== 'game_launch_clicked') continue;
+        const slug = typeof event.meta?.slug === 'string' ? event.meta.slug : '';
+        if (slug) counts[slug] = (counts[slug] || 0) + 1;
+      }
+      return counts;
+    };
+    const compareRegistryOrder = (a, b) => (registryIndex.get(a.slug) || 0) - (registryIndex.get(b.slug) || 0);
+    const getFeaturedRank = (game, rankKey) => {
+      const rank = Number(game.featured?.[rankKey]);
+      return Number.isFinite(rank) && rank > 0 ? rank : Number.POSITIVE_INFINITY;
+    };
+    const compareFeaturedRank = (a, b, rankKey) => {
+      const aRank = getFeaturedRank(a, rankKey);
+      const bRank = getFeaturedRank(b, rankKey);
+      if (!Number.isFinite(aRank) && !Number.isFinite(bRank)) return 0;
+      return aRank - bRank;
+    };
+    const getRankedFeaturedGames = (rankKey, limit = 12) => {
+      const launchCounts = getLaunchCounts();
+      return GAMES
+        .filter((game) => Number.isFinite(getFeaturedRank(game, rankKey)))
+        .sort((a, b) => (
+          compareFeaturedRank(a, b, rankKey) ||
+          (launchCounts[b.slug] || 0) - (launchCounts[a.slug] || 0) ||
+          compareRegistryOrder(a, b)
+        ))
+        .slice(0, limit);
+    };
+    const getNewGames = (limit = 12) => GAMES
+      .slice()
+      .sort((a, b) => {
+        const bTime = Date.parse(b.releasedAt || '') || 0;
+        const aTime = Date.parse(a.releasedAt || '') || 0;
+        return bTime - aTime || compareRegistryOrder(a, b);
+      })
+      .slice(0, limit);
+    const getCategoryGames = (category, limit = 12) => GAMES
+      .filter((game) => gameMatchesCategory(game, category))
+      .sort((a, b) => (
+        compareFeaturedRank(a, b, 'trendingRank') ||
+        compareRegistryOrder(a, b)
+      ))
+      .slice(0, limit);
+    const getDayNumber = () => Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    const chooseSpotlightGame = (period) => {
+      const flag = period === 'week' ? 'weeklyEligible' : 'dailyEligible';
+      const seed = period === 'week' ? Math.floor(getDayNumber() / 7) : getDayNumber();
+      const candidates = GAMES.filter((game) => game.featured?.[flag] === true);
+      const unlocked = candidates.filter((game) => !isGameLockedByClassroom(game.slug));
+      const pool = unlocked.length ? unlocked : candidates;
+      return pool.length ? pool[seed % pool.length] : GAMES[seed % GAMES.length];
+    };
+    const gameLaunchHandler = (game, source, extraMeta = {}) => (event) => {
+      if (isGameLockedByClassroom(game.slug)) {
+        event.preventDefault();
+        return;
+      }
+      trackKpiEvent('game_launch_clicked', { slug: game.slug, source, ...extraMeta });
+      rememberRecent(game.slug);
+    };
+    const renderBadgeMarkup = (game) => getGameBadges(game)
+      .map((badge) => `<span class="tile-tag">${escapeHtml(badge)}</span>`)
+      .join('');
+    const renderCategoryControls = () => {
+      const options = [
+        '<option value="all">All categories</option>',
+        ...GAME_DISCOVERY_CATEGORIES.map((category) => (
+          `<option value="${escapeHtml(category.key)}">${escapeHtml(category.label)}</option>`
+        )),
+      ];
+      gameCategoryFilterEl.innerHTML = options.join('');
+
+      categoryRailEl.textContent = '';
+      const chipData = [{ key: 'all', label: 'All' }, ...GAME_DISCOVERY_CATEGORIES];
+      for (const category of chipData) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'category-chip';
+        chip.dataset.categoryChip = category.key;
+        chip.textContent = category.label;
+        chip.setAttribute('aria-pressed', category.key === gameCategoryFilter ? 'true' : 'false');
+        chip.addEventListener('click', () => {
+          setCategoryFilter(category.key, { scrollToCatalog: category.key !== 'all' });
+        });
+        categoryRailEl.appendChild(chip);
+      }
+    };
+    const updateCategoryControls = () => {
+      gameCategoryFilterEl.value = gameCategoryFilter;
+      categoryRailEl.querySelectorAll('[data-category-chip]').forEach((chip) => {
+        const active = chip.dataset.categoryChip === gameCategoryFilter;
+        chip.classList.toggle('active', active);
+        chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    };
+    const setCategoryFilter = (value, options = {}) => {
+      gameCategoryFilter = normalizeCategoryFilter(value);
+      gameCategoryFilterEl.value = gameCategoryFilter;
+      trackKpiEvent('launcher_category_selected', { category: gameCategoryFilter });
+      trackKpiEvent('launcher_category_filter_changed', { category: gameCategoryFilter });
+      updateUI();
+      if (options.scrollToCatalog && allGamesSectionEl) {
+        allGamesSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+    const createGameTile = (game, source, extraMeta = {}) => {
+      const locked = isGameLockedByClassroom(game.slug);
+      const card = document.createElement('a');
+      card.href = locked ? '#' : game.url;
+      card.className = `game-tile${locked ? ' locked' : ''}`;
+      if (locked) {
+        card.setAttribute('aria-disabled', 'true');
+        card.tabIndex = -1;
+      }
+      card.innerHTML = `
+        <div class="tile-top">
+          <span class="tile-icon" aria-hidden="true">${escapeHtml(game.emoji)}</span>
+          <h3 class="tile-title">${escapeHtml(locked ? `${game.name} (Locked)` : game.name)}</h3>
+        </div>
+        <p class="tile-desc">${escapeHtml(game.desc || `Play ${game.name}!`)}</p>
+        <div class="tile-tags">${renderBadgeMarkup(game)}</div>
+        <span class="tile-action">${locked ? 'Locked For Class' : 'Play'}</span>
+      `;
+      card.addEventListener('click', gameLaunchHandler(game, source, extraMeta));
+      return card;
+    };
+    const renderSpotlight = (target, game, label, source, variant = '') => {
+      if (!target || !game) return;
+      const locked = isGameLockedByClassroom(game.slug);
+      target.innerHTML = `
+        <a href="${locked ? '#' : escapeHtml(game.url)}" class="spotlight-card ${variant}${locked ? ' locked' : ''}" ${locked ? 'aria-disabled="true" tabindex="-1"' : ''}>
+          <span class="spotlight-icon" aria-hidden="true">${escapeHtml(game.emoji)}</span>
+          <span class="spotlight-content">
+            <span class="spotlight-label">${escapeHtml(label)}</span>
+            <h2 class="spotlight-title">${escapeHtml(locked ? `${game.name} (Locked)` : game.name)}</h2>
+            <span class="spotlight-desc">${escapeHtml(game.desc || `Play ${game.name}!`)}</span>
+            <span class="spotlight-meta">${renderBadgeMarkup(game)}</span>
+            <span class="tile-action">${locked ? 'Locked For Class' : 'Play Now'}</span>
+          </span>
+        </a>
+      `;
+      const card = target.querySelector('.spotlight-card');
+      card.addEventListener('click', gameLaunchHandler(game, source));
+    };
+    const renderDiscoverySection = ({ key, title, games, source, meta = '' }) => {
+      if (!Array.isArray(games) || !games.length) return;
+      const section = document.createElement('section');
+      section.className = 'discovery-section';
+      section.dataset.discoveryRow = key;
+      const titleId = `discovery-${key}-title`;
+      section.setAttribute('aria-labelledby', titleId);
+      section.innerHTML = `
+        <div class="discovery-head">
+          <h2 id="${titleId}">${escapeHtml(title)}</h2>
+          <span class="discovery-meta">${escapeHtml(meta || `${games.length} picks`)}</span>
+        </div>
+        <div class="discovery-row"></div>
+      `;
+      const row = section.querySelector('.discovery-row');
+      games.forEach((game) => {
+        row.appendChild(createGameTile(game, source, key.startsWith('category-') ? { category: key.replace('category-', '') } : {}));
+      });
+      discoveryRowsEl.appendChild(section);
+    };
+    const renderDiscoveryRows = () => {
+      discoveryRowsEl.textContent = '';
+      renderDiscoverySection({
+        key: 'trending',
+        title: 'Trending Now',
+        games: getRankedFeaturedGames('trendingRank', 12),
+        source: 'trending',
+        meta: 'Curated picks',
+      });
+      renderDiscoverySection({
+        key: 'top-played',
+        title: 'Top Played',
+        games: getRankedFeaturedGames('topPlayedRank', 12),
+        source: 'top_played',
+        meta: 'Popular classics',
+      });
+      renderDiscoverySection({
+        key: 'new-this-week',
+        title: 'New This Week',
+        games: getNewGames(12),
+        source: 'new_this_week',
+        meta: 'Newest arrivals',
+      });
+      for (const category of GAME_DISCOVERY_CATEGORIES) {
+        renderDiscoverySection({
+          key: `category-${category.key}`,
+          title: category.label,
+          games: getCategoryGames(category.key, 12),
+          source: 'category_row',
+          meta: `${GAMES.filter((game) => gameMatchesCategory(game, category.key)).length} games`,
+        });
+      }
+    };
     const formatWeekLabel = (weekKey) => {
       if (typeof weekKey !== 'string' || !weekKey) return '';
       return `Week of ${weekKey}`;
@@ -1454,33 +1784,17 @@
       renderWeeklyChallenges();
       renderAssignmentBanner();
       renderPremiumTrack();
+      updateCategoryControls();
+      renderSpotlight(gameOfDaySpotlightEl, chooseSpotlightGame('day'), 'Game of the Day', 'game_of_day');
+      renderSpotlight(gameOfWeekSpotlightEl, chooseSpotlightGame('week'), 'Game of the Week', 'game_of_week', 'week');
+      renderDiscoveryRows();
 
       if (state.recent.length > 0) {
         recentSection.style.display = 'block';
         recentGrid.textContent = '';
         const recentGames = state.recent.map((slug) => GAMES.find((g) => g.slug === slug)).filter(Boolean);
         recentGames.forEach((game) => {
-          const locked = isGameLockedByClassroom(game.slug);
-          const card = document.createElement('a');
-          card.href = locked ? '#' : game.url;
-          card.className = `recent-card${locked ? ' locked' : ''}`;
-          const label = economyLabel(game);
-          card.innerHTML = `
-            <span class="recent-icon" aria-hidden="true">${game.emoji}</span>
-            <span class="recent-content">
-              <span class="recent-title">${locked ? `${game.name} (Locked)` : game.name}</span>
-              <span class="recent-meta">${label}</span>
-            </span>
-          `;
-          card.onclick = (event) => {
-            if (locked) {
-              event.preventDefault();
-              return;
-            }
-            trackKpiEvent('game_launch_clicked', { slug: game.slug, source: 'recent' });
-            rememberRecent(game.slug);
-          };
-          recentGrid.appendChild(card);
+          recentGrid.appendChild(createGameTile(game, 'recent'));
         });
       } else {
         recentSection.style.display = 'none';
@@ -1496,7 +1810,7 @@
         if (!matchesCoinFilter) return false;
         const matchesCategoryFilter = (
           gameCategoryFilter === 'all' ||
-          game.category === gameCategoryFilter
+          gameMatchesCategory(game, gameCategoryFilter)
         );
         if (!matchesCategoryFilter) return false;
         if (!gameSearchQuery) return true;
@@ -1518,6 +1832,7 @@
           gameSearchQuery = '';
           gameCoinFilter = 'all';
           gameCategoryFilter = 'all';
+          updateCategoryControls();
           updateUI();
           gameSearchInputEl.focus();
         };
@@ -1545,6 +1860,10 @@
         const accessibilityTagMarkup = accessibilityTags
           .map((tag) => `<span class="accessibility-tag">${escapeHtml(tag)}</span>`)
           .join('');
+        const discoveryCategoryMarkup = getGameBadges(game)
+          .slice(0, 2)
+          .map((tag) => `<span class="accessibility-tag category">${escapeHtml(tag)}</span>`)
+          .join('');
         const categoryTagMarkup = game.category === 'audio-only-blind-accessible'
           ? '<span class="accessibility-tag category">Audio-Only &amp; Blind Accessible</span>'
           : '';
@@ -1555,7 +1874,7 @@
         card.innerHTML = `
           ${locked ? '' : `<span class="game-share" role="button" tabindex="0" aria-label="Share ${escapeHtml(game.name)}" title="Share game">\u{1F517}</span>`}
           <div class="game-icon" aria-hidden="true">${escapeHtml(game.emoji)}</div>
-          <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span>${categoryTagMarkup}${accessibilityTagMarkup}</div>
+          <div class="game-meta"><span class="economy-tag ${coinTagClass}">${coinTagLabel}</span>${categoryTagMarkup}${discoveryCategoryMarkup}${accessibilityTagMarkup}</div>
           <h2 class="game-title">${escapeHtml(game.name)}</h2>
           <p class="game-desc">${desc}</p>
           <div class="game-link">${actionLabel}</div>
@@ -1566,7 +1885,7 @@
             event.preventDefault();
             return;
           }
-          trackKpiEvent('game_launch_clicked', { slug: game.slug, source: 'grid' });
+          trackKpiEvent('game_launch_clicked', { slug: game.slug, source: 'all_games' });
           rememberRecent(game.slug);
         };
 
@@ -1580,7 +1899,7 @@
               text: `Play ${game.name} free on AI & Sons Arcade!`,
               url: `${window.location.origin}/g/${game.slug}`,
             });
-            trackKpiEvent('game_share_clicked', { slug: game.slug, source: 'grid' });
+            trackKpiEvent('game_share_clicked', { slug: game.slug, source: 'all_games' });
           };
           shareBtn.addEventListener('click', openShare);
           shareBtn.addEventListener('keydown', (event) => {
@@ -1734,9 +2053,7 @@
       updateUI();
     });
     gameCategoryFilterEl.addEventListener('change', () => {
-      gameCategoryFilter = normalizeCategoryFilter(gameCategoryFilterEl.value);
-      trackKpiEvent('launcher_category_filter_changed', { category: gameCategoryFilter });
-      updateUI();
+      setCategoryFilter(gameCategoryFilterEl.value);
     });
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
@@ -1791,6 +2108,7 @@
         .catch(() => { /* keep default */ });
     })();
 
+    renderCategoryControls();
     initializeHomepageMusic();
     updateUI();
 

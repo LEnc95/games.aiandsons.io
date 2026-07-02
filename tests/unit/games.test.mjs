@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GAMES } from '../../src/meta/games.js';
+import { GAME_DISCOVERY_CATEGORIES, GAMES } from '../../src/meta/games.js';
+
+const VALID_DURATIONS = new Set(['quick', 'medium', 'long']);
+const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
+const VALID_MODES = new Set(['solo', 'two-player', 'multiplayer']);
+const VALID_CATEGORIES = new Set(GAME_DISCOVERY_CATEGORIES.map((category) => category.key));
 
 test('GAMES list integrity', async (t) => {
   await t.test('is an array and not empty', () => {
@@ -17,6 +22,29 @@ test('GAMES list integrity', async (t) => {
       assert.strictEqual(typeof game.url, 'string', `Game ${game.slug} missing or invalid url`);
       assert.strictEqual(typeof game.desc, 'string', `Game ${game.slug} missing or invalid desc`);
       assert.strictEqual(typeof game.earnsCoins, 'boolean', `Game ${game.slug} missing or invalid earnsCoins`);
+    }
+  });
+
+  await t.test('each game has valid discovery metadata', () => {
+    for (const game of GAMES) {
+      assert.ok(Array.isArray(game.categories), `Game ${game.slug} missing categories array`);
+      assert.ok(game.categories.length > 0, `Game ${game.slug} must have at least one category`);
+      for (const category of game.categories) {
+        assert.ok(VALID_CATEGORIES.has(category), `Game ${game.slug} has invalid category ${category}`);
+      }
+
+      assert.ok(Array.isArray(game.modes), `Game ${game.slug} missing modes array`);
+      assert.ok(game.modes.includes('solo'), `Game ${game.slug} must include solo mode`);
+      for (const mode of game.modes) {
+        assert.ok(VALID_MODES.has(mode), `Game ${game.slug} has invalid mode ${mode}`);
+      }
+
+      assert.ok(VALID_DURATIONS.has(game.duration), `Game ${game.slug} has invalid duration`);
+      assert.ok(VALID_DIFFICULTIES.has(game.difficulty), `Game ${game.slug} has invalid difficulty`);
+      assert.ok(!Number.isNaN(Date.parse(game.releasedAt)), `Game ${game.slug} has invalid releasedAt`);
+      assert.strictEqual(typeof game.featured, 'object', `Game ${game.slug} missing featured metadata`);
+      assert.strictEqual(game.featured.dailyEligible, true, `Game ${game.slug} must be eligible for daily spotlight`);
+      assert.strictEqual(typeof game.featured.weeklyEligible, 'boolean', `Game ${game.slug} missing weekly eligibility`);
     }
   });
 

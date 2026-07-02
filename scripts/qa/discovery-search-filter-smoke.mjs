@@ -202,6 +202,32 @@ async function main() {
       data: { musicInitialState, musicReloadedState, musicEnabledState, musicDisabledState },
     });
 
+    await page.waitForFunction(() => (
+      document.querySelectorAll("#gameOfDaySpotlight .spotlight-card").length === 1 &&
+      document.querySelectorAll("#gameOfWeekSpotlight .spotlight-card").length === 1 &&
+      document.querySelectorAll("#discoveryRows [data-discovery-row]").length >= 6
+    ));
+    const discoveryInitialState = await page.evaluate(() => ({
+      dayTitle: (document.querySelector("#gameOfDaySpotlight .spotlight-title")?.textContent || "").trim(),
+      weekTitle: (document.querySelector("#gameOfWeekSpotlight .spotlight-title")?.textContent || "").trim(),
+      categoryChips: [...document.querySelectorAll("#categoryRail [data-category-chip]")]
+        .map((node) => node.getAttribute("data-category-chip") || "")
+        .filter(Boolean),
+      trendingTiles: document.querySelectorAll('[data-discovery-row="trending"] .game-tile').length,
+      topPlayedTiles: document.querySelectorAll('[data-discovery-row="top-played"] .game-tile').length,
+      newTiles: document.querySelectorAll('[data-discovery-row="new-this-week"] .game-tile').length,
+      puzzleTiles: document.querySelectorAll('[data-discovery-row="category-puzzle"] .game-tile').length,
+    }));
+    assert(discoveryInitialState.dayTitle.length > 0, "Expected Game of the Day to render a title.");
+    assert(discoveryInitialState.weekTitle.length > 0, "Expected Game of the Week to render a title.");
+    assert(discoveryInitialState.categoryChips.includes("puzzle"), "Expected Puzzle category chip to render.");
+    assert(discoveryInitialState.categoryChips.includes("audio-accessible"), "Expected Audio Accessible category chip to render.");
+    assert(discoveryInitialState.trendingTiles >= 6, "Expected Trending Now row to render multiple games.");
+    assert(discoveryInitialState.topPlayedTiles >= 6, "Expected Top Played row to render multiple games.");
+    assert(discoveryInitialState.newTiles >= 6, "Expected New This Week row to render multiple games.");
+    assert(discoveryInitialState.puzzleTiles >= 6, "Expected Puzzle category row to render multiple games.");
+    summary.checks.push({ name: "home_discovery_sections", pass: true, data: discoveryInitialState });
+
     await page.fill("#gameSearchInput", "tetris");
     await page.waitForFunction(() => {
       try {
@@ -261,6 +287,63 @@ async function main() {
     const homeShot = path.join(OUTPUT_DIR, "home-search-filter.png");
     await page.screenshot({ path: homeShot, fullPage: true });
     summary.screenshots.push(homeShot);
+
+    await page.selectOption("#gameCoinFilter", "all");
+    await page.click('[data-category-chip="puzzle"]');
+    await page.waitForFunction(() => document.querySelector("#gameCategoryFilter")?.value === "puzzle");
+    await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length >= 5);
+    const categoryState = await page.evaluate(() => {
+      const titles = [...document.querySelectorAll("#gamesGrid .game-title")]
+        .map((node) => (node.textContent || "").trim())
+        .filter(Boolean);
+      const selectedChip = document.querySelector('[data-category-chip="puzzle"]');
+      const metrics = JSON.parse(localStorage.getItem("cadegames:v1:metrics") || "{}");
+      return {
+        selectedValue: document.querySelector("#gameCategoryFilter")?.value || "",
+        selectedChipPressed: selectedChip?.getAttribute("aria-pressed") || "",
+        selectedChipActive: Boolean(selectedChip?.classList.contains("active")),
+        titles,
+        categoryEvent: Array.isArray(metrics.events)
+          ? metrics.events.some((event) => event?.name === "launcher_category_selected" && event?.meta?.category === "puzzle")
+          : false,
+      };
+    });
+    assert(categoryState.selectedValue === "puzzle", "Expected category select to mirror Puzzle chip.");
+    assert(categoryState.selectedChipPressed === "true", "Expected Puzzle chip aria-pressed state.");
+    assert(categoryState.selectedChipActive === true, "Expected Puzzle chip active class.");
+    assert(categoryState.titles.includes("2048"), "Expected Puzzle filter to include 2048.");
+    assert(categoryState.categoryEvent === true, "Expected category selection KPI event.");
+    summary.checks.push({ name: "home_category_chip_puzzle", pass: true, data: categoryState });
+
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForFunction(() => document.querySelectorAll("#discoveryRows [data-discovery-row]").length >= 6);
+    await page.waitForTimeout(100);
+    const mobileState = await page.evaluate(() => {
+      const controls = document.querySelector(".discovery-controls");
+      const rail = document.querySelector("#categoryRail");
+      const tile = document.querySelector("#discoveryRows .game-tile");
+      const controlsRect = controls?.getBoundingClientRect();
+      const tileRect = tile?.getBoundingClientRect();
+      return {
+        viewportWidth: window.innerWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        controlsWithinViewport: Boolean(controlsRect && controlsRect.left >= -2 && controlsRect.right <= window.innerWidth + 2),
+        railScrollable: Boolean(rail && rail.scrollWidth > rail.clientWidth),
+        tileWidth: Math.round(tileRect?.width || 0),
+        tileHeight: Math.round(tileRect?.height || 0),
+      };
+    });
+    assert(mobileState.documentWidth <= mobileState.viewportWidth + 2, "Expected no page-level horizontal overflow on mobile.");
+    assert(mobileState.controlsWithinViewport === true, "Expected discovery controls to fit mobile viewport.");
+    assert(mobileState.railScrollable === true, "Expected category rail to scroll horizontally on mobile.");
+    assert(mobileState.tileWidth >= 170 && mobileState.tileHeight >= 140, "Expected mobile discovery tiles to remain tappable.");
+    summary.checks.push({ name: "home_mobile_discovery_layout", pass: true, data: mobileState });
+    const mobileShot = path.join(OUTPUT_DIR, "home-mobile-discovery.png");
+    await page.screenshot({ path: mobileShot, fullPage: false });
+    summary.screenshots.push(mobileShot);
+    await page.setViewportSize({ width: 1280, height: 720 });
 
     await page.goto(`${baseUrl}/shop.html`, { waitUntil: "networkidle" });
     await page.selectOption("#shopGameFilter", "Tetris");

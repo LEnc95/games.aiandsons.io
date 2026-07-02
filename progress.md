@@ -3851,3 +3851,16 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `npm run test:feedback-smoke:raw` passed its five functional checks but failed the zero-console-error gate because mobile Tetris POSTed to the raw static server and received HTTP 501, matching the known repository caveat and not a Bridge Islands issue.
 - Run time recorded: 2026-07-01T07:18:57.4638792-04:00.
 - TODO: none for Bridge Islands; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-07-02 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Bridge Islands and recent additions including Vial Sort, Loop Trail, Crazy Eights, Pyramid Hopper, Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, and Pocket Pool.
+- Reviewed the registry and selected SameGame (`/samegame`), a connected-cluster removal puzzle not currently represented in the catalog.
+- Initial implementation added `samegame/index.html` with five seeded boards, gravity and column collapse, pointer/touch and keyboard controls, hints, undo, pause/restart/fullscreen, coin rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__SAMEGAME_GAME__` helpers.
+- Registered SameGame in `src/meta/games.js`.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/samegame.png`, and local Linear feedback seeds now include SameGame. The first OG render attempt hit a transient Chromium screenshot error on the default banner, and the rerun completed successfully. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: SameGame module-script parse, 143-game slug/URL uniqueness and puzzle-only category check, focused catalog/feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/samegame-smoke`, custom desktop/mobile Playwright scenarios in `output/web-game/samegame-scenarios`, screenshot/OG inspection, and `git diff --check` with only LF-to-CRLF warnings.
+- Custom scenarios covered start/menu, real cluster removal, undo, hint, pause/resume, deterministic pointer removal, full campaign win with coin reward, forced loss, shared feedback launcher, mobile touch removal, and zero SameGame browser/page errors.
+- `npm run test:feedback-smoke:raw` passed its five functional checks but failed the zero-console-error gate because mobile Tetris posted to the raw Python static server and received HTTP 501, matching the known repository caveat and not a SameGame issue.
+- Run time recorded: 2026-07-02T07:17:34.0229245-04:00.
+- TODO: none for SameGame; future work may address the raw-static feedback smoke POST/API behavior.

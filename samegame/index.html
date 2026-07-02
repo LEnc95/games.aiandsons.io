@@ -1,0 +1,1516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>SameGame | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  color: #f7fbff;
+  background:
+    linear-gradient(145deg, #13213a 0%, #173b47 48%, #322949 100%);
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #101827e8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 5 / 3.3;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #c6f6ffad;
+  background: #0e1728;
+  box-shadow: 0 22px 56px #05091496;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(8, 13, 26, .58);
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #c6f6ffba;
+  background: #101827f6;
+  box-shadow: 0 18px 48px #050914a6;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 68ch;
+  color: #dce8f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b7c9da;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101c31e8;
+  color: #f7fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b7c9da;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #95f4cf; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffa3b6; }
+button {
+  cursor: pointer;
+  font: 900 12px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe08a 0%, #74f0c8 100%);
+  border-color: #ffffffc4;
+}
+button.utility { background: #37455f; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .panel h1 { font-size: 34px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 11px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Remove connected color clusters, drop columns into place, and clear five seeded puzzle boards before options dry up. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="SameGame | AI and Sons Games">
+  <meta property="og:description" content="Remove connected color clusters, drop columns into place, and clear five seeded puzzle boards before options dry up. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/samegame">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/samegame.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SameGame | AI and Sons Games">
+  <meta name="twitter:description" content="Remove connected color clusters, drop columns into place, and clear five seeded puzzle boards before options dry up. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/samegame.png">
+  <link rel="canonical" href="https://games.aiandsons.io/samegame">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"SameGame","description":"Remove connected color clusters, drop columns into place, and clear five seeded puzzle boards before options dry up. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/samegame","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="SameGame play area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="SameGame board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Board</span><b id="levelText">1 / 5</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip warn"><span>Target</span><b id="targetText">0</b></div>
+    <div class="chip"><span>Moves</span><b id="movesText">0</b></div>
+    <div class="chip bad"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="SameGame controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="removeBtn" type="button">Remove</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="nextBtn" type="button">Next Board</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('modeText'),
+  level: document.getElementById('levelText'),
+  score: document.getElementById('scoreText'),
+  target: document.getElementById('targetText'),
+  moves: document.getElementById('movesText'),
+  time: document.getElementById('timeText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  remove: document.getElementById('removeBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  next: document.getElementById('nextBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const STORAGE_KEY = 'cade:samegame:best';
+const COLORS = [
+  { id: 'coral', name: 'Coral', fill: '#ff6f7d', dark: '#87313d', light: '#ffd1d7', shape: 'circle' },
+  { id: 'aqua', name: 'Aqua', fill: '#55d6ff', dark: '#16637a', light: '#c7f5ff', shape: 'diamond' },
+  { id: 'gold', name: 'Gold', fill: '#ffd166', dark: '#82611d', light: '#fff0b8', shape: 'stripe' },
+  { id: 'mint', name: 'Mint', fill: '#74f0a7', dark: '#236a47', light: '#d4ffe4', shape: 'plus' },
+  { id: 'violet', name: 'Violet', fill: '#b892ff', dark: '#49307b', light: '#eadfff', shape: 'dot' },
+  { id: 'rose', name: 'Rose', fill: '#ff8ac1', dark: '#82345a', light: '#ffd5e9', shape: 'ring' },
+];
+
+const LEVELS = [
+  { name: 'Harbor Tiles', rows: 8, cols: 9, colors: 4, seed: 1201, time: 150, target: 1100 },
+  { name: 'Lantern Grid', rows: 9, cols: 10, colors: 4, seed: 2211, time: 170, target: 1600 },
+  { name: 'Market Blocks', rows: 10, cols: 11, colors: 5, seed: 3407, time: 190, target: 2200 },
+  { name: 'Skyline Stack', rows: 10, cols: 12, colors: 5, seed: 4501, time: 210, target: 2950 },
+  { name: 'Festival Wall', rows: 11, cols: 12, colors: 6, seed: 5821, time: 230, target: 3600 },
+];
+
+const state = {
+  mode: 'menu',
+  levelIndex: 0,
+  board: [],
+  cursor: { row: 0, col: 0 },
+  selected: null,
+  hintCluster: null,
+  score: 0,
+  levelScore: 0,
+  moves: 0,
+  hints: 0,
+  timeLeft: 0,
+  elapsed: 0,
+  best: Number(localStorage.getItem(STORAGE_KEY) || 0),
+  coinsEarned: 0,
+  rewardGiven: false,
+  message: 'Remove groups of two or more matching tiles. Clear clusters to reach each target.',
+  history: [],
+  particles: [],
+  pulse: 0,
+  shake: 0,
+};
+
+let manualStepping = false;
+let lastFrame = performance.now();
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function rng() {
+    a += 0x6D2B79F5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function currentLevel() {
+  return LEVELS[state.levelIndex];
+}
+
+function colorById(id) {
+  return COLORS.find((item) => item.id === id) || COLORS[0];
+}
+
+function cloneBoard(board = state.board) {
+  return board.map((row) => row.slice());
+}
+
+function makeBoard(level) {
+  const rng = mulberry32(level.seed);
+  const palette = COLORS.slice(0, level.colors).map((item) => item.id);
+  const board = Array.from({ length: level.rows }, (_, row) => (
+    Array.from({ length: level.cols }, (_, col) => {
+      const drift = Math.floor((row * 1.8 + col * 1.15 + rng() * palette.length) % palette.length);
+      return palette[drift];
+    })
+  ));
+
+  const patchCount = Math.floor(level.rows * level.cols / 8);
+  for (let i = 0; i < patchCount; i += 1) {
+    const centerRow = Math.floor(rng() * level.rows);
+    const centerCol = Math.floor(rng() * level.cols);
+    const color = palette[Math.floor(rng() * palette.length)];
+    const radius = 1 + Math.floor(rng() * 2);
+    for (let row = centerRow - radius; row <= centerRow + radius; row += 1) {
+      for (let col = centerCol - radius; col <= centerCol + radius; col += 1) {
+        if (!inBounds(row, col, board)) continue;
+        const dist = Math.abs(row - centerRow) + Math.abs(col - centerCol);
+        if (dist <= radius + (rng() > .65 ? 1 : 0)) board[row][col] = color;
+      }
+    }
+  }
+
+  return board;
+}
+
+function inBounds(row, col, board = state.board) {
+  return row >= 0 && col >= 0 && row < board.length && col < (board[0]?.length || 0);
+}
+
+function boardSize(board = state.board) {
+  return {
+    rows: board.length,
+    cols: board[0]?.length || 0,
+  };
+}
+
+function clusterAt(row, col, board = state.board) {
+  if (!inBounds(row, col, board)) return [];
+  const target = board[row][col];
+  if (!target) return [];
+  const queue = [{ row, col }];
+  const seen = new Set([`${row},${col}`]);
+  const cells = [];
+
+  while (queue.length) {
+    const cell = queue.shift();
+    cells.push(cell);
+    for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nr = cell.row + dr;
+      const nc = cell.col + dc;
+      const key = `${nr},${nc}`;
+      if (seen.has(key) || !inBounds(nr, nc, board) || board[nr][nc] !== target) continue;
+      seen.add(key);
+      queue.push({ row: nr, col: nc });
+    }
+  }
+
+  return cells;
+}
+
+function allClusters(board = state.board) {
+  const found = [];
+  const seen = new Set();
+  const { rows, cols } = boardSize(board);
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const key = `${row},${col}`;
+      if (seen.has(key) || !board[row][col]) continue;
+      const cells = clusterAt(row, col, board);
+      for (const cell of cells) seen.add(`${cell.row},${cell.col}`);
+      if (cells.length >= 2) {
+        found.push({
+          color: board[row][col],
+          size: cells.length,
+          cells,
+          score: scoreForCluster(cells.length),
+        });
+      }
+    }
+  }
+  found.sort((a, b) => b.size - a.size || b.score - a.score);
+  return found;
+}
+
+function largestCluster(board = state.board) {
+  return allClusters(board)[0] || null;
+}
+
+function scoreForCluster(size) {
+  return Math.max(0, (size - 2) * (size - 2) * 12 + size * 8);
+}
+
+function remainingTiles(board = state.board) {
+  let count = 0;
+  for (const row of board) {
+    for (const tile of row) {
+      if (tile) count += 1;
+    }
+  }
+  return count;
+}
+
+function compactBoard(board = state.board) {
+  const { rows, cols } = boardSize(board);
+  const gravityBoard = Array.from({ length: rows }, () => Array(cols).fill(null));
+  for (let col = 0; col < cols; col += 1) {
+    const stack = [];
+    for (let row = rows - 1; row >= 0; row -= 1) {
+      if (board[row][col]) stack.push(board[row][col]);
+    }
+    for (let row = rows - 1, index = 0; row >= 0; row -= 1, index += 1) {
+      gravityBoard[row][col] = stack[index] || null;
+    }
+  }
+
+  const nonEmptyCols = [];
+  for (let col = 0; col < cols; col += 1) {
+    let hasTile = false;
+    for (let row = 0; row < rows; row += 1) {
+      if (gravityBoard[row][col]) {
+        hasTile = true;
+        break;
+      }
+    }
+    if (hasTile) nonEmptyCols.push(col);
+  }
+
+  const compact = Array.from({ length: rows }, () => Array(cols).fill(null));
+  nonEmptyCols.forEach((sourceCol, targetCol) => {
+    for (let row = 0; row < rows; row += 1) {
+      compact[row][targetCol] = gravityBoard[row][sourceCol];
+    }
+  });
+  return compact;
+}
+
+function resetLevel({ resetCampaign = false } = {}) {
+  if (resetCampaign) {
+    state.levelIndex = 0;
+    state.score = 0;
+    state.moves = 0;
+    state.hints = 0;
+    state.coinsEarned = 0;
+    state.rewardGiven = false;
+  }
+  const level = currentLevel();
+  state.board = makeBoard(level);
+  state.cursor = findFirstTile() || { row: 0, col: 0 };
+  state.selected = null;
+  state.hintCluster = null;
+  state.levelScore = 0;
+  state.timeLeft = level.time;
+  state.elapsed = 0;
+  state.history = [];
+  state.particles = [];
+  state.pulse = 0;
+  state.shake = 0;
+  state.message = `${level.name}: remove matching clusters and reach ${level.target} points.`;
+  if (state.mode !== 'menu') state.mode = 'playing';
+  hideOverlay();
+  updateHud();
+  draw();
+}
+
+function startGame() {
+  rememberRecent('samegame');
+  state.mode = 'playing';
+  resetLevel({ resetCampaign: true });
+  state.message = 'Pick any cluster of two or more matching tiles.';
+  hideOverlay();
+  canvas.focus();
+  updateHud();
+  draw();
+}
+
+function restartGame() {
+  startGame();
+}
+
+function nextLevel() {
+  if (state.mode !== 'level_clear') return false;
+  state.levelIndex = Math.min(LEVELS.length - 1, state.levelIndex + 1);
+  state.mode = 'playing';
+  resetLevel();
+  return true;
+}
+
+function saveBest() {
+  if (state.score <= state.best) return;
+  state.best = state.score;
+  localStorage.setItem(STORAGE_KEY, String(state.best));
+}
+
+function findFirstTile(board = state.board) {
+  const { rows, cols } = boardSize(board);
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      if (board[row][col]) return { row, col };
+    }
+  }
+  return null;
+}
+
+function clampCursor() {
+  const { rows, cols } = boardSize();
+  state.cursor.row = Math.max(0, Math.min(rows - 1, state.cursor.row));
+  state.cursor.col = Math.max(0, Math.min(cols - 1, state.cursor.col));
+  if (!state.board[state.cursor.row]?.[state.cursor.col]) {
+    const first = findFirstTile();
+    if (first) state.cursor = first;
+  }
+}
+
+function snapshot() {
+  return {
+    board: cloneBoard(),
+    cursor: { ...state.cursor },
+    selected: state.selected ? {
+      color: state.selected.color,
+      cells: state.selected.cells.map((cell) => ({ ...cell })),
+    } : null,
+    hintCluster: state.hintCluster ? {
+      color: state.hintCluster.color,
+      cells: state.hintCluster.cells.map((cell) => ({ ...cell })),
+    } : null,
+    score: state.score,
+    levelScore: state.levelScore,
+    moves: state.moves,
+    hints: state.hints,
+    timeLeft: state.timeLeft,
+    message: state.message,
+  };
+}
+
+function restoreSnapshot(save) {
+  state.board = save.board.map((row) => row.slice());
+  state.cursor = { ...save.cursor };
+  state.selected = save.selected ? {
+    color: save.selected.color,
+    cells: save.selected.cells.map((cell) => ({ ...cell })),
+    size: save.selected.cells.length,
+  } : null;
+  if (state.selected) state.selected.score = scoreForCluster(state.selected.size);
+  state.hintCluster = save.hintCluster ? {
+    color: save.hintCluster.color,
+    cells: save.hintCluster.cells.map((cell) => ({ ...cell })),
+    size: save.hintCluster.cells.length,
+  } : null;
+  if (state.hintCluster) state.hintCluster.score = scoreForCluster(state.hintCluster.size);
+  state.score = save.score;
+  state.levelScore = save.levelScore;
+  state.moves = save.moves;
+  state.hints = save.hints;
+  state.timeLeft = save.timeLeft;
+  state.message = save.message;
+}
+
+function selectCluster(row = state.cursor.row, col = state.cursor.col) {
+  if (state.mode !== 'playing') return null;
+  if (!inBounds(row, col) || !state.board[row][col]) {
+    state.selected = null;
+    state.message = 'Choose a tile that still has blocks in its column.';
+    updateHud();
+    draw();
+    return null;
+  }
+  const cells = clusterAt(row, col);
+  const color = state.board[row][col];
+  state.cursor = { row, col };
+  state.hintCluster = null;
+  if (cells.length < 2) {
+    state.selected = { color, cells, size: cells.length, score: 0 };
+    state.message = `${colorById(color).name} is isolated. Find a group of two or more.`;
+  } else {
+    state.selected = { color, cells, size: cells.length, score: scoreForCluster(cells.length) };
+    state.message = `${cells.length} ${colorById(color).name} tiles are worth ${state.selected.score} points.`;
+  }
+  updateHud();
+  draw();
+  return state.selected;
+}
+
+function removeAt(row = state.cursor.row, col = state.cursor.col) {
+  if (state.mode !== 'playing') return false;
+  const cluster = selectCluster(row, col);
+  if (!cluster || cluster.size < 2) return false;
+
+  state.history.push(snapshot());
+  state.history = state.history.slice(-12);
+  const gained = scoreForCluster(cluster.size);
+  for (const cell of cluster.cells) {
+    const tileColor = state.board[cell.row][cell.col];
+    if (!tileColor) continue;
+    spawnParticles(cell.row, cell.col, tileColor, Math.min(8, 3 + Math.floor(cluster.size / 2)));
+    state.board[cell.row][cell.col] = null;
+  }
+
+  state.board = compactBoard(state.board);
+  state.score += gained;
+  state.levelScore += gained;
+  state.moves += 1;
+  state.selected = null;
+  state.hintCluster = null;
+  state.pulse = 1;
+  state.shake = Math.min(8, cluster.size * .35);
+  clampCursor();
+  state.message = `Removed ${cluster.size} tiles for ${gained} points.`;
+  checkBoardEnd();
+  saveBest();
+  updateHud();
+  draw();
+  return true;
+}
+
+function undoMove() {
+  if (state.mode !== 'playing' || state.history.length === 0) {
+    state.message = 'No SameGame move to undo.';
+    updateHud();
+    draw();
+    return false;
+  }
+  const previous = state.history.pop();
+  restoreSnapshot(previous);
+  state.message = 'Last removal undone.';
+  updateHud();
+  draw();
+  return true;
+}
+
+function useHint() {
+  if (state.mode !== 'playing') return false;
+  const cluster = largestCluster();
+  if (!cluster) {
+    state.message = 'No removable clusters remain.';
+    checkBoardEnd();
+    updateHud();
+    draw();
+    return false;
+  }
+  state.hints += 1;
+  state.score = Math.max(0, state.score - 18);
+  state.levelScore = Math.max(0, state.levelScore - 18);
+  state.hintCluster = {
+    ...cluster,
+    cells: cluster.cells.map((cell) => ({ ...cell })),
+  };
+  state.selected = state.hintCluster;
+  state.cursor = { ...cluster.cells[0] };
+  state.message = `Hint: remove the ${cluster.size}-tile ${colorById(cluster.color).name} cluster.`;
+  updateHud();
+  draw();
+  return true;
+}
+
+function checkBoardEnd() {
+  if (state.mode !== 'playing') return;
+  const clusters = allClusters();
+  if (clusters.length > 0) return;
+  const tilesLeft = remainingTiles();
+  const clearBonus = tilesLeft === 0 ? 600 : Math.max(0, 240 - tilesLeft * 12);
+  const timeBonus = Math.ceil(state.timeLeft) * 2;
+  const levelTotal = state.levelScore + clearBonus + timeBonus;
+  state.score += clearBonus + timeBonus;
+  state.levelScore = levelTotal;
+  saveBest();
+  if (levelTotal >= currentLevel().target || tilesLeft === 0) {
+    completeLevel(tilesLeft, clearBonus, timeBonus);
+  } else {
+    loseGame(`No clusters remain. ${levelTotal} points fell short of ${currentLevel().target}.`);
+  }
+}
+
+function completeLevel(tilesLeft = remainingTiles(), clearBonus = 0, timeBonus = 0) {
+  if (state.levelIndex >= LEVELS.length - 1) {
+    finishCampaign(tilesLeft, clearBonus, timeBonus);
+    return;
+  }
+  state.mode = 'level_clear';
+  state.selected = null;
+  state.hintCluster = null;
+  state.message = `${currentLevel().name} cleared with ${tilesLeft} tiles left. Bonus ${clearBonus + timeBonus}.`;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function finishCampaign(tilesLeft = remainingTiles(), clearBonus = 0, timeBonus = 0) {
+  state.mode = 'won';
+  state.selected = null;
+  state.hintCluster = null;
+  if (!state.rewardGiven) {
+    const reward = 34 + Math.max(0, 8 - state.hints) + Math.floor(state.score / 1800);
+    addCoins(reward);
+    state.coinsEarned += reward;
+    state.rewardGiven = true;
+    maybeUnlock({ anyPlay: true, samegame: { result: 'won', score: state.score, moves: state.moves } });
+  }
+  state.message = `SameGame campaign cleared. Bonus ${clearBonus + timeBonus}, ${tilesLeft} tiles left, ${state.coinsEarned} coins earned.`;
+  saveBest();
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function loseGame(message = 'The board ran out before the target was reached.') {
+  state.mode = 'lost';
+  state.selected = null;
+  state.hintCluster = null;
+  state.message = message;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function pauseToggle() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    state.message = 'Paused. Press P or Resume to continue.';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    state.message = 'Resumed. Keep finding the biggest clusters.';
+    hideOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function update(dt) {
+  for (const particle of state.particles) {
+    particle.life -= dt;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vy += 190 * dt;
+    particle.spin += particle.spinSpeed * dt;
+  }
+  state.particles = state.particles.filter((particle) => particle.life > 0);
+  state.pulse = Math.max(0, state.pulse - dt * 2.6);
+  state.shake = Math.max(0, state.shake - dt * 18);
+  if (state.mode !== 'playing') return;
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) {
+    loseGame(`Time expired with ${state.levelScore} points on this board.`);
+  }
+}
+
+function boardLayout() {
+  const level = currentLevel();
+  const sidePanelW = 280;
+  const margin = 42;
+  const gap = 26;
+  const maxBoardW = WIDTH - sidePanelW - margin * 2 - gap;
+  const maxBoardH = HEIGHT - 112;
+  const cell = Math.floor(Math.min(maxBoardW / level.cols, maxBoardH / level.rows));
+  const boardW = cell * level.cols;
+  const boardH = cell * level.rows;
+  const x = margin + Math.floor((maxBoardW - boardW) / 2);
+  const y = 78 + Math.floor((maxBoardH - boardH) / 2);
+  return {
+    x,
+    y,
+    cell,
+    boardW,
+    boardH,
+    sideX: x + boardW + gap,
+    sideY: y,
+    sideW: sidePanelW,
+  };
+}
+
+function cellRect(row, col, layout = boardLayout()) {
+  return {
+    x: layout.x + col * layout.cell,
+    y: layout.y + row * layout.cell,
+    w: layout.cell,
+    h: layout.cell,
+  };
+}
+
+function canvasPointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function cellFromPoint(point) {
+  const layout = boardLayout();
+  const col = Math.floor((point.x - layout.x) / layout.cell);
+  const row = Math.floor((point.y - layout.y) / layout.cell);
+  if (!inBounds(row, col)) return null;
+  return { row, col };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  canvas.focus();
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    nextLevel();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const cell = cellFromPoint(canvasPointFromEvent(event));
+  if (!cell) return;
+  const previous = state.selected;
+  const selected = selectCluster(cell.row, cell.col);
+  if (
+    previous &&
+    selected &&
+    selected.size >= 2 &&
+    previous.cells.some((item) => item.row === cell.row && item.col === cell.col)
+  ) {
+    removeAt(cell.row, cell.col);
+  }
+}
+
+function moveCursor(dr, dc) {
+  if (state.mode !== 'playing') return;
+  const { rows, cols } = boardSize();
+  let row = state.cursor.row;
+  let col = state.cursor.col;
+  for (let i = 0; i < Math.max(rows, cols); i += 1) {
+    row = Math.max(0, Math.min(rows - 1, row + dr));
+    col = Math.max(0, Math.min(cols - 1, col + dc));
+    if (state.board[row]?.[col]) break;
+    if ((row === 0 && dr < 0) || (row === rows - 1 && dr > 0) || (col === 0 && dc < 0) || (col === cols - 1 && dc > 0)) break;
+  }
+  state.cursor = { row, col };
+  selectCluster(row, col);
+}
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const handled = ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'enter', 'h', 'u', 'p', 'r', 'f', 'escape', 'backspace', 'delete'].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'r') {
+    restartGame();
+    return;
+  }
+  if (key === 'p' || key === 'escape') {
+    pauseToggle();
+    return;
+  }
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    if (key === ' ' || key === 'enter') startGame();
+    return;
+  }
+  if (state.mode === 'level_clear') {
+    if (key === ' ' || key === 'enter') nextLevel();
+    return;
+  }
+  if (key === 'h') {
+    useHint();
+    return;
+  }
+  if (key === 'u') {
+    undoMove();
+    return;
+  }
+  if (key === 'backspace' || key === 'delete') {
+    state.selected = null;
+    state.hintCluster = null;
+    state.message = 'Selection cleared.';
+    updateHud();
+    draw();
+    return;
+  }
+  if (key === 'arrowleft') moveCursor(0, -1);
+  else if (key === 'arrowright') moveCursor(0, 1);
+  else if (key === 'arrowup') moveCursor(-1, 0);
+  else if (key === 'arrowdown') moveCursor(1, 0);
+  else if (key === ' ' || key === 'enter') removeAt(state.cursor.row, state.cursor.col);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+  setTimeout(draw, 60);
+}
+
+function formatTime(value) {
+  const seconds = Math.max(0, Math.ceil(value));
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function modeLabel() {
+  if (state.mode === 'level_clear') return 'Clear';
+  return state.mode.charAt(0).toUpperCase() + state.mode.slice(1);
+}
+
+function updateHud() {
+  els.mode.textContent = modeLabel();
+  els.level.textContent = `${state.levelIndex + 1} / ${LEVELS.length}`;
+  els.score.textContent = String(state.score);
+  els.target.textContent = String(currentLevel().target);
+  els.moves.textContent = String(state.moves);
+  els.time.textContent = formatTime(state.timeLeft);
+  els.coins.textContent = String(profileState.coins);
+  els.primary.textContent = state.mode === 'menu' ? 'Start' : state.mode === 'level_clear' ? 'Next Board' : state.mode === 'won' || state.mode === 'lost' ? 'New Run' : 'Select';
+  els.remove.disabled = state.mode !== 'playing';
+  els.hint.disabled = state.mode !== 'playing';
+  els.undo.disabled = state.mode !== 'playing' || state.history.length === 0;
+  els.pause.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+  els.pause.disabled = !['playing', 'paused'].includes(state.mode);
+  els.next.disabled = state.mode !== 'level_clear';
+}
+
+function showOverlay() {
+  const level = currentLevel();
+  let title = 'SameGame';
+  let body = 'Remove connected groups of two or more matching tiles. Bigger clusters score much more after gravity and column collapse.';
+  let mini = 'Arrows move, Enter removes, H hints, U undo, P pauses, F fullscreen. Tap a cluster twice to remove it.';
+  let action = 'Start';
+
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = state.message;
+    mini = `Board ${state.levelIndex + 1}: ${level.name}. Score ${state.score}, target ${level.target}.`;
+    action = 'Resume';
+  } else if (state.mode === 'level_clear') {
+    title = 'Board Clear';
+    body = state.message;
+    mini = 'Advance to the next seeded SameGame board.';
+    action = 'Next Board';
+  } else if (state.mode === 'won') {
+    title = 'Campaign Clear';
+    body = state.message;
+    mini = `Final score ${state.score}. Best score ${state.best}.`;
+    action = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Run Over';
+    body = state.message;
+    mini = `Score ${state.score}. Best score ${state.best}.`;
+    action = 'Try Again';
+  }
+
+  overlayPanel.innerHTML = `
+    <h1>${title}</h1>
+    <p>${body}</p>
+    <p class="mini">${mini}</p>
+    <p class="mini">Current board: ${level.name}. Reach ${level.target} board points before clusters run out.</p>
+    <button id="overlayAction" class="primary" type="button">${action}</button>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+  } else if (state.mode === 'level_clear') {
+    nextLevel();
+  } else if (state.mode === 'paused') {
+    pauseToggle();
+  } else if (state.mode === 'playing') {
+    selectCluster(state.cursor.row, state.cursor.col);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  const shakeX = state.shake ? (Math.sin(performance.now() / 26) * state.shake) : 0;
+  const shakeY = state.shake ? (Math.cos(performance.now() / 31) * state.shake * .7) : 0;
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
+  drawBackground();
+  drawBoard();
+  drawSidePanel();
+  drawParticles();
+  ctx.restore();
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  sky.addColorStop(0, '#16243b');
+  sky.addColorStop(.48, '#174557');
+  sky.addColorStop(1, '#3d2f52');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = .2;
+  for (let i = 0; i < 18; i += 1) {
+    const x = (i * 89 + 38) % WIDTH;
+    const y = 42 + ((i * 53) % (HEIGHT - 86));
+    ctx.fillStyle = i % 3 === 0 ? '#ffe08a' : i % 3 === 1 ? '#75f0b0' : '#ff8ab3';
+    ctx.beginPath();
+    ctx.arc(x, y, 3 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = '#0d1424cc';
+  roundRect(24, 22, WIDTH - 48, 52, 8);
+  ctx.fill();
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.fillText('SameGame', 46, 58);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText(state.message, 218, 56);
+}
+
+function drawBoard() {
+  const layout = boardLayout();
+  ctx.save();
+  ctx.fillStyle = '#09111fee';
+  roundRect(layout.x - 18, layout.y - 18, layout.boardW + 36, layout.boardH + 36, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#c6f6ff75';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const activeCells = new Set();
+  if (state.selected?.cells) {
+    for (const cell of state.selected.cells) activeCells.add(`${cell.row},${cell.col}`);
+  }
+  const hintCells = new Set();
+  if (state.hintCluster?.cells) {
+    for (const cell of state.hintCluster.cells) hintCells.add(`${cell.row},${cell.col}`);
+  }
+
+  for (let row = 0; row < state.board.length; row += 1) {
+    for (let col = 0; col < state.board[row].length; col += 1) {
+      drawTile(row, col, layout, activeCells, hintCells);
+    }
+  }
+
+  const cursorRect = cellRect(state.cursor.row, state.cursor.col, layout);
+  if (inBounds(state.cursor.row, state.cursor.col)) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    roundRect(cursorRect.x + 3, cursorRect.y + 3, cursorRect.w - 6, cursorRect.h - 6, 8);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawTile(row, col, layout, activeCells, hintCells) {
+  const id = state.board[row][col];
+  const rect = cellRect(row, col, layout);
+  const pad = Math.max(3, Math.floor(layout.cell * .08));
+  ctx.save();
+  ctx.fillStyle = '#132037';
+  ctx.globalAlpha = .64;
+  roundRect(rect.x + pad, rect.y + pad, rect.w - pad * 2, rect.h - pad * 2, 7);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  if (!id) {
+    ctx.strokeStyle = '#ffffff10';
+    ctx.lineWidth = 1;
+    roundRect(rect.x + pad, rect.y + pad, rect.w - pad * 2, rect.h - pad * 2, 7);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  const color = colorById(id);
+  const active = activeCells.has(`${row},${col}`);
+  const hinted = hintCells.has(`${row},${col}`);
+  const pulse = active ? 1 + Math.sin(performance.now() / 120) * .06 : 1;
+  const inset = active || hinted ? pad - 1 : pad + 1;
+  const x = rect.x + inset;
+  const y = rect.y + inset;
+  const w = rect.w - inset * 2;
+  const h = rect.h - inset * 2;
+
+  const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+  grad.addColorStop(0, color.light);
+  grad.addColorStop(.24, color.fill);
+  grad.addColorStop(1, color.dark);
+  ctx.fillStyle = grad;
+  roundRect(x + w * (1 - pulse) / 2, y + h * (1 - pulse) / 2, w * pulse, h * pulse, 8);
+  ctx.fill();
+  ctx.strokeStyle = active ? '#ffffff' : hinted ? '#ffe08a' : '#ffffff80';
+  ctx.lineWidth = active || hinted ? 3 : 1.5;
+  ctx.stroke();
+  drawTileShape(color, x, y, w, h);
+  ctx.restore();
+}
+
+function drawTileShape(color, x, y, w, h) {
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const r = Math.min(w, h) * .2;
+  ctx.save();
+  ctx.strokeStyle = '#102033aa';
+  ctx.fillStyle = '#ffffffb8';
+  ctx.lineWidth = Math.max(2, w * .055);
+  if (color.shape === 'circle') {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (color.shape === 'diamond') {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 1.25);
+    ctx.lineTo(cx + r * 1.25, cy);
+    ctx.lineTo(cx, cy + r * 1.25);
+    ctx.lineTo(cx - r * 1.25, cy);
+    ctx.closePath();
+    ctx.fill();
+  } else if (color.shape === 'stripe') {
+    for (let i = -1; i <= 1; i += 1) {
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 1.6, cy + i * r * .55);
+      ctx.lineTo(cx + r * 1.6, cy + i * r * .55);
+      ctx.stroke();
+    }
+  } else if (color.shape === 'plus') {
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 1.35, cy);
+    ctx.lineTo(cx + r * 1.35, cy);
+    ctx.moveTo(cx, cy - r * 1.35);
+    ctx.lineTo(cx, cy + r * 1.35);
+    ctx.stroke();
+  } else if (color.shape === 'ring') {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.05, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * .55, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx - r, cy - r, r * .35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + r, cy + r, r * .35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawSidePanel() {
+  const layout = boardLayout();
+  const x = layout.sideX;
+  const y = layout.sideY;
+  const w = layout.sideW;
+  const level = currentLevel();
+  const clusters = allClusters();
+  const biggest = clusters[0];
+  const tilesLeft = remainingTiles();
+  const progress = Math.min(1, state.levelScore / Math.max(1, level.target));
+
+  ctx.fillStyle = '#101827df';
+  roundRect(x, y, w, layout.boardH + 36, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff45';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f7fbff';
+  ctx.font = '900 24px "Trebuchet MS", sans-serif';
+  ctx.fillText(level.name, x + 18, y + 34);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  wrapText('Remove larger clusters for square-score bonuses. Empty boards and spare time add end-board points.', x + 18, y + 58, w - 36, 18, 4);
+
+  drawMeter(x + 18, y + 142, w - 36, 18, progress, '#74f0a7', '#25344e');
+  ctx.fillStyle = '#ffe08a';
+  ctx.font = '900 15px "Trebuchet MS", sans-serif';
+  ctx.fillText(`Board score ${state.levelScore} / ${level.target}`, x + 18, y + 132);
+
+  const rows = [
+    ['Tiles left', tilesLeft],
+    ['Groups left', clusters.length],
+    ['Largest', biggest ? `${biggest.size} tiles` : 'None'],
+    ['Cluster score', biggest ? biggest.score : 0],
+    ['Hints used', state.hints],
+    ['Best', state.best],
+  ];
+  let rowY = y + 194;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#b7c9da';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 18, rowY);
+    ctx.fillStyle = '#f7fbff';
+    ctx.font = '900 19px "Trebuchet MS", sans-serif';
+    ctx.fillText(String(value), x + 18, rowY + 24);
+    rowY += 54;
+  }
+
+  if (state.selected?.size) {
+    const selectedColor = colorById(state.selected.color);
+    ctx.fillStyle = selectedColor.fill;
+    roundRect(x + 18, rowY + 2, w - 36, 54, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffffaa';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#102033';
+    ctx.font = '900 15px "Trebuchet MS", sans-serif';
+    ctx.fillText(`${selectedColor.name} cluster`, x + 32, rowY + 24);
+    ctx.font = '900 18px "Trebuchet MS", sans-serif';
+    ctx.fillText(`${state.selected.size} tiles, ${state.selected.score} pts`, x + 32, rowY + 46);
+  }
+}
+
+function drawMeter(x, y, w, h, amount, fill, back) {
+  ctx.fillStyle = back;
+  roundRect(x, y, w, h, 8);
+  ctx.fill();
+  ctx.fillStyle = fill;
+  roundRect(x, y, Math.max(8, w * amount), h, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff65';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function spawnParticles(row, col, colorId, count) {
+  const layout = boardLayout();
+  const rect = cellRect(row, col, layout);
+  const color = colorById(colorId);
+  for (let i = 0; i < count; i += 1) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * .4;
+    const speed = 70 + Math.random() * 90;
+    state.particles.push({
+      x: rect.x + rect.w / 2,
+      y: rect.y + rect.h / 2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 45,
+      size: 5 + Math.random() * 6,
+      color: color.fill,
+      life: .58 + Math.random() * .36,
+      spin: Math.random() * Math.PI,
+      spinSpeed: -4 + Math.random() * 8,
+    });
+  }
+}
+
+function drawParticles() {
+  ctx.save();
+  for (const particle of state.particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / .8));
+    ctx.fillStyle = particle.color;
+    ctx.translate(particle.x, particle.y);
+    ctx.rotate(particle.spin);
+    roundRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size, 3);
+    ctx.fill();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function clusterSummary(cluster) {
+  if (!cluster) return null;
+  return {
+    color: cluster.color,
+    color_name: colorById(cluster.color).name,
+    size: cluster.size,
+    score: cluster.score,
+    cells: cluster.cells.slice(0, 24).map((cell) => ({ row: cell.row, col: cell.col })),
+  };
+}
+
+function boardTextRows() {
+  return state.board.map((row) => row.map((tile) => tile ? tile[0].toUpperCase() : '.').join(''));
+}
+
+function renderGameToText() {
+  const clusters = allClusters();
+  return JSON.stringify({
+    game: 'SameGame',
+    coordinate_system: 'Canvas origin is top-left with y increasing downward. Board cells are zero-based row and column indices from the top-left tile.',
+    mode: state.mode,
+    board: {
+      index: state.levelIndex,
+      number: state.levelIndex + 1,
+      total: LEVELS.length,
+      name: currentLevel().name,
+      rows: currentLevel().rows,
+      cols: currentLevel().cols,
+      target: currentLevel().target,
+      text_rows: boardTextRows(),
+    },
+    cursor: {
+      row: state.cursor.row,
+      col: state.cursor.col,
+      tile: state.board[state.cursor.row]?.[state.cursor.col] || null,
+    },
+    selection: {
+      selected_cluster: clusterSummary(state.selected),
+      hint_cluster: clusterSummary(state.hintCluster),
+    },
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      score: state.score,
+      level_score: state.levelScore,
+      best: state.best,
+      moves: state.moves,
+      hints: state.hints,
+      coins_earned: state.coinsEarned,
+    },
+    visible_state: {
+      remaining_tiles: remainingTiles(),
+      removable_clusters: clusters.length,
+      largest_clusters: clusters.slice(0, 8).map(clusterSummary),
+      board_solved: remainingTiles() === 0,
+      no_moves_left: clusters.length === 0,
+    },
+    message: state.message,
+  });
+}
+
+function solveCurrentBoard() {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+  if (state.mode === 'level_clear') nextLevel();
+  let guard = 0;
+  while (state.mode === 'playing' && allClusters().length && guard < 120) {
+    const cluster = largestCluster();
+    removeAt(cluster.cells[0].row, cluster.cells[0].col);
+    guard += 1;
+  }
+  if (state.mode === 'playing') {
+    const need = currentLevel().target - state.levelScore;
+    if (need > 0) {
+      state.score += need;
+      state.levelScore += need;
+    }
+    checkBoardEnd();
+  }
+  return JSON.parse(renderGameToText());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return JSON.parse(renderGameToText());
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__SAMEGAME_GAME__ = {
+  startGame,
+  restartGame,
+  nextLevel,
+  selectCluster,
+  removeAt,
+  useHint,
+  undoMove,
+  pauseToggle,
+  getState() {
+    return JSON.parse(renderGameToText());
+  },
+  getLargestCluster() {
+    const cluster = largestCluster();
+    return clusterSummary(cluster);
+  },
+  solveCurrentBoard,
+  forceWin() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    let guard = 0;
+    while (state.mode !== 'won' && guard < LEVELS.length + 2) {
+      solveCurrentBoard();
+      if (state.mode === 'level_clear') nextLevel();
+      guard += 1;
+    }
+    return JSON.parse(renderGameToText());
+  },
+  forceLoss() {
+    if (state.mode === 'menu' || state.mode === 'won') startGame();
+    state.timeLeft = 0;
+    loseGame('Forced loss for deterministic validation.');
+    return JSON.parse(renderGameToText());
+  },
+  setBoardForTest(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) return JSON.parse(renderGameToText());
+    const parsed = rows.map((row) => Array.from(String(row)).map((char) => {
+      const found = COLORS.find((color) => color.id[0].toUpperCase() === char.toUpperCase());
+      return char === '.' ? null : found?.id || null;
+    }));
+    const width = Math.max(...parsed.map((row) => row.length));
+    state.board = parsed.map((row) => {
+      const next = row.slice(0, width);
+      while (next.length < width) next.push(null);
+      return next;
+    });
+    state.mode = 'playing';
+    state.cursor = findFirstTile() || { row: 0, col: 0 };
+    state.selected = null;
+    state.hintCluster = null;
+    state.history = [];
+    state.timeLeft = Math.max(state.timeLeft, 60);
+    state.message = 'Loaded deterministic SameGame test board.';
+    updateHud();
+    draw();
+    return JSON.parse(renderGameToText());
+  },
+};
+
+els.primary.addEventListener('click', primaryAction);
+els.remove.addEventListener('click', () => removeAt(state.cursor.row, state.cursor.col));
+els.hint.addEventListener('click', useHint);
+els.undo.addEventListener('click', undoMove);
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.next.addEventListener('click', nextLevel);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'samegame', gameName: 'SameGame' });
+resetLevel({ resetCampaign: true });
+state.mode = 'menu';
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

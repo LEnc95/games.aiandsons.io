@@ -1,4 +1,4 @@
-export const GAMES = [
+const BASE_GAMES = [
   { slug:'clubpenguin-world', name:'Club Penguin World', emoji:'\u{1F427}', scoreHint:'coins', url:'/clubpenguin-world/public/', desc:'Multiplayer social world prototype with rooms, quick chat, and live movement.', earnsCoins:true },
   { slug:'audioagar',      name:'Audio Agar',           emoji:'\u{1F535}', scoreHint:'mass',       url:'/audioagar',     desc:'Audio-first multiplayer orb arena with keyboard movement, spatial cues, and screen-reader status for blind play.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
   { slug:'2048',           name:'2048',                emoji:'\u{1F522}', scoreHint:'best tile',  url:'/2048',          desc:'Slide and merge matching tiles until you reach 2048.', earnsCoins:true },
@@ -50,6 +50,7 @@ export const GAMES = [
   { slug:'looptrail',      name:'Loop Trail',          emoji:'\u27B0',    scoreHint:'loops',      url:'/looptrail',     desc:'Draw one continuous loop around numbered cells, satisfy every edge clue, and avoid branches or broken trails.', earnsCoins:true },
   { slug:'vialsort',       name:'Vial Sort',           emoji:'\u{1F9EA}', scoreHint:'moves',      url:'/vialsort',      desc:'Pour matching liquid layers between glass vials, sort every color into pure tubes, and clear five lab shelves.', earnsCoins:true },
   { slug:'bridgeislands',  name:'Bridge Islands',      emoji:'\u{1F309}', scoreHint:'bridges',    url:'/bridgeislands', desc:'Draw one or two bridges between numbered islands, satisfy every clue, and connect each chart into one network.', earnsCoins:true },
+  { slug:'samegame',       name:'SameGame',            emoji:'\u{1F9E9}', scoreHint:'clusters',   url:'/samegame',      desc:'Remove connected color clusters, drop columns into place, and clear five seeded puzzle boards before options dry up.', earnsCoins:true },
   { slug:'pyramidhopper',   name:'Pyramid Hopper',      emoji:'\u{1F53A}', scoreHint:'tiles',      url:'/pyramidhopper', desc:'Hop across an isometric pyramid, light every cube, dodge rolling sparks, and clear three arcade boards.', earnsCoins:true },
   { slug:'pinball',        name:'Neon Pinball Rush',   emoji:'\u{1F3B0}', scoreHint:'score',      url:'/pinball',       desc:'Launch, flip, and chain bumper combos in a neon table run before your balls run out.', earnsCoins:true },
   { slug:'skywire',        name:'Skywire Sprint',      emoji:'\u{1F6F9}', scoreHint:'distance',   url:'/skywire',       desc:'Swap lanes, dodge drone traffic, and dash through hazards to finish a high-speed skyway run.', earnsCoins:true },
@@ -142,3 +143,163 @@ export const GAMES = [
   { slug:'wordladder',     name:'Word Ladder Sprint',  emoji:'\u{1FA9C}', scoreHint:'ladders',    url:'/wordladder',   desc:'Transform one word into another by changing a single letter at each valid vocabulary step.', earnsCoins:true },
   { slug:'dominodraw',     name:'Domino Draw',         emoji:'\u{1F0CF}', scoreHint:'points',     url:'/dominodraw',   desc:'Match domino ends, draw from the boneyard, block the table AI, and race to 50 points.', earnsCoins:true },
 ];
+
+export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
+  { key: 'puzzle', label: 'Puzzle' },
+  { key: 'arcade', label: 'Arcade' },
+  { key: 'word', label: 'Word' },
+  { key: 'cards', label: 'Cards' },
+  { key: 'sports', label: 'Sports' },
+  { key: 'racing', label: 'Racing' },
+  { key: 'strategy', label: 'Strategy' },
+  { key: 'audio-accessible', label: 'Audio Accessible' },
+  { key: 'two-player', label: 'Two Player' },
+]);
+
+const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
+  puzzle: [
+    '2048', 'memory', 'minesweeper', 'boxquest', 'lightsout', 'glowgrid', 'looptrail',
+    'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
+    'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
+    'switchyard', 'canallock', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
+    'nonogram', 'tenttrail', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+  ],
+  arcade: [
+    'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
+    'dino', 'doodlejump', 'spaceinvaders', 'frogger', 'pacman', 'tetris',
+    'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
+    'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
+    'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
+    'bubbleshooter', 'caverncrush',
+  ],
+  word: ['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder'],
+  cards: [
+    'setmatch', 'crazyeights', 'tripeaks', 'solitaire', 'freecell',
+    'mahjongsolitaire', 'dominodraw',
+  ],
+  sports: [
+    'airhockey', 'skeeball', 'pool', 'plinko', 'darts', 'minigolf', 'ski',
+    'homerunderby', 'nebulacurl',
+  ],
+  racing: [
+    'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
+    'trailblazer', 'aerocourier', 'sundialsprint',
+  ],
+  strategy: [
+    'prisonersdilemma', 'connect4', 'towerdefense', 'waterballoon', 'battleship',
+    'dotsandboxes', 'reversi', 'checkers', 'nimgrove', 'mancala', 'backgammon',
+    'chess', 'gomokugrid', 'oregontrail', 'pokemon',
+  ],
+  'audio-accessible': ['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio'],
+  'two-player': [
+    'pong', 'airhockey', 'tictactoe', 'rps', 'connect4', 'waterballoon',
+    'battleship', 'dotsandboxes', 'reversi', 'checkers', 'mancala',
+    'backgammon', 'chess', 'gomokugrid',
+  ],
+});
+
+const TRENDING_SLUGS = Object.freeze([
+  'tetris', 'pacman', 'snake', '2048', 'bubbleshooter', 'chess', 'plinko',
+  'towerdefense', 'wordsearch', 'dino', 'skeeball', 'audioagar',
+]);
+
+const TOP_PLAYED_SLUGS = Object.freeze([
+  '2048', 'snake', 'tetris', 'pacman', 'pong', 'chess', 'minesweeper',
+  'connect4', 'solitaire', 'checkers', 'flappy', 'breakout',
+]);
+
+const LONG_SLUGS = Object.freeze(new Set([
+  'clubpenguin-world', 'prisonersdilemma', 'oregontrail', 'pokemon',
+  'towerdefense', 'chess', 'backgammon', 'mahjongsolitaire',
+]));
+
+const HARD_SLUGS = Object.freeze(new Set([
+  'prisonersdilemma', 'oregontrail', 'towerdefense', 'chess', 'gomokugrid',
+  'sudokusprint', 'kakuro', 'calccages', 'nonogram', 'bridgeislands',
+]));
+
+const EASY_SLUGS = Object.freeze(new Set([
+  'pong', 'rps', 'snake', 'tictactoe', 'memory', 'flappy', 'dino',
+  'whackamole', 'colorcatch', 'plinko', 'skeeball',
+]));
+
+const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar']));
+const TWO_PLAYER_SLUGS = Object.freeze(new Set(DISCOVERY_CATEGORY_GROUPS['two-player']));
+const BASE_RELEASE_TIME = Date.UTC(2026, 1, 10);
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const rankMap = (slugs) => Object.freeze(
+  slugs.reduce((acc, slug, index) => {
+    acc[slug] = index + 1;
+    return acc;
+  }, {}),
+);
+
+const TRENDING_RANKS = rankMap(TRENDING_SLUGS);
+const TOP_PLAYED_RANKS = rankMap(TOP_PLAYED_SLUGS);
+
+const releaseDateForIndex = (index) => (
+  new Date(BASE_RELEASE_TIME + index * DAY_MS).toISOString().slice(0, 10)
+);
+
+const inferCategories = (game) => {
+  const categories = new Set();
+  for (const [key, slugs] of Object.entries(DISCOVERY_CATEGORY_GROUPS)) {
+    if (slugs.includes(game.slug)) categories.add(key);
+  }
+
+  const haystack = `${game.slug} ${game.name} ${game.desc || ''} ${game.scoreHint || ''}`.toLowerCase();
+  if (game.category === 'audio-only-blind-accessible') categories.add('audio-accessible');
+  if (/(word|letter|hangman)/.test(haystack)) categories.add('word');
+  if (/(card|solitaire|domino|mahjong)/.test(haystack)) categories.add('cards');
+  if (/(race|racing|lap|run|runner|sprint|dash)/.test(haystack)) categories.add('racing');
+  if (/(puzzle|solve|logic|maze|grid|tile|path|sort|match)/.test(haystack)) categories.add('puzzle');
+  if (/(score|waves|arcade|dodge|blast|jump|runner|pinball)/.test(haystack)) categories.add('arcade');
+  if (/(ai|strategy|tactical|battle|defense|opponent)/.test(haystack)) categories.add('strategy');
+
+  if (!categories.size) categories.add(game.earnsCoins === false ? 'strategy' : 'arcade');
+  return [...categories].filter((category) => GAME_DISCOVERY_CATEGORIES.some((item) => item.key === category));
+};
+
+const inferModes = (game) => {
+  const modes = new Set(['solo']);
+  if (TWO_PLAYER_SLUGS.has(game.slug)) modes.add('two-player');
+  if (MULTIPLAYER_SLUGS.has(game.slug)) modes.add('multiplayer');
+  return [...modes];
+};
+
+const inferDuration = (game, categories) => {
+  if (LONG_SLUGS.has(game.slug)) return 'long';
+  if (EASY_SLUGS.has(game.slug) || categories.includes('arcade') || categories.includes('sports')) return 'quick';
+  return 'medium';
+};
+
+const inferDifficulty = (game, categories) => {
+  if (HARD_SLUGS.has(game.slug)) return 'hard';
+  if (EASY_SLUGS.has(game.slug)) return 'easy';
+  if (categories.includes('strategy') || categories.includes('puzzle')) return 'medium';
+  return 'easy';
+};
+
+export const GAMES = BASE_GAMES.map((game, index) => {
+  const categories = inferCategories(game);
+  const modes = inferModes(game);
+  const duration = inferDuration(game, categories);
+  const difficulty = inferDifficulty(game, categories);
+  const featured = {
+    dailyEligible: true,
+    weeklyEligible: duration !== 'long' || categories.includes('strategy'),
+  };
+  if (TRENDING_RANKS[game.slug]) featured.trendingRank = TRENDING_RANKS[game.slug];
+  if (TOP_PLAYED_RANKS[game.slug]) featured.topPlayedRank = TOP_PLAYED_RANKS[game.slug];
+
+  return {
+    ...game,
+    categories,
+    modes,
+    duration,
+    difficulty,
+    releasedAt: releaseDateForIndex(index),
+    featured,
+  };
+});

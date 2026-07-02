@@ -66,6 +66,7 @@
 - game/looptrail
 - game/vialsort
 - game/bridgeislands
+- game/samegame
 - game/pyramidhopper
 - game/pinball
 - game/skywire
