@@ -1,10 +1,12 @@
-const path = require("path");
-const { pathToFileURL } = require("url");
-
 const {
   getFirestore,
   isFirebaseAdminConfigured,
 } = require("../_firebase-admin");
+const {
+  CURATED_TOP_PLAYED_SLUGS,
+  CURATED_TRENDING_SLUGS,
+  DISCOVERY_GAME_SLUGS,
+} = require("./_metadata");
 
 const TOTAL_COLLECTION = "discoveryGameAggregates";
 const DAILY_COLLECTION = "discoveryDailyLaunches";
@@ -13,9 +15,9 @@ const DEFAULT_LIMIT = 24;
 const TRENDING_WINDOW_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-let gamesPromise = null;
 let memoryTotals = new Map();
 let memoryDaily = new Map();
+const validGameSlugs = new Set(DISCOVERY_GAME_SLUGS);
 
 function normalizeSlug(value) {
   if (typeof value !== "string") return "";
@@ -38,22 +40,6 @@ function recentDayKeys(now = Date.now(), days = TRENDING_WINDOW_DAYS) {
   return Array.from({ length: Math.max(1, days) }, (_, index) => (
     dayKeyForTime(numeric - index * DAY_MS)
   ));
-}
-
-async function loadGames() {
-  if (!gamesPromise) {
-    const gamesPath = path.join(process.cwd(), "src", "meta", "games.js");
-    gamesPromise = import(pathToFileURL(gamesPath).href).then((mod) => (
-      Array.isArray(mod.GAMES) ? mod.GAMES : []
-    ));
-  }
-  return gamesPromise;
-}
-
-async function getGameMaps() {
-  const games = await loadGames();
-  const bySlug = new Map(games.map((game) => [normalizeSlug(game.slug), game]));
-  return { games, bySlug };
 }
 
 function rankedItem(slug, score, rank) {
@@ -92,17 +78,14 @@ function mergeRankings(primary, fallback, limit = DEFAULT_LIMIT) {
   return merged;
 }
 
-async function getCuratedRankings(limit = DEFAULT_LIMIT) {
-  const { games } = await getGameMaps();
-  const byFeaturedRank = (key) => games
-    .filter((game) => Number.isFinite(Number(game.featured?.[key])))
-    .sort((a, b) => Number(a.featured[key]) - Number(b.featured[key]))
+function getCuratedRankings(limit = DEFAULT_LIMIT) {
+  const toRankedList = (slugs) => slugs
     .slice(0, limit)
-    .map((game, index) => rankedItem(game.slug, limit - index, index + 1));
+    .map((slug, index) => rankedItem(slug, limit - index, index + 1));
 
   return {
-    trending: byFeaturedRank("trendingRank"),
-    topPlayed: byFeaturedRank("topPlayedRank"),
+    trending: toRankedList(CURATED_TRENDING_SLUGS),
+    topPlayed: toRankedList(CURATED_TOP_PLAYED_SLUGS),
   };
 }
 
@@ -191,8 +174,7 @@ async function validateLaunchPayload(payload) {
   }
 
   const slug = normalizeSlug(raw.slug);
-  const { bySlug } = await getGameMaps();
-  if (!slug || !bySlug.has(slug)) {
+  if (!slug || !validGameSlugs.has(slug)) {
     return { ok: false, status: 400, code: "invalid_game", error: "Unknown game slug." };
   }
 
