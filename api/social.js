@@ -41,6 +41,10 @@ const {
 } = require("./social/_store");
 
 const { getSessionFromRequest } = require("./auth/_session");
+const {
+  handleDiscoveryEvents,
+  handleDiscoveryRankings,
+} = require("./discovery/_handlers");
 
 const LEADERBOARD_LIMIT = 20;
 const SAVE_MAX_BYTES = 64 * 1024;
@@ -539,6 +543,10 @@ module.exports = async function handler(req, res) {
         return await handleSyncPull(req, res);
       case "sync-push":
         return await handleSyncPush(req, res);
+      case "discovery-events":
+        return await handleDiscoveryEvents(req, res);
+      case "discovery-rankings":
+        return await handleDiscoveryRankings(req, res);
       default:
         return sendError(res, 404, "Social route not found.", "social_route_not_found");
     }

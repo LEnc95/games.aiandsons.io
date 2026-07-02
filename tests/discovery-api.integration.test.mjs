@@ -1,13 +1,16 @@
 import test, { beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import fs from "node:fs";
+import path from "node:path";
 import { Readable } from "node:stream";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const eventsHandler = require("../api/discovery/events.js");
-const rankingsHandler = require("../api/discovery/rankings.js");
+const socialHandler = require("../api/social.js");
 const { __resetFirebaseAdminForTests } = require("../api/_firebase-admin.js");
 const { __resetDiscoveryStoreForTests } = require("../api/discovery/_store.js");
+const repoRoot = fileURLToPath(new URL("../", import.meta.url));
 
 const originalEnv = {
   FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64,
@@ -78,6 +81,22 @@ async function invoke(handler, options = {}) {
   };
 }
 
+function listVercelFunctionEntrypoints(dir) {
+  const entries = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      entries.push(...listVercelFunctionEntrypoints(fullPath));
+      continue;
+    }
+    if (!entry.isFile() || path.extname(entry.name) !== ".js" || path.basename(entry.name).startsWith("_")) {
+      continue;
+    }
+    entries.push(path.relative(repoRoot, fullPath).replace(/\\/g, "/"));
+  }
+  return entries.sort();
+}
+
 beforeEach(() => {
   forceMemoryStore();
 });
@@ -89,9 +108,9 @@ afterEach(() => {
 });
 
 test("rankings endpoint returns curated fallback without Firebase", async () => {
-  const { res, json } = await invoke(rankingsHandler, {
+  const { res, json } = await invoke(socialHandler, {
     method: "GET",
-    url: "/api/discovery/rankings?limit=6",
+    url: "/api/social?route=discovery-rankings&limit=6",
   });
 
   assert.equal(res.statusCode, 200);
@@ -105,9 +124,9 @@ test("rankings endpoint returns curated fallback without Firebase", async () => 
 
 test("valid launch events increment anonymous memory rankings", async () => {
   for (const slug of ["tetris", "tetris", "pacman"]) {
-    const { res, json } = await invoke(eventsHandler, {
+    const { res, json } = await invoke(socialHandler, {
       method: "POST",
-      url: "/api/discovery/events",
+      url: "/api/social?route=discovery-events",
       body: {
         event: "game_launch_clicked",
         slug,
@@ -119,9 +138,9 @@ test("valid launch events increment anonymous memory rankings", async () => {
     assert.equal(json.source, "memory");
   }
 
-  const { json } = await invoke(rankingsHandler, {
+  const { json } = await invoke(socialHandler, {
     method: "GET",
-    url: "/api/discovery/rankings?limit=8",
+    url: "/api/social?route=discovery-rankings&limit=8",
   });
 
   assert.equal(json.source, "memory");
@@ -131,9 +150,9 @@ test("valid launch events increment anonymous memory rankings", async () => {
 });
 
 test("launch events reject invalid slugs and event names", async () => {
-  const invalidSlug = await invoke(eventsHandler, {
+  const invalidSlug = await invoke(socialHandler, {
     method: "POST",
-    url: "/api/discovery/events",
+    url: "/api/social?route=discovery-events",
     body: {
       event: "game_launch_clicked",
       slug: "not-a-game",
@@ -144,9 +163,9 @@ test("launch events reject invalid slugs and event names", async () => {
   assert.equal(invalidSlug.res.statusCode, 400);
   assert.equal(invalidSlug.json.code, "invalid_game");
 
-  const invalidEvent = await invoke(eventsHandler, {
+  const invalidEvent = await invoke(socialHandler, {
     method: "POST",
-    url: "/api/discovery/events",
+    url: "/api/social?route=discovery-events",
     body: {
       event: "page_view",
       slug: "tetris",
@@ -159,17 +178,35 @@ test("launch events reject invalid slugs and event names", async () => {
 });
 
 test("discovery endpoints enforce allowed methods", async () => {
-  const postRankings = await invoke(rankingsHandler, {
+  const postRankings = await invoke(socialHandler, {
     method: "POST",
-    url: "/api/discovery/rankings",
+    url: "/api/social?route=discovery-rankings",
   });
-  const getEvents = await invoke(eventsHandler, {
+  const getEvents = await invoke(socialHandler, {
     method: "GET",
-    url: "/api/discovery/events",
+    url: "/api/social?route=discovery-events",
   });
 
   assert.equal(postRankings.res.statusCode, 405);
   assert.equal(postRankings.json.code, "method_not_allowed");
   assert.equal(getEvents.res.statusCode, 405);
   assert.equal(getEvents.json.code, "method_not_allowed");
+});
+
+test("Vercel function entrypoints stay within the Hobby plan limit", () => {
+  const entrypoints = listVercelFunctionEntrypoints(path.join(repoRoot, "api"));
+  assert.ok(
+    entrypoints.length <= 12,
+    `Expected at most 12 Vercel functions, found ${entrypoints.length}:\n${entrypoints.join("\n")}`,
+  );
+});
+
+test("Vercel rewrites preserve public discovery API URLs", () => {
+  const config = JSON.parse(fs.readFileSync(path.join(repoRoot, "vercel.json"), "utf8"));
+  const rewriteMap = new Map(config.rewrites.map((rewrite) => [rewrite.source, rewrite.destination]));
+
+  assert.equal(rewriteMap.get("/api/discovery/events"), "/api/social?route=discovery-events");
+  assert.equal(rewriteMap.get("/api/discovery/events/"), "/api/social?route=discovery-events");
+  assert.equal(rewriteMap.get("/api/discovery/rankings"), "/api/social?route=discovery-rankings");
+  assert.equal(rewriteMap.get("/api/discovery/rankings/"), "/api/social?route=discovery-rankings");
 });
