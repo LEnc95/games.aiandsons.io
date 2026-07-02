@@ -6,6 +6,7 @@ const VALID_DURATIONS = new Set(['quick', 'medium', 'long']);
 const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
 const VALID_MODES = new Set(['solo', 'two-player', 'multiplayer']);
 const VALID_CATEGORIES = new Set(GAME_DISCOVERY_CATEGORIES.map((category) => category.key));
+const VALID_ART_EXTENSIONS = /\.(png|webp|jpe?g)$/i;
 
 test('GAMES list integrity', async (t) => {
   await t.test('is an array and not empty', () => {
@@ -45,6 +46,18 @@ test('GAMES list integrity', async (t) => {
       assert.strictEqual(typeof game.featured, 'object', `Game ${game.slug} missing featured metadata`);
       assert.strictEqual(game.featured.dailyEligible, true, `Game ${game.slug} must be eligible for daily spotlight`);
       assert.strictEqual(typeof game.featured.weeklyEligible, 'boolean', `Game ${game.slug} missing weekly eligibility`);
+
+      if (game.art !== undefined) {
+        assert.strictEqual(typeof game.art, 'object', `Game ${game.slug} art must be an object when present`);
+        assert.ok(game.art.poster || game.art.thumb, `Game ${game.slug} art must include poster or thumb`);
+        for (const [key, value] of Object.entries(game.art)) {
+          assert.ok(key === 'poster' || key === 'thumb', `Game ${game.slug} has unsupported art key ${key}`);
+          assert.strictEqual(typeof value, 'string', `Game ${game.slug} art.${key} must be a string`);
+          assert.ok(value.startsWith('/assets/'), `Game ${game.slug} art.${key} must be under /assets/`);
+          assert.ok(!/\s/.test(value), `Game ${game.slug} art.${key} must not contain whitespace`);
+          assert.ok(VALID_ART_EXTENSIONS.test(value), `Game ${game.slug} art.${key} must be a browser image path`);
+        }
+      }
     }
   });
 

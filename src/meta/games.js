@@ -238,6 +238,22 @@ const rankMap = (slugs) => Object.freeze(
 const TRENDING_RANKS = rankMap(TRENDING_SLUGS);
 const TOP_PLAYED_RANKS = rankMap(TOP_PLAYED_SLUGS);
 
+const FEATURED_ART = Object.freeze({
+  '2048': { poster: '/assets/og/2048.png', thumb: '/assets/og/2048.png' },
+  audioagar: { poster: '/assets/og/audioagar.png', thumb: '/assets/og/audioagar.png' },
+  bubbleshooter: { poster: '/assets/og/bubbleshooter.png', thumb: '/assets/og/bubbleshooter.png' },
+  chess: { poster: '/assets/og/chess.png', thumb: '/assets/og/chess.png' },
+  dino: { poster: '/assets/og/dino.png', thumb: '/assets/og/dino.png' },
+  pacman: { poster: '/assets/discovery/pacman-poster.webp', thumb: '/assets/discovery/pacman-poster.webp' },
+  plinko: { poster: '/assets/og/plinko.png', thumb: '/assets/og/plinko.png' },
+  pong: { poster: '/assets/og/pong.png', thumb: '/assets/og/pong.png' },
+  skeeball: { poster: '/assets/og/skeeball.png', thumb: '/assets/og/skeeball.png' },
+  snake: { poster: '/assets/discovery/snake-poster.webp', thumb: '/assets/discovery/snake-poster.webp' },
+  tetris: { poster: '/assets/discovery/tetris-poster.webp', thumb: '/assets/discovery/tetris-poster.webp' },
+  towerdefense: { poster: '/assets/og/towerdefense.png', thumb: '/assets/og/towerdefense.png' },
+  wordsearch: { poster: '/assets/og/wordsearch.png', thumb: '/assets/og/wordsearch.png' },
+});
+
 const releaseDateForIndex = (index) => (
   new Date(BASE_RELEASE_TIME + index * DAY_MS).toISOString().slice(0, 10)
 );
@@ -301,5 +317,6 @@ export const GAMES = BASE_GAMES.map((game, index) => {
     difficulty,
     releasedAt: releaseDateForIndex(index),
     featured,
+    ...(FEATURED_ART[game.slug] ? { art: FEATURED_ART[game.slug] } : {}),
   };
 });
