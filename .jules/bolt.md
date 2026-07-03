@@ -70,3 +70,7 @@
 ## 2024-05-29 - Avoid O(N) allocation and normalization on memory cache pipelines
 **Learning:** Returning a subset of entries from an in-memory Map structure using mapped pipelines that parse and normalize every item (e.g., \`.map(normalize).filter(condition)\`) creates unnecessary allocations and CPU spikes because the expensive \`normalize\` function is called for every entry before most are dropped. This was seen in \`findStripeBillingProfiles\` and \`listStripeBillingProfiles\`.
 **Action:** Always refactor sequential pipelines over memory caches into an explicit \`for...of\` loop that checks raw properties first, and only calls the \`normalize\` function and \`.push()\` for entries that pass the filtering condition.
+
+## 2026-07-03 - Optimizing category array membership checks
+**Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
+**Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
