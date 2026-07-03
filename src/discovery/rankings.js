@@ -65,14 +65,23 @@ export const shouldSkipDiscoveryRankingsFetch = (locationRef = globalThis.locati
   return port === '4173' && (hostname === '127.0.0.1' || hostname === 'localhost' || hostname === '::1');
 };
 
-export const loadDiscoveryRankings = async ({ fetchImpl = globalThis.fetch, locationRef = globalThis.location, now = Date.now() } = {}) => {
+export const loadDiscoveryRankings = async ({
+  fetchImpl = globalThis.fetch,
+  locationRef = globalThis.location,
+  now = Date.now(),
+  limit = 0,
+} = {}) => {
   const cached = getCachedDiscoveryRankings(now);
   if (cached) return cached;
   if (shouldSkipDiscoveryRankingsFetch(locationRef)) return null;
 
   if (typeof fetchImpl !== 'function') return null;
   try {
-    const response = await fetchImpl('/api/discovery/rankings', {
+    const normalizedLimit = Math.max(0, Math.min(50, Math.floor(Number(limit) || 0)));
+    const endpoint = normalizedLimit > 0
+      ? `/api/discovery/rankings?limit=${encodeURIComponent(String(normalizedLimit))}`
+      : '/api/discovery/rankings';
+    const response = await fetchImpl(endpoint, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       cache: 'no-store',

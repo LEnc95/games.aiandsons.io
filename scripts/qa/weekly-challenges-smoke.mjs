@@ -87,9 +87,13 @@ async function main() {
       return {
         challengeCount: cards.length,
         metaText: document.getElementById("weeklyChallengesMeta")?.textContent?.trim() || "",
+        todayWeeklyVisible: Boolean(document.querySelector('#todayPanel [data-today-kind="weekly"]')),
+        todayRows: document.querySelectorAll("#todayPanel [data-today-kind]").length,
       };
     });
     assert(initialState.challengeCount >= 2, "Expected at least two weekly challenges to be visible on home.");
+    assert(initialState.todayWeeklyVisible, "Expected Today panel to include weekly challenge progress.");
+    assert(initialState.todayRows >= 3, "Expected Today panel to include compact challenge rows.");
     summary.checks.push({ name: "weekly_challenges_rendered", pass: true, data: initialState });
 
     const beforeCoins = await page.evaluate(() => Number(document.getElementById("coins")?.textContent || "0"));
@@ -145,6 +149,11 @@ async function main() {
     assert(Array.isArray(afterState.badges), "Expected badges to be persisted as an array.");
     assert(afterState.badges.includes("weekly-challenge-complete"), "Expected weekly challenge completion badge to be awarded.");
     assert(Boolean(afterState.missions?.weekly?.weekKey), "Expected weekly challenge state to persist with current week key.");
+    const todayAfterState = await page.evaluate(() => ({
+      todayWeeklyValue: (document.querySelector('#todayPanel [data-today-kind="weekly"] .today-row-value')?.textContent || "").trim(),
+      todayWeeklyText: (document.querySelector('#todayPanel [data-today-kind="weekly"]')?.textContent || "").trim(),
+    }));
+    assert(todayAfterState.todayWeeklyValue.includes("/"), "Expected Today weekly row to show progress fraction.");
     summary.checks.push({
       name: "weekly_progress_persisted",
       pass: true,
@@ -153,6 +162,7 @@ async function main() {
         coinsBefore: beforeCoins,
         coinsAfter: afterState.coins,
         weekKey: afterState.missions?.weekly?.weekKey || "",
+        todayAfterState,
       },
     });
 

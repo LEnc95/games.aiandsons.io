@@ -87,9 +87,13 @@ async function main() {
       return {
         missionCount: cards.length,
         metaText: document.getElementById("dailyMissionsMeta")?.textContent?.trim() || "",
+        todayDailyVisible: Boolean(document.querySelector('#todayPanel [data-today-kind="daily"]')),
+        todayRows: document.querySelectorAll("#todayPanel [data-today-kind]").length,
       };
     });
     assert(initialState.missionCount >= 3, "Expected at least three daily missions to be visible on home.");
+    assert(initialState.todayDailyVisible, "Expected Today panel to include daily mission progress.");
+    assert(initialState.todayRows >= 3, "Expected Today panel to include compact challenge rows.");
     summary.checks.push({ name: "missions_rendered", pass: true, data: initialState });
 
     const beforeCoins = await page.evaluate(() => Number(document.getElementById("coins")?.textContent || "0"));
@@ -143,6 +147,11 @@ async function main() {
     assert(Array.isArray(afterState.badges), "Expected badges to be persisted as an array.");
     assert(afterState.badges.includes("daily-mission-complete"), "Expected daily mission completion badge to be awarded.");
     assert(Boolean(afterState.missions?.dayKey), "Expected mission state to persist with current day key.");
+    const todayAfterState = await page.evaluate(() => ({
+      todayDailyValue: (document.querySelector('#todayPanel [data-today-kind="daily"] .today-row-value')?.textContent || "").trim(),
+      todayDailyText: (document.querySelector('#todayPanel [data-today-kind="daily"]')?.textContent || "").trim(),
+    }));
+    assert(todayAfterState.todayDailyValue.includes("/"), "Expected Today daily row to show progress fraction.");
     summary.checks.push({
       name: "missions_progress_persisted",
       pass: true,
@@ -151,6 +160,7 @@ async function main() {
         coinsBefore: beforeCoins,
         coinsAfter: afterState.coins,
         missionDayKey: afterState.missions?.dayKey || "",
+        todayAfterState,
       },
     });
 
@@ -175,4 +185,3 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

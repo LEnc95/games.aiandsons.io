@@ -91,12 +91,14 @@ async function main() {
         ctaVisible: Boolean(cta && cta.style.display !== "none"),
         ctaText: cta?.textContent?.trim() || "",
         cardCount: cards.length,
+        todayPremiumText: (document.querySelector('#todayPanel [data-today-kind="premium"]')?.textContent || "").trim(),
       };
     });
     assert(freeTierState.meta === "Locked", "Expected premium track to show locked state for free tier.");
     assert(freeTierState.ctaVisible, "Expected premium track upgrade CTA to be visible for free tier.");
     assert(freeTierState.ctaText.includes("View plans"), "Expected upgrade CTA to include plans link.");
     assert(freeTierState.cardCount === 0, "Expected no premium challenge cards for free tier.");
+    assert(freeTierState.todayPremiumText.includes("Locked"), "Expected Today panel to show locked premium status for free tier.");
     summary.checks.push({ name: "premium_track_locked_state", pass: true, data: freeTierState });
 
     const freeShot = path.join(OUTPUT_DIR, "premium-track-locked.png");
@@ -126,11 +128,13 @@ async function main() {
         meta,
         ctaVisible: Boolean(cta && cta.style.display !== "none"),
         cardCount: cards.length,
+        todayPremiumText: (document.querySelector('#todayPanel [data-today-kind="premium"]')?.textContent || "").trim(),
       };
     });
     assert(premiumTierState.meta.includes("completed"), "Expected progress text for entitled premium track.");
     assert(!premiumTierState.ctaVisible, "Expected upgrade CTA to be hidden for entitled premium track.");
     assert(premiumTierState.cardCount >= 1, "Expected premium challenge cards for entitled users.");
+    assert(premiumTierState.todayPremiumText.includes("/"), "Expected Today panel to show premium progress for entitled users.");
     summary.checks.push({ name: "premium_track_entitled_state", pass: true, data: premiumTierState });
 
     const premiumShot = path.join(OUTPUT_DIR, "premium-track-entitled.png");

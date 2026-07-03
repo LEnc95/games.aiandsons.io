@@ -113,18 +113,31 @@ async function main() {
     const initialHome = await page.evaluate(() => {
       const skipBtn = document.getElementById("skipOnboardingBtn");
       const showBtn = document.getElementById("showOnboardingBtn");
+      const onboardingSection = document.getElementById("onboardingSection");
+      const parentPath = document.getElementById("parentPathLink");
+      const teacherPath = document.getElementById("teacherPathLink");
       return {
-        hasParentPath: Boolean(document.getElementById("parentPathLink")),
-        hasTeacherPath: Boolean(document.getElementById("teacherPathLink")),
+        hasParentPath: Boolean(parentPath),
+        hasTeacherPath: Boolean(teacherPath),
+        parentHref: parentPath?.getAttribute("href") || "",
+        teacherHref: teacherPath?.getAttribute("href") || "",
+        onboardingVisible: Boolean(onboardingSection) && getComputedStyle(onboardingSection).display !== "none",
         skipVisible: Boolean(skipBtn) && getComputedStyle(skipBtn).display !== "none",
         showVisible: Boolean(showBtn) && getComputedStyle(showBtn).display !== "none",
+        activeGameCards: [...document.querySelectorAll("#gamesGrid .game-card")].filter((card) => {
+          return !card.classList.contains("locked");
+        }).length,
       };
     });
-    assert(initialHome.hasParentPath, "Expected parent onboarding path card on home.");
-    assert(initialHome.hasTeacherPath, "Expected teacher onboarding path card on home.");
-    assert(initialHome.skipVisible, "Expected skip onboarding button to be visible on first load.");
-    assert(!initialHome.showVisible, "Expected show onboarding button to be hidden on first load.");
-    summary.checks.push({ name: "home_onboarding_paths_visible", pass: true, data: initialHome });
+    assert(initialHome.hasParentPath, "Expected parent guide link on home.");
+    assert(initialHome.hasTeacherPath, "Expected teacher guide link on home.");
+    assert(initialHome.parentHref === "/parent-onboarding.html", "Expected parent guide link to target parent onboarding.");
+    assert(initialHome.teacherHref === "/teacher-onboarding.html", "Expected teacher guide link to target teacher onboarding.");
+    assert(!initialHome.onboardingVisible, "Expected old onboarding section to stay out of the main home feed.");
+    assert(!initialHome.skipVisible, "Expected old skip onboarding button to stay hidden from home.");
+    assert(!initialHome.showVisible, "Expected old show onboarding button to stay hidden from home.");
+    assert(initialHome.activeGameCards > 0, "Expected game cards to remain available without onboarding cards.");
+    summary.checks.push({ name: "home_onboarding_guides_in_menu", pass: true, data: initialHome });
 
     const homeInitialShot = path.join(OUTPUT_DIR, "home-onboarding-initial.png");
     await safeScreenshot(page, homeInitialShot);
@@ -144,9 +157,21 @@ async function main() {
     assert(parentPage.hasAccessibilityCta, "Expected accessibility CTA on parent onboarding page.");
 
     const parentStorage = await readOnboardingState(page);
+    const parentGuideMetric = await page.evaluate(() => {
+      try {
+        const metrics = JSON.parse(localStorage.getItem("cadegames:v1:metrics") || "{}");
+        return Array.isArray(metrics.events) && metrics.events.some((event) => (
+          event?.name === "launcher_onboarding_guide_opened" &&
+          event?.meta?.role === "parent"
+        ));
+      } catch {
+        return false;
+      }
+    });
     assert(parentStorage?.selectedRole === "parent", "Expected onboarding selectedRole to persist as parent.");
     assert(parentStorage?.skipped === false, "Expected onboarding skipped to be false after parent path select.");
-    summary.checks.push({ name: "parent_path_role_state", pass: true, data: { parentPage, parentStorage } });
+    assert(parentGuideMetric, "Expected parent guide KPI event to be recorded.");
+    summary.checks.push({ name: "parent_path_role_state", pass: true, data: { parentPage, parentStorage, parentGuideMetric } });
 
     const parentShot = path.join(OUTPUT_DIR, "parent-onboarding.png");
     await safeScreenshot(page, parentShot);
@@ -167,23 +192,31 @@ async function main() {
     assert(teacherPage.hasLicenseCta, "Expected school license CTA on teacher onboarding page.");
 
     const teacherStorage = await readOnboardingState(page);
+    const teacherGuideMetric = await page.evaluate(() => {
+      try {
+        const metrics = JSON.parse(localStorage.getItem("cadegames:v1:metrics") || "{}");
+        return Array.isArray(metrics.events) && metrics.events.some((event) => (
+          event?.name === "launcher_onboarding_guide_opened" &&
+          event?.meta?.role === "teacher"
+        ));
+      } catch {
+        return false;
+      }
+    });
     assert(teacherStorage?.selectedRole === "teacher", "Expected onboarding selectedRole to persist as teacher.");
     assert(teacherStorage?.skipped === false, "Expected onboarding skipped to remain false after teacher path select.");
-    summary.checks.push({ name: "teacher_path_role_state", pass: true, data: { teacherPage, teacherStorage } });
+    assert(teacherGuideMetric, "Expected teacher guide KPI event to be recorded.");
+    summary.checks.push({ name: "teacher_path_role_state", pass: true, data: { teacherPage, teacherStorage, teacherGuideMetric } });
 
     const teacherShot = path.join(OUTPUT_DIR, "teacher-onboarding.png");
     await safeScreenshot(page, teacherShot);
     summary.screenshots.push(teacherShot);
 
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-    await page.click("#skipOnboardingBtn");
-    const skippedHome = await page.evaluate(() => {
+    const finalHome = await page.evaluate(() => {
       const skipBtn = document.getElementById("skipOnboardingBtn");
       const showBtn = document.getElementById("showOnboardingBtn");
-      const grid = document.getElementById("onboardingGrid");
-      const activeGameCards = [...document.querySelectorAll("#gamesGrid .game-card")].filter((card) => {
-        return !card.classList.contains("locked");
-      });
+      const onboardingSection = document.getElementById("onboardingSection");
       let stored = null;
       try {
         stored = JSON.parse(localStorage.getItem("cadegames:v1:onboarding") || "null");
@@ -193,49 +226,25 @@ async function main() {
       return {
         skipVisible: Boolean(skipBtn) && getComputedStyle(skipBtn).display !== "none",
         showVisible: Boolean(showBtn) && getComputedStyle(showBtn).display !== "none",
-        gridVisible: Boolean(grid) && getComputedStyle(grid).display !== "none",
-        activeGameCards: activeGameCards.length,
+        onboardingVisible: Boolean(onboardingSection) && getComputedStyle(onboardingSection).display !== "none",
+        guideLinks: document.querySelectorAll("#parentPathLink, #teacherPathLink").length,
+        activeGameCards: [...document.querySelectorAll("#gamesGrid .game-card")].filter((card) => {
+          return !card.classList.contains("locked");
+        }).length,
         stored,
       };
     });
-    assert(skippedHome.showVisible, "Expected show onboarding button after skipping onboarding.");
-    assert(!skippedHome.skipVisible, "Expected skip onboarding button hidden after skipping.");
-    assert(!skippedHome.gridVisible, "Expected onboarding cards hidden after skipping.");
-    assert(skippedHome.activeGameCards > 0, "Expected gameplay cards to remain available after skipping onboarding.");
-    assert(skippedHome.stored?.skipped === true, "Expected skipped onboarding state to persist.");
-    summary.checks.push({ name: "skip_onboarding_non_blocking", pass: true, data: skippedHome });
+    assert(!finalHome.skipVisible, "Expected old skip onboarding control to remain hidden.");
+    assert(!finalHome.showVisible, "Expected old show onboarding control to remain hidden.");
+    assert(!finalHome.onboardingVisible, "Expected old onboarding section to remain hidden from final home view.");
+    assert(finalHome.guideLinks === 2, "Expected guide links to remain accessible from home.");
+    assert(finalHome.activeGameCards > 0, "Expected game feed to remain playable after visiting guides.");
+    assert(finalHome.stored?.selectedRole === "teacher", "Expected latest selected guide role to persist.");
+    summary.checks.push({ name: "home_guides_non_blocking", pass: true, data: finalHome });
 
-    const skipShot = path.join(OUTPUT_DIR, "home-onboarding-skipped.png");
-    await safeScreenshot(page, skipShot);
-    summary.screenshots.push(skipShot);
-
-    await page.click("#showOnboardingBtn");
-    const restoredHome = await page.evaluate(() => {
-      const skipBtn = document.getElementById("skipOnboardingBtn");
-      const showBtn = document.getElementById("showOnboardingBtn");
-      const grid = document.getElementById("onboardingGrid");
-      let stored = null;
-      try {
-        stored = JSON.parse(localStorage.getItem("cadegames:v1:onboarding") || "null");
-      } catch {
-        stored = null;
-      }
-      return {
-        skipVisible: Boolean(skipBtn) && getComputedStyle(skipBtn).display !== "none",
-        showVisible: Boolean(showBtn) && getComputedStyle(showBtn).display !== "none",
-        gridVisible: Boolean(grid) && getComputedStyle(grid).display !== "none",
-        stored,
-      };
-    });
-    assert(restoredHome.skipVisible, "Expected skip onboarding button visible after restoring onboarding.");
-    assert(!restoredHome.showVisible, "Expected show onboarding button hidden after restoring onboarding.");
-    assert(restoredHome.gridVisible, "Expected onboarding cards visible after restoring onboarding.");
-    assert(restoredHome.stored?.skipped === false, "Expected skipped onboarding state to clear after restore.");
-    summary.checks.push({ name: "show_onboarding_restore", pass: true, data: restoredHome });
-
-    const restoredShot = path.join(OUTPUT_DIR, "home-onboarding-restored.png");
-    await safeScreenshot(page, restoredShot);
-    summary.screenshots.push(restoredShot);
+    const finalShot = path.join(OUTPUT_DIR, "home-guides-non-blocking.png");
+    await safeScreenshot(page, finalShot);
+    summary.screenshots.push(finalShot);
 
     summary.consoleErrors = consoleErrors;
     summary.success = consoleErrors.length === 0;

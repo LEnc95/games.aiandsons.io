@@ -64,6 +64,10 @@ async function resetState(page) {
 }
 
 async function openClassroomModal(page) {
+  if (!(await page.locator("#classroomBtn").isVisible())) {
+    await page.click("#launcherMenuBtn");
+    await page.waitForFunction(() => document.querySelector("#launcherNav")?.classList.contains("open"));
+  }
   await page.click("#classroomBtn");
   await page.waitForFunction(() => {
     const modal = document.getElementById("classroomModal");
@@ -119,6 +123,10 @@ async function getHomeLockState(page) {
       .find((node) => node.textContent?.trim() === "Pong")
       ?.closest(".game-card");
     const lockCount = document.querySelectorAll(".game-card.locked").length;
+    const shelfLockedTiles = [...document.querySelectorAll(".game-tile.locked")];
+    const spotlightCards = [...document.querySelectorAll(".spotlight-card")];
+    const spotlightLockedCards = spotlightCards.filter((card) => card.classList.contains("locked"));
+    const spotlightUnlockedCards = spotlightCards.filter((card) => !card.classList.contains("locked"));
 
     return {
       bannerVisible: !!banner && !banner.classList.contains("hidden"),
@@ -126,6 +134,18 @@ async function getHomeLockState(page) {
       card2048Locked: !!card2048Node?.classList.contains("locked") && card2048Node.getAttribute("href") === "#",
       pongLocked: !!pongCard?.classList.contains("locked"),
       lockCount,
+      shelfLockCount: shelfLockedTiles.length,
+      shelfLockedLabels: shelfLockedTiles
+        .slice(0, 5)
+        .map((tile) => (tile.querySelector(".tile-action")?.textContent || "").trim()),
+      spotlightLockCount: spotlightLockedCards.length,
+      spotlightLockedLabels: spotlightLockedCards
+        .slice(0, 2)
+        .map((card) => (card.querySelector(".tile-action")?.textContent || "").trim()),
+      spotlightCardCount: spotlightCards.length,
+      spotlightUnlockedHrefs: spotlightUnlockedCards
+        .slice(0, 2)
+        .map((card) => card.getAttribute("href") || ""),
     };
   });
 }
@@ -246,6 +266,20 @@ async function main() {
     assert(lockedHome.bannerVisible, "Expected classroom banner to be visible in active session.");
     assert(lockedHome.card2048Locked, "Expected 2048 card to be locked while whitelist excludes it.");
     assert(!lockedHome.pongLocked, "Expected Pong card to remain unlocked because it is whitelisted.");
+    assert(lockedHome.shelfLockCount > 0, "Expected discovery shelf tiles to show locked classroom state.");
+    assert(
+      lockedHome.shelfLockedLabels.every((label) => label === "Locked For Class"),
+      "Expected locked shelf tiles to show Locked For Class."
+    );
+    assert(lockedHome.spotlightCardCount >= 2, "Expected classroom-safe spotlights to remain visible.");
+    assert(
+      lockedHome.spotlightLockedLabels.every((label) => label === "Locked For Class"),
+      "Expected locked spotlights to show Locked For Class."
+    );
+    assert(
+      lockedHome.spotlightUnlockedHrefs.every((href) => href && href !== "#"),
+      "Expected unlocked spotlights to stay playable during classroom mode."
+    );
     summary.checks.push({ name: "home_locked_state", pass: true, data: lockedHome });
     const homeLockedShot = path.join(OUTPUT_DIR, "home-locked.png");
     await captureScreenshot(page, summary, homeLockedShot);

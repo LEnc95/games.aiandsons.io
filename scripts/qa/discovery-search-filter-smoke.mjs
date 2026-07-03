@@ -224,62 +224,92 @@ async function main() {
     await page.waitForFunction(() => (
       document.querySelectorAll("#gameOfDaySpotlight .spotlight-card").length === 1 &&
       document.querySelectorAll("#gameOfWeekSpotlight .spotlight-card").length === 1 &&
-      document.querySelectorAll("#discoveryRows [data-discovery-row]").length >= 6
+      document.querySelectorAll("#discoveryRows [data-discovery-row]").length >= 4 &&
+      document.querySelectorAll("#categoryHub [data-category-key]").length >= 6 &&
+      document.querySelectorAll("#todayPanel [data-today-kind]").length >= 3
     ));
     const discoveryInitialState = await page.evaluate(() => ({
+      todayRows: [...document.querySelectorAll("#todayPanel [data-today-kind]")]
+        .map((node) => node.getAttribute("data-today-kind") || "")
+        .filter(Boolean),
+      todayCta: (document.querySelector("#todayChallengeCta")?.textContent || "").trim(),
+      onboardingVisible: Boolean(document.querySelector("#onboardingSection")) &&
+        window.getComputedStyle(document.querySelector("#onboardingSection")).display !== "none",
       dayTitle: (document.querySelector("#gameOfDaySpotlight .spotlight-title")?.textContent || "").trim(),
       weekTitle: (document.querySelector("#gameOfWeekSpotlight .spotlight-title")?.textContent || "").trim(),
       categoryChips: [...document.querySelectorAll("#categoryRail [data-category-chip]")]
         .map((node) => node.getAttribute("data-category-chip") || "")
         .filter(Boolean),
+      categoryHubCards: document.querySelectorAll("#categoryHub [data-category-key]").length,
+      categoryHubPuzzlePreviewCount: document.querySelectorAll('#categoryHub [data-category-key="puzzle"] .category-preview-icons span').length,
       trendingTiles: document.querySelectorAll('[data-discovery-row="trending"] .game-tile').length,
       topPlayedTiles: document.querySelectorAll('[data-discovery-row="top-played"] .game-tile').length,
       newTiles: document.querySelectorAll('[data-discovery-row="new-this-week"] .game-tile').length,
       friendsTiles: document.querySelectorAll('[data-discovery-row="play-with-friends"] .game-tile').length,
-      puzzleTiles: document.querySelectorAll('[data-discovery-row="category-puzzle"] .game-tile').length,
       forYouTitle: (document.querySelector("#recentTitle")?.textContent || "").trim(),
       trendingFirstTitle: (document.querySelector('[data-discovery-row="trending"] .tile-title')?.textContent || "").trim(),
       topPlayedFirstTitle: (document.querySelector('[data-discovery-row="top-played"] .tile-title')?.textContent || "").trim(),
       posterTiles: document.querySelectorAll(".poster-tile").length,
       trendingCarouselButtons: document.querySelectorAll('[data-discovery-row="trending"] .carousel-btn').length,
+      trendingDotCount: document.querySelectorAll('[data-discovery-row="trending"] .carousel-dot').length,
+      trendingPageText: (document.querySelector('[data-discovery-row="trending"] .carousel-count')?.textContent || "").trim(),
       trendingPreviousDisabled: Boolean(document.querySelector('[data-discovery-row="trending"] [data-carousel-prev]')?.disabled),
       trendingNextDisabled: Boolean(document.querySelector('[data-discovery-row="trending"] [data-carousel-next]')?.disabled),
     }));
+    assert(discoveryInitialState.todayRows.includes("daily"), "Expected Today panel to include daily mission progress.");
+    assert(discoveryInitialState.todayRows.includes("weekly"), "Expected Today panel to include weekly challenge progress.");
+    assert(discoveryInitialState.todayCta === "Continue Challenge", "Expected Today panel to expose challenge CTA.");
+    assert(discoveryInitialState.onboardingVisible === false, "Expected onboarding section to stay out of the main home feed.");
     assert(discoveryInitialState.dayTitle.length > 0, "Expected Game of the Day to render a title.");
     assert(discoveryInitialState.weekTitle.length > 0, "Expected Game of the Week to render a title.");
     assert(discoveryInitialState.categoryChips.includes("puzzle"), "Expected Puzzle category chip to render.");
     assert(discoveryInitialState.categoryChips.includes("audio-accessible"), "Expected Audio Accessible category chip to render.");
-    assert(discoveryInitialState.trendingTiles >= 6, "Expected Trending Now row to render multiple games.");
-    assert(discoveryInitialState.topPlayedTiles >= 6, "Expected Top Played row to render multiple games.");
+    assert(discoveryInitialState.categoryHubCards >= 6, "Expected Browse by Category hub to render category cards.");
+    assert(discoveryInitialState.categoryHubPuzzlePreviewCount >= 3, "Expected Puzzle hub card to render preview icons.");
+    assert(discoveryInitialState.trendingTiles >= 12, "Expected Trending Now row to render a larger set of games.");
+    assert(discoveryInitialState.topPlayedTiles >= 12, "Expected Top Played row to render a larger set of games.");
     assert(discoveryInitialState.newTiles >= 6, "Expected New This Week row to render multiple games.");
     assert(discoveryInitialState.friendsTiles >= 4, "Expected Play With Friends row to render multiple games.");
-    assert(discoveryInitialState.puzzleTiles >= 6, "Expected Puzzle category row to render multiple games.");
     assert(discoveryInitialState.forYouTitle === "For You", "Expected empty recent shelf to become For You.");
     assert(discoveryInitialState.trendingFirstTitle === "Cavern Crush", "Expected cached live trending ranking to lead with Cavern Crush.");
     assert(discoveryInitialState.topPlayedFirstTitle === "Audio Agar", "Expected cached live top-played ranking to lead with Audio Agar.");
     assert(discoveryInitialState.posterTiles >= 3, "Expected featured poster tiles to render for top discovery rows.");
     assert(discoveryInitialState.trendingCarouselButtons === 2, "Expected Trending carousel to render previous/next buttons.");
+    assert(discoveryInitialState.trendingDotCount >= 3, "Expected Trending carousel to expose multiple pages.");
+    assert(discoveryInitialState.trendingPageText.startsWith("1/"), "Expected Trending carousel page count to start on page 1.");
     assert(discoveryInitialState.trendingPreviousDisabled === true, "Expected Trending carousel previous button to start disabled.");
     assert(discoveryInitialState.trendingNextDisabled === false, "Expected Trending carousel next button to be enabled.");
     summary.checks.push({ name: "home_discovery_sections", pass: true, data: discoveryInitialState });
 
     const carouselBeforeScroll = await page.$eval('[data-discovery-row="trending"] .discovery-row', (row) => Math.round(row.scrollLeft));
-    await page.click('[data-discovery-row="trending"] [data-carousel-next]');
-    await page.waitForFunction(() => {
-      const row = document.querySelector('[data-discovery-row="trending"] .discovery-row');
-      return Boolean(row && row.scrollLeft > 20);
-    });
+    let carouselClicks = 0;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const disabled = await page.$eval('[data-discovery-row="trending"] [data-carousel-next]', (button) => button.disabled);
+      if (disabled) break;
+      await page.click('[data-discovery-row="trending"] [data-carousel-next]');
+      carouselClicks += 1;
+      await page.waitForTimeout(360);
+    }
     const carouselState = await page.evaluate((beforeScroll) => {
       const row = document.querySelector('[data-discovery-row="trending"] .discovery-row');
+      const dots = [...document.querySelectorAll('[data-discovery-row="trending"] .carousel-dot')];
+      const activeDotIndex = dots.findIndex((dot) => dot.classList.contains("active"));
       return {
         beforeScroll,
         afterScroll: Math.round(row?.scrollLeft || 0),
+        pageText: (document.querySelector('[data-discovery-row="trending"] .carousel-count')?.textContent || "").trim(),
+        pageCount: dots.length,
+        activeDotIndex,
         previousDisabled: Boolean(document.querySelector('[data-discovery-row="trending"] [data-carousel-prev]')?.disabled),
         nextDisabled: Boolean(document.querySelector('[data-discovery-row="trending"] [data-carousel-next]')?.disabled),
       };
     }, carouselBeforeScroll);
     assert(carouselState.afterScroll > carouselState.beforeScroll, "Expected Trending carousel next button to advance the row.");
     assert(carouselState.previousDisabled === false, "Expected Trending carousel previous button to enable after advancing.");
+    assert(carouselState.pageCount >= 3, "Expected Trending carousel to have at least three pages.");
+    assert(carouselClicks >= Math.min(3, carouselState.pageCount - 1), "Expected Trending carousel to advance beyond the old three-click cap when enough pages exist.");
+    assert(carouselState.nextDisabled === true, "Expected Trending carousel next button to disable only at the true final page.");
+    assert(carouselState.activeDotIndex === carouselState.pageCount - 1, "Expected Trending carousel active dot to reach the final page.");
     summary.checks.push({ name: "home_discovery_carousel_controls", pass: true, data: carouselState });
 
     await page.fill("#gameSearchInput", "tetris");
@@ -303,12 +333,16 @@ async function main() {
         .filter(Boolean);
       const discoveryStyle = window.getComputedStyle(document.querySelector("#discoveryRows"));
       const spotlightStyle = window.getComputedStyle(document.querySelector(".spotlight-grid"));
+      const todayStyle = window.getComputedStyle(document.querySelector("#todayPanel"));
+      const categoryHubStyle = window.getComputedStyle(document.querySelector("#categoryHub"));
       return {
         titles,
         tags,
         allGamesTitle: (document.querySelector("#allGamesTitle")?.textContent || "").trim(),
         discoveryHidden: discoveryStyle.display === "none",
         spotlightHidden: spotlightStyle.display === "none",
+        todayHidden: todayStyle.display === "none",
+        categoryHubHidden: categoryHubStyle.display === "none",
       };
     });
     assert(homeSearchState.titles.length === 1, "Expected home search for 'tetris' to show exactly one game.");
@@ -317,6 +351,8 @@ async function main() {
     assert(homeSearchState.allGamesTitle === "Search Results", "Expected search mode to rename All Games to Search Results.");
     assert(homeSearchState.discoveryHidden === true, "Expected discovery shelves to hide while searching.");
     assert(homeSearchState.spotlightHidden === true, "Expected spotlights to hide while searching.");
+    assert(homeSearchState.todayHidden === true, "Expected Today panel to hide while searching.");
+    assert(homeSearchState.categoryHubHidden === true, "Expected category hub to hide while searching.");
     summary.checks.push({ name: "home_search_tetris", pass: true, data: homeSearchState });
 
     await page.fill("#gameSearchInput", "");
@@ -354,6 +390,33 @@ async function main() {
     summary.screenshots.push(homeShot);
 
     await page.selectOption("#gameCoinFilter", "all");
+    await page.click('#categoryHub [data-category-key="puzzle"] .category-hub-action');
+    await page.waitForFunction(() => document.querySelector("#gameCategoryFilter")?.value === "puzzle");
+    await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length >= 5);
+    const categoryHubState = await page.evaluate(() => {
+      const titles = [...document.querySelectorAll("#gamesGrid .game-title")]
+        .map((node) => (node.textContent || "").trim())
+        .filter(Boolean);
+      const metrics = JSON.parse(localStorage.getItem("cadegames:v1:metrics") || "{}");
+      return {
+        selectedValue: document.querySelector("#gameCategoryFilter")?.value || "",
+        titles,
+        viewAllEvent: Array.isArray(metrics.events)
+          ? metrics.events.some((event) => (
+            event?.name === "launcher_shelf_view_all_clicked" &&
+            event?.meta?.source === "category_hub" &&
+            event?.meta?.category === "puzzle"
+          ))
+          : false,
+      };
+    });
+    assert(categoryHubState.selectedValue === "puzzle", "Expected Puzzle category hub View all to set All Games filter.");
+    assert(categoryHubState.titles.includes("2048"), "Expected Puzzle hub View all to show 2048.");
+    assert(categoryHubState.viewAllEvent === true, "Expected category hub View all KPI event.");
+    summary.checks.push({ name: "home_category_hub_view_all_puzzle", pass: true, data: categoryHubState });
+
+    await page.selectOption("#gameCategoryFilter", "all");
+    await page.waitForFunction(() => document.querySelector("#gameCategoryFilter")?.value === "all");
     await page.click('[data-category-chip="puzzle"]');
     await page.waitForFunction(() => document.querySelector("#gameCategoryFilter")?.value === "puzzle");
     await page.waitForFunction(() => document.querySelectorAll("#gamesGrid .game-title").length >= 5);
@@ -419,29 +482,40 @@ async function main() {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForFunction(() => document.querySelectorAll("#discoveryRows [data-discovery-row]").length >= 6);
+    await page.waitForFunction(() => (
+      document.querySelectorAll("#discoveryRows [data-discovery-row]").length >= 4 &&
+      document.querySelectorAll("#todayPanel [data-today-kind]").length >= 3
+    ));
     await page.waitForTimeout(100);
     await page.click("#launcherMenuBtn");
     await page.waitForFunction(() => document.querySelector("#launcherNav")?.classList.contains("open"));
     const mobileState = await page.evaluate(() => {
       const controls = document.querySelector(".discovery-controls");
       const rail = document.querySelector("#categoryRail");
+      const today = document.querySelector("#todayPanel");
       const tile = document.querySelector("#discoveryRows .game-tile");
       const carousel = document.querySelector('[data-discovery-row="trending"] .carousel-shell');
       const menuButton = document.querySelector("#launcherMenuBtn");
       const nav = document.querySelector("#launcherNav");
+      const bottomNav = document.querySelector(".mobile-bottom-nav");
       const controlsRect = controls?.getBoundingClientRect();
+      const todayRect = today?.getBoundingClientRect();
       const tileRect = tile?.getBoundingClientRect();
       const carouselRect = carousel?.getBoundingClientRect();
       return {
         viewportWidth: window.innerWidth,
         documentWidth: document.documentElement.scrollWidth,
         controlsWithinViewport: Boolean(controlsRect && controlsRect.left >= -2 && controlsRect.right <= window.innerWidth + 2),
+        todayWithinViewport: Boolean(todayRect && todayRect.left >= -2 && todayRect.right <= window.innerWidth + 2 && todayRect.top < window.innerHeight),
         carouselWithinViewport: Boolean(carouselRect && carouselRect.left >= -2 && carouselRect.right <= window.innerWidth + 2),
         carouselButtons: document.querySelectorAll('[data-discovery-row="trending"] .carousel-btn').length,
         railScrollable: Boolean(rail && rail.scrollWidth > rail.clientWidth),
         tileWidth: Math.round(tileRect?.width || 0),
         tileHeight: Math.round(tileRect?.height || 0),
+        bottomNavVisible: Boolean(bottomNav && window.getComputedStyle(bottomNav).display !== "none"),
+        bottomNavItems: document.querySelectorAll(".mobile-bottom-nav a, .mobile-bottom-nav button").length,
+        onboardingVisible: Boolean(document.querySelector("#onboardingSection")) &&
+          window.getComputedStyle(document.querySelector("#onboardingSection")).display !== "none",
         menuButtonVisible: window.getComputedStyle(menuButton).display !== "none",
         navOpen: Boolean(nav?.classList.contains("open")),
         menuExpanded: menuButton?.getAttribute("aria-expanded") || "",
@@ -454,10 +528,14 @@ async function main() {
     });
     assert(mobileState.documentWidth <= mobileState.viewportWidth + 2, "Expected no page-level horizontal overflow on mobile.");
     assert(mobileState.controlsWithinViewport === true, "Expected discovery controls to fit mobile viewport.");
+    assert(mobileState.todayWithinViewport === true, "Expected Today panel to fit inside the mobile first viewport.");
     assert(mobileState.carouselWithinViewport === true, "Expected discovery carousel controls to fit mobile viewport.");
     assert(mobileState.carouselButtons === 2, "Expected mobile discovery carousel to keep previous/next buttons.");
     assert(mobileState.railScrollable === true, "Expected category rail to scroll horizontally on mobile.");
-    assert(mobileState.tileWidth >= 170 && mobileState.tileHeight >= 140, "Expected mobile discovery tiles to remain tappable.");
+    assert(mobileState.tileWidth >= 120 && mobileState.tileHeight >= 120, "Expected mobile discovery tiles to remain tappable.");
+    assert(mobileState.bottomNavVisible === true, "Expected mobile bottom nav to render.");
+    assert(mobileState.bottomNavItems === 5, "Expected mobile bottom nav to expose five primary actions.");
+    assert(mobileState.onboardingVisible === false, "Expected onboarding to stay hidden from mobile main feed.");
     assert(mobileState.menuButtonVisible === true, "Expected compact menu button to show on mobile.");
     assert(mobileState.navOpen === true, "Expected mobile site menu to open.");
     assert(mobileState.menuExpanded === "true", "Expected mobile menu button aria-expanded to update.");

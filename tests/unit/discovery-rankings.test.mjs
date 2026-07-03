@@ -100,6 +100,31 @@ test('fetches and briefly caches backend rankings', async () => {
   assert.equal(getCachedDiscoveryRankings(2_000).topPlayed[0].slug, 'audioagar');
 });
 
+test('can request a larger backend rankings limit', async () => {
+  const rankings = await loadDiscoveryRankings({
+    now: 1_000,
+    limit: 24,
+    fetchImpl: async (url, options) => {
+      assert.equal(url, '/api/discovery/rankings?limit=24');
+      assert.equal(options.method, 'GET');
+      return {
+        ok: true,
+        async json() {
+          return {
+            ok: true,
+            source: 'firebase',
+            trending: [{ slug: 'tetris', score: 12 }],
+            topPlayed: [],
+          };
+        },
+      };
+    },
+  });
+
+  assert.equal(rankings.source, 'firebase');
+  assert.deepEqual(rankings.trending.map((item) => item.slug), ['tetris']);
+});
+
 test('returns null when rankings fetch is unavailable', async () => {
   const rankings = await loadDiscoveryRankings({
     fetchImpl: async () => ({ ok: false, status: 503 }),
