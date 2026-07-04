@@ -1,0 +1,1355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Ink Islands | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  color: #f8fbff;
+  background:
+    radial-gradient(70% 62% at 12% 8%, #27675e 0%, transparent 62%),
+    radial-gradient(76% 68% at 88% 92%, #51365d 0%, transparent 64%),
+    linear-gradient(135deg, #102033 0%, #172944 50%, #233047 100%);
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #0e1728e8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1040px);
+  aspect-ratio: 50 / 33;
+  max-height: min(65dvh, 700px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #95e8d2a8;
+  background: #101c2e;
+  box-shadow: 0 22px 56px #05091496;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(5, 10, 20, .58);
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #95e8d2bd;
+  background: #101827f6;
+  box-shadow: 0 18px 48px #050914a6;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 68ch;
+  color: #dce8f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b7c9da;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1040px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101c31e8;
+  color: #f8fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b7c9da;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #95f4cf; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffa3b6; }
+button {
+  cursor: pointer;
+  font: 900 12px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe08a 0%, #74f0c8 100%);
+  border-color: #ffffffc4;
+}
+button.utility { background: #37455f; }
+button.active {
+  color: #102033;
+  background: #95f4cf;
+  border-color: #ffffffd6;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 55dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .panel h1 { font-size: 34px; }
+  .stage {
+    width: 99vw;
+    max-height: 44dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 11px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Ink Islands | AI and Sons Games">
+  <meta property="og:description" content="Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/inkislands">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/inkislands.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ink Islands | AI and Sons Games">
+  <meta name="twitter:description" content="Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/inkislands.png">
+  <link rel="canonical" href="https://games.aiandsons.io/inkislands">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Ink Islands","description":"Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/inkislands","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Ink Islands play area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Ink Islands puzzle board"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="levelText">1 / 5</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip"><span>Moves</span><b id="movesText">0</b></div>
+    <div class="chip warn"><span>Checks</span><b id="checksText">0</b></div>
+    <div class="chip bad"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Ink Islands controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="shadeBtn" type="button">Ink</button>
+    <button id="circleBtn" type="button">Circle</button>
+    <button id="clearBtn" type="button">Clear</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="checkBtn" type="button">Check</button>
+    <button id="undoBtn" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="nextBtn" type="button">Next Puzzle</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('modeText'),
+  level: document.getElementById('levelText'),
+  score: document.getElementById('scoreText'),
+  moves: document.getElementById('movesText'),
+  checks: document.getElementById('checksText'),
+  time: document.getElementById('timeText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  shade: document.getElementById('shadeBtn'),
+  circle: document.getElementById('circleBtn'),
+  clear: document.getElementById('clearBtn'),
+  hint: document.getElementById('hintBtn'),
+  check: document.getElementById('checkBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  next: document.getElementById('nextBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const STORAGE_KEY = 'cade:inkislands:best';
+const MARKS = Object.freeze({ CLEAR: 'clear', SHADE: 'shade', CIRCLE: 'circle' });
+const LEVEL_DEFS = [
+  {
+    name: 'Reed Bank',
+    time: 160,
+    solution: [
+      '.....',
+      '.#...',
+      '...#.',
+      '.....',
+      '..#..',
+    ],
+  },
+  {
+    name: 'Lily Channels',
+    time: 185,
+    solution: [
+      '..#...',
+      '......',
+      '.#..#.',
+      '......',
+      '...#..',
+      '#.....',
+    ],
+  },
+  {
+    name: 'Moonlit Marsh',
+    time: 210,
+    solution: [
+      '.#.....',
+      '....#..',
+      '..#....',
+      '......#',
+      '...#...',
+      '#......',
+      '.....#.',
+    ],
+  },
+  {
+    name: 'Ferry Garden',
+    time: 240,
+    solution: [
+      '..#.....',
+      '.....#..',
+      '.#......',
+      '....#...',
+      '.......#',
+      '...#....',
+      '......#.',
+      '#.......',
+    ],
+  },
+  {
+    name: 'Starling Delta',
+    time: 280,
+    solution: [
+      '.#.......',
+      '....#....',
+      '.......#.',
+      '..#......',
+      '.....#...',
+      '#........',
+      '...#.....',
+      '......#..',
+      '........#',
+    ],
+  },
+];
+
+const state = {
+  mode: 'menu',
+  levelIndex: 0,
+  board: [],
+  solution: [],
+  marks: [],
+  cursor: { row: 0, col: 0 },
+  tool: MARKS.SHADE,
+  score: 0,
+  moves: 0,
+  checks: 0,
+  hints: 0,
+  timeLeft: 0,
+  elapsed: 0,
+  best: Number(localStorage.getItem(STORAGE_KEY) || 0),
+  coinsEarned: 0,
+  rewardGiven: false,
+  history: [],
+  particles: [],
+  errorCells: new Set(),
+  message: 'Shade duplicate numbers so every row and column is clean. Ink cells cannot touch, and clear islands must stay connected.',
+};
+
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function baseValue(row, col, size) {
+  return ((row + col) % size) + 1;
+}
+
+function makeLevel(def) {
+  const size = def.solution.length;
+  const solution = def.solution.map((row) => Array.from(row).map((char) => char === '#'));
+  const board = Array.from({ length: size }, (_, row) => (
+    Array.from({ length: size }, (_, col) => baseValue(row, col, size))
+  ));
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (!solution[row][col]) continue;
+      let sourceCol = (col + 1) % size;
+      while (solution[row][sourceCol] && sourceCol !== col) sourceCol = (sourceCol + 1) % size;
+      board[row][col] = board[row][sourceCol];
+    }
+  }
+
+  return { ...def, size, board, solution };
+}
+
+const LEVELS = LEVEL_DEFS.map(makeLevel);
+
+function cloneMarks(marks = state.marks) {
+  return marks.map((row) => row.slice());
+}
+
+function currentLevel() {
+  return LEVELS[state.levelIndex];
+}
+
+function resetLevel({ resetCampaign = false } = {}) {
+  const level = currentLevel();
+  if (resetCampaign) {
+    state.levelIndex = 0;
+    state.score = 0;
+    state.moves = 0;
+    state.checks = 0;
+    state.hints = 0;
+    state.coinsEarned = 0;
+    state.rewardGiven = false;
+  }
+  state.board = level.board.map((row) => row.slice());
+  state.solution = level.solution.map((row) => row.slice());
+  state.marks = Array.from({ length: level.size }, () => Array.from({ length: level.size }, () => MARKS.CLEAR));
+  state.cursor = { row: 0, col: 0 };
+  state.timeLeft = level.time;
+  state.elapsed = 0;
+  state.history = [];
+  state.errorCells = new Set();
+  state.particles = [];
+  state.message = `${level.name}: shade duplicates, circle confirmed land, and keep the remaining cells connected.`;
+}
+
+function startGame() {
+  state.mode = 'playing';
+  state.levelIndex = 0;
+  resetLevel({ resetCampaign: true });
+  rememberRecent('inkislands');
+  maybeUnlock({ anyPlay: true });
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus({ preventScroll: true });
+}
+
+function restartGame() {
+  const resetCampaign = state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost';
+  state.mode = 'playing';
+  resetLevel({ resetCampaign });
+  hideOverlay();
+  updateHud();
+  draw();
+  canvas.focus({ preventScroll: true });
+}
+
+function nextLevel() {
+  if (state.mode !== 'level_clear') return;
+  state.levelIndex = Math.min(LEVELS.length - 1, state.levelIndex + 1);
+  resetLevel();
+  state.mode = 'playing';
+  hideOverlay();
+  updateHud();
+  draw();
+}
+
+function pauseToggle() {
+  if (state.mode === 'playing') {
+    state.mode = 'paused';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = 'playing';
+    hideOverlay();
+  }
+  updateHud();
+}
+
+function setTool(tool) {
+  state.tool = tool;
+  updateHud();
+}
+
+function cellKey(row, col) {
+  return `${row},${col}`;
+}
+
+function inBounds(row, col) {
+  return row >= 0 && col >= 0 && row < state.board.length && col < state.board.length;
+}
+
+function saveHistory() {
+  state.history.push({
+    marks: cloneMarks(),
+    moves: state.moves,
+    checks: state.checks,
+    hints: state.hints,
+    score: state.score,
+    message: state.message,
+  });
+  if (state.history.length > 80) state.history.shift();
+}
+
+function applyTool(row, col, tool = state.tool) {
+  if (state.mode !== 'playing' || !inBounds(row, col)) return false;
+  const next = tool === MARKS.SHADE || tool === MARKS.CIRCLE ? tool : MARKS.CLEAR;
+  if (state.marks[row][col] === next) return false;
+  saveHistory();
+  state.marks[row][col] = next;
+  state.cursor = { row, col };
+  state.moves += 1;
+  state.errorCells = new Set();
+  state.message = next === MARKS.SHADE ? 'Inked a duplicate candidate.' : next === MARKS.CIRCLE ? 'Circled a cell that should stay clear.' : 'Cleared the cell mark.';
+  spawnParticles(row, col, next);
+  if (isSolved()) completeLevel();
+  updateHud();
+  draw();
+  return true;
+}
+
+function undoMove() {
+  if (state.mode !== 'playing' || !state.history.length) return;
+  const prev = state.history.pop();
+  state.marks = cloneMarks(prev.marks);
+  state.moves = prev.moves;
+  state.checks = prev.checks;
+  state.hints = prev.hints;
+  state.score = prev.score;
+  state.message = 'Undid the last mark.';
+  state.errorCells = new Set();
+  updateHud();
+  draw();
+}
+
+function useHint() {
+  if (state.mode !== 'playing') return;
+  for (let row = 0; row < state.solution.length; row += 1) {
+    for (let col = 0; col < state.solution.length; col += 1) {
+      const shouldShade = state.solution[row][col];
+      const isShade = state.marks[row][col] === MARKS.SHADE;
+      const isCircle = state.marks[row][col] === MARKS.CIRCLE;
+      if ((shouldShade && !isShade) || (!shouldShade && !isCircle)) {
+        saveHistory();
+        state.marks[row][col] = shouldShade ? MARKS.SHADE : MARKS.CIRCLE;
+        state.cursor = { row, col };
+        state.hints += 1;
+        state.moves += 1;
+        state.errorCells = new Set([cellKey(row, col)]);
+        state.message = shouldShade ? 'Hint: this duplicate needs ink.' : 'Hint: this number should remain clear.';
+        spawnParticles(row, col, shouldShade ? MARKS.SHADE : MARKS.CIRCLE);
+        if (isSolved()) completeLevel();
+        updateHud();
+        draw();
+        return;
+      }
+    }
+  }
+  state.message = 'No hint needed. The island map is already solved.';
+  updateHud();
+}
+
+function checkBoard() {
+  if (state.mode !== 'playing') return false;
+  state.checks += 1;
+  const report = evaluateBoard(true);
+  state.errorCells = new Set(report.issue_cells.map((cell) => cellKey(cell.row, cell.col)));
+  if (report.solved) {
+    completeLevel();
+    return true;
+  }
+  const first = report.issues[0] || 'Keep working through the duplicate clues.';
+  state.message = first;
+  updateHud();
+  draw();
+  return false;
+}
+
+function isSolved() {
+  return evaluateBoard(true).solved;
+}
+
+function completeLevel() {
+  if (state.mode !== 'playing') return;
+  const level = currentLevel();
+  const timeBonus = Math.max(0, Math.floor(state.timeLeft));
+  const moveBonus = Math.max(0, (level.size * 4) - state.moves) * 8;
+  const hintPenalty = state.hints * 20;
+  const checkPenalty = state.checks * 8;
+  const levelScore = Math.max(100, level.size * 120 + timeBonus * 3 + moveBonus - hintPenalty - checkPenalty);
+  state.score += levelScore;
+  state.best = Math.max(state.best, state.score);
+  localStorage.setItem(STORAGE_KEY, String(state.best));
+  state.message = `${level.name} solved for ${levelScore} points.`;
+  burstBoard();
+  if (state.levelIndex >= LEVELS.length - 1) {
+    winCampaign();
+  } else {
+    state.mode = 'level_clear';
+    showOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function winCampaign() {
+  state.mode = 'won';
+  if (!state.rewardGiven) {
+    const reward = 24 + Math.max(0, 8 - state.hints) + Math.max(0, 8 - state.checks);
+    addCoins(reward);
+    state.coinsEarned += reward;
+    state.rewardGiven = true;
+    maybeUnlock({ anyPlay: true, inkislands: { result: 'won', score: state.score, levels: LEVELS.length } });
+  }
+  state.message = `All Ink Islands solved. Coins earned: ${state.coinsEarned}.`;
+  showOverlay();
+}
+
+function loseGame(reason) {
+  state.mode = 'lost';
+  state.message = reason;
+  showOverlay();
+  updateHud();
+  draw();
+}
+
+function evaluateBoard(includeSolution = false) {
+  const size = state.board.length;
+  const issues = [];
+  const issueCells = [];
+  const shaded = (row, col) => state.marks[row]?.[col] === MARKS.SHADE;
+
+  for (let row = 0; row < size; row += 1) {
+    const seen = new Map();
+    for (let col = 0; col < size; col += 1) {
+      if (shaded(row, col)) continue;
+      const value = state.board[row][col];
+      if (!seen.has(value)) seen.set(value, []);
+      seen.get(value).push({ row, col });
+    }
+    for (const [value, cells] of seen) {
+      if (cells.length > 1) {
+        issues.push(`Row ${row + 1} still has duplicate ${value}s.`);
+        issueCells.push(...cells);
+      }
+    }
+  }
+
+  for (let col = 0; col < size; col += 1) {
+    const seen = new Map();
+    for (let row = 0; row < size; row += 1) {
+      if (shaded(row, col)) continue;
+      const value = state.board[row][col];
+      if (!seen.has(value)) seen.set(value, []);
+      seen.get(value).push({ row, col });
+    }
+    for (const [value, cells] of seen) {
+      if (cells.length > 1) {
+        issues.push(`Column ${col + 1} still has duplicate ${value}s.`);
+        issueCells.push(...cells);
+      }
+    }
+  }
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (!shaded(row, col)) continue;
+      for (const [dr, dc] of [[1, 0], [0, 1]]) {
+        const nr = row + dr;
+        const nc = col + dc;
+        if (inBounds(nr, nc) && shaded(nr, nc)) {
+          issues.push('Two inked cells are touching edge-to-edge.');
+          issueCells.push({ row, col }, { row: nr, col: nc });
+        }
+      }
+    }
+  }
+
+  const connection = whiteConnection();
+  if (!connection.connected) {
+    issues.push('The uninked islands are split apart.');
+    issueCells.push(...connection.unreached.slice(0, 8));
+  }
+
+  if (includeSolution) {
+    for (let row = 0; row < size; row += 1) {
+      for (let col = 0; col < size; col += 1) {
+        if (state.solution[row][col] !== shaded(row, col)) {
+          issues.push(state.solution[row][col] ? 'At least one duplicate still needs ink.' : 'At least one safe number has too much ink.');
+          issueCells.push({ row, col });
+          row = size;
+          break;
+        }
+      }
+    }
+  }
+
+  const unique = [];
+  const seenKeys = new Set();
+  for (const cell of issueCells) {
+    const key = cellKey(cell.row, cell.col);
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    unique.push(cell);
+  }
+
+  return {
+    solved: issues.length === 0,
+    issues,
+    issue_cells: unique,
+    duplicates: issues.filter((item) => item.includes('duplicate')).length,
+    connected: connection.connected,
+    shaded_count: countShaded(),
+  };
+}
+
+function whiteConnection() {
+  const size = state.board.length;
+  const white = [];
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (state.marks[row][col] !== MARKS.SHADE) white.push({ row, col });
+    }
+  }
+  if (!white.length) return { connected: false, unreached: [] };
+  const start = white[0];
+  const queue = [start];
+  const seen = new Set([cellKey(start.row, start.col)]);
+  for (let i = 0; i < queue.length; i += 1) {
+    const cell = queue[i];
+    for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nr = cell.row + dr;
+      const nc = cell.col + dc;
+      const key = cellKey(nr, nc);
+      if (!inBounds(nr, nc) || seen.has(key) || state.marks[nr][nc] === MARKS.SHADE) continue;
+      seen.add(key);
+      queue.push({ row: nr, col: nc });
+    }
+  }
+  const unreached = white.filter((cell) => !seen.has(cellKey(cell.row, cell.col)));
+  return { connected: unreached.length === 0, unreached };
+}
+
+function countShaded() {
+  let count = 0;
+  for (const row of state.marks) {
+    for (const mark of row) if (mark === MARKS.SHADE) count += 1;
+  }
+  return count;
+}
+
+function countCircled() {
+  let count = 0;
+  for (const row of state.marks) {
+    for (const mark of row) if (mark === MARKS.CIRCLE) count += 1;
+  }
+  return count;
+}
+
+function cellRect(row, col, layout = boardLayout()) {
+  return {
+    x: layout.x + col * layout.cell,
+    y: layout.y + row * layout.cell,
+    w: layout.cell,
+    h: layout.cell,
+  };
+}
+
+function boardLayout() {
+  const size = Math.max(1, state.board.length || 5);
+  const boardSize = Math.min(570, Math.floor(Math.min(WIDTH * .62, HEIGHT - 92)));
+  const cell = boardSize / size;
+  return {
+    x: 58,
+    y: 56,
+    size: boardSize,
+    cell,
+  };
+}
+
+function cellAtPoint(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) * (WIDTH / rect.width);
+  const y = (clientY - rect.top) * (HEIGHT / rect.height);
+  const layout = boardLayout();
+  const col = Math.floor((x - layout.x) / layout.cell);
+  const row = Math.floor((y - layout.y) / layout.cell);
+  if (!inBounds(row, col)) return null;
+  return { row, col };
+}
+
+function handlePointer(event) {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost' || state.mode === 'level_clear') {
+    primaryAction();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  const cell = cellAtPoint(event.clientX, event.clientY);
+  if (!cell) return;
+  event.preventDefault();
+  applyTool(cell.row, cell.col, state.tool);
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'enter'].includes(key)) event.preventDefault();
+  if (key === 'f') {
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p') {
+    pauseToggle();
+    return;
+  }
+  if (key === 'r') {
+    restartGame();
+    return;
+  }
+  if (state.mode === 'menu' && (key === ' ' || key === 'enter')) {
+    startGame();
+    return;
+  }
+  if (state.mode === 'level_clear' && (key === 'n' || key === 'enter' || key === ' ')) {
+    nextLevel();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+
+  const next = { ...state.cursor };
+  if (key === 'arrowup' || key === 'w') next.row -= 1;
+  if (key === 'arrowdown' || key === 's') next.row += 1;
+  if (key === 'arrowleft' || key === 'a') next.col -= 1;
+  if (key === 'arrowright' || key === 'd') next.col += 1;
+  if (inBounds(next.row, next.col)) {
+    state.cursor = next;
+    updateHud();
+    draw();
+  }
+  if (key === '1') setTool(MARKS.SHADE);
+  if (key === '2') setTool(MARKS.CIRCLE);
+  if (key === '3') setTool(MARKS.CLEAR);
+  if (key === ' ' || key === 'i') applyTool(state.cursor.row, state.cursor.col, MARKS.SHADE);
+  if (key === 'c') applyTool(state.cursor.row, state.cursor.col, MARKS.CIRCLE);
+  if (key === 'x' || key === 'backspace' || key === 'delete') applyTool(state.cursor.row, state.cursor.col, MARKS.CLEAR);
+  if (key === 'h') useHint();
+  if (key === 'enter') checkBoard();
+  if (key === 'u') undoMove();
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startGame();
+  } else if (state.mode === 'paused') {
+    pauseToggle();
+  } else if (state.mode === 'level_clear') {
+    nextLevel();
+  } else if (state.mode === 'playing') {
+    checkBoard();
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.getElementById('stage').requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {}
+  draw();
+}
+
+function update(dt) {
+  if (state.mode !== 'playing') {
+    updateParticles(dt);
+    return;
+  }
+  state.elapsed += dt;
+  state.timeLeft = Math.max(0, state.timeLeft - dt);
+  if (state.timeLeft <= 0) loseGame('Time ran out before the islands were connected.');
+  updateParticles(dt);
+}
+
+function updateParticles(dt) {
+  for (const particle of state.particles) {
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vy += 90 * dt;
+    particle.life -= dt;
+    particle.spin += particle.spinSpeed * dt;
+  }
+  state.particles = state.particles.filter((particle) => particle.life > 0);
+}
+
+function showOverlay() {
+  overlay.classList.add('show');
+  const level = currentLevel();
+  let title = 'Ink Islands';
+  let body = 'Shade duplicate numbers until every row and column has no repeats. Inked cells cannot touch. Every uninked cell must remain one connected island.';
+  let button = 'Start Puzzle';
+  let mini = 'Desktop: arrows or WASD move, Space inks, C circles, X clears, Enter checks, H hints, P pauses, F fullscreen. Touch: choose a tool and tap cells.';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = state.message;
+    button = 'Resume';
+  } else if (state.mode === 'level_clear') {
+    title = `${level.name} solved`;
+    body = 'The logic holds: no row or column duplicates, no touching ink, and the white islands are connected.';
+    button = 'Next Puzzle';
+  } else if (state.mode === 'won') {
+    title = 'All Islands Cleared';
+    body = `Final score ${state.score}. Best ${state.best}. Coins earned ${state.coinsEarned}.`;
+    button = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Island Map Lost';
+    body = state.message;
+    button = 'Try Again';
+  }
+  overlayPanel.innerHTML = `
+    <h1>${title}</h1>
+    <p>${body}</p>
+    <p class="mini">${mini}</p>
+    <p><button id="overlayPrimary" class="primary" type="button">${button}</button></p>
+  `;
+  document.getElementById('overlayPrimary').addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function updateHud() {
+  const modeLabel = state.mode.replace('_', ' ');
+  els.mode.textContent = modeLabel.charAt(0).toUpperCase() + modeLabel.slice(1);
+  els.level.textContent = `${state.levelIndex + 1} / ${LEVELS.length}`;
+  els.score.textContent = String(state.score);
+  els.moves.textContent = String(state.moves);
+  els.checks.textContent = String(state.checks);
+  els.time.textContent = formatTime(state.timeLeft);
+  els.coins.textContent = String(profileState.coins);
+  els.primary.textContent = state.mode === 'level_clear' ? 'Next' : state.mode === 'playing' ? 'Check' : state.mode === 'paused' ? 'Resume' : state.mode === 'won' ? 'Play Again' : state.mode === 'lost' ? 'Try Again' : 'Start';
+  els.next.disabled = state.mode !== 'level_clear';
+  els.undo.disabled = state.mode !== 'playing' || state.history.length === 0;
+  els.hint.disabled = state.mode !== 'playing';
+  els.check.disabled = state.mode !== 'playing';
+  els.shade.classList.toggle('active', state.tool === MARKS.SHADE);
+  els.circle.classList.toggle('active', state.tool === MARKS.CIRCLE);
+  els.clear.classList.toggle('active', state.tool === MARKS.CLEAR);
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  drawBackground();
+  drawBoard();
+  drawSidePanel();
+  drawParticles();
+}
+
+function drawBackground() {
+  const grd = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  grd.addColorStop(0, '#183a4d');
+  grd.addColorStop(.45, '#15344b');
+  grd.addColorStop(1, '#2b3153');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = .42;
+  for (let i = 0; i < 11; i += 1) {
+    ctx.strokeStyle = i % 2 ? '#78d7bc' : '#f4b46f';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    const y = 70 + i * 56;
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= WIDTH; x += 80) {
+      ctx.quadraticCurveTo(x + 34, y - 20, x + 80, y + (i % 2 ? 12 : -12));
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBoard() {
+  const layout = boardLayout();
+  fillRound(layout.x - 14, layout.y - 14, layout.size + 28, layout.size + 28, 18, '#07131fd9');
+  ctx.strokeStyle = '#b8ffe6a8';
+  ctx.lineWidth = 2;
+  roundRect(layout.x - 14, layout.y - 14, layout.size + 28, layout.size + 28, 18);
+  ctx.stroke();
+
+  for (let row = 0; row < state.board.length; row += 1) {
+    for (let col = 0; col < state.board.length; col += 1) {
+      drawCell(row, col, layout);
+    }
+  }
+}
+
+function drawCell(row, col, layout) {
+  const rect = cellRect(row, col, layout);
+  const mark = state.marks[row][col];
+  const isCursor = state.cursor.row === row && state.cursor.col === col;
+  const isError = state.errorCells.has(cellKey(row, col));
+  const shouldShade = state.solution[row][col];
+  const x = rect.x + 2;
+  const y = rect.y + 2;
+  const w = rect.w - 4;
+  const h = rect.h - 4;
+
+  ctx.fillStyle = mark === MARKS.SHADE ? '#101722' : '#edf7e8';
+  if (mark === MARKS.CIRCLE) ctx.fillStyle = '#fff4c9';
+  fillRound(x, y, w, h, Math.max(8, rect.w * .12), ctx.fillStyle);
+
+  if (shouldShade && mark !== MARKS.SHADE) {
+    ctx.save();
+    ctx.globalAlpha = .06;
+    ctx.fillStyle = '#0d1119';
+    fillRound(x + w * .18, y + h * .18, w * .64, h * .64, 999, ctx.fillStyle);
+    ctx.restore();
+  }
+
+  if (mark === MARKS.CIRCLE) {
+    ctx.strokeStyle = '#37a97b';
+    ctx.lineWidth = Math.max(3, rect.w * .06);
+    ctx.beginPath();
+    ctx.arc(rect.x + rect.w / 2, rect.y + rect.h / 2, rect.w * .34, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (mark === MARKS.SHADE) {
+    ctx.fillStyle = '#82e8c6';
+    ctx.save();
+    ctx.globalAlpha = .24;
+    for (let i = 0; i < 4; i += 1) {
+      ctx.fillRect(x + w * (i / 4), y, 2, h);
+    }
+    ctx.restore();
+  }
+
+  ctx.fillStyle = mark === MARKS.SHADE ? '#effff9' : '#1a2a35';
+  ctx.font = `900 ${Math.floor(rect.w * .46)}px "Trebuchet MS", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(state.board[row][col]), rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+
+  if (isError) {
+    ctx.strokeStyle = '#ff7f9c';
+    ctx.lineWidth = 4;
+    roundRect(x + 2, y + 2, w - 4, h - 4, Math.max(7, rect.w * .1));
+    ctx.stroke();
+  }
+
+  if (isCursor) {
+    ctx.strokeStyle = '#ffe08a';
+    ctx.lineWidth = 4;
+    roundRect(x + 4, y + 4, w - 8, h - 8, Math.max(7, rect.w * .1));
+    ctx.stroke();
+  }
+}
+
+function drawSidePanel() {
+  const x = 675;
+  const y = 56;
+  const w = 275;
+  fillRound(x, y, w, 548, 14, '#0b1525d9');
+  ctx.strokeStyle = '#ffffff36';
+  ctx.lineWidth = 1;
+  roundRect(x, y, w, 548, 14);
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 30px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Ink Islands', x + 18, y + 18);
+
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 15px "Trebuchet MS", sans-serif';
+  wrapText(state.message, x + 18, y + 62, w - 36, 21, 5);
+
+  const report = evaluateBoard(false);
+  const stats = [
+    ['Puzzle', `${state.levelIndex + 1} / ${LEVELS.length}`],
+    ['Name', currentLevel().name],
+    ['Tool', state.tool === MARKS.SHADE ? 'Ink' : state.tool === MARKS.CIRCLE ? 'Circle' : 'Clear'],
+    ['Inked', `${countShaded()} / ${state.solution.flat().filter(Boolean).length}`],
+    ['Circled', String(countCircled())],
+    ['Open issues', String(report.issues.length)],
+    ['Best', String(state.best)],
+  ];
+  let sy = y + 186;
+  for (const [label, value] of stats) {
+    drawStat(x + 18, sy, w - 36, label, value);
+    sy += 47;
+  }
+
+  ctx.fillStyle = '#dbeaf6';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  wrapText('Rules: remove row/column repeats, keep ink apart, and keep all clear cells connected.', x + 18, y + 506, w - 36, 17, 3);
+}
+
+function drawStat(x, y, w, label, value) {
+  fillRound(x, y, w, 37, 8, '#ffffff12');
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '900 10px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(label.toUpperCase(), x + 10, y + 6);
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.fillText(String(value), x + 10, y + 19);
+}
+
+function fillRound(x, y, w, h, r, fill) {
+  ctx.fillStyle = fill;
+  roundRect(x, y, w, h, r);
+  ctx.fill();
+}
+
+function roundRect(x, y, w, h, r) {
+  const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function spawnParticles(row, col, mark, count = 12) {
+  const layout = boardLayout();
+  const rect = cellRect(row, col, layout);
+  const colors = mark === MARKS.SHADE ? ['#82e8c6', '#233047', '#f8fbff'] : mark === MARKS.CIRCLE ? ['#ffe08a', '#74f0c8', '#f8fbff'] : ['#b7c9da', '#ffb779'];
+  for (let i = 0; i < count; i += 1) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * .5;
+    const speed = 50 + Math.random() * 90;
+    state.particles.push({
+      x: rect.x + rect.w / 2,
+      y: rect.y + rect.h / 2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 35,
+      size: 4 + Math.random() * 6,
+      color: colors[i % colors.length],
+      life: .5 + Math.random() * .45,
+      spin: Math.random() * Math.PI,
+      spinSpeed: -5 + Math.random() * 10,
+    });
+  }
+}
+
+function burstBoard() {
+  for (let row = 0; row < state.solution.length; row += 1) {
+    for (let col = 0; col < state.solution.length; col += 1) {
+      if ((row + col) % 2 === 0) spawnParticles(row, col, state.solution[row][col] ? MARKS.SHADE : MARKS.CIRCLE, 4);
+    }
+  }
+}
+
+function drawParticles() {
+  for (const particle of state.particles) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / .65));
+    ctx.translate(particle.x, particle.y);
+    ctx.rotate(particle.spin);
+    fillRound(-particle.size / 2, -particle.size / 2, particle.size, particle.size, 3, particle.color);
+    ctx.restore();
+  }
+}
+
+function markRows() {
+  return state.marks.map((row) => row.map((mark) => {
+    if (mark === MARKS.SHADE) return '#';
+    if (mark === MARKS.CIRCLE) return 'o';
+    return '.';
+  }).join(''));
+}
+
+function solutionRows() {
+  return state.solution.map((row) => row.map((cell) => cell ? '#' : '.').join(''));
+}
+
+function renderGameToText() {
+  const report = evaluateBoard(false);
+  return JSON.stringify({
+    game: 'Ink Islands',
+    coordinate_system: 'Canvas origin is top-left with y increasing downward. Board cells are zero-based row and column indices from the top-left number cell.',
+    mode: state.mode,
+    board: {
+      index: state.levelIndex,
+      number: state.levelIndex + 1,
+      total: LEVELS.length,
+      name: currentLevel().name,
+      size: state.board.length,
+      values: state.board.map((row) => row.slice()),
+      marks: markRows(),
+    },
+    cursor: {
+      row: state.cursor.row,
+      col: state.cursor.col,
+      value: state.board[state.cursor.row]?.[state.cursor.col] ?? null,
+      mark: state.marks[state.cursor.row]?.[state.cursor.col] ?? null,
+      tool: state.tool,
+    },
+    resources: {
+      time_left: Number(state.timeLeft.toFixed(2)),
+      score: state.score,
+      best: state.best,
+      moves: state.moves,
+      checks: state.checks,
+      hints: state.hints,
+      coins_earned: state.coinsEarned,
+    },
+    visible_state: {
+      shaded_count: countShaded(),
+      circled_count: countCircled(),
+      open_issues: report.issues,
+      issue_cells: report.issue_cells,
+      connected_uninked_island: report.connected,
+    },
+    message: state.message,
+  });
+}
+
+function solveCurrentLevel() {
+  if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+  if (state.mode === 'level_clear') nextLevel();
+  for (let row = 0; row < state.solution.length; row += 1) {
+    for (let col = 0; col < state.solution.length; col += 1) {
+      state.marks[row][col] = state.solution[row][col] ? MARKS.SHADE : MARKS.CIRCLE;
+    }
+  }
+  state.errorCells = new Set();
+  completeLevel();
+  return JSON.parse(renderGameToText());
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return JSON.parse(renderGameToText());
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(renderGameToText());
+window.__INK_ISLANDS_GAME__ = {
+  startGame,
+  restartGame,
+  nextLevel,
+  setTool,
+  applyTool,
+  useHint,
+  checkBoard,
+  undoMove,
+  pauseToggle,
+  solveCurrentLevel,
+  getState() {
+    return JSON.parse(renderGameToText());
+  },
+  getSolutionRows() {
+    return solutionRows();
+  },
+  forceWin() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startGame();
+    let guard = 0;
+    while (state.mode !== 'won' && guard < LEVELS.length + 2) {
+      solveCurrentLevel();
+      if (state.mode === 'level_clear') nextLevel();
+      guard += 1;
+    }
+    return JSON.parse(renderGameToText());
+  },
+  forceLoss() {
+    if (state.mode === 'menu' || state.mode === 'won') startGame();
+    state.timeLeft = 0;
+    loseGame('Forced loss for deterministic validation.');
+    return JSON.parse(renderGameToText());
+  },
+  setMarksForTest(rows) {
+    if (!Array.isArray(rows)) return JSON.parse(renderGameToText());
+    for (let row = 0; row < state.marks.length; row += 1) {
+      for (let col = 0; col < state.marks.length; col += 1) {
+        const char = String(rows[row] || '')[col] || '.';
+        state.marks[row][col] = char === '#' ? MARKS.SHADE : char.toLowerCase() === 'o' ? MARKS.CIRCLE : MARKS.CLEAR;
+      }
+    }
+    state.mode = 'playing';
+    updateHud();
+    draw();
+    return JSON.parse(renderGameToText());
+  },
+};
+
+els.primary.addEventListener('click', primaryAction);
+els.shade.addEventListener('click', () => setTool(MARKS.SHADE));
+els.circle.addEventListener('click', () => setTool(MARKS.CIRCLE));
+els.clear.addEventListener('click', () => setTool(MARKS.CLEAR));
+els.hint.addEventListener('click', useHint);
+els.check.addEventListener('click', checkBoard);
+els.undo.addEventListener('click', undoMove);
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.next.addEventListener('click', nextLevel);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+canvas.addEventListener('pointerdown', handlePointer);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'inkislands', gameName: 'Ink Islands' });
+resetLevel({ resetCampaign: true });
+state.mode = 'menu';
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

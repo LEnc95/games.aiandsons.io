@@ -3864,3 +3864,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `npm run test:feedback-smoke:raw` passed its five functional checks but failed the zero-console-error gate because mobile Tetris posted to the raw Python static server and received HTTP 501, matching the known repository caveat and not a SameGame issue.
 - Run time recorded: 2026-07-02T07:17:34.0229245-04:00.
 - TODO: none for SameGame; future work may address the raw-static feedback smoke POST/API behavior.
+
+## 2026-07-03 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding SameGame and recent additions including Bridge Islands, Vial Sort, Loop Trail, Crazy Eights, Pyramid Hopper, Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, and Pocket Pool.
+- Reviewed the registry and confirmed no `/twentyone` route or Twenty-One Table metadata entry exists.
+- Chosen game: Twenty-One Table (`/twentyone`), a non-gambling blackjack-style card game with hit/stand/double decisions, dealer resolution, streak scoring, hints, deterministic hooks, shared feedback context, and coin rewards.
+- Plan: add a standalone canvas card game with desktop/touch controls, register metadata, regenerate SEO/OG/Linear artifacts, then run focused tests plus the required Playwright skill loop with screenshot inspection.
+- Initial implementation added `twentyone/index.html` with six-hand point-table play, hit/stand/double/hint controls, dealer resolution, streak scoring, coin rewards, pause/restart/fullscreen, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__TWENTY_ONE_GAME__` helpers.
+- Registered Twenty-One Table in `src/meta/games.js` and the cards discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/twentyone.png`, and local Linear feedback seeds now include Twenty-One Table. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: Twenty-One module-script parse, 144-game slug/URL uniqueness and feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/twentyone-smoke-final-2`, custom desktop/mobile Playwright scenarios in `output/web-game/twentyone-scenarios-final`, screenshot/OG inspection, and `git diff --check` with only LF-to-CRLF warnings.
+- Custom scenarios covered hint, stand/dealer resolution, double-down, forced bust, forced table win with coin reward, shared feedback modal, mobile touch hit, and zero Twenty-One browser/page errors.
+- Run time recorded: 2026-07-03T07:18:42.2228190-04:00.
+- TODO: none for Twenty-One Table; future work may address the repository-wide LF-to-CRLF warning noise.
+
+## 2026-07-04 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Twenty-One Table and recent additions including SameGame, Bridge Islands, Vial Sort, Loop Trail, Crazy Eights, Pyramid Hopper, Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, and Pocket Pool.
+- Reviewed the registry and selected Ink Islands (`/inkislands`), a Hitori-style number logic puzzle not currently represented in the catalog.
+- Initial implementation added `inkislands/index.html` with five deterministic puzzles, shade/circle/clear tools, hints/checking, undo, pause/restart/fullscreen, coin rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__INK_ISLANDS_GAME__` helpers.
+- Registered Ink Islands in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage structured data, `assets/og/inkislands.png`, and local Linear feedback seed artifacts now include Ink Islands. Live Linear provisioning skipped because credentials are unset.
+- Early validation passed: Ink Islands module-script syntax check and 145-game slug/URL uniqueness plus discovery metadata tests.
+- Validation passed: `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), focused game/feedback coverage tests, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/inkislands-smoke-final-2`, custom desktop/mobile Playwright scenarios in `output/web-game/inkislands-scenarios-final`, screenshot/OG inspection, and `git diff --check` with only repository LF-to-CRLF warnings.
+- Custom scenarios covered start/menu, issue checking, hint, ink tool, undo, pause/resume, level clear, full campaign win with coin reward, shared feedback modal, mobile tap input, and zero Ink Islands browser/page errors.
+- Run time recorded: 2026-07-04T07:14:39.2826852-04:00.
+- TODO: none for Ink Islands; future work may address repository-wide LF-to-CRLF warning noise and OG generator churn on pre-existing cards.

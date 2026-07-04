@@ -97,6 +97,7 @@
 - game/wordsearch
 - game/setmatch
 - game/crazyeights
+- game/twentyone
 - game/flowlines
 - game/tripeaks
 - game/diceforge
@@ -158,5 +159,6 @@
 - game/calccages
 - game/wordladder
 - game/dominodraw
+- game/inkislands
 
 Generated from `src/meta/feedback.js`.

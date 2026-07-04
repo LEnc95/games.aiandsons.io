@@ -14,6 +14,8 @@ Operational command reference for contributors and automations in this repositor
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
 - Run social API integration tests: `npm run test:social`
+- Run discovery API integration tests: `node --test tests/discovery-api.integration.test.mjs`
+- Run discovery metadata/ranking unit tests: `node --test tests/unit/games.test.mjs tests/unit/discovery-rankings.test.mjs`
 - Run Audioagar client integration tests: `npm run test:audioagar`
 - Run Audioagar server Go tests: `npm run test:audioagar:server`
 - Run Club Penguin World server Go tests: `cd clubpenguin-world && go test ./...`

@@ -1,0 +1,1293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Twenty-One Table | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  color: #f8fbff;
+  background: linear-gradient(135deg, #12213a 0%, #174a42 48%, #33284c 100%);
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff78;
+  padding: 8px 12px;
+  background: #0e1728e8;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 50 / 33;
+  max-height: min(66dvh, 710px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #f6d47ca6;
+  background: #0c1725;
+  box-shadow: 0 22px 56px #05091496;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(5, 10, 20, .58);
+}
+.panel {
+  width: min(720px, 92vw);
+  border-radius: 8px;
+  border: 1px solid #f6d47cc7;
+  background: #101827f6;
+  box-shadow: 0 18px 48px #050914a6;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px auto;
+  max-width: 68ch;
+  color: #dce8f6;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.panel .mini {
+  color: #b7c9da;
+  font-size: 13px;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff62;
+  background: #101c31e8;
+  color: #f8fbff;
+}
+.chip {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+.chip span {
+  color: #b7c9da;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 16px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #95f4cf; }
+.chip.warn b { color: #ffe08a; }
+.chip.bad b { color: #ffa3b6; }
+button {
+  cursor: pointer;
+  font: 900 12px/1 "Trebuchet MS", "Segoe UI", sans-serif;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 #ffffff30, 0 8px 18px #05091450;
+  touch-action: manipulation;
+}
+button:hover,
+button:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+}
+button.primary {
+  color: #102033;
+  background: linear-gradient(135deg, #ffe08a 0%, #74f0c8 100%);
+  border-color: #ffffffc4;
+}
+button.utility { background: #37455f; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+@media (max-width: 960px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .back { top: 8px; left: 8px; font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 7px; }
+  .panel h1 { font-size: 34px; }
+  .stage {
+    width: 99vw;
+    max-height: 45dvh;
+  }
+  .hud, .controls {
+    width: 98vw;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chip, button { min-height: 40px; }
+  button { font-size: 11px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Build card hands near 21, choose hit, stand, or double, and beat the dealer across a six-hand points table with no betting. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Twenty-One Table | AI and Sons Games">
+  <meta property="og:description" content="Build card hands near 21, choose hit, stand, or double, and beat the dealer across a six-hand points table with no betting. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/twentyone">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/twentyone.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Twenty-One Table | AI and Sons Games">
+  <meta name="twitter:description" content="Build card hands near 21, choose hit, stand, or double, and beat the dealer across a six-hand points table with no betting. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/twentyone.png">
+  <link rel="canonical" href="https://games.aiandsons.io/twentyone">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Twenty-One Table","description":"Build card hands near 21, choose hit, stand, or double, and beat the dealer across a six-hand points table with no betting. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/twentyone","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">Back to games</a>
+<main class="app">
+  <section class="stage" id="stage" aria-label="Twenty-One Table play area">
+    <canvas id="game" width="1000" height="660" tabindex="0" aria-label="Twenty-One Table card table"></canvas>
+    <div id="overlay" class="overlay show">
+      <div id="overlayPanel" class="panel"></div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip good"><span>Round</span><b id="roundText">0 / 6</b></div>
+    <div class="chip good"><span>Your Total</span><b id="playerText">0</b></div>
+    <div class="chip warn"><span>Dealer</span><b id="dealerText">?</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreText">0</b></div>
+    <div class="chip bad"><span>Streak</span><b id="streakText">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Twenty-One controls">
+    <button id="primaryBtn" class="primary" type="button">Start</button>
+    <button id="hitBtn" type="button">Hit</button>
+    <button id="standBtn" type="button">Stand</button>
+    <button id="doubleBtn" type="button">Double</button>
+    <button id="hintBtn" type="button">Hint</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const overlayPanel = document.getElementById('overlayPanel');
+const els = {
+  mode: document.getElementById('modeText'),
+  round: document.getElementById('roundText'),
+  player: document.getElementById('playerText'),
+  dealer: document.getElementById('dealerText'),
+  score: document.getElementById('scoreText'),
+  streak: document.getElementById('streakText'),
+  coins: document.getElementById('coinsText'),
+  primary: document.getElementById('primaryBtn'),
+  hit: document.getElementById('hitBtn'),
+  stand: document.getElementById('standBtn'),
+  double: document.getElementById('doubleBtn'),
+  hint: document.getElementById('hintBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  fullscreen: document.getElementById('fullBtn'),
+};
+
+const WIDTH = 1000;
+const HEIGHT = 660;
+const MAX_ROUNDS = 6;
+const TARGET_SCORE = 620;
+const STORAGE_KEY = 'cade:twentyone:best';
+const SUITS = [
+  { key: 'H', name: 'Hearts', color: '#ef476f' },
+  { key: 'D', name: 'Diamonds', color: '#f77f00' },
+  { key: 'C', name: 'Clubs', color: '#0f8b62' },
+  { key: 'S', name: 'Spades', color: '#31456a' },
+];
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SUIT_NAMES = Object.fromEntries(SUITS.map((suit) => [suit.key, suit.name]));
+const SUIT_COLORS = Object.fromEntries(SUITS.map((suit) => [suit.key, suit.color]));
+
+let seed = 0x210721;
+let lastFrame = performance.now();
+let manualStepping = false;
+let burst = 0;
+
+const state = {
+  mode: 'menu',
+  round: 0,
+  score: 0,
+  streak: 0,
+  best: loadBest(),
+  deck: [],
+  discard: [],
+  player: [],
+  dealer: [],
+  doubled: false,
+  decisions: 0,
+  dealerHoleRevealed: false,
+  dealerDelay: 0,
+  result: null,
+  resultReason: '',
+  gained: 0,
+  hint: '',
+  coinsEarned: 0,
+  rewardGiven: false,
+  message: 'Build a hand near 21, then stand before the dealer catches you.',
+  particles: [],
+  shake: 0,
+};
+
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(STORAGE_KEY) || '0');
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBest() {
+  if (state.score <= state.best) return;
+  state.best = state.score;
+  try {
+    localStorage.setItem(STORAGE_KEY, String(state.best));
+  } catch {
+    // Storage can be unavailable in private or embedded browsing contexts.
+  }
+}
+
+function random() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 0x100000000;
+}
+
+function makeDeck() {
+  const deck = [];
+  for (let shoe = 0; shoe < 2; shoe += 1) {
+    for (const suit of SUITS) {
+      for (const rank of RANKS) {
+        deck.push({ suit: suit.key, rank, id: `${rank}${suit.key}-${shoe}` });
+      }
+    }
+  }
+  for (let i = deck.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function cardValue(card) {
+  if (!card) return 0;
+  if (card.rank === 'A') return 11;
+  if (['K', 'Q', 'J'].includes(card.rank)) return 10;
+  return Number(card.rank) || 0;
+}
+
+function handValue(hand) {
+  let total = 0;
+  let aces = 0;
+  for (const card of hand) {
+    total += cardValue(card);
+    if (card.rank === 'A') aces += 1;
+  }
+  let soft = aces > 0;
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces -= 1;
+  }
+  soft = aces > 0;
+  return { total, soft, bust: total > 21, blackjack: hand.length === 2 && total === 21 };
+}
+
+function describeCard(card) {
+  if (!card) return 'hidden card';
+  return `${card.rank} of ${SUIT_NAMES[card.suit]}`;
+}
+
+function drawCardFromDeck() {
+  if (state.deck.length < 8) {
+    seed = (seed + 0x9e3779b9) >>> 0;
+    state.deck = makeDeck();
+    state.discard = [];
+  }
+  return state.deck.pop();
+}
+
+function startRun() {
+  seed = 0x210721;
+  state.mode = 'playing';
+  state.round = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.best = loadBest();
+  state.deck = makeDeck();
+  state.discard = [];
+  state.coinsEarned = 0;
+  state.rewardGiven = false;
+  state.result = null;
+  state.resultReason = '';
+  state.message = 'Score 620 points in six hands. No bets, just clean decisions.';
+  rememberRecent('twentyone');
+  maybeUnlock({ anyPlay: true });
+  dealRound();
+}
+
+function dealRound() {
+  if (state.mode === 'won' || state.mode === 'lost') return;
+  if (state.round >= MAX_ROUNDS) {
+    finishRun();
+    return;
+  }
+  state.round += 1;
+  state.mode = 'playing';
+  state.player = [];
+  state.dealer = [];
+  state.doubled = false;
+  state.decisions = 0;
+  state.dealerHoleRevealed = false;
+  state.dealerDelay = 0;
+  state.result = null;
+  state.resultReason = '';
+  state.gained = 0;
+  state.hint = '';
+  state.particles = [];
+  state.shake = 0;
+  state.message = `Round ${state.round}: hit, stand, or double from your opening hand.`;
+  state.player.push(drawCardFromDeck());
+  state.dealer.push(drawCardFromDeck());
+  state.player.push(drawCardFromDeck());
+  state.dealer.push(drawCardFromDeck());
+  const player = handValue(state.player);
+  const dealer = handValue(state.dealer);
+  if (player.blackjack || dealer.blackjack) {
+    settleRound('opening_blackjack');
+  } else {
+    hideOverlay();
+    canvas.focus();
+  }
+  updateHud();
+  draw();
+}
+
+function canHit() {
+  return state.mode === 'playing' && !handValue(state.player).bust && handValue(state.player).total < 21;
+}
+
+function canStand() {
+  return state.mode === 'playing' && state.player.length >= 2;
+}
+
+function canDouble() {
+  return state.mode === 'playing' && state.player.length === 2 && state.decisions === 0;
+}
+
+function hit() {
+  if (!canHit()) return false;
+  const card = drawCardFromDeck();
+  state.player.push(card);
+  state.decisions += 1;
+  state.hint = '';
+  burst = 0.35;
+  const value = handValue(state.player);
+  if (value.bust) {
+    state.message = `You drew ${describeCard(card)} and busted at ${value.total}.`;
+    state.shake = 12;
+    settleRound('player_bust');
+  } else if (value.total === 21) {
+    state.message = `You drew ${describeCard(card)} for 21. Dealer plays next.`;
+    startDealerTurn();
+  } else {
+    state.message = `You drew ${describeCard(card)}. Total ${value.total}.`;
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function stand() {
+  if (!canStand()) return false;
+  state.hint = '';
+  state.message = `You stand on ${handValue(state.player).total}. Dealer reveals.`;
+  startDealerTurn();
+  updateHud();
+  draw();
+  return true;
+}
+
+function doubleDown() {
+  if (!canDouble()) return false;
+  state.doubled = true;
+  state.decisions += 1;
+  const card = drawCardFromDeck();
+  state.player.push(card);
+  state.hint = '';
+  burst = 0.35;
+  const value = handValue(state.player);
+  if (value.bust) {
+    state.message = `Double card ${describeCard(card)} busted at ${value.total}.`;
+    state.shake = 12;
+    settleRound('player_bust');
+  } else {
+    state.message = `Double card ${describeCard(card)} gives ${value.total}. Dealer plays next.`;
+    startDealerTurn();
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function startDealerTurn() {
+  state.mode = 'dealer';
+  state.dealerHoleRevealed = true;
+  state.dealerDelay = 0.36;
+}
+
+function dealerShouldHit() {
+  const value = handValue(state.dealer);
+  return value.total < 17;
+}
+
+function updateDealer(dt) {
+  if (state.mode !== 'dealer') return;
+  state.dealerDelay -= dt;
+  if (state.dealerDelay > 0) return;
+  if (dealerShouldHit()) {
+    const card = drawCardFromDeck();
+    state.dealer.push(card);
+    burst = 0.28;
+    const value = handValue(state.dealer);
+    state.message = `Dealer draws ${describeCard(card)}.`;
+    if (value.bust) {
+      settleRound('dealer_bust');
+    } else {
+      state.dealerDelay = 0.42;
+    }
+  } else {
+    settleRound('compare');
+  }
+  updateHud();
+  draw();
+}
+
+function settleRound(cause) {
+  state.dealerHoleRevealed = true;
+  const player = handValue(state.player);
+  const dealer = handValue(state.dealer);
+  let result = 'loss';
+  let reason = 'Dealer wins the hand.';
+  if (cause === 'opening_blackjack') {
+    if (player.blackjack && dealer.blackjack) {
+      result = 'push';
+      reason = 'Both sides opened with 21.';
+    } else if (player.blackjack) {
+      result = 'blackjack';
+      reason = 'Opening 21 scores the table bonus.';
+    } else {
+      result = 'loss';
+      reason = 'Dealer opened with 21.';
+    }
+  } else if (player.bust) {
+    result = 'loss';
+    reason = 'Your hand went over 21.';
+  } else if (dealer.bust) {
+    result = 'win';
+    reason = 'Dealer went over 21.';
+  } else if (player.total > dealer.total) {
+    result = 'win';
+    reason = `${player.total} beats dealer ${dealer.total}.`;
+  } else if (player.total === dealer.total) {
+    result = 'push';
+    reason = `${player.total} pushes with the dealer.`;
+  } else {
+    result = 'loss';
+    reason = `Dealer ${dealer.total} beats ${player.total}.`;
+  }
+
+  state.result = result;
+  state.resultReason = reason;
+  const wasWin = result === 'win' || result === 'blackjack';
+  if (wasWin) {
+    state.streak += 1;
+  } else if (result === 'loss') {
+    state.streak = 0;
+  }
+  const streakBonus = wasWin ? Math.max(0, state.streak - 1) * 25 : 0;
+  const base = result === 'blackjack'
+    ? 220
+    : result === 'win'
+      ? (state.doubled ? 190 : 120)
+      : result === 'push'
+        ? 35
+        : 0;
+  state.gained = base + streakBonus;
+  state.score += state.gained;
+  saveBest();
+  state.discard.push(...state.player, ...state.dealer);
+  state.message = `${reason} ${state.gained ? `+${state.gained} points.` : 'No points this hand.'}`;
+  spawnBurst(wasWin ? '#74f0c8' : result === 'push' ? '#ffe08a' : '#ffa3b6');
+
+  if (state.score >= TARGET_SCORE || state.round >= MAX_ROUNDS) {
+    finishRun();
+  } else {
+    state.mode = 'round_over';
+    showOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function finishRun() {
+  const won = state.score >= TARGET_SCORE;
+  state.mode = won ? 'won' : 'lost';
+  state.message = won
+    ? `Table cleared with ${state.score} points.`
+    : `Run complete at ${state.score}. Target was ${TARGET_SCORE}.`;
+  saveBest();
+  maybeUnlock({
+    anyPlay: true,
+    twentyone: {
+      result: won ? 'won' : 'lost',
+      score: state.score,
+      rounds: state.round,
+      streak: state.streak,
+    },
+  });
+  if (won && !state.rewardGiven) {
+    const reward = Math.max(8, Math.floor(state.score / 80) + state.streak * 2);
+    addCoins(reward);
+    state.coinsEarned += reward;
+    state.rewardGiven = true;
+  }
+  showOverlay();
+}
+
+function requestHint() {
+  if (state.mode !== 'playing') return '';
+  const hint = basicHint();
+  state.hint = hint;
+  state.message = `Hint: ${hint}`;
+  updateHud();
+  draw();
+  return hint;
+}
+
+function basicHint() {
+  const player = handValue(state.player);
+  const dealerUp = state.dealer[0];
+  const dealerValue = Math.min(10, cardValue(dealerUp));
+  if (player.blackjack) return 'Stand. You already have 21.';
+  if (canDouble() && !player.soft && (player.total === 10 || player.total === 11)) {
+    return dealerValue <= 9 || player.total === 11 ? 'Double. Your total has strong draw odds.' : 'Hit. Dealer shows a high card.';
+  }
+  if (player.soft) {
+    if (player.total <= 17) return canDouble() && dealerValue >= 3 && dealerValue <= 6 ? 'Double soft if you want pressure.' : 'Hit soft totals under 18.';
+    if (player.total === 18) return dealerValue >= 9 || dealerValue === 1 ? 'Hit soft 18 against a strong dealer card.' : 'Stand on soft 18.';
+    return 'Stand. Soft 19 or better is strong.';
+  }
+  if (player.total <= 8) return 'Hit. You cannot bust from here.';
+  if (player.total === 9) return canDouble() && dealerValue >= 3 && dealerValue <= 6 ? 'Double against dealer 3 through 6.' : 'Hit to improve the hand.';
+  if (player.total === 10 || player.total === 11) return canDouble() ? 'Double if available; otherwise hit.' : 'Hit.';
+  if (player.total === 12) return dealerValue >= 4 && dealerValue <= 6 ? 'Stand and make the dealer draw.' : 'Hit against this dealer card.';
+  if (player.total >= 13 && player.total <= 16) return dealerValue >= 2 && dealerValue <= 6 ? 'Stand on dealer weakness.' : 'Hit to chase a safer total.';
+  return 'Stand on 17 or better.';
+}
+
+function pauseToggle() {
+  if (state.mode === 'playing' || state.mode === 'dealer') {
+    state.mode = 'paused';
+    showOverlay();
+  } else if (state.mode === 'paused') {
+    state.mode = state.dealerHoleRevealed && state.result === null ? 'dealer' : 'playing';
+    hideOverlay();
+  }
+  updateHud();
+  draw();
+}
+
+function restartGame() {
+  startRun();
+}
+
+function nextRound() {
+  if (state.mode === 'round_over') {
+    dealRound();
+    return true;
+  }
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startRun();
+    return true;
+  }
+  return false;
+}
+
+function primaryAction() {
+  if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') {
+    startRun();
+  } else if (state.mode === 'round_over') {
+    dealRound();
+  } else if (state.mode === 'paused') {
+    pauseToggle();
+  } else if (state.mode === 'playing') {
+    hit();
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await stage.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    // Fullscreen is optional in automated and embedded browser contexts.
+  }
+  setTimeout(draw, 80);
+}
+
+function update(dt) {
+  state.shake = Math.max(0, state.shake - dt * 36);
+  burst = Math.max(0, burst - dt);
+  for (const particle of state.particles) {
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vy += 80 * dt;
+    particle.life -= dt;
+  }
+  state.particles = state.particles.filter((particle) => particle.life > 0);
+  updateDealer(dt);
+}
+
+function modeLabel() {
+  if (state.mode === 'round_over') return 'Hand Over';
+  if (state.mode === 'dealer') return 'Dealer';
+  return state.mode.charAt(0).toUpperCase() + state.mode.slice(1);
+}
+
+function updateHud() {
+  const player = handValue(state.player);
+  const dealer = handValue(state.dealer);
+  const dealerShown = state.dealerHoleRevealed || state.mode !== 'playing'
+    ? `${dealer.total}${dealer.soft ? ' soft' : ''}`
+    : `${cardValue(state.dealer[0] || null)} + ?`;
+  els.mode.textContent = modeLabel();
+  els.round.textContent = `${state.round} / ${MAX_ROUNDS}`;
+  els.player.textContent = state.player.length ? `${player.total}${player.soft ? ' soft' : ''}` : '0';
+  els.dealer.textContent = state.dealer.length ? dealerShown : '?';
+  els.score.textContent = `${state.score} / ${TARGET_SCORE}`;
+  els.streak.textContent = String(state.streak);
+  els.coins.textContent = String(profileState.coins);
+  els.primary.textContent = state.mode === 'menu' ? 'Start'
+    : state.mode === 'round_over' ? 'Next Hand'
+      : state.mode === 'won' || state.mode === 'lost' ? 'New Run'
+        : state.mode === 'paused' ? 'Resume'
+          : state.mode === 'dealer' ? 'Resolving'
+            : 'Playing';
+  els.primary.disabled = state.mode === 'playing' || state.mode === 'dealer';
+  els.hit.disabled = !canHit();
+  els.stand.disabled = !canStand();
+  els.double.disabled = !canDouble();
+  els.hint.disabled = state.mode !== 'playing';
+  els.pause.disabled = !['playing', 'dealer', 'paused'].includes(state.mode);
+  els.pause.textContent = state.mode === 'paused' ? 'Resume' : 'Pause';
+}
+
+function showOverlay() {
+  let title = 'Twenty-One Table';
+  let body = 'Build a hand near 21, use hit, stand, and double decisions, then outscore the dealer across six hands.';
+  let mini = 'Keys: H hit, S stand, D double, ? for hint, P pauses, R restarts, F fullscreen.';
+  let action = 'Start';
+  if (state.mode === 'paused') {
+    title = 'Paused';
+    body = state.message;
+    mini = 'Resume to continue the current hand.';
+    action = 'Resume';
+  } else if (state.mode === 'round_over') {
+    title = state.result === 'loss' ? 'Hand Lost' : state.result === 'push' ? 'Push' : 'Hand Won';
+    body = state.message;
+    mini = `Score ${state.score} / ${TARGET_SCORE}. Round ${state.round} of ${MAX_ROUNDS}.`;
+    action = 'Next Hand';
+  } else if (state.mode === 'won') {
+    title = 'Table Cleared';
+    body = `${state.message} Coins earned: ${state.coinsEarned}.`;
+    mini = `Best score ${state.best}. Streak ${state.streak}.`;
+    action = 'Play Again';
+  } else if (state.mode === 'lost') {
+    title = 'Run Complete';
+    body = state.message;
+    mini = `Best score ${state.best}. Try stronger doubles and stands.`;
+    action = 'Try Again';
+  }
+  overlayPanel.innerHTML = `
+    <h1>${title}</h1>
+    <p>${body}</p>
+    <p class="mini">${mini}</p>
+    <p class="mini">Scoring uses points and streaks only. There are no bets or wagers.</p>
+    <button id="overlayAction" class="primary" type="button">${action}</button>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('overlayAction')?.addEventListener('click', primaryAction);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+}
+
+function draw() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  const shakeX = state.shake ? Math.sin(performance.now() / 22) * state.shake : 0;
+  const shakeY = state.shake ? Math.cos(performance.now() / 27) * state.shake * .6 : 0;
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
+  drawBackground();
+  drawHands();
+  drawSidePanel();
+  drawParticles();
+  ctx.restore();
+}
+
+function drawBackground() {
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, '#16243b');
+  bg.addColorStop(.48, '#0f5746');
+  bg.addColorStop(1, '#34294f');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = .18;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  for (let i = -200; i < WIDTH; i += 76) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + 280, HEIGHT);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = '#0c3a31e8';
+  ctx.beginPath();
+  ctx.ellipse(WIDTH / 2, 360, 430, 238, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#f6d47c96';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#0d1424cc';
+  roundRect(24, 22, WIDTH - 48, 58, 8);
+  ctx.fill();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Twenty-One Table', 46, 52);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Coordinate system: dealer cards across the upper table, player cards across the lower table.', 310, 52);
+}
+
+function drawHands() {
+  drawShoe();
+  drawHand('Dealer', state.dealer, 250, 135, !state.dealerHoleRevealed && state.mode === 'playing');
+  drawHand('You', state.player, 250, 410, false);
+
+  ctx.fillStyle = '#dce8f6';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(state.message, WIDTH / 2, 360);
+  if (state.hint) {
+    ctx.fillStyle = '#ffe08a';
+    ctx.fillText(`Hint: ${state.hint}`, WIDTH / 2, 386);
+  }
+}
+
+function drawShoe() {
+  drawCardFace(80, 245, 94, 132, null, { back: true });
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 16px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Shoe', 127, 402);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  ctx.fillText(`${state.deck.length} cards`, 127, 424);
+}
+
+function drawHand(label, hand, startX, y, hideHole) {
+  const value = handValue(hand);
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 20px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(label, startX, y - 22);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  const totalText = hideHole ? `${cardValue(hand[0] || null)} + hidden` : `${value.total}${value.soft ? ' soft' : ''}`;
+  ctx.fillText(`Total: ${totalText}`, startX + 86, y - 22);
+  const gap = 24;
+  const w = 94;
+  const h = 132;
+  hand.forEach((card, index) => {
+    const hidden = hideHole && index === 1;
+    drawCardFace(startX + index * (w + gap), y, w, h, hidden ? null : card, { back: hidden });
+  });
+  if (hand.length === 0) {
+    ctx.strokeStyle = '#ffffff30';
+    ctx.lineWidth = 2;
+    roundRect(startX, y, w, h, 8);
+    ctx.stroke();
+  }
+}
+
+function drawCardFace(x, y, w, h, card, options = {}) {
+  const { back = false } = options;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#07101e66';
+  roundRect(-4, 6, w + 8, h + 8, 8);
+  ctx.fill();
+  if (back) {
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#213e6e');
+    grad.addColorStop(1, '#7b315b');
+    ctx.fillStyle = grad;
+    roundRect(0, 0, w, h, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#f8fbffcc';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.strokeStyle = '#ffe08ab8';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+    ctx.fillStyle = '#f8fbff';
+    ctx.font = '900 26px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('21', w / 2, h / 2);
+    ctx.restore();
+    return;
+  }
+
+  const suitColor = SUIT_COLORS[card.suit] || '#31456a';
+  ctx.fillStyle = '#fbfbf5';
+  roundRect(0, 0, w, h, 8);
+  ctx.fill();
+  ctx.strokeStyle = burst > 0 ? '#ffe08a' : '#d9dee8';
+  ctx.lineWidth = burst > 0 ? 3 : 2;
+  ctx.stroke();
+
+  ctx.fillStyle = suitColor;
+  ctx.font = '900 25px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(card.rank, 10, 8);
+  ctx.font = '900 18px "Trebuchet MS", sans-serif';
+  ctx.fillText(card.suit, 10, 38);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 44px "Trebuchet MS", sans-serif';
+  ctx.fillText(card.rank, w / 2, h / 2 - 6);
+  ctx.font = '900 28px "Trebuchet MS", sans-serif';
+  ctx.fillText(card.suit, w / 2, h / 2 + 34);
+  ctx.restore();
+}
+
+function drawSidePanel() {
+  const x = 720;
+  const y = 94;
+  const w = 230;
+  const h = 540;
+  const player = handValue(state.player);
+  const dealer = handValue(state.dealer);
+  ctx.fillStyle = '#101827df';
+  roundRect(x, y, w, h, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff45';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 26px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Scoreboard', x + 18, y + 36);
+  ctx.fillStyle = '#b7c9da';
+  ctx.font = '800 13px "Trebuchet MS", sans-serif';
+  wrapText('Six hands. Reach the target with clean wins, opening 21s, doubles, and streak bonuses.', x + 18, y + 58, w - 36, 18, 4);
+
+  drawMeter(x + 18, y + 148, w - 36, 18, Math.min(1, state.score / TARGET_SCORE), '#74f0c8', '#25344e');
+  const rows = [
+    ['Round', `${state.round} / ${MAX_ROUNDS}`],
+    ['Player', state.player.length ? `${player.total}${player.soft ? ' soft' : ''}` : '-'],
+    ['Dealer', state.dealer.length ? (state.dealerHoleRevealed || state.mode !== 'playing' ? `${dealer.total}${dealer.soft ? ' soft' : ''}` : `${cardValue(state.dealer[0])} + ?`) : '-'],
+    ['Last hand', state.result ? `${state.result} +${state.gained}` : '-'],
+    ['Streak', state.streak],
+    ['Best', state.best],
+  ];
+  let rowY = y + 200;
+  for (const [label, value] of rows) {
+    ctx.fillStyle = '#b7c9da';
+    ctx.font = '900 12px "Trebuchet MS", sans-serif';
+    ctx.fillText(label.toUpperCase(), x + 18, rowY);
+    ctx.fillStyle = '#f8fbff';
+    ctx.font = '900 19px "Trebuchet MS", sans-serif';
+    ctx.fillText(String(value), x + 18, rowY + 24);
+    rowY += 48;
+  }
+
+  ctx.fillStyle = '#13233be6';
+  roundRect(x + 18, y + h - 64, w - 36, 48, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff30';
+  ctx.stroke();
+  ctx.fillStyle = '#ffe08a';
+  ctx.font = '900 14px "Trebuchet MS", sans-serif';
+  ctx.fillText('Actions', x + 32, y + h - 43);
+  ctx.fillStyle = '#dce8f6';
+  ctx.font = '800 12px "Trebuchet MS", sans-serif';
+  ctx.fillText(actionSummary(), x + 32, y + h - 23);
+}
+
+function actionSummary() {
+  if (state.mode === 'playing') {
+    const actions = [];
+    if (canHit()) actions.push('hit');
+    if (canStand()) actions.push('stand');
+    if (canDouble()) actions.push('double');
+    return actions.join(' / ') || 'wait';
+  }
+  if (state.mode === 'dealer') return 'dealer resolving';
+  if (state.mode === 'round_over') return 'next hand';
+  return 'start';
+}
+
+function drawMeter(x, y, w, h, amount, fill, back) {
+  ctx.fillStyle = back;
+  roundRect(x, y, w, h, 8);
+  ctx.fill();
+  ctx.fillStyle = fill;
+  roundRect(x, y, Math.max(8, w * amount), h, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff65';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function spawnBurst(color) {
+  for (let i = 0; i < 24; i += 1) {
+    const angle = (i / 24) * Math.PI * 2;
+    const speed = 70 + random() * 110;
+    state.particles.push({
+      x: WIDTH / 2 + (random() - .5) * 120,
+      y: 340 + (random() - .5) * 80,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 40,
+      size: 4 + random() * 5,
+      color,
+      life: .55 + random() * .35,
+    });
+  }
+}
+
+function drawParticles() {
+  ctx.save();
+  for (const particle of state.particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / .7));
+    ctx.fillStyle = particle.color;
+    roundRect(particle.x - particle.size / 2, particle.y - particle.size / 2, particle.size, particle.size, 3);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines += 1;
+      line = word;
+      if (lines >= maxLines - 1) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y);
+}
+
+function cardToText(card) {
+  return card ? {
+    rank: card.rank,
+    suit: card.suit,
+    suit_name: SUIT_NAMES[card.suit],
+    value: cardValue(card),
+    name: describeCard(card),
+  } : null;
+}
+
+function handToText(hand, hideHole = false) {
+  const visible = hideHole ? [hand[0], null].filter((card, index) => index === 0 || hand[index]) : hand;
+  const value = handValue(hand);
+  return {
+    cards: visible.map(cardToText),
+    total: hideHole ? cardValue(hand[0] || null) : value.total,
+    full_total: value.total,
+    soft: hideHole ? false : value.soft,
+    bust: hideHole ? false : value.bust,
+    blackjack: hideHole ? false : value.blackjack,
+  };
+}
+
+function stateToObject() {
+  const hideDealer = !state.dealerHoleRevealed && state.mode === 'playing';
+  return {
+    game: 'Twenty-One Table',
+    coordinate_system: 'Canvas origin is top-left with y increasing downward. Dealer cards are drawn in the upper row; player cards are drawn in the lower row.',
+    mode: state.mode,
+    round: state.round,
+    max_rounds: MAX_ROUNDS,
+    target_score: TARGET_SCORE,
+    score: state.score,
+    streak: state.streak,
+    best: state.best,
+    deck_count: state.deck.length,
+    discard_count: state.discard.length,
+    player: handToText(state.player),
+    dealer: handToText(state.dealer, hideDealer),
+    actions: {
+      can_hit: canHit(),
+      can_stand: canStand(),
+      can_double: canDouble(),
+      can_hint: state.mode === 'playing',
+      can_next_round: state.mode === 'round_over',
+    },
+    doubled: state.doubled,
+    last_result: state.result,
+    result_reason: state.resultReason,
+    points_gained: state.gained,
+    hint: state.hint,
+    coins_earned: state.coinsEarned,
+    message: state.message,
+  };
+}
+
+function forceHands(playerCards, dealerCards) {
+  state.mode = 'playing';
+  state.player = playerCards.map(makeCardFromCode);
+  state.dealer = dealerCards.map(makeCardFromCode);
+  state.doubled = false;
+  state.decisions = 0;
+  state.dealerHoleRevealed = false;
+  state.result = null;
+  state.resultReason = '';
+  state.gained = 0;
+  state.hint = '';
+  state.message = 'Loaded deterministic Twenty-One test hand.';
+  hideOverlay();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function makeCardFromCode(code) {
+  const text = String(code || '').trim().toUpperCase();
+  const suit = text.slice(-1);
+  const rank = text.slice(0, -1);
+  const validSuit = SUIT_NAMES[suit] ? suit : 'S';
+  const validRank = RANKS.includes(rank) ? rank : '10';
+  return { rank: validRank, suit: validSuit, id: `${validRank}${validSuit}-forced-${Math.floor(random() * 9999)}` };
+}
+
+window.render_game_to_text = () => JSON.stringify(stateToObject());
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const total = Math.max(0, Number(ms) || 0);
+  const steps = Math.max(1, Math.round(total / (1000 / 60)));
+  const dt = total > 0 ? total / 1000 / steps : 1 / 60;
+  for (let i = 0; i < steps; i += 1) update(dt);
+  updateHud();
+  draw();
+  lastFrame = performance.now();
+  manualStepping = false;
+  return stateToObject();
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => JSON.parse(window.render_game_to_text());
+window.__TWENTY_ONE_GAME__ = {
+  startRun,
+  dealRound,
+  nextRound,
+  hit,
+  stand,
+  doubleDown,
+  requestHint,
+  pauseToggle,
+  restartGame,
+  getState() {
+    return stateToObject();
+  },
+  forceHands,
+  forcePlayerBlackjack() {
+    if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') startRun();
+    return forceHands(['AS', 'KH'], ['9D', '7C']);
+  },
+  forceDealerBust() {
+    if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') startRun();
+    forceHands(['10S', '8H'], ['9D', '7C']);
+    state.deck.push(makeCardFromCode('8S'));
+    stand();
+    window.advanceTime(1600);
+    return stateToObject();
+  },
+  forcePlayerBust() {
+    if (state.mode === 'menu' || state.mode === 'won' || state.mode === 'lost') startRun();
+    forceHands(['10S', '8H'], ['9D', '7C']);
+    state.deck.push(makeCardFromCode('6S'));
+    hit();
+    return stateToObject();
+  },
+  forceWin() {
+    if (state.mode === 'menu' || state.mode === 'lost' || state.mode === 'won') startRun();
+    state.score = TARGET_SCORE - 40;
+    state.streak = Math.max(1, state.streak);
+    forceHands(['AS', 'KH'], ['9D', '7C']);
+    settleRound('opening_blackjack');
+    return stateToObject();
+  },
+};
+
+function handleKey(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  const handled = ['h', 's', 'd', '?', '/', 'p', 'r', 'f', 'enter', ' '].includes(key);
+  if (!handled) return;
+  event.preventDefault();
+  if (key === 'f') toggleFullscreen();
+  else if (key === 'r') restartGame();
+  else if (key === 'p') pauseToggle();
+  else if (key === 'h') hit();
+  else if (key === 's') stand();
+  else if (key === 'd') doubleDown();
+  else if (key === '?' || key === '/') requestHint();
+  else if (key === 'enter' || key === ' ') primaryAction();
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  canvas.focus();
+  primaryAction();
+});
+els.primary.addEventListener('click', primaryAction);
+els.hit.addEventListener('click', hit);
+els.stand.addEventListener('click', stand);
+els.double.addEventListener('click', doubleDown);
+els.hint.addEventListener('click', requestHint);
+els.pause.addEventListener('click', pauseToggle);
+els.restart.addEventListener('click', restartGame);
+els.fullscreen.addEventListener('click', toggleFullscreen);
+window.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+document.addEventListener('fullscreenchange', draw);
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+    updateHud();
+    draw();
+  }
+  lastFrame = now;
+  requestAnimationFrame(frame);
+}
+
+mountGameFeedback({ gameSlug: 'twentyone', gameName: 'Twenty-One Table' });
+showOverlay();
+updateHud();
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

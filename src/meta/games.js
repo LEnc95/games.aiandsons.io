@@ -81,6 +81,7 @@ const BASE_GAMES = [
   { slug:'wordsearch',     name:'Word Search',         emoji:'\u{1F50E}', scoreHint:'words',      url:'/wordsearch',    desc:'Trace hidden words across themed letter grids with hints, undo, and diagonal searches.', earnsCoins:true },
   { slug:'setmatch',       name:'Set Match',           emoji:'\u{1F0CF}', scoreHint:'sets',       url:'/setmatch',      desc:'Find three-card pattern sets where every feature is all matching or all different before the round timer expires.', earnsCoins:true },
   { slug:'crazyeights',    name:'Crazy Eights',        emoji:'8\uFE0F\u20E3', scoreHint:'score',  url:'/crazyeights',   desc:'Match rank or suit, call wild eights, draw through the deck, and empty your hand before three table rivals.', earnsCoins:true },
+  { slug:'twentyone',      name:'Twenty-One Table',     emoji:'21',        scoreHint:'score',      url:'/twentyone',     desc:'Build card hands near 21, choose hit, stand, or double, and beat the dealer across a six-hand points table with no betting.', earnsCoins:true },
   { slug:'flowlines',      name:'Flow Lines',          emoji:'\u{1F500}', scoreHint:'paths',      url:'/flowlines',     desc:'Connect matching color terminals, fill every grid tile, and keep every flowing path from crossing.', earnsCoins:true },
   { slug:'tripeaks',       name:'Tri Peaks Solitaire', emoji:'\u{1F0CF}', scoreHint:'cleared',    url:'/tripeaks',      desc:'Clear three overlapping card peaks by playing available cards one rank above or below the waste pile before the stock runs dry.', earnsCoins:true },
   { slug:'diceforge',      name:'Dice Forge',          emoji:'\u{1F3B2}', scoreHint:'score',      url:'/diceforge',     desc:'Draft dice with hold-and-reroll strategy, then lock each scoring category before the forge timer expires.', earnsCoins:true },
@@ -142,6 +143,7 @@ const BASE_GAMES = [
   { slug:'calccages',      name:'Calc Cages',          emoji:'\u{1F522}', scoreHint:'solves',     url:'/calccages',    desc:'Fill arithmetic cages with nonrepeating row and column digits while matching every cage target.', earnsCoins:true },
   { slug:'wordladder',     name:'Word Ladder Sprint',  emoji:'\u{1FA9C}', scoreHint:'ladders',    url:'/wordladder',   desc:'Transform one word into another by changing a single letter at each valid vocabulary step.', earnsCoins:true },
   { slug:'dominodraw',     name:'Domino Draw',         emoji:'\u{1F0CF}', scoreHint:'points',     url:'/dominodraw',   desc:'Match domino ends, draw from the boneyard, block the table AI, and race to 50 points.', earnsCoins:true },
+  { slug:'inkislands',     name:'Ink Islands',         emoji:'\u{1F3DD}\uFE0F', scoreHint:'solves', url:'/inkislands',   desc:'Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -162,7 +164,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
-    'nonogram', 'tenttrail', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'nonogram', 'tenttrail', 'inkislands', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ],
   arcade: [
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
@@ -174,7 +176,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   ],
   word: ['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder'],
   cards: [
-    'setmatch', 'crazyeights', 'tripeaks', 'solitaire', 'freecell',
+    'setmatch', 'crazyeights', 'twentyone', 'tripeaks', 'solitaire', 'freecell',
     'mahjongsolitaire', 'dominodraw',
   ],
   sports: [

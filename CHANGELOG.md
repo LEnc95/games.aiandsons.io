@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2026-07-03
+
+### Added
+- Added and wired four new games: `looptrail`, `crazyeights`, `pyramidhopper`, and `samegame`.
+- Added discovery API storage/handler coverage, homepage carousel rankings, and SameGame feedback metadata.
+
+### Improved
+- Refreshed the homepage with space-themed navigation, ranked discovery carousels, carousel pagination, and expanded discovery rows.
+- Kept discovery API routes within Vercel Hobby limits while preserving integration coverage.
+- Improved internal ops accessibility, school license Enter-key submission, default achievement lookups, and Stripe profile lookup performance.
+
+### Operations
+- Refreshed SEO metadata, sitemap entries, OG card assets, Linear seed files, sprint notes, and launch-readiness smoke coverage for the new game surfaces.
+- Key PRs: [#202](https://github.com/LEnc95/games.aiandsons.io/pull/202), [#201](https://github.com/LEnc95/games.aiandsons.io/pull/201), [#200](https://github.com/LEnc95/games.aiandsons.io/pull/200), [#198](https://github.com/LEnc95/games.aiandsons.io/pull/198).
+
 ## [1.9.0] - 2026-06-26
 
 ### Added
