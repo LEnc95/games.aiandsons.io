@@ -139,6 +139,20 @@
     };
     const MEDALS = ['🥇', '🥈', '🥉'];
 
+
+    const escapeHtml = (str) => {
+      return String(str ?? '').replace(/[&<>"']/g, (match) => {
+        switch (match) {
+          case '&': return '&amp;';
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '"': return '&quot;';
+          case "'": return '&#39;';
+          default: return match;
+        }
+      });
+    };
+
     const el = (id) => document.getElementById(id);
     let currentRoom = null;
     let pollTimer = null;
@@ -178,7 +192,7 @@
       currentRoom = room;
       const isHost = room.hostPlayerId === playerId;
       const tbody = el('scoreboardBody');
-      tbody.innerHTML = '';
+      tbody.textContent = '';
       room.players.forEach((player, index) => {
         const row = document.createElement('tr');
         if (player.playerId === playerId) row.className = 'me';
@@ -188,7 +202,7 @@
           : (player.finished ? '✅' : '—');
         row.innerHTML = `
           <td class="medal">${showScores ? (MEDALS[index] || '') : ''}</td>
-          <td>${handleEmoji(player.handle)} ${player.handle}${player.playerId === room.hostPlayerId ? ' 👑' : ''}</td>
+          <td>${handleEmoji(player.handle)} ${escapeHtml(player.handle)}${player.playerId === room.hostPlayerId ? ' 👑' : ''}</td>
           <td>${scoreText}</td>
         `;
         tbody.appendChild(row);
