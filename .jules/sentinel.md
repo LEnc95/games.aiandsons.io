@@ -52,3 +52,8 @@
 ## 2026-06-15 - Escape untrusted values before social embed HTML injection
 **Vulnerability:** Untrusted values like player handles, room codes, and challenge scores were interpolated into HTML strings in `src/social/embed.js`, enabling DOM XSS in banners and result panels.
 **Prevention:** Escape untrusted values before inserting them into HTML and prefer clearing nodes plus `insertAdjacentHTML()` only with sanitized strings when rich markup is still needed.
+
+## 2026-07-05 - [Fix Host Header Trust in Feedback Base URL]
+**Vulnerability:** The application used request-derived origins (via `req.headers.host` or `x-forwarded-host`) to build feedback attachment URLs when `APP_BASE_URL` was unset. This allowed Host Header Injection attacks where malicious attachment URLs could be constructed and signed.
+**Learning:** `APP_BASE_URL` must be strictly enforced in production to ensure sensitive callback or attachment URLs are immutable and safely constructed. Falling back to the `host` header is only safe for local development, not edge/proxy ingress environments.
+**Prevention:** In production environments (`NODE_ENV === "production"`), the application must explicitly throw an error if `APP_BASE_URL` is missing, preventing any fallback to request-derived origins.

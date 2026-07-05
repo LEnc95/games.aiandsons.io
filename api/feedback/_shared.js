@@ -176,6 +176,13 @@ function getRequestOrigin(req) {
   const appBaseUrl = typeof process.env.APP_BASE_URL === "string"
     ? process.env.APP_BASE_URL.trim().replace(/\/+$/, "")
     : "";
+  if (appBaseUrl) {
+    return appBaseUrl;
+  }
+
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    throw new Error("Missing APP_BASE_URL in production. Host header fallback is disabled for security.");
+  }
 
   const forwardedProto = normalizeSingleLine(req?.headers?.["x-forwarded-proto"], 32);
   const forwardedHost = normalizeSingleLine(req?.headers?.["x-forwarded-host"], 200);
@@ -185,7 +192,7 @@ function getRequestOrigin(req) {
     return `${protocol}://${host}`;
   }
 
-  return appBaseUrl || "http://localhost";
+  return "http://localhost";
 }
 
 function buildFeedbackAttachmentUrl({ attachmentId = "", origin = "" } = {}) {
