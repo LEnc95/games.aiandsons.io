@@ -57,7 +57,7 @@ See `RELEASE_CHECKLIST.md`: before tagging, review `privacy.html` / `school-priv
 1. `<slug>/index.html` — the game itself (self-contained HTML/JS/CSS).
 2. `src/meta/games.js` — the `GAMES` registry array. This drives the homepage grid, discovery/search, missions, and reporting. Flags: `earnsCoins`, `scoreHint`, `category` (e.g. `'audio-only-blind-accessible'`), `accessibilityTags`.
 3. `vercel.json` — add a rewrite for `/slug` and `/slug/`, plus a no-cache header entry for `/slug/index.html` (the global default is 1-hour caching).
-4. `npm run seo` to regenerate the sitemap, then `npm run og` to render the game's share/OG card (without it the new game unfurls with the default banner instead of its own per-game card). Share infra: `src/social/share.js` (share sheet), `card.js` (client score card), `record.js` (canvas clip recorder), and `api/share.js` (`/challenge/:id`, `/race/:code`, `/g/:slug` OG landing pages).
+4. `npm run seo` to regenerate the sitemap, inject SEO meta, and resync the discovery slug allowlist (`api/discovery/_metadata.js`, generated from `GAMES` by `scripts/generate-discovery-metadata.mjs` — never hand-edit its `DISCOVERY_GAME_SLUGS`; the `CURATED_*` lists are editorial and preserved). Then `npm run og` to render the game's share/OG card (without it the new game unfurls with the default banner instead of its own per-game card). Share infra: `src/social/share.js` (share sheet), `card.js` (client score card), `record.js` (canvas clip recorder), and `api/share.js` (`/challenge/:id`, `/race/:code`, `/g/:slug` OG landing pages). `npm run test:social` guards that the allowlist stays in sync.
 
 ### Shared client modules (`src/`)
 
