@@ -30,7 +30,7 @@ const DISCOVERY_GAME_SLUGS = Object.freeze([
   "cranecargo", "nebulacurl", "aerocourier", "ribboncapture", "tangletuner", "sundialsprint",
   "bubbleshooter", "mosaicmatch", "mahjongsolitaire", "nonogram", "tenttrail", "rushhour",
   "jigsaw", "kakuro", "caverncrush", "calccages", "wordladder", "dominodraw",
-  "inkislands",
+  "inkislands", "vistatowers",
 ]);
 
 const CURATED_TRENDING_SLUGS = Object.freeze([

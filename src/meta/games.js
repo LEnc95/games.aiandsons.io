@@ -144,6 +144,7 @@ const BASE_GAMES = [
   { slug:'wordladder',     name:'Word Ladder Sprint',  emoji:'\u{1FA9C}', scoreHint:'ladders',    url:'/wordladder',   desc:'Transform one word into another by changing a single letter at each valid vocabulary step.', earnsCoins:true },
   { slug:'dominodraw',     name:'Domino Draw',         emoji:'\u{1F0CF}', scoreHint:'points',     url:'/dominodraw',   desc:'Match domino ends, draw from the boneyard, block the table AI, and race to 50 points.', earnsCoins:true },
   { slug:'inkislands',     name:'Ink Islands',         emoji:'\u{1F3DD}\uFE0F', scoreHint:'solves', url:'/inkislands',   desc:'Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles.', earnsCoins:true },
+  { slug:'vistatowers',    name:'Vista Towers',        emoji:'\u{1F3D9}\uFE0F', scoreHint:'solves', url:'/vistatowers',  desc:'Fill skyline tower heights so every row, column, and edge visibility clue lines up across four logic boards.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -164,7 +165,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
-    'nonogram', 'tenttrail', 'inkislands', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ],
   arcade: [
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

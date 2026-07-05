@@ -3891,3 +3891,17 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Custom scenarios covered start/menu, issue checking, hint, ink tool, undo, pause/resume, level clear, full campaign win with coin reward, shared feedback modal, mobile tap input, and zero Ink Islands browser/page errors.
 - Run time recorded: 2026-07-04T07:14:39.2826852-04:00.
 - TODO: none for Ink Islands; future work may address repository-wide LF-to-CRLF warning noise and OG generator churn on pre-existing cards.
+
+## 2026-07-05 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Ink Islands, Twenty-One Table, SameGame, Bridge Islands, Vial Sort, Loop Trail, Crazy Eights, Pyramid Hopper, Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, and Pocket Pool.
+- Reviewed the 145-game registry and selected Vista Towers (`/vistatowers`), a Skyscrapers-style row/column visibility logic puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic hooks, shared feedback, coin rewards, metadata registration, SEO/OG/Linear regeneration, and focused Playwright validation with screenshot inspection.
+- Initial implementation added `vistatowers/index.html` with four deterministic skyline logic boards, row/column visibility clues, locked starter cells, hint/check/undo, pause/restart/fullscreen, coin rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__VISTA_TOWERS_GAME__` helpers.
+- Registered Vista Towers in `src/meta/games.js` and the puzzle discovery group; the registry now reports 146 games with a 2026-07-05 release date.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, homepage/discovery metadata, `assets/og/vistatowers.png`, and local Linear feedback seeds now include Vista Towers. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: 146-game registry import/uniqueness check, focused games/discovery/feedback coverage tests, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/vistatowers-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/vistatowers-scenarios`, screenshot/OG inspection, and `git diff --check` with only repository LF-to-CRLF warnings.
+- Custom scenarios covered keyboard digit entry, duplicate detection, undo, hint, check, pause/resume, puzzle solve, next-puzzle advance, campaign completion with coin reward, shared feedback modal, mobile touch entry, and zero Vista Towers browser/page errors.
+- `npm run test:feedback-smoke:raw` passed its functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Vista Towers issue.
+- Run time recorded: 2026-07-05T07:14:30.8507920-04:00.
+- TODO: none for Vista Towers; future work may address repository-wide LF-to-CRLF warning noise and the raw-static feedback smoke POST/API behavior.

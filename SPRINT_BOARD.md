@@ -500,3 +500,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-02] Key PR links: none merged for this date.
 - [nightly 2026-07-03] No repository commits found for this date.
 - [nightly 2026-07-03] Key PR links: none merged for this date.
+- [nightly 2026-07-04] Tracked changes: 2 commit(s) - 25ad771 Add Ink Islands & Twenty-One games; refresh SEO, OG cards, and docs; 9f6938e Unify top-level pages onto teal/deep-space brand.
+- [nightly 2026-07-04] Key PR links: none merged for this date.

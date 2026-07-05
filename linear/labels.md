@@ -160,5 +160,6 @@
 - game/wordladder
 - game/dominodraw
 - game/inkislands
+- game/vistatowers
 
 Generated from `src/meta/feedback.js`.

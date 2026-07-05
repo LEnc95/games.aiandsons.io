@@ -1,0 +1,1292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Vista Towers | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #14282d;
+  background: linear-gradient(135deg, #f6fbff 0%, #dfeee7 42%, #f0d8b9 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff8c;
+  padding: 8px 12px;
+  background: #17343adf;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1120px);
+  aspect-ratio: 14 / 9;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffd8;
+  background: #f8fbff;
+  box-shadow: 0 24px 58px #26374745;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd8;
+  background: #17343af3;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #28384861;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(31px, 6vw, 54px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce8e9;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.mini {
+  font-size: 13px;
+  color: #bfd5d4;
+}
+.hud, .controls {
+  width: min(97vw, 1120px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #17343adf;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bfd5d4;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #98ebbe; }
+.chip.warn b { color: #ffd36c; }
+.chip.danger b { color: #ff9aa5; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3448582b;
+}
+button:hover { background: #28565e; }
+button:focus-visible {
+  outline: 3px solid #14282d;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd15f;
+  border-color: #ffe7a5;
+  color: #14282d;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe08a; }
+.action { background: #1f7869; }
+.utility { background: #455f67; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 48dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill skyline tower heights so every row, column, and edge visibility clue lines up across four logic boards. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Vista Towers | AI and Sons Games">
+  <meta property="og:description" content="Fill skyline tower heights so every row, column, and edge visibility clue lines up across four logic boards. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/vistatowers">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/vistatowers.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vista Towers | AI and Sons Games">
+  <meta name="twitter:description" content="Fill skyline tower heights so every row, column, and edge visibility clue lines up across four logic boards. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/vistatowers.png">
+  <link rel="canonical" href="https://games.aiandsons.io/vistatowers">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Vista Towers","description":"Fill skyline tower heights so every row, column, and edge visibility clue lines up across four logic boards. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/vistatowers","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Vista Towers puzzle board">
+    <canvas id="game" width="1120" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Vista Towers</h1>
+        <p id="overlayText">Fill every row and column with unique tower heights. Edge clues show how many towers are visible from that side.</p>
+        <p class="mini">Keyboard: arrows move, digits fill, H hint, C check, Backspace clear, P pause, F fullscreen.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="puzzleText">Harbor 4</b></div>
+    <div class="chip"><span>Filled</span><b id="filledText">0 / 16</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip danger"><span>Issues</span><b id="issuesText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Vista Towers controls">
+    <button class="primary" id="newBtn" type="button">New Puzzle</button>
+    <button class="action" id="hintBtn" type="button">Hint</button>
+    <button class="action" id="checkBtn" type="button">Check</button>
+    <button class="utility" id="clearBtn" type="button">Clear Cell</button>
+    <button class="utility" id="undoBtn" type="button">Undo</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  puzzle: document.getElementById('puzzleText'),
+  filled: document.getElementById('filledText'),
+  time: document.getElementById('timeText'),
+  issues: document.getElementById('issuesText'),
+  coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  newPuzzle: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  check: document.getElementById('checkBtn'),
+  clear: document.getElementById('clearBtn'),
+  undo: document.getElementById('undoBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const W = canvas.width;
+const H = canvas.height;
+const BEST_KEY = 'cade:vistatowers:best';
+const COMPLETE_KEY = 'cade:vistatowers:completed';
+const digitRects = [];
+let lastFrame = nowMs();
+let manualStepping = false;
+
+const PUZZLES = [
+  {
+    id: 'harbor-4',
+    name: 'Harbor 4',
+    size: 4,
+    par: 150,
+    givens: [[0, 2], [3, 0]],
+    solution: [
+      [2, 1, 4, 3],
+      [3, 4, 1, 2],
+      [4, 2, 3, 1],
+      [1, 3, 2, 4],
+    ],
+  },
+  {
+    id: 'market-5',
+    name: 'Market 5',
+    size: 5,
+    par: 240,
+    givens: [[0, 1], [2, 4]],
+    solution: [
+      [2, 4, 1, 5, 3],
+      [5, 3, 4, 2, 1],
+      [1, 5, 2, 3, 4],
+      [3, 1, 5, 4, 2],
+      [4, 2, 3, 1, 5],
+    ],
+  },
+  {
+    id: 'summit-5',
+    name: 'Summit 5',
+    size: 5,
+    par: 270,
+    givens: [[1, 2], [3, 3]],
+    solution: [
+      [3, 5, 2, 1, 4],
+      [1, 4, 5, 3, 2],
+      [5, 2, 1, 4, 3],
+      [2, 3, 4, 5, 1],
+      [4, 1, 3, 2, 5],
+    ],
+  },
+  {
+    id: 'skyline-6',
+    name: 'Skyline 6',
+    size: 6,
+    par: 390,
+    givens: [[0, 3], [4, 5], [5, 0]],
+    solution: [
+      [2, 5, 1, 6, 3, 4],
+      [5, 1, 6, 3, 4, 2],
+      [1, 6, 3, 4, 2, 5],
+      [6, 3, 4, 2, 5, 1],
+      [3, 4, 2, 5, 1, 6],
+      [4, 2, 5, 1, 6, 3],
+    ],
+  },
+];
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  values: [],
+  selected: { r: 0, c: 0 },
+  elapsed: 0,
+  score: 0,
+  bestScore: loadNumber(BEST_KEY, 0),
+  completedCount: loadNumber(COMPLETE_KEY, 0),
+  mistakes: 0,
+  hintsUsed: 0,
+  checksUsed: 0,
+  undoStack: [],
+  message: 'Read the edge clues, then place each tower height once per row and column.',
+  lastAction: { type: 'load' },
+  lastCoins: 0,
+  coinsEarned: 0,
+};
+
+for (const item of PUZZLES) item.clues = buildClues(item.solution);
+
+function nowMs() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+}
+
+function loadNumber(key, fallback = 0) {
+  try {
+    const value = Number(localStorage.getItem(key) || fallback);
+    return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveNumber(key, value) {
+  try {
+    localStorage.setItem(key, String(Math.max(0, Math.floor(value))));
+  } catch {
+    // Local storage may be unavailable in constrained test harnesses.
+  }
+}
+
+function activePuzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function createMatrix(size, value = 0) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => value));
+}
+
+function cellKey(r, c) {
+  return `${r},${c}`;
+}
+
+function givenSet(puz = activePuzzle()) {
+  return new Set((puz.givens || []).map(([r, c]) => cellKey(r, c)));
+}
+
+function isGivenCell(r, c, puz = activePuzzle()) {
+  return givenSet(puz).has(cellKey(r, c));
+}
+
+function visibleCount(line) {
+  let best = 0;
+  let seen = 0;
+  for (const value of line) {
+    if (value > best) {
+      best = value;
+      seen += 1;
+    }
+  }
+  return seen;
+}
+
+function buildClues(solution) {
+  const size = solution.length;
+  const columns = Array.from({ length: size }, (_, c) => solution.map(row => row[c]));
+  return {
+    top: columns.map(visibleCount),
+    bottom: columns.map(col => visibleCount([...col].reverse())),
+    left: solution.map(visibleCount),
+    right: solution.map(row => visibleCount([...row].reverse())),
+  };
+}
+
+function emptyBoard(puz = activePuzzle()) {
+  const values = createMatrix(puz.size, 0);
+  for (const [r, c] of puz.givens || []) values[r][c] = puz.solution[r][c];
+  return values;
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  game.puzzleIndex = ((Math.floor(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  const puz = activePuzzle();
+  game.values = emptyBoard(puz);
+  game.selected = firstEditableCell(puz);
+  game.elapsed = 0;
+  game.score = 0;
+  game.mistakes = 0;
+  game.hintsUsed = 0;
+  game.checksUsed = 0;
+  game.undoStack = [];
+  game.mode = 'playing';
+  game.message = `${puz.name}: fill heights 1 through ${puz.size}.`;
+  game.lastAction = { type: 'start', puzzle: puz.id };
+  game.lastCoins = 0;
+  rememberRecent('vistatowers');
+  maybeUnlock({ anyPlay: true });
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function firstEditableCell(puz = activePuzzle()) {
+  const locked = givenSet(puz);
+  for (let r = 0; r < puz.size; r += 1) {
+    for (let c = 0; c < puz.size; c += 1) {
+      if (!locked.has(cellKey(r, c))) return { r, c };
+    }
+  }
+  return { r: 0, c: 0 };
+}
+
+function restartPuzzle() {
+  return startPuzzle(game.puzzleIndex);
+}
+
+function nextPuzzle() {
+  if (game.mode === 'complete') return startPuzzle(0);
+  return startPuzzle(game.puzzleIndex + 1);
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(safe / 60);
+  const secs = String(safe % 60).padStart(2, '0');
+  return `${mins}:${secs}`;
+}
+
+function filledCount() {
+  return game.values.flat().filter(Boolean).length;
+}
+
+function snapshot() {
+  return {
+    values: game.values.map(row => [...row]),
+    selected: { ...game.selected },
+    mistakes: game.mistakes,
+    hintsUsed: game.hintsUsed,
+    checksUsed: game.checksUsed,
+    message: game.message,
+  };
+}
+
+function restoreSnapshot(snap) {
+  const puz = activePuzzle();
+  game.values = snap.values.map(row => [...row]);
+  game.selected = {
+    r: Math.max(0, Math.min(puz.size - 1, snap.selected.r)),
+    c: Math.max(0, Math.min(puz.size - 1, snap.selected.c)),
+  };
+  game.mistakes = snap.mistakes;
+  game.hintsUsed = snap.hintsUsed;
+  game.checksUsed = snap.checksUsed;
+  game.message = snap.message || 'Undo applied.';
+}
+
+function pushUndo() {
+  game.undoStack.push(snapshot());
+  if (game.undoStack.length > 80) game.undoStack.shift();
+}
+
+function undo() {
+  if (game.mode !== 'playing' || game.undoStack.length === 0) return stateToObject();
+  const snap = game.undoStack.pop();
+  restoreSnapshot(snap);
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function selectCell(r, c) {
+  const puz = activePuzzle();
+  game.selected = {
+    r: Math.max(0, Math.min(puz.size - 1, Math.floor(r))),
+    c: Math.max(0, Math.min(puz.size - 1, Math.floor(c))),
+  };
+  game.lastAction = { type: 'select', cell: { ...game.selected } };
+  draw();
+  return stateToObject();
+}
+
+function moveSelection(dr, dc) {
+  const puz = activePuzzle();
+  const locked = givenSet(puz);
+  let r = game.selected.r;
+  let c = game.selected.c;
+  for (let i = 0; i < puz.size * puz.size; i += 1) {
+    r = (r + dr + puz.size) % puz.size;
+    c = (c + dc + puz.size) % puz.size;
+    if (!locked.has(cellKey(r, c))) break;
+  }
+  return selectCell(r, c);
+}
+
+function enterDigit(digit, r = game.selected.r, c = game.selected.c) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return stateToObject();
+  const puz = activePuzzle();
+  const value = Math.floor(Number(digit));
+  const row = Math.max(0, Math.min(puz.size - 1, Math.floor(r)));
+  const col = Math.max(0, Math.min(puz.size - 1, Math.floor(c)));
+  if (value < 1 || value > puz.size) return stateToObject();
+  if (isGivenCell(row, col, puz)) {
+    game.message = 'Clue starter cells are locked.';
+    game.lastAction = { type: 'locked', cell: { r: row, c: col } };
+    updateHud();
+    draw();
+    return stateToObject();
+  }
+
+  pushUndo();
+  game.selected = { r: row, c: col };
+  game.values[row][col] = value;
+  const validation = validateState();
+  if (validation.conflictKeys.has(cellKey(row, col)) || validation.invalidClues.some(item => item.cells.some(([rr, cc]) => rr === row && cc === col))) {
+    game.mistakes += 1;
+    game.message = `Height ${value} creates a duplicate or blocked vista clue.`;
+  } else {
+    game.message = `Placed tower height ${value}.`;
+  }
+  game.lastAction = { type: 'digit', cell: { r: row, c: col }, digit: value };
+  checkSolved();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function clearCell(r = game.selected.r, c = game.selected.c) {
+  if (game.mode !== 'playing') return stateToObject();
+  const puz = activePuzzle();
+  const row = Math.max(0, Math.min(puz.size - 1, Math.floor(r)));
+  const col = Math.max(0, Math.min(puz.size - 1, Math.floor(c)));
+  if (isGivenCell(row, col, puz)) {
+    game.message = 'Starter tower cells cannot be cleared.';
+    game.lastAction = { type: 'locked_clear', cell: { r: row, c: col } };
+    updateHud();
+    draw();
+    return stateToObject();
+  }
+  if (!game.values[row][col]) return stateToObject();
+  pushUndo();
+  game.values[row][col] = 0;
+  game.selected = { r: row, c: col };
+  game.message = 'Cell cleared.';
+  game.lastAction = { type: 'clear', cell: { r: row, c: col } };
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function useHint() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return stateToObject();
+  const puz = activePuzzle();
+  let target = { ...game.selected };
+  if (isGivenCell(target.r, target.c, puz) || game.values[target.r][target.c] === puz.solution[target.r][target.c]) {
+    target = null;
+    for (let r = 0; r < puz.size && !target; r += 1) {
+      for (let c = 0; c < puz.size; c += 1) {
+        if (!isGivenCell(r, c, puz) && game.values[r][c] !== puz.solution[r][c]) {
+          target = { r, c };
+          break;
+        }
+      }
+    }
+  }
+  if (!target) return stateToObject();
+  pushUndo();
+  game.selected = target;
+  game.values[target.r][target.c] = puz.solution[target.r][target.c];
+  game.hintsUsed += 1;
+  game.message = `Hint filled row ${target.r + 1}, column ${target.c + 1}.`;
+  game.lastAction = { type: 'hint', cell: target, digit: game.values[target.r][target.c] };
+  checkSolved();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function checkBoard() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  const validation = validateState();
+  game.checksUsed += 1;
+  const issues = validation.conflictKeys.size + validation.invalidClues.length;
+  const pending = validation.clueStatuses.filter(item => item.status === 'pending').length;
+  if (issues) {
+    game.message = `${issues} issue${issues === 1 ? '' : 's'} found: fix duplicate heights or red vista clues.`;
+  } else if (pending || filledCount() < activePuzzle().size * activePuzzle().size) {
+    game.message = 'No issues yet. Keep filling the skyline.';
+  } else {
+    game.message = 'Every vista checks out.';
+  }
+  game.lastAction = { type: 'check', issues, pending };
+  checkSolved();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function lineValues(side, index, values = game.values) {
+  const puz = activePuzzle();
+  if (side === 'left') return [...values[index]];
+  if (side === 'right') return [...values[index]].reverse();
+  const column = Array.from({ length: puz.size }, (_, r) => values[r][index]);
+  return side === 'top' ? column : column.reverse();
+}
+
+function lineCells(side, index) {
+  const puz = activePuzzle();
+  if (side === 'left') return Array.from({ length: puz.size }, (_, c) => [index, c]);
+  if (side === 'right') return Array.from({ length: puz.size }, (_, c) => [index, puz.size - 1 - c]);
+  if (side === 'top') return Array.from({ length: puz.size }, (_, r) => [r, index]);
+  return Array.from({ length: puz.size }, (_, r) => [puz.size - 1 - r, index]);
+}
+
+function validateState() {
+  const puz = activePuzzle();
+  const conflictKeys = new Set();
+  const rowConflicts = [];
+  const colConflicts = [];
+
+  for (let r = 0; r < puz.size; r += 1) {
+    const seen = new Map();
+    for (let c = 0; c < puz.size; c += 1) {
+      const value = game.values[r][c];
+      if (!value) continue;
+      if (!seen.has(value)) seen.set(value, []);
+      seen.get(value).push([r, c]);
+    }
+    for (const [value, cells] of seen.entries()) {
+      if (cells.length > 1) {
+        cells.forEach(([rr, cc]) => conflictKeys.add(cellKey(rr, cc)));
+        rowConflicts.push({ row: r, value, cells });
+      }
+    }
+  }
+
+  for (let c = 0; c < puz.size; c += 1) {
+    const seen = new Map();
+    for (let r = 0; r < puz.size; r += 1) {
+      const value = game.values[r][c];
+      if (!value) continue;
+      if (!seen.has(value)) seen.set(value, []);
+      seen.get(value).push([r, c]);
+    }
+    for (const [value, cells] of seen.entries()) {
+      if (cells.length > 1) {
+        cells.forEach(([rr, cc]) => conflictKeys.add(cellKey(rr, cc)));
+        colConflicts.push({ column: c, value, cells });
+      }
+    }
+  }
+
+  const clueStatuses = [];
+  const invalidClues = [];
+  for (const side of ['top', 'bottom', 'left', 'right']) {
+    for (let i = 0; i < puz.size; i += 1) {
+      const line = lineValues(side, i);
+      const target = puz.clues[side][i];
+      const complete = line.every(Boolean);
+      const visible = complete ? visibleCount(line) : visibleCount(line.filter(Boolean));
+      let status = 'pending';
+      if (complete) status = visible === target ? 'satisfied' : 'invalid';
+      const item = {
+        side,
+        index: i,
+        target,
+        visible,
+        complete,
+        status,
+        cells: lineCells(side, i),
+      };
+      clueStatuses.push(item);
+      if (status === 'invalid') invalidClues.push(item);
+    }
+  }
+
+  return { conflictKeys, rowConflicts, colConflicts, clueStatuses, invalidClues };
+}
+
+function isSolved() {
+  const puz = activePuzzle();
+  if (filledCount() !== puz.size * puz.size) return false;
+  const validation = validateState();
+  return validation.conflictKeys.size === 0 && validation.invalidClues.length === 0 && validation.clueStatuses.every(item => item.status === 'satisfied');
+}
+
+function checkSolved() {
+  if (game.mode !== 'playing' || !isSolved()) return false;
+  finishPuzzle();
+  return true;
+}
+
+function currentScoreEstimate() {
+  const puz = activePuzzle();
+  const base = puz.size * puz.size * 20;
+  const timeBonus = Math.max(0, puz.par - Math.floor(game.elapsed));
+  const penalties = game.hintsUsed * 35 + game.mistakes * 12 + game.checksUsed * 5;
+  return Math.max(40, base + timeBonus - penalties);
+}
+
+function finishPuzzle() {
+  const puz = activePuzzle();
+  const finalPuzzle = game.puzzleIndex === PUZZLES.length - 1;
+  game.score = currentScoreEstimate();
+  game.bestScore = Math.max(game.bestScore, game.score);
+  saveNumber(BEST_KEY, game.bestScore);
+  game.completedCount += 1;
+  saveNumber(COMPLETE_KEY, game.completedCount);
+  const baseCoins = Math.max(12, Math.min(46, 8 + puz.size * 5 + Math.floor(Math.max(0, puz.par - game.elapsed) / 90) - game.hintsUsed));
+  const campaignBonus = finalPuzzle ? 20 : 0;
+  const coins = baseCoins + campaignBonus;
+  game.lastCoins = coins;
+  game.coinsEarned += coins;
+  addCoins(coins);
+  maybeUnlock({
+    anyPlay: true,
+    vistatowers: {
+      result: finalPuzzle ? 'campaign' : 'solved',
+      size: puz.size,
+      hintsUsed: game.hintsUsed,
+      mistakes: game.mistakes,
+      score: game.score,
+    },
+  });
+  game.mode = finalPuzzle ? 'complete' : 'solved';
+  game.message = finalPuzzle
+    ? `All skylines solved for ${game.score} points.`
+    : `${puz.name} solved for ${game.score} points.`;
+  game.lastAction = { type: game.mode, puzzle: puz.id, score: game.score, coins };
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function togglePause() {
+  if (game.mode === 'menu') {
+    startPuzzle(game.puzzleIndex);
+    return stateToObject();
+  }
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = `${activePuzzle().name} resumed.`;
+  }
+  game.lastAction = { type: 'pause_toggle', mode: game.mode };
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+  game.lastAction = { type: 'fullscreen' };
+  setTimeout(draw, 80);
+}
+
+function update(dt) {
+  if (game.mode !== 'playing') return;
+  game.elapsed += Math.max(0, dt);
+}
+
+function updateHud() {
+  const puz = activePuzzle();
+  const validation = game.values.length ? validateState() : { conflictKeys: new Set(), invalidClues: [] };
+  const issues = validation.conflictKeys.size + validation.invalidClues.length;
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.puzzle.textContent = puz.name;
+  hud.filled.textContent = `${filledCount()} / ${puz.size * puz.size}`;
+  hud.time.textContent = formatTime(game.elapsed);
+  hud.issues.textContent = String(issues);
+  hud.coins.textContent = String(Number(profileState.coins || 0));
+  if (game.mode === 'paused') startBtn.textContent = 'Resume';
+  else if (game.mode === 'solved') startBtn.textContent = 'Next Puzzle';
+  else if (game.mode === 'complete') startBtn.textContent = 'Play Again';
+  else startBtn.textContent = 'Start Puzzle';
+}
+
+function updateOverlay() {
+  if (game.mode === 'menu') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Vista Towers';
+    overlayText.textContent = 'Place each height once per row and column. A clue of 3 means three towers are visible looking from that edge.';
+  } else if (game.mode === 'paused') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = 'Resume when you are ready to keep reading the skyline clues.';
+  } else if (game.mode === 'solved') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Puzzle Solved';
+    overlayText.textContent = `${game.message} Earned ${game.lastCoins} coins. Best score ${game.bestScore}.`;
+  } else if (game.mode === 'complete') {
+    overlay.classList.add('show');
+    overlayTitle.textContent = 'Skyline Complete';
+    overlayText.textContent = `${game.message} Earned ${game.lastCoins} coins including the campaign bonus.`;
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+
+function boardRect() {
+  return { x: 118, y: 128, size: 492 };
+}
+
+function cellRect(r, c) {
+  const rect = boardRect();
+  const cell = rect.size / activePuzzle().size;
+  return {
+    x: rect.x + c * cell,
+    y: rect.y + r * cell,
+    w: cell,
+    h: cell,
+  };
+}
+
+function drawRoundRect(x, y, w, h, radius) {
+  const r = Math.min(radius, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(x, y, w, h, r, fill, stroke = null, lineWidth = 2) {
+  drawRoundRect(x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawText(text, x, y, size, color, align = 'left', weight = '900') {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#fbfdff');
+  bg.addColorStop(.48, '#ecf6ef');
+  bg.addColorStop(1, '#f3dfc6');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  drawHeader();
+  drawBoard();
+  drawSidePanel();
+  drawFooter();
+}
+
+function drawHeader() {
+  fillRoundRect(36, 24, W - 72, 64, 8, '#17343a', '#ffffff99', 2);
+  drawText('Vista Towers', 58, 55, 31, '#f8fbff');
+  drawText(game.message, 286, 55, 17, '#dce8e9', 'left', '800');
+  drawText(`${activePuzzle().name} | ${formatTime(game.elapsed)}`, W - 58, 55, 18, '#ffd15f', 'right');
+}
+
+function drawBoard() {
+  if (!game.values.length) game.values = emptyBoard();
+  const puz = activePuzzle();
+  const rect = boardRect();
+  const cell = rect.size / puz.size;
+  const validation = validateState();
+  const conflicts = validation.conflictKeys;
+  const locked = givenSet(puz);
+
+  fillRoundRect(rect.x - 58, rect.y - 58, rect.size + 116, rect.size + 116, 8, '#ffffffbf', '#ffffffd7', 2);
+  drawClues(rect, cell, validation);
+
+  for (let r = 0; r < puz.size; r += 1) {
+    for (let c = 0; c < puz.size; c += 1) {
+      const cr = cellRect(r, c);
+      const key = cellKey(r, c);
+      const selected = game.selected.r === r && game.selected.c === c;
+      const given = locked.has(key);
+      ctx.fillStyle = selected ? '#ffe39d' : conflicts.has(key) ? '#ffd9d9' : given ? '#d9f0e5' : '#fffdf8';
+      ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+      ctx.strokeStyle = '#d3cec4';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cr.x, cr.y, cr.w, cr.h);
+      drawCellContent(r, c, cr, given);
+      if (selected) {
+        ctx.strokeStyle = '#1f7869';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(cr.x + 3, cr.y + 3, cr.w - 6, cr.h - 6);
+      }
+    }
+  }
+
+  ctx.strokeStyle = '#17343a';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(rect.x, rect.y, rect.size, rect.size);
+}
+
+function clueStatusFor(validation, side, index) {
+  return validation.clueStatuses.find(item => item.side === side && item.index === index);
+}
+
+function clueColor(status) {
+  if (status === 'satisfied') return '#1f7869';
+  if (status === 'invalid') return '#c33b4a';
+  return '#17343a';
+}
+
+function drawClues(rect, cell, validation) {
+  const puz = activePuzzle();
+  for (let i = 0; i < puz.size; i += 1) {
+    const cx = rect.x + i * cell + cell / 2;
+    const cy = rect.y + i * cell + cell / 2;
+    const top = clueStatusFor(validation, 'top', i);
+    const bottom = clueStatusFor(validation, 'bottom', i);
+    const left = clueStatusFor(validation, 'left', i);
+    const right = clueStatusFor(validation, 'right', i);
+    drawClueBadge(cx, rect.y - 32, puz.clues.top[i], clueColor(top?.status));
+    drawClueBadge(cx, rect.y + rect.size + 32, puz.clues.bottom[i], clueColor(bottom?.status));
+    drawClueBadge(rect.x - 32, cy, puz.clues.left[i], clueColor(left?.status));
+    drawClueBadge(rect.x + rect.size + 32, cy, puz.clues.right[i], clueColor(right?.status));
+  }
+}
+
+function drawClueBadge(x, y, value, color) {
+  fillRoundRect(x - 18, y - 18, 36, 36, 8, '#f8fbff', color, 3);
+  drawText(String(value), x, y + 1, 18, color, 'center');
+}
+
+function drawCellContent(r, c, rect, given) {
+  const value = game.values[r][c];
+  if (!value) {
+    drawText('.', rect.x + rect.w / 2, rect.y + rect.h / 2 + 2, Math.floor(rect.h * .34), '#a8b3b0', 'center');
+    return;
+  }
+  const heightRatio = value / activePuzzle().size;
+  const towerW = rect.w * .33;
+  const towerH = Math.max(18, rect.h * (.26 + heightRatio * .44));
+  const tx = rect.x + rect.w / 2 - towerW / 2;
+  const ty = rect.y + rect.h / 2 + rect.h * .22 - towerH;
+  const fill = given ? '#1f7869' : '#4b80c9';
+  fillRoundRect(tx, ty, towerW, towerH, 5, fill, '#17343a80', 1.5);
+  ctx.fillStyle = '#ffffff44';
+  ctx.fillRect(tx + towerW * .18, ty + 4, towerW * .18, Math.max(8, towerH - 8));
+  drawText(String(value), rect.x + rect.w / 2, rect.y + rect.h * .72, Math.floor(rect.h * .28), '#14282d', 'center');
+}
+
+function drawSidePanel() {
+  const puz = activePuzzle();
+  const validation = validateState();
+  const issues = validation.conflictKeys.size + validation.invalidClues.length;
+  digitRects.length = 0;
+  fillRoundRect(690, 128, 374, 492, 8, '#17343ae8', '#ffffff9f', 2);
+  drawText('Tower Heights', 722, 164, 25, '#f8fbff');
+  drawText(`1-${puz.size}`, 1032, 164, 18, '#ffd15f', 'right');
+
+  const startX = 724;
+  const startY = 200;
+  const gap = 14;
+  const size = 58;
+  for (let i = 1; i <= puz.size; i += 1) {
+    const col = (i - 1) % 3;
+    const row = Math.floor((i - 1) / 3);
+    const rect = { x: startX + col * (size + gap), y: startY + row * (size + gap), w: size, h: size, digit: i };
+    digitRects.push(rect);
+    const selected = game.values[game.selected.r]?.[game.selected.c] === i;
+    fillRoundRect(rect.x, rect.y, rect.w, rect.h, 8, selected ? '#ffd15f' : '#f8fbff', '#ffffffb5', 2);
+    drawText(String(i), rect.x + rect.w / 2, rect.y + rect.h / 2 + 2, 27, '#17343a', 'center');
+  }
+
+  const statusY = 394;
+  drawText('Status', 724, statusY, 24, '#f8fbff');
+  drawText(`Filled ${filledCount()} of ${puz.size * puz.size}`, 724, statusY + 38, 18, '#dce8e9', 'left', '800');
+  drawText(`Issues ${issues}`, 724, statusY + 70, 18, issues ? '#ff9aa5' : '#98ebbe', 'left', '800');
+  drawText(`Hints ${game.hintsUsed}`, 724, statusY + 102, 18, '#dce8e9', 'left', '800');
+  drawText(`Checks ${game.checksUsed}`, 724, statusY + 134, 18, '#dce8e9', 'left', '800');
+  drawText(`Score ${game.score || currentScoreEstimate()}`, 724, statusY + 166, 18, '#ffd15f', 'left', '800');
+
+  const cell = game.selected;
+  drawText(`Selected R${cell.r + 1} C${cell.c + 1}`, 1032, statusY + 38, 17, '#dce8e9', 'right', '800');
+  drawText(isGivenCell(cell.r, cell.c) ? 'Starter cell' : 'Editable cell', 1032, statusY + 70, 18, isGivenCell(cell.r, cell.c) ? '#98ebbe' : '#ffd15f', 'right', '900');
+  drawText(`Best ${game.bestScore}`, 1032, statusY + 102, 17, '#dce8e9', 'right', '800');
+  drawText(`${game.completedCount} solved`, 1032, statusY + 134, 17, '#dce8e9', 'right', '800');
+}
+
+function drawFooter() {
+  fillRoundRect(36, H - 58, W - 72, 36, 8, '#ffffffbd', '#ffffffb0', 2);
+  drawText('Tap cell then height. Edge clues count visible towers. H hint | C check | U undo | R restart | F fullscreen', W / 2, H - 40, 15, '#17343a', 'center', '800');
+}
+
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function cellAtPoint(point) {
+  const rect = boardRect();
+  const puz = activePuzzle();
+  if (point.x < rect.x || point.y < rect.y || point.x > rect.x + rect.size || point.y > rect.y + rect.size) return null;
+  const cell = rect.size / puz.size;
+  return {
+    r: Math.max(0, Math.min(puz.size - 1, Math.floor((point.y - rect.y) / cell))),
+    c: Math.max(0, Math.min(puz.size - 1, Math.floor((point.x - rect.x) / cell))),
+  };
+}
+
+function digitAtPoint(point) {
+  return digitRects.find(rect => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h)?.digit || 0;
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode === 'solved' || game.mode === 'complete' || game.mode === 'paused') return;
+  const point = pointFromEvent(event);
+  const cell = cellAtPoint(point);
+  if (cell) {
+    selectCell(cell.r, cell.c);
+    return;
+  }
+  const digit = digitAtPoint(point);
+  if (digit) enterDigit(digit);
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p' || event.key === 'Escape') {
+    event.preventDefault();
+    if (event.key === 'Escape' && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    togglePause();
+    return;
+  }
+  if (game.mode !== 'playing') {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (game.mode === 'paused') togglePause();
+      else if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+      else startPuzzle(game.puzzleIndex);
+    }
+    return;
+  }
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    moveSelection(0, -1);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    moveSelection(0, 1);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    moveSelection(-1, 0);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    moveSelection(1, 0);
+  } else if (/^[1-9]$/.test(key)) {
+    event.preventDefault();
+    enterDigit(Number(key));
+  } else if (key === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (key === 'c') {
+    event.preventDefault();
+    checkBoard();
+  } else if (key === 'u' || key === 'z') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'backspace' || key === 'delete') {
+    event.preventDefault();
+    clearCell();
+  } else if (key === 'r') {
+    event.preventDefault();
+    restartPuzzle();
+  }
+}
+
+function compactCell(r, c) {
+  const value = game.values[r][c];
+  return {
+    row: r,
+    column: c,
+    value,
+    given: isGivenCell(r, c),
+    selected: game.selected.r === r && game.selected.c === c,
+  };
+}
+
+function stateToObject() {
+  const puz = activePuzzle();
+  const validation = game.values.length ? validateState() : { conflictKeys: new Set(), rowConflicts: [], colConflicts: [], clueStatuses: [], invalidClues: [] };
+  return {
+    game: 'vistatowers',
+    coordinate_system: 'Canvas 1120x720 origin top-left, x increases right, y increases down. Grid cells use zero-based row and column indices.',
+    mode: game.mode,
+    puzzle_id: puz.id,
+    puzzle_name: puz.name,
+    puzzle_index: game.puzzleIndex,
+    puzzle_count: PUZZLES.length,
+    size: puz.size,
+    elapsed_seconds: Number(game.elapsed.toFixed(2)),
+    filled_cells: filledCount(),
+    total_cells: puz.size * puz.size,
+    selected_cell: { ...game.selected },
+    score: game.score || currentScoreEstimate(),
+    best_score: game.bestScore,
+    mistakes: game.mistakes,
+    hints_used: game.hintsUsed,
+    checks_used: game.checksUsed,
+    undo_count: game.undoStack.length,
+    clues: puz.clues,
+    conflict_cells: [...validation.conflictKeys],
+    invalid_clues: validation.invalidClues.map(item => ({ side: item.side, index: item.index, target: item.target, visible: item.visible })),
+    clue_statuses: validation.clueStatuses.map(item => ({
+      side: item.side,
+      index: item.index,
+      target: item.target,
+      visible: item.visible,
+      complete: item.complete,
+      status: item.status,
+    })),
+    board: Array.from({ length: puz.size }, (_, r) => Array.from({ length: puz.size }, (_, c) => compactCell(r, c))),
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  pushUndo();
+  const puz = activePuzzle();
+  game.values = puz.solution.map(row => [...row]);
+  game.selected = firstEditableCell(puz);
+  game.lastAction = { type: 'test_solve', puzzle: puz.id };
+  checkSolved();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function solveCampaign() {
+  for (let i = 0; i < PUZZLES.length; i += 1) {
+    startPuzzle(i);
+    solveCurrent();
+  }
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = nowMs();
+  return renderGameToText();
+};
+
+window.__VISTA_TOWERS_GAME__ = {
+  startPuzzle,
+  restartPuzzle,
+  nextPuzzle,
+  enterDigit,
+  clearCell,
+  selectCell,
+  useHint,
+  checkBoard,
+  undo,
+  solveCurrent,
+  solveCampaign,
+  validateState,
+  stateToObject,
+  renderGameToText,
+  puzzleIds: () => PUZZLES.map(item => item.id),
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'vistatowers', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', handleKey);
+window.addEventListener('resize', draw);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+  else startPuzzle(game.puzzleIndex);
+});
+buttons.newPuzzle.addEventListener('click', nextPuzzle);
+buttons.hint.addEventListener('click', useHint);
+buttons.check.addEventListener('click', checkBoard);
+buttons.clear.addEventListener('click', () => clearCell());
+buttons.undo.addEventListener('click', undo);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+game.values = emptyBoard();
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'vistatowers', gameName: 'Vista Towers' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
