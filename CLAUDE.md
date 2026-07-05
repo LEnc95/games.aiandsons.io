@@ -41,6 +41,7 @@ Other:
 ```sh
 npm run seo                  # regenerate sitemap + inject SEO meta (run after adding a game)
 npm run og                   # render social/OG card PNGs into assets/og/<slug>.png (run after adding a game; needs `npx playwright install chromium`)
+npm run game:preflight       # validate the daily add-a-game drop (registry/folder/discovery/OG/sitemap wiring) before committing to main
 npm run marketing:clips      # capture bot-driven gameplay clips into output/marketing/ (Playwright; ffmpeg optional for mp4 exports)
 npm run test:policy-gate     # release gate; requires approval in release/policy-signoff.json
 npm run firebase:deploy:rules  # deploy firestore.rules + storage.rules
@@ -48,7 +49,7 @@ npm run firebase:deploy:rules  # deploy firestore.rules + storage.rules
 
 ## Release process
 
-See `RELEASE_CHECKLIST.md`: before tagging, review `privacy.html` / `school-privacy.html`, update `release/policy-signoff.json`, and pass `npm run test:policy-gate`. Bump `version.json` for user-visible changes (homepage fetches it for the version badge). CI workflows in `.github/workflows/` run the classroom smoke, nightly billing reconcile, nightly launch readiness, daily feedback provisioning, and the policy release gate.
+See `RELEASE_CHECKLIST.md`: before tagging, review `privacy.html` / `school-privacy.html`, update `release/policy-signoff.json`, and pass `npm run test:policy-gate`. Bump `version.json` for user-visible changes (homepage fetches it for the version badge). CI workflows in `.github/workflows/` run the classroom smoke, nightly billing reconcile, nightly launch readiness, daily feedback provisioning, and the policy release gate. `main-qa.yml` runs the fast unit/integration suites plus `npm run game:preflight` on every push to main (the repo ships by committing directly to main, so this is the primary safety net).
 
 ## Architecture
 
@@ -56,7 +57,7 @@ See `RELEASE_CHECKLIST.md`: before tagging, review `privacy.html` / `school-priv
 
 1. `<slug>/index.html` — the game itself (self-contained HTML/JS/CSS).
 2. `src/meta/games.js` — the `GAMES` registry array. This drives the homepage grid, discovery/search, missions, and reporting. Flags: `earnsCoins`, `scoreHint`, `category` (e.g. `'audio-only-blind-accessible'`), `accessibilityTags`.
-3. `vercel.json` — add a rewrite for `/slug` and `/slug/`, plus a no-cache header entry for `/slug/index.html` (the global default is 1-hour caching).
+3. `vercel.json` — **no per-game edits needed.** A generic `/:slug/index.html` header rule already applies no-cache to every game shell (the global default is 1-hour caching), and Vercel serves `/slug` from the folder's `index.html` automatically. Only touch `vercel.json` for URL aliases (e.g. `/pingpong` → `/pong`) or non-standard paths.
 4. `npm run seo` to regenerate the sitemap, inject SEO meta, and resync the discovery slug allowlist (`api/discovery/_metadata.js`, generated from `GAMES` by `scripts/generate-discovery-metadata.mjs` — never hand-edit its `DISCOVERY_GAME_SLUGS`; the `CURATED_*` lists are editorial and preserved). Then `npm run og` to render the game's share/OG card (without it the new game unfurls with the default banner instead of its own per-game card). Share infra: `src/social/share.js` (share sheet), `card.js` (client score card), `record.js` (canvas clip recorder), and `api/share.js` (`/challenge/:id`, `/race/:code`, `/g/:slug` OG landing pages). `npm run test:social` guards that the allowlist stays in sync.
 
 ### Shared client modules (`src/`)
