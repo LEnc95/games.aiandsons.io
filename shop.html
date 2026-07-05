@@ -1417,10 +1417,16 @@
         const entitlements = getEntitlements();
         const hasFamilyPremium = hasEntitlement(ENTITLEMENT_KEYS.FAMILY_PREMIUM, entitlements);
         const premiumCount = filteredItems.filter((item) => isPremiumShopItem(item)).length;
+        // ⚡ Bolt: Cache owned cosmetic arrays into Sets for O(1) membership lookups to avoid O(N*M) performance penalty inside the item filter loops
+        const cosmeticsSets = {};
+        const hasCosmetic = (category, value) => {
+          if (!cosmeticsSets[category]) cosmeticsSets[category] = new Set(getOwnedList(category));
+          return cosmeticsSets[category].has(value);
+        };
         const premiumLockedCount = filteredItems.filter((item) => {
           const isCosmetic = item.type === "cosmetic";
           const owned = isCosmetic
-            ? getOwnedList(item.category).includes(item.value)
+            ? hasCosmetic(item.category, item.value)
             : state.inventory.has(item.id);
           return !owned && isShopItemLockedByEntitlement(item, entitlements);
         }).length;
@@ -1455,7 +1461,7 @@
 
         filteredItems.forEach(item => {
           const isCosmetic = item.type === "cosmetic";
-          const owned = isCosmetic ? getOwnedList(item.category).includes(item.value) : state.inventory.has(item.id);
+          const owned = isCosmetic ? hasCosmetic(item.category, item.value) : state.inventory.has(item.id);
           const equipped = isCosmetic ? state.cosmetics[item.category] === item.value : false;
           const canAfford = state.coins >= item.price;
           const premiumItem = isPremiumShopItem(item);

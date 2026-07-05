@@ -70,3 +70,7 @@
 ## 2024-05-29 - Avoid O(N) allocation and normalization on memory cache pipelines
 **Learning:** Returning a subset of entries from an in-memory Map structure using mapped pipelines that parse and normalize every item (e.g., \`.map(normalize).filter(condition)\`) creates unnecessary allocations and CPU spikes because the expensive \`normalize\` function is called for every entry before most are dropped. This was seen in \`findStripeBillingProfiles\` and \`listStripeBillingProfiles\`.
 **Action:** Always refactor sequential pipelines over memory caches into an explicit \`for...of\` loop that checks raw properties first, and only calls the \`normalize\` function and \`.push()\` for entries that pass the filtering condition.
+
+## 2025-05-18 - Avoid O(N*M) performance penalty inside frontend rendering loops by using Sets
+**Learning:** Checking a large array for membership via `.includes()` within rendering loops mapping arrays of items (like generating the shop grid) causes significant UI latency due to O(N*M) execution scaling, particularly on low-end devices.
+**Action:** Establish an external hash map or Set (e.g. `const cosmeticsSets = {}`) before the loop. Lazy-evaluate and cache the contents to ensure each item is processed and queried in O(1) time without affecting code readability or requiring state-level refactors.
