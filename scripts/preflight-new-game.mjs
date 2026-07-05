@@ -95,12 +95,21 @@ console.log(`Preflight: ${GAMES.length} games in src/meta/games.js\n`);
 }
 
 // 6. vercel.json parses and the generic no-cache rule for game shells exists.
+//    NOTE: Vercel matches header `source` against the request path the
+//    client actually sends, BEFORE rewrites apply -- so the rule must
+//    target "/:slug" and "/:slug/" (the clean URLs games/pages are linked
+//    with), not "/:slug/index.html" (the rewrite destination, which real
+//    traffic never requests directly and therefore never matches).
 {
   try {
     const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
-    const generic = cfg.headers.some((h) => h.source === '/:slug/index.html');
-    if (!generic) {
-      fail('vercel.json lost the generic /:slug/index.html no-cache header rule', 'game shells would fall back to 1-hour caching');
+    const sources = new Set(cfg.headers.map((h) => h.source));
+    const hasGeneric = sources.has('/:slug') && sources.has('/:slug/');
+    if (!hasGeneric) {
+      fail(
+        'vercel.json lost the generic /:slug + /:slug/ no-cache header rules',
+        'game shells would fall back to 1-hour caching for their real (clean) URLs',
+      );
     } else ok('vercel.json valid; generic game no-cache header present');
   } catch (err) {
     fail(`vercel.json does not parse: ${err.message}`);
