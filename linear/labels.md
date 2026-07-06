@@ -161,5 +161,6 @@
 - game/dominodraw
 - game/inkislands
 - game/vistatowers
+- game/futoshiki
 
 Generated from `src/meta/feedback.js`.

@@ -502,3 +502,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-03] Key PR links: none merged for this date.
 - [nightly 2026-07-04] Tracked changes: 2 commit(s) - 25ad771 Add Ink Islands & Twenty-One games; refresh SEO, OG cards, and docs; 9f6938e Unify top-level pages onto teal/deep-space brand.
 - [nightly 2026-07-04] Key PR links: none merged for this date.
+- [nightly 2026-07-05] Tracked changes: 4 commit(s) - 50e408d Fix Profile modal overflowing the viewport; 0b6776b Fix no-cache header rules: they never matched real request paths; 5b24097 Streamline the daily add-a-game pipeline; eee24e4 Add Vista Towers daily game (codex drop).
+- [nightly 2026-07-05] Key PR links: none merged for this date.

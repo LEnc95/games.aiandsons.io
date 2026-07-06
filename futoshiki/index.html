@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Futoshiki | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #14242c;
+  background: linear-gradient(135deg, #edf7f4 0%, #f8e1bd 48%, #d5e4f5 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f8fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff91;
+  padding: 8px 12px;
+  background: #17334adf;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffd8;
+  background: #f8fbff;
+  box-shadow: 0 24px 58px #26374745;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd8;
+  background: #17334af3;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #28384861;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(31px, 6vw, 54px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce8ef;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.hud, .controls, .number-pad {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.number-pad {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #17334adf;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bfd3dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #95efbc; }
+.chip.warn b { color: #ffd36c; }
+.chip.danger b { color: #ff9aa5; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3448582b;
+}
+button:hover { background: #294f67; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+button:focus-visible {
+  outline: 3px solid #14242c;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd45f;
+  border-color: #ffe8a5;
+  color: #14242c;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe38a; }
+.action { background: #227465; }
+.utility { background: #465d72; }
+.num {
+  font-size: 18px;
+  background: #f8fbff;
+  color: #17334a;
+}
+.num:hover { background: #fff4d2; }
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 47dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .number-pad { gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill inequality logic grids with nonrepeating row and column digits while every greater-than clue stays true. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Futoshiki | AI and Sons Games">
+  <meta property="og:description" content="Fill inequality logic grids with nonrepeating row and column digits while every greater-than clue stays true. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/futoshiki">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/futoshiki.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Futoshiki | AI and Sons Games">
+  <meta name="twitter:description" content="Fill inequality logic grids with nonrepeating row and column digits while every greater-than clue stays true. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/futoshiki.png">
+  <link rel="canonical" href="https://games.aiandsons.io/futoshiki">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Futoshiki","description":"Fill inequality logic grids with nonrepeating row and column digits while every greater-than clue stays true. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/futoshiki","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Futoshiki puzzle board">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Futoshiki</h1>
+        <p id="overlayText">Fill each row and column with unique digits while every inequality clue stays true.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">MENU</b></div>
+    <div class="chip good"><span>Puzzle</span><b id="puzzleText">Meadow 4</b></div>
+    <div class="chip"><span>Filled</span><b id="filledText">0 / 16</b></div>
+    <div class="chip warn"><span>Time</span><b id="timeText">0:00</b></div>
+    <div class="chip danger"><span>Issues</span><b id="issuesText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="number-pad" aria-label="Futoshiki digit controls">
+    <button class="num" data-digit="1" type="button">1</button>
+    <button class="num" data-digit="2" type="button">2</button>
+    <button class="num" data-digit="3" type="button">3</button>
+    <button class="num" data-digit="4" type="button">4</button>
+    <button class="num" data-digit="5" type="button">5</button>
+  </section>
+  <section class="controls" aria-label="Futoshiki controls">
+    <button class="primary" id="newBtn" type="button">New Puzzle</button>
+    <button class="action" id="hintBtn" type="button">Hint</button>
+    <button class="action" id="checkBtn" type="button">Check</button>
+    <button class="utility" id="noteBtn" type="button">Notes Off</button>
+    <button class="utility" id="clearBtn" type="button">Clear Cell</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const digitButtons = [...document.querySelectorAll('[data-digit]')];
+const hud = {
+  mode: document.getElementById('modeText'),
+  puzzle: document.getElementById('puzzleText'),
+  filled: document.getElementById('filledText'),
+  time: document.getElementById('timeText'),
+  issues: document.getElementById('issuesText'),
+  coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  newPuzzle: document.getElementById('newBtn'),
+  hint: document.getElementById('hintBtn'),
+  check: document.getElementById('checkBtn'),
+  note: document.getElementById('noteBtn'),
+  clear: document.getElementById('clearBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const BEST_KEY = 'cade:futoshiki:best';
+const COMPLETE_KEY = 'cade:futoshiki:completed';
+const CELL_EMPTY = 0;
+
+const RAW_PUZZLES = [
+  {
+    id: 'meadow-4',
+    name: 'Meadow 4',
+    solution: [
+      [1, 3, 4, 2],
+      [4, 2, 1, 3],
+      [3, 1, 2, 4],
+      [2, 4, 3, 1],
+    ],
+    givens: [[0, 0], [1, 2], [2, 3], [3, 0]],
+    hEdges: [[0, 0], [0, 2], [1, 1], [2, 1], [3, 0]],
+    vEdges: [[0, 0], [0, 2], [1, 0], [1, 3], [2, 2]],
+  },
+  {
+    id: 'harbor-4',
+    name: 'Harbor 4',
+    solution: [
+      [2, 4, 1, 3],
+      [1, 3, 4, 2],
+      [4, 2, 3, 1],
+      [3, 1, 2, 4],
+    ],
+    givens: [[0, 2], [1, 0], [2, 3], [3, 1]],
+    hEdges: [[0, 0], [0, 2], [1, 1], [2, 0], [3, 2]],
+    vEdges: [[0, 1], [0, 3], [1, 0], [1, 2], [2, 1]],
+  },
+  {
+    id: 'orchard-5',
+    name: 'Orchard 5',
+    solution: [
+      [2, 5, 1, 4, 3],
+      [4, 1, 3, 5, 2],
+      [1, 3, 5, 2, 4],
+      [5, 2, 4, 3, 1],
+      [3, 4, 2, 1, 5],
+    ],
+    givens: [[0, 2], [1, 4], [2, 0], [3, 3], [4, 1]],
+    hEdges: [[0, 0], [0, 2], [1, 1], [1, 3], [2, 0], [2, 2], [3, 1], [4, 3]],
+    vEdges: [[0, 0], [0, 2], [0, 4], [1, 1], [1, 3], [2, 0], [2, 2], [3, 3]],
+  },
+  {
+    id: 'summit-5',
+    name: 'Summit 5',
+    solution: [
+      [5, 1, 4, 2, 3],
+      [2, 4, 3, 5, 1],
+      [3, 5, 2, 1, 4],
+      [1, 3, 5, 4, 2],
+      [4, 2, 1, 3, 5],
+    ],
+    givens: [[0, 0], [1, 3], [2, 1], [3, 4], [4, 2]],
+    hEdges: [[0, 0], [0, 2], [1, 1], [1, 3], [2, 0], [2, 2], [3, 1], [4, 2]],
+    vEdges: [[0, 1], [0, 3], [1, 0], [1, 2], [2, 1], [2, 4], [3, 0], [3, 3]],
+  },
+  {
+    id: 'lantern-5',
+    name: 'Lantern 5',
+    solution: [
+      [3, 1, 5, 2, 4],
+      [5, 4, 2, 1, 3],
+      [1, 5, 3, 4, 2],
+      [4, 2, 1, 3, 5],
+      [2, 3, 4, 5, 1],
+    ],
+    givens: [[0, 3], [1, 1], [2, 4], [3, 0], [4, 2]],
+    hEdges: [[0, 1], [0, 3], [1, 0], [1, 2], [2, 1], [2, 3], [3, 0], [4, 2]],
+    vEdges: [[0, 0], [0, 2], [1, 1], [1, 4], [2, 0], [2, 3], [3, 1], [3, 2]],
+  },
+];
+
+function makeInequality(solution, axis, r, c) {
+  const a = solution[r][c];
+  const b = axis === 'h' ? solution[r][c + 1] : solution[r + 1][c];
+  return { id: `${axis}-${r}-${c}`, axis, r, c, op: a < b ? '<' : '>' };
+}
+
+const PUZZLES = RAW_PUZZLES.map((raw) => {
+  const size = raw.solution.length;
+  const givens = raw.givens.map(([r, c]) => ({ r, c, value: raw.solution[r][c] }));
+  return {
+    ...raw,
+    size,
+    givens,
+    locked: new Set(givens.map(({ r, c }) => keyFor(r, c))),
+    inequalities: [
+      ...raw.hEdges.map(([r, c]) => makeInequality(raw.solution, 'h', r, c)),
+      ...raw.vEdges.map(([r, c]) => makeInequality(raw.solution, 'v', r, c)),
+    ],
+  };
+});
+
+function keyFor(r, c) {
+  return `${r},${c}`;
+}
+
+function readBest() {
+  try {
+    return Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function writeBest(value) {
+  try {
+    localStorage.setItem(BEST_KEY, String(Math.max(0, Math.floor(value))));
+  } catch {
+    // Local storage can be disabled in private contexts.
+  }
+}
+
+function markCampaignComplete() {
+  try {
+    localStorage.setItem(COMPLETE_KEY, new Date().toISOString());
+  } catch {
+    // Completion is also reflected in the in-memory state.
+  }
+}
+
+function createMatrix(size, value = CELL_EMPTY) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => value));
+}
+
+function createNotes(size) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => new Set()));
+}
+
+function cloneNotes(notes) {
+  return notes.map(row => row.map(cell => new Set(cell)));
+}
+
+function emptyBoard(puzzle) {
+  const values = createMatrix(puzzle.size, CELL_EMPTY);
+  for (const given of puzzle.givens) values[given.r][given.c] = given.value;
+  return values;
+}
+
+function firstEditableCell(puzzle) {
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (!puzzle.locked.has(keyFor(r, c))) return { r, c };
+    }
+  }
+  return { r: 0, c: 0 };
+}
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  values: emptyBoard(PUZZLES[0]),
+  notes: createNotes(PUZZLES[0].size),
+  selected: firstEditableCell(PUZZLES[0]),
+  noteMode: false,
+  elapsed: 0,
+  moves: 0,
+  mistakes: 0,
+  hintsUsed: 0,
+  score: 0,
+  bestScore: readBest(),
+  coinsEarned: 0,
+  lastCoins: 0,
+  undoStack: [],
+  message: 'Pick a cell and place digits that obey every row, column, and inequality.',
+  messageTimer: 0,
+  flashTimer: 0,
+  lastAction: { type: 'menu' },
+};
+
+let manualStepping = false;
+let lastFrame = 0;
+
+function activePuzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(safe / 60);
+  const rest = String(safe % 60).padStart(2, '0');
+  return `${minutes}:${rest}`;
+}
+
+function filledCount() {
+  const puzzle = activePuzzle();
+  let count = 0;
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (game.values[r][c] > 0) count += 1;
+    }
+  }
+  return count;
+}
+
+function currentScoreEstimate() {
+  const puzzle = activePuzzle();
+  const base = puzzle.size === 5 ? 1400 : 1000;
+  return Math.max(50, Math.round(base - game.elapsed * 2 - game.moves * 5 - game.hintsUsed * 70 - game.mistakes * 35));
+}
+
+function setMessage(text, seconds = 2.6) {
+  game.message = text;
+  game.messageTimer = seconds;
+}
+
+function snapshot() {
+  return {
+    values: game.values.map(row => [...row]),
+    notes: game.notes.map(row => row.map(cell => [...cell])),
+    selected: { ...game.selected },
+    noteMode: game.noteMode,
+    moves: game.moves,
+    mistakes: game.mistakes,
+    hintsUsed: game.hintsUsed,
+  };
+}
+
+function restoreSnapshot(saved) {
+  game.values = saved.values.map(row => [...row]);
+  game.notes = saved.notes.map(row => row.map(cell => new Set(cell)));
+  game.selected = { ...saved.selected };
+  game.noteMode = Boolean(saved.noteMode);
+  game.moves = saved.moves;
+  game.mistakes = saved.mistakes;
+  game.hintsUsed = saved.hintsUsed;
+}
+
+function pushUndo() {
+  game.undoStack.push(snapshot());
+  if (game.undoStack.length > 80) game.undoStack.shift();
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  const normalized = ((Math.floor(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  game.puzzleIndex = normalized;
+  const puzzle = activePuzzle();
+  game.mode = 'playing';
+  game.values = emptyBoard(puzzle);
+  game.notes = createNotes(puzzle.size);
+  game.selected = firstEditableCell(puzzle);
+  game.noteMode = false;
+  game.elapsed = 0;
+  game.moves = 0;
+  game.mistakes = 0;
+  game.hintsUsed = 0;
+  game.score = 0;
+  game.lastCoins = 0;
+  game.undoStack = [];
+  game.flashTimer = .35;
+  game.lastAction = { type: 'start', puzzle: puzzle.id };
+  setMessage('Digits 1 through ' + puzzle.size + ' appear once in each row and column.', 3);
+  rememberRecent('futoshiki');
+  maybeUnlock({ anyPlay: true });
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function restartPuzzle() {
+  startPuzzle(game.puzzleIndex);
+}
+
+function nextPuzzle() {
+  if (game.mode === 'complete') return startPuzzle(0);
+  return startPuzzle(game.puzzleIndex + 1);
+}
+
+function isLocked(r, c, puzzle = activePuzzle()) {
+  return puzzle.locked.has(keyFor(r, c));
+}
+
+function selectCell(r, c) {
+  const puzzle = activePuzzle();
+  if (r < 0 || c < 0 || r >= puzzle.size || c >= puzzle.size) return false;
+  game.selected = { r, c };
+  game.lastAction = { type: 'select', row: r, column: c };
+  setMessage(isLocked(r, c) ? 'That starter cell is locked.' : `Selected row ${r + 1}, column ${c + 1}.`, 1.4);
+  updateHud();
+  draw();
+  return true;
+}
+
+function enterDigit(value) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const puzzle = activePuzzle();
+  const digit = Math.floor(Number(value));
+  if (digit < 1 || digit > puzzle.size) return false;
+  const { r, c } = game.selected;
+  if (isLocked(r, c, puzzle)) {
+    setMessage('Starter cells stay fixed.', 1.6);
+    return false;
+  }
+  pushUndo();
+  if (game.noteMode) {
+    const notes = game.notes[r][c];
+    if (notes.has(digit)) notes.delete(digit);
+    else notes.add(digit);
+    game.lastAction = { type: 'note', row: r, column: c, digit, notes: [...notes] };
+    setMessage(`Note ${digit} ${notes.has(digit) ? 'added' : 'removed'}.`, 1.2);
+  } else {
+    game.values[r][c] = digit;
+    game.notes[r][c].clear();
+    game.moves += 1;
+    game.lastAction = { type: 'enter', row: r, column: c, digit };
+    setMessage(`Placed ${digit}.`, 1.2);
+    checkSolved();
+  }
+  updateHud();
+  draw();
+  return true;
+}
+
+function clearCell() {
+  if (game.mode !== 'playing') return false;
+  const puzzle = activePuzzle();
+  const { r, c } = game.selected;
+  if (isLocked(r, c, puzzle)) {
+    setMessage('Starter cells stay fixed.', 1.6);
+    return false;
+  }
+  if (game.values[r][c] === CELL_EMPTY && game.notes[r][c].size === 0) return false;
+  pushUndo();
+  game.values[r][c] = CELL_EMPTY;
+  game.notes[r][c].clear();
+  game.moves += 1;
+  game.lastAction = { type: 'clear', row: r, column: c };
+  setMessage('Cell cleared.', 1.4);
+  updateHud();
+  draw();
+  return true;
+}
+
+function toggleNoteMode(force = null) {
+  game.noteMode = force === null ? !game.noteMode : Boolean(force);
+  game.lastAction = { type: 'note_mode', enabled: game.noteMode };
+  setMessage(game.noteMode ? 'Notes enabled.' : 'Notes disabled.', 1.4);
+  updateHud();
+  draw();
+}
+
+function undo() {
+  if (game.mode !== 'playing' || game.undoStack.length === 0) {
+    setMessage('No undo available.', 1.4);
+    return false;
+  }
+  const saved = game.undoStack.pop();
+  restoreSnapshot(saved);
+  game.lastAction = { type: 'undo' };
+  setMessage('Move undone.', 1.4);
+  updateHud();
+  draw();
+  return true;
+}
+
+function compareValues(a, b, op) {
+  return op === '<' ? a < b : a > b;
+}
+
+function validateState() {
+  const puzzle = activePuzzle();
+  const conflictKeys = new Set();
+  const wrongKeys = new Set();
+  const invalidInequalities = [];
+  const inequalityStatuses = [];
+  let complete = true;
+
+  for (let r = 0; r < puzzle.size; r += 1) {
+    const seen = new Map();
+    for (let c = 0; c < puzzle.size; c += 1) {
+      const value = game.values[r][c];
+      if (value === CELL_EMPTY) {
+        complete = false;
+        continue;
+      }
+      if (value !== puzzle.solution[r][c]) wrongKeys.add(keyFor(r, c));
+      const cells = seen.get(value) || [];
+      cells.push({ r, c });
+      seen.set(value, cells);
+    }
+    for (const cells of seen.values()) {
+      if (cells.length > 1) cells.forEach(cell => conflictKeys.add(keyFor(cell.r, cell.c)));
+    }
+  }
+
+  for (let c = 0; c < puzzle.size; c += 1) {
+    const seen = new Map();
+    for (let r = 0; r < puzzle.size; r += 1) {
+      const value = game.values[r][c];
+      if (value === CELL_EMPTY) continue;
+      const cells = seen.get(value) || [];
+      cells.push({ r, c });
+      seen.set(value, cells);
+    }
+    for (const cells of seen.values()) {
+      if (cells.length > 1) cells.forEach(cell => conflictKeys.add(keyFor(cell.r, cell.c)));
+    }
+  }
+
+  for (const clue of puzzle.inequalities) {
+    const a = game.values[clue.r][clue.c];
+    const b = clue.axis === 'h' ? game.values[clue.r][clue.c + 1] : game.values[clue.r + 1][clue.c];
+    const cells = clue.axis === 'h'
+      ? [{ row: clue.r, column: clue.c }, { row: clue.r, column: clue.c + 1 }]
+      : [{ row: clue.r, column: clue.c }, { row: clue.r + 1, column: clue.c }];
+    let status = 'pending';
+    if (a > 0 && b > 0) {
+      status = compareValues(a, b, clue.op) ? 'ok' : 'invalid';
+      if (status === 'invalid') invalidInequalities.push({ ...clue, cells, values: [a, b] });
+    }
+    inequalityStatuses.push({ ...clue, cells, values: [a, b], status });
+  }
+
+  const issueKeys = new Set(conflictKeys);
+  for (const clue of invalidInequalities) {
+    for (const cell of clue.cells) issueKeys.add(keyFor(cell.row, cell.column));
+  }
+
+  return {
+    complete,
+    solved: complete && conflictKeys.size === 0 && invalidInequalities.length === 0 && wrongKeys.size === 0,
+    ruleIssueCount: conflictKeys.size + invalidInequalities.length,
+    conflictKeys,
+    issueKeys,
+    wrongKeys,
+    invalidInequalities,
+    inequalityStatuses,
+  };
+}
+
+function validateStateSafe() {
+  try {
+    return validateState();
+  } catch {
+    return {
+      complete: false,
+      solved: false,
+      ruleIssueCount: 0,
+      conflictKeys: new Set(),
+      issueKeys: new Set(),
+      wrongKeys: new Set(),
+      invalidInequalities: [],
+      inequalityStatuses: [],
+    };
+  }
+}
+
+function checkSolved() {
+  if (game.mode !== 'playing') return false;
+  const validation = validateState();
+  if (!validation.solved) return false;
+  completePuzzle();
+  return true;
+}
+
+function checkBoard() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const validation = validateState();
+  game.lastAction = {
+    type: 'check',
+    ruleIssues: validation.ruleIssueCount,
+    wrongCells: validation.wrongKeys.size,
+    complete: validation.complete,
+  };
+  if (validation.solved) {
+    completePuzzle();
+    return true;
+  }
+  if (validation.ruleIssueCount > 0) {
+    game.mistakes += 1;
+    setMessage(`${validation.ruleIssueCount} row, column, or inequality issue${validation.ruleIssueCount === 1 ? '' : 's'} found.`, 2.6);
+  } else if (!validation.complete) {
+    setMessage('No rule issues so far.', 2.2);
+  } else {
+    game.mistakes += 1;
+    setMessage('The visible rules fit, but this is not the intended solution yet.', 2.8);
+  }
+  updateHud();
+  draw();
+  return false;
+}
+
+function useHint() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const puzzle = activePuzzle();
+  let target = null;
+  for (let r = 0; r < puzzle.size && !target; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (isLocked(r, c, puzzle)) continue;
+      if (game.values[r][c] !== puzzle.solution[r][c]) {
+        target = { r, c };
+        break;
+      }
+    }
+  }
+  if (!target) {
+    setMessage('Every placed digit already matches the solution.', 1.8);
+    return false;
+  }
+  pushUndo();
+  game.selected = target;
+  game.values[target.r][target.c] = puzzle.solution[target.r][target.c];
+  game.notes[target.r][target.c].clear();
+  game.hintsUsed += 1;
+  game.moves += 1;
+  game.lastAction = { type: 'hint', row: target.r, column: target.c, digit: game.values[target.r][target.c] };
+  setMessage(`Hint placed ${game.values[target.r][target.c]} at row ${target.r + 1}, column ${target.c + 1}.`, 2.4);
+  checkSolved();
+  updateHud();
+  draw();
+  return true;
+}
+
+function completePuzzle() {
+  const puzzle = activePuzzle();
+  const finalPuzzle = game.puzzleIndex === PUZZLES.length - 1;
+  const score = currentScoreEstimate();
+  game.score = score;
+  if (score > game.bestScore) {
+    game.bestScore = score;
+    writeBest(score);
+  }
+  const coins = Math.max(8, Math.round(score / 120) + (puzzle.size === 5 ? 4 : 0));
+  addCoins(coins);
+  game.lastCoins = coins;
+  game.coinsEarned += coins;
+  game.mode = finalPuzzle ? 'complete' : 'solved';
+  game.flashTimer = .75;
+  if (finalPuzzle) markCampaignComplete();
+  maybeUnlock({
+    anyPlay: true,
+    futoshiki: {
+      result: 'won',
+      score,
+      solved: game.puzzleIndex + 1,
+      size: puzzle.size,
+      hints: game.hintsUsed,
+      mistakes: game.mistakes,
+    },
+  });
+  game.lastAction = { type: game.mode, puzzle: puzzle.id, score, coins };
+  setMessage(finalPuzzle ? `Campaign complete. +${coins} coins.` : `Puzzle solved. +${coins} coins.`, 4);
+  updateHud();
+  updateOverlay();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.lastAction = { type: 'pause' };
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.lastAction = { type: 'resume' };
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    setMessage('Fullscreen is not available here.', 1.8);
+  }
+  draw();
+}
+
+function getLayout() {
+  const puzzle = activePuzzle();
+  const boardSize = Math.min(560, canvas.width * .58, canvas.height * .78);
+  const signGap = Math.max(26, Math.min(42, boardSize / (puzzle.size * 3.15)));
+  const cell = (boardSize - signGap * (puzzle.size - 1)) / puzzle.size;
+  const width = puzzle.size * cell + (puzzle.size - 1) * signGap;
+  const left = 52;
+  const top = Math.max(72, (canvas.height - width) / 2 + 22);
+  return {
+    size: puzzle.size,
+    left,
+    top,
+    cell,
+    signGap,
+    width,
+    sideX: left + width + 58,
+    sideY: top + 8,
+  };
+}
+
+function roundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#f8fbff');
+  gradient.addColorStop(.48, '#eef7f2');
+  gradient.addColorStop(1, '#f7dfb9');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.globalAlpha = .16;
+  ctx.strokeStyle = '#7aa49f';
+  ctx.lineWidth = 1;
+  for (let x = -canvas.height; x < canvas.width; x += 56) {
+    ctx.beginPath();
+    ctx.moveTo(x, canvas.height);
+    ctx.lineTo(x + canvas.height, 0);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = .1;
+  ctx.strokeStyle = '#d19643';
+  for (let y = 36; y < canvas.height; y += 72) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBoard() {
+  const puzzle = activePuzzle();
+  const layout = getLayout();
+  const validation = validateStateSafe();
+  const invalidClueIds = new Set(validation.invalidInequalities.map(item => item.id));
+
+  ctx.save();
+  roundedRect(layout.left - 24, layout.top - 24, layout.width + 48, layout.width + 48, 8);
+  ctx.fillStyle = '#f7fbf8e8';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      const x = layout.left + c * (layout.cell + layout.signGap);
+      const y = layout.top + r * (layout.cell + layout.signGap);
+      const key = keyFor(r, c);
+      const selected = game.selected.r === r && game.selected.c === c;
+      const locked = isLocked(r, c, puzzle);
+      const issue = validation.issueKeys.has(key);
+
+      roundedRect(x, y, layout.cell, layout.cell, 8);
+      ctx.fillStyle = locked ? '#e8efe4' : '#ffffff';
+      if (issue) ctx.fillStyle = '#ffe8e8';
+      if (selected) ctx.fillStyle = locked ? '#f7edc5' : '#fff3c4';
+      ctx.fill();
+      ctx.lineWidth = selected ? 5 : 2;
+      ctx.strokeStyle = issue ? '#c43f4b' : selected ? '#d89b23' : '#8aa1aa';
+      ctx.stroke();
+
+      const value = game.values[r][c];
+      if (value > 0) {
+        ctx.fillStyle = locked ? '#315846' : '#17334a';
+        ctx.font = `${Math.round(layout.cell * .52)}px Trebuchet MS, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(value), x + layout.cell / 2, y + layout.cell / 2 + 2);
+      } else {
+        const notes = [...game.notes[r][c]].sort((a, b) => a - b);
+        if (notes.length) {
+          ctx.fillStyle = '#607580';
+          ctx.font = `${Math.round(layout.cell * .18)}px Trebuchet MS, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const cols = 3;
+          notes.forEach((note, index) => {
+            const nx = x + layout.cell * (.25 + (index % cols) * .25);
+            const ny = y + layout.cell * (.28 + Math.floor(index / cols) * .24);
+            ctx.fillText(String(note), nx, ny);
+          });
+        }
+      }
+    }
+  }
+
+  for (const clue of puzzle.inequalities) {
+    const invalid = invalidClueIds.has(clue.id);
+    ctx.fillStyle = invalid ? '#c43f4b' : '#17334a';
+    ctx.font = `900 ${Math.round(layout.signGap * .72)}px Trebuchet MS, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if (clue.axis === 'h') {
+      const x = layout.left + clue.c * (layout.cell + layout.signGap) + layout.cell + layout.signGap / 2;
+      const y = layout.top + clue.r * (layout.cell + layout.signGap) + layout.cell / 2;
+      ctx.fillText(clue.op, x, y + 1);
+    } else {
+      const x = layout.left + clue.c * (layout.cell + layout.signGap) + layout.cell / 2;
+      const y = layout.top + clue.r * (layout.cell + layout.signGap) + layout.cell + layout.signGap / 2;
+      ctx.fillText(clue.op === '<' ? 'v' : '^', x, y + 1);
+    }
+  }
+  ctx.restore();
+}
+
+function drawSidePanel() {
+  const puzzle = activePuzzle();
+  const layout = getLayout();
+  const validation = validateStateSafe();
+  const panelW = canvas.width - layout.sideX - 48;
+  const panelH = Math.min(470, layout.width);
+
+  ctx.save();
+  roundedRect(layout.sideX, layout.sideY, panelW, panelH, 8);
+  ctx.fillStyle = '#17334ae8';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#ffffff90';
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 36px Trebuchet MS, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Futoshiki', layout.sideX + 24, layout.sideY + 22);
+
+  ctx.fillStyle = '#9fe6bd';
+  ctx.font = '900 18px Trebuchet MS, sans-serif';
+  ctx.fillText(puzzle.name, layout.sideX + 24, layout.sideY + 70);
+
+  const rows = [
+    `Size: ${puzzle.size} x ${puzzle.size}`,
+    `Filled: ${filledCount()} / ${puzzle.size * puzzle.size}`,
+    `Moves: ${game.moves}`,
+    `Issues: ${validation.ruleIssueCount}`,
+    `Notes: ${game.noteMode ? 'on' : 'off'}`,
+  ];
+  ctx.font = '800 17px Trebuchet MS, sans-serif';
+  ctx.fillStyle = '#dce8ef';
+  rows.forEach((line, index) => ctx.fillText(line, layout.sideX + 24, layout.sideY + 112 + index * 31));
+
+  roundedRect(layout.sideX + 22, layout.sideY + 292, panelW - 44, 116, 8);
+  ctx.fillStyle = '#f8fbff16';
+  ctx.fill();
+  ctx.fillStyle = game.mode === 'playing' ? '#fff4c2' : '#f8fbff';
+  ctx.font = '900 19px Trebuchet MS, sans-serif';
+  wrapText(game.message, layout.sideX + 40, layout.sideY + 314, panelW - 80, 24, 3);
+
+  if (game.flashTimer > 0) {
+    ctx.globalAlpha = Math.min(.28, game.flashTimer);
+    ctx.fillStyle = '#ffd45f';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  ctx.restore();
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines) {
+  const words = String(text).split(/\s+/);
+  let line = '';
+  let lines = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y + lines * lineHeight);
+      line = word;
+      lines += 1;
+      if (lines >= maxLines) return;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines < maxLines) ctx.fillText(line, x, y + lines * lineHeight);
+}
+
+function draw() {
+  drawBackground();
+  drawBoard();
+  drawSidePanel();
+}
+
+function update(dt) {
+  if (game.mode === 'playing') {
+    game.elapsed += dt;
+    game.score = currentScoreEstimate();
+  }
+  if (game.messageTimer > 0) game.messageTimer = Math.max(0, game.messageTimer - dt);
+  if (game.flashTimer > 0) game.flashTimer = Math.max(0, game.flashTimer - dt * 1.8);
+}
+
+function updateHud() {
+  const puzzle = activePuzzle();
+  const validation = validateStateSafe();
+  hud.mode.textContent = game.mode.toUpperCase();
+  hud.puzzle.textContent = puzzle.name;
+  hud.filled.textContent = `${filledCount()} / ${puzzle.size * puzzle.size}`;
+  hud.time.textContent = formatTime(game.elapsed);
+  hud.issues.textContent = String(validation.ruleIssueCount);
+  hud.coins.textContent = String(profileState.coins || 0);
+  buttons.note.textContent = game.noteMode ? 'Notes On' : 'Notes Off';
+  digitButtons.forEach((button) => {
+    button.disabled = Number(button.dataset.digit) > puzzle.size;
+  });
+}
+
+function updateOverlay() {
+  let show = false;
+  if (game.mode === 'menu') {
+    show = true;
+    overlayTitle.textContent = 'Futoshiki';
+    overlayText.textContent = 'Fill each row and column with unique digits while every inequality clue stays true.';
+    startBtn.textContent = 'Start Puzzle';
+  } else if (game.mode === 'paused') {
+    show = true;
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = activePuzzle().name;
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'solved') {
+    show = true;
+    overlayTitle.textContent = 'Puzzle Solved';
+    overlayText.textContent = `${activePuzzle().name} cleared for ${game.score} points.`;
+    startBtn.textContent = 'Next Puzzle';
+  } else if (game.mode === 'complete') {
+    show = true;
+    overlayTitle.textContent = 'Campaign Complete';
+    overlayText.textContent = `All five Futoshiki boards solved. Best score: ${game.bestScore}.`;
+    startBtn.textContent = 'Play Again';
+  }
+  overlay.classList.toggle('show', show);
+}
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function cellFromPoint(x, y) {
+  const puzzle = activePuzzle();
+  const layout = getLayout();
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      const cx = layout.left + c * (layout.cell + layout.signGap);
+      const cy = layout.top + r * (layout.cell + layout.signGap);
+      if (x >= cx && x <= cx + layout.cell && y >= cy && y <= cy + layout.cell) {
+        return { r, c };
+      }
+    }
+  }
+  return null;
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return;
+  const point = canvasPoint(event);
+  const cell = cellFromPoint(point.x, point.y);
+  if (cell) selectCell(cell.r, cell.c);
+}
+
+function moveSelection(dr, dc) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return;
+  const puzzle = activePuzzle();
+  const r = (game.selected.r + dr + puzzle.size) % puzzle.size;
+  const c = (game.selected.c + dc + puzzle.size) % puzzle.size;
+  selectCell(r, c);
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'p' || key === 'escape') {
+    if (key === 'p') event.preventDefault();
+    if (key === 'p') togglePause();
+    return;
+  }
+  if (key === 'enter' || key === ' ') {
+    event.preventDefault();
+    if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+    else if (game.mode === 'paused') togglePause();
+    else if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+    return;
+  }
+  if (key === 'arrowup' || key === 'w') {
+    event.preventDefault();
+    moveSelection(-1, 0);
+  } else if (key === 'arrowdown' || key === 's') {
+    event.preventDefault();
+    moveSelection(1, 0);
+  } else if (key === 'arrowleft' || key === 'a') {
+    event.preventDefault();
+    moveSelection(0, -1);
+  } else if (key === 'arrowright' || key === 'd') {
+    event.preventDefault();
+    moveSelection(0, 1);
+  } else if (/^[1-5]$/.test(key)) {
+    event.preventDefault();
+    enterDigit(Number(key));
+  } else if (key === 'backspace' || key === 'delete' || key === '0') {
+    event.preventDefault();
+    clearCell();
+  } else if (key === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (key === 'c') {
+    event.preventDefault();
+    checkBoard();
+  } else if (key === 'n') {
+    event.preventDefault();
+    toggleNoteMode();
+  } else if (key === 'u' || key === 'z') {
+    event.preventDefault();
+    undo();
+  } else if (key === 'r') {
+    event.preventDefault();
+    restartPuzzle();
+  }
+}
+
+function compactCell(r, c) {
+  return {
+    row: r,
+    column: c,
+    value: game.values[r][c],
+    locked: isLocked(r, c),
+    notes: [...game.notes[r][c]].sort((a, b) => a - b),
+    selected: game.selected.r === r && game.selected.c === c,
+  };
+}
+
+function stateToObject() {
+  const puzzle = activePuzzle();
+  const validation = validateStateSafe();
+  return {
+    game: 'futoshiki',
+    coordinate_system: 'Canvas 1080x720 origin top-left, x increases right, y increases down. Grid cells use zero-based row and column indices.',
+    mode: game.mode,
+    puzzle_id: puzzle.id,
+    puzzle_name: puzzle.name,
+    puzzle_index: game.puzzleIndex,
+    puzzle_count: PUZZLES.length,
+    size: puzzle.size,
+    elapsed_seconds: Number(game.elapsed.toFixed(2)),
+    selected_cell: { ...game.selected },
+    note_mode: game.noteMode,
+    filled_cells: filledCount(),
+    total_cells: puzzle.size * puzzle.size,
+    moves: game.moves,
+    mistakes: game.mistakes,
+    hints_used: game.hintsUsed,
+    undo_count: game.undoStack.length,
+    score: game.score || currentScoreEstimate(),
+    best_score: game.bestScore,
+    rule_issue_count: validation.ruleIssueCount,
+    conflict_cells: [...validation.conflictKeys].map(key => {
+      const [row, column] = key.split(',').map(Number);
+      return { row, column };
+    }),
+    wrong_solution_cells: [...validation.wrongKeys].map(key => {
+      const [row, column] = key.split(',').map(Number);
+      return { row, column };
+    }),
+    invalid_inequalities: validation.invalidInequalities.map(item => ({
+      id: item.id,
+      axis: item.axis,
+      row: item.r,
+      column: item.c,
+      op: item.op,
+      values: item.values,
+      cells: item.cells,
+    })),
+    inequalities: validation.inequalityStatuses.map(item => ({
+      id: item.id,
+      axis: item.axis,
+      row: item.r,
+      column: item.c,
+      op: item.op,
+      status: item.status,
+      values: item.values,
+      cells: item.cells,
+    })),
+    board: Array.from({ length: puzzle.size }, (_, r) => Array.from({ length: puzzle.size }, (_, c) => compactCell(r, c))),
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  pushUndo();
+  const puzzle = activePuzzle();
+  game.values = puzzle.solution.map(row => [...row]);
+  game.notes = createNotes(puzzle.size);
+  game.lastAction = { type: 'test_solve', puzzle: puzzle.id };
+  checkSolved();
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function solveCampaign() {
+  for (let i = 0; i < PUZZLES.length; i += 1) {
+    startPuzzle(i);
+    solveCurrent();
+  }
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__FUTOSHIKI_GAME__ = {
+  startPuzzle,
+  restartPuzzle,
+  nextPuzzle,
+  enterDigit,
+  clearCell,
+  selectCell,
+  toggleNoteMode,
+  useHint,
+  checkBoard,
+  undo,
+  solveCurrent,
+  solveCampaign,
+  validateState,
+  stateToObject,
+  renderGameToText,
+  puzzleIds: () => PUZZLES.map(item => item.id),
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'futoshiki', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', handleKey);
+document.addEventListener('fullscreenchange', draw);
+window.addEventListener('resize', draw);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+  else startPuzzle(game.puzzleIndex);
+});
+buttons.newPuzzle.addEventListener('click', nextPuzzle);
+buttons.hint.addEventListener('click', useHint);
+buttons.check.addEventListener('click', checkBoard);
+buttons.note.addEventListener('click', () => toggleNoteMode());
+buttons.clear.addEventListener('click', clearCell);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+digitButtons.forEach((button) => {
+  button.addEventListener('click', () => enterDigit(Number(button.dataset.digit)));
+});
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'futoshiki', gameName: 'Futoshiki' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

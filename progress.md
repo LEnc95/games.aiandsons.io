@@ -3905,3 +3905,18 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `npm run test:feedback-smoke:raw` passed its functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Vista Towers issue.
 - Run time recorded: 2026-07-05T07:14:30.8507920-04:00.
 - TODO: none for Vista Towers; future work may address repository-wide LF-to-CRLF warning noise and the raw-static feedback smoke POST/API behavior.
+
+## 2026-07-06 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Vista Towers and recent additions including Ink Islands, Twenty-One Table, SameGame, Bridge Islands, Vial Sort, Loop Trail, Crazy Eights, Pyramid Hopper, Glow Grid, Plinko Drop, Tent Trail, Nim Grove, Domino Draw, Mushroom March, and Pocket Pool.
+- Reviewed the registry and confirmed no `/futoshiki` route or Futoshiki metadata entry exists.
+- Chosen game: Futoshiki (`/futoshiki`), an inequality Latin-square logic puzzle with locked starter cells, row/column uniqueness, greater-than/less-than clues, hint/check/undo, deterministic hooks, shared feedback context, and coin rewards.
+- Plan: add a standalone canvas puzzle with desktop/touch controls, register metadata and puzzle discovery, regenerate SEO/OG/Linear artifacts, then run focused tests plus the required Playwright skill loop with screenshot inspection.
+- Initial implementation added `futoshiki/index.html` with five deterministic inequality-grid puzzles, locked givens, notes, hint/check/undo, pause/restart/fullscreen, touch digit controls, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__FUTOSHIKI_GAME__` helpers.
+- Registered Futoshiki in `src/meta/games.js` and the puzzle discovery group; the registry now reports 147 games with a 2026-07-06 release date.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/futoshiki.png`, and local Linear feedback seeds now include Futoshiki. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: 147-game registry import/uniqueness check, focused games/discovery/feedback coverage tests, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/futoshiki-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/futoshiki-scenarios`, screenshot inspection, and `git diff --check` with only repository LF-to-CRLF warnings.
+- Custom scenarios covered digit entry, note mode, invalid duplicate/inequality checking, undo, hint, puzzle solve with coin reward, next-puzzle advance, campaign completion, shared feedback modal, mobile touch digit entry, and zero Futoshiki browser/page errors.
+- `npm run test:feedback-smoke:raw` passed its five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Futoshiki issue.
+- Run time recorded: 2026-07-06T07:15:30.8901201-04:00.
+- TODO: none for Futoshiki; future work may address repository-wide LF-to-CRLF warning noise and the raw-static feedback smoke POST/API behavior.
