@@ -74,3 +74,7 @@
 ## 2025-05-18 - Avoid O(N*M) performance penalty inside frontend rendering loops by using Sets
 **Learning:** Checking a large array for membership via `.includes()` within rendering loops mapping arrays of items (like generating the shop grid) causes significant UI latency due to O(N*M) execution scaling, particularly on low-end devices.
 **Action:** Establish an external hash map or Set (e.g. `const cosmeticsSets = {}`) before the loop. Lazy-evaluate and cache the contents to ensure each item is processed and queried in O(1) time without affecting code readability or requiring state-level refactors.
+
+## 2026-07-03 - Optimizing category array membership checks
+**Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
+**Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).

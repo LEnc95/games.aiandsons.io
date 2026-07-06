@@ -161,45 +161,45 @@ export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
 ]);
 
 const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
-  puzzle: [
+  puzzle: new Set([
     '2048', 'memory', 'minesweeper', 'boxquest', 'lightsout', 'glowgrid', 'looptrail',
     'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
-  ],
-  arcade: [
+  ]),
+  arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
     'dino', 'doodlejump', 'spaceinvaders', 'frogger', 'pacman', 'tetris',
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
     'bubbleshooter', 'caverncrush',
-  ],
-  word: ['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder'],
-  cards: [
+  ]),
+  word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder']),
+  cards: new Set([
     'setmatch', 'crazyeights', 'twentyone', 'tripeaks', 'solitaire', 'freecell',
     'mahjongsolitaire', 'dominodraw',
-  ],
-  sports: [
+  ]),
+  sports: new Set([
     'airhockey', 'skeeball', 'pool', 'plinko', 'darts', 'minigolf', 'ski',
     'homerunderby', 'nebulacurl',
-  ],
-  racing: [
+  ]),
+  racing: new Set([
     'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
     'trailblazer', 'aerocourier', 'sundialsprint',
-  ],
-  strategy: [
+  ]),
+  strategy: new Set([
     'prisonersdilemma', 'connect4', 'towerdefense', 'waterballoon', 'battleship',
     'dotsandboxes', 'reversi', 'checkers', 'nimgrove', 'mancala', 'backgammon',
     'chess', 'gomokugrid', 'oregontrail', 'pokemon',
-  ],
-  'audio-accessible': ['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio'],
-  'two-player': [
+  ]),
+  'audio-accessible': new Set(['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio']),
+  'two-player': new Set([
     'pong', 'airhockey', 'tictactoe', 'rps', 'connect4', 'waterballoon',
     'battleship', 'dotsandboxes', 'reversi', 'checkers', 'mancala',
     'backgammon', 'chess', 'gomokugrid',
-  ],
+  ]),
 });
 
 const TRENDING_SLUGS = Object.freeze([
@@ -228,7 +228,7 @@ const EASY_SLUGS = Object.freeze(new Set([
 ]));
 
 const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar']));
-const TWO_PLAYER_SLUGS = Object.freeze(new Set(DISCOVERY_CATEGORY_GROUPS['two-player']));
+const TWO_PLAYER_SLUGS = Object.freeze(DISCOVERY_CATEGORY_GROUPS['two-player']);
 const BASE_RELEASE_TIME = Date.UTC(2026, 1, 10);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -265,7 +265,7 @@ const releaseDateForIndex = (index) => (
 const inferCategories = (game) => {
   const categories = new Set();
   for (const [key, slugs] of Object.entries(DISCOVERY_CATEGORY_GROUPS)) {
-    if (slugs.includes(game.slug)) categories.add(key);
+    if (slugs.has(game.slug)) categories.add(key);
   }
 
   const haystack = `${game.slug} ${game.name} ${game.desc || ''} ${game.scoreHint || ''}`.toLowerCase();
