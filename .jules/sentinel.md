@@ -52,3 +52,7 @@
 ## 2026-06-15 - Escape untrusted values before social embed HTML injection
 **Vulnerability:** Untrusted values like player handles, room codes, and challenge scores were interpolated into HTML strings in `src/social/embed.js`, enabling DOM XSS in banners and result panels.
 **Prevention:** Escape untrusted values before inserting them into HTML and prefer clearing nodes plus `insertAdjacentHTML()` only with sanitized strings when rich markup is still needed.
+## 2024-05-24 - [Fix DOM XSS in Rooms Scoreboard]
+**Vulnerability:** In `rooms/index.html`, the `player.handle` was interpolated directly into the `row.innerHTML` when constructing the scoreboard rows. This allowed untrusted player names to execute arbitrary JavaScript (DOM-based XSS). Additionally, the scoreboard `tbody` was being cleared using `.innerHTML = ''`.
+**Learning:** Even internal HTML structures constructed using template literals can be vulnerable to XSS if they interpolate untrusted user data without escaping. And, `innerHTML = ''` triggers static analysis blockers even if empty.
+**Prevention:** Always include and use an `escapeHtml` utility function when rendering user-provided values like handles or names into DOM elements via `innerHTML` or `insertAdjacentHTML`. Also, use `.textContent = ''` for clearing elements.
