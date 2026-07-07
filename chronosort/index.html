@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>ChronoSort | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #111318;
+  --bg-deep: #0b0d11;
+  --panel: #191d25;
+  --panel-2: #222833;
+  --line: #353d4c;
+  --line-strong: #4d596d;
+  --text: #f7f8fb;
+  --muted: #aeb7c6;
+  --accent: #e7c26b;
+  --accent-2: #76d7c4;
+  --green: #538d4e;
+  --yellow: #b59f3b;
+  --red: #3a3a3c;
+  --shadow: 0 18px 45px rgba(0, 0, 0, .38);
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    linear-gradient(180deg, #151922 0%, var(--bg) 58%, var(--bg-deep) 100%);
+  color: var(--text);
+  font-family: Inter, Roboto, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+button {
+  font: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.app {
+  width: min(100%, 860px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: max(12px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-decoration: none;
+  background: rgba(25, 29, 37, .78);
+}
+
+.back:focus-visible,
+button:focus-visible,
+.event-card:focus-visible {
+  outline: 3px solid rgba(118, 215, 196, .72);
+  outline-offset: 3px;
+}
+
+.brand {
+  text-align: right;
+  min-width: 0;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.brand p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: .92rem;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chip {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  background: rgba(25, 29, 37, .8);
+}
+
+.chip span {
+  display: block;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.chip b {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timeline {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  touch-action: none;
+}
+
+.event-card {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto 28px;
+  gap: 10px;
+  align-items: center;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, 0)),
+    var(--panel);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .22);
+  cursor: grab;
+  user-select: none;
+  transition:
+    background-color .2s ease,
+    border-color .2s ease,
+    box-shadow .2s ease,
+    transform .2s ease;
+}
+
+.event-card:active {
+  cursor: grabbing;
+}
+
+.event-card.correct {
+  border-color: var(--green);
+  background: #3f7340;
+}
+
+.event-card.near {
+  border-color: var(--yellow);
+  background: #786b2f;
+}
+
+.event-card.miss {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.event-card.checking {
+  border-color: var(--accent);
+  animation: checkPulse .55s ease-in-out infinite alternate;
+}
+
+.event-card.is-dragging {
+  box-shadow: var(--shadow);
+  cursor: grabbing;
+}
+
+.event-card.placeholder {
+  border-style: dashed;
+  border-color: var(--accent-2);
+  background: rgba(118, 215, 196, .09);
+  box-shadow: none;
+}
+
+.rank {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, .06);
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.event-copy {
+  min-width: 0;
+}
+
+.event-copy strong {
+  display: block;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.28;
+}
+
+.event-copy span {
+  display: block;
+  margin-top: 5px;
+  color: rgba(247, 248, 251, .75);
+  font-size: .82rem;
+}
+
+.year-reveal {
+  color: #f4d783;
+  font-weight: 850;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 36px);
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: rgba(12, 15, 20, .46);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.icon-btn:hover:not(:disabled) {
+  border-color: var(--accent-2);
+  background: rgba(118, 215, 196, .14);
+}
+
+.icon-btn:disabled {
+  cursor: default;
+  opacity: .35;
+}
+
+.drag-handle {
+  width: 28px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: rgba(247, 248, 251, .62);
+}
+
+.drag-handle::before {
+  content: "\22EE\22EE";
+  font-size: 1.15rem;
+  line-height: 1;
+  transform: rotate(90deg);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.primary-btn,
+.secondary-btn {
+  min-height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0 16px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.primary-btn {
+  background: #e7c26b;
+  color: #1b1609;
+  border-color: #f1d783;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #f0d37f;
+}
+
+.secondary-btn {
+  background: rgba(34, 40, 51, .86);
+}
+
+.secondary-btn:hover:not(:disabled) {
+  border-color: var(--accent-2);
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  cursor: default;
+  opacity: .52;
+}
+
+.status {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: rgba(25, 29, 37, .72);
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.attempts-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attempt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.swatches {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, .18);
+}
+
+.swatch.correct { background: var(--green); }
+.swatch.near { background: var(--yellow); }
+.swatch.miss { background: var(--red); }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(6, 8, 12, .76);
+}
+
+.modal {
+  width: min(100%, 560px);
+  max-height: min(720px, 92dvh);
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: #171b23;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.modal h2 {
+  margin: 0 0 8px;
+  font-size: 1.55rem;
+  letter-spacing: 0;
+}
+
+.modal p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.modal-section {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.modal-section h3 {
+  margin: 0 0 9px;
+  color: var(--accent);
+  font-size: .9rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.correct-order {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.correct-order li {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--text);
+}
+
+.correct-order b {
+  color: var(--accent);
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.copy-status {
+  min-height: 22px;
+  margin-top: 10px;
+  color: var(--accent-2);
+  font-weight: 750;
+}
+
+@keyframes checkPulse {
+  from {
+    transform: translateY(0);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .22);
+  }
+  to {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(231, 194, 107, .16);
+  }
+}
+
+@media (max-width: 620px) {
+  .app {
+    gap: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .brand {
+    margin-right: 128px;
+    text-align: left;
+  }
+
+  .brand h1 {
+    font-size: 1.35rem;
+  }
+
+  .brand p {
+    font-size: .84rem;
+  }
+
+  .scoreboard {
+    grid-template-columns: 1fr;
+  }
+
+  .event-card {
+    grid-template-columns: 36px minmax(0, 1fr) 28px;
+    min-height: 80px;
+    gap: 8px;
+  }
+
+  .rank {
+    width: 36px;
+    height: 36px;
+  }
+
+  .card-actions {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .icon-btn {
+    width: 100%;
+  }
+
+  .drag-handle {
+    grid-column: 3;
+    grid-row: 1;
+    height: 40px;
+  }
+
+  .actions,
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Drag five historical events into a daily timeline, read green, yellow, and red feedback, and share your attempt path. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="ChronoSort | AI and Sons Games">
+  <meta property="og:description" content="Drag five historical events into a daily timeline, read green, yellow, and red feedback, and share your attempt path. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/chronosort">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/chronosort.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ChronoSort | AI and Sons Games">
+  <meta name="twitter:description" content="Drag five historical events into a daily timeline, read green, yellow, and red feedback, and share your attempt path. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/chronosort.png">
+  <link rel="canonical" href="https://games.aiandsons.io/chronosort">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"ChronoSort","description":"Drag five historical events into a daily timeline, read green, yellow, and red feedback, and share your attempt path. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/chronosort","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="app" aria-labelledby="gameTitle">
+  <header class="topbar">
+    <a class="back" href="/" aria-label="Back to all games">Back</a>
+    <div class="brand">
+      <h1 id="gameTitle">ChronoSort</h1>
+      <p>Oldest at the top, newest at the bottom.</p>
+    </div>
+  </header>
+
+  <section class="scoreboard" aria-label="Game status">
+    <div class="chip">
+      <span>Attempts</span>
+      <b id="attemptsUsed">0 / 3</b>
+    </div>
+    <div class="chip">
+      <span>Puzzle</span>
+      <b id="puzzleLabel">Daily 5</b>
+    </div>
+    <div class="chip">
+      <span>Result</span>
+      <b id="resultLabel">Unsubmitted</b>
+    </div>
+  </section>
+
+  <section class="game-shell" aria-label="Chronological timeline puzzle">
+    <ol id="timeline" class="timeline" aria-label="Events ordered from oldest to newest"></ol>
+
+    <div class="actions">
+      <button id="submitBtn" class="primary-btn" type="button">Submit</button>
+      <button id="resetBtn" class="secondary-btn" type="button">Reset</button>
+    </div>
+
+    <div id="status" class="status" aria-live="polite">Arrange the five events, then submit your timeline.</div>
+    <ul id="attemptsList" class="attempts-list" aria-label="Attempt feedback"></ul>
+  </section>
+</main>
+
+<div id="endModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div class="modal">
+    <h2 id="modalTitle">ChronoSort Complete</h2>
+    <p id="modalSummary"></p>
+
+    <div class="modal-section">
+      <h3>Attempts</h3>
+      <ul id="modalAttempts" class="attempts-list"></ul>
+    </div>
+
+    <div class="modal-section">
+      <h3>Correct Timeline</h3>
+      <ol id="correctOrder" class="correct-order"></ol>
+    </div>
+
+    <div class="modal-actions">
+      <button id="shareBtn" class="primary-btn" type="button">Share</button>
+      <button id="playAgainBtn" class="secondary-btn" type="button">Play Again</button>
+    </div>
+    <div id="copyStatus" class="copy-status" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const MAX_ATTEMPTS = 3;
+  const REVEAL_DELAY_MS = 1000;
+  const PUZZLE_SEED = "chronosort-2026-07-07";
+  const EMOJI = {
+    correct: "\u{1F7E9}",
+    near: "\u{1F7E8}",
+    miss: "\u{1F7E5}",
+    calendar: "\u{1F4C5}",
+  };
+
+  const puzzle = [
+    { id: "magna-carta", text: "Magna Carta is sealed", year: 1215 },
+    { id: "gutenberg-bible", text: "The Gutenberg Bible is completed", year: 1455 },
+    { id: "declaration", text: "The U.S. Declaration of Independence is adopted", year: 1776 },
+    { id: "wright-flight", text: "The Wright brothers complete the first powered flight", year: 1903 },
+    { id: "moon-landing", text: "Apollo 11 lands the first humans on the Moon", year: 1969 },
+  ];
+
+  const timeline = document.getElementById("timeline");
+  const submitBtn = document.getElementById("submitBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const attemptsUsed = document.getElementById("attemptsUsed");
+  const resultLabel = document.getElementById("resultLabel");
+  const statusEl = document.getElementById("status");
+  const attemptsList = document.getElementById("attemptsList");
+  const endModal = document.getElementById("endModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalSummary = document.getElementById("modalSummary");
+  const modalAttempts = document.getElementById("modalAttempts");
+  const correctOrderEl = document.getElementById("correctOrder");
+  const shareBtn = document.getElementById("shareBtn");
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  const copyStatus = document.getElementById("copyStatus");
+
+  const correctOrder = [...puzzle].sort((a, b) => a.year - b.year);
+  const correctIndex = new Map(correctOrder.map((event, index) => [event.id, index]));
+
+  let currentOrder = [];
+  let attempts = 0;
+  let attemptRows = [];
+  let feedbackById = new Map();
+  let locked = false;
+  let checking = false;
+  let gameOver = false;
+  let won = false;
+  let pendingFeedback = null;
+  let pendingTimer = 0;
+  let pendingRevealAt = 0;
+  let gameClock = 0;
+  let dragState = null;
+
+  function hashString(value) {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function seededRandom(seedText) {
+    let seed = hashString(seedText) || 1;
+    return () => {
+      seed = Math.imul(seed, 1664525) + 1013904223;
+      return (seed >>> 0) / 4294967296;
+    };
+  }
+
+  function shuffledPuzzle() {
+    const random = seededRandom(PUZZLE_SEED);
+    const items = [...puzzle];
+    for (let index = items.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      [items[index], items[swapIndex]] = [items[swapIndex], items[index]];
+    }
+    if (items.every((event, index) => event.id === correctOrder[index].id)) {
+      items.push(items.shift());
+    }
+    return items;
+  }
+
+  function classifyOrder(order) {
+    return order.map((event, index) => {
+      const distance = Math.abs(correctIndex.get(event.id) - index);
+      const tone = distance === 0 ? "correct" : distance === 1 ? "near" : "miss";
+      return {
+        id: event.id,
+        tone,
+        emoji: EMOJI[tone],
+        distance,
+      };
+    });
+  }
+
+  function setStatus(message) {
+    statusEl.textContent = message;
+  }
+
+  function clearFeedbackForNextMove() {
+    if (!feedbackById.size || gameOver || checking) return;
+    feedbackById = new Map();
+    setStatus("Timeline unlocked. Adjust the order and submit again.");
+    renderAttempts();
+  }
+
+  function createMoveButton(label, title, id, direction, disabled) {
+    const button = document.createElement("button");
+    button.className = "icon-btn";
+    button.type = "button";
+    button.textContent = label;
+    button.title = title;
+    button.setAttribute("aria-label", title);
+    button.dataset.id = id;
+    button.dataset.direction = String(direction);
+    button.disabled = disabled;
+    return button;
+  }
+
+  function renderList() {
+    timeline.innerHTML = "";
+
+    currentOrder.forEach((event, index) => {
+      const feedback = feedbackById.get(event.id);
+      const item = document.createElement("li");
+      item.className = `event-card${feedback ? ` ${feedback.tone}` : ""}${checking ? " checking" : ""}`;
+      item.dataset.id = event.id;
+      item.tabIndex = 0;
+      item.setAttribute("aria-label", `Position ${index + 1}: ${event.text}`);
+
+      const rank = document.createElement("div");
+      rank.className = "rank";
+      rank.textContent = String(index + 1);
+
+      const copy = document.createElement("div");
+      copy.className = "event-copy";
+      const title = document.createElement("strong");
+      title.textContent = event.text;
+      const hint = document.createElement("span");
+      hint.textContent = gameOver ? `${event.year}` : "Historical event";
+      if (gameOver) hint.className = "year-reveal";
+      copy.append(title, hint);
+
+      const controls = document.createElement("div");
+      controls.className = "card-actions";
+      controls.append(
+        createMoveButton("\u2191", "Move event up", event.id, -1, locked || index === 0),
+        createMoveButton("\u2193", "Move event down", event.id, 1, locked || index === currentOrder.length - 1),
+      );
+
+      const handle = document.createElement("div");
+      handle.className = "drag-handle";
+      handle.setAttribute("aria-hidden", "true");
+
+      item.append(rank, copy, controls, handle);
+      timeline.append(item);
+    });
+
+    updateHud();
+  }
+
+  function renderAttempts(target = attemptsList) {
+    target.innerHTML = "";
+
+    if (!attemptRows.length) {
+      return;
+    }
+
+    attemptRows.forEach((row, index) => {
+      const item = document.createElement("li");
+      item.className = "attempt-row";
+
+      const label = document.createElement("span");
+      label.textContent = `Attempt ${index + 1}`;
+
+      const swatches = document.createElement("span");
+      swatches.className = "swatches";
+      row.tones.forEach((tone) => {
+        const swatch = document.createElement("span");
+        swatch.className = `swatch ${tone}`;
+        swatch.setAttribute("aria-label", tone);
+        swatches.append(swatch);
+      });
+
+      item.append(label, swatches);
+      target.append(item);
+    });
+  }
+
+  function updateHud() {
+    attemptsUsed.textContent = `${attempts} / ${MAX_ATTEMPTS}`;
+    submitBtn.disabled = locked || gameOver;
+    resetBtn.disabled = locked && checking;
+
+    if (won) {
+      resultLabel.textContent = "Solved";
+    } else if (gameOver) {
+      resultLabel.textContent = "Revealed";
+    } else if (checking) {
+      resultLabel.textContent = "Checking";
+    } else if (attemptRows.length) {
+      resultLabel.textContent = `${MAX_ATTEMPTS - attempts} left`;
+    } else {
+      resultLabel.textContent = "Unsubmitted";
+    }
+  }
+
+  function moveItem(id, direction) {
+    if (locked || gameOver) return;
+    const from = currentOrder.findIndex((event) => event.id === id);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= currentOrder.length) return;
+    clearFeedbackForNextMove();
+    [currentOrder[from], currentOrder[to]] = [currentOrder[to], currentOrder[from]];
+    renderList();
+  }
+
+  function readOrderFromDom() {
+    const ids = [...timeline.querySelectorAll(".event-card:not(.placeholder)")].map((item) => item.dataset.id);
+    currentOrder = ids.map((id) => puzzle.find((event) => event.id === id)).filter(Boolean);
+  }
+
+  function submitGuess() {
+    if (locked || gameOver) return;
+
+    attempts += 1;
+    locked = true;
+    checking = true;
+    pendingFeedback = classifyOrder(currentOrder);
+    pendingRevealAt = gameClock + REVEAL_DELAY_MS;
+    setStatus(`Attempt ${attempts} locked in. Checking the timeline...`);
+    renderList();
+
+    pendingTimer = window.setTimeout(() => {
+      gameClock = Math.max(gameClock, pendingRevealAt);
+      revealFeedback();
+    }, REVEAL_DELAY_MS);
+  }
+
+  function revealFeedback() {
+    if (!checking || !pendingFeedback) return;
+
+    if (pendingTimer) {
+      window.clearTimeout(pendingTimer);
+      pendingTimer = 0;
+    }
+
+    checking = false;
+    feedbackById = new Map(pendingFeedback.map((result) => [result.id, result]));
+    const tones = pendingFeedback.map((result) => result.tone);
+    const emojiRow = pendingFeedback.map((result) => result.emoji).join("");
+    attemptRows.push({ tones, emojiRow });
+
+    const solved = tones.every((tone) => tone === "correct");
+    if (solved) {
+      won = true;
+      gameOver = true;
+      locked = true;
+      setStatus(`Solved in ${attempts} ${attempts === 1 ? "attempt" : "attempts"}.`);
+    } else if (attempts >= MAX_ATTEMPTS) {
+      won = false;
+      gameOver = true;
+      locked = true;
+      setStatus("No attempts left. The correct timeline is revealed.");
+    } else {
+      locked = false;
+      setStatus(`${MAX_ATTEMPTS - attempts} ${MAX_ATTEMPTS - attempts === 1 ? "attempt" : "attempts"} left.`);
+    }
+
+    pendingFeedback = null;
+    renderList();
+    renderAttempts();
+
+    if (gameOver) {
+      window.setTimeout(showEndModal, 260);
+    }
+  }
+
+  function buildShareText() {
+    return [
+      `ChronoSort ${EMOJI.calendar}`,
+      ...attemptRows.map((row, index) => `Attempt ${index + 1}: ${row.emojiRow}`),
+    ].join("\n");
+  }
+
+  function renderCorrectOrder() {
+    correctOrderEl.innerHTML = "";
+    correctOrder.forEach((event) => {
+      const item = document.createElement("li");
+      const year = document.createElement("b");
+      year.textContent = String(event.year);
+      const text = document.createElement("span");
+      text.textContent = event.text;
+      item.append(year, text);
+      correctOrderEl.append(item);
+    });
+  }
+
+  function showEndModal() {
+    modalTitle.textContent = won ? "Timeline Solved" : "Timeline Revealed";
+    modalSummary.textContent = won
+      ? `You solved ChronoSort in ${attempts} ${attempts === 1 ? "attempt" : "attempts"}.`
+      : "The daily timeline is complete. Share your path or try the puzzle again.";
+    renderAttempts(modalAttempts);
+    renderCorrectOrder();
+    copyStatus.textContent = "";
+    endModal.hidden = false;
+    shareBtn.focus();
+  }
+
+  function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+  }
+
+  async function shareResults() {
+    const text = buildShareText();
+    copyStatus.textContent = "Copying...";
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
+      await navigator.clipboard.writeText(text);
+      copyStatus.textContent = "Copied results to clipboard.";
+    } catch (error) {
+      copyStatus.textContent = fallbackCopy(text)
+        ? "Copied results to clipboard."
+        : "Could not copy results automatically.";
+    }
+  }
+
+  function resetGame() {
+    if (pendingTimer) {
+      window.clearTimeout(pendingTimer);
+      pendingTimer = 0;
+    }
+    currentOrder = shuffledPuzzle();
+    attempts = 0;
+    attemptRows = [];
+    feedbackById = new Map();
+    locked = false;
+    checking = false;
+    gameOver = false;
+    won = false;
+    pendingFeedback = null;
+    pendingRevealAt = 0;
+    gameClock = 0;
+    endModal.hidden = true;
+    copyStatus.textContent = "";
+    setStatus("Arrange the five events, then submit your timeline.");
+    renderAttempts();
+    renderList();
+  }
+
+  function startDrag(event) {
+    if (locked || gameOver || checking) return;
+    if (event.button !== undefined && event.button !== 0) return;
+    if (event.target.closest("button")) return;
+
+    const card = event.target.closest(".event-card");
+    if (!card || !timeline.contains(card)) return;
+
+    event.preventDefault();
+    clearFeedbackForNextMove();
+
+    const rect = card.getBoundingClientRect();
+    const placeholder = document.createElement("li");
+    placeholder.className = "event-card placeholder";
+    placeholder.style.height = `${rect.height}px`;
+    placeholder.setAttribute("aria-hidden", "true");
+    card.after(placeholder);
+
+    dragState = {
+      card,
+      placeholder,
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    };
+
+    card.classList.add("is-dragging");
+    card.style.position = "fixed";
+    card.style.left = `${rect.left}px`;
+    card.style.top = `${rect.top}px`;
+    card.style.width = `${rect.width}px`;
+    card.style.height = `${rect.height}px`;
+    card.style.zIndex = "90";
+    card.style.pointerEvents = "none";
+    card.style.transform = "scale(1.02)";
+
+    window.addEventListener("pointermove", onDragMove, { passive: false });
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+  }
+
+  function onDragMove(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    event.preventDefault();
+
+    const { card, placeholder, offsetX, offsetY } = dragState;
+    card.style.left = `${event.clientX - offsetX}px`;
+    card.style.top = `${event.clientY - offsetY}px`;
+
+    const cards = [...timeline.querySelectorAll(".event-card:not(.is-dragging):not(.placeholder)")];
+    let placed = false;
+
+    for (const item of cards) {
+      const rect = item.getBoundingClientRect();
+      if (event.clientY < rect.top + rect.height / 2) {
+        timeline.insertBefore(placeholder, item);
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) {
+      timeline.append(placeholder);
+    }
+  }
+
+  function endDrag(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const { card, placeholder } = dragState;
+    timeline.insertBefore(card, placeholder);
+    placeholder.remove();
+
+    card.classList.remove("is-dragging");
+    card.style.position = "";
+    card.style.left = "";
+    card.style.top = "";
+    card.style.width = "";
+    card.style.height = "";
+    card.style.zIndex = "";
+    card.style.pointerEvents = "";
+    card.style.transform = "";
+
+    window.removeEventListener("pointermove", onDragMove);
+    window.removeEventListener("pointerup", endDrag);
+    window.removeEventListener("pointercancel", endDrag);
+
+    dragState = null;
+    readOrderFromDom();
+    renderList();
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  function renderGameToText() {
+    const payload = {
+      game: "ChronoSort",
+      note: "Order is top to bottom; the target is oldest to newest.",
+      mode: gameOver ? (won ? "won" : "lost") : checking ? "checking" : "playing",
+      attemptsUsed: attempts,
+      attemptsRemaining: Math.max(0, MAX_ATTEMPTS - attempts),
+      locked,
+      currentOrder: currentOrder.map((event, index) => ({
+        index,
+        id: event.id,
+        text: event.text,
+        feedback: feedbackById.get(event.id)?.tone || null,
+      })),
+      attemptRows: attemptRows.map((row, index) => ({ attempt: index + 1, emoji: row.emojiRow, tones: row.tones })),
+      modalOpen: !endModal.hidden,
+      submitDisabled: submitBtn.disabled,
+    };
+    return JSON.stringify(payload);
+  }
+
+  timeline.addEventListener("pointerdown", startDrag);
+  timeline.addEventListener("click", (event) => {
+    const button = event.target.closest(".icon-btn");
+    if (!button) return;
+    moveItem(button.dataset.id, Number(button.dataset.direction));
+  });
+  submitBtn.addEventListener("click", submitGuess);
+  resetBtn.addEventListener("click", resetGame);
+  shareBtn.addEventListener("click", shareResults);
+  playAgainBtn.addEventListener("click", resetGame);
+  document.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "f" && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault();
+      toggleFullscreen();
+    }
+    if (event.key === "Escape" && !endModal.hidden) {
+      endModal.hidden = true;
+    }
+  });
+
+  window.render_game_to_text = renderGameToText;
+  window.advanceTime = (ms = 0) => {
+    gameClock += Math.max(0, Number(ms) || 0);
+    if (checking && gameClock >= pendingRevealAt) {
+      revealFeedback();
+    }
+    return renderGameToText();
+  };
+  window.__CHRONOSORT_GAME__ = {
+    getState: () => JSON.parse(renderGameToText()),
+    setOrder: (ids) => {
+      if (!Array.isArray(ids) || ids.length !== puzzle.length || locked) return false;
+      const next = ids.map((id) => puzzle.find((event) => event.id === id));
+      if (next.some((event) => !event)) return false;
+      currentOrder = next;
+      clearFeedbackForNextMove();
+      renderList();
+      return true;
+    },
+    submit: submitGuess,
+    shareText: buildShareText,
+    correctOrder: () => correctOrder.map((event) => event.id),
+  };
+
+  resetGame();
+})();
+</script>
+<script type="module">
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+mountGameFeedback({ gameSlug: 'chronosort', gameName: 'ChronoSort' });
+</script>
+</body>
+</html>

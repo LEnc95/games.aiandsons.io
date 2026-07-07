@@ -3920,3 +3920,27 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `npm run test:feedback-smoke:raw` passed its five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Futoshiki issue.
 - Run time recorded: 2026-07-06T07:15:30.8901201-04:00.
 - TODO: none for Futoshiki; future work may address repository-wide LF-to-CRLF warning noise and the raw-static feedback smoke POST/API behavior.
+
+## 2026-07-07 Create a new game automation
+- New request: add a game we do not already have to the website using $develop-web-game.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Futoshiki and recent additions listed there.
+- Reviewed current routes and selected Black Box (/blackbox), a hidden-atom ray deduction puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas game with edge probes, atom marking, hints/checking, deterministic hooks, shared feedback, coin rewards, metadata/discovery registration, regenerated SEO/OG/Linear artifacts, and Playwright validation with screenshot inspection.
+- Initial implementation added `blackbox/index.html` with five deterministic hidden-atom puzzles, edge probe simulation, mark/probe tools, hints/checking, undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__BLACK_BOX_GAME__` helpers.
+- Registered Black Box in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/blackbox.png`, and local Linear feedback seeds now include Black Box. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: 149-game registry import/uniqueness check, focused games/discovery/feedback tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/blackbox-smoke-final-4`, custom desktop/mobile Playwright scenarios in `output/web-game/blackbox-scenarios-final-4`, screenshot/feedback-modal inspection, and zero Black Box browser/page error artifacts.
+- `git diff --check` reported only repository LF-to-CRLF warning noise after the progress EOF blank line was fixed.
+- Run time recorded: 2026-07-07T07:19:57.3740116-04:00.
+- TODO: none for Black Box; future work may address repository-wide LF-to-CRLF warning noise.
+
+## 2026-07-07 ChronoSort single-file timeline puzzle
+- New request: build a fully playable, responsive, single-file web game called ChronoSort using vanilla HTML/CSS/JavaScript, mobile drag-and-drop, 3 attempts, Wordle-style timeline feedback, and emoji share output.
+- Plan: add `chronosort/index.html` as the self-contained playable route, register it in metadata if compatible with current repo changes, then validate desktop/mobile ordering, submit feedback, end modal, clipboard sharing, and required `$WEB_GAME_CLIENT` screenshot/state loop.
+- Initial implementation added `chronosort/index.html` with a DOM-first responsive timeline puzzle, pointer-event drag reordering, up/down controls, three attempts, delayed feedback reveal, end modal, clipboard share output, `window.render_game_to_text()`, `window.advanceTime(ms)`, and shared feedback mount.
+- Registered ChronoSort in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, discovery metadata, SEO blocks, `assets/og/chronosort.png`, and local Linear feedback seeds now include ChronoSort. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: focused game/discovery/feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/chronosort-smoke-final-2`, custom desktop/mobile Playwright scenarios in `output/web-game/chronosort-scenarios`, screenshot/OG inspection, and zero ChronoSort browser/page error artifacts.
+- Custom scenarios covered desktop pointer drag reorder, mobile touch drag reorder, one-second locked checking state, solved modal, forced loss modal, clipboard share text, and responsive header/layout with shared feedback launcher.
+- `git diff --check` reported only repository LF-to-CRLF warning noise.
+- TODO: none for ChronoSort; future work may address repository-wide LF-to-CRLF warning noise.

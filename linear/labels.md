@@ -163,5 +163,7 @@
 - game/inkislands
 - game/vistatowers
 - game/futoshiki
+- game/blackbox
+- game/chronosort
 
 Generated from `src/meta/feedback.js`.

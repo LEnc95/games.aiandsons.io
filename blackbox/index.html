@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Black Box | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  color: #172126;
+  background: linear-gradient(135deg, #e7f4f2 0%, #f6ead2 48%, #d9e7f7 100%);
+}
+.back {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  color: #f7fbff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 8px;
+  border: 1px solid #ffffff96;
+  padding: 8px 12px;
+  background: #162b37df;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 62px 10px 14px;
+}
+.stage {
+  width: min(97vw, 1080px);
+  aspect-ratio: 3 / 2;
+  max-height: min(66dvh, 720px);
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  border: 2px solid #ffffffd8;
+  background: #f8fbff;
+  box-shadow: 0 24px 58px #26374745;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  max-width: 720px;
+  border-radius: 8px;
+  border: 1px solid #ffffffd8;
+  background: #162b37f4;
+  color: #f8fbff;
+  box-shadow: 0 18px 42px #28384861;
+  padding: clamp(18px, 4vw, 30px);
+}
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: clamp(31px, 6vw, 54px);
+  letter-spacing: 0;
+}
+.panel p {
+  margin: 8px 0;
+  color: #dce9ed;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.hud, .controls {
+  width: min(97vw, 1080px);
+  display: grid;
+  gap: 8px;
+}
+.hud {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.controls {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.chip, button {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ffffff90;
+  background: #162b37df;
+  color: #f8fbff;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip span {
+  font-size: 12px;
+  color: #bfd3dc;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.chip b {
+  font-size: 15px;
+  text-align: right;
+}
+.chip.good b { color: #91e8b0; }
+.chip.warn b { color: #ffd36c; }
+.chip.danger b { color: #ff9aa5; }
+button {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 0 8px;
+  box-shadow: inset 0 1px 0 #ffffff2f, 0 8px 18px #3448582b;
+}
+button:hover { background: #294f62; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+button:focus-visible {
+  outline: 3px solid #172126;
+  outline-offset: 2px;
+}
+.primary {
+  background: #ffd45f;
+  border-color: #ffe8a5;
+  color: #172126;
+  min-width: 190px;
+}
+.primary:hover { background: #ffe38a; }
+.action { background: #217366; }
+.utility { background: #475d72; }
+.active {
+  background: #ffd45f;
+  border-color: #fff0ae;
+  color: #172126;
+}
+@media (max-width: 900px) {
+  .app { justify-content: flex-start; }
+  .stage {
+    width: min(98vw, 900px);
+    max-height: 56dvh;
+  }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .chip, button { min-height: 42px; }
+}
+@media (max-width: 560px) {
+  .back { font-size: 12px; padding: 7px 9px; }
+  .app { padding: 54px 8px 10px; gap: 8px; }
+  .stage {
+    width: 98vw;
+    max-height: 47dvh;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  button { font-size: 13px; padding: 0 6px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fire probe rays into a hidden grid, read hits, reflections, and detours, then mark every atom in the black box. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Black Box | AI and Sons Games">
+  <meta property="og:description" content="Fire probe rays into a hidden grid, read hits, reflections, and detours, then mark every atom in the black box. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/blackbox">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/blackbox.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Black Box | AI and Sons Games">
+  <meta name="twitter:description" content="Fire probe rays into a hidden grid, read hits, reflections, and detours, then mark every atom in the black box. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/blackbox.png">
+  <link rel="canonical" href="https://games.aiandsons.io/blackbox">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Black Box","description":"Fire probe rays into a hidden grid, read hits, reflections, and detours, then mark every atom in the black box. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/blackbox","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/" aria-label="Back to Home">&larr; Back</a>
+<main class="app">
+  <section class="stage" aria-label="Black Box deduction board">
+    <canvas id="game" width="1080" height="720"></canvas>
+    <div class="overlay show" id="overlay">
+      <div class="panel">
+        <h1 id="overlayTitle">Black Box</h1>
+        <p id="overlayText">Probe edge ports, read each ray clue, then mark the hidden atoms inside the box.</p>
+        <button class="primary" id="startBtn" type="button">Start Puzzle</button>
+      </div>
+    </div>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Mode</span><b id="modeText">Menu</b></div>
+    <div class="chip"><span>Puzzle</span><b id="puzzleText">1/5</b></div>
+    <div class="chip"><span>Probes</span><b id="probeText">0</b></div>
+    <div class="chip warn"><span>Marks</span><b id="markText">0/3</b></div>
+    <div class="chip danger"><span>Issues</span><b id="issueText">0</b></div>
+    <div class="chip good"><span>Coins</span><b id="coinsText">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button class="action" id="newBtn" type="button">New Puzzle</button>
+    <button class="action active" id="probeBtn" type="button">Probe</button>
+    <button class="action" id="markBtn" type="button">Mark</button>
+    <button class="action" id="hintBtn" type="button">Hint</button>
+    <button class="action" id="checkBtn" type="button">Check</button>
+    <button class="utility" id="undoBtn" type="button">Undo</button>
+    <button class="utility" id="fullscreenBtn" type="button">Fullscreen</button>
+  </section>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { maybeUnlock } from '/src/prog/achievements.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const hud = {
+  mode: document.getElementById('modeText'),
+  puzzle: document.getElementById('puzzleText'),
+  probes: document.getElementById('probeText'),
+  marks: document.getElementById('markText'),
+  issues: document.getElementById('issueText'),
+  coins: document.getElementById('coinsText'),
+};
+const buttons = {
+  newPuzzle: document.getElementById('newBtn'),
+  probe: document.getElementById('probeBtn'),
+  mark: document.getElementById('markBtn'),
+  hint: document.getElementById('hintBtn'),
+  check: document.getElementById('checkBtn'),
+  undo: document.getElementById('undoBtn'),
+  fullscreen: document.getElementById('fullscreenBtn'),
+};
+
+const BEST_KEY = 'cade:blackbox:best';
+const COMPLETE_KEY = 'cade:blackbox:completed';
+const EDGES = ['top', 'right', 'bottom', 'left'];
+const RAW_PUZZLES = [
+  { id: 'quartz-5', name: 'Quartz 5', size: 5, atoms: [[0, 3], [2, 1], [4, 4]] },
+  { id: 'harbor-5', name: 'Harbor 5', size: 5, atoms: [[1, 1], [1, 4], [3, 2]] },
+  { id: 'cedar-6', name: 'Cedar 6', size: 6, atoms: [[0, 4], [2, 2], [3, 5], [5, 1]] },
+  { id: 'cobalt-6', name: 'Cobalt 6', size: 6, atoms: [[1, 0], [1, 4], [4, 2], [5, 5]] },
+  { id: 'prism-6', name: 'Prism 6', size: 6, atoms: [[0, 1], [2, 4], [3, 1], [5, 3]] },
+];
+
+const keyFor = (r, c) => `${r},${c}`;
+const PUZZLES = RAW_PUZZLES.map((raw) => ({
+  ...raw,
+  atomSet: new Set(raw.atoms.map(([r, c]) => keyFor(r, c))),
+}));
+
+const game = {
+  mode: 'menu',
+  tool: 'probe',
+  puzzleIndex: 0,
+  guesses: new Set(),
+  probes: [],
+  undoStack: [],
+  lastIssues: null,
+  lastProbe: null,
+  lastAction: null,
+  message: 'Probe edge ports, then mark every hidden atom.',
+  messageTimer: 0,
+  elapsed: 0,
+  moves: 0,
+  mistakes: 0,
+  hintsUsed: 0,
+  score: 0,
+  bestScore: readBest(),
+  coinsEarned: 0,
+  lastCoins: 0,
+  flashTimer: 0,
+  revealed: false,
+  selectedCell: { r: 0, c: 0 },
+  selectedEdge: { edge: 'top', index: 0 },
+};
+
+let lastFrame = performance.now();
+let manualStepping = false;
+
+function readBest() {
+  try {
+    const raw = Number(localStorage.getItem(BEST_KEY));
+    return Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeBest(score) {
+  try {
+    localStorage.setItem(BEST_KEY, String(Math.max(0, Math.floor(score))));
+  } catch {
+    // Storage can be unavailable in private contexts.
+  }
+}
+
+function markCampaignComplete() {
+  try {
+    localStorage.setItem(COMPLETE_KEY, new Date().toISOString());
+  } catch {
+    // Storage can be unavailable in private contexts.
+  }
+}
+
+function activePuzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function inBounds(r, c, size) {
+  return r >= 0 && r < size && c >= 0 && c < size;
+}
+
+function hasAtom(puzzle, r, c) {
+  return inBounds(r, c, puzzle.size) && puzzle.atomSet.has(keyFor(r, c));
+}
+
+function cloneProbe(probe) {
+  return {
+    ...probe,
+    entry: { ...probe.entry },
+    exit: probe.exit ? { ...probe.exit } : null,
+    hitCell: probe.hitCell ? { ...probe.hitCell } : null,
+    path: probe.path.map((step) => ({ ...step })),
+  };
+}
+
+function pushUndo() {
+  game.undoStack.push({
+    guesses: [...game.guesses],
+    probes: game.probes.map(cloneProbe),
+    lastIssues: game.lastIssues ? {
+      exact: game.lastIssues.exact,
+      wrong: game.lastIssues.wrong.map((item) => ({ ...item })),
+      missing: game.lastIssues.missing.map((item) => ({ ...item })),
+      issueCount: game.lastIssues.issueCount,
+    } : null,
+    lastProbe: game.lastProbe ? cloneProbe(game.lastProbe) : null,
+    mistakes: game.mistakes,
+    hintsUsed: game.hintsUsed,
+    moves: game.moves,
+    message: game.message,
+  });
+  if (game.undoStack.length > 40) game.undoStack.shift();
+}
+
+function undo() {
+  if (game.mode === 'menu' || game.mode === 'complete') return false;
+  const prev = game.undoStack.pop();
+  if (!prev) {
+    setMessage('Nothing to undo.', 1.3);
+    return false;
+  }
+  game.guesses = new Set(prev.guesses);
+  game.probes = prev.probes.map(cloneProbe);
+  game.lastIssues = prev.lastIssues;
+  game.lastProbe = prev.lastProbe ? cloneProbe(prev.lastProbe) : null;
+  game.mistakes = prev.mistakes;
+  game.hintsUsed = prev.hintsUsed;
+  game.moves = prev.moves;
+  game.message = prev.message;
+  game.mode = 'playing';
+  game.revealed = false;
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  updateOverlay();
+  draw();
+  return true;
+}
+
+function setMessage(message, seconds = 2) {
+  game.message = message;
+  game.messageTimer = seconds;
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  game.puzzleIndex = ((index % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  const puzzle = activePuzzle();
+  game.mode = 'playing';
+  game.guesses = new Set();
+  game.probes = [];
+  game.undoStack = [];
+  game.lastIssues = null;
+  game.lastProbe = null;
+  game.lastAction = { type: 'start', puzzle: puzzle.id };
+  game.elapsed = 0;
+  game.moves = 0;
+  game.mistakes = 0;
+  game.hintsUsed = 0;
+  game.score = 0;
+  game.lastCoins = 0;
+  game.flashTimer = 0;
+  game.revealed = false;
+  game.selectedCell = { r: 0, c: 0 };
+  game.selectedEdge = { edge: 'top', index: 0 };
+  setMessage(`${puzzle.name}: find ${puzzle.atoms.length} hidden atoms.`, 2.4);
+  rememberRecent('blackbox');
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function nextPuzzle() {
+  if (game.mode === 'complete') return startPuzzle(0);
+  return startPuzzle(game.puzzleIndex + 1);
+}
+
+function setTool(tool) {
+  game.tool = tool === 'mark' ? 'mark' : 'probe';
+  game.lastAction = { type: 'tool', tool: game.tool };
+  updateHud();
+  draw();
+}
+
+function edgeLabel(edge, index) {
+  const prefix = { top: 'T', right: 'R', bottom: 'B', left: 'L' }[edge] || '?';
+  return `${prefix}${index + 1}`;
+}
+
+function rayStart(edge, index, size) {
+  if (edge === 'top') return { r: -1, c: index, dr: 1, dc: 0 };
+  if (edge === 'right') return { r: index, c: size, dr: 0, dc: -1 };
+  if (edge === 'bottom') return { r: size, c: index, dr: -1, dc: 0 };
+  return { r: index, c: -1, dr: 0, dc: 1 };
+}
+
+function edgeFromExit(r, c, size) {
+  if (r < 0) return { edge: 'top', index: Math.max(0, Math.min(size - 1, c)) };
+  if (r >= size) return { edge: 'bottom', index: Math.max(0, Math.min(size - 1, c)) };
+  if (c < 0) return { edge: 'left', index: Math.max(0, Math.min(size - 1, r)) };
+  return { edge: 'right', index: Math.max(0, Math.min(size - 1, r)) };
+}
+
+function samePort(a, b) {
+  return a && b && a.edge === b.edge && a.index === b.index;
+}
+
+function simulateRay(edge, index, puzzle = activePuzzle()) {
+  const start = rayStart(edge, index, puzzle.size);
+  let { r, c, dr, dc } = start;
+  const entry = { edge, index, label: edgeLabel(edge, index) };
+  const path = [];
+  const seen = new Set();
+  let turns = 0;
+
+  for (let step = 0; step < puzzle.size * puzzle.size * 8; step += 1) {
+    const stateKey = `${r},${c},${dr},${dc}`;
+    if (seen.has(stateKey)) {
+      return {
+        entry,
+        exit: entry,
+        outcome: 'reflection',
+        path,
+        turns,
+        reason: 'loop',
+        label: `${entry.label} reflects`,
+      };
+    }
+    seen.add(stateKey);
+
+    const aheadR = r + dr;
+    const aheadC = c + dc;
+    const sideAR = aheadR + dc;
+    const sideAC = aheadC + dr;
+    const sideBR = aheadR - dc;
+    const sideBC = aheadC - dr;
+    const sideAAtom = hasAtom(puzzle, sideAR, sideAC);
+    const sideBAtom = hasAtom(puzzle, sideBR, sideBC);
+
+    if (!inBounds(r, c, puzzle.size) && (sideAAtom || sideBAtom)) {
+      return {
+        entry,
+        exit: entry,
+        outcome: 'reflection',
+        path,
+        turns,
+        reason: 'edge-graze',
+        label: `${entry.label} reflects`,
+      };
+    }
+
+    if (hasAtom(puzzle, aheadR, aheadC)) {
+      return {
+        entry,
+        exit: null,
+        outcome: 'hit',
+        path,
+        turns,
+        hitCell: { r: aheadR, c: aheadC },
+        label: `${entry.label} hits`,
+      };
+    }
+
+    if (sideAAtom && sideBAtom) {
+      return {
+        entry,
+        exit: entry,
+        outcome: 'reflection',
+        path,
+        turns,
+        reason: 'pinched',
+        label: `${entry.label} reflects`,
+      };
+    }
+
+    if (sideAAtom || sideBAtom) {
+      const next = sideAAtom
+        ? { dr: -dc, dc: -dr }
+        : { dr: dc, dc: dr };
+      dr = next.dr;
+      dc = next.dc;
+      turns += 1;
+      continue;
+    }
+
+    if (!inBounds(aheadR, aheadC, puzzle.size)) {
+      const exit = edgeFromExit(aheadR, aheadC, puzzle.size);
+      const outcome = samePort(entry, exit) ? 'reflection' : 'detour';
+      return {
+        entry,
+        exit,
+        outcome,
+        path,
+        turns,
+        label: outcome === 'reflection'
+          ? `${entry.label} reflects`
+          : `${entry.label} exits ${edgeLabel(exit.edge, exit.index)}`,
+      };
+    }
+
+    r = aheadR;
+    c = aheadC;
+    path.push({ r, c });
+  }
+
+  return {
+    entry,
+    exit: entry,
+    outcome: 'reflection',
+    path,
+    turns,
+    reason: 'limit',
+    label: `${entry.label} reflects`,
+  };
+}
+
+function fireProbe(edge = game.selectedEdge.edge, index = game.selectedEdge.index) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return null;
+  const puzzle = activePuzzle();
+  if (!EDGES.includes(edge) || index < 0 || index >= puzzle.size) return null;
+  pushUndo();
+  const result = simulateRay(edge, index, puzzle);
+  const probe = {
+    id: game.probes.length + 1,
+    ...result,
+  };
+  game.probes.push(probe);
+  game.lastProbe = probe;
+  game.selectedEdge = { edge, index };
+  game.moves += 1;
+  game.lastAction = { type: 'probe', edge, index, outcome: probe.outcome, exit: probe.exit };
+  setMessage(probe.label, 2.2);
+  updateHud();
+  draw();
+  return probe;
+}
+
+function toggleMark(r = game.selectedCell.r, c = game.selectedCell.c) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const puzzle = activePuzzle();
+  if (!inBounds(r, c, puzzle.size)) return false;
+  pushUndo();
+  const key = keyFor(r, c);
+  if (game.guesses.has(key)) game.guesses.delete(key);
+  else game.guesses.add(key);
+  game.selectedCell = { r, c };
+  game.moves += 1;
+  game.lastIssues = null;
+  game.lastAction = { type: game.guesses.has(key) ? 'mark' : 'unmark', row: r, column: c };
+  setMessage(game.guesses.has(key) ? `Marked row ${r + 1}, column ${c + 1}.` : `Cleared row ${r + 1}, column ${c + 1}.`, 1.5);
+  const validation = validateGuesses();
+  if (validation.exact) completePuzzle();
+  updateHud();
+  draw();
+  return true;
+}
+
+function validateGuesses() {
+  const puzzle = activePuzzle();
+  const wrong = [];
+  const missing = [];
+  for (const key of game.guesses) {
+    if (!puzzle.atomSet.has(key)) {
+      const [r, c] = key.split(',').map(Number);
+      wrong.push({ r, c });
+    }
+  }
+  for (const [r, c] of puzzle.atoms) {
+    if (!game.guesses.has(keyFor(r, c))) missing.push({ r, c });
+  }
+  const exact = wrong.length === 0 && missing.length === 0 && game.guesses.size === puzzle.atoms.length;
+  return {
+    exact,
+    wrong,
+    missing,
+    issueCount: wrong.length + missing.length,
+  };
+}
+
+function checkSolution() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const validation = validateGuesses();
+  game.lastIssues = validation;
+  if (validation.exact) {
+    completePuzzle();
+    return true;
+  }
+  game.mistakes += 1;
+  game.lastAction = { type: 'check', result: 'issues', issues: validation.issueCount };
+  setMessage(`${validation.issueCount} issue${validation.issueCount === 1 ? '' : 's'} found.`, 2.2);
+  updateHud();
+  draw();
+  return false;
+}
+
+function useHint() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const puzzle = activePuzzle();
+  const wrong = [...game.guesses].find((key) => !puzzle.atomSet.has(key));
+  pushUndo();
+  if (wrong) {
+    const [r, c] = wrong.split(',').map(Number);
+    game.guesses.delete(wrong);
+    game.selectedCell = { r, c };
+    setMessage(`Hint cleared row ${r + 1}, column ${c + 1}.`, 2.2);
+    game.lastAction = { type: 'hint_clear', row: r, column: c };
+  } else {
+    const missing = puzzle.atoms.find(([r, c]) => !game.guesses.has(keyFor(r, c)));
+    if (!missing) {
+      setMessage('Every atom is already marked.', 1.8);
+      return false;
+    }
+    const [r, c] = missing;
+    game.guesses.add(keyFor(r, c));
+    game.selectedCell = { r, c };
+    setMessage(`Hint marked row ${r + 1}, column ${c + 1}.`, 2.2);
+    game.lastAction = { type: 'hint_mark', row: r, column: c };
+  }
+  game.hintsUsed += 1;
+  game.moves += 1;
+  game.lastIssues = null;
+  const validation = validateGuesses();
+  if (validation.exact) completePuzzle();
+  updateHud();
+  draw();
+  return true;
+}
+
+function currentScoreEstimate() {
+  const puzzle = activePuzzle();
+  const base = 950 + puzzle.size * 70 + puzzle.atoms.length * 55;
+  const penalty = Math.floor(game.elapsed * 2.5) + game.probes.length * 18 + game.mistakes * 65 + game.hintsUsed * 90;
+  return Math.max(120, base - penalty);
+}
+
+function completePuzzle() {
+  if (game.mode === 'solved' || game.mode === 'complete') return;
+  const puzzle = activePuzzle();
+  const finalPuzzle = game.puzzleIndex === PUZZLES.length - 1;
+  const score = currentScoreEstimate();
+  game.score = score;
+  if (score > game.bestScore) {
+    game.bestScore = score;
+    writeBest(score);
+  }
+  const coins = Math.max(8, Math.round(score / 135) + puzzle.atoms.length);
+  addCoins(coins);
+  game.lastCoins = coins;
+  game.coinsEarned += coins;
+  game.mode = finalPuzzle ? 'complete' : 'solved';
+  game.revealed = true;
+  game.flashTimer = .8;
+  if (finalPuzzle) markCampaignComplete();
+  maybeUnlock({
+    anyPlay: true,
+    blackbox: {
+      result: 'won',
+      score,
+      solved: game.puzzleIndex + 1,
+      probes: game.probes.length,
+      hints: game.hintsUsed,
+      mistakes: game.mistakes,
+    },
+  });
+  game.lastIssues = validateGuesses();
+  game.lastAction = { type: game.mode, puzzle: puzzle.id, score, coins };
+  setMessage(finalPuzzle ? `Campaign complete. +${coins} coins.` : `Box solved. +${coins} coins.`, 4);
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.lastAction = { type: 'pause' };
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.lastAction = { type: 'resume' };
+  }
+  updateHud();
+  updateOverlay();
+  draw();
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {
+    setMessage('Fullscreen is not available here.', 1.8);
+  }
+  draw();
+}
+
+function update(dt) {
+  if (game.mode === 'playing') game.elapsed += dt;
+  if (game.messageTimer > 0) game.messageTimer = Math.max(0, game.messageTimer - dt);
+  if (game.flashTimer > 0) game.flashTimer = Math.max(0, game.flashTimer - dt);
+}
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(total / 60);
+  const rest = String(total % 60).padStart(2, '0');
+  return `${minutes}:${rest}`;
+}
+
+function updateHud() {
+  const puzzle = activePuzzle();
+  const issueCount = game.lastIssues ? game.lastIssues.issueCount : 0;
+  hud.mode.textContent = game.mode === 'playing' ? game.tool : game.mode;
+  hud.puzzle.textContent = `${game.puzzleIndex + 1}/${PUZZLES.length}`;
+  hud.probes.textContent = String(game.probes.length);
+  hud.marks.textContent = `${game.guesses.size}/${puzzle.atoms.length}`;
+  hud.issues.textContent = String(issueCount);
+  hud.coins.textContent = String(profileState.coins || 0);
+  buttons.probe.classList.toggle('active', game.tool === 'probe');
+  buttons.mark.classList.toggle('active', game.tool === 'mark');
+  buttons.undo.disabled = game.undoStack.length === 0 || game.mode === 'complete';
+}
+
+function updateOverlay() {
+  overlay.classList.toggle('show', game.mode !== 'playing');
+  const puzzle = activePuzzle();
+  if (game.mode === 'menu') {
+    overlayTitle.textContent = 'Black Box';
+    overlayText.textContent = 'Probe edge ports, read each ray clue, then mark the hidden atoms inside the box.';
+    startBtn.textContent = 'Start Puzzle';
+  } else if (game.mode === 'paused') {
+    overlayTitle.textContent = 'Paused';
+    overlayText.textContent = `${puzzle.name} is paused at ${formatTime(game.elapsed)}.`;
+    startBtn.textContent = 'Resume';
+  } else if (game.mode === 'solved') {
+    overlayTitle.textContent = 'Box Solved';
+    overlayText.textContent = `${puzzle.name} cleared for ${game.score} points.`;
+    startBtn.textContent = 'Next Puzzle';
+  } else if (game.mode === 'complete') {
+    overlayTitle.textContent = 'Campaign Complete';
+    overlayText.textContent = `All five boxes cleared. Best score: ${game.bestScore}.`;
+    startBtn.textContent = 'Restart Campaign';
+  }
+}
+
+function metrics() {
+  const puzzle = activePuzzle();
+  if (window.innerWidth <= 560) {
+    const board = Math.min(canvas.width * .52, canvas.height * .78);
+    const left = (canvas.width - board) / 2;
+    const top = 86;
+    const cell = board / puzzle.size;
+    const edge = Math.min(38, cell * .5);
+    return {
+      compact: true,
+      board,
+      cell,
+      left,
+      top,
+      edge,
+      panelX: 76,
+      panelY: top + board + edge + 24,
+      panelW: canvas.width - 152,
+      panelH: 54,
+    };
+  }
+  const board = Math.min(canvas.height * .68, canvas.width * .52);
+  const left = 82;
+  const top = 112;
+  const cell = board / puzzle.size;
+  return {
+    board,
+    cell,
+    left,
+    top,
+    edge: Math.min(46, cell * .62),
+    panelX: left + board + 78,
+    panelY: top,
+    panelW: canvas.width - (left + board + 108),
+    panelH: board,
+  };
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+
+function fillRound(x, y, w, h, r, color) {
+  ctx.fillStyle = color;
+  roundRect(x, y, w, h, r);
+  ctx.fill();
+}
+
+function strokeRound(x, y, w, h, r, color, width = 2) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  roundRect(x, y, w, h, r);
+  ctx.stroke();
+}
+
+function drawText(text, x, y, size, color, align = 'left', weight = '800') {
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function cellCenter(r, c, m = metrics()) {
+  return {
+    x: m.left + c * m.cell + m.cell / 2,
+    y: m.top + r * m.cell + m.cell / 2,
+  };
+}
+
+function edgeCenter(edge, index, m = metrics()) {
+  const slot = m.edge;
+  if (edge === 'top') return { x: m.left + index * m.cell + m.cell / 2, y: m.top - slot / 2 - 6 };
+  if (edge === 'bottom') return { x: m.left + index * m.cell + m.cell / 2, y: m.top + m.board + slot / 2 + 6 };
+  if (edge === 'left') return { x: m.left - slot / 2 - 6, y: m.top + index * m.cell + m.cell / 2 };
+  return { x: m.left + m.board + slot / 2 + 6, y: m.top + index * m.cell + m.cell / 2 };
+}
+
+function drawBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#eaf7f3');
+  gradient.addColorStop(.48, '#f9edcf');
+  gradient.addColorStop(1, '#dceafb');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ffffff88';
+  for (let i = 0; i < 9; i += 1) {
+    const x = 60 + i * 126;
+    ctx.fillRect(x, 0, 2, canvas.height);
+  }
+  ctx.fillStyle = '#17313b18';
+  ctx.beginPath();
+  ctx.arc(930, 95, 150, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function issueKeySet(list) {
+  return new Set((list || []).map(({ r, c }) => keyFor(r, c)));
+}
+
+function drawBoard() {
+  const puzzle = activePuzzle();
+  const m = metrics();
+  const wrongKeys = issueKeySet(game.lastIssues?.wrong);
+  const missingKeys = game.revealed ? new Set(puzzle.atoms.map(([r, c]) => keyFor(r, c))) : issueKeySet(game.lastIssues?.missing);
+
+  fillRound(m.left - m.edge - 15, m.top - m.edge - 15, m.board + m.edge * 2 + 30, m.board + m.edge * 2 + 30, 8, '#162b37');
+  fillRound(m.left - 6, m.top - 6, m.board + 12, m.board + 12, 8, '#fdfbf4');
+
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      const x = m.left + c * m.cell;
+      const y = m.top + r * m.cell;
+      const key = keyFor(r, c);
+      ctx.fillStyle = (r + c) % 2 === 0 ? '#f3faf8' : '#e6f1f4';
+      if (wrongKeys.has(key)) ctx.fillStyle = '#ffdce0';
+      if (missingKeys.has(key)) ctx.fillStyle = '#dcf6e6';
+      ctx.fillRect(x, y, m.cell, m.cell);
+      ctx.strokeStyle = '#62808a55';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, m.cell, m.cell);
+    }
+  }
+
+  if (game.flashTimer > 0) {
+    ctx.fillStyle = `rgba(255, 212, 95, ${Math.min(.24, game.flashTimer * .25)})`;
+    ctx.fillRect(m.left, m.top, m.board, m.board);
+  }
+
+  for (const key of game.guesses) {
+    const [r, c] = key.split(',').map(Number);
+    const center = cellCenter(r, c, m);
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, m.cell * .27, 0, Math.PI * 2);
+    ctx.fillStyle = wrongKeys.has(key) ? '#f25d6a' : '#ffd45f';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#162b37';
+    ctx.stroke();
+    drawText('A', center.x, center.y + 1, Math.max(16, m.cell * .25), '#162b37', 'center', '900');
+  }
+
+  if (game.revealed || game.mode === 'complete' || game.mode === 'solved') {
+    for (const [r, c] of puzzle.atoms) {
+      const center = cellCenter(r, c, m);
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, m.cell * .17, 0, Math.PI * 2);
+      ctx.fillStyle = '#14242c';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#91e8b0';
+      ctx.stroke();
+    }
+  }
+
+  const selected = cellCenter(game.selectedCell.r, game.selectedCell.c, m);
+  ctx.strokeStyle = game.tool === 'mark' ? '#217366' : '#5f7591';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(
+    selected.x - m.cell / 2 + 5,
+    selected.y - m.cell / 2 + 5,
+    m.cell - 10,
+    m.cell - 10,
+  );
+
+  ctx.strokeStyle = '#162b37';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(m.left, m.top, m.board, m.board);
+}
+
+function drawEdgePorts() {
+  const puzzle = activePuzzle();
+  const m = metrics();
+  const fired = new Map();
+  for (const probe of game.probes) {
+    fired.set(`${probe.entry.edge}:${probe.entry.index}`, probe);
+  }
+  for (const edge of EDGES) {
+    for (let index = 0; index < puzzle.size; index += 1) {
+      const center = edgeCenter(edge, index, m);
+      const probe = fired.get(`${edge}:${index}`);
+      const selected = game.selectedEdge.edge === edge && game.selectedEdge.index === index;
+      let x = center.x - m.edge / 2;
+      let y = center.y - m.edge / 2;
+      if (edge === 'top' || edge === 'bottom') {
+        x = m.left + index * m.cell + (m.cell - m.edge) / 2;
+      } else {
+        y = m.top + index * m.cell + (m.cell - m.edge) / 2;
+      }
+      fillRound(x, y, m.edge, m.edge, 8, probe ? '#ffd45f' : '#e8f0f3');
+      strokeRound(x, y, m.edge, m.edge, 8, selected ? '#217366' : '#162b37', selected ? 4 : 2);
+      const label = probe ? (probe.outcome === 'hit' ? 'H' : probe.outcome === 'reflection' ? 'R' : edgeLabel(probe.exit.edge, probe.exit.index)) : edgeLabel(edge, index);
+      drawText(label, x + m.edge / 2, y + m.edge / 2 + 1, Math.max(12, m.edge * .28), '#162b37', 'center', '900');
+    }
+  }
+}
+
+function drawLastRay() {
+  if (!game.lastProbe) return;
+  const m = metrics();
+  const points = [edgeCenter(game.lastProbe.entry.edge, game.lastProbe.entry.index, m)];
+  for (const step of game.lastProbe.path) points.push(cellCenter(step.r, step.c, m));
+  if (game.lastProbe.outcome === 'hit' && game.lastProbe.hitCell) {
+    points.push(cellCenter(game.lastProbe.hitCell.r, game.lastProbe.hitCell.c, m));
+  } else if (game.lastProbe.exit) {
+    points.push(edgeCenter(game.lastProbe.exit.edge, game.lastProbe.exit.index, m));
+  }
+  if (points.length < 2 && game.lastProbe.outcome === 'reflection') {
+    const p = edgeCenter(game.lastProbe.entry.edge, game.lastProbe.entry.index, m);
+    points.push({ x: p.x, y: p.y });
+  }
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#f25d6a';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) ctx.lineTo(point.x, point.y);
+  ctx.stroke();
+  ctx.strokeStyle = '#fff7d5';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) ctx.lineTo(point.x, point.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPanel() {
+  const puzzle = activePuzzle();
+  const m = metrics();
+  if (m.compact) {
+    return;
+  }
+  fillRound(m.panelX, m.panelY, m.panelW, m.panelH, 8, '#ffffffcc');
+  strokeRound(m.panelX, m.panelY, m.panelW, m.panelH, 8, '#162b3744', 2);
+  drawText('Black Box', m.panelX + 24, m.panelY + 35, 30, '#162b37', 'left', '900');
+  drawText(puzzle.name, m.panelX + 24, m.panelY + 72, 18, '#4d6874', 'left', '900');
+
+  const lines = [
+    `Atoms: ${game.guesses.size}/${puzzle.atoms.length}`,
+    `Probes fired: ${game.probes.length}`,
+    `Time: ${formatTime(game.elapsed)}`,
+    `Score: ${game.score || currentScoreEstimate()}`,
+    `Best: ${game.bestScore}`,
+  ];
+  lines.forEach((line, i) => drawText(line, m.panelX + 24, m.panelY + 118 + i * 28, 17, '#243942', 'left', '800'));
+
+  const messageY = m.panelY + 274;
+  fillRound(m.panelX + 18, messageY - 26, m.panelW - 36, 62, 8, '#162b37');
+  drawText(game.message, m.panelX + 32, messageY, 16, '#f7fbff', 'left', '900');
+
+  drawText('Recent probes', m.panelX + 24, m.panelY + 350, 20, '#162b37', 'left', '900');
+  const recent = game.probes.slice(-6).reverse();
+  if (recent.length === 0) {
+    drawText('No probes yet', m.panelX + 24, m.panelY + 386, 16, '#6b7f88', 'left', '800');
+  }
+  recent.forEach((probe, i) => {
+    const y = m.panelY + 386 + i * 31;
+    const color = probe.outcome === 'hit' ? '#f25d6a' : probe.outcome === 'reflection' ? '#5f7591' : '#217366';
+    fillRound(m.panelX + 22, y - 12, 24, 24, 6, color);
+    drawText(String(probe.id), m.panelX + 34, y + 1, 13, '#ffffff', 'center', '900');
+    drawText(probe.label, m.panelX + 58, y, 15, '#243942', 'left', '800');
+  });
+
+  if (game.lastIssues && !game.lastIssues.exact) {
+    const y = m.panelY + m.panelH - 46;
+    const text = `${game.lastIssues.wrong.length} wrong, ${game.lastIssues.missing.length} missing`;
+    drawText(text, m.panelX + 24, y, 16, '#9a3340', 'left', '900');
+  }
+}
+
+function draw() {
+  const m = metrics();
+  drawBackground();
+  if (!m.compact) {
+    drawText('Black Box', 78, 45, 34, '#162b37', 'left', '900');
+    drawText('Probe rays from the ports. Mark the atoms hidden in the grid.', 78, 78, 17, '#48636f', 'left', '800');
+  }
+  drawBoard();
+  drawEdgePorts();
+  drawLastRay();
+  drawPanel();
+}
+
+function hitTest(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top) * (canvas.height / rect.height);
+  const puzzle = activePuzzle();
+  const m = metrics();
+
+  if (x >= m.left && x <= m.left + m.board && y >= m.top && y <= m.top + m.board) {
+    return {
+      type: 'cell',
+      r: Math.max(0, Math.min(puzzle.size - 1, Math.floor((y - m.top) / m.cell))),
+      c: Math.max(0, Math.min(puzzle.size - 1, Math.floor((x - m.left) / m.cell))),
+    };
+  }
+  if (x >= m.left && x <= m.left + m.board && y >= m.top - m.edge - 18 && y <= m.top - 5) {
+    return { type: 'edge', edge: 'top', index: Math.max(0, Math.min(puzzle.size - 1, Math.floor((x - m.left) / m.cell))) };
+  }
+  if (x >= m.left && x <= m.left + m.board && y >= m.top + m.board + 5 && y <= m.top + m.board + m.edge + 18) {
+    return { type: 'edge', edge: 'bottom', index: Math.max(0, Math.min(puzzle.size - 1, Math.floor((x - m.left) / m.cell))) };
+  }
+  if (y >= m.top && y <= m.top + m.board && x >= m.left - m.edge - 18 && x <= m.left - 5) {
+    return { type: 'edge', edge: 'left', index: Math.max(0, Math.min(puzzle.size - 1, Math.floor((y - m.top) / m.cell))) };
+  }
+  if (y >= m.top && y <= m.top + m.board && x >= m.left + m.board + 5 && x <= m.left + m.board + m.edge + 18) {
+    return { type: 'edge', edge: 'right', index: Math.max(0, Math.min(puzzle.size - 1, Math.floor((y - m.top) / m.cell))) };
+  }
+  return { type: 'none' };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  const target = hitTest(event.clientX, event.clientY);
+  if (target.type === 'cell') {
+    game.selectedCell = { r: target.r, c: target.c };
+    if (game.tool === 'mark') toggleMark(target.r, target.c);
+    else {
+      setTool('mark');
+      toggleMark(target.r, target.c);
+    }
+  } else if (target.type === 'edge') {
+    game.selectedEdge = { edge: target.edge, index: target.index };
+    setTool('probe');
+    fireProbe(target.edge, target.index);
+  }
+  updateHud();
+  draw();
+}
+
+function moveCell(dr, dc) {
+  const puzzle = activePuzzle();
+  game.selectedCell = {
+    r: Math.max(0, Math.min(puzzle.size - 1, game.selectedCell.r + dr)),
+    c: Math.max(0, Math.min(puzzle.size - 1, game.selectedCell.c + dc)),
+  };
+  draw();
+}
+
+function moveEdge(delta) {
+  const puzzle = activePuzzle();
+  game.selectedEdge.index = (game.selectedEdge.index + delta + puzzle.size) % puzzle.size;
+  draw();
+}
+
+function setEdge(edge) {
+  const puzzle = activePuzzle();
+  game.selectedEdge.edge = edge;
+  game.selectedEdge.index = Math.max(0, Math.min(puzzle.size - 1, game.selectedEdge.index));
+  setTool('probe');
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (key === 'escape' && document.fullscreenElement) {
+    document.exitFullscreen();
+    return;
+  }
+  if (key === 'p' && game.mode !== 'paused') {
+    event.preventDefault();
+    if (game.mode === 'playing') togglePause();
+    return;
+  }
+  if (game.mode === 'menu') {
+    if (['enter', ' '].includes(key)) {
+      event.preventDefault();
+      startPuzzle(game.puzzleIndex);
+    }
+    return;
+  }
+  if (key === 'r') {
+    event.preventDefault();
+    startPuzzle(game.puzzleIndex);
+  } else if (key === 'n') {
+    event.preventDefault();
+    nextPuzzle();
+  } else if (key === 'm') {
+    event.preventDefault();
+    setTool('mark');
+  } else if (key === 'q') {
+    event.preventDefault();
+    setTool('probe');
+  } else if (key === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (key === 'c') {
+    event.preventDefault();
+    checkSolution();
+  } else if (key === 'u' || (event.ctrlKey && key === 'z')) {
+    event.preventDefault();
+    undo();
+  } else if (key === 'arrowup' || key === 'w') {
+    event.preventDefault();
+    moveCell(-1, 0);
+  } else if (key === 'arrowdown' || key === 's') {
+    event.preventDefault();
+    moveCell(1, 0);
+  } else if (key === 'arrowleft' || key === 'a') {
+    event.preventDefault();
+    moveCell(0, -1);
+  } else if (key === 'arrowright' || key === 'd') {
+    event.preventDefault();
+    moveCell(0, 1);
+  } else if (key === '[') {
+    event.preventDefault();
+    moveEdge(-1);
+  } else if (key === ']') {
+    event.preventDefault();
+    moveEdge(1);
+  } else if (key === 't') {
+    event.preventDefault();
+    setEdge('top');
+  } else if (key === 'b') {
+    event.preventDefault();
+    setEdge('bottom');
+  } else if (key === 'l') {
+    event.preventDefault();
+    setEdge('left');
+  } else if (key === 'e') {
+    event.preventDefault();
+    setEdge('right');
+  } else if (key === 'enter') {
+    event.preventDefault();
+    if (game.tool === 'probe') fireProbe();
+    else toggleMark();
+  } else if (key === ' ') {
+    event.preventDefault();
+    toggleMark();
+  }
+}
+
+function compactProbe(probe) {
+  return {
+    id: probe.id,
+    entry: probe.entry,
+    outcome: probe.outcome,
+    exit: probe.exit ? { edge: probe.exit.edge, index: probe.exit.index, label: edgeLabel(probe.exit.edge, probe.exit.index) } : null,
+    hit_cell: probe.hitCell ? { row: probe.hitCell.r, column: probe.hitCell.c } : null,
+    turns: probe.turns,
+    path: probe.path.map(({ r, c }) => ({ row: r, column: c })),
+    label: probe.label,
+  };
+}
+
+function stateToObject() {
+  const puzzle = activePuzzle();
+  const validation = validateGuesses();
+  return {
+    game: 'blackbox',
+    coordinate_system: 'Grid origin is top-left. Rows increase downward, columns increase rightward. Edge indices are zero-based from left-to-right or top-to-bottom.',
+    mode: game.mode,
+    tool: game.tool,
+    puzzle: {
+      id: puzzle.id,
+      name: puzzle.name,
+      index: game.puzzleIndex,
+      count: PUZZLES.length,
+      size: puzzle.size,
+      atom_count: puzzle.atoms.length,
+    },
+    elapsed_seconds: Number(game.elapsed.toFixed(2)),
+    selected_cell: { row: game.selectedCell.r, column: game.selectedCell.c },
+    selected_edge: { ...game.selectedEdge, label: edgeLabel(game.selectedEdge.edge, game.selectedEdge.index) },
+    marked_atoms: [...game.guesses].map((key) => {
+      const [row, column] = key.split(',').map(Number);
+      return { row, column };
+    }),
+    probes: game.probes.map(compactProbe),
+    last_probe: game.lastProbe ? compactProbe(game.lastProbe) : null,
+    validation: {
+      exact: validation.exact,
+      wrong_marks: validation.wrong.map(({ r, c }) => ({ row: r, column: c })),
+      missing_marks: validation.missing.map(({ r, c }) => ({ row: r, column: c })),
+      issue_count: validation.issueCount,
+    },
+    revealed_atoms: game.revealed ? puzzle.atoms.map(([row, column]) => ({ row, column })) : [],
+    score_estimate: currentScoreEstimate(),
+    score: game.score,
+    best_score: game.bestScore,
+    moves: game.moves,
+    mistakes: game.mistakes,
+    hints_used: game.hintsUsed,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  pushUndo();
+  const puzzle = activePuzzle();
+  game.guesses = new Set(puzzle.atoms.map(([r, c]) => keyFor(r, c)));
+  game.lastAction = { type: 'test_solve', puzzle: puzzle.id };
+  completePuzzle();
+  updateHud();
+  updateOverlay();
+  draw();
+  return stateToObject();
+}
+
+function solveCampaign() {
+  for (let i = 0; i < PUZZLES.length; i += 1) {
+    startPuzzle(i);
+    solveCurrent();
+  }
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  updateOverlay();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__BLACK_BOX_GAME__ = {
+  startPuzzle,
+  nextPuzzle,
+  setTool,
+  fireProbe,
+  toggleMark,
+  useHint,
+  checkSolution,
+  undo,
+  simulateRay,
+  solveCurrent,
+  solveCampaign,
+  validateGuesses,
+  stateToObject,
+  renderGameToText,
+  puzzleIds: () => PUZZLES.map((item) => item.id),
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return JSON.parse(renderGameToText());
+  } catch {
+    return { game: 'blackbox', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', handleKey);
+document.addEventListener('fullscreenchange', draw);
+window.addEventListener('resize', draw);
+startBtn.addEventListener('click', () => {
+  if (game.mode === 'paused') togglePause();
+  else if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+  else startPuzzle(game.puzzleIndex);
+});
+buttons.newPuzzle.addEventListener('click', nextPuzzle);
+buttons.probe.addEventListener('click', () => setTool('probe'));
+buttons.mark.addEventListener('click', () => setTool('mark'));
+buttons.hint.addEventListener('click', useHint);
+buttons.check.addEventListener('click', checkSolution);
+buttons.undo.addEventListener('click', undo);
+buttons.fullscreen.addEventListener('click', toggleFullscreen);
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    updateHud();
+    updateOverlay();
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+updateOverlay();
+draw();
+mountGameFeedback({ gameSlug: 'blackbox', gameName: 'Black Box' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

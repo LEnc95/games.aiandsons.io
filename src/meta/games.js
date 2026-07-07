@@ -147,6 +147,8 @@ const BASE_GAMES = [
   { slug:'inkislands',     name:'Ink Islands',         emoji:'\u{1F3DD}\uFE0F', scoreHint:'solves', url:'/inkislands',   desc:'Shade duplicate numbers, keep inked cells apart, and connect every uninked island across five Hitori-style logic puzzles.', earnsCoins:true },
   { slug:'vistatowers',    name:'Vista Towers',        emoji:'\u{1F3D9}\uFE0F', scoreHint:'solves', url:'/vistatowers',  desc:'Fill skyline tower heights so every row, column, and edge visibility clue lines up across four logic boards.', earnsCoins:true },
   { slug:'futoshiki',      name:'Futoshiki',            emoji:'\u{1F522}', scoreHint:'solves',     url:'/futoshiki',    desc:'Fill inequality logic grids with nonrepeating row and column digits while every greater-than clue stays true.', earnsCoins:true },
+  { slug:'blackbox',       name:'Black Box',            emoji:'\u25FC\uFE0F', scoreHint:'atoms',   url:'/blackbox',     desc:'Fire probe rays into a hidden grid, read hits, reflections, and detours, then mark every atom in the black box.', earnsCoins:true },
+  { slug:'chronosort',     name:'ChronoSort',           emoji:'\u{1F4C5}', scoreHint:'attempts',   url:'/chronosort',   desc:'Drag five historical events into a daily timeline, read green, yellow, and red feedback, and share your attempt path.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -167,7 +169,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
-    'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
