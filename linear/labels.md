@@ -141,6 +141,7 @@
 - game/switchyard
 - game/canallock
 - game/skylinestacker
+- game/wobble-drop
 - game/cranecargo
 - game/nebulacurl
 - game/aerocourier

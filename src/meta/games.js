@@ -125,6 +125,7 @@ const BASE_GAMES = [
   { slug:'switchyard',     name:'Switchyard Shuffle',  emoji:'\u{1F686}', scoreHint:'delivered',  url:'/switchyard',    desc:'Flip rail junctions, route colored trains, and deliver each line to the matching platform before safety fails.', earnsCoins:true },
   { slug:'canallock',      name:'Canal Lock',          emoji:'\u{1F6A2}', scoreHint:'delivered',  url:'/canallock',     desc:'Pump lock chambers, match water levels, and guide cargo barges through canal gates before pressure floods the harbor.', earnsCoins:true },
   { slug:'skylinestacker', name:'Skyline Stacker',     emoji:'\u{1F3D9}\uFE0F', scoreHint:'floors', url:'/skylinestacker', desc:'Time sliding floor drops, keep each tower segment aligned, and build the tallest skyline before the stack slips away.', earnsCoins:true },
+  { slug:'wobble-drop',    name:'Wobble Drop',         emoji:'\u{1F7E3}', scoreHint:'height',     url:'/wobble-drop',   desc:'Drop pastel physics toys onto a wobbling sky platform, merge matching shapes, and stack as high as possible before anything slips away.', earnsCoins:true },
   { slug:'cranecargo',     name:'Crane Cargo',         emoji:'\u{1F3D7}\uFE0F', scoreHint:'delivered', url:'/cranecargo', desc:'Move a crane trolley, lower the swinging hook, and sort color-coded cargo into matching bays before the shift timer expires.', earnsCoins:true },
   { slug:'nebulacurl',     name:'Nebula Curl',         emoji:'\u{1F94C}', scoreHint:'rings',      url:'/nebulacurl',    desc:'Aim curling comets through gravity wells, cross bonus gates, and settle each shot inside glowing target rings.', earnsCoins:true },
   { slug:'aerocourier',    name:'Aero Courier',        emoji:'\u2708\uFE0F', scoreHint:'delivered', url:'/aerocourier',  desc:'Pilot a glider through wind lanes, collect color-coded parcels, and deliver them to matching rooftop pads before dusk.', earnsCoins:true },
@@ -165,7 +166,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     '2048', 'memory', 'minesweeper', 'boxquest', 'lightsout', 'glowgrid', 'looptrail',
     'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
-    'switchyard', 'canallock', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
+    'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
@@ -174,7 +175,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
-    'bubbleshooter', 'caverncrush',
+    'bubbleshooter', 'caverncrush', 'wobble-drop',
   ]),
   word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder']),
   cards: new Set([

@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wobble Drop | AI and Sons Games</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #23313f;
+      --muted: #5f7184;
+      --panel: rgba(255, 255, 255, 0.76);
+      --panel-strong: rgba(255, 255, 255, 0.9);
+      --line: rgba(54, 78, 98, 0.16);
+      --shadow: 0 16px 42px rgba(54, 78, 98, 0.16);
+      --mint: #9de0d2;
+      --rose: #f7a6b8;
+      --gold: #ffe08a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, #d9f4ff 0%, #f4fbff 52%, #fff7ea 100%);
+      color: var(--ink);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud {
+      position: fixed;
+      z-index: 5;
+      display: flex;
+      gap: 0.55rem;
+      align-items: stretch;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .hud-left {
+      top: 1rem;
+      left: 1rem;
+      flex-direction: column;
+    }
+
+    .hud-right {
+      top: 1rem;
+      right: 1rem;
+      align-items: flex-end;
+    }
+
+    .chip,
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .chip {
+      min-width: 13.5rem;
+      padding: 0.72rem 0.85rem;
+    }
+
+    .chip-title,
+    .stat-label {
+      display: block;
+      margin: 0 0 0.18rem;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .chip strong {
+      display: block;
+      font-size: 1.08rem;
+      line-height: 1.25;
+      font-weight: 850;
+    }
+
+    .chip small {
+      display: block;
+      margin-top: 0.18rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .stat {
+      min-width: 5.7rem;
+      padding: 0.62rem 0.72rem;
+      text-align: right;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.02rem;
+      font-weight: 850;
+      line-height: 1.1;
+    }
+
+    .next-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .swatch {
+      width: 1.1rem;
+      height: 1.1rem;
+      flex: 0 0 auto;
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(40, 60, 76, 0.2);
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 1rem;
+      z-index: 5;
+      max-width: min(31rem, calc(100vw - 2rem));
+      transform: translateX(-50%);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: var(--muted);
+      padding: 0.56rem 0.84rem;
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-align: center;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      pointer-events: none;
+      user-select: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .hint.is-quiet {
+      opacity: 0.64;
+      transform: translate(-50%, 0.25rem);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      display: none;
+      place-items: center;
+      padding: 1.25rem;
+      background: rgba(35, 49, 63, 0.24);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .modal.is-open {
+      display: grid;
+    }
+
+    .dialog {
+      width: min(25rem, 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      box-shadow: 0 24px 70px rgba(35, 49, 63, 0.24);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .dialog h1 {
+      margin: 0 0 0.4rem;
+      font-size: 1.6rem;
+      line-height: 1.1;
+    }
+
+    .dialog p {
+      margin: 0.2rem 0 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .dialog button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      background: #23313f;
+      color: #ffffff;
+      padding: 0.72rem 1rem;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 850;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(35, 49, 63, 0.18);
+    }
+
+    .dialog button:focus-visible {
+      outline: 3px solid rgba(157, 224, 210, 0.9);
+      outline-offset: 3px;
+    }
+
+    .loading {
+      position: fixed;
+      inset: 0;
+      z-index: 12;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(180deg, #d9f4ff 0%, #f4fbff 52%, #fff7ea 100%);
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+      transition: opacity 220ms ease;
+    }
+
+    .loading.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 720px) {
+      .hud-left,
+      .hud-right {
+        top: 0.7rem;
+      }
+
+      .hud-left {
+        left: 0.7rem;
+      }
+
+      .hud-right {
+        right: 0.7rem;
+        flex-direction: column;
+      }
+
+      .chip {
+        width: min(12.4rem, calc(100vw - 6.25rem));
+        min-width: 0;
+        padding: 0.62rem 0.7rem;
+      }
+
+      .chip small {
+        display: none;
+      }
+
+      .chip-title,
+      .stat-label {
+        font-size: 0.68rem;
+      }
+
+      .chip strong,
+      .stat-value {
+        font-size: 0.96rem;
+      }
+
+      .stat {
+        min-width: 4.2rem;
+        padding: 0.55rem 0.62rem;
+      }
+
+      .hint {
+        bottom: 0.65rem;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .hud-left {
+        max-width: calc(100vw - 6.2rem);
+      }
+
+      .chip {
+        width: 100%;
+      }
+    }
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Drop pastel physics toys onto a wobbling sky platform, merge matching shapes, and stack as high as possible before anything slips away. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Wobble Drop | AI and Sons Games">
+  <meta property="og:description" content="Drop pastel physics toys onto a wobbling sky platform, merge matching shapes, and stack as high as possible before anything slips away. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/wobble-drop">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/wobble-drop.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Wobble Drop | AI and Sons Games">
+  <meta name="twitter:description" content="Drop pastel physics toys onto a wobbling sky platform, merge matching shapes, and stack as high as possible before anything slips away. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/wobble-drop.png">
+  <link rel="canonical" href="https://games.aiandsons.io/wobble-drop">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Wobble Drop","description":"Drop pastel physics toys onto a wobbling sky platform, merge matching shapes, and stack as high as possible before anything slips away. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/wobble-drop","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+  <div class="loading" id="loading">Loading Wobble Drop</div>
+
+  <section class="hud hud-left" aria-live="polite">
+    <div class="chip">
+      <span class="chip-title">Wobble Drop</span>
+      <strong><span id="height">0.0</span> m stack</strong>
+      <small>Click or tap the platform. Matching toys merge.</small>
+    </div>
+    <div class="chip">
+      <span class="chip-title">Next</span>
+      <div class="next-row">
+        <span class="swatch" id="nextSwatch"></span>
+        <strong id="nextName">Pebble</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="hud hud-right" aria-label="Run stats">
+    <div class="stat">
+      <span class="stat-label">Score</span>
+      <span class="stat-value" id="score">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Best</span>
+      <span class="stat-value" id="best">0.0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">FPS</span>
+      <span class="stat-value" id="fps">60</span>
+    </div>
+  </section>
+
+  <div class="hint" id="hint">Aim with the pointer, then drop. Press R to restart.</div>
+
+  <div class="modal" id="gameOver">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
+      <h1 id="gameOverTitle">Stack toppled</h1>
+      <p id="gameOverText">A toy fell below the sky platform.</p>
+      <button id="restartButton" type="button">Restart</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
+    import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js";
+
+    const FIXED_STEP = 1 / 60;
+    const TARGET_FRAME_MS = 1000 / 60;
+    const MAX_PHYSICS_STEPS = 3;
+    const PLATFORM_RADIUS = 3.25;
+    const PLATFORM_HEIGHT = 0.38;
+    const FALL_Y = -4.5;
+    const FALL_RADIUS = PLATFORM_RADIUS + 3.4;
+    const MAX_ACTIVE_ENTITIES = 92;
+    const STORAGE_KEY = "wobble-drop-best-height";
+
+    const LEVELS = [
+      {
+        name: "Pebble",
+        shape: "sphere",
+        radius: 0.32,
+        mass: 0.62,
+        color: "#f7a6b8",
+        roughness: 0.88,
+        restitution: 0.16
+      },
+      {
+        name: "Block",
+        shape: "box",
+        size: 0.58,
+        mass: 0.86,
+        color: "#ffe08a",
+        roughness: 0.84,
+        restitution: 0.12
+      },
+      {
+        name: "Drum",
+        shape: "cylinder",
+        radius: 0.36,
+        height: 0.54,
+        mass: 1.12,
+        color: "#9de0d2",
+        roughness: 0.86,
+        restitution: 0.1
+      },
+      {
+        name: "Puff",
+        shape: "sphere",
+        radius: 0.46,
+        mass: 1.65,
+        color: "#b8cdf8",
+        roughness: 0.9,
+        restitution: 0.12
+      },
+      {
+        name: "Crate",
+        shape: "box",
+        size: 0.82,
+        mass: 2.35,
+        color: "#f7c59f",
+        roughness: 0.86,
+        restitution: 0.08
+      },
+      {
+        name: "Can",
+        shape: "cylinder",
+        radius: 0.53,
+        height: 0.78,
+        mass: 3.18,
+        color: "#c7e89b",
+        roughness: 0.88,
+        restitution: 0.07
+      },
+      {
+        name: "Boulder",
+        shape: "sphere",
+        radius: 0.68,
+        mass: 4.35,
+        color: "#cdb7f6",
+        roughness: 0.92,
+        restitution: 0.06
+      },
+      {
+        name: "Totem",
+        shape: "box",
+        size: 1.16,
+        mass: 5.9,
+        color: "#f4a7a1",
+        roughness: 0.9,
+        restitution: 0.05
+      }
+    ];
+
+    const loadingEl = document.getElementById("loading");
+    const heightEl = document.getElementById("height");
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const fpsEl = document.getElementById("fps");
+    const hintEl = document.getElementById("hint");
+    const nextNameEl = document.getElementById("nextName");
+    const nextSwatchEl = document.getElementById("nextSwatch");
+    const gameOverEl = document.getElementById("gameOver");
+    const gameOverTextEl = document.getElementById("gameOverText");
+    const restartButton = document.getElementById("restartButton");
+
+    const verifyRenderBuffer = new URLSearchParams(window.location.search).has("verify");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color("#dff6ff");
+    scene.fog = new THREE.Fog("#dff6ff", 13, 44);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      120
+    );
+    const cameraTarget = new THREE.Vector3(0, 1.1, 0);
+    const desiredCameraPosition = new THREE.Vector3(7.4, 6.4, 9.2);
+    const desiredCameraTarget = new THREE.Vector3(0, 1.1, 0);
+    const shakeOffset = new THREE.Vector3();
+    camera.position.copy(desiredCameraPosition);
+    camera.lookAt(cameraTarget);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance",
+      preserveDrawingBuffer: verifyRenderBuffer
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    document.body.appendChild(renderer.domElement);
+
+    renderer.domElement.addEventListener("webglcontextlost", (event) => {
+      event.preventDefault();
+      isPaused = true;
+      hintEl.textContent = "WebGL paused. Reload the page to resume.";
+      hintEl.classList.remove("is-quiet");
+    });
+    renderer.domElement.addEventListener("webglcontextrestored", () => {
+      window.location.reload();
+    });
+
+    const ambientLight = new THREE.AmbientLight("#ffffff", 1.65);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight("#fff8eb", 3.1);
+    sunLight.position.set(7, 10, 6);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.camera.left = -11;
+    sunLight.shadow.camera.right = 11;
+    sunLight.shadow.camera.top = 14;
+    sunLight.shadow.camera.bottom = -8;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 34;
+    sunLight.shadow.bias = -0.00022;
+    scene.add(sunLight);
+
+    const world = new CANNON.World({
+      gravity: new CANNON.Vec3(0, -9.82, 0)
+    });
+    world.allowSleep = true;
+    world.broadphase = new CANNON.SAPBroadphase(world);
+    world.solver.iterations = 11;
+    world.solver.tolerance = 0.001;
+
+    const pieceMaterial = new CANNON.Material("clay-toy");
+    const platformPhysicsMaterial = new CANNON.Material("soft-platform");
+    world.addContactMaterial(new CANNON.ContactMaterial(pieceMaterial, pieceMaterial, {
+      friction: 0.54,
+      restitution: 0.08,
+      contactEquationStiffness: 1e7,
+      contactEquationRelaxation: 4
+    }));
+    world.addContactMaterial(new CANNON.ContactMaterial(pieceMaterial, platformPhysicsMaterial, {
+      friction: 0.86,
+      restitution: 0.04,
+      contactEquationStiffness: 1e7,
+      contactEquationRelaxation: 4
+    }));
+    world.defaultContactMaterial.friction = 0.52;
+    world.defaultContactMaterial.restitution = 0.08;
+
+    const cylinderOrientation = new CANNON.Quaternion();
+
+    const geometries = LEVELS.map((level) => {
+      if (level.shape === "sphere") {
+        return new THREE.SphereGeometry(level.radius, 36, 24);
+      }
+      if (level.shape === "box") {
+        return new THREE.BoxGeometry(level.size, level.size, level.size, 2, 2, 2);
+      }
+      return new THREE.CylinderGeometry(level.radius, level.radius, level.height, 36, 1);
+    });
+
+    const materials = LEVELS.map((level) => new THREE.MeshStandardMaterial({
+      color: level.color,
+      roughness: level.roughness,
+      metalness: 0.02
+    }));
+
+    const ghostMaterials = LEVELS.map((level) => new THREE.MeshStandardMaterial({
+      color: level.color,
+      roughness: 0.92,
+      metalness: 0,
+      transparent: true,
+      opacity: 0.42
+    }));
+
+    const cannonShapes = LEVELS.map((level) => {
+      if (level.shape === "sphere") {
+        return new CANNON.Sphere(level.radius);
+      }
+      if (level.shape === "box") {
+        const h = level.size / 2;
+        return new CANNON.Box(new CANNON.Vec3(h, h, h));
+      }
+      return new CANNON.Cylinder(level.radius, level.radius, level.height, 24);
+    });
+
+    const platformGroup = new THREE.Group();
+    scene.add(platformGroup);
+
+    const deckMaterial = new THREE.MeshStandardMaterial({
+      color: "#bdebdc",
+      roughness: 0.88,
+      metalness: 0.02
+    });
+    const rimMaterial = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.82,
+      metalness: 0.01
+    });
+    const undersideMaterial = new THREE.MeshStandardMaterial({
+      color: "#8fcab9",
+      roughness: 0.9,
+      metalness: 0.02
+    });
+
+    const platformDeck = new THREE.Mesh(
+      new THREE.CylinderGeometry(PLATFORM_RADIUS, PLATFORM_RADIUS, PLATFORM_HEIGHT, 96, 1),
+      deckMaterial
+    );
+    platformDeck.castShadow = true;
+    platformDeck.receiveShadow = true;
+    platformGroup.add(platformDeck);
+
+    const platformRim = new THREE.Mesh(
+      new THREE.TorusGeometry(PLATFORM_RADIUS + 0.035, 0.075, 12, 128),
+      rimMaterial
+    );
+    platformRim.rotation.x = Math.PI / 2;
+    platformRim.position.y = PLATFORM_HEIGHT / 2 + 0.045;
+    platformRim.castShadow = true;
+    platformRim.receiveShadow = true;
+    platformGroup.add(platformRim);
+
+    const platformUnderside = new THREE.Mesh(
+      new THREE.CylinderGeometry(PLATFORM_RADIUS * 0.72, PLATFORM_RADIUS * 0.58, 0.7, 80, 1),
+      undersideMaterial
+    );
+    platformUnderside.position.y = -0.52;
+    platformUnderside.castShadow = true;
+    platformUnderside.receiveShadow = true;
+    platformGroup.add(platformUnderside);
+
+    const anchorBody = new CANNON.Body({
+      mass: 0,
+      type: CANNON.Body.STATIC,
+      position: new CANNON.Vec3(0, 0, 0)
+    });
+    world.addBody(anchorBody);
+
+    const platformShape = new CANNON.Cylinder(
+      PLATFORM_RADIUS,
+      PLATFORM_RADIUS,
+      PLATFORM_HEIGHT,
+      48
+    );
+    const platformBody = new CANNON.Body({
+      mass: 70,
+      material: platformPhysicsMaterial,
+      position: new CANNON.Vec3(0, 0, 0),
+      linearDamping: 0.88,
+      angularDamping: 0.58
+    });
+    platformBody.addShape(platformShape, new CANNON.Vec3(0, 0, 0), cylinderOrientation);
+    world.addBody(platformBody);
+
+    const platformHinge = new CANNON.PointToPointConstraint(
+      anchorBody,
+      new CANNON.Vec3(0, 0, 0),
+      platformBody,
+      new CANNON.Vec3(0, 0, 0),
+      62000
+    );
+    world.addConstraint(platformHinge);
+
+    const suspensionSpring = new CANNON.Spring(anchorBody, platformBody, {
+      restLength: 0,
+      stiffness: 5600,
+      damping: 105,
+      localAnchorA: new CANNON.Vec3(0, 0, 0),
+      localAnchorB: new CANNON.Vec3(0, 0, 0)
+    });
+
+    const worldUp = new CANNON.Vec3(0, 1, 0);
+    const platformUp = new CANNON.Vec3();
+    const uprightAxis = new CANNON.Vec3();
+    const uprightTorque = new CANNON.Vec3();
+    const dampingTorque = new CANNON.Vec3();
+    world.addEventListener("preStep", () => {
+      suspensionSpring.applyForce();
+      platformBody.quaternion.vmult(worldUp, platformUp);
+      platformUp.cross(worldUp, uprightAxis);
+      const axisLength = uprightAxis.length();
+
+      if (axisLength > 0.00001) {
+        uprightAxis.scale(1 / axisLength, uprightAxis);
+        const tiltAngle = Math.asin(Math.min(1, axisLength));
+        uprightAxis.scale(tiltAngle * 920, uprightTorque);
+        platformBody.angularVelocity.scale(-52, dampingTorque);
+        uprightTorque.vadd(dampingTorque, uprightTorque);
+        platformBody.torque.vadd(uprightTorque, platformBody.torque);
+      }
+    });
+
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      color: "#8aa5a6",
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false
+    });
+    const softShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(PLATFORM_RADIUS * 1.18, 96),
+      shadowMaterial
+    );
+    softShadow.rotation.x = -Math.PI / 2;
+    softShadow.position.set(0, -3.15, 0);
+    scene.add(softShadow);
+
+    const pulseMaterial = new THREE.MeshBasicMaterial({
+      color: "#ffffff",
+      transparent: true,
+      opacity: 0,
+      depthWrite: false
+    });
+    const pulseRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1, 0.026, 8, 72),
+      pulseMaterial
+    );
+    pulseRing.rotation.x = Math.PI / 2;
+    pulseRing.visible = false;
+    scene.add(pulseRing);
+
+    const ghostMeshes = LEVELS.map((level, index) => {
+      const mesh = new THREE.Mesh(geometries[index], ghostMaterials[index]);
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      mesh.visible = false;
+      scene.add(mesh);
+      return mesh;
+    });
+
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    const pointerWorld = new THREE.Vector3(0, 0, 0);
+    const dropPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.25);
+    const tempThreeVector = new THREE.Vector3();
+    const cameraBasePosition = new THREE.Vector3();
+
+    const entities = new Map();
+    const bodyToEntity = new Map();
+    const mergeQueue = [];
+    const queuedMergeKeys = new Set();
+
+    let entityIdCounter = 1;
+    let nextLevelIndex = 0;
+    let score = 0;
+    let bestHeight = readBestHeight();
+    let highestPoint = 0;
+    let gameTime = 0;
+    let accumulator = 0;
+    let lastTick = performance.now();
+    let lastFrameMark = performance.now();
+    let frameCounter = 0;
+    let fpsCounter = 0;
+    let fpsWindow = 0;
+    let lastDropTime = -1;
+    let pulseTime = 0;
+    let isGameOver = false;
+    let isPaused = false;
+    let cameraShakeTime = 0;
+    let cameraShakeDuration = 0;
+    let cameraShakePower = 0;
+    let hudTimer = 0;
+
+    bestEl.textContent = bestHeight.toFixed(1);
+    chooseNextLevel();
+    updateGhostVisibility();
+    updatePointerFromViewport(window.innerWidth * 0.5, window.innerHeight * 0.47);
+
+    function readBestHeight() {
+      try {
+        const value = Number.parseFloat(window.localStorage.getItem(STORAGE_KEY) || "0");
+        return Number.isFinite(value) ? value : 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    function writeBestHeight(value) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, value.toFixed(2));
+      } catch {
+        return;
+      }
+    }
+
+    function levelRadius(level) {
+      if (level.shape === "sphere") {
+        return level.radius;
+      }
+      if (level.shape === "box") {
+        return level.size * 0.68;
+      }
+      return Math.max(level.radius, level.height * 0.5);
+    }
+
+    function levelHalfHeight(level) {
+      if (level.shape === "sphere") {
+        return level.radius;
+      }
+      if (level.shape === "box") {
+        return level.size / 2;
+      }
+      return level.height / 2;
+    }
+
+    function makeBody(levelIndex, position) {
+      const level = LEVELS[levelIndex];
+      const body = new CANNON.Body({
+        mass: level.mass,
+        material: pieceMaterial,
+        position: new CANNON.Vec3(position.x, position.y, position.z),
+        linearDamping: 0.012 + levelIndex * 0.004,
+        angularDamping: 0.055 + levelIndex * 0.008
+      });
+
+      if (level.shape === "cylinder") {
+        body.addShape(cannonShapes[levelIndex], new CANNON.Vec3(0, 0, 0), cylinderOrientation);
+      } else {
+        body.addShape(cannonShapes[levelIndex]);
+      }
+
+      body.allowSleep = true;
+      body.sleepSpeedLimit = 0.07;
+      body.sleepTimeLimit = 0.55;
+      body.quaternion.setFromEuler(
+        (Math.random() - 0.5) * 0.24,
+        Math.random() * Math.PI * 2,
+        (Math.random() - 0.5) * 0.24
+      );
+      return body;
+    }
+
+    function createEntity(levelIndex, position, source) {
+      const id = entityIdCounter;
+      entityIdCounter += 1;
+
+      const mesh = new THREE.Mesh(geometries[levelIndex], materials[levelIndex]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.matrixAutoUpdate = true;
+      scene.add(mesh);
+
+      const body = makeBody(levelIndex, position);
+      const entity = {
+        id,
+        levelIndex,
+        mesh,
+        body,
+        bornAt: gameTime,
+        mergeCooldownUntil: source === "merge" ? gameTime + 0.28 : gameTime + 0.12,
+        lastPlatformShakeAt: -10,
+        hasTouchedStack: source === "merge",
+        popTime: source === "merge" ? 0.24 : 0
+      };
+
+      body.addEventListener("collide", (event) => handleEntityCollision(entity.id, event));
+      world.addBody(body);
+      entities.set(id, entity);
+      bodyToEntity.set(body.id, entity);
+      return entity;
+    }
+
+    function removeEntity(entity) {
+      world.removeBody(entity.body);
+      scene.remove(entity.mesh);
+      bodyToEntity.delete(entity.body.id);
+      entities.delete(entity.id);
+    }
+
+    function handleEntityCollision(entityId, event) {
+      const entity = entities.get(entityId);
+      if (!entity || isGameOver) {
+        return;
+      }
+
+      if (event.body === platformBody) {
+        entity.hasTouchedStack = true;
+        const impactSpeed = event.contact &&
+          typeof event.contact.getImpactVelocityAlongNormal === "function"
+          ? Math.abs(event.contact.getImpactVelocityAlongNormal())
+          : entity.body.velocity.length();
+        const weightedImpact = impactSpeed * LEVELS[entity.levelIndex].mass;
+
+        if (weightedImpact > 8.2 && gameTime - entity.lastPlatformShakeAt > 0.35) {
+          shakeScreen(Math.min(0.22, 0.025 + weightedImpact * 0.006), 0.13);
+          entity.lastPlatformShakeAt = gameTime;
+        }
+        return;
+      }
+
+      const other = bodyToEntity.get(event.body.id);
+      if (!other || other.id === entity.id) {
+        return;
+      }
+      entity.hasTouchedStack = true;
+      other.hasTouchedStack = true;
+
+      if (
+        entity.levelIndex !== other.levelIndex ||
+        entity.levelIndex >= LEVELS.length - 1 ||
+        gameTime < entity.mergeCooldownUntil ||
+        gameTime < other.mergeCooldownUntil
+      ) {
+        return;
+      }
+
+      const first = Math.min(entity.id, other.id);
+      const second = Math.max(entity.id, other.id);
+      const key = `${first}:${second}`;
+      if (!queuedMergeKeys.has(key)) {
+        queuedMergeKeys.add(key);
+        mergeQueue.push([first, second]);
+      }
+    }
+
+    function processMerges() {
+      if (mergeQueue.length === 0) {
+        return;
+      }
+
+      const pending = mergeQueue.splice(0, mergeQueue.length);
+      queuedMergeKeys.clear();
+
+      for (const [firstId, secondId] of pending) {
+        const first = entities.get(firstId);
+        const second = entities.get(secondId);
+        if (
+          !first ||
+          !second ||
+          first.levelIndex !== second.levelIndex ||
+          first.levelIndex >= LEVELS.length - 1
+        ) {
+          continue;
+        }
+
+        const maxDistance = levelRadius(LEVELS[first.levelIndex]) * 2.55;
+        const dx = first.body.position.x - second.body.position.x;
+        const dy = first.body.position.y - second.body.position.y;
+        const dz = first.body.position.z - second.body.position.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (distance > maxDistance) {
+          continue;
+        }
+
+        const nextLevel = first.levelIndex + 1;
+        const mergedPosition = {
+          x: (first.body.position.x + second.body.position.x) * 0.5,
+          y: Math.max(
+            (first.body.position.y + second.body.position.y) * 0.5,
+            PLATFORM_HEIGHT + levelHalfHeight(LEVELS[nextLevel]) + 0.18
+          ),
+          z: (first.body.position.z + second.body.position.z) * 0.5
+        };
+        const mergedVelocity = {
+          x: (first.body.velocity.x + second.body.velocity.x) * 0.22,
+          y: Math.max(0.4, (first.body.velocity.y + second.body.velocity.y) * 0.12 + 0.6),
+          z: (first.body.velocity.z + second.body.velocity.z) * 0.22
+        };
+
+        removeEntity(first);
+        removeEntity(second);
+
+        const merged = createEntity(nextLevel, mergedPosition, "merge");
+        merged.body.velocity.set(mergedVelocity.x, mergedVelocity.y, mergedVelocity.z);
+        merged.body.angularVelocity.set(
+          (Math.random() - 0.5) * 1.2,
+          (Math.random() - 0.5) * 1.2,
+          (Math.random() - 0.5) * 1.2
+        );
+
+        score += (nextLevel + 1) * 35;
+        pulseAt(mergedPosition, LEVELS[nextLevel].color);
+        shakeScreen(0.15 + nextLevel * 0.018, 0.18);
+      }
+    }
+
+    function dropPiece() {
+      if (isGameOver || isPaused) {
+        return;
+      }
+
+      if (entities.size >= MAX_ACTIVE_ENTITIES) {
+        finishGame("The stack got too crowded for the platform to recover.");
+        return;
+      }
+
+      if (gameTime - lastDropTime < 0.18) {
+        return;
+      }
+
+      const level = LEVELS[nextLevelIndex];
+      const spawnY = Math.max(
+        5.6,
+        highestPoint + 3.7,
+        platformBody.position.y + 4.7
+      );
+      const position = {
+        x: pointerWorld.x,
+        y: spawnY,
+        z: pointerWorld.z
+      };
+
+      const entity = createEntity(nextLevelIndex, position, "drop");
+      entity.body.velocity.set(0, -0.35, 0);
+      entity.body.angularVelocity.set(
+        (Math.random() - 0.5) * 0.55,
+        (Math.random() - 0.5) * 0.55,
+        (Math.random() - 0.5) * 0.55
+      );
+
+      score += 10 + nextLevelIndex * 2;
+      lastDropTime = gameTime;
+      chooseNextLevel();
+      updateGhostVisibility();
+      updateGhostPosition();
+      hintEl.classList.add("is-quiet");
+    }
+
+    function chooseNextLevel() {
+      const roll = Math.random();
+      if (score < 220) {
+        nextLevelIndex = roll < 0.72 ? 0 : roll < 0.92 ? 1 : 2;
+      } else if (score < 850) {
+        nextLevelIndex = roll < 0.48 ? 0 : roll < 0.78 ? 1 : roll < 0.94 ? 2 : 3;
+      } else {
+        nextLevelIndex = roll < 0.36 ? 0 : roll < 0.62 ? 1 : roll < 0.82 ? 2 : roll < 0.95 ? 3 : 4;
+      }
+
+      const level = LEVELS[nextLevelIndex];
+      nextNameEl.textContent = level.name;
+      nextSwatchEl.style.background = level.color;
+    }
+
+    function updatePointerFromViewport(clientX, clientY) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      dropPlane.constant = -(platformBody.position.y + PLATFORM_HEIGHT * 0.5 + 0.06);
+      raycaster.setFromCamera(pointerNdc, camera);
+
+      if (!raycaster.ray.intersectPlane(dropPlane, pointerWorld)) {
+        return false;
+      }
+
+      const level = LEVELS[nextLevelIndex];
+      const maxRadius = PLATFORM_RADIUS - levelRadius(level) - 0.18;
+      const planarLength = Math.hypot(pointerWorld.x, pointerWorld.z);
+      if (planarLength > maxRadius) {
+        const scale = maxRadius / planarLength;
+        pointerWorld.x *= scale;
+        pointerWorld.z *= scale;
+      }
+      updateGhostPosition();
+      return true;
+    }
+
+    function updateGhostVisibility() {
+      ghostMeshes.forEach((mesh, index) => {
+        mesh.visible = index === nextLevelIndex && !isGameOver;
+      });
+    }
+
+    function updateGhostPosition() {
+      const ghost = ghostMeshes[nextLevelIndex];
+      const level = LEVELS[nextLevelIndex];
+      ghost.position.set(
+        pointerWorld.x,
+        platformBody.position.y + PLATFORM_HEIGHT * 0.5 + levelHalfHeight(level) + 0.08,
+        pointerWorld.z
+      );
+      ghost.rotation.y = gameTime * 0.9;
+    }
+
+    function syncMeshes(dt) {
+      platformGroup.position.copy(platformBody.position);
+      platformGroup.quaternion.copy(platformBody.quaternion);
+
+      for (const entity of entities.values()) {
+        entity.mesh.position.copy(entity.body.position);
+        entity.mesh.quaternion.copy(entity.body.quaternion);
+
+        if (entity.popTime > 0) {
+          entity.popTime = Math.max(0, entity.popTime - dt);
+          const t = 1 - entity.popTime / 0.24;
+          const scale = 1 + Math.sin(t * Math.PI) * 0.2;
+          entity.mesh.scale.setScalar(scale);
+        } else if (entity.mesh.scale.x !== 1) {
+          entity.mesh.scale.setScalar(1);
+        }
+      }
+    }
+
+    function updateHighestPoint() {
+      let peak = platformBody.position.y + PLATFORM_HEIGHT * 0.5;
+      for (const entity of entities.values()) {
+        if (!entity.hasTouchedStack) {
+          continue;
+        }
+        const level = LEVELS[entity.levelIndex];
+        const top = entity.body.position.y + levelHalfHeight(level);
+        if (top > peak) {
+          peak = top;
+        }
+      }
+
+      highestPoint = Math.max(0, peak - PLATFORM_HEIGHT * 0.5);
+      if (highestPoint > bestHeight) {
+        bestHeight = highestPoint;
+        writeBestHeight(bestHeight);
+      }
+    }
+
+    function checkForFallenPieces() {
+      for (const entity of Array.from(entities.values())) {
+        const pos = entity.body.position;
+        const radius = Math.hypot(pos.x, pos.z);
+        if (gameTime - entity.bornAt < 0.8) {
+          continue;
+        }
+
+        if (pos.y < FALL_Y || radius > FALL_RADIUS) {
+          removeEntity(entity);
+          finishGame(`${LEVELS[entity.levelIndex].name} slipped off the wobble platform.`);
+          return;
+        }
+      }
+    }
+
+    function updatePulse(dt) {
+      if (pulseTime <= 0) {
+        pulseRing.visible = false;
+        pulseMaterial.opacity = 0;
+        return;
+      }
+
+      pulseTime = Math.max(0, pulseTime - dt);
+      const t = 1 - pulseTime / 0.34;
+      pulseRing.visible = true;
+      pulseRing.scale.setScalar(0.45 + t * 1.35);
+      pulseMaterial.opacity = Math.max(0, (1 - t) * 0.48);
+    }
+
+    function pulseAt(position, color) {
+      pulseMaterial.color.set(color);
+      pulseRing.position.set(position.x, position.y + 0.06, position.z);
+      pulseRing.scale.setScalar(0.45);
+      pulseTime = 0.34;
+      pulseRing.visible = true;
+    }
+
+    function shakeScreen(power, duration) {
+      cameraShakePower = Math.max(cameraShakePower, power);
+      cameraShakeDuration = Math.max(cameraShakeDuration, duration);
+      cameraShakeTime = Math.max(cameraShakeTime, duration);
+    }
+
+    function updateCamera(dt) {
+      const lift = Math.max(0, highestPoint - 1.65);
+      desiredCameraTarget.set(0, 1.05 + lift * 0.42, 0);
+      desiredCameraPosition.set(7.4, 6.4 + lift * 0.62, 9.2 + lift * 0.18);
+
+      const damping = 1 - Math.pow(0.001, dt);
+      cameraTarget.lerp(desiredCameraTarget, damping);
+      camera.position.lerp(desiredCameraPosition, damping);
+      cameraBasePosition.copy(camera.position);
+
+      if (cameraShakeTime > 0) {
+        cameraShakeTime = Math.max(0, cameraShakeTime - dt);
+        const falloff = cameraShakeDuration > 0 ? cameraShakeTime / cameraShakeDuration : 0;
+        const amount = cameraShakePower * falloff;
+        shakeOffset.set(
+          (Math.random() * 2 - 1) * amount,
+          (Math.random() * 2 - 1) * amount * 0.65,
+          (Math.random() * 2 - 1) * amount
+        );
+        camera.position.add(shakeOffset);
+      } else {
+        cameraShakePower = 0;
+        cameraShakeDuration = 0;
+      }
+
+      camera.lookAt(cameraTarget);
+    }
+
+    function updateHud(dt) {
+      fpsCounter += 1;
+      fpsWindow += dt;
+      hudTimer += dt;
+
+      if (fpsWindow >= 0.5) {
+        fpsEl.textContent = Math.round(fpsCounter / fpsWindow).toString();
+        fpsCounter = 0;
+        fpsWindow = 0;
+      }
+
+      if (hudTimer >= 0.12) {
+        heightEl.textContent = highestPoint.toFixed(1);
+        bestEl.textContent = bestHeight.toFixed(1);
+        scoreEl.textContent = score.toString();
+        hudTimer = 0;
+      }
+    }
+
+    function finishGame(message) {
+      if (isGameOver) {
+        return;
+      }
+      isGameOver = true;
+      gameOverTextEl.textContent = `${message} Final height: ${highestPoint.toFixed(1)} m.`;
+      gameOverEl.classList.add("is-open");
+      hintEl.textContent = "Press R or use Restart for another stack.";
+      hintEl.classList.remove("is-quiet");
+      updateGhostVisibility();
+    }
+
+    function resetPlatformBody() {
+      platformBody.position.set(0, 0, 0);
+      platformBody.previousPosition.set(0, 0, 0);
+      platformBody.interpolatedPosition.set(0, 0, 0);
+      platformBody.quaternion.set(0, 0, 0, 1);
+      platformBody.previousQuaternion.set(0, 0, 0, 1);
+      platformBody.interpolatedQuaternion.set(0, 0, 0, 1);
+      platformBody.velocity.set(0, 0, 0);
+      platformBody.angularVelocity.set(0, 0, 0);
+      platformBody.force.set(0, 0, 0);
+      platformBody.torque.set(0, 0, 0);
+    }
+
+    function restartGame() {
+      for (const entity of Array.from(entities.values())) {
+        removeEntity(entity);
+      }
+      mergeQueue.length = 0;
+      queuedMergeKeys.clear();
+      resetPlatformBody();
+      score = 0;
+      highestPoint = 0;
+      gameTime = 0;
+      accumulator = 0;
+      lastDropTime = -1;
+      isGameOver = false;
+      cameraShakeTime = 0;
+      cameraShakeDuration = 0;
+      cameraShakePower = 0;
+      pulseTime = 0;
+      pulseRing.visible = false;
+      pulseMaterial.opacity = 0;
+      gameOverEl.classList.remove("is-open");
+      hintEl.textContent = "Aim with the pointer, then drop. Press R to restart.";
+      hintEl.classList.remove("is-quiet");
+      chooseNextLevel();
+      updateGhostVisibility();
+      updateGhostPosition();
+      updateHud(1);
+    }
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      updatePointerFromViewport(window.innerWidth * 0.5, window.innerHeight * 0.47);
+    }
+
+    function sampleCanvasPixels() {
+      const gl = renderer.getContext();
+      const width = gl.drawingBufferWidth;
+      const height = gl.drawingBufferHeight;
+      const pixel = new Uint8Array(4);
+      const samples = [];
+      const points = [
+        [0.5, 0.5],
+        [0.38, 0.52],
+        [0.62, 0.52],
+        [0.5, 0.35],
+        [0.5, 0.68],
+        [0.25, 0.44],
+        [0.75, 0.44]
+      ];
+
+      for (const [xRatio, yRatio] of points) {
+        gl.readPixels(
+          Math.max(0, Math.min(width - 1, Math.floor(width * xRatio))),
+          Math.max(0, Math.min(height - 1, Math.floor(height * yRatio))),
+          1,
+          1,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          pixel
+        );
+        samples.push(`${pixel[0]},${pixel[1]},${pixel[2]},${pixel[3]}`);
+      }
+
+      return {
+        width,
+        height,
+        uniqueColors: new Set(samples).size,
+        samples
+      };
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("pointermove", (event) => {
+      updatePointerFromViewport(event.clientX, event.clientY);
+    }, { passive: true });
+    renderer.domElement.addEventListener("pointerdown", (event) => {
+      updatePointerFromViewport(event.clientX, event.clientY);
+      dropPiece();
+    });
+    renderer.domElement.addEventListener("pointerleave", () => {
+      updatePointerFromViewport(window.innerWidth * 0.5, window.innerHeight * 0.47);
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "r" || event.key === "R") {
+        restartGame();
+      }
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        dropPiece();
+      }
+    });
+    restartButton.addEventListener("click", restartGame);
+
+    function tick(now) {
+      window.requestAnimationFrame(tick);
+      if (now - lastFrameMark < TARGET_FRAME_MS - 0.75) {
+        return;
+      }
+
+      const frameDt = Math.min(0.05, (now - lastTick) / 1000);
+      lastTick = now;
+      lastFrameMark = now - ((now - lastFrameMark) % TARGET_FRAME_MS);
+
+      if (!isPaused) {
+        accumulator += frameDt;
+        let steps = 0;
+
+        while (accumulator >= FIXED_STEP && steps < MAX_PHYSICS_STEPS) {
+          world.step(FIXED_STEP);
+          gameTime += FIXED_STEP;
+          processMerges();
+          checkForFallenPieces();
+          accumulator -= FIXED_STEP;
+          steps += 1;
+        }
+
+        if (steps === MAX_PHYSICS_STEPS) {
+          accumulator = 0;
+        }
+      }
+
+      updateHighestPoint();
+      updateGhostPosition();
+      syncMeshes(frameDt);
+      updatePulse(frameDt);
+      updateCamera(frameDt);
+      updateHud(frameDt);
+      renderer.render(scene, camera);
+      frameCounter += 1;
+
+      if (frameCounter === 2) {
+        loadingEl.classList.add("is-hidden");
+      }
+    }
+
+    window.__wobbleDropDebug = {
+      dropAt(x = 0, z = 0, levelIndex = nextLevelIndex) {
+        const level = LEVELS[Math.max(0, Math.min(LEVELS.length - 1, levelIndex))];
+        const position = {
+          x,
+          y: Math.max(5.6, highestPoint + 3.7),
+          z
+        };
+        return createEntity(LEVELS.indexOf(level), position, "drop").id;
+      },
+      getStats() {
+        return {
+          entities: entities.size,
+          score,
+          highestPoint,
+          bestHeight,
+          frameCounter,
+          renderCalls: renderer.info.render.calls,
+          levels: Array.from(entities.values()).map((entity) => entity.levelIndex),
+          platformQuaternion: {
+            x: platformBody.quaternion.x,
+            y: platformBody.quaternion.y,
+            z: platformBody.quaternion.z,
+            w: platformBody.quaternion.w
+          },
+          nextLevel: LEVELS[nextLevelIndex].name,
+          gameOver: isGameOver
+        };
+      },
+      sampleCanvasPixels
+    };
+
+    resize();
+    window.requestAnimationFrame(tick);
+  </script>
+  <script type="module">
+    import { mountGameFeedback } from '../src/feedback/embed.js';
+    mountGameFeedback({ gameSlug: 'wobble-drop', gameName: 'Wobble Drop' });
+  </script>
+</body>
+</html>

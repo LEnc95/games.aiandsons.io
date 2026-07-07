@@ -27,10 +27,10 @@ const DISCOVERY_GAME_SLUGS = Object.freeze([
   "fifteenpuzzle", "battleship", "dotsandboxes", "reversi", "checkers", "pegsolitaire",
   "towerhanoi", "nimgrove", "mancala", "backgammon", "chess", "gomokugrid",
   "sudokusprint", "potionpantry", "marblecircuit", "switchyard", "canallock", "skylinestacker",
-  "cranecargo", "nebulacurl", "aerocourier", "ribboncapture", "tangletuner", "sundialsprint",
-  "bubbleshooter", "mosaicmatch", "mahjongsolitaire", "nonogram", "tenttrail", "rushhour",
-  "jigsaw", "kakuro", "caverncrush", "calccages", "wordladder", "dominodraw",
-  "inkislands", "vistatowers", "futoshiki",
+  "wobble-drop", "cranecargo", "nebulacurl", "aerocourier", "ribboncapture", "tangletuner",
+  "sundialsprint", "bubbleshooter", "mosaicmatch", "mahjongsolitaire", "nonogram", "tenttrail",
+  "rushhour", "jigsaw", "kakuro", "caverncrush", "calccages", "wordladder",
+  "dominodraw", "inkislands", "vistatowers", "futoshiki",
 ]);
 
 const CURATED_TRENDING_SLUGS = Object.freeze([
