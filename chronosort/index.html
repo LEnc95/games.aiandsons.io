@@ -43,6 +43,19 @@ body {
 
 body {
   min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .028) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, .018) 0 1px, transparent 1px 72px);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, .75), rgba(0, 0, 0, .15));
 }
 
 button {
@@ -90,7 +103,42 @@ button:focus-visible,
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   text-align: right;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  color: var(--accent);
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+}
+
+.brand-mark .calendar-page {
+  fill: #202634;
+  stroke: #68758b;
+}
+
+.brand-mark .calendar-top {
+  fill: #e7c26b;
+}
+
+.brand-mark .clock-ring {
+  fill: #111821;
+  stroke: #76d7c4;
+}
+
+.brand-mark .clock-hand {
+  stroke: #f7f8fb;
+  stroke-linecap: round;
+}
+
+.brand-copy {
   min-width: 0;
 }
 
@@ -148,6 +196,7 @@ button:focus-visible,
 }
 
 .timeline {
+  position: relative;
   display: grid;
   gap: 8px;
   margin: 0;
@@ -156,10 +205,24 @@ button:focus-visible,
   touch-action: none;
 }
 
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 32px;
+  bottom: 32px;
+  left: 31px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(231, 194, 107, .35), rgba(118, 215, 196, .48), rgba(231, 194, 107, .28));
+  box-shadow: 0 0 20px rgba(118, 215, 196, .12);
+}
+
 .event-card {
+  position: relative;
+  overflow: hidden;
   min-height: 68px;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto 28px;
+  grid-template-columns: 42px 48px minmax(0, 1fr) 34px auto 28px;
   gap: 10px;
   align-items: center;
   border: 2px solid var(--line);
@@ -178,23 +241,45 @@ button:focus-visible,
     transform .2s ease;
 }
 
+.event-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--asset-color, var(--accent)) 16%, transparent), transparent 42%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .026) 0 1px, transparent 1px 9px);
+  opacity: .72;
+}
+
+.event-card > * {
+  position: relative;
+  z-index: 1;
+}
+
 .event-card:active {
   cursor: grabbing;
 }
 
 .event-card.correct {
   border-color: var(--green);
-  background: #3f7340;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .08), transparent 46%),
+    #3f7340;
 }
 
 .event-card.near {
   border-color: var(--yellow);
-  background: #786b2f;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .08), transparent 46%),
+    #786b2f;
 }
 
 .event-card.miss {
   border-color: var(--red);
-  background: var(--red);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .06), transparent 46%),
+    var(--red);
 }
 
 .event-card.checking {
@@ -226,6 +311,42 @@ button:focus-visible,
   font-weight: 900;
 }
 
+.asset-slot {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--asset-color, var(--accent)) 52%, var(--line));
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .02)),
+    color-mix(in srgb, var(--asset-color, var(--accent)) 18%, #111821);
+  color: color-mix(in srgb, var(--asset-color, var(--accent)) 82%, #ffffff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16);
+}
+
+.asset-slot svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.event-card[data-asset="charter"] { --asset-color: #d9b46a; }
+.event-card[data-asset="press"] { --asset-color: #91c7f7; }
+.event-card[data-asset="quill"] { --asset-color: #ef8b80; }
+.event-card[data-asset="flight"] { --asset-color: #88d4b5; }
+.event-card[data-asset="lunar"] { --asset-color: #c2b5ff; }
+.mini-asset[data-asset="charter"] { --asset-color: #d9b46a; }
+.mini-asset[data-asset="press"] { --asset-color: #91c7f7; }
+.mini-asset[data-asset="quill"] { --asset-color: #ef8b80; }
+.mini-asset[data-asset="flight"] { --asset-color: #88d4b5; }
+.mini-asset[data-asset="lunar"] { --asset-color: #c2b5ff; }
+
 .event-copy {
   min-width: 0;
 }
@@ -248,6 +369,41 @@ button:focus-visible,
   color: #f4d783;
   font-weight: 850;
 }
+
+.feedback-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 50%;
+  background: rgba(10, 13, 18, .36);
+  color: #ffffff;
+  opacity: 0;
+  transform: scale(.88);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.feedback-mark svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.feedback-mark.correct,
+.feedback-mark.near,
+.feedback-mark.miss {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.feedback-mark.correct { background: rgba(83, 141, 78, .95); }
+.feedback-mark.near { background: rgba(181, 159, 59, .95); }
+.feedback-mark.miss { background: rgba(58, 58, 60, .95); }
 
 .card-actions {
   display: grid;
@@ -438,10 +594,28 @@ button:focus-visible,
 
 .correct-order li {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: 30px 58px minmax(0, 1fr);
   gap: 8px;
   align-items: start;
   color: var(--text);
+}
+
+.correct-order .mini-asset {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--asset-color, var(--accent-2));
+}
+
+.correct-order .mini-asset svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .correct-order b {
@@ -487,6 +661,12 @@ button:focus-visible,
   .brand {
     margin-right: 128px;
     text-align: left;
+    justify-content: flex-start;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
   }
 
   .brand h1 {
@@ -502,7 +682,7 @@ button:focus-visible,
   }
 
   .event-card {
-    grid-template-columns: 36px minmax(0, 1fr) 28px;
+    grid-template-columns: 36px 44px minmax(0, 1fr) 30px 28px;
     min-height: 80px;
     gap: 8px;
   }
@@ -512,8 +692,18 @@ button:focus-visible,
     height: 36px;
   }
 
+  .asset-slot {
+    width: 44px;
+    height: 44px;
+  }
+
+  .asset-slot svg {
+    width: 27px;
+    height: 27px;
+  }
+
   .card-actions {
-    grid-column: 2 / 4;
+    grid-column: 2 / 6;
     grid-row: 2;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -523,9 +713,14 @@ button:focus-visible,
   }
 
   .drag-handle {
-    grid-column: 3;
+    grid-column: 5;
     grid-row: 1;
     height: 40px;
+  }
+
+  .feedback-mark {
+    width: 30px;
+    height: 30px;
   }
 
   .actions,
@@ -570,8 +765,18 @@ button:focus-visible,
   <header class="topbar">
     <a class="back" href="/" aria-label="Back to all games">Back</a>
     <div class="brand">
-      <h1 id="gameTitle">ChronoSort</h1>
-      <p>Oldest at the top, newest at the bottom.</p>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <rect class="calendar-page" x="10" y="12" width="44" height="44" rx="10" />
+        <path class="calendar-top" d="M10 22h44v-2a8 8 0 0 0-8-8H18a8 8 0 0 0-8 8v2Z" />
+        <path d="M22 8v10M42 8v10" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+        <circle class="clock-ring" cx="40" cy="40" r="13" />
+        <path class="clock-hand" d="M40 32v9l7 4" stroke-width="3" />
+        <path d="M20 32h8M20 42h6" stroke="#68758b" stroke-width="3" stroke-linecap="round" />
+      </svg>
+      <div class="brand-copy">
+        <h1 id="gameTitle">ChronoSort</h1>
+        <p>Oldest at the top, newest at the bottom.</p>
+      </div>
     </div>
   </header>
 
@@ -640,12 +845,26 @@ button:focus-visible,
     calendar: "\u{1F4C5}",
   };
 
+  const ICON_SVGS = {
+    charter: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 5h13a4 4 0 0 1 4 4v15H10a4 4 0 0 0-4 4V9a4 4 0 0 1 3-4Z"/><path d="M10 24h16M12 11h9M12 16h7"/><circle cx="22" cy="20" r="3"/><path d="m20 23-1 4 3-2 3 2-1-4"/></svg>',
+    press: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 6h16v6H8zM6 18h20v8H6z"/><path d="M10 12v6M22 12v6M11 22h10M13 26h6"/></svg>',
+    quill: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25 5c-7 1-13 5-16 12-1 2-1 5 1 7 2 2 5 1 7 0 7-3 11-9 12-16l-7 7"/><path d="M7 27c3-6 7-10 13-14M10 18l7 4"/></svg>',
+    flight: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 18 28 7l-7 20-5-8-8 5 3-8-7 2Z"/><path d="m11 16 10 3"/></svg>',
+    lunar: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M22 5a10 10 0 1 0 5 17 8 8 0 0 1-5-17Z"/><path d="M7 25h11M10 21h3M21 24l3 3M24 24l-3 3"/></svg>',
+  };
+
+  const FEEDBACK_ICONS = {
+    correct: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
+    near: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10l-3-3M17 16H7l3 3"/></svg>',
+    miss: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>',
+  };
+
   const puzzle = [
-    { id: "magna-carta", text: "Magna Carta is sealed", year: 1215 },
-    { id: "gutenberg-bible", text: "The Gutenberg Bible is completed", year: 1455 },
-    { id: "declaration", text: "The U.S. Declaration of Independence is adopted", year: 1776 },
-    { id: "wright-flight", text: "The Wright brothers complete the first powered flight", year: 1903 },
-    { id: "moon-landing", text: "Apollo 11 lands the first humans on the Moon", year: 1969 },
+    { id: "magna-carta", text: "Magna Carta is sealed", year: 1215, asset: "charter", tagline: "Charter and law" },
+    { id: "gutenberg-bible", text: "The Gutenberg Bible is completed", year: 1455, asset: "press", tagline: "Printing press" },
+    { id: "declaration", text: "The U.S. Declaration of Independence is adopted", year: 1776, asset: "quill", tagline: "Revolutionary document" },
+    { id: "wright-flight", text: "The Wright brothers complete the first powered flight", year: 1903, asset: "flight", tagline: "Aviation milestone" },
+    { id: "moon-landing", text: "Apollo 11 lands the first humans on the Moon", year: 1969, asset: "lunar", tagline: "Lunar mission" },
   ];
 
   const timeline = document.getElementById("timeline");
@@ -748,6 +967,24 @@ button:focus-visible,
     return button;
   }
 
+  function createAssetIcon(event, className = "asset-slot") {
+    const icon = document.createElement("div");
+    icon.className = className;
+    icon.dataset.asset = event.asset;
+    icon.title = event.tagline;
+    icon.setAttribute("aria-hidden", "true");
+    icon.innerHTML = ICON_SVGS[event.asset] || ICON_SVGS.charter;
+    return icon;
+  }
+
+  function createFeedbackMark(feedback) {
+    const mark = document.createElement("div");
+    mark.className = `feedback-mark${feedback ? ` ${feedback.tone}` : ""}`;
+    mark.setAttribute("aria-hidden", "true");
+    if (feedback) mark.innerHTML = FEEDBACK_ICONS[feedback.tone] || "";
+    return mark;
+  }
+
   function renderList() {
     timeline.innerHTML = "";
 
@@ -756,6 +993,7 @@ button:focus-visible,
       const item = document.createElement("li");
       item.className = `event-card${feedback ? ` ${feedback.tone}` : ""}${checking ? " checking" : ""}`;
       item.dataset.id = event.id;
+      item.dataset.asset = event.asset;
       item.tabIndex = 0;
       item.setAttribute("aria-label", `Position ${index + 1}: ${event.text}`);
 
@@ -763,12 +1001,14 @@ button:focus-visible,
       rank.className = "rank";
       rank.textContent = String(index + 1);
 
+      const asset = createAssetIcon(event);
+
       const copy = document.createElement("div");
       copy.className = "event-copy";
       const title = document.createElement("strong");
       title.textContent = event.text;
       const hint = document.createElement("span");
-      hint.textContent = gameOver ? `${event.year}` : "Historical event";
+      hint.textContent = gameOver ? `${event.year} / ${event.tagline}` : event.tagline;
       if (gameOver) hint.className = "year-reveal";
       copy.append(title, hint);
 
@@ -783,7 +1023,9 @@ button:focus-visible,
       handle.className = "drag-handle";
       handle.setAttribute("aria-hidden", "true");
 
-      item.append(rank, copy, controls, handle);
+      const feedbackMark = createFeedbackMark(feedback);
+
+      item.append(rank, asset, copy, feedbackMark, controls, handle);
       timeline.append(item);
     });
 
@@ -918,11 +1160,12 @@ button:focus-visible,
     correctOrderEl.innerHTML = "";
     correctOrder.forEach((event) => {
       const item = document.createElement("li");
+      const asset = createAssetIcon(event, "mini-asset");
       const year = document.createElement("b");
       year.textContent = String(event.year);
       const text = document.createElement("span");
       text.textContent = event.text;
-      item.append(year, text);
+      item.append(asset, year, text);
       correctOrderEl.append(item);
     });
   }
@@ -1103,6 +1346,8 @@ button:focus-visible,
         index,
         id: event.id,
         text: event.text,
+        asset: event.asset,
+        tagline: event.tagline,
         feedback: feedbackById.get(event.id)?.tone || null,
       })),
       attemptRows: attemptRows.map((row, index) => ({ attempt: index + 1, emoji: row.emojiRow, tones: row.tones })),

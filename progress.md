@@ -3944,3 +3944,17 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Custom scenarios covered desktop pointer drag reorder, mobile touch drag reorder, one-second locked checking state, solved modal, forced loss modal, clipboard share text, and responsive header/layout with shared feedback launcher.
 - `git diff --check` reported only repository LF-to-CRLF warning noise.
 - TODO: none for ChronoSort; future work may address repository-wide LF-to-CRLF warning noise.
+
+## 2026-07-07 Wobble Drop difficulty tuning
+- Request: make Wobble Drop easier and add a small lip around the base so a single ball will not just roll off.
+- Updated `wobble-drop/index.html` with a real Cannon physics lip around the platform, a modest visible rim, softer platform wobble/recovery constants, reduced initial drop spin, and a rim-assist nudge that damps outward velocity near the raised edge.
+- Added `window.render_game_to_text()` and `window.advanceTime(ms)` hooks for future automated tuning/playtests.
+- Validation passed: module body parse, `npm run game:preflight`, Browser plugin edge-drop playtest, required `$WEB_GAME_CLIENT` run in `output/web-game/wobble-drop-easier-rim-final`, and a custom edge-stress Playwright check where repeated near-rim drops stayed playable with `gameOver: false`.
+- TODO: none for the requested Wobble Drop ease pass.
+
+## 2026-07-07 ChronoSort asset polish
+- New request: improve the assets of ChronoSort using the requested `game-studio:web-3d-asset-pipeline` skill. The skill is GLB/glTF-focused, but ChronoSort has no 3D assets, so the work targeted its actual single-file asset surface instead of introducing an unrelated 3D model pipeline.
+- Added inline SVG brand art, themed event icons, per-event material color tokens, a subtle timeline rail/background texture, richer card material treatment, feedback glyphs, and mini icons in the end-modal correct timeline.
+- Updated `window.render_game_to_text()` to expose each visible event's `asset` and `tagline` for validation.
+- Validation passed: static route HTTP 200, required `$WEB_GAME_CLIENT` run in `output/web-game/chronosort-assets-smoke-2`, custom desktop/mobile Playwright asset scenarios in `output/web-game/chronosort-assets-scenarios`, screenshot inspection, clipboard share check, and zero ChronoSort browser/page error artifacts.
+- TODO: none for the asset polish; future work may address repository-wide LF-to-CRLF warning noise.
