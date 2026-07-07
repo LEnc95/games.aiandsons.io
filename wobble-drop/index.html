@@ -407,6 +407,12 @@
     const MAX_PHYSICS_STEPS = 3;
     const PLATFORM_RADIUS = 3.25;
     const PLATFORM_HEIGHT = 0.38;
+    const PLATFORM_LIP_HEIGHT = 0.48;
+    const PLATFORM_LIP_THICKNESS = 0.28;
+    const PLATFORM_LIP_SEGMENTS = 48;
+    const PLATFORM_LIP_CENTER_RADIUS = PLATFORM_RADIUS - PLATFORM_LIP_THICKNESS * 0.4;
+    const PLATFORM_LIP_VISUAL_TUBE = 0.14;
+    const PLATFORM_SAFE_DROP_MARGIN = PLATFORM_LIP_THICKNESS + 0.36;
     const FALL_Y = -4.5;
     const FALL_RADIUS = PLATFORM_RADIUS + 3.4;
     const MAX_ACTIVE_ENTITIES = 92;
@@ -586,6 +592,7 @@
     world.defaultContactMaterial.friction = 0.52;
     world.defaultContactMaterial.restitution = 0.08;
 
+    const worldUp = new CANNON.Vec3(0, 1, 0);
     const cylinderOrientation = new CANNON.Quaternion();
 
     const geometries = LEVELS.map((level) => {
@@ -651,11 +658,16 @@
     platformGroup.add(platformDeck);
 
     const platformRim = new THREE.Mesh(
-      new THREE.TorusGeometry(PLATFORM_RADIUS + 0.035, 0.075, 12, 128),
+      new THREE.TorusGeometry(
+        PLATFORM_LIP_CENTER_RADIUS,
+        PLATFORM_LIP_VISUAL_TUBE,
+        16,
+        128
+      ),
       rimMaterial
     );
     platformRim.rotation.x = Math.PI / 2;
-    platformRim.position.y = PLATFORM_HEIGHT / 2 + 0.045;
+    platformRim.position.y = PLATFORM_HEIGHT / 2 + PLATFORM_LIP_VISUAL_TUBE * 0.9;
     platformRim.castShadow = true;
     platformRim.receiveShadow = true;
     platformGroup.add(platformRim);
@@ -683,13 +695,30 @@
       48
     );
     const platformBody = new CANNON.Body({
-      mass: 70,
+      mass: 86,
       material: platformPhysicsMaterial,
       position: new CANNON.Vec3(0, 0, 0),
-      linearDamping: 0.88,
-      angularDamping: 0.58
+      linearDamping: 0.9,
+      angularDamping: 0.74
     });
     platformBody.addShape(platformShape, new CANNON.Vec3(0, 0, 0), cylinderOrientation);
+    const lipSegmentLength = (Math.PI * 2 * PLATFORM_LIP_CENTER_RADIUS) / PLATFORM_LIP_SEGMENTS * 1.08;
+    const lipShape = new CANNON.Box(new CANNON.Vec3(
+      lipSegmentLength / 2,
+      PLATFORM_LIP_HEIGHT / 2,
+      PLATFORM_LIP_THICKNESS / 2
+    ));
+    for (let i = 0; i < PLATFORM_LIP_SEGMENTS; i += 1) {
+      const angle = (i / PLATFORM_LIP_SEGMENTS) * Math.PI * 2;
+      const offset = new CANNON.Vec3(
+        Math.cos(angle) * PLATFORM_LIP_CENTER_RADIUS,
+        PLATFORM_HEIGHT / 2 + PLATFORM_LIP_HEIGHT / 2,
+        Math.sin(angle) * PLATFORM_LIP_CENTER_RADIUS
+      );
+      const orientation = new CANNON.Quaternion();
+      orientation.setFromAxisAngle(worldUp, angle + Math.PI / 2);
+      platformBody.addShape(lipShape, offset, orientation);
+    }
     world.addBody(platformBody);
 
     const platformHinge = new CANNON.PointToPointConstraint(
@@ -703,13 +732,12 @@
 
     const suspensionSpring = new CANNON.Spring(anchorBody, platformBody, {
       restLength: 0,
-      stiffness: 5600,
-      damping: 105,
+      stiffness: 6800,
+      damping: 132,
       localAnchorA: new CANNON.Vec3(0, 0, 0),
       localAnchorB: new CANNON.Vec3(0, 0, 0)
     });
 
-    const worldUp = new CANNON.Vec3(0, 1, 0);
     const platformUp = new CANNON.Vec3();
     const uprightAxis = new CANNON.Vec3();
     const uprightTorque = new CANNON.Vec3();
@@ -723,8 +751,8 @@
       if (axisLength > 0.00001) {
         uprightAxis.scale(1 / axisLength, uprightAxis);
         const tiltAngle = Math.asin(Math.min(1, axisLength));
-        uprightAxis.scale(tiltAngle * 920, uprightTorque);
-        platformBody.angularVelocity.scale(-52, dampingTorque);
+        uprightAxis.scale(tiltAngle * 1160, uprightTorque);
+        platformBody.angularVelocity.scale(-74, dampingTorque);
         uprightTorque.vadd(dampingTorque, uprightTorque);
         platformBody.torque.vadd(uprightTorque, platformBody.torque);
       }
@@ -1040,11 +1068,11 @@
       };
 
       const entity = createEntity(nextLevelIndex, position, "drop");
-      entity.body.velocity.set(0, -0.35, 0);
+      entity.body.velocity.set(0, -0.28, 0);
       entity.body.angularVelocity.set(
-        (Math.random() - 0.5) * 0.55,
-        (Math.random() - 0.5) * 0.55,
-        (Math.random() - 0.5) * 0.55
+        (Math.random() - 0.5) * 0.34,
+        (Math.random() - 0.5) * 0.34,
+        (Math.random() - 0.5) * 0.34
       );
 
       score += 10 + nextLevelIndex * 2;
@@ -1082,7 +1110,7 @@
       }
 
       const level = LEVELS[nextLevelIndex];
-      const maxRadius = PLATFORM_RADIUS - levelRadius(level) - 0.18;
+      const maxRadius = PLATFORM_RADIUS - levelRadius(level) - PLATFORM_SAFE_DROP_MARGIN;
       const planarLength = Math.hypot(pointerWorld.x, pointerWorld.z);
       if (planarLength > maxRadius) {
         const scale = maxRadius / planarLength;
@@ -1360,16 +1388,7 @@
     });
     restartButton.addEventListener("click", restartGame);
 
-    function tick(now) {
-      window.requestAnimationFrame(tick);
-      if (now - lastFrameMark < TARGET_FRAME_MS - 0.75) {
-        return;
-      }
-
-      const frameDt = Math.min(0.05, (now - lastTick) / 1000);
-      lastTick = now;
-      lastFrameMark = now - ((now - lastFrameMark) % TARGET_FRAME_MS);
-
+    function stepGameFrame(frameDt) {
       if (!isPaused) {
         accumulator += frameDt;
         let steps = 0;
@@ -1377,6 +1396,7 @@
         while (accumulator >= FIXED_STEP && steps < MAX_PHYSICS_STEPS) {
           world.step(FIXED_STEP);
           gameTime += FIXED_STEP;
+          applyRimAssist();
           processMerges();
           checkForFallenPieces();
           accumulator -= FIXED_STEP;
@@ -1403,6 +1423,104 @@
       }
     }
 
+    function applyRimAssist() {
+      const innerRadius = PLATFORM_LIP_CENTER_RADIUS - PLATFORM_LIP_THICKNESS / 2;
+      const assistTop = platformBody.position.y + PLATFORM_HEIGHT / 2 + PLATFORM_LIP_HEIGHT + 0.62;
+
+      for (const entity of entities.values()) {
+        const body = entity.body;
+        const pos = body.position;
+        if (pos.y > assistTop) {
+          continue;
+        }
+
+        const radius = Math.hypot(pos.x, pos.z);
+        if (radius < 0.001) {
+          continue;
+        }
+
+        const level = LEVELS[entity.levelIndex];
+        const softLimit = innerRadius - levelRadius(level) * 0.18;
+        if (radius <= softLimit) {
+          continue;
+        }
+
+        const nx = pos.x / radius;
+        const nz = pos.z / radius;
+        const outwardVelocity = body.velocity.x * nx + body.velocity.z * nz;
+        const correction = Math.min(0.12, (radius - softLimit) * 0.32);
+
+        pos.x -= nx * correction;
+        pos.z -= nz * correction;
+        if (outwardVelocity > -0.12) {
+          body.velocity.x -= nx * (0.22 + Math.max(0, outwardVelocity) * 0.65);
+          body.velocity.z -= nz * (0.22 + Math.max(0, outwardVelocity) * 0.65);
+        }
+        body.angularVelocity.scale(0.9, body.angularVelocity);
+      }
+    }
+
+    function tick(now) {
+      window.requestAnimationFrame(tick);
+      if (now - lastFrameMark < TARGET_FRAME_MS - 0.75) {
+        return;
+      }
+
+      const frameDt = Math.min(0.05, (now - lastTick) / 1000);
+      lastTick = now;
+      lastFrameMark = now - ((now - lastFrameMark) % TARGET_FRAME_MS);
+      stepGameFrame(frameDt);
+    }
+
+    function getDebugStats() {
+      return {
+        entities: entities.size,
+        score,
+        highestPoint,
+        bestHeight,
+        frameCounter,
+        renderCalls: renderer.info.render.calls,
+        levels: Array.from(entities.values()).map((entity) => entity.levelIndex),
+        pieces: Array.from(entities.values()).map((entity) => ({
+          id: entity.id,
+          level: LEVELS[entity.levelIndex].name,
+          x: Number(entity.body.position.x.toFixed(3)),
+          y: Number(entity.body.position.y.toFixed(3)),
+          z: Number(entity.body.position.z.toFixed(3)),
+          touched: entity.hasTouchedStack
+        })),
+        platformQuaternion: {
+          x: platformBody.quaternion.x,
+          y: platformBody.quaternion.y,
+          z: platformBody.quaternion.z,
+          w: platformBody.quaternion.w
+        },
+        lip: {
+          height: PLATFORM_LIP_HEIGHT,
+          thickness: PLATFORM_LIP_THICKNESS,
+          innerRadius: PLATFORM_LIP_CENTER_RADIUS - PLATFORM_LIP_THICKNESS / 2
+        },
+        nextLevel: LEVELS[nextLevelIndex].name,
+        gameOver: isGameOver
+      };
+    }
+
+    function renderGameToText() {
+      return JSON.stringify({
+        coordinateSystem: "world space, y is up, platform center is x=0 z=0",
+        ...getDebugStats()
+      });
+    }
+
+    window.render_game_to_text = renderGameToText;
+    window.advanceTime = (ms = 1000 / 60) => {
+      const steps = Math.max(1, Math.min(300, Math.round(ms / (1000 / 60))));
+      for (let i = 0; i < steps; i += 1) {
+        stepGameFrame(FIXED_STEP);
+      }
+      return renderGameToText();
+    };
+
     window.__wobbleDropDebug = {
       dropAt(x = 0, z = 0, levelIndex = nextLevelIndex) {
         const level = LEVELS[Math.max(0, Math.min(LEVELS.length - 1, levelIndex))];
@@ -1414,23 +1532,7 @@
         return createEntity(LEVELS.indexOf(level), position, "drop").id;
       },
       getStats() {
-        return {
-          entities: entities.size,
-          score,
-          highestPoint,
-          bestHeight,
-          frameCounter,
-          renderCalls: renderer.info.render.calls,
-          levels: Array.from(entities.values()).map((entity) => entity.levelIndex),
-          platformQuaternion: {
-            x: platformBody.quaternion.x,
-            y: platformBody.quaternion.y,
-            z: platformBody.quaternion.z,
-            w: platformBody.quaternion.w
-          },
-          nextLevel: LEVELS[nextLevelIndex].name,
-          gameOver: isGameOver
-        };
+        return getDebugStats();
       },
       sampleCanvasPixels
     };
