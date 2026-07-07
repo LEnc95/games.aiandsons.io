@@ -247,6 +247,11 @@
       pointer-events: none;
     }
 
+    .loading.is-error {
+      padding: 1.5rem;
+      text-align: center;
+    }
+
     @media (max-width: 720px) {
       .hud-left,
       .hud-right {
@@ -367,9 +372,35 @@
     </div>
   </div>
 
+  <script>
+    (() => {
+      const loadingEl = document.getElementById("loading");
+      const setBootError = () => {
+        if (!loadingEl || window.__wobbleDropLoaded) {
+          return;
+        }
+        loadingEl.textContent = "Wobble Drop could not start. Refresh to try again.";
+        loadingEl.classList.add("is-error");
+      };
+      const bootTimer = window.setTimeout(setBootError, 8000);
+      window.__wobbleDropMarkLoaded = () => {
+        window.__wobbleDropLoaded = true;
+        window.clearTimeout(bootTimer);
+      };
+      window.addEventListener("error", setBootError);
+      window.addEventListener("unhandledrejection", setBootError);
+    })();
+  </script>
+  <script nomodule>
+    const loadingEl = document.getElementById("loading");
+    if (loadingEl) {
+      loadingEl.textContent = "Wobble Drop needs a modern browser to start.";
+      loadingEl.classList.add("is-error");
+    }
+  </script>
   <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
-    import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js";
+    import * as THREE from "../assets/vendor/three-0.165.0.module.js";
+    import * as CANNON from "../assets/vendor/cannon-es-0.20.0.js";
 
     const FIXED_STEP = 1 / 60;
     const TARGET_FRAME_MS = 1000 / 60;
@@ -1367,6 +1398,7 @@
       frameCounter += 1;
 
       if (frameCounter === 2) {
+        window.__wobbleDropMarkLoaded?.();
         loadingEl.classList.add("is-hidden");
       }
     }
