@@ -506,3 +506,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-05] Key PR links: none merged for this date.
 - [nightly 2026-07-06] Tracked changes: 1 commit(s) - a8133dd Add Futoshiki to discovery metadata.
 - [nightly 2026-07-06] Key PR links: none merged for this date.
+- [nightly 2026-07-07] Tracked changes: 4 commit(s) - 25b2f63 Polish ChronoSort event assets and timeline styling; 4fecd6f Ease Wobble Drop platform handling; 3f036db Add new games to discovery metadata; 4c199a2 Serve Wobble Drop engine modules locally.
+- [nightly 2026-07-07] Key PR links: none merged for this date.
