@@ -163,6 +163,8 @@ export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
   { key: 'two-player', label: 'Two Player' },
 ]);
 
+const DISCOVERY_CATEGORY_KEYS = new Set(GAME_DISCOVERY_CATEGORIES.map(item => item.key));
+
 const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   puzzle: new Set([
     '2048', 'memory', 'minesweeper', 'boxquest', 'lightsout', 'glowgrid', 'looptrail',
@@ -281,7 +283,7 @@ const inferCategories = (game) => {
   if (/(ai|strategy|tactical|battle|defense|opponent)/.test(haystack)) categories.add('strategy');
 
   if (!categories.size) categories.add(game.earnsCoins === false ? 'strategy' : 'arcade');
-  return [...categories].filter((category) => GAME_DISCOVERY_CATEGORIES.some((item) => item.key === category));
+  return new Set([...categories].filter((category) => DISCOVERY_CATEGORY_KEYS.has(category)));
 };
 
 const inferModes = (game) => {
@@ -293,32 +295,32 @@ const inferModes = (game) => {
 
 const inferDuration = (game, categories) => {
   if (LONG_SLUGS.has(game.slug)) return 'long';
-  if (EASY_SLUGS.has(game.slug) || categories.includes('arcade') || categories.includes('sports')) return 'quick';
+  if (EASY_SLUGS.has(game.slug) || categories.has('arcade') || categories.has('sports')) return 'quick';
   return 'medium';
 };
 
 const inferDifficulty = (game, categories) => {
   if (HARD_SLUGS.has(game.slug)) return 'hard';
   if (EASY_SLUGS.has(game.slug)) return 'easy';
-  if (categories.includes('strategy') || categories.includes('puzzle')) return 'medium';
+  if (categories.has('strategy') || categories.has('puzzle')) return 'medium';
   return 'easy';
 };
 
 export const GAMES = BASE_GAMES.map((game, index) => {
-  const categories = inferCategories(game);
+  const categoriesSet = inferCategories(game);
   const modes = inferModes(game);
-  const duration = inferDuration(game, categories);
-  const difficulty = inferDifficulty(game, categories);
+  const duration = inferDuration(game, categoriesSet);
+  const difficulty = inferDifficulty(game, categoriesSet);
   const featured = {
     dailyEligible: true,
-    weeklyEligible: duration !== 'long' || categories.includes('strategy'),
+    weeklyEligible: duration !== 'long' || categoriesSet.has('strategy'),
   };
   if (TRENDING_RANKS[game.slug]) featured.trendingRank = TRENDING_RANKS[game.slug];
   if (TOP_PLAYED_RANKS[game.slug]) featured.topPlayedRank = TOP_PLAYED_RANKS[game.slug];
 
   return {
     ...game,
-    categories,
+    categories: [...categoriesSet],
     modes,
     duration,
     difficulty,
