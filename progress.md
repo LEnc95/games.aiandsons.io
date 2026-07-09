@@ -3958,3 +3958,30 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Updated `window.render_game_to_text()` to expose each visible event's `asset` and `tagline` for validation.
 - Validation passed: static route HTTP 200, required `$WEB_GAME_CLIENT` run in `output/web-game/chronosort-assets-smoke-2`, custom desktop/mobile Playwright asset scenarios in `output/web-game/chronosort-assets-scenarios`, screenshot inspection, clipboard share check, and zero ChronoSort browser/page error artifacts.
 - TODO: none for the asset polish; future work may address repository-wide LF-to-CRLF warning noise.
+
+## 2026-07-08 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Black Box, ChronoSort, and recent additions listed there.
+- Reviewed the 150-game registry and selected Mini Crossword (`/minicrossword`), a compact clue-based word puzzle not currently represented in the catalog.
+- Initial implementation added `minicrossword/index.html` with five deterministic word-square crossword boards, across/down clue navigation, keyboard/touch input, hints/check/undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and deterministic `window.__MINI_CROSSWORD_GAME__` helpers.
+- Registered Mini Crossword in `src/meta/games.js` and the puzzle/word discovery groups.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/minicrossword.png`, and local Linear feedback seeds now include Mini Crossword. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: Mini Crossword module-script body syntax check, 151-game registry import/uniqueness and category check, focused game/discovery/feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/minicrossword-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/minicrossword-scenarios-final`, screenshot/feedback-modal/OG inspection, and zero Mini Crossword browser/page error artifacts.
+- Custom scenarios covered wrong-letter check feedback, undo, hint, pause/resume, single-puzzle solve with coin reward, full five-puzzle campaign completion, shared feedback modal, mobile touch keyboard input, and responsive mobile canvas cleanup.
+- `git diff --check` exited cleanly with only repository LF-to-CRLF warning noise.
+- Run time recorded: 2026-07-08T07:16:17.8954769-04:00.
+- TODO: none for Mini Crossword; future work may address repository-wide LF-to-CRLF warning noise.
+
+## 2026-07-09 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Mini Crossword and the recent additions listed there.
+- Reviewed the registry and selected Fillomino (`/fillomino`), a number-region logic puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas game with desktop/touch controls, deterministic hooks, shared feedback, coin rewards, metadata/discovery registration, regenerated SEO/OG/Linear artifacts, and Playwright validation with screenshot inspection.
+- Initial implementation added `fillomino/index.html` with five deterministic number-region puzzles, touch/keyboard number entry, hints/check/undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and deterministic `window.__FILLOMINO_GAME__` helpers.
+- Registered Fillomino in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/fillomino.png`, and local Linear feedback seeds now include Fillomino. Live Linear provisioning skipped because credentials are unset.
+- Fixed validation findings from browser runs: primed the menu board before first render so `render_game_to_text()` and canvas drawing work on load, and adjusted the mobile stage/header layout so the board is fully visible with controls still in view.
+- Validation passed: Fillomino module-script parse, 152-game registry import/uniqueness and puzzle category check, focused games/discovery/feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/fillomino-smoke-final-2`, custom desktop/mobile Playwright scenarios in `output/web-game/fillomino-scenarios-final-2`, feedback modal viewport capture, mobile layout screenshot inspection, OG inspection, and zero final Fillomino browser/page error artifacts.
+- `git diff --check` exited cleanly with only repository LF-to-CRLF warning noise.
+- Run time recorded: 2026-07-09T07:19:13.0930583-04:00.
+- TODO: none for Fillomino; future work may address repository-wide LF-to-CRLF warning noise and the generated OG card theme if the site wants non-purple social cards.

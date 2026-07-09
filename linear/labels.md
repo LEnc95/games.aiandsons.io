@@ -165,5 +165,7 @@
 - game/futoshiki
 - game/blackbox
 - game/chronosort
+- game/minicrossword
+- game/fillomino
 
 Generated from `src/meta/feedback.js`.

@@ -149,6 +149,8 @@ const BASE_GAMES = [
   { slug:'futoshiki',      name:'Futoshiki',            emoji:'\u{1F522}', scoreHint:'solves',     url:'/futoshiki',    desc:'Fill inequality logic grids with nonrepeating row and column digits while every greater-than clue stays true.', earnsCoins:true },
   { slug:'blackbox',       name:'Black Box',            emoji:'\u25FC\uFE0F', scoreHint:'atoms',   url:'/blackbox',     desc:'Fire probe rays into a hidden grid, read hits, reflections, and detours, then mark every atom in the black box.', earnsCoins:true },
   { slug:'chronosort',     name:'ChronoSort',           emoji:'\u{1F4C5}', scoreHint:'attempts',   url:'/chronosort',   desc:'Drag five historical events into a daily timeline, read green, yellow, and red feedback, and share your attempt path.', earnsCoins:false },
+  { slug:'minicrossword',  name:'Mini Crossword',       emoji:'\u{1F5DE}\uFE0F', scoreHint:'solves', url:'/minicrossword', desc:'Fill compact word-square crossword grids, follow across and down clues, use hints, and solve five bite-size minis.', earnsCoins:true },
+  { slug:'fillomino',      name:'Fillomino',            emoji:'\u{1F9E9}', scoreHint:'solves',     url:'/fillomino',    desc:'Fill number grids so every connected region contains exactly as many cells as its number.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -171,7 +173,8 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'vialsort', 'bridgeislands', 'samegame', 'chromeshift', 'signalstack', 'flowlines',
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
-    'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
+    'minicrossword', 'fillomino', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
@@ -181,7 +184,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
     'bubbleshooter', 'caverncrush', 'wobble-drop',
   ]),
-  word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder']),
+  word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder', 'minicrossword']),
   cards: new Set([
     'setmatch', 'crazyeights', 'twentyone', 'tripeaks', 'solitaire', 'freecell',
     'mahjongsolitaire', 'dominodraw',

@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Fillomino | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #102032;
+  background:
+    radial-gradient(circle at 12% 12%, #e3fff6 0 14%, transparent 29%),
+    radial-gradient(circle at 82% 8%, #e8f0ff 0 16%, transparent 31%),
+    linear-gradient(145deg, #f8fffc 0%, #d7ecf4 54%, #d7e7ff 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 30;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffa8;
+  border-radius: 8px;
+  background: #14324ce8;
+  color: #f8fbff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 10px 24px #173b5930;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(56px, calc(env(safe-area-inset-top) + 54px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 1 1 auto;
+  min-height: 315px;
+  max-height: 650px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffd6;
+  border-radius: 8px;
+  background: #fbfffd;
+  box-shadow: 0 24px 58px #24465b33;
+}
+.hud,
+.controls,
+.number-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.number-pad { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffab;
+  border-radius: 8px;
+  background: #173b59e8;
+  color: #f8fbff;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #bdd5e9;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9dffc9; }
+.chip.warn b { color: #ffdb7a; }
+.chip.danger b { color: #ff9fab; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #24577f; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.primary {
+  background: #ffd464;
+  border-color: #ffecaa;
+  color: #102032;
+}
+.primary:hover { background: #ffe08a; }
+.action { background: #1f756b; }
+.utility { background: #33536e; }
+.clear { background: #664c69; }
+button:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #ffd464;
+  outline-offset: 2px;
+}
+@media (max-width: 840px) {
+  .app { padding-left: 9px; padding-right: 9px; gap: 7px; }
+  .stage { max-height: 53dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .number-pad { gap: 6px; }
+}
+@media (max-width: 540px) {
+  .back { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .app { padding-top: max(48px, calc(env(safe-area-inset-top) + 46px)); }
+  .stage {
+    flex: 0 0 clamp(300px, 42vh, 360px);
+    height: clamp(300px, 42vh, 360px);
+    min-height: 0;
+    max-height: none;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip:nth-child(6) { display: none; }
+  button { min-height: 39px; padding: 0 5px; font-size: 13px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill number grids so every connected region contains exactly as many cells as its number. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Fillomino | AI and Sons Games">
+  <meta property="og:description" content="Fill number grids so every connected region contains exactly as many cells as its number. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/fillomino">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/fillomino.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Fillomino | AI and Sons Games">
+  <meta name="twitter:description" content="Fill number grids so every connected region contains exactly as many cells as its number. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/fillomino.png">
+  <link rel="canonical" href="https://games.aiandsons.io/fillomino">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Fillomino","description":"Fill number grids so every connected region contains exactly as many cells as its number. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/fillomino","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">&larr; Games</a>
+<main class="app" aria-label="Fillomino game">
+  <div class="stage">
+    <canvas id="game" width="1080" height="700" aria-label="Fillomino puzzle board"></canvas>
+  </div>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleLabel">1 / 5</b></div>
+    <div class="chip"><span>Filled</span><b id="filledLabel">0 / 25</b></div>
+    <div class="chip"><span>Moves</span><b id="movesLabel">0</b></div>
+    <div class="chip warn"><span>Hints</span><b id="hintsLabel">0</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreLabel">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">Start</button>
+    <button id="checkBtn" class="action" type="button">Check</button>
+    <button id="hintBtn" class="action" type="button">Hint</button>
+    <button id="undoBtn" class="utility" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+  <section class="number-pad" aria-label="Number pad">
+    <button type="button" data-number="1">1</button>
+    <button type="button" data-number="2">2</button>
+    <button type="button" data-number="3">3</button>
+    <button type="button" data-number="4">4</button>
+    <button type="button" data-number="5">5</button>
+    <button id="clearBtn" class="clear" type="button">Clear</button>
+  </section>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  puzzle: document.getElementById('puzzleLabel'),
+  filled: document.getElementById('filledLabel'),
+  moves: document.getElementById('movesLabel'),
+  hints: document.getElementById('hintsLabel'),
+  score: document.getElementById('scoreLabel'),
+  coins: document.getElementById('coinsLabel'),
+  start: document.getElementById('startBtn'),
+  check: document.getElementById('checkBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+  clear: document.getElementById('clearBtn'),
+  numbers: [...document.querySelectorAll('[data-number]')],
+};
+
+const PUZZLES = [
+  {
+    id: 'river-stones',
+    name: 'River Stones',
+    solution: [
+      [1, 4, 4, 4, 5],
+      [4, 2, 1, 4, 5],
+      [4, 2, 3, 5, 5],
+      [4, 3, 3, 1, 5],
+      [4, 1, 2, 2, 1],
+    ],
+    givens: [
+      [1, 4, 0, 0, 5],
+      [0, 2, 1, 4, 0],
+      [4, 0, 3, 5, 0],
+      [0, 3, 0, 1, 5],
+      [4, 1, 2, 0, 1],
+    ],
+  },
+  {
+    id: 'copper-isles',
+    name: 'Copper Isles',
+    solution: [
+      [2, 3, 2, 2, 3],
+      [2, 3, 3, 4, 3],
+      [3, 1, 2, 4, 3],
+      [3, 3, 2, 4, 2],
+      [2, 2, 1, 4, 2],
+    ],
+    givens: [
+      [2, 0, 2, 0, 3],
+      [0, 3, 0, 4, 0],
+      [3, 1, 2, 0, 3],
+      [0, 3, 0, 4, 2],
+      [2, 0, 1, 0, 0],
+    ],
+  },
+  {
+    id: 'garden-plots',
+    name: 'Garden Plots',
+    solution: [
+      [3, 1, 4, 4, 1],
+      [3, 3, 5, 4, 2],
+      [2, 2, 5, 4, 2],
+      [3, 3, 5, 1, 3],
+      [3, 5, 5, 3, 3],
+    ],
+    givens: [
+      [3, 1, 4, 0, 1],
+      [0, 3, 5, 0, 2],
+      [2, 0, 0, 4, 0],
+      [3, 0, 5, 1, 3],
+      [0, 5, 0, 0, 3],
+    ],
+  },
+  {
+    id: 'canopy-map',
+    name: 'Canopy Map',
+    solution: [
+      [5, 5, 5, 5, 4],
+      [5, 2, 1, 2, 4],
+      [3, 2, 5, 2, 4],
+      [3, 3, 5, 1, 4],
+      [5, 5, 5, 2, 2],
+    ],
+    givens: [
+      [5, 0, 5, 0, 4],
+      [0, 2, 1, 2, 0],
+      [3, 0, 5, 0, 4],
+      [0, 3, 0, 1, 0],
+      [5, 0, 5, 2, 0],
+    ],
+  },
+  {
+    id: 'summit-cells',
+    name: 'Summit Cells',
+    solution: [
+      [1, 4, 4, 2, 2],
+      [3, 3, 4, 1, 5],
+      [4, 3, 4, 5, 5],
+      [4, 4, 2, 5, 2],
+      [1, 4, 2, 5, 2],
+    ],
+    givens: [
+      [1, 4, 0, 2, 0],
+      [3, 0, 4, 1, 5],
+      [0, 3, 0, 5, 0],
+      [4, 0, 2, 0, 2],
+      [1, 4, 0, 5, 0],
+    ],
+  },
+];
+
+const COLORS = {
+  0: '#f9fffd',
+  1: '#f6faff',
+  2: '#dbf6ef',
+  3: '#e4edff',
+  4: '#fff0b8',
+  5: '#f8d7e9',
+};
+const BORDER = '#14324c';
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+let layout = { boardX: 0, boardY: 0, cell: 0, boardSize: 0, panelX: 0, panelW: 0 };
+let lastFrame = 0;
+let manualStepping = false;
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  values: [],
+  locked: [],
+  selected: { row: 0, col: 0 },
+  undoStack: [],
+  elapsed: 0,
+  moves: 0,
+  hints: 0,
+  checks: 0,
+  score: 0,
+  bestScore: Number(localStorage.getItem('fillomino:best') || 0),
+  coinsEarned: 0,
+  lastCoins: 0,
+  completed: new Set(),
+  message: 'Fill each region with one number. A group of 4s must contain exactly four cells.',
+  lastAction: { type: 'load' },
+  errorCells: new Set(),
+  successPulse: 0,
+};
+
+function primeMenuBoard() {
+  const current = puzzle();
+  game.values = cloneGrid(current.givens);
+  game.locked = current.givens.map(row => row.map(value => value !== 0));
+  game.selected = firstEditableCell();
+}
+
+function cloneGrid(grid) {
+  return grid.map(row => [...row]);
+}
+
+function puzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function key(row, col) {
+  return `${row},${col}`;
+}
+
+function firstEditableCell() {
+  const current = puzzle();
+  for (let row = 0; row < current.solution.length; row += 1) {
+    for (let col = 0; col < current.solution[row].length; col += 1) {
+      if (!game.locked[row][col]) return { row, col };
+    }
+  }
+  return { row: 0, col: 0 };
+}
+
+function setupPuzzle(index = game.puzzleIndex) {
+  const wrapped = ((index % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  game.puzzleIndex = wrapped;
+  const current = puzzle();
+  game.values = cloneGrid(current.givens);
+  game.locked = current.givens.map(row => row.map(value => value !== 0));
+  game.selected = firstEditableCell();
+  game.undoStack = [];
+  game.elapsed = 0;
+  game.moves = 0;
+  game.hints = 0;
+  game.checks = 0;
+  game.lastCoins = 0;
+  game.errorCells = new Set();
+  game.mode = 'playing';
+  game.message = 'Enter 1-5. Connected equal numbers must form regions of that exact size.';
+  game.lastAction = { type: 'start', puzzle: current.id };
+  updateHud();
+  draw();
+}
+
+function pushUndo() {
+  game.undoStack.push({
+    values: cloneGrid(game.values),
+    selected: { ...game.selected },
+    moves: game.moves,
+    hints: game.hints,
+    checks: game.checks,
+  });
+  if (game.undoStack.length > 60) game.undoStack.shift();
+}
+
+function undo() {
+  if (game.mode !== 'playing' || !game.undoStack.length) return false;
+  const previous = game.undoStack.pop();
+  game.values = cloneGrid(previous.values);
+  game.selected = { ...previous.selected };
+  game.moves = previous.moves;
+  game.hints = previous.hints;
+  game.checks = previous.checks;
+  game.errorCells = new Set();
+  game.message = 'Undo restored the previous board.';
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  draw();
+  return true;
+}
+
+function selectCell(row, col) {
+  const current = puzzle();
+  if (row < 0 || col < 0 || row >= current.solution.length || col >= current.solution.length) return false;
+  game.selected = { row, col };
+  game.lastAction = { type: 'select', row, col };
+  draw();
+  return true;
+}
+
+function enterNumber(value) {
+  if (game.mode === 'menu') setupPuzzle(game.puzzleIndex);
+  if (game.mode === 'solved' || game.mode === 'complete') return false;
+  if (game.mode !== 'playing') return false;
+  const { row, col } = game.selected;
+  if (game.locked[row][col]) {
+    game.message = 'That clue cell is fixed.';
+    draw();
+    return false;
+  }
+  if (game.values[row][col] === value) return false;
+  pushUndo();
+  game.values[row][col] = value;
+  game.moves += 1;
+  game.errorCells.delete(key(row, col));
+  game.message = `Placed ${value} at row ${row + 1}, column ${col + 1}.`;
+  game.lastAction = { type: 'enter', row, col, value };
+  const next = nextEditable(row, col);
+  if (next) game.selected = next;
+  updateHud();
+  draw();
+  maybeFinish();
+  return true;
+}
+
+function clearCell() {
+  if (game.mode !== 'playing') return false;
+  const { row, col } = game.selected;
+  if (game.locked[row][col] || game.values[row][col] === 0) return false;
+  pushUndo();
+  game.values[row][col] = 0;
+  game.moves += 1;
+  game.errorCells.delete(key(row, col));
+  game.message = `Cleared row ${row + 1}, column ${col + 1}.`;
+  game.lastAction = { type: 'clear', row, col };
+  updateHud();
+  draw();
+  return true;
+}
+
+function nextEditable(row, col) {
+  const current = puzzle();
+  const size = current.solution.length;
+  for (let offset = 1; offset <= size * size; offset += 1) {
+    const index = row * size + col + offset;
+    const r = Math.floor(index / size) % size;
+    const c = index % size;
+    if (!game.locked[r][c]) return { row: r, col: c };
+  }
+  return null;
+}
+
+function filledCount() {
+  return game.values.flat().filter(Boolean).length;
+}
+
+function analyzeBoard(values = game.values) {
+  const current = puzzle();
+  const size = current.solution.length;
+  const seen = Array.from({ length: size }, () => Array(size).fill(false));
+  const regions = [];
+  const conflictCells = new Set();
+  const wrongCells = new Set();
+  let empty = 0;
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const value = values[row][col];
+      if (!value) {
+        empty += 1;
+        continue;
+      }
+      if (value !== current.solution[row][col]) wrongCells.add(key(row, col));
+      if (seen[row][col]) continue;
+      const cells = [];
+      const queue = [[row, col]];
+      seen[row][col] = true;
+      for (let i = 0; i < queue.length; i += 1) {
+        const [r, c] = queue[i];
+        cells.push({ row: r, col: c });
+        for (const [dr, dc] of DIRS) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr < 0 || nc < 0 || nr >= size || nc >= size || seen[nr][nc] || values[nr][nc] !== value) continue;
+          seen[nr][nc] = true;
+          queue.push([nr, nc]);
+        }
+      }
+      const status = cells.length === value ? 'complete' : cells.length > value ? 'oversized' : 'growing';
+      if (status === 'oversized') {
+        for (const cell of cells) conflictCells.add(key(cell.row, cell.col));
+      }
+      regions.push({ value, size: cells.length, status, cells });
+    }
+  }
+
+  const ruleSolved = empty === 0 && regions.every(region => region.size === region.value);
+  const targetSolved = empty === 0 && wrongCells.size === 0;
+  return {
+    empty,
+    regions,
+    conflictCells,
+    wrongCells,
+    ruleSolved,
+    targetSolved,
+    solved: ruleSolved && targetSolved,
+  };
+}
+
+function checkBoard() {
+  if (game.mode === 'menu') setupPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  game.checks += 1;
+  const analysis = analyzeBoard();
+  game.errorCells = new Set([...analysis.conflictCells, ...analysis.wrongCells]);
+  if (analysis.solved) {
+    game.message = 'Every region matches its number.';
+    finishPuzzle();
+  } else if (analysis.conflictCells.size) {
+    game.message = `${analysis.conflictCells.size} cells belong to oversized regions. Split or reduce them.`;
+  } else if (analysis.wrongCells.size) {
+    game.message = `${analysis.wrongCells.size} entries do not match this puzzle yet.`;
+  } else if (analysis.empty) {
+    game.message = `${analysis.empty} cells are still empty.`;
+  } else {
+    game.message = 'The board is full, but at least one region size is not exact.';
+  }
+  game.lastAction = {
+    type: 'check',
+    empty: analysis.empty,
+    wrong: analysis.wrongCells.size,
+    conflicts: analysis.conflictCells.size,
+  };
+  updateHud();
+  draw();
+  return analysis.solved;
+}
+
+function maybeFinish() {
+  const analysis = analyzeBoard();
+  if (analysis.solved) finishPuzzle();
+}
+
+function useHint() {
+  if (game.mode === 'menu') setupPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const current = puzzle();
+  const size = current.solution.length;
+  let target = null;
+  const selected = game.selected;
+  if (!game.locked[selected.row][selected.col] && game.values[selected.row][selected.col] !== current.solution[selected.row][selected.col]) {
+    target = { ...selected };
+  }
+  if (!target) {
+    for (let row = 0; row < size && !target; row += 1) {
+      for (let col = 0; col < size; col += 1) {
+        if (!game.locked[row][col] && game.values[row][col] !== current.solution[row][col]) {
+          target = { row, col };
+          break;
+        }
+      }
+    }
+  }
+  if (!target) {
+    game.message = 'No hint needed on this board.';
+    draw();
+    return false;
+  }
+  pushUndo();
+  game.selected = target;
+  game.values[target.row][target.col] = current.solution[target.row][target.col];
+  game.hints += 1;
+  game.moves += 1;
+  game.errorCells = new Set();
+  game.message = `Hint filled row ${target.row + 1}, column ${target.col + 1}.`;
+  game.lastAction = { type: 'hint', row: target.row, col: target.col, value: game.values[target.row][target.col] };
+  updateHud();
+  draw();
+  maybeFinish();
+  return true;
+}
+
+function finishPuzzle() {
+  if (game.mode !== 'playing') return;
+  const current = puzzle();
+  const base = 900 + (game.puzzleIndex + 1) * 120;
+  const speed = Math.max(0, 260 - Math.floor(game.elapsed));
+  const score = Math.max(150, base + speed - game.hints * 90 - game.checks * 20 - game.moves * 4);
+  game.score += score;
+  if (game.score > game.bestScore) {
+    game.bestScore = game.score;
+    localStorage.setItem('fillomino:best', String(game.bestScore));
+  }
+  let coins = 0;
+  if (!game.completed.has(current.id)) {
+    coins = Math.max(8, 18 - game.hints * 2 + Math.max(0, 4 - game.checks));
+    addCoins(coins);
+    game.completed.add(current.id);
+    game.coinsEarned += coins;
+  }
+  game.lastCoins = coins;
+  game.successPulse = 1;
+  game.mode = game.puzzleIndex === PUZZLES.length - 1 ? 'complete' : 'solved';
+  game.message = game.mode === 'complete'
+    ? `Campaign complete. Earned ${coins} coins on this board.`
+    : `Solved ${current.name}. Earned ${coins} coins.`;
+  game.lastAction = { type: 'solve', puzzle: current.id, score, coins };
+  updateHud();
+  draw();
+}
+
+function nextPuzzle() {
+  if (game.puzzleIndex >= PUZZLES.length - 1) {
+    setupPuzzle(0);
+  } else {
+    setupPuzzle(game.puzzleIndex + 1);
+  }
+}
+
+function restartPuzzle() {
+  setupPuzzle(game.puzzleIndex);
+  game.lastAction = { type: 'restart', puzzle: puzzle().id };
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Resumed.';
+  } else if (game.mode === 'menu') {
+    setupPuzzle(game.puzzleIndex);
+    return;
+  }
+  game.lastAction = { type: game.mode === 'paused' ? 'pause' : 'resume' };
+  updateHud();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function moveSelection(dr, dc) {
+  const current = puzzle();
+  const size = current.solution.length;
+  const row = Math.max(0, Math.min(size - 1, game.selected.row + dr));
+  const col = Math.max(0, Math.min(size - 1, game.selected.col + dc));
+  return selectCell(row, col);
+}
+
+function update(dt) {
+  if (game.mode === 'playing') game.elapsed += Math.max(0, Math.min(.5, dt));
+  if (game.successPulse > 0) game.successPulse = Math.max(0, game.successPulse - dt * 1.8);
+}
+
+function updateHud() {
+  const current = puzzle();
+  const size = current.solution.length;
+  els.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  els.filled.textContent = `${filledCount()} / ${size * size}`;
+  els.moves.textContent = String(game.moves);
+  els.hints.textContent = String(game.hints);
+  els.score.textContent = String(game.score);
+  els.coins.textContent = String(profileState.coins || 0);
+  els.start.textContent = game.mode === 'solved' ? 'Next' : game.mode === 'complete' ? 'Replay' : game.mode === 'paused' ? 'Resume' : game.mode === 'menu' ? 'Start' : 'New';
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  els.check.disabled = game.mode === 'paused' || game.mode === 'complete' || game.mode === 'solved';
+  els.hint.disabled = game.mode === 'paused' || game.mode === 'complete' || game.mode === 'solved';
+  els.undo.disabled = game.mode !== 'playing' || !game.undoStack.length;
+  els.clear.disabled = game.mode !== 'playing';
+  for (const button of els.numbers) button.disabled = game.mode === 'paused' || game.mode === 'complete' || game.mode === 'solved';
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  canvas.width = Math.max(1, Math.round(rect.width * dpr));
+  canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+function computeLayout() {
+  const w = canvas.width / Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const h = canvas.height / Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const current = puzzle();
+  const size = current.solution.length;
+  const compact = w < 720;
+  const boardSize = compact ? Math.min(w - 36, h - 126) : Math.min(h - 112, w * .56);
+  layout.boardSize = compact ? Math.max(120, boardSize) : Math.max(210, boardSize);
+  layout.cell = layout.boardSize / size;
+  layout.boardX = compact ? (w - layout.boardSize) / 2 : 34;
+  layout.boardY = compact ? 112 : 82;
+  layout.panelX = layout.boardX + layout.boardSize + 28;
+  layout.panelW = Math.max(0, w - layout.panelX - 28);
+  return { w, h, compact };
+}
+
+function roundRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function draw() {
+  if (!ctx) return;
+  const { w, h, compact } = computeLayout();
+  ctx.clearRect(0, 0, w, h);
+  const grd = ctx.createLinearGradient(0, 0, w, h);
+  grd.addColorStop(0, '#fafffd');
+  grd.addColorStop(.55, '#e8f6ff');
+  grd.addColorStop(1, '#f7fbff');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, w, h);
+  drawHeader(w);
+  drawBoard();
+  if (!compact) drawSidePanel();
+  if (game.mode === 'menu' || game.mode === 'paused' || game.mode === 'solved' || game.mode === 'complete') drawOverlay(w, h);
+}
+
+function drawHeader(w) {
+  const current = puzzle();
+  const compact = w < 720;
+  ctx.fillStyle = '#102032';
+  ctx.font = '900 28px Inter, Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('Fillomino', 24, 34);
+  ctx.font = '800 14px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#49677f';
+  ctx.fillText(`${current.name} - puzzle ${game.puzzleIndex + 1} of ${PUZZLES.length}`, 26, 58);
+  ctx.fillStyle = '#173b59';
+  if (compact) {
+    const compactMessage = game.message.length > 48 ? `${game.message.slice(0, 47)}...` : game.message;
+    ctx.textAlign = 'left';
+    ctx.fillText(compactMessage, 26, 86);
+  } else {
+    ctx.textAlign = 'right';
+    ctx.fillText(game.message, w - 24, 36);
+  }
+}
+
+function drawBoard() {
+  const current = puzzle();
+  const size = current.solution.length;
+  const analysis = analyzeBoard();
+  const x = layout.boardX;
+  const y = layout.boardY;
+  const cell = layout.cell;
+
+  roundRect(x - 10, y - 10, layout.boardSize + 20, layout.boardSize + 20, 8);
+  ctx.fillStyle = '#ffffffc8';
+  ctx.fill();
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const value = game.values[row][col];
+      const cx = x + col * cell;
+      const cy = y + row * cell;
+      ctx.fillStyle = COLORS[value] || '#eef6ff';
+      ctx.fillRect(cx, cy, cell, cell);
+      if (game.errorCells.has(key(row, col))) {
+        ctx.fillStyle = '#ff64785c';
+        ctx.fillRect(cx + 3, cy + 3, cell - 6, cell - 6);
+      } else if (value && value === current.solution[row][col]) {
+        ctx.fillStyle = analysis.solved ? '#7cffb036' : '#ffffff32';
+        ctx.fillRect(cx + 3, cy + 3, cell - 6, cell - 6);
+      }
+      if (game.locked[row][col]) {
+        ctx.fillStyle = '#14324c1c';
+        ctx.fillRect(cx, cy, cell, cell);
+      }
+      if (game.selected.row === row && game.selected.col === col) {
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#ffce4f';
+        ctx.strokeRect(cx + 4, cy + 4, cell - 8, cell - 8);
+      }
+      if (value) {
+        ctx.fillStyle = game.locked[row][col] ? '#102032' : '#173b59';
+        ctx.font = `${game.locked[row][col] ? 900 : 800} ${Math.floor(cell * .42)}px Inter, Segoe UI, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(value), cx + cell / 2, cy + cell / 2 + 1);
+      } else {
+        ctx.fillStyle = '#7290a83b';
+        ctx.beginPath();
+        ctx.arc(cx + cell / 2, cy + cell / 2, Math.max(3, cell * .06), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (game.locked[row][col]) {
+        ctx.fillStyle = '#173b59';
+        ctx.beginPath();
+        ctx.arc(cx + cell - 12, cy + 12, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  ctx.lineCap = 'square';
+  for (let i = 0; i <= size; i += 1) {
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#7d98ad';
+    ctx.beginPath();
+    ctx.moveTo(x, y + i * cell);
+    ctx.lineTo(x + layout.boardSize, y + i * cell);
+    ctx.moveTo(x + i * cell, y);
+    ctx.lineTo(x + i * cell, y + layout.boardSize);
+    ctx.stroke();
+  }
+
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = BORDER;
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const value = game.values[row][col];
+      const cx = x + col * cell;
+      const cy = y + row * cell;
+      if (row === 0 || game.values[row - 1][col] !== value || value === 0) line(cx, cy, cx + cell, cy);
+      if (col === 0 || game.values[row][col - 1] !== value || value === 0) line(cx, cy, cx, cy + cell);
+      if (row === size - 1 || game.values[row + 1][col] !== value || value === 0) line(cx, cy + cell, cx + cell, cy + cell);
+      if (col === size - 1 || game.values[row][col + 1] !== value || value === 0) line(cx + cell, cy, cx + cell, cy + cell);
+    }
+  }
+
+  if (game.successPulse > 0) {
+    ctx.save();
+    ctx.globalAlpha = game.successPulse * .45;
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#21c98d';
+    ctx.strokeRect(x - 6, y - 6, layout.boardSize + 12, layout.boardSize + 12);
+    ctx.restore();
+  }
+}
+
+function line(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function drawSidePanel() {
+  const x = layout.panelX;
+  const w = layout.panelW;
+  if (w < 180) return;
+  roundRect(x, layout.boardY, w, layout.boardSize, 8);
+  ctx.fillStyle = '#173b59e6';
+  ctx.fill();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 23px Inter, Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('How to solve', x + 22, layout.boardY + 38);
+  const lines = [
+    'Equal numbers connect into a region.',
+    'The region size must match that number.',
+    'A finished group of 3s has exactly 3 cells.',
+    'Use Check to find oversized or wrong cells.',
+    'Keyboard: arrows, 1-5, Backspace, H, C, U, P, F.',
+  ];
+  ctx.font = '800 15px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#d6e6f2';
+  let y = layout.boardY + 76;
+  for (const text of lines) {
+    wrapText(text, x + 22, y, w - 44, 22);
+    y += text.length > 43 ? 44 : 30;
+  }
+  const analysis = analyzeBoard();
+  ctx.fillStyle = '#f8fbff';
+  ctx.font = '900 18px Inter, Segoe UI, sans-serif';
+  ctx.fillText('Current board', x + 22, y + 12);
+  ctx.font = '800 15px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#bfe0f5';
+  ctx.fillText(`Regions: ${analysis.regions.length}`, x + 22, y + 44);
+  ctx.fillText(`Empty: ${analysis.empty}`, x + 22, y + 72);
+  ctx.fillText(`Oversized cells: ${analysis.conflictCells.size}`, x + 22, y + 100);
+  ctx.fillText(`Best score: ${game.bestScore}`, x + 22, y + 128);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let lineText = '';
+  for (const word of words) {
+    const test = lineText ? `${lineText} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && lineText) {
+      ctx.fillText(lineText, x, y);
+      lineText = word;
+      y += lineHeight;
+    } else {
+      lineText = test;
+    }
+  }
+  if (lineText) ctx.fillText(lineText, x, y);
+}
+
+function drawOverlay(w, h) {
+  ctx.save();
+  ctx.fillStyle = '#10203299';
+  ctx.fillRect(0, 0, w, h);
+  const panelW = Math.min(620, w - 36);
+  const panelH = game.mode === 'menu' ? 225 : 190;
+  const x = (w - panelW) / 2;
+  const y = (h - panelH) / 2;
+  roundRect(x, y, panelW, panelH, 8);
+  ctx.fillStyle = '#f8fbff';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#102032';
+  ctx.textAlign = 'center';
+  ctx.font = '900 34px Inter, Segoe UI, sans-serif';
+  const title = game.mode === 'complete' ? 'Campaign Complete' : game.mode === 'solved' ? 'Puzzle Solved' : game.mode === 'paused' ? 'Paused' : 'Fillomino';
+  ctx.fillText(title, w / 2, y + 52);
+  ctx.font = '800 16px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#48677f';
+  const body = game.mode === 'menu'
+    ? 'Fill every cell so each connected group has the exact size shown by its number.'
+    : game.message;
+  wrapCentered(body, w / 2, y + 88, panelW - 70, 22);
+  ctx.fillStyle = '#173b59';
+  ctx.font = '900 15px Inter, Segoe UI, sans-serif';
+  const action = game.mode === 'complete' ? 'Press Replay for another run.' : game.mode === 'solved' ? 'Press Next to continue.' : game.mode === 'paused' ? 'Press Resume or P to keep solving.' : 'Press Start, Enter, or tap a cell.';
+  ctx.fillText(action, w / 2, y + panelH - 38);
+  ctx.restore();
+}
+
+function wrapCentered(text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  const lines = [];
+  let lineText = '';
+  for (const word of words) {
+    const test = lineText ? `${lineText} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && lineText) {
+      lines.push(lineText);
+      lineText = word;
+    } else {
+      lineText = test;
+    }
+  }
+  if (lineText) lines.push(lineText);
+  for (let i = 0; i < lines.length; i += 1) ctx.fillText(lines[i], x, y + i * lineHeight);
+}
+
+function cellFromPoint(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  const row = Math.floor((y - layout.boardY) / layout.cell);
+  const col = Math.floor((x - layout.boardX) / layout.cell);
+  const size = puzzle().solution.length;
+  if (row < 0 || col < 0 || row >= size || col >= size) return null;
+  return { row, col };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') {
+    setupPuzzle(game.puzzleIndex);
+    return;
+  }
+  if (game.mode === 'paused') return;
+  if (game.mode === 'solved' || game.mode === 'complete') {
+    nextPuzzle();
+    return;
+  }
+  const cell = cellFromPoint(event.clientX, event.clientY);
+  if (cell) selectCell(cell.row, cell.col);
+}
+
+function handleKey(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+  const keyName = event.key.toLowerCase();
+  if (/^[1-5]$/.test(keyName)) {
+    event.preventDefault();
+    enterNumber(Number(keyName));
+  } else if (event.key === 'Backspace' || event.key === 'Delete' || keyName === '0') {
+    event.preventDefault();
+    clearCell();
+  } else if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    moveSelection(0, -1);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    moveSelection(0, 1);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    moveSelection(-1, 0);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    moveSelection(1, 0);
+  } else if (keyName === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (keyName === 'c') {
+    event.preventDefault();
+    checkBoard();
+  } else if (keyName === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (keyName === 'p' || event.key === 'Escape') {
+    event.preventDefault();
+    togglePause();
+  } else if (keyName === 'r') {
+    event.preventDefault();
+    restartPuzzle();
+  } else if (keyName === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+    else if (game.mode === 'menu') setupPuzzle(game.puzzleIndex);
+    else checkBoard();
+  }
+}
+
+function stateToObject() {
+  const current = puzzle();
+  const analysis = analyzeBoard();
+  return {
+    game: 'fillomino',
+    coordinate_system: 'Canvas origin is top-left with x right and y down. Grid rows and columns are zero-based.',
+    mode: game.mode,
+    puzzle_id: current.id,
+    puzzle_name: current.name,
+    puzzle_index: game.puzzleIndex,
+    puzzle_count: PUZZLES.length,
+    size: current.solution.length,
+    selected_cell: { ...game.selected },
+    board: game.values.map(row => [...row]),
+    locked: game.locked.map(row => row.map(Boolean)),
+    filled_cells: filledCount(),
+    total_cells: current.solution.length * current.solution.length,
+    elapsed_seconds: Number(game.elapsed.toFixed(2)),
+    moves: game.moves,
+    hints_used: game.hints,
+    checks: game.checks,
+    score: game.score,
+    best_score: game.bestScore,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    empty_cells: analysis.empty,
+    rule_solved: analysis.ruleSolved,
+    target_solved: analysis.targetSolved,
+    region_count: analysis.regions.length,
+    regions: analysis.regions.map(region => ({
+      value: region.value,
+      size: region.size,
+      status: region.status,
+      cells: region.cells,
+    })),
+    conflict_cells: [...analysis.conflictCells].map(item => {
+      const [row, col] = item.split(',').map(Number);
+      return { row, col };
+    }),
+    wrong_solution_cells: [...analysis.wrongCells].map(item => {
+      const [row, col] = item.split(',').map(Number);
+      return { row, col };
+    }),
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') setupPuzzle(game.puzzleIndex);
+  pushUndo();
+  game.values = cloneGrid(puzzle().solution);
+  game.lastAction = { type: 'test_solve', puzzle: puzzle().id };
+  finishPuzzle();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function solveCampaign() {
+  for (let i = 0; i < PUZZLES.length; i += 1) {
+    setupPuzzle(i);
+    solveCurrent();
+  }
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+window.__FILLOMINO_GAME__ = {
+  start: setupPuzzle,
+  restart: restartPuzzle,
+  nextPuzzle,
+  selectCell,
+  enterNumber,
+  clearCell,
+  checkBoard,
+  useHint,
+  undo,
+  solveCurrent,
+  solveCampaign,
+  stateToObject,
+  renderGameToText,
+  analyzeBoard,
+  puzzleIds: () => PUZZLES.map(item => item.id),
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return stateToObject();
+  } catch {
+    return { game: 'fillomino', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('resize', resizeCanvas);
+document.addEventListener('fullscreenchange', resizeCanvas);
+document.addEventListener('keydown', handleKey);
+els.start.addEventListener('click', () => {
+  if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+  else if (game.mode === 'paused') togglePause();
+  else setupPuzzle(game.puzzleIndex);
+});
+els.check.addEventListener('click', checkBoard);
+els.hint.addEventListener('click', useHint);
+els.undo.addEventListener('click', undo);
+els.pause.addEventListener('click', togglePause);
+els.restart.addEventListener('click', restartPuzzle);
+els.full.addEventListener('click', toggleFullscreen);
+els.clear.addEventListener('click', clearCell);
+for (const button of els.numbers) {
+  button.addEventListener('click', () => enterNumber(Number(button.dataset.number)));
+}
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    if (game.mode === 'playing' || game.successPulse > 0) {
+      updateHud();
+      draw();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+primeMenuBoard();
+updateHud();
+resizeCanvas();
+mountGameFeedback({ gameSlug: 'fillomino', gameName: 'Fillomino' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
