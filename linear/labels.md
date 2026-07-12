@@ -167,5 +167,6 @@
 - game/chronosort
 - game/minicrossword
 - game/fillomino
+- game/canyonglider
 
 Generated from `src/meta/feedback.js`.

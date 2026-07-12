@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Canyon Glider | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #14202a;
+  background:
+    radial-gradient(circle at 14% 12%, #ffe7b8 0 14%, transparent 30%),
+    radial-gradient(circle at 86% 10%, #bcefff 0 15%, transparent 31%),
+    linear-gradient(150deg, #fbf2d6 0%, #a9dddf 48%, #6b9abb 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 30;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffb8;
+  border-radius: 8px;
+  background: #17344ee8;
+  color: #f8fcff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 12px 28px #12314835;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(56px, calc(env(safe-area-inset-top) + 54px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 1 1 auto;
+  min-height: 330px;
+  max-height: 675px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffd8;
+  border-radius: 8px;
+  background: #dff4ff;
+  box-shadow: 0 24px 58px #203b5236;
+}
+.hud,
+.controls,
+.flight-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.flight-pad { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffab;
+  border-radius: 8px;
+  background: #183b54e8;
+  color: #f9fcff;
+  box-shadow: inset 0 1px 0 #ffffff38;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #b9d5e4;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9ff3b2; }
+.chip.warn b { color: #ffd072; }
+.chip.danger b { color: #ff9da2; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #245a79; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+button.active,
+button:active { transform: translateY(1px); }
+.primary {
+  background: #ffd36b;
+  border-color: #ffebb3;
+  color: #14202a;
+}
+.primary:hover { background: #ffdf8f; }
+.action { background: #1f6e78; }
+.utility { background: #34546f; }
+.danger { background: #7b3f44; }
+button:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #ffd36b;
+  outline-offset: 2px;
+}
+@media (max-width: 820px) {
+  .app { padding-left: 9px; padding-right: 9px; gap: 7px; }
+  .stage { max-height: 56dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .controls,
+  .flight-pad { gap: 6px; }
+}
+@media (max-width: 540px) {
+  .back { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .app { padding-top: max(48px, calc(env(safe-area-inset-top) + 46px)); }
+  .stage {
+    flex: 0 0 clamp(300px, 43vh, 370px);
+    height: clamp(300px, 43vh, 370px);
+    min-height: 0;
+    max-height: none;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip:nth-child(6) { display: none; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  button { min-height: 39px; padding: 0 5px; font-size: 13px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Race through canyon gates, ride gusts, collect flight rings, and boost to the finish before your hull gives out. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Canyon Glider | AI and Sons Games">
+  <meta property="og:description" content="Race through canyon gates, ride gusts, collect flight rings, and boost to the finish before your hull gives out. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/canyonglider">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/canyonglider.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Canyon Glider | AI and Sons Games">
+  <meta name="twitter:description" content="Race through canyon gates, ride gusts, collect flight rings, and boost to the finish before your hull gives out. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/canyonglider.png">
+  <link rel="canonical" href="https://games.aiandsons.io/canyonglider">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Canyon Glider","description":"Race through canyon gates, ride gusts, collect flight rings, and boost to the finish before your hull gives out. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/canyonglider","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">&larr; Games</a>
+<main class="app" aria-label="Canyon Glider game">
+  <div class="stage">
+    <canvas id="game" width="960" height="540" aria-label="Canyon Glider canvas"></canvas>
+  </div>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Distance</span><b id="distanceLabel">0%</b></div>
+    <div class="chip good"><span>Rings</span><b id="ringsLabel">0 / 0</b></div>
+    <div class="chip danger"><span>Hull</span><b id="hullLabel">100</b></div>
+    <div class="chip warn"><span>Boost</span><b id="boostLabel">100</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreLabel">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">Start</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+  <section class="flight-pad" aria-label="Flight controls">
+    <button class="action" type="button" data-hold="lift">Lift</button>
+    <button class="danger" type="button" data-hold="dive">Dive</button>
+    <button class="action" type="button" data-hold="boost">Boost</button>
+  </section>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  distance: document.getElementById('distanceLabel'),
+  rings: document.getElementById('ringsLabel'),
+  hull: document.getElementById('hullLabel'),
+  boost: document.getElementById('boostLabel'),
+  score: document.getElementById('scoreLabel'),
+  coins: document.getElementById('coinsLabel'),
+  start: document.getElementById('startBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+};
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+const TRACK_LENGTH = 9000;
+const PLAYER_X = 168;
+const PLAYER_R = 18;
+const FINISH_BONUS = 900;
+const input = { lift: false, dive: false, boost: false };
+let lastFrame = 0;
+let manualStep = false;
+
+function randFactory(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return value / 4294967296;
+  };
+}
+
+function buildCourse(seed = 7421) {
+  const rand = randFactory(seed);
+  const obstacles = [];
+  const rings = [];
+  const gusts = [];
+  for (let x = 620; x < TRACK_LENGTH - 380; x += 560) {
+    const gapY = 160 + rand() * 220;
+    const gapH = 164 + rand() * 52;
+    obstacles.push({ x, w: 72 + rand() * 34, gapY, gapH });
+  }
+  for (let x = 360; x < TRACK_LENGTH - 220; x += 340) {
+    const base = 110 + rand() * 320;
+    const wave = Math.sin(x * 0.006) * 34;
+    rings.push({ x, y: Math.max(80, Math.min(450, base + wave)), r: 18, collected: false });
+  }
+  for (let x = 980; x < TRACK_LENGTH - 700; x += 1120) {
+    gusts.push({
+      x,
+      y: 92 + rand() * 270,
+      w: 260,
+      h: 118,
+      strength: rand() > 0.5 ? -230 : 245,
+    });
+  }
+  return { obstacles, rings, gusts };
+}
+
+function freshGame() {
+  const course = buildCourse();
+  return {
+    mode: 'menu',
+    distance: 0,
+    speed: 218,
+    time: 0,
+    score: 0,
+    rings: 0,
+    health: 100,
+    boost: 100,
+    hitCooldown: 0,
+    coinsAwarded: 0,
+    message: 'Thread the canyon gates and collect flight rings.',
+    player: { x: PLAYER_X, y: 278, vy: 0, tilt: 0 },
+    course,
+    particles: [],
+  };
+}
+
+let game = freshGame();
+
+function startGame() {
+  if (game.mode === 'playing') return;
+  if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'over') game = freshGame();
+  game.mode = 'playing';
+  game.message = 'Glide clean through the canyon.';
+  render();
+}
+
+function pauseGame() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Back in the wind.';
+  }
+  render();
+}
+
+function restartGame() {
+  game = freshGame();
+  render();
+}
+
+function awardCoins(amount) {
+  if (game.coinsAwarded > 0) return;
+  const coins = Math.max(0, Math.floor(amount));
+  if (coins > 0) addCoins(coins);
+  game.coinsAwarded = coins;
+}
+
+function finishRun() {
+  game.mode = 'won';
+  game.distance = TRACK_LENGTH;
+  const cleanBonus = Math.floor(game.health * 4);
+  const ringBonus = game.rings * 36;
+  game.score += FINISH_BONUS + cleanBonus + ringBonus;
+  awardCoins(30 + Math.floor(game.rings / 2) + Math.max(0, Math.floor(game.health / 10)));
+  game.message = 'Finish beacon reached.';
+}
+
+function crashRun() {
+  game.mode = 'over';
+  awardCoins(Math.max(4, Math.floor(game.rings / 4)));
+  game.message = 'Hull integrity failed.';
+}
+
+function addBurst(x, y, color, count = 10) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = (Math.PI * 2 * i) / count;
+    const speed = 42 + (i % 3) * 32;
+    game.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.55,
+      color,
+    });
+  }
+}
+
+function topWall(worldX) {
+  return 38 + Math.sin(worldX * 0.0027) * 16 + Math.sin(worldX * 0.007) * 8;
+}
+
+function bottomWall(worldX) {
+  return 502 + Math.sin(worldX * 0.0022 + 1.9) * 16 + Math.sin(worldX * 0.006) * 9;
+}
+
+function playerWorldX() {
+  return game.distance + game.player.x;
+}
+
+function activeGustStrength() {
+  const wx = playerWorldX();
+  for (const gust of game.course.gusts) {
+    if (wx >= gust.x && wx <= gust.x + gust.w && game.player.y >= gust.y && game.player.y <= gust.y + gust.h) {
+      return gust.strength;
+    }
+  }
+  return 0;
+}
+
+function damage(amount, source) {
+  if (game.hitCooldown > 0 || game.mode !== 'playing') return;
+  game.health = Math.max(0, game.health - amount);
+  game.hitCooldown = 1.05;
+  game.player.vy *= -0.45;
+  addBurst(game.player.x - 8, game.player.y, '#ff786e', 14);
+  game.message = source;
+  if (game.health <= 0) crashRun();
+}
+
+function update(dt) {
+  dt = Math.min(0.05, Math.max(0, dt));
+  for (const p of game.particles) {
+    p.life -= dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 60 * dt;
+  }
+  game.particles = game.particles.filter((p) => p.life > 0);
+
+  if (game.mode !== 'playing') return;
+
+  game.time += dt;
+  game.hitCooldown = Math.max(0, game.hitCooldown - dt);
+
+  const gust = activeGustStrength();
+  const lift = input.lift ? -540 : 0;
+  const dive = input.dive ? 360 : 0;
+  const gravity = 238;
+  game.player.vy += (gravity + lift + dive + gust) * dt;
+  game.player.vy = Math.max(-330, Math.min(360, game.player.vy));
+  game.player.y += game.player.vy * dt;
+  game.player.tilt += ((game.player.vy / 350) - game.player.tilt) * Math.min(1, dt * 9);
+
+  const boosting = input.boost && game.boost > 0;
+  game.speed += ((boosting ? 342 : 220) - game.speed) * Math.min(1, dt * 3.8);
+  if (boosting) game.boost = Math.max(0, game.boost - 42 * dt);
+  else game.boost = Math.min(100, game.boost + 18 * dt);
+  game.distance = Math.min(TRACK_LENGTH, game.distance + game.speed * dt);
+
+  const wx = playerWorldX();
+  const ceiling = topWall(wx) + PLAYER_R + 2;
+  const floor = bottomWall(wx) - PLAYER_R - 2;
+  if (game.player.y < ceiling) {
+    game.player.y = ceiling;
+    game.player.vy = Math.abs(game.player.vy) * 0.35;
+    damage(16, 'Scraped the canyon ceiling.');
+  } else if (game.player.y > floor) {
+    game.player.y = floor;
+    game.player.vy = -Math.abs(game.player.vy) * 0.35;
+    damage(16, 'Scraped the canyon floor.');
+  }
+
+  for (const obstacle of game.course.obstacles) {
+    const sx = obstacle.x - game.distance;
+    if (sx < game.player.x + PLAYER_R && sx + obstacle.w > game.player.x - PLAYER_R) {
+      const gapTop = obstacle.gapY - obstacle.gapH / 2;
+      const gapBottom = obstacle.gapY + obstacle.gapH / 2;
+      if (game.player.y - PLAYER_R < gapTop || game.player.y + PLAYER_R > gapBottom) {
+        damage(22, 'Clipped a rock gate.');
+      }
+    }
+  }
+
+  for (const ring of game.course.rings) {
+    if (ring.collected) continue;
+    const sx = ring.x - game.distance;
+    if (sx < -80 || sx > WIDTH + 80) continue;
+    const dx = sx - game.player.x;
+    const dy = ring.y - game.player.y;
+    if (Math.hypot(dx, dy) <= ring.r + PLAYER_R) {
+      ring.collected = true;
+      game.rings += 1;
+      game.score += 160;
+      game.message = 'Ring collected.';
+      addBurst(sx, ring.y, '#ffd56f', 12);
+    }
+  }
+
+  game.score = Math.max(game.score, Math.floor(game.distance / 9) + game.rings * 160);
+  if (game.distance >= TRACK_LENGTH) finishRun();
+}
+
+function drawCanyonLayer(offset, yBase, color, amplitude, speed) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, HEIGHT);
+  for (let x = 0; x <= WIDTH + 40; x += 40) {
+    const wx = x + game.distance * speed + offset;
+    const y = yBase + Math.sin(wx * 0.004) * amplitude + Math.sin(wx * 0.011) * amplitude * 0.45;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(WIDTH, HEIGHT);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawWalls() {
+  ctx.fillStyle = '#7b5540';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  for (let x = 0; x <= WIDTH; x += 18) ctx.lineTo(x, topWall(game.distance + x));
+  ctx.lineTo(WIDTH, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#8b6144';
+  ctx.beginPath();
+  ctx.moveTo(0, HEIGHT);
+  for (let x = 0; x <= WIDTH; x += 18) ctx.lineTo(x, bottomWall(game.distance + x));
+  ctx.lineTo(WIDTH, HEIGHT);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#efc27f';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let x = 0; x <= WIDTH; x += 18) {
+    const y = topWall(game.distance + x);
+    if (x === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.beginPath();
+  for (let x = 0; x <= WIDTH; x += 18) {
+    const y = bottomWall(game.distance + x);
+    if (x === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function drawObstacles() {
+  for (const obstacle of game.course.obstacles) {
+    const sx = obstacle.x - game.distance;
+    if (sx < -140 || sx > WIDTH + 120) continue;
+    const gapTop = obstacle.gapY - obstacle.gapH / 2;
+    const gapBottom = obstacle.gapY + obstacle.gapH / 2;
+    const grad = ctx.createLinearGradient(sx, 0, sx + obstacle.w, 0);
+    grad.addColorStop(0, '#5f3f31');
+    grad.addColorStop(0.5, '#9a6b47');
+    grad.addColorStop(1, '#4d3329');
+    ctx.fillStyle = grad;
+    ctx.fillRect(sx, 0, obstacle.w, gapTop);
+    ctx.fillRect(sx, gapBottom, obstacle.w, HEIGHT - gapBottom);
+    ctx.fillStyle = '#edbe73';
+    ctx.fillRect(sx + 7, gapTop - 4, obstacle.w - 14, 4);
+    ctx.fillRect(sx + 7, gapBottom, obstacle.w - 14, 4);
+  }
+}
+
+function drawGusts() {
+  for (const gust of game.course.gusts) {
+    const sx = gust.x - game.distance;
+    if (sx < -gust.w || sx > WIDTH + 60) continue;
+    ctx.fillStyle = gust.strength < 0 ? '#8fe0ff35' : '#ffd77a35';
+    ctx.strokeStyle = gust.strength < 0 ? '#d6f7ff' : '#ffeab1';
+    ctx.lineWidth = 2;
+    ctx.fillRect(sx, gust.y, gust.w, gust.h);
+    ctx.strokeRect(sx, gust.y, gust.w, gust.h);
+    ctx.fillStyle = gust.strength < 0 ? '#e8fbff' : '#fff1bd';
+    for (let x = sx + 38; x < sx + gust.w; x += 56) {
+      const top = gust.strength < 0 ? gust.y + gust.h - 22 : gust.y + 22;
+      const tip = gust.strength < 0 ? gust.y + 22 : gust.y + gust.h - 22;
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(x - 9, tip);
+      ctx.lineTo(x + 9, tip);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+}
+
+function drawRings() {
+  for (const ring of game.course.rings) {
+    if (ring.collected) continue;
+    const sx = ring.x - game.distance;
+    if (sx < -60 || sx > WIDTH + 60) continue;
+    ctx.save();
+    ctx.translate(sx, ring.y);
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#ffd15f';
+    ctx.shadowColor = '#ffd15f';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff4c7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, ring.r + 6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawGlider() {
+  const flash = game.hitCooldown > 0 && Math.floor(game.hitCooldown * 12) % 2 === 0;
+  ctx.save();
+  ctx.translate(game.player.x, game.player.y);
+  ctx.rotate(game.player.tilt * 0.45);
+  ctx.fillStyle = flash ? '#fff5e2' : '#f7f4df';
+  ctx.strokeStyle = '#17344e';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-34, -4);
+  ctx.quadraticCurveTo(-4, -26, 44, -8);
+  ctx.quadraticCurveTo(10, 4, -34, -4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#e46a4b';
+  ctx.beginPath();
+  ctx.ellipse(3, 4, 30, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#2e6c91';
+  ctx.beginPath();
+  ctx.moveTo(-32, 2);
+  ctx.lineTo(-48, -14);
+  ctx.lineTo(-35, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#23384a';
+  ctx.beginPath();
+  ctx.arc(22, 0, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawParticles() {
+  for (const p of game.particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.8));
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawProgress() {
+  const barW = 230;
+  const barH = 10;
+  const x = WIDTH - barW - 24;
+  const y = 22;
+  ctx.fillStyle = '#17344e55';
+  ctx.fillRect(x, y, barW, barH);
+  ctx.fillStyle = '#ffd36b';
+  ctx.fillRect(x, y, barW * (game.distance / TRACK_LENGTH), barH);
+  ctx.strokeStyle = '#ffffffb8';
+  ctx.strokeRect(x, y, barW, barH);
+}
+
+function drawOverlay() {
+  if (game.mode === 'playing') return;
+  ctx.fillStyle = '#1024379c';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#f9fcff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 46px system-ui, sans-serif';
+  const title = game.mode === 'won' ? 'Canyon Cleared' : game.mode === 'over' ? 'Run Ended' : game.mode === 'paused' ? 'Paused' : 'Canyon Glider';
+  ctx.fillText(title, WIDTH / 2, HEIGHT / 2 - 86);
+  ctx.font = '700 20px system-ui, sans-serif';
+  const lines = game.mode === 'menu'
+    ? ['Lift through rings, dive under rock gates, and boost to the finish.', 'Keys: Up or Space lift, Down dives, Right or Shift boosts, P pauses, F fullscreen.']
+    : [`${game.message} Score ${game.score}. Rings ${game.rings}/${game.course.rings.length}.`, 'Press Start to fly again or Restart to reset.'];
+  for (let i = 0; i < lines.length; i += 1) {
+    ctx.fillText(lines[i], WIDTH / 2, HEIGHT / 2 - 24 + i * 34);
+  }
+}
+
+function render() {
+  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  sky.addColorStop(0, '#9fe7ff');
+  sky.addColorStop(0.46, '#f8e4b0');
+  sky.addColorStop(1, '#d99768');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = '#ffffff75';
+  for (let i = 0; i < 6; i += 1) {
+    const x = ((i * 210 - game.distance * 0.12) % (WIDTH + 180)) - 90;
+    ctx.beginPath();
+    ctx.ellipse(x, 78 + (i % 2) * 44, 46, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawCanyonLayer(120, 330, '#8aa8a4', 22, 0.18);
+  drawCanyonLayer(0, 388, '#ad8562', 34, 0.32);
+  drawGusts();
+  drawWalls();
+  drawObstacles();
+  drawRings();
+  drawGlider();
+  drawParticles();
+  drawProgress();
+  drawOverlay();
+  updateHud();
+}
+
+function updateHud() {
+  els.distance.textContent = `${Math.floor((game.distance / TRACK_LENGTH) * 100)}%`;
+  els.rings.textContent = `${game.rings} / ${game.course.rings.length}`;
+  els.hull.textContent = `${Math.ceil(game.health)}`;
+  els.boost.textContent = `${Math.ceil(game.boost)}`;
+  els.score.textContent = `${game.score}`;
+  els.coins.textContent = `${profileState.coins || 0}`;
+  els.start.textContent = game.mode === 'playing' ? 'Flying' : game.mode === 'paused' ? 'Resume' : 'Start';
+  els.start.disabled = game.mode === 'playing';
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  els.pause.disabled = game.mode === 'menu' || game.mode === 'won' || game.mode === 'over';
+}
+
+function frame(now) {
+  if (!lastFrame) lastFrame = now;
+  const dt = (now - lastFrame) / 1000;
+  lastFrame = now;
+  if (!manualStep) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(frame);
+}
+
+function setInput(name, value) {
+  if (Object.prototype.hasOwnProperty.call(input, name)) input[name] = value;
+}
+
+function keyName(event) {
+  if (event.code === 'ArrowUp' || event.code === 'KeyW' || event.code === 'Space') return 'lift';
+  if (event.code === 'ArrowDown' || event.code === 'KeyS') return 'dive';
+  if (event.code === 'ArrowRight' || event.code === 'ShiftLeft' || event.code === 'ShiftRight') return 'boost';
+  return '';
+}
+
+window.addEventListener('keydown', (event) => {
+  const name = keyName(event);
+  if (name) {
+    event.preventDefault();
+    setInput(name, true);
+  }
+  if (event.code === 'Enter') startGame();
+  if (event.code === 'KeyP') pauseGame();
+  if (event.code === 'KeyR') restartGame();
+  if (event.code === 'KeyF') toggleFullscreen();
+});
+
+window.addEventListener('keyup', (event) => {
+  const name = keyName(event);
+  if (name) {
+    event.preventDefault();
+    setInput(name, false);
+  }
+});
+
+for (const button of document.querySelectorAll('[data-hold]')) {
+  const name = button.dataset.hold;
+  const on = (event) => {
+    event.preventDefault();
+    button.classList.add('active');
+    setInput(name, true);
+  };
+  const off = (event) => {
+    event.preventDefault();
+    button.classList.remove('active');
+    setInput(name, false);
+  };
+  button.addEventListener('pointerdown', on);
+  button.addEventListener('pointerup', off);
+  button.addEventListener('pointercancel', off);
+  button.addEventListener('pointerleave', off);
+}
+
+let canvasPointer = '';
+canvas.addEventListener('pointerdown', (event) => {
+  if (game.mode !== 'playing') {
+    startGame();
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const y = ((event.clientY - rect.top) / rect.height) * HEIGHT;
+  canvasPointer = y < HEIGHT / 2 ? 'lift' : 'dive';
+  setInput(canvasPointer, true);
+});
+canvas.addEventListener('pointerup', () => {
+  if (canvasPointer) setInput(canvasPointer, false);
+  canvasPointer = '';
+});
+canvas.addEventListener('pointercancel', () => {
+  if (canvasPointer) setInput(canvasPointer, false);
+  canvasPointer = '';
+});
+
+els.start.addEventListener('click', startGame);
+els.pause.addEventListener('click', pauseGame);
+els.restart.addEventListener('click', restartGame);
+els.full.addEventListener('click', toggleFullscreen);
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function visibleItems(items, mapper) {
+  return items
+    .map(mapper)
+    .filter((item) => item.x > -80 && item.x < WIDTH + 80)
+    .slice(0, 8);
+}
+
+function renderGameToText() {
+  const payload = {
+    note: 'Coordinates use canvas pixels, origin top-left, x right, y down. Player x is screen-fixed; world distance scrolls right.',
+    mode: game.mode,
+    distance: Math.round(game.distance),
+    track_length: TRACK_LENGTH,
+    score: game.score,
+    health: Math.ceil(game.health),
+    boost: Math.ceil(game.boost),
+    rings_collected: game.rings,
+    rings_total: game.course.rings.length,
+    player: {
+      x: Math.round(game.player.x),
+      y: Math.round(game.player.y),
+      vy: Math.round(game.player.vy),
+      r: PLAYER_R,
+    },
+    active_gust: Math.round(activeGustStrength()),
+    visible_rings: visibleItems(game.course.rings.filter((ring) => !ring.collected), (ring) => ({
+      x: Math.round(ring.x - game.distance),
+      y: Math.round(ring.y),
+      r: ring.r,
+    })),
+    visible_gates: visibleItems(game.course.obstacles, (gate) => ({
+      x: Math.round(gate.x - game.distance),
+      w: Math.round(gate.w),
+      gap_y: Math.round(gate.gapY),
+      gap_h: Math.round(gate.gapH),
+    })),
+    message: game.message,
+  };
+  return JSON.stringify(payload);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms) => {
+  const steps = Math.max(1, Math.min(240, Math.round(ms / (1000 / 60))));
+  manualStep = true;
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  manualStep = false;
+};
+
+window.__CANYON_GLIDER_GAME__ = {
+  start: startGame,
+  reset: restartGame,
+  state: () => game,
+  forceWin: () => finishRun(),
+  damage: (amount = 25) => damage(amount, 'Test damage.'),
+};
+
+mountGameFeedback({ gameSlug: 'canyonglider', gameName: 'Canyon Glider' });
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

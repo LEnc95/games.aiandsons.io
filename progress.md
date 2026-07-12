@@ -3985,3 +3985,15 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `git diff --check` exited cleanly with only repository LF-to-CRLF warning noise.
 - Run time recorded: 2026-07-09T07:19:13.0930583-04:00.
 - TODO: none for Fillomino; future work may address repository-wide LF-to-CRLF warning noise and the generated OG card theme if the site wants non-purple social cards.
+
+## 2026-07-12 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was missing at `$CODEX_HOME/automations/create-a-new-game/memory.md`; using `progress.md` history to avoid recent additions such as Fillomino, Mini Crossword, ChronoSort, Black Box, Futoshiki, Vista Towers, and Ink Islands.
+- Chosen game: Canyon Glider (`/canyonglider`), a side-scrolling canyon flight arcade game with lift/dive/boost controls, gates, gusts, rings, hull damage, coin rewards, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
+- Initial implementation added `canyonglider/index.html` and registered Canyon Glider in `src/meta/games.js` plus arcade/racing discovery groups.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/canyonglider.png`, and local Linear feedback seeds now include Canyon Glider. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: focused game/discovery/feedback coverage tests, `npm run game:preflight`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/canyonglider-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/canyonglider-scenarios`, screenshot/feedback-modal/OG inspection, and zero final Canyon Glider browser/page error artifacts.
+- The required skill client crash run covered fail-state rendering; custom scenarios covered lift/dive/boost input, pause/resume, damage, win coin reward, shared feedback modal, and mobile touch controls.
+- `git diff --check` exited cleanly except for the repository's usual LF-to-CRLF warning noise. `SPRINT_BOARD.md` has an unrelated pre-existing/current external nightly-entry diff and was not modified for Canyon Glider.
+- Run time recorded: 2026-07-11T21:02:40.3283873-04:00. Generated catalog release date for Canyon Glider: 2026-07-12.
+- TODO: none for Canyon Glider; future work may address repository-wide LF-to-CRLF warning noise.
