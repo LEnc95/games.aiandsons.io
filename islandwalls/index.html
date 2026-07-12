@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Island Walls | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #112331;
+  background:
+    radial-gradient(circle at 12% 12%, #dbfff7 0 13%, transparent 29%),
+    radial-gradient(circle at 84% 10%, #ffe3d4 0 14%, transparent 31%),
+    linear-gradient(145deg, #f8fff9 0%, #d6edf1 48%, #bad3e8 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 30;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffb8;
+  border-radius: 8px;
+  background: #14364be8;
+  color: #fbfdff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 10px 24px #1a425b30;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(56px, calc(env(safe-area-inset-top) + 54px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 1 1 auto;
+  min-height: 315px;
+  max-height: 650px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffd6;
+  border-radius: 8px;
+  background: #f8fffb;
+  box-shadow: 0 24px 58px #24465b33;
+}
+.hud,
+.controls,
+.tool-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.tool-pad { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffab;
+  border-radius: 8px;
+  background: #173b56e8;
+  color: #f8fbff;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #bdd8ea;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9dffd0; }
+.chip.warn b { color: #ffdc78; }
+.chip.danger b { color: #ff9fab; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #24597e; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.primary {
+  background: #ffd264;
+  border-color: #ffedab;
+  color: #112331;
+}
+.primary:hover { background: #ffe08a; }
+.action { background: #1f746f; }
+.utility { background: #34536e; }
+.clear { background: #714c61; }
+.active-tool {
+  background: #ff9d6e;
+  border-color: #ffd7c3;
+  color: #112331;
+}
+button:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #ffd264;
+  outline-offset: 2px;
+}
+@media (max-width: 840px) {
+  .app { padding-left: 9px; padding-right: 9px; gap: 7px; }
+  .stage { max-height: 53dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .tool-pad { gap: 6px; }
+}
+@media (max-width: 540px) {
+  .back { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .app { padding-top: max(48px, calc(env(safe-area-inset-top) + 46px)); }
+  .stage {
+    flex: 0 0 clamp(300px, 42vh, 360px);
+    height: clamp(300px, 42vh, 360px);
+    min-height: 0;
+    max-height: none;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip:nth-child(6) { display: none; }
+  button { min-height: 39px; padding: 0 5px; font-size: 13px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Mark one connected wall network while every numbered island keeps its exact size across five deduction maps. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Island Walls | AI and Sons Games">
+  <meta property="og:description" content="Mark one connected wall network while every numbered island keeps its exact size across five deduction maps. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/islandwalls">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/islandwalls.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Island Walls | AI and Sons Games">
+  <meta name="twitter:description" content="Mark one connected wall network while every numbered island keeps its exact size across five deduction maps. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/islandwalls.png">
+  <link rel="canonical" href="https://games.aiandsons.io/islandwalls">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Island Walls","description":"Mark one connected wall network while every numbered island keeps its exact size across five deduction maps. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/islandwalls","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">&larr; Games</a>
+<main class="app" aria-label="Island Walls game">
+  <div class="stage">
+    <canvas id="game" width="1080" height="700" aria-label="Island Walls puzzle board"></canvas>
+  </div>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleLabel">1 / 5</b></div>
+    <div class="chip"><span>Walls</span><b id="wallsLabel">0 / 0</b></div>
+    <div class="chip"><span>Moves</span><b id="movesLabel">0</b></div>
+    <div class="chip warn"><span>Hints</span><b id="hintsLabel">0</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreLabel">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">Start</button>
+    <button id="checkBtn" class="action" type="button">Check</button>
+    <button id="hintBtn" class="action" type="button">Hint</button>
+    <button id="undoBtn" class="utility" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+  <section class="tool-pad" aria-label="Marking tools">
+    <button class="active-tool" type="button" data-tool="wall">Wall</button>
+    <button type="button" data-tool="island">Island</button>
+    <button class="clear" type="button" data-tool="clear">Clear</button>
+  </section>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  puzzle: document.getElementById('puzzleLabel'),
+  walls: document.getElementById('wallsLabel'),
+  moves: document.getElementById('movesLabel'),
+  hints: document.getElementById('hintsLabel'),
+  score: document.getElementById('scoreLabel'),
+  coins: document.getElementById('coinsLabel'),
+  start: document.getElementById('startBtn'),
+  check: document.getElementById('checkBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+  tools: [...document.querySelectorAll('[data-tool]')],
+};
+
+const UNKNOWN = 0;
+const WALL = 1;
+const ISLAND = 2;
+const CELL_NAMES = ['unknown', 'wall', 'island'];
+
+const PUZZLE_DATA = [
+  {
+    id: 'pearl-shoals',
+    name: 'Pearl Shoals',
+    solution: [
+      'WWWWWL',
+      'LLWLLW',
+      'WWWWLW',
+      'LWLWWW',
+      'LWWWLL',
+      'LWLWWL',
+    ],
+  },
+  {
+    id: 'tidal-cuts',
+    name: 'Tidal Cuts',
+    solution: [
+      'WLLWWW',
+      'WWWWLL',
+      'WLLWLW',
+      'LWWWLW',
+      'LWLWWW',
+      'WWWWLW',
+    ],
+  },
+  {
+    id: 'kelp-crown',
+    name: 'Kelp Crown',
+    solution: [
+      'LWWWLW',
+      'LWLLLW',
+      'WWWWWW',
+      'WLLWLW',
+      'WLLWWL',
+      'WWWLLL',
+    ],
+  },
+  {
+    id: 'lagoon-gates',
+    name: 'Lagoon Gates',
+    solution: [
+      'WWWWWL',
+      'LWLLWW',
+      'LWWLLW',
+      'WLWWLW',
+      'WLWLWW',
+      'WWWWLW',
+    ],
+  },
+  {
+    id: 'coral-map',
+    name: 'Coral Map',
+    solution: [
+      'WWWLLL',
+      'WLLWWW',
+      'WWLWLL',
+      'WLWWWW',
+      'WWWLWL',
+      'LLWLWL',
+    ],
+  },
+];
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  marks: [],
+  cursor: { r: 0, c: 0 },
+  tool: 'wall',
+  moves: 0,
+  hints: 3,
+  score: 0,
+  coinsEarned: 0,
+  elapsed: 0,
+  status: 'Mark walls so every numbered island keeps its size.',
+  statusTimer: 0,
+  history: [],
+  mistakeCells: [],
+  highlightCells: [],
+  solvedIds: new Set(),
+};
+
+const cloneMarks = (marks = game.marks) => marks.map(row => [...row]);
+const keyOf = (r, c) => `${r},${c}`;
+const parseKey = key => key.split(',').map(Number);
+
+function componentsFromSolution(rows, target) {
+  const n = rows.length;
+  const seen = Array.from({ length: n }, () => Array(n).fill(false));
+  const out = [];
+  for (let r = 0; r < n; r += 1) {
+    for (let c = 0; c < n; c += 1) {
+      if (seen[r][c] || rows[r][c] !== target) continue;
+      const queue = [[r, c]];
+      const cells = [];
+      seen[r][c] = true;
+      for (let i = 0; i < queue.length; i += 1) {
+        const [cr, cc] = queue[i];
+        cells.push([cr, cc]);
+        for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nr = cr + dr;
+          const nc = cc + dc;
+          if (nr < 0 || nc < 0 || nr >= n || nc >= n) continue;
+          if (seen[nr][nc] || rows[nr][nc] !== target) continue;
+          seen[nr][nc] = true;
+          queue.push([nr, nc]);
+        }
+      }
+      out.push(cells);
+    }
+  }
+  return out;
+}
+
+const PUZZLES = PUZZLE_DATA.map((puzzle) => {
+  const land = componentsFromSolution(puzzle.solution, 'L');
+  const clues = land.map((cells) => ({ r: cells[0][0], c: cells[0][1], n: cells.length }));
+  return {
+    ...puzzle,
+    size: puzzle.solution.length,
+    clues,
+    clueMap: new Map(clues.map(clue => [keyOf(clue.r, clue.c), clue])),
+    wallTotal: puzzle.solution.join('').split('').filter(cell => cell === 'W').length,
+  };
+});
+
+function currentPuzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function isClue(r, c, puzzle = currentPuzzle()) {
+  return puzzle.clueMap.has(keyOf(r, c));
+}
+
+function solutionValue(r, c, puzzle = currentPuzzle()) {
+  return puzzle.solution[r][c] === 'W' ? WALL : ISLAND;
+}
+
+function status(message, seconds = 2.4) {
+  game.status = message;
+  game.statusTimer = seconds;
+}
+
+function resetHighlights() {
+  game.mistakeCells = [];
+  game.highlightCells = [];
+}
+
+function buildEmptyMarks(puzzle = currentPuzzle()) {
+  return Array.from({ length: puzzle.size }, (_, r) => (
+    Array.from({ length: puzzle.size }, (_, c) => (isClue(r, c, puzzle) ? ISLAND : UNKNOWN))
+  ));
+}
+
+function loadPuzzle(index = game.puzzleIndex, keepScore = true) {
+  game.puzzleIndex = Math.max(0, Math.min(PUZZLES.length - 1, index));
+  const puzzle = currentPuzzle();
+  game.marks = buildEmptyMarks(puzzle);
+  game.cursor = { r: puzzle.clues[0].r, c: puzzle.clues[0].c };
+  game.mode = 'playing';
+  game.moves = 0;
+  game.hints = 3;
+  game.elapsed = 0;
+  game.history = [];
+  resetHighlights();
+  if (!keepScore) {
+    game.score = 0;
+    game.coinsEarned = 0;
+    game.solvedIds.clear();
+  }
+  status(`${puzzle.name}: mark the connected wall and keep each island exact.`);
+  updateHud();
+  render();
+}
+
+function snapshot() {
+  return {
+    marks: cloneMarks(),
+    moves: game.moves,
+    hints: game.hints,
+    score: game.score,
+    coinsEarned: game.coinsEarned,
+    cursor: { ...game.cursor },
+  };
+}
+
+function restore(snap) {
+  game.marks = cloneMarks(snap.marks);
+  game.moves = snap.moves;
+  game.hints = snap.hints;
+  game.score = snap.score;
+  game.coinsEarned = snap.coinsEarned;
+  game.cursor = { ...snap.cursor };
+}
+
+function pushHistory() {
+  game.history.push(snapshot());
+  if (game.history.length > 80) game.history.shift();
+}
+
+function updateHud() {
+  const puzzle = currentPuzzle();
+  const wallCount = game.marks.flat().filter(cell => cell === WALL).length;
+  els.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  els.walls.textContent = `${wallCount} / ${puzzle.wallTotal}`;
+  els.moves.textContent = String(game.moves);
+  els.hints.textContent = String(game.hints);
+  els.score.textContent = String(game.score);
+  els.coins.textContent = String((profileState && Number.isFinite(profileState.coins)) ? profileState.coins : 0);
+  els.start.textContent = game.mode === 'won' ? 'Again' : (game.mode === 'solved' ? 'Next' : (game.mode === 'menu' ? 'Start' : 'Reset'));
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  els.undo.disabled = !game.history.length || game.mode === 'menu';
+  els.check.disabled = !['playing', 'solved'].includes(game.mode);
+  els.hint.disabled = game.mode !== 'playing' || game.hints <= 0;
+  for (const btn of els.tools) {
+    btn.classList.toggle('active-tool', btn.dataset.tool === game.tool);
+  }
+}
+
+function markCell(r, c, value, countMove = true) {
+  const puzzle = currentPuzzle();
+  if (game.mode !== 'playing') return false;
+  if (r < 0 || c < 0 || r >= puzzle.size || c >= puzzle.size) return false;
+  game.cursor = { r, c };
+  if (isClue(r, c, puzzle)) {
+    status('Numbered islands are fixed clues.');
+    return false;
+  }
+  if (game.marks[r][c] === value) return false;
+  pushHistory();
+  game.marks[r][c] = value;
+  if (countMove) game.moves += 1;
+  resetHighlights();
+  status(value === WALL ? 'Wall marked.' : (value === ISLAND ? 'Island space marked.' : 'Cell cleared.'), 1.2);
+  updateHud();
+  render();
+  return true;
+}
+
+function applyCurrentTool() {
+  const value = game.tool === 'wall' ? WALL : (game.tool === 'island' ? ISLAND : UNKNOWN);
+  markCell(game.cursor.r, game.cursor.c, value);
+}
+
+function setTool(tool) {
+  game.tool = tool;
+  updateHud();
+  render();
+}
+
+function neighbors(r, c, n) {
+  return [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]
+    .filter(([nr, nc]) => nr >= 0 && nc >= 0 && nr < n && nc < n);
+}
+
+function componentsForMarks(value) {
+  const puzzle = currentPuzzle();
+  const n = puzzle.size;
+  const seen = Array.from({ length: n }, () => Array(n).fill(false));
+  const comps = [];
+  for (let r = 0; r < n; r += 1) {
+    for (let c = 0; c < n; c += 1) {
+      if (seen[r][c] || game.marks[r][c] !== value) continue;
+      const queue = [[r, c]];
+      const cells = [];
+      seen[r][c] = true;
+      for (let i = 0; i < queue.length; i += 1) {
+        const [cr, cc] = queue[i];
+        cells.push([cr, cc]);
+        for (const [nr, nc] of neighbors(cr, cc, n)) {
+          if (seen[nr][nc] || game.marks[nr][nc] !== value) continue;
+          seen[nr][nc] = true;
+          queue.push([nr, nc]);
+        }
+      }
+      comps.push(cells);
+    }
+  }
+  return comps;
+}
+
+function analyzeCurrentBoard() {
+  const puzzle = currentPuzzle();
+  const wrong = [];
+  let unknown = 0;
+  let correct = 0;
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      const mark = game.marks[r][c];
+      if (mark === UNKNOWN) {
+        unknown += 1;
+      } else if (mark === solutionValue(r, c, puzzle)) {
+        correct += 1;
+      } else {
+        wrong.push([r, c]);
+      }
+    }
+  }
+
+  const wallComponents = componentsForMarks(WALL);
+  const islandComponents = componentsForMarks(ISLAND).map((cells) => {
+    const clues = cells
+      .map(([r, c]) => puzzle.clueMap.get(keyOf(r, c)))
+      .filter(Boolean);
+    return {
+      cells,
+      clues,
+      valid: clues.length === 1 && cells.length <= clues[0].n,
+      exact: clues.length === 1 && cells.length === clues[0].n,
+    };
+  });
+
+  const twoByTwoWalls = [];
+  for (let r = 0; r < puzzle.size - 1; r += 1) {
+    for (let c = 0; c < puzzle.size - 1; c += 1) {
+      if (
+        game.marks[r][c] === WALL &&
+        game.marks[r + 1][c] === WALL &&
+        game.marks[r][c + 1] === WALL &&
+        game.marks[r + 1][c + 1] === WALL
+      ) {
+        twoByTwoWalls.push([r, c]);
+      }
+    }
+  }
+
+  const allFilled = unknown === 0;
+  const solved = allFilled && wrong.length === 0;
+  return {
+    allFilled,
+    correct,
+    unknown,
+    wrong,
+    solved,
+    wallConnected: wallComponents.length <= 1,
+    wallComponentCount: wallComponents.length,
+    twoByTwoWalls,
+    islandComponents,
+    exactIslands: islandComponents.filter(comp => comp.exact).length,
+  };
+}
+
+function checkBoard() {
+  if (game.mode !== 'playing' && game.mode !== 'solved') return;
+  const analysis = analyzeCurrentBoard();
+  game.mistakeCells = analysis.wrong.map(([r, c]) => keyOf(r, c));
+  if (analysis.solved) {
+    completePuzzle();
+    return;
+  }
+  if (analysis.wrong.length) {
+    status(`${analysis.wrong.length} mark${analysis.wrong.length === 1 ? '' : 's'} conflict with the island map.`);
+  } else if (analysis.unknown) {
+    status(`${analysis.unknown} open cell${analysis.unknown === 1 ? '' : 's'} left. Keep going.`);
+  } else if (!analysis.wallConnected) {
+    status('The wall must be one connected network.');
+  } else if (analysis.twoByTwoWalls.length) {
+    status('A 2 by 2 wall block is not allowed.');
+  } else {
+    status('The structure is close. Check island sizes.');
+  }
+  updateHud();
+  render();
+}
+
+function hint() {
+  if (game.mode !== 'playing' || game.hints <= 0) return;
+  const puzzle = currentPuzzle();
+  let target = null;
+  for (let r = 0; r < puzzle.size && !target; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (isClue(r, c, puzzle)) continue;
+      const solution = solutionValue(r, c, puzzle);
+      if (game.marks[r][c] !== solution) {
+        target = { r, c, solution };
+        break;
+      }
+    }
+  }
+  if (!target) {
+    checkBoard();
+    return;
+  }
+  pushHistory();
+  game.marks[target.r][target.c] = target.solution;
+  game.cursor = { r: target.r, c: target.c };
+  game.hints -= 1;
+  game.moves += 1;
+  game.highlightCells = [keyOf(target.r, target.c)];
+  game.mistakeCells = [];
+  status(`Hint placed a ${CELL_NAMES[target.solution]} at row ${target.r + 1}, column ${target.c + 1}.`);
+  updateHud();
+  render();
+}
+
+function undo() {
+  const snap = game.history.pop();
+  if (!snap) {
+    status('No move to undo.');
+    return;
+  }
+  restore(snap);
+  resetHighlights();
+  status('Last move undone.', 1.4);
+  updateHud();
+  render();
+}
+
+function addReward(coins) {
+  const amount = Math.max(0, Math.floor(coins));
+  if (!amount) return;
+  game.coinsEarned += amount;
+  addCoins(amount);
+}
+
+function completePuzzle() {
+  const puzzle = currentPuzzle();
+  if (game.solvedIds.has(puzzle.id)) {
+    game.mode = game.puzzleIndex === PUZZLES.length - 1 ? 'won' : 'solved';
+    status(game.mode === 'won' ? 'All maps solved.' : 'Puzzle already solved. Move to the next map.');
+    updateHud();
+    render();
+    return;
+  }
+  const moveBonus = Math.max(0, 140 - game.moves * 4);
+  const hintBonus = game.hints * 35;
+  const points = 420 + game.puzzleIndex * 85 + moveBonus + hintBonus;
+  game.score += points;
+  const coins = 8 + game.puzzleIndex * 2 + Math.max(0, game.hints);
+  addReward(coins);
+  game.solvedIds.add(puzzle.id);
+  game.highlightCells = [];
+  game.mistakeCells = [];
+  if (game.puzzleIndex === PUZZLES.length - 1) {
+    game.mode = 'won';
+    addReward(25);
+    status(`Campaign clear. ${points} points and bonus coins earned.`);
+  } else {
+    game.mode = 'solved';
+    status(`${puzzle.name} solved for ${points} points. Next map is ready.`);
+  }
+  updateHud();
+  render();
+}
+
+function nextPuzzleOrRestart() {
+  if (game.mode === 'won') {
+    game.solvedIds.clear();
+    game.score = 0;
+    game.coinsEarned = 0;
+    loadPuzzle(0, true);
+    return;
+  }
+  if (game.mode === 'solved') {
+    loadPuzzle(game.puzzleIndex + 1, true);
+    return;
+  }
+  loadPuzzle(game.puzzleIndex, game.mode !== 'menu');
+}
+
+function togglePause() {
+  if (game.mode === 'paused') {
+    game.mode = 'playing';
+    status('Resumed.');
+  } else if (game.mode === 'playing') {
+    game.mode = 'paused';
+    status('Paused.');
+  }
+  updateHud();
+  render();
+}
+
+function toggleFullscreen() {
+  const root = document.documentElement;
+  if (!document.fullscreenElement) {
+    root.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function layout() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const puzzle = currentPuzzle();
+  const cssWidth = canvas.getBoundingClientRect().width || w;
+  const compact = cssWidth < 650;
+  const boardSize = Math.min(w * (compact ? 0.74 : 0.62), h * (compact ? 0.78 : 0.74));
+  const x = (w - boardSize) / 2;
+  const y = Math.max(86, (h - boardSize) / 2 + 28);
+  const cell = boardSize / puzzle.size;
+  return { x, y, boardSize, cell, compact };
+}
+
+function roundRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const sky = ctx.createLinearGradient(0, 0, w, h);
+  sky.addColorStop(0, '#eefcf6');
+  sky.addColorStop(0.55, '#d8eff1');
+  sky.addColorStop(1, '#adc9df');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.strokeStyle = '#2b8a9c';
+  ctx.lineWidth = 2;
+  for (let i = -2; i < 10; i += 1) {
+    ctx.beginPath();
+    const y = 64 + i * 70 + Math.sin(game.elapsed * 0.6 + i) * 5;
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= w; x += 44) {
+      ctx.quadraticCurveTo(x + 22, y + Math.sin(i + x * 0.025) * 13, x + 44, y);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = 0.34;
+  ctx.fillStyle = '#ff9d6e';
+  ctx.beginPath();
+  ctx.arc(w - 94, 82, 44, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#6ac9a3';
+  ctx.beginPath();
+  ctx.arc(88, h - 70, 62, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawHeader() {
+  const puzzle = currentPuzzle();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#112331';
+  ctx.font = '900 38px Inter, Segoe UI, sans-serif';
+  ctx.fillText('Island Walls', canvas.width / 2, 48);
+  ctx.font = '800 18px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#365266';
+  const modeLabel = game.mode === 'menu' ? 'Ready' : (game.mode === 'won' ? 'Campaign clear' : puzzle.name);
+  ctx.fillText(`${modeLabel} | ${game.status}`, canvas.width / 2, 78);
+}
+
+function drawBoard() {
+  const puzzle = currentPuzzle();
+  const { x, y, boardSize, cell } = layout();
+  ctx.save();
+  ctx.shadowColor = '#21475f30';
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 16;
+  roundRect(x - 14, y - 14, boardSize + 28, boardSize + 28, 18);
+  ctx.fillStyle = '#ffffffc9';
+  ctx.fill();
+  ctx.restore();
+
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      const px = x + c * cell;
+      const py = y + r * cell;
+      const mark = game.marks[r][c];
+      const key = keyOf(r, c);
+      const clue = puzzle.clueMap.get(key);
+      const isWrong = game.mistakeCells.includes(key);
+      const isHint = game.highlightCells.includes(key);
+      if (mark === WALL) {
+        const wallGradient = ctx.createLinearGradient(px, py, px + cell, py + cell);
+        wallGradient.addColorStop(0, '#15465c');
+        wallGradient.addColorStop(1, '#092b3a');
+        ctx.fillStyle = wallGradient;
+      } else if (mark === ISLAND) {
+        ctx.fillStyle = clue ? '#ffe4a6' : '#f7f1d9';
+      } else {
+        ctx.fillStyle = '#f9fdff';
+      }
+      ctx.fillRect(px, py, cell, cell);
+
+      if (mark === UNKNOWN) {
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.strokeStyle = '#80b8c5';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px + cell * 0.22, py + cell * 0.78);
+        ctx.lineTo(px + cell * 0.78, py + cell * 0.22);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (mark === WALL) {
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = '#89e4d4';
+        ctx.beginPath();
+        ctx.arc(px + cell * 0.34, py + cell * 0.32, cell * 0.08, 0, Math.PI * 2);
+        ctx.arc(px + cell * 0.68, py + cell * 0.64, cell * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (mark === ISLAND && !clue) {
+        ctx.save();
+        ctx.fillStyle = '#76b37e';
+        ctx.globalAlpha = 0.45;
+        ctx.beginPath();
+        ctx.ellipse(px + cell * 0.52, py + cell * 0.52, cell * 0.22, cell * 0.13, -0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (clue) {
+        ctx.save();
+        ctx.fillStyle = '#ff9d6e';
+        ctx.beginPath();
+        ctx.arc(px + cell * 0.5, py + cell * 0.5, cell * 0.27, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#112331';
+        ctx.font = `900 ${Math.max(20, cell * 0.34)}px Inter, Segoe UI, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(clue.n), px + cell * 0.5, py + cell * 0.51);
+        ctx.restore();
+      }
+
+      if (isHint) {
+        ctx.strokeStyle = '#3fcd8a';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(px + 5, py + 5, cell - 10, cell - 10);
+      }
+      if (isWrong) {
+        ctx.strokeStyle = '#e94c64';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(px + 5, py + 5, cell - 10, cell - 10);
+      }
+
+      ctx.strokeStyle = '#7f9caf';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(px, py, cell, cell);
+    }
+  }
+
+  ctx.strokeStyle = '#112331';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x, y, boardSize, boardSize);
+
+  const { r, c } = game.cursor;
+  ctx.strokeStyle = game.mode === 'playing' ? '#ffd264' : '#7898aa';
+  ctx.lineWidth = 5;
+  ctx.strokeRect(x + c * cell + 4, y + r * cell + 4, cell - 8, cell - 8);
+}
+
+function drawSidebar() {
+  const analysis = analyzeCurrentBoard();
+  const { x, y, boardSize, compact } = layout();
+  if (compact) return;
+  const panelX = x + boardSize + 26;
+  const panelY = y + 8;
+  const panelW = Math.min(250, canvas.width - panelX - 24);
+  if (panelW < 180) return;
+  ctx.save();
+  roundRect(panelX, panelY, panelW, 250, 12);
+  ctx.fillStyle = '#173b56d9';
+  ctx.fill();
+  ctx.fillStyle = '#f8fbff';
+  ctx.textAlign = 'left';
+  ctx.font = '900 19px Inter, Segoe UI, sans-serif';
+  ctx.fillText('Map Rules', panelX + 18, panelY + 34);
+  ctx.font = '750 14px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#d6eff7';
+  const lines = [
+    `Tool: ${game.tool}`,
+    `Open cells: ${analysis.unknown}`,
+    `Wall groups: ${analysis.wallComponentCount}`,
+    `2x2 wall blocks: ${analysis.twoByTwoWalls.length}`,
+    `Exact islands: ${analysis.exactIslands} / ${currentPuzzle().clues.length}`,
+  ];
+  lines.forEach((line, idx) => ctx.fillText(line, panelX + 18, panelY + 70 + idx * 30));
+  ctx.fillStyle = '#ffd264';
+  ctx.font = '800 13px Inter, Segoe UI, sans-serif';
+  ctx.fillText('Arrows move. Space marks.', panelX + 18, panelY + 226);
+  ctx.restore();
+}
+
+function drawOverlay() {
+  if (!['menu', 'paused', 'solved', 'won'].includes(game.mode)) return;
+  const label = {
+    menu: ['Ready to Map', 'Wall cells must connect. Numbered islands keep exact size.'],
+    paused: ['Paused', 'Resume when ready.'],
+    solved: ['Map Solved', 'Press Next to continue.'],
+    won: ['All Maps Solved', 'Restart for another campaign run.'],
+  }[game.mode];
+  ctx.save();
+  ctx.fillStyle = '#102c3ecc';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  roundRect(canvas.width / 2 - 250, canvas.height / 2 - 92, 500, 184, 16);
+  ctx.fillStyle = '#f8fbffe8';
+  ctx.fill();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#112331';
+  ctx.font = '900 34px Inter, Segoe UI, sans-serif';
+  ctx.fillText(label[0], canvas.width / 2, canvas.height / 2 - 34);
+  ctx.font = '750 17px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#365266';
+  ctx.fillText(label[1], canvas.width / 2, canvas.height / 2 + 2);
+  ctx.fillStyle = '#1f746f';
+  ctx.font = '850 15px Inter, Segoe UI, sans-serif';
+  ctx.fillText('Use Wall, Island, and Clear tools. Check validates the whole board.', canvas.width / 2, canvas.height / 2 + 42);
+  ctx.restore();
+}
+
+function render() {
+  drawBackground();
+  drawHeader();
+  drawBoard();
+  drawSidebar();
+  drawOverlay();
+}
+
+function update(dt) {
+  if (game.mode === 'playing') game.elapsed += dt;
+  if (game.statusTimer > 0) {
+    game.statusTimer -= dt;
+    if (game.statusTimer <= 0 && game.mode === 'playing') {
+      game.status = 'Build one connected wall while islands match their numbers.';
+    }
+  }
+}
+
+let lastTime = performance.now();
+let stepping = false;
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000 || 0);
+  lastTime = now;
+  if (!stepping) {
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function cellFromPointer(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (event.clientX - rect.left) * scaleX;
+  const y = (event.clientY - rect.top) * scaleY;
+  const board = layout();
+  const c = Math.floor((x - board.x) / board.cell);
+  const r = Math.floor((y - board.y) / board.cell);
+  const puzzle = currentPuzzle();
+  if (r < 0 || c < 0 || r >= puzzle.size || c >= puzzle.size) return null;
+  return { r, c };
+}
+
+canvas.addEventListener('pointerdown', (event) => {
+  const cell = cellFromPointer(event);
+  if (!cell) return;
+  event.preventDefault();
+  if (game.mode === 'menu') {
+    loadPuzzle(game.puzzleIndex, true);
+  }
+  game.cursor = cell;
+  applyCurrentTool();
+  render();
+});
+
+window.addEventListener('keydown', (event) => {
+  const puzzle = currentPuzzle();
+  const key = event.key.toLowerCase();
+  let handled = true;
+  if (event.key === 'ArrowUp') game.cursor.r = Math.max(0, game.cursor.r - 1);
+  else if (event.key === 'ArrowDown') game.cursor.r = Math.min(puzzle.size - 1, game.cursor.r + 1);
+  else if (event.key === 'ArrowLeft') game.cursor.c = Math.max(0, game.cursor.c - 1);
+  else if (event.key === 'ArrowRight') game.cursor.c = Math.min(puzzle.size - 1, game.cursor.c + 1);
+  else if (key === ' ' || key === 'enter') applyCurrentTool();
+  else if (key === 'w' || key === 'x') setTool('wall');
+  else if (key === 'i' || key === 'l') setTool('island');
+  else if (key === '0' || key === 'backspace' || key === 'delete') setTool('clear');
+  else if (key === 'h') hint();
+  else if (key === 'c') checkBoard();
+  else if (key === 'u') undo();
+  else if (key === 'p') togglePause();
+  else if (key === 'r') loadPuzzle(game.puzzleIndex, true);
+  else if (key === 's') nextPuzzleOrRestart();
+  else if (key === 'f') toggleFullscreen();
+  else handled = false;
+  if (handled) {
+    event.preventDefault();
+    updateHud();
+    render();
+  }
+});
+
+els.start.addEventListener('click', nextPuzzleOrRestart);
+els.check.addEventListener('click', checkBoard);
+els.hint.addEventListener('click', hint);
+els.undo.addEventListener('click', undo);
+els.pause.addEventListener('click', togglePause);
+els.restart.addEventListener('click', () => loadPuzzle(game.puzzleIndex, true));
+els.full.addEventListener('click', toggleFullscreen);
+for (const btn of els.tools) {
+  btn.addEventListener('click', () => setTool(btn.dataset.tool));
+}
+
+function renderGameToText() {
+  const puzzle = currentPuzzle();
+  const analysis = analyzeCurrentBoard();
+  const visible = game.marks.map((row, r) => row.map((cell, c) => {
+    const clue = puzzle.clueMap.get(keyOf(r, c));
+    return clue ? `clue-${clue.n}` : CELL_NAMES[cell];
+  }));
+  return JSON.stringify({
+    note: 'Coordinates use zero-based rows and columns, origin at top-left, row increases downward.',
+    mode: game.mode,
+    puzzle: { index: game.puzzleIndex, count: PUZZLES.length, id: puzzle.id, name: puzzle.name, size: puzzle.size },
+    cursor: { ...game.cursor },
+    tool: game.tool,
+    marks: visible,
+    clues: puzzle.clues,
+    walls: { marked: game.marks.flat().filter(cell => cell === WALL).length, target: puzzle.wallTotal },
+    rules: {
+      unknown: analysis.unknown,
+      wrong: analysis.wrong.length,
+      wall_connected: analysis.wallConnected,
+      wall_groups: analysis.wallComponentCount,
+      two_by_two_wall_blocks: analysis.twoByTwoWalls.length,
+      exact_islands: analysis.exactIslands,
+      total_islands: puzzle.clues.length,
+    },
+    moves: game.moves,
+    hints: game.hints,
+    score: game.score,
+    coins_earned_this_run: game.coinsEarned,
+    status: game.status,
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  stepping = true;
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  render();
+  stepping = false;
+};
+
+window.__ISLAND_WALLS_GAME__ = {
+  loadPuzzle: (index = 0) => loadPuzzle(index, true),
+  solveCurrentPuzzle: () => {
+    const puzzle = currentPuzzle();
+    pushHistory();
+    game.marks = Array.from({ length: puzzle.size }, (_, r) => (
+      Array.from({ length: puzzle.size }, (_, c) => solutionValue(r, c, puzzle))
+    ));
+    game.moves += 1;
+    checkBoard();
+  },
+  markCell: (r, c, value) => markCell(r, c, value),
+  setTool,
+  checkBoard,
+  hint,
+  getState: () => JSON.parse(renderGameToText()),
+  puzzles: PUZZLES.map(puzzle => ({ id: puzzle.id, name: puzzle.name, clues: puzzle.clues, solution: puzzle.solution })),
+};
+
+const firstClue = currentPuzzle().clues[0];
+game.cursor = { r: firstClue.r, c: firstClue.c };
+game.marks = buildEmptyMarks();
+mountGameFeedback({ gameSlug: 'islandwalls', gameName: 'Island Walls' });
+updateHud();
+render();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

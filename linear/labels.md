@@ -168,5 +168,6 @@
 - game/minicrossword
 - game/fillomino
 - game/canyonglider
+- game/islandwalls
 
 Generated from `src/meta/feedback.js`.

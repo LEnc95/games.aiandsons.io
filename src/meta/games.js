@@ -152,6 +152,7 @@ const BASE_GAMES = [
   { slug:'minicrossword',  name:'Mini Crossword',       emoji:'\u{1F5DE}\uFE0F', scoreHint:'solves', url:'/minicrossword', desc:'Fill compact word-square crossword grids, follow across and down clues, use hints, and solve five bite-size minis.', earnsCoins:true },
   { slug:'fillomino',      name:'Fillomino',            emoji:'\u{1F9E9}', scoreHint:'solves',     url:'/fillomino',    desc:'Fill number grids so every connected region contains exactly as many cells as its number.', earnsCoins:true },
   { slug:'canyonglider',   name:'Canyon Glider',        emoji:'\u{1F6E9}\uFE0F', scoreHint:'rings', url:'/canyonglider', desc:'Race through canyon gates, ride gusts, collect flight rings, and boost to the finish before your hull gives out.', earnsCoins:true },
+  { slug:'islandwalls',    name:'Island Walls',         emoji:'\u{1F3DD}\uFE0F', scoreHint:'solves', url:'/islandwalls',  desc:'Mark one connected wall network while every numbered island keeps its exact size across five deduction maps.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -175,7 +176,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

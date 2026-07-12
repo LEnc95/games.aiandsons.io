@@ -3997,3 +3997,17 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `git diff --check` exited cleanly except for the repository's usual LF-to-CRLF warning noise. `SPRINT_BOARD.md` has an unrelated pre-existing/current external nightly-entry diff and was not modified for Canyon Glider.
 - Run time recorded: 2026-07-11T21:02:40.3283873-04:00. Generated catalog release date for Canyon Glider: 2026-07-12.
 - TODO: none for Canyon Glider; future work may address repository-wide LF-to-CRLF warning noise.
+
+## 2026-07-12 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory was missing at `$CODEX_HOME/automations/create-a-new-game/memory.md`; using `progress.md` history to avoid Canyon Glider, Fillomino, Mini Crossword, ChronoSort, Black Box, Futoshiki, Vista Towers, Ink Islands, and other recent additions.
+- Reviewed the 153-game registry and selected Island Walls (`/islandwalls`), a Nurikabe-style island/wall deduction puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas puzzle with desktop/touch controls, deterministic hooks, shared feedback, coin rewards, metadata/discovery registration, regenerated SEO/OG/Linear artifacts, and Playwright validation with screenshot inspection.
+- Initial implementation added `islandwalls/index.html` with five validated island/wall puzzle boards, desktop/touch tools, hints/check/undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and deterministic `window.__ISLAND_WALLS_GAME__` helpers.
+- Registered Island Walls in `src/meta/games.js` and the puzzle discovery group; next step is regenerating SEO/OG/Linear artifacts and running validation.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/islandwalls.png`, and local Linear feedback seeds now include Island Walls. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: Island Walls module-script parse, 154-game registry import/uniqueness and puzzle category check, focused games/discovery/feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/islandwalls-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/islandwalls-scenarios-final`, screenshot/feedback-modal inspection, and zero final Island Walls browser/page error artifacts.
+- Custom scenarios covered wrong-mark checking, undo, hint, pause/resume, puzzle solve with coin reward, next-puzzle advance, full campaign win, shared feedback modal, mobile touch marking, and canvas nonblank pixel checks.
+- `git diff --check` exited cleanly except for the repository's usual LF-to-CRLF warning noise.
+- Run time recorded: 2026-07-12T07:16:10.1791177-04:00. Generated catalog release date for Island Walls: 2026-07-13.
+- TODO: none for Island Walls; future work may address repository-wide LF-to-CRLF warning noise and whether same-day automation runs should share a catalog release date.
