@@ -9,8 +9,10 @@ Operational command reference for contributors and automations in this repositor
 - Install Playwright browser runtime for smoke tests: `npx playwright install --with-deps chromium`
 - Run local static server for raw smoke tests: `python -m http.server 4173`
 - Regenerate sitemap and inject SEO metadata: `npm run seo`
+- Regenerate only discovery slug metadata from `src/meta/games.js`: `npm run discovery:meta`
 - Render social/OG card PNGs: `npm run og`
 - Capture marketing gameplay clips: `npm run marketing:clips`
+- Validate daily new-game wiring before commit: `npm run game:preflight`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
 - Run social API integration tests: `npm run test:social`
@@ -53,6 +55,7 @@ Operational command reference for contributors and automations in this repositor
 - Live-provision missing Linear labels and baseline issues: `npm run feedback:provision-linear`
 
 ## GitHub Automations
+- Main branch fast QA and new-game preflight: `.github/workflows/main-qa.yml`
 - PR classroom smoke gate: `.github/workflows/classroom-smoke.yml`
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
@@ -75,6 +78,7 @@ Operational command reference for contributors and automations in this repositor
 ## Daily Game Checklist
 - Add the game route and update `src/meta/games.js`
 - Run `npm run seo` and `npm run og` after metadata/content changes
+- Run `npm run game:preflight` before committing a new game
 - Mount `mountGameFeedback({ gameSlug, gameName })`
 - Run `npm run feedback:sync-linear`
 - Run `npm run test:feedback`

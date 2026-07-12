@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2026-07-11
+
+### Added
+- Added and wired nine new games: `inkislands`, `twentyone`, `vistatowers`, `futoshiki`, `wobble-drop`, `blackbox`, `chronosort`, `fillomino`, and `minicrossword`.
+- Added local Wobble Drop engine modules so the game no longer depends on remote physics/rendering module delivery.
+
+### Improved
+- Refreshed top-level page styling with the teal/deep-space brand treatment across homepage, pricing, shop, onboarding, policy, classroom, changelog, and room surfaces.
+- Improved discovery metadata generation by keeping the slug allowlist synchronized from the games registry and refreshing SEO, sitemap, OG card, Linear seed, and homepage metadata for new games.
+- Improved game and UI polish for ChronoSort event assets, Wobble Drop platform handling, Profile modal viewport behavior, and no-cache header matching.
+- Optimized cosmetics shop rendering, category inference, and category membership lookups.
+
+### Security
+- Fixed scoreboard DOM XSS handling in `rooms/index.html`.
+- Fixed feedback origin construction to avoid trusting arbitrary host headers.
+
+### Operations
+- Streamlined the daily add-a-game pipeline with preflight, QA, and deployment configuration updates.
+- Updated sprint board notes for the week.
+- Key PRs: [#209](https://github.com/LEnc95/games.aiandsons.io/pull/209), [#208](https://github.com/LEnc95/games.aiandsons.io/pull/208), [#207](https://github.com/LEnc95/games.aiandsons.io/pull/207), [#205](https://github.com/LEnc95/games.aiandsons.io/pull/205), [#204](https://github.com/LEnc95/games.aiandsons.io/pull/204).
+
 ## [1.10.0] - 2026-07-03
 
 ### Added
