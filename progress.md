@@ -4011,3 +4011,18 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `git diff --check` exited cleanly except for the repository's usual LF-to-CRLF warning noise.
 - Run time recorded: 2026-07-12T07:16:10.1791177-04:00. Generated catalog release date for Island Walls: 2026-07-13.
 - TODO: none for Island Walls; future work may address repository-wide LF-to-CRLF warning noise and whether same-day automation runs should share a catalog release date.
+
+## 2026-07-13 Create a new game automation
+- New request: add a game we do not already have to the website using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Island Walls, Canyon Glider, Fillomino, Mini Crossword, ChronoSort, Black Box, Futoshiki, Vista Towers, Ink Islands, and other recent additions.
+- Reviewed routes and registry search results; selected Binary Grid (`/binarygrid`), a Binairo/Takuzu-style binary logic puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas puzzle with 0/1 entry, row/column parity, no-triples, duplicate-line checks, hints/check/undo, deterministic hooks, shared feedback, coin rewards, metadata/discovery registration, regenerated SEO/OG/Linear artifacts, and Playwright validation with screenshot inspection.
+- Initial implementation added `binarygrid/index.html` with five deterministic 6x6 binary logic boards, desktop/touch input, hints/check/undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__BINARY_GRID_GAME__` helpers.
+- Registered Binary Grid in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear`; sitemap, SEO blocks, discovery metadata, `assets/og/binarygrid.png`, and local Linear feedback seeds now include Binary Grid. Live Linear provisioning skipped because credentials are unset.
+- Validation passed: Binary Grid module-script parse, puzzle data/given consistency check, 155-game registry import/uniqueness and puzzle category check, focused games/discovery/feedback coverage tests, `npm run feedback:check-daily`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run game:preflight`, static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/binarygrid-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/binarygrid-scenarios-final`, screenshot/feedback-modal/OG inspection, and zero final Binary Grid browser/page error artifacts.
+- Fixed validation findings: hardened `roundRect` against negative dimensions during early/compact canvas layout, made `analyzeBoard(values)` compute empty counts from the supplied grid, and reduced desktop stage height/top spacing so HUD and controls do not overlap the canvas.
+- `npm run test:feedback-smoke:raw` passed its five functional checks but failed its zero-console-error gate because mobile Tetris POSTed to the raw Python static server and received HTTP 501, matching the known repository caveat and not a Binary Grid issue.
+- `git diff --check` exited cleanly with only repository LF-to-CRLF warning noise. `SPRINT_BOARD.md` has an unrelated pre-existing/current external diff and was not modified for Binary Grid.
+- Run time recorded: 2026-07-13T07:17:32.5273318-04:00. Generated catalog release date for Binary Grid: 2026-07-14.
+- TODO: none for Binary Grid; future work may address repository-wide LF-to-CRLF warning noise and the raw-static feedback/social POST behavior.

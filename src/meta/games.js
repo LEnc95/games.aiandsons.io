@@ -153,6 +153,7 @@ const BASE_GAMES = [
   { slug:'fillomino',      name:'Fillomino',            emoji:'\u{1F9E9}', scoreHint:'solves',     url:'/fillomino',    desc:'Fill number grids so every connected region contains exactly as many cells as its number.', earnsCoins:true },
   { slug:'canyonglider',   name:'Canyon Glider',        emoji:'\u{1F6E9}\uFE0F', scoreHint:'rings', url:'/canyonglider', desc:'Race through canyon gates, ride gusts, collect flight rings, and boost to the finish before your hull gives out.', earnsCoins:true },
   { slug:'islandwalls',    name:'Island Walls',         emoji:'\u{1F3DD}\uFE0F', scoreHint:'solves', url:'/islandwalls',  desc:'Mark one connected wall network while every numbered island keeps its exact size across five deduction maps.', earnsCoins:true },
+  { slug:'binarygrid',     name:'Binary Grid',          emoji:'\u{1F522}', scoreHint:'solves',     url:'/binarygrid',   desc:'Fill binary logic grids with balanced 0s and 1s while avoiding triples and duplicate lines.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -176,7 +177,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

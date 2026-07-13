@@ -169,5 +169,6 @@
 - game/fillomino
 - game/canyonglider
 - game/islandwalls
+- game/binarygrid
 
 Generated from `src/meta/feedback.js`.
