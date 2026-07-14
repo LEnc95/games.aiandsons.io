@@ -170,5 +170,6 @@
 - game/canyonglider
 - game/islandwalls
 - game/binarygrid
+- game/thermotrail
 
 Generated from `src/meta/feedback.js`.

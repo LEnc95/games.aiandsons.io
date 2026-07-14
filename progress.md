@@ -4026,3 +4026,17 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - `git diff --check` exited cleanly with only repository LF-to-CRLF warning noise. `SPRINT_BOARD.md` has an unrelated pre-existing/current external diff and was not modified for Binary Grid.
 - Run time recorded: 2026-07-13T07:17:32.5273318-04:00. Generated catalog release date for Binary Grid: 2026-07-14.
 - TODO: none for Binary Grid; future work may address repository-wide LF-to-CRLF warning noise and the raw-static feedback/social POST behavior.
+
+## 2026-07-14 Create a new game automation
+- New request: add exactly one game the website does not already have using `$develop-web-game`.
+- Automation memory was missing at `$CODEX_HOME/automations/create-a-new-game/memory.md`; using `progress.md` history to avoid Binary Grid, Island Walls, Canyon Glider, Fillomino, Mini Crossword, ChronoSort, Black Box, Futoshiki, and other recent additions.
+- Reviewed the registry and selected Thermo Trail (`/thermotrail`), a thermometer-style Latin-grid logic puzzle not currently represented in the catalog.
+- Plan: add a standalone canvas puzzle with digit entry, row/column uniqueness, thermometer increasing-path checks, hints/check/undo, deterministic hooks, shared feedback, coin rewards, metadata/discovery registration, regenerated SEO/OG/Linear artifacts, and Playwright validation with screenshot inspection.
+- Initial implementation added `thermotrail/index.html` with five deterministic 5x5 thermometer Latin-grid boards, desktop/touch digit entry, hints/check/undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__THERMO_TRAIL_GAME__` helpers.
+- Registered Thermo Trail in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`; sitemap, SEO blocks, discovery metadata, `assets/og/thermotrail.png`, and local Linear feedback seeds now include Thermo Trail. Installed the local Playwright Chromium runtime because the OG generator needed it.
+- Cleaned SEO generator line-ending side effects so the remaining repo diff is limited to the allowed release files for Thermo Trail.
+- Validation passed: static route HTTP 200, required `$WEB_GAME_CLIENT` loop in `output/web-game/thermotrail-smoke-final`, focused desktop/mobile Playwright scenarios in `output/web-game/thermotrail-scenarios-final`, screenshot/feedback-modal inspection, deterministic `advanceTime(ms)` delta check, and zero final Thermo Trail browser/page error artifacts.
+- Custom scenarios covered digit entry, duplicate/conflict checking, undo, hint, pause/resume, restart, fullscreen, edge/boundary selection, single-puzzle solve with coin reward, campaign completion, shared feedback modal, mobile touch digit entry, and canvas nonblank pixel checks.
+- Final pre-publish gate passed before this note: `npm run game:preflight`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run test:social` (20 tests), and `git diff --check` with only repository LF-to-CRLF warnings. Rerunning the gate after this progress update before commit.
+- TODO: none for Thermo Trail; future work may address repository-wide LF-to-CRLF warning noise in generated files.

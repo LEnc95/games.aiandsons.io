@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Thermo Trail | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #182327;
+  background: linear-gradient(140deg, #fff7ec 0%, #e2f1f6 48%, #d2eadf 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 20;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffc4;
+  border-radius: 8px;
+  background: #17333deb;
+  color: #fbfffb;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 12px 24px #17333d2e;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(68px, calc(env(safe-area-inset-top) + 64px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 0 1 auto;
+  height: clamp(310px, calc(100dvh - 255px), 590px);
+  min-height: 300px;
+  max-height: 590px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffe0;
+  border-radius: 8px;
+  background: #fffdfa;
+  box-shadow: 0 24px 58px #17333d30;
+}
+.hud,
+.controls,
+.digit-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.digit-pad { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffb8;
+  border-radius: 8px;
+  background: #17333de8;
+  color: #f8fffb;
+  box-shadow: inset 0 1px 0 #ffffff36;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #c7dfdf;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9cffc7; }
+.chip.warn b { color: #ffd879; }
+.chip.danger b { color: #ff9c95; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #245866; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.primary {
+  background: #ffd36b;
+  border-color: #fff1bd;
+  color: #182327;
+}
+.primary:hover { background: #ffe08e; }
+.action { background: #24735f; }
+.utility { background: #465c70; }
+.clear { background: #7b4c58; }
+.digit {
+  background: #f08459;
+  color: #182327;
+}
+button:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #ffd36b;
+  outline-offset: 2px;
+}
+@media (max-width: 840px) {
+  .app {
+    padding: max(56px, calc(env(safe-area-inset-top) + 54px)) 9px max(12px, env(safe-area-inset-bottom));
+    gap: 7px;
+  }
+  .stage { max-height: 53dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .digit-pad { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+}
+@media (max-width: 540px) {
+  .back { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .app { padding-top: max(48px, calc(env(safe-area-inset-top) + 46px)); }
+  .stage {
+    flex: 0 0 clamp(300px, 42vh, 360px);
+    height: clamp(300px, 42vh, 360px);
+    min-height: 0;
+    max-height: none;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip:nth-child(6) { display: none; }
+  button { min-height: 39px; padding: 0 5px; font-size: 13px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill Latin-grid digits while every thermometer trail strictly rises from bulb to tip. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Thermo Trail | AI and Sons Games">
+  <meta property="og:description" content="Fill Latin-grid digits while every thermometer trail strictly rises from bulb to tip. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/thermotrail">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/thermotrail.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Thermo Trail | AI and Sons Games">
+  <meta name="twitter:description" content="Fill Latin-grid digits while every thermometer trail strictly rises from bulb to tip. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/thermotrail.png">
+  <link rel="canonical" href="https://games.aiandsons.io/thermotrail">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Thermo Trail","description":"Fill Latin-grid digits while every thermometer trail strictly rises from bulb to tip. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/thermotrail","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">&larr; Games</a>
+<main class="app" aria-label="Thermo Trail game">
+  <div class="stage">
+    <canvas id="game" width="1080" height="700" aria-label="Thermo Trail puzzle board"></canvas>
+  </div>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleLabel">1 / 5</b></div>
+    <div class="chip"><span>Filled</span><b id="filledLabel">0 / 25</b></div>
+    <div class="chip"><span>Moves</span><b id="movesLabel">0</b></div>
+    <div class="chip warn"><span>Hints</span><b id="hintsLabel">0</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreLabel">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">Start</button>
+    <button id="checkBtn" class="action" type="button">Check</button>
+    <button id="hintBtn" class="action" type="button">Hint</button>
+    <button id="undoBtn" class="utility" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+  <section class="digit-pad" aria-label="Digit input pad">
+    <button class="digit" data-digit="1" type="button">1</button>
+    <button class="digit" data-digit="2" type="button">2</button>
+    <button class="digit" data-digit="3" type="button">3</button>
+    <button class="digit" data-digit="4" type="button">4</button>
+    <button class="digit" data-digit="5" type="button">5</button>
+    <button id="clearBtn" class="clear" type="button">Clear</button>
+  </section>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  puzzle: document.getElementById('puzzleLabel'),
+  filled: document.getElementById('filledLabel'),
+  moves: document.getElementById('movesLabel'),
+  hints: document.getElementById('hintsLabel'),
+  score: document.getElementById('scoreLabel'),
+  coins: document.getElementById('coinsLabel'),
+  start: document.getElementById('startBtn'),
+  check: document.getElementById('checkBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+  clear: document.getElementById('clearBtn'),
+  digits: [...document.querySelectorAll('[data-digit]')],
+};
+
+const EMPTY = 0;
+const SIZE = 5;
+const DIGITS = [1, 2, 3, 4, 5];
+const UNDO_LIMIT = 80;
+
+const PUZZLES = [
+  {
+    id: 'warm-front',
+    name: 'Warm Front',
+    solution: [
+      '12345',
+      '23451',
+      '34512',
+      '45123',
+      '51234',
+    ],
+    givens: [
+      '1...5',
+      '.3...',
+      '..5.2',
+      '4...3',
+      '.1...',
+    ],
+    thermos: [
+      [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]],
+      [[1, 0], [1, 1], [1, 2], [1, 3]],
+      [[3, 2], [3, 3], [3, 4]],
+      [[4, 1], [4, 2], [4, 3], [4, 4]],
+    ],
+  },
+  {
+    id: 'glass-ridge',
+    name: 'Glass Ridge',
+    solution: [
+      '24135',
+      '35241',
+      '41352',
+      '52413',
+      '13524',
+    ],
+    givens: [
+      '2..3.',
+      '.5..1',
+      '..3..',
+      '5..1.',
+      '.3..4',
+    ],
+    thermos: [
+      [[0, 2], [1, 2], [2, 2], [3, 2]],
+      [[4, 0], [4, 1], [4, 2]],
+      [[1, 4], [1, 0], [1, 1]],
+      [[3, 3], [3, 4], [3, 0]],
+    ],
+  },
+  {
+    id: 'boiler-bay',
+    name: 'Boiler Bay',
+    solution: [
+      '31425',
+      '42531',
+      '53142',
+      '14253',
+      '25314',
+    ],
+    givens: [
+      '.1..5',
+      '4...1',
+      '.3.4.',
+      '1...3',
+      '..3.4',
+    ],
+    thermos: [
+      [[0, 1], [0, 3], [0, 4]],
+      [[3, 0], [3, 2], [3, 4], [3, 1], [3, 3]],
+      [[1, 4], [1, 1], [1, 3], [1, 0], [1, 2]],
+      [[4, 3], [4, 0], [4, 2], [4, 4], [4, 1]],
+    ],
+  },
+  {
+    id: 'copper-coil',
+    name: 'Copper Coil',
+    solution: [
+      '45123',
+      '51234',
+      '12345',
+      '23451',
+      '34512',
+    ],
+    givens: [
+      '4..2.',
+      '.1..4',
+      '1...5',
+      '.3..1',
+      '..5.2',
+    ],
+    thermos: [
+      [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]],
+      [[3, 0], [3, 1], [3, 2], [3, 3]],
+      [[0, 2], [0, 3], [0, 4]],
+      [[1, 1], [1, 2], [1, 3], [1, 4]],
+    ],
+  },
+  {
+    id: 'polar-lamp',
+    name: 'Polar Lamp',
+    solution: [
+      '53142',
+      '14253',
+      '25314',
+      '31425',
+      '42531',
+    ],
+    givens: [
+      '5..4.',
+      '1...3',
+      '.5..4',
+      '..4.5',
+      '4..3.',
+    ],
+    thermos: [
+      [[1, 0], [1, 2], [1, 4], [1, 1], [1, 3]],
+      [[2, 3], [2, 0], [2, 2], [2, 4], [2, 1]],
+      [[3, 1], [3, 3], [3, 0], [3, 2], [3, 4]],
+      [[4, 4], [4, 1], [4, 3], [4, 0], [4, 2]],
+    ],
+  },
+].map((puzzle) => ({
+  ...puzzle,
+  solutionGrid: puzzle.solution.map(row => row.split('').map(Number)),
+  givenGrid: puzzle.givens.map(row => row.split('').map(value => (value === '.' ? EMPTY : Number(value)))),
+}));
+
+const game = {
+  mode: 'menu',
+  puzzleIndex: 0,
+  values: [],
+  locked: [],
+  selected: { row: 0, col: 0 },
+  undoStack: [],
+  elapsed: 0,
+  moves: 0,
+  hints: 0,
+  checks: 0,
+  score: 0,
+  bestScore: Number(localStorage.getItem('thermotrail:best') || 0),
+  coinsEarned: 0,
+  lastCoins: 0,
+  solvedIds: new Set(),
+  message: 'Fill each row and column with 1 through 5 while thermometers rise from bulb to tip.',
+  errorCells: new Set(),
+  errorThermos: new Set(),
+  successPulse: 0,
+  lastAction: { type: 'load' },
+};
+
+const layout = {
+  boardX: 0,
+  boardY: 0,
+  boardSize: 0,
+  cell: 0,
+  panelX: 0,
+  panelW: 0,
+};
+let lastFrame = 0;
+let manualStepping = false;
+
+function puzzle() {
+  return PUZZLES[game.puzzleIndex];
+}
+
+function cloneGrid(grid) {
+  return grid.map(row => [...row]);
+}
+
+function cellKey(row, col) {
+  return `${row},${col}`;
+}
+
+function parseCellKey(key) {
+  const [row, col] = key.split(',').map(Number);
+  return { row, col };
+}
+
+function firstOpenCell() {
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let col = 0; col < SIZE; col += 1) {
+      if (!game.locked[row][col]) return { row, col };
+    }
+  }
+  return { row: 0, col: 0 };
+}
+
+function primeMenuBoard() {
+  const current = puzzle();
+  game.values = cloneGrid(current.givenGrid);
+  game.locked = current.givenGrid.map(row => row.map(value => value !== EMPTY));
+  game.selected = firstOpenCell();
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  game.puzzleIndex = ((index % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  const current = puzzle();
+  game.values = cloneGrid(current.givenGrid);
+  game.locked = current.givenGrid.map(row => row.map(value => value !== EMPTY));
+  game.selected = firstOpenCell();
+  game.undoStack = [];
+  game.elapsed = 0;
+  game.moves = 0;
+  game.hints = 0;
+  game.checks = 0;
+  game.lastCoins = 0;
+  game.errorCells = new Set();
+  game.errorThermos = new Set();
+  game.mode = 'playing';
+  game.message = `${current.name}: digits rise along every thermometer.`;
+  game.lastAction = { type: 'start', puzzle: current.id };
+  updateHud();
+  draw();
+}
+
+function pushUndo() {
+  game.undoStack.push({
+    values: cloneGrid(game.values),
+    selected: { ...game.selected },
+    moves: game.moves,
+    hints: game.hints,
+    checks: game.checks,
+  });
+  if (game.undoStack.length > UNDO_LIMIT) game.undoStack.shift();
+}
+
+function undo() {
+  if (game.mode !== 'playing' || !game.undoStack.length) return false;
+  const previous = game.undoStack.pop();
+  game.values = cloneGrid(previous.values);
+  game.selected = { ...previous.selected };
+  game.moves = previous.moves;
+  game.hints = previous.hints;
+  game.checks = previous.checks;
+  game.errorCells = new Set();
+  game.errorThermos = new Set();
+  game.message = 'Undo restored the previous grid.';
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  draw();
+  return true;
+}
+
+function selectCell(row, col) {
+  if (row < 0 || col < 0 || row >= SIZE || col >= SIZE) return false;
+  game.selected = { row, col };
+  game.lastAction = { type: 'select', row, col };
+  draw();
+  return true;
+}
+
+function nextOpenCell(row, col) {
+  for (let offset = 1; offset <= SIZE * SIZE; offset += 1) {
+    const index = row * SIZE + col + offset;
+    const r = Math.floor(index / SIZE) % SIZE;
+    const c = index % SIZE;
+    if (!game.locked[r][c]) return { row: r, col: c };
+  }
+  return null;
+}
+
+function setValue(value) {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const nextValue = Number(value) || EMPTY;
+  if (nextValue < EMPTY || nextValue > SIZE) return false;
+  const { row, col } = game.selected;
+  if (game.locked[row][col]) {
+    game.message = 'That clue cell is fixed.';
+    draw();
+    return false;
+  }
+  if (game.values[row][col] === nextValue) return false;
+  pushUndo();
+  game.values[row][col] = nextValue;
+  game.moves += 1;
+  game.errorCells.delete(cellKey(row, col));
+  game.errorThermos = new Set();
+  game.message = nextValue === EMPTY
+    ? `Cleared row ${row + 1}, column ${col + 1}.`
+    : `Placed ${nextValue} at row ${row + 1}, column ${col + 1}.`;
+  game.lastAction = { type: nextValue === EMPTY ? 'clear' : 'enter', row, col, value: nextValue };
+  if (nextValue !== EMPTY) {
+    const next = nextOpenCell(row, col);
+    if (next) game.selected = next;
+  }
+  updateHud();
+  draw();
+  maybeFinish();
+  return true;
+}
+
+function filledCount() {
+  return game.values.flat().filter(value => value !== EMPTY).length;
+}
+
+function markDuplicateValues(cells, errors) {
+  const seen = new Map();
+  for (const cell of cells) {
+    if (cell.value === EMPTY) continue;
+    if (!seen.has(cell.value)) {
+      seen.set(cell.value, cell);
+      continue;
+    }
+    const first = seen.get(cell.value);
+    errors.add(cellKey(first.row, first.col));
+    errors.add(cellKey(cell.row, cell.col));
+  }
+}
+
+function analyzeBoard(values = game.values) {
+  const errors = new Set();
+  const thermoErrors = new Set();
+  let duplicateRows = 0;
+  let duplicateColumns = 0;
+  let thermoViolations = 0;
+  const rows = [];
+  const columns = [];
+
+  for (let row = 0; row < SIZE; row += 1) {
+    const cells = values[row].map((value, col) => ({ row, col, value }));
+    const before = errors.size;
+    markDuplicateValues(cells, errors);
+    if (errors.size > before) duplicateRows += 1;
+    rows.push({
+      filled: cells.filter(cell => cell.value !== EMPTY).length,
+      missing: DIGITS.filter(digit => !cells.some(cell => cell.value === digit)),
+    });
+  }
+
+  for (let col = 0; col < SIZE; col += 1) {
+    const cells = values.map((rowValues, row) => ({ row, col, value: rowValues[col] }));
+    const before = errors.size;
+    markDuplicateValues(cells, errors);
+    if (errors.size > before) duplicateColumns += 1;
+    columns.push({
+      filled: cells.filter(cell => cell.value !== EMPTY).length,
+      missing: DIGITS.filter(digit => !cells.some(cell => cell.value === digit)),
+    });
+  }
+
+  puzzle().thermos.forEach((path, thermoIndex) => {
+    for (let i = 1; i < path.length; i += 1) {
+      const [prevRow, prevCol] = path[i - 1];
+      const [row, col] = path[i];
+      const prevValue = values[prevRow][prevCol];
+      const value = values[row][col];
+      if (prevValue !== EMPTY && value !== EMPTY && value <= prevValue) {
+        thermoViolations += 1;
+        thermoErrors.add(thermoIndex);
+        errors.add(cellKey(prevRow, prevCol));
+        errors.add(cellKey(row, col));
+      }
+    }
+  });
+
+  const empty = values.flat().filter(value => value === EMPTY).length;
+  const solved = empty === 0 &&
+    duplicateRows === 0 &&
+    duplicateColumns === 0 &&
+    thermoViolations === 0 &&
+    values.every((row, rowIndex) => row.every((value, colIndex) => value === puzzle().solutionGrid[rowIndex][colIndex]));
+
+  return {
+    empty,
+    errors,
+    thermoErrors,
+    duplicateRows,
+    duplicateColumns,
+    thermoViolations,
+    rows,
+    columns,
+    solved,
+  };
+}
+
+function checkBoard() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  game.checks += 1;
+  const analysis = analyzeBoard();
+  game.errorCells = new Set(analysis.errors);
+  game.errorThermos = new Set(analysis.thermoErrors);
+  if (analysis.solved) {
+    game.message = 'Every row, column, and thermometer checks out.';
+    finishPuzzle();
+  } else if (analysis.duplicateRows || analysis.duplicateColumns) {
+    game.message = 'A row or column repeats a digit.';
+  } else if (analysis.thermoViolations) {
+    game.message = 'One thermometer does not strictly increase from bulb to tip.';
+  } else if (analysis.empty) {
+    game.message = `${analysis.empty} cell${analysis.empty === 1 ? '' : 's'} still open.`;
+  } else {
+    game.message = 'The grid is filled, but at least one digit is not the intended solution.';
+    for (let row = 0; row < SIZE; row += 1) {
+      for (let col = 0; col < SIZE; col += 1) {
+        if (game.values[row][col] !== puzzle().solutionGrid[row][col]) errorsFromMismatch(row, col);
+      }
+    }
+  }
+  game.lastAction = {
+    type: 'check',
+    empty: analysis.empty,
+    errors: analysis.errors.size,
+    duplicate_rows: analysis.duplicateRows,
+    duplicate_columns: analysis.duplicateColumns,
+    thermo_violations: analysis.thermoViolations,
+  };
+  updateHud();
+  draw();
+  return analysis.solved;
+}
+
+function errorsFromMismatch(row, col) {
+  game.errorCells.add(cellKey(row, col));
+}
+
+function maybeFinish() {
+  const analysis = analyzeBoard();
+  if (analysis.solved) finishPuzzle();
+}
+
+function useHint() {
+  if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+  if (game.mode !== 'playing') return false;
+  const current = puzzle();
+  const selected = game.selected;
+  let target = null;
+  if (!game.locked[selected.row][selected.col] && game.values[selected.row][selected.col] !== current.solutionGrid[selected.row][selected.col]) {
+    target = { ...selected };
+  }
+  if (!target) {
+    for (let row = 0; row < SIZE; row += 1) {
+      for (let col = 0; col < SIZE; col += 1) {
+        if (!game.locked[row][col] && game.values[row][col] !== current.solutionGrid[row][col]) {
+          target = { row, col };
+          break;
+        }
+      }
+      if (target) break;
+    }
+  }
+  if (!target) {
+    game.message = 'No hint needed on this board.';
+    draw();
+    return false;
+  }
+  pushUndo();
+  game.selected = target;
+  game.values[target.row][target.col] = current.solutionGrid[target.row][target.col];
+  game.hints += 1;
+  game.moves += 1;
+  game.errorCells = new Set();
+  game.errorThermos = new Set();
+  game.message = `Hint filled row ${target.row + 1}, column ${target.col + 1}.`;
+  game.lastAction = { type: 'hint', row: target.row, col: target.col, value: game.values[target.row][target.col] };
+  updateHud();
+  draw();
+  maybeFinish();
+  return true;
+}
+
+function finishPuzzle() {
+  if (game.mode === 'solved' || game.mode === 'complete') return;
+  const current = puzzle();
+  game.mode = game.puzzleIndex >= PUZZLES.length - 1 ? 'complete' : 'solved';
+  game.successPulse = 1;
+  game.solvedIds.add(current.id);
+  const base = 1200;
+  const timePenalty = Math.floor(game.elapsed * 2);
+  const movePenalty = game.moves * 8;
+  const hintPenalty = game.hints * 90;
+  const checkPenalty = Math.max(0, game.checks - 1) * 35;
+  const score = Math.max(180, base - timePenalty - movePenalty - hintPenalty - checkPenalty);
+  game.score += score;
+  game.bestScore = Math.max(game.bestScore, game.score);
+  localStorage.setItem('thermotrail:best', String(game.bestScore));
+  const coins = game.mode === 'complete' ? 14 : 5;
+  addCoins(coins);
+  game.coinsEarned += coins;
+  game.lastCoins = coins;
+  game.errorCells = new Set();
+  game.errorThermos = new Set();
+  game.message = game.mode === 'complete'
+    ? `Campaign complete. Earned ${coins} coins on this grid.`
+    : `Solved ${current.name}. Earned ${coins} coins.`;
+  game.lastAction = { type: 'solve', puzzle: current.id, score, coins };
+  updateHud();
+  draw();
+}
+
+function nextPuzzle() {
+  if (game.puzzleIndex >= PUZZLES.length - 1) {
+    game.solvedIds.clear();
+    game.score = 0;
+    game.coinsEarned = 0;
+    startPuzzle(0);
+  } else {
+    startPuzzle(game.puzzleIndex + 1);
+  }
+}
+
+function restartPuzzle() {
+  startPuzzle(game.puzzleIndex);
+  game.lastAction = { type: 'restart', puzzle: puzzle().id };
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Resumed.';
+  } else if (game.mode === 'menu') {
+    startPuzzle(game.puzzleIndex);
+    return;
+  }
+  game.lastAction = { type: game.mode === 'paused' ? 'pause' : 'resume' };
+  updateHud();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function moveSelection(dr, dc) {
+  return selectCell(
+    Math.max(0, Math.min(SIZE - 1, game.selected.row + dr)),
+    Math.max(0, Math.min(SIZE - 1, game.selected.col + dc)),
+  );
+}
+
+function update(dt) {
+  if (game.mode === 'playing') game.elapsed += Math.max(0, Math.min(.5, dt));
+  if (game.successPulse > 0) game.successPulse = Math.max(0, game.successPulse - dt * 1.8);
+}
+
+function updateHud() {
+  els.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  els.filled.textContent = `${filledCount()} / ${SIZE * SIZE}`;
+  els.moves.textContent = String(game.moves);
+  els.hints.textContent = String(game.hints);
+  els.score.textContent = String(game.score);
+  els.coins.textContent = String(Number(profileState.coins || 0));
+  els.start.textContent = game.mode === 'solved' ? 'Next' : game.mode === 'complete' ? 'Replay' : game.mode === 'paused' ? 'Resume' : game.mode === 'menu' ? 'Start' : 'New';
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  els.check.disabled = game.mode === 'paused' || game.mode === 'solved' || game.mode === 'complete';
+  els.hint.disabled = game.mode === 'paused' || game.mode === 'solved' || game.mode === 'complete';
+  els.undo.disabled = game.mode !== 'playing' || !game.undoStack.length;
+  els.clear.disabled = game.mode !== 'playing';
+  for (const button of els.digits) button.disabled = game.mode === 'paused' || game.mode === 'solved' || game.mode === 'complete';
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  canvas.width = Math.max(1, Math.round(rect.width * dpr));
+  canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+function computeLayout() {
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const w = canvas.width / dpr;
+  const h = canvas.height / dpr;
+  const compact = w < 720;
+  const boardSize = compact ? Math.min(w - 34, h - 124) : Math.min(h - 110, w * .56);
+  layout.boardSize = compact ? Math.max(120, boardSize) : Math.max(230, boardSize);
+  layout.cell = layout.boardSize / SIZE;
+  layout.boardX = compact ? (w - layout.boardSize) / 2 : 38;
+  layout.boardY = compact ? 112 : 84;
+  layout.panelX = layout.boardX + layout.boardSize + 28;
+  layout.panelW = Math.max(0, w - layout.panelX - 28);
+  return { w, h, compact };
+}
+
+function roundRect(x, y, w, h, r) {
+  const width = Math.max(0, w);
+  const height = Math.max(0, h);
+  const radius = Math.max(0, Math.min(r, width / 2, height / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function draw() {
+  if (!ctx) return;
+  const { w, h, compact } = computeLayout();
+  ctx.clearRect(0, 0, w, h);
+  drawBackground(w, h);
+  drawHeader(w);
+  drawThermometers();
+  drawBoard();
+  if (!compact) drawSidePanel();
+  if (['menu', 'paused', 'solved', 'complete'].includes(game.mode)) drawOverlay(w, h);
+}
+
+function drawBackground(w, h) {
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#fffaf0');
+  bg.addColorStop(.5, '#e6f5f7');
+  bg.addColorStop(1, '#d7efe2');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.globalAlpha = .16;
+  ctx.strokeStyle = '#ef7b58';
+  ctx.lineWidth = 1;
+  for (let y = 34; y < h; y += 70) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.bezierCurveTo(w * .25, y + 36, w * .55, y - 28, w, y + 20);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#24735f';
+  for (let x = 40; x < w; x += 84) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x - 48, h);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawHeader(w) {
+  const current = puzzle();
+  const compact = w < 720;
+  ctx.fillStyle = '#182327';
+  ctx.font = '900 29px Inter, Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('Thermo Trail', 24, 36);
+  ctx.font = '800 14px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#526469';
+  ctx.fillText(`${current.name} - puzzle ${game.puzzleIndex + 1} of ${PUZZLES.length}`, 26, 60);
+  ctx.fillStyle = '#17333d';
+  if (compact) {
+    const message = game.message.length > 50 ? `${game.message.slice(0, 49)}...` : game.message;
+    ctx.fillText(message, 26, 88);
+  } else {
+    ctx.textAlign = 'right';
+    ctx.fillText(game.message, w - 24, 38);
+  }
+}
+
+function cellCenter(row, col) {
+  return {
+    x: layout.boardX + col * layout.cell + layout.cell / 2,
+    y: layout.boardY + row * layout.cell + layout.cell / 2,
+  };
+}
+
+function drawThermometers() {
+  const thermos = puzzle().thermos;
+  thermos.forEach((path, index) => {
+    const bad = game.errorThermos.has(index);
+    const points = path.map(([row, col]) => cellCenter(row, col));
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = bad ? '#d94855' : '#f28c64';
+    ctx.lineWidth = Math.max(14, layout.cell * .2);
+    ctx.globalAlpha = .72;
+    ctx.beginPath();
+    points.forEach((point, pointIndex) => {
+      if (pointIndex === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = bad ? '#d94855' : '#ffb06d';
+    ctx.beginPath();
+    ctx.arc(points[0].x, points[0].y, Math.max(13, layout.cell * .22), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffffbd';
+    ctx.lineWidth = Math.max(4, layout.cell * .055);
+    ctx.beginPath();
+    points.forEach((point, pointIndex) => {
+      if (pointIndex === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function drawBoard() {
+  const x = layout.boardX;
+  const y = layout.boardY;
+  const cell = layout.cell;
+
+  roundRect(x - 10, y - 10, layout.boardSize + 20, layout.boardSize + 20, 8);
+  ctx.fillStyle = '#ffffffc8';
+  ctx.fill();
+
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let col = 0; col < SIZE; col += 1) {
+      const value = game.values[row][col];
+      const px = x + col * cell;
+      const py = y + row * cell;
+      const locked = game.locked[row][col];
+      const selected = game.selected.row === row && game.selected.col === col;
+      const error = game.errorCells.has(cellKey(row, col));
+      ctx.fillStyle = (row + col) % 2 === 0 ? '#fffdfa88' : '#edf7f088';
+      ctx.fillRect(px, py, cell, cell);
+      if (locked) {
+        ctx.fillStyle = '#17333d1f';
+        ctx.fillRect(px, py, cell, cell);
+      }
+      if (error) {
+        ctx.fillStyle = '#ff64785c';
+        ctx.fillRect(px + 4, py + 4, cell - 8, cell - 8);
+      }
+      if (selected) {
+        ctx.strokeStyle = '#ffd36b';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(px + 4, py + 4, cell - 8, cell - 8);
+      }
+      if (value !== EMPTY) {
+        ctx.fillStyle = locked ? '#17333d' : '#8a321b';
+        ctx.font = `${locked ? 900 : 850} ${Math.floor(cell * .45)}px Inter, Segoe UI, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(value), px + cell / 2, py + cell / 2 + 1);
+        if (locked) {
+          ctx.fillStyle = '#24735f';
+          ctx.beginPath();
+          ctx.arc(px + cell - 13, py + 13, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = '#637a7e38';
+        ctx.beginPath();
+        ctx.arc(px + cell / 2, py + cell / 2, Math.max(3, cell * .055), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  for (let i = 0; i <= SIZE; i += 1) {
+    ctx.lineWidth = i === 0 || i === SIZE ? 4 : 1.5;
+    ctx.strokeStyle = i === 0 || i === SIZE ? '#17333d' : '#80959a';
+    ctx.beginPath();
+    ctx.moveTo(x, y + i * cell);
+    ctx.lineTo(x + layout.boardSize, y + i * cell);
+    ctx.moveTo(x + i * cell, y);
+    ctx.lineTo(x + i * cell, y + layout.boardSize);
+    ctx.stroke();
+  }
+
+  if (game.successPulse > 0) {
+    ctx.save();
+    ctx.globalAlpha = game.successPulse * .42;
+    ctx.strokeStyle = '#21c98a';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(x - 6, y - 6, layout.boardSize + 12, layout.boardSize + 12);
+    ctx.restore();
+  }
+}
+
+function drawSidePanel() {
+  const x = layout.panelX;
+  const y = layout.boardY;
+  const w = layout.panelW;
+  if (w < 190) return;
+  const analysis = analyzeBoard();
+  roundRect(x, y, w, layout.boardSize, 8);
+  ctx.fillStyle = '#17333de8';
+  ctx.fill();
+  ctx.fillStyle = '#f8fffb';
+  ctx.font = '900 23px Inter, Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Rules', x + 22, y + 38);
+  ctx.font = '800 15px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#d8eee8';
+  const lines = [
+    'Each row has digits 1 through 5 once.',
+    'Each column has digits 1 through 5 once.',
+    'Numbers strictly increase from each bulb to the thermometer tip.',
+    'Use Check to mark conflicts.',
+  ];
+  let lineY = y + 76;
+  for (const text of lines) {
+    wrapText(text, x + 22, lineY, w - 44, 22);
+    lineY += text.length > 42 ? 44 : 30;
+  }
+  const statusY = Math.min(y + layout.boardSize - 140, lineY + 12);
+  ctx.fillStyle = '#ffd36b';
+  ctx.font = '900 17px Inter, Segoe UI, sans-serif';
+  ctx.fillText('Grid status', x + 22, statusY);
+  ctx.fillStyle = '#cfe6e1';
+  ctx.font = '800 15px Inter, Segoe UI, sans-serif';
+  ctx.fillText(`Open cells: ${analysis.empty}`, x + 22, statusY + 28);
+  ctx.fillText(`Row conflicts: ${analysis.duplicateRows}`, x + 22, statusY + 52);
+  ctx.fillText(`Column conflicts: ${analysis.duplicateColumns}`, x + 22, statusY + 76);
+  ctx.fillText(`Thermo conflicts: ${analysis.thermoViolations}`, x + 22, statusY + 100);
+  ctx.fillText(`Best score: ${game.bestScore}`, x + 22, statusY + 124);
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, y);
+}
+
+function drawOverlay(w, h) {
+  ctx.save();
+  ctx.fillStyle = '#182327b6';
+  ctx.fillRect(0, 0, w, h);
+  const panelW = Math.min(640, w - 36);
+  const panelH = game.mode === 'menu' ? 238 : 190;
+  const x = (w - panelW) / 2;
+  const y = (h - panelH) / 2;
+  roundRect(x, y, panelW, panelH, 8);
+  ctx.fillStyle = '#fffdfa';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#182327';
+  ctx.font = '900 34px Inter, Segoe UI, sans-serif';
+  const title = game.mode === 'complete' ? 'Campaign Complete' : game.mode === 'solved' ? 'Trail Solved' : game.mode === 'paused' ? 'Paused' : 'Thermo Trail';
+  ctx.fillText(title, w / 2, y + 54);
+  ctx.font = '800 16px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#526469';
+  const body = game.mode === 'menu'
+    ? 'Fill a 5 by 5 grid with digits 1 through 5. Every thermometer must climb from bulb to tip.'
+    : game.message;
+  wrapCentered(body, w / 2, y + 91, panelW - 70, 22);
+  ctx.fillStyle = '#24735f';
+  ctx.font = '900 15px Inter, Segoe UI, sans-serif';
+  const action = game.mode === 'complete' ? 'Press Replay for another run.' : game.mode === 'solved' ? 'Press Next to continue.' : game.mode === 'paused' ? 'Press Resume to continue.' : 'Press Start or tap a cell.';
+  ctx.fillText(action, w / 2, y + panelH - 38);
+  ctx.restore();
+}
+
+function wrapCentered(text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  for (let i = 0; i < lines.length; i += 1) ctx.fillText(lines[i], x, y + i * lineHeight);
+}
+
+function cellFromPoint(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  const row = Math.floor((y - layout.boardY) / layout.cell);
+  const col = Math.floor((x - layout.boardX) / layout.cell);
+  if (row < 0 || col < 0 || row >= SIZE || col >= SIZE) return null;
+  return { row, col };
+}
+
+function handlePointer(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') {
+    startPuzzle(game.puzzleIndex);
+    return;
+  }
+  if (game.mode === 'paused') return;
+  if (game.mode === 'solved' || game.mode === 'complete') {
+    nextPuzzle();
+    return;
+  }
+  const cell = cellFromPoint(event.clientX, event.clientY);
+  if (cell) selectCell(cell.row, cell.col);
+}
+
+function handleKey(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+  const keyName = event.key.toLowerCase();
+  if (/^[1-5]$/.test(event.key)) {
+    event.preventDefault();
+    setValue(Number(event.key));
+  } else if (event.key === 'Backspace' || event.key === 'Delete' || event.key === '0') {
+    event.preventDefault();
+    setValue(EMPTY);
+  } else if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    moveSelection(0, -1);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    moveSelection(0, 1);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    moveSelection(-1, 0);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    moveSelection(1, 0);
+  } else if (keyName === 'h') {
+    event.preventDefault();
+    useHint();
+  } else if (keyName === 'c') {
+    event.preventDefault();
+    checkBoard();
+  } else if (keyName === 'u') {
+    event.preventDefault();
+    undo();
+  } else if (keyName === 'p' || event.key === 'Escape') {
+    event.preventDefault();
+    togglePause();
+  } else if (keyName === 'r') {
+    event.preventDefault();
+    restartPuzzle();
+  } else if (keyName === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+    else if (game.mode === 'menu') startPuzzle(game.puzzleIndex);
+    else checkBoard();
+  }
+}
+
+function stateToObject() {
+  const current = puzzle();
+  const analysis = analyzeBoard();
+  return {
+    game: 'thermotrail',
+    coordinate_system: 'Canvas origin is top-left with x right and y down. Grid rows and columns are zero-based.',
+    mode: game.mode,
+    puzzle_id: current.id,
+    puzzle_name: current.name,
+    puzzle_index: game.puzzleIndex,
+    puzzle_count: PUZZLES.length,
+    size: SIZE,
+    digits: DIGITS,
+    selected_cell: { ...game.selected },
+    board: cloneGrid(game.values),
+    locked: game.locked.map(row => row.map(Boolean)),
+    thermometers: current.thermos.map((path, index) => ({ index, path: path.map(([row, col]) => ({ row, col })) })),
+    filled_cells: filledCount(),
+    total_cells: SIZE * SIZE,
+    elapsed_seconds: Number(game.elapsed.toFixed(2)),
+    moves: game.moves,
+    hints_used: game.hints,
+    checks: game.checks,
+    score: game.score,
+    best_score: game.bestScore,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    empty_cells: analysis.empty,
+    rule_errors: [...analysis.errors].map(parseCellKey),
+    thermo_error_indexes: [...analysis.thermoErrors],
+    duplicate_rows: analysis.duplicateRows,
+    duplicate_columns: analysis.duplicateColumns,
+    thermo_violations: analysis.thermoViolations,
+    rows: analysis.rows,
+    columns: analysis.columns,
+    solved: analysis.solved,
+    message: game.message,
+    last_action: game.lastAction,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function solveCurrent() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  pushUndo();
+  game.values = cloneGrid(puzzle().solutionGrid);
+  game.lastAction = { type: 'test_solve', puzzle: puzzle().id };
+  finishPuzzle();
+  updateHud();
+  draw();
+  return stateToObject();
+}
+
+function solveCampaign() {
+  for (let i = 0; i < PUZZLES.length; i += 1) {
+    startPuzzle(i);
+    solveCurrent();
+  }
+  return stateToObject();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  draw();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+window.__THERMO_TRAIL_GAME__ = {
+  start: startPuzzle,
+  restart: restartPuzzle,
+  nextPuzzle,
+  selectCell,
+  setValue,
+  checkBoard,
+  useHint,
+  undo,
+  solveCurrent,
+  solveCampaign,
+  stateToObject,
+  renderGameToText,
+  analyzeBoard,
+  puzzleIds: () => PUZZLES.map(item => item.id),
+};
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return stateToObject();
+  } catch {
+    return { game: 'thermotrail', mode: game.mode };
+  }
+};
+
+canvas.addEventListener('pointerdown', handlePointer);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('resize', resizeCanvas);
+document.addEventListener('fullscreenchange', resizeCanvas);
+document.addEventListener('keydown', handleKey);
+els.start.addEventListener('click', () => {
+  if (game.mode === 'solved' || game.mode === 'complete') nextPuzzle();
+  else if (game.mode === 'paused') togglePause();
+  else startPuzzle(game.puzzleIndex);
+});
+els.check.addEventListener('click', checkBoard);
+els.hint.addEventListener('click', useHint);
+els.undo.addEventListener('click', undo);
+els.pause.addEventListener('click', togglePause);
+els.restart.addEventListener('click', restartPuzzle);
+els.full.addEventListener('click', toggleFullscreen);
+els.clear.addEventListener('click', () => setValue(EMPTY));
+for (const button of els.digits) {
+  button.addEventListener('click', () => setValue(Number(button.dataset.digit)));
+}
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+    if (game.mode === 'playing' || game.successPulse > 0) {
+      updateHud();
+      draw();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+primeMenuBoard();
+updateHud();
+resizeCanvas();
+mountGameFeedback({ gameSlug: 'thermotrail', gameName: 'Thermo Trail' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
