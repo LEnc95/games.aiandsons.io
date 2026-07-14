@@ -516,3 +516,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-11] Key PR links: none merged for this date.
 - [nightly 2026-07-12] Tracked changes: 1 commit(s) - 7be1d21 Add Island Walls to discovery metadata.
 - [nightly 2026-07-12] Key PR links: none merged for this date.
+- [nightly 2026-07-13] Tracked changes: 1 commit(s) - 7e3a0ed Add Binary Grid to discovery metadata.
+- [nightly 2026-07-13] Key PR links: none merged for this date.

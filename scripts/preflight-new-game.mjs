@@ -1,6 +1,6 @@
-// Preflight for the daily add-a-game flow (codex drops a game, a human
-// commits it to main). Validates that everything a new game needs is
-// wired before the commit ships to prod:
+// Preflight for the daily add-a-game flow (Codex builds and validates a
+// game, then the scheduled automation commits it to main). Validates that
+// everything a new game needs is wired before the commit ships to prod:
 //
 //   node scripts/preflight-new-game.mjs   (or: npm run game:preflight)
 //

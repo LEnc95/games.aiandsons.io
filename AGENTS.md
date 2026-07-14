@@ -55,6 +55,7 @@ Operational command reference for contributors and automations in this repositor
 - Live-provision missing Linear labels and baseline issues: `npm run feedback:provision-linear`
 
 ## GitHub Automations
+- The Codex `create-a-new-game` scheduler runs daily at 07:00 in an isolated worktree. A successful run commits one game and pushes `HEAD:main`; any pre-push failure must leave `main` unchanged.
 - Main branch fast QA and new-game preflight: `.github/workflows/main-qa.yml`
 - PR classroom smoke gate: `.github/workflows/classroom-smoke.yml`
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
@@ -80,8 +81,9 @@ Operational command reference for contributors and automations in this repositor
 - Run `npm run seo` and `npm run og` after metadata/content changes
 - Run `npm run game:preflight` before committing a new game
 - Mount `mountGameFeedback({ gameSlug, gameName })`
-- Run `npm run feedback:sync-linear`
+- Scheduled runs use `npm run feedback:sync-linear:files`; the daily provisioning workflow handles live Linear resources
 - Run `npm run test:feedback`
 - Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
 - Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
+- After every required gate passes, commit as `Add <Game Name> daily game`, push without force to `main`, and verify both Main QA and the production game route
 
