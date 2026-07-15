@@ -1423,11 +1423,12 @@
       const categories = Array.isArray(game.categories) ? game.categories.join(' ') : '';
       const modes = Array.isArray(game.modes) ? game.modes.join(' ') : '';
       game._searchHaystack = normalizeText(`${game.name} ${game.slug} ${game.desc || ''} ${game.scoreHint || ''} ${game.category || ''} ${categories} ${modes} ${game.duration || ''} ${game.difficulty || ''} ${accessibilityTags}`);
+      game._categoriesSet = new Set(Array.isArray(game.categories) ? game.categories : []);
+      game._modesSet = new Set(Array.isArray(game.modes) ? game.modes : []);
     });
     const gameMatchesCategory = (game, category) => {
       if (category === 'all') return true;
-      const categories = Array.isArray(game.categories) ? game.categories : [];
-      if (categories.includes(category)) return true;
+      if (game._categoriesSet && game._categoriesSet.has(category)) return true;
       return category === 'audio-accessible' && game.category === 'audio-only-blind-accessible';
     };
     const formatMetaLabel = (value) => {
@@ -1441,8 +1442,8 @@
     const getGameBadges = (game) => {
       const badges = [getCategoryLabel(getPrimaryCategory(game))];
       if (game.duration) badges.push(formatMetaLabel(game.duration));
-      if (Array.isArray(game.modes) && game.modes.includes('two-player')) badges.push('Two Player');
-      if (Array.isArray(game.modes) && game.modes.includes('multiplayer')) badges.push('Multiplayer');
+      if (game._modesSet && game._modesSet.has('two-player')) badges.push('Two Player');
+      if (game._modesSet && game._modesSet.has('multiplayer')) badges.push('Multiplayer');
       return [...new Set(badges)].slice(0, 3);
     };
     const getLaunchCounts = () => {
@@ -1520,9 +1521,9 @@
         .slice(0, limit);
     };
     const getPlayWithFriendsGames = (limit = 12) => GAMES
-      .filter((game) => Array.isArray(game.modes) && (
-        game.modes.includes('two-player') ||
-        game.modes.includes('multiplayer')
+      .filter((game) => game._modesSet && (
+        game._modesSet.has('two-player') ||
+        game._modesSet.has('multiplayer')
       ))
       .sort((a, b) => (
         compareFeaturedRank(a, b, 'trendingRank') ||
