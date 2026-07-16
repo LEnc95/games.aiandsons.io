@@ -171,5 +171,6 @@
 - game/islandwalls
 - game/binarygrid
 - game/thermotrail
+- game/kropkidots
 
 Generated from `src/meta/feedback.js`.

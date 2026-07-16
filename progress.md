@@ -4040,3 +4040,13 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Custom scenarios covered digit entry, duplicate/conflict checking, undo, hint, pause/resume, restart, fullscreen, edge/boundary selection, single-puzzle solve with coin reward, campaign completion, shared feedback modal, mobile touch digit entry, and canvas nonblank pixel checks.
 - Final pre-publish gate passed before this note: `npm run game:preflight`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run test:social` (20 tests), and `git diff --check` with only repository LF-to-CRLF warnings. Rerunning the gate after this progress update before commit.
 - TODO: none for Thermo Trail; future work may address repository-wide LF-to-CRLF warning noise in generated files.
+
+## 2026-07-16 Create a new game automation
+- New request: add exactly one game the website does not already have using `$develop-web-game`.
+- Automation memory was missing at `$CODEX_HOME/automations/create-a-new-game/memory.md`; using `progress.md` history to avoid Thermo Trail, Binary Grid, Island Walls, Canyon Glider, Fillomino, Mini Crossword, ChronoSort, Black Box, Futoshiki, and other recent additions.
+- Reviewed the registry and selected Kropki Dots (`/kropkidots`), a Latin-grid adjacency-dot logic puzzle not currently represented in the catalog.
+- Initial implementation added `kropkidots/index.html` with five deterministic 4x4 Kropki boards, white consecutive dots, black double/half dots, row/column uniqueness checks, hint/check/undo, pause/restart/fullscreen, touch and keyboard controls, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__KROPKI_DOTS_GAME__` helpers.
+- Registered Kropki Dots in `src/meta/games.js` and the puzzle discovery group.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`; sitemap, SEO blocks, discovery metadata, `assets/og/kropkidots.png`, and local Linear feedback seeds now include Kropki Dots. Cleaned generator line-ending side effects so the remaining repo diff stays in the allowed release scope.
+- Validation passed so far: required `$WEB_GAME_CLIENT` loop in `output/web-game/kropkidots-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/kropkidots-scenarios-final`, screenshot/feedback-modal/OG inspection, deterministic `advanceTime(ms)` delta check, fullscreen activation, mobile layout fix, and zero final Kropki Dots browser/page error artifacts.
+- Final pre-publish gate passed: `npm run game:preflight`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run test:social` (20 tests), and `git diff --check` with only repository LF-to-CRLF warnings.

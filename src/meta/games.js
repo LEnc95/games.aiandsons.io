@@ -155,6 +155,7 @@ const BASE_GAMES = [
   { slug:'islandwalls',    name:'Island Walls',         emoji:'\u{1F3DD}\uFE0F', scoreHint:'solves', url:'/islandwalls',  desc:'Mark one connected wall network while every numbered island keeps its exact size across five deduction maps.', earnsCoins:true },
   { slug:'binarygrid',     name:'Binary Grid',          emoji:'\u{1F522}', scoreHint:'solves',     url:'/binarygrid',   desc:'Fill binary logic grids with balanced 0s and 1s while avoiding triples and duplicate lines.', earnsCoins:true },
   { slug:'thermotrail',    name:'Thermo Trail',         emoji:'\u{1F321}\uFE0F', scoreHint:'solves', url:'/thermotrail', desc:'Fill Latin-grid digits while every thermometer trail strictly rises from bulb to tip.', earnsCoins:true },
+  { slug:'kropkidots',     name:'Kropki Dots',          emoji:'\u26AB',    scoreHint:'solves', url:'/kropkidots', desc:'Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -178,7 +179,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

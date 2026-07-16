@@ -1,0 +1,1226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Kropki Dots | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #172126;
+  background:
+    radial-gradient(circle at 18% 18%, #fff1b8 0 12%, transparent 34%),
+    radial-gradient(circle at 78% 10%, #b9f2df 0 10%, transparent 32%),
+    linear-gradient(145deg, #f9fbf2 0%, #d9eaf0 46%, #f2dad2 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 20;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffcc;
+  border-radius: 8px;
+  background: #172126ec;
+  color: #f8fffb;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 12px 26px #1721262e;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(68px, calc(env(safe-area-inset-top) + 64px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 0 1 auto;
+  height: clamp(314px, calc(100dvh - 255px), 592px);
+  min-height: 304px;
+  max-height: 592px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffe2;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 24px 58px #1721262d;
+}
+.hud,
+.controls,
+.digit-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.digit-pad { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffbd;
+  border-radius: 8px;
+  background: #172126e8;
+  color: #f8fffb;
+  box-shadow: inset 0 1px 0 #ffffff36;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #cadfe1;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #9dffd0; }
+.chip.warn b { color: #ffd86e; }
+.chip.danger b { color: #ff9a8c; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #244b53; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.primary {
+  background: #ffd15c;
+  border-color: #fff0ba;
+  color: #172126;
+}
+.primary:hover { background: #ffdd84; }
+.action { background: #1f7c67; }
+.utility { background: #465870; }
+.clear { background: #7a4a55; }
+.digit {
+  background: #ef8f5d;
+  color: #172126;
+}
+button:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #ffd15c;
+  outline-offset: 2px;
+}
+@media (max-width: 840px) {
+  .app {
+    padding: max(56px, calc(env(safe-area-inset-top) + 54px)) 9px max(12px, env(safe-area-inset-bottom));
+    gap: 7px;
+  }
+  .stage { max-height: 53dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .digit-pad { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+}
+@media (max-width: 540px) {
+  .back { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .app { padding-top: max(48px, calc(env(safe-area-inset-top) + 46px)); }
+  .stage {
+    flex: 0 0 clamp(300px, 42vh, 360px);
+    height: clamp(300px, 42vh, 360px);
+    min-height: 0;
+    max-height: none;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip:nth-child(6) { display: none; }
+  button { min-height: 39px; padding: 0 5px; font-size: 13px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Kropki Dots | AI and Sons Games">
+  <meta property="og:description" content="Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/kropkidots">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/kropkidots.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Kropki Dots | AI and Sons Games">
+  <meta name="twitter:description" content="Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/kropkidots.png">
+  <link rel="canonical" href="https://games.aiandsons.io/kropkidots">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Kropki Dots","description":"Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/kropkidots","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">&larr; Games</a>
+<main class="app" aria-label="Kropki Dots game">
+  <div class="stage">
+    <canvas id="game" width="1080" height="700" aria-label="Kropki Dots puzzle board"></canvas>
+  </div>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleLabel">1 / 5</b></div>
+    <div class="chip"><span>Filled</span><b id="filledLabel">0 / 16</b></div>
+    <div class="chip"><span>Moves</span><b id="movesLabel">0</b></div>
+    <div class="chip warn"><span>Hints</span><b id="hintsLabel">0</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreLabel">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">Start</button>
+    <button id="checkBtn" class="action" type="button">Check</button>
+    <button id="hintBtn" class="action" type="button">Hint</button>
+    <button id="undoBtn" class="utility" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+  <section class="digit-pad" aria-label="Digit input pad">
+    <button class="digit" data-digit="1" type="button">1</button>
+    <button class="digit" data-digit="2" type="button">2</button>
+    <button class="digit" data-digit="3" type="button">3</button>
+    <button class="digit" data-digit="4" type="button">4</button>
+    <button id="clearBtn" class="clear" type="button">Clear</button>
+  </section>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  puzzle: document.getElementById('puzzleLabel'),
+  filled: document.getElementById('filledLabel'),
+  moves: document.getElementById('movesLabel'),
+  hints: document.getElementById('hintsLabel'),
+  score: document.getElementById('scoreLabel'),
+  coins: document.getElementById('coinsLabel'),
+  start: document.getElementById('startBtn'),
+  check: document.getElementById('checkBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+  clear: document.getElementById('clearBtn'),
+  digits: [...document.querySelectorAll('[data-digit]')],
+};
+
+const EMPTY = 0;
+const SIZE = 4;
+const DIGITS = [1, 2, 3, 4];
+const STORAGE_BEST = 'kropkidots:best';
+
+const rawPuzzles = [
+  {
+    id: 'harbor-lamps',
+    name: 'Harbor Lamps',
+    solution: [
+      [1, 2, 3, 4],
+      [3, 4, 1, 2],
+      [2, 1, 4, 3],
+      [4, 3, 2, 1],
+    ],
+    givens: [
+      [1, 0, 0, 0],
+      [0, 4, 0, 0],
+      [0, 0, 4, 0],
+      [0, 0, 0, 1],
+    ],
+  },
+  {
+    id: 'market-strings',
+    name: 'Market Strings',
+    solution: [
+      [2, 4, 1, 3],
+      [1, 3, 4, 2],
+      [3, 1, 2, 4],
+      [4, 2, 3, 1],
+    ],
+    givens: [
+      [2, 0, 0, 0],
+      [0, 0, 4, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 1],
+    ],
+  },
+  {
+    id: 'gallery-tiles',
+    name: 'Gallery Tiles',
+    solution: [
+      [4, 1, 2, 3],
+      [2, 3, 4, 1],
+      [1, 4, 3, 2],
+      [3, 2, 1, 4],
+    ],
+    givens: [
+      [4, 0, 0, 0],
+      [0, 3, 0, 0],
+      [0, 0, 3, 0],
+      [0, 0, 0, 4],
+    ],
+  },
+  {
+    id: 'roof-garden',
+    name: 'Roof Garden',
+    solution: [
+      [3, 1, 4, 2],
+      [4, 2, 1, 3],
+      [1, 3, 2, 4],
+      [2, 4, 3, 1],
+    ],
+    givens: [
+      [0, 1, 0, 0],
+      [4, 0, 0, 0],
+      [0, 0, 2, 0],
+      [0, 0, 0, 1],
+    ],
+  },
+  {
+    id: 'moon-court',
+    name: 'Moon Court',
+    solution: [
+      [1, 3, 4, 2],
+      [4, 2, 1, 3],
+      [2, 4, 3, 1],
+      [3, 1, 2, 4],
+    ],
+    givens: [
+      [0, 3, 0, 0],
+      [4, 0, 0, 0],
+      [0, 0, 3, 0],
+      [0, 0, 0, 4],
+    ],
+  },
+];
+
+const dotRelation = (a, b) => {
+  if (!a || !b) return null;
+  const low = Math.min(a, b);
+  const high = Math.max(a, b);
+  if (high === low * 2) return 'black';
+  if (Math.abs(a - b) === 1) return 'white';
+  return null;
+};
+
+const normalizePuzzle = (puzzle) => {
+  const dots = [];
+  const dotMap = new Map();
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE - 1; c += 1) {
+      const type = dotRelation(puzzle.solution[r][c], puzzle.solution[r][c + 1]);
+      if (type) {
+        const key = `h:${r}:${c}`;
+        dots.push({ orientation: 'h', row: r, col: c, type });
+        dotMap.set(key, type);
+      }
+    }
+  }
+  for (let r = 0; r < SIZE - 1; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      const type = dotRelation(puzzle.solution[r][c], puzzle.solution[r + 1][c]);
+      if (type) {
+        const key = `v:${r}:${c}`;
+        dots.push({ orientation: 'v', row: r, col: c, type });
+        dotMap.set(key, type);
+      }
+    }
+  }
+  return { ...puzzle, dots, dotMap };
+};
+
+const PUZZLES = rawPuzzles.map(normalizePuzzle);
+
+const newGrid = () => Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+const cloneGrid = grid => grid.map(row => [...row]);
+const cellKey = (r, c) => `${r},${c}`;
+const dotKey = (orientation, row, col) => `${orientation}:${row}:${col}`;
+const parseCellKey = key => {
+  const [row, col] = key.split(',').map(Number);
+  return { row, col };
+};
+const parseDotKey = key => {
+  const [orientation, row, col] = key.split(':');
+  return { orientation, row: Number(row), col: Number(col) };
+};
+
+const game = {
+  mode: 'menu',
+  previousMode: 'playing',
+  puzzleIndex: 0,
+  values: newGrid(),
+  selected: { row: 0, col: 0 },
+  history: [],
+  moves: 0,
+  hints: 0,
+  checks: 0,
+  score: 0,
+  bestScore: Number(localStorage.getItem(STORAGE_BEST) || 0),
+  coinsEarned: 0,
+  lastCoins: 0,
+  solvedIds: new Set(),
+  message: 'Fill every row and column with 1 through 4. White dots touch consecutive digits; black dots touch double or half.',
+  errors: new Set(),
+  dotErrors: new Set(),
+  successPulse: 0,
+  shake: 0,
+  elapsedMs: 0,
+  lastAction: { type: 'load' },
+};
+
+let view = {
+  width: 1080,
+  height: 700,
+  board: { left: 48, top: 48, size: 500, cell: 125 },
+  sidePanel: null,
+};
+let lastFrame = performance.now();
+let manualStepping = false;
+
+const currentPuzzle = () => PUZZLES[game.puzzleIndex];
+const isGiven = (row, col) => currentPuzzle().givens[row][col] !== EMPTY;
+
+function primePuzzle(index = 0) {
+  game.puzzleIndex = Math.max(0, Math.min(PUZZLES.length - 1, index));
+  const puzzle = currentPuzzle();
+  game.values = cloneGrid(puzzle.givens);
+  game.selected = firstEditableCell();
+  game.history = [];
+  game.moves = 0;
+  game.hints = 0;
+  game.checks = 0;
+  game.lastCoins = 0;
+  game.errors = new Set();
+  game.dotErrors = new Set();
+  game.successPulse = 0;
+  game.shake = 0;
+}
+
+function firstEditableCell() {
+  const puzzle = currentPuzzle();
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      if (!puzzle.givens[r][c]) return { row: r, col: c };
+    }
+  }
+  return { row: 0, col: 0 };
+}
+
+function startPuzzle(index = game.puzzleIndex) {
+  primePuzzle(index);
+  game.mode = 'playing';
+  game.message = `Puzzle ${game.puzzleIndex + 1}: ${currentPuzzle().name}. Use the dots between cells to place every digit.`;
+  game.lastAction = { type: 'start', puzzle: currentPuzzle().id };
+  updateHud();
+  draw();
+}
+
+function restartPuzzle() {
+  if (game.mode === 'complete') {
+    game.solvedIds.clear();
+    game.score = 0;
+    game.coinsEarned = 0;
+    startPuzzle(0);
+    return;
+  }
+  startPuzzle(game.puzzleIndex);
+}
+
+function nextPuzzleOrStart() {
+  if (game.mode === 'menu') {
+    game.score = 0;
+    game.coinsEarned = 0;
+    game.solvedIds.clear();
+    startPuzzle(0);
+  } else if (game.mode === 'solved') {
+    startPuzzle(Math.min(PUZZLES.length - 1, game.puzzleIndex + 1));
+  } else if (game.mode === 'complete') {
+    game.score = 0;
+    game.coinsEarned = 0;
+    game.solvedIds.clear();
+    startPuzzle(0);
+  } else if (game.mode === 'paused') {
+    togglePause();
+  } else {
+    restartPuzzle();
+  }
+}
+
+function pushHistory() {
+  game.history.push({
+    values: cloneGrid(game.values),
+    moves: game.moves,
+    hints: game.hints,
+    checks: game.checks,
+    selected: { ...game.selected },
+    message: game.message,
+  });
+  if (game.history.length > 80) game.history.shift();
+}
+
+function undoMove() {
+  if (game.mode !== 'playing' || !game.history.length) return;
+  const snapshot = game.history.pop();
+  game.values = cloneGrid(snapshot.values);
+  game.moves = snapshot.moves;
+  game.hints = snapshot.hints;
+  game.checks = snapshot.checks;
+  game.selected = { ...snapshot.selected };
+  game.message = 'Undo restored the previous grid.';
+  game.errors = new Set();
+  game.dotErrors = new Set();
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  draw();
+}
+
+function selectCell(row, col) {
+  const r = Math.max(0, Math.min(SIZE - 1, row));
+  const c = Math.max(0, Math.min(SIZE - 1, col));
+  game.selected = { row: r, col: c };
+  game.lastAction = { type: 'select', row: r, col: c };
+  draw();
+}
+
+function moveSelection(dr, dc) {
+  selectCell(game.selected.row + dr, game.selected.col + dc);
+}
+
+function setValue(value) {
+  if (game.mode !== 'playing') return false;
+  const { row, col } = game.selected;
+  if (isGiven(row, col)) {
+    game.message = 'Locked starter cells cannot be changed.';
+    game.shake = 1;
+    updateHud();
+    draw();
+    return false;
+  }
+  const normalized = DIGITS.includes(value) ? value : EMPTY;
+  if (game.values[row][col] === normalized) return false;
+  pushHistory();
+  game.values[row][col] = normalized;
+  game.moves += 1;
+  game.errors = new Set();
+  game.dotErrors = new Set();
+  game.message = normalized ? `Placed ${normalized} at row ${row + 1}, column ${col + 1}.` : `Cleared row ${row + 1}, column ${col + 1}.`;
+  game.lastAction = { type: normalized ? 'place' : 'clear', row, col, value: normalized };
+  const analysis = analyzeBoard(game.values);
+  if (analysis.solved) handleSolved();
+  else updateHud();
+  draw();
+  return true;
+}
+
+function revealHint() {
+  if (game.mode !== 'playing') return false;
+  const puzzle = currentPuzzle();
+  let target = null;
+  for (let r = 0; r < SIZE && !target; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      if (!isGiven(r, c) && game.values[r][c] !== puzzle.solution[r][c]) {
+        target = { row: r, col: c };
+        break;
+      }
+    }
+  }
+  if (!target) {
+    checkBoard();
+    return false;
+  }
+  pushHistory();
+  game.selected = { ...target };
+  game.values[target.row][target.col] = puzzle.solution[target.row][target.col];
+  game.hints += 1;
+  game.moves += 1;
+  game.errors = new Set();
+  game.dotErrors = new Set();
+  game.message = `Hint filled row ${target.row + 1}, column ${target.col + 1}.`;
+  game.lastAction = { type: 'hint', row: target.row, col: target.col, value: game.values[target.row][target.col] };
+  const analysis = analyzeBoard(game.values);
+  if (analysis.solved) handleSolved();
+  else updateHud();
+  draw();
+  return true;
+}
+
+function checkBoard() {
+  if (game.mode !== 'playing') return false;
+  const analysis = analyzeBoard(game.values);
+  game.checks += 1;
+  game.errors = analysis.errors;
+  game.dotErrors = analysis.dotErrors;
+  game.lastAction = {
+    type: 'check',
+    empty: analysis.empty,
+    cellErrors: analysis.errors.size,
+    dotErrors: analysis.dotErrors.size,
+  };
+  if (analysis.solved) {
+    handleSolved();
+    return true;
+  }
+  game.shake = analysis.errors.size || analysis.dotErrors.size ? 1 : 0;
+  if (analysis.empty) {
+    game.message = `${analysis.empty} cells still need digits.`;
+  } else if (analysis.errors.size || analysis.dotErrors.size) {
+    game.message = `${analysis.errors.size + analysis.dotErrors.size} rule issues are highlighted.`;
+  } else {
+    game.message = 'Rows, columns, and dots currently agree.';
+  }
+  updateHud();
+  draw();
+  return false;
+}
+
+function analyzeBoard(values) {
+  const puzzle = currentPuzzle();
+  const errors = new Set();
+  const dotErrors = new Set();
+  let empty = 0;
+
+  for (let r = 0; r < SIZE; r += 1) {
+    const seen = new Map();
+    for (let c = 0; c < SIZE; c += 1) {
+      const value = values[r][c];
+      if (!value) {
+        empty += 1;
+        continue;
+      }
+      if (!DIGITS.includes(value)) errors.add(cellKey(r, c));
+      if (puzzle.givens[r][c] && value !== puzzle.givens[r][c]) errors.add(cellKey(r, c));
+      if (seen.has(value)) {
+        errors.add(cellKey(r, c));
+        errors.add(cellKey(r, seen.get(value)));
+      } else {
+        seen.set(value, c);
+      }
+    }
+  }
+
+  for (let c = 0; c < SIZE; c += 1) {
+    const seen = new Map();
+    for (let r = 0; r < SIZE; r += 1) {
+      const value = values[r][c];
+      if (!value) continue;
+      if (seen.has(value)) {
+        errors.add(cellKey(r, c));
+        errors.add(cellKey(seen.get(value), c));
+      } else {
+        seen.set(value, r);
+      }
+    }
+  }
+
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE - 1; c += 1) {
+      inspectDotPair(values, puzzle, dotErrors, errors, 'h', r, c, r, c, r, c + 1);
+    }
+  }
+  for (let r = 0; r < SIZE - 1; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      inspectDotPair(values, puzzle, dotErrors, errors, 'v', r, c, r, c, r + 1, c);
+    }
+  }
+
+  const solved = empty === 0 && errors.size === 0 && dotErrors.size === 0;
+  return { empty, errors, dotErrors, solved };
+}
+
+function inspectDotPair(values, puzzle, dotErrors, errors, orientation, dotRow, dotCol, r1, c1, r2, c2) {
+  const a = values[r1][c1];
+  const b = values[r2][c2];
+  if (!a || !b) return;
+  const expected = puzzle.dotMap.get(dotKey(orientation, dotRow, dotCol)) || null;
+  const actual = dotRelation(a, b);
+  const ok = expected ? actual === expected : actual === null;
+  if (!ok) {
+    dotErrors.add(dotKey(orientation, dotRow, dotCol));
+    errors.add(cellKey(r1, c1));
+    errors.add(cellKey(r2, c2));
+  }
+}
+
+function scoreForSolve() {
+  const base = 180 + game.puzzleIndex * 35;
+  const movePenalty = Math.max(0, game.moves - 8) * 4;
+  const hintPenalty = game.hints * 18;
+  const checkPenalty = Math.max(0, game.checks - 1) * 6;
+  return Math.max(40, base - movePenalty - hintPenalty - checkPenalty);
+}
+
+function addReward(coins) {
+  const amount = Math.max(0, Math.floor(coins));
+  if (!amount) return;
+  game.coinsEarned += amount;
+  addCoins(amount);
+}
+
+function handleSolved() {
+  const puzzle = currentPuzzle();
+  const score = scoreForSolve();
+  game.score += score;
+  game.bestScore = Math.max(game.bestScore, game.score);
+  localStorage.setItem(STORAGE_BEST, String(game.bestScore));
+  let coins = 0;
+  if (!game.solvedIds.has(puzzle.id)) {
+    coins = 7 + game.puzzleIndex * 2 + Math.max(0, 3 - game.hints);
+    if (game.puzzleIndex === PUZZLES.length - 1) coins += 22;
+    addReward(coins);
+    game.solvedIds.add(puzzle.id);
+  }
+  game.lastCoins = coins;
+  game.successPulse = 1;
+  game.errors = new Set();
+  game.dotErrors = new Set();
+  game.mode = game.puzzleIndex === PUZZLES.length - 1 ? 'complete' : 'solved';
+  game.message = game.mode === 'complete'
+    ? `Campaign complete. Earned ${coins} coins on this grid.`
+    : `Solved ${puzzle.name}. Earned ${coins} coins.`;
+  game.lastAction = { type: 'solve', puzzle: puzzle.id, score, coins };
+  updateHud();
+  draw();
+}
+
+function togglePause() {
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode || 'playing';
+    game.message = 'Resumed. Keep the dot clues aligned.';
+    game.lastAction = { type: 'resume' };
+  } else if (game.mode === 'playing') {
+    game.previousMode = game.mode;
+    game.mode = 'paused';
+    game.message = 'Paused.';
+    game.lastAction = { type: 'pause' };
+  }
+  updateHud();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function countFilled() {
+  return game.values.flat().filter(Boolean).length;
+}
+
+function updateHud() {
+  const analysis = analyzeBoard(game.values);
+  els.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  els.filled.textContent = `${SIZE * SIZE - analysis.empty} / ${SIZE * SIZE}`;
+  els.moves.textContent = String(game.moves);
+  els.hints.textContent = String(game.hints);
+  els.score.textContent = String(game.score);
+  els.coins.textContent = String(Number(profileState.coins || 0));
+  els.start.textContent = game.mode === 'solved' ? 'Next' : game.mode === 'complete' ? 'Replay' : game.mode === 'paused' ? 'Resume' : game.mode === 'menu' ? 'Start' : 'New';
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  const playing = game.mode === 'playing';
+  els.check.disabled = !playing;
+  els.hint.disabled = !playing;
+  els.undo.disabled = !playing || !game.history.length;
+  els.clear.disabled = !playing;
+  for (const button of els.digits) button.disabled = !playing;
+}
+
+function update(dt) {
+  game.elapsedMs += dt * 1000;
+  game.successPulse = Math.max(0, game.successPulse - dt * 1.6);
+  game.shake = Math.max(0, game.shake - dt * 5);
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = Math.max(320, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(240, Math.floor(rect.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  view.width = rect.width;
+  view.height = rect.height;
+  draw();
+}
+
+function computeLayout() {
+  const w = view.width;
+  const h = view.height;
+  const wide = w >= 780;
+  const side = wide
+    ? Math.min(528, h - 68, w - 340)
+    : Math.min(w - 28, h - 112, 402);
+  const size = Math.max(210, side);
+  const left = wide ? 34 : (w - size) / 2;
+  const top = wide ? 34 : 38;
+  view.board = { left, top, size, cell: size / SIZE };
+  view.sidePanel = wide
+    ? { left: left + size + 30, top, width: Math.max(240, w - (left + size + 62)), height: size }
+    : { left: 14, top: top + size + 14, width: w - 28, height: Math.max(70, h - (top + size + 24)) };
+}
+
+function draw() {
+  computeLayout();
+  const w = view.width;
+  const h = view.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, '#fffdf8');
+  gradient.addColorStop(0.48, '#eaf6f4');
+  gradient.addColorStop(1, '#f7e0d7');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+  drawBackgroundDots(w, h);
+  drawBoard();
+  drawPanel();
+  if (game.mode === 'menu') drawOverlay('Kropki Dots', 'Fill rows and columns with 1-4. White dots mean consecutive; black dots mean double or half.');
+  if (game.mode === 'paused') drawOverlay('Paused', 'Resume when you are ready.');
+  if (game.mode === 'solved') drawOverlay('Solved', 'Use Next to continue the campaign.');
+  if (game.mode === 'complete') drawOverlay('Campaign Complete', 'Replay to try for a cleaner score.');
+}
+
+function drawBackgroundDots(w, h) {
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  for (let i = 0; i < 20; i += 1) {
+    const x = ((i * 113) % Math.max(1, w)) + 8;
+    const y = ((i * 67) % Math.max(1, h)) + 8;
+    ctx.beginPath();
+    ctx.arc(x, y, 7 + (i % 3) * 4, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 ? '#1f7c67' : '#ef8f5d';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawBoard() {
+  const { left, top, size, cell } = view.board;
+  const offset = game.shake ? Math.sin(game.elapsedMs / 24) * 4 * game.shake : 0;
+  ctx.save();
+  ctx.translate(offset, 0);
+  roundRect(left - 8, top - 8, size + 16, size + 16, 8, '#fffaf0e8', '#ffffffc9', 2);
+
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      drawCell(r, c);
+    }
+  }
+
+  ctx.strokeStyle = '#29343b';
+  ctx.lineWidth = 2;
+  for (let i = 0; i <= SIZE; i += 1) {
+    const p = left + i * cell;
+    ctx.beginPath();
+    ctx.moveTo(p, top);
+    ctx.lineTo(p, top + size);
+    ctx.stroke();
+    const q = top + i * cell;
+    ctx.beginPath();
+    ctx.moveTo(left, q);
+    ctx.lineTo(left + size, q);
+    ctx.stroke();
+  }
+
+  for (const dot of currentPuzzle().dots) drawDot(dot);
+  ctx.restore();
+}
+
+function drawCell(row, col) {
+  const { left, top, cell } = view.board;
+  const x = left + col * cell;
+  const y = top + row * cell;
+  const key = cellKey(row, col);
+  const selected = game.selected.row === row && game.selected.col === col;
+  const given = isGiven(row, col);
+  const error = game.errors.has(key);
+  let fill = given ? '#eef2e7' : '#fffaf2';
+  if (selected) fill = '#fff0bd';
+  if (error) fill = '#ffd9d3';
+  if (game.successPulse > 0 && game.mode !== 'playing') fill = '#ddffe8';
+  ctx.fillStyle = fill;
+  ctx.fillRect(x, y, cell, cell);
+
+  if (selected) {
+    ctx.strokeStyle = '#ef8f5d';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x + 4, y + 4, cell - 8, cell - 8);
+  }
+
+  const value = game.values[row][col];
+  if (value) {
+    ctx.fillStyle = given ? '#172126' : '#1f665a';
+    ctx.font = `${Math.max(28, cell * 0.42)}px Inter, Segoe UI, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(value), x + cell / 2, y + cell / 2 + 1);
+  }
+
+  if (given) {
+    ctx.fillStyle = '#17212688';
+    ctx.font = `${Math.max(9, cell * 0.105)}px Inter, Segoe UI, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('LOCK', x + 8, y + 8);
+  }
+}
+
+function drawDot(dot) {
+  const { left, top, cell } = view.board;
+  const x = dot.orientation === 'h'
+    ? left + (dot.col + 1) * cell
+    : left + (dot.col + 0.5) * cell;
+  const y = dot.orientation === 'h'
+    ? top + (dot.row + 0.5) * cell
+    : top + (dot.row + 1) * cell;
+  const key = dotKey(dot.orientation, dot.row, dot.col);
+  const radius = Math.max(7, cell * 0.09);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#fffaf2';
+  ctx.fill();
+  ctx.lineWidth = game.dotErrors.has(key) ? 5 : 2.5;
+  ctx.strokeStyle = game.dotErrors.has(key) ? '#df3c2e' : '#29343b';
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = dot.type === 'black' ? '#172126' : '#fffdf8';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPanel() {
+  const panel = view.sidePanel;
+  roundRect(panel.left, panel.top, panel.width, panel.height, 8, '#172126df', '#ffffffbd', 1.5);
+  const puzzle = currentPuzzle();
+  const analysis = analyzeBoard(game.values);
+  if (panel.height < 150) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#f8fffb';
+    ctx.font = '900 17px Inter, Segoe UI, sans-serif';
+    ctx.fillText('KROPKI DOTS', panel.left + 14, panel.top + 11);
+    ctx.fillStyle = '#ffd15c';
+    ctx.font = '850 14px Inter, Segoe UI, sans-serif';
+    ctx.fillText(puzzle.name, panel.left + 14, panel.top + 36);
+    ctx.fillStyle = '#d6e7e6';
+    ctx.font = '750 12px Inter, Segoe UI, sans-serif';
+    ctx.fillText(`Filled ${SIZE * SIZE - analysis.empty}/${SIZE * SIZE}  Moves ${game.moves}`, panel.left + 14, panel.top + 60);
+    if (panel.height >= 104) {
+      wrapText(game.message, panel.left + 14, panel.top + 80, panel.width - 28, 15, 2);
+    }
+    return;
+  }
+  const lines = [
+    'KROPKI DOTS',
+    puzzle.name,
+    `Filled ${SIZE * SIZE - analysis.empty}/${SIZE * SIZE}`,
+    `White: consecutive`,
+    `Black: double/half`,
+    `Best ${game.bestScore}`,
+  ];
+  ctx.fillStyle = '#f8fffb';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = '900 22px Inter, Segoe UI, sans-serif';
+  ctx.fillText(lines[0], panel.left + 16, panel.top + 15);
+  ctx.font = '800 15px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#ffd15c';
+  ctx.fillText(lines[1], panel.left + 16, panel.top + 45);
+  ctx.font = '700 13px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#d6e7e6';
+  let y = panel.top + 74;
+  for (const line of lines.slice(2)) {
+    ctx.fillText(line, panel.left + 16, y);
+    y += 21;
+  }
+
+  ctx.fillStyle = '#f8fffb';
+  ctx.font = '800 13px Inter, Segoe UI, sans-serif';
+  wrapText(game.message, panel.left + 16, Math.min(panel.top + panel.height - 56, y + 8), panel.width - 32, 18, 3);
+}
+
+function drawOverlay(title, body) {
+  const { left, top, size } = view.board;
+  const width = Math.min(size - 34, 380);
+  const height = 116;
+  const x = left + (size - width) / 2;
+  const y = top + (size - height) / 2;
+  roundRect(x, y, width, height, 8, '#172126ee', '#ffffffd6', 1.5);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#ffd15c';
+  ctx.font = '900 25px Inter, Segoe UI, sans-serif';
+  ctx.fillText(title, x + width / 2, y + 17);
+  ctx.fillStyle = '#f8fffb';
+  ctx.font = '750 13px Inter, Segoe UI, sans-serif';
+  wrapText(body, x + 18, y + 55, width - 36, 17, 3, 'center');
+}
+
+function roundRect(x, y, width, height, radius, fill, stroke, lineWidth = 1) {
+  const r = Math.max(0, Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4, align = 'left') {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  ctx.textAlign = align;
+  const tx = align === 'center' ? x + maxWidth / 2 : x;
+  for (let i = 0; i < lines.length; i += 1) ctx.fillText(lines[i], tx, y + i * lineHeight);
+}
+
+function pointerToCell(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const { left, top, size, cell } = view.board;
+  if (x < left || x > left + size || y < top || y > top + size) return null;
+  return {
+    row: Math.max(0, Math.min(SIZE - 1, Math.floor((y - top) / cell))),
+    col: Math.max(0, Math.min(SIZE - 1, Math.floor((x - left) / cell))),
+  };
+}
+
+function handlePointerDown(event) {
+  const cell = pointerToCell(event);
+  if (!cell) return;
+  event.preventDefault();
+  if (game.mode === 'menu') nextPuzzleOrStart();
+  selectCell(cell.row, cell.col);
+}
+
+function handleKey(event) {
+  const keyName = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'enter', 'backspace'].includes(keyName)) {
+    event.preventDefault();
+  }
+  if (keyName === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (keyName === 'enter' || keyName === ' ') {
+    if (game.mode !== 'playing') nextPuzzleOrStart();
+    else checkBoard();
+    return;
+  }
+  if (keyName === 'p') {
+    togglePause();
+    return;
+  }
+  if (keyName === 'r') {
+    restartPuzzle();
+    return;
+  }
+  if (keyName === 'h') {
+    revealHint();
+    return;
+  }
+  if (keyName === 'c') {
+    checkBoard();
+    return;
+  }
+  if (keyName === 'z') {
+    undoMove();
+    return;
+  }
+  if (keyName === 'backspace' || keyName === 'delete' || keyName === '0') {
+    setValue(EMPTY);
+    return;
+  }
+  if (event.key === 'ArrowUp') moveSelection(-1, 0);
+  else if (event.key === 'ArrowDown') moveSelection(1, 0);
+  else if (event.key === 'ArrowLeft') moveSelection(0, -1);
+  else if (event.key === 'ArrowRight') moveSelection(0, 1);
+  else if (/^[1-4]$/.test(event.key)) setValue(Number(event.key));
+}
+
+function renderGameToText() {
+  const analysis = analyzeBoard(game.values);
+  const puzzle = currentPuzzle();
+  const cells = [];
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      cells.push({
+        row: r,
+        col: c,
+        value: game.values[r][c],
+        given: Boolean(puzzle.givens[r][c]),
+        selected: game.selected.row === r && game.selected.col === c,
+        error: game.errors.has(cellKey(r, c)),
+      });
+    }
+  }
+  return JSON.stringify({
+    game: 'kropkidots',
+    coordinate_system: 'Grid rows and columns are zero-based from the top-left. Canvas x increases right and y increases down.',
+    mode: game.mode,
+    puzzle: {
+      index: game.puzzleIndex,
+      total: PUZZLES.length,
+      id: puzzle.id,
+      name: puzzle.name,
+    },
+    selected: { ...game.selected },
+    cells,
+    dots: puzzle.dots.map(dot => ({
+      ...dot,
+      error: game.dotErrors.has(dotKey(dot.orientation, dot.row, dot.col)),
+    })),
+    empty_cells: analysis.empty,
+    rule_errors: [...game.errors].map(parseCellKey),
+    dot_errors: [...game.dotErrors].map(parseDotKey),
+    moves: game.moves,
+    hints: game.hints,
+    checks: game.checks,
+    score: game.score,
+    best_score: game.bestScore,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    elapsed_ms: Math.round(game.elapsedMs),
+    message: game.message,
+    last_action: game.lastAction,
+  });
+}
+
+function setCellForTest(row, col, value) {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  selectCell(row, col);
+  return setValue(value);
+}
+
+function solveCurrentForTest() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  const puzzle = currentPuzzle();
+  pushHistory();
+  game.values = cloneGrid(puzzle.solution);
+  game.moves += 1;
+  game.errors = new Set();
+  game.dotErrors = new Set();
+  game.lastAction = { type: 'test-solve', puzzle: puzzle.id };
+  handleSolved();
+  return renderGameToText();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__KROPKI_DOTS_GAME__ = {
+  start: startPuzzle,
+  restart: restartPuzzle,
+  pause: togglePause,
+  check: checkBoard,
+  hint: revealHint,
+  undo: undoMove,
+  setCell: setCellForTest,
+  solveCurrent: solveCurrentForTest,
+  state: () => JSON.parse(renderGameToText()),
+  puzzles: PUZZLES.map(puzzle => ({
+    id: puzzle.id,
+    name: puzzle.name,
+    solution: cloneGrid(puzzle.solution),
+    givens: cloneGrid(puzzle.givens),
+    dots: puzzle.dots.map(dot => ({ ...dot })),
+  })),
+};
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('resize', resizeCanvas);
+document.addEventListener('fullscreenchange', resizeCanvas);
+document.addEventListener('keydown', handleKey);
+els.start.addEventListener('click', nextPuzzleOrStart);
+els.check.addEventListener('click', checkBoard);
+els.hint.addEventListener('click', revealHint);
+els.undo.addEventListener('click', undoMove);
+els.pause.addEventListener('click', togglePause);
+els.restart.addEventListener('click', restartPuzzle);
+els.full.addEventListener('click', toggleFullscreen);
+els.clear.addEventListener('click', () => setValue(EMPTY));
+for (const button of els.digits) {
+  button.addEventListener('click', () => setValue(Number(button.dataset.digit)));
+}
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+  }
+  lastFrame = now;
+  draw();
+  requestAnimationFrame(frame);
+}
+
+primePuzzle(0);
+updateHud();
+resizeCanvas();
+mountGameFeedback({ gameSlug: 'kropkidots', gameName: 'Kropki Dots' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
