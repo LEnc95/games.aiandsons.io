@@ -518,3 +518,9 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-12] Key PR links: none merged for this date.
 - [nightly 2026-07-13] Tracked changes: 1 commit(s) - 7e3a0ed Add Binary Grid to discovery metadata.
 - [nightly 2026-07-13] Key PR links: none merged for this date.
+- [nightly 2026-07-14] Tracked changes: 1 commit(s) - 3248dac Clarify daily game preflight workflow docs.
+- [nightly 2026-07-14] Key PR links: none merged for this date.
+- [nightly 2026-07-15] No repository commits found for this date.
+- [nightly 2026-07-15] Key PR links: none merged for this date.
+- [nightly 2026-07-16] No repository commits found for this date.
+- [nightly 2026-07-16] Key PR links: none merged for this date.
