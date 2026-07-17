@@ -172,5 +172,6 @@
 - game/binarygrid
 - game/thermotrail
 - game/kropkidots
+- game/pearlloop
 
 Generated from `src/meta/feedback.js`.
