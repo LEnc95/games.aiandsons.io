@@ -78,3 +78,7 @@
 ## 2026-07-03 - Optimizing category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
+
+## 2026-07-17 - Avoid O(N) normalization overhead on memory state reads while maintaining safety
+**Learning:** Returning fully parsed objects from an in-memory cache using a normalization function (like `normalizeFamilyAccount`) on every read creates significant O(N) allocation and GC overhead. However, returning the raw cache reference directly is dangerous, as callers mutating the object (e.g. `account.members.push()` in tests) will permanently corrupt the global cache.
+**Action:** When a memory store entry is already normalized upon insertion, avoid running the deep normalization pipeline again on read paths. Instead, perform a shallow clone of the parent object and its top-level arrays (e.g., `[...raw.members]`) to return a fresh reference, which significantly reduces allocation overhead while safely preventing caller-induced cache mutation bugs.
