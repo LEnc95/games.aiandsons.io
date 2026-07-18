@@ -4062,3 +4062,15 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Validation passed so far: Pearl Loop module-script parse, required `$WEB_GAME_CLIENT` loop in `output/web-game/pearlloop-smoke-final`, custom desktop/mobile Playwright scenarios in `output/web-game/pearlloop-scenarios-final`, screenshot/feedback-modal/OG inspection, deterministic `advanceTime(ms)` delta check, fullscreen activation, mobile layout fix, campaign completion, and zero final Pearl Loop browser/page error artifacts.
 - Final pre-publish gate passed: `npm run game:preflight`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run test:social` (20 tests), and `git diff --check` with only repository LF-to-CRLF warnings.
 - TODO: none for Pearl Loop; future work may address repository-wide LF-to-CRLF warning noise in generated files.
+
+## 2026-07-18 Create a new game automation
+- New request: add exactly one game the website does not already have using `$develop-web-game`.
+- Automation memory read from `C:\Users\Luke\.codex\automations\create-a-new-game\memory.md`; avoiding Pearl Loop, Kropki Dots, Thermo Trail, Binary Grid, Island Walls, Canyon Glider, Fillomino, Mini Crossword, ChronoSort, Black Box, Futoshiki, Vista Towers, and Ink Islands.
+- Reviewed the 158-game registry and selected Star Battle (`/starbattle`), a region-based star-placement logic puzzle not currently represented in the catalog.
+- Initial implementation added `starbattle/index.html` with five deterministic 6x6 region puzzles, star/X/clear marking, row/column/region/touch validation, hint/check/undo, pause/restart/fullscreen, shared feedback, coin rewards, `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__STAR_BATTLE_GAME__` helpers.
+- Registered Star Battle in `src/meta/games.js` and the puzzle discovery group.
+- Generated SEO, discovery metadata, OG cards, and local Linear seed files; `/starbattle` metadata and `assets/og/starbattle.png` were created.
+- Required `$WEB_GAME_CLIENT` smoke loop passed in `output/web-game/starbattle-smoke-initial`; screenshot inspection confirmed the region board and text state matched. Focused scenario initially found fullscreen entry worked but Escape did not exit deterministically in headless Chromium, so `starbattle/index.html` now handles Escape explicitly when fullscreen is active.
+- Final required `$WEB_GAME_CLIENT` loop passed in `output/web-game/starbattle-smoke-final`; focused desktop/mobile scenarios passed in `output/web-game/starbattle-scenarios-final` with screenshot inspection, deterministic `advanceTime(ms)`, fullscreen activation/Escape exit, wrong-star errors, undo, X/clear tools, boundary input, hint, pause/resume, restart, campaign completion, coin reward, shared feedback modal, mobile tool taps, nonblank canvas pixel checks, and zero browser error artifacts.
+- Cleaned SEO generator line-ending side effects so the remaining repo diff stays in the allowed release scope.
+- TODO: run the final pre-publish gate, audit, commit, concurrency check, push, and production verification.

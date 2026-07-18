@@ -173,5 +173,6 @@
 - game/thermotrail
 - game/kropkidots
 - game/pearlloop
+- game/starbattle
 
 Generated from `src/meta/feedback.js`.
