@@ -4088,3 +4088,21 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Final pre-publish gate passed in order: `npm run game:preflight`, `npm run test:feedback` (31 tests), `npm run test:shop` (68 tests), `npm run test:social` (20 tests), and `git diff --check` (repository line-ending warnings only).
 - Release audit against `c2766bb56e9148aa088f60b28c0f6484192e7655` passed: exactly one registry addition and matching top-level folder (`parcelpatch`), nine allowed release paths, required hooks/support files, and no secret or artifact paths.
 - Next: stage and inspect the audited diff, commit, concurrency-check, publish, and verify Main QA plus production.
+
+## 2026-07-18 Create a new game automation - Domino Mosaic
+- Original automation request: build, validate, and publish exactly one new self-contained browser game absent from the repository.
+- Clean isolated baseline established at `69478a42b6fd502598ebef2789a66d395f60eb77`; `npm ci` passed with 16 existing dependency audit findings.
+- Read automation memory and the develop-web-game skill; avoided Parcel Patch, Star Battle, Pearl Loop, Kropki Dots, and the earlier remembered concepts.
+- Reviewed the 160-game registry and selected Domino Mosaic (`/dominomosaic`), a Dominosa-style exact-pair tiling puzzle not represented in the catalog.
+- Added the standalone canvas implementation with five solver-verified unique 5x6 boards, drag/tap/keyboard pairing, duplicate-pair and overlap prevention, check/hint/undo, three-check failure, pause/restart/fullscreen, mobile layout, campaign rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and deterministic QA helpers.
+- Registered Domino Mosaic in `src/meta/games.js` and the puzzle discovery category.
+- Ran `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`; generated the Domino Mosaic SEO block, sitemap/home/discovery metadata, `assets/og/dominomosaic.png`, and local Linear seed entries.
+- Verified the SEO generator's existing-file side effects were line-ending-only and restored them, leaving exactly the nine allowed release paths changed.
+- Required supplied Playwright smoke passed with three purposeful keyboard domino placements; its screenshot and text state agreed and no error artifact was produced.
+- Focused desktop/mobile scenarios passed for deterministic stepping, boundaries, keyboard/drag/tap pairing, duplicate rejection, erase, hint replacement, undo, check failure/retry, pause/resume, restart, fullscreen/Escape, all five success transitions, campaign rewards, feedback, nonblank rendering, and responsive controls with zero browser/page errors.
+- Visually inspected the draft, gameplay, failure, pause, full-board, success, campaign-win, feedback, mobile, and OG captures. Gameplay visuals were clear; the first OG card exposed a misleading joker icon, so the registry icon was changed to a chain link before regeneration.
+- Regenerated SEO, OG, and local Linear seeds after the icon correction, removed only verified line-ending generator side effects, reran the supplied Playwright client, and visually confirmed the final gameplay plus chain-link OG images. Final supplied-client state showed three correct dominoes and no error artifact.
+- Final pre-publish gate passed in order: `npm run game:preflight`, `npm run test:feedback` (31), `npm run test:shop` (68), `npm run test:social` (20), and `git diff --check` (line-ending policy warnings only).
+- Release audit against `69478a42b6fd502598ebef2789a66d395f60eb77` passed: exactly one registry addition and matching top-level folder (`dominomosaic`), nine allowed release paths, all generated/feedback/hook wiring present, no staged paths, and no secret markers or artifact paths.
+- Staged only the nine audited paths, inspected the complete cached diff, and passed `git diff --cached --check`.
+- TODO: commit, concurrency-check, publish, and verify Main QA plus production.

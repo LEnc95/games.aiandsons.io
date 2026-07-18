@@ -175,5 +175,6 @@
 - game/pearlloop
 - game/starbattle
 - game/parcelpatch
+- game/dominomosaic
 
 Generated from `src/meta/feedback.js`.
