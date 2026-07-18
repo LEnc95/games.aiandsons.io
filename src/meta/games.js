@@ -158,6 +158,7 @@ const BASE_GAMES = [
   { slug:'kropkidots',     name:'Kropki Dots',          emoji:'\u26AB',    scoreHint:'solves', url:'/kropkidots', desc:'Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues.', earnsCoins:true },
   { slug:'pearlloop',      name:'Pearl Loop',           emoji:'\u26AA',    scoreHint:'loops', url:'/pearlloop', desc:'Draw one continuous loop through black and white pearls while satisfying every turn and straight-line clue.', earnsCoins:true },
   { slug:'starbattle',     name:'Star Battle',          emoji:'\u{2B50}',  scoreHint:'solves', url:'/starbattle', desc:'Place one star in each row, column, and colored region without letting stars touch, then clear five logic boards.', earnsCoins:true },
+  { slug:'parcelpatch',    name:'Parcel Patch',         emoji:'\u{1F5FA}\uFE0F', scoreHint:'patches', url:'/parcelpatch', desc:'Divide each grid into rectangles so every parcel contains one number and covers exactly that many squares.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -181,7 +182,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

@@ -174,5 +174,6 @@
 - game/kropkidots
 - game/pearlloop
 - game/starbattle
+- game/parcelpatch
 
 Generated from `src/meta/feedback.js`.
