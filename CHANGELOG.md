@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - 2026-07-17
+
+### Added
+- Added and wired five new games: `islandwalls`, `binarygrid`, `thermotrail`, `kropkidots`, and `pearlloop`.
+- Added deterministic test hooks, feedback mounting, coin rewards, fullscreen support, and mobile controls across the new daily game surfaces where applicable.
+
+### Improved
+- Refreshed discovery metadata, homepage entries, sitemap coverage, OG cards, and local Linear feedback seed files for the new games.
+
+### Operations
+- Clarified the daily game preflight workflow and updated documented unit and integration test commands.
+- Key PRs: not recorded in the local repo history for this release window.
+
 ## [1.11.0] - 2026-07-11
 
 ### Added
