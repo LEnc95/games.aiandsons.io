@@ -32,7 +32,7 @@ const DISCOVERY_GAME_SLUGS = Object.freeze([
   "rushhour", "jigsaw", "kakuro", "caverncrush", "calccages", "wordladder",
   "dominodraw", "inkislands", "vistatowers", "futoshiki", "blackbox", "chronosort",
   "minicrossword", "fillomino", "canyonglider", "islandwalls", "binarygrid", "thermotrail",
-  "kropkidots", "pearlloop", "starbattle", "parcelpatch", "dominomosaic",
+  "kropkidots", "pearlloop", "starbattle", "parcelpatch", "dominomosaic", "windbow",
 ]);
 
 const CURATED_TRENDING_SLUGS = Object.freeze([

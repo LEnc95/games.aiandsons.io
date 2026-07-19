@@ -176,5 +176,6 @@
 - game/starbattle
 - game/parcelpatch
 - game/dominomosaic
+- game/windbow
 
 Generated from `src/meta/feedback.js`.

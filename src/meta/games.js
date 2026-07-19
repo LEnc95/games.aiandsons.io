@@ -160,6 +160,7 @@ const BASE_GAMES = [
   { slug:'starbattle',     name:'Star Battle',          emoji:'\u{2B50}',  scoreHint:'solves', url:'/starbattle', desc:'Place one star in each row, column, and colored region without letting stars touch, then clear five logic boards.', earnsCoins:true },
   { slug:'parcelpatch',    name:'Parcel Patch',         emoji:'\u{1F5FA}\uFE0F', scoreHint:'patches', url:'/parcelpatch', desc:'Divide each grid into rectangles so every parcel contains one number and covers exactly that many squares.', earnsCoins:true },
   { slug:'dominomosaic',   name:'Domino Mosaic',        emoji:'\u{1F517}', scoreHint:'mosaics', url:'/dominomosaic', desc:'Link adjacent numbered cells into dominoes while using every pair from 0-0 through 4-4 exactly once.', earnsCoins:true },
+  { slug:'windbow',        name:'Windbow Trials',       emoji:'\u{1F3F9}', scoreHint:'score', url:'/windbow', desc:'Read shifting winds, charge each arrow, and strike the target rings across five archery rounds.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -200,7 +201,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   ]),
   sports: new Set([
     'airhockey', 'skeeball', 'pool', 'plinko', 'darts', 'minigolf', 'ski',
-    'homerunderby', 'nebulacurl',
+    'homerunderby', 'nebulacurl', 'windbow',
   ]),
   racing: new Set([
     'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
