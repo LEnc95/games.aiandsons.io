@@ -161,6 +161,7 @@ const BASE_GAMES = [
   { slug:'parcelpatch',    name:'Parcel Patch',         emoji:'\u{1F5FA}\uFE0F', scoreHint:'patches', url:'/parcelpatch', desc:'Divide each grid into rectangles so every parcel contains one number and covers exactly that many squares.', earnsCoins:true },
   { slug:'dominomosaic',   name:'Domino Mosaic',        emoji:'\u{1F517}', scoreHint:'mosaics', url:'/dominomosaic', desc:'Link adjacent numbered cells into dominoes while using every pair from 0-0 through 4-4 exactly once.', earnsCoins:true },
   { slug:'windbow',        name:'Windbow Trials',       emoji:'\u{1F3F9}', scoreHint:'score', url:'/windbow', desc:'Read shifting winds, charge each arrow, and strike the target rings across five archery rounds.', earnsCoins:true },
+  { slug:'knightstour',    name:"Knight's Tour",       emoji:'\u265E\uFE0F', scoreHint:'tours', url:'/knightstour', desc:'Guide a chess knight across every square exactly once, avoid dead ends, and complete five pathfinding puzzle boards.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -184,7 +185,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

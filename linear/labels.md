@@ -177,5 +177,6 @@
 - game/parcelpatch
 - game/dominomosaic
 - game/windbow
+- game/knightstour
 
 Generated from `src/meta/feedback.js`.

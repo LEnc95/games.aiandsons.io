@@ -1,5 +1,16 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-07-20 Create a new game automation - Knight's Tour
+- New unattended release request: build, validate, and publish exactly one unique browser game from an isolated clean `origin/main` baseline.
+- Read the automation history and avoided all recent additions through Windbow Trials; selected Knight's Tour (`/knightstour`), which was absent from the 162-game registry.
+- Implemented the first standalone canvas version with five deterministic boards, legal-move highlighting, pointer/touch and keyboard focus controls, hint/undo, dead-end recovery, pause/restart/fullscreen, campaign rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and deterministic QA helpers.
+- Registered the single new game and puzzle discovery category. Next: generate tracked support files, run the supplied Playwright loop and focused scenario coverage, visually inspect captures, fix defects, then complete release gates and audit.
+- Generated the required support files with `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`; discovery now contains 163 games, the OG set contains 163 cards, and the local Linear seeds contain the Knight's Tour baseline issue without requiring live credentials.
+- Develop-web-game verification completed: the supplied Playwright client produced matching gameplay state/screenshots with purposeful keyboard moves and no error artifact; focused desktop/mobile scenarios passed menu/start, pointer/touch/keyboard movement, prior-square and outer-boundary rejection, hint, exact deterministic stepping, undo, pause-time freeze/resume, restart, fullscreen enter/Escape exit, a 14-square dead-end loss and recovery, every board completion, final campaign win, 60-coin rewards, feedback context, and 390x844 no-overflow layout.
+- Visually inspected menu, gameplay, hint, pause, dead-end, level-complete, campaign-win, feedback, mobile, and OG captures. Moved the orphaned fullscreen control into the utility group, then reran the supplied client and focused regression matrix successfully with zero console/page errors.
+- Final ordered pre-publish gate passed: `npm run game:preflight`, `npm run test:feedback` (31), `npm run test:shop` (68), `npm run test:social` (20), and `git diff --check`.
+- Release audit against start commit `3cec3e2161a927581c35317d37ab77a7816cbaf1` found exactly one registry addition, one matching top-level game folder, nine permitted paths, no secrets/env/test artifacts, and no second game or unrelated content. TODO: none for Knight's Tour.
+
 - New automation request (2026-06-22): add a game the website does not already have.
 - Selected `/dominodraw`, a turn-based double-six domino game absent from the 132-game catalog.
 - Implemented Domino Draw with deterministic dealing, player/AI hands, left/right chain placement, boneyard draws, passes, blocked rounds, first-to-50 match scoring, coin rewards, pointer/keyboard controls, fullscreen, shared feedback, `window.render_game_to_text()`, and `window.advanceTime(ms)`.
