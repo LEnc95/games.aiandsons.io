@@ -178,5 +178,6 @@
 - game/dominomosaic
 - game/windbow
 - game/knightstour
+- game/neondivide
 
 Generated from `src/meta/feedback.js`.

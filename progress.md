@@ -1,5 +1,17 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-07-20 Create a new game automation - Neon Divide
+- New unattended production request: build, validate, and publish exactly one unique browser game from a clean isolated `origin/main` baseline (`0eb3f8e584e4819842e357c490a36053aec8badc`).
+- Read the registry and automation memory; selected Neon Divide (`/neondivide`), a Qix-inspired territory-capture arcade game absent from the 163-game catalog and distinct from the recent logic-puzzle releases.
+- Implemented the standalone canvas game with three deterministic zones, live trail drawing and region capture, roaming spark hazards, shields and timers, keyboard/touch controls, pause/restart/fullscreen, campaign rewards, shared feedback, `window.render_game_to_text()`, `window.advanceTime(ms)`, and deterministic QA helpers.
+- Initial syntax and registry checks passed: 164 unique games with exactly one Neon Divide entry.
+- Generated required tracked support files with `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`; discovery, sitemap, homepage SEO, OG card, and local Linear seeds now include Neon Divide without live credentials.
+- First supplied Playwright loop produced three matching state/screenshot pairs with a real 54.5% capture and no console/page errors. Visual inspection confirmed a clear board, player, claimed/open regions, and spark, but state comparison exposed a spark sticking at its lower-right clamp; corrected the enemy bounce threshold before the next run.
+- Reran the supplied loop after the bounce fix: the spark moved and reversed velocity deterministically across successive state snapshots, with no browser errors. Also tightened direction presses so a quick mobile tap moves one cell immediately before held-input repeat begins.
+- Focused Playwright matrix passed exact deterministic stepping, pause freeze/resume, boundary rejection, dropped held inputs on blur, live-trail self-collision, shield loss/restart, timer failure, fullscreen/Escape, feedback context, all three zone transitions, the 45-coin campaign win, and 390x844 touch/layout checks with zero console/page errors. Visual review covered every captured state plus the generated OG card; aligned the final Restart action and overlay to start a fresh campaign from zone one.
+- Final ordered pre-publish gate passed: `npm run game:preflight`, `npm run test:feedback` (31), `npm run test:shop` (68), `npm run test:social` (20), and `git diff --check`.
+- TODO: none for Neon Divide; release diff audit, commit, concurrency check, push, Main QA, and production verification remain in the unattended release workflow.
+
 ## 2026-07-20 Create a new game automation - Knight's Tour
 - New unattended release request: build, validate, and publish exactly one unique browser game from an isolated clean `origin/main` baseline.
 - Read the automation history and avoided all recent additions through Windbow Trials; selected Knight's Tour (`/knightstour`), which was absent from the 162-game registry.
