@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A static browser arcade ("AI and Sons Games" / cade-games-arcade) deployed to Vercel with no build step or framework. ~126 games, each a self-contained folder with an `index.html`. Around the games sits a meta-layer: coin economy, cosmetics shop, daily/weekly missions, achievements, classroom mode for teachers, family/school premium subscriptions (Stripe), Firebase Google auth, and a feedback pipeline wired to Slack and Linear.
+A static browser arcade ("AI and Sons Games" / cade-games-arcade) deployed to Vercel with no build step or framework. ~155 games, each a self-contained folder with an `index.html`. Around the games sits a meta-layer: coin economy, cosmetics shop, daily/weekly missions, achievements, classroom mode for teachers, family/school premium subscriptions (Stripe), Firebase Google auth, and a feedback pipeline wired to Slack and Linear.
 
 ## Commands
 
@@ -56,9 +56,16 @@ See `RELEASE_CHECKLIST.md`: before tagging, review `privacy.html` / `school-priv
 ### Adding or changing a game touches multiple files
 
 1. `<slug>/index.html` — the game itself (self-contained HTML/JS/CSS).
-2. `src/meta/games.js` — the `GAMES` registry array. This drives the homepage grid, discovery/search, missions, and reporting. Flags: `earnsCoins`, `scoreHint`, `category` (e.g. `'audio-only-blind-accessible'`), `accessibilityTags`.
-3. `vercel.json` — **no per-game edits needed.** A generic `/:slug/index.html` header rule already applies no-cache to every game shell (the global default is 1-hour caching), and Vercel serves `/slug` from the folder's `index.html` automatically. Only touch `vercel.json` for URL aliases (e.g. `/pingpong` → `/pong`) or non-standard paths.
-4. `npm run seo` to regenerate the sitemap, inject SEO meta, and resync the discovery slug allowlist (`api/discovery/_metadata.js`, generated from `GAMES` by `scripts/generate-discovery-metadata.mjs` — never hand-edit its `DISCOVERY_GAME_SLUGS`; the `CURATED_*` lists are editorial and preserved). Then `npm run og` to render the game's share/OG card (without it the new game unfurls with the default banner instead of its own per-game card). Share infra: `src/social/share.js` (share sheet), `card.js` (client score card), `record.js` (canvas clip recorder), and `api/share.js` (`/challenge/:id`, `/race/:code`, `/g/:slug` OG landing pages). `npm run test:social` guards that the allowlist stays in sync.
+2. `src/meta/games.js` — the `GAMES` registry array and discovery enrichment. The `BASE_GAMES` entry drives the homepage grid, discovery/search, missions, and reporting. Add the slug to the right `DISCOVERY_CATEGORY_GROUPS` Set(s) when heuristics are not enough; those categories power homepage category chips, the category hub, badges, and weekly eligibility. Other metadata flags include `earnsCoins`, `scoreHint`, `category` (e.g. `'audio-only-blind-accessible'`), and `accessibilityTags`.
+3. `vercel.json` — **no per-game edits needed.** Generic `/:slug` and `/:slug/` header rules already apply no-cache to clean game-shell URLs (the global default is 1-hour caching), and Vercel serves `/slug` from the folder's `index.html` automatically. Only touch `vercel.json` for URL aliases (e.g. `/pingpong` → `/pong`) or non-standard paths.
+4. `npm run seo` to regenerate the sitemap, inject SEO meta, and resync the discovery slug allowlist (`api/discovery/_metadata.js`, generated from `GAMES` by `scripts/generate-discovery-metadata.mjs` — never hand-edit its `DISCOVERY_GAME_SLUGS`; the `CURATED_*` lists are editorial and preserved). Then `npm run og` to render the game's share/OG card (without it the new game unfurls with the default banner instead of its own per-game card). Share infra: `src/social/share.js` (share sheet), `card.js` (client score card), `record.js` (canvas clip recorder), and `api/share.js` (`/challenge/:id`, `/race/:code`, `/g/:slug` OG landing pages). `npm run game:preflight` checks registry/folder/discovery/OG/sitemap/Vercel header wiring, and `npm run test:social` guards the discovery API plus slug allowlist.
+
+### Discovery ranking and category pipeline
+
+- `src/meta/games.js` exports enriched `GAMES` records. `DISCOVERY_CATEGORY_GROUPS` values are `Set`s used by `inferCategories`; text heuristics add supplemental categories, but curated Set membership is the reliable way to place new games in launcher shelves.
+- Client fallback ranking is controlled by `TRENDING_SLUGS` and `TOP_PLAYED_SLUGS` in `src/meta/games.js`, which become `featured.trendingRank` / `featured.topPlayedRank`. Server fallback ranking is controlled by `CURATED_TRENDING_SLUGS` and `CURATED_TOP_PLAYED_SLUGS` in `api/discovery/_metadata.js`. Keep both locations aligned when changing editorial ranking defaults, or the homepage fallback and API fallback can diverge.
+- Runtime flow: homepage clicks call `sendDiscoveryLaunchEvent` from `src/discovery/rankings.js`, POSTing `/api/discovery/events`; Vercel rewrites that to `api/social.js?route=discovery-events`, which delegates to `api/discovery/_handlers.js` and `_store.js`. Rankings come back from `/api/discovery/rankings`, merging Firestore launch aggregates (`discoveryGameAggregates`, `discoveryDailyLaunches`) or in-memory preview counts with curated fallback lists.
+- Local static dev on `http://127.0.0.1:4173` intentionally skips the discovery ranking fetch (`shouldSkipDiscoveryRankingsFetch`) so raw smoke tests do not depend on serverless APIs. The homepage then uses the client-side featured ranking fallback.
 
 ### Shared client modules (`src/`)
 
@@ -79,7 +86,7 @@ Each top-level function is a router switching on a `route` query param; `vercel.
 - `api/auth.js` — `/api/auth/:route` → Firebase Google login, session cookie, firebase-config.
 - `api/feedback/` — submit/attachment endpoints plus admin list/update and `prepare-agent-task`; integrates Slack (`_slack.js`) and Linear (`_linear.js`). Admin UI at `/ops/feedback/`.
 - `api/games/prisoners-dilemma/` — server-authoritative game engine (state, strategies, cookie-signed state); the one game with server logic.
-- `api/social.js` — `/api/social/:route` → player identity (server-generated kid-safe handles, HMAC player tokens), score submit, daily/weekly/all-time leaderboards, "beat my score" challenges, join-by-code race rooms (Firestore-polling, no WebSockets), and cloud save sync (`sync-pull`/`sync-push`, Google session required). Store in `api/social/_store.js` falls back to in-memory when Firebase Admin is not configured (local dev/tests).
+- `api/social.js` — `/api/social/:route` → player identity (server-generated kid-safe handles, HMAC player tokens), score submit, daily/weekly/all-time leaderboards, "beat my score" challenges, join-by-code race rooms (Firestore-polling, no WebSockets), cloud save sync (`sync-pull`/`sync-push`, Google session required), and discovery events/rankings via `/api/discovery/events` + `/api/discovery/rankings` rewrites. Store in `api/social/_store.js` falls back to in-memory when Firebase Admin is not configured (local dev/tests).
 
 Files prefixed `_` are internal helpers, not routes.
 

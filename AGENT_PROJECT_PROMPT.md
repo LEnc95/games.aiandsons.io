@@ -28,7 +28,7 @@ You are working in **Cade's Games**, a static web arcade that ships as plain HTM
   - `src/prog/achievements.js` -> badge/reward definitions and unlock evaluation (`maybeUnlock`).
   - `src/prog/cosmetics.js` -> runtime style mapping helpers (paddle/snake/mario/memory card back).
 - **Game and feedback metadata registry:**
-  - `src/meta/games.js` is the central launcher list (slug, name, emoji, route, description).
+  - `src/meta/games.js` is the central launcher list and discovery enrichment source (slug, name, emoji, route, description, category groups, duration/difficulty, featured ranks).
   - `src/meta/feedback.js` derives feedback coverage, Linear labels, and per-game baseline issue metadata from the game registry.
 - **Feedback flow:**
   - `src/feedback/client.js` -> browser-side submission/admin client with loopback stub mode.
@@ -41,17 +41,20 @@ You are working in **Cade's Games**, a static web arcade that ships as plain HTM
 
 ## 3) Game catalog and route model
 
-Current playable routes are mostly clean routes like `/pong`, `/snake`, etc., mapped by `vercel.json` rewrites to each folder's `index.html`.
+Current playable routes are mostly clean routes like `/pong`, `/snake`, etc. Vercel serves each `<slug>/index.html` from the folder automatically, and generic `/:slug` plus `/:slug/` header rules keep game shells uncached. Do not add per-game rewrites or no-cache headers for standard game folders; only touch `vercel.json` for aliases or non-standard paths.
 
-Games currently present in the repo include:
-- 2048, Pong, Snake, Tic-Tac-Toe, Rock Paper Scissors, Memory, Breakout, Connect 4, Minesweeper, Flappy, Dino, Space Invaders, Frogger, Pocket Mini Golf, Micro Mario, Retro Ski, Home Run Derby, and Micro RC Racer.
+The catalog has 150+ games. Use `src/meta/games.js` as the source of truth instead of copying a route list into prompts or docs.
 
 Important nuance:
 - `src/meta/games.js` is the homepage source of truth for listed cards.
+- `BASE_GAMES` defines the core game entry; `DISCOVERY_CATEGORY_GROUPS` places games into the launcher category chips and category hub. Text heuristics add categories too, but explicit group membership is the safer choice for new games.
+- Client fallback shelves use `TRENDING_SLUGS` and `TOP_PLAYED_SLUGS` in `src/meta/games.js`. Server fallback rankings use `CURATED_TRENDING_SLUGS` and `CURATED_TOP_PLAYED_SLUGS` in `api/discovery/_metadata.js`; update both when changing editorial defaults.
+- Public discovery endpoints are `/api/discovery/events` and `/api/discovery/rankings`, but `vercel.json` rewrites them into `api/social.js` routes (`discovery-events`, `discovery-rankings`) that delegate to `api/discovery/*`.
 - Some game folders may exist without being wired into all progression systems.
 - `src/meta/feedback.js` should stay aligned with the game registry through `npm run feedback:sync-linear`.
 - When `LINEAR_API_KEY` + `LINEAR_TEAM_ID` are present, `npm run feedback:sync-linear` also provisions missing Linear labels and baseline issues; `npm run feedback:sync-linear:files` keeps it local-only.
 - `npm run feedback:check-daily` is the strict guard that fails when generated Linear seed artifacts drift from repo metadata, and it already runs inside `npm run test:feedback`.
+- `npm run game:preflight` validates registry/folder alignment, discovery slug metadata, OG cards, sitemap coverage, and the generic Vercel no-cache rules, but it does not verify category group placement or feedback widget coverage.
 
 ## 4) Progression and data model details
 
@@ -76,13 +79,16 @@ Agent guidance when adding/modifying progression:
 
 ### Add a new game
 1. Create `<slug>/index.html` (self-contained game page).
-2. Add entry to `src/meta/games.js`.
-3. Mount the shared feedback widget with `mountGameFeedback({ gameSlug, gameName })`.
-4. Run `npm run feedback:sync-linear` so feedback labels/baseline issues stay aligned and live Linear provisioning runs when env vars are configured.
-5. Run `npm run test:feedback` so the strict seed-artifact guard and widget coverage checks fail early if anything drifted.
-6. Add rewrites for `/<slug>` and `/<slug>/` in `vercel.json`.
-7. Add no-cache header override for the new game HTML in `vercel.json`.
-8. If shop inventory should reference this game prefix, update test mapping in `tests/shop-items.integration.test.mjs`.
+2. Add a `BASE_GAMES` entry to `src/meta/games.js`.
+3. Add the slug to the appropriate `DISCOVERY_CATEGORY_GROUPS` Set(s). For example, a logic grid game should usually land in `puzzle`; a game with local turns should also join `two-player` when applicable.
+4. Run `npm run seo` to regenerate sitemap/SEO metadata and `api/discovery/_metadata.js`.
+5. Run `npm run og` so `assets/og/<slug>.png` exists for social/share cards.
+6. Run `npm run game:preflight` to catch registry, folder, discovery metadata, OG, sitemap, and generic Vercel header drift.
+7. Mount the shared feedback widget with `mountGameFeedback({ gameSlug, gameName })`.
+8. Run `npm run feedback:sync-linear` so feedback labels/baseline issues stay aligned and live Linear provisioning runs when env vars are configured.
+9. Run `npm run test:feedback` so the strict seed-artifact guard and widget coverage checks fail early if anything drifted.
+10. Run `npm run test:social` when discovery metadata, curated ranking defaults, score/challenge routes, or cloud-save/social APIs changed.
+11. If shop inventory should reference this game prefix, update test mapping in `tests/shop-items.integration.test.mjs`.
 
 ### Add a new shop item
 1. Add item object in `shop.html` `items` array.
@@ -106,6 +112,8 @@ Agent guidance when adding/modifying progression:
 Primary automated checks:
 - `npm run test:shop`
 - `npm run test:feedback`
+- `npm run test:social`
+- `npm run game:preflight`
 
 What these tests protect:
 - uniqueness of shop item IDs,
@@ -113,6 +121,8 @@ What these tests protect:
 - inventory ID prefix -> known game mapping,
 - feedback widget coverage across every game,
 - feedback API/admin workflow determinism.
+- discovery events/rankings API behavior and discovery slug allowlist drift.
+- new-game registry/folder/OG/sitemap/generic Vercel header wiring.
 
 Manual smoke checklist after edits:
 - homepage loads and cards navigate,
@@ -124,9 +134,10 @@ Manual smoke checklist after edits:
 
 ## 7) Deployment notes
 
-- App is static; local run can be any static server (`python3 -m http.server 8080`).
+- App is static; local smoke tests expect `python -m http.server 4173` at `http://127.0.0.1:4173`.
 - `version.json` stores displayed version badge value for homepage.
 - `vercel.json` controls rewrites and cache/security headers.
+- On `127.0.0.1:4173`, `src/discovery/rankings.js` intentionally skips backend discovery ranking fetches; the homepage falls back to client featured ranks from `src/meta/games.js`.
 - Feedback API deployment expects `FEEDBACK_ADMIN_TOKEN`, `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, and optionally `LINEAR_PROJECT_ID` plus `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
 - Firebase-backed deployment expects `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_WEB_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_APP_ID`, and `FIREBASE_MESSAGING_SENDER_ID`.
 - Google sign-in still requires the Google provider + authorized domains to be configured in Firebase/Identity Platform for the project `games-aiandsons-io`.
@@ -139,7 +150,10 @@ Manual smoke checklist after edits:
 
 ## 8) Known pitfalls to avoid
 
-- Forgetting route rewrites in `vercel.json` after adding a game.
+- Adding per-game `vercel.json` rewrites or headers for ordinary new game folders; use the existing generic clean-route model.
+- Updating `BASE_GAMES` without adding curated `DISCOVERY_CATEGORY_GROUPS` membership for category shelves.
+- Updating client featured ranking lists without matching server `CURATED_*` fallback lists when editorial defaults should stay aligned.
+- Running `npm run seo` but forgetting `npm run og`, leaving social/share cards on the default banner.
 - Adding cosmetic shop items without updating `src/prog/cosmetics.js` switch cases.
 - Using new inventory prefixes without updating test mapping.
 - Adding a game without mounting the shared feedback widget, running `npm run feedback:sync-linear`, or checking `npm run test:feedback`.
@@ -156,4 +170,4 @@ Manual smoke checklist after edits:
 
 Use this instruction block when assigning a task to another coding agent:
 
-> You are modifying the Cade's Games static arcade repo. Before coding, inspect `index.html`, `shop.html`, `src/core/*`, `src/prog/*`, `src/meta/games.js`, `src/meta/feedback.js`, `src/feedback/*`, `api/feedback/*`, and `vercel.json` for impacted flows. Keep changes minimal and consistent with existing vanilla HTML/CSS/JS patterns. If you add/rename game routes, update rewrites and cache headers in `vercel.json`. If you add a game, mount the shared feedback widget, run `npm run feedback:sync-linear`, and then run `npm run test:feedback` so stale seed artifacts are caught. If you add shop cosmetics, also update `src/prog/cosmetics.js`. If you add shop inventory prefixes, ensure `tests/shop-items.integration.test.mjs` maps them to real game files. Run `npm run test:shop` and `npm run test:feedback` before finishing. Summarize what changed, why, and any follow-up risks. Call out if live Linear provisioning was skipped because env vars or label-management permissions were unavailable.
+> You are modifying the Cade's Games static arcade repo. Before coding, inspect `index.html`, `shop.html`, `src/core/*`, `src/prog/*`, `src/meta/games.js`, `src/meta/feedback.js`, `src/feedback/*`, `api/feedback/*`, and `vercel.json` for impacted flows. Keep changes minimal and consistent with existing vanilla HTML/CSS/JS patterns. Standard game folders do not need per-game Vercel rewrites or cache headers; the generic `/:slug` and `/:slug/` rules cover clean URLs. If you add a game, add the `BASE_GAMES` entry, place the slug in `DISCOVERY_CATEGORY_GROUPS`, run `npm run seo`, run `npm run og`, run `npm run game:preflight`, mount the shared feedback widget, run `npm run feedback:sync-linear`, and then run `npm run test:feedback` so stale seed artifacts are caught. Run `npm run test:social` when discovery metadata/rankings or social routes change. If you add shop cosmetics, also update `src/prog/cosmetics.js`. If you add shop inventory prefixes, ensure `tests/shop-items.integration.test.mjs` maps them to real game files. Run `npm run test:shop` and `npm run test:feedback` before finishing. Summarize what changed, why, and any follow-up risks. Call out if live Linear provisioning was skipped because env vars or label-management permissions were unavailable.

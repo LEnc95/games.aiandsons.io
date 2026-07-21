@@ -19,7 +19,7 @@ Static browser arcade platform with:
 - `pricing.html`: family plan billing UI.
 - `school-license.html`: school/district licensing flow.
 - `ops/feedback/index.html`: feedback inbox and admin actions.
-- `src/meta/games.js`: source of truth for game catalog.
+- `src/meta/games.js`: source of truth for game catalog and discovery metadata.
 - `src/meta/feedback.js`: feedback/Linear metadata mapped from game catalog.
 - `src/auth/*`: Firebase client account helpers + floating account widget.
 - `api/auth/*`: app session bootstrap + Google login exchange/logout.
@@ -29,8 +29,8 @@ Static browser arcade platform with:
 
 ## Game catalog
 
-The catalog is maintained in `src/meta/games.js` and currently has `60` games.
-Use that file as the source of truth instead of maintaining a duplicated list in this README.
+The catalog is maintained in `src/meta/games.js` and currently has 150+ games.
+Use that file as the source of truth instead of maintaining a duplicated list in this README. New games should update both the `BASE_GAMES` entry and the appropriate `DISCOVERY_CATEGORY_GROUPS` Set(s) so the launcher search, category chips, category hub, and featured shelves stay useful.
 
 ## Quick start
 
@@ -60,6 +60,8 @@ Install and setup:
 - `npm ci`
 - `npx playwright install --with-deps chromium`
 - `npm run seo`
+- `npm run og`
+- `npm run game:preflight`
 
 Integration and QA:
 
@@ -195,9 +197,12 @@ Optional env vars:
 ## Daily game ship checklist
 
 1. Add the game route and update `src/meta/games.js`.
-2. Mount `mountGameFeedback({ gameSlug, gameName })`.
-3. Run `npm run feedback:sync-linear`.
-4. Run `npm run test:feedback`.
-5. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
-6. Confirm Linear baseline issue coverage or let daily provisioning backfill it.
+2. Add the slug to relevant `DISCOVERY_CATEGORY_GROUPS` in `src/meta/games.js`.
+3. Run `npm run seo`, `npm run og`, and `npm run game:preflight`.
+4. Mount `mountGameFeedback({ gameSlug, gameName })`.
+5. Run `npm run feedback:sync-linear`.
+6. Run `npm run test:feedback`.
+7. Run `npm run test:social` when discovery metadata, rankings, or social routes changed.
+8. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
+9. Confirm Linear baseline issue coverage or let daily provisioning backfill it.
 

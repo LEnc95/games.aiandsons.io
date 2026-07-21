@@ -78,13 +78,27 @@ Operational command reference for contributors and automations in this repositor
 - Google sign-in still requires the Firebase/Auth provider setup and authorized domains in the Firebase or Google Cloud console
 
 ## Daily Game Checklist
-- Add the game route and update `src/meta/games.js`
+- Add `<slug>/index.html` and a `BASE_GAMES` entry in `src/meta/games.js`
+- Add the slug to the appropriate `DISCOVERY_CATEGORY_GROUPS` Set(s); category chips, the homepage category hub, badges, duration/difficulty, and weekly eligibility are derived from the enriched `GAMES` export
+- Do not add per-game Vercel rewrites or cache headers for normal clean URLs; the generic `/:slug` and `/:slug/` no-cache rules cover game shells
 - Run `npm run seo` and `npm run og` after metadata/content changes
 - Run `npm run game:preflight` before committing a new game
 - Mount `mountGameFeedback({ gameSlug, gameName })`
 - Scheduled runs use `npm run feedback:sync-linear:files`; the daily provisioning workflow handles live Linear resources
 - Run `npm run test:feedback`
+- Run `npm run test:social` when discovery metadata, ranking defaults, or social/challenge wiring changed
 - Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
 - Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
 - After every required gate passes, commit as `Add <Game Name> daily game`, push without force to `main`, and verify both Main QA and the production game route
+
+### New-game preflight coverage
+`npm run game:preflight` runs `scripts/preflight-new-game.mjs` and fails with remediation hints when:
+- a registry entry points at a missing `<folder>/index.html`
+- a top-level game folder with `index.html` is not registered in `src/meta/games.js`
+- `api/discovery/_metadata.js` is stale versus the `GAMES` registry (`npm run seo` or `npm run discovery:meta`)
+- a game is missing `assets/og/<slug>.png` (`npm run og`)
+- `sitemap.xml` does not include every game route (`npm run seo`)
+- `vercel.json` loses the generic `/:slug` and `/:slug/` no-cache header rules
+
+Preflight does not check `DISCOVERY_CATEGORY_GROUPS` placement, feedback widget mounting, Linear seed generation, or alignment between client `TRENDING_SLUGS` / `TOP_PLAYED_SLUGS` and server `CURATED_*` ranking lists. `npm run test:social` covers discovery API behavior and validates that curated server slugs still reference real games.
 
