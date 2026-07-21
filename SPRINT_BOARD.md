@@ -530,3 +530,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-18] Key PR links: none merged for this date.
 - [nightly 2026-07-19] No repository commits found for this date.
 - [nightly 2026-07-19] Key PR links: none merged for this date.
+- [nightly 2026-07-20] Tracked changes: 5 commit(s) - 0eb3f8e Bump release version to 1.12.0; a5021e8 Document release 1.12.0 and update sprint tracking; 9afacf1 Document updated unit and integration test commands; 12da5e7 Clarify daily game preflight workflow docs; 8b2196a Add Knight's Tour daily game.
+- [nightly 2026-07-20] Key PR links: none merged for this date.
