@@ -179,5 +179,6 @@
 - game/windbow
 - game/knightstour
 - game/neondivide
+- game/lureline
 
 Generated from `src/meta/feedback.js`.

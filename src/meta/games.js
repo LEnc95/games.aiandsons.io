@@ -163,6 +163,7 @@ const BASE_GAMES = [
   { slug:'windbow',        name:'Windbow Trials',       emoji:'\u{1F3F9}', scoreHint:'score', url:'/windbow', desc:'Read shifting winds, charge each arrow, and strike the target rings across five archery rounds.', earnsCoins:true },
   { slug:'knightstour',    name:"Knight's Tour",       emoji:'\u265E\uFE0F', scoreHint:'tours', url:'/knightstour', desc:'Guide a chess knight across every square exactly once, avoid dead ends, and complete five pathfinding puzzle boards.', earnsCoins:true },
   { slug:'neondivide',     name:'Neon Divide',          emoji:'\u{1F4A0}', scoreHint:'territory', url:'/neondivide', desc:'Cut glowing trails across a live arcade field, dodge roaming sparks, and claim three increasingly dangerous neon zones.', earnsCoins:true },
+  { slug:'lureline',       name:'Lure Line',            emoji:'\u{1F3A3}', scoreHint:'catch', url:'/lureline', desc:'Charge each cast, react to fish bites, and alternate reel strokes to land the target catch across three lively ponds.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -194,7 +195,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
-    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide',
+    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline',
   ]),
   word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder', 'minicrossword']),
   cards: new Set([
@@ -203,7 +204,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   ]),
   sports: new Set([
     'airhockey', 'skeeball', 'pool', 'plinko', 'darts', 'minigolf', 'ski',
-    'homerunderby', 'nebulacurl', 'windbow',
+    'homerunderby', 'nebulacurl', 'windbow', 'lureline',
   ]),
   racing: new Set([
     'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
