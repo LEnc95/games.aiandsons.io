@@ -180,7 +180,9 @@
     .today-focus,
     .today-reward { border:1px solid rgba(148,184,219,0.18); border-radius:8px; background:rgba(4,14,28,0.58); padding:10px; min-width:0; }
     .today-progress { display:flex; flex-direction:column; gap:8px; }
-    .today-row { display:grid; grid-template-columns:26px minmax(0, 1fr) auto; gap:8px; align-items:center; }
+    .today-row { display:grid; grid-template-columns:26px minmax(0, 1fr) auto; gap:8px; align-items:center; color:inherit; text-decoration:none; border-radius:7px; }
+    a.today-row { margin:-4px; padding:4px; }
+    a.today-row:hover, a.today-row:focus-visible { background:rgba(94,234,212,0.1); outline:1px solid rgba(94,234,212,0.55); }
     .today-row-icon { width:26px; height:26px; display:grid; place-items:center; border-radius:8px; background:rgba(94,234,212,0.12); border:1px solid rgba(94,234,212,0.28); }
     .today-row-main { min-width:0; display:flex; flex-direction:column; gap:4px; }
     .today-row-label { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -2224,11 +2226,15 @@
       }
     }
 
-    function renderTodayProgressRow({ kind, icon, label, sub, value, progress, target, completed }) {
+    function renderTodayProgressRow({ kind, icon, label, sub, value, progress, target, completed, href, linkLabel }) {
       const ratio = target > 0 ? clampNumber(Number(progress) || 0, 0, target) / target : 0;
       const percent = Math.round(ratio * 100);
+      const tagName = href ? 'a' : 'article';
+      const linkAttributes = href
+        ? ` href="${escapeHtml(href)}" aria-label="${escapeHtml(linkLabel || `Play ${sub}`)}"`
+        : '';
       return `
-        <article class="today-row${completed ? ' completed' : ''}" data-today-kind="${escapeHtml(kind)}">
+        <${tagName} class="today-row${completed ? ' completed' : ''}" data-today-kind="${escapeHtml(kind)}"${linkAttributes}>
           <span class="today-row-icon" aria-hidden="true">${escapeHtml(icon)}</span>
           <span class="today-row-main">
             <span class="today-row-label">${escapeHtml(label)}</span>
@@ -2236,7 +2242,7 @@
             <span class="today-bar" aria-hidden="true"><span class="today-bar-fill" style="width:${percent}%"></span></span>
           </span>
           <span class="today-row-value">${escapeHtml(value)}</span>
-        </article>
+        </${tagName}>
       `;
     }
 
@@ -2282,6 +2288,8 @@
       const weeklyCompleted = weeklyChallenges.filter((challenge) => challenge.completed).length;
       const nextDaily = dailyMissions.find((mission) => !mission.completed) || dailyMissions[0];
       const nextWeekly = weeklyChallenges.find((challenge) => !challenge.completed) || weeklyChallenges[0];
+      const nextDailyGame = nextDaily ? GAMES.find((game) => game.slug === nextDaily.gameSlug) : null;
+      const nextWeeklyGame = nextWeekly ? GAMES.find((game) => game.slug === nextWeekly.gameSlug) : null;
       const nextPremium = premiumTrack.challenges?.find((challenge) => !challenge.completed) || premiumTrack.challenges?.[0] || null;
       const dailyRewardCoins = dailyMissions
         .filter((mission) => !mission.completed)
@@ -2301,6 +2309,8 @@
           progress: dailyCompleted,
           target: dailyMissions.length || 1,
           completed: dailyMissions.length > 0 && dailyCompleted >= dailyMissions.length,
+          href: nextDailyGame?.url || '',
+          linkLabel: nextDailyGame ? `Play ${nextDailyGame.name} for ${nextDaily.name}` : '',
         },
         {
           kind: 'weekly',
@@ -2311,6 +2321,8 @@
           progress: weeklyCompleted,
           target: weeklyChallenges.length || 1,
           completed: weeklyChallenges.length > 0 && weeklyCompleted >= weeklyChallenges.length,
+          href: nextWeeklyGame?.url || '',
+          linkLabel: nextWeeklyGame ? `Play ${nextWeeklyGame.name} for ${nextWeekly.name}` : '',
         },
       ];
 
@@ -2341,9 +2353,9 @@
       }
 
       const focus = nextWeekly && !nextWeekly.completed
-        ? { kicker: 'Weekly Focus', title: nextWeekly.name, desc: nextWeekly.desc }
+        ? { kicker: 'Weekly Focus', title: nextWeekly.name, desc: nextWeekly.desc, game: nextWeeklyGame }
         : (nextDaily && !nextDaily.completed
-          ? { kicker: 'Daily Focus', title: nextDaily.name, desc: nextDaily.desc }
+          ? { kicker: 'Daily Focus', title: nextDaily.name, desc: nextDaily.desc, game: nextDailyGame }
           : (assignmentSummary && !assignmentSummary.completed
             ? { kicker: 'Class Assignment', title: assignmentSummary.bundle.name, desc: assignmentSummary.bundle.desc }
             : (nextPremium && !nextPremium.completed
@@ -2369,6 +2381,11 @@
         <span class="today-reward-value">+${escapeHtml(possibleRewardCoins)}</span>
         <span class="today-reward-label">coins available</span>
       `;
+      if (todayChallengeCtaEl) {
+        todayChallengeCtaEl.href = focus.game?.url || '#challengeDetailsSection';
+        todayChallengeCtaEl.textContent = focus.game ? `Play ${focus.game.name}` : 'View Challenge Details';
+        todayChallengeCtaEl.dataset.gameSlug = focus.game?.slug || '';
+      }
     }
 
     function collectClassroomForm() {
