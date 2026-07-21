@@ -301,6 +301,8 @@
     .mission-name { margin:0 0 5px 0; font-size:14px; font-weight:700; }
     .mission-desc { margin:0 0 8px 0; color:#b8cdee; font-size:12px; line-height:1.35; }
     .mission-progress { margin:0; font-size:12px; color:#d8e8ff; }
+    .mission-game-link { display:inline-block; margin-top:8px; color:#8fd3ff; font-size:12px; font-weight:700; text-decoration:none; }
+    .mission-game-link:hover, .mission-game-link:focus-visible { color:#fff; text-decoration:underline; }
     .mission-week { margin:0 0 5px 0; font-size:11px; color:#a6c9f2; text-transform:uppercase; letter-spacing:0.04em; }
     .premium-section { border:1px solid rgba(244,191,97,0.45); border-radius:14px; padding:14px; margin-bottom:18px; background:rgba(244,191,97,0.08); }
     .premium-cta { border:1px dashed rgba(244,191,97,0.6); border-radius:10px; padding:12px; font-size:13px; color:#ffe0a6; margin-bottom:10px; }
@@ -2103,11 +2105,16 @@
         const statusText = mission.completed
           ? `Complete - +${mission.rewardCoins} coins`
           : `${progress}/${mission.target} - +${mission.rewardCoins} coins`;
+        const game = GAMES.find((entry) => entry.slug === mission.gameSlug);
+        const gameLink = game
+          ? `<a class="mission-game-link" href="${escapeHtml(game.url)}" aria-label="Play ${escapeHtml(game.name)} for ${escapeHtml(mission.name)}">Play ${escapeHtml(game.name)} &rarr;</a>`
+          : '';
 
         card.innerHTML = `
           <h3 class="mission-name">${escapeHtml(mission.name)}</h3>
           <p class="mission-desc">${escapeHtml(mission.desc)}</p>
           <p class="mission-progress">${escapeHtml(statusText)}</p>
+          ${gameLink}
         `;
         dailyMissionsListEl.appendChild(card);
       }
@@ -2136,12 +2143,17 @@
         const statusText = challenge.completed
           ? `Complete - +${challenge.rewardCoins} coins`
           : `${progress}/${challenge.target} - +${challenge.rewardCoins} coins`;
+        const game = GAMES.find((entry) => entry.slug === challenge.gameSlug);
+        const gameLink = game
+          ? `<a class="mission-game-link" href="${escapeHtml(game.url)}" aria-label="Play ${escapeHtml(game.name)} for ${escapeHtml(challenge.name)}">Play ${escapeHtml(game.name)} &rarr;</a>`
+          : '';
 
         card.innerHTML = `
           <p class="mission-week">${escapeHtml(formatWeekLabel(challenge.weekKey))}</p>
           <h3 class="mission-name">${escapeHtml(challenge.name)}</h3>
           <p class="mission-desc">${escapeHtml(challenge.desc)}</p>
           <p class="mission-progress">${escapeHtml(statusText)}</p>
+          ${gameLink}
         `;
         weeklyChallengesListEl.appendChild(card);
       }

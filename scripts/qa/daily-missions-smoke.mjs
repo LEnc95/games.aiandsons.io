@@ -86,12 +86,14 @@ async function main() {
       const cards = [...document.querySelectorAll("#dailyMissionsList [data-mission-id]")];
       return {
         missionCount: cards.length,
+        gameLinkCount: cards.filter((card) => card.querySelector('.mission-game-link[href^="/"]')).length,
         metaText: document.getElementById("dailyMissionsMeta")?.textContent?.trim() || "",
         todayDailyVisible: Boolean(document.querySelector('#todayPanel [data-today-kind="daily"]')),
         todayRows: document.querySelectorAll("#todayPanel [data-today-kind]").length,
       };
     });
     assert(initialState.missionCount >= 3, "Expected at least three daily missions to be visible on home.");
+    assert(initialState.gameLinkCount === initialState.missionCount, `Expected every daily mission to link to its game: ${JSON.stringify(initialState)}`);
     assert(initialState.todayDailyVisible, "Expected Today panel to include daily mission progress.");
     assert(initialState.todayRows >= 3, "Expected Today panel to include compact challenge rows.");
     summary.checks.push({ name: "missions_rendered", pass: true, data: initialState });

@@ -52,6 +52,7 @@ const pickRotatingIds = (definitions, seedKey, count) => {
 const missionDefs = [
   {
     id: 'snake-length-14',
+    gameSlug: 'snake',
     name: 'Stretch Goal',
     desc: 'Reach length 14 in Snake.',
     target: 14,
@@ -60,6 +61,7 @@ const missionDefs = [
   },
   {
     id: 'pong-margin-3',
+    gameSlug: 'pong',
     name: 'Paddle Power',
     desc: 'Win Pong by at least 3 points.',
     target: 3,
@@ -68,6 +70,7 @@ const missionDefs = [
   },
   {
     id: 'tetris-lines-16',
+    gameSlug: 'tetris',
     name: 'Line Cleaner',
     desc: 'Clear 16 lines in Tetris.',
     target: 16,
@@ -76,6 +79,7 @@ const missionDefs = [
   },
   {
     id: 'asteroids-wave-4',
+    gameSlug: 'asteroids',
     name: 'Field Survivor',
     desc: 'Reach wave 4 in Asteroids.',
     target: 4,
@@ -84,6 +88,7 @@ const missionDefs = [
   },
   {
     id: 'bomberman-level-3',
+    gameSlug: 'bomberman',
     name: 'Maze Breaker',
     desc: 'Reach level 3 in Bomberman Lite.',
     target: 3,
@@ -92,6 +97,7 @@ const missionDefs = [
   },
   {
     id: 'dino-distance-700',
+    gameSlug: 'dino',
     name: 'Long Sprint',
     desc: 'Reach 700 distance in Dino Run.',
     target: 700,
@@ -100,6 +106,7 @@ const missionDefs = [
   },
   {
     id: 'frogger-score-12',
+    gameSlug: 'frogger',
     name: 'River Champ',
     desc: 'Score 12 in Frogger.',
     target: 12,
@@ -108,6 +115,7 @@ const missionDefs = [
   },
   {
     id: 'pokemon-badge-1',
+    gameSlug: 'pokemon',
     name: 'Trainer Badge',
     desc: 'Earn at least 1 badge in Pokemon.',
     target: 1,
@@ -116,6 +124,7 @@ const missionDefs = [
   },
   {
     id: 'tetris-score-2500',
+    gameSlug: 'tetris',
     name: 'Stack Scorer',
     desc: 'Reach 2500 score in Tetris.',
     target: 2500,
@@ -124,6 +133,7 @@ const missionDefs = [
   },
   {
     id: 'colorcatch-score-1200',
+    gameSlug: 'colorcatch',
     name: 'Color Chain',
     desc: 'Reach 1200 score in Color Catch Arcade.',
     target: 1200,
@@ -132,6 +142,7 @@ const missionDefs = [
   },
   {
     id: 'colorcatch-stage-2',
+    gameSlug: 'colorcatch',
     name: 'Stage Sprint',
     desc: 'Reach stage 2 in Color Catch Arcade.',
     target: 2,
@@ -143,6 +154,7 @@ const missionDefs = [
 const weeklyDefs = [
   {
     id: 'weekly-snake-length-22',
+    gameSlug: 'snake',
     name: 'Weekly Snake Master',
     desc: 'Reach length 22 in Snake.',
     target: 22,
@@ -151,6 +163,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-pong-margin-6',
+    gameSlug: 'pong',
     name: 'Weekly Pong Ace',
     desc: 'Win Pong by at least 6 points.',
     target: 6,
@@ -159,6 +172,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-tetris-lines-40',
+    gameSlug: 'tetris',
     name: 'Weekly Line Boss',
     desc: 'Clear 40 lines in Tetris.',
     target: 40,
@@ -167,6 +181,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-asteroids-wave-7',
+    gameSlug: 'asteroids',
     name: 'Weekly Deep Space',
     desc: 'Reach wave 7 in Asteroids.',
     target: 7,
@@ -175,6 +190,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-bomberman-level-5',
+    gameSlug: 'bomberman',
     name: 'Weekly Blast Route',
     desc: 'Reach level 5 in Bomberman Lite.',
     target: 5,
@@ -183,6 +199,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-dino-distance-1800',
+    gameSlug: 'dino',
     name: 'Weekly Dino Dash',
     desc: 'Reach 1800 distance in Dino Run.',
     target: 1800,
@@ -191,6 +208,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-frogger-score-20',
+    gameSlug: 'frogger',
     name: 'Weekly River Captain',
     desc: 'Score 20 in Frogger.',
     target: 20,
@@ -199,6 +217,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-pokemon-badges-2',
+    gameSlug: 'pokemon',
     name: 'Weekly Gym Push',
     desc: 'Earn 2 badges in Pokemon.',
     target: 2,
@@ -207,6 +226,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-colorcatch-score-2400',
+    gameSlug: 'colorcatch',
     name: 'Weekly Spectrum Rush',
     desc: 'Reach 2400 score in Color Catch Arcade.',
     target: 2400,
@@ -215,6 +235,7 @@ const weeklyDefs = [
   },
   {
     id: 'weekly-colorcatch-stage-3',
+    gameSlug: 'colorcatch',
     name: 'Weekly Full Prism',
     desc: 'Reach stage 3 in Color Catch Arcade.',
     target: 3,
@@ -322,6 +343,7 @@ const materializeEntries = (ids, byId, progressMap, completedIds, rewardedIds) =
       const rewarded = rewardedSet.has(entry.id);
       return {
         id: entry.id,
+        gameSlug: entry.gameSlug,
         name: entry.name,
         desc: entry.desc,
         target: entry.target,
