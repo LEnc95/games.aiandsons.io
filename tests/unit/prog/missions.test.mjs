@@ -8,7 +8,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 test('missions module loading', async (t) => {
-  const { ensureDailyMissions, ensureWeeklyChallenges } = await import('../../../src/prog/missions.js');
+  const {
+    ensureDailyMissions,
+    ensureWeeklyChallenges,
+    getActiveDailyMissions,
+    getActiveWeeklyChallenges,
+  } = await import('../../../src/prog/missions.js');
   const { state } = await import('../../../src/core/state.js');
 
   await t.test('missions module tests', async (t) => {
@@ -102,6 +107,15 @@ test('missions module loading', async (t) => {
         assert.deepEqual(state.missions.weekly.rewarded, []);
         assert.equal(state.missions.weekly.activeIds.length, 2);
       });
+    });
+
+    await t.test('active daily and weekly entries identify their games', () => {
+      const timestamp = new Date('2024-05-01T12:00:00Z').getTime();
+      const daily = getActiveDailyMissions(timestamp);
+      const weekly = getActiveWeeklyChallenges(timestamp);
+
+      assert.ok(daily.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
+      assert.ok(weekly.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
     });
   });
 });

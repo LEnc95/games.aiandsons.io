@@ -180,7 +180,9 @@
     .today-focus,
     .today-reward { border:1px solid rgba(148,184,219,0.18); border-radius:8px; background:rgba(4,14,28,0.58); padding:10px; min-width:0; }
     .today-progress { display:flex; flex-direction:column; gap:8px; }
-    .today-row { display:grid; grid-template-columns:26px minmax(0, 1fr) auto; gap:8px; align-items:center; }
+    .today-row { display:grid; grid-template-columns:26px minmax(0, 1fr) auto; gap:8px; align-items:center; color:inherit; text-decoration:none; border-radius:7px; }
+    a.today-row { margin:-4px; padding:4px; }
+    a.today-row:hover, a.today-row:focus-visible { background:rgba(94,234,212,0.1); outline:1px solid rgba(94,234,212,0.55); }
     .today-row-icon { width:26px; height:26px; display:grid; place-items:center; border-radius:8px; background:rgba(94,234,212,0.12); border:1px solid rgba(94,234,212,0.28); }
     .today-row-main { min-width:0; display:flex; flex-direction:column; gap:4px; }
     .today-row-label { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -301,6 +303,8 @@
     .mission-name { margin:0 0 5px 0; font-size:14px; font-weight:700; }
     .mission-desc { margin:0 0 8px 0; color:#b8cdee; font-size:12px; line-height:1.35; }
     .mission-progress { margin:0; font-size:12px; color:#d8e8ff; }
+    .mission-game-link { display:inline-block; margin-top:8px; color:#8fd3ff; font-size:12px; font-weight:700; text-decoration:none; }
+    .mission-game-link:hover, .mission-game-link:focus-visible { color:#fff; text-decoration:underline; }
     .mission-week { margin:0 0 5px 0; font-size:11px; color:#a6c9f2; text-transform:uppercase; letter-spacing:0.04em; }
     .premium-section { border:1px solid rgba(244,191,97,0.45); border-radius:14px; padding:14px; margin-bottom:18px; background:rgba(244,191,97,0.08); }
     .premium-cta { border:1px dashed rgba(244,191,97,0.6); border-radius:10px; padding:12px; font-size:13px; color:#ffe0a6; margin-bottom:10px; }
@@ -2103,11 +2107,16 @@
         const statusText = mission.completed
           ? `Complete - +${mission.rewardCoins} coins`
           : `${progress}/${mission.target} - +${mission.rewardCoins} coins`;
+        const game = GAMES.find((entry) => entry.slug === mission.gameSlug);
+        const gameLink = game
+          ? `<a class="mission-game-link" href="${escapeHtml(game.url)}" aria-label="Play ${escapeHtml(game.name)} for ${escapeHtml(mission.name)}">Play ${escapeHtml(game.name)} &rarr;</a>`
+          : '';
 
         card.innerHTML = `
           <h3 class="mission-name">${escapeHtml(mission.name)}</h3>
           <p class="mission-desc">${escapeHtml(mission.desc)}</p>
           <p class="mission-progress">${escapeHtml(statusText)}</p>
+          ${gameLink}
         `;
         dailyMissionsListEl.appendChild(card);
       }
@@ -2136,12 +2145,17 @@
         const statusText = challenge.completed
           ? `Complete - +${challenge.rewardCoins} coins`
           : `${progress}/${challenge.target} - +${challenge.rewardCoins} coins`;
+        const game = GAMES.find((entry) => entry.slug === challenge.gameSlug);
+        const gameLink = game
+          ? `<a class="mission-game-link" href="${escapeHtml(game.url)}" aria-label="Play ${escapeHtml(game.name)} for ${escapeHtml(challenge.name)}">Play ${escapeHtml(game.name)} &rarr;</a>`
+          : '';
 
         card.innerHTML = `
           <p class="mission-week">${escapeHtml(formatWeekLabel(challenge.weekKey))}</p>
           <h3 class="mission-name">${escapeHtml(challenge.name)}</h3>
           <p class="mission-desc">${escapeHtml(challenge.desc)}</p>
           <p class="mission-progress">${escapeHtml(statusText)}</p>
+          ${gameLink}
         `;
         weeklyChallengesListEl.appendChild(card);
       }
@@ -2212,11 +2226,15 @@
       }
     }
 
-    function renderTodayProgressRow({ kind, icon, label, sub, value, progress, target, completed }) {
+    function renderTodayProgressRow({ kind, icon, label, sub, value, progress, target, completed, href, linkLabel }) {
       const ratio = target > 0 ? clampNumber(Number(progress) || 0, 0, target) / target : 0;
       const percent = Math.round(ratio * 100);
+      const tagName = href ? 'a' : 'article';
+      const linkAttributes = href
+        ? ` href="${escapeHtml(href)}" aria-label="${escapeHtml(linkLabel || `Play ${sub}`)}"`
+        : '';
       return `
-        <article class="today-row${completed ? ' completed' : ''}" data-today-kind="${escapeHtml(kind)}">
+        <${tagName} class="today-row${completed ? ' completed' : ''}" data-today-kind="${escapeHtml(kind)}"${linkAttributes}>
           <span class="today-row-icon" aria-hidden="true">${escapeHtml(icon)}</span>
           <span class="today-row-main">
             <span class="today-row-label">${escapeHtml(label)}</span>
@@ -2224,7 +2242,7 @@
             <span class="today-bar" aria-hidden="true"><span class="today-bar-fill" style="width:${percent}%"></span></span>
           </span>
           <span class="today-row-value">${escapeHtml(value)}</span>
-        </article>
+        </${tagName}>
       `;
     }
 
@@ -2270,6 +2288,8 @@
       const weeklyCompleted = weeklyChallenges.filter((challenge) => challenge.completed).length;
       const nextDaily = dailyMissions.find((mission) => !mission.completed) || dailyMissions[0];
       const nextWeekly = weeklyChallenges.find((challenge) => !challenge.completed) || weeklyChallenges[0];
+      const nextDailyGame = nextDaily ? GAMES.find((game) => game.slug === nextDaily.gameSlug) : null;
+      const nextWeeklyGame = nextWeekly ? GAMES.find((game) => game.slug === nextWeekly.gameSlug) : null;
       const nextPremium = premiumTrack.challenges?.find((challenge) => !challenge.completed) || premiumTrack.challenges?.[0] || null;
       const dailyRewardCoins = dailyMissions
         .filter((mission) => !mission.completed)
@@ -2289,6 +2309,8 @@
           progress: dailyCompleted,
           target: dailyMissions.length || 1,
           completed: dailyMissions.length > 0 && dailyCompleted >= dailyMissions.length,
+          href: nextDailyGame?.url || '',
+          linkLabel: nextDailyGame ? `Play ${nextDailyGame.name} for ${nextDaily.name}` : '',
         },
         {
           kind: 'weekly',
@@ -2299,6 +2321,8 @@
           progress: weeklyCompleted,
           target: weeklyChallenges.length || 1,
           completed: weeklyChallenges.length > 0 && weeklyCompleted >= weeklyChallenges.length,
+          href: nextWeeklyGame?.url || '',
+          linkLabel: nextWeeklyGame ? `Play ${nextWeeklyGame.name} for ${nextWeekly.name}` : '',
         },
       ];
 
@@ -2329,9 +2353,9 @@
       }
 
       const focus = nextWeekly && !nextWeekly.completed
-        ? { kicker: 'Weekly Focus', title: nextWeekly.name, desc: nextWeekly.desc }
+        ? { kicker: 'Weekly Focus', title: nextWeekly.name, desc: nextWeekly.desc, game: nextWeeklyGame }
         : (nextDaily && !nextDaily.completed
-          ? { kicker: 'Daily Focus', title: nextDaily.name, desc: nextDaily.desc }
+          ? { kicker: 'Daily Focus', title: nextDaily.name, desc: nextDaily.desc, game: nextDailyGame }
           : (assignmentSummary && !assignmentSummary.completed
             ? { kicker: 'Class Assignment', title: assignmentSummary.bundle.name, desc: assignmentSummary.bundle.desc }
             : (nextPremium && !nextPremium.completed
@@ -2357,6 +2381,11 @@
         <span class="today-reward-value">+${escapeHtml(possibleRewardCoins)}</span>
         <span class="today-reward-label">coins available</span>
       `;
+      if (todayChallengeCtaEl) {
+        todayChallengeCtaEl.href = focus.game?.url || '#challengeDetailsSection';
+        todayChallengeCtaEl.textContent = focus.game ? `Play ${focus.game.name}` : 'View Challenge Details';
+        todayChallengeCtaEl.dataset.gameSlug = focus.game?.slug || '';
+      }
     }
 
     function collectClassroomForm() {

@@ -86,13 +86,19 @@ async function main() {
       const cards = [...document.querySelectorAll("#weeklyChallengesList [data-challenge-id]")];
       return {
         challengeCount: cards.length,
+        gameLinkCount: cards.filter((card) => card.querySelector('.mission-game-link[href^="/"]')).length,
         metaText: document.getElementById("weeklyChallengesMeta")?.textContent?.trim() || "",
         todayWeeklyVisible: Boolean(document.querySelector('#todayPanel [data-today-kind="weekly"]')),
+        todayWeeklyHref: document.querySelector('#todayPanel a[data-today-kind="weekly"]')?.getAttribute('href') || '',
+        todayCtaHref: document.querySelector('#todayChallengeCta')?.getAttribute('href') || '',
         todayRows: document.querySelectorAll("#todayPanel [data-today-kind]").length,
       };
     });
     assert(initialState.challengeCount >= 2, "Expected at least two weekly challenges to be visible on home.");
+    assert(initialState.gameLinkCount === initialState.challengeCount, `Expected every weekly challenge to link to its game: ${JSON.stringify(initialState)}`);
     assert(initialState.todayWeeklyVisible, "Expected Today panel to include weekly challenge progress.");
+    assert(initialState.todayWeeklyHref.startsWith('/'), `Expected the Today weekly challenge to link to its game: ${JSON.stringify(initialState)}`);
+    assert(initialState.todayCtaHref === initialState.todayWeeklyHref, `Expected the featured challenge button to open the weekly game: ${JSON.stringify(initialState)}`);
     assert(initialState.todayRows >= 3, "Expected Today panel to include compact challenge rows.");
     summary.checks.push({ name: "weekly_challenges_rendered", pass: true, data: initialState });
 
