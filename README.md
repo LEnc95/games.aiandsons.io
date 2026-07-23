@@ -21,16 +21,89 @@ Static browser arcade platform with:
 - `ops/feedback/index.html`: feedback inbox and admin actions.
 - `src/meta/games.js`: source of truth for game catalog.
 - `src/meta/feedback.js`: feedback/Linear metadata mapped from game catalog.
+- `src/discovery/rankings.js`: client helpers for launch telemetry and ranked discovery rows.
 - `src/auth/*`: Firebase client account helpers + floating account widget.
 - `api/auth/*`: app session bootstrap + Google login exchange/logout.
+- `api/discovery/*`: discovery ranking handlers, storage, and generated metadata used by `api/social.js`.
 - `api/feedback/*`: feedback submit/admin/attachments APIs.
 - `api/stripe/*`: Stripe checkout, portal, status, webhook, and reconcile routes.
 - `scripts/qa/*`: smoke coverage for classroom, discovery, feedback, pricing, entitlement, onboarding, and launch-readiness flows.
 
 ## Game catalog
 
-The catalog is maintained in `src/meta/games.js` and currently has `60` games.
-Use that file as the source of truth instead of maintaining a duplicated list in this README.
+The catalog is maintained in `src/meta/games.js`. Use that file as the source of truth for game names,
+routes, categories, search metadata, coin eligibility, score hints, and accessibility tags. To inspect
+the current count without adding a stale number to docs:
+
+```bash
+node --input-type=module -e "import { GAMES } from './src/meta/games.js'; console.log(GAMES.length)"
+```
+
+When adding or changing a game, keep these generated artifacts in sync:
+
+- `api/discovery/_metadata.js`: server-side discovery slug allowlist. `DISCOVERY_GAME_SLUGS` is generated
+  from `GAMES`; do not edit it by hand. The `CURATED_TRENDING_SLUGS` and `CURATED_TOP_PLAYED_SLUGS`
+  lists are editorial and are preserved by the generator.
+- `sitemap.xml` and injected SEO blocks in game pages.
+- `assets/og/<slug>.png`: share/Open Graph card for each game.
+- `linear/labels.md` and `linear/game-issues.csv`: generated feedback/Linear seed files from
+  `src/meta/feedback.js`.
+
+Useful commands:
+
+```bash
+npm run seo                  # sitemap + SEO injection + discovery metadata
+npm run discovery:meta       # discovery metadata only
+npm run og                   # per-game OG cards
+npm run feedback:sync-linear # generated Linear seeds + live provisioning when envs are present
+npm run feedback:sync-linear:files # generated Linear seeds only
+npm run game:preflight       # registry/folder/discovery/OG/sitemap/cache-header guard
+```
+
+Common preflight failures:
+
+| Failure | Fix |
+| --- | --- |
+| `registry entries without a game folder` | Create `<slug>/index.html` or correct the `url` in `src/meta/games.js`. |
+| `game folders not in the registry` | Add the folder to `src/meta/games.js`, then run `npm run seo`. |
+| `api/discovery/_metadata.js is out of sync` | Run `npm run seo` or `npm run discovery:meta`. |
+| `games missing assets/og/<slug>.png` | Run `npm run og` after installing Playwright Chromium if needed. |
+| `sitemap.xml missing routes` | Run `npm run seo`. |
+| `vercel.json lost the generic /:slug + /:slug/ no-cache header rules` | Restore the clean-URL no-cache headers before shipping. |
+
+Normal one-folder games do not need new `vercel.json` rewrites or headers. Add rewrites only for aliases
+or non-standard paths, such as `/pingpong` pointing at `/pong`.
+
+## Discovery launch telemetry and rankings
+
+The homepage combines local catalog metadata with ranked discovery rows:
+
+1. `index.html` imports `GAMES` and `src/discovery/rankings.js`.
+2. Game tile clicks call `sendDiscoveryLaunchEvent({ slug, source })`, which sends a non-blocking
+   `POST /api/discovery/events` using `sendBeacon` when available and falls back to `fetch(..., keepalive)`.
+3. `loadDiscoveryRankings()` fetches `GET /api/discovery/rankings`, normalizes duplicate or malformed
+   rank items, and caches the payload in namespaced local storage for up to three minutes.
+4. On the raw static smoke server (`127.0.0.1:4173`), the client skips discovery ranking fetches because
+   Python's static server cannot serve the serverless API routes.
+
+Public discovery API URLs are rewired through `api/social.js`:
+
+- `/api/discovery/events` -> `api/social?route=discovery-events`
+- `/api/discovery/rankings` -> `api/social?route=discovery-rankings`
+
+That consolidation keeps Vercel function entrypoints within the Hobby plan limit. The handlers live in
+`api/discovery/_handlers.js`, validate methods and payloads, and delegate storage to `api/discovery/_store.js`.
+When Firebase Admin is configured, launches are counted in Firestore collections
+`discoveryGameAggregates` and `discoveryDailyLaunches`. Tests and previews fall back to in-memory counts,
+and empty or failed backends fall back to the curated lists from `api/discovery/_metadata.js`.
+
+Coverage map:
+
+- `tests/unit/discovery-rankings.test.mjs`: client normalization, cache TTL, static-server skip, event send.
+- `tests/discovery-api.integration.test.mjs`: API methods, payload validation, memory fallback, Vercel rewrites,
+  and function-entrypoint budget.
+- `tests/discovery-metadata-sync.test.mjs`: generated discovery slug allowlist and curated slug validity.
+- `npm run test:discovery-smoke:raw`: homepage discovery/search and shop filtering against a static server.
 
 ## Quick start
 
@@ -60,11 +133,15 @@ Install and setup:
 - `npm ci`
 - `npx playwright install --with-deps chromium`
 - `npm run seo`
+- `npm run discovery:meta`
+- `npm run og`
+- `npm run game:preflight`
 
 Integration and QA:
 
 - `npm run test:shop`
 - `npm run test:feedback`
+- `npm run test:social`
 - `npm run test:qa`
 - `npm run test:classroom-smoke`
 - `npm run test:launch-readiness-smoke`
@@ -194,12 +271,15 @@ Optional env vars:
 
 ## Daily game ship checklist
 
-1. Add the game route and update `src/meta/games.js`.
-2. Mount `mountGameFeedback({ gameSlug, gameName })`.
-3. Run `npm run feedback:sync-linear`.
-4. Run `npm run test:feedback`.
-5. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
-6. Confirm Linear baseline issue coverage or let daily provisioning backfill it.
+1. Add `<slug>/index.html` and a matching `src/meta/games.js` entry.
+2. Mount `mountGameFeedback({ gameSlug, gameName })` from the shared feedback embed.
+3. Run `npm run seo` to refresh sitemap, SEO metadata, and discovery metadata.
+4. Run `npm run og` so `/g/:slug` and shared links have a game-specific card.
+5. Run `npm run feedback:sync-linear` or `npm run feedback:sync-linear:files` to refresh Linear seed artifacts.
+6. Run `npm run game:preflight`.
+7. Run `npm run test:feedback` and `npm run test:social`.
+8. Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed.
+9. Confirm Linear baseline issue coverage or let daily provisioning backfill it.
 
 ## Self-maintaining release train
 
