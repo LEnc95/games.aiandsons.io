@@ -195,11 +195,15 @@ Optional env vars:
 ## Daily game ship checklist
 
 1. Add the game route and update `src/meta/games.js`.
-2. Mount `mountGameFeedback({ gameSlug, gameName })`.
-3. Run `npm run feedback:sync-linear`.
-4. Run `npm run test:feedback`.
-5. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
-6. Confirm Linear baseline issue coverage or let daily provisioning backfill it.
+2. Add an explicit `src/meta/content-contracts.js` entry with a release date, bounded outcome metrics, and at least one cosmetic slot.
+3. Report completion through `reportGameOutcome({ slug, result, durationMs, metrics })`.
+4. Mount `mountGameFeedback({ gameSlug, gameName })`.
+5. Add the game to the `CHANGELOG.md` Unreleased section.
+6. Run `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`.
+7. Run `npm run maintenance:validate`, `npm run game:preflight`, `npm run test:telemetry`, `npm run test:feedback`, `npm run test:shop`, and `npm run test:social`.
+8. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
+9. Commit one game as `Add <Game Name> daily game` on `automation/daily-game/YYYY-MM-DD`, then open a guarded pull request. Unattended releases never push directly to `main`.
+10. Let the required premerge checks and trusted squash auto-merge update `main`, then verify Main QA and the production game route.
 
 ## Self-maintaining release train
 

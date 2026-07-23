@@ -59,7 +59,7 @@ Operational command reference for contributors and automations in this repositor
 - Live-provision missing Linear labels and baseline issues: `npm run feedback:provision-linear`
 
 ## GitHub Automations
-- The Codex `create-a-new-game` scheduler runs daily at 07:00 in an isolated worktree. A successful run commits one game and pushes `HEAD:main`; any pre-push failure must leave `main` unchanged.
+- The Codex `create-a-new-game` scheduler runs daily at 07:00 in an isolated worktree. A successful run commits one game on `automation/daily-game/YYYY-MM-DD`, opens a guarded pull request, and lets the trusted post-gate workflow update `main`; unattended releases never push directly to `main`.
 - Main branch fast QA and new-game preflight: `.github/workflows/main-qa.yml`
 - Automation PR full premerge gate and auto-merge: `.github/workflows/automation-premerge.yml`
 - Trusted post-gate auto-merge authority: `.github/workflows/automation-auto-merge.yml`
@@ -89,6 +89,7 @@ Operational command reference for contributors and automations in this repositor
 - Add the game route and update `src/meta/games.js`
 - Add an explicit entry to `src/meta/content-contracts.js` with release date, bounded outcome metrics, and at least one cosmetic slot
 - Report completion through `reportGameOutcome({ slug, result, durationMs, metrics })`
+- Add the game to the `CHANGELOG.md` Unreleased section
 - Run `npm run seo` and `npm run og` after metadata/content changes
 - Run `npm run game:preflight` before committing a new game
 - Mount `mountGameFeedback({ gameSlug, gameName })`
@@ -96,8 +97,8 @@ Operational command reference for contributors and automations in this repositor
 - Run `npm run test:feedback`
 - Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
 - Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
-- After every required gate passes, commit as `Add <Game Name> daily game`, push without force to `main`, and verify both Main QA and the production game route
-- Scheduled automation instead opens `automation/daily-game/YYYY-MM-DD`; passing automation PRs enable squash auto-merge and then run production verification
+- After every required gate passes, commit as `Add <Game Name> daily game` on `automation/daily-game/YYYY-MM-DD` and open a guarded pull request
+- Passing automation PRs enable trusted squash auto-merge; then verify Main QA and the production game route
 
 ## Self-Maintenance Privacy Boundary
 - Aggregate outcome collection is disabled in the browser until `CADE_AGGREGATE_TELEMETRY_ENABLED` is explicitly enabled after a release-specific privacy review.
