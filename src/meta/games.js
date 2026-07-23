@@ -1,3 +1,5 @@
+import { getGameContentContract } from './content-contracts.js';
+
 const BASE_GAMES = [
   { slug:'clubpenguin-world', name:'Club Penguin World', emoji:'\u{1F427}', scoreHint:'coins', url:'/clubpenguin-world/public/', desc:'Multiplayer social world prototype with rooms, quick chat, and live movement.', earnsCoins:true },
   { slug:'audioagar',      name:'Audio Agar',           emoji:'\u{1F535}', scoreHint:'mass',       url:'/audioagar',     desc:'Audio-first multiplayer orb arena with keyboard movement, spatial cues, and screen-reader status for blind play.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
@@ -334,13 +336,16 @@ export const GAMES = BASE_GAMES.map((game, index) => {
   if (TRENDING_RANKS[game.slug]) featured.trendingRank = TRENDING_RANKS[game.slug];
   if (TOP_PLAYED_RANKS[game.slug]) featured.topPlayedRank = TOP_PLAYED_RANKS[game.slug];
 
+  const contentContract = getGameContentContract(game.slug);
   return {
     ...game,
     categories: [...categoriesSet],
     modes,
     duration,
     difficulty,
-    releasedAt: releaseDateForIndex(index),
+    releasedAt: contentContract?.releasedAt || releaseDateForIndex(index),
+    releaseDateSource: contentContract?.releasedAt ? 'explicit' : 'legacy-derived',
+    contentContract,
     featured,
     ...(FEATURED_ART[game.slug] ? { art: FEATURED_ART[game.slug] } : {}),
   };

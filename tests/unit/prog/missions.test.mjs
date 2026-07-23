@@ -81,7 +81,7 @@ test('missions module loading', async (t) => {
         assert.ok(Array.isArray(state.missions.weekly.activeIds));
         assert.ok(Array.isArray(state.missions.weekly.completed));
         assert.ok(Array.isArray(state.missions.weekly.rewarded));
-        assert.equal(state.missions.weekly.activeIds.length, 2);
+        assert.equal(state.missions.weekly.activeIds.length, 4);
       });
 
       await t.test('returns false if the week has not changed and there are active challenges', () => {
@@ -105,7 +105,7 @@ test('missions module loading', async (t) => {
         assert.deepEqual(state.missions.weekly.progress, {});
         assert.deepEqual(state.missions.weekly.completed, []);
         assert.deepEqual(state.missions.weekly.rewarded, []);
-        assert.equal(state.missions.weekly.activeIds.length, 2);
+        assert.equal(state.missions.weekly.activeIds.length, 4);
       });
     });
 

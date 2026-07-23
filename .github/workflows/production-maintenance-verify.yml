@@ -1,0 +1,49 @@
+name: Production Maintenance Verify
+
+on:
+  workflow_run:
+    workflows: [Main QA]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify production with two delayed retries
+        shell: bash
+        run: |
+          set +e
+          node scripts/qa/production-maintenance-smoke.mjs --base-url https://games.aiandsons.io && exit 0
+          sleep 300
+          node scripts/qa/production-maintenance-smoke.mjs --base-url https://games.aiandsons.io && exit 0
+          sleep 900
+          node scripts/qa/production-maintenance-smoke.mjs --base-url https://games.aiandsons.io
+      - name: Notify Slack on persistent failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CI_WEBHOOK_URL }}
+          WORKFLOW_NAME: Production Maintenance Verify
+          WORKFLOW_STATUS: ${{ job.status }}
+          WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: node scripts/ci/send-slack-notification.mjs
+

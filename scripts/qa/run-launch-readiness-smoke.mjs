@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..");
 const baseUrl = "http://127.0.0.1:4173";
 
-function pickPythonCommand() {
+function pickServerCommand() {
   const candidates = process.platform === "win32"
     ? ["python", "py"]
     : ["python3", "python"];
@@ -15,10 +15,10 @@ function pickPythonCommand() {
   for (const candidate of candidates) {
     const result = spawnSync(candidate, ["--version"], { stdio: "ignore" });
     if (!result.error && result.status === 0) {
-      return candidate;
+      return { command: candidate, args: ["-m", "http.server", "4173"] };
     }
   }
-  throw new Error("Python is required to run local smoke tests (python3/python not found).");
+  return { command: process.execPath, args: [path.join(repoRoot, "scripts", "qa", "static-server.mjs"), repoRoot, "4173"] };
 }
 
 function sleep(ms) {
@@ -44,8 +44,8 @@ function runNodeScript(scriptPath, args = []) {
 }
 
 async function main() {
-  const pythonCmd = pickPythonCommand();
-  const server = spawn(pythonCmd, ["-m", "http.server", "4173"], {
+  const serverCommand = pickServerCommand();
+  const server = spawn(serverCommand.command, serverCommand.args, {
     cwd: repoRoot,
     stdio: "ignore",
     detached: false,

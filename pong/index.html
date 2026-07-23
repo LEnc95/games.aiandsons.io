@@ -102,9 +102,11 @@
   <script type="module">
     import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
     import { maybeUnlock } from '../src/prog/achievements.js';
+    import { reportGameOutcome } from '../src/core/outcomes.js';
     import { pongPaddleStyle } from '../src/prog/cosmetics.js';
     window.addCoins = addCoinsFn;
     window.maybeUnlock = maybeUnlock;
+    window.reportGameOutcome = reportGameOutcome;
     window.pongPaddleStyle = pongPaddleStyle;
     rememberRecent('pong');
   </script>
@@ -500,6 +502,9 @@
         if (state.player.score > state.cpu.score && typeof maybeUnlock === 'function') {
           const winMargin = state.player.score - state.cpu.score;
           maybeUnlock({ anyPlay: true, pong: { winMargin } });
+        }
+        if (typeof reportGameOutcome === 'function') {
+          reportGameOutcome({ slug: 'pong', result: 'completed', metrics: { winMargin: Math.max(0, state.player.score - state.cpu.score) } });
         }
         setHint(isTouchDevice ? `${winner} Tap RESTART to play again.` : `${winner} Press R to restart.`);
         updateServeButton();

@@ -1,0 +1,42 @@
+name: Weekly Content Pack Brief
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: weekly-content-pack
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Generate deterministic agent brief
+        run: node scripts/automation/prepare-weekly-pack.mjs --output output/automation/weekly-pack.json
+      - name: Validate maintenance baseline
+        run: npm run maintenance:validate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weekly-content-pack-brief
+          path: output/automation/weekly-pack.json
+      - name: Create agent work item
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          WEEK_KEY=$(node -e "const x=require('./output/automation/weekly-pack.json');process.stdout.write(x.weekKey)")
+          if gh issue list --state open --search "Weekly content pack ${WEEK_KEY} in:title" --json title --jq 'length' | grep -q '^0$'; then
+            gh issue create --title "Weekly content pack ${WEEK_KEY}" --body-file output/automation/weekly-pack.json
+          fi
