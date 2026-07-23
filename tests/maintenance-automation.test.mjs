@@ -213,5 +213,9 @@ test('trusted auto-merge uses workflow_run fields that GitHub populates', () => 
   assert.match(workflow, /workflow_run\.head_repository\.full_name == github\.repository/);
   assert.match(workflow, /startsWith\(github\.event\.workflow_run\.head_branch, 'automation\/'\)/);
   assert.doesNotMatch(workflow, /pull_requests\[0\]\.head\.repo\.full_name/);
+  const checkCommand = workflow.indexOf('gh pr checks "$PR_NUMBER"');
+  const mergeCommand = workflow.indexOf('gh pr merge "$PR_NUMBER"');
+  assert.ok(checkCommand >= 0, 'trusted auto-merge must inspect the complete PR check rollup');
+  assert.ok(mergeCommand > checkCommand, 'trusted auto-merge must wait for PR checks before merging');
 });
 
