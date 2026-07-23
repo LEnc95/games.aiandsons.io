@@ -180,5 +180,6 @@
 - game/knightstour
 - game/neondivide
 - game/lureline
+- game/aquariumlogic
 
 Generated from `src/meta/feedback.js`.

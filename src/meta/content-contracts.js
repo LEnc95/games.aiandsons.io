@@ -33,6 +33,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'reel-trail', kind: 'trail', tokens: Object.freeze(['color', 'glow', 'particle']) }),
     ]),
   }),
+  aquariumlogic: Object.freeze({
+    releasedAt: '2026-07-23',
+    outcomes: Object.freeze({
+      boards: Object.freeze({ min: 1, max: 5, direction: 'higher' }),
+      filled: Object.freeze({ min: 0, max: 36, direction: 'higher' }),
+      air: Object.freeze({ min: 0, max: 3, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'tank-theme', kind: 'palette', tokens: Object.freeze(['water', 'glass', 'sand', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
