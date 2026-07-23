@@ -207,7 +207,26 @@ function getFamilyCollections() {
 
 function getMemoryAccountById(accountId) {
   const raw = memoryState.accounts.get(accountId);
-  return raw ? normalizeFamilyAccount(raw) : null;
+  if (!raw) return null;
+  // ⚡ Bolt Optimization: clone members array references to avoid caching mutation
+  // but avoid expensive O(N) normalizeFamilyAccount call.
+  const account = { ...raw };
+  if (Array.isArray(raw.members)) {
+    account.members = raw.members.map(m => ({...m}));
+  }
+  if (Array.isArray(raw.memberUserIds)) {
+    account.memberUserIds = [...raw.memberUserIds];
+  }
+
+  // Reattach the hidden set to maintain O(1) membership check support
+  Object.defineProperty(account, "_memberUserIdsSet", {
+    value: new Set(account.memberUserIds),
+    enumerable: false,
+    writable: false,
+    configurable: true,
+  });
+
+  return account;
 }
 
 async function getFamilyAccount(accountId) {
