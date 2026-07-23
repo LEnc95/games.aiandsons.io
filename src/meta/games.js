@@ -166,6 +166,7 @@ const BASE_GAMES = [
   { slug:'knightstour',    name:"Knight's Tour",       emoji:'\u265E\uFE0F', scoreHint:'tours', url:'/knightstour', desc:'Guide a chess knight across every square exactly once, avoid dead ends, and complete five pathfinding puzzle boards.', earnsCoins:true },
   { slug:'neondivide',     name:'Neon Divide',          emoji:'\u{1F4A0}', scoreHint:'territory', url:'/neondivide', desc:'Cut glowing trails across a live arcade field, dodge roaming sparks, and claim three increasingly dangerous neon zones.', earnsCoins:true },
   { slug:'lureline',       name:'Lure Line',            emoji:'\u{1F3A3}', scoreHint:'catch', url:'/lureline', desc:'Charge each cast, react to fish bites, and alternate reel strokes to land the target catch across three lively ponds.', earnsCoins:true },
+  { slug:'aquariumlogic',  name:'Aquarium Logic',       emoji:'\u{1F420}', scoreHint:'tanks', url:'/aquariumlogic', desc:'Fill glass tanks from the bottom up, match every row and column clue, and solve five colorful aquarium puzzles.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

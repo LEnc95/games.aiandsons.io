@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Added Star Battle, Parcel Patch, Domino Mosaic, Windbow Trials, Knight's Tour, Neon Divide, and Lure Line.
+- Added Aquarium Logic, a five-board aquarium deduction game with bounded outcome telemetry and a tank-theme cosmetic contract.
 - Added the first standardized game outcome and cosmetic-slot contract for unattended engagement content.
 
 ### Improved
