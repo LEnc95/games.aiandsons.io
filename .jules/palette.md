@@ -52,3 +52,7 @@
 ## 2026-06-25 - Enter key submission for school license billing input
 **Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
 **Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
+
+## 2025-02-23 - Remove redundant aria-labels from explicitly labeled inputs
+**Learning:** Adding an `aria-label` to an `<input>` element that already has an explicitly associated native HTML `<label for="[id]">` is an accessibility anti-pattern. This can cause some screen readers to double-announce or misinterpret the field.
+**Action:** Only use `aria-label` on inputs that lack a valid native label or an `aria-labelledby` reference. Always rely on native `<label>` wrapping or `for=` association when visible labels exist.
