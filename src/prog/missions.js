@@ -1,8 +1,9 @@
 import { state, save, recordClassroomAssignmentCompletion } from '../core/state.js';
 import { getAssignmentBundleById } from './assignments.js';
+import { CHALLENGE_POLICY, DAILY_CHALLENGE_DEFS, WEEKLY_CHALLENGE_DEFS } from './challenge-catalog.js';
 
-const DAILY_MISSION_COUNT = 3;
-const WEEKLY_CHALLENGE_COUNT = 2;
+const DAILY_MISSION_COUNT = CHALLENGE_POLICY.dailyActiveCount;
+const WEEKLY_CHALLENGE_COUNT = CHALLENGE_POLICY.weeklyActiveCount;
 
 const toLocalDayKey = (timestamp = Date.now()) => {
   const date = new Date(timestamp);
@@ -244,8 +245,10 @@ const weeklyDefs = [
   },
 ];
 
-const missionById = new Map(missionDefs.map((entry) => [entry.id, entry]));
-const weeklyById = new Map(weeklyDefs.map((entry) => [entry.id, entry]));
+// Canonical data lives in challenge-catalog.js. The legacy declarations above
+// remain temporarily for migration readability but are not used at runtime.
+const missionById = new Map(DAILY_CHALLENGE_DEFS.map((entry) => [entry.id, entry]));
+const weeklyById = new Map(WEEKLY_CHALLENGE_DEFS.map((entry) => [entry.id, entry]));
 
 const ensureMissionContainers = () => {
   if (!state.missions || typeof state.missions !== 'object') {
@@ -290,7 +293,7 @@ const ensureMissionContainers = () => {
 
 const resetDailyMissions = (dayKey) => {
   state.missions.dayKey = dayKey;
-  state.missions.activeIds = pickRotatingIds(missionDefs, `daily:${dayKey}`, DAILY_MISSION_COUNT);
+  state.missions.activeIds = pickRotatingIds(DAILY_CHALLENGE_DEFS, `daily:${dayKey}`, DAILY_MISSION_COUNT);
   state.missions.progress = {};
   state.missions.completed = [];
   state.missions.rewarded = [];
@@ -299,7 +302,7 @@ const resetDailyMissions = (dayKey) => {
 const resetWeeklyChallenges = (weekKey) => {
   state.missions.weekly = {
     weekKey,
-    activeIds: pickRotatingIds(weeklyDefs, `weekly:${weekKey}`, WEEKLY_CHALLENGE_COUNT),
+    activeIds: pickRotatingIds(WEEKLY_CHALLENGE_DEFS, `weekly:${weekKey}`, WEEKLY_CHALLENGE_COUNT),
     progress: {},
     completed: [],
     rewarded: [],

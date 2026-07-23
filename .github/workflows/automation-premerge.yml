@@ -1,0 +1,52 @@
+name: Automation Premerge Gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: Automation lane (daily-game or weekly-pack)
+        required: false
+        default: daily-game
+
+permissions:
+  contents: read
+
+concurrency:
+  group: automation-premerge-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'automation/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Audit release diff
+        env:
+          AUTOMATION_BASE_SHA: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+          AUTOMATION_LANE: ${{ inputs.lane || (startsWith(github.head_ref, 'automation/weekly-pack/') && 'weekly-pack') || 'daily-game' }}
+        run: node scripts/automation/audit-release-diff.mjs
+      - run: npm run game:preflight
+      - run: npm run test:telemetry
+      - run: npm run test:shop
+      - run: npm run test:feedback
+      - run: npm run test:social
+      - run: npm run test:launch-readiness-smoke
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-premerge-artifacts
+          path: output/web-game
+          if-no-files-found: warn

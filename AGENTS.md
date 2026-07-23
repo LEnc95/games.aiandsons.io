@@ -13,6 +13,9 @@ Operational command reference for contributors and automations in this repositor
 - Render social/OG card PNGs: `npm run og`
 - Capture marketing gameplay clips: `npm run marketing:clips`
 - Validate daily new-game wiring before commit: `npm run game:preflight`
+- Validate self-maintenance contracts and release feeds: `npm run maintenance:validate`
+- Generate the current weekly agent content brief: `npm run automation:weekly-brief`
+- Run aggregate telemetry and maintenance automation tests: `npm run test:telemetry`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
 - Run social API integration tests: `npm run test:social`
@@ -58,6 +61,11 @@ Operational command reference for contributors and automations in this repositor
 ## GitHub Automations
 - The Codex `create-a-new-game` scheduler runs daily at 07:00 in an isolated worktree. A successful run commits one game and pushes `HEAD:main`; any pre-push failure must leave `main` unchanged.
 - Main branch fast QA and new-game preflight: `.github/workflows/main-qa.yml`
+- Automation PR full premerge gate and auto-merge: `.github/workflows/automation-premerge.yml`
+- Trusted post-gate auto-merge authority: `.github/workflows/automation-auto-merge.yml`
+- Monday three-cosmetic/four-challenge agent brief: `.github/workflows/weekly-content-pack.yml`
+- Sunday synchronized public/technical release PR: `.github/workflows/weekly-release.yml`
+- Post-Main-QA production verification with 5/15-minute retries: `.github/workflows/production-maintenance-verify.yml`
 - PR classroom smoke gate: `.github/workflows/classroom-smoke.yml`
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
 - Daily lightweight Linear provisioning: `.github/workflows/daily-feedback-provisioning.yml`
@@ -79,6 +87,8 @@ Operational command reference for contributors and automations in this repositor
 
 ## Daily Game Checklist
 - Add the game route and update `src/meta/games.js`
+- Add an explicit entry to `src/meta/content-contracts.js` with release date, bounded outcome metrics, and at least one cosmetic slot
+- Report completion through `reportGameOutcome({ slug, result, durationMs, metrics })`
 - Run `npm run seo` and `npm run og` after metadata/content changes
 - Run `npm run game:preflight` before committing a new game
 - Mount `mountGameFeedback({ gameSlug, gameName })`
@@ -87,4 +97,10 @@ Operational command reference for contributors and automations in this repositor
 - Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
 - Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
 - After every required gate passes, commit as `Add <Game Name> daily game`, push without force to `main`, and verify both Main QA and the production game route
+- Scheduled automation instead opens `automation/daily-game/YYYY-MM-DD`; passing automation PRs enable squash auto-merge and then run production verification
+
+## Self-Maintenance Privacy Boundary
+- Aggregate outcome collection is disabled in the browser until `CADE_AGGREGATE_TELEMETRY_ENABLED` is explicitly enabled after a release-specific privacy review.
+- The telemetry endpoint accepts only registered numeric metrics and persists daily counts/sums/min/max values. Do not add player identifiers, IP addresses, cookies, free-form fields, or raw event histories.
+- Weekly content automation may change up to three game shells and must not add dependencies, billing changes, network calls, new storage keys, or free-form telemetry.
 

@@ -31,7 +31,7 @@ test('premium challenge track computes capped progress and completion for entitl
     entitlements: { familyPremium: true, schoolLicense: false },
     missions: {
       completed: ['daily-1', 'daily-2', 'daily-3', 'daily-4'],
-      weekly: { completed: ['weekly-1', 'weekly-2', 'weekly-3'] },
+      weekly: { completed: ['weekly-1', 'weekly-2', 'weekly-3', 'weekly-4'] },
     },
     classroom: {
       assignment: { completedAt: Date.now() },
@@ -48,8 +48,8 @@ test('premium challenge track computes capped progress and completion for entitl
   assert.equal(daily.target, 3);
   assert.equal(daily.completed, true);
 
-  assert.equal(weekly.progress, 2);
-  assert.equal(weekly.target, 2);
+  assert.equal(weekly.progress, 4);
+  assert.equal(weekly.target, 4);
   assert.equal(weekly.completed, true);
 
   assert.equal(assignment.progress, 1);

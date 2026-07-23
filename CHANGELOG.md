@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+- Added Star Battle, Parcel Patch, Domino Mosaic, Windbow Trials, Knight's Tour, Neon Divide, and Lure Line.
+- Added the first standardized game outcome and cosmetic-slot contract for unattended engagement content.
+
+### Improved
+- Expanded the active weekly challenge board from two to four challenges.
+- Added privacy-preserving aggregate outcome buckets; collection remains disabled until release-specific privacy approval is recorded.
+
+### Operations
+- Began the self-maintaining release train with contract validation, pre-production automation gates, and production verification.
+
+
 ## [1.12.0] - 2026-07-17
 
 ### Added

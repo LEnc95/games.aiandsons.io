@@ -1,0 +1,61 @@
+name: Weekly Release
+
+on:
+  schedule:
+    - cron: "0 14 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prepare release files
+        run: npm run release:prepare-weekly
+      - name: Skip an already prepared week
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run game:preflight
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run test:policy-gate
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run test:telemetry
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run test:shop
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run test:social
+      - name: Open release PR and enable auto-merge
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          BRANCH="automation/weekly-release/v${VERSION}"
+          git config user.name "cade-maintenance-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add CHANGELOG.md TECHNICAL_CHANGELOG.md package.json package-lock.json version.json release/weekly-state.json
+          git commit -m "Prepare weekly release ${VERSION}"
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create --base main --head "$BRANCH" --title "Weekly release ${VERSION}" --body "Automated public and technical release feeds, synchronized version, and validated maintenance state.")
+          gh pr merge "$PR_URL" --auto --squash

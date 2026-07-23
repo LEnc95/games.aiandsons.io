@@ -10,6 +10,7 @@ import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { GAMES } from '../src/meta/games.js';
+import { validateMaintenance } from './automation/validate-maintenance.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -114,6 +115,15 @@ console.log(`Preflight: ${GAMES.length} games in src/meta/games.js\n`);
   } catch (err) {
     fail(`vercel.json does not parse: ${err.message}`);
   }
+}
+
+// 7. The newest game and recurring content satisfy the unattended release
+// contract (explicit date/outcomes/theme slots, current changelog, economy).
+{
+  const maintenanceErrors = validateMaintenance(ROOT);
+  if (maintenanceErrors.length) {
+    maintenanceErrors.forEach((message) => fail(message, 'run `npm run maintenance:validate` for the complete contract check'));
+  } else ok('maintenance contracts and release feeds are current');
 }
 
 console.log('');
