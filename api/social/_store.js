@@ -19,6 +19,8 @@ const ROOMS_COLLECTION = "socialRooms";
 const SAVES_COLLECTION = "socialSaves";
 const LEADERBOARD_SCAN_LIMIT = 500;
 
+const VALID_ROOM_STATUSES = new Set(["lobby", "racing", "finished"]);
+
 const memoryState = (() => {
   if (!globalThis.__cadeSocialMemoryStore) {
     globalThis.__cadeSocialMemoryStore = {
@@ -117,7 +119,7 @@ function normalizeStoredRoom(source) {
     if (!normalizedKey) continue;
     players[normalizedKey] = normalizeStoredRoomPlayer(value);
   }
-  const status = ["lobby", "racing", "finished"].includes(raw.status) ? raw.status : "lobby";
+  const status = VALID_ROOM_STATUSES.has(raw.status) ? raw.status : "lobby";
   return {
     code: normalizeSingleLine(raw.code, 8),
     gameSlug: normalizeSlug(raw.gameSlug),
