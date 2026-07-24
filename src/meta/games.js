@@ -167,6 +167,7 @@ const BASE_GAMES = [
   { slug:'neondivide',     name:'Neon Divide',          emoji:'\u{1F4A0}', scoreHint:'territory', url:'/neondivide', desc:'Cut glowing trails across a live arcade field, dodge roaming sparks, and claim three increasingly dangerous neon zones.', earnsCoins:true },
   { slug:'lureline',       name:'Lure Line',            emoji:'\u{1F3A3}', scoreHint:'catch', url:'/lureline', desc:'Charge each cast, react to fish bites, and alternate reel strokes to land the target catch across three lively ponds.', earnsCoins:true },
   { slug:'aquariumlogic',  name:'Aquarium Logic',       emoji:'\u{1F420}', scoreHint:'tanks', url:'/aquariumlogic', desc:'Fill glass tanks from the bottom up, match every row and column clue, and solve five colorful aquarium puzzles.', earnsCoins:true },
+  { slug:'morrismeadow',   name:'Morris Meadow',        emoji:'\u{1F33C}', scoreHint:'mills', url:'/morrismeadow', desc:'Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

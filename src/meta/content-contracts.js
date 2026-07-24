@@ -44,6 +44,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'tank-theme', kind: 'palette', tokens: Object.freeze(['water', 'glass', 'sand', 'accent']) }),
     ]),
   }),
+  morrismeadow: Object.freeze({
+    releasedAt: '2026-07-24',
+    outcomes: Object.freeze({
+      mills: Object.freeze({ min: 0, max: 50, direction: 'higher' }),
+      captures: Object.freeze({ min: 0, max: 9, direction: 'higher' }),
+      turns: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'board-theme', kind: 'palette', tokens: Object.freeze(['background', 'lines', 'player', 'rival', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
