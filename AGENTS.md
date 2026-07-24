@@ -14,7 +14,11 @@ Operational command reference for contributors and automations in this repositor
 - Capture marketing gameplay clips: `npm run marketing:clips`
 - Validate daily new-game wiring before commit: `npm run game:preflight`
 - Validate self-maintenance contracts and release feeds: `npm run maintenance:validate`
+- Audit an automation branch diff: `npm run automation:audit-diff`
 - Generate the current weekly agent content brief: `npm run automation:weekly-brief`
+- Prepare synchronized weekly release files: `npm run release:prepare-weekly`
+- Verify the production maintenance surface: `npm run test:production-maintenance`
+- Roll up and enforce aggregate telemetry retention: `npm run telemetry:retention -- --dry-run false`
 - Run aggregate telemetry and maintenance automation tests: `npm run test:telemetry`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
@@ -65,6 +69,7 @@ Operational command reference for contributors and automations in this repositor
 - Trusted post-gate auto-merge authority: `.github/workflows/automation-auto-merge.yml`
 - Monday three-cosmetic/four-challenge agent brief: `.github/workflows/weekly-content-pack.yml`
 - Sunday synchronized public/technical release PR: `.github/workflows/weekly-release.yml`
+- Sunday aggregate telemetry rollup and retention: `.github/workflows/telemetry-retention.yml`
 - Post-Main-QA production verification with 5/15-minute retries: `.github/workflows/production-maintenance-verify.yml`
 - PR classroom smoke gate: `.github/workflows/classroom-smoke.yml`
 - Nightly launch gate: `.github/workflows/nightly-launch-readiness.yml`
