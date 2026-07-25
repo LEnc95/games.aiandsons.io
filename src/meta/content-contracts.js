@@ -55,6 +55,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'board-theme', kind: 'palette', tokens: Object.freeze(['background', 'lines', 'player', 'rival', 'accent']) }),
     ]),
   }),
+  reboundrelay: Object.freeze({
+    releasedAt: '2026-07-25',
+    outcomes: Object.freeze({
+      beacons: Object.freeze({ min: 0, max: 15, direction: 'higher' }),
+      relays: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      moves: Object.freeze({ min: 0, max: 80, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'circuit-theme', kind: 'palette', tokens: Object.freeze(['background', 'grid', 'wall', 'bot', 'beacon', 'trail']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

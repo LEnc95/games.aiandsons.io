@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Rebound Relay | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#071827;color:#e9fbff;display:flex;justify-content:center;padding:clamp(8px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:11px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.45rem,4.6vw,2.35rem);line-height:1;margin:0;letter-spacing:-.04em}
+    small{color:#a9cbd8}
+    .home{color:#dbfcff;font-weight:850;text-decoration:none;border:2px solid #2d7185;border-radius:999px;padding:8px 13px;background:#102b3a}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .stat{min-width:0;background:#102b3a;border:2px solid #2d7185;border-radius:15px;padding:7px 10px;text-align:center;box-shadow:0 4px 0 #05131d}
+    .stat span{display:block;font-size:.68rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#8cbcca}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.86rem,2.7vw,1.05rem)}
+    .stage{position:relative;border:3px solid #2d7185;border-radius:22px;overflow:hidden;background:#0d2634;box-shadow:0 10px 0 #04111a}
+    canvas{width:100%;aspect-ratio:4/3;display:block;touch-action:none;outline:none}
+    .controls{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+    button{border:2px solid #347b90;border-radius:13px;background:#123545;color:#eaffff;font:800 clamp(.72rem,1.9vw,.92rem)/1.1 inherit;padding:9px 5px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #04131d}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #04131d}
+    button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #04131d}
+    button.primary{background:#ffe07a;border-color:#997225;color:#302611}
+    button.direction{background:#184c60;font-size:1.05rem}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .help{background:#102b3a;border:2px solid #2d7185;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#cde8ef}
+    .help b{color:#72e6f3}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}
+      .home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.56rem}.stat strong{font-size:.75rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #04111a}
+      .controls{grid-template-columns:repeat(4,1fr);gap:6px}
+      button{min-height:41px;padding:8px 3px}
+      .help{font-size:.72rem;padding:8px 10px}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:16/9}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Rebound Relay | AI and Sons Games">
+  <meta property="og:description" content="Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/reboundrelay">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/reboundrelay.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rebound Relay | AI and Sons Games">
+  <meta name="twitter:description" content="Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/reboundrelay.png">
+  <link rel="canonical" href="https://games.aiandsons.io/reboundrelay">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Rebound Relay","description":"Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/reboundrelay","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Rebound Relay</h1><small>Slide, spark every beacon, dock at the relay.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Relay status">
+    <div class="stat"><span>Relay</span><strong id="relay">1 / 5</strong></div>
+    <div class="stat"><span>Beacons</span><strong id="beacons">0 / 3</strong></div>
+    <div class="stat"><span>Energy</span><strong id="energy">10</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage">
+    <canvas id="game" width="900" height="675" tabindex="0" aria-label="Rebound Relay circuit board"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="start" class="primary">Start relay</button>
+    <button class="direction" data-direction="left" aria-label="Slide left">← Left</button>
+    <button class="direction" data-direction="up" aria-label="Slide up">↑ Up</button>
+    <button class="direction" data-direction="down" aria-label="Slide down">↓ Down</button>
+    <button class="direction" data-direction="right" aria-label="Slide right">→ Right</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Aurora</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Goal:</b> the relay bot slides until a wall or circuit edge stops it. Spark all three beacons, then stop on the gold dock before energy runs out. Use <b>Arrows/WASD</b>, the direction buttons, a swipe, or click along a row/column. <b>P</b> pauses, <b>R</b> restarts, <b>T</b> changes the circuit theme, and <b>F</b> toggles fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={
+  relay:document.querySelector('#relay'),beacons:document.querySelector('#beacons'),energy:document.querySelector('#energy'),time:document.querySelector('#time'),
+  start:document.querySelector('#start'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),
+  fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live'),
+  directions:[...document.querySelectorAll('[data-direction]')]
+};
+const ROWS=8,COLS=8;
+const LEVELS=[
+  {name:'First Contact',start:[2,6],exit:[2,3],beacons:[[2,5],[0,4],[0,1]],walls:[[5,7],[3,4],[1,1],[4,2],[0,5],[2,2],[6,5],[4,3],[4,6],[1,3]],moves:10,solution:['left','down','left','up','right','down','left']},
+  {name:'Cross Current',start:[0,6],exit:[3,4],beacons:[[5,6],[0,0],[0,2]],walls:[[7,7],[5,3],[0,1],[1,3],[1,4],[0,7],[4,7],[7,5],[2,4],[6,5],[5,7]],moves:12,solution:['down','up','left','down','left','up','down','right','up']},
+  {name:'Switchback',start:[1,1],exit:[4,1],beacons:[[4,2],[6,5],[0,1]],walls:[[3,1],[2,6],[5,2],[6,2],[6,0],[4,6],[4,4],[5,4],[0,5],[0,4],[5,3],[0,3]],moves:15,solution:['down','right','down','up','left','up','right','down','left','down','right','up']},
+  {name:'Deep Circuit',start:[3,2],exit:[4,5],beacons:[[7,0],[1,3],[2,4]],walls:[[0,5],[5,5],[1,6],[7,3],[6,1],[0,7],[7,6],[4,7],[2,6],[5,6],[5,1],[4,6],[2,0]],moves:14,solution:['down','left','right','up','right','down','up','left','down','right','down']},
+  {name:'Final Frequency',start:[1,2],exit:[7,1],beacons:[[5,0],[4,4],[4,7]],walls:[[5,7],[0,0],[7,5],[5,2],[7,7],[7,0],[5,5],[2,0],[0,2],[4,5],[1,7],[4,3],[1,4],[4,2]],moves:16,solution:['down','left','down','up','right','down','up','left','down','right','up','down','left']}
+];
+const THEMES=[
+  {name:'Aurora',top:'#092b42',bottom:'#13546b',grid:'#4baabd',gridSoft:'#26768a',wall:'#102c45',wallEdge:'#87e4ef',bot:'#efffff',botCore:'#43e6ee',beacon:'#ff78cc',exit:'#ffd96a',trail:'#86f8ff'},
+  {name:'Solar',top:'#412139',bottom:'#9a4b40',grid:'#ffb15c',gridSoft:'#b86950',wall:'#4a2838',wallEdge:'#ffd290',bot:'#fff9df',botCore:'#ff9b42',beacon:'#ffe45e',exit:'#8df5c9',trail:'#fff0a3'},
+  {name:'Synth',top:'#24194f',bottom:'#5940a5',grid:'#a989ff',gridSoft:'#6855b7',wall:'#20194c',wallEdge:'#f2b7ff',bot:'#fff4ff',botCore:'#f36cfa',beacon:'#6affdf',exit:'#ffe369',trail:'#e3b7ff'}
+];
+const DIRECTIONS={left:[0,-1],right:[0,1],up:[-1,0],down:[1,0]};
+const game={
+  mode:'menu',resumeMode:'playing',levelIndex:0,row:0,col:0,collected:[],movesLeft:0,movesUsed:0,totalBeacons:0,relays:0,
+  elapsedMs:0,animation:null,themeIndex:0,rewarded:false,reported:false,status:'Start the first relay.',lastAction:{type:'ready'}
+};
+let view={left:170,top:70,cell:64,size:512},manualUntil=0,lastFrame=performance.now(),pointerStart=null;
+
+const level=()=>LEVELS[game.levelIndex];
+const sameCell=(a,b)=>a[0]===b[0]&&a[1]===b[1];
+const wallAt=(row,col)=>level().walls.some(cell=>cell[0]===row&&cell[1]===col);
+const beaconAt=(row,col)=>level().beacons.findIndex(cell=>cell[0]===row&&cell[1]===col);
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const currentMetrics=()=>({beacons:game.totalBeacons,relays:game.relays,moves:game.movesUsed});
+function report(result){
+  if(game.reported)return;
+  game.reported=true;
+  reportGameOutcome({slug:'reboundrelay',result,durationMs:game.elapsedMs,metrics:currentMetrics()});
+}
+function setLevel(index,mode='playing'){
+  game.levelIndex=index;
+  const current=level();
+  [game.row,game.col]=current.start;
+  game.collected=current.beacons.map(()=>false);
+  game.movesLeft=current.moves;
+  game.animation=null;
+  game.mode=mode;
+  game.resumeMode='playing';
+  game.status=mode==='menu'?'Start the first relay.':`${current.name}: spark three beacons, then reach the dock.`;
+  game.lastAction={type:mode==='menu'?'ready':'level-start',level:index+1};
+  syncUi();render();
+}
+function resetCampaign(mode='playing'){
+  game.movesUsed=0;game.totalBeacons=0;game.relays=0;game.elapsedMs=0;game.rewarded=false;game.reported=false;
+  setLevel(0,mode);
+}
+function start(){
+  if(game.mode==='menu'){resetCampaign('playing');canvas.focus();return}
+  if(game.mode==='level-complete'){setLevel(game.levelIndex+1,'playing');canvas.focus();return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus()}
+}
+function restart(){
+  if(['playing','paused','level-complete'].includes(game.mode)&&(game.movesUsed>0||game.relays>0))report('abandoned');
+  resetCampaign('playing');
+  game.status='Fresh campaign. First relay restored.';
+  game.lastAction={type:'restart'};
+  syncUi();render();canvas.focus();
+}
+function pathFor(direction){
+  const delta=DIRECTIONS[direction];
+  if(!delta)return[];
+  const path=[];
+  let row=game.row,col=game.col;
+  while(true){
+    const nextRow=row+delta[0],nextCol=col+delta[1];
+    if(nextRow<0||nextRow>=ROWS||nextCol<0||nextCol>=COLS||wallAt(nextRow,nextCol))break;
+    row=nextRow;col=nextCol;path.push([row,col]);
+  }
+  return path;
+}
+function slide(direction){
+  if(game.mode!=='playing'||game.animation)return false;
+  const path=pathFor(direction);
+  if(!path.length){
+    game.status=`${direction[0].toUpperCase()+direction.slice(1)} is blocked. Choose another direction.`;
+    game.lastAction={type:'blocked',direction,at:[game.row,game.col]};
+    syncUi();render();return false;
+  }
+  game.movesLeft--;game.movesUsed++;
+  game.animation={direction,path,index:0,stepMs:0,from:[game.row,game.col]};
+  game.status=`Sliding ${direction} until the next stop…`;
+  game.lastAction={type:'slide-start',direction,path:[...path],energy:game.movesLeft};
+  syncUi();render();return true;
+}
+function finishMove(){
+  game.animation=null;
+  const allLit=game.collected.every(Boolean);
+  if(allLit&&sameCell([game.row,game.col],level().exit)){
+    game.relays++;
+    if(game.levelIndex===LEVELS.length-1){
+      game.mode='won';game.status='Every circuit is linked. Rebound Relay complete!';
+      game.lastAction={type:'campaign-complete',metrics:currentMetrics()};
+      if(!game.rewarded){addCoins(45);game.rewarded=true}
+      report('completed');
+    }else{
+      game.mode='level-complete';game.status=`${level().name} linked with ${game.movesLeft} energy remaining.`;
+      game.lastAction={type:'relay-complete',level:game.levelIndex+1,energy:game.movesLeft};
+    }
+  }else if(game.movesLeft<=0){
+    game.mode='lost';game.status=allLit?'The bot ran out of energy before docking.':'Energy depleted before every beacon was sparked.';
+    game.lastAction={type:'energy-depleted',missing:game.collected.filter(value=>!value).length,metrics:currentMetrics()};
+    report('lost');
+  }else{
+    const missing=game.collected.filter(value=>!value).length;
+    game.status=sameCell([game.row,game.col],level().exit)&&missing?`Dock reached, but ${missing} beacon${missing===1?' is':'s are'} still dark.`:`Stopped with ${game.movesLeft} energy. ${missing?`${missing} beacon${missing===1?' remains':'s remain'}.`:'All beacons lit—dock on gold!'}`;
+    game.lastAction={type:'slide-stop',at:[game.row,game.col],energy:game.movesLeft,missing};
+  }
+  syncUi();render();
+}
+function update(ms){
+  if(game.mode!=='playing')return;
+  let remaining=Math.max(0,Math.min(5000,Number(ms)||0));
+  game.elapsedMs+=remaining;
+  while(game.animation&&remaining>0){
+    const needed=115-game.animation.stepMs;
+    if(remaining<needed){game.animation.stepMs+=remaining;remaining=0;break}
+    remaining-=needed;game.animation.stepMs=0;
+    const cell=game.animation.path[game.animation.index];
+    game.row=cell[0];game.col=cell[1];
+    const beacon=beaconAt(game.row,game.col);
+    if(beacon>=0&&!game.collected[beacon]){
+      game.collected[beacon]=true;game.totalBeacons++;
+      game.lastAction={type:'beacon',beacon:beacon+1,at:[game.row,game.col],total:game.totalBeacons};
+    }
+    game.animation.index++;
+    if(game.animation.index>=game.animation.path.length)finishMove();
+  }
+}
+function togglePause(){
+  if(game.mode==='paused'){game.mode=game.resumeMode;game.status='Relay resumed. Circuit time is moving again.';game.lastAction={type:'resume'}}
+  else if(game.mode==='playing'){game.resumeMode='playing';game.mode='paused';game.status='Paused. Time and bot motion are frozen.';game.lastAction={type:'pause'}}
+  syncUi();render();
+}
+function cycleTheme(){
+  game.themeIndex=(game.themeIndex+1)%THEMES.length;
+  game.status=`${THEMES[game.themeIndex].name} circuit theme applied.`;
+  game.lastAction={type:'theme',theme:THEMES[game.themeIndex].name};
+  syncUi();render();
+}
+async function toggleFullscreen(){
+  try{
+    if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();
+    else await document.exitFullscreen?.();
+  }catch(error){
+    game.status='Fullscreen is unavailable in this browser.';
+    game.lastAction={type:'fullscreen-error',message:String(error?.message||error)};
+    syncUi();render();
+  }
+}
+function rounded(x,y,width,height,radius){
+  ctx.beginPath();ctx.roundRect(x,y,width,height,Math.min(radius,width/2,height/2));
+}
+function computeView(){
+  const maxSize=Math.min(canvas.width*.72,canvas.height*.76);
+  const cell=Math.max(30,Math.floor(maxSize/8));
+  const size=cell*8,left=(canvas.width-size)/2,top=(canvas.height-size)/2+canvas.height*.035;
+  view={width:canvas.width,height:canvas.height,cell,size,left,top};return view;
+}
+function cellCenter(row,col){return{x:view.left+(col+.5)*view.cell,y:view.top+(row+.5)*view.cell}}
+function drawBackground(theme){
+  const gradient=ctx.createLinearGradient(0,0,0,view.height);gradient.addColorStop(0,theme.top);gradient.addColorStop(1,theme.bottom);
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,view.width,view.height);
+  ctx.globalAlpha=.15;ctx.strokeStyle=theme.trail;ctx.lineWidth=1;
+  for(let i=0;i<22;i++){const y=(i*83%503)/503*view.height;ctx.beginPath();ctx.moveTo(0,y);ctx.bezierCurveTo(view.width*.3,y+20,view.width*.7,y-22,view.width,y+8);ctx.stroke()}
+  ctx.globalAlpha=1;
+}
+function drawBoard(theme){
+  const pad=view.cell*.16;
+  rounded(view.left-pad,view.top-pad,view.size+pad*2,view.size+pad*2,view.cell*.28);ctx.fillStyle='#06131ecc';ctx.fill();ctx.strokeStyle=theme.wallEdge;ctx.lineWidth=Math.max(2,view.cell*.055);ctx.stroke();
+  for(let row=0;row<ROWS;row++)for(let col=0;col<COLS;col++){
+    const x=view.left+col*view.cell,y=view.top+row*view.cell;
+    ctx.fillStyle=(row+col)%2?theme.gridSoft+'25':theme.grid+'1d';ctx.fillRect(x,y,view.cell,view.cell);
+    ctx.strokeStyle=theme.gridSoft+'99';ctx.lineWidth=Math.max(1,view.cell*.02);ctx.strokeRect(x+.5,y+.5,view.cell-1,view.cell-1);
+  }
+  ctx.strokeStyle=theme.grid+'88';ctx.lineWidth=Math.max(2,view.cell*.035);
+  for(let row=0;row<ROWS;row++){const p=cellCenter(row,0),q=cellCenter(row,COLS-1);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}
+  for(let col=0;col<COLS;col++){const p=cellCenter(0,col),q=cellCenter(ROWS-1,col);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}
+  drawExit(theme);
+  level().walls.forEach(cell=>drawWall(cell[0],cell[1],theme));
+  level().beacons.forEach((cell,index)=>drawBeacon(cell[0],cell[1],index,theme));
+  drawMotionTrail(theme);drawRobot(theme);
+}
+function drawWall(row,col,theme){
+  const x=view.left+col*view.cell+view.cell*.12,y=view.top+row*view.cell+view.cell*.12,s=view.cell*.76;
+  rounded(x,y,s,s,view.cell*.16);ctx.fillStyle=theme.wall;ctx.fill();ctx.strokeStyle=theme.wallEdge;ctx.lineWidth=Math.max(2,view.cell*.055);ctx.stroke();
+  ctx.fillStyle=theme.wallEdge+'55';for(let i=0;i<3;i++){rounded(x+s*.18,y+s*(.2+i*.23),s*.64,s*.08,s*.04);ctx.fill()}
+}
+function drawBeacon(row,col,index,theme){
+  const p=cellCenter(row,col),lit=game.collected[index],r=view.cell*.19;
+  ctx.save();ctx.shadowColor=lit?theme.beacon:'#0000';ctx.shadowBlur=lit?view.cell*.34:0;
+  ctx.beginPath();for(let i=0;i<8;i++){const angle=-Math.PI/2+i*Math.PI/4,rr=i%2?r*.52:r;const x=p.x+Math.cos(angle)*rr,y=p.y+Math.sin(angle)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();
+  ctx.fillStyle=lit?theme.beacon:'#203644';ctx.fill();ctx.strokeStyle=lit?'#fff9':theme.grid;ctx.lineWidth=Math.max(2,view.cell*.04);ctx.stroke();ctx.restore();
+  ctx.fillStyle=lit?'#fff':'#7ba3ad';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`900 ${Math.max(8,view.cell*.16)}px Inter,system-ui`;ctx.fillText(String(index+1),p.x,p.y);
+}
+function drawExit(theme){
+  const p=cellCenter(level().exit[0],level().exit[1]),r=view.cell*.33,ready=game.collected.every(Boolean);
+  ctx.save();ctx.shadowColor=ready?theme.exit:'#0000';ctx.shadowBlur=ready?view.cell*.35:0;
+  ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=ready?theme.exit:'#6f622b';ctx.fill();
+  ctx.strokeStyle=ready?'#fff7bd':'#a28c45';ctx.lineWidth=Math.max(3,view.cell*.055);ctx.stroke();
+  ctx.beginPath();ctx.arc(p.x,p.y,r*.56,0,Math.PI*2);ctx.strokeStyle=ready?theme.top:'#392f1c';ctx.stroke();ctx.restore();
+}
+function robotPosition(){
+  if(!game.animation)return cellCenter(game.row,game.col);
+  const next=game.animation.path[game.animation.index]||[game.row,game.col],from=game.animation.index===0?game.animation.from:game.animation.path[game.animation.index-1];
+  const a=cellCenter(from[0],from[1]),b=cellCenter(next[0],next[1]),t=Math.min(1,game.animation.stepMs/115);
+  return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+}
+function drawMotionTrail(theme){
+  if(!game.animation)return;
+  const points=[game.animation.from,...game.animation.path.slice(0,game.animation.index+1)].map(cell=>cellCenter(cell[0],cell[1]));
+  ctx.strokeStyle=theme.trail+'99';ctx.lineWidth=Math.max(3,view.cell*.08);ctx.lineCap='round';ctx.setLineDash([view.cell*.12,view.cell*.13]);ctx.beginPath();
+  points.forEach((point,index)=>index?ctx.lineTo(point.x,point.y):ctx.moveTo(point.x,point.y));ctx.stroke();ctx.setLineDash([]);
+}
+function drawRobot(theme){
+  const p=robotPosition(),r=view.cell*.27;
+  ctx.save();ctx.shadowColor=theme.botCore;ctx.shadowBlur=view.cell*.28;ctx.translate(p.x,p.y);
+  rounded(-r,-r*.76,r*2,r*1.52,r*.5);ctx.fillStyle=theme.bot;ctx.fill();ctx.strokeStyle=theme.botCore;ctx.lineWidth=Math.max(2,view.cell*.045);ctx.stroke();
+  ctx.beginPath();ctx.arc(-r*.38,-r*.05,r*.18,0,Math.PI*2);ctx.arc(r*.38,-r*.05,r*.18,0,Math.PI*2);ctx.fillStyle=theme.botCore;ctx.fill();
+  ctx.strokeStyle=theme.botCore;ctx.lineWidth=Math.max(2,view.cell*.04);ctx.beginPath();ctx.moveTo(0,-r*.76);ctx.lineTo(0,-r*1.15);ctx.stroke();ctx.beginPath();ctx.arc(0,-r*1.25,r*.13,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function drawHeader(theme){
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#edfdff';ctx.font=`900 ${Math.max(16,Math.min(32,view.width*.035))}px Inter,system-ui`;
+  const title=game.mode==='menu'?'REBOUND RELAY':game.mode==='won'?'ALL RELAYS LINKED':game.mode==='lost'?'CIRCUIT OFFLINE':level().name.toUpperCase();
+  ctx.fillText(title,view.width/2,Math.max(24,view.top*.42));
+  if(game.mode==='playing'){
+    const label=game.animation?`SLIDING ${game.animation.direction.toUpperCase()}`:game.collected.every(Boolean)?'DOCK ON GOLD':'SPARK EVERY BEACON';
+    ctx.font=`850 ${Math.max(10,Math.min(16,view.width*.0175))}px Inter,system-ui`;const width=Math.max(130,ctx.measureText(label).width+28),y=Math.max(48,view.top*.72);
+    rounded(view.width/2-width/2,y-14,width,28,14);ctx.fillStyle='#071722dd';ctx.fill();ctx.strokeStyle=theme.grid;ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#e8fcff';ctx.fillText(label,view.width/2,y);
+  }
+}
+function overlay(title,lines,theme){
+  ctx.fillStyle='#03101bc7';ctx.fillRect(0,0,view.width,view.height);
+  const width=Math.min(view.width*.82,650),height=Math.min(view.height*.56,330),x=(view.width-width)/2,y=(view.height-height)/2;
+  rounded(x,y,width,height,24);ctx.fillStyle='#0d2a39f5';ctx.fill();ctx.strokeStyle=theme.grid;ctx.lineWidth=5;ctx.stroke();
+  ctx.fillStyle='#f0fdff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`900 ${Math.max(23,Math.min(44,width*.07))}px Inter,system-ui`;ctx.fillText(title,x+width/2,y+height*.25);
+  ctx.font=`750 ${Math.max(11,Math.min(18,width*.028))}px Inter,system-ui`;lines.forEach((line,index)=>ctx.fillText(line,x+width/2,y+height*(.48+index*.14)));
+}
+function render(){
+  computeView();const theme=THEMES[game.themeIndex];drawBackground(theme);drawBoard(theme);drawHeader(theme);
+  if(game.mode==='menu')overlay('REBOUND RELAY',['The bot slides until a wall or edge stops it.','Spark three beacons, then dock on gold.','Click Start relay or press Enter.'],theme);
+  else if(game.mode==='paused')overlay('CIRCUIT PAUSED',['Time and bot motion are frozen.','Your relay state is safe.','Press P or Pause to continue.'],theme);
+  else if(game.mode==='level-complete')overlay('RELAY LINKED',[game.status,`Total beacons ${game.totalBeacons} · Moves ${game.movesUsed}`,'Press Enter or Next relay.'],theme);
+  else if(game.mode==='won')overlay('NETWORK COMPLETE',[game.status,'45 coins added to your collection.',`Relays ${game.relays} · Beacons ${game.totalBeacons} · Moves ${game.movesUsed}`],theme);
+  else if(game.mode==='lost')overlay('ENERGY DEPLETED',[game.status,'Restart the campaign and plan each rebound.',`Relays ${game.relays} · Beacons ${game.totalBeacons} · Moves ${game.movesUsed}`],theme);
+}
+function syncUi(){
+  el.relay.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;
+  el.beacons.textContent=`${game.collected.filter(Boolean).length} / ${level().beacons.length}`;
+  el.energy.textContent=String(game.movesLeft);
+  el.time.textContent=formatTime(game.elapsedMs);
+  el.start.hidden=!['menu','level-complete','won','lost'].includes(game.mode);
+  el.start.textContent=game.mode==='level-complete'?'Next relay':game.mode==='menu'?'Start relay':'Play again';
+  el.pause.disabled=!['playing','paused'].includes(game.mode);
+  el.pause.textContent=game.mode==='paused'?'Resume':'Pause';
+  el.directions.forEach(button=>button.disabled=game.mode!=='playing'||Boolean(game.animation));
+  el.theme.textContent=`Theme: ${THEMES[game.themeIndex].name}`;
+  el.live.textContent=game.status;
+}
+function canvasCell(event){
+  const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)/rect.width*canvas.width,y=(event.clientY-rect.top)/rect.height*canvas.height;
+  return{row:Math.floor((y-view.top)/view.cell),col:Math.floor((x-view.left)/view.cell),x,y};
+}
+function directionToward(cell){
+  const dr=cell.row-game.row,dc=cell.col-game.col;
+  if(Math.abs(dc)>Math.abs(dr))return dc<0?'left':'right';
+  if(Math.abs(dr)>0)return dr<0?'up':'down';
+  return null;
+}
+canvas.addEventListener('pointerdown',event=>{pointerStart={x:event.clientX,y:event.clientY};canvas.setPointerCapture?.(event.pointerId);event.preventDefault()});
+canvas.addEventListener('pointerup',event=>{
+  if(game.mode==='menu'||game.mode==='level-complete'||['won','lost'].includes(game.mode)){start();pointerStart=null;event.preventDefault();return}
+  if(game.mode!=='playing'){pointerStart=null;return}
+  const dx=pointerStart?event.clientX-pointerStart.x:0,dy=pointerStart?event.clientY-pointerStart.y:0;
+  let direction=null;
+  if(Math.hypot(dx,dy)>24)direction=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
+  else direction=directionToward(canvasCell(event));
+  if(direction)slide(direction);
+  else{game.status='Swipe or choose a cell along the bot’s row or column.';game.lastAction={type:'pointer-boundary'};syncUi();render()}
+  pointerStart=null;canvas.focus();event.preventDefault();
+});
+el.start.addEventListener('click',start);
+el.pause.addEventListener('click',togglePause);
+el.restart.addEventListener('click',restart);
+el.theme.addEventListener('click',cycleTheme);
+el.fullscreen.addEventListener('click',toggleFullscreen);
+el.directions.forEach(button=>button.addEventListener('click',()=>slide(button.dataset.direction)));
+document.addEventListener('keydown',event=>{
+  const direction={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down'}[event.key];
+  if(direction){event.preventDefault();slide(direction);return}
+  const key=event.key.toLowerCase();
+  if(key==='enter'||key===' '){if(['menu','level-complete','won','lost'].includes(game.mode)){event.preventDefault();start()}return}
+  if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}
+  if(key==='p'){togglePause();return}
+  if(key==='r'){restart();return}
+  if(key==='t'){cycleTheme();return}
+  if(key==='f')toggleFullscreen();
+});
+function resizeCanvas(){
+  const rect=canvas.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.round(rect.width*dpr)),height=Math.max(240,Math.round(rect.height*dpr));
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}
+  computeView();render();
+}
+document.addEventListener('fullscreenchange',resizeCanvas);window.addEventListener('resize',resizeCanvas);
+window.advanceTime=ms=>{
+  manualUntil=performance.now()+180;
+  let remaining=Math.max(0,Math.min(30000,Number(ms)||0));
+  while(remaining>0){const step=Math.min(1000/60,remaining);update(step);remaining-=step}
+  syncUi();render();
+};
+window.render_game_to_text=()=>JSON.stringify({
+  coordinate_system:'8x8 grid; row 0 is top, column 0 is left; canvas origin is top-left with x right and y down',
+  mode:game.mode,paused_from:game.mode==='paused'?game.resumeMode:null,level:game.levelIndex+1,level_name:level().name,
+  robot:{row:game.row,col:game.col,moving:Boolean(game.animation),direction:game.animation?.direction||null,next_cell:game.animation?.path[game.animation.index]||null},
+  exit:{row:level().exit[0],col:level().exit[1],unlocked:game.collected.every(Boolean)},
+  beacons:level().beacons.map((cell,index)=>({id:index+1,row:cell[0],col:cell[1],lit:game.collected[index]})),
+  walls:level().walls.map(cell=>({row:cell[0],col:cell[1]})),energy:game.movesLeft,elapsed_ms:Math.round(game.elapsedMs),
+  stats:currentMetrics(),theme:THEMES[game.themeIndex].name,status:game.status,last_action:game.lastAction,
+  controls:{slide:'Arrow keys, WASD, direction buttons, swipe, or aligned pointer click',continue:'Enter',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
+});
+function loadScenario(name){
+  if(name==='near-level'){
+    resetCampaign('playing');game.row=2;game.col=7;game.collected=[true,true,true];game.totalBeacons=3;game.movesLeft=2;game.movesUsed=7;game.status='QA setup: slide left to link the first relay.';
+  }else if(name==='near-loss'){
+    resetCampaign('playing');game.row=7;game.col=7;game.movesLeft=1;game.movesUsed=9;game.status='QA setup: one energy remains; slide up to deplete it.';
+  }else if(name==='near-win'){
+    game.movesUsed=56;game.totalBeacons=14;game.relays=4;game.elapsedMs=9000;game.rewarded=false;game.reported=false;setLevel(4,'playing');game.row=0;game.col=1;game.collected=[true,true,true];game.totalBeacons=15;game.movesLeft=2;game.status='QA setup: slide down to finish the final relay.';
+  }else throw new Error(`Unknown scenario: ${name}`);
+  game.lastAction={type:'qa-scenario',name};syncUi();render();return true;
+}
+window.__REBOUND_RELAY_GAME__={
+  getState:()=>game,getView:()=>view,start,restart,slide,pause:togglePause,cycleTheme,loadScenario,
+  loadLevel:index=>{const safe=Math.max(0,Math.min(LEVELS.length-1,Number(index)||0));setLevel(safe,'playing');return true},
+  solution:index=>[...LEVELS[Math.max(0,Math.min(LEVELS.length-1,Number(index)||0))].solution]
+};
+window.addEventListener('pagehide',()=>{if(['playing','paused','level-complete'].includes(game.mode)&&(game.movesUsed>0||game.relays>0))report('abandoned')},{once:true});
+mountGameFeedback({gameSlug:'reboundrelay',gameName:'Rebound Relay'});
+el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+function frame(now){
+  if(now>=manualUntil){const dt=Math.min(50,Math.max(0,now-lastFrame));update(dt);syncUi();render()}
+  lastFrame=now;requestAnimationFrame(frame);
+}
+setLevel(0,'menu');resizeCanvas();syncUi();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
