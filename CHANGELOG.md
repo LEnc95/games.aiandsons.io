@@ -13,11 +13,14 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 - Expanded the active weekly challenge board from two to four challenges.
+- Linked daily missions and weekly challenges directly to their games.
+- Improved search filter option readability.
 - Added privacy-preserving aggregate outcome buckets; collection remains disabled until release-specific privacy approval is recorded.
 
 ### Operations
 - Began the self-maintaining release train with contract validation, pre-production automation gates, and production verification.
-
+- Hardened automated daily game releases by auditing generated changes and waiting for required PR checks before merge.
+- Key PRs: [#229](https://github.com/LEnc95/games.aiandsons.io/pull/229), [#228](https://github.com/LEnc95/games.aiandsons.io/pull/228), [#227](https://github.com/LEnc95/games.aiandsons.io/pull/227), [#226](https://github.com/LEnc95/games.aiandsons.io/pull/226), [#221](https://github.com/LEnc95/games.aiandsons.io/pull/221), [#220](https://github.com/LEnc95/games.aiandsons.io/pull/220).
 
 ## [1.12.0] - 2026-07-17
 
