@@ -101,6 +101,26 @@ async function main() {
     await mobilePage.screenshot({ path: mobileShot, fullPage: true });
     summary.screenshots.push(mobileShot);
 
+    // Tetris binds F/R/Space/etc. at document level; typing those chars must still work
+    // while the shared feedback modal is open.
+    await desktopPage.goto(`${baseUrl}/tetris/index.html`, { waitUntil: "networkidle" });
+    await desktopPage.waitForSelector("#cadeFeedbackOpenBtn");
+    await desktopPage.click("#cadeFeedbackOpenBtn");
+    await desktopPage.waitForSelector("#cadeFeedbackBackdrop.active");
+    const shortcutProbe = "frps wad";
+    await desktopPage.locator("#cadeFeedbackSummary").click();
+    await desktopPage.locator("#cadeFeedbackSummary").pressSequentially(shortcutProbe, { delay: 20 });
+    const typedSummary = await desktopPage.locator("#cadeFeedbackSummary").inputValue();
+    assert(
+      typedSummary === shortcutProbe,
+      `Expected feedback summary to accept game shortcut letters, got ${JSON.stringify(typedSummary)}`,
+    );
+    const stayedOpen = await desktopPage.locator("#cadeFeedbackBackdrop").evaluate((el) => el.classList.contains("active"));
+    assert(stayedOpen, "Feedback modal should stay open while typing shortcut letters.");
+    const notFullscreen = await desktopPage.evaluate(() => !document.fullscreenElement);
+    assert(notFullscreen, "Typing F in feedback should not toggle fullscreen.");
+    summary.checks.push({ name: "modal_accepts_shortcut_letters", pass: true, data: { typedSummary } });
+
     await desktopPage.goto(`${baseUrl}/ops/feedback/index.html`, { waitUntil: "networkidle" });
     await desktopPage.waitForFunction(() => {
       const list = document.getElementById("submissionList");

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added the first standardized game outcome and cosmetic-slot contract for unattended engagement content.
 
 ### Improved
+- Feedback dialogs now isolate keyboard input so game shortcuts (fullscreen, restart, etc.) no longer block typing bug reports.
 - Expanded the active weekly challenge board from two to four challenges.
 - Added privacy-preserving aggregate outcome buckets; collection remains disabled until release-specific privacy approval is recorded.
 
