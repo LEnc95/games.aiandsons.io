@@ -168,6 +168,7 @@ const BASE_GAMES = [
   { slug:'lureline',       name:'Lure Line',            emoji:'\u{1F3A3}', scoreHint:'catch', url:'/lureline', desc:'Charge each cast, react to fish bites, and alternate reel strokes to land the target catch across three lively ponds.', earnsCoins:true },
   { slug:'aquariumlogic',  name:'Aquarium Logic',       emoji:'\u{1F420}', scoreHint:'tanks', url:'/aquariumlogic', desc:'Fill glass tanks from the bottom up, match every row and column clue, and solve five colorful aquarium puzzles.', earnsCoins:true },
   { slug:'morrismeadow',   name:'Morris Meadow',        emoji:'\u{1F33C}', scoreHint:'mills', url:'/morrismeadow', desc:'Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris.', earnsCoins:true },
+  { slug:'reboundrelay',   name:'Rebound Relay',        emoji:'\u{1F916}', scoreHint:'relays', url:'/reboundrelay', desc:'Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -191,7 +192,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
