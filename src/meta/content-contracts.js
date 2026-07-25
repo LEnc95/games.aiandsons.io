@@ -66,6 +66,18 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'circuit-theme', kind: 'palette', tokens: Object.freeze(['background', 'grid', 'wall', 'bot', 'beacon', 'trail']) }),
     ]),
   }),
+  meteorminer: Object.freeze({
+    releasedAt: '2026-07-25',
+    outcomes: Object.freeze({
+      score: Object.freeze({ min: 0, max: 100000, direction: 'higher' }),
+      ore: Object.freeze({ min: 0, max: 27, direction: 'higher' }),
+      sectors: Object.freeze({ min: 0, max: 3, direction: 'higher' }),
+      hull: Object.freeze({ min: 0, max: 100, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'drone-theme', kind: 'palette', tokens: Object.freeze(['hull', 'engine', 'shield', 'ore']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

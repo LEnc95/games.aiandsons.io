@@ -1,5 +1,15 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-07-25 Main-branch recovery - Meteor Miner
+- Recovered the uncommitted Meteor Miner work from detached worktree `7d41` into the current `main` worktree while preserving the original state in Git stash `7f2f0ab066fff39404d7b9e662ccb97e2088530f`.
+- Updated the recovered game for the current release contract: literal shared-feedback mounting, bounded outcome reporting for score/ore/sectors/hull, an explicit drone-theme palette contract, current registry/discovery wiring, and an Unreleased changelog entry.
+- Regenerated SEO/discovery/sitemap, all 169 OG cards, and the 169-game local Linear seed set from current `main`.
+- The supplied Playwright client exercised keyboard flight, ore pickup, shield activation/cooldown, and deterministic stepping. The inspected gameplay screenshot matches `render_game_to_text` (score 45, one ore in cargo, full hull, live meteors), and the clean verification run emitted no console/page error artifact.
+- Focused browser checks passed win, loss, reward, outcome-reporting, and shared-feedback flows with no console/page errors. Visual review found the force-win QA hook showed an impossible `7/11` final delivery state, so it now fills the final-sector quota and all 27 campaign ore before reporting the win.
+- Repository gates passed: 169-game preflight, feedback (31), telemetry/maintenance (15), shop/economy (68), and social/discovery (20). SEO/discovery/sitemap and Linear seeds are repeatable; a second OG render changed zero SHA-256 hashes.
+- Final supplied-client and focused-browser reruns passed after the QA-hook correction; the inspected win state and canvas now agree on 11/11 final-sector delivery and 27 total campaign ore with no browser errors.
+- TODO: none for the recovered Meteor Miner work; commit and push from `main`.
+
 ## 2026-07-25 Create a new game automation - Rebound Relay
 - New unattended production request: build, validate, and publish exactly one unique browser game from clean isolated `origin/main` baseline `c2fbe4912cba42f6d941c2b2a2744bef2e243f2b`.
 - Read the current repository instructions, develop-web-game skill, progress history, and automation memory after syncing. Selected Rebound Relay (`/reboundrelay`), a five-board slide-until-stopped circuit puzzle absent from the 167-game registry and recent release memory.

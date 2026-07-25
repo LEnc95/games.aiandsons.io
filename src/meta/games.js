@@ -169,6 +169,7 @@ const BASE_GAMES = [
   { slug:'aquariumlogic',  name:'Aquarium Logic',       emoji:'\u{1F420}', scoreHint:'tanks', url:'/aquariumlogic', desc:'Fill glass tanks from the bottom up, match every row and column clue, and solve five colorful aquarium puzzles.', earnsCoins:true },
   { slug:'morrismeadow',   name:'Morris Meadow',        emoji:'\u{1F33C}', scoreHint:'mills', url:'/morrismeadow', desc:'Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris.', earnsCoins:true },
   { slug:'reboundrelay',   name:'Rebound Relay',        emoji:'\u{1F916}', scoreHint:'relays', url:'/reboundrelay', desc:'Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards.', earnsCoins:true },
+  { slug:'meteorminer',    name:'Meteor Miner',         emoji:'\u2604\uFE0F', scoreHint:'ore', url:'/meteorminer', desc:'Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -200,7 +201,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
-    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline',
+    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline', 'meteorminer',
   ]),
   word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder', 'minicrossword']),
   cards: new Set([

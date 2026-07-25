@@ -183,5 +183,6 @@
 - game/aquariumlogic
 - game/morrismeadow
 - game/reboundrelay
+- game/meteorminer
 
 Generated from `src/meta/feedback.js`.

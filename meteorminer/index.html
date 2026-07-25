@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Meteor Miner | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #13252b;
+  background:
+    radial-gradient(circle at 12% 10%, #ffe89a 0 11%, transparent 28%),
+    radial-gradient(circle at 88% 16%, #9be7dc 0 12%, transparent 30%),
+    linear-gradient(145deg, #ecfbff 0%, #b7d9df 46%, #5f8ba0 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 30;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffc2;
+  border-radius: 8px;
+  background: #153642e8;
+  color: #f8fdff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 12px 24px #14323e33;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(58px, calc(env(safe-area-inset-top) + 54px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 0 0 auto;
+  height: clamp(322px, calc(100dvh - 236px), 672px);
+  max-height: 672px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffdc;
+  border-radius: 8px;
+  background: #d8f1f5;
+  box-shadow: 0 24px 58px #18384633;
+}
+.hud,
+.controls,
+.flight-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.flight-pad { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffb5;
+  border-radius: 8px;
+  background: #153642e8;
+  color: #f9fdff;
+  box-shadow: inset 0 1px 0 #ffffff36;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #c7dde2;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #8dffc4; }
+.chip.warn b { color: #ffd26f; }
+.chip.danger b { color: #ff9b91; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #22596b; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+button.primary {
+  background: #f4c75d;
+  color: #162429;
+}
+button.primary:hover { background: #ffd773; }
+button.hold.active,
+button[data-command="shield"].active {
+  background: #f16f52;
+  color: #fff8f0;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+}
+@media (max-width: 760px) {
+  .app {
+    gap: 7px;
+    padding-top: max(54px, calc(env(safe-area-inset-top) + 50px));
+  }
+  .stage {
+    height: clamp(220px, 34dvh, 330px);
+    max-height: none;
+  }
+  .hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .controls,
+  .flight-pad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .flight-pad button:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+  .chip,
+  button {
+    min-height: 39px;
+  }
+  .chip b { font-size: 13px; }
+  .chip span { font-size: 10px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Meteor Miner | AI and Sons Games">
+  <meta property="og:description" content="Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/meteorminer">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/meteorminer.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Meteor Miner | AI and Sons Games">
+  <meta name="twitter:description" content="Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/meteorminer.png">
+  <link rel="canonical" href="https://games.aiandsons.io/meteorminer">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Meteor Miner","description":"Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/meteorminer","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">All games</a>
+<main class="app">
+  <section class="stage" aria-label="Meteor Miner play field">
+    <canvas id="game" width="960" height="600"></canvas>
+  </section>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Sector</span><b id="sectorLabel">1/3</b></div>
+    <div class="chip good"><span>Ore</span><b id="oreLabel">0/7</b></div>
+    <div class="chip"><span>Cargo</span><b id="cargoLabel">0/6</b></div>
+    <div class="chip warn"><span>Energy</span><b id="energyLabel">100</b></div>
+    <div class="chip danger"><span>Hull</span><b id="hullLabel">100</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game commands">
+    <button class="primary" id="startBtn" type="button">Start</button>
+    <button id="pauseBtn" type="button">Pause</button>
+    <button id="restartBtn" type="button">Restart</button>
+    <button id="fullBtn" type="button">Full</button>
+  </section>
+  <section class="flight-pad" aria-label="Flight controls">
+    <button class="hold" data-hold="up" type="button">Up</button>
+    <button class="hold" data-hold="left" type="button">Left</button>
+    <button data-command="shield" type="button">Shield</button>
+    <button class="hold" data-hold="right" type="button">Right</button>
+    <button class="hold" data-hold="down" type="button">Down</button>
+  </section>
+  <p class="sr" id="statusText" aria-live="polite">Meteor Miner ready.</p>
+</main>
+
+<script type="module">
+import { addCoins, rememberRecent, state as profileState } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const GAME_SLUG = 'meteorminer';
+const GAME_NAME = 'Meteor Miner';
+const WIDTH = 960;
+const HEIGHT = 600;
+const PLAYER_R = 18;
+const BASE = { x: 812, y: 494, r: 62 };
+const MAX_SECTOR = 3;
+const MAX_CARGO = 6;
+const SECTORS = [
+  { quota: 7, ore: 10, meteors: 4, speed: 1 },
+  { quota: 9, ore: 12, meteors: 5, speed: 1.13 },
+  { quota: 11, ore: 14, meteors: 6, speed: 1.26 },
+];
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  sector: document.getElementById('sectorLabel'),
+  ore: document.getElementById('oreLabel'),
+  cargo: document.getElementById('cargoLabel'),
+  energy: document.getElementById('energyLabel'),
+  hull: document.getElementById('hullLabel'),
+  coins: document.getElementById('coinsLabel'),
+  status: document.getElementById('statusText'),
+  start: document.getElementById('startBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+  holdButtons: [...document.querySelectorAll('[data-hold]')],
+  shieldButton: document.querySelector('[data-command="shield"]'),
+};
+
+const input = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+};
+
+let game = makeGame();
+let lastFrame = 0;
+let manualStepping = false;
+
+function makeGame() {
+  return {
+    mode: 'menu',
+    sector: 1,
+    score: 0,
+    hull: 100,
+    energy: 100,
+    cargo: 0,
+    delivered: 0,
+    totalDelivered: 0,
+    coinsAwarded: 0,
+    reported: false,
+    time: 0,
+    message: 'Collect ore, dock at the refinery, and shield through meteors.',
+    flash: 0,
+    shake: 0,
+    sectorDelay: 0,
+    player: {
+      x: 150,
+      y: 305,
+      vx: 0,
+      vy: 0,
+      shield: 0,
+      shieldCooldown: 0,
+      hitCooldown: 0,
+      angle: 0,
+    },
+    ores: [],
+    meteors: [],
+    sparks: [],
+    stars: makeStars(),
+  };
+}
+
+function seeded(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function makeStars() {
+  const rand = seeded(9142026);
+  const stars = [];
+  for (let i = 0; i < 76; i += 1) {
+    stars.push({
+      x: Math.round(rand() * WIDTH),
+      y: Math.round(rand() * HEIGHT),
+      r: 1 + rand() * 2.2,
+      phase: rand() * Math.PI * 2,
+    });
+  }
+  return stars;
+}
+
+function loadSector(sector) {
+  const index = Math.max(0, Math.min(SECTORS.length - 1, sector - 1));
+  const cfg = SECTORS[index];
+  const rand = seeded(3100 + sector * 971);
+  game.sector = sector;
+  game.delivered = 0;
+  game.cargo = 0;
+  game.energy = Math.min(100, game.energy + 18);
+  game.player.x = 145;
+  game.player.y = 300;
+  game.player.vx = 0;
+  game.player.vy = 0;
+  game.player.shield = 0;
+  game.player.shieldCooldown = 0;
+  game.player.hitCooldown = 0;
+  game.ores = [];
+  game.meteors = [];
+  game.sparks = [];
+  game.flash = .8;
+  game.message = `Sector ${sector}: deliver ${cfg.quota} ore.`;
+
+  const placed = [];
+  for (let i = 0; i < cfg.ore; i += 1) {
+    let x = 0;
+    let y = 0;
+    for (let tries = 0; tries < 80; tries += 1) {
+      x = 100 + rand() * 710;
+      y = 88 + rand() * 410;
+      const nearBase = distance(x, y, BASE.x, BASE.y) < 122;
+      const nearStart = distance(x, y, 145, 300) < 95;
+      const crowded = placed.some((p) => distance(x, y, p.x, p.y) < 58);
+      if (!nearBase && !nearStart && !crowded) break;
+    }
+    placed.push({ x, y });
+    game.ores.push({
+      id: `s${sector}-ore${i}`,
+      x,
+      y,
+      r: 11 + rand() * 4,
+      value: 1,
+      collected: false,
+      pulse: rand() * Math.PI * 2,
+    });
+  }
+
+  for (let i = 0; i < cfg.meteors; i += 1) {
+    const leftSide = i % 2 === 0;
+    const speed = (78 + rand() * 62) * cfg.speed;
+    game.meteors.push({
+      id: `s${sector}-m${i}`,
+      x: leftSide ? WIDTH + 70 + rand() * 240 : -70 - rand() * 180,
+      y: 70 + rand() * 420,
+      vx: (leftSide ? -1 : 1) * speed,
+      vy: (-34 + rand() * 68) * cfg.speed,
+      r: 18 + rand() * 12,
+      spin: rand() * Math.PI * 2,
+      stunned: 0,
+    });
+  }
+}
+
+function startGame() {
+  game = makeGame();
+  loadSector(1);
+  game.mode = 'playing';
+  game.message = 'Mine ore, then return to the refinery pad.';
+  try { rememberRecent(GAME_SLUG); } catch {}
+  updateHud();
+  render();
+}
+
+function restartGame() {
+  startGame();
+}
+
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    game.message = 'Paused.';
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    game.message = 'Resumed.';
+  }
+  updateHud();
+  render();
+}
+
+function reportOutcome(result) {
+  if (game.reported) return;
+  game.reported = true;
+  reportGameOutcome({
+    slug: GAME_SLUG,
+    result,
+    durationMs: game.time * 1000,
+    metrics: {
+      score: game.score,
+      ore: game.totalDelivered,
+      sectors: result === 'completed' ? MAX_SECTOR : Math.max(0, game.sector - 1),
+      hull: game.hull,
+    },
+  });
+}
+
+function finishGame(mode) {
+  if (game.mode === 'won' || game.mode === 'lost') return;
+  game.mode = mode;
+  if (mode === 'won') {
+    const coins = 28 + Math.floor(game.score / 450) + Math.floor(Math.max(0, game.hull) / 14);
+    awardCoinsOnce(coins);
+    game.message = `Survey complete. Earned ${coins} coins.`;
+  } else {
+    const coins = Math.max(3, Math.floor(game.totalDelivered / 2));
+    awardCoinsOnce(coins);
+    game.message = `Hull failed. Earned ${coins} salvage coins.`;
+  }
+  reportOutcome(mode === 'won' ? 'completed' : 'lost');
+  updateHud();
+  render();
+}
+
+function awardCoinsOnce(amount) {
+  if (game.coinsAwarded > 0) return;
+  const coins = Math.max(0, Math.floor(amount));
+  if (coins > 0) addCoins(coins);
+  game.coinsAwarded = coins;
+}
+
+function completeSector() {
+  game.score += 360 + game.sector * 90 + Math.round(game.hull);
+  game.flash = 1;
+  if (game.sector >= MAX_SECTOR) {
+    finishGame('won');
+    return;
+  }
+  game.mode = 'sector';
+  game.sectorDelay = 1.15;
+  game.message = `Sector ${game.sector} secured. Jumping to sector ${game.sector + 1}.`;
+}
+
+function triggerShield() {
+  if (game.mode === 'menu') {
+    startGame();
+    return;
+  }
+  if (game.mode === 'won' || game.mode === 'lost') {
+    restartGame();
+    return;
+  }
+  if (game.mode !== 'playing') return;
+  const player = game.player;
+  if (player.shieldCooldown > 0 || player.shield > 0 || game.energy < 24) {
+    game.message = game.energy < 24 ? 'Shield needs more energy.' : 'Shield is recharging.';
+    return;
+  }
+  player.shield = .95;
+  player.shieldCooldown = 1.7;
+  game.energy = Math.max(0, game.energy - 24);
+  game.message = 'Shield pulse armed.';
+  spawnSparks(player.x, player.y, 14, '#ffd36f');
+}
+
+function update(dt) {
+  const safeDt = Math.max(0, Math.min(.05, Number(dt) || 0));
+  game.time += safeDt;
+  game.flash = Math.max(0, game.flash - safeDt * 1.2);
+  game.shake = Math.max(0, game.shake - safeDt * 20);
+  for (const spark of game.sparks) {
+    spark.life -= safeDt;
+    spark.x += spark.vx * safeDt;
+    spark.y += spark.vy * safeDt;
+  }
+  game.sparks = game.sparks.filter((spark) => spark.life > 0);
+
+  if (game.mode === 'sector') {
+    game.sectorDelay -= safeDt;
+    if (game.sectorDelay <= 0) {
+      loadSector(game.sector + 1);
+      game.mode = 'playing';
+    }
+    return;
+  }
+
+  if (game.mode !== 'playing') return;
+
+  const player = game.player;
+  player.shield = Math.max(0, player.shield - safeDt);
+  player.shieldCooldown = Math.max(0, player.shieldCooldown - safeDt);
+  player.hitCooldown = Math.max(0, player.hitCooldown - safeDt);
+  const recharge = player.shield > 0 ? 5 : 15;
+  game.energy = Math.min(100, game.energy + recharge * safeDt);
+
+  const ax = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const ay = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+  if (ax || ay) {
+    const mag = Math.hypot(ax, ay) || 1;
+    player.vx += (ax / mag) * 420 * safeDt;
+    player.vy += (ay / mag) * 420 * safeDt;
+    player.angle = Math.atan2(player.vy || ay, player.vx || ax);
+  }
+  player.vx *= Math.pow(.58, safeDt);
+  player.vy *= Math.pow(.58, safeDt);
+  const speed = Math.hypot(player.vx, player.vy);
+  const maxSpeed = 228;
+  if (speed > maxSpeed) {
+    player.vx = (player.vx / speed) * maxSpeed;
+    player.vy = (player.vy / speed) * maxSpeed;
+  }
+  player.x += player.vx * safeDt;
+  player.y += player.vy * safeDt;
+  clampPlayer();
+
+  updateMeteors(safeDt);
+  collectOre();
+  depositCargo();
+  checkMeteorHits();
+  if (game.hull <= 0) finishGame('lost');
+}
+
+function clampPlayer() {
+  const p = game.player;
+  const minX = 32;
+  const maxX = WIDTH - 32;
+  const minY = 42;
+  const maxY = HEIGHT - 42;
+  if (p.x < minX) { p.x = minX; p.vx = Math.max(0, p.vx); }
+  if (p.x > maxX) { p.x = maxX; p.vx = Math.min(0, p.vx); }
+  if (p.y < minY) { p.y = minY; p.vy = Math.max(0, p.vy); }
+  if (p.y > maxY) { p.y = maxY; p.vy = Math.min(0, p.vy); }
+}
+
+function updateMeteors(dt) {
+  for (const meteor of game.meteors) {
+    meteor.x += meteor.vx * dt;
+    meteor.y += meteor.vy * dt;
+    meteor.spin += dt * (meteor.vx > 0 ? .9 : -.9);
+    meteor.stunned = Math.max(0, meteor.stunned - dt);
+    if (meteor.x < -95) meteor.x = WIDTH + 95;
+    if (meteor.x > WIDTH + 95) meteor.x = -95;
+    if (meteor.y < 40) {
+      meteor.y = 40;
+      meteor.vy = Math.abs(meteor.vy);
+    }
+    if (meteor.y > HEIGHT - 40) {
+      meteor.y = HEIGHT - 40;
+      meteor.vy = -Math.abs(meteor.vy);
+    }
+  }
+}
+
+function collectOre() {
+  for (const ore of game.ores) {
+    if (ore.collected) continue;
+    const d = distance(game.player.x, game.player.y, ore.x, ore.y);
+    if (d > PLAYER_R + ore.r + 5) continue;
+    if (game.cargo >= MAX_CARGO) {
+      game.message = 'Cargo bay full. Return to the refinery.';
+      continue;
+    }
+    ore.collected = true;
+    game.cargo += ore.value;
+    game.score += 45;
+    game.message = `Ore loaded: ${game.cargo}/${MAX_CARGO}.`;
+    spawnSparks(ore.x, ore.y, 10, '#76f0c4');
+  }
+}
+
+function depositCargo() {
+  if (game.cargo <= 0) return;
+  const d = distance(game.player.x, game.player.y, BASE.x, BASE.y);
+  if (d > BASE.r + PLAYER_R + 6) return;
+  const amount = game.cargo;
+  game.cargo = 0;
+  game.delivered += amount;
+  game.totalDelivered += amount;
+  game.score += amount * 95;
+  game.message = `Deposited ${amount} ore at the refinery.`;
+  game.energy = Math.min(100, game.energy + 8 + amount);
+  spawnSparks(BASE.x, BASE.y, 18, '#ffd36f');
+  if (game.delivered >= SECTORS[game.sector - 1].quota) completeSector();
+}
+
+function checkMeteorHits() {
+  const player = game.player;
+  for (const meteor of game.meteors) {
+    const hitRange = PLAYER_R + meteor.r - 2;
+    if (distance(player.x, player.y, meteor.x, meteor.y) > hitRange) continue;
+    if (player.shield > 0) {
+      const angle = Math.atan2(meteor.y - player.y, meteor.x - player.x);
+      const speed = Math.max(120, Math.hypot(meteor.vx, meteor.vy));
+      meteor.vx = Math.cos(angle) * speed * 1.12;
+      meteor.vy = Math.sin(angle) * speed * 1.12;
+      meteor.stunned = .45;
+      game.score += 30;
+      game.message = 'Shield deflected a meteor.';
+      game.shake = 5;
+      spawnSparks(meteor.x, meteor.y, 16, '#f16f52');
+      continue;
+    }
+    if (player.hitCooldown > 0) continue;
+    player.hitCooldown = 1.05;
+    const angle = Math.atan2(player.y - meteor.y, player.x - meteor.x);
+    player.vx += Math.cos(angle) * 170;
+    player.vy += Math.sin(angle) * 170;
+    game.hull = Math.max(0, game.hull - 18);
+    game.cargo = Math.max(0, game.cargo - 1);
+    game.shake = 10;
+    game.message = 'Meteor impact. Hull damaged.';
+    spawnSparks(player.x, player.y, 20, '#ff9b91');
+  }
+}
+
+function spawnSparks(x, y, count, color) {
+  const rand = seeded((Math.round(x * 7 + y * 13 + game.time * 1000) >>> 0) || 1);
+  for (let i = 0; i < count; i += 1) {
+    const a = rand() * Math.PI * 2;
+    const speed = 40 + rand() * 120;
+    game.sparks.push({
+      x,
+      y,
+      vx: Math.cos(a) * speed,
+      vy: Math.sin(a) * speed,
+      life: .28 + rand() * .45,
+      maxLife: .75,
+      color,
+    });
+  }
+}
+
+function render() {
+  const shake = game.shake > 0 ? game.shake : 0;
+  ctx.save();
+  if (shake) {
+    const sx = Math.sin(game.time * 61) * shake * .45;
+    const sy = Math.cos(game.time * 53) * shake * .35;
+    ctx.translate(sx, sy);
+  }
+  drawBackground();
+  drawRefinery();
+  drawOres();
+  drawMeteors();
+  drawPlayer();
+  drawSparks();
+  if (game.flash > 0) drawFlash();
+  ctx.restore();
+  drawOverlay();
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  sky.addColorStop(0, '#eefcff');
+  sky.addColorStop(.45, '#9fd3da');
+  sky.addColorStop(1, '#315e74');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = .38;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  for (let x = 60; x < WIDTH; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x - 82, HEIGHT);
+    ctx.stroke();
+  }
+  for (let y = 70; y < HEIGHT; y += 76) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(WIDTH, y + 36);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  for (const star of game.stars) {
+    const twinkle = .45 + Math.sin(game.time * 2 + star.phase) * .2;
+    ctx.globalAlpha = twinkle;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = '#14364222';
+  ctx.beginPath();
+  ctx.ellipse(174, 512, 195, 36, -.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(730, 92, 165, 32, .12, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawRefinery() {
+  ctx.save();
+  ctx.translate(BASE.x, BASE.y);
+  const active = distance(game.player.x, game.player.y, BASE.x, BASE.y) < BASE.r + 34;
+  ctx.fillStyle = active ? '#ffe69b' : '#e6f7f4';
+  ctx.strokeStyle = active ? '#f16f52' : '#1c5463';
+  ctx.lineWidth = active ? 5 : 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, BASE.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#1c5463';
+  roundedRect(-42, -23, 84, 46, 8);
+  ctx.fill();
+  ctx.fillStyle = '#8dffc4';
+  roundedRect(-27, -10, 54, 20, 5);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffffaa';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i += 1) {
+    ctx.beginPath();
+    ctx.arc(0, 0, BASE.r + 10 + i * 10 + Math.sin(game.time * 2 + i) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawOres() {
+  for (const ore of game.ores) {
+    if (ore.collected) continue;
+    const pulse = 1 + Math.sin(game.time * 3 + ore.pulse) * .08;
+    ctx.save();
+    ctx.translate(ore.x, ore.y);
+    ctx.rotate(ore.pulse + game.time * .8);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = '#5ee0bc';
+    ctx.strokeStyle = '#133a40';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -ore.r);
+    ctx.lineTo(ore.r * .85, -ore.r * .12);
+    ctx.lineTo(ore.r * .45, ore.r);
+    ctx.lineTo(-ore.r * .6, ore.r * .7);
+    ctx.lineTo(-ore.r * .9, -ore.r * .2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#eafff7';
+    ctx.beginPath();
+    ctx.arc(-ore.r * .16, -ore.r * .2, ore.r * .24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawMeteors() {
+  for (const meteor of game.meteors) {
+    ctx.save();
+    ctx.translate(meteor.x, meteor.y);
+    ctx.rotate(meteor.spin);
+    ctx.fillStyle = meteor.stunned > 0 ? '#ffd36f' : '#7f6b62';
+    ctx.strokeStyle = '#2a3e45';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const points = 9;
+    for (let i = 0; i < points; i += 1) {
+      const a = (Math.PI * 2 * i) / points;
+      const r = meteor.r * (.74 + ((i % 3) * .11));
+      const x = Math.cos(a) * r;
+      const y = Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#493a36';
+    ctx.globalAlpha = .28;
+    ctx.beginPath();
+    ctx.arc(-meteor.r * .2, -meteor.r * .08, meteor.r * .23, 0, Math.PI * 2);
+    ctx.arc(meteor.r * .25, meteor.r * .18, meteor.r * .14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+function drawPlayer() {
+  const p = game.player;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  const angle = Math.hypot(p.vx, p.vy) > 8 ? Math.atan2(p.vy, p.vx) : p.angle;
+  ctx.rotate(angle);
+  if (p.hitCooldown > 0 && Math.floor(p.hitCooldown * 12) % 2 === 0) {
+    ctx.globalAlpha = .55;
+  }
+  ctx.fillStyle = '#153642';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(24, 0);
+  ctx.lineTo(-16, -15);
+  ctx.lineTo(-9, 0);
+  ctx.lineTo(-16, 15);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#f4c75d';
+  ctx.beginPath();
+  ctx.arc(2, 0, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#76f0c4';
+  roundedRect(-23, -7, 9, 14, 3);
+  ctx.fill();
+  ctx.restore();
+
+  if (p.shield > 0) {
+    const radius = 34 + Math.sin(game.time * 18) * 4;
+    ctx.strokeStyle = '#ffd36f';
+    ctx.lineWidth = 5;
+    ctx.globalAlpha = .66;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawSparks() {
+  for (const spark of game.sparks) {
+    const alpha = Math.max(0, spark.life / spark.maxLife);
+    ctx.globalAlpha = Math.min(.9, alpha);
+    ctx.fillStyle = spark.color;
+    ctx.beginPath();
+    ctx.arc(spark.x, spark.y, 2.5 + alpha * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawFlash() {
+  ctx.globalAlpha = game.flash * .18;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.globalAlpha = 1;
+}
+
+function drawOverlay() {
+  drawCanvasHud();
+  if (game.mode === 'playing') return;
+
+  ctx.save();
+  ctx.fillStyle = '#0e2b35cc';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#f8fdff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 58px Inter, Segoe UI, sans-serif';
+  let title = 'Meteor Miner';
+  if (game.mode === 'paused') title = 'Paused';
+  if (game.mode === 'sector') title = 'Sector Secured';
+  if (game.mode === 'won') title = 'Survey Complete';
+  if (game.mode === 'lost') title = 'Hull Failed';
+  ctx.fillText(title, WIDTH / 2, 178);
+
+  ctx.font = '700 22px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#d7f5f8';
+  const lines = overlayLines();
+  lines.forEach((line, index) => {
+    ctx.fillText(line, WIDTH / 2, 248 + index * 34);
+  });
+
+  ctx.fillStyle = '#ffd36f';
+  ctx.font = '900 20px Inter, Segoe UI, sans-serif';
+  ctx.fillText(overlayAction(), WIDTH / 2, 418);
+  ctx.restore();
+}
+
+function drawCanvasHud() {
+  const quota = SECTORS[game.sector - 1]?.quota || SECTORS[0].quota;
+  const panelX = 118;
+  ctx.save();
+  ctx.fillStyle = '#0e2b35bf';
+  roundedRect(panelX, 16, 360, 42, 8);
+  ctx.fill();
+  ctx.fillStyle = '#f8fdff';
+  ctx.font = '800 16px Inter, Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`Score ${game.score}`, panelX + 16, 37);
+  ctx.fillStyle = '#ffd36f';
+  ctx.fillText(`Delivered ${game.delivered}/${quota}`, panelX + 126, 37);
+  ctx.fillStyle = game.player.shield > 0 ? '#ffd36f' : '#8dffc4';
+  const shield = game.player.shield > 0 ? 'Shield active' : `Shield ${Math.max(0, Math.ceil(game.player.shieldCooldown * 10) / 10)}s`;
+  ctx.fillText(shield, panelX + 266, 37);
+  ctx.restore();
+}
+
+function overlayLines() {
+  if (game.mode === 'menu') {
+    return [
+      'Collect glowing ore, then dock on the refinery pad.',
+      'Use the shield pulse to deflect meteors before they crack your hull.',
+      'Clear three mining sectors to finish the survey.',
+    ];
+  }
+  if (game.mode === 'paused') return ['Press P or Pause to continue.', game.message];
+  if (game.mode === 'sector') return [game.message, 'Controls remain ready for the next sector.'];
+  if (game.mode === 'won') return [`Final score ${game.score}.`, game.message];
+  if (game.mode === 'lost') return [`Final score ${game.score}.`, game.message];
+  return [game.message];
+}
+
+function overlayAction() {
+  if (game.mode === 'menu') return 'Press Start, Enter, or Space.';
+  if (game.mode === 'paused') return 'Press P to resume.';
+  if (game.mode === 'sector') return 'Stand by.';
+  return 'Press Restart or Space to play again.';
+}
+
+function updateHud() {
+  const quota = SECTORS[game.sector - 1]?.quota || SECTORS[0].quota;
+  els.sector.textContent = `${game.sector}/${MAX_SECTOR}`;
+  els.ore.textContent = `${Math.min(game.delivered, quota)}/${quota}`;
+  els.cargo.textContent = `${game.cargo}/${MAX_CARGO}`;
+  els.energy.textContent = `${Math.round(game.energy)}`;
+  els.hull.textContent = `${Math.max(0, Math.ceil(game.hull))}`;
+  els.coins.textContent = String(Number(profileState.coins || 0));
+  els.status.textContent = `${GAME_NAME}: ${game.message}`;
+  els.start.textContent = game.mode === 'menu' ? 'Start' : 'Resume';
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  els.pause.disabled = !['playing', 'paused'].includes(game.mode);
+  els.shieldButton?.classList.toggle('active', game.player.shield > 0);
+}
+
+function distance(ax, ay, bx, by) {
+  return Math.hypot(ax - bx, ay - by);
+}
+
+function roundedRect(x, y, w, h, r) {
+  const radius = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function setHold(name, value) {
+  if (!(name in input)) return;
+  input[name] = value;
+  for (const button of els.holdButtons) {
+    if (button.dataset.hold === name) button.classList.toggle('active', value);
+  }
+}
+
+function clearInput() {
+  for (const key of Object.keys(input)) setHold(key, false);
+}
+
+function handleKeyDown(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'w'].includes(key)) { setHold('up', true); event.preventDefault(); }
+  else if (['arrowdown', 's'].includes(key)) { setHold('down', true); event.preventDefault(); }
+  else if (['arrowleft', 'a'].includes(key)) { setHold('left', true); event.preventDefault(); }
+  else if (['arrowright', 'd'].includes(key)) { setHold('right', true); event.preventDefault(); }
+  else if (key === ' ' || key === 'spacebar') { triggerShield(); event.preventDefault(); }
+  else if (key === 'enter') { if (game.mode === 'menu') startGame(); else if (game.mode === 'won' || game.mode === 'lost') restartGame(); event.preventDefault(); }
+  else if (key === 'p') { togglePause(); event.preventDefault(); }
+  else if (key === 'r') { restartGame(); event.preventDefault(); }
+  else if (key === 'f') { toggleFullscreen(); event.preventDefault(); }
+}
+
+function handleKeyUp(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'w'].includes(key)) { setHold('up', false); event.preventDefault(); }
+  else if (['arrowdown', 's'].includes(key)) { setHold('down', false); event.preventDefault(); }
+  else if (['arrowleft', 'a'].includes(key)) { setHold('left', false); event.preventDefault(); }
+  else if (['arrowright', 'd'].includes(key)) { setHold('right', false); event.preventDefault(); }
+}
+
+function bindControls() {
+  els.start.addEventListener('click', () => {
+    if (game.mode === 'menu' || game.mode === 'won' || game.mode === 'lost') startGame();
+    else if (game.mode === 'paused') togglePause();
+  });
+  els.pause.addEventListener('click', togglePause);
+  els.restart.addEventListener('click', restartGame);
+  els.full.addEventListener('click', toggleFullscreen);
+  els.shieldButton.addEventListener('click', triggerShield);
+
+  for (const button of els.holdButtons) {
+    const name = button.dataset.hold;
+    button.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      button.setPointerCapture?.(event.pointerId);
+      setHold(name, true);
+    });
+    button.addEventListener('pointerup', (event) => {
+      event.preventDefault();
+      setHold(name, false);
+    });
+    button.addEventListener('pointercancel', () => setHold(name, false));
+    button.addEventListener('pointerleave', () => setHold(name, false));
+  }
+
+  canvas.addEventListener('pointerdown', () => {
+    if (game.mode === 'menu') startGame();
+  });
+  document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keyup', handleKeyUp);
+  document.addEventListener('fullscreenchange', render);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function visibleOres() {
+  return game.ores
+    .filter((ore) => !ore.collected)
+    .slice(0, 8)
+    .map((ore) => ({ id: ore.id, x: Math.round(ore.x), y: Math.round(ore.y), r: Math.round(ore.r) }));
+}
+
+function visibleMeteors() {
+  return game.meteors
+    .slice(0, 8)
+    .map((meteor) => ({
+      id: meteor.id,
+      x: Math.round(meteor.x),
+      y: Math.round(meteor.y),
+      vx: Math.round(meteor.vx),
+      vy: Math.round(meteor.vy),
+      r: Math.round(meteor.r),
+    }));
+}
+
+function stateToObject() {
+  const quota = SECTORS[game.sector - 1]?.quota || SECTORS[0].quota;
+  return {
+    note: 'Coordinates use canvas pixels, origin top-left, x increases right, y increases down.',
+    mode: game.mode,
+    sector: game.sector,
+    sector_count: MAX_SECTOR,
+    score: game.score,
+    hull: Math.ceil(game.hull),
+    energy: Math.round(game.energy),
+    cargo: game.cargo,
+    cargo_max: MAX_CARGO,
+    delivered: game.delivered,
+    quota,
+    total_delivered: game.totalDelivered,
+    coins: Number(profileState.coins || 0),
+    coins_awarded_this_session: game.coinsAwarded,
+    player: {
+      x: Math.round(game.player.x),
+      y: Math.round(game.player.y),
+      vx: Math.round(game.player.vx),
+      vy: Math.round(game.player.vy),
+      r: PLAYER_R,
+    },
+    shield: {
+      active: game.player.shield > 0,
+      timer: Number(game.player.shield.toFixed(2)),
+      cooldown: Number(game.player.shieldCooldown.toFixed(2)),
+    },
+    refinery: { x: BASE.x, y: BASE.y, r: BASE.r },
+    ore_remaining: game.ores.filter((ore) => !ore.collected).length,
+    visible_ores: visibleOres(),
+    meteors: visibleMeteors(),
+    message: game.message,
+  };
+}
+
+function renderGameToText() {
+  return JSON.stringify(stateToObject());
+}
+
+function frame(timestamp = 0) {
+  if (!manualStepping) {
+    const dt = Math.min(.05, Math.max(0, (timestamp - lastFrame) / 1000 || 0));
+    lastFrame = timestamp;
+    update(dt);
+  }
+  updateHud();
+  render();
+  requestAnimationFrame(frame);
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.min(240, Math.round(Number(ms || 16.67) / (1000 / 60))));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  updateHud();
+  render();
+  manualStepping = false;
+  lastFrame = performance.now();
+  return renderGameToText();
+};
+
+window.__METEOR_MINER_GAME__ = {
+  start: startGame,
+  restart: restartGame,
+  pause: togglePause,
+  shield: triggerShield,
+  state: stateToObject,
+  setPlayer: (x, y) => {
+    game.player.x = Number(x);
+    game.player.y = Number(y);
+    clampPlayer();
+    updateHud();
+    render();
+    return stateToObject();
+  },
+  collectFirstOre: () => {
+    const ore = game.ores.find((item) => !item.collected);
+    if (ore) {
+      game.player.x = ore.x;
+      game.player.y = ore.y;
+      collectOre();
+    }
+    updateHud();
+    render();
+    return stateToObject();
+  },
+  deposit: () => {
+    game.player.x = BASE.x;
+    game.player.y = BASE.y;
+    depositCargo();
+    updateHud();
+    render();
+    return stateToObject();
+  },
+  damage: (amount = 25) => {
+    game.hull = Math.max(0, game.hull - Math.max(0, Number(amount) || 0));
+    if (game.hull <= 0) finishGame('lost');
+    updateHud();
+    render();
+    return stateToObject();
+  },
+  forceWin: () => {
+    game.score += 1200;
+    game.sector = MAX_SECTOR;
+    game.delivered = SECTORS[MAX_SECTOR - 1].quota;
+    game.totalDelivered = SECTORS.reduce((total, sector) => total + sector.quota, 0);
+    finishGame('won');
+    return stateToObject();
+  },
+};
+
+window.__CADE_FEEDBACK_CONTEXT__ = () => {
+  try {
+    return stateToObject();
+  } catch {
+    return { game: GAME_SLUG, mode: game.mode };
+  }
+};
+
+bindControls();
+clearInput();
+updateHud();
+render();
+mountGameFeedback({ gameSlug: 'meteorminer', gameName: 'Meteor Miner' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
