@@ -34,7 +34,7 @@ const DISCOVERY_GAME_SLUGS = Object.freeze([
   "minicrossword", "fillomino", "canyonglider", "islandwalls", "binarygrid", "thermotrail",
   "kropkidots", "pearlloop", "starbattle", "parcelpatch", "dominomosaic", "windbow",
   "knightstour", "neondivide", "lureline", "aquariumlogic", "morrismeadow", "reboundrelay",
-  "meteorminer",
+  "meteorminer", "rippleshepherd",
 ]);
 
 const CURATED_TRENDING_SLUGS = Object.freeze([

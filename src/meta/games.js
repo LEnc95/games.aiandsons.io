@@ -170,6 +170,7 @@ const BASE_GAMES = [
   { slug:'morrismeadow',   name:'Morris Meadow',        emoji:'\u{1F33C}', scoreHint:'mills', url:'/morrismeadow', desc:'Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris.', earnsCoins:true },
   { slug:'reboundrelay',   name:'Rebound Relay',        emoji:'\u{1F916}', scoreHint:'relays', url:'/reboundrelay', desc:'Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards.', earnsCoins:true },
   { slug:'meteorminer',    name:'Meteor Miner',         emoji:'\u2604\uFE0F', scoreHint:'ore', url:'/meteorminer', desc:'Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors.', earnsCoins:true },
+  { slug:'rippleshepherd', name:'Ripple Shepherd',      emoji:'\u{1F4A7}', scoreHint:'fireflies', url:'/rippleshepherd', desc:'Place moonlit ripples to guide drifting fireflies around pond stones and into matching lily lanterns across five physics puzzles.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -193,7 +194,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

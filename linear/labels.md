@@ -184,5 +184,6 @@
 - game/morrismeadow
 - game/reboundrelay
 - game/meteorminer
+- game/rippleshepherd
 
 Generated from `src/meta/feedback.js`.
