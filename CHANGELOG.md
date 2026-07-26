@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.13.0] - 2026-07-26
 ### Added
 - Added Star Battle, Parcel Patch, Domino Mosaic, Windbow Trials, Knight's Tour, Neon Divide, and Lure Line.
 - Added Aquarium Logic, a five-board aquarium deduction game with bounded outcome telemetry and a tank-theme cosmetic contract.
