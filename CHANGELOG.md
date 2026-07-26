@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Added Morris Meadow, a deterministic Nine Men's Morris strategy game with complete placement, mill, capture, movement, flying, and board-theme support.
 - Added Rebound Relay, a five-board slide-until-stopped circuit puzzle with beacon, energy, and circuit-theme support.
 - Added Meteor Miner, a three-sector arcade mining game with ore delivery, shield defense, bounded outcomes, and a drone-theme cosmetic contract.
+- Added Ripple Shepherd, a five-pond physics puzzle with firefly guidance, bounded ripple outcomes, and rendered pond themes.
 - Added the first standardized game outcome and cosmetic-slot contract for unattended engagement content.
 
 ### Improved

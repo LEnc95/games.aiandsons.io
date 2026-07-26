@@ -78,6 +78,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'drone-theme', kind: 'palette', tokens: Object.freeze(['hull', 'engine', 'shield', 'ore']) }),
     ]),
   }),
+  rippleshepherd: Object.freeze({
+    releasedAt: '2026-07-26',
+    outcomes: Object.freeze({
+      fireflies: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      ponds: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      ripples: Object.freeze({ min: 0, max: 100, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'pond-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'rim', 'ripple', 'lily', 'stone']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
