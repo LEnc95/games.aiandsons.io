@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Added Pollen Patrol, a five-garden tactical pollination game with deterministic beetle patrols, bounded outcomes, and rendered garden themes.
+
 ## [1.13.0] - 2026-07-26
 ### Added
 - Added Star Battle, Parcel Patch, Domino Mosaic, Windbow Trials, Knight's Tour, Neon Divide, and Lure Line.

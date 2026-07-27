@@ -4210,3 +4210,18 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Visually inspected menu, gameplay/ripple, pause, stone contact, pond transition, loss, final pond, win, feedback, mobile, supplied-client, and OG captures; rendered state matched `render_game_to_text()` and no overlap, clipping, contrast, or overflow defect remained.
 - Repeated SEO, OG, and local Linear generation was SHA-256 idempotent across all relevant outputs. The ordered final gate passed: maintenance, preflight, telemetry/maintenance (15), feedback (31), shop (68), social/discovery (20), and `git diff --check`.
 - TODO: audit/stage/commit, publish through the guarded PR lane, and verify Main QA plus Production Maintenance Verify and the production route.
+
+## 2026-07-27 Create a new game automation - Pollen Patrol
+- Confirmed the run is in clean isolated worktree `8bf6`, fetched `origin/main`, and reset the detached HEAD to starting commit `ffbfc7712d9ee4726d8d2e78b89073839c88673a`.
+- Read the post-sync `AGENTS.md`, develop-web-game skill, existing progress, and automation memory. `npm ci` completed with the repository's existing 16 audit findings and no dependency-file changes.
+- Chosen game: Pollen Patrol (`/pollenpatrol`), a distinct five-garden tactical grid game about collecting every flower, avoiding deterministic beetle patrols, and returning to the hive within a wingbeat budget.
+- Added the first playable self-contained shell with keyboard, pointer, swipe, touch-button, wait, pause, restart, theme, fullscreen, feedback, deterministic-time, text-state, outcome, and focused QA integrations.
+- Required SEO/OG/local-Linear generation produced exactly the intended 11-path release diff; `npm run maintenance:validate` and the 171-game `npm run game:preflight` both passed.
+- The first supplied develop-web-game Playwright sequence completed the real 12-move Clover Corner route with all three flowers, eight wingbeats remaining, matching `level-complete` text/visual state, and no console/page errors.
+- Full focused Playwright verification passed after correcting one QA-harness-only mobile collector expression: exact +1,234 ms stepping, paused-time freeze, boundary/hedge blocking, wait turns, genuine beetle/wingbeat loss, locked hive, restart abandonment, pointer/tap/swipe/buttons, fullscreen/Escape, feedback keyboard isolation, and 390x844 mobile layout all passed with zero console/page errors.
+- A breadth-first solver found and the browser played genuine solutions for all five gardens in 12/18/20/24/28 moves. The campaign completed with exact bounded outcome metrics `{ flowers: 21, gardens: 5, moves: 102 }`.
+- Visually inspected gameplay, pause, beetle-loss, all-garden win, feedback, mobile, transition, supplied-client, and generated OG screenshots. Text state matched the visuals, all three rendered themes remained legible, and no overlap/clipping issue remained.
+- The final supplied-client regression again completed Clover Corner in 12 moves with matching state/screenshot and no error artifact.
+- Repeated SEO, all 171 OG cards, and local Linear generation with SHA-256 snapshots across every generated target; the second pass changed zero hashes.
+- The ordered final local gate passed: maintenance, 171-game preflight, telemetry/maintenance (15), feedback (31), shop/economy (68), social/discovery (20), and `git diff --check`.
+- TODO: audit/stage/commit, publish through the guarded PR lane, then verify Main QA, Production Maintenance Verify, the live game, and the homepage route.

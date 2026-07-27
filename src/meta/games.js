@@ -171,6 +171,7 @@ const BASE_GAMES = [
   { slug:'reboundrelay',   name:'Rebound Relay',        emoji:'\u{1F916}', scoreHint:'relays', url:'/reboundrelay', desc:'Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards.', earnsCoins:true },
   { slug:'meteorminer',    name:'Meteor Miner',         emoji:'\u2604\uFE0F', scoreHint:'ore', url:'/meteorminer', desc:'Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors.', earnsCoins:true },
   { slug:'rippleshepherd', name:'Ripple Shepherd',      emoji:'\u{1F4A7}', scoreHint:'fireflies', url:'/rippleshepherd', desc:'Place moonlit ripples to guide drifting fireflies around pond stones and into matching lily lanterns across five physics puzzles.', earnsCoins:true },
+  { slug:'pollenpatrol',   name:'Pollen Patrol',        emoji:'\u{1F41D}', scoreHint:'flowers', url:'/pollenpatrol', desc:'Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
