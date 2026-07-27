@@ -29,8 +29,8 @@ Static browser arcade platform with:
 
 ## Game catalog
 
-The catalog is maintained in `src/meta/games.js` and currently has `60` games.
-Use that file as the source of truth instead of maintaining a duplicated list in this README.
+The catalog is maintained in `src/meta/games.js`.
+Use that file as the source of truth instead of maintaining duplicated counts or game lists in this README.
 
 ## Quick start
 
@@ -94,6 +94,10 @@ Data/audit ops:
 - `npm run stripe:reconcile-audit -- --base-url https://<your-domain> --user-ids-file data/stripe/users.txt --dry-run true`
 - `npm run stripe:nightly-reconcile -- --base-url https://<your-domain> --dry-run false`
 - `npm run firebase:deploy:rules`
+- `npm run maintenance:validate`
+- `npm run automation:audit-diff`
+- `npm run automation:weekly-brief`
+- `npm run release:prepare-weekly`
 - `npm run feedback:check-daily`
 - `npm run feedback:sync-linear`
 - `npm run feedback:sync-linear:files`
@@ -101,11 +105,18 @@ Data/audit ops:
 
 ## CI workflows
 
+- `.github/workflows/main-qa.yml`
+- `.github/workflows/automation-premerge.yml`
+- `.github/workflows/automation-auto-merge.yml`
+- `.github/workflows/weekly-content-pack.yml`
+- `.github/workflows/weekly-release.yml`
+- `.github/workflows/production-maintenance-verify.yml`
 - `.github/workflows/classroom-smoke.yml`
 - `.github/workflows/nightly-launch-readiness.yml`
 - `.github/workflows/daily-feedback-provisioning.yml`
 - `.github/workflows/nightly-billing-reconcile.yml`
 - `.github/workflows/policy-release-gate.yml`
+- `.github/workflows/telemetry-retention.yml`
 
 Slack notifications:
 
@@ -191,6 +202,9 @@ Optional env vars:
 - Admin triage runs from `ops/feedback/index.html` against protected `/api/feedback/admin/*` APIs.
 - `linear/labels.md` and `linear/game-issues.csv` are generated artifacts from `src/meta/feedback.js`.
 - `npm run feedback:check-daily` is the strict drift guard for those artifacts.
+- Game pages mount the shared modal with `mountGameFeedback({ gameSlug, gameName })` from `src/feedback/embed.js`.
+- When the modal opens it sets `document.documentElement.dataset.cadeFeedbackOpen = "1"`, stops modal `keydown`/`keyup`/`keypress` propagation, closes on Escape, and restores focus to the launcher.
+- Game-level global shortcut handlers should return early while `document.documentElement.dataset.cadeFeedbackOpen` is set, and should avoid calling `preventDefault()` for focused text inputs or textareas.
 
 ## Daily game ship checklist
 
@@ -202,14 +216,18 @@ Optional env vars:
 6. Run `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`.
 7. Run `npm run maintenance:validate`, `npm run game:preflight`, `npm run test:telemetry`, `npm run test:feedback`, `npm run test:shop`, and `npm run test:social`.
 8. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
-9. Commit one game as `Add <Game Name> daily game` on `automation/daily-game/YYYY-MM-DD`, then open a guarded pull request. Unattended releases never push directly to `main`.
-10. Let the required premerge checks and trusted squash auto-merge update `main`, then verify Main QA and the production game route.
+9. If the game binds document/window shortcuts, ensure the handler does not consume feedback modal typing while `data-cade-feedback-open` is present.
+10. Commit one game as `Add <Game Name> daily game` on `automation/daily-game/YYYY-MM-DD`, then open a guarded pull request. Unattended releases never push directly to `main`.
+11. Let the required premerge checks and trusted squash auto-merge update `main`, then verify Main QA and the production game route.
 
 ## Self-maintaining release train
 
 - Every new daily game declares bounded outcomes and cosmetic slots in the engagement contract registry and reports results through the shared outcome API.
-- Monday automation produces a deterministic brief for three agent-designed cosmetics and four challenges. Automation PRs receive the full premerge gate and enable auto-merge after required checks.
-- Sunday automation promotes `CHANGELOG.md` for players and parents, updates `TECHNICAL_CHANGELOG.md` for maintainers, and synchronizes package/runtime versions.
-- Production verification runs after Main QA and retries after 5 and 15 minutes before alerting. It does not automatically revert a failed deployment.
+- `npm run maintenance:validate` is the shared contract gate. It fails when `package.json` and `version.json` disagree, the newest game lacks an explicit content contract/release date/outcome reporter/cosmetic slot, `CHANGELOG.md` omits the newest game, `TECHNICAL_CHANGELOG.md` is missing, challenge IDs collide, the weekly reward cap would be exceeded, weekly policy is not four challenges, premium shop IDs are missing from `shop.html`, or weekly policy is not three cosmetics.
+- The daily automation lane is audited by `scripts/automation/audit-release-diff.mjs` with `AUTOMATION_LANE=daily-game`. It allows at most 40 changed paths, rejects secret-like paths, requires exactly one appended `src/meta/games.js` entry, requires the matching `<slug>/index.html` and `assets/og/<slug>.png`, requires generated support files (`src/meta/content-contracts.js`, discovery metadata, sitemap, home page, Linear seed files, and changelog), and rejects unrelated top-level game shells.
+- Weekly content automation (`.github/workflows/weekly-content-pack.yml`) runs each Monday, generates `output/automation/weekly-pack.json`, and opens one issue per ISO week. The brief is deterministic for that week and requests three cosmetics plus four bounded-metric challenges. It forbids network calls, new storage keys, dependencies, billing changes, and free-form telemetry in the generated content pack.
+- Weekly release automation (`.github/workflows/weekly-release.yml`) runs each Sunday, skips if `release/weekly-state.json` already records the ISO week, otherwise runs `npm run release:prepare-weekly`, moves Unreleased notes into a new versioned `CHANGELOG.md` section, appends `TECHNICAL_CHANGELOG.md`, updates `package.json`, `package-lock.json`, `version.json`, and `release/weekly-state.json`, then opens `automation/weekly-release/v<version>`.
+- Automation PRs from `automation/*` branches receive the premerge gate: diff audit, `game:preflight`, telemetry tests, shop tests, feedback tests, social tests, and launch-readiness smoke. The trusted auto-merge workflow waits for all PR checks with `gh pr checks --watch --fail-fast` before enabling squash auto-merge.
+- Production verification runs after Main QA and retries after roughly 5 and 20 minutes before alerting. It checks `/`, `/shop.html`, `/changelog`, `/CHANGELOG.md`, `/TECHNICAL_CHANGELOG.md`, `/version.json`, and the newest game URL, and confirms the production changelog mentions the newest game. It does not automatically revert a failed deployment.
 - Aggregate gameplay telemetry stores only daily counters and bounded numeric summaries. Client transmission remains disabled until privacy approval is recorded and the runtime flag is enabled.
 
