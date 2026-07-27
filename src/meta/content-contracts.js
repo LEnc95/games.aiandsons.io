@@ -89,6 +89,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'pond-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'rim', 'ripple', 'lily', 'stone']) }),
     ]),
   }),
+  pollenpatrol: Object.freeze({
+    releasedAt: '2026-07-27',
+    outcomes: Object.freeze({
+      flowers: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      moves: Object.freeze({ min: 0, max: 200, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'garden-theme', kind: 'palette', tokens: Object.freeze(['background', 'ground', 'hedge', 'flower', 'bee', 'beetle', 'trail']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

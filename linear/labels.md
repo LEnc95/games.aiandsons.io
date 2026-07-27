@@ -185,5 +185,6 @@
 - game/reboundrelay
 - game/meteorminer
 - game/rippleshepherd
+- game/pollenpatrol
 
 Generated from `src/meta/feedback.js`.

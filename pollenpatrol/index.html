@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Pollen Patrol | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#102617;color:#f7fff0;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.45rem,4.6vw,2.4rem);line-height:1;margin:0;letter-spacing:-.04em}
+    small{color:#cce4af}
+    .home{color:#f7ffe9;font-weight:850;text-decoration:none;border:2px solid #638949;border-radius:999px;padding:8px 13px;background:#243f25}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .stat{min-width:0;background:#243f25;border:2px solid #638949;border-radius:15px;padding:7px 10px;text-align:center;box-shadow:0 4px 0 #08150b}
+    .stat span{display:block;font-size:.68rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#b7d894}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.86rem,2.7vw,1.05rem)}
+    .stage{position:relative;border:3px solid #638949;border-radius:22px;overflow:hidden;background:#17381f;box-shadow:0 10px 0 #08150b}
+    canvas{width:100%;aspect-ratio:18/13;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #fff39a}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #6e9852;border-radius:13px;background:#29492b;color:#f7fff0;font:800 clamp(.7rem,1.8vw,.9rem)/1.1 inherit;padding:9px 5px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #08150b}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #08150b}
+    button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #08150b}
+    button.primary{background:#ffe982;border-color:#ae8527;color:#30240d}
+    button.move{font-size:1.05rem;background:#315c34}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .help{background:#243f25;border:2px solid #638949;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#e2f1d1}
+    .help b{color:#ffe982}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}
+      .home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.56rem}.stat strong{font-size:.75rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #08150b}
+      .controls{grid-template-columns:repeat(4,1fr);gap:6px}
+      button{min-height:40px;padding:7px 3px}
+      .help{font-size:.7rem;padding:8px 10px}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Pollen Patrol | AI and Sons Games">
+  <meta property="og:description" content="Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pollenpatrol">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/pollenpatrol.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pollen Patrol | AI and Sons Games">
+  <meta name="twitter:description" content="Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/pollenpatrol.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pollenpatrol">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Pollen Patrol","description":"Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/pollenpatrol","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Pollen Patrol</h1><small>Gather every bloom, dodge the beetles, and buzz home.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Garden status">
+    <div class="stat"><span>Garden</span><strong id="garden">1 / 5</strong></div>
+    <div class="stat"><span>Flowers</span><strong id="flowers">0 / 3</strong></div>
+    <div class="stat"><span>Wingbeats</span><strong id="wingbeats">20</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="650" tabindex="0" aria-label="Pollen Patrol garden grid"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="start" class="primary">Start garden</button>
+    <button class="move" data-move="up" aria-label="Move up">▲ Up</button>
+    <button class="move" data-move="left" aria-label="Move left">◀ Left</button>
+    <button class="move" data-move="wait" aria-label="Wait one turn">● Wait</button>
+    <button class="move" data-move="right" aria-label="Move right">Right ▶</button>
+    <button class="move" data-move="down" aria-label="Move down">Down ▼</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Sunpatch</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Goal:</b> visit every flower, then reach the striped hive. Beetles advance whenever you move or wait. Use <b>Arrows/WASD</b>, swipe or tap the garden, and press <b>Space</b> to wait. <b>P</b> pauses, <b>R</b> restarts, <b>T</b> changes theme, and <b>F</b> toggles fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={
+  garden:document.querySelector('#garden'),flowers:document.querySelector('#flowers'),wingbeats:document.querySelector('#wingbeats'),time:document.querySelector('#time'),
+  stage:document.querySelector('#stage'),start:document.querySelector('#start'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),
+  theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
+};
+const WIDTH=900,HEIGHT=650,COLS=8,ROWS=6,CELL=80,ORIGIN={x:130,y:112},MOVE_MS=180;
+const THEMES=[
+  {name:'Sunpatch',background:'#17351f',ground:'#d9e995',soil:'#9bb85d',grid:'#75994b',hedge:'#315f35',hedgeTop:'#6fac55',flower:'#fff6ba',accent:'#ffca52',bee:'#ffd84e',beetle:'#d94b55',trail:'#fff0a1'},
+  {name:'Bluebell',background:'#182b45',ground:'#93b6c9',soil:'#6489a0',grid:'#4f718c',hedge:'#315673',hedgeTop:'#6d9cc0',flower:'#e3dcff',accent:'#b490ff',bee:'#ffe16a',beetle:'#ec628a',trail:'#d9f7ff'},
+  {name:'Honeyrose',background:'#4b2430',ground:'#e5aa96',soil:'#bc786f',grid:'#9a5a5c',hedge:'#6d3847',hedgeTop:'#b96772',flower:'#fff0e8',accent:'#ffb14f',bee:'#ffe06a',beetle:'#863a4d',trail:'#ffe5a6'}
+];
+const FLOWER_COLORS=['#ff75a8','#8f7dff','#55cfd0','#ff9c54','#f6df4e'];
+const LEVELS=[
+  {name:'Clover Corner',start:[0,5],hive:[7,0],flowers:[[1,4],[3,3],[5,1]],walls:[[2,5],[2,4],[4,4],[4,3],[6,3],[6,2]],beetles:[],wingbeats:20},
+  {name:'Bluebell Bend',start:[0,5],hive:[7,0],flowers:[[0,3],[3,4],[4,1],[7,3]],walls:[[2,2],[3,2],[5,3],[5,4],[6,1]],beetles:[{path:[[2,5],[3,5],[4,5],[3,5]],phase:0}],wingbeats:28},
+  {name:'Rosehip Run',start:[0,3],hive:[7,0],flowers:[[1,1],[3,4],[5,2],[7,4]],walls:[[1,2],[2,2],[2,4],[4,1],[4,2],[6,3]],beetles:[{path:[[0,5],[1,5],[2,5],[1,5]],phase:1},{path:[[5,0],[6,0],[7,0],[6,0]],phase:0}],wingbeats:34},
+  {name:'Lavender Lanes',start:[0,5],hive:[7,0],flowers:[[0,1],[2,3],[4,5],[5,1],[7,3]],walls:[[1,1],[1,2],[3,3],[3,4],[5,3],[6,3]],beetles:[{path:[[2,0],[3,0],[4,0],[3,0]],phase:0},{path:[[6,5],[7,5],[7,4],[7,5]],phase:1}],wingbeats:40},
+  {name:'Crown Garden',start:[0,5],hive:[7,0],flowers:[[0,2],[2,0],[3,5],[5,3],[7,4]],walls:[[1,2],[1,3],[2,3],[3,1],[4,1],[4,4],[5,4],[6,2]],beetles:[{path:[[2,5],[2,4],[3,4],[2,4]],phase:0},{path:[[5,0],[6,0],[6,1],[6,0]],phase:2},{path:[[7,2],[7,3],[6,3],[7,3]],phase:0}],wingbeats:46}
+];
+const sameCell=(a,b)=>a[0]===b[0]&&a[1]===b[1];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const center=cell=>({x:ORIGIN.x+cell[0]*CELL+CELL/2,y:ORIGIN.y+cell[1]*CELL+CELL/2});
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const game={
+  mode:'menu',started:false,levelIndex:0,player:[0,5],flowers:[],beetles:[],wingbeats:20,elapsedMs:0,moves:0,
+  totalFlowers:0,gardens:0,themeIndex:0,animation:null,visited:[],reported:false,rewarded:false,
+  status:'Press Start to begin Clover Corner.',lastAction:{type:'ready'}
+};
+let pointerStart=null,lastFrame=performance.now(),manualUntil=0;
+
+function currentMetrics(){return{flowers:game.totalFlowers,gardens:game.gardens,moves:game.moves}}
+function report(result){
+  if(game.reported)return;
+  game.reported=true;
+  reportGameOutcome({slug:'pollenpatrol',result,durationMs:game.elapsedMs,metrics:currentMetrics()});
+}
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function flowerCount(){return game.flowers.filter(item=>item.collected).length}
+function loadLevel(index,mode='playing'){
+  game.levelIndex=index;
+  game.player=[...level().start];
+  game.flowers=level().flowers.map((cell,index)=>({cell:[...cell],color:index%FLOWER_COLORS.length,collected:false}));
+  game.beetles=level().beetles.map((item,index)=>({id:index,path:item.path.map(cell=>[...cell]),phase:item.phase}));
+  game.wingbeats=level().wingbeats;
+  game.animation=null;
+  game.visited=[[...game.player]];
+  game.mode=mode;
+  game.status=mode==='menu'?'Press Start to begin Clover Corner.':`Collect ${game.flowers.length} flowers, then reach the hive.`;
+  game.lastAction={type:mode==='menu'?'ready':'garden-start',garden:index+1};
+  syncUi();render();
+}
+function resetCampaign(mode='menu'){
+  game.started=mode!=='menu';
+  game.elapsedMs=0;game.moves=0;game.totalFlowers=0;game.gardens=0;game.reported=false;game.rewarded=false;
+  loadLevel(0,mode);
+}
+function start(){
+  if(game.mode==='menu'){
+    resetCampaign('playing');canvas.focus();announce('Clover Corner started.');return;
+  }
+  if(game.mode==='level-complete'){
+    loadLevel(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} started.`);return;
+  }
+  if(['won','lost'].includes(game.mode)){
+    resetCampaign('playing');canvas.focus();announce('Fresh pollen patrol started.');
+  }
+}
+function restart(){
+  if(game.started&&['playing','paused','level-complete'].includes(game.mode))report('abandoned');
+  resetCampaign('playing');
+  game.status='Fresh patrol. Clover Corner restored.';
+  game.lastAction={type:'restart'};
+  syncUi();render();canvas.focus();announce(game.status);
+}
+function nextBeetleCell(beetle){return beetle.path[(beetle.phase+1)%beetle.path.length]}
+function isWall(cell){return level().walls.some(wall=>sameCell(wall,cell))}
+function inside(cell){return cell[0]>=0&&cell[0]<COLS&&cell[1]>=0&&cell[1]<ROWS}
+function attemptMove(dx,dy,source='keyboard'){
+  if(game.mode!=='playing'||game.animation)return false;
+  const target=[game.player[0]+dx,game.player[1]+dy];
+  if(!inside(target)||isWall(target)){
+    game.status=!inside(target)?'The garden fence blocks that move.':'A thick hedge blocks that move.';
+    game.lastAction={type:'blocked',target,reason:!inside(target)?'boundary':'hedge',source};
+    syncUi();render();announce(game.status);return false;
+  }
+  const beetleMoves=game.beetles.map(beetle=>({from:[...beetle.path[beetle.phase]],to:[...nextBeetleCell(beetle)]}));
+  const collision=beetleMoves.some(move=>sameCell(target,move.from)||sameCell(target,move.to)||(sameCell(target,move.from)&&sameCell(game.player,move.to)));
+  game.moves++;game.wingbeats--;
+  game.animation={elapsed:0,from:[...game.player],to:target,beetles:beetleMoves,collision,source,wait:dx===0&&dy===0};
+  game.status=dx===0&&dy===0?'You hover while the beetles patrol.':'Buzzing to the next garden tile.';
+  game.lastAction={type:dx===0&&dy===0?'wait':'move',from:[...game.player],to:target,source};
+  syncUi();render();return true;
+}
+function collectFlower(){
+  const flower=game.flowers.find(item=>!item.collected&&sameCell(item.cell,game.player));
+  if(!flower)return false;
+  flower.collected=true;game.totalFlowers++;
+  game.status=`Pollen gathered! ${flowerCount()} of ${game.flowers.length} flowers visited.`;
+  game.lastAction={type:'flower',cell:[...game.player],gardenFlowers:flowerCount(),campaignFlowers:game.totalFlowers};
+  announce(game.status);return true;
+}
+function finishGarden(){
+  game.gardens++;
+  if(game.levelIndex===LEVELS.length-1){
+    game.mode='won';game.status='The Crown Garden hums. Pollen Patrol complete!';
+    game.lastAction={type:'campaign-complete',metrics:currentMetrics()};
+    if(!game.rewarded){addCoins(55);game.rewarded=true}
+    report('completed');announce('Campaign complete. Fifty-five coins earned.');
+  }else{
+    game.mode='level-complete';game.status=`${level().name} is fully pollinated.`;
+    game.lastAction={type:'garden-complete',garden:game.levelIndex+1,metrics:currentMetrics()};
+    announce(`${level().name} complete. Continue to garden ${game.levelIndex+2}.`);
+  }
+  syncUi();render();
+}
+function fail(reason='wingbeats'){
+  if(game.mode!=='playing')return;
+  game.mode='lost';
+  game.status=reason==='beetle'?'A beetle intercepted the patrol.':'The bee ran out of wingbeats before reaching home.';
+  game.lastAction={type:'loss',reason,metrics:currentMetrics()};
+  report('lost');syncUi();render();announce(`${game.status} Patrol lost.`);
+}
+function completeAnimation(){
+  const animation=game.animation;
+  if(!animation)return;
+  game.player=[...animation.to];
+  game.beetles.forEach(beetle=>{beetle.phase=(beetle.phase+1)%beetle.path.length});
+  game.visited.push([...game.player]);
+  if(game.visited.length>16)game.visited.shift();
+  game.animation=null;
+  if(animation.collision){fail('beetle');return}
+  const collected=collectFlower();
+  if(sameCell(game.player,level().hive)){
+    if(flowerCount()===game.flowers.length){finishGarden();return}
+    game.status=`The hive needs ${game.flowers.length-flowerCount()} more flower${game.flowers.length-flowerCount()===1?'':'s'}.`;
+    game.lastAction={type:'hive-locked',remaining:game.flowers.length-flowerCount()};
+    announce(game.status);
+  }else if(!collected){
+    game.status=`${game.wingbeats} wingbeats remain. Beetles advanced one tile.`;
+  }
+  if(game.mode==='playing'&&game.wingbeats<=0){fail('wingbeats');return}
+  syncUi();render();
+}
+function update(ms){
+  if(game.mode!=='playing')return;
+  const amount=Math.max(0,Number(ms)||0);
+  game.elapsedMs+=amount;
+  if(game.animation){
+    game.animation.elapsed=Math.min(MOVE_MS,game.animation.elapsed+amount);
+    if(game.animation.elapsed>=MOVE_MS)completeAnimation();
+  }
+}
+function togglePause(){
+  if(game.mode==='playing'&&!game.animation){
+    game.mode='paused';game.status='Garden paused. Bee and beetles are frozen.';game.lastAction={type:'pause'};announce(game.status);
+  }else if(game.mode==='paused'){
+    game.mode='playing';game.status='Patrol resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status);
+  }
+  syncUi();render();
+}
+function cycleTheme(){
+  game.themeIndex=(game.themeIndex+1)%THEMES.length;
+  game.status=`${theme().name} garden theme selected.`;
+  game.lastAction={type:'theme',theme:theme().name};
+  syncUi();render();announce(game.status);
+}
+async function toggleFullscreen(){
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else await el.stage.requestFullscreen();
+  }catch{
+    game.status='Fullscreen is unavailable in this browser.';
+    game.lastAction={type:'fullscreen-unavailable'};syncUi();render();
+  }
+}
+
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawFlower(position,color,index){
+  ctx.save();ctx.translate(position.x,position.y);
+  ctx.strokeStyle='#315b2d';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,7);ctx.lineTo(0,24);ctx.stroke();
+  ctx.rotate(index*.7);
+  for(let petal=0;petal<6;petal++){ctx.rotate(Math.PI/3);ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,-13,7,13,0,0,Math.PI*2);ctx.fill()}
+  ctx.fillStyle='#ffe66b';ctx.beginPath();ctx.arc(0,0,7,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function drawHive(position,open){
+  ctx.save();ctx.translate(position.x,position.y);
+  ctx.fillStyle=open?'#ffd55d':'#b9a66d';ctx.strokeStyle='#6a4b25';ctx.lineWidth=4;
+  for(let row=0;row<4;row++){roundedRect(-25+row*3,-29+row*14,50-row*6,18,8);ctx.fill();ctx.stroke()}
+  ctx.fillStyle=open?'#4d311e':'#736c54';ctx.beginPath();ctx.arc(0,21,8,Math.PI,0);ctx.lineTo(8,26);ctx.lineTo(-8,26);ctx.closePath();ctx.fill();ctx.restore();
+}
+function drawBee(position,angle=0){
+  ctx.save();ctx.translate(position.x,position.y);ctx.rotate(angle);
+  ctx.fillStyle='rgba(235,251,255,.78)';ctx.strokeStyle='rgba(75,112,118,.55)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(-12,-14,13,8,-.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.ellipse(12,-14,13,8,.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle=theme().bee;ctx.strokeStyle='#533a1c';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,19,15,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#533a1c';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-7,-12);ctx.lineTo(-7,12);ctx.moveTo(5,-13);ctx.lineTo(5,13);ctx.stroke();
+  ctx.fillStyle='#fff9d4';ctx.beginPath();ctx.arc(11,-5,3,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function drawBeetle(position,index){
+  ctx.save();ctx.translate(position.x,position.y);ctx.rotate((index%2?1:-1)*.18);
+  ctx.fillStyle=theme().beetle;ctx.strokeStyle='#34212a';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,2,18,22,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#34212a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(0,22);ctx.stroke();
+  ctx.fillStyle='#332229';for(const spot of [[-8,-6],[8,1],[-7,10]]){ctx.beginPath();ctx.arc(spot[0],spot[1],3.5,0,Math.PI*2);ctx.fill()}
+  ctx.strokeStyle='#332229';ctx.lineWidth=3;for(const side of [-1,1])for(const y of [-8,4,15]){ctx.beginPath();ctx.moveTo(side*13,y);ctx.lineTo(side*23,y-5);ctx.stroke()}ctx.restore();
+}
+function overlay(title,lines,color='#ffe982'){
+  ctx.fillStyle='rgba(8,20,12,.86)';roundedRect(170,180,560,290,24);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();
+  ctx.textAlign='center';ctx.fillStyle=color;ctx.font='900 43px system-ui';ctx.fillText(title,450,245);
+  ctx.fillStyle='#f5ffe9';ctx.font='700 20px system-ui';lines.forEach((line,index)=>ctx.fillText(line,450,302+index*38));ctx.textAlign='left';
+}
+function animationPosition(from,to,progress){
+  const a=center(from),b=center(to),ease=progress<.5?2*progress*progress:1-Math.pow(-2*progress+2,2)/2;
+  return{x:a.x+(b.x-a.x)*ease,y:a.y+(b.y-a.y)*ease};
+}
+function render(){
+  const colors=theme(),background=ctx.createLinearGradient(0,0,0,HEIGHT);background.addColorStop(0,colors.background);background.addColorStop(1,'#07150d');
+  ctx.fillStyle=background;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  ctx.fillStyle=colors.ground;roundedRect(ORIGIN.x-18,ORIGIN.y-18,COLS*CELL+36,ROWS*CELL+36,24);ctx.fill();ctx.strokeStyle=colors.soil;ctx.lineWidth=10;ctx.stroke();
+  ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=colors.flower;
+  for(let i=0;i<22;i++){const x=35+(i*137)%830,y=35+(i*83)%575;ctx.beginPath();ctx.arc(x,y,2+(i%3),0,Math.PI*2);ctx.fill()}ctx.restore();
+  for(let row=0;row<ROWS;row++)for(let col=0;col<COLS;col++){
+    const x=ORIGIN.x+col*CELL,y=ORIGIN.y+row*CELL;ctx.fillStyle=(row+col)%2?colors.ground:colors.soil;ctx.globalAlpha=.7;ctx.fillRect(x,y,CELL,CELL);ctx.globalAlpha=1;
+    ctx.strokeStyle=colors.grid;ctx.lineWidth=2;ctx.strokeRect(x,y,CELL,CELL);
+  }
+  game.visited.forEach((cell,index)=>{
+    const p=center(cell);ctx.fillStyle=colors.trail;ctx.globalAlpha=.08+.25*(index+1)/game.visited.length;ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  });
+  level().walls.forEach(cell=>{
+    const x=ORIGIN.x+cell[0]*CELL+8,y=ORIGIN.y+cell[1]*CELL+8;ctx.fillStyle=colors.hedge;roundedRect(x,y,CELL-16,CELL-16,16);ctx.fill();
+    ctx.fillStyle=colors.hedgeTop;roundedRect(x+7,y+6,CELL-30,20,10);ctx.fill();ctx.fillStyle=colors.flower;ctx.globalAlpha=.55;
+    for(const offset of [14,34,49]){ctx.beginPath();ctx.arc(x+offset,y+38+(offset%2)*8,3,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+  });
+  drawHive(center(level().hive),flowerCount()===game.flowers.length);
+  game.flowers.forEach((flower,index)=>{
+    if(flower.collected)return;const p=center(flower.cell);ctx.save();ctx.shadowBlur=13;ctx.shadowColor=FLOWER_COLORS[flower.color];drawFlower(p,FLOWER_COLORS[flower.color],index);ctx.restore();
+  });
+  game.beetles.forEach((beetle,index)=>{
+    let position=center(beetle.path[beetle.phase]);
+    if(game.animation){const move=game.animation.beetles[index],progress=clamp(game.animation.elapsed/MOVE_MS,0,1);position=animationPosition(move.from,move.to,progress)}
+    drawBeetle(position,index);
+  });
+  let beePosition=center(game.player),beeAngle=0;
+  if(game.animation){
+    const progress=clamp(game.animation.elapsed/MOVE_MS,0,1);beePosition=animationPosition(game.animation.from,game.animation.to,progress);beePosition.y-=Math.sin(progress*Math.PI)*10;
+    beeAngle=Math.atan2(game.animation.to[1]-game.animation.from[1],game.animation.to[0]-game.animation.from[0]);
+  }
+  ctx.save();ctx.shadowBlur=14;ctx.shadowColor=colors.accent;drawBee(beePosition,beeAngle);ctx.restore();
+  ctx.fillStyle='#f8ffe9';ctx.font='800 17px system-ui';ctx.fillText(level().name,ORIGIN.x,76);
+  ctx.textAlign='right';ctx.fillStyle=colors.accent;ctx.fillText(`${flowerCount()} / ${game.flowers.length} blooms`,ORIGIN.x+COLS*CELL,76);ctx.textAlign='left';
+  if(game.mode==='menu')overlay('Pollen Patrol',['Collect every flower in each garden.','Beetles move whenever your bee moves.','Press Enter or Start to begin.']);
+  if(game.mode==='paused')overlay('Garden Paused',['The bee and every beetle are frozen.','Press P or Pause to continue.']);
+  if(game.mode==='level-complete')overlay('Garden Blooming',[`${level().name} is fully pollinated.`,`${game.wingbeats} wingbeats remained.`,`Press Enter for garden ${game.levelIndex+2}.`]);
+  if(game.mode==='won')overlay('Hive Crowned',['All five gardens are blooming.',`${game.totalFlowers} flowers visited in ${game.moves} moves.`,'55 coins earned.'],'#baff9f');
+  if(game.mode==='lost')overlay('Patrol Grounded',[game.lastAction.reason==='beetle'?'A beetle crossed the flight path.':'No wingbeats remain.',`${game.totalFlowers} flowers gathered across ${game.gardens} gardens.`,'Press Enter or Restart to try again.'],'#ffb3bd');
+}
+function syncUi(){
+  el.garden.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.flowers.textContent=`${flowerCount()} / ${game.flowers.length}`;el.wingbeats.textContent=String(game.wingbeats);el.time.textContent=formatTime(game.elapsedMs);
+  el.start.textContent=game.mode==='menu'?'Start garden':game.mode==='level-complete'?'Next garden':(['won','lost'].includes(game.mode)?'Play again':'Playing');
+  el.start.disabled=game.mode==='playing'||game.mode==='paused';el.pause.disabled=!['playing','paused'].includes(game.mode)||Boolean(game.animation);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';
+  el.theme.textContent=`Theme: ${theme().name}`;document.querySelectorAll('[data-move]').forEach(button=>{button.disabled=game.mode!=='playing'||Boolean(game.animation)});
+}
+function pointerCell(event){
+  const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*WIDTH/rect.width,y=(event.clientY-rect.top)*HEIGHT/rect.height;
+  return{x,y,cell:[Math.floor((x-ORIGIN.x)/CELL),Math.floor((y-ORIGIN.y)/CELL)]};
+}
+canvas.addEventListener('pointerdown',event=>{
+  if(game.mode!=='playing'||game.animation)return;pointerStart={clientX:event.clientX,clientY:event.clientY,id:event.pointerId};canvas.setPointerCapture?.(event.pointerId);event.preventDefault();
+});
+canvas.addEventListener('pointerup',event=>{
+  if(!pointerStart||pointerStart.id!==event.pointerId)return;
+  const dx=event.clientX-pointerStart.clientX,dy=event.clientY-pointerStart.clientY,point=pointerCell(event);pointerStart=null;
+  if(Math.hypot(dx,dy)>24){if(Math.abs(dx)>Math.abs(dy))attemptMove(Math.sign(dx),0,'swipe');else attemptMove(0,Math.sign(dy),'swipe')}
+  else if(inside(point.cell)){
+    const deltaX=point.cell[0]-game.player[0],deltaY=point.cell[1]-game.player[1];
+    if(deltaX===0&&deltaY===0)attemptMove(0,0,'tap');else if(Math.abs(deltaX)>Math.abs(deltaY))attemptMove(Math.sign(deltaX),0,'tap');else attemptMove(0,Math.sign(deltaY),'tap');
+  }
+  canvas.focus();event.preventDefault();
+});
+el.start.addEventListener('click',start);
+document.querySelectorAll('[data-move]').forEach(button=>button.addEventListener('click',()=>{
+  const moves={up:[0,-1],left:[-1,0],wait:[0,0],right:[1,0],down:[0,1]};attemptMove(...moves[button.dataset.move],'button');canvas.focus();
+}));
+el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);
+window.addEventListener('keydown',event=>{
+  const target=event.target;if(target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;
+  const key=event.key.toLowerCase();
+  if(key==='enter'){if(['menu','level-complete','won','lost'].includes(game.mode)){event.preventDefault();start()}return}
+  if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}
+  if(key==='p'){event.preventDefault();togglePause();return}
+  if(key==='r'){event.preventDefault();restart();return}
+  if(key==='t'){event.preventDefault();cycleTheme();return}
+  if(key==='f'){event.preventDefault();toggleFullscreen();return}
+  if(key===' '){event.preventDefault();attemptMove(0,0,'keyboard');return}
+  const moves={arrowleft:[-1,0],a:[-1,0],arrowright:[1,0],d:[1,0],arrowup:[0,-1],w:[0,-1],arrowdown:[0,1],s:[0,1]};
+  if(moves[key]){event.preventDefault();attemptMove(...moves[key],'keyboard')}
+});
+document.addEventListener('fullscreenchange',()=>{canvas.focus();render()});window.addEventListener('resize',render);
+window.addEventListener('pagehide',()=>{if(game.started&&['playing','paused','level-complete'].includes(game.mode))report('abandoned')});
+window.advanceTime=ms=>{
+  const amount=Math.max(0,Math.min(20000,Number(ms)||0));manualUntil=performance.now()+150;update(amount);syncUi();render();
+};
+window.render_game_to_text=()=>JSON.stringify({
+  coordinateSystem:'The garden is an 8-column by 6-row grid. Cell (0,0) is top-left; column x increases right and row y increases down. Canvas origin is top-left; the grid spans x 130..770 and y 112..592.',
+  mode:game.mode,garden:{index:game.levelIndex+1,total:LEVELS.length,name:level().name},elapsedMs:Math.round(game.elapsedMs),
+  player:{cell:[...game.player],animation:game.animation?{from:[...game.animation.from],to:[...game.animation.to],progress:Number((game.animation.elapsed/MOVE_MS).toFixed(3))}:null},
+  hive:{cell:[...level().hive],open:flowerCount()===game.flowers.length},
+  flowers:game.flowers.map((flower,index)=>({id:index,cell:[...flower.cell],color:FLOWER_COLORS[flower.color],collected:flower.collected})),
+  hedges:level().walls.map(cell=>[...cell]),beetles:game.beetles.map(beetle=>({id:beetle.id,cell:[...beetle.path[beetle.phase]],next:[...nextBeetleCell(beetle)]})),
+  resources:{wingbeats:game.wingbeats,moves:game.moves},campaign:{flowers:game.totalFlowers,gardens:game.gardens},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  controls:{move:'Arrow keys, WASD, direction buttons, swipe, or tap toward a cell',wait:'Space, Wait button, or tap the bee',continue:'Enter',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
+});
+window.__POLLEN_PATROL_GAME__={
+  getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='playing')=>resetCampaign(mode),
+  getLevels:()=>LEVELS.map(item=>({name:item.name,start:[...item.start],hive:[...item.hive],flowers:item.flowers.map(cell=>[...cell]),walls:item.walls.map(cell=>[...cell]),beetles:item.beetles.map(beetle=>({path:beetle.path.map(cell=>[...cell]),phase:beetle.phase})),wingbeats:item.wingbeats})),
+  setLevel:index=>{game.started=true;loadLevel(clamp(Math.floor(Number(index)||0),0,LEVELS.length-1),'playing')},
+  move:(dx,dy)=>attemptMove(clamp(Math.sign(Number(dx)||0),-1,1),clamp(Math.sign(Number(dy)||0),-1,1),'qa'),wait:()=>attemptMove(0,0,'qa'),
+  finishMove:()=>window.advanceTime(MOVE_MS),setWingbeats:value=>{game.wingbeats=clamp(Math.floor(Number(value)||0),0,99);syncUi();render()},
+  setTheme:index=>{game.themeIndex=((Math.floor(Number(index)||0)%THEMES.length)+THEMES.length)%THEMES.length;syncUi();render()},
+  forceGardenComplete:()=>{
+    if(game.mode!=='playing')return;game.flowers.forEach(flower=>{if(!flower.collected){flower.collected=true;game.totalFlowers++}});game.player=[...level().hive];finishGarden();
+  },
+  forceWin:()=>{
+    game.started=true;game.gardens=LEVELS.length-1;game.totalFlowers=LEVELS.slice(0,-1).reduce((sum,item)=>sum+item.flowers.length,0);loadLevel(LEVELS.length-1,'playing');
+    game.flowers.forEach(flower=>{flower.collected=true;game.totalFlowers++});game.player=[...level().hive];finishGarden();
+  },
+  forceLoss:reason=>fail(reason==='wingbeats'?'wingbeats':'beetle'),tick:ms=>window.advanceTime(ms)
+};
+function frame(now){
+  const delta=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(delta);syncUi();render();requestAnimationFrame(frame);
+}
+mountGameFeedback({gameSlug:'pollenpatrol',gameName:'Pollen Patrol'});
+el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+loadLevel(0,'menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>
