@@ -186,5 +186,6 @@
 - game/meteorminer
 - game/rippleshepherd
 - game/pollenpatrol
+- game/starwheel
 
 Generated from `src/meta/feedback.js`.

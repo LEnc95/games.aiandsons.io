@@ -100,6 +100,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'garden-theme', kind: 'palette', tokens: Object.freeze(['background', 'ground', 'hedge', 'flower', 'bee', 'beetle', 'trail']) }),
     ]),
   }),
+  starwheel: Object.freeze({
+    releasedAt: '2026-07-28',
+    outcomes: Object.freeze({
+      rings: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      locks: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      turns: Object.freeze({ min: 0, max: 120, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'dial-theme', kind: 'palette', tokens: Object.freeze(['background', 'ring', 'gate', 'glyph', 'core', 'beam']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
