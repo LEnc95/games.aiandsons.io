@@ -111,6 +111,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'dial-theme', kind: 'palette', tokens: Object.freeze(['background', 'ring', 'gate', 'glyph', 'core', 'beam']) }),
     ]),
   }),
+  firebreakcommand: Object.freeze({
+    releasedAt: '2026-07-29',
+    outcomes: Object.freeze({
+      cabins: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      zones: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      firelines: Object.freeze({ min: 0, max: 30, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'terrain-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'forest', 'water', 'rock', 'fireline', 'fire', 'cabin']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

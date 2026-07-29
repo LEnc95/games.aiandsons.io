@@ -187,5 +187,6 @@
 - game/rippleshepherd
 - game/pollenpatrol
 - game/starwheel
+- game/firebreakcommand
 
 Generated from `src/meta/feedback.js`.

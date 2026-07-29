@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Firebreak Command | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#142a22;color:#fffaf0;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.5rem,4.7vw,2.5rem);line-height:1;margin:0;letter-spacing:-.04em}
+    small{color:#d8e9d9}
+    .home{color:#fff7cf;font-weight:850;text-decoration:none;border:2px solid #7aa573;border-radius:999px;padding:8px 13px;background:#284b3b}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .stat{min-width:0;background:#284b3b;border:2px solid #7aa573;border-radius:15px;padding:7px 10px;text-align:center;box-shadow:0 4px 0 #091710}
+    .stat span{display:block;font-size:.68rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#c4dec5}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.86rem,2.7vw,1.05rem)}
+    .stage{position:relative;border:3px solid #7aa573;border-radius:22px;overflow:hidden;background:#172f28;box-shadow:0 10px 0 #091710}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #fff2a8}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #7aa573;border-radius:13px;background:#315944;color:#fffdf4;font:800 clamp(.68rem,1.8vw,.9rem)/1.1 inherit;padding:9px 5px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #091710}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #091710}
+    button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #091710}
+    button.primary{background:#ffd66e;border-color:#bd8732;color:#35210d}
+    button.danger{background:#a7422e;border-color:#ff9f79}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .help{background:#284b3b;border:2px solid #7aa573;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#e7f5e6}
+    .help b{color:#ffe18b}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}
+      .home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.56rem}.stat strong{font-size:.75rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #091710}
+      .controls{grid-template-columns:repeat(4,1fr);gap:6px}
+      button{min-height:40px;padding:7px 3px}
+      .help{font-size:.7rem;padding:8px 10px}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Firebreak Command | AI and Sons Games">
+  <meta property="og:description" content="Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/firebreakcommand">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/firebreakcommand.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Firebreak Command | AI and Sons Games">
+  <meta name="twitter:description" content="Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/firebreakcommand.png">
+  <link rel="canonical" href="https://games.aiandsons.io/firebreakcommand">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Firebreak Command","description":"Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/firebreakcommand","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Firebreak Command</h1><small>Read the terrain. Cut the fuel. Keep every cabin safe.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Firebreak Command status">
+    <div class="stat"><span>Zone</span><strong id="zone">1 / 5</strong></div>
+    <div class="stat"><span>Firelines</span><strong id="lines">0 / 0</strong></div>
+    <div class="stat"><span>Cabins</span><strong id="cabins">0 / 0</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="Firebreak Command wildfire planning board"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="start" class="primary">Start command</button>
+    <button id="ignite" class="danger">Run forecast</button>
+    <button id="place">Place line</button>
+    <button id="undo">Undo</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Pine</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Goal:</b> place firelines on forest cells so every cabin survives the forecast. Fire crosses forest but not water, rock, or firelines. Use <b>Arrows/WASD</b> to move, <b>Space/B</b> to place, <b>Enter</b> to run, and <b>Z</b> to undo. Tap any forest cell on touch screens. <b>P</b> pauses, <b>R</b> restarts, <b>T</b> changes terrain, and <b>F</b> toggles fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={
+  zone:document.querySelector('#zone'),lines:document.querySelector('#lines'),cabins:document.querySelector('#cabins'),time:document.querySelector('#time'),
+  stage:document.querySelector('#stage'),start:document.querySelector('#start'),ignite:document.querySelector('#ignite'),place:document.querySelector('#place'),
+  undo:document.querySelector('#undo'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),
+  fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
+};
+const WIDTH=900,HEIGHT=620,GRID_X=130,GRID_Y=94,CELL=80,COLS=8,ROWS=6,SPREAD_MS=520;
+const THEMES=[
+  {name:'Pine',sky:'#173a35',ground:'#315f43',forest:'#4c8254',forestDark:'#28523b',water:'#54a9be',rock:'#8d8a73',line:'#f2d06f',fire:'#ff713e',ember:'#ffd15d',cabin:'#f4e0ad',roof:'#a9412d',burnt:'#392d28',grid:'#a8ca8c'},
+  {name:'Dusk',sky:'#2c274a',ground:'#504263',forest:'#68608a',forestDark:'#3d385c',water:'#5186b8',rock:'#a08d9d',line:'#ffe382',fire:'#ff6c6a',ember:'#ffc56c',cabin:'#f1dbc2',roof:'#8e4464',burnt:'#332c40',grid:'#b8a9cf'},
+  {name:'Autumn',sky:'#49301f',ground:'#73512d',forest:'#a36938',forestDark:'#694126',water:'#4a93a1',rock:'#9f8c72',line:'#fff099',fire:'#f44c27',ember:'#ffc94d',cabin:'#f5dca6',roof:'#7b2f23',burnt:'#3d2a22',grid:'#dab36f'}
+];
+const LEVELS=[
+  {name:'Wind Gap',budget:2,map:['F...~..C','....~...','..^^~...','.......C','F..~~~..','........'],solution:[[4,3],[4,5]]},
+  {name:'Pine Divide',budget:4,map:['F......C','...~....','..~~~...','........','..^^^...','........'],solution:[[4,0],[4,1],[4,3],[4,5]]},
+  {name:'Hearth Hollow',budget:4,map:['F......F','..~~~...','...C....','...C....','..^^^...','F......F'],solution:[[2,2],[4,2],[2,3],[4,3]]},
+  {name:'Split Ridge',budget:8,map:['F......F','.~~~.~~.','.C....C.','.C....C.','.^^^.^^.','F......F'],solution:[[0,2],[2,2],[0,3],[2,3],[5,2],[7,2],[5,3],[7,3]]},
+  {name:'Ranger Ring',budget:8,map:['F......F','.~~~.~~.','.CC..C..','.CC..C..','.^^^.^^.','F......F'],solution:[[0,2],[3,2],[0,3],[3,3],[4,2],[6,2],[4,3],[6,3]]}
+];
+const keyOf=(x,y)=>`${x},${y}`;
+const pointOf=key=>key.split(',').map(Number);
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const terrainAt=(x,y)=>level().map[y]?.[x]||null;
+const cabinCount=currentLevel=>currentLevel.map.reduce((sum,row)=>sum+[...row].filter(cell=>cell==='C').length,0);
+const totalCabins=LEVELS.reduce((sum,item)=>sum+cabinCount(item),0);
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const game={
+  mode:'menu',resumeMode:'planning',started:false,levelIndex:0,cursor:{x:0,y:0},breaks:new Set(),history:[],
+  burning:new Set(),frontier:new Set(),wave:0,spreadClock:0,elapsedMs:0,zones:0,savedCabins:0,breaksUsed:0,
+  themeIndex:0,reported:false,rewarded:false,status:'Press Start Command to survey Wind Gap.',lastAction:{type:'ready'}
+};
+let lastFrame=performance.now(),manualUntil=0,pointerDown=null;
+
+function cabinState(){
+  const cabins=[];
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(terrainAt(x,y)==='C')cabins.push({x,y,safe:!game.burning.has(keyOf(x,y))});
+  return cabins;
+}
+function currentMetrics(){
+  const completed=['level-complete','won'].includes(game.mode);
+  return{cabins:game.savedCabins,zones:game.zones,firelines:game.breaksUsed+(completed?0:game.breaks.size)};
+}
+function report(result){
+  if(game.reported)return;
+  game.reported=true;
+  reportGameOutcome({slug:'firebreakcommand',result,durationMs:game.elapsedMs,metrics:currentMetrics()});
+}
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function initialFires(){
+  const fires=[];
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(terrainAt(x,y)==='F')fires.push(keyOf(x,y));
+  return fires;
+}
+function firstBuildable(){
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(terrainAt(x,y)==='.')return{x,y};
+  return{x:0,y:0};
+}
+function loadLevel(index,mode='planning'){
+  game.levelIndex=index;game.breaks=new Set();game.history=[];game.burning=new Set(initialFires());game.frontier=new Set(initialFires());
+  game.cursor=firstBuildable();game.wave=0;game.spreadClock=0;game.mode=mode;game.resumeMode='planning';
+  game.status=mode==='menu'?'Press Start Command to survey Wind Gap.':`Place up to ${level().budget} firelines, then run the forecast.`;
+  game.lastAction={type:mode==='menu'?'ready':'zone-start',zone:index+1};syncUi();render();
+}
+function resetCampaign(mode='menu'){
+  game.started=mode!=='menu';game.elapsedMs=0;game.zones=0;game.savedCabins=0;game.breaksUsed=0;game.reported=false;game.rewarded=false;
+  loadLevel(0,mode);
+}
+function start(){
+  if(game.mode==='menu'){resetCampaign('planning');canvas.focus();announce('Wind Gap ready for fireline planning.');return}
+  if(game.mode==='level-complete'){loadLevel(game.levelIndex+1,'planning');canvas.focus();announce(`${level().name} ready.`);return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('planning');canvas.focus();announce('A fresh Firebreak Command campaign started.')}
+}
+function restart(){
+  if(game.started&&['planning','spreading','paused','level-complete'].includes(game.mode))report('abandoned');
+  resetCampaign('planning');game.status='Campaign restarted at Wind Gap.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status);
+}
+function moveCursor(dx,dy,source='keyboard'){
+  if(game.mode!=='planning')return false;
+  const before={...game.cursor};game.cursor.x=clamp(game.cursor.x+dx,0,COLS-1);game.cursor.y=clamp(game.cursor.y+dy,0,ROWS-1);
+  game.status=before.x===game.cursor.x&&before.y===game.cursor.y?'Survey cursor reached the map boundary.':`Surveying column ${game.cursor.x+1}, row ${game.cursor.y+1}.`;
+  game.lastAction={type:'move',x:game.cursor.x,y:game.cursor.y,source,boundary:before.x===game.cursor.x&&before.y===game.cursor.y};syncUi();render();return true;
+}
+function canBuild(x,y){return terrainAt(x,y)==='.'}
+function toggleBreak(x=game.cursor.x,y=game.cursor.y,source='keyboard'){
+  if(game.mode!=='planning')return false;
+  game.cursor={x:clamp(x,0,COLS-1),y:clamp(y,0,ROWS-1)};
+  const key=keyOf(game.cursor.x,game.cursor.y);
+  if(!canBuild(game.cursor.x,game.cursor.y)){
+    game.status='Firelines can only be placed in forest fuel cells.';game.lastAction={type:'blocked-placement',x:game.cursor.x,y:game.cursor.y,source};syncUi();render();announce(game.status);return false;
+  }
+  if(!game.breaks.has(key)&&game.breaks.size>=level().budget){
+    game.status=`All ${level().budget} firelines are already committed.`;game.lastAction={type:'budget-blocked',source};syncUi();render();announce(game.status);return false;
+  }
+  game.history.push([...game.breaks]);
+  if(game.breaks.has(key)){game.breaks.delete(key);game.status='Fireline removed.'}
+  else{game.breaks.add(key);game.status=`Fireline placed. ${level().budget-game.breaks.size} remain.`}
+  game.lastAction={type:game.breaks.has(key)?'place':'remove',x:game.cursor.x,y:game.cursor.y,source};syncUi();render();announce(game.status);return true;
+}
+function undo(){
+  if(game.mode!=='planning'||!game.history.length)return false;
+  game.breaks=new Set(game.history.pop());game.status='Last fireline plan restored.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true;
+}
+function ignite(source='keyboard'){
+  if(game.mode!=='planning')return false;
+  game.mode='spreading';game.resumeMode='spreading';game.spreadClock=0;game.status='Forecast running. Fire is crossing connected fuel.';game.lastAction={type:'forecast-start',source,firelines:game.breaks.size};
+  syncUi();render();announce(game.status);return true;
+}
+function fail(){
+  if(game.mode!=='spreading')return;
+  game.mode='lost';game.status='A cabin entered the fire front. The command failed.';
+  game.lastAction={type:'loss',reason:'cabin-burned',wave:game.wave,metrics:currentMetrics()};report('lost');syncUi();render();announce(game.status);
+}
+function finishZone(){
+  const saved=cabinCount(level());game.zones++;game.savedCabins+=saved;game.breaksUsed+=game.breaks.size;
+  if(game.levelIndex===LEVELS.length-1){
+    game.mode='won';game.status='Every zone is contained. The ranger district is safe!';
+    game.lastAction={type:'campaign-complete',metrics:currentMetrics()};
+    if(!game.rewarded){addCoins(55);game.rewarded=true}
+    report('completed');announce('Firebreak Command complete. Fifty-five coins earned.');
+  }else{
+    game.mode='level-complete';game.status=`${level().name} contained. All ${saved} cabins survived.`;
+    game.lastAction={type:'zone-complete',zone:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue to the next zone.`);
+  }
+  syncUi();render();
+}
+function spreadFire(){
+  if(game.mode!=='spreading')return;
+  const next=new Set();
+  for(const key of game.frontier){
+    const [x,y]=pointOf(key);
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx,ny=y+dy,nextKey=keyOf(nx,ny),terrain=terrainAt(nx,ny);
+      if(nx<0||ny<0||nx>=COLS||ny>=ROWS||!terrain||terrain==='~'||terrain==='^'||game.breaks.has(nextKey)||game.burning.has(nextKey))continue;
+      game.burning.add(nextKey);next.add(nextKey);
+    }
+  }
+  game.frontier=next;game.wave++;game.lastAction={type:'spread',wave:game.wave,newCells:[...next].map(key=>{const[x,y]=pointOf(key);return{x,y}})};
+  if(cabinState().some(cabin=>!cabin.safe)){fail();return}
+  if(!next.size){finishZone();return}
+  game.status=`Forecast wave ${game.wave}: ${next.size} new fuel cells ignited.`;syncUi();render();announce(game.status);
+}
+function update(ms){
+  if(!['planning','spreading'].includes(game.mode))return;
+  const amount=Math.max(0,Number(ms)||0);game.elapsedMs+=amount;
+  if(game.mode==='spreading'){
+    game.spreadClock+=amount;
+    while(game.mode==='spreading'&&game.spreadClock>=SPREAD_MS){game.spreadClock-=SPREAD_MS;spreadFire()}
+  }
+}
+function togglePause(){
+  if(['planning','spreading'].includes(game.mode)){
+    game.resumeMode=game.mode;game.mode='paused';game.status='Command paused. Planning time and the fire front are frozen.';game.lastAction={type:'pause',resumeMode:game.resumeMode};announce(game.status);
+  }else if(game.mode==='paused'){
+    game.mode=game.resumeMode;game.status=game.mode==='spreading'?'Forecast resumed.':'Fireline planning resumed.';game.lastAction={type:'resume',mode:game.mode};canvas.focus();announce(game.status);
+  }
+  syncUi();render();
+}
+function cycleTheme(){
+  game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} terrain palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status);
+}
+async function toggleFullscreen(){
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else await el.stage.requestFullscreen();
+  }catch{
+    game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-unavailable'};syncUi();render();
+  }
+}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawTree(x,y,colors,alive=true){
+  ctx.fillStyle=alive?colors.forestDark:colors.burnt;ctx.fillRect(x-5,y+8,10,19);
+  ctx.fillStyle=alive?colors.forest:colors.burnt;
+  for(const [ox,oy,r] of [[0,-10,19],[-12,3,15],[12,3,15]]){ctx.beginPath();ctx.arc(x+ox,y+oy,r,0,Math.PI*2);ctx.fill()}
+}
+function drawFlame(x,y,size,colors){
+  ctx.save();ctx.translate(x,y);ctx.fillStyle=colors.fire;ctx.shadowBlur=16;ctx.shadowColor=colors.fire;
+  ctx.beginPath();ctx.moveTo(0,-size);ctx.bezierCurveTo(size*.9,-size*.15,size*.75,size*.75,0,size);ctx.bezierCurveTo(-size*.8,size*.72,-size*.9,-size*.1,0,-size);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle=colors.ember;ctx.beginPath();ctx.moveTo(0,-size*.38);ctx.quadraticCurveTo(size*.45,size*.35,0,size*.62);ctx.quadraticCurveTo(-size*.42,size*.35,0,-size*.38);ctx.fill();ctx.restore();
+}
+function drawCabin(x,y,colors,burning){
+  ctx.fillStyle=colors.cabin;roundedRect(x-23,y-8,46,34,4);ctx.fill();
+  ctx.fillStyle=colors.roof;ctx.beginPath();ctx.moveTo(x-29,y-8);ctx.lineTo(x,y-31);ctx.lineTo(x+29,y-8);ctx.closePath();ctx.fill();
+  ctx.fillStyle=colors.sky;ctx.fillRect(x-6,y+5,12,21);ctx.fillStyle=colors.ember;ctx.fillRect(x+10,y+2,8,9);
+  if(burning)drawFlame(x,y-10,23,colors);
+}
+function drawCell(x,y,colors){
+  const left=GRID_X+x*CELL,top=GRID_Y+y*CELL,cx=left+CELL/2,cy=top+CELL/2,key=keyOf(x,y),terrain=terrainAt(x,y);
+  ctx.fillStyle=(x+y)%2?colors.ground:colors.forestDark;ctx.globalAlpha=.9;ctx.fillRect(left,top,CELL,CELL);ctx.globalAlpha=1;
+  if(terrain==='~'){
+    ctx.fillStyle=colors.water;ctx.fillRect(left,top,CELL,CELL);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=3;
+    for(let row=0;row<3;row++){ctx.beginPath();ctx.arc(cx-12,cy-18+row*18,15,0,Math.PI);ctx.arc(cx+18,cy-18+row*18,15,Math.PI,0,true);ctx.stroke()}
+  }else if(terrain==='^'){
+    ctx.fillStyle=colors.rock;
+    for(const [ox,oy,scale] of [[-18,12,1],[13,10,.8],[0,-13,.72]]){ctx.beginPath();ctx.moveTo(cx+ox-17*scale,cy+oy+14*scale);ctx.lineTo(cx+ox,cy+oy-17*scale);ctx.lineTo(cx+ox+18*scale,cy+oy+14*scale);ctx.closePath();ctx.fill()}
+  }else if(terrain==='C'){
+    drawCabin(cx,cy,colors,game.burning.has(key));
+  }else{
+    drawTree(cx,cy+3,colors,!game.burning.has(key));
+  }
+  if(game.burning.has(key)&&terrain!=='C'){
+    ctx.fillStyle='rgba(25,13,10,.48)';ctx.fillRect(left,top,CELL,CELL);
+    if(game.frontier.has(key))drawFlame(cx,cy,23+(game.wave%2)*3,colors);
+    else{ctx.fillStyle=colors.burnt;for(let index=0;index<5;index++)ctx.fillRect(left+12+index*13,top+52-(index%2)*6,7,14)}
+  }
+  if(game.breaks.has(key)){
+    ctx.strokeStyle=colors.line;ctx.lineWidth=9;ctx.lineCap='round';ctx.shadowBlur=12;ctx.shadowColor=colors.line;
+    ctx.beginPath();ctx.moveTo(left+10,top+66);ctx.lineTo(left+70,top+14);ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle=colors.rock;for(let index=0;index<4;index++){ctx.beginPath();ctx.arc(left+17+index*16,top+59-index*14,8,0,Math.PI*2);ctx.fill()}
+  }
+  ctx.strokeStyle=colors.grid;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.strokeRect(left+.5,top+.5,CELL-1,CELL-1);ctx.globalAlpha=1;
+  if(game.mode==='planning'&&game.cursor.x===x&&game.cursor.y===y){
+    ctx.strokeStyle=colors.line;ctx.lineWidth=5;ctx.shadowBlur=12;ctx.shadowColor=colors.line;ctx.strokeRect(left+5,top+5,CELL-10,CELL-10);ctx.shadowBlur=0;
+  }
+}
+function overlay(title,lines,color='#ffe18b'){
+  ctx.fillStyle='rgba(7,18,13,.9)';roundedRect(165,166,570,292,24);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();
+  ctx.textAlign='center';ctx.fillStyle=color;ctx.font='900 40px system-ui';ctx.fillText(title,450,230);
+  ctx.fillStyle='#fffdf4';ctx.font='700 19px system-ui';lines.forEach((line,index)=>ctx.fillText(line,450,286+index*38));ctx.textAlign='left';
+}
+function render(){
+  const colors=theme(),gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,colors.sky);gradient.addColorStop(1,colors.ground);
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  ctx.fillStyle='rgba(255,255,255,.07)';for(let index=0;index<34;index++){ctx.beginPath();ctx.arc((index*137)%WIDTH,(index*61)%HEIGHT,1+(index%3),0,Math.PI*2);ctx.fill()}
+  ctx.fillStyle='#fff7dc';ctx.font='900 21px system-ui';ctx.fillText(level().name,GRID_X,54);
+  ctx.textAlign='right';ctx.fillStyle=colors.line;ctx.fillText(game.mode==='spreading'?`FIRE WAVE ${game.wave}`:`PLAN ${game.breaks.size} / ${level().budget}`,GRID_X+COLS*CELL,54);ctx.textAlign='left';
+  ctx.fillStyle='rgba(4,16,10,.28)';roundedRect(GRID_X-9,GRID_Y-9,COLS*CELL+18,ROWS*CELL+18,16);ctx.fill();
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)drawCell(x,y,colors);
+  if(game.mode==='menu')overlay('Firebreak Command',['Place firelines before the forecast begins.','Water and rock already split the terrain.','Protect every cabin across five zones.']);
+  if(game.mode==='paused')overlay('Command Paused',['The survey clock and fire front are frozen.','Press P or Pause to continue.']);
+  if(game.mode==='level-complete')overlay('Zone Contained',[`${level().name}: every cabin survived.`,`Used ${game.breaks.size} of ${level().budget} firelines.`,`Press Enter for zone ${game.levelIndex+2}.`],'#b9ffc3');
+  if(game.mode==='won')overlay('District Safe',[`${game.savedCabins} cabins protected across five zones.`,`${game.breaksUsed} firelines held the fronts.`,'55 coins earned.'],'#b9ffc3');
+  if(game.mode==='lost')overlay('Cabin Reached',[`The fire crossed a route on wave ${game.wave}.`,`Replan the fuel cut before running again.`,'Press Enter or Restart to try again.'],'#ffb39e');
+}
+function syncUi(){
+  el.zone.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.lines.textContent=`${level().budget-game.breaks.size} left`;el.cabins.textContent=`${cabinState().filter(item=>item.safe).length} / ${cabinCount(level())}`;el.time.textContent=formatTime(game.elapsedMs);
+  el.start.textContent=game.mode==='menu'?'Start command':game.mode==='level-complete'?'Next zone':(['won','lost'].includes(game.mode)?'Play again':'Command active');
+  el.start.disabled=['planning','spreading','paused'].includes(game.mode);el.ignite.disabled=game.mode!=='planning';el.place.disabled=game.mode!=='planning';
+  el.place.textContent=game.breaks.has(keyOf(game.cursor.x,game.cursor.y))?'Remove line':'Place line';el.undo.disabled=game.mode!=='planning'||!game.history.length;
+  el.pause.disabled=!['planning','spreading','paused'].includes(game.mode);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';el.theme.textContent=`Theme: ${theme().name}`;
+}
+function canvasPoint(event){
+  const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height};
+}
+canvas.addEventListener('pointerdown',event=>{pointerDown={...canvasPoint(event),id:event.pointerId};canvas.setPointerCapture?.(event.pointerId);event.preventDefault()});
+canvas.addEventListener('pointerup',event=>{
+  if(!pointerDown||pointerDown.id!==event.pointerId)return;
+  const point=canvasPoint(event),distance=Math.hypot(point.x-pointerDown.x,point.y-pointerDown.y);pointerDown=null;
+  if(distance<24&&point.x>=GRID_X&&point.y>=GRID_Y&&point.x<GRID_X+COLS*CELL&&point.y<GRID_Y+ROWS*CELL){
+    const x=Math.floor((point.x-GRID_X)/CELL),y=Math.floor((point.y-GRID_Y)/CELL);game.cursor={x,y};toggleBreak(x,y,'pointer');
+  }
+  canvas.focus();event.preventDefault();
+});
+el.start.addEventListener('click',start);el.ignite.addEventListener('click',()=>ignite('button'));el.place.addEventListener('click',()=>toggleBreak(game.cursor.x,game.cursor.y,'button'));
+el.undo.addEventListener('click',undo);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);
+el.fullscreen.addEventListener('click',toggleFullscreen);
+window.addEventListener('keydown',event=>{
+  const target=event.target;if(target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;
+  const key=event.key.toLowerCase();
+  if(key==='enter'){event.preventDefault();if(['menu','level-complete','won','lost'].includes(game.mode))start();else ignite('keyboard');return}
+  if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}
+  if(key==='p'){event.preventDefault();togglePause();return}
+  if(key==='r'){event.preventDefault();restart();return}
+  if(key==='t'){event.preventDefault();cycleTheme();return}
+  if(key==='f'){event.preventDefault();toggleFullscreen();return}
+  if(key==='z'){event.preventDefault();undo();return}
+  if(key===' '||key==='b'){event.preventDefault();toggleBreak(game.cursor.x,game.cursor.y,'keyboard');return}
+  if(key==='arrowleft'||key==='a'){event.preventDefault();moveCursor(-1,0,'keyboard');return}
+  if(key==='arrowright'||key==='d'){event.preventDefault();moveCursor(1,0,'keyboard');return}
+  if(key==='arrowup'||key==='w'){event.preventDefault();moveCursor(0,-1,'keyboard');return}
+  if(key==='arrowdown'||key==='s'){event.preventDefault();moveCursor(0,1,'keyboard')}
+});
+document.addEventListener('fullscreenchange',()=>{canvas.focus();render()});window.addEventListener('resize',render);
+window.addEventListener('pagehide',()=>{if(game.started&&['planning','spreading','paused','level-complete'].includes(game.mode))report('abandoned')});
+window.advanceTime=ms=>{
+  const amount=Math.max(0,Math.min(20000,Number(ms)||0));manualUntil=performance.now()+150;update(amount);syncUi();render();
+};
+window.render_game_to_text=()=>JSON.stringify({
+  coordinateSystem:'Canvas origin is top-left with x right and y down. The 8-column by 6-row map starts at canvas (130,94); grid coordinates are zero-based. Fire spreads one orthogonal cell per 520 ms wave through forest and cabins, but not through water (~), rock (^), or firelines (X).',
+  legend:{'.':'unburned forest','F':'fire origin','C':'safe cabin','~':'water','^':'rock','X':'fireline','*':'active fire front','b':'burned fuel','!':'burning cabin'},
+  mode:game.mode,resumeMode:game.resumeMode,zone:{index:game.levelIndex+1,total:LEVELS.length,name:level().name},
+  elapsedMs:Math.round(game.elapsedMs),cursor:{...game.cursor},resources:{firelinesPlaced:game.breaks.size,firelineBudget:level().budget,firelinesRemaining:level().budget-game.breaks.size},
+  map:level().map.map((row,y)=>[...row].map((cell,x)=>{const key=keyOf(x,y);if(game.breaks.has(key))return'X';if(game.frontier.has(key))return cell==='C'?'!':'*';if(game.burning.has(key))return cell==='C'?'!':'b';return cell}).join('')),
+  firelines:[...game.breaks].map(key=>{const[x,y]=pointOf(key);return{x,y}}),activeFront:[...game.frontier].map(key=>{const[x,y]=pointOf(key);return{x,y}}),
+  cabins:cabinState(),wave:game.wave,waveProgress:game.mode==='spreading'?Number((game.spreadClock/SPREAD_MS).toFixed(3)):null,
+  campaign:{zonesContained:game.zones,cabinsSaved:game.savedCabins,totalCabins,firelinesUsed:game.breaksUsed},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  controls:{survey:'Arrows or WASD',place:'Space or B, Place button, or tap a forest cell',forecast:'Enter or Run Forecast',undo:'Z',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
+});
+window.__FIREBREAK_COMMAND_GAME__={
+  getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='planning')=>resetCampaign(mode),
+  getLevels:()=>LEVELS.map(item=>({name:item.name,budget:item.budget,map:[...item.map],solution:item.solution.map(([x,y])=>({x,y}))})),
+  setLevel:index=>{game.started=true;loadLevel(clamp(Math.floor(Number(index)||0),0,LEVELS.length-1),'planning')},
+  toggle:(x,y)=>toggleBreak(clamp(Math.floor(Number(x)||0),0,COLS-1),clamp(Math.floor(Number(y)||0),0,ROWS-1),'qa'),
+  placeSolution:()=>{if(game.mode!=='planning')return false;game.history.push([...game.breaks]);game.breaks=new Set(level().solution.map(([x,y])=>keyOf(x,y)));game.lastAction={type:'qa-solution'};syncUi();render();return true},
+  ignite:()=>ignite('qa'),spread:spreadFire,tick:ms=>window.advanceTime(ms),pause:togglePause,
+  setTheme:index=>{game.themeIndex=((Math.floor(Number(index)||0)%THEMES.length)+THEMES.length)%THEMES.length;syncUi();render()}
+};
+function frame(now){
+  const delta=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(delta);syncUi();render();requestAnimationFrame(frame);
+}
+mountGameFeedback({gameSlug:'firebreakcommand',gameName:'Firebreak Command'});
+el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+loadLevel(0,'menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>

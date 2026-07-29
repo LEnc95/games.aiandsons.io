@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added Pollen Patrol, a five-garden tactical pollination game with deterministic beetle patrols, bounded outcomes, and rendered garden themes.
 - Added Starwheel, a five-lock concentric-ring puzzle with coupled rotations, bounded outcomes, and rendered dial themes.
+- Added Firebreak Command, a five-zone wildfire planning game with deterministic spread, bounded outcomes, and rendered terrain themes.
 
 ## [1.13.0] - 2026-07-26
 ### Added
