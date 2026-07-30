@@ -1,5 +1,19 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-07-30 Create a new game automation - Sumshade
+- New unattended production request: build, validate, and publish exactly one unique browser game from clean isolated `origin/main` baseline `a5f3f316aa7274b305c904da4c30bf79fcd3b4ac`.
+- Read the freshly synced repository instructions, full develop-web-game skill, current progress history, and automation memory after syncing. `npm ci` passed with the repository's existing 16 audit findings.
+- Selected Sumshade (`/sumshade`), a five-board Kakurasu-style weighted-sum logic campaign absent from the 173-game registry and recent automation memory. Generated and solver-checked five unique 4x4 to 6x6 boards before implementation.
+- Plan: implement the standalone canvas game with shade/X/erase tools, check lives, hint/undo, pause/restart/fullscreen, keyboard/pointer/touch controls, three rendered paper themes, shared feedback, bounded outcome reporting, deterministic text/time hooks, and focused QA helpers.
+- Added the initial standalone canvas build, the sole new registry/discovery entry, the 2026-07-30 content contract with exact `tiles`/`boards`/`checks` metrics and a rendered `paper-theme` palette, and one Unreleased changelog mention.
+- Generated SEO/discovery/home/sitemap metadata, all 174 OG cards, and local Linear seeds. The first OG attempt hit the renderer's known transient screenshot protocol error; the unchanged retry passed. A full second generator pass changed zero SHA-256 hashes across 368 targets and left status identical.
+- Early `npm run maintenance:validate` and the 174-game `npm run game:preflight` both passed with exactly the intended 11-path release scope.
+- The first required supplied Playwright sequence genuinely solved First Fold with seven keyboard placements and matching 8/8 clue sums, producing no console/page errors. Visual inspection found the redundant column-weight caption overlapping the board title, so that caption was removed before the browser regression matrix.
+- Focused desktop/mobile QA passed exact +1,234 ms stepping, paused-time/input freeze, boundaries, all tools, hint/undo, real three-check loss, restart, all five pointer-played solutions, exact completion metrics, themes, fullscreen/Escape, feedback keyboard isolation, 390x844 touch layout, and zero browser errors. Visual inspection found the original playing-card registry icon too generic for the OG card, so it was replaced with an abacus before final generation.
+- Final generated assets were again hash-idempotent across 368 targets, the post-generation supplied-client solve stayed clean, and visual review passed gameplay, transition, pause, loss, win, feedback, mobile, three-theme, and abacus OG captures.
+- The ordered local gate passed maintenance, 174-game preflight, telemetry 15/15, feedback 31/31, shop 68/68, social 20/20, and `git diff --check`. The pre-staging audit accepted exactly 11 permitted paths, one registry addition/folder/contract/changelog entry, exact terminal metrics, and no secrets, dependencies, artifacts, or unrelated edits.
+- TODO: stage and inspect the audited diff, commit, run the authoritative daily-lane audit, concurrency-check, publish through the guarded PR lane, and verify Main QA plus production.
+
 ## 2026-07-29 Create a new game automation - Firebreak Command
 - New unattended production request: build, validate, and publish exactly one unique browser game from clean isolated `origin/main` baseline `47f1a7926d0bca1ca275596918655e81416944ac`.
 - Read the freshly synced repository instructions, full develop-web-game skill, current progress history, and automation memory after syncing. `npm ci` passed with the repository's existing 16 audit findings.

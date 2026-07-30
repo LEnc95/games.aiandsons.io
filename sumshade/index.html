@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Sumshade | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:light;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#e8e0c8;color:#25372f;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#52655b;font-weight:650}
+    .home{color:#f8f1d9;font-weight:850;text-decoration:none;border:2px solid #344c41;border-radius:999px;padding:8px 13px;background:#385a49}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .stat{min-width:0;background:#f8f1d9;border:2px solid #708276;border-radius:15px;padding:7px 10px;text-align:center;box-shadow:0 4px 0 #a9a088}
+    .stat span{display:block;font-size:.68rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#65786d}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.86rem,2.7vw,1.05rem)}
+    .stage{position:relative;border:3px solid #52675b;border-radius:22px;overflow:hidden;background:#f5eed8;box-shadow:0 10px 0 #9f9680}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #e28a47}
+    .stage:fullscreen{display:grid;place-items:center;background:#1f2f29}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 45 / 31));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #52675b;border-radius:13px;background:#f8f1d9;color:#263a31;font:800 clamp(.68rem,1.8vw,.9rem)/1.1 inherit;padding:9px 5px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #9f9680}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #9f9680}
+    button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #9f9680}
+    button.primary{background:#385a49;border-color:#263b32;color:#fff8df}
+    button.active{background:#e7a85a;border-color:#8e512d;color:#2e2016}
+    button.danger{background:#bd5a4c;border-color:#74372f;color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .help{background:#f8f1d9;border:2px solid #708276;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#34483e}
+    .help b{color:#8c4d2b}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}
+      .home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.56rem}.stat strong{font-size:.75rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #9f9680}
+      .controls{grid-template-columns:repeat(4,1fr);gap:6px}
+      button{min-height:40px;padding:7px 3px}
+      .help{font-size:.7rem;padding:8px 10px}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Sumshade | AI and Sons Games">
+  <meta property="og:description" content="Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/sumshade">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/sumshade.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sumshade | AI and Sons Games">
+  <meta name="twitter:description" content="Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/sumshade.png">
+  <link rel="canonical" href="https://games.aiandsons.io/sumshade">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Sumshade","description":"Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/sumshade","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Sumshade</h1><small>Read the weights. Balance the clues. Reveal the pattern.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Sumshade status">
+    <div class="stat"><span>Board</span><strong id="board">1 / 5</strong></div>
+    <div class="stat"><span>Checks</span><strong id="checks">3 left</strong></div>
+    <div class="stat"><span>Balanced</span><strong id="balanced">0 / 0</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="Sumshade weighted clue puzzle"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="start" class="primary">Start puzzle</button>
+    <button id="shade" class="active">Shade</button>
+    <button id="cross">Mark X</button>
+    <button id="erase">Erase</button>
+    <button id="check" class="primary">Check sums</button>
+    <button id="hint">Hint</button>
+    <button id="undo">Undo</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Paper</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Goal:</b> shade cells so each row equals its clue on the right and each column equals its clue below. A shaded cell contributes its <b>column weight</b> to its row and its <b>row weight</b> to its column. Use <b>Arrows/WASD</b> to move, <b>Space</b> to shade, <b>X</b> to mark empty, and <b>Backspace</b> to erase. <b>Enter</b> checks, <b>H</b> hints, <b>Z</b> undoes, <b>P</b> pauses, and <b>F</b> toggles fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={
+  board:document.querySelector('#board'),checks:document.querySelector('#checks'),balanced:document.querySelector('#balanced'),time:document.querySelector('#time'),
+  stage:document.querySelector('#stage'),start:document.querySelector('#start'),shade:document.querySelector('#shade'),cross:document.querySelector('#cross'),
+  erase:document.querySelector('#erase'),check:document.querySelector('#check'),hint:document.querySelector('#hint'),undo:document.querySelector('#undo'),
+  pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),
+  fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
+};
+const WIDTH=900,HEIGHT=620,MAX_CHECKS=3;
+const THEMES=[
+  {name:'Paper',background:'#e9dfc6',paper:'#fff9e7',board:'#d9cfb4',line:'#6f7d70',shaded:'#355b4a',shadeEdge:'#203c31',cross:'#b95045',clue:'#a95d32',solved:'#43835b',cursor:'#e49a4c',ink:'#263b32'},
+  {name:'Blueprint',background:'#173d59',paper:'#205574',board:'#2c6a8c',line:'#9bc5d5',shaded:'#f4c85b',shadeEdge:'#7b5b13',cross:'#ff8f83',clue:'#e8f6f7',solved:'#8df0bb',cursor:'#ffba59',ink:'#f2fbfb'},
+  {name:'Berry',background:'#3f253b',paper:'#5b3451',board:'#76415f',line:'#d6a7c0',shaded:'#f0a94f',shadeEdge:'#8f4b1c',cross:'#ff8f9b',clue:'#f7d9e8',solved:'#9be1bd',cursor:'#fff09b',ink:'#fff4f9'}
+];
+const LEVELS=[
+  {name:'First Fold',n:4,pattern:['..##','##..','.#.#','...#'],row:[7,3,6,4],col:[2,5,1,8]},
+  {name:'Counterweight',n:4,pattern:['#.#.','.###','#.#.','.###'],row:[4,9,4,9],col:[4,6,10,6]},
+  {name:'Five Petals',n:5,pattern:['....#','#.#..','#....','##.#.','##..#'],row:[5,4,1,7,8],col:[14,9,2,4,6]},
+  {name:'Crosscurrent',n:5,pattern:['.###.','#....','#..##','..##.','..#.#'],row:[9,1,10,7,8],col:[5,1,10,8,8]},
+  {name:'Grand Ledger',n:6,pattern:['.#..#.','..##..','#..#..','####.#','..#...','#....#'],row:[7,7,5,16,3,7],col:[13,5,11,9,1,10]}
+];
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const indexOf=(x,y)=>y*level().n+x;
+const solutionAt=(x,y)=>level().pattern[y]?.[x]==='#';
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const solutionTiles=item=>item.pattern.reduce((total,row)=>total+[...row].filter(cell=>cell==='#').length,0);
+const totalSolutionTiles=LEVELS.reduce((total,item)=>total+solutionTiles(item),0);
+const game={
+  mode:'menu',resumeMode:'playing',started:false,levelIndex:0,cursor:{x:0,y:0},cells:[],history:[],tool:'shade',
+  checksLeft:MAX_CHECKS,checksUsed:0,hintsUsed:0,elapsedMs:0,boards:0,tiles:0,themeIndex:0,
+  status:'Press Start Puzzle to open First Fold.',lastAction:{type:'ready'},reported:false,rewarded:false
+};
+let pointerDown=null,lastFrame=performance.now(),manualUntil=0;
+
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function currentMetrics(){return{tiles:game.tiles,boards:game.boards,checks:game.checksUsed}}
+function report(result){
+  if(game.reported)return;
+  game.reported=true;
+  reportGameOutcome({slug:'sumshade',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()});
+}
+function blankCells(){return Array(level().n*level().n).fill(0)}
+function sums(){
+  const n=level().n,row=Array(n).fill(0),col=Array(n).fill(0);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(game.cells[indexOf(x,y)]===1){row[y]+=x+1;col[x]+=y+1}
+  return{row,col};
+}
+function satisfaction(){
+  const actual=sums();
+  return{
+    row:actual.row.map((value,index)=>value===level().row[index]),
+    col:actual.col.map((value,index)=>value===level().col[index]),
+    actual
+  };
+}
+function balancedCount(){
+  const state=satisfaction();
+  return state.row.filter(Boolean).length+state.col.filter(Boolean).length;
+}
+function loadLevel(index,mode='playing'){
+  game.levelIndex=index;game.cells=blankCells();game.history=[];game.cursor={x:0,y:0};game.checksLeft=MAX_CHECKS;
+  game.mode=mode;game.resumeMode='playing';game.status=mode==='menu'?'Press Start Puzzle to open First Fold.':`Balance all ${level().n*2} weighted clues.`;
+  game.lastAction={type:mode==='menu'?'ready':'board-start',board:index+1};syncUi();render();
+}
+function resetCampaign(mode='menu'){
+  game.started=mode!=='menu';game.elapsedMs=0;game.boards=0;game.tiles=0;game.checksUsed=0;game.hintsUsed=0;game.reported=false;game.rewarded=false;
+  loadLevel(0,mode);
+}
+function start(){
+  if(game.mode==='menu'){resetCampaign('playing');canvas.focus();announce('First Fold ready. Balance every row and column.');return}
+  if(game.mode==='level-complete'){loadLevel(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} ready.`);return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Sumshade campaign started.')}
+}
+function restart(){
+  if(game.started&&['playing','paused','level-complete'].includes(game.mode))report('abandoned');
+  resetCampaign('playing');game.status='Campaign restarted at First Fold.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status);
+}
+function setTool(tool){
+  if(!['shade','cross','erase'].includes(tool))return;
+  game.tool=tool;game.status=`${tool==='cross'?'X mark':tool[0].toUpperCase()+tool.slice(1)} tool selected.`;game.lastAction={type:'tool',tool};
+  syncUi();render();
+}
+function moveCursor(dx,dy,source='keyboard'){
+  if(game.mode!=='playing')return false;
+  const before={...game.cursor},n=level().n;
+  game.cursor.x=clamp(game.cursor.x+dx,0,n-1);game.cursor.y=clamp(game.cursor.y+dy,0,n-1);
+  const boundary=before.x===game.cursor.x&&before.y===game.cursor.y;
+  game.status=boundary?'Cursor reached the board boundary.':`Cell ${game.cursor.x+1}, ${game.cursor.y+1} selected.`;
+  game.lastAction={type:'move',x:game.cursor.x,y:game.cursor.y,source,boundary};syncUi();render();return true;
+}
+function setCell(x=game.cursor.x,y=game.cursor.y,value=game.tool,source='keyboard'){
+  if(game.mode!=='playing')return false;
+  const n=level().n;game.cursor={x:clamp(Math.floor(x),0,n-1),y:clamp(Math.floor(y),0,n-1)};
+  const index=indexOf(game.cursor.x,game.cursor.y),next=value==='shade'?1:value==='cross'?2:0;
+  game.history.push([...game.cells]);
+  game.cells[index]=game.cells[index]===next&&next!==0?0:next;
+  game.status=game.cells[index]===1?'Cell shaded.':game.cells[index]===2?'Cell marked X.':'Cell cleared.';
+  game.lastAction={type:'cell',x:game.cursor.x,y:game.cursor.y,value:game.cells[index],source};
+  syncUi();render();announce(game.status);return true;
+}
+function undo(){
+  if(game.mode!=='playing'||!game.history.length)return false;
+  game.cells=game.history.pop();game.status='Last mark restored.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true;
+}
+function hint(){
+  if(game.mode!=='playing')return false;
+  const n=level().n;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const correct=solutionAt(x,y)?1:2,index=indexOf(x,y);
+    if(game.cells[index]!==correct){
+      game.history.push([...game.cells]);game.cells[index]=correct;game.cursor={x,y};game.hintsUsed++;
+      game.status=correct===1?'Hint: this weighted cell must be shaded.':'Hint: this cell stays unshaded.';
+      game.lastAction={type:'hint',x,y,value:correct};syncUi();render();announce(game.status);return true;
+    }
+  }
+  game.status='Every cell already matches the hidden pattern.';game.lastAction={type:'hint-complete'};syncUi();render();announce(game.status);return false;
+}
+function failBoard(){
+  game.mode='lost';game.status='The final check was unbalanced. Reopen the ledger and try again.';
+  game.lastAction={type:'loss',reason:'checks-exhausted',metrics:currentMetrics()};report('lost');syncUi();render();announce(game.status);
+}
+function finishBoard(){
+  game.boards++;game.tiles+=solutionTiles(level());
+  if(game.levelIndex===LEVELS.length-1){
+    game.mode='won';game.status='Every weighted ledger balances. Sumshade complete!';
+    game.lastAction={type:'campaign-complete',metrics:currentMetrics()};
+    if(!game.rewarded){addCoins(50);game.rewarded=true}
+    report('completed');announce('Sumshade complete. Fifty coins earned.');
+  }else{
+    game.mode='level-complete';game.status=`${level().name} balances perfectly.`;
+    game.lastAction={type:'board-complete',board:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue to the next board.`);
+  }
+  syncUi();render();
+}
+function checkBoard(source='keyboard'){
+  if(game.mode!=='playing')return false;
+  game.checksUsed++;
+  const state=satisfaction(),solved=state.row.every(Boolean)&&state.col.every(Boolean);
+  if(solved){finishBoard();return true}
+  game.checksLeft--;
+  const offRows=state.row.filter(value=>!value).length,offCols=state.col.filter(value=>!value).length;
+  game.status=`${offRows} row${offRows===1?'':'s'} and ${offCols} column${offCols===1?'':'s'} are still unbalanced.`;
+  game.lastAction={type:'check-failed',source,offRows,offCols,checksLeft:game.checksLeft};
+  if(game.checksLeft<=0){failBoard();return false}
+  syncUi();render();announce(`${game.status} ${game.checksLeft} checks remain.`);return false;
+}
+function togglePause(){
+  if(game.mode==='playing'){
+    game.resumeMode='playing';game.mode='paused';game.status='Puzzle paused. The ledger clock is frozen.';game.lastAction={type:'pause'};announce(game.status);
+  }else if(game.mode==='paused'){
+    game.mode='playing';game.status='Puzzle resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status);
+  }
+  syncUi();render();
+}
+function cycleTheme(){
+  game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} paper palette selected.`;game.lastAction={type:'theme',theme:theme().name};
+  syncUi();render();announce(game.status);
+}
+async function toggleFullscreen(){
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else await el.stage.requestFullscreen();
+  }catch{
+    game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-unavailable'};syncUi();render();
+  }
+}
+function update(ms){if(game.mode==='playing')game.elapsedMs+=Math.max(0,Number(ms)||0)}
+function layout(){
+  const n=level().n,cell=Math.floor(Math.min(88,456/n)),size=cell*n;
+  return{n,cell,size,left:Math.floor((WIDTH-size)/2)-18,top:92};
+}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawCheckMark(x,y,color){
+  ctx.strokeStyle=color;ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-7,y);ctx.lineTo(x-1,y+7);ctx.lineTo(x+10,y-8);ctx.stroke();
+}
+function drawClue(x,y,value,balanced,colors){
+  ctx.fillStyle=balanced?colors.solved:colors.clue;ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=colors.paper;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 17px system-ui';ctx.fillText(value,x,y+1);
+  if(balanced)drawCheckMark(x+25,y,colors.solved);
+}
+function drawCell(x,y,colors,board){
+  const left=board.left+x*board.cell,top=board.top+y*board.cell,index=indexOf(x,y),value=game.cells[index];
+  ctx.fillStyle=(x+y)%2?colors.paper:colors.board;ctx.fillRect(left,top,board.cell,board.cell);
+  if(value===1){
+    const inset=Math.max(8,board.cell*.12);
+    ctx.fillStyle=colors.shaded;roundedRect(left+inset,top+inset,board.cell-inset*2,board.cell-inset*2,10);ctx.fill();
+    ctx.strokeStyle=colors.shadeEdge;ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.16)';roundedRect(left+inset+6,top+inset+6,board.cell-inset*2-12,Math.max(7,board.cell*.11),5);ctx.fill();
+  }else if(value===2){
+    const inset=board.cell*.27;ctx.strokeStyle=colors.cross;ctx.lineWidth=Math.max(5,board.cell*.075);ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(left+inset,top+inset);ctx.lineTo(left+board.cell-inset,top+board.cell-inset);ctx.moveTo(left+board.cell-inset,top+inset);ctx.lineTo(left+inset,top+board.cell-inset);ctx.stroke();
+  }
+  ctx.strokeStyle=colors.line;ctx.globalAlpha=.58;ctx.lineWidth=1.5;ctx.strokeRect(left+.75,top+.75,board.cell-1.5,board.cell-1.5);ctx.globalAlpha=1;
+  if(game.mode==='playing'&&game.cursor.x===x&&game.cursor.y===y){
+    ctx.strokeStyle=colors.cursor;ctx.lineWidth=5;ctx.shadowBlur=11;ctx.shadowColor=colors.cursor;ctx.strokeRect(left+5,top+5,board.cell-10,board.cell-10);ctx.shadowBlur=0;
+  }
+}
+function overlay(title,lines,color){
+  const colors=theme();ctx.fillStyle='rgba(21,28,25,.91)';roundedRect(155,162,590,296,24);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle=color;ctx.font='900 40px system-ui';ctx.fillText(title,450,229);
+  ctx.fillStyle='#fff9e8';ctx.font='700 19px system-ui';lines.forEach((line,index)=>ctx.fillText(line,450,287+index*38));ctx.textAlign='left';
+}
+function render(){
+  const colors=theme(),board=layout(),state=satisfaction();
+  const gradient=ctx.createLinearGradient(0,0,WIDTH,HEIGHT);gradient.addColorStop(0,colors.background);gradient.addColorStop(1,colors.paper);
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  ctx.globalAlpha=.09;ctx.fillStyle=colors.ink;
+  for(let index=0;index<75;index++){ctx.beginPath();ctx.arc((index*127)%WIDTH,(index*83)%HEIGHT,1+(index%3),0,Math.PI*2);ctx.fill()}
+  ctx.globalAlpha=1;ctx.textBaseline='alphabetic';ctx.fillStyle=colors.ink;ctx.font='900 22px system-ui';ctx.fillText(level().name,board.left,47);
+  ctx.textAlign='right';ctx.fillStyle=colors.clue;ctx.fillText(`${balancedCount()} / ${level().n*2} BALANCED`,board.left+board.size,47);ctx.textAlign='left';
+  ctx.fillStyle='rgba(0,0,0,.12)';roundedRect(board.left-12,board.top-12,board.size+24,board.size+24,18);ctx.fill();
+  for(let y=0;y<board.n;y++)for(let x=0;x<board.n;x++)drawCell(x,y,colors,board);
+  ctx.fillStyle=colors.ink;ctx.font='850 16px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let x=0;x<board.n;x++)ctx.fillText(`+${x+1}`,board.left+x*board.cell+board.cell/2,board.top-26);
+  for(let y=0;y<board.n;y++)ctx.fillText(`+${y+1}`,board.left-31,board.top+y*board.cell+board.cell/2);
+  for(let y=0;y<board.n;y++)drawClue(board.left+board.size+39,board.top+y*board.cell+board.cell/2,level().row[y],state.row[y],colors);
+  for(let x=0;x<board.n;x++)drawClue(board.left+x*board.cell+board.cell/2,board.top+board.size+38,level().col[x],state.col[x],colors);
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle=colors.ink;ctx.font='750 14px system-ui';
+  ctx.save();ctx.translate(board.left-58,board.top+board.size);ctx.rotate(-Math.PI/2);ctx.fillText('ROW WEIGHTS',0,0);ctx.restore();
+  if(game.mode==='menu')overlay('Sumshade',['Shade cells to reach every weighted clue.','Top weights count across rows.','Side weights count down columns.'],colors.cursor);
+  if(game.mode==='paused')overlay('Ledger Paused',['The puzzle clock and controls are frozen.','Press P or Pause to continue.'],colors.cursor);
+  if(game.mode==='level-complete')overlay('Board Balanced',[`${level().name} matches every clue.`,`${solutionTiles(level())} weighted tiles revealed.`,`Press Enter for board ${game.levelIndex+2}.`],colors.solved);
+  if(game.mode==='won')overlay('All Sums Balanced',[`${game.tiles} weighted tiles across five boards.`,`${game.checksUsed} checks used in the campaign.`,'50 coins earned.'],colors.solved);
+  if(game.mode==='lost')overlay('Ledger Closed',[`All ${MAX_CHECKS} checks were used on this board.`,'Adjust the pattern and try a fresh campaign.','Press Enter or Restart to begin again.'],colors.cross);
+}
+function syncUi(){
+  el.board.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.checks.textContent=`${game.checksLeft} left`;el.balanced.textContent=`${balancedCount()} / ${level().n*2}`;el.time.textContent=formatTime(game.elapsedMs);
+  el.start.textContent=game.mode==='menu'?'Start puzzle':game.mode==='level-complete'?'Next board':(['won','lost'].includes(game.mode)?'Play again':'Puzzle active');
+  el.start.disabled=['playing','paused'].includes(game.mode);
+  const interactive=game.mode==='playing';
+  for(const button of [el.shade,el.cross,el.erase,el.check,el.hint])button.disabled=!interactive;
+  el.undo.disabled=!interactive||!game.history.length;el.pause.disabled=!['playing','paused'].includes(game.mode);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';
+  el.shade.classList.toggle('active',game.tool==='shade');el.cross.classList.toggle('active',game.tool==='cross');el.erase.classList.toggle('active',game.tool==='erase');
+  el.theme.textContent=`Theme: ${theme().name}`;
+}
+function canvasPoint(event){
+  const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height};
+}
+canvas.addEventListener('pointerdown',event=>{pointerDown={...canvasPoint(event),id:event.pointerId};canvas.setPointerCapture?.(event.pointerId);event.preventDefault()});
+canvas.addEventListener('pointerup',event=>{
+  if(!pointerDown||pointerDown.id!==event.pointerId)return;
+  const point=canvasPoint(event),distance=Math.hypot(point.x-pointerDown.x,point.y-pointerDown.y),board=layout();pointerDown=null;
+  if(distance<24&&point.x>=board.left&&point.y>=board.top&&point.x<board.left+board.size&&point.y<board.top+board.size){
+    const x=Math.floor((point.x-board.left)/board.cell),y=Math.floor((point.y-board.top)/board.cell);setCell(x,y,game.tool,'pointer');
+  }
+  canvas.focus();event.preventDefault();
+});
+el.start.addEventListener('click',start);el.shade.addEventListener('click',()=>setTool('shade'));el.cross.addEventListener('click',()=>setTool('cross'));el.erase.addEventListener('click',()=>setTool('erase'));
+el.check.addEventListener('click',()=>checkBoard('button'));el.hint.addEventListener('click',hint);el.undo.addEventListener('click',undo);el.pause.addEventListener('click',togglePause);
+el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);
+window.addEventListener('keydown',event=>{
+  const target=event.target;if(target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;
+  const key=event.key.toLowerCase();
+  if(key==='enter'){event.preventDefault();if(['menu','level-complete','won','lost'].includes(game.mode))start();else checkBoard('keyboard');return}
+  if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}
+  if(key==='p'){event.preventDefault();togglePause();return}
+  if(key==='r'){event.preventDefault();restart();return}
+  if(key==='t'){event.preventDefault();cycleTheme();return}
+  if(key==='f'){event.preventDefault();toggleFullscreen();return}
+  if(key==='h'){event.preventDefault();hint();return}
+  if(key==='z'){event.preventDefault();undo();return}
+  if(key===' '){event.preventDefault();setCell(game.cursor.x,game.cursor.y,'shade','keyboard');return}
+  if(key==='x'){event.preventDefault();setCell(game.cursor.x,game.cursor.y,'cross','keyboard');return}
+  if(key==='backspace'||key==='delete'||key==='c'){event.preventDefault();setCell(game.cursor.x,game.cursor.y,'erase','keyboard');return}
+  if(key==='arrowleft'||key==='a'){event.preventDefault();moveCursor(-1,0,'keyboard');return}
+  if(key==='arrowright'||key==='d'){event.preventDefault();moveCursor(1,0,'keyboard');return}
+  if(key==='arrowup'||key==='w'){event.preventDefault();moveCursor(0,-1,'keyboard');return}
+  if(key==='arrowdown'||key==='s'){event.preventDefault();moveCursor(0,1,'keyboard')}
+});
+document.addEventListener('fullscreenchange',()=>{canvas.focus();render()});window.addEventListener('resize',render);
+window.addEventListener('pagehide',()=>{if(game.started&&['playing','paused','level-complete'].includes(game.mode))report('abandoned')});
+window.advanceTime=ms=>{
+  const amount=Math.max(0,Math.min(20000,Number(ms)||0));manualUntil=performance.now()+180;update(amount);syncUi();render();
+};
+window.render_game_to_text=()=>JSON.stringify((()=>{
+  const state=satisfaction();
+  return{
+    coordinateSystem:'Canvas origin is top-left with x right and y down. Puzzle grid coordinates are zero-based. A shaded cell at (x,y) adds x+1 to its row and y+1 to its column.',
+    legend:{'.':'empty','#':'shaded','x':'marked unshaded'},mode:game.mode,resumeMode:game.resumeMode,
+    board:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,size:level().n},elapsedMs:Math.round(game.elapsedMs),
+    cursor:{...game.cursor},tool:game.tool,grid:Array.from({length:level().n},(_,y)=>Array.from({length:level().n},(_,x)=>['.','#','x'][game.cells[indexOf(x,y)]]).join('')),
+    clues:{rows:[...level().row],columns:[...level().col]},actualSums:{rows:state.actual.row,columns:state.actual.col},
+    balanced:{rows:state.row,columns:state.col,count:balancedCount(),total:level().n*2},
+    resources:{checksLeft:game.checksLeft,checksUsed:game.checksUsed,hintsUsed:game.hintsUsed,undoDepth:game.history.length},
+    campaign:{boardsBalanced:game.boards,totalBoards:LEVELS.length,tilesRevealed:game.tiles,totalSolutionTiles},theme:theme().name,status:game.status,lastAction:game.lastAction,
+    controls:{move:'Arrows or WASD',shade:'Space',cross:'X',erase:'Backspace, Delete, or C',check:'Enter',hint:'H',undo:'Z',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
+  };
+})());
+window.__SUMSHADE_GAME__={
+  getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='playing')=>resetCampaign(mode),
+  getLevels:()=>LEVELS.map(item=>({name:item.name,n:item.n,row:[...item.row],col:[...item.col],pattern:[...item.pattern],solution:Array.from({length:item.n},(_,y)=>Array.from({length:item.n},(_,x)=>item.pattern[y][x]==='#'?{x,y}:null).filter(Boolean)).flat()})),
+  setBoard:index=>{game.started=true;loadLevel(clamp(Math.floor(Number(index)||0),0,LEVELS.length-1),'playing')},
+  setCell:(x,y,value='shade')=>setCell(clamp(Math.floor(Number(x)||0),0,level().n-1),clamp(Math.floor(Number(y)||0),0,level().n-1),value,'qa'),
+  applySolution:()=>{if(game.mode!=='playing')return false;game.history.push([...game.cells]);game.cells=level().pattern.flatMap(row=>[...row].map(cell=>cell==='#'?1:2));game.lastAction={type:'qa-solution'};syncUi();render();return true},
+  clear:()=>{if(game.mode!=='playing')return false;game.history.push([...game.cells]);game.cells=blankCells();game.lastAction={type:'qa-clear'};syncUi();render();return true},
+  check:()=>checkBoard('qa'),hint,pause:togglePause,tick:ms=>window.advanceTime(ms),
+  setTheme:index=>{game.themeIndex=((Math.floor(Number(index)||0)%THEMES.length)+THEMES.length)%THEMES.length;syncUi();render()}
+};
+function frame(now){
+  const delta=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(delta);syncUi();render();requestAnimationFrame(frame);
+}
+mountGameFeedback({gameSlug:'sumshade',gameName:'Sumshade'});
+el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+loadLevel(0,'menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>

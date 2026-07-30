@@ -188,5 +188,6 @@
 - game/pollenpatrol
 - game/starwheel
 - game/firebreakcommand
+- game/sumshade
 
 Generated from `src/meta/feedback.js`.
