@@ -122,6 +122,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'terrain-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'forest', 'water', 'rock', 'fireline', 'fire', 'cabin']) }),
     ]),
   }),
+  sumshade: Object.freeze({
+    releasedAt: '2026-07-30',
+    outcomes: Object.freeze({
+      tiles: Object.freeze({ min: 0, max: 100, direction: 'higher' }),
+      boards: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      checks: Object.freeze({ min: 0, max: 30, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'paper-theme', kind: 'palette', tokens: Object.freeze(['background', 'board', 'shaded', 'cross', 'clue', 'cursor']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

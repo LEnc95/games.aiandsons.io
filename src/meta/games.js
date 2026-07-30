@@ -174,6 +174,7 @@ const BASE_GAMES = [
   { slug:'pollenpatrol',   name:'Pollen Patrol',        emoji:'\u{1F41D}', scoreHint:'flowers', url:'/pollenpatrol', desc:'Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive.', earnsCoins:true },
   { slug:'starwheel',      name:'Starwheel',             emoji:'\u2699\uFE0F', scoreHint:'locks', url:'/starwheel', desc:'Rotate coupled rings, align every starlit gate, and open five intricate celestial locks before your turns run out.', earnsCoins:true },
   { slug:'firebreakcommand', name:'Firebreak Command',   emoji:'\u{1F525}', scoreHint:'cabins', url:'/firebreakcommand', desc:'Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones.', earnsCoins:true },
+  { slug:'sumshade',       name:'Sumshade',              emoji:'\u{1F9EE}', scoreHint:'boards', url:'/sumshade', desc:'Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -197,7 +198,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
