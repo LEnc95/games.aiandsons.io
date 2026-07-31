@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Lantern Wake | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#071b2b;color:#f4efd8;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#a8cbd2;font-weight:650}
+    .home{color:#071b2b;font-weight:850;text-decoration:none;border:2px solid #f6c85f;border-radius:999px;padding:8px 13px;background:#f4d47b}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#102f42;border:2px solid #2d6476;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #05121d}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#82b5c0}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #2f7184;border-radius:22px;overflow:hidden;background:#0a354c;box-shadow:0 10px 0 #04111c}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #ffd66b}
+    .stage:fullscreen{display:grid;place-items:center;background:#020a10}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 45 / 31));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+    button{border:2px solid #2f7184;border-radius:13px;background:#12394d;color:#edf8f7;font:800 clamp(.68rem,1.7vw,.9rem)/1.1 inherit;padding:9px 5px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #04111c;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #04111c}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #04111c;background:#f2ca65;color:#102333;border-color:#ffdf87}
+    button.primary{background:#e6b94c;border-color:#ffe09a;color:#102333}
+    button.danger{background:#a8444c;border-color:#e98888;color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .help{background:#102f42;border:2px solid #2d6476;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#c8dfe2}
+    .help b{color:#ffd66b}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.5rem}.stat strong{font-size:.68rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #04111c}.controls{grid-template-columns:repeat(4,1fr);gap:6px}button{min-height:42px;padding:7px 3px}.help{font-size:.69rem;padding:8px 10px}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Lantern Wake | AI and Sons Games">
+  <meta property="og:description" content="Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/lanternwake">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/lanternwake.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lantern Wake | AI and Sons Games">
+  <meta name="twitter:description" content="Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/lanternwake.png">
+  <link rel="canonical" href="https://games.aiandsons.io/lanternwake">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Lantern Wake","description":"Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/lanternwake","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Lantern Wake</h1><small>Read the current. Gather the lights. Reach the far dock.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Lantern Wake status">
+    <div class="stat"><span>Crossing</span><strong id="crossing">1 / 5</strong></div>
+    <div class="stat"><span>Lanterns</span><strong id="lanterns">0 / 3</strong></div>
+    <div class="stat"><span>Hull</span><strong id="hull">3 / 3</strong></div>
+    <div class="stat"><span>Current</span><strong id="current">Calm</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="Lantern Wake moonlit ferry game"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="start" class="primary">Start crossing</button>
+    <button id="up">Steer up</button>
+    <button id="down">Steer down</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Moon</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Goal:</b> collect every lantern before the ferry reaches the far dock. Steer with <b>Up/Down</b> or <b>W/S</b>, hold the on-screen buttons, or press and drag above or below the ferry. Currents continuously bend your wake. Avoid driftwood: three collisions sink the ferry. <b>P</b> pauses, <b>R</b> restarts, <b>T</b> changes the wake palette, and <b>F</b> toggles fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={crossing:document.querySelector('#crossing'),lanterns:document.querySelector('#lanterns'),hull:document.querySelector('#hull'),current:document.querySelector('#current'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),start:document.querySelector('#start'),up:document.querySelector('#up'),down:document.querySelector('#down'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=900,HEIGHT=620,RIVER_TOP=76,RIVER_BOTTOM=544,FERRY_X=84,DOCK_X=828,MAX_HULL=3;
+const THEMES=[
+  {name:'Moon',sky:'#071b2b',haze:'#16445a',water:'#0d5871',water2:'#13768a',bank:'#243d38',bank2:'#49634e',foam:'#b7f2ed',lantern:'#ffd464',glow:'#ffb53d',hull:'#e7ddd0',trim:'#b5443f',log:'#70452f',ink:'#f6f0d6',danger:'#ff7777'},
+  {name:'Dawn',sky:'#6b4264',haze:'#d88779',water:'#397f91',water2:'#6da6a6',bank:'#47563b',bank2:'#73835a',foam:'#e9ffff',lantern:'#fff09a',glow:'#ffba62',hull:'#fff1d0',trim:'#2e6d73',log:'#76513d',ink:'#fff9ea',danger:'#b72f43'},
+  {name:'Festival',sky:'#241544',haze:'#623778',water:'#234c82',water2:'#3276a3',bank:'#193c3a',bank2:'#2f6b53',foam:'#a9f4ff',lantern:'#ff8bd6',glow:'#ffd769',hull:'#f7deff',trim:'#f2a340',log:'#633956',ink:'#fff1fb',danger:'#ff647f'}
+];
+const LEVELS=[
+  {name:'Quiet Reach',speed:52,steer:156,current:18,phase:.2,lanterns:[[245,214],[470,390],[690,248]],logs:[[350,278,90,28],[575,168,82,26]]},
+  {name:'Reed Channel',speed:57,steer:163,current:25,phase:1.1,lanterns:[[210,408],[382,212],[566,414],[732,260]],logs:[[290,308,86,28],[485,282,102,30],[645,365,76,25]]},
+  {name:'Bellwater Bend',speed:61,steer:170,current:32,phase:2.2,lanterns:[[205,180],[360,374],[535,204],[710,425]],logs:[[270,265,96,30],[445,414,82,26],[620,300,112,30],[760,170,66,24]]},
+  {name:'Firefly Narrows',speed:65,steer:176,current:38,phase:.7,lanterns:[[180,394],[315,192],[455,405],[598,216],[738,384]],logs:[[240,300,88,28],[375,354,80,25],[520,285,100,30],[665,320,84,27]]},
+  {name:'Last Light',speed:68,steer:184,current:44,phase:1.8,lanterns:[[175,195],[300,405],[430,230],[560,418],[700,205]],logs:[[225,303,72,25],[350,280,94,29],[482,352,86,27],[620,286,100,30],[755,374,62,24]]}
+];
+const level=()=>LEVELS[game.levelIndex],theme=()=>THEMES[game.themeIndex];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const game={mode:'menu',resumeMode:'playing',started:false,levelIndex:0,ferry:{x:FERRY_X,y:310,vy:0},intent:0,hull:MAX_HULL,routeMs:0,elapsedMs:0,invulnerableMs:0,lanternStates:[],lanterns:0,crossings:0,collisions:0,themeIndex:0,status:'Press Start Crossing to leave the first dock.',lastAction:{type:'ready'},reported:false,rewarded:false};
+let lastFrame=performance.now(),manualUntil=0,pointerId=null;
+
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function currentMetrics(){return{lanterns:game.lanterns,crossings:game.crossings,collisions:game.collisions}}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'lanternwake',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function currentVector(x=game.ferry.x,time=game.routeMs){return Math.sin(x/118+time/1450+level().phase)*level().current}
+function currentLabel(){const value=currentVector();if(Math.abs(value)<7)return'Calm';return value<0?'Pulling north':'Pulling south'}
+function loadCrossing(index,mode='playing'){
+  game.levelIndex=index;game.ferry={x:FERRY_X,y:310,vy:0};game.intent=0;game.hull=MAX_HULL;game.routeMs=0;game.invulnerableMs=0;game.lanternStates=level().lanterns.map(()=>false);game.mode=mode;game.resumeMode='playing';
+  game.status=mode==='menu'?'Press Start Crossing to leave the first dock.':`Collect all ${level().lanterns.length} lanterns before the far dock.`;game.lastAction={type:mode==='menu'?'ready':'crossing-start',crossing:index+1};syncUi();render();
+}
+function resetCampaign(mode='menu'){
+  game.started=mode!=='menu';game.elapsedMs=0;game.lanterns=0;game.crossings=0;game.collisions=0;game.reported=false;game.rewarded=false;loadCrossing(0,mode);
+}
+function start(){
+  if(game.mode==='menu'){resetCampaign('playing');canvas.focus();announce('Quiet Reach underway. Collect three lanterns.');return}
+  if(game.mode==='level-complete'){loadCrossing(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} underway.`);return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Lantern Wake voyage has begun.')}
+}
+function restart(){
+  if(game.started&&['playing','paused','level-complete'].includes(game.mode))report('abandoned');
+  resetCampaign('playing');game.status='Voyage restarted at Quiet Reach.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status);
+}
+function setIntent(value,source='keyboard'){
+  if(game.mode!=='playing')return false;const next=clamp(Math.sign(Number(value)||0),-1,1);game.intent=next;
+  game.status=next<0?'Rudder set north.':next>0?'Rudder set south.':'Rudder centered.';game.lastAction={type:'steer',direction:next,source};syncUi();render();return true;
+}
+function lose(reason){
+  game.mode='lost';game.intent=0;game.status=reason==='hull'?'The ferry struck too much driftwood and foundered.':'The far dock arrived before every lantern was gathered.';
+  game.lastAction={type:'loss',reason,metrics:currentMetrics()};report('lost');syncUi();render();announce(game.status);
+}
+function finishCrossing(){
+  const gathered=game.lanternStates.filter(Boolean).length;
+  if(gathered<level().lanterns.length){lose('lantern-quota');return}
+  game.crossings++;
+  if(game.levelIndex===LEVELS.length-1){
+    game.mode='won';game.intent=0;game.status='Every channel glows behind the Lantern Wake!';game.lastAction={type:'campaign-complete',metrics:currentMetrics()};
+    if(!game.rewarded){addCoins(55);game.rewarded=true}report('completed');announce('Lantern Wake complete. Fifty-five coins earned.');
+  }else{
+    game.mode='level-complete';game.intent=0;game.status=`${level().name} crossed with every lantern.`;game.lastAction={type:'crossing-complete',crossing:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`);
+  }
+  syncUi();render();
+}
+function collectLanterns(){
+  level().lanterns.forEach(([x,y],index)=>{
+    if(game.lanternStates[index])return;
+    if(Math.abs(game.ferry.x-x)<34&&Math.abs(game.ferry.y-y)<34){game.lanternStates[index]=true;game.lanterns++;game.status=`Lantern ${game.lanternStates.filter(Boolean).length} of ${level().lanterns.length} aboard.`;game.lastAction={type:'lantern',index,x,y};announce(game.status)}
+  });
+}
+function collideWithLogs(){
+  if(game.invulnerableMs>0)return;
+  const hit=level().logs.findIndex(([x,y,w,h])=>game.ferry.x+25>x&&game.ferry.x-25<x+w&&game.ferry.y+17>y&&game.ferry.y-17<y+h);
+  if(hit<0)return;
+  game.hull--;game.collisions++;game.invulnerableMs=950;game.ferry.x=Math.max(FERRY_X,game.ferry.x-18);const log=level().logs[hit];game.ferry.y=clamp(game.ferry.y+(game.ferry.y<log[1]+log[3]/2?-34:34),RIVER_TOP+30,RIVER_BOTTOM-30);
+  game.status=`Driftwood strike. ${game.hull} hull point${game.hull===1?'':'s'} remain.`;game.lastAction={type:'collision',log:hit,hull:game.hull};announce(game.status);if(game.hull<=0)lose('hull');
+}
+function updateStep(ms){
+  if(game.mode!=='playing')return;
+  const dt=ms/1000;game.elapsedMs+=ms;game.routeMs+=ms;game.invulnerableMs=Math.max(0,game.invulnerableMs-ms);
+  const targetVelocity=game.intent*level().steer,blend=Math.min(1,dt*7);game.ferry.vy+=(targetVelocity-game.ferry.vy)*blend;
+  game.ferry.x+=level().speed*dt;game.ferry.y+=game.ferry.vy*dt+currentVector(game.ferry.x,game.routeMs)*dt;
+  const unclampedY=game.ferry.y;game.ferry.y=clamp(game.ferry.y,RIVER_TOP+29,RIVER_BOTTOM-29);
+  if(unclampedY!==game.ferry.y){game.ferry.vy=0;game.lastAction={type:'boundary',edge:unclampedY<RIVER_TOP+29?'north':'south'};game.status='The riverbank blocks the ferry.'}
+  collectLanterns();collideWithLogs();if(game.mode==='playing'&&game.ferry.x>=DOCK_X)finishCrossing();
+}
+function advanceSimulation(ms){let remaining=Math.max(0,Number(ms)||0);while(remaining>0&&game.mode==='playing'){const step=Math.min(1000/60,remaining);updateStep(step);remaining-=step}}
+function togglePause(){
+  if(game.mode==='playing'){game.resumeMode='playing';game.mode='paused';game.intent=0;game.ferry.vy=0;game.status='Voyage paused. Ferry, current, and clock are frozen.';game.lastAction={type:'pause'};announce(game.status)}
+  else if(game.mode==='paused'){game.mode='playing';game.status='Voyage resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render();
+}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} wake palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-unavailable'};syncUi();render()}}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawWater(colors){
+  const gradient=ctx.createLinearGradient(0,RIVER_TOP,0,RIVER_BOTTOM);gradient.addColorStop(0,colors.water2);gradient.addColorStop(.52,colors.water);gradient.addColorStop(1,colors.water2);ctx.fillStyle=gradient;ctx.fillRect(0,RIVER_TOP,WIDTH,RIVER_BOTTOM-RIVER_TOP);
+  ctx.globalAlpha=.22;ctx.strokeStyle=colors.foam;ctx.lineWidth=2;
+  for(let row=0;row<9;row++){ctx.beginPath();for(let x=-30;x<=WIDTH+30;x+=12){const y=RIVER_TOP+32+row*51+Math.sin(x/44+game.routeMs/700+row)*6;if(x===-30)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke()}ctx.globalAlpha=1;
+}
+function drawBanks(colors){
+  ctx.fillStyle=colors.bank;ctx.fillRect(0,0,WIDTH,RIVER_TOP);ctx.fillRect(0,RIVER_BOTTOM,WIDTH,HEIGHT-RIVER_BOTTOM);ctx.fillStyle=colors.bank2;
+  for(let x=-10;x<WIDTH;x+=38){ctx.beginPath();ctx.arc(x,RIVER_TOP-3,24+(x%3)*2,Math.PI,0);ctx.fill();ctx.beginPath();ctx.arc(x,RIVER_BOTTOM+3,24+(x%4),0,Math.PI);ctx.fill()}
+  ctx.fillStyle='#76573c';roundedRect(32,248,82,125,8);ctx.fill();roundedRect(806,238,80,145,8);ctx.fill();ctx.fillStyle='#b58b5a';for(let y=255;y<370;y+=23){ctx.fillRect(37,y,72,5);ctx.fillRect(811,y-8,70,5)}
+}
+function drawLantern(x,y,collected,colors,index){
+  if(collected){ctx.globalAlpha=.25;ctx.strokeStyle=colors.glow;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;return}
+  const pulse=1+Math.sin(game.routeMs/260+index)*.08;ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);ctx.globalAlpha=.18;ctx.fillStyle=colors.glow;ctx.beginPath();ctx.arc(0,0,30,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.fillStyle=colors.lantern;roundedRect(-11,-15,22,28,7);ctx.fill();ctx.strokeStyle=colors.glow;ctx.lineWidth=3;ctx.stroke();ctx.beginPath();ctx.arc(0,-15,7,Math.PI,0);ctx.stroke();ctx.fillStyle=colors.glow;ctx.fillRect(-7,-3,14,4);ctx.restore();
+}
+function drawLog(log,colors,index){
+  const [x,y,w,h]=log;ctx.save();ctx.translate(x,y+Math.sin(game.routeMs/420+index)*3);ctx.rotate(Math.sin(index*2.1)*.05);ctx.fillStyle=colors.log;roundedRect(0,0,w,h,h/2);ctx.fill();ctx.strokeStyle='rgba(20,8,5,.5)';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='rgba(255,255,255,.13)';roundedRect(11,5,w-22,5,3);ctx.fill();ctx.restore();
+}
+function drawFerry(colors){
+  const {x,y}=game.ferry,blink=game.invulnerableMs>0&&Math.floor(game.invulnerableMs/90)%2===0;if(blink)ctx.globalAlpha=.32;
+  ctx.strokeStyle=colors.foam;ctx.lineWidth=4;ctx.globalAlpha*=.7;ctx.beginPath();ctx.moveTo(x-25,y+13);ctx.quadraticCurveTo(x-55,y+24,x-84,y+8);ctx.moveTo(x-25,y-13);ctx.quadraticCurveTo(x-55,y-24,x-84,y-8);ctx.stroke();ctx.globalAlpha=blink?.32:1;
+  ctx.save();ctx.translate(x,y);ctx.fillStyle=colors.hull;ctx.beginPath();ctx.moveTo(29,0);ctx.lineTo(16,19);ctx.lineTo(-25,15);ctx.lineTo(-31,0);ctx.lineTo(-25,-15);ctx.lineTo(16,-19);ctx.closePath();ctx.fill();ctx.strokeStyle=colors.trim;ctx.lineWidth=4;ctx.stroke();ctx.fillStyle=colors.trim;roundedRect(-8,-12,17,24,4);ctx.fill();ctx.fillStyle=colors.lantern;ctx.beginPath();ctx.arc(3,0,4,0,Math.PI*2);ctx.fill();ctx.restore();ctx.globalAlpha=1;
+}
+function overlay(title,lines,color){ctx.fillStyle='rgba(2,12,20,.92)';roundedRect(155,159,590,302,24);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();ctx.textAlign='center';ctx.fillStyle=color;ctx.font='900 40px system-ui';ctx.fillText(title,450,229);ctx.fillStyle='#f8f2dc';ctx.font='700 19px system-ui';lines.forEach((line,index)=>ctx.fillText(line,450,287+index*38));ctx.textAlign='left'}
+function render(){
+  const colors=theme(),sky=ctx.createLinearGradient(0,0,0,HEIGHT);sky.addColorStop(0,colors.sky);sky.addColorStop(1,colors.haze);ctx.fillStyle=sky;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  ctx.globalAlpha=.55;ctx.fillStyle=colors.lantern;for(let index=0;index<32;index++){const x=(index*179)%WIDTH,y=18+(index*47)%52;ctx.beginPath();ctx.arc(x,y,1+(index%3===0),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+  drawWater(colors);drawBanks(colors);level().lanterns.forEach((item,index)=>drawLantern(item[0],item[1],game.lanternStates[index],colors,index));level().logs.forEach((item,index)=>drawLog(item,colors,index));drawFerry(colors);
+  ctx.fillStyle=colors.ink;ctx.font='900 21px system-ui';ctx.fillText(level().name,132,42);ctx.textAlign='right';ctx.fillStyle=colors.foam;ctx.fillText(`${Math.max(0,Math.round((DOCK_X-game.ferry.x)/(DOCK_X-FERRY_X)*100))}% TO DOCK`,790,42);ctx.textAlign='left';
+  if(game.mode==='menu')overlay('Lantern Wake',['Steer the ferry through a living current.','Collect every lantern before the far dock.','Three driftwood strikes will sink the voyage.'],colors.lantern);
+  if(game.mode==='paused')overlay('Water Stilled',['Ferry, current, and voyage clock are frozen.','Press P or Pause to continue.'],colors.foam);
+  if(game.mode==='level-complete')overlay('Crossing Lit',[`${level().name} glows with ${level().lanterns.length} lanterns.`,`Hull arrived with ${game.hull} point${game.hull===1?'':'s'} intact.`,`Press Enter for crossing ${game.levelIndex+2}.`],colors.lantern);
+  if(game.mode==='won')overlay('Every Wake Aglow',[`${game.lanterns} lanterns across five crossings.`,`${game.collisions} driftwood collisions in the voyage.`,'55 coins earned.'],colors.lantern);
+  if(game.mode==='lost')overlay('Voyage Ended',[game.lastAction.reason==='hull'?'The ferry lost all three hull points.':'Some lanterns were left behind.',`${game.lanterns} lanterns gathered so far.`,'Press Enter or Restart to sail again.'],colors.danger);
+}
+function syncUi(){
+  const gathered=game.lanternStates.filter(Boolean).length,currentText=currentLabel(),mobileCurrent=currentText==='Calm'?'Calm':currentText.endsWith('north')?'North':'South';el.crossing.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.lanterns.textContent=`${gathered} / ${level().lanterns.length}`;el.hull.textContent=`${game.hull} / ${MAX_HULL}`;el.current.textContent=innerWidth<=480?mobileCurrent:currentText;el.time.textContent=formatTime(game.elapsedMs);
+  el.start.textContent=game.mode==='menu'?'Start crossing':game.mode==='level-complete'?'Next crossing':(['won','lost'].includes(game.mode)?'Sail again':'Ferry underway');el.start.disabled=['playing','paused'].includes(game.mode);
+  const interactive=game.mode==='playing';el.up.disabled=!interactive;el.down.disabled=!interactive;el.up.classList.toggle('active',interactive&&game.intent<0);el.down.classList.toggle('active',interactive&&game.intent>0);el.pause.disabled=!['playing','paused'].includes(game.mode);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';el.theme.textContent=`Theme: ${theme().name}`;
+}
+function canvasPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function pointerSteer(event){if(game.mode!=='playing')return;const point=canvasPoint(event);setIntent(point.y<game.ferry.y?-1:1,'pointer')}
+function capturePointer(element,id){try{element.setPointerCapture?.(id)}catch{/* Synthetic and canceled pointers may not be capturable. */}}
+canvas.addEventListener('pointerdown',event=>{pointerId=event.pointerId;capturePointer(canvas,event.pointerId);pointerSteer(event);canvas.focus();event.preventDefault()});
+canvas.addEventListener('pointermove',event=>{if(pointerId===event.pointerId)pointerSteer(event)});
+canvas.addEventListener('pointerup',event=>{if(pointerId===event.pointerId){pointerId=null;setIntent(0,'pointer')}event.preventDefault()});canvas.addEventListener('pointercancel',()=>{pointerId=null;setIntent(0,'pointer')});
+function bindHold(button,value){button.addEventListener('pointerdown',event=>{capturePointer(button,event.pointerId);setIntent(value,'button');event.preventDefault()});for(const type of ['pointerup','pointercancel','pointerleave'])button.addEventListener(type,event=>{if(game.intent===value)setIntent(0,'button');event.preventDefault()})}
+bindHold(el.up,-1);bindHold(el.down,1);el.start.addEventListener('click',start);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);
+window.addEventListener('keydown',event=>{
+  const target=event.target;if(target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;const key=event.key.toLowerCase();
+  if(key==='enter'&&['menu','level-complete','won','lost'].includes(game.mode)){event.preventDefault();start();return}if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}if(key==='p'){event.preventDefault();togglePause();return}if(key==='r'){event.preventDefault();restart();return}if(key==='t'){event.preventDefault();cycleTheme();return}if(key==='f'){event.preventDefault();toggleFullscreen();return}if(key==='arrowup'||key==='w'){event.preventDefault();setIntent(-1,'keyboard');return}if(key==='arrowdown'||key==='s'){event.preventDefault();setIntent(1,'keyboard')}
+});
+window.addEventListener('keyup',event=>{const key=event.key.toLowerCase();if((key==='arrowup'||key==='w')&&game.intent<0)setIntent(0,'keyboard');if((key==='arrowdown'||key==='s')&&game.intent>0)setIntent(0,'keyboard')});
+window.addEventListener('blur',()=>{if(game.mode==='playing')setIntent(0,'blur')});document.addEventListener('fullscreenchange',()=>{canvas.focus();render()});window.addEventListener('resize',render);window.addEventListener('pagehide',()=>{if(game.started&&['playing','paused','level-complete'].includes(game.mode))report('abandoned')});
+window.advanceTime=ms=>{const amount=Math.max(0,Math.min(30000,Number(ms)||0));manualUntil=performance.now()+180;advanceSimulation(amount);syncUi();render()};
+window.render_game_to_text=()=>JSON.stringify({
+  coordinateSystem:'Canvas origin is top-left with x right and y down. The river spans y=76..544; the ferry travels east from x=84 to the far dock at x=828.',mode:game.mode,resumeMode:game.resumeMode,
+  crossing:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,progress:Number(clamp((game.ferry.x-FERRY_X)/(DOCK_X-FERRY_X),0,1).toFixed(3))},elapsedMs:Math.round(game.elapsedMs),routeMs:Math.round(game.routeMs),
+  ferry:{x:Number(game.ferry.x.toFixed(2)),y:Number(game.ferry.y.toFixed(2)),verticalVelocity:Number(game.ferry.vy.toFixed(2)),steering:game.intent,hull:game.hull,invulnerableMs:Math.round(game.invulnerableMs)},
+  current:{verticalVelocity:Number(currentVector().toFixed(2)),label:currentLabel()},lanterns:level().lanterns.map(([x,y],index)=>({index,x,y,collected:game.lanternStates[index]})),
+  driftwood:level().logs.map(([x,y,width,height],index)=>({index,x,y,width,height})),campaign:{lanterns:game.lanterns,crossings:game.crossings,collisions:game.collisions,totalCrossings:LEVELS.length},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  controls:{steer:'Up/Down or W/S; hold buttons or press/drag canvas',pause:'P',restart:'R',theme:'T',fullscreen:'F',continue:'Enter'}
+});
+window.__LANTERN_WAKE_GAME__={
+  getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='playing')=>resetCampaign(mode),getLevels:()=>LEVELS.map(item=>({name:item.name,speed:item.speed,steer:item.steer,current:item.current,lanterns:item.lanterns.map(pair=>[...pair]),logs:item.logs.map(log=>[...log])})),
+  setCrossing:index=>{game.started=true;loadCrossing(clamp(Math.floor(Number(index)||0),0,LEVELS.length-1),'playing')},setFerry:(x,y)=>{if(game.mode!=='playing')return false;game.ferry.x=clamp(Number(x)||FERRY_X,FERRY_X,DOCK_X-1);game.ferry.y=clamp(Number(y)||310,RIVER_TOP+29,RIVER_BOTTOM-29);syncUi();render();return true},
+  setIntent:value=>setIntent(value,'qa'),collectAll:()=>{if(game.mode!=='playing')return false;game.lanternStates.forEach((collected,index)=>{if(!collected){game.lanternStates[index]=true;game.lanterns++}});game.lastAction={type:'qa-collect-all'};syncUi();render();return true},
+  finish:()=>{if(game.mode!=='playing')return false;game.ferry.x=DOCK_X;finishCrossing();return game.mode},hitLog:index=>{if(game.mode!=='playing')return false;const log=level().logs[clamp(Math.floor(Number(index)||0),0,level().logs.length-1)];game.invulnerableMs=0;game.ferry.x=log[0]+log[2]/2;game.ferry.y=log[1]+log[3]/2;collideWithLogs();syncUi();render();return game.hull},pause:togglePause,tick:ms=>window.advanceTime(ms),setTheme:index=>{game.themeIndex=((Math.floor(Number(index)||0)%THEMES.length)+THEMES.length)%THEMES.length;syncUi();render()}
+};
+function frame(now){const delta=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)advanceSimulation(delta);syncUi();render();requestAnimationFrame(frame)}
+mountGameFeedback({gameSlug:'lanternwake',gameName:'Lantern Wake'});el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());loadCrossing(0,'menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>
