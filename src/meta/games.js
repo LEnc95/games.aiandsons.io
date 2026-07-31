@@ -175,6 +175,7 @@ const BASE_GAMES = [
   { slug:'starwheel',      name:'Starwheel',             emoji:'\u2699\uFE0F', scoreHint:'locks', url:'/starwheel', desc:'Rotate coupled rings, align every starlit gate, and open five intricate celestial locks before your turns run out.', earnsCoins:true },
   { slug:'firebreakcommand', name:'Firebreak Command',   emoji:'\u{1F525}', scoreHint:'cabins', url:'/firebreakcommand', desc:'Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones.', earnsCoins:true },
   { slug:'sumshade',       name:'Sumshade',              emoji:'\u{1F9EE}', scoreHint:'boards', url:'/sumshade', desc:'Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards.', earnsCoins:true },
+  { slug:'lanternwake',    name:'Lantern Wake',          emoji:'\u{1F3EE}', scoreHint:'lanterns', url:'/lanternwake', desc:'Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -206,7 +207,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
-    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline', 'meteorminer',
+    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline', 'meteorminer', 'lanternwake',
   ]),
   word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder', 'minicrossword']),
   cards: new Set([

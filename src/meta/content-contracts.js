@@ -133,6 +133,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'paper-theme', kind: 'palette', tokens: Object.freeze(['background', 'board', 'shaded', 'cross', 'clue', 'cursor']) }),
     ]),
   }),
+  lanternwake: Object.freeze({
+    releasedAt: '2026-07-31',
+    outcomes: Object.freeze({
+      lanterns: Object.freeze({ min: 0, max: 30, direction: 'higher' }),
+      crossings: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      collisions: Object.freeze({ min: 0, max: 15, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'wake-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'bank', 'foam', 'lantern', 'hull', 'trim', 'driftwood']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

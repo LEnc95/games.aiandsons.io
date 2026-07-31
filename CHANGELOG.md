@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Added Starwheel, a five-lock concentric-ring puzzle with coupled rotations, bounded outcomes, and rendered dial themes.
 - Added Firebreak Command, a five-zone wildfire planning game with deterministic spread, bounded outcomes, and rendered terrain themes.
 - Added Sumshade, a five-board weighted-sum logic game with unique puzzles, bounded outcomes, and rendered paper themes.
+- Added Lantern Wake, a five-crossing current-steering game with collectible lanterns, bounded outcomes, and rendered wake themes.
 
 ## [1.13.0] - 2026-07-26
 ### Added

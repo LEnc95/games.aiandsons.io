@@ -189,5 +189,6 @@
 - game/starwheel
 - game/firebreakcommand
 - game/sumshade
+- game/lanternwake
 
 Generated from `src/meta/feedback.js`.
