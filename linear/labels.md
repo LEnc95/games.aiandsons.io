@@ -190,5 +190,6 @@
 - game/firebreakcommand
 - game/sumshade
 - game/lanternwake
+- game/acornascent
 
 Generated from `src/meta/feedback.js`.

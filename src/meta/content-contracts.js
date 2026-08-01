@@ -144,6 +144,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'wake-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'bank', 'foam', 'lantern', 'hull', 'trim', 'driftwood']) }),
     ]),
   }),
+  acornascent: Object.freeze({
+    releasedAt: '2026-08-01',
+    outcomes: Object.freeze({
+      acorns: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      leaps: Object.freeze({ min: 0, max: 100, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'canopy-theme', kind: 'palette', tokens: Object.freeze(['sky', 'leaf', 'leaf2', 'wood', 'squirrel', 'acorn', 'nest', 'trail']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
