@@ -176,6 +176,7 @@ const BASE_GAMES = [
   { slug:'firebreakcommand', name:'Firebreak Command',   emoji:'\u{1F525}', scoreHint:'cabins', url:'/firebreakcommand', desc:'Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones.', earnsCoins:true },
   { slug:'sumshade',       name:'Sumshade',              emoji:'\u{1F9EE}', scoreHint:'boards', url:'/sumshade', desc:'Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards.', earnsCoins:true },
   { slug:'lanternwake',    name:'Lantern Wake',          emoji:'\u{1F3EE}', scoreHint:'lanterns', url:'/lanternwake', desc:'Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings.', earnsCoins:true },
+  { slug:'acornascent',    name:'Acorn Ascent',          emoji:'\u{1F43F}\uFE0F', scoreHint:'acorns', url:'/acornascent', desc:'Tune each launch arc, gather airborne acorns, and land a nimble squirrel on rising branches across five canopy groves.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -207,7 +208,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
-    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline', 'meteorminer', 'lanternwake',
+    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline', 'meteorminer', 'lanternwake', 'acornascent',
   ]),
   word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder', 'minicrossword']),
   cards: new Set([
