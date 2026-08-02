@@ -191,5 +191,6 @@
 - game/sumshade
 - game/lanternwake
 - game/acornascent
+- game/moonscale
 
 Generated from `src/meta/feedback.js`.

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Moonscale | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#0e1836;color:#f8f4dd;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#bec9ea;font-weight:650}
+    .home{color:#171a3b;font-weight:850;text-decoration:none;border:2px solid #ffe993;border-radius:999px;padding:8px 13px;background:#e8c85b}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#182653;border:2px solid #455894;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #070c20}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#aebbe3}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #5369aa;border-radius:22px;overflow:hidden;background:#273166;box-shadow:0 10px 0 #070c20}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #ffe783}
+    .stage:fullscreen{display:grid;place-items:center;background:#050815}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 45 / 31));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #4b5f9d;border-radius:13px;background:#1c2d61;color:#f3f5ff;font:800 clamp(.61rem,1.45vw,.84rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #070c20;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #070c20}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #070c20;background:#e6c453;color:#171a3b;border-color:#ffeb94}
+    button.primary{background:#d8af3f;border-color:#ffe690;color:#161a3c}
+    button.danger{background:#9d3d60;border-color:#e9819c;color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    #feedback{grid-column:span 2}
+    .help{background:#182653;border:2px solid #455894;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#d8def4}
+    .help b{color:#ffe783}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.5rem}.stat strong{font-size:.68rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #070c20}.controls{grid-template-columns:repeat(3,1fr);gap:6px}#feedback{grid-column:span 2}button{min-height:42px;padding:7px 3px}.help{font-size:.68rem;padding:8px 10px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(3,7,15,.96)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Moonscale | AI and Sons Games">
+  <meta property="og:description" content="Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/moonscale">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/moonscale.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Moonscale | AI and Sons Games">
+  <meta name="twitter:description" content="Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/moonscale.png">
+  <link rel="canonical" href="https://games.aiandsons.io/moonscale">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Moonscale","description":"Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/moonscale","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Moonscale</h1><small>Place every moonstone. Match the torque. Restore the sky.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Moonscale status">
+    <div class="stat"><span>Sky</span><strong id="sky">1 / 5</strong></div>
+    <div class="stat"><span>Left</span><strong id="leftTorque">0</strong></div>
+    <div class="stat"><span>Right</span><strong id="rightTorque">0</strong></div>
+    <div class="stat"><span>Checks</span><strong id="checksLeft">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="Moonscale celestial balance puzzle"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="focusPrev">Focus ◀</button>
+    <button id="focusNext">Focus ▶</button>
+    <button id="activate" class="primary">Pick / Place</button>
+    <button id="undo">Undo</button>
+    <button id="hint">Hint</button>
+    <button id="check" class="primary">Start</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Midnight</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Goal:</b> place every numbered moonstone on a glowing notch so <b>weight × distance</b> matches on both sides. Tap a stone then a notch, or use <b>Arrows</b> and <b>Space</b>. A third wrong check ends the reading. <b>U</b> undoes, <b>H</b> hints, <b>C</b> checks, <b>P</b> pauses, <b>R</b> restarts, <b>T</b> changes the scale palette, and <b>F</b> toggles fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={sky:document.querySelector('#sky'),leftTorque:document.querySelector('#leftTorque'),rightTorque:document.querySelector('#rightTorque'),checksLeft:document.querySelector('#checksLeft'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),focusPrev:document.querySelector('#focusPrev'),focusNext:document.querySelector('#focusNext'),activate:document.querySelector('#activate'),undo:document.querySelector('#undo'),hint:document.querySelector('#hint'),check:document.querySelector('#check'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=900,HEIGHT=620,MAX_CHECKS=3,SLOT_DISTANCES=[4,3,2,1,1,2,3,4];
+const THEMES=[
+  {name:'Midnight',sky:'#11183f',horizon:'#344482',star:'#ffe994',beam:'#d5b65b',stand:'#6577b3',moonstone:'#dce8ff',stoneEdge:'#7188bc',glow:'#83e8ff',accent:'#ffe783',ink:'#f7f1d8',panel:'#10183a',danger:'#ff7898'},
+  {name:'Aurora',sky:'#123a4c',horizon:'#276a68',star:'#fff0a8',beam:'#83d6bd',stand:'#4b9d91',moonstone:'#d8fff5',stoneEdge:'#51a69b',glow:'#f5a8ff',accent:'#ffd47b',ink:'#f5fff8',panel:'#0d323d',danger:'#ff7f91'},
+  {name:'Dawn',sky:'#6f426f',horizon:'#d57878',star:'#fff0bc',beam:'#f4c56e',stand:'#a35370',moonstone:'#fff0db',stoneEdge:'#bf7180',glow:'#9ef4ff',accent:'#fff1a4',ink:'#2e1932',panel:'#54304f',danger:'#8f2148'}
+];
+const LEVELS=[
+  {name:'Crescent Lesson',pieces:[1,2,3,4],solution:[0,6,5,2]},
+  {name:'Tidal Measure',pieces:[1,2,2,3,4],solution:[0,1,4,7,3]},
+  {name:'Halo Equation',pieces:[1,2,3,3,4,5],solution:[0,1,2,3,4,6]},
+  {name:'Eclipse Ledger',pieces:[1,2,2,3,4,5,6],solution:[0,1,4,3,5,6,2]},
+  {name:'Zenith Accord',pieces:[1,2,3,4,5,6,7,8],solution:[0,3,5,6,7,4,2,1]}
+];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const level=()=>LEVELS[game.levelIndex],theme=()=>THEMES[game.themeIndex];
+const game={mode:'menu',resumeMode:'playing',started:false,levelIndex:0,placements:[],selectedPiece:null,focusIndex:0,history:[],checksRemaining:MAX_CHECKS,elapsedMs:0,moonstones:0,skies:0,checks:0,themeIndex:0,status:'Press Enter or Start Reading to balance the first sky.',lastAction:{type:'ready'},reported:false,rewarded:false,shakeMs:0};
+let lastFrame=performance.now(),manualUntil=0;
+
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function currentMetrics(){return{moonstones:game.moonstones,skies:game.skies,checks:game.checks}}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'moonscale',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function snapshot(){return{placements:[...game.placements],selectedPiece:game.selectedPiece,focusIndex:game.focusIndex}}
+function restore(state){game.placements=[...state.placements];game.selectedPiece=state.selectedPiece;game.focusIndex=state.focusIndex}
+function pushHistory(){game.history.push(snapshot());if(game.history.length>50)game.history.shift()}
+function totals(){let left=0,right=0;game.placements.forEach((slot,piece)=>{if(slot===null)return;const torque=level().pieces[piece]*SLOT_DISTANCES[slot];if(slot<4)left+=torque;else right+=torque});return{left,right}}
+function placedCount(){return game.placements.filter(slot=>slot!==null).length}
+function occupant(slot){return game.placements.findIndex(value=>value===slot)}
+function itemCount(){return level().pieces.length+8}
+function loadSky(index,mode='playing'){
+  game.levelIndex=index;game.placements=Array(level().pieces.length).fill(null);game.selectedPiece=null;game.focusIndex=0;game.history=[];game.checksRemaining=MAX_CHECKS;game.mode=mode;game.resumeMode='playing';game.shakeMs=0;
+  game.status=mode==='menu'?'Press Enter or Start Reading to balance the first sky.':`${level().name}: place every moonstone, then check the scale.`;game.lastAction={type:mode==='menu'?'ready':'sky-start',sky:index+1};syncUi();render();
+}
+function resetCampaign(mode='menu'){
+  game.started=mode!=='menu';game.elapsedMs=0;game.moonstones=0;game.skies=0;game.checks=0;game.reported=false;game.rewarded=false;loadSky(0,mode);
+}
+function startOrContinue(){
+  if(game.mode==='menu'){resetCampaign('playing');canvas.focus();announce('Crescent Lesson begun. Place every moonstone.');return}
+  if(game.mode==='sky-complete'){loadSky(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} begun.`);return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Moonscale reading has begun.')}
+}
+function restart(){
+  if(game.started&&['playing','paused','sky-complete'].includes(game.mode))report('abandoned');resetCampaign('playing');game.status='Reading restarted at Crescent Lesson.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status);
+}
+function focusItem(delta){
+  if(game.mode!=='playing')return false;game.focusIndex=(game.focusIndex+delta+itemCount())%itemCount();const count=level().pieces.length;if(game.focusIndex<count){const slot=game.placements[game.focusIndex];game.status=`Focused moonstone ${game.focusIndex+1}, weight ${level().pieces[game.focusIndex]}${slot===null?', in tray':`, on ${slot<4?'left':'right'} distance ${SLOT_DISTANCES[slot]}`}.`}else{const slot=game.focusIndex-count,piece=occupant(slot);game.status=`Focused ${slot<4?'left':'right'} distance ${SLOT_DISTANCES[slot]}${piece>=0?`, holding moonstone ${piece+1}`:', empty'}.`;}game.lastAction={type:'focus',index:game.focusIndex};syncUi();render();return true;
+}
+function selectPiece(piece,source='pointer'){
+  if(game.mode!=='playing'||piece<0||piece>=level().pieces.length)return false;pushHistory();const priorSlot=game.placements[piece];game.placements[piece]=null;game.selectedPiece=piece;game.focusIndex=piece;game.status=`Moonstone ${piece+1}, weight ${level().pieces[piece]}, selected${priorSlot===null?' from the tray':' from the beam'}. Choose a notch.`;game.lastAction={type:'select',piece:piece+1,weight:level().pieces[piece],source};syncUi();render();announce(game.status);return true;
+}
+function placeSelected(slot,source='pointer'){
+  if(game.mode!=='playing'||game.selectedPiece===null||slot<0||slot>7)return false;pushHistory();const piece=game.selectedPiece,displaced=occupant(slot);if(displaced>=0&&displaced!==piece)game.placements[displaced]=null;game.placements[piece]=slot;game.selectedPiece=null;game.focusIndex=level().pieces.length+slot;const side=slot<4?'left':'right',distance=SLOT_DISTANCES[slot],torque=level().pieces[piece]*distance;game.status=`Placed weight ${level().pieces[piece]} at ${side} distance ${distance}: ${torque} torque${displaced>=0?'. The previous stone returned to the tray.':'.'}`;game.lastAction={type:'place',piece:piece+1,slot,side,distance,torque,source,displaced:displaced>=0?displaced+1:null};syncUi();render();announce(game.status);return true;
+}
+function activateFocus(source='keyboard'){
+  if(game.mode!=='playing')return false;const count=level().pieces.length;if(game.focusIndex<count)return selectPiece(game.focusIndex,source);const slot=game.focusIndex-count;if(game.selectedPiece!==null)return placeSelected(slot,source);const piece=occupant(slot);if(piece>=0)return selectPiece(piece,source);game.status='That notch is empty. Select a moonstone first.';game.lastAction={type:'empty-slot',slot};syncUi();render();return false;
+}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;const previous=game.history.pop();restore(previous);game.status='Last moonstone move undone.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true}
+function hint(){
+  if(game.mode!=='playing')return false;const piece=level().solution.findIndex((slot,index)=>game.placements[index]!==slot);if(piece<0){game.status='Every moonstone already matches the sky chart. Check the scale.';game.lastAction={type:'hint-complete'};syncUi();render();return false}const slot=level().solution[piece];pushHistory();const displaced=occupant(slot);if(displaced>=0&&displaced!==piece)game.placements[displaced]=null;game.placements[piece]=slot;game.selectedPiece=null;game.focusIndex=level().pieces.length+slot;game.status=`Hint placed weight ${level().pieces[piece]} at ${slot<4?'left':'right'} distance ${SLOT_DISTANCES[slot]}.`;game.lastAction={type:'hint',piece:piece+1,slot};syncUi();render();announce(game.status);return true;
+}
+function failCheck(reason){
+  game.checksRemaining--;game.shakeMs=420;const {left,right}=totals();game.lastAction={type:'check-failed',reason,leftTorque:left,rightTorque:right,checksRemaining:game.checksRemaining};if(game.checksRemaining<=0){game.mode='lost';game.status='The third reading failed. The sky drifted out of balance.';report('lost');announce('Moonscale reading ended after three failed checks.')}else{game.status=reason==='incomplete'?`Every moonstone must be placed. ${game.checksRemaining} checks remain.`:`Torque differs by ${Math.abs(left-right)}. ${game.checksRemaining} checks remain.`;announce(game.status)}syncUi();render();return false;
+}
+function checkBalance(){
+  if(game.mode==='menu'){startOrContinue();return false}if(game.mode==='sky-complete'){startOrContinue();return false}if(['won','lost'].includes(game.mode)){startOrContinue();return false}if(game.mode!=='playing')return false;game.checks++;if(placedCount()!==level().pieces.length)return failCheck('incomplete');const {left,right}=totals();if(left!==right)return failCheck('unbalanced');game.moonstones+=level().pieces.length;game.skies++;
+  if(game.levelIndex===LEVELS.length-1){game.mode='won';game.status='All five skies are balanced beneath the restored moon.';game.lastAction={type:'campaign-complete',leftTorque:left,rightTorque:right,metrics:currentMetrics()};if(!game.rewarded){addCoins(50);game.rewarded=true}report('completed');announce('Moonscale complete. Fifty coins earned.');}
+  else{game.mode='sky-complete';game.status=`${level().name} balanced at ${left} torque per side.`;game.lastAction={type:'sky-complete',sky:game.levelIndex+1,leftTorque:left,rightTorque:right,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`)}syncUi();render();return true;
+}
+function togglePause(){
+  if(game.mode==='playing'){game.resumeMode='playing';game.mode='paused';game.status='The celestial balance and reading clock are frozen.';game.lastAction={type:'pause'};announce(game.status)}else if(game.mode==='paused'){game.mode=game.resumeMode;game.status='Reading resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render();
+}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} scale palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-unavailable'};syncUi();render()}}
+function updateStep(ms){if(game.mode==='playing')game.elapsedMs+=ms;if(game.shakeMs>0)game.shakeMs=Math.max(0,game.shakeMs-ms)}
+function advanceSimulation(ms){let remaining=Math.max(0,Number(ms)||0);while(remaining>0){const step=Math.min(1000/60,remaining);updateStep(step);remaining-=step}}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function slotPosition(slot,angle){const distance=SLOT_DISTANCES[slot],side=slot<4?-1:1,x=450+side*distance*76,y=316+Math.tan(angle)*(x-450);return{x,y}}
+function piecePosition(piece){const columns=Math.min(8,level().pieces.length),gap=86,start=450-(columns-1)*gap/2;return{x:start+piece*gap,y:530}}
+function beamAngle(){const {left,right}=totals();return clamp((right-left)/55,-1,1)*.13}
+function drawBackground(colors){
+  const gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,colors.sky);gradient.addColorStop(1,colors.horizon);ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  for(let i=0;i<70;i++){const x=(i*137+game.levelIndex*53)%WIDTH,y=(i*83+game.levelIndex*29)%360,r=i%9===0?2.2:1.2,pulse=.55+.4*Math.sin(game.elapsedMs/700+i);ctx.globalAlpha=pulse;ctx.fillStyle=i%7===0?colors.glow:colors.star;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+  ctx.fillStyle=colors.horizon;ctx.globalAlpha=.44;ctx.beginPath();ctx.moveTo(0,430);for(let x=0;x<=WIDTH;x+=90)ctx.lineTo(x,405+Math.sin(x/120+game.levelIndex)*22);ctx.lineTo(WIDTH,HEIGHT);ctx.lineTo(0,HEIGHT);ctx.fill();ctx.globalAlpha=1;
+}
+function drawScale(colors){
+  const angle=beamAngle(),shake=game.shakeMs>0?Math.sin(game.shakeMs*.16)*5:0;ctx.save();ctx.translate(shake,0);
+  ctx.fillStyle=colors.stand;ctx.beginPath();ctx.moveTo(420,458);ctx.lineTo(480,458);ctx.lineTo(462,325);ctx.lineTo(438,325);ctx.closePath();ctx.fill();ctx.fillStyle=colors.accent;ctx.beginPath();ctx.arc(450,322,19,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.translate(450,316);ctx.rotate(angle);ctx.shadowColor=colors.glow;ctx.shadowBlur=14;ctx.fillStyle=colors.beam;roundedRect(-350,-9,700,18,9);ctx.fill();ctx.shadowBlur=0;ctx.restore();
+  for(let slot=0;slot<8;slot++){const point=slotPosition(slot,angle),focused=game.focusIndex===level().pieces.length+slot,occupied=occupant(slot)>=0;ctx.save();ctx.translate(point.x,point.y);ctx.strokeStyle=focused?colors.accent:colors.glow;ctx.lineWidth=focused?5:3;ctx.globalAlpha=occupied?.42:1;ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=colors.ink;ctx.font='850 13px system-ui';ctx.textAlign='center';ctx.fillText(String(SLOT_DISTANCES[slot]),0,34);ctx.restore()}
+  const total=totals();ctx.fillStyle=colors.ink;ctx.font='900 17px system-ui';ctx.textAlign='center';ctx.fillText(`LEFT ${total.left}`,175,250);ctx.fillText(`RIGHT ${total.right}`,725,250);ctx.textAlign='left';ctx.restore();
+}
+function drawStone(piece,x,y,selected=false,placed=false){
+  const colors=theme(),weight=level().pieces[piece],focused=game.focusIndex===piece;ctx.save();ctx.translate(x,y);if(selected){ctx.shadowColor=colors.accent;ctx.shadowBlur=25}else if(focused){ctx.shadowColor=colors.glow;ctx.shadowBlur=18}ctx.fillStyle=selected?colors.accent:colors.moonstone;ctx.strokeStyle=focused||selected?colors.accent:colors.stoneEdge;ctx.lineWidth=focused||selected?5:3;ctx.beginPath();ctx.arc(0,0,placed?22:25,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle=theme().name==='Dawn'?colors.ink:'#172044';ctx.font=`900 ${placed?18:21}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(weight),0,1);ctx.textBaseline='alphabetic';ctx.restore();
+}
+function drawPieces(){
+  const angle=beamAngle();level().pieces.forEach((weight,piece)=>{const slot=game.placements[piece];if(slot===null){const point=piecePosition(piece);drawStone(piece,point.x,point.y,game.selectedPiece===piece,false)}else{const point=slotPosition(slot,angle);drawStone(piece,point.x,point.y-29,false,true)}});
+  ctx.fillStyle=theme().ink;ctx.font='800 14px system-ui';ctx.textAlign='center';ctx.fillText(game.selectedPiece===null?'MOONSTONE TRAY':'STONE SELECTED — CHOOSE A NOTCH',450,584);ctx.textAlign='left';
+}
+function overlay(title,lines,color){ctx.fillStyle='rgba(7,10,28,.93)';roundedRect(150,145,600,330,24);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();ctx.textAlign='center';ctx.fillStyle=color;ctx.font='900 40px system-ui';ctx.fillText(title,450,215);ctx.fillStyle='#f8f3de';ctx.font='700 19px system-ui';lines.forEach((line,index)=>ctx.fillText(line,450,278+index*40));ctx.textAlign='left'}
+function render(){
+  const colors=theme();drawBackground(colors);drawScale(colors);drawPieces();ctx.fillStyle=colors.ink;ctx.font='900 21px system-ui';ctx.fillText(level().name,30,42);ctx.textAlign='right';ctx.fillText(`${placedCount()} / ${level().pieces.length} PLACED`,870,42);ctx.textAlign='left';
+  if(game.mode==='menu')overlay('Moonscale',['Place each numbered moonstone on one notch.','Torque equals weight multiplied by distance.','Match both sides before the third failed check.'],colors.accent);
+  if(game.mode==='paused')overlay('Orbit Held',['Moonstones, beam, and reading clock are frozen.','Press P or Pause to continue.'],colors.glow);
+  if(game.mode==='sky-complete')overlay('Sky Balanced',[`${level().name} holds at ${totals().left} torque per side.`,`${game.checksRemaining} check${game.checksRemaining===1?'':'s'} remained.`,`Press Enter for sky ${game.levelIndex+2}.`],colors.accent);
+  if(game.mode==='won')overlay('Moon Restored',[`${game.moonstones} moonstones balanced across five skies.`,`${game.checks} total checks completed the reading.`,'50 coins earned.'],colors.accent);
+  if(game.mode==='lost')overlay('Reading Ended',['Three checks found the scale out of balance.',`${game.moonstones} moonstones and ${game.skies} skies restored.`,'Press Enter or Restart to read again.'],colors.danger);
+}
+function syncUi(){
+  const total=totals();el.sky.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.leftTorque.textContent=String(total.left);el.rightTorque.textContent=String(total.right);el.checksLeft.textContent=`${game.checksRemaining} / ${MAX_CHECKS}`;el.time.textContent=formatTime(game.elapsedMs);const playing=game.mode==='playing';for(const button of [el.focusPrev,el.focusNext,el.activate,el.undo,el.hint])button.disabled=!playing;el.pause.disabled=!['playing','paused'].includes(game.mode);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';el.check.disabled=game.mode==='paused';el.check.textContent=game.mode==='menu'?'Start':game.mode==='sky-complete'?'Next sky':['won','lost'].includes(game.mode)?'Play again':'Check scale';el.theme.textContent=`Theme: ${theme().name}`;
+}
+function canvasPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function pointerHit(point){
+  for(let piece=0;piece<level().pieces.length;piece++){const slot=game.placements[piece],position=slot===null?piecePosition(piece):slotPosition(slot,beamAngle()),x=position.x,y=slot===null?position.y:position.y-29;if(Math.hypot(point.x-x,point.y-y)<=32)return{type:'piece',piece}}
+  for(let slot=0;slot<8;slot++){const position=slotPosition(slot,beamAngle());if(Math.hypot(point.x-position.x,point.y-position.y)<=30)return{type:'slot',slot}}
+  return null;
+}
+canvas.addEventListener('pointerdown',event=>{if(game.mode!=='playing')return;const hit=pointerHit(canvasPoint(event));if(hit?.type==='piece')selectPiece(hit.piece,event.pointerType||'pointer');else if(hit?.type==='slot'){game.focusIndex=level().pieces.length+hit.slot;if(game.selectedPiece!==null)placeSelected(hit.slot,event.pointerType||'pointer');else activateFocus(event.pointerType||'pointer')}canvas.focus();event.preventDefault()});
+el.focusPrev.addEventListener('click',()=>focusItem(-1));el.focusNext.addEventListener('click',()=>focusItem(1));el.activate.addEventListener('click',()=>activateFocus('button'));el.undo.addEventListener('click',undo);el.hint.addEventListener('click',hint);el.check.addEventListener('click',checkBalance);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);
+window.addEventListener('keydown',event=>{
+  const target=event.target;if(target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;const key=event.key.toLowerCase();
+  if(key==='enter'&&['menu','sky-complete','won','lost'].includes(game.mode)){event.preventDefault();startOrContinue();return}if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}if(key==='p'){event.preventDefault();togglePause();return}if(key==='r'){event.preventDefault();restart();return}if(key==='t'){event.preventDefault();cycleTheme();return}if(key==='f'){event.preventDefault();toggleFullscreen();return}if(key==='u'){event.preventDefault();undo();return}if(key==='h'){event.preventDefault();hint();return}if(key==='c'){event.preventDefault();checkBalance();return}if(key===' '){event.preventDefault();activateFocus('keyboard');return}if(key==='arrowleft'||key==='a'){event.preventDefault();focusItem(-1);return}if(key==='arrowright'||key==='d'){event.preventDefault();focusItem(1);return}if(key==='arrowup'||key==='w'){event.preventDefault();focusItem(-4);return}if(key==='arrowdown'||key==='s'){event.preventDefault();focusItem(4)}
+});
+document.addEventListener('fullscreenchange',()=>{canvas.focus();render()});window.addEventListener('resize',render);window.addEventListener('pagehide',()=>{if(game.started&&['playing','paused','sky-complete'].includes(game.mode))report('abandoned')});
+window.advanceTime=ms=>{const amount=Math.max(0,Math.min(30000,Number(ms)||0));manualUntil=performance.now()+180;advanceSimulation(amount);syncUi();render()};
+window.render_game_to_text=()=>JSON.stringify({
+  coordinateSystem:'Canvas origin is top-left with x right and y down. The fulcrum is at x 450. Left slots are indices 0-3 at distances 4,3,2,1; right slots are 4-7 at distances 1,2,3,4.',mode:game.mode,resumeMode:game.resumeMode,elapsedMs:Math.round(game.elapsedMs),
+  sky:{index:game.levelIndex+1,total:LEVELS.length,name:level().name},scale:{leftTorque:totals().left,rightTorque:totals().right,difference:totals().right-totals().left,beamAngle:Number(beamAngle().toFixed(4)),balanced:placedCount()===level().pieces.length&&totals().left===totals().right},
+  moonstones:level().pieces.map((weight,index)=>({id:index+1,weight,slot:game.placements[index],side:game.placements[index]===null?'tray':game.placements[index]<4?'left':'right',distance:game.placements[index]===null?0:SLOT_DISTANCES[game.placements[index]],torque:game.placements[index]===null?0:weight*SLOT_DISTANCES[game.placements[index]],selected:game.selectedPiece===index,focused:game.focusIndex===index})),
+  slots:SLOT_DISTANCES.map((distance,index)=>({index,side:index<4?'left':'right',distance,occupant:occupant(index)>=0?occupant(index)+1:null,focused:game.focusIndex===level().pieces.length+index})),checksRemaining:game.checksRemaining,placed:placedCount(),campaign:{moonstones:game.moonstones,skies:game.skies,checks:game.checks,totalSkies:LEVELS.length},theme:theme().name,status:game.status,lastAction:game.lastAction,controls:{focus:'Arrow keys or A/D/W/S',pickPlace:'Space or tap stone/notch',undo:'U',hint:'H',check:'C',pause:'P',restart:'R',theme:'T',fullscreen:'F',continue:'Enter'}
+});
+window.__MOONSCALE_GAME__={
+  getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='playing')=>resetCampaign(mode),getLevels:()=>LEVELS.map(item=>({name:item.name,pieces:[...item.pieces],solution:[...item.solution]})),setSky:index=>{game.started=true;loadSky(clamp(Math.floor(Number(index)||0),0,LEVELS.length-1),'playing')},selectPiece:index=>selectPiece(clamp(Math.floor(Number(index)||0),0,level().pieces.length-1),'qa'),place:(piece,slot)=>{const index=clamp(Math.floor(Number(piece)||0),0,level().pieces.length-1);if(game.placements[index]!==null)game.placements[index]=null;game.selectedPiece=index;return placeSelected(clamp(Math.floor(Number(slot)||0),0,7),'qa')},applySolution:()=>{level().solution.forEach((slot,piece)=>{game.placements[piece]=slot});game.selectedPiece=null;game.lastAction={type:'qa-solution'};syncUi();render();return totals()},check:checkBalance,failCheck:()=>{if(game.mode!=='playing')return false;game.checks++;return failCheck('qa-unbalanced')},pause:togglePause,tick:ms=>window.advanceTime(ms),setTheme:index=>{game.themeIndex=((Math.floor(Number(index)||0)%THEMES.length)+THEMES.length)%THEMES.length;syncUi();render()},start:startOrContinue
+};
+function frame(now){const delta=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)advanceSimulation(delta);syncUi();render();requestAnimationFrame(frame)}
+mountGameFeedback({gameSlug:'moonscale',gameName:'Moonscale'});el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());loadSky(0,'menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>
