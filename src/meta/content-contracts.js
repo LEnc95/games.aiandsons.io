@@ -155,6 +155,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'canopy-theme', kind: 'palette', tokens: Object.freeze(['sky', 'leaf', 'leaf2', 'wood', 'squirrel', 'acorn', 'nest', 'trail']) }),
     ]),
   }),
+  moonscale: Object.freeze({
+    releasedAt: '2026-08-02',
+    outcomes: Object.freeze({
+      moonstones: Object.freeze({ min: 0, max: 40, direction: 'higher' }),
+      skies: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      checks: Object.freeze({ min: 0, max: 30, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'scale-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'beam', 'stand', 'moonstone', 'glow', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
