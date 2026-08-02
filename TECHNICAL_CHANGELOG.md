@@ -2,6 +2,24 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.14.0 — 2026-08-02
+
+- Release week: 2026-W31
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- a1a12c2 Add Moonscale daily game (#242)
+- dc263bb Add Acorn Ascent daily game (#241)
+- 6d2e2fc Add Lantern Wake daily game (#240)
+- 3d65f7c Add Sumshade daily game (#239)
+- a5f3f31 Add Firebreak Command daily game (#238)
+- 47f1a79 Add Starwheel daily game (#237)
+- ba56c73 Add Pollen Patrol daily game (#235)
+- ffbfc77 Prepare weekly release 1.13.0 (#234)
+- 0a3464e Add Ripple Shepherd daily game (#233)
+
 ## 1.13.0 — 2026-07-26
 
 - Release week: 2026-W30
