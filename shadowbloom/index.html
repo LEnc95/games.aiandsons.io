@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Shadow Bloom | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#101733;color:#fff9e8;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#c9cfeb;font-weight:650}
+    .home{color:#17142d;font-weight:850;text-decoration:none;border:2px solid #ffe9a6;border-radius:999px;padding:8px 13px;background:#e5bd54}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#1b2550;border:2px solid #52639a;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #070a1b}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#b8c1e5}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #6675ae;border-radius:22px;overflow:hidden;background:#273466;box-shadow:0 10px 0 #070a1b}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #ffe582}
+    .stage:fullscreen{display:grid;place-items:center;background:#050713}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 45 / 31));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #56669b;border-radius:13px;background:#202d5c;color:#f6f7ff;font:800 clamp(.61rem,1.45vw,.84rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #070a1b;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #070a1b}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #070a1b;background:#e4b94f;color:#17142d;border-color:#ffe79b}
+    button.primary{background:#d9a841;border-color:#ffe394;color:#17142d}
+    button.danger{background:#9e3f64;border-color:#ee8ba7;color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    #feedback{grid-column:span 2}
+    .help{background:#1b2550;border:2px solid #52639a;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#dce1f4}
+    .help b{color:#ffe582}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.5rem}.stat strong{font-size:.68rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #070a1b}.controls{grid-template-columns:repeat(3,1fr);gap:6px}#feedback{grid-column:span 2}button{min-height:42px;padding:7px 3px}.help{font-size:.68rem;padding:8px 10px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(3,6,15,.97)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Shadow Bloom | AI and Sons Games">
+  <meta property="og:description" content="Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/shadowbloom">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/shadowbloom.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shadow Bloom | AI and Sons Games">
+  <meta name="twitter:description" content="Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/shadowbloom.png">
+  <link rel="canonical" href="https://games.aiandsons.io/shadowbloom">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Shadow Bloom","description":"Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/shadowbloom","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Shadow Bloom</h1><small>Cast moonlit shadows. Wake every night garden.</small></div>
+    <a class="home" href="/">All Games</a>
+  </header>
+  <section class="stats" aria-label="Game status">
+    <div class="stat"><span>Garden</span><strong id="garden">1 / 5</strong></div>
+    <div class="stat"><span>Night blooms</span><strong id="nightBlooms">0 / 0</strong></div>
+    <div class="stat"><span>Sun safe</span><strong id="sunSafe">0 / 0</strong></div>
+    <div class="stat"><span>Checks</span><strong id="checksLeft">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00.0</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="Shadow Bloom garden board. Use arrow keys to choose a moon angle and Space to cast or lift its shadow."></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="dirPrev" type="button">◀ Angle</button>
+    <button id="dirNext" type="button">Angle ▶</button>
+    <button id="cast" class="primary" type="button">Cast shadow</button>
+    <button id="undo" type="button">Undo (U)</button>
+    <button id="hint" type="button">Hint (H)</button>
+    <button id="check" class="primary" type="button">Start</button>
+    <button id="pause" type="button">Pause (P)</button>
+    <button id="restart" class="danger" type="button">Restart (R)</button>
+    <button id="theme" type="button">Theme</button>
+    <button id="fullscreen" type="button">Fullscreen (F)</button>
+    <button id="feedback" type="button">Send feedback</button>
+  </section>
+  <div class="help"><b>Goal:</b> activate moon angles so their statue shadows cover every blue night bloom while every gold sun blossom stays bright. Use <b>←/→ + Space</b>, tap moons, or the buttons. <b>C</b> checks, <b>U</b> undoes, <b>H</b> hints, <b>P</b> pauses, and <b>F</b> toggles fullscreen.</div>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={garden:document.querySelector('#garden'),nightBlooms:document.querySelector('#nightBlooms'),sunSafe:document.querySelector('#sunSafe'),checksLeft:document.querySelector('#checksLeft'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),dirPrev:document.querySelector('#dirPrev'),dirNext:document.querySelector('#dirNext'),cast:document.querySelector('#cast'),undo:document.querySelector('#undo'),hint:document.querySelector('#hint'),check:document.querySelector('#check'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=900,HEIGHT=620,GRID=7,CELL=60,GRID_X=240,GRID_Y=94,MAX_CHECKS=3;
+const DIRECTIONS=Object.freeze([
+  Object.freeze({name:'North',short:'N',shadow:[0,1],moon:[450,48]}),
+  Object.freeze({name:'Northeast',short:'NE',shadow:[-1,1],moon:[735,102]}),
+  Object.freeze({name:'East',short:'E',shadow:[-1,0],moon:[790,304]}),
+  Object.freeze({name:'Southeast',short:'SE',shadow:[-1,-1],moon:[735,520]}),
+  Object.freeze({name:'South',short:'S',shadow:[0,-1],moon:[450,574]}),
+  Object.freeze({name:'Southwest',short:'SW',shadow:[1,-1],moon:[165,520]}),
+  Object.freeze({name:'West',short:'W',shadow:[1,0],moon:[110,304]}),
+  Object.freeze({name:'Northwest',short:'NW',shadow:[1,1],moon:[165,102]})
+]);
+const LEVELS=Object.freeze([
+  Object.freeze({name:'Moonseed Court',limit:2,statues:[[3,3]],targets:[[3,5],[5,3]],suns:[[3,1],[1,3],[5,5]],solution:[0,6]}),
+  Object.freeze({name:'Twin Aster Walk',limit:2,statues:[[2,2],[4,4]],targets:[[0,4],[3,5],[2,0],[4,2]],suns:[[6,6],[1,1],[5,3]],solution:[1,4]}),
+  Object.freeze({name:'Foxglove Maze',limit:3,statues:[[1,3],[3,2],[5,3]],targets:[[1,6],[5,5],[0,3],[0,2],[3,5],[6,4]],suns:[[6,0],[4,1],[2,0]],solution:[0,2,7]}),
+  Object.freeze({name:'Dahlia Crescent',limit:3,statues:[[2,1],[4,1],[3,4]],targets:[[1,0],[0,1],[3,0],[5,0],[5,2],[6,4]],suns:[[1,3],[3,6],[5,5]],solution:[3,5,6]}),
+  Object.freeze({name:'Eclipse Conservatory',limit:4,statues:[[1,1],[5,1],[2,4],[4,4]],targets:[[0,2],[3,3],[6,2],[1,3],[5,3],[0,6],[6,6]],suns:[[3,0],[0,3],[6,3],[3,6]],solution:[1,3,5,7]})
+]);
+const THEMES=Object.freeze([
+  Object.freeze({name:'Moon Iris',sky:'#151b43',ground:'#273b5b',grid:'#59749b',shadow:'#6257a8',stone:'#aeb7c9',stoneEdge:'#f0e7c8',nightBloom:'#7bd9ff',sunBloom:'#ffd762',accent:'#e8bb55',ink:'#fff8df',hud:'#fff8df',footer:'#fff8df',leaf:'#4fa477'}),
+  Object.freeze({name:'Rose Dusk',sky:'#402344',ground:'#604152',grid:'#a56c82',shadow:'#383864',stone:'#d3b1aa',stoneEdge:'#ffe5c7',nightBloom:'#b9a1ff',sunBloom:'#ffb557',accent:'#ff7895',ink:'#fff4e8',hud:'#fff4e8',footer:'#fff4e8',leaf:'#6ab587'}),
+  Object.freeze({name:'Frost Fern',sky:'#123b4a',ground:'#d9ecdf',grid:'#7fae9f',shadow:'#51829b',stone:'#6c8b92',stoneEdge:'#eaf8ed',nightBloom:'#624caa',sunBloom:'#e89131',accent:'#1d7e8d',ink:'#102e35',hud:'#effff8',footer:'#102e35',leaf:'#26835f'})
+]);
+const game={mode:'menu',resumeMode:'playing',levelIndex:0,activeDirs:new Set(),focusDir:0,history:[],checksRemaining:MAX_CHECKS,elapsedMs:0,blooms:0,gardens:0,casts:0,themeIndex:0,status:'Choose moon angles whose shadows wake every night bloom.',lastAction:{type:'ready'},shakeMs:0,started:false,reported:false,rewarded:false};
+let lastFrame=performance.now(),manualUntil=0;
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const key=(x,y)=>`${x},${y}`;
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const formatTime=ms=>{const tenths=Math.floor(ms/100)%10,total=Math.floor(ms/1000);return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}.${tenths}`};
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function currentMetrics(){return{blooms:game.blooms,gardens:game.gardens,casts:game.casts}}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'shadowbloom',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function shadowCells(dirs=game.activeDirs){
+  const cells=new Set();
+  for(const dirIndex of dirs){const [dx,dy]=DIRECTIONS[dirIndex].shadow;for(const [sx,sy] of level().statues){let x=sx+dx,y=sy+dy;while(x>=0&&x<GRID&&y>=0&&y<GRID){cells.add(key(x,y));x+=dx;y+=dy}}}
+  return cells;
+}
+function coverage(){const shadows=shadowCells(),covered=level().targets.filter(([x,y])=>shadows.has(key(x,y))).length,shadedSuns=level().suns.filter(([x,y])=>shadows.has(key(x,y))).length;return{shadows,covered,shadedSuns,safeSuns:level().suns.length-shadedSuns,valid:covered===level().targets.length&&shadedSuns===0}}
+function snapshot(){return{activeDirs:[...game.activeDirs],focusDir:game.focusDir}}
+function restore(state){game.activeDirs=new Set(state.activeDirs);game.focusDir=state.focusDir}
+function pushHistory(){game.history.push(snapshot());if(game.history.length>50)game.history.shift()}
+function loadGarden(index,mode='playing'){
+  game.levelIndex=clamp(index,0,LEVELS.length-1);game.activeDirs=new Set();game.focusDir=0;game.history=[];game.checksRemaining=MAX_CHECKS;game.mode=mode;game.resumeMode='playing';game.shakeMs=0;game.status=mode==='menu'?'Choose moon angles whose shadows wake every night bloom.':`${level().name}: cast up to ${level().limit} moon shadows.`;game.lastAction={type:mode==='menu'?'ready':'garden-start',garden:game.levelIndex+1};syncUi();render();
+}
+function resetCampaign(mode='menu'){
+  game.elapsedMs=0;game.blooms=0;game.gardens=0;game.casts=0;game.started=mode!=='menu';game.reported=false;game.rewarded=false;loadGarden(0,mode);
+}
+function startOrContinue(){
+  if(game.mode==='menu'){game.started=true;game.mode='playing';game.status=`${level().name}: cast up to ${level().limit} moon shadows.`;game.lastAction={type:'start'};canvas.focus();announce('Shadow Bloom begun. North moon selected.');syncUi();render();return}
+  if(game.mode==='garden-complete'){loadGarden(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} begun.`);return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Shadow Bloom campaign has begun.')}
+}
+function restart(){if(game.started&&['playing','paused','garden-complete'].includes(game.mode))report('abandoned');resetCampaign('playing');game.status='Garden campaign restarted at Moonseed Court.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status)}
+function focusDirection(delta){if(game.mode!=='playing')return false;game.focusDir=(game.focusDir+delta+DIRECTIONS.length)%DIRECTIONS.length;game.status=`${DIRECTIONS[game.focusDir].name} moon selected${game.activeDirs.has(game.focusDir)?'; its shadow is active.':'.'}`;game.lastAction={type:'focus',direction:DIRECTIONS[game.focusDir].short};syncUi();render();return true}
+function toggleCast(source='keyboard'){
+  if(game.mode!=='playing')return false;const dir=game.focusDir;pushHistory();if(game.activeDirs.has(dir)){game.activeDirs.delete(dir);game.casts++;game.status=`Lifted the ${DIRECTIONS[dir].name.toLowerCase()} shadow.`;game.lastAction={type:'lift',direction:DIRECTIONS[dir].short,source}}
+  else if(game.activeDirs.size>=level().limit){game.history.pop();game.status=`This garden allows ${level().limit} active shadow${level().limit===1?'':'s'}. Lift one first.`;game.lastAction={type:'cast-blocked',direction:DIRECTIONS[dir].short,source};syncUi();render();announce(game.status);return false}
+  else{game.activeDirs.add(dir);game.casts++;game.status=`Cast the ${DIRECTIONS[dir].name.toLowerCase()} shadow.`;game.lastAction={type:'cast',direction:DIRECTIONS[dir].short,source}}
+  syncUi();render();announce(game.status);return true;
+}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;restore(game.history.pop());game.status='Last shadow change undone.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true}
+function hint(){
+  if(game.mode!=='playing')return false;const missing=level().solution.find(dir=>!game.activeDirs.has(dir));if(missing===undefined){game.status='The intended moon pattern is active. Check the garden.';game.lastAction={type:'hint-complete'};syncUi();render();announce(game.status);return false}
+  pushHistory();if(game.activeDirs.size>=level().limit){const wrong=[...game.activeDirs].find(dir=>!level().solution.includes(dir));if(wrong!==undefined)game.activeDirs.delete(wrong);else{game.history.pop();game.status='Lift an extra shadow before asking for another hint.';game.lastAction={type:'hint-blocked'};syncUi();render();announce(game.status);return false}}
+  game.activeDirs.add(missing);game.focusDir=missing;game.casts++;game.status=`Hint: the ${DIRECTIONS[missing].name.toLowerCase()} moon now casts a shadow.`;game.lastAction={type:'hint',direction:DIRECTIONS[missing].short};syncUi();render();announce(game.status);return true;
+}
+function failCheck(reason){
+  game.checksRemaining--;game.shakeMs=420;const state=coverage();game.lastAction={type:'check-failed',reason,covered:state.covered,shadedSuns:state.shadedSuns,checksRemaining:game.checksRemaining};if(game.checksRemaining<=0){game.mode='lost';game.status='The third dawn arrived before the garden was ready.';report('lost');announce('Shadow Bloom ended after three failed checks.')}else if(reason==='blooms'){game.status=`${level().targets.length-state.covered} night bloom${level().targets.length-state.covered===1?'':'s'} still need shadow. ${game.checksRemaining} checks remain.`}else{game.status=`${state.shadedSuns} sun blossom${state.shadedSuns===1?' is':'s are'} in shadow. ${game.checksRemaining} checks remain.`}syncUi();render();announce(game.status);return false;
+}
+function checkGarden(){
+  if(game.mode==='menu'||game.mode==='garden-complete'||['won','lost'].includes(game.mode)){startOrContinue();return false}if(game.mode!=='playing')return false;const state=coverage();if(!state.valid)return failCheck(state.covered<level().targets.length?'blooms':'sun');game.blooms+=level().targets.length;game.gardens++;
+  if(game.levelIndex===LEVELS.length-1){game.mode='won';game.status='All five gardens flower beneath the moon.';game.lastAction={type:'campaign-complete',metrics:currentMetrics()};if(!game.rewarded){addCoins(50);game.rewarded=true}report('completed');announce('Shadow Bloom complete. Fifty coins earned.');}
+  else{game.mode='garden-complete';game.status=`${level().name} opened ${level().targets.length} night blooms.`;game.lastAction={type:'garden-complete',garden:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`)}syncUi();render();return true;
+}
+function togglePause(){if(game.mode==='playing'){game.resumeMode='playing';game.mode='paused';game.status='Moonlight, garden, and clock are frozen.';game.lastAction={type:'pause'};announce(game.status)}else if(game.mode==='paused'){game.mode=game.resumeMode;game.status='Moonlight resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render()}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} garden palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-unavailable'};syncUi();render()}}
+function updateStep(ms){if(game.mode==='playing')game.elapsedMs+=ms;if(game.shakeMs>0)game.shakeMs=Math.max(0,game.shakeMs-ms)}
+function advanceSimulation(ms){let remaining=Math.max(0,Number(ms)||0);while(remaining>0){const step=Math.min(1000/60,remaining);updateStep(step);remaining-=step}}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function cellCenter(x,y){return{x:GRID_X+x*CELL+CELL/2,y:GRID_Y+y*CELL+CELL/2}}
+function drawBloom(x,y,color,shadowed,kind){const p=cellCenter(x,y);ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=shadowed?.78:1;ctx.strokeStyle=theme().leaf;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,18);ctx.lineTo(0,3);ctx.stroke();for(let i=0;i<5;i++){ctx.save();ctx.rotate(i*Math.PI*2/5);ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,-9,7,12,0,0,Math.PI*2);ctx.fill();ctx.restore()}ctx.fillStyle=kind==='night'?'#e9fbff':'#7a4a16';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.restore()}
+function drawBackground(colors){
+  const gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,colors.sky);gradient.addColorStop(1,colors.ground);ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  for(let i=0;i<54;i++){const x=(i*149+game.levelIndex*31)%WIDTH,y=(i*83+game.levelIndex*47)%HEIGHT,r=i%8===0?2.2:1.1;ctx.globalAlpha=.38+.3*Math.sin(game.elapsedMs/850+i);ctx.fillStyle=i%6===0?colors.accent:'#eef5ff';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+}
+function drawGarden(colors){
+  const shake=game.shakeMs>0?Math.sin(game.shakeMs*.16)*5:0,state=coverage();ctx.save();ctx.translate(shake,0);ctx.fillStyle=colors.ground;roundedRect(GRID_X-12,GRID_Y-12,GRID*CELL+24,GRID*CELL+24,24);ctx.fill();ctx.strokeStyle=colors.grid;ctx.lineWidth=3;ctx.stroke();
+  for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++){ctx.fillStyle=(x+y)%2===0?'rgba(255,255,255,.035)':'rgba(0,0,0,.035)';ctx.fillRect(GRID_X+x*CELL,GRID_Y+y*CELL,CELL,CELL);ctx.strokeStyle=colors.grid;ctx.globalAlpha=.42;ctx.strokeRect(GRID_X+x*CELL,GRID_Y+y*CELL,CELL,CELL);ctx.globalAlpha=1}
+  for(const cellKey of state.shadows){const [x,y]=cellKey.split(',').map(Number);ctx.fillStyle=colors.shadow;ctx.globalAlpha=.62;roundedRect(GRID_X+x*CELL+4,GRID_Y+y*CELL+4,CELL-8,CELL-8,12);ctx.fill();ctx.globalAlpha=1}
+  for(const [x,y] of level().targets)drawBloom(x,y,colors.nightBloom,state.shadows.has(key(x,y)),'night');for(const [x,y] of level().suns)drawBloom(x,y,colors.sunBloom,state.shadows.has(key(x,y)),'sun');
+  for(const [x,y] of level().statues){const p=cellCenter(x,y);ctx.fillStyle=colors.stone;ctx.strokeStyle=colors.stoneEdge;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(p.x-17,p.y+20);ctx.lineTo(p.x-11,p.y-19);ctx.lineTo(p.x+8,p.y-25);ctx.lineTo(p.x+18,p.y+20);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=colors.shadow;ctx.globalAlpha=.45;ctx.beginPath();ctx.arc(p.x,p.y-7,6,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+  ctx.restore();
+}
+function drawMoonSelectors(colors){
+  DIRECTIONS.forEach((dir,index)=>{const [x,y]=dir.moon,active=game.activeDirs.has(index),focused=game.focusDir===index;ctx.save();ctx.translate(x,y);if(active){ctx.shadowColor=colors.accent;ctx.shadowBlur=22}ctx.fillStyle=active?colors.accent:colors.stone;ctx.strokeStyle=focused?colors.nightBloom:colors.stoneEdge;ctx.lineWidth=focused?5:2;ctx.beginPath();ctx.arc(0,0,active?24:20,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle=active?'#17142d':colors.ink;ctx.font='900 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(dir.short,0,1);ctx.textBaseline='alphabetic';ctx.restore()});
+}
+function overlay(title,lines,color){ctx.fillStyle='rgba(7,9,25,.94)';roundedRect(145,142,610,334,25);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();ctx.textAlign='center';ctx.fillStyle=color;ctx.font='900 39px system-ui';ctx.fillText(title,450,211);ctx.fillStyle='#fff8e8';ctx.font='700 18px system-ui';lines.forEach((line,index)=>ctx.fillText(line,450,274+index*41));ctx.textAlign='left'}
+function render(){
+  const colors=theme(),state=coverage();drawBackground(colors);drawGarden(colors);drawMoonSelectors(colors);ctx.fillStyle=colors.hud;ctx.font='900 20px system-ui';ctx.fillText(level().name,24,35);ctx.textAlign='right';ctx.fillText(`${game.activeDirs.size} / ${level().limit} SHADOWS`,876,35);ctx.textAlign='left';
+  if(game.mode==='menu')overlay('Shadow Bloom',['Choose moon angles around the seven-by-seven garden.','Each stone casts a shadow away from that moon.','Shade blue blooms. Keep gold blossoms bright.'],colors.accent);
+  if(game.mode==='paused')overlay('Moon Held',['Shadows, garden shimmer, and clock are frozen.','Press P or Pause to continue.'],colors.nightBloom);
+  if(game.mode==='garden-complete')overlay('Garden Opened',[`${level().name} woke ${level().targets.length} night blooms.`,`${game.checksRemaining} check${game.checksRemaining===1?'':'s'} remained.`,`Press Enter for garden ${game.levelIndex+2}.`],colors.accent);
+  if(game.mode==='won')overlay('Eclipse in Bloom',[`${game.blooms} night blooms opened across five gardens.`,`${game.casts} shadow changes completed the campaign.`,'50 coins earned.'],colors.accent);
+  if(game.mode==='lost')overlay('Dawn Arrived',['Three checks found an unfinished garden.',`${game.blooms} blooms opened in ${game.gardens} gardens.`,'Press Enter or Restart to try again.'],colors.sunBloom);
+  if(game.mode==='playing'){ctx.fillStyle=colors.footer;ctx.font='800 13px system-ui';ctx.fillText(`${state.covered}/${level().targets.length} NIGHT`,18,603);ctx.textAlign='right';ctx.fillText(`${state.safeSuns}/${level().suns.length} SUN SAFE`,882,603);ctx.textAlign='left'}
+}
+function syncUi(){
+  const state=coverage();el.garden.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.nightBlooms.textContent=`${state.covered} / ${level().targets.length}`;el.sunSafe.textContent=`${state.safeSuns} / ${level().suns.length}`;el.checksLeft.textContent=`${game.checksRemaining} / ${MAX_CHECKS}`;el.time.textContent=formatTime(game.elapsedMs);const playing=game.mode==='playing';for(const button of [el.dirPrev,el.dirNext,el.cast,el.undo,el.hint])button.disabled=!playing;el.pause.disabled=!['playing','paused'].includes(game.mode);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';el.cast.textContent=game.activeDirs.has(game.focusDir)?'Lift shadow':'Cast shadow';el.cast.classList.toggle('active',game.activeDirs.has(game.focusDir));el.check.disabled=game.mode==='paused';el.check.textContent=game.mode==='menu'?'Start':game.mode==='garden-complete'?'Next garden':['won','lost'].includes(game.mode)?'Play again':'Check garden';el.theme.textContent=`Theme: ${theme().name}`;
+}
+function canvasPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+canvas.addEventListener('pointerdown',event=>{if(game.mode!=='playing')return;const point=canvasPoint(event);let picked=-1,best=Infinity;DIRECTIONS.forEach((dir,index)=>{const distance=Math.hypot(point.x-dir.moon[0],point.y-dir.moon[1]);if(distance<best&&distance<=34){picked=index;best=distance}});if(picked>=0){game.focusDir=picked;toggleCast(event.pointerType||'pointer');canvas.focus();event.preventDefault()}});
+el.dirPrev.addEventListener('click',()=>focusDirection(-1));el.dirNext.addEventListener('click',()=>focusDirection(1));el.cast.addEventListener('click',()=>toggleCast('button'));el.undo.addEventListener('click',undo);el.hint.addEventListener('click',hint);el.check.addEventListener('click',checkGarden);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);
+window.addEventListener('keydown',event=>{const target=event.target;if(target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;const keyName=event.key.toLowerCase();if(keyName==='enter'&&['menu','garden-complete','won','lost'].includes(game.mode)){event.preventDefault();startOrContinue();return}if(keyName==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();return}if(keyName==='p'){event.preventDefault();togglePause();return}if(keyName==='r'){event.preventDefault();restart();return}if(keyName==='t'){event.preventDefault();cycleTheme();return}if(keyName==='f'){event.preventDefault();toggleFullscreen();return}if(keyName==='u'){event.preventDefault();undo();return}if(keyName==='h'){event.preventDefault();hint();return}if(keyName==='c'){event.preventDefault();checkGarden();return}if(keyName===' '){event.preventDefault();toggleCast('keyboard');return}if(keyName==='arrowleft'||keyName==='a'){event.preventDefault();focusDirection(-1);return}if(keyName==='arrowright'||keyName==='d'){event.preventDefault();focusDirection(1);return}if(keyName==='arrowup'||keyName==='w'){event.preventDefault();focusDirection(-2);return}if(keyName==='arrowdown'||keyName==='s'){event.preventDefault();focusDirection(2)}});
+document.addEventListener('fullscreenchange',()=>{canvas.focus();render()});window.addEventListener('resize',render);window.addEventListener('pagehide',()=>{if(game.started&&['playing','paused','garden-complete'].includes(game.mode))report('abandoned')});
+window.advanceTime=ms=>{const amount=Math.max(0,Math.min(30000,Number(ms)||0));manualUntil=performance.now()+180;advanceSimulation(amount);syncUi();render()};
+window.render_game_to_text=()=>{const state=coverage();return JSON.stringify({coordinateSystem:'Canvas origin is top-left with x right and y down. Garden cells use zero-based [x,y] coordinates from [0,0] at the top-left to [6,6] at the bottom-right. Moon directions are clockwise N, NE, E, SE, S, SW, W, NW; shadows extend away from the chosen moon.',mode:game.mode,resumeMode:game.resumeMode,elapsedMs:Math.round(game.elapsedMs),garden:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,castLimit:level().limit},focusDirection:DIRECTIONS[game.focusDir].short,activeDirections:[...game.activeDirs].sort((a,b)=>a-b).map(index=>DIRECTIONS[index].short),statues:level().statues.map(([x,y])=>({x,y})),nightBlooms:level().targets.map(([x,y])=>({x,y,shadowed:state.shadows.has(key(x,y))})),sunBlossoms:level().suns.map(([x,y])=>({x,y,shadowed:state.shadows.has(key(x,y))})),shadowCells:[...state.shadows].sort(),coverage:{night:state.covered,totalNight:level().targets.length,sunSafe:state.safeSuns,totalSun:level().suns.length,valid:state.valid},checksRemaining:game.checksRemaining,campaign:{blooms:game.blooms,gardens:game.gardens,casts:game.casts,totalGardens:LEVELS.length},theme:theme().name,status:game.status,lastAction:game.lastAction,controls:{direction:'Arrow keys or A/D/W/S',cast:'Space or tap moon',undo:'U',hint:'H',check:'C',pause:'P',restart:'R',theme:'T',fullscreen:'F',continue:'Enter'}})};
+window.__SHADOW_BLOOM_GAME__={getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='playing')=>resetCampaign(mode),getLevels:()=>LEVELS.map(item=>({name:item.name,limit:item.limit,statues:item.statues.map(cell=>[...cell]),targets:item.targets.map(cell=>[...cell]),suns:item.suns.map(cell=>[...cell]),solution:[...item.solution]})),setGarden:index=>{game.started=true;loadGarden(clamp(Math.floor(Number(index)||0),0,LEVELS.length-1),'playing')},setDirection:index=>{game.focusDir=((Math.floor(Number(index)||0)%DIRECTIONS.length)+DIRECTIONS.length)%DIRECTIONS.length;syncUi();render()},cast:()=>toggleCast('qa'),applySolution:()=>{pushHistory();game.activeDirs=new Set(level().solution);game.focusDir=level().solution[0];game.casts+=level().solution.length;game.lastAction={type:'qa-solution'};syncUi();render();return coverage()},check:checkGarden,failCheck:()=>{if(game.mode!=='playing')return false;return failCheck('blooms')},pause:togglePause,tick:ms=>window.advanceTime(ms),setTheme:index=>{game.themeIndex=((Math.floor(Number(index)||0)%THEMES.length)+THEMES.length)%THEMES.length;syncUi();render()},start:startOrContinue};
+function frame(now){const delta=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)advanceSimulation(delta);syncUi();render();requestAnimationFrame(frame)}
+mountGameFeedback({gameSlug:'shadowbloom',gameName:'Shadow Bloom'});el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());loadGarden(0,'menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>

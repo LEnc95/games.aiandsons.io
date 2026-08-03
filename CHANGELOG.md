@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added Lantern Wake, a five-crossing current-steering game with collectible lanterns, bounded outcomes, and rendered wake themes.
 - Added Acorn Ascent, a five-grove precision-launch game with collectible acorns, bounded outcomes, and rendered canopy themes.
 - Added Moonscale, a five-sky celestial balance puzzle with torque-based moonstone placement, bounded outcomes, and rendered scale themes.
+- Added Shadow Bloom, a five-garden moon-shadow puzzle with protected sun blossoms, bounded outcomes, and rendered garden themes.
 
 ## [1.13.0] - 2026-07-26
 ### Added
