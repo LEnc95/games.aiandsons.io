@@ -178,6 +178,7 @@ const BASE_GAMES = [
   { slug:'lanternwake',    name:'Lantern Wake',          emoji:'\u{1F3EE}', scoreHint:'lanterns', url:'/lanternwake', desc:'Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings.', earnsCoins:true },
   { slug:'acornascent',    name:'Acorn Ascent',          emoji:'\u{1F43F}\uFE0F', scoreHint:'acorns', url:'/acornascent', desc:'Tune each launch arc, gather airborne acorns, and land a nimble squirrel on rising branches across five canopy groves.', earnsCoins:true },
   { slug:'moonscale',      name:'Moonscale',             emoji:'\u{1F319}', scoreHint:'skies', url:'/moonscale', desc:'Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies.', earnsCoins:true },
+  { slug:'shadowbloom',    name:'Shadow Bloom',          emoji:'\u{1F311}', scoreHint:'blooms', url:'/shadowbloom', desc:'Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -201,7 +202,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'shadowbloom', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

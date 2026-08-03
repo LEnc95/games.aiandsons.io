@@ -166,6 +166,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'scale-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'beam', 'stand', 'moonstone', 'glow', 'accent']) }),
     ]),
   }),
+  shadowbloom: Object.freeze({
+    releasedAt: '2026-08-03',
+    outcomes: Object.freeze({
+      blooms: Object.freeze({ min: 0, max: 40, direction: 'higher' }),
+      gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      casts: Object.freeze({ min: 0, max: 200, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'garden-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'grid', 'shadow', 'stone', 'nightBloom', 'sunBloom', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

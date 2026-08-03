@@ -192,5 +192,6 @@
 - game/lanternwake
 - game/acornascent
 - game/moonscale
+- game/shadowbloom
 
 Generated from `src/meta/feedback.js`.
