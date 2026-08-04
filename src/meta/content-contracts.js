@@ -177,6 +177,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'garden-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'grid', 'shadow', 'stone', 'nightBloom', 'sunBloom', 'accent']) }),
     ]),
   }),
+  quiltquest: Object.freeze({
+    releasedAt: '2026-08-04',
+    outcomes: Object.freeze({
+      patches: Object.freeze({ min: 0, max: 30, direction: 'higher' }),
+      panels: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      placements: Object.freeze({ min: 0, max: 300, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'quilt-theme', kind: 'palette', tokens: Object.freeze(['background', 'cloth', 'grid', 'patches', 'stitch', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

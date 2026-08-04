@@ -179,6 +179,7 @@ const BASE_GAMES = [
   { slug:'acornascent',    name:'Acorn Ascent',          emoji:'\u{1F43F}\uFE0F', scoreHint:'acorns', url:'/acornascent', desc:'Tune each launch arc, gather airborne acorns, and land a nimble squirrel on rising branches across five canopy groves.', earnsCoins:true },
   { slug:'moonscale',      name:'Moonscale',             emoji:'\u{1F319}', scoreHint:'skies', url:'/moonscale', desc:'Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies.', earnsCoins:true },
   { slug:'shadowbloom',    name:'Shadow Bloom',          emoji:'\u{1F311}', scoreHint:'blooms', url:'/shadowbloom', desc:'Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens.', earnsCoins:true },
+  { slug:'quiltquest',     name:'Quilt Quest',           emoji:'\u{1FAA1}', scoreHint:'panels', url:'/quiltquest', desc:'Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
