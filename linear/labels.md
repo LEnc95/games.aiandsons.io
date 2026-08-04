@@ -193,5 +193,6 @@
 - game/acornascent
 - game/moonscale
 - game/shadowbloom
+- game/quiltquest
 
 Generated from `src/meta/feedback.js`.

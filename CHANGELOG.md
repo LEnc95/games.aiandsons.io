@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+
+- Quilt Quest, a five-panel spatial packing campaign with rotatable fabric patches, keyboard and touch controls, three quilt palettes, deterministic stepping, and shared feedback.
 - Added Pollen Patrol, a five-garden tactical pollination game with deterministic beetle patrols, bounded outcomes, and rendered garden themes.
 - Added Starwheel, a five-lock concentric-ring puzzle with coupled rotations, bounded outcomes, and rendered dial themes.
 - Added Firebreak Command, a five-zone wildfire planning game with deterministic spread, bounded outcomes, and rendered terrain themes.
