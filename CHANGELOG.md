@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
 - Quilt Quest, a five-panel spatial packing campaign with rotatable fabric patches, keyboard and touch controls, three quilt palettes, deterministic stepping, and shared feedback.
 - Added Pollen Patrol, a five-garden tactical pollination game with deterministic beetle patrols, bounded outcomes, and rendered garden themes.
 - Added Starwheel, a five-lock concentric-ring puzzle with coupled rotations, bounded outcomes, and rendered dial themes.
