@@ -194,5 +194,6 @@
 - game/moonscale
 - game/shadowbloom
 - game/quiltquest
+- game/riverriddle
 
 Generated from `src/meta/feedback.js`.

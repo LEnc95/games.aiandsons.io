@@ -188,6 +188,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'quilt-theme', kind: 'palette', tokens: Object.freeze(['background', 'cloth', 'grid', 'patches', 'stitch', 'accent']) }),
     ]),
   }),
+  riverriddle: Object.freeze({
+    releasedAt: '2026-08-05',
+    outcomes: Object.freeze({
+      travelers: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      rivers: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      voyages: Object.freeze({ min: 0, max: 200, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'river-theme', kind: 'palette', tokens: Object.freeze(['background', 'sky', 'water', 'banks', 'boat', 'cards', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
