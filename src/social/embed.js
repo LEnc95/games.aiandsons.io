@@ -18,7 +18,7 @@ import {
 } from './client.js';
 import { openShareSheet } from './share.js';
 import { shareScoreCard } from './card.js';
-import { startRecording, finalizeRecording, shareClip } from './record.js';
+import { armRecordingOnGameStart, finalizeRecording, shareClip } from './record.js';
 import { GAMES } from '../meta/games.js';
 
 const gameMeta = (slug) => GAMES.find((game) => game.slug === slug) || null;
@@ -410,12 +410,9 @@ export const initSocial = ({ slug }) => {
 
   mountSocialDock();
 
-  // Begin capturing the canvas for an optional shareable clip. Self-gates on
-  // support (no-op for DOM-based games) and never throws. Retry once in case
-  // the game creates its canvas a beat after initSocial.
-  if (!startRecording()) {
-    setTimeout(() => startRecording(), 1200);
-  }
+  // Arm the optional canvas recorder now, but do not capture menu/loading time.
+  // The first real gameplay gesture starts recording in the capture phase.
+  armRecordingOnGameStart();
 
   // Register lazily so first reportScore is fast.
   ensurePlayer().catch(() => {});
