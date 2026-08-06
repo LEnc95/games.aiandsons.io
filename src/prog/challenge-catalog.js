@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w32-tetris-score-6000', gameSlug: 'tetris', metric: 'score', name: 'Prism Stack', desc: 'Reach 6000 score in Tetris.', target: 6000, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-aquariumlogic-boards-5', gameSlug: 'aquariumlogic', metric: 'boards', name: 'Reef Architect', desc: 'Balance all 5 boards in Aquarium Logic.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-acornascent-acorns-18', gameSlug: 'acornascent', metric: 'acorns', name: 'Summit Squirrel', desc: 'Gather 18 acorns in Acorn Ascent.', target: 18, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-pong-margin-8', gameSlug: 'pong', metric: 'winMargin', name: 'Perfect Paddle', desc: 'Win Pong by at least 8 points.', target: 8, rewardCoins: 20 }),
   define({ id: 'weekly-snake-length-22', gameSlug: 'snake', metric: 'length', name: 'Weekly Snake Master', desc: 'Reach length 22 in Snake.', target: 22, rewardCoins: 14 }),
   define({ id: 'weekly-pong-margin-6', gameSlug: 'pong', metric: 'winMargin', name: 'Weekly Pong Ace', desc: 'Win Pong by at least 6 points.', target: 6, rewardCoins: 14 }),
   define({ id: 'weekly-tetris-lines-40', gameSlug: 'tetris', metric: 'lines', name: 'Weekly Line Boss', desc: 'Clear 40 lines in Tetris.', target: 40, rewardCoins: 18 }),

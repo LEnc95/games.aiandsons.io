@@ -205,6 +205,18 @@ test('weekly release audit retains the three-game-shell limit without the daily 
   assert.ok(errors.some((error) => error.includes('maximum is 3')));
 });
 
+test('weekly content workflow deduplicates and supersedes generated work items', () => {
+  const workflow = fs.readFileSync(
+    path.join(process.cwd(), '.github', 'workflows', 'weekly-content-pack.yml'),
+    'utf8',
+  );
+  assert.match(workflow, /LABEL="automation:weekly-pack"/);
+  assert.match(workflow, /gh issue list --state all --search "\$\{TITLE\} in:title"/);
+  assert.match(workflow, /select\(\.title == \\"\$\{TITLE\}\\"\)/);
+  assert.match(workflow, /gh issue close "\$NUMBER" --reason "not planned"/);
+  assert.match(workflow, /Superseded by #\$\{CURRENT_NUMBER\}/);
+});
+
 test('trusted auto-merge uses workflow_run fields that GitHub populates', () => {
   const workflow = fs.readFileSync(
     path.join(process.cwd(), '.github', 'workflows', 'automation-auto-merge.yml'),

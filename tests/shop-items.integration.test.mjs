@@ -23,6 +23,8 @@ const GAME_FILE_BY_PREFIX = {
   ski: 'ski/index.html',
   '2048': '2048/index.html',
   tetris: 'tetris/index.html',
+  aquariumlogic: 'aquariumlogic/index.html',
+  acornascent: 'acornascent/index.html',
   asteroids: 'asteroids/index.html',
   bomberman: 'bomberman/index.html',
   colorcatch: 'colorcatch/index.html',

@@ -13,6 +13,7 @@ test('missions module loading', async (t) => {
     ensureWeeklyChallenges,
     getActiveDailyMissions,
     getActiveWeeklyChallenges,
+    recordMissionProgress,
   } = await import('../../../src/prog/missions.js');
   const { state } = await import('../../../src/core/state.js');
 
@@ -116,6 +117,51 @@ test('missions module loading', async (t) => {
 
       assert.ok(daily.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
       assert.ok(weekly.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
+    });
+
+    await t.test('W32 challenges complete and reward exactly once', () => {
+      const timestamp = new Date('2026-08-06T12:00:00Z').getTime();
+      const originalCoins = state.coins;
+      const originalBadges = state.badges;
+      try {
+        state.coins = 0;
+        state.badges = new Set();
+        ensureDailyMissions(timestamp);
+        ensureWeeklyChallenges(timestamp);
+        state.missions.activeIds = ['snake-length-14'];
+        state.missions.progress = {};
+        state.missions.completed = [];
+        state.missions.rewarded = [];
+        state.missions.weekly.activeIds = [
+          'weekly-w32-tetris-score-6000',
+          'weekly-w32-aquariumlogic-boards-5',
+          'weekly-w32-acornascent-acorns-18',
+          'weekly-w32-pong-margin-8',
+        ];
+        state.missions.weekly.progress = {};
+        state.missions.weekly.completed = [];
+        state.missions.weekly.rewarded = [];
+
+        const payload = {
+          tetris: { score: 6000 },
+          aquariumlogic: { boards: 5 },
+          acornascent: { acorns: 18 },
+          pong: { winMargin: 8 },
+        };
+        const first = recordMissionProgress(payload, timestamp);
+        assert.equal(first.weeklyCompletedNow.length, 4);
+        assert.equal(first.weeklyRewardsNow.length, 4);
+        assert.equal(first.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0), 80);
+        assert.equal(state.coins, 80);
+
+        const second = recordMissionProgress(payload, timestamp);
+        assert.deepEqual(second.weeklyCompletedNow, []);
+        assert.deepEqual(second.weeklyRewardsNow, []);
+        assert.equal(state.coins, 80);
+      } finally {
+        state.coins = originalCoins;
+        state.badges = originalBadges;
+      }
     });
   });
 });

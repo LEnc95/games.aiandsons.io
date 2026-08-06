@@ -37,6 +37,21 @@ jobs:
         shell: bash
         run: |
           WEEK_KEY=$(node -e "const x=require('./output/automation/weekly-pack.json');process.stdout.write(x.weekKey)")
-          if gh issue list --state open --search "Weekly content pack ${WEEK_KEY} in:title" --json title --jq 'length' | grep -q '^0$'; then
-            gh issue create --title "Weekly content pack ${WEEK_KEY}" --body-file output/automation/weekly-pack.json
+          TITLE="Weekly content pack ${WEEK_KEY}"
+          LABEL="automation:weekly-pack"
+          gh label create "$LABEL" --color "1d76db" --description "Generated weekly cosmetics and challenges work item" --force
+
+          CURRENT_NUMBER=$(gh issue list --state all --search "${TITLE} in:title" --json number,title --jq ".[] | select(.title == \"${TITLE}\") | .number" | head -n 1)
+          if [ -z "$CURRENT_NUMBER" ]; then
+            CURRENT_URL=$(gh issue create --title "$TITLE" --label "$LABEL" --body-file output/automation/weekly-pack.json)
+            CURRENT_NUMBER=${CURRENT_URL##*/}
+          else
+            gh issue edit "$CURRENT_NUMBER" --add-label "$LABEL"
           fi
+
+          gh issue list --state open --search "Weekly content pack in:title" --json number,title \
+            --jq ".[] | select(.number != ${CURRENT_NUMBER}) | select(.title | test(\"^Weekly content pack [0-9]{4}-W[0-9]{2}$\")) | .number" |
+          while read -r NUMBER; do
+            [ -z "$NUMBER" ] && continue
+            gh issue close "$NUMBER" --reason "not planned" --comment "Superseded by #${CURRENT_NUMBER}."
+          done
