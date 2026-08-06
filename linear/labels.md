@@ -195,5 +195,6 @@
 - game/shadowbloom
 - game/quiltquest
 - game/riverriddle
+- game/choruscurrent
 
 Generated from `src/meta/feedback.js`.
