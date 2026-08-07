@@ -182,6 +182,7 @@ const BASE_GAMES = [
   { slug:'quiltquest',     name:'Quilt Quest',           emoji:'\u{1FAA1}', scoreHint:'panels', url:'/quiltquest', desc:'Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps.', earnsCoins:true },
   { slug:'riverriddle',    name:'River Riddle',          emoji:'\u{1F6F6}', scoreHint:'rivers', url:'/riverriddle', desc:'Ferry every traveler across five storybook rivers without leaving incompatible pairs unsupervised.', earnsCoins:true },
   { slug:'choruscurrent',  name:'Chorus Current',        emoji:'\u{1F30A}', scoreHint:'harbors', url:'/choruscurrent', desc:'Tune the strength and phase of three colorful sea currents to match five glowing beacon waveforms.', earnsCoins:true },
+  { slug:'kiteparade',     name:'Kite Parade',           emoji:'\u{1FA81}', scoreHint:'kites', url:'/kiteparade', desc:'Dye connected fabric patches with different colors and send five bright festival kites into the sky.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -205,7 +206,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'shadowbloom', 'riverriddle', 'choruscurrent', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'shadowbloom', 'riverriddle', 'choruscurrent', 'kiteparade', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

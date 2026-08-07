@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Kite Parade, a five-kite graph-coloring campaign with fixed star patches, conflict-aware inspections, three fabric palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
 - Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
