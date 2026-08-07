@@ -196,5 +196,6 @@
 - game/quiltquest
 - game/riverriddle
 - game/choruscurrent
+- game/kiteparade
 
 Generated from `src/meta/feedback.js`.

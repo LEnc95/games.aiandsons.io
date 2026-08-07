@@ -210,6 +210,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'harbor-theme', kind: 'palette', tokens: Object.freeze(['background', 'sky', 'horizon', 'water', 'panel', 'grid', 'current', 'beacon', 'accent']) }),
     ]),
   }),
+  kiteparade: Object.freeze({
+    releasedAt: '2026-08-07',
+    outcomes: Object.freeze({
+      patches: Object.freeze({ min: 0, max: 40, direction: 'higher' }),
+      kites: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      checks: Object.freeze({ min: 0, max: 15, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'kite-theme', kind: 'palette', tokens: Object.freeze(['sky', 'cloud', 'hills', 'kite', 'seam', 'tail', 'dyes', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
