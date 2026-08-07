@@ -5,6 +5,7 @@ import {
   signInWithGoogle,
   signOutFromApp,
 } from "../auth/client.js";
+import { mountClipControls } from "../social/clip-controls.js";
 
 const ROOT_ID = "cadeFeedbackRoot";
 const STYLE_ID = "cadeFeedbackStyles";
@@ -245,6 +246,7 @@ function readFileAsDataUrl(file) {
 
 export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   if (!gameSlug || !gameName || document.getElementById(ROOT_ID)) return;
+  mountClipControls({ gameSlug, gameName });
   injectStyles();
 
   const root = document.createElement("div");
