@@ -197,5 +197,6 @@
 - game/riverriddle
 - game/choruscurrent
 - game/kiteparade
+- game/shellshift
 
 Generated from `src/meta/feedback.js`.
