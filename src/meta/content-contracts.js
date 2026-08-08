@@ -221,6 +221,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'kite-theme', kind: 'palette', tokens: Object.freeze(['sky', 'cloud', 'hills', 'kite', 'seam', 'tail', 'dyes', 'accent']) }),
     ]),
   }),
+  shellshift: Object.freeze({
+    releasedAt: '2026-08-08',
+    outcomes: Object.freeze({
+      shells: Object.freeze({ min: 0, max: 124, direction: 'higher' }),
+      tidepools: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      shifts: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'shell-theme', kind: 'palette', tokens: Object.freeze(['background', 'water', 'sand', 'tray', 'shells', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Shell Shift | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#0e3d57;color:#fffaf0;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#c8f4ff;font-weight:650}
+    .home{color:#273447;font-weight:850;text-decoration:none;border:2px solid #fff0b6;border-radius:999px;padding:8px 13px;background:#ffd978}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#145675;border:2px solid #3b8ca4;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #06293c}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#aee5ef}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #4ca3b6;border-radius:22px;overflow:hidden;background:#63c4cf;box-shadow:0 10px 0 #06293c}
+    canvas{width:100%;aspect-ratio:8/5;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #fff09a}
+    .stage:fullscreen{display:grid;place-items:center;background:#06293c}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 8 / 5));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+    button{border:2px solid #4ca3b6;border-radius:13px;background:#145675;color:#fffaf0;font:800 clamp(.59rem,1.35vw,.82rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #06293c;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #06293c}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #06293c;background:#ffd978;color:#273447;border-color:#fff0b6}
+    button.primary{background:#f5c04c;border-color:#ffe79a;color:#273447}
+    button.danger{background:#a34265;border-color:#ed8fae;color:#fff}
+    button:disabled{opacity:.43;cursor:not-allowed}
+    .help{background:#145675;border:2px solid #4ca3b6;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#d9f7fb}
+    .help b{color:#ffe27a}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px;padding-top:48px}header>div{max-width:230px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.49rem}.stat strong{font-size:.67rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #06293c}.controls{grid-template-columns:repeat(3,1fr);gap:6px}button{min-height:42px;padding:7px 3px}.help{font-size:.68rem;padding:8px 10px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(6,41,60,.98)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Rotate rows of colorful seashells to match five tidepool patterns before all three pearls are gone. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Shell Shift | AI and Sons Games">
+  <meta property="og:description" content="Rotate rows of colorful seashells to match five tidepool patterns before all three pearls are gone. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/shellshift">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/shellshift.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shell Shift | AI and Sons Games">
+  <meta name="twitter:description" content="Rotate rows of colorful seashells to match five tidepool patterns before all three pearls are gone. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/shellshift.png">
+  <link rel="canonical" href="https://games.aiandsons.io/shellshift">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Shell Shift","description":"Rotate rows of colorful seashells to match five tidepool patterns before all three pearls are gone. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/shellshift","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Shell Shift</h1><small>Slide each shell row into the target tide pattern.</small></div>
+    <a class="home" href="/">All Games</a>
+  </header>
+  <section class="stats" aria-label="Game status">
+    <div class="stat"><span>Tidepool</span><strong id="pool">1 / 5</strong></div>
+    <div class="stat"><span>Matched</span><strong id="matched">0 / 15</strong></div>
+    <div class="stat"><span>Shifts</span><strong id="shifts">0</strong></div>
+    <div class="stat"><span>Pearls</span><strong id="pearls">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00.0</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="960" height="600" tabindex="0" aria-label="Shell Shift row rotation puzzle. Select a tide row and shift its shells left or right to match the target preview."></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="previous" type="button">▲ Row</button>
+    <button id="next" type="button">Row ▼</button>
+    <button id="left" type="button">◀ Shift (Q)</button>
+    <button id="right" type="button">Shift (E) ▶</button>
+    <button id="inspect" class="primary" type="button">Inspect (Enter)</button>
+    <button id="undo" type="button">Undo (U)</button>
+    <button id="hint" type="button">Hint (H)</button>
+    <button id="action" class="primary" type="button">Start</button>
+    <button id="pause" type="button">Pause (P)</button>
+    <button id="restart" class="danger" type="button">Restart (R)</button>
+    <button id="theme" type="button">Theme</button>
+    <button id="fullscreen" type="button">Fullscreen (F)</button>
+    <button id="feedback" type="button">Send feedback</button>
+  </section>
+  <div class="help"><b>Goal:</b> make every large shell row match its small target preview. Select rows with <b>↑/↓</b> or a tap, shift with <b>←/→</b>, <b>Q/E</b>, or the buttons, inspect with <b>Enter</b>, undo with <b>U</b>, hint with <b>H</b>, pause with <b>P</b>, and fullscreen with <b>F</b>.</div>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={pool:document.querySelector('#pool'),matched:document.querySelector('#matched'),shifts:document.querySelector('#shifts'),pearls:document.querySelector('#pearls'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),previous:document.querySelector('#previous'),next:document.querySelector('#next'),left:document.querySelector('#left'),right:document.querySelector('#right'),inspect:document.querySelector('#inspect'),undo:document.querySelector('#undo'),hint:document.querySelector('#hint'),action:document.querySelector('#action'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=960,HEIGHT=600,MAX_PEARLS=3;
+const row=(...shells)=>Object.freeze(shells);
+const pool=(name,rows,offsets)=>Object.freeze({name,rows:Object.freeze(rows),offsets:Object.freeze(offsets)});
+const POOLS=Object.freeze([
+  pool('Sunny Shallows',[row(0,1,2,3,4),row(2,4,1,0,3),row(3,0,4,2,1)],[2,4,1]),
+  pool('Coral Window',[row(1,3,0,4,2),row(4,2,3,1,0),row(0,2,4,1,3),row(3,1,2,0,4)],[1,3,4,2]),
+  pool('Seagrass Steps',[row(0,3,1,4,2,1),row(2,4,0,3,1,4),row(4,1,3,0,2,3),row(1,0,4,2,3,0)],[5,2,4,1]),
+  pool('Moonfoam Shelf',[row(3,0,2,4,1,2),row(1,4,3,0,2,4),row(4,2,0,3,1,0),row(0,3,4,1,2,3),row(2,1,3,4,0,1)],[2,5,1,4,3]),
+  pool('Festival Tide',[row(0,4,1,3,2,4,1),row(2,1,4,0,3,1,0),row(4,3,0,2,1,3,2),row(1,0,3,4,2,0,4),row(3,2,1,0,4,2,0)],[6,2,5,3,1])
+]);
+const THEMES=Object.freeze([
+  Object.freeze({name:'Sunlit Cove',sky:'#7dd9dd',water:'#1ba6b8',water2:'#117993',sand:'#f5d78c',tray:'#fdf1c8',ink:'#213e50',muted:'#527386',accent:'#ffd24f',danger:'#d84c68',shells:['#f06f78','#ffbd58','#55b9da','#8ac77b','#9c7ac7']}),
+  Object.freeze({name:'Moonlit Reef',sky:'#394a82',water:'#334b8f',water2:'#172d67',sand:'#9677a8',tray:'#eee0ff',ink:'#27223c',muted:'#675d82',accent:'#f4cdff',danger:'#ff6f96',shells:['#ff7fb0','#8d8fff','#55d1dd','#f0ae63','#c690e7']}),
+  Object.freeze({name:'Kelp Garden',sky:'#8ccda2',water:'#2a9b83',water2:'#176653',sand:'#e7d29a',tray:'#f8efcf',ink:'#21493f',muted:'#5e7566',accent:'#ffdb64',danger:'#d55354',shells:['#e7675e','#efbd45','#47b8a2','#6c8fd2','#9a6ab2']})
+]);
+const game={mode:'menu',poolIndex:0,offsets:[],selected:0,history:[],pearls:MAX_PEARLS,elapsedMs:0,shells:0,tidepools:0,shifts:0,checks:0,themeIndex:0,status:'Match each large shell row to its target preview.',lastAction:{type:'ready'},pulseMs:0,started:false,reported:false,rewarded:false};
+let lastFrame=performance.now(),manualUntil=0,hitRegions=[];
+const currentPool=()=>POOLS[game.poolIndex];
+const theme=()=>THEMES[game.themeIndex];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const formatTime=ms=>{const tenths=Math.floor(ms/100)%10,total=Math.floor(ms/1000);return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}.${tenths}`};
+const rotate=(values,offset)=>values.map((_,index)=>values[(index-offset+values.length)%values.length]);
+const currentRow=index=>rotate(currentPool().rows[index],game.offsets[index]);
+const rowMatches=index=>currentRow(index).every((shell,index2)=>shell===currentPool().rows[index][index2]);
+const poolShells=()=>currentPool().rows.reduce((sum,values)=>sum+values.length,0);
+const matchedShells=()=>currentPool().rows.reduce((sum,target,index)=>sum+currentRow(index).filter((shell,index2)=>shell===target[index2]).length,0);
+const alignedRows=()=>currentPool().rows.reduce((sum,_,index)=>sum+(rowMatches(index)?1:0),0);
+const currentMetrics=()=>({shells:game.shells+(['playing','paused','lost'].includes(game.mode)?matchedShells():0),tidepools:game.tidepools,shifts:game.shifts});
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'shellshift',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function loadPool(index,mode='playing'){game.poolIndex=clamp(index,0,POOLS.length-1);game.offsets=currentPool().offsets.slice();game.selected=0;game.history=[];game.pearls=MAX_PEARLS;game.mode=mode;game.pulseMs=0;game.status=mode==='menu'?'Match each large shell row to its target preview.':`${currentPool().name}: choose a row and slide its shells.`;game.lastAction={type:mode==='menu'?'ready':'pool-start',tidepool:game.poolIndex+1};syncUi();render()}
+function resetCampaign(mode='menu'){game.elapsedMs=0;game.shells=0;game.tidepools=0;game.shifts=0;game.checks=0;game.started=mode!=='menu';game.reported=false;game.rewarded=false;loadPool(0,mode)}
+function startOrContinue(){if(game.mode==='menu'){game.started=true;game.mode='playing';game.status=`${currentPool().name}: align all ${currentPool().rows.length} rows.`;game.lastAction={type:'start'};canvas.focus();announce('Shell Shift begun. Row one selected.');syncUi();render();return}if(game.mode==='pool-complete'){loadPool(game.poolIndex+1,'playing');canvas.focus();announce(`${currentPool().name} begun.`);return}if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Shell Shift has begun.')}}
+function restart(){if(game.started&&['playing','paused','pool-complete'].includes(game.mode))report('abandoned');resetCampaign('playing');game.status='Shell Shift restarted at Sunny Shallows.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status)}
+function selectRow(index,source='keyboard'){if(game.mode!=='playing')return false;const next=clamp(index,0,currentPool().rows.length-1);if(next===game.selected&&index!==game.selected){game.status=`Row ${game.selected+1} is at the selection boundary.`;game.lastAction={type:'select-blocked',row:game.selected+1,source};syncUi();render();announce(game.status);return false}game.selected=next;game.status=`Row ${next+1}${rowMatches(next)?' already matches its preview.':' is ready to shift.'}`;game.lastAction={type:'select',row:next+1,source};syncUi();render();return true}
+function pushHistory(){game.history.push(game.offsets.slice());if(game.history.length>150)game.history.shift()}
+function shiftRow(delta,source='keyboard'){if(game.mode!=='playing'||!delta)return false;const length=currentPool().rows[game.selected].length;pushHistory();game.offsets[game.selected]=(game.offsets[game.selected]+delta+length)%length;game.shifts++;const direction=delta<0?'left':'right',matched=rowMatches(game.selected);game.status=`Row ${game.selected+1} shifted ${direction}${matched?' and now matches its target!':'.'}`;game.lastAction={type:'shift',row:game.selected+1,direction,offset:game.offsets[game.selected],matched,source};syncUi();render();announce(game.status);return true}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;game.offsets=game.history.pop();game.status='The previous shell shift was undone.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true}
+function hint(){if(game.mode!=='playing')return false;let index=game.offsets.findIndex((_,rowIndex)=>!rowMatches(rowIndex));if(index<0){game.status='Every row matches. Inspect the tidepool.';game.lastAction={type:'hint-complete'};syncUi();render();announce(game.status);return true}game.selected=index;const length=currentPool().rows[index].length,offset=game.offsets[index],delta=offset<=length/2?-1:1,changed=shiftRow(delta,'hint');if(changed){game.status=`Hint: row ${index+1} slid ${delta<0?'left':'right'} toward its target.`;game.lastAction={type:'hint',row:index+1,direction:delta<0?'left':'right',offset:game.offsets[index]};syncUi();render();announce(game.status)}return changed}
+function finishPool(){game.shells+=poolShells();game.tidepools++;game.pulseMs=900;if(game.poolIndex===POOLS.length-1){game.mode='won';game.status='All five tidepools mirror their festival shell patterns.';game.lastAction={type:'campaign-complete',metrics:currentMetrics()};if(!game.rewarded){addCoins(50);game.rewarded=true}report('completed');announce('Shell Shift complete. Fifty coins earned.')}else{game.mode='pool-complete';game.status=`${currentPool().name} is perfectly aligned. The next tidepool is ready.`;game.lastAction={type:'pool-complete',tidepool:game.poolIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`)}syncUi();render();return true}
+function inspect(source='keyboard'){if(game.mode!=='playing')return false;game.checks++;const aligned=alignedRows();if(aligned===currentPool().rows.length)return finishPool();game.pearls--;game.pulseMs=520;const remaining=currentPool().rows.length-aligned;game.status=`${remaining} shell row${remaining===1?' needs':'s need'} more shifting.`;game.lastAction={type:'inspection-failed',alignedRows:aligned,rowsRemaining:remaining,pearlsRemaining:game.pearls,source};if(game.pearls<=0){game.mode='lost';game.status='Three rough inspections washed this pattern away.';game.lastAction={type:'campaign-lost',reason:'misaligned-rows',metrics:currentMetrics()};report('lost');announce('Shell Shift ended after three failed inspections.')}else announce(`${game.status} ${game.pearls} pearls remain.`);syncUi();render();return false}
+function togglePause(){if(game.mode==='playing'){game.mode='paused';game.status='Tide, clock, and shell controls are frozen.';game.lastAction={type:'pause'};announce(game.status)}else if(game.mode==='paused'){game.mode='playing';game.status='Shell shifting resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render()}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} shore palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-error'};syncUi();render();announce(game.status)}}
+function syncUi(){el.pool.textContent=`${game.poolIndex+1} / ${POOLS.length}`;el.matched.textContent=`${matchedShells()} / ${poolShells()}`;el.shifts.textContent=game.shifts;el.pearls.textContent=`${game.pearls} / ${MAX_PEARLS}`;el.time.textContent=formatTime(game.elapsedMs);const playing=game.mode==='playing';for(const button of [el.previous,el.next,el.left,el.right,el.inspect,el.undo,el.hint])button.disabled=!playing;el.previous.disabled=!playing||game.selected===0;el.next.disabled=!playing||game.selected===currentPool().rows.length-1;el.undo.disabled=!playing||!game.history.length;el.pause.disabled=!['playing','paused'].includes(game.mode);el.action.disabled=playing||game.mode==='paused';el.action.textContent=game.mode==='menu'?'Start':game.mode==='pool-complete'?'Next tidepool':game.mode==='won'||game.mode==='lost'?'Play again':'Continue';el.pause.textContent=game.mode==='paused'?'Resume (P)':'Pause (P)';el.theme.textContent=`Theme: ${game.themeIndex+1}/3`}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawBackdrop(){const t=theme(),gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,t.sky);gradient.addColorStop(.38,t.water);gradient.addColorStop(1,t.water2);ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.fillStyle=t.sand;ctx.globalAlpha=.78;ctx.beginPath();ctx.moveTo(0,492);ctx.quadraticCurveTo(180,454,360,506);ctx.quadraticCurveTo(590,455,790,505);ctx.quadraticCurveTo(875,480,960,493);ctx.lineTo(960,600);ctx.lineTo(0,600);ctx.closePath();ctx.fill();ctx.globalAlpha=1;for(let index=0;index<18;index++){const x=(index*83+37)%WIDTH,y=HEIGHT-((index*97+game.elapsedMs*.018)%(HEIGHT+80)),r=2+(index%3);ctx.fillStyle='rgba(230,255,255,.48)';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}}
+function drawShell(x,y,r,type,alpha=1){const t=theme(),color=t.shells[type];ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.fillStyle=color;ctx.strokeStyle=t.ink;ctx.lineWidth=Math.max(1.2,r*.09);if(type===0){ctx.beginPath();ctx.arc(0,r*.15,r,-Math.PI,0);ctx.lineTo(r*.82,r*.62);ctx.quadraticCurveTo(0,r*.86,-r*.82,r*.62);ctx.closePath();ctx.fill();ctx.stroke();for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(0,r*.1);ctx.lineTo(i*r*.32,r*.64);ctx.stroke()}}else if(type===1){ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(0,0,r*.58,.1,Math.PI*1.8);ctx.arc(0,0,r*.27,Math.PI*1.8,.25,true);ctx.stroke()}else if(type===2){ctx.beginPath();ctx.moveTo(-r*.85,r*.55);ctx.quadraticCurveTo(-r*.92,-r*.5,-r*.1,-r*.86);ctx.quadraticCurveTo(r*.72,-r*.5,r*.88,r*.5);ctx.quadraticCurveTo(r*.1,r*.82,-r*.85,r*.55);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-r*.55,r*.38);ctx.quadraticCurveTo(0,-r*.2,r*.57,r*.34);ctx.stroke()}else if(type===3){ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();for(let i=0;i<5;i++){const a=-Math.PI/2+i*Math.PI*2/5;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*.2,Math.sin(a)*r*.2);ctx.lineTo(Math.cos(a)*r*.62,Math.sin(a)*r*.62);ctx.stroke()}ctx.beginPath();ctx.arc(0,0,r*.18,0,Math.PI*2);ctx.stroke()}else{ctx.beginPath();ctx.ellipse(0,0,r,r*.72,0,0,Math.PI*2);ctx.fill();ctx.stroke();for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(i*r*.24,-r*.52);ctx.quadraticCurveTo(i*r*.16,0,i*r*.27,r*.5);ctx.stroke()}}ctx.restore()}
+function drawBoard(){const t=theme(),rows=currentPool().rows,rowCount=rows.length,rowGap=rowCount===3?116:rowCount===4?96:82,startY=rowCount===3?151:rowCount===4?125:105;hitRegions=[];ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(17,54,73,.82)';roundedRect(34,76,174,430,20);ctx.fill();ctx.fillStyle='#fff';ctx.font='900 14px system-ui';ctx.fillText('TARGET',121,100);ctx.fillStyle='rgba(17,54,73,.72)';roundedRect(227,76,699,430,20);ctx.fill();ctx.fillStyle='#fff';ctx.fillText('SHIFTING ROWS',576,100);rows.forEach((target,rowIndex)=>{const y=startY+rowIndex*rowGap,selected=rowIndex===game.selected,matched=rowMatches(rowIndex),current=currentRow(rowIndex);ctx.fillStyle=matched?'rgba(110,225,176,.32)':'rgba(255,255,255,.12)';roundedRect(238,y-36,676,72,18);ctx.fill();ctx.strokeStyle=selected?t.accent:matched?'#8ff0bd':'rgba(255,255,255,.28)';ctx.lineWidth=selected?6:2;ctx.stroke();ctx.fillStyle=selected?t.accent:'#fff';ctx.font='900 15px system-ui';ctx.fillText(String(rowIndex+1),252,y);const miniGap=Math.min(25,126/target.length);target.forEach((shell,index)=>drawShell(58+miniGap/2+index*miniGap,y,9,shell,.96));ctx.strokeStyle=matched?'#8ff0bd':'rgba(255,255,255,.35)';ctx.lineWidth=2;roundedRect(48,y-19,146,38,12);ctx.stroke();const shellGap=610/current.length;current.forEach((shell,index)=>drawShell(292+shellGap/2+index*shellGap,y,Math.min(28,shellGap*.34),shell));ctx.fillStyle=matched?'#9ff3c3':'rgba(255,255,255,.72)';ctx.font='900 18px system-ui';ctx.fillText(matched?'✓':'↔',895,y);hitRegions.push({row:rowIndex,y1:y-39,y2:y+39,x1:34,x2:926})})}
+function drawHud(){const t=theme();ctx.fillStyle='rgba(17,54,73,.82)';roundedRect(24,14,370,52,16);ctx.fill();ctx.fillStyle='#fff';ctx.font='900 19px system-ui';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText(currentPool().name,42,37);ctx.fillStyle='#d8f8fb';ctx.font='700 12px system-ui';ctx.fillText(`${currentPool().rows.length} rows • ${poolShells()} shells • ${alignedRows()} aligned`,42,55);ctx.fillStyle='rgba(17,54,73,.86)';roundedRect(24,532,912,48,15);ctx.fill();ctx.fillStyle='#fff';ctx.font='750 14px system-ui';const message=game.status.length>122?`${game.status.slice(0,119)}…`:game.status;ctx.fillText(message,43,561)}
+function drawOverlay(){if(!['menu','paused','pool-complete','won','lost'].includes(game.mode))return;const t=theme();ctx.fillStyle='rgba(6,36,55,.84)';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle='#fff';ctx.font='900 42px system-ui';const title=game.mode==='menu'?'SHELL SHIFT':game.mode==='paused'?'TIDE PAUSED':game.mode==='pool-complete'?'PATTERN MATCHED':game.mode==='won'?'FESTIVAL SHORE READY':'PATTERN WASHED AWAY';ctx.fillText(title,WIDTH/2,227);ctx.font='750 18px system-ui';ctx.globalAlpha=.95;const message=game.mode==='menu'?'Slide each row until the large shells match its target preview.':game.status;ctx.fillText(message,WIDTH/2,271);ctx.globalAlpha=1;ctx.fillStyle=t.accent;roundedRect(WIDTH/2-135,307,270,55,17);ctx.fill();ctx.fillStyle=t.ink;ctx.font='900 18px system-ui';const action=game.mode==='menu'?'PRESS START':game.mode==='paused'?'PRESS P TO RESUME':game.mode==='pool-complete'?'NEXT TIDEPOOL':'PLAY AGAIN';ctx.fillText(action,WIDTH/2,342);ctx.textAlign='left';ctx.textBaseline='alphabetic'}
+function render(){drawBackdrop();drawBoard();drawHud();drawOverlay()}
+function update(ms){if(game.mode==='playing')game.elapsedMs+=ms;if(game.pulseMs>0)game.pulseMs=Math.max(0,game.pulseMs-ms);syncUi()}
+function frame(now){const dt=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(dt);render();requestAnimationFrame(frame)}
+function pointerPosition(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function handlePointer(event){event.preventDefault();if(game.mode!=='playing'){if(['menu','pool-complete','won','lost'].includes(game.mode))startOrContinue();return}const point=pointerPosition(event),hit=hitRegions.find(region=>point.x>=region.x1&&point.x<=region.x2&&point.y>=region.y1&&point.y<=region.y2);if(!hit)return;selectRow(hit.row,event.pointerType||'pointer');if(point.x>227)shiftRow(point.x<576?-1:1,event.pointerType||'pointer');canvas.focus()}
+canvas.addEventListener('pointerdown',handlePointer);
+el.previous.addEventListener('click',()=>selectRow(game.selected-1,'button'));el.next.addEventListener('click',()=>selectRow(game.selected+1,'button'));el.left.addEventListener('click',()=>shiftRow(-1,'button'));el.right.addEventListener('click',()=>shiftRow(1,'button'));el.inspect.addEventListener('click',()=>inspect('button'));el.undo.addEventListener('click',undo);el.hint.addEventListener('click',hint);el.action.addEventListener('click',startOrContinue);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+window.addEventListener('keydown',event=>{if(document.documentElement.dataset.cadeFeedbackOpen==='1')return;const key=event.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' ','q','e','u','h','p','r','t','f','enter','escape'].includes(key))event.preventDefault();if(key==='escape'&&document.fullscreenElement){document.exitFullscreen();return}if(key==='p'){togglePause();return}if(key==='f'){toggleFullscreen();return}if(key==='t'){cycleTheme();return}if(key==='r'){restart();return}if((key==='enter'||key===' ')&&game.mode!=='playing'){startOrContinue();return}if(game.mode!=='playing')return;if(key==='arrowup')selectRow(game.selected-1);else if(key==='arrowdown')selectRow(game.selected+1);else if(key==='arrowleft'||key==='q')shiftRow(-1);else if(key==='arrowright'||key==='e')shiftRow(1);else if(key==='enter'||key===' ')inspect();else if(key==='u')undo();else if(key==='h')hint()});
+document.addEventListener('fullscreenchange',()=>{game.lastAction={type:'fullscreen',active:Boolean(document.fullscreenElement)};render()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.mode==='playing')togglePause()});
+window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+300;lastFrame=performance.now();update(amount);render()};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; small target previews are left of the large horizontally shifting shell rows',mode:game.mode,tidepool:{index:game.poolIndex+1,total:POOLS.length,name:currentPool().name},selectedRow:game.selected+1,rows:currentPool().rows.map((target,index)=>({row:index+1,y:Math.round((currentPool().rows.length===3?151:currentPool().rows.length===4?125:105)+index*(currentPool().rows.length===3?116:currentPool().rows.length===4?96:82)),target:[...target],current:currentRow(index),offset:game.offsets[index],matched:rowMatches(index)})),alignedRows:alignedRows(),matchedShells:matchedShells(),pearlsRemaining:game.pearls,checks:game.checks,elapsedMs:Math.round(game.elapsedMs),theme:theme().name,status:game.status,lastAction:game.lastAction,metrics:currentMetrics()});
+window.__SHELL_SHIFT_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadPool:index=>loadPool(index,'playing'),select:index=>selectRow(index,'qa'),shift:delta=>shiftRow(delta,'qa'),check:()=>inspect('qa'),undo:()=>undo(),hint:()=>hint(),pause:()=>togglePause(),theme:()=>cycleTheme(),solvePool:()=>{for(let index=0;index<currentPool().rows.length;index++){game.selected=index;let guard=0;while(!rowMatches(index)&&guard++<currentPool().rows[index].length){const length=currentPool().rows[index].length,offset=game.offsets[index];shiftRow(offset<=length/2?-1:1,'qa-solution')}}return inspect('qa-solution')},fail:()=>{let guard=0;while(game.mode==='playing'&&guard++<MAX_PEARLS)inspect('qa-failure');return game.mode==='lost'},pools:POOLS};
+mountGameFeedback({gameSlug:'shellshift',gameName:'Shell Shift'});
+resetCampaign('menu');syncUi();render();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
