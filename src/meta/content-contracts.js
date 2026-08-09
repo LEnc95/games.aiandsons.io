@@ -232,6 +232,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'shell-theme', kind: 'palette', tokens: Object.freeze(['background', 'water', 'sand', 'tray', 'shells', 'accent']) }),
     ]),
   }),
+  flockfold: Object.freeze({
+    releasedAt: '2026-08-09',
+    outcomes: Object.freeze({
+      gates: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      skies: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      folds: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'flock-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'cloud', 'gate', 'birds', 'trail', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

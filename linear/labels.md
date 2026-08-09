@@ -198,5 +198,6 @@
 - game/choruscurrent
 - game/kiteparade
 - game/shellshift
+- game/flockfold
 
 Generated from `src/meta/feedback.js`.

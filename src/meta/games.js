@@ -184,6 +184,7 @@ const BASE_GAMES = [
   { slug:'choruscurrent',  name:'Chorus Current',        emoji:'\u{1F30A}', scoreHint:'harbors', url:'/choruscurrent', desc:'Tune the strength and phase of three colorful sea currents to match five glowing beacon waveforms.', earnsCoins:true },
   { slug:'kiteparade',     name:'Kite Parade',           emoji:'\u{1FA81}', scoreHint:'kites', url:'/kiteparade', desc:'Dye connected fabric patches with different colors and send five bright festival kites into the sky.', earnsCoins:true },
   { slug:'shellshift',     name:'Shell Shift',           emoji:'\u{1F41A}', scoreHint:'tidepools', url:'/shellshift', desc:'Rotate rows of colorful seashells to match five tidepool patterns before all three pearls are gone.', earnsCoins:true },
+  { slug:'flockfold',      name:'Flock Fold',            emoji:'\u{1F426}', scoreHint:'gates', url:'/flockfold', desc:'Fold seven paper birds into line, wedge, and column formations to clear five skies of cloud gates.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
