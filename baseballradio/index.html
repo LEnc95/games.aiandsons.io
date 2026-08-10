@@ -12,8 +12,9 @@
       href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/index-DcRtB0k8.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CdnghoMK.css">
+    <script type="module" crossorigin src="./assets/index-DH1dGUJy.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CjqpJZQS.css">
+    
     <style>
       .back-home {
         flex: 0 0 auto;
@@ -28,7 +29,18 @@
       }
       @media (max-width: 640px) {
         .masthead { justify-content: flex-start; }
-        .masthead .tagline { display: none; }
+        /* Keep tagline available to screen readers; hide visually only. */
+        .masthead .tagline {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
       }
     </style>
 
@@ -53,11 +65,13 @@
   <!-- SEO:END -->
 </head>
   <body>
+
     <!--
       Audio-only game, Gameday-style interface: scorebug, pitch tracker, live stats.
       There is still no animated field — the ballgame lives in your ears; the board
       is the broadcast graphic layer (location, velocity, box score).
     -->
+    <a class="skip-link" href="#gd-controls">Skip to broadcast controls</a>
     <main class="shell">
       <header class="masthead">
         <a class="back-home" href="/" aria-label="Back to all games">← Back</a>
@@ -66,11 +80,16 @@
           <h1>Bottom of the Ninth</h1>
         </div>
         <p class="tagline">
-          Headphones · <kbd>SPACE</kbd> swing / release · pick your club
+          Headphones · Tap or <kbd>SPACE</kbd> to swing / release · pick your club
         </p>
       </header>
 
-      <section id="gate" class="gate">
+      <section id="gate" class="gate" aria-labelledby="gate-heading">
+        <h2 id="gate-heading" class="sr-only">Start game</h2>
+        <p class="sr-only">
+          Audio-first baseball. Timing cues are stereo field sounds, not the visual board.
+          Use headphones. Tap or press Space to swing when batting, or to release when pitching.
+        </p>
         <label class="side-pick" for="player-side">
           <span>Play as</span>
           <select id="player-side" name="player-side">
@@ -78,39 +97,92 @@
             <option value="away">Phillies (away) — bat top, pitch bottom</option>
           </select>
         </label>
+        <label class="side-pick" for="session-mode">
+          <span>Mode</span>
+          <select id="session-mode" name="session-mode">
+            <option value="exhibition">Exhibition game</option>
+            <option value="practice">Practice cage</option>
+          </select>
+        </label>
+        <label class="side-pick" for="session-length" id="session-length-label">
+          <span>Length</span>
+          <select id="session-length" name="session-length">
+            <option value="3">3 innings</option>
+            <option value="6">6 innings</option>
+            <option value="9" selected>Full 9 innings</option>
+          </select>
+        </label>
+        <label class="side-pick" for="role-lock" id="role-lock-label">
+          <span>Roles</span>
+          <select id="role-lock" name="role-lock">
+            <option value="both">Bat and pitch</option>
+            <option value="bat">Bat only (AI pitches)</option>
+            <option value="pitch">Pitch only (AI bats)</option>
+          </select>
+        </label>
         <button id="play-ball" class="primary" type="button">Play Ball</button>
         <p class="gate-note">
-          Audio starts on click. When batting: count four, swing on five. When pitching: call the pitch,
-          then release on four. Calibrate latency before your first pitch.
+          Headphones or stereo speakers recommended — pitch location is left/right and high/low in your ears.
+          Audio starts on tap. When batting: count four, swing on five. When pitching: call the pitch,
+          then release on four. Calibrate latency (tap along) before your first pitch.
         </p>
       </section>
 
-      <section id="booth" class="booth" hidden>
-        <div id="gameday" class="gameday" role="region" aria-label="Live game board"></div>
+      <section id="booth" class="booth" hidden aria-label="Broadcast booth">
+        <div class="gd-board-column">
+          <details id="gameday-fold" class="gameday-fold" open>
+            <summary class="gameday-fold-summary">Visual board (optional)</summary>
+            <div id="gameday" class="gameday" role="region" aria-label="Visual game board"></div>
+          </details>
 
-        <div class="gd-controls">
-          <div class="transport">
-            <button id="next-pitch" class="primary" type="button">Start at-bat</button>
-            <kbd class="hint">SPACE</kbd><span id="space-hint" class="hint-text">to swing</span>
-            <button id="calibrate" class="secondary" type="button">Calibrate latency</button>
-            <p id="calibration-status" class="cal-status">Not calibrated.</p>
-          </div>
-          <div id="pitch-call" class="pitch-call" hidden></div>
-          <div id="timing-coach" class="timing-coach" aria-hidden="true"></div>
-          <p id="swing-readout" class="swing-readout" role="status" aria-live="polite">
-            Calibrate first, then start the at-bat. Count four, swing on five.
-          </p>
-          <p id="difficulty-announce" class="difficulty-announce" role="status" aria-live="polite"></p>
-        </div>
+          <p id="live-score" class="live-score">Game not started.</p>
 
-        <div class="gd-lower">
-          <section class="gd-feed">
-            <h2 class="section-label">Play-by-Play</h2>
-            <ol id="radio-log" class="radio-log" role="log" aria-live="polite" aria-relevant="additions"></ol>
+          <section class="gd-feed" aria-labelledby="pbp-heading">
+            <h2 id="pbp-heading" class="section-label">Play-by-Play</h2>
+            <ol id="radio-log" class="radio-log"></ol>
           </section>
 
-          <aside class="gd-settings">
-            <h2 class="section-label">Mix</h2>
+          <section class="gd-diagnostics" aria-labelledby="diag-heading">
+            <h2 id="diag-heading" class="section-label">Diagnostics</h2>
+            <div id="diagnostics" class="diagnostics"></div>
+          </section>
+        </div>
+
+        <aside class="gd-rail" aria-label="Broadcast controls">
+          <div class="gd-controls" id="gd-controls">
+            <h2 class="section-label">Controls</h2>
+            <div class="transport">
+              <button id="next-pitch" class="primary" type="button">Start at-bat</button>
+              <kbd class="hint" aria-hidden="true">TAP / SPACE</kbd>
+              <span id="space-hint" class="hint-text">to swing</span>
+              <button id="calibrate" class="secondary" type="button">Calibrate latency</button>
+              <button id="skip-cal" class="secondary" type="button" hidden>I know my latency</button>
+              <button id="announce-situation" class="secondary" type="button">Announce situation</button>
+              <p id="calibration-status" class="cal-status" role="status" aria-live="polite">Not calibrated.</p>
+            </div>
+            <div id="cal-tap-zone" class="cal-tap-zone" hidden>
+              <p class="cal-tap-label" id="cal-tap-label">Tap here with each click</p>
+              <button
+                id="cal-tap-target"
+                class="cal-tap-target"
+                type="button"
+                data-timing-action="true"
+                aria-labelledby="cal-tap-label"
+              >
+                Tap
+              </button>
+            </div>
+            <div id="pitch-call" class="pitch-call" hidden></div>
+            <div id="timing-coach" class="timing-coach" aria-hidden="true"></div>
+            <p id="swing-readout" class="swing-readout" role="status" aria-live="polite">
+              Calibrate first, then start the at-bat. Count four, swing on five.
+            </p>
+            <p id="difficulty-announce" class="difficulty-announce" role="status" aria-live="polite"></p>
+            <div id="end-card" hidden></div>
+          </div>
+
+          <div class="gd-settings">
+            <h2 class="section-label">Mix &amp; accessibility</h2>
             <div class="mixer">
               <label class="difficulty-label" for="difficulty">
                 <span>Difficulty</span>
@@ -121,6 +193,18 @@
                   <option value="legend">Legend — tight windows</option>
                 </select>
               </label>
+              <label class="difficulty-label" for="announce-mode">
+                <span>Announce mode</span>
+                <select id="announce-mode" name="announce-mode" aria-describedby="announce-mode-hint">
+                  <option value="booth">Booth speech (recommended)</option>
+                  <option value="screen-reader">Screen reader play-by-play</option>
+                  <option value="both">Both (may double-speak)</option>
+                </select>
+              </label>
+              <p id="announce-mode-hint" class="sr-only">
+                Screen reader mode turns off booth speech and announces play-by-play lines through your screen reader.
+                Both may double-speak with VoiceOver or NVDA.
+              </p>
               <label class="toggle">
                 <input type="checkbox" id="radio-filter" checked />
                 <span>AM radio filter</span>
@@ -131,18 +215,49 @@
                 <output id="crowd-level-out">0</output>
               </label>
               <label class="slider">
+                <span>Field (timing cues)</span>
+                <input type="range" id="field-gain" min="40" max="100" step="1" value="95" />
+                <output id="field-gain-out">95</output>
+              </label>
+              <label class="slider">
+                <span>Crowd bus</span>
+                <input type="range" id="crowd-bus-gain" min="0" max="100" step="1" value="40" />
+                <output id="crowd-bus-gain-out">40</output>
+              </label>
+              <label class="slider">
+                <span>Booth</span>
+                <input type="range" id="booth-gain" min="0" max="100" step="1" value="100" />
+                <output id="booth-gain-out">100</output>
+              </label>
+              <label class="slider">
                 <span>Master</span>
                 <input type="range" id="master-gain" min="0" max="100" step="1" value="80" />
                 <output id="master-gain-out">80</output>
               </label>
+              <label class="slider">
+                <span>Booth speech rate</span>
+                <input type="range" id="speech-rate" min="70" max="140" step="5" value="100" aria-describedby="speech-rate-hint" />
+                <output id="speech-rate-out">100%</output>
+              </label>
+              <p id="speech-rate-hint" class="sr-only">
+                Affects Web Speech booth voice only. Screen reader rate is controlled by your assistive technology.
+              </p>
+              <label class="difficulty-label" for="coach-verbosity">
+                <span>Coach verbosity</span>
+                <select id="coach-verbosity" name="coach-verbosity" aria-describedby="coach-verbosity-hint">
+                  <option value="full">Full</option>
+                  <option value="short">Short</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+              <p id="coach-verbosity-hint" class="sr-only">
+                Coaching tips only. The booth broadcast and field timing cues stay on.
+              </p>
             </div>
+          </div>
+        </aside>
 
-            <details class="diag-details">
-              <summary class="section-label">Diagnostics</summary>
-              <div id="diagnostics" class="diagnostics"></div>
-            </details>
-          </aside>
-        </div>
+        <button id="action-fab" class="action-fab" type="button">Swing</button>
       </section>
     </main>
 
@@ -151,5 +266,6 @@
       import { mountGameFeedback } from '../src/feedback/embed.js';
       mountGameFeedback({ gameSlug: "baseballradio", gameName: "Bottom of the Ninth" });
     </script>
+
   </body>
 </html>
