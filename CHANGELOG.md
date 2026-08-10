@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Shell Shift, a five-tidepool row-rotation puzzle with target shell patterns, three rendered shore palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Kite Parade, a five-kite graph-coloring campaign with fixed star patches, conflict-aware inspections, three fabric palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Bottom of the Ninth, a full nine-inning audio-first baseball broadcast with player batting and pitching, stereo timing cues, screen-reader-friendly live state, bounded outcomes, and shared feedback.
+- Bottom of the Ninth retention polish: phone Swing/Release control, touch calibration, 3/6/9-inning and practice modes, bus mix and a11y prefs, broadcast-theme shop cosmetics, and arcade sync/smoke tooling.
 - Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
 - Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
