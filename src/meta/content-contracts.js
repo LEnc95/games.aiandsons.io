@@ -243,6 +243,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'flock-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'cloud', 'gate', 'birds', 'trail', 'accent']) }),
     ]),
   }),
+  geargrove: Object.freeze({
+    releasedAt: '2026-08-10',
+    outcomes: Object.freeze({
+      gears: Object.freeze({ min: 0, max: 27, direction: 'higher' }),
+      groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      turns: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'gear-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'leaf', 'edge', 'gear', 'teeth', 'target', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
