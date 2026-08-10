@@ -33,7 +33,7 @@
     #cadeFeedbackOpenBtn{display:none!important}
     @media(max-width:680px){
       body{padding:7px}
-      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px;padding-top:48px}
       .home{padding:6px 10px;font-size:.77rem}
       .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.56rem}.stat strong{font-size:.75rem}
       .stage{border-radius:16px;box-shadow:0 6px 0 #08150b}
@@ -98,7 +98,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -109,10 +109,12 @@ const el={
   theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
 };
 const WIDTH=900,HEIGHT=650,COLS=8,ROWS=6,CELL=80,ORIGIN={x:130,y:112},MOVE_MS=180;
+const STARLIGHT_CLOVER=profileState.inventory instanceof Set&&profileState.inventory.has('pollenpatrol-starlight-clover');
 const THEMES=[
   {name:'Sunpatch',background:'#17351f',ground:'#d9e995',soil:'#9bb85d',grid:'#75994b',hedge:'#315f35',hedgeTop:'#6fac55',flower:'#fff6ba',accent:'#ffca52',bee:'#ffd84e',beetle:'#d94b55',trail:'#fff0a1'},
   {name:'Bluebell',background:'#182b45',ground:'#93b6c9',soil:'#6489a0',grid:'#4f718c',hedge:'#315673',hedgeTop:'#6d9cc0',flower:'#e3dcff',accent:'#b490ff',bee:'#ffe16a',beetle:'#ec628a',trail:'#d9f7ff'},
-  {name:'Honeyrose',background:'#4b2430',ground:'#e5aa96',soil:'#bc786f',grid:'#9a5a5c',hedge:'#6d3847',hedgeTop:'#b96772',flower:'#fff0e8',accent:'#ffb14f',bee:'#ffe06a',beetle:'#863a4d',trail:'#ffe5a6'}
+  {name:'Honeyrose',background:'#4b2430',ground:'#e5aa96',soil:'#bc786f',grid:'#9a5a5c',hedge:'#6d3847',hedgeTop:'#b96772',flower:'#fff0e8',accent:'#ffb14f',bee:'#ffe06a',beetle:'#863a4d',trail:'#ffe5a6'},
+  ...(STARLIGHT_CLOVER?[{name:'Starlight Clover',background:'#111334',ground:'#64748b',soil:'#334155',grid:'#94a3b8',hedge:'#14532d',hedgeTop:'#22c55e',flower:'#e9d5ff',accent:'#c4b5fd',bee:'#fef08a',beetle:'#f472b6',trail:'#67e8f9'}]:[])
 ];
 const FLOWER_COLORS=['#ff75a8','#8f7dff','#55cfd0','#ff9c54','#f6df4e'];
 const LEVELS=[
@@ -130,7 +132,7 @@ const center=cell=>({x:ORIGIN.x+cell[0]*CELL+CELL/2,y:ORIGIN.y+cell[1]*CELL+CELL
 const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
 const game={
   mode:'menu',started:false,levelIndex:0,player:[0,5],flowers:[],beetles:[],wingbeats:20,elapsedMs:0,moves:0,
-  totalFlowers:0,gardens:0,themeIndex:0,animation:null,visited:[],reported:false,rewarded:false,
+  totalFlowers:0,gardens:0,themeIndex:STARLIGHT_CLOVER?THEMES.length-1:0,animation:null,visited:[],reported:false,rewarded:false,
   status:'Press Start to begin Clover Corner.',lastAction:{type:'ready'}
 };
 let pointerStart=null,lastFrame=performance.now(),manualUntil=0;
@@ -414,7 +416,7 @@ window.render_game_to_text=()=>JSON.stringify({
   hive:{cell:[...level().hive],open:flowerCount()===game.flowers.length},
   flowers:game.flowers.map((flower,index)=>({id:index,cell:[...flower.cell],color:FLOWER_COLORS[flower.color],collected:flower.collected})),
   hedges:level().walls.map(cell=>[...cell]),beetles:game.beetles.map(beetle=>({id:beetle.id,cell:[...beetle.path[beetle.phase]],next:[...nextBeetleCell(beetle)]})),
-  resources:{wingbeats:game.wingbeats,moves:game.moves},campaign:{flowers:game.totalFlowers,gardens:game.gardens},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  resources:{wingbeats:game.wingbeats,moves:game.moves},campaign:{flowers:game.totalFlowers,gardens:game.gardens},theme:theme().name,cosmetics:{starlightClover:STARLIGHT_CLOVER},status:game.status,lastAction:game.lastAction,
   controls:{move:'Arrow keys, WASD, direction buttons, swipe, or tap toward a cell',wait:'Space, Wait button, or tap the bee',continue:'Enter',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
 });
 window.__POLLEN_PATROL_GAME__={

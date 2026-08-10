@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W33 content pack with Aurora Lantern Ripple Shepherd, Sunrise Kelp Aquarium Logic, and Starlight Clover Pollen Patrol cosmetics plus four bounded weekly challenges.
 - Flock Fold, a five-sky formation-shifting flight with 25 cloud gates, three rendered paper palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Shell Shift, a five-tidepool row-rotation puzzle with target shell patterns, three rendered shore palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Kite Parade, a five-kite graph-coloring campaign with fixed star patches, conflict-aware inspections, three fabric palettes, deterministic stepping, bounded outcomes, and shared feedback.

@@ -25,6 +25,8 @@ const GAME_FILE_BY_PREFIX = {
   tetris: 'tetris/index.html',
   aquariumlogic: 'aquariumlogic/index.html',
   acornascent: 'acornascent/index.html',
+  rippleshepherd: 'rippleshepherd/index.html',
+  pollenpatrol: 'pollenpatrol/index.html',
   asteroids: 'asteroids/index.html',
   bomberman: 'bomberman/index.html',
   colorcatch: 'colorcatch/index.html',
