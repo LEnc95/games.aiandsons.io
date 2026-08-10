@@ -540,3 +540,11 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-23] Key PR links: none merged for this date.
 - [nightly 2026-07-24] Tracked changes: 1 commit(s) - 242d1e7 Document maintenance workflows and update sprint board.
 - [nightly 2026-07-24] Key PR links: none merged for this date.
+- [nightly 2026-08-06] Tracked changes: 3 commit(s) - 3f28394 Add shared gameplay clip recording controls; 7ecc6d7 Add 2026-W32 weekly content pack (#249); de8c128 Add Chorus Current daily game (#248).
+- [nightly 2026-08-06] Key PR links: none merged for this date.
+- [nightly 2026-08-07] No repository commits found for this date.
+- [nightly 2026-08-07] Key PR links: none merged for this date.
+- [nightly 2026-08-08] No repository commits found for this date.
+- [nightly 2026-08-08] Key PR links: none merged for this date.
+- [nightly 2026-08-09] No repository commits found for this date.
+- [nightly 2026-08-09] Key PR links: none merged for this date.

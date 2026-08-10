@@ -29,6 +29,7 @@ const BASE_GAMES = [
   { slug:'micro-mario',    name:'Micro Mario',         emoji:'\u{1F344}', scoreHint:'coins',      url:'/mario',         desc:'Tiny platformer. Collect coins and reach the flag.', earnsCoins:true },
   { slug:'ski',            name:'Retro Downhill Ski',  emoji:'\u26F7\uFE0F', scoreHint:'distance', url:'/ski',         desc:'Dodge trees and rocks as you race down the mountain!', earnsCoins:true },
   { slug:'homerunderby',   name:'Home Run Derby',      emoji:'\u26BE',    scoreHint:'homeruns',   url:'/homerunderby/', desc:'Time your swing to crush home runs before you rack up 10 outs.', earnsCoins:true },
+  { slug:'baseballradio',  name:'Bottom of the Ninth', emoji:'\u{1F4FB}', scoreHint:'wins',       url:'/baseballradio/', desc:'Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
   { slug:'micro-rc-racer', name:'Micro RC Racer',      emoji:'\u{1F3CE}\uFE0F', scoreHint:'best lap', url:'/microrc',   desc:'Top-down RC dirt racing with tank steering and slippery drifts.', earnsCoins:false },
   { slug:'oregontrail',    name:'Oregon Trail',        emoji:'\u{1F40E}', scoreHint:'miles',      url:'/oregontrail/', desc:'Lead a wagon party across 2,000 miles, ration supplies, and survive trail disasters.', earnsCoins:false },
   { slug:'neonrally',      name:'Neon Rally',          emoji:'\u{1F3C1}', scoreHint:'position',   url:'/neonrally',     desc:'Race AI rivals through neon turns, chain boosts, and finish 3 laps before time runs out.', earnsCoins:true },
@@ -222,7 +223,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   ]),
   sports: new Set([
     'airhockey', 'skeeball', 'pool', 'plinko', 'darts', 'minigolf', 'ski',
-    'homerunderby', 'nebulacurl', 'windbow', 'lureline',
+    'homerunderby', 'baseballradio', 'nebulacurl', 'windbow', 'lureline',
   ]),
   racing: new Set([
     'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
@@ -233,7 +234,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'dotsandboxes', 'reversi', 'checkers', 'nimgrove', 'mancala', 'backgammon',
     'chess', 'gomokugrid', 'oregontrail', 'pokemon', 'riverriddle',
   ]),
-  'audio-accessible': new Set(['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio']),
+  'audio-accessible': new Set(['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio', 'baseballradio']),
   'two-player': new Set([
     'pong', 'airhockey', 'tictactoe', 'rps', 'connect4', 'waterballoon',
     'battleship', 'dotsandboxes', 'reversi', 'checkers', 'mancala',
@@ -252,7 +253,7 @@ const TOP_PLAYED_SLUGS = Object.freeze([
 ]);
 
 const LONG_SLUGS = Object.freeze(new Set([
-  'clubpenguin-world', 'prisonersdilemma', 'oregontrail', 'pokemon',
+  'clubpenguin-world', 'prisonersdilemma', 'oregontrail', 'pokemon', 'baseballradio',
   'towerdefense', 'chess', 'backgammon', 'mahjongsolitaire',
 ]));
 

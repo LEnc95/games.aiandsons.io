@@ -210,6 +210,18 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'harbor-theme', kind: 'palette', tokens: Object.freeze(['background', 'sky', 'horizon', 'water', 'panel', 'grid', 'current', 'beacon', 'accent']) }),
     ]),
   }),
+  baseballradio: Object.freeze({
+    releasedAt: '2026-08-10',
+    outcomes: Object.freeze({
+      wins: Object.freeze({ min: 0, max: 1, direction: 'higher' }),
+      runs: Object.freeze({ min: 0, max: 100, direction: 'higher' }),
+      opponentRuns: Object.freeze({ min: 0, max: 100, direction: 'lower' }),
+      innings: Object.freeze({ min: 9, max: 30, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'broadcast-theme', kind: 'palette', tokens: Object.freeze(['background', 'panel', 'accent', 'score', 'warning']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

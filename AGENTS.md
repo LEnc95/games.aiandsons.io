@@ -18,7 +18,7 @@ Operational command reference for contributors and automations in this repositor
 - Run aggregate telemetry and maintenance automation tests: `npm run test:telemetry`
 - Run integration tests: `npm run test:shop`
 - Run feedback integration tests: `npm run test:feedback`
-- Run social API integration tests: `npm run test:social`
+- Run social API and gameplay clip recording integration tests: `npm run test:social`
 - Run share landing integration tests: `node --test tests/share.integration.test.mjs`
 - Run discovery API integration tests: `node --test tests/discovery-api.integration.test.mjs`
 - Run standalone unit tests: `node --test tests/unit/games.test.mjs tests/unit/discovery-rankings.test.mjs tests/unit/storage.test.mjs tests/unit/core/billing.test.mjs tests/unit/core/onboarding.test.mjs tests/unit/prog/missions.test.mjs`

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Bottom of the Ninth, a full nine-inning audio-first baseball broadcast with player batting and pitching, stereo timing cues, screen-reader-friendly live state, bounded outcomes, and shared feedback.
 - Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
 - Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
@@ -18,6 +19,10 @@ All notable changes to this project will be documented in this file.
 - Added Acorn Ascent, a five-grove precision-launch game with collectible acorns, bounded outcomes, and rendered canopy themes.
 - Added Moonscale, a five-sky celestial balance puzzle with torque-based moonstone placement, bounded outcomes, and rendered scale themes.
 - Added Shadow Bloom, a five-garden moon-shadow puzzle with protected sun blossoms, bounded outcomes, and rendered garden themes.
+
+### Operations
+
+- Key PRs: [#249](https://github.com/LEnc95/games.aiandsons.io/pull/249), [#248](https://github.com/LEnc95/games.aiandsons.io/pull/248), [#247](https://github.com/LEnc95/games.aiandsons.io/pull/247), [#246](https://github.com/LEnc95/games.aiandsons.io/pull/246), [#243](https://github.com/LEnc95/games.aiandsons.io/pull/243), [#242](https://github.com/LEnc95/games.aiandsons.io/pull/242), [#241](https://github.com/LEnc95/games.aiandsons.io/pull/241).
 
 ## [1.13.0] - 2026-07-26
 ### Added
