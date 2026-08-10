@@ -43,6 +43,7 @@
 - game/micro-mario
 - game/ski
 - game/homerunderby
+- game/baseballradio
 - game/micro-rc-racer
 - game/oregontrail
 - game/neonrally

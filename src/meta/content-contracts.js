@@ -243,6 +243,18 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'flock-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'cloud', 'gate', 'birds', 'trail', 'accent']) }),
     ]),
   }),
+  baseballradio: Object.freeze({
+    releasedAt: '2026-08-10',
+    outcomes: Object.freeze({
+      wins: Object.freeze({ min: 0, max: 1, direction: 'higher' }),
+      runs: Object.freeze({ min: 0, max: 100, direction: 'higher' }),
+      opponentRuns: Object.freeze({ min: 0, max: 100, direction: 'lower' }),
+      innings: Object.freeze({ min: 9, max: 30, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'broadcast-theme', kind: 'palette', tokens: Object.freeze(['background', 'panel', 'accent', 'score', 'warning']) }),
+    ]),
+  }),
   geargrove: Object.freeze({
     releasedAt: '2026-08-10',
     outcomes: Object.freeze({
