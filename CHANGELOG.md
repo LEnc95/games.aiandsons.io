@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Gear Grove, a five-grove linked-gear orientation puzzle with solver-backed hints, three rendered garden palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Flock Fold, a five-sky formation-shifting flight with 25 cloud gates, three rendered paper palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Shell Shift, a five-tidepool row-rotation puzzle with target shell patterns, three rendered shore palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Kite Parade, a five-kite graph-coloring campaign with fixed star patches, conflict-aware inspections, three fabric palettes, deterministic stepping, bounded outcomes, and shared feedback.
