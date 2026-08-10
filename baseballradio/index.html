@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bottom of the Ninth | AI and Sons Games</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="./assets/index-DcRtB0k8.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CdnghoMK.css">
+    <style>
+      .back-home {
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 999px;
+        background: rgba(6,12,24,.82);
+        color: #eef5ff;
+        font: 700 14px/1 system-ui, sans-serif;
+        text-decoration: none;
+        backdrop-filter: blur(10px);
+      }
+      @media (max-width: 640px) {
+        .masthead { justify-content: flex-start; }
+        .masthead .tagline { display: none; }
+      }
+    </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Bottom of the Ninth | AI and Sons Games">
+  <meta property="og:description" content="Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/baseballradio">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/baseballradio.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bottom of the Ninth | AI and Sons Games">
+  <meta name="twitter:description" content="Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/baseballradio.png">
+  <link rel="canonical" href="https://games.aiandsons.io/baseballradio">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Bottom of the Ninth","description":"Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/baseballradio","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+  <body>
+    <!--
+      Audio-only game, Gameday-style interface: scorebug, pitch tracker, live stats.
+      There is still no animated field — the ballgame lives in your ears; the board
+      is the broadcast graphic layer (location, velocity, box score).
+    -->
+    <main class="shell">
+      <header class="masthead">
+        <a class="back-home" href="/" aria-label="Back to all games">← Back</a>
+        <div class="masthead-brand">
+          <p class="eyebrow">Live Gameday</p>
+          <h1>Bottom of the Ninth</h1>
+        </div>
+        <p class="tagline">
+          Headphones · <kbd>SPACE</kbd> swing / release · pick your club
+        </p>
+      </header>
+
+      <section id="gate" class="gate">
+        <label class="side-pick" for="player-side">
+          <span>Play as</span>
+          <select id="player-side" name="player-side">
+            <option value="home">Pirates (home) — bat bottom, pitch top</option>
+            <option value="away">Phillies (away) — bat top, pitch bottom</option>
+          </select>
+        </label>
+        <button id="play-ball" class="primary" type="button">Play Ball</button>
+        <p class="gate-note">
+          Audio starts on click. When batting: count four, swing on five. When pitching: call the pitch,
+          then release on four. Calibrate latency before your first pitch.
+        </p>
+      </section>
+
+      <section id="booth" class="booth" hidden>
+        <div id="gameday" class="gameday" role="region" aria-label="Live game board"></div>
+
+        <div class="gd-controls">
+          <div class="transport">
+            <button id="next-pitch" class="primary" type="button">Start at-bat</button>
+            <kbd class="hint">SPACE</kbd><span id="space-hint" class="hint-text">to swing</span>
+            <button id="calibrate" class="secondary" type="button">Calibrate latency</button>
+            <p id="calibration-status" class="cal-status">Not calibrated.</p>
+          </div>
+          <div id="pitch-call" class="pitch-call" hidden></div>
+          <div id="timing-coach" class="timing-coach" aria-hidden="true"></div>
+          <p id="swing-readout" class="swing-readout" role="status" aria-live="polite">
+            Calibrate first, then start the at-bat. Count four, swing on five.
+          </p>
+          <p id="difficulty-announce" class="difficulty-announce" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="gd-lower">
+          <section class="gd-feed">
+            <h2 class="section-label">Play-by-Play</h2>
+            <ol id="radio-log" class="radio-log" role="log" aria-live="polite" aria-relevant="additions"></ol>
+          </section>
+
+          <aside class="gd-settings">
+            <h2 class="section-label">Mix</h2>
+            <div class="mixer">
+              <label class="difficulty-label" for="difficulty">
+                <span>Difficulty</span>
+                <select id="difficulty" name="difficulty">
+                  <option value="rookie">Rookie — learn the beat</option>
+                  <option value="pro">Pro — mostly fastballs</option>
+                  <option value="all-star">All-Star — full mix</option>
+                  <option value="legend">Legend — tight windows</option>
+                </select>
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="radio-filter" checked />
+                <span>AM radio filter</span>
+              </label>
+              <label class="slider">
+                <span>Crowd energy bias</span>
+                <input type="range" id="crowd-level" min="-2" max="2" step="1" value="0" />
+                <output id="crowd-level-out">0</output>
+              </label>
+              <label class="slider">
+                <span>Master</span>
+                <input type="range" id="master-gain" min="0" max="100" step="1" value="80" />
+                <output id="master-gain-out">80</output>
+              </label>
+            </div>
+
+            <details class="diag-details">
+              <summary class="section-label">Diagnostics</summary>
+              <div id="diagnostics" class="diagnostics"></div>
+            </details>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./site-integration.js"></script>
+    <script type="module">
+      import { mountGameFeedback } from '../src/feedback/embed.js';
+      mountGameFeedback({ gameSlug: "baseballradio", gameName: "Bottom of the Ninth" });
+    </script>
+  </body>
+</html>

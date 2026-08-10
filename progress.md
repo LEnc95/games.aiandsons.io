@@ -4400,3 +4400,14 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Visually inspected all three shop previews, baseline gameplay, equipped gameplay, and 390x844 equipped layouts. Prism Tide, Moonlit Reef, and Firefly Canopy are distinct, readable, and consistent with their declared palette tokens.
 - Validation passed: maintenance; 181-game preflight; telemetry/automation 15/15 before the lifecycle regression and focused maintenance 11/11 after it; mission unit 12/12; feedback 31/31; shop/billing 68/68; social/discovery 20/20; weekly challenge smoke; and `git diff --check`.
 - Next: run the final focused cosmetic pass after the last non-semantic cleanup, authoritative weekly-pack diff audit, stage/commit, refresh against origin/main, push, and open the draft PR with `Closes #244`.
+
+## 2026-08-10 Bottom of the Ninth integration
+- Current request: integrate the standalone `C:\Users\Luke\Documents\BaseballRadio` game into the arcade website.
+- Inspected the standalone Vite/TypeScript game and the arcade route, discovery, content-contract, feedback, and outcome conventions; preserved existing user edits in `AGENTS.md`, `CHANGELOG.md`, and `SPRINT_BOARD.md`.
+- Updated the standalone Vite config and audio manifest for route-relative production assets; added fullscreen, concise `render_game_to_text`, and a bounded game-over integration event.
+- Standalone verification passed: 17 test files / 154 tests, TypeScript, and the Vite production build.
+- Copied the production build into `/baseballradio/` and wired recent history, bounded end-game outcomes, feedback context, shared feedback, back navigation, Sports and Audio Accessible discovery categories, and an explicit broadcast-theme content contract.
+- Generated discovery metadata, SEO, sitemap coverage, and the 182-game OG card set.
+- Arcade preflight passed for all 182 routes, registry integrity/discovery unit tests passed (14 assertions), and local Linear feedback seeds were regenerated for all 182 game baselines.
+- Browser verification passed with the supplied game client and focused DOM/audio scenarios: menu and live text state, away-side batting with a +5 ms perfect home run, home-side pitch calling with a -1 ms perfect curveball release and recorded out, shared feedback open/cancel, fullscreen/Escape, all audio/network requests, 390x844 zero-horizontal-overflow layout, and zero console/page errors. Visually inspected menu, batting, pitching, mobile menu/gameplay, and OG captures; fixed the initial Back-link overlap and hid the compact-header tagline on mobile.
+- Final validation passed: feedback/auth/Linear/Slack 31/31, social/discovery/clip 22/22, maintenance validation, 182-game preflight, bounded outcome normalization, SEO/discovery idempotence, and `git diff --check`. The final 390x844 menu/gameplay layout has zero horizontal overflow and no header/control collisions. No remaining integration TODOs.
