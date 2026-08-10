@@ -81,12 +81,19 @@ async function main() {
     assert(/Swing|Release/i.test(fabLabel), "Action FAB should show Swing or Release");
     summary.checks.push("action-fab");
 
-    // Soft-gate: either calibrate skip or start is available.
+    // Soft-gate: Start at-bat is locked until calibrate/skip — Space must activate Skip.
     const skipVisible = await page.locator("#skip-cal").isVisible().catch(() => false);
     if (skipVisible) {
-      await page.click("#skip-cal");
-      summary.checks.push("skip-calibration");
+      await page.focus("#skip-cal");
+      await page.keyboard.press("Space");
+      await page.waitForFunction(() => !document.getElementById("next-pitch")?.disabled, null, {
+        timeout: 5000,
+      });
+      summary.checks.push("skip-calibration-space");
     }
+
+    assert(await page.locator("#timing-action").count() > 0, "Rail Swing/Release control should exist for SR");
+    summary.checks.push("timing-action-rail");
 
     await page.click("#calibrate");
     await page.waitForSelector("#cal-tap-zone:not([hidden])", { timeout: 10000 });
