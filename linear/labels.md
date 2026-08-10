@@ -199,5 +199,6 @@
 - game/kiteparade
 - game/shellshift
 - game/flockfold
+- game/geargrove
 
 Generated from `src/meta/feedback.js`.
