@@ -32,7 +32,7 @@
     #cadeFeedbackOpenBtn{display:none!important}
     @media(max-width:680px){
       body{padding:7px}
-      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px;padding-top:48px}
       .home{padding:6px 10px;font-size:.77rem}
       .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.56rem}.stat strong{font-size:.75rem}
       .stage{border-radius:16px;box-shadow:0 6px 0 #031219}
@@ -93,7 +93,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -104,6 +104,7 @@ const el={
   theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
 };
 const WIDTH=900,HEIGHT=650,BOUNDS={left:42,right:858,top:42,bottom:608};
+const AURORA_LANTERN=profileState.inventory instanceof Set&&profileState.inventory.has('rippleshepherd-aurora-lantern');
 const COLORS=[
   {name:'Gold',core:'#fff39a',glow:'#ffc54d',leaf:'#ddb35a'},
   {name:'Rose',core:'#ffd2ef',glow:'#ff79c8',leaf:'#d866a7'},
@@ -113,7 +114,8 @@ const COLORS=[
 const THEMES=[
   {name:'Moonmint',sky:'#071d2d',water:'#0d4e5d',deep:'#082f43',rim:'#65d4d0',ripple:'#b8fff3',pad:'#2b8c70',padEdge:'#71d19c',rock:'#526878',rockEdge:'#96b3ba',cursor:'#fff29a'},
   {name:'Lotus',sky:'#2b1831',water:'#714363',deep:'#40294d',rim:'#f0a5cf',ripple:'#ffe0f3',pad:'#648c64',padEdge:'#bbdb8c',rock:'#765c76',rockEdge:'#c9a5bd',cursor:'#ffe589'},
-  {name:'Sunken',sky:'#16233c',water:'#245b80',deep:'#173a65',rim:'#75cfff',ripple:'#d9f7ff',pad:'#397c82',padEdge:'#7bd1c4',rock:'#4f627b',rockEdge:'#a6b6ce',cursor:'#ffd978'}
+  {name:'Sunken',sky:'#16233c',water:'#245b80',deep:'#173a65',rim:'#75cfff',ripple:'#d9f7ff',pad:'#397c82',padEdge:'#7bd1c4',rock:'#4f627b',rockEdge:'#a6b6ce',cursor:'#ffd978'},
+  ...(AURORA_LANTERN?[{name:'Aurora Lantern',sky:'#140c36',water:'#155e75',deep:'#082f49',rim:'#67e8f9',ripple:'#f0abfc',lily:'#0f766e',lilyEdge:'#5eead4',stone:'#4338ca',stoneEdge:'#a5b4fc',cursor:'#fde68a'}]:[])
 ];
 const LEVELS=[
   {
@@ -149,7 +151,7 @@ const LEVELS=[
 ];
 const game={
   mode:'menu',resumeMode:'playing',levelIndex:0,bugs:[],ripples:[],pulsesLeft:0,ripplesUsed:0,totalDelivered:0,ponds:0,
-  elapsedMs:0,settleMs:0,themeIndex:0,cursor:{x:450,y:325},rewarded:false,reported:false,started:false,
+  elapsedMs:0,settleMs:0,themeIndex:AURORA_LANTERN?THEMES.length-1:0,cursor:{x:450,y:325},rewarded:false,reported:false,started:false,
   status:'Start at Quiet Cove.',lastAction:{type:'ready'}
 };
 let lastFrame=performance.now(),manualUntil=0;
@@ -353,19 +355,21 @@ function drawPond(){
 }
 function drawRock(rock){
   const t=theme();
+  const stone=t.stone||t.rock,stoneEdge=t.stoneEdge||t.rockEdge;
   const grad=ctx.createRadialGradient(rock.x-rock.r*.3,rock.y-rock.r*.35,5,rock.x,rock.y,rock.r);
-  grad.addColorStop(0,t.rockEdge);grad.addColorStop(1,t.rock);
+  grad.addColorStop(0,stoneEdge);grad.addColorStop(1,stone);
   ctx.beginPath();
   ctx.moveTo(rock.x-rock.r*.9,rock.y+rock.r*.2);
   ctx.quadraticCurveTo(rock.x-rock.r*.7,rock.y-rock.r*.8,rock.x,rock.y-rock.r);
   ctx.quadraticCurveTo(rock.x+rock.r*.9,rock.y-rock.r*.65,rock.x+rock.r,rock.y+rock.r*.15);
   ctx.quadraticCurveTo(rock.x+rock.r*.55,rock.y+rock.r,rock.x-rock.r*.5,rock.y+rock.r*.8);
-  ctx.closePath();ctx.fillStyle=grad;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=t.rockEdge;ctx.stroke();
+  ctx.closePath();ctx.fillStyle=grad;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=stoneEdge;ctx.stroke();
 }
 function drawLantern(lantern,index){
   const color=COLORS[lantern.color],delivered=game.bugs.some(bug=>bug.delivered&&bug.color===lantern.color);
+  const lily=theme().lily||theme().pad,lilyEdge=theme().lilyEdge||theme().padEdge;
   ctx.save();ctx.translate(lantern.x,lantern.y);
-  ctx.fillStyle=theme().pad;ctx.strokeStyle=theme().padEdge;ctx.lineWidth=3;
+  ctx.fillStyle=lily;ctx.strokeStyle=lilyEdge;ctx.lineWidth=3;
   ctx.beginPath();ctx.ellipse(0,5,42,25,-.16,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.fillStyle=theme().water;ctx.beginPath();ctx.moveTo(0,5);ctx.lineTo(39,-4);ctx.lineTo(28,18);ctx.closePath();ctx.fill();
   ctx.shadowColor=color.glow;ctx.shadowBlur=delivered?28:14;
@@ -484,7 +488,7 @@ window.render_game_to_text=()=>JSON.stringify({
   cursor:{x:Math.round(game.cursor.x),y:Math.round(game.cursor.y)},
   fireflies:game.bugs.map(bug=>({id:bug.id,color:COLORS[bug.color].name,x:Math.round(bug.x),y:Math.round(bug.y),vx:Number(bug.vx.toFixed(3)),vy:Number(bug.vy.toFixed(3)),delivered:bug.delivered})),
   lanterns:level().lanterns.map(lantern=>({color:COLORS[lantern.color].name,x:lantern.x,y:lantern.y})),
-  rocks:level().rocks.map(rock=>({...rock})),campaign:{delivered:game.totalDelivered,ponds:game.ponds},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  rocks:level().rocks.map(rock=>({...rock})),campaign:{delivered:game.totalDelivered,ponds:game.ponds},theme:theme().name,cosmetics:{auroraLantern:AURORA_LANTERN},status:game.status,lastAction:game.lastAction,
   controls:{ripple:'Pointer/touch on pond or Space at cursor',aim:'Arrow keys or WASD',continue:'Enter',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
 });
 window.__RIPPLE_SHEPHERD_GAME__={

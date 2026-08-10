@@ -163,5 +163,60 @@ test('missions module loading', async (t) => {
         state.badges = originalBadges;
       }
     });
+
+    await t.test('W33 challenges stay bounded and reward exactly once', () => {
+      const timestamp = new Date('2026-08-10T16:00:00Z').getTime();
+      const originalCoins = state.coins;
+      const originalBadges = state.badges;
+      try {
+        state.coins = 0;
+        state.badges = new Set();
+        ensureDailyMissions(timestamp);
+        ensureWeeklyChallenges(timestamp);
+        state.missions.activeIds = ['snake-length-14'];
+        state.missions.progress = {};
+        state.missions.completed = [];
+        state.missions.rewarded = [];
+        state.missions.weekly.activeIds = [
+          'weekly-w33-rippleshepherd-fireflies-20',
+          'weekly-w33-aquariumlogic-boards-5',
+          'weekly-w33-pollenpatrol-flowers-21',
+          'weekly-w33-meteorminer-score-5000',
+        ];
+        state.missions.weekly.progress = {};
+        state.missions.weekly.completed = [];
+        state.missions.weekly.rewarded = [];
+
+        const first = recordMissionProgress({
+          rippleshepherd: { fireflies: 999 },
+          aquariumlogic: { boards: 999 },
+          pollenpatrol: { flowers: 999 },
+          meteorminer: { score: 999999 },
+        }, timestamp);
+        assert.equal(first.weeklyCompletedNow.length, 4);
+        assert.equal(first.weeklyRewardsNow.length, 4);
+        assert.equal(first.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0), 80);
+        assert.deepEqual(state.missions.weekly.progress, {
+          'weekly-w33-rippleshepherd-fireflies-20': 20,
+          'weekly-w33-aquariumlogic-boards-5': 5,
+          'weekly-w33-pollenpatrol-flowers-21': 21,
+          'weekly-w33-meteorminer-score-5000': 5000,
+        });
+        assert.equal(state.coins, 80);
+
+        const second = recordMissionProgress({
+          rippleshepherd: { fireflies: 20 },
+          aquariumlogic: { boards: 5 },
+          pollenpatrol: { flowers: 21 },
+          meteorminer: { score: 5000 },
+        }, timestamp);
+        assert.deepEqual(second.weeklyCompletedNow, []);
+        assert.deepEqual(second.weeklyRewardsNow, []);
+        assert.equal(state.coins, 80);
+      } finally {
+        state.coins = originalCoins;
+        state.badges = originalBadges;
+      }
+    });
   });
 });
