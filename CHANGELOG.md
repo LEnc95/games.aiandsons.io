@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Bottom of the Ninth utility mic: Eric handles station IDs and vendor calls (hot dogs / beer / programs) as directed samples.
 - Bottom of the Ninth cast clarity: AM filter defaults off so Adam/Brian/Eric stay intelligible; booth assets fetch with no-store cache busting so stale manifests cannot silence the booth.
 - Bottom of the Ninth voice cast lock: expanded Adam/Brian sample coverage for bridges, situations, and color lines; OS speech fallback never picks a female voice for booth roles.
+- Bottom of the Ninth live cast TTS: Adam/Brian/Eric speak the real situation text (batter and pitcher names, count, field) via `/api/booth/tts`, with the directed sample bank and system speech as fallback.
 - Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
 - Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
