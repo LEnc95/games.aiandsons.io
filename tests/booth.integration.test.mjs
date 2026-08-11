@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { createRequire } from "node:module";
 import { Readable } from "node:stream";
 
 const require = createRequire(import.meta.url);
-const boothHandler = require("../api/booth.js");
+const socialHandler = require("../api/social.js");
 const { ALLOWED_SPEAKERS, DEFAULT_VOICES, MAX_TEXT } = require("../api/booth/_tts.js");
 
 function mockRequest(url, { method = "GET", body = null } = {}) {
@@ -50,7 +52,7 @@ test("booth health reports configured=false without API key", async () => {
   delete process.env.ELEVEN_API_KEY;
   try {
     const res = mockResponse();
-    await boothHandler(mockRequest("/api/booth?route=health"), res);
+    await socialHandler(mockRequest("/api/social?route=booth-health"), res);
     assert.equal(res.statusCode, 200);
     const json = JSON.parse(String(res.body));
     assert.equal(json.ok, false);
@@ -72,8 +74,8 @@ test("booth tts rejects missing key with 503", async () => {
   delete process.env.ELEVEN_API_KEY;
   try {
     const res = mockResponse();
-    await boothHandler(
-      mockRequest("/api/booth?route=tts", {
+    await socialHandler(
+      mockRequest("/api/social?route=booth-tts", {
         method: "POST",
         body: { text: "Rivera CRUSHES one to deep left!", speaker: "announcer", tone: "hot" },
       }),
@@ -92,8 +94,8 @@ test("booth tts validates speaker and text length", async () => {
   process.env.ELEVENLABS_API_KEY = "test-key-not-used";
   try {
     const badSpeaker = mockResponse();
-    await boothHandler(
-      mockRequest("/api/booth?route=tts", {
+    await socialHandler(
+      mockRequest("/api/social?route=booth-tts", {
         method: "POST",
         body: { text: "Hello", speaker: "umpire" },
       }),
@@ -102,8 +104,8 @@ test("booth tts validates speaker and text length", async () => {
     assert.equal(badSpeaker.statusCode, 400);
 
     const tooLong = mockResponse();
-    await boothHandler(
-      mockRequest("/api/booth?route=tts", {
+    await socialHandler(
+      mockRequest("/api/social?route=booth-tts", {
         method: "POST",
         body: { text: "x".repeat(MAX_TEXT + 1), speaker: "announcer" },
       }),
@@ -115,8 +117,9 @@ test("booth tts validates speaker and text length", async () => {
   }
 });
 
-test("booth unknown route is 404", async () => {
-  const res = mockResponse();
-  await boothHandler(mockRequest("/api/booth?route=nope"), res);
-  assert.equal(res.statusCode, 404);
+test("vercel rewrite maps pretty booth URLs onto social routes", () => {
+  const vercel = JSON.parse(fs.readFileSync(path.join(process.cwd(), "vercel.json"), "utf8"));
+  const rewriteMap = new Map(vercel.rewrites.map((r) => [r.source, r.destination]));
+  assert.equal(rewriteMap.get("/api/booth/:route"), "/api/social?route=booth-:route");
+  assert.equal(rewriteMap.get("/api/booth/:route/"), "/api/social?route=booth-:route");
 });

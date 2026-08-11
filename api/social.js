@@ -46,6 +46,7 @@ const {
   handleDiscoveryRankings,
 } = require("./discovery/_handlers");
 const { handleTelemetryOutcome } = require("./telemetry/_handler");
+const { handleHealth: handleBoothHealth, handleTts: handleBoothTts } = require("./booth/_tts");
 
 const LEADERBOARD_LIMIT = 20;
 const SAVE_MAX_BYTES = 64 * 1024;
@@ -550,6 +551,11 @@ module.exports = async function handler(req, res) {
         return await handleDiscoveryRankings(req, res);
       case "telemetry-outcome":
         return await handleTelemetryOutcome(req, res);
+      // Bottom of the Ninth cast TTS — mounted here to stay within Hobby function limit.
+      case "booth-health":
+        return await handleBoothHealth(req, res);
+      case "booth-tts":
+        return await handleBoothTts(req, res);
       default:
         return sendError(res, 404, "Social route not found.", "social_route_not_found");
     }
