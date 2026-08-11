@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Bottom of the Ninth directed booth seed bank: 20 priority play-by-play/color WAVs (hot/lift/calm/wry) with Edge neural house voices and speech fallback for the long tail.
 - Bottom of the Ninth booth cast: ElevenLabs Adam (PBP) / Brian (color), denser sample coverage for routine calls, and clip-variant fallback so rolled lines use `.0` samples instead of system TTS.
 - Bottom of the Ninth utility mic: Eric handles station IDs and vendor calls (hot dogs / beer / programs) as directed samples.
+- Bottom of the Ninth cast clarity: directed booth mode no longer falls back to OS TTS; AM filter defaults off so Adam/Brian/Eric stay intelligible.
 - Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
 - Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
