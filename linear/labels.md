@@ -201,5 +201,6 @@
 - game/shellshift
 - game/flockfold
 - game/geargrove
+- game/nectarmeasure
 
 Generated from `src/meta/feedback.js`.

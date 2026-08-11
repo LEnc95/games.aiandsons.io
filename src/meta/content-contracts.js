@@ -266,6 +266,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'gear-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'leaf', 'edge', 'gear', 'teeth', 'target', 'accent']) }),
     ]),
   }),
+  nectarmeasure: Object.freeze({
+    releasedAt: '2026-08-11',
+    outcomes: Object.freeze({
+      vessels: Object.freeze({ min: 0, max: 18, direction: 'higher' }),
+      hives: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      pours: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'nectar-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'ground', 'hill', 'panel', 'edge', 'nectar', 'nectar2', 'target', 'accent', 'ink']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
