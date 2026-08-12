@@ -188,6 +188,7 @@ const BASE_GAMES = [
   { slug:'flockfold',      name:'Flock Fold',            emoji:'\u{1F426}', scoreHint:'gates', url:'/flockfold', desc:'Fold seven paper birds into line, wedge, and column formations to clear five skies of cloud gates.', earnsCoins:true },
   { slug:'geargrove',      name:'Gear Grove',            emoji:'\u2699\uFE0F', scoreHint:'groves', url:'/geargrove', desc:'Turn linked flower gears in opposite directions, align every engraved arrow, and awaken five clockwork groves.', earnsCoins:true },
   { slug:'nectarmeasure',  name:'Nectar Measure',        emoji:'\u{1F36F}', scoreHint:'hives', url:'/nectarmeasure', desc:'Pour finite nectar among capacity-marked vessels, match every exact target, and balance five colorful apiary harvests.', earnsCoins:true },
+  { slug:'glassgarden',    name:'Glass Garden',          emoji:'\u{1FA9F}', scoreHint:'windows', url:'/glassgarden', desc:'Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -211,7 +212,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'shadowbloom', 'riverriddle', 'choruscurrent', 'kiteparade', 'shellshift', 'nectarmeasure', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'shadowbloom', 'riverriddle', 'choruscurrent', 'kiteparade', 'shellshift', 'nectarmeasure', 'glassgarden', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',

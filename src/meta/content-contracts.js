@@ -277,6 +277,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'nectar-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'ground', 'hill', 'panel', 'edge', 'nectar', 'nectar2', 'target', 'accent', 'ink']) }),
     ]),
   }),
+  glassgarden: Object.freeze({
+    releasedAt: '2026-08-12',
+    outcomes: Object.freeze({
+      panes: Object.freeze({ min: 0, max: 43, direction: 'higher' }),
+      windows: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      turns: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'glass-theme', kind: 'palette', tokens: Object.freeze(['wall', 'frame', 'lead', 'glass', 'glow', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

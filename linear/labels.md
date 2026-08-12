@@ -202,5 +202,6 @@
 - game/flockfold
 - game/geargrove
 - game/nectarmeasure
+- game/glassgarden
 
 Generated from `src/meta/feedback.js`.
