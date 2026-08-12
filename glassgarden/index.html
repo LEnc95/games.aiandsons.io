@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Glass Garden | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#18233f;color:#fff7db;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#d7e4ff;font-weight:650}
+    .home{color:#17213a;font-weight:850;text-decoration:none;border:2px solid #fff1a8;border-radius:999px;padding:8px 13px;background:#f5c95f}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#26375f;border:2px solid #526da5;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #0d1428}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#c6d8ff}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #607ab3;border-radius:22px;overflow:hidden;background:#101932;box-shadow:0 10px 0 #0d1428}
+    canvas{width:100%;aspect-ratio:8/5;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #fff4ab}
+    .stage:fullscreen{display:grid;place-items:center;background:#080d1c}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 8 / 5));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+    button{border:2px solid #526da5;border-radius:13px;background:#26375f;color:#fff7db;font:800 clamp(.56rem,1.25vw,.79rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #0d1428;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #0d1428}
+    button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #0d1428;background:#f5c95f;color:#17213a;border-color:#fff1a8}
+    button.primary{background:#b96e43;border-color:#f3b06f;color:#fff}
+    button.danger{background:#943f58;border-color:#e78fa8;color:#fff}
+    button:disabled{opacity:.43;cursor:not-allowed}
+    .help{background:#26375f;border:2px solid #526da5;border-radius:15px;padding:10px 14px;font-size:.82rem;line-height:1.45;color:#dfe8ff}
+    .help b{color:#ffe487}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px;padding-top:48px}header>div{max-width:250px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.49rem}.stat strong{font-size:.67rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #0d1428}.controls{grid-template-columns:repeat(2,1fr);gap:6px}button{min-height:40px;padding:6px 3px}.help{font-size:.68rem;padding:8px 10px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(8,13,28,.98)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Glass Garden | AI and Sons Games">
+  <meta property="og:description" content="Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/glassgarden">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/glassgarden.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Glass Garden | AI and Sons Games">
+  <meta name="twitter:description" content="Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/glassgarden.png">
+  <link rel="canonical" href="https://games.aiandsons.io/glassgarden">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Glass Garden","description":"Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/glassgarden","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Glass Garden</h1><small>Turn every stained-glass pane until its colored petals meet across each leaded seam.</small></div>
+    <a class="home" href="/">All Games</a>
+  </header>
+  <section class="stats" aria-label="Game status">
+    <div class="stat"><span>Window</span><strong id="window">1 / 5</strong></div>
+    <div class="stat"><span>Seams</span><strong id="seams">0 / 8</strong></div>
+    <div class="stat"><span>Turns</span><strong id="turns">0</strong></div>
+    <div class="stat"><span>Cracks</span><strong id="cracks">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00.0</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="960" height="600" tabindex="0" aria-label="Glass Garden rotation puzzle. Rotate stained-glass panes so every touching color and every frame jewel match."></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="previous" aria-label="Focus previous pane">◀ Previous</button>
+    <button id="counter" aria-label="Turn focused pane counterclockwise">↶ Counter (Q)</button>
+    <button id="clockwise" class="primary" aria-label="Turn focused pane clockwise">Clockwise ↷</button>
+    <button id="next" aria-label="Focus next pane">Next ▶</button>
+    <button id="inspect">Inspect (I)</button>
+    <button id="hint">Hint (H)</button>
+    <button id="undo">Undo (U)</button>
+    <button id="action" class="primary">Open Shutters</button>
+    <button id="pause">Pause (P)</button>
+    <button id="restart" class="danger">Restart (R)</button>
+    <button id="theme">Glass (T)</button>
+    <button id="fullscreen">Fullscreen (F)</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <div class="help"><b>Desktop:</b> ←/→ chooses a pane; Space/Enter turns clockwise and Q turns counterclockwise. <b>Touch:</b> tap any pane to turn it. Match colored petals across every seam and to every frame jewel. I inspects, H hints, U undoes, P pauses, R restarts, T changes glass, and F toggles fullscreen.</div>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),stage=document.querySelector('#stage');
+const WIDTH=960,HEIGHT=600,GLASS=['ruby','amber','azure','emerald'];
+const el=Object.fromEntries(['window','seams','turns','cracks','time','previous','counter','clockwise','next','inspect','hint','undo','action','pause','restart','theme','fullscreen','feedback','live'].map(id=>[id,document.querySelector(`#${id}`)]));
+const LEVELS=Object.freeze([
+  Object.freeze({name:'Rose Alcove',rows:2,cols:2,start:[1,3,2,1],north:[0,1],east:[2,3],south:[1,0],west:[3,2],h:[[2],[0]],v:[[1,3]],story:'Match the four rose panes to eight frame jewels.'}),
+  Object.freeze({name:'Dawn Gallery',rows:2,cols:3,start:[2,1,3,1,2,3],north:[1,3,0],east:[2,1],south:[3,0,2],west:[0,2],h:[[2,1],[3,0]],v:[[0,2,1]],story:'Turn six dawn panes until every amber seam meets.'}),
+  Object.freeze({name:'Bluebell Arch',rows:3,cols:3,start:[3,1,2,2,3,1,1,2,3],north:[2,0,3],east:[1,3,0],south:[0,2,1],west:[3,1,2],h:[[1,3],[2,0],[3,1]],v:[[0,2,1],[1,3,2]],story:'Restore the bluebell arch across a nine-pane lattice.'}),
+  Object.freeze({name:'Emerald Nave',rows:3,cols:4,start:[1,2,3,1,3,1,2,3,2,3,1,2],north:[3,1,0,2],east:[0,2,1],south:[2,0,3,1],west:[1,3,0],h:[[2,0,3],[1,3,2],[0,2,1]],v:[[3,1,2,0],[2,0,1,3]],story:'Align twelve emerald panes beneath the high nave.'}),
+  Object.freeze({name:'Crown Conservatory',rows:3,cols:4,start:[3,2,1,3,1,3,2,1,2,1,3,2],north:[0,2,1,3],east:[3,1,2],south:[1,3,0,2],west:[2,0,3],h:[[1,3,0],[2,0,3],[3,1,2]],v:[[2,1,3,0],[0,3,2,1]],story:'Complete the crown window and wake the glass garden.'}),
+]);
+const THEMES=Object.freeze([
+  Object.freeze({name:'Cathedral',wall:'#17213d',wall2:'#2b3d69',frame:'#e4b85c',lead:'#17213b',panel:'#f4e7c3',ink:'#17213b',glow:'#fff2ad',accent:'#e9c86e',glass:['#d8495f','#f2aa3b','#3998d0','#42a875']}),
+  Object.freeze({name:'Moon Chapel',wall:'#24204a',wall2:'#504779',frame:'#c8c5ea',lead:'#17132f',panel:'#eceaff',ink:'#28204a',glow:'#d9f5ff',accent:'#91d3e8',glass:['#da5f8f','#edc869','#648fe5','#59b9a7']}),
+  Object.freeze({name:'Sunroom',wall:'#32514c',wall2:'#5d8068',frame:'#f0d596',lead:'#263d39',panel:'#fff4cf',ink:'#263d39',glow:'#fff4b1',accent:'#f2b966',glass:['#d95f52','#f4bd45','#4fa6c6','#61aa61']}),
+]);
+const game={mode:'menu',levelIndex:0,rotations:[],focus:0,history:[],turns:0,levelTurns:0,cracks:3,completedPanes:0,completedWindows:0,elapsedMs:0,themeIndex:0,status:'Press Open Shutters to begin.',lastAction:'menu',reported:false};
+let paneRegions=[],lastFrame=performance.now(),manualUntil=0;
+
+function level(){return LEVELS[game.levelIndex]}
+function palette(){return THEMES[game.themeIndex]}
+function paneCount(which=level()){return which.rows*which.cols}
+function announce(message){game.status=message;el.live.textContent=message}
+function baseEdges(index,which=level()){
+  const row=Math.floor(index/which.cols),col=index%which.cols;
+  return [row===0?which.north[col]:which.v[row-1][col],col===which.cols-1?which.east[row]:which.h[row][col],row===which.rows-1?which.south[col]:which.v[row][col],col===0?which.west[row]:which.h[row][col-1]];
+}
+function displayedEdges(index,rotations=game.rotations,which=level()){
+  const edges=baseEdges(index,which),rotation=((rotations[index]||0)%4+4)%4;
+  return [0,1,2,3].map(side=>edges[(side-rotation+4)%4]);
+}
+function seamState(rotations=game.rotations,which=level()){
+  let matched=0,total=0;const seams=[];
+  for(let row=0;row<which.rows;row++)for(let col=0;col<which.cols;col++){
+    const index=row*which.cols+col,edges=displayedEdges(index,rotations,which);
+    if(row===0){total++;const ok=edges[0]===which.north[col];matched+=ok?1:0;seams.push({kind:'north',index,ok})}
+    if(col===0){total++;const ok=edges[3]===which.west[row];matched+=ok?1:0;seams.push({kind:'west',index,ok})}
+    if(col<which.cols-1){total++;const ok=edges[1]===displayedEdges(index+1,rotations,which)[3];matched+=ok?1:0;seams.push({kind:'horizontal',index,other:index+1,ok})}
+    else{total++;const ok=edges[1]===which.east[row];matched+=ok?1:0;seams.push({kind:'east',index,ok})}
+    if(row<which.rows-1){total++;const ok=edges[2]===displayedEdges(index+which.cols,rotations,which)[0];matched+=ok?1:0;seams.push({kind:'vertical',index,other:index+which.cols,ok})}
+    else{total++;const ok=edges[2]===which.south[col];matched+=ok?1:0;seams.push({kind:'south',index,ok})}
+  }
+  return{matched,total,seams,solved:matched===total};
+}
+function currentMetrics(){return{panes:game.completedPanes,windows:game.completedWindows,turns:game.turns}}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'glassgarden',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function resetCampaign(mode='menu'){
+  game.mode=mode;game.levelIndex=0;game.rotations=[...LEVELS[0].start];game.focus=0;game.history=[];game.turns=0;game.levelTurns=0;game.cracks=3;game.completedPanes=0;game.completedWindows=0;game.elapsedMs=0;game.reported=false;game.lastAction='campaign-reset';announce(mode==='menu'?'Press Open Shutters to begin.':LEVELS[0].story);render();
+}
+function loadLevel(index,mode='playing'){
+  game.levelIndex=Math.max(0,Math.min(LEVELS.length-1,index));game.rotations=[...level().start];game.focus=0;game.history=[];game.levelTurns=0;game.cracks=3;game.mode=mode;game.lastAction='window-loaded';announce(level().story);render();
+}
+function turnPane(index,delta=1,input='control'){
+  if(game.mode!=='playing')return false;const count=paneCount();index=(index+count)%count;game.history.push({rotations:[...game.rotations],turns:game.turns,levelTurns:game.levelTurns,focus:game.focus});game.rotations[index]=(game.rotations[index]+delta+4)%4;game.turns+=1;game.levelTurns+=1;game.focus=index;game.lastAction=`turn-${delta>0?'clockwise':'counter'}-${input}`;const seams=seamState();announce(`Pane ${index+1} turned ${delta>0?'clockwise':'counterclockwise'}; ${seams.matched} of ${seams.total} seams glow.`);render();return true;
+}
+function cycleFocus(delta){if(game.mode!=='playing')return;const count=paneCount();game.focus=(game.focus+delta+count)%count;game.lastAction='focus';announce(`Focused pane ${game.focus+1} of ${count}.`);render()}
+function hint(){
+  if(game.mode!=='playing')return false;const index=game.rotations.findIndex(rotation=>rotation!==0);if(index<0){announce('Every pane is aligned. Inspect the window.');render();return false}game.focus=index;const delta=game.rotations[index]===3?1:-1;announce(`The conservator points to pane ${index+1}.`);return turnPane(index,delta,'hint');
+}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;const previous=game.history.pop();game.rotations=previous.rotations;game.turns=previous.turns;game.levelTurns=previous.levelTurns;game.focus=previous.focus;game.lastAction='undo';announce('The last pane turn was undone.');render();return true}
+function completeLevel(){
+  game.completedWindows+=1;game.completedPanes+=paneCount();game.history=[];
+  if(game.levelIndex===LEVELS.length-1){game.mode='won';game.lastAction='campaign-complete';announce(`The Glass Garden shines after ${game.turns} turns. You earned 60 coins!`);addCoins(60);report('completed')}
+  else{game.mode='window-complete';game.lastAction='window-complete';announce(`${level().name} restored. Continue to the next window.`)}render();
+}
+function inspect(){
+  if(game.mode!=='playing')return false;const seams=seamState();if(seams.solved){completeLevel();return true}game.cracks=Math.max(0,game.cracks-1);game.lastAction='inspection-failed';announce(`${seams.total-seams.matched} seams remain dark. ${game.cracks} inspection seal${game.cracks===1?'':'s'} remain.`);if(game.cracks===0){game.mode='lost';game.lastAction='window-lost';announce('The third inspection cracked the window. Restart the restoration.');report('lost')}render();return false;
+}
+function startOrContinue(){if(game.mode==='menu'||game.mode==='lost'||game.mode==='won'){resetCampaign('playing');announce(level().story)}else if(game.mode==='window-complete')loadLevel(game.levelIndex+1,'playing');else if(game.mode==='paused')togglePause()}
+function togglePause(){if(game.mode==='playing'){game.mode='paused';game.lastAction='paused';announce('Restoration paused. Time and pane turns are frozen.')}else if(game.mode==='paused'){game.mode='playing';game.lastAction='resumed';announce('Restoration resumed.')}render()}
+function restart(){if(['playing','paused','window-complete'].includes(game.mode)&&(game.elapsedMs>0||game.turns>0||game.completedWindows>0||game.cracks<3))report('abandoned');resetCampaign('menu')}
+async function toggleFullscreen(){try{if(!document.fullscreenElement)await stage.requestFullscreen();else await document.exitFullscreen()}catch(error){announce('Fullscreen is unavailable in this browser.')}render()}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.lastAction='theme';announce(`${palette().name} glass selected.`);render()}
+function update(ms){if(game.mode==='playing')game.elapsedMs+=Math.max(0,ms)}
+function formatTime(ms){const tenths=Math.floor(ms/100)%10,total=Math.floor(ms/1000),seconds=total%60,minutes=Math.floor(total/60);return `${minutes}:${String(seconds).padStart(2,'0')}.${tenths}`}
+
+function roundedRect(x,y,w,h,r,fill,stroke,line=1){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=line;ctx.stroke()}}
+function drawWall(theme){
+  const gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,theme.wall2);gradient.addColorStop(1,theme.wall);ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
+  ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle=theme.frame;ctx.lineWidth=2;for(let row=0;row<7;row++)for(let col=0;col<12;col++){const x=col*88+(row%2)*44-20,y=row*86+12;ctx.strokeRect(x,y,78,70)}ctx.restore();
+  ctx.save();ctx.shadowColor=theme.glow;ctx.shadowBlur=38;ctx.fillStyle='rgba(255,244,180,.14)';ctx.beginPath();ctx.ellipse(WIDTH/2,335,330,260,0,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function drawJewel(x,y,color,theme,side){
+  ctx.save();ctx.translate(x,y);if(side==='east'||side==='west')ctx.rotate(Math.PI/2);ctx.shadowColor=theme.glass[color];ctx.shadowBlur=12;ctx.fillStyle=theme.glass[color];ctx.strokeStyle=theme.frame;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(11,0);ctx.lineTo(0,10);ctx.lineTo(-11,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+}
+function drawPane(index,x,y,size,theme){
+  const edges=displayedEdges(index),focused=index===game.focus;ctx.save();ctx.translate(x,y);
+  if(focused){ctx.shadowColor=theme.glow;ctx.shadowBlur=24;roundedRect(-size/2-7,-size/2-7,size+14,size+14,14,null,theme.glow,5);ctx.shadowBlur=0}
+  const glassGradient=ctx.createRadialGradient(-size*.18,-size*.2,4,0,0,size*.75);glassGradient.addColorStop(0,'rgba(255,255,255,.48)');glassGradient.addColorStop(.45,theme.glass[(index+1)%4]);glassGradient.addColorStop(1,theme.glass[(index+3)%4]);roundedRect(-size/2,-size/2,size,size,10,glassGradient,theme.lead,7);
+  const wedge=size*.34,tip=size*.08;for(let side=0;side<4;side++){ctx.save();ctx.rotate(side*Math.PI/2);ctx.fillStyle=theme.glass[edges[side]];ctx.strokeStyle=theme.lead;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-wedge,-size/2+4);ctx.lineTo(wedge,-size/2+4);ctx.lineTo(tip,-size*.08);ctx.lineTo(-tip,-size*.08);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+  ctx.fillStyle=theme.glass[(index+game.levelIndex)%4];ctx.strokeStyle=theme.lead;ctx.lineWidth=5;ctx.beginPath();for(let petal=0;petal<8;petal++){const angle=petal*Math.PI/4-Math.PI/2,r=petal%2===0?size*.22:size*.13,px=Math.cos(angle)*r,py=Math.sin(angle)*r;if(petal===0)ctx.moveTo(px,py);else ctx.lineTo(px,py)}ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle=theme.glow;ctx.beginPath();ctx.arc(0,0,size*.045,0,Math.PI*2);ctx.fill();ctx.fillStyle=theme.ink;ctx.font=`900 ${Math.max(11,size*.105)}px Inter,system-ui`;ctx.textAlign='center';ctx.fillText(String(index+1),0,size*.39);ctx.restore();
+  paneRegions.push({index,x,y,size});
+}
+function overlay(title,lines,actionLabel,theme){
+  ctx.fillStyle='rgba(7,12,27,.78)';ctx.fillRect(0,0,WIDTH,HEIGHT);roundedRect(146,112,668,360,30,theme.panel,theme.accent,5);ctx.fillStyle=theme.ink;ctx.textAlign='center';ctx.font='900 46px Inter,system-ui';ctx.fillText(title,WIDTH/2,180);ctx.font='750 21px Inter,system-ui';lines.forEach((line,index)=>ctx.fillText(line,WIDTH/2,235+index*36));roundedRect(315,365,330,64,18,theme.accent,theme.lead,4);ctx.fillStyle=theme.ink;ctx.font='900 23px Inter,system-ui';ctx.fillText(actionLabel,WIDTH/2,405);ctx.font='700 15px Inter,system-ui';ctx.fillText('Press Enter, Space, or tap the canvas',WIDTH/2,451);
+}
+function render(){
+  const theme=palette(),which=level(),maxCell=Math.min(126,360/which.rows,510/which.cols),gap=7,size=maxCell-gap,boardW=which.cols*maxCell,boardH=which.rows*maxCell,left=WIDTH/2-boardW/2,top=150+(360-boardH)/2;drawWall(theme);paneRegions=[];
+  roundedRect(left-36,top-55,boardW+72,boardH+92,28,'rgba(9,15,31,.82)',theme.frame,10);ctx.fillStyle=theme.frame;ctx.beginPath();ctx.arc(WIDTH/2,top-48,20,Math.PI,0);ctx.lineTo(WIDTH/2+20,top-37);ctx.lineTo(WIDTH/2-20,top-37);ctx.closePath();ctx.fill();
+  for(let row=0;row<which.rows;row++)for(let col=0;col<which.cols;col++){const index=row*which.cols+col,x=left+col*maxCell+maxCell/2,y=top+row*maxCell+maxCell/2;drawPane(index,x,y,size,theme)}
+  for(let col=0;col<which.cols;col++){drawJewel(left+col*maxCell+maxCell/2,top-23,which.north[col],theme,'north');drawJewel(left+col*maxCell+maxCell/2,top+boardH+23,which.south[col],theme,'south')}
+  for(let row=0;row<which.rows;row++){drawJewel(left-23,top+row*maxCell+maxCell/2,which.west[row],theme,'west');drawJewel(left+boardW+23,top+row*maxCell+maxCell/2,which.east[row],theme,'east')}
+  const seams=seamState(),headline=`${which.name} · ${which.story}`;roundedRect(156,72,648,58,18,'rgba(244,231,195,.9)',theme.frame,3);ctx.fillStyle=theme.ink;ctx.textAlign='center';let headlineSize=21;do{ctx.font=`900 ${headlineSize}px Inter,system-ui`;headlineSize-=1}while(ctx.measureText(headline).width>618&&headlineSize>13);ctx.fillText(headline,WIDTH/2,108);
+  ctx.font='800 15px Inter,system-ui';ctx.fillStyle=seams.solved?theme.glow:'rgba(255,255,255,.82)';ctx.fillText(seams.solved?'Every seam is glowing — inspect the window!':`${seams.matched} of ${seams.total} seams and frame jewels glow`,WIDTH/2,562);
+  if(game.mode==='menu')overlay('Glass Garden',['Turn each jewel-toned pane.','Match every touching petal and frame jewel.','Restore five windows without cracking the glass.'],'OPEN SHUTTERS',theme);
+  else if(game.mode==='paused')overlay('Shutters Closed',['Time and pane turns are frozen.','Your stained-glass pattern is safe.'],'REOPEN',theme);
+  else if(game.mode==='window-complete')overlay('Window Restored',[`${which.name} glowed after ${game.levelTurns} turns.`,`${LEVELS.length-game.completedWindows} windows remain.`],'NEXT WINDOW',theme);
+  else if(game.mode==='lost')overlay('Window Cracked',['Three unfinished inspections broke the seal.',`${game.completedWindows} of ${LEVELS.length} windows were restored.`],'TRY AGAIN',theme);
+  else if(game.mode==='won')overlay('Glass Garden Awakened',[`All ${game.completedPanes} panes aligned in ${game.turns} turns.`,`Five windows restored · 60 coins earned.`],'PLAY AGAIN',theme);
+  el.window.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.seams.textContent=`${seams.matched} / ${seams.total}`;el.turns.textContent=String(game.turns);el.cracks.textContent=`${game.cracks} / 3`;el.time.textContent=formatTime(game.elapsedMs);
+  const playing=game.mode==='playing';el.action.textContent=game.mode==='window-complete'?'Next Window':game.mode==='paused'?'Reopen':game.mode==='won'?'Play Again':game.mode==='lost'?'Try Again':game.mode==='menu'?'Open Shutters':'Restoring';el.action.disabled=playing;el.pause.textContent=game.mode==='paused'?'Resume (P)':'Pause (P)';el.pause.disabled=!['playing','paused'].includes(game.mode);el.previous.disabled=!playing;el.counter.disabled=!playing;el.clockwise.disabled=!playing;el.next.disabled=!playing;el.inspect.disabled=!playing;el.hint.disabled=!playing;el.undo.disabled=!playing||!game.history.length;el.theme.textContent=`Glass: ${theme.name}`;
+}
+function pointerPosition(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function handlePointer(event){event.preventDefault();if(game.mode==='paused'){togglePause();return}if(game.mode!=='playing'){startOrContinue();return}const point=pointerPosition(event),hit=paneRegions.find(region=>Math.abs(point.x-region.x)<=region.size/2&&Math.abs(point.y-region.y)<=region.size/2);if(hit)turnPane(hit.index,1,event.pointerType||'pointer');canvas.focus()}
+canvas.addEventListener('pointerdown',handlePointer);
+el.previous.addEventListener('click',()=>cycleFocus(-1));el.counter.addEventListener('click',()=>turnPane(game.focus,-1,'button'));el.clockwise.addEventListener('click',()=>turnPane(game.focus,1,'button'));el.next.addEventListener('click',()=>cycleFocus(1));el.inspect.addEventListener('click',inspect);el.hint.addEventListener('click',hint);el.undo.addEventListener('click',undo);el.action.addEventListener('click',startOrContinue);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+window.addEventListener('keydown',event=>{
+  if(document.documentElement.dataset.cadeFeedbackOpen==='1')return;const key=event.key.toLowerCase();if(['arrowleft','arrowright',' ','enter','q','h','u','i','p','r','t','f','escape'].includes(key))event.preventDefault();
+  if(key==='escape'&&document.fullscreenElement){document.exitFullscreen();return}if(key==='p'){togglePause();return}if(key==='f'){toggleFullscreen();return}if(key==='t'){cycleTheme();return}if(key==='r'){restart();return}if((key==='enter'||key===' ')&&game.mode!=='playing'){startOrContinue();return}if(game.mode!=='playing')return;
+  if(key==='arrowleft')cycleFocus(-1);else if(key==='arrowright')cycleFocus(1);else if(key==='q')turnPane(game.focus,-1,'keyboard');else if(key==='h')hint();else if(key==='u')undo();else if(key==='i')inspect();else if(key==='enter'||key===' ')turnPane(game.focus,1,'keyboard');
+});
+document.addEventListener('fullscreenchange',render);
+function frame(now){if(now>=manualUntil)update(Math.min(50,now-lastFrame));lastFrame=now;render();requestAnimationFrame(frame)}
+window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+350;lastFrame=performance.now();update(amount);render()};
+window.render_game_to_text=()=>{const seams=seamState(),hintIndex=game.rotations.findIndex(rotation=>rotation!==0);return JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; panes use row-major order from top-left',mode:game.mode,window:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,rows:level().rows,cols:level().cols},focusedPane:game.focus+1,panes:game.rotations.map((rotation,index)=>({id:index+1,row:Math.floor(index/level().cols)+1,column:index%level().cols+1,rotationQuarterTurns:rotation,edges:displayedEdges(index).map(color=>GLASS[color]),x:paneRegions[index]?.x??null,y:paneRegions[index]?.y??null})),seams:{matched:seams.matched,total:seams.total,dark:seams.total-seams.matched,solved:seams.solved},cracksRemaining:game.cracks,turns:game.turns,levelTurns:game.levelTurns,elapsedMs:Math.round(game.elapsedMs),theme:palette().name,status:game.status,lastAction:game.lastAction,nextHint:game.mode==='playing'&&hintIndex>=0?hintIndex+1:null,metrics:currentMetrics()})};
+function qaSolveWindow(){let guard=0;while(game.mode==='playing'&&game.rotations.some(rotation=>rotation!==0)&&guard++<100){const index=game.rotations.findIndex(rotation=>rotation!==0),rotation=game.rotations[index];turnPane(index,rotation===3?1:-1,'qa')}if(game.mode==='playing')inspect();return game.mode}
+window.__GLASS_GARDEN_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadWindow:index=>loadLevel(index,'playing'),focus:index=>{game.focus=Math.max(0,Math.min(paneCount()-1,index));render()},turn:(index,delta=1)=>turnPane(index,delta,'qa'),hint:()=>hint(),undo:()=>undo(),inspect:()=>inspect(),solveWindow:()=>qaSolveWindow(),solveCampaign:()=>{if(game.mode==='menu'||game.mode==='lost'||game.mode==='won')startOrContinue();let guard=0;while(game.mode!=='won'&&guard++<10){if(game.mode==='playing')qaSolveWindow();if(game.mode==='window-complete')startOrContinue();if(game.mode==='lost')break}return game.mode},levels:LEVELS,themes:THEMES,seams:()=>seamState()};
+mountGameFeedback({gameSlug:'glassgarden',gameName:'Glass Garden'});
+resetCampaign('menu');requestAnimationFrame(frame);
+</script>
+</body>
+</html>
