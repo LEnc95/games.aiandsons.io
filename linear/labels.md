@@ -203,5 +203,6 @@
 - game/geargrove
 - game/nectarmeasure
 - game/glassgarden
+- game/dapplegrove
 
 Generated from `src/meta/feedback.js`.

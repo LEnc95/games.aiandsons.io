@@ -288,6 +288,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'glass-theme', kind: 'palette', tokens: Object.freeze(['wall', 'frame', 'lead', 'glass', 'glow', 'accent']) }),
     ]),
   }),
+  dapplegrove: Object.freeze({
+    releasedAt: '2026-08-13',
+    outcomes: Object.freeze({
+      leaves: Object.freeze({ min: 0, max: 107, direction: 'higher' }),
+      groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      marks: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'grove-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'trunk', 'bark', 'panel', 'leaf', 'leaf2', 'shade', 'sun', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
