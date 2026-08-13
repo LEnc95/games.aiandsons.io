@@ -189,6 +189,7 @@ const BASE_GAMES = [
   { slug:'geargrove',      name:'Gear Grove',            emoji:'\u2699\uFE0F', scoreHint:'groves', url:'/geargrove', desc:'Turn linked flower gears in opposite directions, align every engraved arrow, and awaken five clockwork groves.', earnsCoins:true },
   { slug:'nectarmeasure',  name:'Nectar Measure',        emoji:'\u{1F36F}', scoreHint:'hives', url:'/nectarmeasure', desc:'Pour finite nectar among capacity-marked vessels, match every exact target, and balance five colorful apiary harvests.', earnsCoins:true },
   { slug:'glassgarden',    name:'Glass Garden',          emoji:'\u{1FA9F}', scoreHint:'windows', url:'/glassgarden', desc:'Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows.', earnsCoins:true },
+  { slug:'dapplegrove',    name:'Dapple Grove',          emoji:'\u{1F343}', scoreHint:'groves', url:'/dapplegrove', desc:'Shade duplicate numbered leaves, keep every sunlit leaf connected, and restore five woodland logic puzzles.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
