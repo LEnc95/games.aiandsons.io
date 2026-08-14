@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Firefly Slants, a five-clearing diagonal-trail logic campaign with numbered lantern knots, loop-free paths, three rendered meadow palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Dapple Grove, a five-board leaf-shading logic campaign with connectivity rules, three rendered woodland palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Glass Garden, a five-window stained-glass rotation puzzle with matching seams and frame jewels, three rendered glass palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Nectar Measure, a five-hive exact-volume pouring campaign with solver-backed hints, three rendered apiary palettes, deterministic stepping, bounded outcomes, and shared feedback.

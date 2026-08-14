@@ -299,6 +299,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'grove-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'trunk', 'bark', 'panel', 'leaf', 'leaf2', 'shade', 'sun', 'accent']) }),
     ]),
   }),
+  fireflyslants: Object.freeze({
+    releasedAt: '2026-08-14',
+    outcomes: Object.freeze({
+      trails: Object.freeze({ min: 0, max: 127, direction: 'higher' }),
+      clearings: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      strokes: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'firefly-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'hill', 'panel', 'grid', 'trail', 'glow', 'knot', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
