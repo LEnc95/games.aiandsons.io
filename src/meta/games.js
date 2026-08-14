@@ -190,6 +190,7 @@ const BASE_GAMES = [
   { slug:'nectarmeasure',  name:'Nectar Measure',        emoji:'\u{1F36F}', scoreHint:'hives', url:'/nectarmeasure', desc:'Pour finite nectar among capacity-marked vessels, match every exact target, and balance five colorful apiary harvests.', earnsCoins:true },
   { slug:'glassgarden',    name:'Glass Garden',          emoji:'\u{1FA9F}', scoreHint:'windows', url:'/glassgarden', desc:'Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows.', earnsCoins:true },
   { slug:'dapplegrove',    name:'Dapple Grove',          emoji:'\u{1F343}', scoreHint:'groves', url:'/dapplegrove', desc:'Shade duplicate numbered leaves, keep every sunlit leaf connected, and restore five woodland logic puzzles.', earnsCoins:true },
+  { slug:'fireflyslants',  name:'Firefly Slants',        emoji:'\u2728', scoreHint:'clearings', url:'/fireflyslants', desc:'Draw diagonal firefly trails, match every numbered lantern knot, and light five loop-free meadow lattices.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

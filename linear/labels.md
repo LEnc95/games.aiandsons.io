@@ -204,5 +204,6 @@
 - game/nectarmeasure
 - game/glassgarden
 - game/dapplegrove
+- game/fireflyslants
 
 Generated from `src/meta/feedback.js`.
