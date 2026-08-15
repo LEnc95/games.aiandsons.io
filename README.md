@@ -29,8 +29,53 @@ Static browser arcade platform with:
 
 ## Game catalog
 
-The catalog is maintained in `src/meta/games.js` and currently has `60` games.
+The catalog is maintained in `src/meta/games.js`.
 Use that file as the source of truth instead of maintaining a duplicated list in this README.
+For a quick local count, run:
+
+```bash
+node --input-type=module -e "import { GAMES } from './src/meta/games.js'; console.log(GAMES.length)"
+```
+
+## Engagement contracts and outcome telemetry
+
+New daily games also need an explicit content contract in `src/meta/content-contracts.js`.
+The contract is separate from launcher copy so automation can safely pick challenge metrics and cosmetic slots without guessing at game-specific behavior.
+
+Each contract entry includes:
+
+- `releasedAt`: explicit release date used by sitemap/SEO maintenance.
+- `outcomes`: bounded numeric metrics with `min`, `max`, and `direction` (`higher` or `lower`).
+- `cosmeticSlots`: renderable theme or cosmetic slots with token names the game can actually apply.
+
+Games report terminal outcomes through `src/core/outcomes.js`:
+
+```js
+import { reportGameOutcome } from '/src/core/outcomes.js';
+
+reportGameOutcome({
+  slug: 'shadowbloom',
+  result: 'completed', // completed | lost | abandoned
+  durationMs: elapsedMs,
+  metrics: { blooms: 40, gardens: 5, casts: 72 },
+});
+```
+
+Important constraints:
+
+- Only games with a registered content contract are accepted.
+- Metric values are floored and clamped to the contract bounds; unregistered metric keys are ignored.
+- `durationMs` is clamped to a maximum of four hours.
+- Reporting always updates local mission progress for accepted outcomes.
+- Browser aggregate telemetry is off unless `globalThis.CADE_AGGREGATE_TELEMETRY_ENABLED === true`.
+- When enabled, aggregate posts go to `/api/telemetry/outcome`, which rewrites to the shared `/api/social?route=telemetry-outcome` Vercel function.
+- The telemetry API stores daily aggregate counters and metric summaries in `telemetryDaily` (or in memory for local tests), not raw events, player identifiers, cookies, IP addresses, or free-form metadata.
+
+Automation that depends on these contracts:
+
+- `npm run maintenance:validate` checks package/version parity, the newest game's explicit contract, bounded outcomes, cosmetic slot, `reportGameOutcome` usage, changelog mention, weekly challenge reward cap, and premium shop catalog coverage.
+- `npm run game:preflight` runs the maintenance validation plus registry/folder/discovery/OG/sitemap/routing checks before daily game commits.
+- `npm run automation:weekly-brief` selects contract-ready games for the Monday content pack: three cosmetics and four bounded challenges, with no new dependencies, network calls, storage keys, billing changes, or free-form telemetry.
 
 ## Quick start
 
