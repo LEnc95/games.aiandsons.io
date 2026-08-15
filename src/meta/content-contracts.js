@@ -310,6 +310,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'firefly-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'hill', 'panel', 'grid', 'trail', 'glow', 'knot', 'accent']) }),
     ]),
   }),
+  magnetmeadow: Object.freeze({
+    releasedAt: '2026-08-15',
+    outcomes: Object.freeze({
+      magnets: Object.freeze({ min: 0, max: 40, direction: 'higher' }),
+      meadows: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      flips: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'magnet-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'ground', 'hill', 'panel', 'grid', 'plus', 'minus', 'grass', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

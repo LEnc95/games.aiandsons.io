@@ -1,5 +1,18 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-15 Create a new game automation - Magnet Meadow
+- New unattended production request: build, validate, and publish exactly one unique browser game from clean isolated `origin/main` baseline `a0fca64c79e41932e220df2f773c6a5235261ee5`.
+- Read the freshly synced repository instructions, complete develop-web-game skill and action reference, current progress/TODO index, and automation memory after syncing. `npm ci` passed with the repository's existing 16 audit findings.
+- Selected Magnet Meadow (`/magnetmeadow`), a five-board polarity-placement puzzle absent from the 190-game registry and recent automation memory. Exhaustively checked every three-state magnet assignment and confirmed all five planned row/column-clue boards have exactly one solution.
+- Implemented the self-contained canvas game, sole registry entry, explicit 2026-08-15 content contract with bounded `magnets`/`meadows`/`flips`, visibly rendered `magnet-theme` palette slot, exact terminal outcome reporting, Unreleased changelog mention, shared feedback, deterministic hooks, and focused QA helpers.
+- The required supplied Playwright client genuinely solved all eight Compass Clover pairs with purposeful pointer cycles. Text state reports 16/16 satisfied clues, all pairs filled, no equal-pole conflicts, and `solved: true`; the visually inspected capture matches and has no browser-error artifact.
+- Generated SEO/discovery/sitemap, all 191 OG cards, and local Linear seeds. The unmodified repeat preserved aggregate SHA-256 digest `31B498F04601BA794B68F57E21F49A3F9F62E6086CCE3B83B2BA9804C6A1A9C4`; only the expected game-specific generated paths changed. Early maintenance and 191-game preflight both pass.
+- Full desktop/mobile browser matrix passes 47 assertions with zero console/page errors: exact +1,234 ms stepping, paused-time/input freeze, Z/X/C/Space/pointer/touch placement, spatial arrow boundaries, undo/hint, equal-pole conflict, three-petal loss, restart abandonment, all five unique solutions with exact `{ magnets: 40, meadows: 5, flips: 52 }`, all palettes, fullscreen/Escape, feedback isolation, and 390x844 no-overflow layout.
+- Visually inspected supplied-client, gameplay, pause, fullscreen, conflict, loss, transition, largest-board, win, feedback, mobile menu/gameplay/pause/feedback, all palette, and OG captures; each matches text state and remains legible.
+- Ordered final local gate passes: maintenance; 191-game preflight; telemetry 16/16; feedback 31/31; shop 68/68; social 22/22; and `git diff --check`.
+- Exact release audit accepts 11 allowed paths: one registry entry, one matching top-level folder/file, one explicit contract, matching outcomes, one Unreleased mention, required generated support, no forbidden dependency/env/artifact paths, and no EOL-only noise. The same-date remote branch/open-PR check is clear.
+- Next: create the guarded branch, stage/inspect/commit, run the authoritative lane audit, concurrency check, PR checks/trusted merge, Main QA, Production Maintenance Verify, and live route/homepage verification.
+
 ## 2026-08-14 Create a new game automation - Firefly Slants
 - New unattended production request: build, validate, and publish exactly one unique browser game from clean isolated `origin/main` baseline `b4fb4bdda29a22eb2f0f291990efbd9d000270d0`.
 - Read the freshly synced repository instructions, complete develop-web-game skill, action payload reference, current progress/TODO index, and automation memory after syncing. `npm ci` passed with the repository's existing 16 audit findings.

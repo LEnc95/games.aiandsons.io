@@ -205,5 +205,6 @@
 - game/glassgarden
 - game/dapplegrove
 - game/fireflyslants
+- game/magnetmeadow
 
 Generated from `src/meta/feedback.js`.
