@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Rainkeeper, a five-storm umbrella arcade campaign with nourishing raindrops, hazardous hail, three rendered garden palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Magnet Meadow, a five-board polarity-placement puzzle with paired magnets, positive and negative edge clues, three rendered field palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Firefly Slants, a five-clearing diagonal-trail logic campaign with numbered lantern knots, loop-free paths, three rendered meadow palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Dapple Grove, a five-board leaf-shading logic campaign with connectivity rules, three rendered woodland palettes, deterministic stepping, bounded outcomes, and shared feedback.

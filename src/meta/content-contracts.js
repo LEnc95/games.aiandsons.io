@@ -321,6 +321,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'magnet-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'ground', 'hill', 'panel', 'grid', 'plus', 'minus', 'grass', 'accent']) }),
     ]),
   }),
+  rainkeeper: Object.freeze({
+    releasedAt: '2026-08-16',
+    outcomes: Object.freeze({
+      raindrops: Object.freeze({ min: 0, max: 60, direction: 'higher' }),
+      gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      hailHits: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'rain-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'cloud', 'ground', 'water', 'umbrella', 'hail', 'flower', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

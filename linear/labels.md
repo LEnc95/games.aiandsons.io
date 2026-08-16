@@ -206,5 +206,6 @@
 - game/dapplegrove
 - game/fireflyslants
 - game/magnetmeadow
+- game/rainkeeper
 
 Generated from `src/meta/feedback.js`.
