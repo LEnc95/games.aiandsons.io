@@ -192,6 +192,7 @@ const BASE_GAMES = [
   { slug:'dapplegrove',    name:'Dapple Grove',          emoji:'\u{1F343}', scoreHint:'groves', url:'/dapplegrove', desc:'Shade duplicate numbered leaves, keep every sunlit leaf connected, and restore five woodland logic puzzles.', earnsCoins:true },
   { slug:'fireflyslants',  name:'Firefly Slants',        emoji:'\u2728', scoreHint:'clearings', url:'/fireflyslants', desc:'Draw diagonal firefly trails, match every numbered lantern knot, and light five loop-free meadow lattices.', earnsCoins:true },
   { slug:'magnetmeadow',   name:'Magnet Meadow',         emoji:'\u{1F9F2}', scoreHint:'meadows', url:'/magnetmeadow', desc:'Place paired magnets, match every positive and negative edge clue, and balance five polarity puzzle meadows.', earnsCoins:true },
+  { slug:'rainkeeper',     name:'Rainkeeper',            emoji:'\u2614', scoreHint:'gardens', url:'/rainkeeper', desc:'Steer a bright umbrella through five passing storms, catch nourishing raindrops, dodge hail, and wake each waiting garden.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
