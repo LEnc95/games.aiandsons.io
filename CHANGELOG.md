@@ -29,6 +29,9 @@ All notable changes to this project will be documented in this file.
 - Bottom of the Ninth live cast TTS: Adam/Brian/Eric speak the real situation text (batter and pitcher names, count, field) via `/api/booth/tts`, with the directed sample bank and system speech as fallback.
 - Bottom of the Ninth booth location language: inside/outside calls follow batter handedness (lefties reverse the plate sides); the pitch-call pad mirrors the same way.
 - Bottom of the Ninth color mic level: Brian matches Adam — equal booth bus levels and a color clip gain boost (live cast + samples).
+- Bottom of the Ninth save/resume: mid-game progress persists between pitches (and on tab hide) so a phone call or refresh can Resume broadcast from the gate.
+- Bottom of the Ninth campaign modes: Best of 3 series, Playoff (pennant) Bo3, and Season (6/12 games) with spoken between-game booth breaks and end cards.
+- Bottom of the Ninth rosters: Pirates vs Phillies with MLB-stat-derived ability ratings (contact/eye/power/speed and pitcher velo/command/stuff).
 - Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
 - Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
