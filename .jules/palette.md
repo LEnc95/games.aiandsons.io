@@ -25,7 +25,7 @@
 ## 2026-05-01 - Search Landmark Roles on Control Wrappers
 **Learning:** The application uses custom wrapper classes like `.search-controls` and `.shop-controls` for its primary search inputs. Without the `role="search"` landmark on these specific wrapper elements, screen reader users cannot quickly navigate to the main search areas using landmark shortcuts.
 **Action:** Always ensure that any container wrapping a global or primary search input (typically featuring the `.search-controls` or similar classes) explicitly includes the `role="search"` attribute to provide a standard navigation landmark.
-## $(date +%Y-%m-%d) - WCAG 2.5.3 (Label in Name) Adherence
+## 2026-07-17 - WCAG 2.5.3 (Label in Name) Adherence
 **Learning:** When assigning `aria-label`s to elements that already have visible text, failing to include that exact visible text breaks WCAG 2.5.3, which can cause severe navigation issues for users relying on voice control software.
 **Action:** Always ensure the text inside `aria-label` exactly matches or contains the visible text of the button.
 ## 2026-05-21 - Add explicit required field indicators to forms
@@ -52,3 +52,7 @@
 ## 2026-06-25 - Enter key submission for school license billing input
 **Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
 **Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
+
+## 2026-07-17 - Explicit Tooltips for Disabled States
+**Learning:** Disabled buttons without explanation (e.g., "Not enough coins") create dead ends for users, especially those using screen readers, who may not understand why an action is unavailable. Additionally, ARIA labels for disabled states can easily drift from the visible text if dynamically generated.
+**Action:** Always provide an explicit `title` attribute for `disabled` buttons that explains why it is disabled (e.g., "You need X more coins to buy this item"). Simultaneously ensure `aria-label` exactly matches the dynamically updated disabled text content.
