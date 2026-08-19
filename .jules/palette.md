@@ -52,3 +52,6 @@
 ## 2026-06-25 - Enter key submission for school license billing input
 **Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
 **Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
+## 2026-07-21 - Add tooltips and ARIA labels for disabled buttons
+**Learning:** When programmatically disabling buttons in the UI, adding a descriptive `title` attribute and synchronizing the `aria-label` provides clear context to users, especially those using screen readers.
+**Action:** Always synchronize the `aria-label` to match the new visible text content and add a descriptive `title` attribute when dynamically setting buttons to a disabled state.
