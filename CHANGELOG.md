@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Bottom of the Ninth season of series: a season can be a slate of best-of-3 series (3 or 6) with series wins and losses, not only exhibition games.
+- Bottom of the Ninth playoff depth: Bracket (Bo3 pennant → Bo5 championship) or Pennant only (Bo3), with a spoken round break between series.
 - Bottom of the Ninth situation challenges: fixed scoreboard presets (Today's broadcast, Hold the ninth, Bottom of the Ninth, Escape act, and more) with clear win/lose rules and deep-link support.
 - Bottom of the Ninth call the closer: late-inning one-shot closer swap from the Controls rail.
 - Bottom of the Ninth shareable broadcast moments: end-card and mid-game share with copyable links and optional PNG cards.
