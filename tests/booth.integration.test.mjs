@@ -35,6 +35,11 @@ function mockResponse() {
   };
 }
 
+test("booth text strips Happily tags and respells Horwitz", () => {
+  const { prepareBoothText } = require("../api/booth/_tts.js");
+  assert.equal(prepareBoothText("[happily] Here's Horwitz."), "Here's Hor-witz.");
+});
+
 test("booth cast defaults lock Adam / Brian / Eric voice IDs", () => {
   assert.equal(DEFAULT_VOICES.announcer, "pNInz6obpgDQGcFmaJgB");
   assert.equal(DEFAULT_VOICES.color, "nPczCjzI2devNBz1zQrb");

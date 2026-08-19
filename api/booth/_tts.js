@@ -11,6 +11,24 @@ const DEFAULT_VOICES = {
 
 const MAX_TEXT = 360;
 const ALLOWED_SPEAKERS = new Set(["announcer", "color", "utility"]);
+const AUDIO_TAG = /\[(?:happily|excited|sighs|whispers|sadly|angry|laughs)\]\s*/gi;
+const NAME_PRONUNCIATIONS = [
+  [/\bHorwitz\b/g, "Hor-witz"],
+  [/\bArraez\b/g, "Arry-ez"],
+  [/\bRodríguez\b/g, "Rodriguez"],
+  [/\bRealmuto\b/g, "Real-moo-toe"],
+  [/\bSkenes\b/g, "Skeens"],
+  [/\bBohm\b/g, "Bome"],
+];
+
+/** Strip v3 direction tags and respell names so TTS does not say "Happily". */
+function prepareBoothText(text) {
+  let out = String(text || "").replace(AUDIO_TAG, "");
+  for (const [pattern, spoken] of NAME_PRONUNCIATIONS) {
+    out = out.replace(pattern, spoken);
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -103,9 +121,7 @@ async function handleTts(req, res) {
     return;
   }
 
-  const text = String(body.text || "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const text = prepareBoothText(body.text);
   if (!text || text.length > MAX_TEXT) {
     res.statusCode = 400;
     res.setHeader("Content-Type", "application/json");
@@ -157,6 +173,7 @@ async function handleTts(req, res) {
 module.exports = {
   handleHealth,
   handleTts,
+  prepareBoothText,
   DEFAULT_VOICES,
   MAX_TEXT,
   ALLOWED_SPEAKERS,
