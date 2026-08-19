@@ -3,6 +3,8 @@ import { del, get, set } from '../core/storage.js';
 
 const PLAYER_STORAGE_KEY = 'socialPlayer';
 
+const STALE_PLAYER_ERRORS = new Set(['invalid_player_token', 'unknown_player']);
+
 let cachedPlayer = null;
 let registerPromise = null;
 
@@ -60,7 +62,7 @@ const clearStoredPlayer = () => {
 };
 
 const isStalePlayerError = (error) =>
-  error && ['invalid_player_token', 'unknown_player'].includes(error.code);
+  error && STALE_PLAYER_ERRORS.has(error.code);
 
 const postJsonWithPlayer = async (route, buildPayload) => {
   let player = await ensurePlayer();
