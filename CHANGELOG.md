@@ -50,6 +50,14 @@ All notable changes to this project will be documented in this file.
 - Added Moonscale, a five-sky celestial balance puzzle with torque-based moonstone placement, bounded outcomes, and rendered scale themes.
 - Added Shadow Bloom, a five-garden moon-shadow puzzle with protected sun blossoms, bounded outcomes, and rendered garden themes.
 
+### Improved
+
+- Bottom of the Ninth gate polish: hide inapplicable Mode/Schedule/Challenge controls, Resume/Continue copy, and abort from a saved broadcast.
+- Bottom of the Ninth closer unlocks in a late save window (protecting a lead), not mid-game fatigue.
+- Bottom of the Ninth series home/away booth copy so series games read as home or away.
+- Bottom of the Ninth today's broadcast local streak (days attempted).
+- Bottom of the Ninth extras and walk-off booth color lines.
+
 ## [1.13.0] - 2026-07-26
 ### Added
 - Added Star Battle, Parcel Patch, Domino Mosaic, Windbow Trials, Knight's Tour, Neon Divide, and Lure Line.
