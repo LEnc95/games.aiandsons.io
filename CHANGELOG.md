@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Bottom of the Ninth Extra-inning hold and Inherited ninth challenges: extras-hold and inherited-save scoreboard presets with clear win/lose rules.
 - Bottom of the Ninth season of series: a season can be a slate of best-of-3 series (3 or 6) with series wins and losses, not only exhibition games.
 - Bottom of the Ninth playoff depth: Bracket (Bo3 pennant → Bo5 championship) or Pennant only (Bo3), with a spoken round break between series.
 - Bottom of the Ninth situation challenges: fixed scoreboard presets (Today's broadcast, Hold the ninth, Bottom of the Ninth, Escape act, and more) with clear win/lose rules and deep-link support.
@@ -52,6 +53,9 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 
+- Bottom of the Ninth series home/away GameState flip so series host actually swaps sides, not only booth copy.
+- Bottom of the Ninth season slash persistence so AVG/OBP/SLG carry across the season slate.
+- Bottom of the Ninth rain-delay booth color lines.
 - Bottom of the Ninth gate polish: hide inapplicable Mode/Schedule/Challenge controls, Resume/Continue copy, and abort from a saved broadcast.
 - Bottom of the Ninth closer unlocks in a late save window (protecting a lead), not mid-game fatigue.
 - Bottom of the Ninth series home/away booth copy so series games read as home or away.
