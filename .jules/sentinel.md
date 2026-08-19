@@ -56,3 +56,7 @@
 **Vulnerability:** In `rooms/index.html`, the `player.handle` was interpolated directly into the `row.innerHTML` when constructing the scoreboard rows. This allowed untrusted player names to execute arbitrary JavaScript (DOM-based XSS). Additionally, the scoreboard `tbody` was being cleared using `.innerHTML = ''`.
 **Learning:** Even internal HTML structures constructed using template literals can be vulnerable to XSS if they interpolate untrusted user data without escaping. And, `innerHTML = ''` triggers static analysis blockers even if empty.
 **Prevention:** Always include and use an `escapeHtml` utility function when rendering user-provided values like handles or names into DOM elements via `innerHTML` or `insertAdjacentHTML`. Also, use `.textContent = ''` for clearing elements.
+## 2026-04-29 - [DOM Clearing XSS Defense]
+**Vulnerability:** Clearing DOM elements using `.innerHTML = ""` triggers static analysis blocking flags for DOM-based XSS, even when assigning an empty string.
+**Learning:** Found several more games (`plinko`, `chronosort`) using `.innerHTML = ""` instead of the codebase standard `.textContent = ""`.
+**Prevention:** Apply `.textContent = ""` universally for clearing elements to ensure security scanners pass and to enforce strict vanilla JS safety patterns.
