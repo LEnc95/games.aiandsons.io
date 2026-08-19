@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Bottom of the Ninth situation challenges: fixed scoreboard presets (Today's broadcast, Hold the ninth, Bottom of the Ninth, Escape act, and more) with clear win/lose rules and deep-link support.
+- Bottom of the Ninth call the closer: late-inning one-shot closer swap from the Controls rail.
+- Bottom of the Ninth shareable broadcast moments: end-card and mid-game share with copyable links and optional PNG cards.
 - Rainkeeper, a five-storm umbrella arcade campaign with nourishing raindrops, hazardous hail, three rendered garden palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Magnet Meadow, a five-board polarity-placement puzzle with paired magnets, positive and negative edge clues, three rendered field palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Firefly Slants, a five-clearing diagonal-trail logic campaign with numbered lantern knots, loop-free paths, three rendered meadow palettes, deterministic stepping, bounded outcomes, and shared feedback.
