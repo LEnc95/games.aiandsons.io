@@ -194,6 +194,7 @@ const BASE_GAMES = [
   { slug:'magnetmeadow',   name:'Magnet Meadow',         emoji:'\u{1F9F2}', scoreHint:'meadows', url:'/magnetmeadow', desc:'Place paired magnets, match every positive and negative edge clue, and balance five polarity puzzle meadows.', earnsCoins:true },
   { slug:'rainkeeper',     name:'Rainkeeper',            emoji:'\u2614', scoreHint:'gardens', url:'/rainkeeper', desc:'Steer a bright umbrella through five passing storms, catch nourishing raindrops, dodge hail, and wake each waiting garden.', earnsCoins:true },
   { slug:'harborharmony',  name:'Harbor Harmony',         emoji:'\u2693', scoreHint:'harbors', url:'/harborharmony', desc:'Guide bright signal boats into matching harbor lights, protect the lanterns, and calm five moonlit crossings.', earnsCoins:true },
+  { slug:'lanternloom',    name:'Lantern Loom',          emoji:'\u{1F3EE}', scoreHint:'nights', url:'/lanternloom', desc:'Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

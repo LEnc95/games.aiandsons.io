@@ -38,7 +38,7 @@ const DISCOVERY_GAME_SLUGS = Object.freeze([
   "sumshade", "lanternwake", "acornascent", "moonscale", "shadowbloom", "quiltquest",
   "riverriddle", "choruscurrent", "kiteparade", "shellshift", "flockfold", "geargrove",
   "nectarmeasure", "glassgarden", "dapplegrove", "fireflyslants", "magnetmeadow", "rainkeeper",
-  "harborharmony",
+  "harborharmony", "lanternloom",
 ]);
 
 const CURATED_TRENDING_SLUGS = Object.freeze([
