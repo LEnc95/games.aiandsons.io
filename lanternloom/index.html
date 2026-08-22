@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Lantern Loom | AI and Sons Games</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        color: #fff;
+        background: #101737;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 12px;
+        background: radial-gradient(circle at top, #3d3c7b, #101737 64%);
+      }
+      main {
+        width: min(100%, 960px);
+        display: grid;
+        gap: 10px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.7rem, 5vw, 2.8rem);
+      }
+      a,
+      button {
+        font: 800 14px system-ui;
+        color: #fff;
+        border: 2px solid #9ba9e9;
+        border-radius: 12px;
+        background: #263363;
+        padding: 9px 12px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #d9679a;
+        border-color: #ffd29c;
+      }
+      button:disabled {
+        opacity: 0.45;
+      }
+      .stats,
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
+      }
+      .stat {
+        background: #263363;
+        border: 2px solid #596aab;
+        border-radius: 12px;
+        text-align: center;
+        padding: 5px;
+      }
+      .stat span {
+        display: block;
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #c9d0ff;
+      }
+      .stage {
+        position: relative;
+        background: #111b41;
+        border: 3px solid #9ba9e9;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 0 #090d24;
+      }
+      .stage:fullscreen {
+        display: grid;
+        place-items: center;
+      }
+      .stage:fullscreen canvas {
+        width: min(100vw, calc(100vh * 1.6));
+        height: auto;
+      }
+      canvas {
+        width: 100%;
+        display: block;
+        aspect-ratio: 8/5;
+        touch-action: none;
+        outline: none;
+      }
+      .help {
+        background: #263363;
+        border: 2px solid #596aab;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 0.82rem;
+        line-height: 1.4;
+      }
+      #live {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+      #cadeFeedbackOpenBtn {
+        display: none !important;
+      }
+      @media (max-width: 620px) {
+        body {
+          padding: 7px;
+        }
+        header {
+          padding-top: 42px;
+        }
+        .stats {
+          gap: 3px;
+        }
+        .stat {
+          font-size: 12px;
+          padding: 4px;
+        }
+        .controls {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .controls button:last-child {
+          grid-column: span 2;
+        }
+        .help {
+          font-size: 0.72rem;
+        }
+      }
+    </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Lantern Loom | AI and Sons Games">
+  <meta property="og:description" content="Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/lanternloom">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/lanternloom.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lantern Loom | AI and Sons Games">
+  <meta name="twitter:description" content="Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/lanternloom.png">
+  <link rel="canonical" href="https://games.aiandsons.io/lanternloom">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Lantern Loom","description":"Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/lanternloom","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+  <body>
+    <main>
+      <header>
+        <h1>🏮 Lantern Loom</h1>
+        <a href="/">All games</a>
+      </header>
+      <section class="stats">
+        <div class="stat"><span>Night</span><b id="night"></b></div>
+        <div class="stat"><span>Stars</span><b id="stars"></b></div>
+        <div class="stat"><span>Thread</span><b id="thread"></b></div>
+        <div class="stat"><span>Misses</span><b id="misses"></b></div>
+        <div class="stat"><span>Time</span><b id="time"></b></div>
+      </section>
+      <div class="stage" id="stage">
+        <canvas id="game" width="960" height="600" tabindex="0"></canvas>
+        <div id="live" aria-live="polite"></div>
+      </div>
+      <section class="controls">
+        <button id="left">↺ Turn left</button
+        ><button id="action" class="primary">Begin night</button
+        ><button id="right">Turn right ↻</button
+        ><button id="pause">Pause (P)</button
+        ><button id="restart">Restart (R)</button
+        ><button id="theme">Palette</button
+        ><button id="full">Fullscreen (F)</button
+        ><button id="feedback">Feedback</button>
+      </section>
+      <div class="help">
+        <b>Weave constellations:</b> turn the lantern with ←/→, A/D, buttons, or
+        tap left/right of the canvas. Catch the next glowing star in its beam;
+        three misses end the run. Space begins/continues, P pauses, T changes
+        palette.
+      </div>
+    </main>
+    <script type="module">
+      import { reportGameOutcome } from "/src/core/outcomes.js";
+      import { addCoins } from "/src/core/state.js";
+      import { mountGameFeedback } from "/src/feedback/embed.js";
+      const c = document.querySelector("#game"),
+        x = c.getContext("2d"),
+        W = 960,
+        H = 600,
+        stage = document.querySelector("#stage"),
+        el = Object.fromEntries(
+          [
+            "night",
+            "stars",
+            "thread",
+            "misses",
+            "time",
+            "action",
+            "pause",
+            "left",
+            "right",
+            "restart",
+            "theme",
+            "full",
+            "feedback",
+            "live",
+          ].map((k) => [k, document.querySelector("#" + k)]),
+        ),
+        N = [
+          ["Willow Arc", 7, 26000],
+          ["River Crown", 9, 28000],
+          ["Foxfire Kite", 11, 30000],
+          ["Hearth Wheel", 13, 32000],
+          ["Dawn Bell", 15, 34000],
+        ],
+        T = [
+          ["Indigo Thread", "#121b46", "#4d5ba6", "#ffda7e", "#fa85ac"],
+          ["Rose Lantern", "#3a1e45", "#a55286", "#ffe4a5", "#71dce0"],
+          ["Pine Moon", "#112d31", "#43817a", "#fff0a4", "#e48cd7"],
+        ];
+      let s,
+        keys = { l: false, r: false },
+        manual = 0,
+        last = performance.now();
+      function reset(mode = "menu") {
+        s = {
+          mode,
+          night: 0,
+          angle: -Math.PI / 2,
+          stars: 0,
+          nightStars: 0,
+          misses: 0,
+          thread: 0,
+          elapsed: 0,
+          spawn: 0,
+          active: null,
+          reported: false,
+          status: "Press Begin night to light the first constellation.",
+          theme: 0,
+          lastAction: "ready",
+        };
+        draw();
+      }
+      function n() {
+        return N[s.night];
+      }
+      function p() {
+        return T[s.theme];
+      }
+      function met() {
+        return {
+          stars: s.stars,
+          nights: s.night + (s.mode === "won" ? 1 : 0),
+          misses: s.misses,
+        };
+      }
+      function say(v) {
+        s.status = v;
+        el.live.textContent = v;
+      }
+      function rep(result) {
+        if (!s.reported) {
+          s.reported = true;
+          reportGameOutcome({
+            slug: "lanternloom",
+            result,
+            durationMs: Math.round(s.elapsed),
+            metrics: met(),
+          });
+        }
+      }
+      function begin() {
+        if (["menu", "lost", "won"].includes(s.mode)) {
+          reset("playing");
+          say("Follow the bright star with your lantern beam.");
+        } else if (s.mode === "complete") {
+          s.night++;
+          s.mode = "playing";
+          s.spawn = 0;
+          s.active = null;
+          s.elapsed = 0;
+          s.nightStars = 0;
+          s.misses = 0;
+          s.angle = -Math.PI / 2;
+          say(n()[0] + " is waiting.");
+        } else if (s.mode === "paused") {
+          s.mode = "playing";
+          say("The lantern turns again.");
+        }
+        draw();
+      }
+      function turn(d, src = "button") {
+        if (s.mode !== "playing") return;
+        s.angle += (d * Math.PI) / 8;
+        s.lastAction = "turned-" + src;
+        draw();
+      }
+      function pause() {
+        if (s.mode === "playing") {
+          s.mode = "paused";
+          say("The night is frozen.");
+        } else if (s.mode === "paused") {
+          s.mode = "playing";
+          say("The lantern turns again.");
+        }
+        draw();
+      }
+      function restart() {
+        if (["playing", "paused", "complete"].includes(s.mode))
+          rep("abandoned");
+        reset();
+      }
+      function ta(i) {
+        return (
+          -Math.PI / 2 + ((i * 2.3999632297 + s.night * 0.73) % (Math.PI * 2))
+        );
+      }
+      function update(ms) {
+        if (s.mode !== "playing") return;
+        s.elapsed += ms;
+        if (keys.l !== keys.r) turn(keys.r ? 1 : -1, "held");
+        let int = n()[2] / n()[1];
+        if (!s.active && s.spawn < n()[1] && s.elapsed >= s.spawn * int + 650) {
+          s.active = { index: s.spawn, angle: ta(s.spawn), age: 0 };
+          s.spawn++;
+        }
+        if (s.active) {
+          s.active.age += ms;
+          let d = Math.abs(
+            Math.atan2(
+              Math.sin(s.angle - s.active.angle),
+              Math.cos(s.angle - s.active.angle),
+            ),
+          );
+          if (d < 0.22) {
+            s.stars++;
+            s.thread++;
+            s.nightStars++;
+            s.active = null;
+            s.lastAction = "star-woven";
+            say("Star woven.");
+            if (s.nightStars >= n()[1]) {
+              if (s.night === 4) {
+                s.mode = "won";
+                addCoins(60);
+                rep("completed");
+                say("All five constellations are glowing.");
+              } else {
+                s.mode = "complete";
+                say(n()[0] + " is complete.");
+              }
+              return;
+            }
+          } else if (s.active.age > 2600) {
+            s.misses++;
+            s.active = null;
+            s.lastAction = "star-missed";
+            if (s.misses >= 3) {
+              s.mode = "lost";
+              rep("lost");
+              say("Three stars faded.");
+            }
+          }
+        }
+        if (s.elapsed >= n()[2] && s.mode === "playing") {
+          s.mode = "lost";
+          rep("lost");
+          say("Dawn arrived too soon.");
+        }
+      }
+      function rr(a, b, d, e, r, f, o) {
+        x.beginPath();
+        x.roundRect(a, b, d, e, r);
+        if (f) {
+          x.fillStyle = f;
+          x.fill();
+        }
+        if (o) {
+          x.strokeStyle = o;
+          x.lineWidth = 2;
+          x.stroke();
+        }
+      }
+      function draw() {
+        let q = p(),
+          g = x.createRadialGradient(480, 270, 30, 480, 270, 680);
+        g.addColorStop(0, q[2]);
+        g.addColorStop(1, q[1]);
+        x.fillStyle = g;
+        x.fillRect(0, 0, W, H);
+        for (let i = 0; i < 72; i++) {
+          x.fillStyle = `rgba(255,255,255,${0.22 + (i % 4) * 0.12})`;
+          x.fillRect((i * 137) % W, (i * 71) % H, 2, 2);
+        }
+        let cx = 480,
+          cy = 320;
+        for (let i = 0; i < 8; i++) {
+          x.strokeStyle = "rgba(255,255,255,.09)";
+          x.beginPath();
+          x.arc(cx, cy, 95 + i * 45, 0, 7);
+          x.stroke();
+        }
+        if (s.active) {
+          let a = s.active.angle,
+            r = 260;
+          x.fillStyle = q[3];
+          x.shadowColor = q[3];
+          x.shadowBlur = 20;
+          x.beginPath();
+          x.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 12, 0, 7);
+          x.fill();
+          x.shadowBlur = 0;
+        }
+        x.save();
+        x.translate(cx, cy);
+        x.rotate(s.angle);
+        x.fillStyle = "rgba(255,218,126,.12)";
+        x.beginPath();
+        x.moveTo(0, 0);
+        x.lineTo(405, -62);
+        x.lineTo(405, 62);
+        x.closePath();
+        x.fill();
+        x.strokeStyle = q[3];
+        x.lineWidth = 9;
+        x.lineCap = "round";
+        x.beginPath();
+        x.moveTo(0, 0);
+        x.lineTo(330, 0);
+        x.stroke();
+        x.fillStyle = q[4];
+        x.beginPath();
+        x.arc(0, 0, 55, 0, 7);
+        x.fill();
+        x.fillStyle = q[3];
+        x.beginPath();
+        x.arc(0, 0, 28, 0, 7);
+        x.fill();
+        x.restore();
+        rr(26, 22, 345, 64, 16, "rgba(9,13,37,.78)", "rgba(255,255,255,.35)");
+        x.fillStyle = "#fff";
+        x.font = "900 23px system-ui";
+        x.fillText(n()[0], 48, 50);
+        x.fillStyle = q[3];
+        x.font = "800 15px system-ui";
+        x.fillText(`Weave ${s.nightStars} of ${n()[1]} stars`, 48, 74);
+        if (s.mode !== "playing") {
+          x.fillStyle = "rgba(4,7,24,.7)";
+          x.fillRect(0, 0, W, H);
+          rr(190, 145, 580, 300, 28, "rgba(26,34,78,.96)", q[3]);
+          x.textAlign = "center";
+          x.fillStyle = q[3];
+          x.font = "900 20px system-ui";
+          x.fillText(
+            s.mode === "menu"
+              ? "FIVE NIGHTS OF LIGHT"
+              : s.mode === "complete"
+                ? "CONSTELLATION WOVEN"
+                : s.mode === "won"
+                  ? "DAWN CHORUS"
+                  : s.mode === "paused"
+                    ? "NIGHT PAUSED"
+                    : "THE STARS FADED",
+            480,
+            198,
+          );
+          x.fillStyle = "#fff";
+          x.font = "900 39px system-ui";
+          x.fillText(
+            s.mode === "menu"
+              ? "Become the Lantern Keeper"
+              : s.mode === "complete"
+                ? n()[0] + " shines!"
+                : s.mode === "won"
+                  ? "Every sky is singing"
+                  : s.mode === "paused"
+                    ? "Time stands still"
+                    : "Try the pattern again",
+            480,
+            253,
+          );
+          x.font = "700 18px system-ui";
+          x.fillStyle = "#dbe2ff";
+          x.fillText(
+            s.mode === "menu"
+              ? "Aim the beam at each appearing star before it fades."
+              : s.mode === "won"
+                ? s.stars + " stars woven; 60 coins earned."
+                : s.mode === "complete"
+                  ? "Press Begin night for " + N[s.night + 1][0] + "."
+                  : s.mode === "paused"
+                    ? "Press P or Resume to continue."
+                    : "Turn to the bright star before it fades.",
+            480,
+            304,
+          );
+          rr(340, 350, 280, 55, 16, q[4], q[3]);
+          x.fillStyle = "#fff";
+          x.font = "900 19px system-ui";
+          x.fillText(
+            s.mode === "menu"
+              ? "BEGIN NIGHT"
+              : s.mode === "complete"
+                ? "NEXT NIGHT"
+                : s.mode === "won"
+                  ? "PLAY AGAIN"
+                  : s.mode === "paused"
+                    ? "RESUME"
+                    : "TRY AGAIN",
+            480,
+            386,
+          );
+          x.textAlign = "left";
+        }
+        el.night.textContent = `${s.night + 1}/5`;
+        el.stars.textContent = `${s.nightStars}/${n()[1]}`;
+        el.thread.textContent = s.stars;
+        el.misses.textContent = `${s.misses}/3`;
+        el.time.textContent =
+          Math.max(0, Math.ceil((n()[2] - s.elapsed) / 1000)) + "s";
+        el.action.textContent =
+          s.mode === "menu"
+            ? "Begin night"
+            : s.mode === "complete"
+              ? "Next night"
+              : s.mode === "paused"
+                ? "Resume"
+                : s.mode === "won"
+                  ? "Play again"
+                  : s.mode === "lost"
+                    ? "Try again"
+                    : "Playing";
+        el.action.disabled = s.mode === "playing";
+        el.pause.disabled = !["playing", "paused"].includes(s.mode);
+        el.pause.textContent = s.mode === "paused" ? "Resume (P)" : "Pause (P)";
+      }
+      function pos(e) {
+        let r = c.getBoundingClientRect();
+        return (e.clientX - r.left) / r.width;
+      }
+      c.onpointerdown = (e) => {
+        e.preventDefault();
+        if (s.mode !== "playing") begin();
+        else turn(pos(e) < 0.5 ? -1 : 1, "touch");
+        c.focus();
+      };
+      el.left.onclick = () => turn(-1);
+      el.right.onclick = () => turn(1);
+      el.action.onclick = begin;
+      el.pause.onclick = pause;
+      el.restart.onclick = restart;
+      el.theme.onclick = () => {
+        s.theme = (s.theme + 1) % T.length;
+        s.lastAction = "palette";
+        say("Palette changed.");
+        draw();
+      };
+      el.full.onclick = async () => {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await stage.requestFullscreen();
+      };
+      el.feedback.onclick = () =>
+        document.querySelector("#cadeFeedbackOpenBtn")?.click();
+      addEventListener("keydown", (e) => {
+        let k = e.key.toLowerCase();
+        if (
+          [
+            "arrowleft",
+            "arrowright",
+            "a",
+            "d",
+            " ",
+            "p",
+            "r",
+            "t",
+            "f",
+          ].includes(k)
+        )
+          e.preventDefault();
+        if (k === "p") pause();
+        else if (k === "r") restart();
+        else if (k === "t") {
+          s.theme = (s.theme + 1) % T.length;
+          draw();
+        } else if (k === "f") el.full.click();
+        else if (k === " " && s.mode !== "playing") begin();
+        else if (k === "arrowleft" || k === "a") keys.l = true;
+        else if (k === "arrowright" || k === "d") keys.r = true;
+      });
+      addEventListener("keyup", (e) => {
+        let k = e.key.toLowerCase();
+        if (k === "arrowleft" || k === "a") keys.l = false;
+        if (k === "arrowright" || k === "d") keys.r = false;
+      });
+      addEventListener("pagehide", () => {
+        if (["playing", "paused", "complete"].includes(s.mode))
+          rep("abandoned");
+      });
+      function sim(ms) {
+        for (let r = ms; r > 0;) {
+          let z = Math.min(r, 1000 / 60);
+          update(z);
+          r -= z;
+        }
+        draw();
+      }
+      function frame(t) {
+        if (t >= manual) update(Math.min(40, t - last));
+        last = t;
+        draw();
+        requestAnimationFrame(frame);
+      }
+      window.advanceTime = (ms) => {
+        manual = performance.now() + 300;
+        last = performance.now();
+        sim(Math.max(0, Number(ms) || 0));
+      };
+      window.render_game_to_text = () =>
+        JSON.stringify({
+          coordinateSystem:
+            "canvas origin top-left; lantern is centered at 480,320; angles increase clockwise",
+          mode: s.mode,
+          night: { index: s.night + 1, name: n()[0], target: n()[1] },
+          nightStars: s.nightStars,
+          lantern: { angle: +s.angle.toFixed(3) },
+          activeStar: s.active && {
+            angle: +s.active.angle.toFixed(3),
+            age: Math.round(s.active.age),
+          },
+          metrics: met(),
+          timeMs: Math.round(s.elapsed),
+          theme: p()[0],
+          status: s.status,
+          lastAction: s.lastAction,
+        });
+      window.__LANTERN_LOOM__ = {
+        start: begin,
+        reset,
+        turn,
+        complete: () => {
+          while (s.mode === "playing") {
+            if (!s.active) sim(700);
+            else {
+              s.angle = s.active.angle;
+              sim(20);
+            }
+          }
+          return s.mode;
+        },
+        snapshot: () => JSON.parse(window.render_game_to_text()),
+      };
+      reset();
+      requestAnimationFrame(frame);
+      mountGameFeedback({ gameSlug: "lanternloom", gameName: "Lantern Loom" });
+    </script>
+  </body>
+</html>

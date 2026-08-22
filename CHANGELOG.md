@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Harbor Harmony, a five-crossing signal-boat arcade campaign with matching harbor lights, three rendered sea palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Lantern Loom — weave five fading star constellations with a rotating lantern beam.
 - Bottom of the Ninth spoken batting order: compact nine announced at each new game and at the first Continue-series at-bat.
 - Bottom of the Ninth intentional walk: Controls rail plus I, one pitch, when you're pitching.
 - Bottom of the Ninth steal of second: human Send him / G once per at-bat with first occupied and second open (0–1 out); AI steals remain rare.

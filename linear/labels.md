@@ -208,5 +208,6 @@
 - game/magnetmeadow
 - game/rainkeeper
 - game/harborharmony
+- game/lanternloom
 
 Generated from `src/meta/feedback.js`.

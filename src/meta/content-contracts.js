@@ -343,6 +343,7 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'harbor-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sea', 'dock', 'boat', 'signal', 'accent']) }),
     ]),
   }),
+  lanternloom: Object.freeze({ releasedAt: '2026-08-21', outcomes: Object.freeze({ stars: Object.freeze({ min: 0, max: 55, direction: 'higher' }), nights: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'lantern-theme', kind: 'palette', tokens: Object.freeze(['sky', 'halo', 'beam', 'lantern']) })]) }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
