@@ -207,5 +207,6 @@
 - game/fireflyslants
 - game/magnetmeadow
 - game/rainkeeper
+- game/harborharmony
 
 Generated from `src/meta/feedback.js`.

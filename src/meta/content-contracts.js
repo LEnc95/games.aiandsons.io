@@ -332,6 +332,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'rain-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'cloud', 'ground', 'water', 'umbrella', 'hail', 'flower', 'accent']) }),
     ]),
   }),
+  harborharmony: Object.freeze({
+    releasedAt: '2026-08-22',
+    outcomes: Object.freeze({
+      beacons: Object.freeze({ min: 0, max: 45, direction: 'higher' }),
+      harbors: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      misfires: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'harbor-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sea', 'dock', 'boat', 'signal', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

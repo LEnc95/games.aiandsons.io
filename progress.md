@@ -1,5 +1,8 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-22 Create a new game automation - Harbor Harmony
+- Synced clean isolated worktree to origin/main baseline e9b898067c66fae810135014756bfa38f6bfa631, read current instructions/memory, and installed lockfile dependencies. Added Harbor Harmony, a self-contained five-harbor matching arcade campaign with feedback, terminal reporting, cosmetic themes, and deterministic hooks. Next: validate browser behavior and generated release support files.
+
 ## 2026-08-16 Create a new game automation - Rainkeeper
 - Synced the clean isolated worktree to `origin/main` baseline `bda87884549fe7beeb577b394bd4a10c0092fa4b`, read current repository/skill/progress/memory guidance, and completed `npm ci` (the existing 16 audit findings remain).
 - Selected Rainkeeper (`/rainkeeper`), a five-storm umbrella-catching arcade campaign absent from the registry and recent automation memory. Planned bounded `raindrops`/`gardens`/`hailHits` outcomes and a visibly rendered `rain-theme` palette slot.
