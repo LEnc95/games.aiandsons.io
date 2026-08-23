@@ -209,5 +209,6 @@
 - game/rainkeeper
 - game/harborharmony
 - game/lanternloom
+- game/tideglass
 
 Generated from `src/meta/feedback.js`.

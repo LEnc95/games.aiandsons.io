@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-23 Create a new game automation — Tideglass Trails
+- Synced clean isolated worktree to `origin/main` baseline `aa782e93f65822254c4076415f6353452284a24d`, read current guidance and memory, and ran `npm ci` (existing 16 audit findings).
+- Added Tideglass Trails (`/tideglass`), a five-board shoreline route game with desktop/mobile movement, pause/restart/fullscreen, three visible palettes, feedback, bounded terminal outcomes, deterministic state/text hooks, and one current release contract. Next: generate support assets and complete browser/final verification.
+
 ## 2026-08-22 Create a new game automation - Harbor Harmony
 - Synced clean isolated worktree to origin/main baseline e9b898067c66fae810135014756bfa38f6bfa631, read current instructions/memory, and installed lockfile dependencies. Added Harbor Harmony, a self-contained five-harbor matching arcade campaign with feedback, terminal reporting, cosmetic themes, and deterministic hooks. Next: validate browser behavior and generated release support files.
 
