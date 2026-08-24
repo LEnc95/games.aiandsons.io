@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Aurora Accord — a five-part aurora lane-conducting game for keyboard and touch.
+
 - Tideglass Trails, a five-shore pathfinding campaign with glass shells, three rendered tide palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Harbor Harmony, a five-crossing signal-boat arcade campaign with matching harbor lights, three rendered sea palettes, deterministic stepping, bounded outcomes, and shared feedback.
 - Lantern Loom (released August 21, 2026) — weave five fading star constellations with a rotating lantern beam.

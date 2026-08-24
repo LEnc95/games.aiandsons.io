@@ -196,6 +196,7 @@ const BASE_GAMES = [
   { slug:'harborharmony',  name:'Harbor Harmony',         emoji:'\u2693', scoreHint:'harbors', url:'/harborharmony', desc:'Guide bright signal boats into matching harbor lights, protect the lanterns, and calm five moonlit crossings.', earnsCoins:true },
   { slug:'lanternloom',    name:'Lantern Loom',          emoji:'\u{1F3EE}', scoreHint:'nights', url:'/lanternloom', desc:'Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn.', earnsCoins:true },
   { slug:'tideglass',      name:'Tideglass Trails',      emoji:'\u{1F30A}', scoreHint:'trails', url:'/tideglass', desc:'Walk five shimmering shore paths, gather glass shells, and reach each lighthouse before the tide breaks the trail.', earnsCoins:true },
+  { slug:'auroraaccord',   name:'Aurora Accord',          emoji:'\u2728', scoreHint:'accords', url:'/auroraaccord', desc:'Conduct five skyward light accords: catch drifting notes in their glowing lanes before the aurora fades.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

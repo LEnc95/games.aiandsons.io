@@ -345,6 +345,7 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
   }),
   lanternloom: Object.freeze({ releasedAt: '2026-08-21', outcomes: Object.freeze({ stars: Object.freeze({ min: 0, max: 55, direction: 'higher' }), nights: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'lantern-theme', kind: 'palette', tokens: Object.freeze(['sky', 'halo', 'beam', 'lantern']) })]) }),
   tideglass: Object.freeze({ releasedAt: '2026-08-23', outcomes: Object.freeze({ shells: Object.freeze({ min: 0, max: 25, direction: 'higher' }), trails: Object.freeze({ min: 0, max: 5, direction: 'higher' }), cracks: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'tideglass-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'sand', 'path', 'accent']) })]) }),
+  auroraaccord: Object.freeze({ releasedAt: '2026-08-24', outcomes: Object.freeze({ notes: Object.freeze({ min: 0, max: 25, direction: 'higher' }), accords: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'aurora-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'lane', 'note', 'beam', 'accent']) })]) }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;
