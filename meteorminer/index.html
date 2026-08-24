@@ -226,6 +226,10 @@ const PLAYER_R = 18;
 const BASE = { x: 812, y: 494, r: 62 };
 const MAX_SECTOR = 3;
 const MAX_CARGO = 6;
+const ION_ORCHARD = profileState.inventory instanceof Set && profileState.inventory.has('meteorminer-ion-orchard');
+const DRONE_PALETTE = ION_ORCHARD
+  ? { hull: '#4c1d95', engine: '#f472b6', shield: '#67e8f9', ore: '#bef264', sky: ['#190b3d', '#4c1d95', '#be185d'], line: '#f5d0fe', ink: '#2e1065', panel: '#2e1065cc', text: '#fdf4ff', accent: '#fbbf24', meteor: '#a78bfa' }
+  : { hull: '#153642', engine: '#76f0c4', shield: '#ffd36f', ore: '#5ee0bc', sky: ['#eefcff', '#9fd3da', '#315e74'], line: '#ffffff', ink: '#0e2b35', panel: '#0e2b35cc', text: '#f8fdff', accent: '#ffd36f', meteor: '#7f6b62' };
 const SECTORS = [
   { quota: 7, ore: 10, meteors: 4, speed: 1 },
   { quota: 9, ore: 12, meteors: 5, speed: 1.13 },
@@ -666,15 +670,15 @@ function render() {
 
 function drawBackground() {
   const sky = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  sky.addColorStop(0, '#eefcff');
-  sky.addColorStop(.45, '#9fd3da');
-  sky.addColorStop(1, '#315e74');
+  sky.addColorStop(0, DRONE_PALETTE.sky[0]);
+  sky.addColorStop(.45, DRONE_PALETTE.sky[1]);
+  sky.addColorStop(1, DRONE_PALETTE.sky[2]);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
   ctx.save();
   ctx.globalAlpha = .38;
-  ctx.strokeStyle = '#ffffff';
+  ctx.strokeStyle = DRONE_PALETTE.line;
   ctx.lineWidth = 1;
   for (let x = 60; x < WIDTH; x += 80) {
     ctx.beginPath();
@@ -693,14 +697,14 @@ function drawBackground() {
   for (const star of game.stars) {
     const twinkle = .45 + Math.sin(game.time * 2 + star.phase) * .2;
     ctx.globalAlpha = twinkle;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = DRONE_PALETTE.line;
     ctx.beginPath();
     ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
 
-  ctx.fillStyle = '#14364222';
+  ctx.fillStyle = `${DRONE_PALETTE.ink}22`;
   ctx.beginPath();
   ctx.ellipse(174, 512, 195, 36, -.08, 0, Math.PI * 2);
   ctx.fill();
@@ -713,20 +717,20 @@ function drawRefinery() {
   ctx.save();
   ctx.translate(BASE.x, BASE.y);
   const active = distance(game.player.x, game.player.y, BASE.x, BASE.y) < BASE.r + 34;
-  ctx.fillStyle = active ? '#ffe69b' : '#e6f7f4';
-  ctx.strokeStyle = active ? '#f16f52' : '#1c5463';
+  ctx.fillStyle = active ? '#ffe69b' : DRONE_PALETTE.text;
+  ctx.strokeStyle = active ? '#f16f52' : DRONE_PALETTE.ink;
   ctx.lineWidth = active ? 5 : 3;
   ctx.beginPath();
   ctx.arc(0, 0, BASE.r, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#1c5463';
+  ctx.fillStyle = DRONE_PALETTE.ink;
   roundedRect(-42, -23, 84, 46, 8);
   ctx.fill();
-  ctx.fillStyle = '#8dffc4';
+  ctx.fillStyle = DRONE_PALETTE.engine;
   roundedRect(-27, -10, 54, 20, 5);
   ctx.fill();
-  ctx.strokeStyle = '#ffffffaa';
+  ctx.strokeStyle = `${DRONE_PALETTE.line}aa`;
   ctx.lineWidth = 2;
   for (let i = 0; i < 3; i += 1) {
     ctx.beginPath();
@@ -744,8 +748,8 @@ function drawOres() {
     ctx.translate(ore.x, ore.y);
     ctx.rotate(ore.pulse + game.time * .8);
     ctx.scale(pulse, pulse);
-    ctx.fillStyle = '#5ee0bc';
-    ctx.strokeStyle = '#133a40';
+    ctx.fillStyle = DRONE_PALETTE.ore;
+    ctx.strokeStyle = DRONE_PALETTE.ink;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, -ore.r);
@@ -756,7 +760,7 @@ function drawOres() {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#eafff7';
+    ctx.fillStyle = DRONE_PALETTE.text;
     ctx.beginPath();
     ctx.arc(-ore.r * .16, -ore.r * .2, ore.r * .24, 0, Math.PI * 2);
     ctx.fill();
@@ -769,8 +773,8 @@ function drawMeteors() {
     ctx.save();
     ctx.translate(meteor.x, meteor.y);
     ctx.rotate(meteor.spin);
-    ctx.fillStyle = meteor.stunned > 0 ? '#ffd36f' : '#7f6b62';
-    ctx.strokeStyle = '#2a3e45';
+    ctx.fillStyle = meteor.stunned > 0 ? DRONE_PALETTE.shield : DRONE_PALETTE.meteor;
+    ctx.strokeStyle = DRONE_PALETTE.ink;
     ctx.lineWidth = 3;
     ctx.beginPath();
     const points = 9;
@@ -785,7 +789,7 @@ function drawMeteors() {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#493a36';
+    ctx.fillStyle = DRONE_PALETTE.ink;
     ctx.globalAlpha = .28;
     ctx.beginPath();
     ctx.arc(-meteor.r * .2, -meteor.r * .08, meteor.r * .23, 0, Math.PI * 2);
@@ -805,8 +809,8 @@ function drawPlayer() {
   if (p.hitCooldown > 0 && Math.floor(p.hitCooldown * 12) % 2 === 0) {
     ctx.globalAlpha = .55;
   }
-  ctx.fillStyle = '#153642';
-  ctx.strokeStyle = '#ffffff';
+  ctx.fillStyle = DRONE_PALETTE.hull;
+  ctx.strokeStyle = DRONE_PALETTE.line;
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(24, 0);
@@ -816,18 +820,18 @@ function drawPlayer() {
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#f4c75d';
+  ctx.fillStyle = DRONE_PALETTE.accent;
   ctx.beginPath();
   ctx.arc(2, 0, 8, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#76f0c4';
+  ctx.fillStyle = DRONE_PALETTE.engine;
   roundedRect(-23, -7, 9, 14, 3);
   ctx.fill();
   ctx.restore();
 
   if (p.shield > 0) {
     const radius = 34 + Math.sin(game.time * 18) * 4;
-    ctx.strokeStyle = '#ffd36f';
+    ctx.strokeStyle = DRONE_PALETTE.shield;
     ctx.lineWidth = 5;
     ctx.globalAlpha = .66;
     ctx.beginPath();
@@ -861,9 +865,9 @@ function drawOverlay() {
   if (game.mode === 'playing') return;
 
   ctx.save();
-  ctx.fillStyle = '#0e2b35cc';
+  ctx.fillStyle = DRONE_PALETTE.panel;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.fillStyle = '#f8fdff';
+  ctx.fillStyle = DRONE_PALETTE.text;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = '900 58px Inter, Segoe UI, sans-serif';
@@ -875,13 +879,13 @@ function drawOverlay() {
   ctx.fillText(title, WIDTH / 2, 178);
 
   ctx.font = '700 22px Inter, Segoe UI, sans-serif';
-  ctx.fillStyle = '#d7f5f8';
+  ctx.fillStyle = DRONE_PALETTE.line;
   const lines = overlayLines();
   lines.forEach((line, index) => {
     ctx.fillText(line, WIDTH / 2, 248 + index * 34);
   });
 
-  ctx.fillStyle = '#ffd36f';
+  ctx.fillStyle = DRONE_PALETTE.accent;
   ctx.font = '900 20px Inter, Segoe UI, sans-serif';
   ctx.fillText(overlayAction(), WIDTH / 2, 418);
   ctx.restore();
@@ -891,17 +895,17 @@ function drawCanvasHud() {
   const quota = SECTORS[game.sector - 1]?.quota || SECTORS[0].quota;
   const panelX = 118;
   ctx.save();
-  ctx.fillStyle = '#0e2b35bf';
+  ctx.fillStyle = `${DRONE_PALETTE.ink}bf`;
   roundedRect(panelX, 16, 360, 42, 8);
   ctx.fill();
-  ctx.fillStyle = '#f8fdff';
+  ctx.fillStyle = DRONE_PALETTE.text;
   ctx.font = '800 16px Inter, Segoe UI, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText(`Score ${game.score}`, panelX + 16, 37);
-  ctx.fillStyle = '#ffd36f';
+  ctx.fillStyle = DRONE_PALETTE.accent;
   ctx.fillText(`Delivered ${game.delivered}/${quota}`, panelX + 126, 37);
-  ctx.fillStyle = game.player.shield > 0 ? '#ffd36f' : '#8dffc4';
+  ctx.fillStyle = game.player.shield > 0 ? DRONE_PALETTE.shield : DRONE_PALETTE.engine;
   const shield = game.player.shield > 0 ? 'Shield active' : `Shield ${Math.max(0, Math.ceil(game.player.shieldCooldown * 10) / 10)}s`;
   ctx.fillText(shield, panelX + 266, 37);
   ctx.restore();
@@ -1074,6 +1078,7 @@ function stateToObject() {
     total_delivered: game.totalDelivered,
     coins: Number(profileState.coins || 0),
     coins_awarded_this_session: game.coinsAwarded,
+    cosmetics: { ion_orchard: ION_ORCHARD },
     player: {
       x: Math.round(game.player.x),
       y: Math.round(game.player.y),

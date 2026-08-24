@@ -98,7 +98,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -112,11 +112,13 @@ const LEVELS=Object.freeze([
   Object.freeze({name:'Emerald Nave',rows:3,cols:4,start:[1,2,3,1,3,1,2,3,2,3,1,2],north:[3,1,0,2],east:[0,2,1],south:[2,0,3,1],west:[1,3,0],h:[[2,0,3],[1,3,2],[0,2,1]],v:[[3,1,2,0],[2,0,1,3]],story:'Align twelve emerald panes beneath the high nave.'}),
   Object.freeze({name:'Crown Conservatory',rows:3,cols:4,start:[3,2,1,3,1,3,2,1,2,1,3,2],north:[0,2,1,3],east:[3,1,2],south:[1,3,0,2],west:[2,0,3],h:[[1,3,0],[2,0,3],[3,1,2]],v:[[2,1,3,0],[0,3,2,1]],story:'Complete the crown window and wake the glass garden.'}),
 ]);
-const THEMES=Object.freeze([
+const TWILIGHT_CONSERVATORY=profileState.inventory instanceof Set&&profileState.inventory.has('glassgarden-twilight-conservatory');
+const BASE_THEMES=Object.freeze([
   Object.freeze({name:'Cathedral',wall:'#17213d',wall2:'#2b3d69',frame:'#e4b85c',lead:'#17213b',panel:'#f4e7c3',ink:'#17213b',glow:'#fff2ad',accent:'#e9c86e',glass:['#d8495f','#f2aa3b','#3998d0','#42a875']}),
   Object.freeze({name:'Moon Chapel',wall:'#24204a',wall2:'#504779',frame:'#c8c5ea',lead:'#17132f',panel:'#eceaff',ink:'#28204a',glow:'#d9f5ff',accent:'#91d3e8',glass:['#da5f8f','#edc869','#648fe5','#59b9a7']}),
   Object.freeze({name:'Sunroom',wall:'#32514c',wall2:'#5d8068',frame:'#f0d596',lead:'#263d39',panel:'#fff4cf',ink:'#263d39',glow:'#fff4b1',accent:'#f2b966',glass:['#d95f52','#f4bd45','#4fa6c6','#61aa61']}),
 ]);
+const THEMES=Object.freeze(TWILIGHT_CONSERVATORY?[...BASE_THEMES,Object.freeze({name:'Twilight Conservatory',wall:'#170f31',wall2:'#3b1b63',frame:'#f2b6ff',lead:'#21113d',panel:'#fef3ff',ink:'#281447',glow:'#d8b4fe',accent:'#fb7185',glass:['#fb7185','#fbbf24','#38bdf8','#a3e635']})]:BASE_THEMES);
 const game={mode:'menu',levelIndex:0,rotations:[],focus:0,history:[],turns:0,levelTurns:0,cracks:3,completedPanes:0,completedWindows:0,elapsedMs:0,themeIndex:0,status:'Press Open Shutters to begin.',lastAction:'menu',reported:false};
 let paneRegions=[],lastFrame=performance.now(),manualUntil=0;
 
@@ -226,7 +228,7 @@ window.addEventListener('keydown',event=>{
 document.addEventListener('fullscreenchange',render);
 function frame(now){if(now>=manualUntil)update(Math.min(50,now-lastFrame));lastFrame=now;render();requestAnimationFrame(frame)}
 window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+350;lastFrame=performance.now();update(amount);render()};
-window.render_game_to_text=()=>{const seams=seamState(),hintIndex=game.rotations.findIndex(rotation=>rotation!==0);return JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; panes use row-major order from top-left',mode:game.mode,window:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,rows:level().rows,cols:level().cols},focusedPane:game.focus+1,panes:game.rotations.map((rotation,index)=>({id:index+1,row:Math.floor(index/level().cols)+1,column:index%level().cols+1,rotationQuarterTurns:rotation,edges:displayedEdges(index).map(color=>GLASS[color]),x:paneRegions[index]?.x??null,y:paneRegions[index]?.y??null})),seams:{matched:seams.matched,total:seams.total,dark:seams.total-seams.matched,solved:seams.solved},cracksRemaining:game.cracks,turns:game.turns,levelTurns:game.levelTurns,elapsedMs:Math.round(game.elapsedMs),theme:palette().name,status:game.status,lastAction:game.lastAction,nextHint:game.mode==='playing'&&hintIndex>=0?hintIndex+1:null,metrics:currentMetrics()})};
+window.render_game_to_text=()=>{const seams=seamState(),hintIndex=game.rotations.findIndex(rotation=>rotation!==0);return JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; panes use row-major order from top-left',mode:game.mode,window:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,rows:level().rows,cols:level().cols},focusedPane:game.focus+1,panes:game.rotations.map((rotation,index)=>({id:index+1,row:Math.floor(index/level().cols)+1,column:index%level().cols+1,rotationQuarterTurns:rotation,edges:displayedEdges(index).map(color=>GLASS[color]),x:paneRegions[index]?.x??null,y:paneRegions[index]?.y??null})),seams:{matched:seams.matched,total:seams.total,dark:seams.total-seams.matched,solved:seams.solved},cracksRemaining:game.cracks,turns:game.turns,levelTurns:game.levelTurns,elapsedMs:Math.round(game.elapsedMs),theme:palette().name,cosmetics:{twilight_conservatory:TWILIGHT_CONSERVATORY},status:game.status,lastAction:game.lastAction,nextHint:game.mode==='playing'&&hintIndex>=0?hintIndex+1:null,metrics:currentMetrics()})};
 function qaSolveWindow(){let guard=0;while(game.mode==='playing'&&game.rotations.some(rotation=>rotation!==0)&&guard++<100){const index=game.rotations.findIndex(rotation=>rotation!==0),rotation=game.rotations[index];turnPane(index,rotation===3?1:-1,'qa')}if(game.mode==='playing')inspect();return game.mode}
 window.__GLASS_GARDEN_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadWindow:index=>loadLevel(index,'playing'),focus:index=>{game.focus=Math.max(0,Math.min(paneCount()-1,index));render()},turn:(index,delta=1)=>turnPane(index,delta,'qa'),hint:()=>hint(),undo:()=>undo(),inspect:()=>inspect(),solveWindow:()=>qaSolveWindow(),solveCampaign:()=>{if(game.mode==='menu'||game.mode==='lost'||game.mode==='won')startOrContinue();let guard=0;while(game.mode!=='won'&&guard++<10){if(game.mode==='playing')qaSolveWindow();if(game.mode==='window-complete')startOrContinue();if(game.mode==='lost')break}return game.mode},levels:LEVELS,themes:THEMES,seams:()=>seamState()};
 mountGameFeedback({gameSlug:'glassgarden',gameName:'Glass Garden'});
