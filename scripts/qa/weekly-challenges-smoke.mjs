@@ -109,6 +109,10 @@ async function main() {
       }
       const update = window.maybeUnlock({
         anyPlay: true,
+        glassgarden: { panes: 43 },
+        aquariumlogic: { boards: 5 },
+        meteorminer: { score: 3000 },
+        dapplegrove: { leaves: 50 },
         snake: { length: 32 },
         pong: { winMargin: 7 },
         tetris: { lines: 60, score: 5200, level: 9 },

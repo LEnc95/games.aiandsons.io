@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W35 content pack with Twilight Conservatory Glass Garden, Coral Dawn Aquarium Logic, and Ion Orchard Drone Meteor Miner cosmetics plus four bounded weekly challenges.
 - Aurora Accord — a five-part aurora lane-conducting game for keyboard and touch.
 
 - Tideglass Trails, a five-shore pathfinding campaign with glass shells, three rendered tide palettes, deterministic stepping, bounded outcomes, and shared feedback.

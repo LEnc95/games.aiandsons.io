@@ -119,8 +119,8 @@ test('missions module loading', async (t) => {
       assert.ok(weekly.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
     });
 
-    await t.test('W32 challenges complete and reward exactly once', () => {
-      const timestamp = new Date('2026-08-06T12:00:00Z').getTime();
+    await t.test('W35 scheduled challenges complete and reward exactly once', () => {
+      const timestamp = new Date('2026-08-24T12:00:00Z').getTime();
       const originalCoins = state.coins;
       const originalBadges = state.badges;
       try {
@@ -133,20 +133,20 @@ test('missions module loading', async (t) => {
         state.missions.completed = [];
         state.missions.rewarded = [];
         state.missions.weekly.activeIds = [
-          'weekly-w32-tetris-score-6000',
-          'weekly-w32-aquariumlogic-boards-5',
-          'weekly-w32-acornascent-acorns-18',
-          'weekly-w32-pong-margin-8',
+          'weekly-w35-glassgarden-panes-43',
+          'weekly-w35-aquariumlogic-boards-5',
+          'weekly-w35-meteorminer-score-3000',
+          'weekly-w35-dapplegrove-leaves-50',
         ];
         state.missions.weekly.progress = {};
         state.missions.weekly.completed = [];
         state.missions.weekly.rewarded = [];
 
         const payload = {
-          tetris: { score: 6000 },
+          glassgarden: { panes: 43 },
           aquariumlogic: { boards: 5 },
-          acornascent: { acorns: 18 },
-          pong: { winMargin: 8 },
+          meteorminer: { score: 3000 },
+          dapplegrove: { leaves: 50 },
         };
         const first = recordMissionProgress(payload, timestamp);
         assert.equal(first.weeklyCompletedNow.length, 4);
