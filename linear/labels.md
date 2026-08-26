@@ -211,5 +211,6 @@
 - game/lanternloom
 - game/tideglass
 - game/auroraaccord
+- game/cindercompass
 
 Generated from `src/meta/feedback.js`.

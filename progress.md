@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-25 Create a new game automation — Cinder Compass
+- Synced the clean isolated worktree to `origin/main` baseline `56b6944e90380cb165a552dc3722186f9a7e2215`; `npm ci` passed with the repository's existing 16 audit findings.
+- Added Cinder Compass (`/cindercompass`), a self-contained five-chart ember navigation game with keyboard/touch controls, pause/restart/fullscreen, three rendered palettes, feedback, deterministic hooks, and bounded terminal reporting. Next: generate metadata and complete browser/final QA.
+
 ## 2026-08-24 Create a new game automation — Aurora Accord
 - Synced isolated clean worktree to `origin/main` baseline `1aac27719a7d3262b96dd9f5dfbd69c069c4942b`; `npm ci` passed with the repository's existing 16 audit findings.
 - Added Aurora Accord (`/auroraaccord`), a self-contained five-movement aurora-lane conductor with keyboard/touch controls, pause/restart/fullscreen, three visibly rendered palettes, feedback, deterministic stepping/text hooks, bounded terminal reporting, metadata contract, and changelog entry. Next: generate, validate, and complete browser QA.
