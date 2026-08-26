@@ -1,5 +1,10 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-26 Create a new game automation — Prism Pulse
+- Clean isolated baseline `d521710091e26a834cfe287076b5f313db572135`; selected a new five-round prism timing game. Initial implementation, generated support artifacts, browser QA, and release gates are in progress.
+- Restored four generator-touched existing pages after ordinary and EOL-insensitive diffs proved their content unchanged. The supplied client genuinely caught the first pulse; focused desktop/mobile QA then passed controls, boundaries, exact +1,234 ms stepping, paused freeze, transition, three-fracture loss, restart, all three themes, 25-pulse win, fullscreen/Escape, feedback, and 390px layout with zero browser errors. Gameplay, pause, loss, transition, win, feedback, fullscreen, mobile, and OG captures were visually inspected and agree with text state.
+- Repeated SEO, all 198 OG cards, and local Linear seed generation; restored only the four known generator whitespace insertions. The ordered final local gate passed maintenance, 198-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and `git diff --check`. The exact baseline audit contains one registry entry, folder, contract, changelog mention, and only the 11 daily-lane paths; no branch conflict exists.
+
 ## 2026-08-25 Create a new game automation — Cinder Compass
 - Synced the clean isolated worktree to `origin/main` baseline `56b6944e90380cb165a552dc3722186f9a7e2215`; `npm ci` passed with the repository's existing 16 audit findings.
 - Added Cinder Compass (`/cindercompass`), a self-contained five-chart ember navigation game with keyboard/touch controls, pause/restart/fullscreen, three rendered palettes, feedback, deterministic hooks, and bounded terminal reporting. Next: generate metadata and complete browser/final QA.
