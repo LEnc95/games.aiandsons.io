@@ -198,6 +198,7 @@ const BASE_GAMES = [
   { slug:'tideglass',      name:'Tideglass Trails',      emoji:'\u{1F30A}', scoreHint:'trails', url:'/tideglass', desc:'Walk five shimmering shore paths, gather glass shells, and reach each lighthouse before the tide breaks the trail.', earnsCoins:true },
   { slug:'auroraaccord',   name:'Aurora Accord',          emoji:'\u2728', scoreHint:'accords', url:'/auroraaccord', desc:'Conduct five skyward light accords: catch drifting notes in their glowing lanes before the aurora fades.', earnsCoins:true },
   { slug:'cindercompass',  name:'Cinder Compass',         emoji:'\u{1F9ED}', scoreHint:'charts', url:'/cindercompass', desc:'Turn a brass compass toward glowing beacons and map five volcanic star charts before the cinders cool.', earnsCoins:true },
+  { slug:'prismpulse',     name:'Prism Pulse',            emoji:'\u{1F308}', scoreHint:'rounds', url:'/prismpulse', desc:'Tune a crystal dial to catch five waves of colored pulses as they sweep across a luminous prism.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

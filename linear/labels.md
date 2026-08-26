@@ -212,5 +212,6 @@
 - game/tideglass
 - game/auroraaccord
 - game/cindercompass
+- game/prismpulse
 
 Generated from `src/meta/feedback.js`.
