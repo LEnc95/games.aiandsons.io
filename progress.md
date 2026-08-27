@@ -1,5 +1,10 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-27 Create a new game automation — Seedskip
+- Clean isolated baseline `baff29f95cb8fbcaf22dde4f2d5289b4bf59d384`; selected a new five-garden seed-ricochet physics puzzle. Implementation and release validation are in progress.
+- SEO/OG/Linear generation and early maintenance/preflight passed for 199 games; restored four generator-only blank-line insertions after diff review. Supplied-client gameplay and focused desktop/mobile state QA pass; corrected interim completed-garden metrics before final regression.
+- Exhaustive physics QA found and fixed over-constrained layouts and fresh-scenario timer leakage; all five gardens now have real trajectories. Full desktop/mobile regression passes deterministic stepping, paused freeze, loss/restart, transitions, five-garden win, themes, fullscreen/Escape, feedback, and overflow with zero browser errors; gameplay, transition, win, mobile, and OG captures were visually inspected.
+
 ## 2026-08-26 Prism Pulse distinct-gameplay redesign
 - Replaced the five-lane timing loop with five handcrafted spatial beam-routing boards using selectable, rotatable crystal mirrors and animated pulse tracing. Focused desktop/mobile QA passed 22 assertions covering controls, boundaries, exact deterministic stepping, paused-time freeze, success/loss transitions, restart, palettes, fullscreen/Escape, feedback, touch, and the complete five-chamber campaign with zero browser errors; gameplay, feedback, mobile, transition, and regenerated OG captures were visually inspected. SEO/OG generation and the full maintenance, preflight, telemetry, feedback, shop, social, and diff gates passed; the follow-up release is ready for guarded publication.
 
