@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Redesigned Prism Pulse as a five-board spatial beam-routing puzzle with rotatable mirrors.
 - Prism Pulse — a five-round color-timing game for keyboard and touch.
 - Cinder Compass — a five-chart ember-navigation game for keyboard and touch.
 - Added the 2026-W35 content pack with Twilight Conservatory Glass Garden, Coral Dawn Aquarium Logic, and Ion Orchard Drone Meteor Miner cosmetics plus four bounded weekly challenges.

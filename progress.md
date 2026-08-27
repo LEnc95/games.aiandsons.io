@@ -1,5 +1,8 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-26 Prism Pulse distinct-gameplay redesign
+- Replaced the five-lane timing loop with five handcrafted spatial beam-routing boards using selectable, rotatable crystal mirrors and animated pulse tracing. Focused desktop/mobile QA passed 22 assertions covering controls, boundaries, exact deterministic stepping, paused-time freeze, success/loss transitions, restart, palettes, fullscreen/Escape, feedback, touch, and the complete five-chamber campaign with zero browser errors; gameplay, feedback, mobile, transition, and regenerated OG captures were visually inspected. SEO/OG generation and the full maintenance, preflight, telemetry, feedback, shop, social, and diff gates passed; the follow-up release is ready for guarded publication.
+
 ## 2026-08-26 Create a new game automation — Prism Pulse
 - Clean isolated baseline `d521710091e26a834cfe287076b5f313db572135`; selected a new five-round prism timing game. Initial implementation, generated support artifacts, browser QA, and release gates are in progress.
 - Restored four generator-touched existing pages after ordinary and EOL-insensitive diffs proved their content unchanged. The supplied client genuinely caught the first pulse; focused desktop/mobile QA then passed controls, boundaries, exact +1,234 ms stepping, paused freeze, transition, three-fracture loss, restart, all three themes, 25-pulse win, fullscreen/Escape, feedback, and 390px layout with zero browser errors. Gameplay, pause, loss, transition, win, feedback, fullscreen, mobile, and OG captures were visually inspected and agree with text state.
