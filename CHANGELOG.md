@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Seedskip — a five-garden seed-ricochet puzzle for keyboard and touch.
 - Redesigned Prism Pulse as a five-board spatial beam-routing puzzle with rotatable mirrors.
 - Prism Pulse — a five-round color-timing game for keyboard and touch.
 - Cinder Compass — a five-chart ember-navigation game for keyboard and touch.

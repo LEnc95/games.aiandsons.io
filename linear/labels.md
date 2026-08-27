@@ -213,5 +213,6 @@
 - game/auroraaccord
 - game/cindercompass
 - game/prismpulse
+- game/seedskip
 
 Generated from `src/meta/feedback.js`.
