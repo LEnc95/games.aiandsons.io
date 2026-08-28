@@ -214,5 +214,6 @@
 - game/cindercompass
 - game/prismpulse
 - game/seedskip
+- game/kitecircuit
 
 Generated from `src/meta/feedback.js`.

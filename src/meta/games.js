@@ -200,6 +200,7 @@ const BASE_GAMES = [
   { slug:'cindercompass',  name:'Cinder Compass',         emoji:'\u{1F9ED}', scoreHint:'charts', url:'/cindercompass', desc:'Turn a brass compass toward glowing beacons and map five volcanic star charts before the cinders cool.', earnsCoins:true },
   { slug:'prismpulse',     name:'Prism Pulse',            emoji:'\u{1F308}', scoreHint:'rounds', url:'/prismpulse', desc:'Rotate crystal mirrors, trace bending beams, and route light through five spatial prism chambers.', earnsCoins:true },
   { slug:'seedskip',       name:'Seedskip',               emoji:'\u{1F331}', scoreHint:'gardens', url:'/seedskip', desc:'Aim spring-loaded seeds, bank them around stone walls, and bloom five pocket gardens with clever ricochets.', earnsCoins:true },
+  { slug:'kitecircuit',     name:'Kite Circuit',           emoji:'\u{1FA81}', scoreHint:'rings', url:'/kitecircuit', desc:'Steer a bright kite through ordered sky rings, ride shifting winds, and dodge storm clouds across five aerial courses.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
