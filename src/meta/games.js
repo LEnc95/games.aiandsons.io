@@ -201,6 +201,7 @@ const BASE_GAMES = [
   { slug:'prismpulse',     name:'Prism Pulse',            emoji:'\u{1F308}', scoreHint:'rounds', url:'/prismpulse', desc:'Rotate crystal mirrors, trace bending beams, and route light through five spatial prism chambers.', earnsCoins:true },
   { slug:'seedskip',       name:'Seedskip',               emoji:'\u{1F331}', scoreHint:'gardens', url:'/seedskip', desc:'Aim spring-loaded seeds, bank them around stone walls, and bloom five pocket gardens with clever ricochets.', earnsCoins:true },
   { slug:'kitecircuit',     name:'Kite Circuit',           emoji:'\u{1FA81}', scoreHint:'rings', url:'/kitecircuit', desc:'Steer a bright kite through ordered sky rings, ride shifting winds, and dodge storm clouds across five aerial courses.', earnsCoins:true },
+  { slug:'echoferry',       name:'Echo Ferry',             emoji:'\u{1F6A2}', scoreHint:'channels', url:'/echoferry', desc:'Navigate five fogbound channels, reveal hidden buoys and reefs with sonar pings, and guide a tiny ferry safely to each dock.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

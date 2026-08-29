@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Echo Ferry — a five-channel fog-and-sonar navigation game for keyboard and touch.
 - Kite Circuit — a five-course wind-steering game for keyboard and touch.
 - Seedskip — a five-garden seed-ricochet puzzle for keyboard and touch.
 - Redesigned Prism Pulse as a five-board spatial beam-routing puzzle with rotatable mirrors.

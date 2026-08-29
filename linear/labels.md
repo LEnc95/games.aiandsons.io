@@ -215,5 +215,6 @@
 - game/prismpulse
 - game/seedskip
 - game/kitecircuit
+- game/echoferry
 
 Generated from `src/meta/feedback.js`.
