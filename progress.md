@@ -1,5 +1,10 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-08-29 Create a new game automation — Echo Ferry
+- Clean isolated baseline `92dded3e72957dbc397cf36df5e01330ab1b9be5`; selected a distinct five-channel fog-and-sonar navigation game with hidden reefs, buoy collection, three rendered palettes, feedback, deterministic stepping, and bounded `{ buoys, channels, pings }` outcomes.
+- SEO/OG/Linear generation and early maintenance/preflight passed for 201 games; restored five inspected generator-only whitespace/line-ending changes. Supplied-client visual inspection confirmed the fog/sonar gameplay composition and prompted a completed-channel abandonment metric correction before focused QA.
+- Browser QA passed 18 focused assertions: sonar reveal, exact +1,233 ms deterministic stepping, paused freeze, steering, boundaries, reef loss, restart, palette cycling, first-channel transition, 20-buoy/five-channel win, fullscreen/Escape, feedback, touch start, and 390px no-overflow layout with zero page/console errors. Gameplay, pause, loss, transition, win, feedback, mobile, and OG captures were visually inspected.
+
 ## 2026-08-28 Create a new game automation — Kite Circuit
 - Clean isolated baseline `74b4626616dbdb2b5f30739d1ba5fc7c34722384`; implementing a distinct five-course wind-steering game with ordered rings, hazards, palettes, feedback, deterministic stepping, and bounded outcome reporting.
 - Generated SEO/OG/Linear support and passed early maintenance/preflight for 200 games; restored four inspected generator-only blank-line changes. Supplied-client gameplay inspection caught and fixed frame-rate-dependent steering acceleration.
