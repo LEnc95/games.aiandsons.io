@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Moon Mender — a five-site lunar rover pushing puzzle for keyboard and touch.
 - Cloud Quilt — a five-pattern cloud-patch flipping puzzle for keyboard and touch.
 - Echo Ferry — a five-channel fog-and-sonar navigation game for keyboard and touch.
 - Kite Circuit — a five-course wind-steering game for keyboard and touch.

@@ -217,5 +217,6 @@
 - game/kitecircuit
 - game/echoferry
 - game/cloudquilt
+- game/moonmender
 
 Generated from `src/meta/feedback.js`.
