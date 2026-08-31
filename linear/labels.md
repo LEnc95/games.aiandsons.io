@@ -216,5 +216,6 @@
 - game/seedskip
 - game/kitecircuit
 - game/echoferry
+- game/cloudquilt
 
 Generated from `src/meta/feedback.js`.
