@@ -202,6 +202,7 @@ const BASE_GAMES = [
   { slug:'seedskip',       name:'Seedskip',               emoji:'\u{1F331}', scoreHint:'gardens', url:'/seedskip', desc:'Aim spring-loaded seeds, bank them around stone walls, and bloom five pocket gardens with clever ricochets.', earnsCoins:true },
   { slug:'kitecircuit',     name:'Kite Circuit',           emoji:'\u{1FA81}', scoreHint:'rings', url:'/kitecircuit', desc:'Steer a bright kite through ordered sky rings, ride shifting winds, and dodge storm clouds across five aerial courses.', earnsCoins:true },
   { slug:'echoferry',       name:'Echo Ferry',             emoji:'\u{1F6A2}', scoreHint:'channels', url:'/echoferry', desc:'Navigate five fogbound channels, reveal hidden buoys and reefs with sonar pings, and guide a tiny ferry safely to each dock.', earnsCoins:true },
+  { slug:'cloudquilt',      name:'Cloud Quilt',            emoji:'\u{1F9F5}', scoreHint:'quilts', url:'/cloudquilt', desc:'Flip connected cloud patches, match five glowing sky quilts, and finish each pattern before the thread runs out.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
