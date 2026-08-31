@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w36-dapplegrove-leaves-107', weekKey: '2026-08-31', gameSlug: 'dapplegrove', metric: 'leaves', name: 'Crown Canopy', desc: 'Shade all 107 leaves in Dapple Grove.', target: 107, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-geargrove-gears-27', weekKey: '2026-08-31', gameSlug: 'geargrove', metric: 'gears', name: 'Clockwork Gardener', desc: 'Align all 27 gears in Gear Grove.', target: 27, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-prismpulse-pulses-25', weekKey: '2026-08-31', gameSlug: 'prismpulse', metric: 'pulses', name: 'Prism Conductor', desc: 'Send 25 pulses in Prism Pulse.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-snake-length-500', weekKey: '2026-08-31', gameSlug: 'snake', metric: 'length', name: 'Serpent Summit', desc: 'Reach length 500 in Snake.', target: 500, rewardCoins: 20 }),
   define({ id: 'weekly-w35-glassgarden-panes-43', weekKey: '2026-08-24', gameSlug: 'glassgarden', metric: 'panes', name: 'Conservatory Restorer', desc: 'Restore all 43 panes in Glass Garden.', target: 43, rewardCoins: 20 }),
   define({ id: 'weekly-w35-aquariumlogic-boards-5', weekKey: '2026-08-24', gameSlug: 'aquariumlogic', metric: 'boards', name: 'Dawn Reef Keeper', desc: 'Balance all 5 boards in Aquarium Logic.', target: 5, rewardCoins: 20 }),
   define({ id: 'weekly-w35-meteorminer-score-3000', weekKey: '2026-08-24', gameSlug: 'meteorminer', metric: 'score', name: 'Ion Survey', desc: 'Reach 3000 score in Meteor Miner.', target: 3000, rewardCoins: 20 }),

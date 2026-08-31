@@ -4539,3 +4539,8 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 
 ## 2026-08-24 Weekly content pack 2026-W35
 - Isolated from `origin/main` baseline `1d94db23889e8df67f09a76d3ffd71e0adcfcded`; W35 issue #275 is authoritative. Added inventory-only Twilight Conservatory, Coral Dawn, and Ion Orchard Drone palettes plus the exact four one-time, 20-coin W35 challenges. Next: complete supplied-client visual QA, ordered gates, audit, and guarded PR publication.
+
+## 2026-08-31 Weekly content pack 2026-W36
+- Isolated from `origin/main` baseline `81e741c775decde82f7f2a63827edcbe079f87e5`; W36 issue #285 is authoritative. Added inventory-only Starlit Moss, Copper Bloom, and Solar Flare Prism palettes plus the exact four one-time, 20-coin W36 challenges. Next: complete supplied-client visual QA, ordered gates, audit, and guarded PR publication.
+- Supplied-client gameplay passes and focused ownership checks confirmed matching text state, unique shop previews, before/equipped visual differences, 390px layouts without overflow, pause/resume, and restart for all three shells; native fullscreen is unavailable in headless Chromium after its controls were exercised. Visually inspected all shop, baseline, equipped, and mobile captures with zero page/console errors.
+- Validation passed: focused W36 mission 12/12 and local weekly smoke, then maintenance, 203-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, repeated weekly smoke, and diff check. Next: audit, stage, commit, and publish through the guarded weekly lane.

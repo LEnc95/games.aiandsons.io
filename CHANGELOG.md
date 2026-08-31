@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W36 content pack with Starlit Moss Dapple Grove, Copper Bloom Gear Grove, and Solar Flare Prism Prism Pulse cosmetics plus four bounded weekly challenges.
 - Moon Mender — a five-site lunar rover pushing puzzle for keyboard and touch.
 - Cloud Quilt — a five-pattern cloud-patch flipping puzzle for keyboard and touch.
 - Echo Ferry — a five-channel fog-and-sonar navigation game for keyboard and touch.
