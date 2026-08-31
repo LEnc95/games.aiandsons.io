@@ -205,7 +205,7 @@
       <div id="live" aria-live="polite"></div>
     </main>
     <script type="module">
-      import { addCoins } from "/src/core/state.js";
+      import { addCoins, state as profileState } from "/src/core/state.js";
       import { reportGameOutcome } from "/src/core/outcomes.js";
       import { mountGameFeedback } from "/src/feedback/embed.js";
       const c = document.querySelector("#game"),
@@ -305,6 +305,7 @@
             ],
           },
         ],
+        SOLAR_FLARE_PRISM = profileState.inventory instanceof Set && profileState.inventory.has("prismpulse-solar-flare"),
         themes = [
           {
             name: "Nebula",
@@ -330,6 +331,7 @@
             crystal: "#ffd5ef",
             accent: "#f5c5ff",
           },
+          ...(SOLAR_FLARE_PRISM ? [{ name: "Solar Flare", sky: "#4b1d24", panel: "#8f3f2d", beam: "#ffd66b", crystal: "#fff0be", accent: "#ffb26b" }] : []),
         ];
       let g;
       const lev = () => levels[g.round],
@@ -698,7 +700,7 @@
         reset();
       };
       E.theme.onclick = () => {
-        g.theme = (g.theme + 1) % 3;
+        g.theme = (g.theme + 1) % themes.length;
         draw();
       };
       E.full.onclick = async () => {
@@ -790,6 +792,7 @@
           fractures: g.fractures,
           timeMs: Math.round(g.time),
           theme: pal().name,
+          cosmetics: { solarFlarePrism: SOLAR_FLARE_PRISM },
           lastAction: g.last,
           status: g.status,
           metrics: metrics(),
