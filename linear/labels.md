@@ -218,5 +218,6 @@
 - game/echoferry
 - game/cloudquilt
 - game/moonmender
+- game/frostfootprints
 
 Generated from `src/meta/feedback.js`.
