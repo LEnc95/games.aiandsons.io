@@ -204,6 +204,7 @@ const BASE_GAMES = [
   { slug:'echoferry',       name:'Echo Ferry',             emoji:'\u{1F6A2}', scoreHint:'channels', url:'/echoferry', desc:'Navigate five fogbound channels, reveal hidden buoys and reefs with sonar pings, and guide a tiny ferry safely to each dock.', earnsCoins:true },
   { slug:'cloudquilt',      name:'Cloud Quilt',            emoji:'\u{1F9F5}', scoreHint:'quilts', url:'/cloudquilt', desc:'Flip connected cloud patches, match five glowing sky quilts, and finish each pattern before the thread runs out.', earnsCoins:true },
   { slug:'moonmender',      name:'Moon Mender',            emoji:'\u{1F319}', scoreHint:'sites', url:'/moonmender', desc:'Drive a tiny lunar rover, roll loose moonstones into glowing craters, and mend five handcrafted moon sites.', earnsCoins:true },
+  { slug:'frostfootprints', name:'Frost Footprints',       emoji:'\u{1F427}', scoreHint:'floes', url:'/frostfootprints', desc:'Slide a scarfed penguin across five icy floes, sweep up every gold star, and reach each glowing igloo.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
