@@ -219,5 +219,6 @@
 - game/cloudquilt
 - game/moonmender
 - game/frostfootprints
+- game/bramblebounce
 
 Generated from `src/meta/feedback.js`.

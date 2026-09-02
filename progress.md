@@ -1,5 +1,11 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-02 Create a new game automation — Bramble Bounce
+- Clean isolated baseline `7a37c0f6db81139eef0a705583bd5998c900d381`; selected a distinct five-grove paddle-and-seed arcade game with bounded `{ blooms, groves, drops }` outcomes, three rendered garden palettes, feedback, and deterministic hooks. Implementation and release validation are in progress.
+- SEO/OG/Linear generation and early maintenance/preflight passed for 205 games; restored nine inspected generator-only blank-line changes. The first fresh-worktree browser run found an unclosed `update` function, now corrected before gameplay QA.
+- Browser QA passed the supplied client and focused desktop/mobile matrix: fixed-step timing, paused freeze, paddle boundaries, natural 22-bloom campaign win, three-drop loss/restart, all themes, fullscreen/Escape, feedback, touch, 390px no-overflow, and zero browser errors. Gameplay, pause, loss, win, feedback, mobile, and OG captures were visually inspected.
+- Final local gates passed: maintenance, 205-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff checks. Release diff audit and guarded publication are next.
+
 ## 2026-09-01 Create a new game automation — Frost Footprints
 - Clean isolated baseline `9de574ec6dad13661617ea413e2d64a38ea806f7`; selected a distinct five-floe penguin ice-sliding puzzle with bounded `{ stars, floes, slides }` outcomes, three rendered scarf palettes, feedback, and deterministic hooks. Implementation and release validation are in progress.
 - SEO/OG/Linear generation and early maintenance/preflight passed for 204 games; restored eight inspected generator-only blank-line changes. Browser QA found and fixed a missing fifth-floe start marker, then passed supplied-client, boundaries, exact stepping, paused freeze, transition, restart, themes, 60-slide loss, 14-slide five-floe win, fullscreen/Escape, feedback, touch, 390px no-overflow, and zero browser errors. Gameplay, pause, transition, loss, win, feedback, mobile, and OG captures were visually inspected.
