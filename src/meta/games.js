@@ -205,6 +205,7 @@ const BASE_GAMES = [
   { slug:'cloudquilt',      name:'Cloud Quilt',            emoji:'\u{1F9F5}', scoreHint:'quilts', url:'/cloudquilt', desc:'Flip connected cloud patches, match five glowing sky quilts, and finish each pattern before the thread runs out.', earnsCoins:true },
   { slug:'moonmender',      name:'Moon Mender',            emoji:'\u{1F319}', scoreHint:'sites', url:'/moonmender', desc:'Drive a tiny lunar rover, roll loose moonstones into glowing craters, and mend five handcrafted moon sites.', earnsCoins:true },
   { slug:'frostfootprints', name:'Frost Footprints',       emoji:'\u{1F427}', scoreHint:'floes', url:'/frostfootprints', desc:'Slide a scarfed penguin across five icy floes, sweep up every gold star, and reach each glowing igloo.', earnsCoins:true },
+  { slug:'bramblebounce', name:'Bramble Bounce',           emoji:'\u{1F331}', scoreHint:'blooms', url:'/bramblebounce', desc:'Bounce a glowing seed from a leaf paddle, wake every flower, and clear five tangled groves before three drops.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

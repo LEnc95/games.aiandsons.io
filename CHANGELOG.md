@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Bramble Bounce — a five-grove seed-and-leaf paddle game for keyboard and touch.
 - Frost Footprints — a five-floe penguin ice-sliding puzzle for keyboard and touch.
 - Added the 2026-W36 content pack with Starlit Moss Dapple Grove, Copper Bloom Gear Grove, and Solar Flare Prism Prism Pulse cosmetics plus four bounded weekly challenges.
 - Moon Mender — a five-site lunar rover pushing puzzle for keyboard and touch.
