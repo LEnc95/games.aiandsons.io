@@ -220,5 +220,6 @@
 - game/moonmender
 - game/frostfootprints
 - game/bramblebounce
+- game/dewdropdrift
 
 Generated from `src/meta/feedback.js`.
