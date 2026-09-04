@@ -78,3 +78,6 @@
 ## 2026-07-03 - Optimizing category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
+## 2026-07-04 - Optimizing mapping array membership checks
+**Learning:** Using `Array.prototype.includes()` repeatedly inside mapping or filtering loops for high-volume arrays (like checking game categories during rendering) causes O(N*M) execution time, which scales poorly for large datasets.
+**Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) by creating Sets during initialization data passes. This drops the lookup time complexity to linear O(N) when iterating through items in UI updates.
