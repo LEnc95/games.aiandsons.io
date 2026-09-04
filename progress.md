@@ -1,5 +1,10 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-04 Create a new game automation — Dewdrop Drift
+- Clean isolated baseline `4d95e0e6b8e830c0a616f41501afce0e502f3c39`; selected a distinct five-leaf sliding maze with bounded `{ motes, leaves, tilts }` outcomes, three rendered palettes, feedback, and deterministic hooks. Implemented the self-contained route plus registry, current content contract, and changelog wiring. Generation and browser validation are next.
+- Generated SEO/discovery/sitemap, 206 OG cards, and local Linear seeds; restored ten proven generator-only blank-line changes. Early maintenance and 206-game preflight pass. Browser QA found and replaced three unsolvable layouts, then passed 20 focused assertions with real solutions across all five leaves, exact stepping, paused freeze, loss/restart, themes, fullscreen/Escape, feedback, touch, true 390px layout, and zero console/page errors. Gameplay, transitions, pause, loss, win, feedback, mobile, and OG captures were visually inspected.
+- Ordered final local gate passed: maintenance, preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff checks. Exact pre-stage audit accepted the 11 allowlisted paths with one game/registry/contract/changelog addition and no dependency, secret, artifact, unrelated, or EOL-only changes. Guarded commit and publication are next.
+
 ## 2026-09-02 Create a new game automation — Bramble Bounce
 - Clean isolated baseline `7a37c0f6db81139eef0a705583bd5998c900d381`; selected a distinct five-grove paddle-and-seed arcade game with bounded `{ blooms, groves, drops }` outcomes, three rendered garden palettes, feedback, and deterministic hooks. Implementation and release validation are in progress.
 - SEO/OG/Linear generation and early maintenance/preflight passed for 205 games; restored nine inspected generator-only blank-line changes. The first fresh-worktree browser run found an unclosed `update` function, now corrected before gameplay QA.
