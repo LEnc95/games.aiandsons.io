@@ -78,3 +78,7 @@
 ## 2026-07-03 - Optimizing category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
+
+## 2026-07-16 - Optimizing static array includes
+**Learning:** When optimizing static/inline default fallback arrays (e.g., ['win', 'won']) that are checked repeatedly via .includes(), extract them into module-scoped constant Sets. This upgrades the O(N) lookup to O(1) and eliminates the overhead of reallocating the array on every function call.
+**Action:** Extracted inline arrays to module-scoped Sets in api/social/_store.js and src/social/client.js.
