@@ -221,5 +221,6 @@
 - game/frostfootprints
 - game/bramblebounce
 - game/dewdropdrift
+- game/mushroommorse
 
 Generated from `src/meta/feedback.js`.
