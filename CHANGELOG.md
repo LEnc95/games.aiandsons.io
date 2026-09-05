@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Mushroom Morse — a five-clearing short-and-long pulse decoding game for keyboard and touch.
 - Dewdrop Drift — a five-leaf dewdrop sliding maze for keyboard and touch.
 - Bramble Bounce — a five-grove seed-and-leaf paddle game for keyboard and touch.
 - Frost Footprints — a five-floe penguin ice-sliding puzzle for keyboard and touch.
