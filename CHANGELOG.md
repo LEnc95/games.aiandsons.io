@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Reed Relay — a five-reach river-lane glowseed relay for keyboard and touch.
 - Mushroom Morse — a five-clearing short-and-long pulse decoding game for keyboard and touch.
 - Dewdrop Drift — a five-leaf dewdrop sliding maze for keyboard and touch.
 - Bramble Bounce — a five-grove seed-and-leaf paddle game for keyboard and touch.
