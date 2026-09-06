@@ -222,5 +222,6 @@
 - game/bramblebounce
 - game/dewdropdrift
 - game/mushroommorse
+- game/reedrelay
 
 Generated from `src/meta/feedback.js`.
