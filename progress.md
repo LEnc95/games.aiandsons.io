@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-07 Weekly content pack 2026-W37
+- Isolated from `origin/main` baseline `0a54b3fc4a7eae889e5495da9b230e3cee8b399b`; issue #294 is authoritative. Added Opaline Regatta for Harbor Harmony, Violet Pollinator for Pollen Patrol, and Glacier Watch for Firebreak Command as inventory-gated palette cosmetics, plus the four exact 20-coin W37 challenges for Harbor Harmony beacons, Pollen Patrol flowers, Firebreak Command cabins, and Nectar Measure vessels.
+- Supplied-client and focused ownership checks passed: each shop preview, baseline, equipped theme, desktop interaction, and 390px mobile layout was visually inspected with matching text state and zero browser errors. Ordered local gates passed: maintenance, 209-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, weekly smoke, and diff check. Next: stage, audit, publish the guarded PR, then wait for merge and production verification.
+
 ## 2026-09-07 Create a new game automation — Belltower Bloom
 - Synced a clean isolated worktree to `origin/main` baseline `a4089b253ad98b96709be73d883b403d682cff2f`; read current instructions, develop-web-game skill, progress, and automation memory. `npm ci` passed with the existing 16 audit findings.
 - Selected and implemented Belltower Bloom (`/belltowerbloom`), a distinct five-tower three-bell timing game with keyboard/touch controls, pause/restart/fullscreen, three rendered metalwork palettes, feedback, deterministic text/time hooks, and bounded `{ chimes, towers, tangles }` outcomes. Generation and QA remain TODO.

@@ -96,7 +96,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -108,10 +108,12 @@ const el={
   fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
 };
 const WIDTH=900,HEIGHT=620,GRID_X=130,GRID_Y=94,CELL=80,COLS=8,ROWS=6,SPREAD_MS=520;
+const GLACIER_WATCH=profileState.inventory instanceof Set&&profileState.inventory.has('firebreakcommand-glacier-watch');
 const THEMES=[
-  {name:'Pine',sky:'#173a35',ground:'#315f43',forest:'#4c8254',forestDark:'#28523b',water:'#54a9be',rock:'#8d8a73',line:'#f2d06f',fire:'#ff713e',ember:'#ffd15d',cabin:'#f4e0ad',roof:'#a9412d',burnt:'#392d28',grid:'#a8ca8c'},
-  {name:'Dusk',sky:'#2c274a',ground:'#504263',forest:'#68608a',forestDark:'#3d385c',water:'#5186b8',rock:'#a08d9d',line:'#ffe382',fire:'#ff6c6a',ember:'#ffc56c',cabin:'#f1dbc2',roof:'#8e4464',burnt:'#332c40',grid:'#b8a9cf'},
-  {name:'Autumn',sky:'#49301f',ground:'#73512d',forest:'#a36938',forestDark:'#694126',water:'#4a93a1',rock:'#9f8c72',line:'#fff099',fire:'#f44c27',ember:'#ffc94d',cabin:'#f5dca6',roof:'#7b2f23',burnt:'#3d2a22',grid:'#dab36f'}
+  {name:'Pine',sky:'#173a35',ground:'#315f43',forest:'#4c8254',forestDark:'#28523b',water:'#54a9be',rock:'#8d8a73',fireline:'#f2d06f',fire:'#ff713e',ember:'#ffd15d',cabin:'#f4e0ad',roof:'#a9412d',burnt:'#392d28',grid:'#a8ca8c'},
+  {name:'Dusk',sky:'#2c274a',ground:'#504263',forest:'#68608a',forestDark:'#3d385c',water:'#5186b8',rock:'#a08d9d',fireline:'#ffe382',fire:'#ff6c6a',ember:'#ffc56c',cabin:'#f1dbc2',roof:'#8e4464',burnt:'#332c40',grid:'#b8a9cf'},
+  {name:'Autumn',sky:'#49301f',ground:'#73512d',forest:'#a36938',forestDark:'#694126',water:'#4a93a1',rock:'#9f8c72',fireline:'#fff099',fire:'#f44c27',ember:'#ffc94d',cabin:'#f5dca6',roof:'#7b2f23',burnt:'#3d2a22',grid:'#dab36f'},
+  ...(GLACIER_WATCH?[{name:'Glacier Watch',sky:'#1d3e59',ground:'#4c8190',forest:'#679f94',forestDark:'#3f6e6a',water:'#86d3e2',rock:'#8294a1',fireline:'#eefaff',fire:'#ff735a',ember:'#ffd27b',cabin:'#f5dfb1',roof:'#52657c',burnt:'#384550',grid:'#b9e6df'}]:[])
 ];
 const LEVELS=[
   {name:'Wind Gap',budget:2,map:['F...~..C','....~...','..^^~...','.......C','F..~~~..','........'],solution:[[4,3],[4,5]]},
@@ -308,13 +310,13 @@ function drawCell(x,y,colors){
     else{ctx.fillStyle=colors.burnt;for(let index=0;index<5;index++)ctx.fillRect(left+12+index*13,top+52-(index%2)*6,7,14)}
   }
   if(game.breaks.has(key)){
-    ctx.strokeStyle=colors.line;ctx.lineWidth=9;ctx.lineCap='round';ctx.shadowBlur=12;ctx.shadowColor=colors.line;
+    ctx.strokeStyle=colors.fireline;ctx.lineWidth=9;ctx.lineCap='round';ctx.shadowBlur=12;ctx.shadowColor=colors.fireline;
     ctx.beginPath();ctx.moveTo(left+10,top+66);ctx.lineTo(left+70,top+14);ctx.stroke();ctx.shadowBlur=0;
     ctx.fillStyle=colors.rock;for(let index=0;index<4;index++){ctx.beginPath();ctx.arc(left+17+index*16,top+59-index*14,8,0,Math.PI*2);ctx.fill()}
   }
   ctx.strokeStyle=colors.grid;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.strokeRect(left+.5,top+.5,CELL-1,CELL-1);ctx.globalAlpha=1;
   if(game.mode==='planning'&&game.cursor.x===x&&game.cursor.y===y){
-    ctx.strokeStyle=colors.line;ctx.lineWidth=5;ctx.shadowBlur=12;ctx.shadowColor=colors.line;ctx.strokeRect(left+5,top+5,CELL-10,CELL-10);ctx.shadowBlur=0;
+    ctx.strokeStyle=colors.fireline;ctx.lineWidth=5;ctx.shadowBlur=12;ctx.shadowColor=colors.fireline;ctx.strokeRect(left+5,top+5,CELL-10,CELL-10);ctx.shadowBlur=0;
   }
 }
 function overlay(title,lines,color='#ffe18b'){
@@ -327,7 +329,7 @@ function render(){
   ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
   ctx.fillStyle='rgba(255,255,255,.07)';for(let index=0;index<34;index++){ctx.beginPath();ctx.arc((index*137)%WIDTH,(index*61)%HEIGHT,1+(index%3),0,Math.PI*2);ctx.fill()}
   ctx.fillStyle='#fff7dc';ctx.font='900 21px system-ui';ctx.fillText(level().name,GRID_X,54);
-  ctx.textAlign='right';ctx.fillStyle=colors.line;ctx.fillText(game.mode==='spreading'?`FIRE WAVE ${game.wave}`:`PLAN ${game.breaks.size} / ${level().budget}`,GRID_X+COLS*CELL,54);ctx.textAlign='left';
+  ctx.textAlign='right';ctx.fillStyle=colors.fireline;ctx.fillText(game.mode==='spreading'?`FIRE WAVE ${game.wave}`:`PLAN ${game.breaks.size} / ${level().budget}`,GRID_X+COLS*CELL,54);ctx.textAlign='left';
   ctx.fillStyle='rgba(4,16,10,.28)';roundedRect(GRID_X-9,GRID_Y-9,COLS*CELL+18,ROWS*CELL+18,16);ctx.fill();
   for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)drawCell(x,y,colors);
   if(game.mode==='menu')overlay('Firebreak Command',['Place firelines before the forecast begins.','Water and rock already split the terrain.','Protect every cabin across five zones.']);
@@ -387,7 +389,7 @@ window.render_game_to_text=()=>JSON.stringify({
   map:level().map.map((row,y)=>[...row].map((cell,x)=>{const key=keyOf(x,y);if(game.breaks.has(key))return'X';if(game.frontier.has(key))return cell==='C'?'!':'*';if(game.burning.has(key))return cell==='C'?'!':'b';return cell}).join('')),
   firelines:[...game.breaks].map(key=>{const[x,y]=pointOf(key);return{x,y}}),activeFront:[...game.frontier].map(key=>{const[x,y]=pointOf(key);return{x,y}}),
   cabins:cabinState(),wave:game.wave,waveProgress:game.mode==='spreading'?Number((game.spreadClock/SPREAD_MS).toFixed(3)):null,
-  campaign:{zonesContained:game.zones,cabinsSaved:game.savedCabins,totalCabins,firelinesUsed:game.breaksUsed},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  campaign:{zonesContained:game.zones,cabinsSaved:game.savedCabins,totalCabins,firelinesUsed:game.breaksUsed},theme:theme().name,cosmetics:{glacierWatch:GLACIER_WATCH},status:game.status,lastAction:game.lastAction,
   controls:{survey:'Arrows or WASD',place:'Space or B, Place button, or tap a forest cell',forecast:'Enter or Run Forecast',undo:'Z',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
 });
 window.__FIREBREAK_COMMAND_GAME__={

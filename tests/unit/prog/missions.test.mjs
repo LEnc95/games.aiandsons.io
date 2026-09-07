@@ -119,8 +119,8 @@ test('missions module loading', async (t) => {
       assert.ok(weekly.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
     });
 
-    await t.test('W36 scheduled challenges complete and reward exactly once', () => {
-      const timestamp = new Date('2026-08-31T12:00:00Z').getTime();
+    await t.test('W37 scheduled challenges complete and reward exactly once', () => {
+      const timestamp = new Date('2026-09-07T12:00:00Z').getTime();
       const originalCoins = state.coins;
       const originalBadges = state.badges;
       try {
@@ -128,25 +128,25 @@ test('missions module loading', async (t) => {
         state.badges = new Set();
         ensureDailyMissions(timestamp);
         ensureWeeklyChallenges(timestamp);
-        state.missions.activeIds = ['tetris-lines-16'];
+        state.missions.activeIds = ['snake-length-14'];
         state.missions.progress = {};
         state.missions.completed = [];
         state.missions.rewarded = [];
         state.missions.weekly.activeIds = [
-          'weekly-w36-dapplegrove-leaves-107',
-          'weekly-w36-geargrove-gears-27',
-          'weekly-w36-prismpulse-pulses-25',
-          'weekly-w36-snake-length-500',
+          'weekly-w37-harborharmony-beacons-45',
+          'weekly-w37-pollenpatrol-flowers-25',
+          'weekly-w37-firebreakcommand-cabins-20',
+          'weekly-w37-nectarmeasure-vessels-18',
         ];
         state.missions.weekly.progress = {};
         state.missions.weekly.completed = [];
         state.missions.weekly.rewarded = [];
 
         const payload = {
-          dapplegrove: { leaves: 107 },
-          geargrove: { gears: 27 },
-          prismpulse: { pulses: 25 },
-          snake: { length: 500 },
+          harborharmony: { beacons: 45 },
+          pollenpatrol: { flowers: 25 },
+          firebreakcommand: { cabins: 20 },
+          nectarmeasure: { vessels: 18 },
         };
         const first = recordMissionProgress(payload, timestamp);
         assert.equal(first.weeklyCompletedNow.length, 4);
