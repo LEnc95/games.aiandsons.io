@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W37 content pack with Opaline Regatta Harbor Harmony, Violet Pollinator Pollen Patrol, and Glacier Watch Firebreak Command cosmetics plus four bounded weekly challenges.
 - Belltower Bloom — a five-tower musical bell-timing game for keyboard and touch.
 - Reed Relay — a five-reach river-lane glowseed relay for keyboard and touch.
 - Mushroom Morse — a five-clearing short-and-long pulse decoding game for keyboard and touch.

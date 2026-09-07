@@ -98,7 +98,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -109,10 +109,12 @@ const el={
   theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')
 };
 const WIDTH=900,HEIGHT=650,COLS=8,ROWS=6,CELL=80,ORIGIN={x:130,y:112},MOVE_MS=180;
+const VIOLET_POLLINATOR=profileState.inventory instanceof Set&&profileState.inventory.has('pollenpatrol-violet-pollinator');
 const THEMES=[
   {name:'Sunpatch',background:'#17351f',ground:'#d9e995',soil:'#9bb85d',grid:'#75994b',hedge:'#315f35',hedgeTop:'#6fac55',flower:'#fff6ba',accent:'#ffca52',bee:'#ffd84e',beetle:'#d94b55',trail:'#fff0a1'},
   {name:'Bluebell',background:'#182b45',ground:'#93b6c9',soil:'#6489a0',grid:'#4f718c',hedge:'#315673',hedgeTop:'#6d9cc0',flower:'#e3dcff',accent:'#b490ff',bee:'#ffe16a',beetle:'#ec628a',trail:'#d9f7ff'},
-  {name:'Honeyrose',background:'#4b2430',ground:'#e5aa96',soil:'#bc786f',grid:'#9a5a5c',hedge:'#6d3847',hedgeTop:'#b96772',flower:'#fff0e8',accent:'#ffb14f',bee:'#ffe06a',beetle:'#863a4d',trail:'#ffe5a6'}
+  {name:'Honeyrose',background:'#4b2430',ground:'#e5aa96',soil:'#bc786f',grid:'#9a5a5c',hedge:'#6d3847',hedgeTop:'#b96772',flower:'#fff0e8',accent:'#ffb14f',bee:'#ffe06a',beetle:'#863a4d',trail:'#ffe5a6'},
+  ...(VIOLET_POLLINATOR?[{name:'Violet Pollinator',background:'#281b49',ground:'#9e8bd3',soil:'#6d5aab',grid:'#765da5',hedge:'#47705c',hedgeTop:'#7fc7a1',flower:'#e9b4ff',accent:'#f5d36f',bee:'#ffd966',beetle:'#ef7194',trail:'#e8f8b0'}]:[])
 ];
 const FLOWER_COLORS=['#ff75a8','#8f7dff','#55cfd0','#ff9c54','#f6df4e'];
 const LEVELS=[
@@ -414,7 +416,7 @@ window.render_game_to_text=()=>JSON.stringify({
   hive:{cell:[...level().hive],open:flowerCount()===game.flowers.length},
   flowers:game.flowers.map((flower,index)=>({id:index,cell:[...flower.cell],color:FLOWER_COLORS[flower.color],collected:flower.collected})),
   hedges:level().walls.map(cell=>[...cell]),beetles:game.beetles.map(beetle=>({id:beetle.id,cell:[...beetle.path[beetle.phase]],next:[...nextBeetleCell(beetle)]})),
-  resources:{wingbeats:game.wingbeats,moves:game.moves},campaign:{flowers:game.totalFlowers,gardens:game.gardens},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  resources:{wingbeats:game.wingbeats,moves:game.moves},campaign:{flowers:game.totalFlowers,gardens:game.gardens},theme:theme().name,cosmetics:{violetPollinator:VIOLET_POLLINATOR},status:game.status,lastAction:game.lastAction,
   controls:{move:'Arrow keys, WASD, direction buttons, swipe, or tap toward a cell',wait:'Space, Wait button, or tap the bee',continue:'Enter',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
 });
 window.__POLLEN_PATROL_GAME__={
