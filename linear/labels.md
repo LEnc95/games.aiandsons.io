@@ -223,5 +223,6 @@
 - game/dewdropdrift
 - game/mushroommorse
 - game/reedrelay
+- game/belltowerbloom
 
 Generated from `src/meta/feedback.js`.

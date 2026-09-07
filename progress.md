@@ -1,5 +1,11 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-07 Create a new game automation — Belltower Bloom
+- Synced a clean isolated worktree to `origin/main` baseline `a4089b253ad98b96709be73d883b403d682cff2f`; read current instructions, develop-web-game skill, progress, and automation memory. `npm ci` passed with the existing 16 audit findings.
+- Selected and implemented Belltower Bloom (`/belltowerbloom`), a distinct five-tower three-bell timing game with keyboard/touch controls, pause/restart/fullscreen, three rendered metalwork palettes, feedback, deterministic text/time hooks, and bounded `{ chimes, towers, tangles }` outcomes. Generation and QA remain TODO.
+- Generated SEO/discovery/sitemap, 209 OG cards, and local Linear seeds; restored ten verified generator-only blank-line changes. Early maintenance and 209-game preflight pass.
+- Browser QA passed the supplied Playwright client and 20 focused assertions for exact stepping, paused freeze, correct/mistimed notes, tower transition, three-tangle loss, restart, all palettes, fullscreen/Escape, feedback, 20-chime five-tower win, touch controls, 390px no-overflow, and zero browser errors. Visually inspected gameplay, pause, transition, loss, win, feedback, mobile, supplied-client, and OG captures. Final gates and release publication remain TODO.
+
 ## 2026-09-06 Create a new game automation — Reed Relay
 - Synced a clean isolated worktree to `origin/main` baseline `6127e7106f4ca32a11d9162d0fe5a811c2061c16`; read current instructions, develop-web-game skill, progress, and automation memory. `npm ci` passed with the existing 16 audit findings.
 - Selected and implemented Reed Relay (`/reedrelay`), a distinct five-reach three-lane river reaction game with glowseed collection, snag avoidance, keyboard/touch controls, pause/restart/fullscreen, three rendered raft palettes, shared feedback, deterministic text/time hooks, and bounded `{ glowseeds, reaches, snags }` outcomes. Generation and QA remain TODO.

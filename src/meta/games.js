@@ -209,6 +209,7 @@ const BASE_GAMES = [
   { slug:'dewdropdrift', name:'Dewdrop Drift',             emoji:'\u{1F4A7}', scoreHint:'leaves', url:'/dewdropdrift', desc:'Tilt five leafy mazes, gather every sun mote, and roll a sparkling dewdrop into each waiting blossom.', earnsCoins:true },
   { slug:'mushroommorse', name:'Mushroom Morse',            emoji:'\u{1F344}', scoreHint:'clearings', url:'/mushroommorse', desc:'Read short and long lantern pulses, choose the matching mushroom code cap, and decode five woodland clearings.', earnsCoins:true },
   { slug:'reedrelay', name:'Reed Relay',                    emoji:'\u{1F6F6}', scoreHint:'glowseeds', url:'/reedrelay', desc:'Switch river lanes, gather drifting glowseeds, and dodge snags across five moonlit reaches.', earnsCoins:true },
+  { slug:'belltowerbloom', name:'Belltower Bloom',           emoji:'\u{1F514}', scoreHint:'chimes', url:'/belltowerbloom', desc:'Read falling notes, ring three hanging bells on the golden line, and wake five moonlit towers into bloom.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
