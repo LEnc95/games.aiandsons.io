@@ -224,5 +224,6 @@
 - game/mushroommorse
 - game/reedrelay
 - game/belltowerbloom
+- game/neststack
 
 Generated from `src/meta/feedback.js`.
