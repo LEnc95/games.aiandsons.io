@@ -1,5 +1,16 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-08 Create a new game automation — Nest Stack
+- Started from clean isolated `origin/main` baseline `ea5aac31433c222871cbe7d2b686c0d78bb6d328`; current instructions, game skill, progress, and automation memory read; `npm ci` passed with 16 pre-existing audit findings.
+- Implemented Nest Stack (`/neststack`), a five-nest branch-balancing game with keyboard/touch controls, pause/restart/fullscreen, three rendered woodland palettes, feedback, deterministic text/time hooks, and bounded `{ branches, nests, tumbles }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual QA, run final gates, audit, publish guarded PR, and verify production.
+- Browser QA initially exposed a missing closing brace in the test helper object; fixed before continuing the full matrix.
+- Generated SEO/discovery/sitemap, 210 OG cards, and local Linear seeds; restored eleven proven generator-only blank-line changes. Early maintenance and 210-game preflight passed.
+- Browser QA passed the supplied Playwright client and focused assertions for exact 1000ms stepping, paused-time freeze, keyboard/touch movement and drop, balanced stacking, three-tumble loss, restart, 20-branch/five-nest win, three themes, fullscreen/Escape, feedback, and 390px no-overflow with zero browser errors. Gameplay, pause, loss, win, feedback, mobile, and OG captures were visually inspected.
+- TODO: run ordered final gates, audit, publish guarded PR, wait for merge, and verify production.
+- Ordered final local gate passed: maintenance, 210-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and `git diff --check`.
+- TODO: audit, publish guarded PR, wait for merge, and verify production.
+
 ## 2026-09-07 Weekly content pack 2026-W37
 - Isolated from `origin/main` baseline `0a54b3fc4a7eae889e5495da9b230e3cee8b399b`; issue #294 is authoritative. Added Opaline Regatta for Harbor Harmony, Violet Pollinator for Pollen Patrol, and Glacier Watch for Firebreak Command as inventory-gated palette cosmetics, plus the four exact 20-coin W37 challenges for Harbor Harmony beacons, Pollen Patrol flowers, Firebreak Command cabins, and Nectar Measure vessels.
 - Supplied-client and focused ownership checks passed: each shop preview, baseline, equipped theme, desktop interaction, and 390px mobile layout was visually inspected with matching text state and zero browser errors. Ordered local gates passed: maintenance, 209-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, weekly smoke, and diff check. Next: stage, audit, publish the guarded PR, then wait for merge and production verification.

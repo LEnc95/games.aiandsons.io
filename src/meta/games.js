@@ -210,6 +210,7 @@ const BASE_GAMES = [
   { slug:'mushroommorse', name:'Mushroom Morse',            emoji:'\u{1F344}', scoreHint:'clearings', url:'/mushroommorse', desc:'Read short and long lantern pulses, choose the matching mushroom code cap, and decode five woodland clearings.', earnsCoins:true },
   { slug:'reedrelay', name:'Reed Relay',                    emoji:'\u{1F6F6}', scoreHint:'glowseeds', url:'/reedrelay', desc:'Switch river lanes, gather drifting glowseeds, and dodge snags across five moonlit reaches.', earnsCoins:true },
   { slug:'belltowerbloom', name:'Belltower Bloom',           emoji:'\u{1F514}', scoreHint:'chimes', url:'/belltowerbloom', desc:'Read falling notes, ring three hanging bells on the golden line, and wake five moonlit towers into bloom.', earnsCoins:true },
+  { slug:'neststack', name:'Nest Stack',                       emoji:'\u{1FAB9}', scoreHint:'branches', url:'/neststack', desc:'Guide swaying branches onto a growing stack and weave five balanced treetop nests.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
