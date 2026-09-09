@@ -225,5 +225,6 @@
 - game/reedrelay
 - game/belltowerbloom
 - game/neststack
+- game/clockworkclover
 
 Generated from `src/meta/feedback.js`.

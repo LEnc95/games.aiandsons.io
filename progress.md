@@ -1,5 +1,13 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-09 Create a new game automation — Clockwork Clover
+- Started from clean isolated `origin/main` baseline `9339571a45b0edf95414d578c3947c8a84750aa3`; current instructions, game skill, progress, and automation memory read; `npm ci` passed with 16 pre-existing audit findings.
+- Implemented Clockwork Clover (`/clockworkclover`), a five-courtyard rotating-hand timing game with keyboard/touch controls, pause/restart/fullscreen, three rendered stonework palettes, feedback, deterministic text/time hooks, and bounded `{ beams, courtyards, shadows }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual QA, run final gates, audit, publish guarded PR, and verify production.
+- Generated SEO/discovery/sitemap, 211 OG cards, and local Linear seeds; restored twelve verified generator-only blank-line changes. Early maintenance and 211-game preflight passed.
+- Browser QA passed the supplied Playwright client and focused assertions for exact 1000ms stepping, paused-time freeze, keyboard/touch turn and catch controls, aligned catches, transition, three-shadow loss, restart, 20-beam/five-courtyard win, three themes, fullscreen request/Escape, feedback, and 390px no-overflow with zero browser errors. Gameplay, pause, transition, loss, win, feedback, mobile, and OG captures were visually inspected.
+- TODO: run ordered final gates, audit, publish guarded PR, wait for merge, and verify production.
+
 ## 2026-09-08 Create a new game automation — Nest Stack
 - Started from clean isolated `origin/main` baseline `ea5aac31433c222871cbe7d2b686c0d78bb6d328`; current instructions, game skill, progress, and automation memory read; `npm ci` passed with 16 pre-existing audit findings.
 - Implemented Nest Stack (`/neststack`), a five-nest branch-balancing game with keyboard/touch controls, pause/restart/fullscreen, three rendered woodland palettes, feedback, deterministic text/time hooks, and bounded `{ branches, nests, tumbles }` outcomes.
