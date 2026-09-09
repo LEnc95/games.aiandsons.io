@@ -29,8 +29,8 @@ Static browser arcade platform with:
 
 ## Game catalog
 
-The catalog is maintained in `src/meta/games.js` and currently has `60` games.
-Use that file as the source of truth instead of maintaining a duplicated list in this README.
+The catalog is maintained in `src/meta/games.js`.
+Use that file as the source of truth instead of maintaining a duplicated list or hard-coded count in this README.
 
 ## Quick start
 
