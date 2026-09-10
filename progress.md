@@ -1,5 +1,15 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-10 Create a new game automation — Thimble Tide
+- Started from clean isolated `origin/main` baseline `efc1107b59ad06c937478d32d27709786b72457f`; current instructions, game skill, progress, and automation memory read; `npm ci` passed with 16 pre-existing audit findings.
+- Implemented Thimble Tide (`/thimbletide`), a five-shore visual shell-tracking game with keyboard/touch controls, pause/restart/fullscreen, three rendered tide palettes, feedback, deterministic text/time hooks, and bounded `{ pearls, shores, mistakes }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual QA, run final gates, audit, publish guarded PR, and verify production.
+- Generated SEO/discovery/sitemap, 212 OG cards, and local Linear seeds; restored thirteen verified blank-line-only SEO changes and nondeterministic older OG cards. Early maintenance and 212-game preflight passed.
+- Browser QA caught and fixed an initially invisible shell-swap animation. The supplied Playwright client and focused matrix then passed exact stepping, paused freeze, visible swaps, keyboard/touch selection, correct and wrong guesses, three-mistake loss, restart, 20-pearl/five-shore win, three themes, fullscreen/Escape, feedback, and 390px no-overflow with zero browser errors. Gameplay, swap, pause, loss, win, feedback, mobile, and OG captures were visually inspected.
+- TODO: run ordered final gates, audit, publish guarded PR, wait for merge, and verify production.
+- Ordered final local gate passed: maintenance, 212-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and `git diff --check`.
+- TODO: audit, publish guarded PR, wait for merge, and verify production.
+
 ## 2026-09-09 Create a new game automation — Clockwork Clover
 - Started from clean isolated `origin/main` baseline `9339571a45b0edf95414d578c3947c8a84750aa3`; current instructions, game skill, progress, and automation memory read; `npm ci` passed with 16 pre-existing audit findings.
 - Implemented Clockwork Clover (`/clockworkclover`), a five-courtyard rotating-hand timing game with keyboard/touch controls, pause/restart/fullscreen, three rendered stonework palettes, feedback, deterministic text/time hooks, and bounded `{ beams, courtyards, shadows }` outcomes.

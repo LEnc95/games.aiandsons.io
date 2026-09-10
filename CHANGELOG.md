@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Thimble Tide — a five-shore shell-tracking game for keyboard and touch.
+
 - Clockwork Clover — a five-garden timing game for keyboard and touch.
 
 - Nest Stack — a five-nest branch-balancing game for keyboard and touch.
