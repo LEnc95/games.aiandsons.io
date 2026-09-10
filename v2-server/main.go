@@ -186,10 +186,11 @@ func newHub() *hub {
 func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
-		"ok":       true,
-		"service":  "v2-server",
-		"games":    []string{audioAgarGameID, partyGameID},
-		"protocol": protocolName,
+		"ok":         true,
+		"service":    "v2-server",
+		"games":      []string{audioAgarGameID, partyGameID},
+		"partyGames": []string{turboTiltGameKey, crowdShiftGameKey},
+		"protocol":   protocolName,
 	})
 }
 

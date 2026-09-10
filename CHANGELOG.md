@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Crowd Shift — a seven-round shared-screen party game where 2–8 phone players make secret either/or choices under rotating majority, underdog, split, and unanimity scoring rules.
 - Turbo Tilt party games foundation with four-letter rooms, shared-screen racing, phone tilt and touch controllers, reconnect support, and server-authoritative cups for 2–8 players.
 
 - Thimble Tide — a five-shore shell-tracking game for keyboard and touch.

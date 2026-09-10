@@ -170,6 +170,7 @@ type partyRoom struct {
 	nextChaosAt        int64
 	replayFrames       []partyReplayFrame
 	awards             []map[string]any
+	crowd              *crowdShiftState
 }
 
 func (c *client) currentRoomID() string {
@@ -200,7 +201,7 @@ func (h *hub) handlePartyJoin(c *client, msg envelope, payload joinPayload) {
 	if role == "host" {
 		if roomID == "" {
 			gameKey := strings.ToLower(strings.TrimSpace(payload.GameKey))
-			if gameKey != turboTiltGameKey {
+			if !isSupportedPartyGame(gameKey) {
 				c.sendErrorCode("", "unsupported_game", "That party game is not available.")
 				return
 			}
@@ -276,6 +277,9 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 			Mode: "classic", Heats: 3, Chaos: "standard", TrackRotation: "all",
 		},
 		votes: make(map[string]string),
+	}
+	if gameKey == crowdShiftGameKey {
+		room.crowd = newCrowdShiftState()
 	}
 	h.partyRooms[roomID] = room
 	go room.loop()
@@ -384,7 +388,7 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, token string) {
 	}
 
 	if len(r.players) >= partyMaxPlayers {
-		c.sendErrorCode(r.roomID, "room_full", "This room already has eight racers.")
+		c.sendErrorCode(r.roomID, "room_full", "This room already has eight players.")
 		return
 	}
 	if c.partyRoom != r {
@@ -437,7 +441,7 @@ func (r *partyRoom) removeClient(c *client) {
 	if c.role == "host" && r.host == c {
 		r.host = nil
 		r.hostDisconnectedAt = now
-		if r.phase == "countdown" || r.phase == "racing" || r.phase == "intermission" {
+		if containsString([]string{"countdown", "racing", "choosing", "reveal", "intermission"}, r.phase) {
 			r.pauseLocked("host_disconnected", now)
 		}
 	} else if c.role == "display" {
@@ -477,7 +481,7 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 			c.sendErrorCode(r.roomID, "unauthorized_host_action", "Only the room host can do that.")
 			return
 		}
-		if strings.EqualFold(strings.TrimSpace(input.Action), "configure") {
+		if r.gameKey == turboTiltGameKey && strings.EqualFold(strings.TrimSpace(input.Action), "configure") {
 			r.configureLocked(input.Settings, c)
 		} else {
 			r.applyHostActionLocked(strings.ToLower(strings.TrimSpace(input.Action)), now, c)
@@ -493,6 +497,10 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 		return
 	}
 	p.LastSeq = payload.Seq
+	if r.gameKey == crowdShiftGameKey {
+		r.applyCrowdShiftPlayerInputLocked(p, input, now, c)
+		return
+	}
 	switch input.Type {
 	case "steer":
 		if now-p.LastSteerAt < 60 {
@@ -609,6 +617,10 @@ func (r *partyRoom) recordPlayerEventLocked(p *partyPlayer, eventType, object st
 }
 
 func (r *partyRoom) applyHostActionLocked(action string, now int64, c *client) {
+	if r.gameKey == crowdShiftGameKey {
+		r.applyCrowdShiftHostActionLocked(action, now, c)
+		return
+	}
 	switch action {
 	case "start":
 		if r.phase != "lobby" && r.phase != "podium" && r.phase != "ended" {
@@ -710,6 +722,10 @@ func (r *partyRoom) step(now int64, dt float64) {
 	if r.hostDisconnectedAt > 0 && now-r.hostDisconnectedAt >= partyHostReconnectMs {
 		r.phase = "ended"
 		r.endedAt = now - partyEndedRetentionMs
+		return
+	}
+	if r.gameKey == crowdShiftGameKey {
+		r.stepCrowdShiftLocked(now)
 		return
 	}
 	if r.phase == "paused" || r.phase == "lobby" || r.phase == "podium" || r.phase == "ended" {
@@ -991,6 +1007,9 @@ func (r *partyRoom) broadcastState() {
 }
 
 func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
+	if r.gameKey == crowdShiftGameKey {
+		return r.crowdShiftSnapshotLocked(selfID)
+	}
 	now := nowMillis()
 	ordered := r.rankedPlayersLocked(false)
 	players := make([]map[string]any, 0, len(ordered))
@@ -1436,6 +1455,12 @@ func partyPhaseDuration(base int64) int64 {
 		return 8000
 	case partyIntermissionMs:
 		return 1200
+	case crowdShiftChoiceMs:
+		return 2000
+	case crowdShiftRevealMs:
+		return 800
+	case crowdShiftMinimumChoiceMs:
+		return 250
 	default:
 		return base
 	}
