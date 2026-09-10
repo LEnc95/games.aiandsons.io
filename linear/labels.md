@@ -226,5 +226,6 @@
 - game/belltowerbloom
 - game/neststack
 - game/clockworkclover
+- game/thimbletide
 
 Generated from `src/meta/feedback.js`.

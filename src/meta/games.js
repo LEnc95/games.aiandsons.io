@@ -212,6 +212,7 @@ const BASE_GAMES = [
   { slug:'belltowerbloom', name:'Belltower Bloom',           emoji:'\u{1F514}', scoreHint:'chimes', url:'/belltowerbloom', desc:'Read falling notes, ring three hanging bells on the golden line, and wake five moonlit towers into bloom.', earnsCoins:true },
   { slug:'neststack', name:'Nest Stack',                       emoji:'\u{1FAB9}', scoreHint:'branches', url:'/neststack', desc:'Guide swaying branches onto a growing stack and weave five balanced treetop nests.', earnsCoins:true },
   { slug:'clockworkclover', name:'Clockwork Clover',            emoji:'\u{1F340}', scoreHint:'beams', url:'/clockworkclover', desc:'Turn a garden clock, catch bright timing arcs, and wake five flower courtyards before sunset.', earnsCoins:true },
+  { slug:'thimbletide', name:'Thimble Tide',                    emoji:'\u{1F41A}', scoreHint:'pearls', url:'/thimbletide', desc:'Track a hidden pearl through quick shell swaps and chart five moonlit shores.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
