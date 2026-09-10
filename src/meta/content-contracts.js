@@ -362,6 +362,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
   neststack: Object.freeze({ releasedAt: '2026-09-08', outcomes: Object.freeze({ branches: Object.freeze({ min: 0, max: 20, direction: 'higher' }), nests: Object.freeze({ min: 0, max: 5, direction: 'higher' }), tumbles: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'neststack-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'trunk', 'leaf', 'branch', 'nest', 'bird']) })]) }),
   clockworkclover: Object.freeze({ releasedAt: '2026-09-09', outcomes: Object.freeze({ beams: Object.freeze({ min: 0, max: 20, direction: 'higher' }), courtyards: Object.freeze({ min: 0, max: 5, direction: 'higher' }), shadows: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'clockworkclover-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'stone', 'line', 'beam', 'flower']) })]) }),
   thimbletide: Object.freeze({ releasedAt: '2026-09-10', outcomes: Object.freeze({ pearls: Object.freeze({ min: 0, max: 20, direction: 'higher' }), shores: Object.freeze({ min: 0, max: 5, direction: 'higher' }), mistakes: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'thimbletide-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sea', 'sand', 'shell', 'edge', 'pearl']) })]) }),
+  turbotilt: Object.freeze({
+    releasedAt: '2026-09-09',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      heats: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      boosts: Object.freeze({ min: 0, max: 200, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'turbo-theme', kind: 'palette', tokens: Object.freeze(['sky', 'road', 'edge', 'racer', 'barrier', 'energy', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

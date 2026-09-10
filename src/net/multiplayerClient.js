@@ -134,6 +134,8 @@ class MultiplayerConnection {
       roomId: "",
       token: "",
       playerName: "",
+      role: "",
+      gameKey: "",
       reconnect: true,
       reconnectBaseMs: 800,
       reconnectMaxMs: 8000,
@@ -202,6 +204,8 @@ class MultiplayerConnection {
         roomId: this.roomId || undefined,
         token: this.options.token || undefined,
         playerName: this.options.playerName || undefined,
+        role: this.options.role || undefined,
+        gameKey: this.options.gameKey || undefined,
         userAgent: globalThis.navigator?.userAgent || "",
       });
       this.flushPendingInputs();
