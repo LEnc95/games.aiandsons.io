@@ -3,6 +3,7 @@ import { getGameContentContract } from './content-contracts.js';
 const BASE_GAMES = [
   { slug:'clubpenguin-world', name:'Club Penguin World', emoji:'\u{1F427}', scoreHint:'coins', url:'/clubpenguin-world/public/', desc:'Multiplayer social world prototype with rooms, quick chat, and live movement.', earnsCoins:true },
   { slug:'audioagar',      name:'Audio Agar',           emoji:'\u{1F535}', scoreHint:'mass',       url:'/audioagar',     desc:'Audio-first multiplayer orb arena with keyboard movement, spatial cues, and screen-reader status for blind play.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
+  { slug:'turbotilt',      name:'Turbo Tilt',           emoji:'\u{1F3CE}\uFE0F', scoreHint:'points', url:'/turbotilt/', desc:'Host a customizable party cup where up to eight players tilt, boost, use gadgets, and vote from their phones.', earnsCoins:false },
   { slug:'2048',           name:'2048',                emoji:'\u{1F522}', scoreHint:'best tile',  url:'/2048',          desc:'Slide and merge matching tiles until you reach 2048.', earnsCoins:true },
   { slug:'pong',           name:'Pong',                emoji:'\u{1F3D3}', scoreHint:'returns',    url:'/pong',          desc:'Classic paddle game. Play against the computer!', earnsCoins:true },
   { slug:'airhockey',      name:'Air Hockey',          emoji:'\u{1F3D2}', scoreHint:'goals',      url:'/airhockey',     desc:'Drag your striker, bank the puck, and beat the table AI to seven goals.', earnsCoins:true },
@@ -258,6 +259,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   racing: new Set([
     'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
     'trailblazer', 'aerocourier', 'sundialsprint', 'canyonglider',
+    'turbotilt',
   ]),
   strategy: new Set([
     'prisonersdilemma', 'connect4', 'towerdefense', 'waterballoon', 'battleship',
@@ -297,7 +299,7 @@ const EASY_SLUGS = Object.freeze(new Set([
   'whackamole', 'colorcatch', 'plinko', 'skeeball',
 ]));
 
-const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar']));
+const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar', 'turbotilt']));
 const TWO_PLAYER_SLUGS = Object.freeze(DISCOVERY_CATEGORY_GROUPS['two-player']);
 const BASE_RELEASE_TIME = Date.UTC(2026, 1, 10);
 const DAY_MS = 24 * 60 * 60 * 1000;

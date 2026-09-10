@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Turbo Tilt party games foundation with four-letter rooms, shared-screen racing, phone tilt and touch controllers, reconnect support, and server-authoritative cups for 2–8 players.
+
 - Thimble Tide — a five-shore shell-tracking game for keyboard and touch.
 
 - Clockwork Clover — a five-garden timing game for keyboard and touch.
@@ -83,6 +85,8 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 
+- Turbo Tilt now makes energy pickups and barrier impacts unmistakable with shared-screen bursts, crash shake, floating effect labels, phone haptics/status callouts, live race order, boost-charge pips, richer track art, and heat-result boards. Rooms can also mirror the live match to up to sixteen read-only computers or TVs while the original host retains all game controls.
+- Turbo Tilt Party Pack expansion adds Neon City, Glacier Run, Volcano Rush, and Spaceway; safe/risk routes, moving hazards, jumps, streak/style scoring, four phone-selected gadgets, six voted modifiers, Classic/Elimination/Teams/Relay/Survival/Chaos modes, host presets, temporary cars/trails/horns, reactions, synchronized sound and announcing, photo-finish replay, and end-of-match awards.
 - Bottom of the Ninth series home/away GameState flip so series host actually swaps sides, not only booth copy.
 - Bottom of the Ninth season slash persistence so AVG/OBP/SLG carry across the season slate.
 - Bottom of the Ninth rain-delay booth color lines.

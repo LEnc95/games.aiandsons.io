@@ -25,6 +25,7 @@ const (
 	protocolName    = "aiandsons.multiplayer.v1"
 	protocolVersion = 1
 	audioAgarGameID = "audioagar"
+	partyGameID     = "party"
 
 	arenaWidth       = 4200.0
 	arenaHeight      = 4200.0
@@ -66,12 +67,14 @@ type joinPayload struct {
 	Token      string `json:"token"`
 	PlayerName string `json:"playerName"`
 	UserAgent  string `json:"userAgent"`
+	Role       string `json:"role"`
+	GameKey    string `json:"gameKey"`
 }
 
 type inputEnvelope struct {
-	Seq        int       `json:"seq"`
-	Input      gameInput `json:"input"`
-	ClientTime int64     `json:"clientTime"`
+	Seq        int             `json:"seq"`
+	Input      json.RawMessage `json:"input"`
+	ClientTime int64           `json:"clientTime"`
 }
 
 type gameInput struct {
@@ -123,15 +126,20 @@ type audioAgarState struct {
 }
 
 type hub struct {
-	mu    sync.Mutex
-	rooms map[string]*audioAgarRoom
+	mu         sync.Mutex
+	rooms      map[string]*audioAgarRoom
+	partyRooms map[string]*partyRoom
 }
 
 type client struct {
 	id        string
 	name      string
+	gameID    string
+	role      string
+	playerID  string
 	hub       *hub
-	room      *audioAgarRoom
+	audioRoom *audioAgarRoom
+	partyRoom *partyRoom
 	conn      *websocket.Conn
 	send      chan []byte
 	closeOnce sync.Once
@@ -169,7 +177,10 @@ func main() {
 }
 
 func newHub() *hub {
-	return &hub{rooms: make(map[string]*audioAgarRoom)}
+	return &hub{
+		rooms:      make(map[string]*audioAgarRoom),
+		partyRooms: make(map[string]*partyRoom),
+	}
 }
 
 func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
@@ -177,7 +188,7 @@ func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"ok":       true,
 		"service":  "v2-server",
-		"games":    []string{audioAgarGameID},
+		"games":    []string{audioAgarGameID, partyGameID},
 		"protocol": protocolName,
 	})
 }
@@ -235,9 +246,8 @@ func originAllowed(r *http.Request) bool {
 
 func (c *client) readPump() {
 	defer func() {
-		if c.room != nil {
-			c.room.removeClient(c)
-		}
+		c.leaveCurrentRoom()
+		c.closeSend()
 		_ = c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageBytes)
@@ -304,25 +314,32 @@ func (h *hub) handleEnvelope(c *client, msg envelope) {
 		var payload joinPayload
 		_ = json.Unmarshal(msg.Payload, &payload)
 		gameID := firstNonEmpty(msg.GameID, payload.GameID, audioAgarGameID)
-		if gameID != audioAgarGameID {
-			c.sendError(msg.RoomID, "Unsupported gameId. This server currently hosts audioagar.")
-			return
+		switch gameID {
+		case audioAgarGameID:
+			roomID := sanitizeRoomID(firstNonEmpty(msg.RoomID, payload.RoomID, "lobby"))
+			name := sanitizeName(payload.PlayerName)
+			room := h.getAudioAgarRoom(roomID)
+			room.addClient(c, name)
+		case partyGameID:
+			h.handlePartyJoin(c, msg, payload)
+		default:
+			c.sendErrorCode(msg.RoomID, "unsupported_game", "Unsupported gameId.")
 		}
-		roomID := sanitizeRoomID(firstNonEmpty(msg.RoomID, payload.RoomID, "lobby"))
-		name := sanitizeName(payload.PlayerName)
-		room := h.getAudioAgarRoom(roomID)
-		room.addClient(c, name)
 	case "input":
-		if c.room == nil {
+		if c.audioRoom == nil && c.partyRoom == nil {
 			c.sendError(msg.RoomID, "Join a room before sending input.")
 			return
 		}
 		var payload inputEnvelope
 		if err := json.Unmarshal(msg.Payload, &payload); err != nil {
-			c.sendError(c.room.roomID, "Malformed input payload.")
+			c.sendError(c.currentRoomID(), "Malformed input payload.")
 			return
 		}
-		c.room.applyInput(c.id, payload)
+		if c.partyRoom != nil {
+			c.partyRoom.applyInput(c, payload)
+		} else {
+			c.audioRoom.applyInput(c.id, payload)
+		}
 	case "ping":
 		c.sendEnvelope("pong", msg.RoomID, map[string]any{"serverTime": nowMillis(), "echo": json.RawMessage(msg.Payload)})
 	default:
@@ -369,14 +386,14 @@ func (r *audioAgarRoom) loop() {
 }
 
 func (r *audioAgarRoom) addClient(c *client, name string) {
-	if c.room != nil && c.room != r {
-		c.room.removeClient(c)
-	}
+	c.leaveCurrentRoom()
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	c.name = name
-	c.room = r
+	c.gameID = audioAgarGameID
+	c.role = "player"
+	c.audioRoom = r
 	r.clients[c.id] = c
 	r.lastActive = time.Now()
 	p := r.spawnPlayerLocked(c.id, name, false)
@@ -396,7 +413,9 @@ func (r *audioAgarRoom) removeClient(c *client) {
 	delete(r.players, c.id)
 	r.lastActive = time.Now()
 	r.mu.Unlock()
-	c.closeSend()
+	if c.audioRoom == r {
+		c.audioRoom = nil
+	}
 }
 
 func (c *client) closeSend() {
@@ -406,14 +425,22 @@ func (c *client) closeSend() {
 }
 
 func (c *client) sendError(roomID, message string) {
-	if roomID == "" && c.room != nil {
-		roomID = c.room.roomID
+	c.sendErrorCode(roomID, "invalid_request", message)
+}
+
+func (c *client) sendErrorCode(roomID, code, message string) {
+	if roomID == "" {
+		roomID = c.currentRoomID()
 	}
-	c.sendEnvelope("error", roomID, map[string]any{"message": message})
+	c.sendEnvelope("error", roomID, map[string]any{"code": code, "message": message})
 }
 
 func (c *client) sendEnvelope(messageType, roomID string, payload any) {
-	raw, err := marshalEnvelope(messageType, roomID, payload)
+	gameID := c.gameID
+	if gameID == "" {
+		gameID = audioAgarGameID
+	}
+	raw, err := marshalEnvelope(gameID, messageType, roomID, payload)
 	if err != nil {
 		log.Printf("marshal envelope failed: %v", err)
 		return
@@ -422,18 +449,19 @@ func (c *client) sendEnvelope(messageType, roomID string, payload any) {
 	case c.send <- raw:
 	default:
 		log.Printf("dropping slow client %s", c.id)
-		if c.room != nil {
-			go c.room.removeClient(c)
-		}
+		go func() {
+			c.leaveCurrentRoom()
+			c.closeSend()
+		}()
 	}
 }
 
-func marshalEnvelope(messageType, roomID string, payload any) ([]byte, error) {
+func marshalEnvelope(gameID, messageType, roomID string, payload any) ([]byte, error) {
 	return json.Marshal(outEnvelope{
 		Protocol: protocolName,
 		V:        protocolVersion,
 		Type:     messageType,
-		GameID:   audioAgarGameID,
+		GameID:   gameID,
 		RoomID:   roomID,
 		SentAt:   nowMillis(),
 		Payload:  payload,
@@ -482,7 +510,10 @@ func (r *audioAgarRoom) applyInput(playerID string, payload inputEnvelope) {
 	if payload.Seq != 0 {
 		p.lastSeq = payload.Seq
 	}
-	input := payload.Input
+	var input gameInput
+	if err := json.Unmarshal(payload.Input, &input); err != nil {
+		return
+	}
 	input.Type = strings.ToLower(strings.TrimSpace(input.Type))
 	dir := normalizeVector(input.Vector)
 	if zeroVector(dir) {
@@ -594,7 +625,7 @@ func (r *audioAgarRoom) broadcastState() {
 	}, 0, len(r.clients))
 	for id, c := range r.clients {
 		state := r.snapshotLocked(id)
-		raw, err := marshalEnvelope("state", r.roomID, map[string]any{"state": state})
+		raw, err := marshalEnvelope(audioAgarGameID, "state", r.roomID, map[string]any{"state": state})
 		if err != nil {
 			continue
 		}

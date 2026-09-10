@@ -54,12 +54,8 @@ func TestAudioAgarWebSocketJoinMoveAndAction(t *testing.T) {
 		GameID:   audioAgarGameID,
 		RoomID:   "screen-reader-room",
 		Payload: inputEnvelope{
-			Seq: 1,
-			Input: gameInput{
-				Type:      "move",
-				Direction: "E",
-				Vector:    vector2{X: 1, Y: 0},
-			},
+			Seq:   1,
+			Input: json.RawMessage(`{"type":"move","direction":"E","vector":{"x":1,"y":0}}`),
 		},
 	})
 
@@ -84,12 +80,8 @@ func TestAudioAgarWebSocketJoinMoveAndAction(t *testing.T) {
 		GameID:   audioAgarGameID,
 		RoomID:   "screen-reader-room",
 		Payload: inputEnvelope{
-			Seq: 2,
-			Input: gameInput{
-				Type:      "eject",
-				Direction: "E",
-				Vector:    vector2{X: 1, Y: 0},
-			},
+			Seq:   2,
+			Input: json.RawMessage(`{"type":"eject","direction":"E","vector":{"x":1,"y":0}}`),
 		},
 	})
 	state = readStateEnvelope(t, conn)

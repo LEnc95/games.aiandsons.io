@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <title>Party Games | AI and Sons Games</title>
+  <meta name="description" content="Host a shared-screen party game or join with a four-letter room code and use your phone as the controller.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/party/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand" aria-label="AI and Sons Games home"><span>A</span><strong>AI and Sons <small>Party Games</small></strong></a>
+    <div id="connectionPill" class="connection-pill" aria-live="polite">Ready</div>
+  </header>
+
+  <main class="shell">
+    <section id="landingView" class="landing-view">
+      <div class="hero">
+        <p class="eyebrow">Big screen. Pocket controllers.</p>
+        <h1>Play together,<br><em>right now.</em></h1>
+        <p>Start a game on the TV, then everyone joins from a phone. No app and no account required.</p>
+      </div>
+
+      <div class="cards">
+        <article class="card host-card">
+          <div class="game-art" aria-hidden="true"><span>🏎️</span><i></i><i></i><i></i></div>
+          <p class="eyebrow">Host a game</p>
+          <h2>Turbo Tilt</h2>
+          <p>Tilt, dodge, boost, and battle through three quick heats with up to eight racers.</p>
+          <a class="button primary" href="/turbotilt/">Start on this screen</a>
+        </article>
+
+        <article class="card join-card">
+          <p class="eyebrow">Join a room</p>
+          <h2>Use your phone</h2>
+          <form id="joinForm" novalidate>
+            <label for="roomCode">Room code</label>
+            <input id="roomCode" class="code-input" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="4" placeholder="ABCD" required>
+            <label for="playerName">Nickname</label>
+            <input id="playerName" autocomplete="nickname" maxlength="16" placeholder="Your racer name" required>
+            <button class="button secondary" type="submit">Join the race</button>
+            <p id="joinError" class="error" role="alert"></p>
+          </form>
+        </article>
+
+        <article class="card watch-card">
+          <p class="eyebrow">Another TV or computer</p>
+          <h2>Watch the same race</h2>
+          <p>Put the live party screen in another room or home. It stays synchronized while only the original host controls the match.</p>
+          <form id="watchForm" novalidate>
+            <label for="watchCode">Room code</label>
+            <input id="watchCode" class="code-input" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="4" placeholder="ABCD" required>
+            <button class="button watch-button" type="submit">Open synchronized screen</button>
+            <p id="watchError" class="error" role="alert"></p>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <section id="controllerView" class="controller-view" hidden aria-label="Turbo Tilt phone controller">
+      <div class="controller-head">
+        <div id="playerBadge" class="player-badge"><span id="playerDot"></span><strong id="playerLabel">Racer</strong></div>
+        <div class="room-chip">Room <b id="controllerRoom">----</b></div>
+      </div>
+
+      <div class="controller-status">
+        <p id="phaseLabel" class="eyebrow">Lobby</p>
+        <h1 id="controllerMessage">Waiting for the host</h1>
+        <div class="controller-metrics">
+          <span>Rank <b id="rankValue">—</b></span>
+          <span>Points <b id="pointsValue">0</b></span>
+          <span>Boosts <b id="boostValue">1</b></span>
+        </div>
+      </div>
+
+      <div id="raceFeedback" class="race-feedback" role="status" aria-live="assertive" hidden></div>
+
+      <section id="choicePanel" class="choice-panel">
+        <div id="gadgetPicker">
+          <p class="eyebrow">Choose one gadget for the next heat</p>
+          <div class="choice-buttons" role="group" aria-label="Gadget selection">
+            <button type="button" data-gadget="shield">🛡 Shield</button>
+            <button type="button" data-gadget="magnet">🧲 Magnet</button>
+            <button type="button" data-gadget="overcharge">🚀 Overcharge</button>
+            <button type="button" data-gadget="repair">🔧 Repair</button>
+          </div>
+        </div>
+        <div id="votePicker" hidden>
+          <p class="eyebrow">Vote for the next heat</p>
+          <div id="voteButtons" class="choice-buttons vote-buttons"></div>
+        </div>
+        <details id="garagePanel" class="garage-panel">
+          <summary>Customize racer</summary>
+          <div class="garage-grid">
+            <label>Car<select id="carSelect"><option value="comet">Comet</option><option value="buggy">Buggy</option><option value="rocket">Rocket</option></select></label>
+            <label>Trail<select id="trailSelect"><option value="sparks">Sparks</option><option value="rainbow">Rainbow</option><option value="bubbles">Bubbles</option></select></label>
+            <label>Horn<select id="hornSelect"><option value="beep">Beep</option><option value="airhorn">Air horn</option><option value="chime">Chime</option></select></label>
+          </div>
+        </details>
+      </section>
+
+      <div class="tilt-panel">
+        <div class="tilt-meter" aria-hidden="true"><span id="tiltMarker"></span></div>
+        <button id="tiltButton" class="button tilt-button" type="button">Enable &amp; calibrate tilt</button>
+        <p id="tiltHelp">Hold your phone comfortably, then calibrate. Touch controls always work.</p>
+      </div>
+
+      <div class="drive-controls" role="group" aria-label="Racing controls">
+        <button id="leftButton" class="drive-button steer" type="button" aria-label="Steer left">◀<small>LEFT</small></button>
+        <button id="boostButton" class="drive-button boost" type="button" aria-label="Use boost">⚡<small>BOOST</small></button>
+        <button id="rightButton" class="drive-button steer" type="button" aria-label="Steer right">▶<small>RIGHT</small></button>
+      </div>
+      <button id="gadgetButton" class="gadget-use" type="button" disabled>USE GADGET</button>
+      <div class="emote-bar" aria-label="Party reactions">
+        <button type="button" data-emote="fire" aria-label="Fire reaction">🔥</button><button type="button" data-emote="wow" aria-label="Wow reaction">😱</button><button type="button" data-emote="laugh" aria-label="Laugh reaction">😂</button><button type="button" data-emote="clap" aria-label="Clap reaction">👏</button><button id="hornButton" type="button" aria-label="Sound horn">📣</button>
+      </div>
+      <button id="leaveButton" class="text-button" type="button">Leave room</button>
+    </section>
+  </main>
+
+  <script type="module" src="/party/app.js"></script>
+</body>
+</html>
