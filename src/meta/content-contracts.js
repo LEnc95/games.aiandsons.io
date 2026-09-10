@@ -373,6 +373,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'turbo-theme', kind: 'palette', tokens: Object.freeze(['sky', 'road', 'edge', 'racer', 'barrier', 'energy', 'accent']) }),
     ]),
   }),
+  crowdshift: Object.freeze({
+    releasedAt: '2026-09-10',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      rounds: Object.freeze({ min: 0, max: 7, direction: 'higher' }),
+      unanimous: Object.freeze({ min: 0, max: 7, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'crowd-theme', kind: 'palette', tokens: Object.freeze(['background', 'left', 'right', 'rule', 'accent']) }),
+    ]),
+  }),
 });
 
 export const getGameContentContract = (slug) => GAME_CONTENT_CONTRACTS[String(slug || '').trim()] || null;

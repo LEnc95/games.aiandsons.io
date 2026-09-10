@@ -8,8 +8,8 @@ gcloud run deploy audioagar-server `
   --project games-aiandsons-io `
   --region us-central1 `
   --allow-unauthenticated `
-  --min 0 `
-  --max 1 `
+  --min-instances 0 `
+  --max-instances 1 `
   --concurrency 1000 `
   --set-env-vars "ALLOWED_ORIGINS=https://games.aiandsons.io"
 ```

@@ -18,6 +18,7 @@
 - game/clubpenguin-world
 - game/audioagar
 - game/turbotilt
+- game/crowdshift
 - game/2048
 - game/pong
 - game/airhockey

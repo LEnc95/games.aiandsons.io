@@ -5,7 +5,7 @@ Authoritative WebSocket game server for multiplayer AI and Sons games.
 ## Current Games
 
 - `audioagar`: real-time orb arena with server-owned movement, pellets, bots, mass growth, split/eject actions, eating, death events, and per-player snapshots.
-- `party` / `turbotilt`: ephemeral four-letter rooms with a dedicated host screen, 2–8 phone controllers, up to 16 read-only synchronized displays, three authoritative racing heats, reconnect tokens, and role-specific snapshots.
+- `party` / `turbotilt` / `crowdshift`: ephemeral four-letter rooms with a dedicated host screen, 2–8 phone controllers, up to 16 read-only synchronized displays, reconnect tokens, and role-specific authoritative game snapshots.
 
 ## Run Locally
 
@@ -61,9 +61,11 @@ Inputs are sent as:
 
 The server broadcasts personalized `state` messages with `payload.state.selfId`, `players`, `pellets`, `arenaWidth`, `arenaHeight`, `tick`, and `roomId`.
 
-Party hosts join with `gameId: "party"`, `role: "host"`, `gameKey: "turbotilt"`, and an empty room ID. Phone controllers join the returned room ID with `role: "player"`. Additional TVs or computers use `role: "display"`; they receive the full host snapshot at 15 Hz, do not consume racer capacity, and cannot send game or host input. The existing version-one envelope is unchanged; game-specific input data is decoded only after dispatching to the selected game.
+Party hosts join with `gameId: "party"`, `role: "host"`, a supported `gameKey`, and an empty room ID. Phone controllers join the returned room ID with `role: "player"`. Additional TVs or computers use `role: "display"`; they receive the full host snapshot at 15 Hz, do not consume player capacity, and cannot send game or host input. The existing version-one envelope is unchanged; game-specific input data is decoded only after dispatching to the selected game.
 
 Turbo Tilt party input also supports validated `gadget`, `vote`, `customize`, `emote`, and `horn` messages. Host `configure` actions select Classic, Elimination, Teams, Relay, Survival, or Chaos Cup; two to five heats; track rotation; obstacle density; and reduced-motion presentation. All selections, modifiers, events, route rewards, team state, and the bounded photo-finish buffer remain ephemeral in the room process.
+
+Crowd Shift accepts secret `choice` inputs during seven server-timed rounds. Its majority, minority, near-even split, and unanimity scoring rules, prompt selection, reveal counts, scores, and reconnect state are authoritative and ephemeral; host/display snapshots hide individual choices until reveal.
 
 See `DEPLOY.md` for the single-instance Cloud Run beta configuration and rollout order.
 

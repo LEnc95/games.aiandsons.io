@@ -9,6 +9,7 @@ const state = {
   playerId: "",
   playerName: "",
   playerColor: "#31e6c1",
+  gameKey: "",
   snapshot: null,
   tiltEnabled: false,
   calibrating: false,
@@ -25,6 +26,7 @@ const state = {
   selectedGadget: "shield",
   selectedVote: "",
   voteSignature: "",
+  selectedChoice: "",
 };
 
 function normalizeCode(value) {
@@ -46,6 +48,10 @@ function showController() {
   byId("controllerView").hidden = false;
   window.scrollTo({ top: 0, behavior: "auto" });
   byId("controllerRoom").textContent = state.roomId;
+  const isCrowdShift = state.gameKey === "crowdshift";
+  byId("turboController").hidden = isCrowdShift;
+  byId("crowdController").hidden = !isCrowdShift;
+  byId("controllerView").setAttribute("aria-label", `${isCrowdShift ? "Crowd Shift" : "Turbo Tilt"} phone controller`);
   renderController();
 }
 
@@ -95,6 +101,7 @@ function handleEvent(connection, event) {
     state.playerId = payload.playerId || state.playerId;
     state.playerName = payload.playerName || "Racer";
     state.playerColor = payload.playerColor || state.playerColor;
+    state.gameKey = payload.gameKey || state.gameKey || "turbotilt";
     if (payload.token) localStorage.setItem(tokenKey(state.roomId), payload.token);
     byId("playerLabel").textContent = state.playerName;
     byId("playerDot").style.background = state.playerColor;
@@ -136,6 +143,11 @@ function phaseMessage(snapshot, me) {
 
 function renderController() {
   const snapshot = state.snapshot;
+  if (snapshot?.gameKey) state.gameKey = snapshot.gameKey;
+  if (state.gameKey === "crowdshift") {
+    renderCrowdController(snapshot);
+    return;
+  }
   const me = snapshot?.players?.find((player) => player.id === (snapshot.selfId || state.playerId));
   const phase = snapshot?.phase || "lobby";
   const mode = String(snapshot?.settings?.mode || "classic").replaceAll("_", " ");
@@ -159,6 +171,55 @@ function renderController() {
   state.selectedGadget = me?.nextGadget || state.selectedGadget;
   document.querySelectorAll("[data-gadget]").forEach((button) => button.classList.toggle("selected", button.dataset.gadget === state.selectedGadget));
   renderVotes(snapshot);
+}
+
+const crowdRuleLabels = {
+  majority: "FOLLOW THE CROWD · The bigger side scores 1,000",
+  minority: "BACK THE UNDERDOG · The smaller side scores 1,200",
+  split: "PERFECT SPLIT · Get the room within one vote",
+  unanimous: "ALL TOGETHER · Everyone must pick the same side",
+};
+
+function renderCrowdController(snapshot) {
+  const me = snapshot?.players?.find((player) => player.id === (snapshot?.selfId || state.playerId));
+  const phase = snapshot?.phase || "lobby";
+  const round = Number(snapshot?.round || 0);
+  const remaining = Math.max(0, (Number(snapshot?.phaseEndsAt || 0) - (Date.now() + state.testOffsetMs)) / 1000);
+  const prompt = snapshot?.prompt || {};
+  if (me?.choice) state.selectedChoice = me.choice;
+  if (phase === "intermission" || phase === "choosing" && !me?.choice) state.selectedChoice = "";
+
+  byId("crowdPhaseLabel").textContent = round ? `${phase} · Round ${round}/${snapshot?.totalRounds || 7}` : phase;
+  byId("crowdRound").textContent = round ? `${round}/${snapshot?.totalRounds || 7}` : "—";
+  byId("crowdRank").textContent = me?.rank ? `#${me.rank}` : "—";
+  byId("crowdPoints").textContent = String(me?.points || 0);
+  let message = "Waiting for the host";
+  if (me?.queued) message = "You join next round";
+  else if (phase === "countdown") message = `First choice in ${Math.max(1, Math.ceil(remaining))}`;
+  else if (phase === "choosing") message = me?.hasChosen ? "Choice locked—watch the screen" : `${Math.ceil(remaining)} seconds to choose`;
+  else if (phase === "reveal") message = me?.roundPoints ? `+${me.roundPoints.toLocaleString()} points!` : "The crowd has spoken";
+  else if (phase === "intermission") message = "Next dilemma incoming";
+  else if (phase === "paused") message = snapshot?.pauseReason === "host_disconnected" ? "Host reconnecting…" : "Game paused";
+  else if (phase === "podium") message = me?.rank === 1 ? "You shifted the crowd!" : `You finished #${me?.rank || "—"}`;
+  else if (phase === "ended") message = "Game ended";
+  byId("crowdMessage").textContent = message;
+  byId("crowdRule").textContent = crowdRuleLabels[snapshot?.rule] || "Watch the big screen";
+  byId("crowdQuestion").textContent = prompt.question || "Get ready to pick a side.";
+  byId("crowdLeftText").textContent = prompt.left || "Option A";
+  byId("crowdRightText").textContent = prompt.right || "Option B";
+
+  const canChoose = phase === "choosing" && me?.active && !me?.queued;
+  ["left", "right"].forEach((choice) => {
+    const button = byId(choice === "left" ? "crowdLeft" : "crowdRight");
+    button.disabled = !canChoose;
+    button.classList.toggle("selected", state.selectedChoice === choice);
+  });
+  let status = "Your choice stays secret until the reveal.";
+  if (me?.queued) status = "Cheer this round—your first choice is next.";
+  else if (phase === "choosing" && me?.hasChosen) status = "Locked! You can still switch sides before time runs out.";
+  else if (phase === "reveal") status = `${snapshot?.resultHeadline || "Reveal!"} ${snapshot?.leftCount || 0}–${snapshot?.rightCount || 0}`;
+  else if (phase === "podium") status = `Final score: ${(me?.points || 0).toLocaleString()}`;
+  byId("crowdChoiceStatus").textContent = status;
 }
 
 const modifierLabels = {
@@ -332,6 +393,15 @@ document.querySelectorAll("[data-emote]").forEach((button) => button.addEventLis
   state.connection?.sendInput({ type: "emote", emote: button.dataset.emote });
 }));
 byId("hornButton").addEventListener("click", () => state.connection?.sendInput({ type: "horn" }));
+["left", "right"].forEach((choice) => byId(choice === "left" ? "crowdLeft" : "crowdRight").addEventListener("click", () => {
+  state.selectedChoice = choice;
+  state.connection?.sendInput({ type: "choice", choice });
+  renderController();
+  navigator.vibrate?.(30);
+}));
+document.querySelectorAll("[data-crowd-emote]").forEach((button) => button.addEventListener("click", () => {
+  state.connection?.sendInput({ type: "emote", emote: button.dataset.crowdEmote });
+}));
 byId("leaveButton").addEventListener("click", () => {
   state.connection?.disconnect();
   if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
@@ -341,10 +411,12 @@ byId("leaveButton").addEventListener("click", () => {
 setInterval(() => {
   if (!byId("controllerView").hidden) {
     renderController();
-    const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
-    showRaceFeedback(me);
+    if (state.gameKey !== "crowdshift") {
+      const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
+      showRaceFeedback(me);
+    }
   }
-  sendSteer();
+  if (state.gameKey !== "crowdshift") sendSteer();
 }, 100);
 
 const initialCode = normalizeCode(params.get("code"));
@@ -362,7 +434,10 @@ byId("watchForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const code = normalizeCode(byId("watchCode").value);
   byId("watchError").textContent = code.length === 4 ? "" : "Enter the four letters shown by the host.";
-  if (code.length === 4) location.href = `/turbotilt/?display=${encodeURIComponent(code)}`;
+  if (code.length === 4) {
+    const route = byId("watchGame").value === "crowdshift" ? "/crowdshift/" : "/turbotilt/";
+    location.href = `${route}?display=${encodeURIComponent(code)}`;
+  }
 });
 
 window.advanceTime = (ms) => {
@@ -374,10 +449,12 @@ window.render_game_to_text = () => JSON.stringify({
   coordinate_system: { steering: "-1 left to +1 right" },
   room_id: state.roomId,
   player_id: state.playerId,
+  game_key: state.gameKey,
   tilt_enabled: state.tiltEnabled,
   effective_steer: Number(effectiveSteer().toFixed(2)),
   selected_gadget: state.selectedGadget,
   selected_vote: state.selectedVote,
+  selected_choice: state.selectedChoice,
   state: state.snapshot,
 });
 if (["127.0.0.1", "localhost"].includes(location.hostname)) {
