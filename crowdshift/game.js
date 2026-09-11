@@ -7,7 +7,8 @@ const ctx = canvas.getContext("2d");
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const displayCode = String(params.get("display") || "").toUpperCase().replace(/[^A-HJ-NP-Z]/g, "").slice(0, 4);
-const state = { connection:null,roomId:"",hostToken:"",snapshot:null,displayMode:displayCode.length===4,testOffsetMs:0,reported:false,sound:false,audio:null,lastPhase:"",lastRound:0 };
+const embedded=params.get("embedded")==="1";
+const state = { connection:null,roomId:"",hostToken:"",snapshot:null,displayMode:embedded||displayCode.length===4,testOffsetMs:0,reported:false,sound:false,audio:null,lastPhase:"",lastRound:0 };
 if (!state.displayMode) rememberRecent("crowdshift");
 
 const rules = {
@@ -24,6 +25,14 @@ const remaining = () => Math.max(0,(Number(state.snapshot?.phaseEndsAt||0)-now()
 
 function status(text,kind=""){byId("serverStatus").textContent=text;byId("serverStatus").className=kind;}
 async function connectScreen(){
+  if(embedded){
+    document.body.classList.add("display-mode","embedded-mode");byId("screenRole").textContent="Party activity";
+    const style=document.createElement("style");
+    style.textContent=".embedded-mode{padding:0;overflow:hidden}.embedded-mode .back,.embedded-mode .host-header,.embedded-mode .host-panel{display:none}.embedded-mode .host-shell,.embedded-mode .game-layout,.embedded-mode .stage-wrap{width:100vw;height:100vh;max-width:none;margin:0;display:block;border:0;border-radius:0;box-shadow:none;aspect-ratio:auto}.embedded-mode canvas{width:100%;height:100%;object-fit:contain}";
+    document.head.appendChild(style);
+    window.addEventListener("message",(event)=>{if(event.origin!==location.origin||event.data?.type!=="party_snapshot")return;const previous=state.snapshot;state.roomId=event.data.roomId||state.roomId;state.snapshot=event.data.snapshot||null;syncUi();soundFor(previous,state.snapshot);});
+    return;
+  }
   let roomId=state.displayMode?displayCode:String(params.get("room")||"").toUpperCase();
   let token=!state.displayMode&&roomId?sessionStorage.getItem(tokenKey(roomId))||"":"";
   if(roomId&&!state.displayMode&&!token){roomId="";params.delete("room");history.replaceState({},"",location.pathname);}
@@ -76,5 +85,5 @@ function soundFor(previous,next){if(!next||previous?.phase===next.phase&&previou
 function toggleSound(){state.sound=!state.sound;if(state.sound){ensureAudio();tone(720,.1);}byId("soundButton").textContent=`Sound: ${state.sound?"On":"Off"}`;}
 function toggleFullscreen(){if(!document.fullscreenElement)byId("stageWrap").requestFullscreen?.().catch(()=>{});else document.exitFullscreen?.().catch(()=>{});}
 byId("startButton").addEventListener("click",()=>sendHost("start"));byId("pauseButton").addEventListener("click",()=>sendHost(state.snapshot?.phase==="paused"?"resume":"pause"));byId("endButton").addEventListener("click",()=>sendHost("end"));byId("fullscreenButton").addEventListener("click",toggleFullscreen);byId("soundButton").addEventListener("click",toggleSound);byId("shareScreenButton").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(displayUrl());byId("shareScreenButton").textContent="Screen link copied!";setTimeout(()=>byId("shareScreenButton").textContent="Copy link for another screen",1600);}catch{byId("hostError").textContent=displayUrl();}});window.addEventListener("keydown",(event)=>{if(event.key.toLowerCase()==="f")toggleFullscreen();});window.addEventListener("beforeunload",()=>state.connection?.disconnect());
-function loop(){draw();requestAnimationFrame(loop);}window.advanceTime=(ms)=>{state.testOffsetMs+=Math.max(0,Math.min(60000,Number(ms)||0));draw();};window.render_game_to_text=()=>JSON.stringify({screen_role:state.displayMode?"display":"host",coordinate_system:"Canvas 1200x675; origin top-left; x right, y down",room_id:state.roomId,phase:state.snapshot?.phase||"connecting",seconds_remaining:Number(remaining().toFixed(1)),round:state.snapshot?.round||0,total_rounds:state.snapshot?.totalRounds||7,rule:state.snapshot?.rule||"",duel:Boolean(state.snapshot?.duel),ready_count:state.snapshot?.readyCount||0,duel_objective_met:Boolean(state.snapshot?.duelObjectiveMet),prompt:state.snapshot?.prompt||null,submitted_count:state.snapshot?.submittedCount||0,left_count:state.snapshot?.leftCount||0,right_count:state.snapshot?.rightCount||0,result:state.snapshot?.resultHeadline||"",players:state.snapshot?.players||[]});
+function loop(){draw();requestAnimationFrame(loop);}window.advanceTime=(ms)=>{state.testOffsetMs+=Math.max(0,Math.min(60000,Number(ms)||0));draw();};window.addEventListener("message",(event)=>{if(event.origin===location.origin&&event.data?.type==="party_advance_time")window.advanceTime(event.data.ms);});window.render_game_to_text=()=>JSON.stringify({screen_role:state.displayMode?"display":"host",coordinate_system:"Canvas 1200x675; origin top-left; x right, y down",room_id:state.roomId,phase:state.snapshot?.phase||"connecting",seconds_remaining:Number(remaining().toFixed(1)),round:state.snapshot?.round||0,total_rounds:state.snapshot?.totalRounds||7,rule:state.snapshot?.rule||"",duel:Boolean(state.snapshot?.duel),ready_count:state.snapshot?.readyCount||0,duel_objective_met:Boolean(state.snapshot?.duelObjectiveMet),prompt:state.snapshot?.prompt||null,submitted_count:state.snapshot?.submittedCount||0,left_count:state.snapshot?.leftCount||0,right_count:state.snapshot?.rightCount||0,result:state.snapshot?.resultHeadline||"",players:state.snapshot?.players||[]});
 connectScreen().catch(()=>status("Unable to connect","problem"));loop();

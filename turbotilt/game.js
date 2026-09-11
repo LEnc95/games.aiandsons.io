@@ -7,7 +7,8 @@ const ctx = canvas.getContext("2d");
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const displayCode = String(params.get("display") || "").toUpperCase().replace(/[^A-HJ-NP-Z]/g, "").slice(0, 4);
-const isDisplay = displayCode.length === 4;
+const embedded = params.get("embedded") === "1";
+const isDisplay = embedded || displayCode.length === 4;
 if (!isDisplay) rememberRecent("turbotilt");
 const state = {
   connection: null,
@@ -39,6 +40,20 @@ function setServerStatus(label, kind = "") {
 }
 
 async function connectScreen() {
+  if (embedded) {
+    document.body.classList.add("display-mode", "embedded-mode");
+    byId("screenRole").textContent = "Party activity";
+    window.addEventListener("message", (event) => {
+      if (event.origin !== location.origin || event.data?.type !== "party_snapshot") return;
+      const previous = state.snapshot;
+      state.roomId = event.data.roomId || state.roomId;
+      state.snapshot = event.data.snapshot || null;
+      consumeRaceEvents();
+      processRaceAudio(previous, state.snapshot);
+      syncUi();
+    });
+    return;
+  }
   if (state.displayMode) {
     const connection = await connect({
       gameId: "party",
@@ -892,6 +907,9 @@ window.advanceTime = (ms) => {
   state.stripeOffset += amount * .19;
   draw();
 };
+window.addEventListener("message", (event) => {
+  if (event.origin === location.origin && event.data?.type === "party_advance_time") window.advanceTime(event.data.ms);
+});
 window.render_game_to_text = () => JSON.stringify({
   coordinate_system: { origin: "top-left", x_axis: "right", y_axis: "down", canvas: { width: canvas.width, height: canvas.height }, track_x: "-1 left to +1 right", distance: "increases toward finish" },
   room_id: state.roomId,

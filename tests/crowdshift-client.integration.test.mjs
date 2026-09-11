@@ -11,15 +11,20 @@ test("Crowd Shift is registered as an accountless multiplayer party game", async
   assert.match(contracts, /crowdshift:[\s\S]*releasedAt: '2026-09-10'[\s\S]*unanimous/);
 });
 
-test("party hub offers Crowd Shift hosting, watching, group choices, and Duel Shift controls", async () => {
+test("party hub offers persistent party rotation, watching, group choices, and Duel Shift controls", async () => {
   const [html, app] = await Promise.all([read("party/index.html"), read("party/app.js")]);
   assert.match(html, /href="\/crowdshift\/"/);
-  assert.match(html, /id="watchGame"[\s\S]*value="crowdshift"/);
+  assert.match(html, /id="startPartyLink"[\s\S]*href="\/party\/\?host=1"/);
+  assert.doesNotMatch(html, /id="watchGame"/);
+  assert.match(html, /id="partyStage"[\s\S]*id="activityFrame"/);
+  assert.match(html, /id="partyVoteButtons"/);
   assert.match(html, /id="crowdLeft"[\s\S]*id="crowdRight"/);
   assert.match(html, /id="duelPredictLeft"[\s\S]*id="duelHotTake"/);
   assert.match(app, /sendInput\(\{ type: "choice", choice \}\)/);
   assert.match(app, /sendInput\(\{ type: "predict", choice: prediction \}\)/);
   assert.match(app, /sendInput\(\{ type: "hot_take" \}\)/);
+  assert.match(app, /type: "party_vote"/);
+  assert.match(app, /THE PARTY WHEEL/);
   assert.match(app, /gameKey === "crowdshift"/);
   assert.match(app, /window\.render_game_to_text/);
   assert.match(app, /window\.advanceTime/);

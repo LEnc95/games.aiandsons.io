@@ -26,6 +26,7 @@ type crowdShiftPrompt struct {
 }
 
 type crowdShiftState struct {
+	Mode             string
 	Round            int
 	TotalRounds      int
 	Prompt           crowdShiftPrompt
@@ -80,6 +81,7 @@ func isSupportedPartyGame(gameKey string) bool {
 
 func newCrowdShiftState() *crowdShiftState {
 	return &crowdShiftState{
+		Mode:        "classic_mix",
 		TotalRounds: crowdShiftRounds, Choices: make(map[string]string), Predictions: make(map[string]string),
 		HotTakes: make(map[string]bool), HotTakeAvailable: make(map[string]bool), ReadStreaks: make(map[string]int),
 		ReadCorrect: make(map[string]bool), ReadPoints: make(map[string]int), ObjectivePoints: make(map[string]int), StealPoints: make(map[string]int),
@@ -243,8 +245,12 @@ func (r *partyRoom) prepareCrowdShiftRoundLocked(now int64) {
 		rules := []string{"duel_sync", "duel_clash"}
 		r.crowd.Rule = rules[(seed+r.crowd.Round-1)%len(rules)]
 	} else {
-		rules := []string{"majority", "minority", "split", "unanimous"}
-		r.crowd.Rule = rules[(seed+r.crowd.Round-1)%len(rules)]
+		if containsString([]string{"majority", "minority", "split", "unanimous"}, r.crowd.Mode) {
+			r.crowd.Rule = r.crowd.Mode
+		} else {
+			rules := []string{"majority", "minority", "split", "unanimous"}
+			r.crowd.Rule = rules[(seed+r.crowd.Round-1)%len(rules)]
+		}
 	}
 	r.crowd.Choices = make(map[string]string)
 	r.crowd.Predictions = make(map[string]string)
@@ -443,6 +449,9 @@ func (r *partyRoom) finishCrowdShiftMatchLocked(now int64) {
 	r.phase = "podium"
 	r.phaseEndsAt = 0
 	r.endedAt = now
+	if r.sessionMode == partyRotationSessionMode {
+		r.completeRotationActivityLocked(now)
+	}
 }
 
 func (r *partyRoom) updateCrowdShiftRanksLocked() []*partyPlayer {
@@ -506,7 +515,7 @@ func (r *partyRoom) crowdShiftSnapshotLocked(selfID string) map[string]any {
 		"rightCount": r.crowd.RightCount, "winnerSide": r.crowd.WinnerSide,
 		"resultHeadline": r.crowd.ResultHeadline, "unanimousRounds": r.crowd.UnanimousRounds,
 		"displayCount": len(r.displays), "duel": r.crowd.Duel, "duelObjectiveMet": r.crowd.DuelObjectiveMet,
-		"readyCount": r.crowdShiftReadyCountLocked(),
+		"readyCount": r.crowdShiftReadyCountLocked(), "mode": r.crowd.Mode,
 	}
 	if selfID != "" {
 		state["selfId"] = selfID

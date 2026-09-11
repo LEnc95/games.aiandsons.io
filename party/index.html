@@ -23,9 +23,16 @@
       </div>
 
       <div class="cards">
+        <article class="card start-party-card">
+          <div class="party-orbit" aria-hidden="true"><span>🎉</span><i>🏎️</i><i>↔️</i></div>
+          <p class="eyebrow">Everyone joins once</p>
+          <h2>Start a Party</h2>
+          <p>Vote together, spin the wheel, and keep playing different games without changing rooms.</p>
+          <a id="startPartyLink" class="button party-primary" href="/party/?host=1">Open a party room</a>
+        </article>
         <article class="card host-card">
           <div class="game-art" aria-hidden="true"><span>🏎️</span><i></i><i></i><i></i></div>
-          <p class="eyebrow">Host a game</p>
+          <p class="eyebrow">Quick play</p>
           <h2>Turbo Tilt</h2>
           <p>Tilt, dodge, boost, and battle through a customizable racing cup with up to eight racers.</p>
           <a class="button primary" href="/turbotilt/">Start on this screen</a>
@@ -33,7 +40,7 @@
 
         <article class="card host-card crowd-card">
           <div class="game-art crowd-art" aria-hidden="true"><span>↔️</span><i></i><i></i><i></i></div>
-          <p class="eyebrow">Host a game</p>
+          <p class="eyebrow">Quick play</p>
           <h2>Crowd Shift</h2>
           <p>Read your rival in two-player Duel Shift, or tackle rotating crowd rules with up to eight phones.</p>
           <a class="button crowd-primary" href="/crowdshift/">Start on this screen</a>
@@ -57,8 +64,6 @@
           <h2>Watch the same game</h2>
           <p>Put the live party screen in another room or home. It stays synchronized while only the original host controls the match.</p>
           <form id="watchForm" novalidate>
-            <label for="watchGame">Game</label>
-            <select id="watchGame"><option value="turbotilt">Turbo Tilt</option><option value="crowdshift">Crowd Shift</option></select>
             <label for="watchCode">Room code</label>
             <input id="watchCode" class="code-input" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="4" placeholder="ABCD" required>
             <button class="button watch-button" type="submit">Open synchronized screen</button>
@@ -68,10 +73,55 @@
       </div>
     </section>
 
+    <section id="sessionView" class="session-view" hidden aria-label="Persistent party screen">
+      <div class="session-head">
+        <div><p id="sessionRole" class="eyebrow">Party host</p><div class="session-code">ROOM <b id="sessionRoom">----</b></div></div>
+        <div class="session-stats"><span id="sessionPlayerCount">0 / 8 players</span><span id="sessionScreenCount">1 live screen</span></div>
+      </div>
+      <div class="session-layout">
+        <div id="partyStageWrap" class="party-stage-wrap">
+          <canvas id="partyStage" width="1200" height="675" aria-label="Party voting and standings screen"></canvas>
+          <iframe id="activityFrame" title="Current party activity" hidden></iframe>
+        </div>
+        <aside id="sessionSidebar" class="session-sidebar">
+          <div id="sessionQr" class="session-qr" aria-label="Party room QR code"></div>
+          <p>Join at <b>games.aiandsons.io/party</b></p>
+          <ol id="partyRoster" class="party-roster"></ol>
+          <div id="hostControls" class="host-controls">
+            <button id="partyStartButton" class="button party-primary" type="button">Start Party</button>
+            <button id="partyPauseButton" class="button quiet-button" type="button" hidden>Pause</button>
+            <button id="partySkipButton" class="button quiet-button" type="button" hidden>Skip Activity</button>
+            <button id="partyEndButton" class="button danger-button" type="button" hidden>End Party</button>
+          </div>
+          <button id="partyFullscreenButton" class="text-button" type="button">Fullscreen</button>
+          <button id="partyShareButton" class="text-button" type="button">Copy link for another screen</button>
+          <p id="sessionError" class="error" role="alert"></p>
+        </aside>
+      </div>
+    </section>
+
     <section id="controllerView" class="controller-view" hidden aria-label="Party game phone controller">
       <div class="controller-head">
         <div id="playerBadge" class="player-badge"><span id="playerDot"></span><strong id="playerLabel">Racer</strong></div>
         <div class="room-chip">Room <b id="controllerRoom">----</b></div>
+      </div>
+
+      <div id="partyController" class="controller-game party-controller" hidden>
+        <div class="controller-status party-status">
+          <p id="partyPhaseLabel" class="eyebrow">Party lobby</p>
+          <h1 id="partyMessage">Waiting for the host</h1>
+          <div class="controller-metrics">
+            <span>Party rank <b id="partyRank">—</b></span>
+            <span>Party points <b id="partyPoints">0</b></span>
+            <span>Wins <b id="partyWins">0</b></span>
+          </div>
+        </div>
+        <section id="partyVotePanel" class="party-vote-panel" aria-live="polite">
+          <p class="eyebrow">Choose what everyone plays next</p>
+          <div id="partyVoteButtons" class="party-vote-buttons"></div>
+          <p id="partyVoteStatus" class="crowd-choice-status">You can change your vote until the wheel spins.</p>
+        </section>
+        <ol id="phoneStandings" class="phone-standings"></ol>
       </div>
 
       <div id="turboController" class="controller-game">
@@ -165,6 +215,7 @@
     </section>
   </main>
 
+  <script src="/party/vendor/qrcode.js"></script>
   <script type="module" src="/party/app.js"></script>
 </body>
 </html>
