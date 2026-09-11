@@ -229,5 +229,6 @@
 - game/neststack
 - game/clockworkclover
 - game/thimbletide
+- game/ribbonreversal
 
 Generated from `src/meta/feedback.js`.
