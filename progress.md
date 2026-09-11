@@ -1,5 +1,21 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-11 Ribbon Reversal continuation
+- User authorized continuing only the new game and forbade touching other games/shared generators. Copied only the eleven allowed game-release paths into C:/Users/Luke/.codex/worktrees/e51a-ribbon-release/games.aiandsons.io at the recorded baseline 17631a8bb3c0accfe4760d693c2d5962e4c3fd86. Original worktree and all earlier generator noise remain untouched; none is in this release workspace.
+- Dependency install, maintenance validation, and 215-game preflight passed. Supplied Playwright client and focused desktop/mobile matrix passed with zero browser errors; naturally solved all five bundles using 41 flips and verified completed/lost/abandoned outcomes, exact deterministic stepping, paused freeze, controls/boundaries, fullscreen/Escape, feedback, and themes.
+- Visually inspected gameplay, animated flip, pause, bundle completion, win/loss, feedback, palettes, mobile and OG card. Fixed mobile title overlap with the shared clip button by adding space inside the new game's responsive header; corrected the new game's feedback-open guard to use the embed's existing state flag.
+- Repeated supplied-client and complete relevant browser matrix passed after polish; latest mobile, gameplay, transition, feedback and terminal screenshots were visually verified. Shared feedback smoke passed. Ordered final gates passed: maintenance, 215-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and git diff --check. Used npm.cmd after the PowerShell npm wrapper misparsed a loop invocation before starting validation.
+- TODO: exact release diff audit, guarded PR publication, and production verification. Do not repair shared generators or modify other game files.
+
+## 2026-09-11 Create a new game automation - Ribbon Reversal BLOCKED
+- Clean isolated worktree C:/Users/Luke/.codex/worktrees/e51a/games.aiandsons.io at 17631a8bb3c0accfe4760d693c2d5962e4c3fd86. Fetch/detached checkout and npm ci passed; npm reported 16 existing vulnerabilities.
+- Implemented an UNVERIFIED draft Ribbon Reversal (/ribbonreversal), a five-bundle prefix-reversal sorting puzzle. Added registry, 2026-09-11 contract (bundles 0-5, ribbons 0-30, flips 0-80), rendered palettes, completed/lost/abandoned outcomes, feedback, deterministic hooks, and changelog. Preserve this draft if resuming.
+- STOPPED at step 3 generation audit: SEO, OG, and local Linear generation commands passed (215 games, 225 labels). Generators changed 42 existing OG PNGs and 14 unrelated game pages. Pixel comparison confirms aerocourier.png changed within [529,250,567,287], so this is not just encoding or line endings. HTML diffs add whitespace-only lines before SEO blocks. No generator changes restored.
+- Per the prompt's scope boundary, browser QA, early/final local gates, authoritative commit audit, branch creation, PR, merge, Main QA, and production verification were not run. Nothing staged, committed, or pushed. No branch commit, PR URL, or merge SHA exists. Intended route https://games.aiandsons.io/ribbonreversal was not published by this run.
+- TODO: fix generator idempotence in separate authorized scope before resuming release validation. Draft remains unverified.
+- Run time: 2026-09-11T10:07:59.070631-04:00.
+
+
 ## 2026-09-10 Create a new game automation — Thimble Tide
 - Started from clean isolated `origin/main` baseline `efc1107b59ad06c937478d32d27709786b72457f`; current instructions, game skill, progress, and automation memory read; `npm ci` passed with 16 pre-existing audit findings.
 - Implemented Thimble Tide (`/thimbletide`), a five-shore visual shell-tracking game with keyboard/touch controls, pause/restart/fullscreen, three rendered tide palettes, feedback, deterministic text/time hooks, and bounded `{ pearls, shores, mistakes }` outcomes.

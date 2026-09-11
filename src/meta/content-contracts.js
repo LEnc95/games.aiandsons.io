@@ -2,6 +2,17 @@
 // must add an explicit contract so automated challenges and cosmetics never
 // guess at unbounded metrics or promise effects a game cannot render.
 export const GAME_CONTENT_CONTRACTS = Object.freeze({
+  ribbonreversal: Object.freeze({
+    releasedAt: '2026-09-11',
+    outcomes: Object.freeze({
+      bundles: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      ribbons: Object.freeze({ min: 0, max: 30, direction: 'higher' }),
+      flips: Object.freeze({ min: 0, max: 80, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'ribbonreversal-theme', kind: 'palette', tokens: Object.freeze(['paper', 'ink', 'accent', 'ribbons']) }),
+    ]),
+  }),
   pong: Object.freeze({
     releasedAt: '2026-02-13',
     outcomes: Object.freeze({ winMargin: Object.freeze({ min: 0, max: 20, direction: 'higher' }) }),

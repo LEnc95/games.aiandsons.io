@@ -215,6 +215,7 @@ const BASE_GAMES = [
   { slug:'neststack', name:'Nest Stack',                       emoji:'\u{1FAB9}', scoreHint:'branches', url:'/neststack', desc:'Guide swaying branches onto a growing stack and weave five balanced treetop nests.', earnsCoins:true },
   { slug:'clockworkclover', name:'Clockwork Clover',            emoji:'\u{1F340}', scoreHint:'beams', url:'/clockworkclover', desc:'Turn a garden clock, catch bright timing arcs, and wake five flower courtyards before sunset.', earnsCoins:true },
   { slug:'thimbletide', name:'Thimble Tide',                    emoji:'\u{1F41A}', scoreHint:'pearls', url:'/thimbletide', desc:'Track a hidden pearl through quick shell swaps and chart five moonlit shores.', earnsCoins:true },
+  { slug:'ribbonreversal', name:'Ribbon Reversal', emoji:'\u{1F380}', scoreHint:'bundles', url:'/ribbonreversal', desc:'Reverse the top of a ribbon stack, sort lengths from shortest to longest, and organize five colorful puzzle bundles.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
