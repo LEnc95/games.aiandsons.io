@@ -35,8 +35,12 @@ func TestCrowdShiftScoringRules(t *testing.T) {
 
 func TestCrowdShiftChoicesStaySecretUntilReveal(t *testing.T) {
 	r := crowdShiftTestRoom()
+	r.crowd.Duel = true
+	r.crowd.DuelPlayerIDs = []string{"a", "b"}
 	r.phase = "choosing"
 	r.crowd.Choices = map[string]string{"a": "left", "b": "right"}
+	r.crowd.Predictions = map[string]string{"a": "right", "b": "right"}
+	r.crowd.HotTakes = map[string]bool{"a": true}
 	host := r.crowdShiftSnapshotLocked("")
 	for _, player := range host["players"].([]map[string]any) {
 		if player["choice"] != "" {
@@ -44,6 +48,9 @@ func TestCrowdShiftChoicesStaySecretUntilReveal(t *testing.T) {
 		}
 		if player["hasChosen"] != true && (player["id"] == "a" || player["id"] == "b") {
 			t.Fatalf("host should receive submission status without the choice: %#v", player)
+		}
+		if player["prediction"] != "" || player["hotTake"] == true {
+			t.Fatalf("host snapshot leaked duel strategy before reveal: %#v", player)
 		}
 	}
 	playerState := r.crowdShiftSnapshotLocked("a")
@@ -54,6 +61,12 @@ func TestCrowdShiftChoicesStaySecretUntilReveal(t *testing.T) {
 		if player["id"] == "b" && player["choice"] != "" {
 			t.Fatalf("player saw another player's secret choice: %#v", player)
 		}
+		if player["id"] == "a" && (player["prediction"] != "right" || player["hotTake"] != true) {
+			t.Fatalf("player did not receive their own duel strategy: %#v", player)
+		}
+		if player["id"] == "b" && player["prediction"] != "" {
+			t.Fatalf("player saw another player's secret prediction: %#v", player)
+		}
 	}
 	r.phase = "reveal"
 	reveal := r.crowdShiftSnapshotLocked("")
@@ -61,6 +74,81 @@ func TestCrowdShiftChoicesStaySecretUntilReveal(t *testing.T) {
 		if (player["id"] == "a" || player["id"] == "b") && player["choice"] == "" {
 			t.Fatalf("reveal snapshot omitted a submitted choice: %#v", player)
 		}
+	}
+}
+
+func TestCrowdShiftDuelRewardsReadsStreaksAndHotTakes(t *testing.T) {
+	r := crowdShiftTestRoom()
+	delete(r.players, "c")
+	r.crowd.Duel = true
+	r.crowd.DuelPlayerIDs = []string{"a", "b"}
+	r.crowd.HotTakeAvailable = map[string]bool{"a": true, "b": true}
+	r.crowd.Rule = "duel_sync"
+	r.crowd.Choices = map[string]string{"a": "left", "b": "left"}
+	r.crowd.Predictions = map[string]string{"a": "left", "b": "right"}
+	r.crowd.HotTakes = map[string]bool{"a": true, "b": true}
+	r.scoreCrowdShiftRoundLocked()
+
+	if !r.crowd.DuelObjectiveMet || r.players["a"].HeatPoints != 2100 || r.players["b"].HeatPoints != 400 {
+		t.Fatalf("unexpected first duel score: objective=%v a=%d b=%d", r.crowd.DuelObjectiveMet, r.players["a"].HeatPoints, r.players["b"].HeatPoints)
+	}
+	if r.crowd.HotTakeAvailable["a"] || r.crowd.HotTakeAvailable["b"] || r.crowd.ReadStreaks["a"] != 1 || r.crowd.ReadStreaks["b"] != 0 {
+		t.Fatalf("hot takes or read streaks were not resolved: %#v", r.crowd)
+	}
+
+	r.crowd.Rule = "duel_clash"
+	r.crowd.Choices = map[string]string{"a": "left", "b": "right"}
+	r.crowd.Predictions = map[string]string{"a": "right", "b": "left"}
+	r.crowd.HotTakes = make(map[string]bool)
+	r.crowd.ReadCorrect = make(map[string]bool)
+	r.crowd.ReadPoints = make(map[string]int)
+	r.crowd.ObjectivePoints = make(map[string]int)
+	r.crowd.StealPoints = make(map[string]int)
+	r.crowd.LeftCount, r.crowd.RightCount = 0, 0
+	r.scoreCrowdShiftRoundLocked()
+	if r.players["a"].HeatPoints != 1200 || r.players["b"].HeatPoints != 1000 || r.crowd.ReadStreaks["a"] != 2 || r.crowd.ReadStreaks["b"] != 1 {
+		t.Fatalf("read streak did not raise the duel stakes: a=%d b=%d streaks=%v", r.players["a"].HeatPoints, r.players["b"].HeatPoints, r.crowd.ReadStreaks)
+	}
+}
+
+func TestCrowdShiftDuelNeedsAChoiceAndPrediction(t *testing.T) {
+	r := crowdShiftTestRoom()
+	delete(r.players, "c")
+	r.crowd.Duel = true
+	r.crowd.DuelPlayerIDs = []string{"a", "b"}
+	r.crowd.Choices = map[string]string{"a": "left", "b": "right"}
+	if r.crowdShiftAllConnectedChosenLocked() {
+		t.Fatal("duel became ready without mind-read predictions")
+	}
+	r.crowd.Predictions = map[string]string{"a": "right", "b": "left"}
+	if !r.crowdShiftAllConnectedChosenLocked() {
+		t.Fatal("duel did not become ready after both complete picks")
+	}
+}
+
+func TestCrowdShiftDuelGivesPlayersTimeToChangeTheirPlay(t *testing.T) {
+	r := crowdShiftTestRoom()
+	delete(r.players, "c")
+	r.crowd.Duel = true
+	r.crowd.DuelPlayerIDs = []string{"a", "b"}
+	r.crowd.Rule = "duel_sync"
+	r.crowd.Choices = map[string]string{"a": "left", "b": "left"}
+	r.crowd.Predictions = map[string]string{"a": "left", "b": "left"}
+	r.phase = "choosing"
+	r.crowd.RoundStartedAt = 10000
+	r.phaseEndsAt = 30000
+
+	r.stepCrowdShiftLocked(12000)
+	if r.phase != "choosing" || r.crowd.DuelReadyAt != 12000 {
+		t.Fatalf("duel did not begin its final-play grace window: phase=%s readyAt=%d", r.phase, r.crowd.DuelReadyAt)
+	}
+	r.stepCrowdShiftLocked(13999)
+	if r.phase != "choosing" {
+		t.Fatal("duel revealed before the final-play grace window elapsed")
+	}
+	r.stepCrowdShiftLocked(14000)
+	if r.phase != "reveal" {
+		t.Fatal("duel did not reveal after the final-play grace window")
 	}
 }
 
