@@ -1,6 +1,7 @@
 import { connect } from "/src/net/multiplayerClient.js";
 import { rememberRecent } from "/src/core/state.js";
 import { reportGameOutcome } from "/src/core/outcomes.js";
+import { finalizeRecording, startRecording } from "/src/social/record.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -10,6 +11,7 @@ const displayCode = String(params.get("display") || "").toUpperCase().replace(/[
 const embedded = params.get("embedded") === "1";
 const isDisplay = embedded || displayCode.length === 4;
 if (!isDisplay) rememberRecent("turbotilt");
+let embeddedRecording = false;
 const state = {
   connection: null,
   roomId: "",
@@ -48,6 +50,7 @@ async function connectScreen() {
       const previous = state.snapshot;
       state.roomId = event.data.roomId || state.roomId;
       state.snapshot = event.data.snapshot || null;
+      syncEmbeddedRecording(previous, state.snapshot);
       consumeRaceEvents();
       processRaceAudio(previous, state.snapshot);
       syncUi();
@@ -79,6 +82,18 @@ async function connectScreen() {
     token,
   });
   bindConnection(connection);
+}
+
+function syncEmbeddedRecording(previous, next) {
+  if (!embedded || !next) return;
+  const active = next.partyPhase === "activity";
+  const wasActive = previous?.partyPhase === "activity";
+  if (active && !wasActive) {
+    embeddedRecording = startRecording() || embeddedRecording;
+  } else if (!active && wasActive && embeddedRecording) {
+    embeddedRecording = false;
+    void finalizeRecording();
+  }
 }
 
 function bindConnection(connection) {

@@ -1,6 +1,7 @@
 import { connect } from "/src/net/multiplayerClient.js";
 import { rememberRecent } from "/src/core/state.js";
 import { reportGameOutcome } from "/src/core/outcomes.js";
+import { finalizeRecording, startRecording } from "/src/social/record.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -9,6 +10,7 @@ const params = new URLSearchParams(location.search);
 const displayCode = String(params.get("display") || "").toUpperCase().replace(/[^A-HJ-NP-Z]/g, "").slice(0, 4);
 const embedded=params.get("embedded")==="1";
 const state = { connection:null,roomId:"",hostToken:"",snapshot:null,displayMode:embedded||displayCode.length===4,testOffsetMs:0,reported:false,sound:false,audio:null,lastPhase:"",lastRound:0 };
+let embeddedRecording=false;
 if (!state.displayMode) rememberRecent("crowdshift");
 
 const rules = {
@@ -30,7 +32,7 @@ async function connectScreen(){
     const style=document.createElement("style");
     style.textContent=".embedded-mode{padding:0;overflow:hidden}.embedded-mode .back,.embedded-mode .host-header,.embedded-mode .host-panel{display:none}.embedded-mode .host-shell,.embedded-mode .game-layout,.embedded-mode .stage-wrap{width:100vw;height:100vh;max-width:none;margin:0;display:block;border:0;border-radius:0;box-shadow:none;aspect-ratio:auto}.embedded-mode canvas{width:100%;height:100%;object-fit:contain}";
     document.head.appendChild(style);
-    window.addEventListener("message",(event)=>{if(event.origin!==location.origin||event.data?.type!=="party_snapshot")return;const previous=state.snapshot;state.roomId=event.data.roomId||state.roomId;state.snapshot=event.data.snapshot||null;syncUi();soundFor(previous,state.snapshot);});
+    window.addEventListener("message",(event)=>{if(event.origin!==location.origin||event.data?.type!=="party_snapshot")return;const previous=state.snapshot;state.roomId=event.data.roomId||state.roomId;state.snapshot=event.data.snapshot||null;syncEmbeddedRecording(previous,state.snapshot);syncUi();soundFor(previous,state.snapshot);});
     return;
   }
   let roomId=state.displayMode?displayCode:String(params.get("room")||"").toUpperCase();
@@ -38,6 +40,7 @@ async function connectScreen(){
   if(roomId&&!state.displayMode&&!token){roomId="";params.delete("room");history.replaceState({},"",location.pathname);}
   bind(await connect({gameId:"party",gameKey:"crowdshift",role:state.displayMode?"display":"host",roomId,token}));
 }
+function syncEmbeddedRecording(previous,next){if(!embedded||!next)return;const active=next.partyPhase==="activity",wasActive=previous?.partyPhase==="activity";if(active&&!wasActive){embeddedRecording=startRecording()||embeddedRecording;}else if(!active&&wasActive&&embeddedRecording){embeddedRecording=false;void finalizeRecording();}}
 function bind(connection){
   state.connection=connection;
   connection.onStatus(({status:s})=>{if(connection!==state.connection)return;if(s==="open")status("Connected","online");else if(s==="reconnecting")status("Reconnecting…");else if(s==="error"||s==="timeout")status("Connection problem","problem");});

@@ -33,3 +33,13 @@ test("party rotation exposes the bounded lifecycle and activity catalogs", async
     assert.match(server, new RegExp(`ModeKey: "${mode}"|ModeKey:.*"${mode}"`));
   }
 });
+
+test("embedded activities start and finalize the existing clip recorder", async () => {
+  const [turbo, crowd] = await Promise.all([read("turbotilt/game.js"), read("crowdshift/game.js")]);
+  for (const source of [turbo, crowd]) {
+    assert.match(source, /finalizeRecording/);
+    assert.match(source, /startRecording/);
+    assert.match(source, /partyPhase.{0,8}activity/);
+    assert.match(source, /syncEmbeddedRecording/);
+  }
+});
