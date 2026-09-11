@@ -11,12 +11,15 @@ test("Crowd Shift is registered as an accountless multiplayer party game", async
   assert.match(contracts, /crowdshift:[\s\S]*releasedAt: '2026-09-10'[\s\S]*unanimous/);
 });
 
-test("party hub offers Crowd Shift hosting, joining, watching, and phone choices", async () => {
+test("party hub offers Crowd Shift hosting, watching, group choices, and Duel Shift controls", async () => {
   const [html, app] = await Promise.all([read("party/index.html"), read("party/app.js")]);
   assert.match(html, /href="\/crowdshift\/"/);
   assert.match(html, /id="watchGame"[\s\S]*value="crowdshift"/);
   assert.match(html, /id="crowdLeft"[\s\S]*id="crowdRight"/);
+  assert.match(html, /id="duelPredictLeft"[\s\S]*id="duelHotTake"/);
   assert.match(app, /sendInput\(\{ type: "choice", choice \}\)/);
+  assert.match(app, /sendInput\(\{ type: "predict", choice: prediction \}\)/);
+  assert.match(app, /sendInput\(\{ type: "hot_take" \}\)/);
   assert.match(app, /gameKey === "crowdshift"/);
   assert.match(app, /window\.render_game_to_text/);
   assert.match(app, /window\.advanceTime/);
@@ -33,12 +36,17 @@ test("Crowd Shift host supports shared displays and deterministic inspection hoo
   assert.match(game, /window\.advanceTime/);
 });
 
-test("server keeps Crowd Shift choices secret until reveal", async () => {
+test("server keeps Crowd Shift choices and Duel Shift reads secret until reveal", async () => {
   const server = await read("v2-server/crowdshift.go");
   assert.match(server, /case "choice":/);
+  assert.match(server, /case "predict":/);
+  assert.match(server, /case "hot_take":/);
   assert.match(server, /p\.ID == selfID/);
   assert.match(server, /r\.phase == "reveal"/);
   assert.match(server, /"majority", "minority", "split", "unanimous"/);
+  assert.match(server, /"duel_sync", "duel_clash"/);
+  assert.match(server, /readPoints \+= 700/);
+  assert.match(server, /StealPoints\[opponentID\] \+= 400/);
 });
 
 test("Vercel routes Crowd Shift with both slash variants", async () => {

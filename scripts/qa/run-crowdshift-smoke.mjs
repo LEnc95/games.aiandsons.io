@@ -10,6 +10,6 @@ async function main(){
   const web=spawn(process.execPath,[path.join(repoRoot,"scripts","qa","static-server.mjs"),repoRoot,"4173"],{cwd:repoRoot,stdio:"ignore"});
   const multiplayer=spawn("go",["run","."],{cwd:path.join(repoRoot,"v2-server"),stdio:"ignore",env:{...process.env,PORT:"8081",PARTY_TEST_FAST:"1"}});
   const cleanup=()=>{stop(web);stop(multiplayer);};process.on("SIGINT",()=>{cleanup();process.exit(130);});process.on("SIGTERM",()=>{cleanup();process.exit(143);});
-  try{await Promise.all([waitFor(`${baseUrl}/crowdshift/`),waitFor("http://127.0.0.1:8081/healthz")]);await new Promise((resolve,reject)=>{const child=spawn(process.execPath,[path.join(repoRoot,"scripts","qa","crowdshift-smoke.mjs"),baseUrl],{cwd:repoRoot,stdio:"inherit"});child.on("error",reject);child.on("exit",(code)=>code===0?resolve():reject(new Error(`Crowd Shift smoke exited with ${code}`)));});}finally{cleanup();}
+  try{await Promise.all([waitFor(`${baseUrl}/crowdshift/`),waitFor("http://127.0.0.1:8081/healthz")]);for(const script of ["crowdshift-smoke.mjs","crowdshift-duel-smoke.mjs"]){await new Promise((resolve,reject)=>{const child=spawn(process.execPath,[path.join(repoRoot,"scripts","qa",script),baseUrl],{cwd:repoRoot,stdio:"inherit"});child.on("error",reject);child.on("exit",(code)=>code===0?resolve():reject(new Error(`${script} exited with ${code}`)));});}}finally{cleanup();}
 }
 main().catch((error)=>{console.error(error);process.exit(1);});

@@ -1,7 +1,51 @@
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-const baseUrl=process.argv[2]||"https://games.aiandsons.io";const errors=[];
-async function loadPlaywright(){try{return await import("playwright");}catch{const fallback=path.join(process.env.CODEX_HOME||path.join(os.homedir(),".codex"),"skills","develop-web-game","node_modules","playwright","index.mjs");return import(pathToFileURL(fallback).href);}}
-async function main(){const {chromium}=await loadPlaywright();const browser=await chromium.launch({headless:true});const contexts=[];const makePage=async(viewport,label)=>{const context=await browser.newContext({viewport});contexts.push(context);const page=await context.newPage();page.on("pageerror",(error)=>errors.push(`${label}: ${error}`));page.on("console",(message)=>{if(message.type()==="error")errors.push(`${label}: ${message.text()}`);});return page;};try{const host=await makePage({width:1280,height:720},"host");await host.goto(`${baseUrl}/crowdshift/`);await host.waitForFunction(()=>/^[A-HJ-NP-Z]{4}$/.test(document.getElementById("roomCode")?.textContent||""),null,{timeout:20000});const room=await host.locator("#roomCode").textContent();const join=async(name)=>{const page=await makePage({width:390,height:844},name);await page.goto(`${baseUrl}/party/?code=${room}`);await page.fill("#playerName",name);await page.click("#joinForm button[type=submit]");await page.waitForSelector("#crowdController:not([hidden])",{timeout:15000});return page;};const first=await join("Live One"),second=await join("Live Two");const display=await makePage({width:1280,height:720},"display");await display.goto(`${baseUrl}/crowdshift/?display=${room}`);await display.waitForFunction(()=>JSON.parse(window.render_game_to_text()).screen_role==="display",null,{timeout:15000});await host.click("#startButton");await host.waitForFunction(()=>JSON.parse(window.render_game_to_text()).phase==="choosing",null,{timeout:10000});await first.click("#crowdLeft");await second.click("#crowdRight");await host.waitForFunction(()=>JSON.parse(window.render_game_to_text()).phase==="reveal",null,{timeout:10000});await display.waitForFunction(()=>JSON.parse(window.render_game_to_text()).phase==="reveal",null,{timeout:10000});await host.click("#endButton");if(errors.length)throw new Error(errors.join(" | "));console.log(`Crowd Shift production smoke passed for room ${room}: host, two phones, secret choices, reveal, display, and host end.`);}finally{await Promise.all(contexts.map((context)=>context.close().catch(()=>{})));await browser.close();}}
-main().catch((error)=>{console.error(error);process.exit(1);});
+
+const baseUrl = process.argv[2] || "https://games.aiandsons.io";
+const errors = [];
+async function loadPlaywright() { try { return await import("playwright"); } catch { return import(pathToFileURL(path.join(process.env.CODEX_HOME || path.join(os.homedir(), ".codex"), "skills", "develop-web-game", "node_modules", "playwright", "index.mjs")).href); } }
+
+async function main() {
+  const { chromium } = await loadPlaywright();
+  const browser = await chromium.launch({ headless: true });
+  const contexts = [];
+  const makePage = async (viewport, label) => {
+    const context = await browser.newContext({ viewport }); contexts.push(context);
+    const page = await context.newPage();
+    page.on("pageerror", (error) => errors.push(`${label}: ${error}`));
+    page.on("console", (message) => { if (message.type() === "error") errors.push(`${label}: ${message.text()}`); });
+    return page;
+  };
+  try {
+    const host = await makePage({ width: 1280, height: 720 }, "host");
+    await host.goto(`${baseUrl}/crowdshift/`);
+    await host.waitForFunction(() => /^[A-HJ-NP-Z]{4}$/.test(document.getElementById("roomCode")?.textContent || ""), null, { timeout: 20000 });
+    const room = await host.locator("#roomCode").textContent();
+    const join = async (name) => {
+      const page = await makePage({ width: 390, height: 844 }, name);
+      await page.goto(`${baseUrl}/party/?code=${room}`);
+      await page.fill("#playerName", name);
+      await page.click("#joinForm button[type=submit]");
+      await page.waitForSelector("#crowdController:not([hidden])", { timeout: 15000 });
+      return page;
+    };
+    const first = await join("Live One"), second = await join("Live Two");
+    const display = await makePage({ width: 1280, height: 720 }, "display");
+    await display.goto(`${baseUrl}/crowdshift/?display=${room}`);
+    await display.waitForFunction(() => JSON.parse(window.render_game_to_text()).screen_role === "display", null, { timeout: 15000 });
+    await host.click("#startButton");
+    await host.waitForFunction(() => { const state = JSON.parse(window.render_game_to_text()); return state.phase === "choosing" && state.duel; }, null, { timeout: 10000 });
+    await first.click("#crowdLeft"); await first.click("#duelHotTake"); await first.click("#duelPredictRight");
+    await second.click("#crowdRight"); await second.click("#duelPredictLeft");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "reveal", null, { timeout: 10000 });
+    await display.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "reveal", null, { timeout: 10000 });
+    await host.click("#endButton");
+    if (errors.length) throw new Error(errors.join(" | "));
+    console.log("Crowd Shift Duel production smoke passed: host, two phones, secret choices and predictions, Hot Take, reveal, display, and host end.");
+  } finally {
+    await Promise.all(contexts.map((context) => context.close().catch(() => {})));
+    await browser.close();
+  }
+}
+main().catch((error) => { console.error(error); process.exit(1); });

@@ -1461,6 +1461,8 @@ func partyPhaseDuration(base int64) int64 {
 		return 800
 	case crowdShiftMinimumChoiceMs:
 		return 250
+	case crowdShiftDuelGraceMs:
+		return 350
 	default:
 		return base
 	}

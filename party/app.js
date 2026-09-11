@@ -27,6 +27,8 @@ const state = {
   selectedVote: "",
   voteSignature: "",
   selectedChoice: "",
+  selectedPrediction: "",
+  selectedHotTake: false,
 };
 
 function normalizeCode(value) {
@@ -178,6 +180,8 @@ const crowdRuleLabels = {
   minority: "BACK THE UNDERDOG · The smaller side scores 1,200",
   split: "PERFECT SPLIT · Get the room within one vote",
   unanimous: "ALL TOGETHER · Everyone must pick the same side",
+  duel_sync: "SYNC ROUND · Match choices for 400 each",
+  duel_clash: "CLASH ROUND · Opposite choices for 400 each",
 };
 
 function renderCrowdController(snapshot) {
@@ -186,18 +190,29 @@ function renderCrowdController(snapshot) {
   const round = Number(snapshot?.round || 0);
   const remaining = Math.max(0, (Number(snapshot?.phaseEndsAt || 0) - (Date.now() + state.testOffsetMs)) / 1000);
   const prompt = snapshot?.prompt || {};
+  const duel = Boolean(snapshot?.duel);
+  const rival = snapshot?.players?.find((player) => player.id !== me?.id && player.active && !player.queued);
   if (me?.choice) state.selectedChoice = me.choice;
-  if (phase === "intermission" || phase === "choosing" && !me?.choice) state.selectedChoice = "";
+  if (me?.prediction) state.selectedPrediction = me.prediction;
+  state.selectedHotTake = Boolean(me?.hotTake);
+  if (phase === "intermission" || phase === "choosing" && !me?.choice && !me?.prediction) {
+    state.selectedChoice = "";
+    state.selectedPrediction = "";
+    state.selectedHotTake = false;
+  }
+  const hasChoice = Boolean(me?.hasChosen || state.selectedChoice);
+  const hasPrediction = Boolean(me?.hasPredicted || state.selectedPrediction);
 
   byId("crowdPhaseLabel").textContent = round ? `${phase} · Round ${round}/${snapshot?.totalRounds || 7}` : phase;
   byId("crowdRound").textContent = round ? `${round}/${snapshot?.totalRounds || 7}` : "—";
-  byId("crowdRank").textContent = me?.rank ? `#${me.rank}` : "—";
+  const hasScores = snapshot?.players?.some((player) => Number(player.points) > 0);
+  byId("crowdRank").textContent = hasScores && me?.rank ? `#${me.rank}` : "—";
   byId("crowdPoints").textContent = String(me?.points || 0);
   let message = "Waiting for the host";
   if (me?.queued) message = "You join next round";
   else if (phase === "countdown") message = `First choice in ${Math.max(1, Math.ceil(remaining))}`;
-  else if (phase === "choosing") message = me?.hasChosen ? "Choice locked—watch the screen" : `${Math.ceil(remaining)} seconds to choose`;
-  else if (phase === "reveal") message = me?.roundPoints ? `+${me.roundPoints.toLocaleString()} points!` : "The crowd has spoken";
+  else if (phase === "choosing") message = duel && (!hasChoice || !hasPrediction) ? `${Math.ceil(remaining)} seconds—pick and predict` : hasChoice ? "Locked—watch the showdown" : `${Math.ceil(remaining)} seconds to choose`;
+  else if (phase === "reveal") message = me?.roundPoints ? `+${me.roundPoints.toLocaleString()} points!` : duel ? "Your rival escaped the read" : "The crowd has spoken";
   else if (phase === "intermission") message = "Next dilemma incoming";
   else if (phase === "paused") message = snapshot?.pauseReason === "host_disconnected" ? "Host reconnecting…" : "Game paused";
   else if (phase === "podium") message = me?.rank === 1 ? "You shifted the crowd!" : `You finished #${me?.rank || "—"}`;
@@ -207,6 +222,11 @@ function renderCrowdController(snapshot) {
   byId("crowdQuestion").textContent = prompt.question || "Get ready to pick a side.";
   byId("crowdLeftText").textContent = prompt.left || "Option A";
   byId("crowdRightText").textContent = prompt.right || "Option B";
+  byId("crowdPrompt").classList.toggle("duel-active", duel);
+  byId("duelPanel").hidden = !duel;
+  byId("duelRival").textContent = rival?.name || "your rival";
+  byId("duelPredictLeftText").textContent = prompt.left || "Option A";
+  byId("duelPredictRightText").textContent = prompt.right || "Option B";
 
   const canChoose = phase === "choosing" && me?.active && !me?.queued;
   ["left", "right"].forEach((choice) => {
@@ -214,9 +234,21 @@ function renderCrowdController(snapshot) {
     button.disabled = !canChoose;
     button.classList.toggle("selected", state.selectedChoice === choice);
   });
+  ["left", "right"].forEach((prediction) => {
+    const button = byId(prediction === "left" ? "duelPredictLeft" : "duelPredictRight");
+    button.disabled = !duel || !canChoose;
+    button.classList.toggle("selected", state.selectedPrediction === prediction);
+  });
+  const hotTake = byId("duelHotTake");
+  hotTake.disabled = !duel || !canChoose || !me?.hotTakeAvailable;
+  hotTake.classList.toggle("selected", state.selectedHotTake);
+  hotTake.classList.toggle("used", duel && !me?.hotTakeAvailable);
+  hotTake.querySelector("b").textContent = me?.hotTakeAvailable ? "🔥 HOT TAKE" : "✓ HOT TAKE USED";
   let status = "Your choice stays secret until the reveal.";
   if (me?.queued) status = "Cheer this round—your first choice is next.";
-  else if (phase === "choosing" && me?.hasChosen) status = "Locked! You can still switch sides before time runs out.";
+  else if (phase === "choosing" && duel && (!hasChoice || !hasPrediction)) status = "Lock your own choice and your prediction. Both stay secret.";
+  else if (phase === "choosing" && hasChoice) status = "Locked! You can still change your play before time runs out.";
+  else if (phase === "reveal" && duel) status = `${me?.readCorrect ? `Mind read! +${(me.readPoints || 0).toLocaleString()}` : "Read missed."}${me?.stealPoints ? ` You stole ${me.stealPoints.toLocaleString()}!` : ""}`;
   else if (phase === "reveal") status = `${snapshot?.resultHeadline || "Reveal!"} ${snapshot?.leftCount || 0}–${snapshot?.rightCount || 0}`;
   else if (phase === "podium") status = `Final score: ${(me?.points || 0).toLocaleString()}`;
   byId("crowdChoiceStatus").textContent = status;
@@ -399,6 +431,18 @@ byId("hornButton").addEventListener("click", () => state.connection?.sendInput({
   renderController();
   navigator.vibrate?.(30);
 }));
+["left", "right"].forEach((prediction) => byId(prediction === "left" ? "duelPredictLeft" : "duelPredictRight").addEventListener("click", () => {
+  state.selectedPrediction = prediction;
+  state.connection?.sendInput({ type: "predict", choice: prediction });
+  renderController();
+  navigator.vibrate?.(20);
+}));
+byId("duelHotTake").addEventListener("click", () => {
+  state.selectedHotTake = !state.selectedHotTake;
+  state.connection?.sendInput({ type: "hot_take" });
+  renderController();
+  navigator.vibrate?.([25, 20, 25]);
+});
 document.querySelectorAll("[data-crowd-emote]").forEach((button) => button.addEventListener("click", () => {
   state.connection?.sendInput({ type: "emote", emote: button.dataset.crowdEmote });
 }));
@@ -455,6 +499,8 @@ window.render_game_to_text = () => JSON.stringify({
   selected_gadget: state.selectedGadget,
   selected_vote: state.selectedVote,
   selected_choice: state.selectedChoice,
+  selected_prediction: state.selectedPrediction,
+  hot_take_selected: state.selectedHotTake,
   state: state.snapshot,
 });
 if (["127.0.0.1", "localhost"].includes(location.hostname)) {

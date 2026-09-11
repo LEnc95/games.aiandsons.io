@@ -65,7 +65,7 @@ Party hosts join with `gameId: "party"`, `role: "host"`, a supported `gameKey`, 
 
 Turbo Tilt party input also supports validated `gadget`, `vote`, `customize`, `emote`, and `horn` messages. Host `configure` actions select Classic, Elimination, Teams, Relay, Survival, or Chaos Cup; two to five heats; track rotation; obstacle density; and reduced-motion presentation. All selections, modifiers, events, route rewards, team state, and the bounded photo-finish buffer remain ephemeral in the room process.
 
-Crowd Shift accepts secret `choice` inputs during seven server-timed rounds. Its majority, minority, near-even split, and unanimity scoring rules, prompt selection, reveal counts, scores, and reconnect state are authoritative and ephemeral; host/display snapshots hide individual choices until reveal.
+Crowd Shift accepts secret `choice` inputs during seven server-timed rounds. Rooms that start with exactly two connected players enter Duel Shift: both players also submit a secret `predict` input, build individual mind-read streaks, and may risk one `hot_take` per match for a larger correct-read bonus or a 400-point steal by their rival. Three-to-eight-player rooms retain majority, minority, near-even split, and unanimity scoring. Prompts, reveals, scores, and reconnect state are authoritative and ephemeral; host/display snapshots expose readiness but hide choices, predictions, and Hot Takes until reveal.
 
 See `DEPLOY.md` for the single-instance Cloud Run beta configuration and rollout order.
 
