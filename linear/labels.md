@@ -230,5 +230,6 @@
 - game/clockworkclover
 - game/thimbletide
 - game/ribbonreversal
+- game/pebbleparade
 
 Generated from `src/meta/feedback.js`.

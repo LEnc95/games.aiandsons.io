@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Pebble Parade - a five-pond timing game for keyboard and touch.
+
 - Ribbon Reversal - a five-bundle prefix-reversal sorting puzzle for keyboard and touch.
 
 - Crowd Shift — a seven-round shared-screen party game with a dedicated two-player Duel Shift for secret choices, mind reads, streaks, and risky Hot Takes, plus rotating crowd rules for 3–8 phones.

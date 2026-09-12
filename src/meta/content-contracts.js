@@ -2,6 +2,17 @@
 // must add an explicit contract so automated challenges and cosmetics never
 // guess at unbounded metrics or promise effects a game cannot render.
 export const GAME_CONTENT_CONTRACTS = Object.freeze({
+  pebbleparade: Object.freeze({
+    releasedAt: '2026-09-12',
+    outcomes: Object.freeze({
+      skips: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      ponds: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      splashes: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'pebbleparade-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'deep', 'bank', 'stone', 'ring', 'ink']) }),
+    ]),
+  }),
   ribbonreversal: Object.freeze({
     releasedAt: '2026-09-11',
     outcomes: Object.freeze({
