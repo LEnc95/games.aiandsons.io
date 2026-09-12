@@ -1,5 +1,16 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-12 Pebble Parade automation
+- Started from clean detached origin/main `a82bcebf2664ffe0b7669eac37143b42b3f582ab`; `npm ci` passed with 16 existing audit findings.
+- Added Pebble Parade (`/pebbleparade`), a five-pond timing game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ skips, ponds, splashes }` outcomes.
+- TODO: generators, early gates, complete browser QA, final gates, diff audit, guarded PR, merge, and production verification.
+- SEO, OG, and local Linear generation passed. Restored the same 42 existing nondeterministic OG renders and 14 blank-line-only page edits documented by the prior run; kept only required release outputs.
+- Maintenance validation and 216-game preflight passed. Supplied Playwright client and focused QA passed with zero browser errors: exact stepping, paused freeze, aim/boundaries, loss/restart, five transitions, 20-skip win, all palettes, feedback, fullscreen/Escape, touch, and 390px layout.
+- Visually inspected gameplay, pause, transition, loss, win, feedback, mobile, and OG captures. Corrected completed-pond outcome accounting during QA.
+- TODO: final gates, exact diff audit, guarded PR, merge, and production verification.
+- Ordered final gates passed: maintenance, preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff check. Exact release review found one registry entry, one top-level game folder, matching contract/outcomes/changelog, and only the 11 permitted paths.
+- TODO: branch commit, authoritative audit, guarded PR, merge, and production verification.
+
 ## 2026-09-11 Ribbon Reversal continuation
 - User authorized continuing only the new game and forbade touching other games/shared generators. Copied only the eleven allowed game-release paths into C:/Users/Luke/.codex/worktrees/e51a-ribbon-release/games.aiandsons.io at the recorded baseline 17631a8bb3c0accfe4760d693c2d5962e4c3fd86. Original worktree and all earlier generator noise remain untouched; none is in this release workspace.
 - Dependency install, maintenance validation, and 215-game preflight passed. Supplied Playwright client and focused desktop/mobile matrix passed with zero browser errors; naturally solved all five bundles using 41 flips and verified completed/lost/abandoned outcomes, exact deterministic stepping, paused freeze, controls/boundaries, fullscreen/Escape, feedback, and themes.

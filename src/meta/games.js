@@ -216,6 +216,7 @@ const BASE_GAMES = [
   { slug:'clockworkclover', name:'Clockwork Clover',            emoji:'\u{1F340}', scoreHint:'beams', url:'/clockworkclover', desc:'Turn a garden clock, catch bright timing arcs, and wake five flower courtyards before sunset.', earnsCoins:true },
   { slug:'thimbletide', name:'Thimble Tide',                    emoji:'\u{1F41A}', scoreHint:'pearls', url:'/thimbletide', desc:'Track a hidden pearl through quick shell swaps and chart five moonlit shores.', earnsCoins:true },
   { slug:'ribbonreversal', name:'Ribbon Reversal', emoji:'\u{1F380}', scoreHint:'bundles', url:'/ribbonreversal', desc:'Reverse the top of a ribbon stack, sort lengths from shortest to longest, and organize five colorful puzzle bundles.', earnsCoins:true },
+  { slug:'pebbleparade', name:'Pebble Parade', emoji:'\u{1FAA8}', scoreHint:'skips', url:'/pebbleparade', desc:'Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
