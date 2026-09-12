@@ -1,14 +1,17 @@
 import { connect } from "/src/net/multiplayerClient.js";
 import { rememberRecent } from "/src/core/state.js";
 import { reportGameOutcome } from "/src/core/outcomes.js";
+import { finalizeRecording, startRecording } from "/src/social/record.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const displayCode = String(params.get("display") || "").toUpperCase().replace(/[^A-HJ-NP-Z]/g, "").slice(0, 4);
-const isDisplay = displayCode.length === 4;
+const embedded = params.get("embedded") === "1";
+const isDisplay = embedded || displayCode.length === 4;
 if (!isDisplay) rememberRecent("turbotilt");
+let embeddedRecording = false;
 const state = {
   connection: null,
   roomId: "",
@@ -39,6 +42,21 @@ function setServerStatus(label, kind = "") {
 }
 
 async function connectScreen() {
+  if (embedded) {
+    document.body.classList.add("display-mode", "embedded-mode");
+    byId("screenRole").textContent = "Party activity";
+    window.addEventListener("message", (event) => {
+      if (event.origin !== location.origin || event.data?.type !== "party_snapshot") return;
+      const previous = state.snapshot;
+      state.roomId = event.data.roomId || state.roomId;
+      state.snapshot = event.data.snapshot || null;
+      syncEmbeddedRecording(previous, state.snapshot);
+      consumeRaceEvents();
+      processRaceAudio(previous, state.snapshot);
+      syncUi();
+    });
+    return;
+  }
   if (state.displayMode) {
     const connection = await connect({
       gameId: "party",
@@ -64,6 +82,18 @@ async function connectScreen() {
     token,
   });
   bindConnection(connection);
+}
+
+function syncEmbeddedRecording(previous, next) {
+  if (!embedded || !next) return;
+  const active = next.partyPhase === "activity";
+  const wasActive = previous?.partyPhase === "activity";
+  if (active && !wasActive) {
+    embeddedRecording = startRecording() || embeddedRecording;
+  } else if (!active && wasActive && embeddedRecording) {
+    embeddedRecording = false;
+    void finalizeRecording();
+  }
 }
 
 function bindConnection(connection) {
@@ -892,6 +922,9 @@ window.advanceTime = (ms) => {
   state.stripeOffset += amount * .19;
   draw();
 };
+window.addEventListener("message", (event) => {
+  if (event.origin === location.origin && event.data?.type === "party_advance_time") window.advanceTime(event.data.ms);
+});
 window.render_game_to_text = () => JSON.stringify({
   coordinate_system: { origin: "top-left", x_axis: "right", y_axis: "down", canvas: { width: canvas.width, height: canvas.height }, track_x: "-1 left to +1 right", distance: "increases toward finish" },
   room_id: state.roomId,
