@@ -62,13 +62,14 @@ type outEnvelope struct {
 }
 
 type joinPayload struct {
-	GameID     string `json:"gameId"`
-	RoomID     string `json:"roomId"`
-	Token      string `json:"token"`
-	PlayerName string `json:"playerName"`
-	UserAgent  string `json:"userAgent"`
-	Role       string `json:"role"`
-	GameKey    string `json:"gameKey"`
+	GameID       string `json:"gameId"`
+	RoomID       string `json:"roomId"`
+	Token        string `json:"token"`
+	PlayerName   string `json:"playerName"`
+	PlayerAvatar string `json:"playerAvatar"`
+	UserAgent    string `json:"userAgent"`
+	Role         string `json:"role"`
+	GameKey      string `json:"gameKey"`
 }
 
 type inputEnvelope struct {

@@ -22,4 +22,4 @@ Deploy the server before publishing the static party pages. Verify:
 Invoke-RestMethod https://audioagar-server-6owms56gxq-uc.a.run.app/healthz/
 ```
 
-The response must list both `audioagar` and `party`. Cloud Run's current edge routes the slash-terminated health path; the application also registers `/healthz` for local and direct-container checks. Then create a Turbo Tilt room on the production site and join it from two physical phones before treating the rollout as complete.
+The response must list both `audioagar` and `party` (with `turbotilt` and `crowdshift` in the party game list). Cloud Run's current edge routes the slash-terminated health path; the application also registers `/healthz` for local and direct-container checks. Then create a rotating Party room on the production site, join it from two physical phones, complete a vote, and open the copied display link on a second computer before treating the rollout as complete.
