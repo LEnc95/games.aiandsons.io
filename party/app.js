@@ -603,7 +603,13 @@ function renderSessionQr() {
   const qr = window.qrcode(0, "M");
   qr.addData(`https://games.aiandsons.io/party?code=${encodeURIComponent(state.roomId)}`);
   qr.make();
-  target.innerHTML = qr.createSvgTag(4, 1, "Scan to join the party", "Party room QR code");
+  const qrDocument = new DOMParser().parseFromString(
+    qr.createSvgTag(4, 1, "Scan to join the party", "Party room QR code"),
+    "image/svg+xml",
+  );
+  if (!qrDocument.querySelector("parsererror") && qrDocument.documentElement.localName === "svg") {
+    target.append(document.importNode(qrDocument.documentElement, true));
+  }
 }
 
 function sendPartyHost(action) {
