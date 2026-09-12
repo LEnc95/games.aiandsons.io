@@ -495,7 +495,7 @@ func (r *partyRoom) crowdShiftSnapshotLocked(selfID string) map[string]any {
 			hotTake = r.crowd.HotTakes[p.ID]
 		}
 		players = append(players, map[string]any{
-			"id": p.ID, "name": p.Name, "color": p.Color, "connected": p.Connected,
+			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar, "connected": p.Connected,
 			"queued": p.Queued, "active": p.Active, "points": p.Points,
 			"roundPoints": p.HeatPoints, "rank": p.Rank, "choice": choice,
 			"hasChosen": r.crowd.Choices[p.ID] != "", "emote": p.Emote, "emoteAt": p.EmoteAt,

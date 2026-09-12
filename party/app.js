@@ -1,4 +1,5 @@
 import { connect } from "/src/net/multiplayerClient.js";
+import { AVATAR_EMOJI, DEFAULT_AVATAR_EMOJI, isAvatarEmoji } from "/src/social/avatars.js";
 
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -7,12 +8,14 @@ const partyCanvas = byId("partyStage");
 const partyCtx = partyCanvas.getContext("2d");
 const screenMode = params.get("host") === "1" || normalizeCode(params.get("display")).length === 4;
 const displayMode = normalizeCode(params.get("display")).length === 4;
+const avatarStorageKey = "aiandsons-party-avatar";
 const state = {
   connection: null,
   roomId: "",
   playerId: "",
   playerName: "",
   playerColor: "#31e6c1",
+  playerAvatar: DEFAULT_AVATAR_EMOJI,
   gameKey: "",
   snapshot: null,
   tiltEnabled: false,
@@ -40,6 +43,42 @@ const state = {
   selectedPartyVote: "",
   partyAnimationFrame: 0,
 };
+
+function loadSavedAvatar() {
+  try {
+    const saved = localStorage.getItem(avatarStorageKey);
+    return isAvatarEmoji(saved) ? saved : DEFAULT_AVATAR_EMOJI;
+  } catch {
+    return DEFAULT_AVATAR_EMOJI;
+  }
+}
+
+function renderAvatarPicker() {
+  state.playerAvatar = loadSavedAvatar();
+  const target = byId("avatarOptions");
+  if (!target) return;
+  target.textContent = "";
+  AVATAR_EMOJI.forEach((avatar, index) => {
+    const label = document.createElement("label");
+    label.className = "avatar-option";
+    label.setAttribute("aria-label", `Avatar ${index + 1}: ${avatar}`);
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "playerAvatar";
+    input.value = avatar;
+    input.setAttribute("aria-label", `Avatar ${index + 1}: ${avatar}`);
+    input.checked = avatar === state.playerAvatar;
+    input.addEventListener("change", () => {
+      state.playerAvatar = avatar;
+      try { localStorage.setItem(avatarStorageKey, avatar); } catch { /* Storage is optional. */ }
+    });
+    const preview = document.createElement("span");
+    preview.setAttribute("aria-hidden", "true");
+    preview.textContent = avatar;
+    label.append(input, preview);
+    target.append(label);
+  });
+}
 
 function normalizeCode(value) {
   return String(value || "").toUpperCase().replace(allowedCode, "").slice(0, 4);
@@ -91,6 +130,7 @@ async function joinParty({ withoutToken = false } = {}) {
     roomId: code,
     role: "player",
     playerName: name,
+    playerAvatar: state.playerAvatar,
     token: savedToken,
   });
   state.connection = connection;
@@ -116,11 +156,13 @@ function handleEvent(connection, event) {
     state.playerId = payload.playerId || state.playerId;
     state.playerName = payload.playerName || "Racer";
     state.playerColor = payload.playerColor || state.playerColor;
+    state.playerAvatar = isAvatarEmoji(payload.playerAvatar) ? payload.playerAvatar : state.playerAvatar;
     state.gameKey = payload.gameKey || state.gameKey || "turbotilt";
     state.sessionMode = payload.sessionMode || state.sessionMode;
     if (payload.token) localStorage.setItem(tokenKey(state.roomId), payload.token);
     byId("playerLabel").textContent = state.playerName;
     byId("playerDot").style.background = state.playerColor;
+    byId("playerDot").textContent = state.playerAvatar;
     showController();
     window.scrollTo({ top: 0, behavior: "auto" });
     renderController();
@@ -248,7 +290,7 @@ function renderPartyController(snapshot) {
   }
   target.querySelectorAll("[data-party-vote]").forEach((button) => {
     const optionId = button.dataset.partyVote;
-    const names = (vote.ballots || []).filter((ballot) => ballot.optionId === optionId).map((ballot) => ballot.playerName);
+    const names = (vote.ballots || []).filter((ballot) => ballot.optionId === optionId).map((ballot) => `${ballot.playerAvatar || DEFAULT_AVATAR_EMOJI} ${ballot.playerName}`);
     button.classList.toggle("selected", optionId === state.selectedPartyVote);
     button.disabled = !voting;
     button.querySelector(".party-voters").textContent = names.length ? `Voted: ${names.join(", ")}` : "No votes yet";
@@ -264,6 +306,7 @@ function renderPhoneStandings(snapshot) {
     const row = document.createElement("li");
     row.style.setProperty("--player", player.color);
     const dot = document.createElement("i");
+    dot.textContent = player.avatar || DEFAULT_AVATAR_EMOJI;
     const name = document.createElement("b");
     name.textContent = `#${player.partyRank || "—"} ${player.name}`;
     const points = document.createElement("span");
@@ -601,6 +644,7 @@ function renderSessionRoster(players) {
     const row = document.createElement("li");
     row.style.setProperty("--player", player.color);
     const dot = document.createElement("i");
+    dot.textContent = player.avatar || DEFAULT_AVATAR_EMOJI;
     const name = document.createElement("b");
     name.textContent = `${player.partyRank ? `#${player.partyRank} ` : ""}${player.name}${player.connected ? "" : " · offline"}`;
     const score = document.createElement("span");
@@ -656,6 +700,17 @@ function partyRoundRect(x, y, w, h, radius, fill, stroke = "") {
   if (stroke) { partyCtx.strokeStyle = stroke; partyCtx.lineWidth = 3; partyCtx.stroke(); }
 }
 
+function partyAvatar(player, x, y, radius = 24, fontSize = radius * 1.25) {
+  partyCtx.fillStyle = player?.color || "#31e6c1";
+  partyCtx.beginPath();
+  partyCtx.arc(x, y, radius, 0, Math.PI * 2);
+  partyCtx.fill();
+  partyCtx.textAlign = "center";
+  partyCtx.textBaseline = "middle";
+  partyCtx.font = `${fontSize}px "Segoe UI Emoji",sans-serif`;
+  partyCtx.fillText(player?.avatar || player?.playerAvatar || DEFAULT_AVATAR_EMOJI, x, y + 1);
+}
+
 function drawPartyStage(snapshot) {
   partyBackground();
   if (!snapshot || (snapshot.partyPhase || "party_lobby") === "party_lobby") return drawPartyLobby(snapshot);
@@ -685,7 +740,7 @@ function drawPartyLobby(snapshot) {
   partyText(players.length < 2 ? "Waiting for players" : "The party is ready!", 600, 286, 760, 46, players.length < 2 ? "#fff" : "#31e6c1");
   players.slice(0, 8).forEach((player, index) => {
     const x = 255 + (index % 4) * 230, y = 370 + Math.floor(index / 4) * 100;
-    partyCtx.fillStyle = player.color; partyCtx.beginPath(); partyCtx.arc(x, y, 28, 0, Math.PI * 2); partyCtx.fill();
+    partyAvatar(player, x, y, 28, 34);
     partyText(player.name, x, y + 48, 195, 18, player.connected ? "#fff" : "#8799aa");
   });
   partyText("Host starts the opening vote", 600, 605, 800, 25, "#c7b9db");
@@ -706,7 +761,7 @@ function drawPartyVoting(snapshot) {
     own.forEach((ballot, ballotIndex) => {
       const bx = x + 34 + (ballotIndex % 2) * 145, by = 385 + Math.floor(ballotIndex / 2) * 55;
       partyRoundRect(bx, by, 125, 40, 20, ballot.playerColor || "#ffcf4a");
-      partyText(ballot.playerName, bx + 62, by + 21, 108, 14, "#07131d");
+      partyText(`${ballot.playerAvatar || DEFAULT_AVATAR_EMOJI} ${ballot.playerName}`, bx + 62, by + 21, 108, 14, "#07131d");
     });
     if (!own.length) partyText("Waiting for votes…", x + 164, 425, 270, 17, "#8097aa");
   });
@@ -728,7 +783,7 @@ function drawPartyWheel(snapshot) {
     partyCtx.fillStyle = ballot.playerColor || ["#31e6c1", "#ffcf4a", "#ff6b8a"][index % 3]; partyCtx.fill();
     partyCtx.strokeStyle = "rgba(5,14,28,.55)"; partyCtx.lineWidth = 4; partyCtx.stroke();
     partyCtx.save(); partyCtx.translate(cx, cy); partyCtx.rotate(start + arc / 2); partyCtx.textAlign = "right"; partyCtx.fillStyle = "#08151f";
-    partyCtx.font = `900 ${count > 6 ? 14 : 18}px Inter,system-ui`; partyCtx.fillText(ballot.playerName || "Mystery pick", radius - 24, 5, radius - 50); partyCtx.restore();
+    partyCtx.font = `900 ${count > 6 ? 14 : 18}px Inter,system-ui`; partyCtx.fillText(`${ballot.playerAvatar || DEFAULT_AVATAR_EMOJI} ${ballot.playerName || "Mystery pick"}`, radius - 24, 5, radius - 50); partyCtx.restore();
   });
   partyCtx.fillStyle = "#fff"; partyCtx.beginPath(); partyCtx.moveTo(cx, 92); partyCtx.lineTo(cx - 24, 135); partyCtx.lineTo(cx + 24, 135); partyCtx.closePath(); partyCtx.fill();
   partyCtx.fillStyle = "#0a1830"; partyCtx.beginPath(); partyCtx.arc(cx, cy, 58, 0, Math.PI * 2); partyCtx.fill();
@@ -761,7 +816,7 @@ function drawPartyStandings(players, awards = false) {
   [...players].sort((a, b) => (a.partyRank || 99) - (b.partyRank || 99)).slice(0, 8).forEach((player, index) => {
     const col = index % 2, row = Math.floor(index / 2), x = 130 + col * 500, y = 145 + row * 105;
     partyRoundRect(x, y, 440, 82, 18, "rgba(255,255,255,.075)", index === 0 ? "#ffe36e" : "rgba(255,255,255,.1)");
-    partyCtx.fillStyle = player.color; partyCtx.beginPath(); partyCtx.arc(x + 40, y + 41, 20, 0, Math.PI * 2); partyCtx.fill();
+    partyAvatar(player, x + 40, y + 41, 20, 24);
     partyCtx.textAlign = "left"; partyCtx.fillStyle = "#fff"; partyCtx.font = "850 23px Inter,system-ui"; partyCtx.fillText(`#${player.partyRank || index + 1} ${player.name}`, x + 75, y + 35, 245);
     partyCtx.fillStyle = "#aebdcb"; partyCtx.font = "700 14px Inter,system-ui"; partyCtx.fillText(`${player.activityWins || 0} win${player.activityWins === 1 ? "" : "s"}${awards && player.partyAward ? ` · +${player.partyAward} this game` : ""}`, x + 75, y + 59, 270);
     partyCtx.textAlign = "right"; partyCtx.fillStyle = "#ffe36e"; partyCtx.font = "950 26px Inter,system-ui"; partyCtx.fillText(`${player.partyPoints || 0} pts`, x + 415, y + 49);
@@ -770,7 +825,7 @@ function drawPartyStandings(players, awards = false) {
 
 function drawPartyStandingsStrip(players) {
   const ordered = [...players].sort((a, b) => (a.partyRank || 99) - (b.partyRank || 99)).slice(0, 4);
-  partyText(ordered.map((player) => `#${player.partyRank || "—"} ${player.name} ${player.partyPoints || 0}`).join("   ·   ") || "Standings begin after the first game", 600, 617, 1080, 19, "#d5e5ed");
+  partyText(ordered.map((player) => `${player.avatar || DEFAULT_AVATAR_EMOJI} #${player.partyRank || "—"} ${player.name} ${player.partyPoints || 0}`).join("   ·   ") || "Standings begin after the first game", 600, 617, 1080, 19, "#d5e5ed");
 }
 
 byId("roomCode").addEventListener("input", (event) => { event.target.value = normalizeCode(event.target.value); });
@@ -854,6 +909,7 @@ setInterval(() => {
 }, 100);
 
 const initialCode = normalizeCode(params.get("code"));
+renderAvatarPicker();
 if (!screenMode && initialCode) {
   byId("roomCode").value = initialCode;
   if (localStorage.getItem(tokenKey(initialCode))) {
@@ -884,6 +940,7 @@ window.render_game_to_text = () => JSON.stringify({
   coordinate_system: { steering: "-1 left to +1 right" },
   room_id: state.roomId,
   player_id: state.playerId,
+  player_avatar: state.playerAvatar,
   game_key: state.gameKey,
   tilt_enabled: state.tiltEnabled,
   effective_steer: Number(effectiveSteer().toFixed(2)),

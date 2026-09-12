@@ -203,6 +203,7 @@ function syncUi() {
     dot.className = "dot";
     dot.style.color = player.color;
     dot.style.background = player.color;
+    dot.textContent = player.avatar || "🦊";
     const name = document.createElement("strong");
     name.textContent = player.name;
     item.append(dot, name);
@@ -568,6 +569,11 @@ function drawRacer(player, leaderDistance, index) {
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#08151d";
   ctx.fillRect(-14, -19, 28, 20);
+  ctx.fillStyle = "#fff";
+  ctx.font = "17px \"Segoe UI Emoji\",sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(player.avatar || "🦊", 0, -9);
   ctx.fillStyle = "rgba(255,255,255,.8)";
   ctx.fillRect(-16, 12, 7, 14); ctx.fillRect(9, 12, 7, 14);
   if (player.slowed) {
@@ -587,7 +593,7 @@ function drawRacer(player, leaderDistance, index) {
   ctx.font = "800 15px Trebuchet MS";
   ctx.textAlign = "center";
   ctx.fillStyle = "#fff";
-  ctx.fillText(player.name, 0, -46);
+  ctx.fillText(`${player.avatar || "🦊"} ${player.name}`, 0, -46);
   if (state.snapshot?.settings?.mode === "relay" && player.driving) {
     ctx.fillStyle = "#ffcf4a";
     ctx.font = "900 11px Trebuchet MS";
@@ -661,11 +667,10 @@ function drawLeaderboard(players) {
   ctx.fillText("LIVE ORDER", 46, 52);
   leaders.forEach((player, index) => {
     const y = 84 + index * 42;
-    ctx.fillStyle = player.color;
-    ctx.beginPath(); ctx.arc(48, y - 5, 7, 0, Math.PI * 2); ctx.fill();
+    drawPlayerAvatar(player, 48, y - 5, 14);
     ctx.fillStyle = "#fff";
     ctx.font = "900 18px Trebuchet MS";
-    ctx.fillText(`${index + 1}. ${player.name}`, 64, y);
+    ctx.fillText(`${index + 1}. ${player.name}`, 70, y);
     ctx.textAlign = "right";
     ctx.fillStyle = player.slowed ? "#ff9aaa" : player.boosting ? "#ffcf4a" : "#9cb6c8";
     ctx.font = "800 13px Trebuchet MS";
@@ -688,6 +693,16 @@ function drawLobby(snapshot) {
   ctx.fillStyle = "#9cb6c8";
   ctx.font = "700 24px Trebuchet MS";
   ctx.fillText("Use the room code or scan the QR code", 600, 362);
+}
+
+function drawPlayerAvatar(player, x, y, radius = 18) {
+  ctx.fillStyle = player?.color || "#31e6c1";
+  ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = `${Math.round(radius * 1.25)}px \"Segoe UI Emoji\",sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(player?.avatar || "🦊", x, y + 1);
 }
 
 function drawRace(snapshot) {
@@ -766,8 +781,7 @@ function drawIntermission(snapshot) {
   players.slice(0, 6).forEach((player, index) => {
     const y = 268 + index * 43;
     ctx.textAlign = "left";
-    ctx.fillStyle = player.color;
-    ctx.beginPath(); ctx.arc(402, y - 5, 8, 0, Math.PI * 2); ctx.fill();
+    drawPlayerAvatar(player, 402, y - 5, 14);
     ctx.fillStyle = "#fff";
     ctx.font = "900 20px Trebuchet MS";
     ctx.fillText(`${index + 1}. ${player.name}`, 424, y);
@@ -837,7 +851,7 @@ function drawPodium(snapshot) {
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#fff";
     ctx.font = "900 21px Trebuchet MS";
-    ctx.fillText(player.name, x, 590 - h);
+    ctx.fillText(`${player.avatar || "🦊"} ${player.name}`, x, 590 - h);
     ctx.fillStyle = "#07141d";
     ctx.font = "900 17px Trebuchet MS";
     ctx.fillText(`${player.points} pts`, x, 618 - h);

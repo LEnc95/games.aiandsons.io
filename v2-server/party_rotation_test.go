@@ -11,7 +11,7 @@ func rotationTestRoom(playerCount int) *partyRoom {
 	}
 	for index := 0; index < playerCount; index++ {
 		id := "p" + strconvItoa(index+1)
-		r.players[id] = &partyPlayer{ID: id, Name: "Player " + strconvItoa(index+1), Color: partyPlayerColor(index), Connected: true, Active: true, Team: index % 2}
+		r.players[id] = &partyPlayer{ID: id, Name: "Player " + strconvItoa(index+1), Color: partyPlayerColor(index), Avatar: partyPlayerAvatar("", index), Connected: true, Active: true, Team: index % 2}
 	}
 	return r
 }
@@ -51,8 +51,12 @@ func TestPartyRotationVisibleBallotsAndWeightedSlices(t *testing.T) {
 	r.partyVote.Votes["p3"] = optionB
 	snapshot := r.partyVoteSnapshotLocked()
 	ballots := snapshot["ballots"].([]map[string]any)
-	if len(ballots) != 3 || ballots[0]["playerName"] == "" {
+	if len(ballots) != 3 || ballots[0]["playerName"] == "" || ballots[0]["playerAvatar"] == "" {
 		t.Fatalf("expected three named visible ballots, got %#v", ballots)
+	}
+	rotation := r.rotationSnapshotLocked("p1")
+	if rotation["players"].([]map[string]any)[0]["avatar"] == "" {
+		t.Fatalf("rotation snapshot omitted player avatar: %#v", rotation["players"])
 	}
 	r.closePartyVoteLocked(now + partyVoteMinimumMs)
 	if r.partyPhase != "spinning" || r.activity.ID == "" {

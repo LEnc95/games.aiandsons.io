@@ -89,6 +89,7 @@ type partyPlayer struct {
 	Token            string
 	Name             string
 	Color            string
+	Avatar           string
 	Client           *client
 	Connected        bool
 	Queued           bool
@@ -254,7 +255,7 @@ func (h *hub) handlePartyJoin(c *client, msg envelope, payload joinPayload) {
 		room.attachDisplay(c)
 		return
 	}
-	room.attachPlayer(c, payload.PlayerName, payload.Token)
+	room.attachPlayer(c, payload.PlayerName, payload.PlayerAvatar, payload.Token)
 }
 
 func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
@@ -374,7 +375,7 @@ func (r *partyRoom) attachHost(c *client, token string) {
 	})
 }
 
-func (r *partyRoom) attachPlayer(c *client, requestedName, token string) {
+func (r *partyRoom) attachPlayer(c *client, requestedName, requestedAvatar, token string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -431,6 +432,7 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, token string) {
 		Token:          playerToken,
 		Name:           name,
 		Color:          partyPlayerColor(len(r.players)),
+		Avatar:         partyPlayerAvatar(requestedAvatar, len(r.players)),
 		Client:         c,
 		Connected:      true,
 		Queued:         queued,
@@ -458,7 +460,7 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, token string) {
 func (r *partyRoom) sendPlayerWelcomeLocked(c *client, p *partyPlayer, adjusted bool) {
 	c.sendEnvelope("welcome", r.roomID, map[string]any{
 		"role": "player", "roomId": r.roomID, "gameKey": r.gameKey,
-		"playerId": p.ID, "playerName": p.Name, "playerColor": p.Color,
+		"playerId": p.ID, "playerName": p.Name, "playerColor": p.Color, "playerAvatar": p.Avatar,
 		"token": p.Token, "queued": p.Queued, "nameAdjusted": adjusted,
 		"sessionMode": r.sessionMode,
 	})
@@ -1081,7 +1083,7 @@ func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 			rank = index + 1
 		}
 		players = append(players, map[string]any{
-			"id": p.ID, "name": p.Name, "color": p.Color,
+			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar,
 			"connected": p.Connected, "queued": p.Queued, "active": p.Active,
 			"x": roundTo(p.X, 3), "distance": roundTo(p.Distance, 1),
 			"points": p.Points, "heatPoints": p.HeatPoints, "rank": rank,
@@ -1478,6 +1480,16 @@ func randomPartyCode() string {
 func partyPlayerColor(index int) string {
 	colors := []string{"#31e6c1", "#ffcf4a", "#ff6b8a", "#75a7ff", "#c28cff", "#ff914d", "#7ee35d", "#f06ee8"}
 	return colors[index%len(colors)]
+}
+
+func partyPlayerAvatar(requested string, index int) string {
+	avatars := []string{"🦊", "🐼", "🐸", "🦖", "🐙", "🦉", "🐯", "🐧", "🦄", "🐲", "🦈", "🐺", "🦜", "🐢", "🦁", "🐹"}
+	for _, avatar := range avatars {
+		if requested == avatar {
+			return requested
+		}
+	}
+	return avatars[index%len(avatars)]
 }
 
 func truncateRunes(value string, max int) string {

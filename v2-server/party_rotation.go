@@ -484,7 +484,7 @@ func (r *partyRoom) rotationPlayersLocked() []map[string]any {
 	players := make([]map[string]any, 0, len(ordered))
 	for _, p := range ordered {
 		players = append(players, map[string]any{
-			"id": p.ID, "name": p.Name, "color": p.Color, "connected": p.Connected,
+			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar, "connected": p.Connected,
 			"queued": p.Queued, "active": p.Active, "points": p.Points,
 			"partyPoints": p.PartyPoints, "partyRank": p.PartyRank,
 			"activityWins": p.ActivityWins, "partyAward": p.PartyAward,
@@ -504,7 +504,7 @@ func (r *partyRoom) partyVoteSnapshotLocked() map[string]any {
 	sort.Strings(ids)
 	for _, id := range ids {
 		p := r.players[id]
-		ballots = append(ballots, map[string]any{"id": id, "playerId": id, "playerName": p.Name, "playerColor": p.Color, "optionId": r.partyVote.Votes[id]})
+		ballots = append(ballots, map[string]any{"id": id, "playerId": id, "playerName": p.Name, "playerColor": p.Color, "playerAvatar": p.Avatar, "optionId": r.partyVote.Votes[id]})
 	}
 	if len(ballots) == 0 && (r.partyPhase == "spinning" || r.partyPhase == "next_up") {
 		for _, option := range r.partyVote.Options {

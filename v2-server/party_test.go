@@ -31,15 +31,16 @@ func TestPartyWebSocketCreateJoinStartAndReconnect(t *testing.T) {
 	}
 
 	players := make([]*websocket.Conn, 0, 2)
-	for _, name := range []string{"Alpha", "Beta"} {
+	for index, name := range []string{"Alpha", "Beta"} {
 		conn := dialTestWebSocket(t, server.URL, "/ws")
 		players = append(players, conn)
+		avatar := []string{"🐸", "🦉"}[index]
 		writeTestEnvelope(t, conn, outEnvelope{
 			Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
-			Payload: map[string]any{"role": "player", "playerName": name},
+			Payload: map[string]any{"role": "player", "playerName": name, "playerAvatar": avatar},
 		})
 		welcome := readPartyEnvelope(t, conn, "welcome")
-		if stringField(welcome, "playerId") == "" || stringField(welcome, "token") == "" {
+		if stringField(welcome, "playerId") == "" || stringField(welcome, "token") == "" || stringField(welcome, "playerAvatar") != avatar {
 			t.Fatalf("player welcome missing identity: %#v", welcome)
 		}
 	}
@@ -95,6 +96,18 @@ func TestPartyNameFilteringAndRoomRules(t *testing.T) {
 	}
 	if sanitizePartyRoomID("ABIO") != "" || sanitizePartyRoomID("ABCD") != "ABCD" {
 		t.Fatal("room code normalization accepted ambiguous letters or rejected a valid code")
+	}
+}
+
+func TestPartyAvatarValidation(t *testing.T) {
+	if actual := partyPlayerAvatar("🐲", 0); actual != "🐲" {
+		t.Fatalf("valid avatar changed to %q", actual)
+	}
+	if actual := partyPlayerAvatar("<script>", 1); actual != "🐼" {
+		t.Fatalf("invalid avatar fallback = %q, want player-slot fallback", actual)
+	}
+	if actual := partyPlayerAvatar("", 16); actual != "🦊" {
+		t.Fatalf("legacy avatar fallback = %q, want wrapped first avatar", actual)
 	}
 }
 
@@ -375,7 +388,7 @@ func TestPartyReconnectResetsSequenceAndRateLimitsSteering(t *testing.T) {
 	c := &client{id: "player", role: "player", playerID: "r-one", send: make(chan []byte, 8)}
 	p := &partyPlayer{
 		ID: "r-one", Token: "secret", Client: c, Connected: true, Active: true,
-		LastSeq: 40, LastSteerAt: now, HitObstacleIDs: make(map[string]bool),
+		Avatar: "🐙", LastSeq: 40, LastSteerAt: now, HitObstacleIDs: make(map[string]bool),
 	}
 	r := &partyRoom{
 		roomID: "RACE", gameKey: turboTiltGameKey, phase: "racing", players: map[string]*partyPlayer{p.ID: p},
@@ -383,9 +396,12 @@ func TestPartyReconnectResetsSequenceAndRateLimitsSteering(t *testing.T) {
 	}
 	c.partyRoom = r
 	reconnected := &client{id: "replacement", send: make(chan []byte, 8)}
-	r.attachPlayer(reconnected, "", p.Token)
+	r.attachPlayer(reconnected, "", "🦁", p.Token)
 	if p.LastSeq != 0 || p.LastSteerAt != 0 || p.Client != reconnected {
 		t.Fatal("reconnect did not reset connection-scoped input sequence state")
+	}
+	if p.Avatar != "🐙" {
+		t.Fatalf("reconnect replaced server-authoritative avatar with %q", p.Avatar)
 	}
 
 	r.applyInput(reconnected, inputEnvelope{Seq: 1, Input: json.RawMessage(`{"type":"steer","value":0.5}`)})
