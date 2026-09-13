@@ -50,6 +50,7 @@ async function connectScreen() {
       const previous = state.snapshot;
       state.roomId = event.data.roomId || state.roomId;
       state.snapshot = event.data.snapshot || null;
+      applyPartyPresentation(state.snapshot);
       syncEmbeddedRecording(previous, state.snapshot);
       consumeRaceEvents();
       processRaceAudio(previous, state.snapshot);
@@ -276,7 +277,7 @@ function audioContext() {
 }
 
 function playTone(kind) {
-  if (!state.audioEnabled) return;
+  if (!state.audioEnabled || state.snapshot?.partySettings?.effects === false) return;
   const audio = audioContext();
   const now = audio.currentTime;
   const oscillator = audio.createOscillator();
@@ -293,13 +294,18 @@ function playTone(kind) {
 }
 
 function announce(text) {
-  if (!state.audioEnabled || !text || !window.speechSynthesis || performance.now() - state.lastAnnounceAt < 1800) return;
+  if (!state.audioEnabled || state.snapshot?.partySettings?.narration === false || !text || !window.speechSynthesis || performance.now() - state.lastAnnounceAt < 1800) return;
   state.lastAnnounceAt = performance.now();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 1.12;
   utterance.pitch = 1.08;
   utterance.volume = .82;
   window.speechSynthesis.speak(utterance);
+}
+
+function applyPartyPresentation(snapshot) {
+  document.body.classList.toggle("party-reduced-motion", Boolean(snapshot?.partySettings?.reducedMotion));
+  document.body.classList.toggle("party-high-contrast", Boolean(snapshot?.partySettings?.highContrast));
 }
 
 function processRaceAudio(previous, snapshot) {
@@ -950,6 +956,7 @@ window.render_game_to_text = () => JSON.stringify({
   heat: state.snapshot?.heat || 0,
   mode: state.snapshot?.settings?.mode || "classic",
   settings: state.snapshot?.settings || {},
+  party_settings: state.snapshot?.partySettings || {},
   track: state.snapshot?.track || "",
   modifier: state.snapshot?.modifier || "",
   vote_options: state.snapshot?.voteOptions || [],

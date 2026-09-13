@@ -43,3 +43,29 @@ test("embedded activities start and finalize the existing clip recorder", async 
     assert.match(source, /syncEmbeddedRecording/);
   }
 });
+
+test("party setup exposes persisted duration, style, and accessibility controls", async () => {
+  const [html, app, server, turbo, crowd] = await Promise.all([
+    read("party/index.html"),
+    read("party/app.js"),
+    read("v2-server/party_rotation.go"),
+    read("turbotilt/game.js"),
+    read("crowdshift/game.js"),
+  ]);
+  for (const id of ["partyDurationSelect", "partyPlayStyleSelect", "partyAccessibilitySelect", "partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics", "sessionProgress"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /aiandsons-party-host-settings-v1/);
+  assert.match(app, /configure_party/);
+  assert.match(app, /partySettings: settings/);
+  assert.match(app, /Game \$\{Math\.min\(completedActivities \+ 1, targetActivities\)\} of \$\{targetActivities\}/);
+  assert.match(server, /TargetActivities/);
+  assert.match(server, /PlayStyle/);
+  assert.match(server, /finishPartyLocked/);
+  for (const source of [app, turbo, crowd]) {
+    assert.match(source, /party-reduced-motion/);
+    assert.match(source, /party-high-contrast/);
+  }
+  assert.match(turbo, /partySettings\?\.narration/);
+  assert.match(crowd, /partySettings\?\.effects/);
+});

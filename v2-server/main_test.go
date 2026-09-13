@@ -7,11 +7,32 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+func TestClientSendEnvelopeCanRaceClose(t *testing.T) {
+	for attempt := 0; attempt < 50; attempt++ {
+		c := &client{id: "race", gameID: partyGameID, send: make(chan []byte, 64)}
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for index := 0; index < 32; index++ {
+				c.sendEnvelope("state", "RACE", map[string]any{"index": index})
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			c.closeSend()
+		}()
+		wg.Wait()
+		c.sendEnvelope("state", "RACE", nil)
+	}
+}
 
 func TestAudioAgarWebSocketJoinMoveAndAction(t *testing.T) {
 	h := newHub()

@@ -126,7 +126,7 @@ func (r *partyRoom) applyCrowdShiftHostActionLocked(action string, now int64, c 
 		}
 		r.prepareCrowdShiftRoundLocked(now)
 		r.phase = "countdown"
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftCountdownMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftCountdownMs)
 	case "pause":
 		if !containsString([]string{"countdown", "choosing", "reveal", "intermission"}, r.phase) {
 			c.sendErrorCode(r.roomID, "invalid_phase", "The game cannot be paused right now.")
@@ -198,24 +198,24 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 	if r.phase == "countdown" && now >= r.phaseEndsAt {
 		r.phase = "choosing"
 		r.crowd.RoundStartedAt = now
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftChoiceMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftChoiceMs)
 		return
 	}
 	if r.phase == "choosing" {
 		allChosen := r.crowdShiftAllConnectedChosenLocked()
-		minimumRevealAt := r.crowd.RoundStartedAt + partyPhaseDuration(crowdShiftMinimumChoiceMs)
+		minimumRevealAt := r.crowd.RoundStartedAt + r.partyDurationLocked(crowdShiftMinimumChoiceMs)
 		if r.crowd.Duel {
 			if !allChosen {
 				r.crowd.DuelReadyAt = 0
 			} else if r.crowd.DuelReadyAt == 0 {
 				r.crowd.DuelReadyAt = now
 			}
-			minimumRevealAt = maxInt64(minimumRevealAt, r.crowd.DuelReadyAt+partyPhaseDuration(crowdShiftDuelGraceMs))
+			minimumRevealAt = maxInt64(minimumRevealAt, r.crowd.DuelReadyAt+r.partyDurationLocked(crowdShiftDuelGraceMs))
 		}
 		if now >= r.phaseEndsAt || (allChosen && now >= minimumRevealAt) {
 			r.scoreCrowdShiftRoundLocked()
 			r.phase = "reveal"
-			r.phaseEndsAt = now + partyPhaseDuration(crowdShiftRevealMs)
+			r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftRevealMs)
 		}
 		return
 	}
@@ -225,7 +225,7 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 			return
 		}
 		r.phase = "intermission"
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftIntermissionMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftIntermissionMs)
 		return
 	}
 	if r.phase == "intermission" && now >= r.phaseEndsAt {
@@ -233,7 +233,7 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 		r.prepareCrowdShiftRoundLocked(now)
 		r.phase = "choosing"
 		r.crowd.RoundStartedAt = now
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftChoiceMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftChoiceMs)
 	}
 }
 

@@ -32,15 +32,16 @@ const (
 var partyPlacementPoints = []int{10, 8, 6, 5, 4, 3, 2, 1}
 
 type partyInput struct {
-	Type          string             `json:"type"`
-	Value         float64            `json:"value,omitempty"`
-	Action        string             `json:"action,omitempty"`
-	PlayerID      string             `json:"playerId,omitempty"`
-	Choice        string             `json:"choice,omitempty"`
-	Emote         string             `json:"emote,omitempty"`
-	Settings      partySettings      `json:"settings,omitempty"`
-	Customization partyCustomization `json:"customization,omitempty"`
-	OptionID      string             `json:"optionId,omitempty"`
+	Type          string               `json:"type"`
+	Value         float64              `json:"value,omitempty"`
+	Action        string               `json:"action,omitempty"`
+	PlayerID      string               `json:"playerId,omitempty"`
+	PartySettings partySessionSettings `json:"partySettings,omitempty"`
+	Choice        string               `json:"choice,omitempty"`
+	Emote         string               `json:"emote,omitempty"`
+	Settings      partySettings        `json:"settings,omitempty"`
+	Customization partyCustomization   `json:"customization,omitempty"`
+	OptionID      string               `json:"optionId,omitempty"`
 }
 
 type partySettings struct {
@@ -158,6 +159,7 @@ type partyRoom struct {
 	allowLateJoin      bool
 	maxPlayers         int
 	friendlyNames      bool
+	partyConfig        partySessionSettings
 	phase              string
 	resumePhase        string
 	pauseReason        string
@@ -293,6 +295,7 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 		blockedTokens: make(map[string]bool),
 		allowLateJoin: true,
 		maxPlayers:    partyMaxPlayers,
+		partyConfig:   defaultPartySessionSettings(),
 		phase:         "lobby",
 		totalHeats:    3,
 		createdAt:     now,
@@ -640,6 +643,21 @@ func (r *partyRoom) applyRoomHostActionLocked(input partyInput, c *client) bool 
 			return true
 		}
 		r.maxPlayers = limit
+	case "configure_party":
+		if r.sessionMode != partyRotationSessionMode {
+			c.sendErrorCode(r.roomID, "unsupported_input", "Party presets are available in Party Mode rooms.")
+			return true
+		}
+		if r.partyPhase != "party_lobby" {
+			c.sendErrorCode(r.roomID, "invalid_phase", "Party setup can only change before the party starts.")
+			return true
+		}
+		settings, ok := validatePartySessionSettings(input.PartySettings)
+		if !ok {
+			c.sendErrorCode(r.roomID, "invalid_party_settings", "Choose supported party and accessibility settings.")
+			return true
+		}
+		r.partyConfig = settings
 	case "kick":
 		playerID := strings.TrimSpace(input.PlayerID)
 		p := r.players[playerID]
@@ -886,7 +904,7 @@ func (r *partyRoom) stepTurboTiltLocked(now int64, dt float64) {
 	}
 	if r.phase == "countdown" && now >= r.phaseEndsAt {
 		r.phase = "racing"
-		r.phaseEndsAt = now + partyPhaseDuration(partyHeatMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(partyHeatMs)
 		r.raceStartedAt = now
 		r.nextChaosAt = now + 10000
 	}
@@ -962,7 +980,7 @@ func (r *partyRoom) startCountdownLocked(now int64) {
 	r.votes = make(map[string]string)
 	r.voteOptions = nil
 	r.phase = "countdown"
-	r.phaseEndsAt = now + partyPhaseDuration(partyCountdownMs)
+	r.phaseEndsAt = now + r.partyDurationLocked(partyCountdownMs)
 	r.track = r.trackForHeatLocked()
 	r.obstacles = buildTurboTiltObstacles(r.roomID, r.heat, r.track, r.settings.Chaos)
 	r.routes = buildTurboTiltRoutes(r.roomID, r.heat)
@@ -1030,7 +1048,7 @@ func (r *partyRoom) finishHeatLocked(now int64) {
 		return
 	}
 	r.phase = "intermission"
-	r.phaseEndsAt = now + partyPhaseDuration(partyIntermissionMs)
+	r.phaseEndsAt = now + r.partyDurationLocked(partyIntermissionMs)
 	r.voteOptions = voteOptionsForHeat(r.roomID, r.heat)
 }
 
@@ -1234,7 +1252,31 @@ func (r *partyRoom) decorateRoomControlsLocked(state map[string]any) map[string]
 	state["allowLateJoin"] = r.allowLateJoin
 	state["friendlyNames"] = r.friendlyNames
 	state["maxPlayers"] = r.maxPlayerCountLocked()
+	settings := r.partySessionSettingsLocked()
+	state["partySettings"] = settings
+	state["estimatedMinutes"] = settings.TargetActivities * 5
+	remaining := settings.TargetActivities - r.activityIndex
+	if remaining < 0 {
+		remaining = 0
+	}
+	state["activitiesRemaining"] = remaining
 	return state
+}
+
+func (r *partyRoom) partySessionSettingsLocked() partySessionSettings {
+	settings, ok := validatePartySessionSettings(r.partyConfig)
+	if !ok {
+		settings = defaultPartySessionSettings()
+	}
+	return settings
+}
+
+func (r *partyRoom) partyDurationLocked(base int64) int64 {
+	duration := partyPhaseDuration(base)
+	if r.sessionMode == partyRotationSessionMode && r.partySessionSettingsLocked().ExtendedTimers {
+		return duration * 3 / 2
+	}
+	return duration
 }
 
 func (r *partyRoom) maxPlayerCountLocked() int {
