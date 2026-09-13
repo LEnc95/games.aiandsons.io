@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -108,6 +109,71 @@ func TestPartyAvatarValidation(t *testing.T) {
 	}
 	if actual := partyPlayerAvatar("", 16); actual != "🦊" {
 		t.Fatalf("legacy avatar fallback = %q, want wrapped first avatar", actual)
+	}
+}
+
+func TestPartyRoomSafetyControlsAreServerAuthoritative(t *testing.T) {
+	host := &client{id: "host", role: "host", send: make(chan []byte, 16)}
+	r := &partyRoom{
+		roomID: "SAFE", gameKey: partyRotationGameKey, sessionMode: partyRotationSessionMode,
+		phase: "lobby", partyPhase: "party_lobby", host: host, allowLateJoin: true, maxPlayers: partyMaxPlayers,
+		players: make(map[string]*partyPlayer), tokenToPlayer: make(map[string]string), blockedTokens: make(map[string]bool),
+		votes: make(map[string]string), partyVote: partyVoteState{Votes: make(map[string]string)},
+	}
+	host.partyRoom = r
+
+	r.applyRoomHostActionLocked(partyInput{Action: "lock"}, host)
+	blocked := &client{id: "blocked", send: make(chan []byte, 8)}
+	r.attachPlayer(blocked, "Blocked", "🦊", "")
+	if payload := readQueuedEnvelope(t, blocked.send); stringField(payload, "code") != "room_locked" {
+		t.Fatalf("expected room_locked, got %#v", payload)
+	}
+
+	r.applyRoomHostActionLocked(partyInput{Action: "unlock"}, host)
+	r.applyRoomHostActionLocked(partyInput{Action: "friendly_names_on"}, host)
+	r.applyRoomHostActionLocked(partyInput{Action: "set_max_players", Value: 2}, host)
+	firstClient := &client{id: "first", send: make(chan []byte, 8)}
+	r.attachPlayer(firstClient, "Custom Name", "🐸", "")
+	var first *partyPlayer
+	for _, player := range r.players {
+		first = player
+	}
+	if first == nil || first.Name == "Custom Name" || !strings.Contains(first.Name, " ") {
+		t.Fatalf("friendly-name mode did not replace the supplied name: %#v", first)
+	}
+	firstToken := first.Token
+
+	secondClient := &client{id: "second", send: make(chan []byte, 8)}
+	r.attachPlayer(secondClient, "Second", "🦉", "")
+	fullClient := &client{id: "full", send: make(chan []byte, 8)}
+	r.attachPlayer(fullClient, "Third", "🐼", "")
+	if payload := readQueuedEnvelope(t, fullClient.send); stringField(payload, "code") != "room_full" {
+		t.Fatalf("expected dynamic room_full, got %#v", payload)
+	}
+
+	r.applyRoomHostActionLocked(partyInput{Action: "kick", PlayerID: first.ID}, host)
+	if payload := readQueuedEnvelope(t, firstClient.send); stringField(payload, "code") != "removed_from_room" {
+		t.Fatalf("expected removed player notification, got %#v", payload)
+	}
+	if r.players[first.ID] != nil || !r.blockedTokens[firstToken] {
+		t.Fatal("removed player remained on the roster or reconnect token was not blocked")
+	}
+	reconnect := &client{id: "reconnect", send: make(chan []byte, 8)}
+	r.attachPlayer(reconnect, "Custom Name", "🐸", firstToken)
+	if payload := readQueuedEnvelope(t, reconnect.send); stringField(payload, "code") != "removed_from_room" {
+		t.Fatalf("expected blocked reconnect token, got %#v", payload)
+	}
+
+	r.allowLateJoin = false
+	r.partyPhase = "voting"
+	late := &client{id: "late", send: make(chan []byte, 8)}
+	r.attachPlayer(late, "Late", "🐢", "")
+	if payload := readQueuedEnvelope(t, late.send); stringField(payload, "code") != "late_join_disabled" {
+		t.Fatalf("expected late_join_disabled, got %#v", payload)
+	}
+	state := r.snapshotLocked("")
+	if state["roomLocked"] != false || state["allowLateJoin"] != false || state["friendlyNames"] != true || int(state["maxPlayers"].(int)) != 2 {
+		t.Fatalf("room safety settings missing from snapshot: %#v", state)
 	}
 }
 

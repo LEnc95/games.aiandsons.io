@@ -446,7 +446,7 @@ func (r *partyRoom) rotationSnapshotLocked(selfID string) map[string]any {
 	state := map[string]any{
 		"gameKey": partyRotationGameKey, "roomId": r.roomID, "phase": r.phase,
 		"pauseReason": r.pauseReason, "serverTime": nowMillis(), "phaseEndsAt": r.phaseEndsAt,
-		"players": players, "minPlayers": partyMinPlayers, "maxPlayers": partyMaxPlayers,
+		"players": players, "minPlayers": partyMinPlayers, "maxPlayers": r.maxPlayerCountLocked(),
 		"displayCount": len(r.displays),
 	}
 	if selfID != "" {

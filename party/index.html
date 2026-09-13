@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>Party Games | AI and Sons Games</title>
-  <meta name="description" content="Host a shared-screen party game or join with a four-letter room code and use your phone as the controller.">
+  <title>Party Mode | AI and Sons Games</title>
+  <meta name="description" content="Start a shared party room on this screen, or join one with a four-letter code and your animal avatar.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/party/styles.css">
 </head>
@@ -17,38 +17,32 @@
   <main class="shell">
     <section id="landingView" class="landing-view">
       <div class="hero">
-        <p class="eyebrow">Big screen. Pocket controllers.</p>
-        <h1>Play together,<br><em>right now.</em></h1>
-        <p>Start a game on the TV, then everyone joins from a phone. No app and no account required.</p>
+        <p class="eyebrow">One room. Everyone in.</p>
+        <h1>Your party<br><em>starts here.</em></h1>
+        <p>Use this screen to start a room, or enter a four-letter code to join one. No app, account, or setup required.</p>
       </div>
 
-      <div class="cards">
+      <div class="cards party-actions">
         <article class="card start-party-card">
-          <div class="party-orbit" aria-hidden="true"><span>🎉</span><i>🏎️</i><i>↔️</i></div>
-          <p class="eyebrow">Everyone joins once</p>
-          <h2>Start a Party</h2>
-          <p>Vote together, spin the wheel, and keep playing different games without changing rooms.</p>
-          <a id="startPartyLink" class="button party-primary" href="/party/?host=1">Open a party room</a>
-        </article>
-        <article class="card host-card">
-          <div class="game-art" aria-hidden="true"><span>🏎️</span><i></i><i></i><i></i></div>
-          <p class="eyebrow">Quick play</p>
-          <h2>Turbo Tilt</h2>
-          <p>Tilt, dodge, boost, and battle through a customizable racing cup with up to eight racers.</p>
-          <a class="button primary" href="/turbotilt/">Start on this screen</a>
-        </article>
-
-        <article class="card host-card crowd-card">
-          <div class="game-art crowd-art" aria-hidden="true"><span>↔️</span><i></i><i></i><i></i></div>
-          <p class="eyebrow">Quick play</p>
-          <h2>Crowd Shift</h2>
-          <p>Read your rival in two-player Duel Shift, or tackle rotating crowd rules with up to eight phones.</p>
-          <a class="button crowd-primary" href="/crowdshift/">Start on this screen</a>
+          <p class="eyebrow">I’m hosting</p>
+          <h2>Start a party room</h2>
+          <p>Make this the shared party screen. You’ll get a room code for everyone to join from their phones.</p>
+          <a id="startPartyLink" class="button party-primary" href="/party/?host=1">Start a party room</a>
+          <div class="party-room-preview" aria-hidden="true">
+            <div class="preview-screen"><small>Your room</small><strong>PLAY</strong></div>
+            <div class="preview-players"><span>🦊</span><span>🐼</span><span>🐸</span><span>🦉</span></div>
+          </div>
+          <ul class="party-promises" aria-label="Party room features">
+            <li><span>✓</span> 2–8 players</li>
+            <li><span>✓</span> Phones become controllers</li>
+            <li><span>✓</span> One room for the whole party</li>
+          </ul>
         </article>
 
         <article class="card join-card">
-          <p class="eyebrow">Join a room</p>
-          <h2>Use your phone</h2>
+          <p class="eyebrow">I have a code</p>
+          <h2>Join a party room</h2>
+          <p>Enter the code from the host’s screen, pick your name and avatar, and you’re in.</p>
           <form id="joinForm" novalidate>
             <label for="roomCode">Room code</label>
             <input id="roomCode" class="code-input" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="4" placeholder="ABCD" required>
@@ -58,23 +52,25 @@
               <legend>Choose your avatar</legend>
               <div id="avatarOptions" class="avatar-options"></div>
             </fieldset>
-            <button class="button secondary" type="submit">Join the room</button>
+            <button class="button secondary" type="submit">Join the party</button>
             <p id="joinError" class="error" role="alert"></p>
           </form>
         </article>
+      </div>
 
-        <article class="card watch-card">
+      <aside class="watch-card">
+        <div>
           <p class="eyebrow">Another TV or computer</p>
-          <h2>Watch the same game</h2>
-          <p>Put the live party screen in another room or home. It stays synchronized while only the original host controls the match.</p>
-          <form id="watchForm" novalidate>
+          <h2>Open an extra party screen</h2>
+          <p>Follow an existing room on another display. The original host stays in control.</p>
+        </div>
+        <form id="watchForm" novalidate>
             <label for="watchCode">Room code</label>
             <input id="watchCode" class="code-input" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="4" placeholder="ABCD" required>
             <button class="button watch-button" type="submit">Open synchronized screen</button>
             <p id="watchError" class="error" role="alert"></p>
-          </form>
-        </article>
-      </div>
+        </form>
+      </aside>
     </section>
 
     <section id="sessionView" class="session-view" hidden aria-label="Persistent party screen">
@@ -92,6 +88,27 @@
           <p>Join at <b>games.aiandsons.io/party</b></p>
           <ol id="partyRoster" class="party-roster"></ol>
           <div id="hostControls" class="host-controls">
+            <section class="room-safety-controls" aria-labelledby="roomSafetyTitle">
+              <div class="room-safety-heading">
+                <p id="roomSafetyTitle" class="eyebrow">Room safety</p>
+                <span id="roomAccessStatus">Open</span>
+              </div>
+              <button id="partyLockButton" class="button quiet-button" type="button">Lock room</button>
+              <button id="partyLateJoinButton" class="button quiet-button" type="button">Late joining: On</button>
+              <button id="partyFriendlyNamesButton" class="button quiet-button" type="button">Friendly names: Off</button>
+              <label class="player-limit-label" for="partyMaxPlayersSelect">Player limit
+                <select id="partyMaxPlayersSelect" aria-describedby="playerLimitHelp">
+                  <option value="2">2 players</option>
+                  <option value="3">3 players</option>
+                  <option value="4">4 players</option>
+                  <option value="5">5 players</option>
+                  <option value="6">6 players</option>
+                  <option value="7">7 players</option>
+                  <option value="8" selected>8 players</option>
+                </select>
+              </label>
+              <p id="playerLimitHelp" class="room-control-help">Remove players before lowering the limit below the roster size.</p>
+            </section>
             <button id="partyStartButton" class="button party-primary" type="button">Start Party</button>
             <button id="partyPauseButton" class="button quiet-button" type="button" hidden>Pause</button>
             <button id="partySkipButton" class="button quiet-button" type="button" hidden>Skip Activity</button>
@@ -105,6 +122,12 @@
     </section>
 
     <section id="controllerView" class="controller-view" hidden aria-label="Party game phone controller">
+      <div id="removedNotice" class="removed-notice" role="alert" hidden>
+        <span aria-hidden="true">👋</span>
+        <h1>You were removed</h1>
+        <p>The host removed you from this party room. You can return to the Party Mode page and join a different room.</p>
+        <a class="button party-primary" href="/party/">Return to Party Mode</a>
+      </div>
       <div class="controller-head">
         <div id="playerBadge" class="player-badge"><span id="playerDot" aria-hidden="true">🦊</span><strong id="playerLabel">Racer</strong></div>
         <div class="room-chip">Room <b id="controllerRoom">----</b></div>

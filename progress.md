@@ -4672,3 +4672,14 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 ## 2026-09-12 Party Mode navigation and player avatars
 - Added the homepage Party Mode menu link and an accessible 16-animal picker that remembers the device choice. Extended the WebSocket join/welcome/player/ballot contracts with validated, reconnect-stable avatars and rendered them throughout the Party shell, Turbo Tilt, and Crowd Shift.
 - Focused Node/Go suites, social compatibility, supplied game client, Party Rotation smoke with distinct persisted avatars, Turbo Tilt smoke, Crowd Shift smoke, and diff checks pass. Desktop/mobile screenshots for the menu, picker, controllers, lobbies, voting, gameplay, reveals, standings, and podiums were visually inspected with zero reported browser errors. No remaining TODOs.
+## 2026-09-12 Party Mode entry-page refocus
+- Refocused `/party/` on the two primary intents: starting a shared party room or joining one with a code, nickname, and saved animal avatar. Removed the visible Turbo Tilt and Crowd Shift promotional cards/links and moved the extra-screen form into a quieter secondary strip.
+- Updated focused client contracts to prevent game-specific links from returning. The 15-test Party/Turbo/Crowd client set and the full two-player Party Rotation smoke pass. Supplied-client desktop state matches `party-hub`; desktop and 390px full-page mobile captures were visually inspected with no overflow or browser errors.
+- TODO: publish the entry-page-only follow-up when requested; unrelated local `CHANGELOG.md` and `SPRINT_BOARD.md` edits remain outside this work.
+
+## 2026-09-13 Party Mode Sprint 1 - room safety and host controls
+- Added server-authoritative room locking, late-join policy, a dynamic 2–8 player limit, friendly generated animal names, and host removal. Removed-player reconnect tokens are blocked for the lifetime of the room, and player state is cleared from voting plus Crowd Shift maps.
+- Added accessible host controls and state indicators to the shared screen, roster-level Remove actions with confirmation, dynamic capacity counts, and a dedicated mobile-friendly removal notice. All room policies are included in standalone and rotating-party snapshots.
+- Added Go and client contract coverage plus expanded the Party Rotation browser smoke to verify locked joins, friendly names, removal, blocked reconnect, capacity enforcement, and late-join enforcement before completing voting, two activities, standings, and party end.
+- Verification passed: focused Party/Turbo/Crowd Node tests, all Go tests, the expanded multi-browser Playwright smoke, `render_game_to_text()` state checks, and diff checks. Visually inspected the 1280x720 host lobby and 390x844 avatar/removal screens; no browser-console errors or layout overflow were reported.
+- TODO: continue the next prioritized sprint after review; deployment was not requested for this sprint.
