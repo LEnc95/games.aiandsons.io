@@ -2,6 +2,17 @@
 // must add an explicit contract so automated challenges and cosmetics never
 // guess at unbounded metrics or promise effects a game cannot render.
 export const GAME_CONTENT_CONTRACTS = Object.freeze({
+  chalkchase: Object.freeze({
+    releasedAt: '2026-09-13',
+    outcomes: Object.freeze({
+      stars: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      boards: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      erases: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'chalkchase-theme', kind: 'palette', tokens: Object.freeze(['sky', 'board', 'grid', 'chalk', 'star', 'flag', 'ink']) }),
+    ]),
+  }),
   pebbleparade: Object.freeze({
     releasedAt: '2026-09-12',
     outcomes: Object.freeze({
