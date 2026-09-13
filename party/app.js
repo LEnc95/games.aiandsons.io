@@ -97,6 +97,7 @@ function setConnectionLabel(label, kind = "") {
 function showController() {
   byId("landingView").hidden = true;
   byId("controllerView").hidden = false;
+  byId("removedNotice").hidden = true;
   byId("controllerRoom").textContent = state.roomId;
   const partyPhase = state.snapshot?.partyPhase || "";
   const activityControls = partyPhase === "activity" || (partyPhase === "paused" && state.snapshot?.resumePartyPhase === "activity");
@@ -163,6 +164,7 @@ function handleEvent(connection, event) {
     byId("playerLabel").textContent = state.playerName;
     byId("playerDot").style.background = state.playerColor;
     byId("playerDot").textContent = state.playerAvatar;
+    document.querySelectorAll("#controllerView .controller-game, #controllerView .controller-head").forEach((element) => { element.hidden = false; });
     showController();
     window.scrollTo({ top: 0, behavior: "auto" });
     renderController();
@@ -171,6 +173,18 @@ function handleEvent(connection, event) {
     return;
   }
   if (event.type === "error") {
+    if (payload.code === "removed_from_room") {
+      const message = payload.message || "The host removed you from this room.";
+      if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
+      byId("landingView").hidden = true;
+      byId("controllerView").hidden = false;
+      document.querySelectorAll("#controllerView .controller-game, #controllerView .controller-head").forEach((element) => { element.hidden = true; });
+      byId("removedNotice").hidden = false;
+      byId("removedNotice").querySelector("p").textContent = `${message} You can return to the Party Mode page and join a different room.`;
+      setConnectionLabel("Removed by host", "problem");
+      connection.disconnect();
+      return;
+    }
     if (payload.code === "invalid_player_token" && !state.retryingToken) {
       state.retryingToken = true;
       localStorage.removeItem(tokenKey(state.roomId));
@@ -612,9 +626,9 @@ function renderSessionQr() {
   }
 }
 
-function sendPartyHost(action) {
+function sendPartyHost(action, details = {}) {
   byId("sessionError").textContent = "";
-  state.connection?.sendInput({ type: "host", action });
+  state.connection?.sendInput({ type: "host", action, ...details });
 }
 
 function renderSessionScreen() {
@@ -623,10 +637,29 @@ function renderSessionScreen() {
   const connected = players.filter((player) => player.connected).length;
   const partyPhase = snapshot?.partyPhase || "party_lobby";
   byId("sessionRoom").textContent = state.roomId || snapshot?.roomId || "----";
-  byId("sessionPlayerCount").textContent = `${connected} / 8 players`;
+  const maxPlayers = Number(snapshot?.maxPlayers || 8);
+  byId("sessionPlayerCount").textContent = `${connected} / ${maxPlayers} players`;
   byId("sessionScreenCount").textContent = `${1 + Number(snapshot?.displayCount || 0)} live screen${Number(snapshot?.displayCount || 0) ? "s" : ""}`;
   renderSessionRoster(players);
   const host = !displayMode;
+  if (host) {
+    const locked = Boolean(snapshot?.roomLocked);
+    const allowLateJoin = snapshot?.allowLateJoin !== false;
+    const friendlyNames = Boolean(snapshot?.friendlyNames);
+    byId("roomAccessStatus").textContent = locked ? "Locked" : "Open";
+    byId("roomAccessStatus").classList.toggle("locked", locked);
+    byId("partyLockButton").textContent = locked ? "Unlock room" : "Lock room";
+    byId("partyLockButton").classList.toggle("is-active", locked);
+    byId("partyLockButton").setAttribute("aria-pressed", String(locked));
+    byId("partyLateJoinButton").textContent = `Late joining: ${allowLateJoin ? "On" : "Off"}`;
+    byId("partyLateJoinButton").classList.toggle("is-active", !allowLateJoin);
+    byId("partyLateJoinButton").setAttribute("aria-pressed", String(allowLateJoin));
+    byId("partyFriendlyNamesButton").textContent = `Friendly names: ${friendlyNames ? "On" : "Off"}`;
+    byId("partyFriendlyNamesButton").classList.toggle("is-active", friendlyNames);
+    byId("partyFriendlyNamesButton").setAttribute("aria-pressed", String(friendlyNames));
+    byId("partyMaxPlayersSelect").value = String(maxPlayers);
+    [...byId("partyMaxPlayersSelect").options].forEach((option) => { option.disabled = Number(option.value) < players.length; });
+  }
   byId("partyStartButton").hidden = !host || partyPhase !== "party_lobby";
   byId("partyStartButton").disabled = connected < 2;
   byId("partyStartButton").textContent = connected < 2 ? "Start with 2 players" : `Start Party with ${connected}`;
@@ -648,6 +681,7 @@ function renderSessionRoster(players) {
   target.textContent = "";
   [...players].sort((a, b) => (a.partyRank || 99) - (b.partyRank || 99)).forEach((player) => {
     const row = document.createElement("li");
+    if (!displayMode) row.classList.add("host-manageable");
     row.style.setProperty("--player", player.color);
     const dot = document.createElement("i");
     dot.textContent = player.avatar || DEFAULT_AVATAR_EMOJI;
@@ -656,6 +690,17 @@ function renderSessionRoster(players) {
     const score = document.createElement("span");
     score.textContent = `${player.partyPoints || 0}`;
     row.append(dot, name, score);
+    if (!displayMode) {
+      const remove = document.createElement("button");
+      remove.className = "roster-remove";
+      remove.type = "button";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", `Remove ${player.name} from the room`);
+      remove.addEventListener("click", () => {
+        if (window.confirm(`Remove ${player.name} from this room?`)) sendPartyHost("kick", { playerId: player.id });
+      });
+      row.append(remove);
+    }
     target.append(row);
   });
 }
@@ -886,6 +931,10 @@ byId("leaveButton").addEventListener("click", () => {
   location.href = "/party/";
 });
 byId("partyStartButton").addEventListener("click", () => sendPartyHost("start"));
+byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snapshot?.roomLocked ? "unlock" : "lock"));
+byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
+byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
+byId("partyMaxPlayersSelect").addEventListener("change", (event) => sendPartyHost("set_max_players", { value: Number(event.target.value) }));
 byId("partyPauseButton").addEventListener("click", () => sendPartyHost(state.snapshot?.partyPhase === "paused" ? "resume" : "pause"));
 byId("partySkipButton").addEventListener("click", () => sendPartyHost("skip"));
 byId("partyEndButton").addEventListener("click", () => { if (window.confirm("End this party and show the final standings?")) sendPartyHost("end"); });

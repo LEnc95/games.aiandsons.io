@@ -35,6 +35,7 @@ type partyInput struct {
 	Type          string             `json:"type"`
 	Value         float64            `json:"value,omitempty"`
 	Action        string             `json:"action,omitempty"`
+	PlayerID      string             `json:"playerId,omitempty"`
 	Choice        string             `json:"choice,omitempty"`
 	Emote         string             `json:"emote,omitempty"`
 	Settings      partySettings      `json:"settings,omitempty"`
@@ -152,6 +153,11 @@ type partyRoom struct {
 	players            map[string]*partyPlayer
 	displays           map[string]*client
 	tokenToPlayer      map[string]string
+	blockedTokens      map[string]bool
+	locked             bool
+	allowLateJoin      bool
+	maxPlayers         int
+	friendlyNames      bool
 	phase              string
 	resumePhase        string
 	pauseReason        string
@@ -284,6 +290,9 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 		players:       make(map[string]*partyPlayer),
 		displays:      make(map[string]*client),
 		tokenToPlayer: make(map[string]string),
+		blockedTokens: make(map[string]bool),
+		allowLateJoin: true,
+		maxPlayers:    partyMaxPlayers,
 		phase:         "lobby",
 		totalHeats:    3,
 		createdAt:     now,
@@ -380,6 +389,10 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, requestedAvatar, toke
 	defer r.mu.Unlock()
 
 	if token != "" {
+		if r.blockedTokens[token] {
+			c.sendErrorCode(r.roomID, "removed_from_room", "The host removed you from this room.")
+			return
+		}
 		if playerID := r.tokenToPlayer[token]; playerID != "" {
 			if p := r.players[playerID]; p != nil {
 				if p.Client != nil && p.Client != c {
@@ -405,14 +418,22 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, requestedAvatar, toke
 		c.sendErrorCode(r.roomID, "invalid_player_token", "Your saved player session has expired.")
 		return
 	}
+	if r.locked {
+		c.sendErrorCode(r.roomID, "room_locked", "This room is locked by the host.")
+		return
+	}
+	if !r.allowLateJoin && r.partyHasStartedLocked() {
+		c.sendErrorCode(r.roomID, "late_join_disabled", "The host has turned off late joining.")
+		return
+	}
 	if (r.sessionMode == partyRotationSessionMode && r.partyPhase == "ended") ||
 		(r.sessionMode != partyRotationSessionMode && (r.phase == "ended" || r.phase == "podium")) {
 		c.sendErrorCode(r.roomID, "room_expired", "That game has already ended.")
 		return
 	}
 
-	if len(r.players) >= partyMaxPlayers {
-		c.sendErrorCode(r.roomID, "room_full", "This room already has eight players.")
+	if len(r.players) >= r.maxPlayerCountLocked() {
+		c.sendErrorCode(r.roomID, "room_full", "This room has reached its player limit.")
 		return
 	}
 	if c.partyRoom != r {
@@ -514,6 +535,9 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 			c.sendErrorCode(r.roomID, "unauthorized_host_action", "Only the room host can do that.")
 			return
 		}
+		if r.applyRoomHostActionLocked(input, c) {
+			return
+		}
 		if r.gameKey == turboTiltGameKey && strings.EqualFold(strings.TrimSpace(input.Action), "configure") {
 			r.configureLocked(input.Settings, c)
 		} else {
@@ -588,6 +612,77 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 	default:
 		c.sendErrorCode(r.roomID, "unsupported_input", "That controller action is not supported.")
 	}
+}
+
+func (r *partyRoom) applyRoomHostActionLocked(input partyInput, c *client) bool {
+	action := strings.ToLower(strings.TrimSpace(input.Action))
+	switch action {
+	case "lock":
+		r.locked = true
+	case "unlock":
+		r.locked = false
+	case "late_join_on":
+		r.allowLateJoin = true
+	case "late_join_off":
+		r.allowLateJoin = false
+	case "friendly_names_on":
+		r.friendlyNames = true
+	case "friendly_names_off":
+		r.friendlyNames = false
+	case "set_max_players":
+		limit := int(input.Value)
+		if math.Trunc(input.Value) != input.Value || limit < partyMinPlayers || limit > partyMaxPlayers {
+			c.sendErrorCode(r.roomID, "invalid_player_limit", "Choose a player limit from 2 to 8.")
+			return true
+		}
+		if limit < len(r.players) {
+			c.sendErrorCode(r.roomID, "invalid_player_limit", "The player limit cannot be lower than the current roster.")
+			return true
+		}
+		r.maxPlayers = limit
+	case "kick":
+		playerID := strings.TrimSpace(input.PlayerID)
+		p := r.players[playerID]
+		if p == nil {
+			c.sendErrorCode(r.roomID, "player_not_found", "That player is no longer in the room.")
+			return true
+		}
+		delete(r.tokenToPlayer, p.Token)
+		if r.blockedTokens == nil {
+			r.blockedTokens = make(map[string]bool)
+		}
+		r.blockedTokens[p.Token] = true
+		delete(r.players, playerID)
+		delete(r.votes, playerID)
+		delete(r.partyVote.Votes, playerID)
+		r.removeCrowdShiftPlayerLocked(playerID)
+		victim := p.Client
+		p.Client = nil
+		p.Connected = false
+		if victim != nil {
+			victim.sendErrorCode(r.roomID, "removed_from_room", "The host removed you from this room.")
+			victim.partyRoom = nil
+			victim.playerID = ""
+		}
+	default:
+		return false
+	}
+	return true
+}
+
+func (r *partyRoom) removeCrowdShiftPlayerLocked(playerID string) {
+	if r.crowd == nil {
+		return
+	}
+	delete(r.crowd.Choices, playerID)
+	delete(r.crowd.Predictions, playerID)
+	delete(r.crowd.HotTakes, playerID)
+	delete(r.crowd.HotTakeAvailable, playerID)
+	delete(r.crowd.ReadStreaks, playerID)
+	delete(r.crowd.ReadCorrect, playerID)
+	delete(r.crowd.ReadPoints, playerID)
+	delete(r.crowd.ObjectivePoints, playerID)
+	delete(r.crowd.StealPoints, playerID)
 }
 
 func (r *partyRoom) configureLocked(settings partySettings, c *client) {
@@ -1069,10 +1164,10 @@ func (r *partyRoom) broadcastState() {
 
 func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 	if r.gameKey == crowdShiftGameKey {
-		return r.decorateRotationSnapshotLocked(r.crowdShiftSnapshotLocked(selfID), selfID)
+		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.crowdShiftSnapshotLocked(selfID), selfID))
 	}
 	if r.gameKey == partyRotationGameKey {
-		return r.rotationSnapshotLocked(selfID)
+		return r.decorateRoomControlsLocked(r.rotationSnapshotLocked(selfID))
 	}
 	now := nowMillis()
 	ordered := r.rankedPlayersLocked(false)
@@ -1115,7 +1210,7 @@ func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 		"gameKey": r.gameKey, "roomId": r.roomID, "phase": r.phase,
 		"pauseReason": r.pauseReason, "serverTime": now,
 		"phaseEndsAt": r.phaseEndsAt, "heat": r.heat, "totalHeats": r.totalHeats,
-		"players": players, "minPlayers": partyMinPlayers, "maxPlayers": partyMaxPlayers,
+		"players": players, "minPlayers": partyMinPlayers, "maxPlayers": r.maxPlayerCountLocked(),
 		"totalBoosts":  r.totalBoosts,
 		"displayCount": len(r.displays),
 		"settings":     r.settings, "track": r.track, "modifier": r.modifier,
@@ -1131,7 +1226,29 @@ func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 	} else {
 		state["selfId"] = selfID
 	}
-	return r.decorateRotationSnapshotLocked(state, selfID)
+	return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(state, selfID))
+}
+
+func (r *partyRoom) decorateRoomControlsLocked(state map[string]any) map[string]any {
+	state["roomLocked"] = r.locked
+	state["allowLateJoin"] = r.allowLateJoin
+	state["friendlyNames"] = r.friendlyNames
+	state["maxPlayers"] = r.maxPlayerCountLocked()
+	return state
+}
+
+func (r *partyRoom) maxPlayerCountLocked() int {
+	if r.maxPlayers < partyMinPlayers || r.maxPlayers > partyMaxPlayers {
+		return partyMaxPlayers
+	}
+	return r.maxPlayers
+}
+
+func (r *partyRoom) partyHasStartedLocked() bool {
+	if r.sessionMode == partyRotationSessionMode {
+		return r.partyPhase != "party_lobby" && r.partyPhase != "ended"
+	}
+	return r.phase != "lobby" && r.phase != "podium" && r.phase != "ended"
 }
 
 func (r *partyRoom) rankedPlayersLocked(activeOnly bool) []*partyPlayer {
@@ -1329,7 +1446,12 @@ func buildTurboTiltRoutes(roomID string, heat int) []partyRoute {
 }
 
 func (r *partyRoom) uniquePlayerNameLocked(raw string) (string, bool) {
+	forcedFriendlyName := r.friendlyNames
+	if forcedFriendlyName {
+		raw = friendlyPartyName()
+	}
 	name, adjusted := sanitizePartyName(raw)
+	adjusted = adjusted || forcedFriendlyName
 	if name == "" {
 		name = "Racer " + strings.ToUpper(randomID(2))
 		adjusted = true
@@ -1345,6 +1467,12 @@ func (r *partyRoom) uniquePlayerNameLocked(raw string) (string, bool) {
 		adjusted = true
 	}
 	return name, adjusted
+}
+
+func friendlyPartyName() string {
+	adjectives := []string{"Brave", "Bright", "Calm", "Clever", "Cosmic", "Happy", "Lucky", "Mighty", "Quick", "Sunny"}
+	animals := []string{"Bear", "Fox", "Frog", "Koala", "Otter", "Owl", "Panda", "Tiger", "Turtle", "Wolf"}
+	return adjectives[securePartyIndex(len(adjectives))] + " " + animals[securePartyIndex(len(animals))]
 }
 
 func sanitizePartyRoomID(raw string) string {
