@@ -28,6 +28,7 @@ const state = {
   lastSentAt: 0,
   testOffsetMs: 0,
   retryingToken: false,
+  removed: false,
   lastEventId: 0,
   feedbackTimer: 0,
   selectedGadget: "shield",
@@ -153,6 +154,7 @@ function handleEvent(connection, event) {
   if (connection !== state.connection) return;
   const payload = event.payload || {};
   if (event.type === "welcome") {
+    state.removed = false;
     state.roomId = payload.roomId || state.roomId;
     state.playerId = payload.playerId || state.playerId;
     state.playerName = payload.playerName || "Racer";
@@ -174,6 +176,7 @@ function handleEvent(connection, event) {
   }
   if (event.type === "error") {
     if (payload.code === "removed_from_room") {
+      state.removed = true;
       const message = payload.message || "The host removed you from this room.";
       if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
       byId("landingView").hidden = true;
@@ -216,6 +219,7 @@ function phaseMessage(snapshot, me) {
 }
 
 function renderController() {
+  if (state.removed) return;
   const snapshot = state.snapshot;
   if (snapshot?.gameKey) state.gameKey = snapshot.gameKey;
   if (snapshot?.sessionMode) state.sessionMode = snapshot.sessionMode;
