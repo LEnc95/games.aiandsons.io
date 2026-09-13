@@ -161,3 +161,48 @@ func TestPartyDurationPresetFinishesAtTarget(t *testing.T) {
 		t.Fatalf("quick party did not end after three activities: phase=%s gamePhase=%s endedAt=%d", r.partyPhase, r.phase, r.endedAt)
 	}
 }
+
+func TestPartyActivityPoolRepeatRulesAndCatchUp(t *testing.T) {
+	r := rotationTestRoom(2)
+	r.partyConfig = defaultPartySessionSettings()
+	r.partyConfig.EnabledActivities = []string{"turbotilt:classic", "turbotilt:survival"}
+	r.partyConfig.RepeatAvoidance = "session"
+	r.activityHistory = []string{"turbotilt:classic"}
+	options := r.partyOptionsLocked(2)
+	if len(options) != 1 || options[0].ID != "turbotilt:survival" {
+		t.Fatalf("activity pool or session repeat rule was ignored: %#v", options)
+	}
+
+	r.activity = partyActivityCatalog[0]
+	r.gameKey = turboTiltGameKey
+	r.partyPhase = "activity"
+	r.players["p1"].PartyPoints = 10
+	r.players["p1"].Points = 5
+	r.players["p2"].Points = 10
+	r.completeRotationActivityLocked(9000)
+	if r.players["p2"].PartyAward != 12 {
+		t.Fatalf("trailing winner did not receive gentle catch-up bonus: %#v", r.players["p2"])
+	}
+}
+
+func TestPartySelectionMethodsAndHostChoice(t *testing.T) {
+	r := rotationTestRoom(3)
+	r.partyConfig = defaultPartySessionSettings()
+	r.partyConfig.SelectionMethod = "majority"
+	r.beginPartyVoteLocked(1000)
+	first, second := r.partyVote.Options[0].ID, r.partyVote.Options[1].ID
+	r.partyVote.Votes["p1"], r.partyVote.Votes["p2"], r.partyVote.Votes["p3"] = first, first, second
+	r.closePartyVoteLocked(2000)
+	if r.partyVote.WinnerOptionID != first {
+		t.Fatalf("majority selection chose %q, want %q", r.partyVote.WinnerOptionID, first)
+	}
+
+	r = rotationTestRoom(2)
+	r.partyConfig = defaultPartySessionSettings()
+	r.partyConfig.SelectionMethod = "host"
+	r.beginPartyVoteLocked(3000)
+	choice := r.partyVote.Options[1].ID
+	if !r.selectPartyActivityLocked(choice, 4000, "host") || r.partyVote.WinnerOptionID != choice || r.partyPhase != "spinning" {
+		t.Fatalf("host selection did not start the wheel: %#v", r.partyVote)
+	}
+}

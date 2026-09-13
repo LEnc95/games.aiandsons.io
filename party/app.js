@@ -84,10 +84,11 @@ function renderAvatarPicker() {
 }
 
 function defaultPartySettings() {
-  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true };
+  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true, selectionMethod: "chaos", repeatAvoidance: "session", catchUp: true, enabledActivities: null };
 }
 
 function partySettingsFromControls() {
+  const activityInputs = [...document.querySelectorAll("#partyActivityPool input[data-activity-id]")];
   return {
     version: 1,
     durationPreset: byId("partyDurationSelect").value,
@@ -99,7 +100,36 @@ function partySettingsFromControls() {
     effects: byId("partyEffects").checked,
     narration: byId("partyNarration").checked,
     haptics: byId("partyHaptics").checked,
+    selectionMethod: byId("partySelectionSelect").value,
+    repeatAvoidance: byId("partyRepeatSelect").value,
+    catchUp: byId("partyCatchUp").checked,
+    enabledActivities: activityInputs.length ? activityInputs.filter((input) => input.checked).map((input) => input.dataset.activityId) : (state.hostPartySettings?.enabledActivities || null),
   };
+}
+
+function renderPartyActivityPool(catalog = [], enabledActivities = null) {
+  const target = byId("partyActivityPool");
+  if (!catalog.length || target.dataset.ready === "true") return;
+  const enabled = new Set(enabledActivities || catalog.map((activity) => activity.id));
+  target.textContent = "";
+  catalog.forEach((activity) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = enabled.has(activity.id);
+    input.dataset.activityId = activity.id;
+    input.addEventListener("change", () => {
+      if (!target.querySelector("input:checked")) {
+        input.checked = true;
+        byId("sessionError").textContent = "Keep at least one activity in the party pool.";
+        return;
+      }
+      sendPartyConfiguration();
+    });
+    label.append(input, document.createTextNode(activity.label));
+    target.append(label);
+  });
+  target.dataset.ready = "true";
 }
 
 function syncPartySettingsControls(settings = defaultPartySettings()) {
@@ -113,6 +143,10 @@ function syncPartySettingsControls(settings = defaultPartySettings()) {
   byId("partyEffects").checked = accepted.effects !== false;
   byId("partyNarration").checked = accepted.narration !== false;
   byId("partyHaptics").checked = accepted.haptics !== false;
+  byId("partySelectionSelect").value = accepted.selectionMethod;
+  byId("partyRepeatSelect").value = accepted.repeatAvoidance;
+  byId("partyCatchUp").checked = accepted.catchUp !== false;
+  document.querySelectorAll("#partyActivityPool input[data-activity-id]").forEach((input) => { input.checked = !accepted.enabledActivities || accepted.enabledActivities.includes(input.dataset.activityId); });
   const counts = { quick: 3, standard: 6, marathon: 10 };
   byId("partyEstimate").textContent = `About ${(counts[accepted.durationPreset] || 6) * 5} min`;
 }
@@ -347,14 +381,14 @@ function renderPartyController(snapshot) {
   byId("partyPoints").textContent = String(me?.partyPoints || 0);
   byId("partyWins").textContent = String(me?.activityWins || 0);
   let message = "Waiting for the host to start the party";
-  if (phase === "voting") message = `${Math.ceil(remaining)} seconds to vote`;
+  if (phase === "voting") message = snapshot?.partySettings?.selectionMethod === "host" ? "The host is choosing the next game" : `${Math.ceil(remaining)} seconds to vote`;
   else if (phase === "spinning") message = "The wheel is spinning!";
   else if (phase === "next_up") message = winner?.label || snapshot?.activity?.label || "Next activity incoming";
   else if (phase === "results") message = snapshot?.activitySkipped ? "Activity skipped" : me?.partyAward ? `+${me.partyAward} party points!` : "Activity complete";
   else if (phase === "paused") message = snapshot?.pauseReason === "host_disconnected" ? "Host reconnecting…" : "Party paused";
   else if (phase === "ended") message = me?.partyRank === 1 ? "You won the party!" : `Party finished · #${me?.partyRank || "—"}`;
   byId("partyMessage").textContent = message;
-  const voting = phase === "voting";
+  const voting = phase === "voting" && snapshot?.partySettings?.selectionMethod !== "host";
   byId("partyVotePanel").hidden = !voting;
   const ownBallot = vote.ballots?.find((ballot) => ballot.playerId === me?.id);
   if (ownBallot) state.selectedPartyVote = ownBallot.optionId;
@@ -733,6 +767,7 @@ function renderSessionScreen() {
   renderSessionRoster(players);
   const host = !displayMode;
   applyPartyPresentation(snapshot);
+  renderPartyActivityPool(snapshot?.activityCatalog || [], snapshot?.partySettings?.enabledActivities);
   if (host) {
     const locked = Boolean(snapshot?.roomLocked);
     const allowLateJoin = snapshot?.allowLateJoin !== false;
@@ -754,6 +789,7 @@ function renderSessionScreen() {
     syncPartySettingsControls(snapshot?.partySettings || state.hostPartySettings || partySettingsFromControls());
     byId("partySetupControls").setAttribute("aria-disabled", String(!setupOpen));
     byId("partySetupControls").querySelectorAll("select,input").forEach((control) => { control.disabled = !setupOpen; });
+    renderHostChoice(snapshot);
   }
   byId("partyStartButton").hidden = !host || partyPhase !== "party_lobby";
   byId("partyStartButton").disabled = connected < 2;
@@ -769,6 +805,24 @@ function renderSessionScreen() {
   byId("activityFrame").hidden = !showEmbedded;
   if (showEmbedded) mountEmbeddedActivity(snapshot.gameKey, snapshot);
   else drawPartyStage(snapshot);
+}
+
+function renderHostChoice(snapshot) {
+  const section = byId("partyHostChoice");
+  const choosing = snapshot?.partyPhase === "voting" && snapshot?.partySettings?.selectionMethod === "host";
+  section.hidden = !choosing;
+  const target = byId("partyHostChoiceButtons");
+  const signature = (snapshot?.partyVote?.options || []).map((option) => option.id).join("|");
+  if (!choosing || target.dataset.signature === signature) return;
+  target.dataset.signature = signature;
+  target.textContent = "";
+  (snapshot.partyVote.options || []).forEach((option) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = option.label;
+    button.addEventListener("click", () => sendPartyHost("choose_activity", { optionId: option.id }));
+    target.append(button);
+  });
 }
 
 function renderSessionRoster(players) {
@@ -896,7 +950,9 @@ function drawPartyVoting(snapshot) {
   const vote = snapshot.partyVote || {}, options = vote.options || [], ballots = vote.ballots || [];
   const seconds = Math.max(0, Math.ceil((Number(vote.closesAt || 0) - (Date.now() + state.testOffsetMs)) / 1000));
   partyText("WHAT SHOULD WE PLAY NEXT?", 600, 55, 1050, 48, "#ffe36e");
-  partyText(`${seconds}s · Every player gets one wheel slice`, 600, 99, 850, 20, "#d5e5ed");
+  const method = snapshot?.partySettings?.selectionMethod || "chaos";
+  const methodCopy = { chaos: "Every player gets one wheel slice", majority: "The activity with the most votes wins", unanimous: "Agree together or the wheel breaks the tie", host: "The host chooses from the activity pool" }[method];
+  partyText(`${seconds}s · ${methodCopy}`, 600, 99, 850, 20, "#d5e5ed");
   options.forEach((option, index) => {
     const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : "#ff6b9f";
     partyRoundRect(x, 135, 328, 420, 28, "rgba(10,23,52,.88)", accent);
@@ -1025,13 +1081,21 @@ byId("leaveButton").addEventListener("click", () => {
   if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
   location.href = "/party/";
 });
-byId("partyStartButton").addEventListener("click", () => sendPartyHost("start"));
+byId("partyStartButton").addEventListener("click", () => {
+  byId("partyActivitySettings").open = false;
+  byId("partyAdvancedSettings").open = false;
+  window.scrollTo({ top: 0, behavior: "auto" });
+  sendPartyHost("start");
+});
 byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snapshot?.roomLocked ? "unlock" : "lock"));
 byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
 byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
 byId("partyMaxPlayersSelect").addEventListener("change", (event) => sendPartyHost("set_max_players", { value: Number(event.target.value) }));
 byId("partyDurationSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyPlayStyleSelect").addEventListener("change", sendPartyConfiguration);
+byId("partySelectionSelect").addEventListener("change", sendPartyConfiguration);
+byId("partyRepeatSelect").addEventListener("change", sendPartyConfiguration);
+byId("partyCatchUp").addEventListener("change", sendPartyConfiguration);
 byId("partyAccessibilitySelect").addEventListener("change", (event) => { applyAccessibilityPreset(event.target.value); sendPartyConfiguration(); });
 ["partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics"].forEach((id) => {
   byId(id).addEventListener("change", () => { byId("partyAccessibilitySelect").value = "custom"; sendPartyConfiguration(); });

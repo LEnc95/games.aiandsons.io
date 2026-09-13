@@ -69,3 +69,16 @@ test("party setup exposes persisted duration, style, and accessibility controls"
   assert.match(turbo, /partySettings\?\.narration/);
   assert.match(crowd, /partySettings\?\.effects/);
 });
+
+test("party setup supports activity pools, repeat rules, catch-up, and host choice", async () => {
+  const [html, app, server] = await Promise.all([read("party/index.html"), read("party/app.js"), read("v2-server/party_rotation.go")]);
+  for (const id of ["partySelectionSelect", "partyRepeatSelect", "partyCatchUp", "partyActivityPool", "partyHostChoice"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /enabledActivities/);
+  assert.match(app, /choose_activity/);
+  assert.match(server, /SelectionMethod/);
+  assert.match(server, /RepeatAvoidance/);
+  assert.match(server, /CatchUp/);
+  assert.match(server, /activityHistory/);
+});

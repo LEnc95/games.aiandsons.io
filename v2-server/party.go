@@ -191,6 +191,7 @@ type partyRoom struct {
 	activityIndex      int
 	activity           partyActivity
 	lastActivityID     string
+	activityHistory    []string
 	partyVote          partyVoteState
 	partyAwarded       bool
 	activitySkipped    bool
@@ -658,6 +659,14 @@ func (r *partyRoom) applyRoomHostActionLocked(input partyInput, c *client) bool 
 			return true
 		}
 		r.partyConfig = settings
+	case "choose_activity":
+		if r.sessionMode != partyRotationSessionMode || r.partyPhase != "voting" || r.partySessionSettingsLocked().SelectionMethod != "host" {
+			c.sendErrorCode(r.roomID, "invalid_phase", "Host choice is not available right now.")
+			return true
+		}
+		if !r.selectPartyActivityLocked(strings.TrimSpace(input.OptionID), nowMillis(), "host") {
+			c.sendErrorCode(r.roomID, "invalid_vote", "Choose one of the available activities.")
+		}
 	case "kick":
 		playerID := strings.TrimSpace(input.PlayerID)
 		p := r.players[playerID]
