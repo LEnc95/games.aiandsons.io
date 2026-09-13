@@ -50,6 +50,16 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).view === "host", null, { timeout: 15000 });
     await host.waitForFunction(() => /^[A-HJ-NP-Z]{4}$/.test(document.getElementById("sessionRoom")?.textContent || ""), null, { timeout: 15000 });
     const room = await host.locator("#sessionRoom").textContent();
+    await host.selectOption("#partyDurationSelect", "quick");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partySettings?.targetActivities === 3);
+    await host.selectOption("#partyAccessibilitySelect", "relaxed");
+    await host.waitForFunction(() => {
+      const settings = JSON.parse(window.render_game_to_text()).state?.partySettings;
+      return settings?.accessibilityPreset === "relaxed" && settings.extendedTimers === true && settings.reducedMotion === true;
+    });
+    const savedSettings = await host.evaluate(() => JSON.parse(localStorage.getItem("aiandsons-party-host-settings-v1")));
+    if (savedSettings?.durationPreset !== "quick" || savedSettings?.accessibilityPreset !== "relaxed") throw new Error("Host party settings did not persist locally");
+    if (!await host.locator("body").evaluate((body) => body.classList.contains("party-reduced-motion"))) throw new Error("Reduced-motion presentation was not applied");
     const openJoinPage = async (label) => {
       const page = await makePage({ width: 390, height: 844 }, label);
       await page.goto(`${baseUrl}/party/?code=${room}&ws=${encodeURIComponent(ws)}`);
@@ -142,6 +152,8 @@ async function main() {
     const firstActivity = (await stateOf(host)).state.activity;
     if (!firstActivity?.gameKey || !firstActivity?.modeKey) throw new Error("First activity missing game and mode");
     await waitForEmbeddedAvatars(host);
+    const embeddedReducedMotion = await host.locator("#activityFrame").evaluate((frame) => frame.contentDocument.body.classList.contains("party-reduced-motion"));
+    if (!embeddedReducedMotion) throw new Error("Embedded activity did not receive reduced-motion party settings");
     await host.screenshot({ path: path.join(outputDir, "party-activity-first.png") });
     await host.click("#partySkipButton");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "voting", null, { timeout: 10000 });
@@ -159,7 +171,7 @@ async function main() {
     if (!ended.state.players.every((player) => Number.isInteger(player.partyPoints))) throw new Error("Party standings missing");
     await host.screenshot({ path: path.join(outputDir, "party-podium.png") });
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();

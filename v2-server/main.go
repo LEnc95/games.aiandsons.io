@@ -133,17 +133,19 @@ type hub struct {
 }
 
 type client struct {
-	id        string
-	name      string
-	gameID    string
-	role      string
-	playerID  string
-	hub       *hub
-	audioRoom *audioAgarRoom
-	partyRoom *partyRoom
-	conn      *websocket.Conn
-	send      chan []byte
-	closeOnce sync.Once
+	id         string
+	name       string
+	gameID     string
+	role       string
+	playerID   string
+	hub        *hub
+	audioRoom  *audioAgarRoom
+	partyRoom  *partyRoom
+	conn       *websocket.Conn
+	send       chan []byte
+	sendMu     sync.RWMutex
+	sendClosed bool
+	closeOnce  sync.Once
 }
 
 type audioAgarRoom struct {
@@ -422,6 +424,9 @@ func (r *audioAgarRoom) removeClient(c *client) {
 
 func (c *client) closeSend() {
 	c.closeOnce.Do(func() {
+		c.sendMu.Lock()
+		defer c.sendMu.Unlock()
+		c.sendClosed = true
 		close(c.send)
 	})
 }
@@ -447,15 +452,26 @@ func (c *client) sendEnvelope(messageType, roomID string, payload any) {
 		log.Printf("marshal envelope failed: %v", err)
 		return
 	}
+	c.sendMu.RLock()
+	if c.sendClosed {
+		c.sendMu.RUnlock()
+		return
+	}
+	slow := false
 	select {
 	case c.send <- raw:
 	default:
-		log.Printf("dropping slow client %s", c.id)
-		go func() {
-			c.leaveCurrentRoom()
-			c.closeSend()
-		}()
+		slow = true
 	}
+	c.sendMu.RUnlock()
+	if !slow {
+		return
+	}
+	log.Printf("dropping slow client %s", c.id)
+	go func() {
+		c.leaveCurrentRoom()
+		c.closeSend()
+	}()
 }
 
 func marshalEnvelope(gameID, messageType, roomID string, payload any) ([]byte, error) {

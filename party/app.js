@@ -9,6 +9,7 @@ const partyCtx = partyCanvas.getContext("2d");
 const screenMode = params.get("host") === "1" || normalizeCode(params.get("display")).length === 4;
 const displayMode = normalizeCode(params.get("display")).length === 4;
 const avatarStorageKey = "aiandsons-party-avatar";
+const partySettingsStorageKey = "aiandsons-party-host-settings-v1";
 const state = {
   connection: null,
   roomId: "",
@@ -43,6 +44,7 @@ const state = {
   embeddedGame: "",
   selectedPartyVote: "",
   partyAnimationFrame: 0,
+  hostPartySettings: null,
 };
 
 function loadSavedAvatar() {
@@ -79,6 +81,80 @@ function renderAvatarPicker() {
     label.append(input, preview);
     target.append(label);
   });
+}
+
+function defaultPartySettings() {
+  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true };
+}
+
+function partySettingsFromControls() {
+  return {
+    version: 1,
+    durationPreset: byId("partyDurationSelect").value,
+    playStyle: byId("partyPlayStyleSelect").value,
+    accessibilityPreset: byId("partyAccessibilitySelect").value,
+    extendedTimers: byId("partyExtendedTimers").checked,
+    reducedMotion: byId("partyReducedMotion").checked,
+    highContrast: byId("partyHighContrast").checked,
+    effects: byId("partyEffects").checked,
+    narration: byId("partyNarration").checked,
+    haptics: byId("partyHaptics").checked,
+  };
+}
+
+function syncPartySettingsControls(settings = defaultPartySettings()) {
+  const accepted = { ...defaultPartySettings(), ...settings };
+  byId("partyDurationSelect").value = accepted.durationPreset;
+  byId("partyPlayStyleSelect").value = accepted.playStyle;
+  byId("partyAccessibilitySelect").value = accepted.accessibilityPreset;
+  byId("partyExtendedTimers").checked = Boolean(accepted.extendedTimers);
+  byId("partyReducedMotion").checked = Boolean(accepted.reducedMotion);
+  byId("partyHighContrast").checked = Boolean(accepted.highContrast);
+  byId("partyEffects").checked = accepted.effects !== false;
+  byId("partyNarration").checked = accepted.narration !== false;
+  byId("partyHaptics").checked = accepted.haptics !== false;
+  const counts = { quick: 3, standard: 6, marathon: 10 };
+  byId("partyEstimate").textContent = `About ${(counts[accepted.durationPreset] || 6) * 5} min`;
+}
+
+function loadSavedPartySettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(partySettingsStorageKey) || "null");
+    state.hostPartySettings = { ...defaultPartySettings(), ...(saved || {}) };
+    syncPartySettingsControls(state.hostPartySettings);
+  } catch {
+    state.hostPartySettings = defaultPartySettings();
+    syncPartySettingsControls(state.hostPartySettings);
+  }
+}
+
+function sendPartyConfiguration() {
+  const settings = partySettingsFromControls();
+  state.hostPartySettings = settings;
+  try { localStorage.setItem(partySettingsStorageKey, JSON.stringify(settings)); } catch { /* Storage is optional. */ }
+  sendPartyHost("configure_party", { partySettings: settings });
+}
+
+function applyAccessibilityPreset(preset) {
+  const values = {
+    standard: { extendedTimers: false, reducedMotion: false, highContrast: false },
+    family: { extendedTimers: true, reducedMotion: false, highContrast: true },
+    relaxed: { extendedTimers: true, reducedMotion: true, highContrast: false },
+  }[preset];
+  if (!values) return;
+  byId("partyExtendedTimers").checked = values.extendedTimers;
+  byId("partyReducedMotion").checked = values.reducedMotion;
+  byId("partyHighContrast").checked = values.highContrast;
+}
+
+function applyPartyPresentation(snapshot) {
+  const settings = snapshot?.partySettings;
+  document.body.classList.toggle("party-reduced-motion", Boolean(settings?.reducedMotion));
+  document.body.classList.toggle("party-high-contrast", Boolean(settings?.highContrast));
+}
+
+function vibrate(pattern) {
+  if (state.snapshot?.partySettings?.haptics !== false) navigator.vibrate?.(pattern);
 }
 
 function normalizeCode(value) {
@@ -223,6 +299,7 @@ function renderController() {
   const snapshot = state.snapshot;
   if (snapshot?.gameKey) state.gameKey = snapshot.gameKey;
   if (snapshot?.sessionMode) state.sessionMode = snapshot.sessionMode;
+  applyPartyPresentation(snapshot);
   const activityControls = snapshot?.partyPhase === "activity" || (snapshot?.partyPhase === "paused" && snapshot?.resumePartyPhase === "activity");
   if (state.sessionMode === "rotation" && !activityControls) {
     showController();
@@ -301,7 +378,7 @@ function renderPartyController(snapshot) {
         state.selectedPartyVote = option.id;
         state.connection?.sendInput({ type: "party_vote", optionId: option.id });
         renderPartyController(state.snapshot);
-        navigator.vibrate?.(25);
+        vibrate(25);
       });
       target.append(button);
     });
@@ -469,7 +546,7 @@ function showRaceFeedback(player) {
   feedback.textContent = messages[player.lastEventType] || "Nice move!";
   feedback.className = `race-feedback${impact ? " impact" : ""}`;
   feedback.hidden = false;
-  navigator.vibrate?.(impact ? [90, 45, 90] : [28, 30, 45]);
+  vibrate(impact ? [90, 45, 90] : [28, 30, 45]);
   clearTimeout(state.feedbackTimer);
   state.feedbackTimer = setTimeout(() => { feedback.hidden = true; }, 1800);
 }
@@ -607,6 +684,10 @@ async function connectSessionScreen() {
       byId("sessionRoom").textContent = state.roomId || "----";
       renderSessionQr();
       renderSessionScreen();
+      if (!displayMode && !requestedRoom) {
+        syncPartySettingsControls(state.hostPartySettings || defaultPartySettings());
+        sendPartyConfiguration();
+      }
     } else if (event.type === "error") {
       byId("sessionError").textContent = payload.message || "The party server rejected that action.";
       if (["invalid_host_token", "room_not_found"].includes(payload.code) && state.roomId) sessionStorage.removeItem(hostTokenKey(state.roomId));
@@ -643,9 +724,15 @@ function renderSessionScreen() {
   byId("sessionRoom").textContent = state.roomId || snapshot?.roomId || "----";
   const maxPlayers = Number(snapshot?.maxPlayers || 8);
   byId("sessionPlayerCount").textContent = `${connected} / ${maxPlayers} players`;
+  const targetActivities = Number(snapshot?.partySettings?.targetActivities || 6);
+  const completedActivities = Math.min(Number(snapshot?.activityIndex || 0), targetActivities);
+  byId("sessionProgress").textContent = partyPhase === "party_lobby"
+    ? `${targetActivities}-game party · about ${Number(snapshot?.estimatedMinutes || targetActivities * 5)} min`
+    : partyPhase === "ended" ? `${completedActivities} games complete` : `Game ${Math.min(completedActivities + 1, targetActivities)} of ${targetActivities}`;
   byId("sessionScreenCount").textContent = `${1 + Number(snapshot?.displayCount || 0)} live screen${Number(snapshot?.displayCount || 0) ? "s" : ""}`;
   renderSessionRoster(players);
   const host = !displayMode;
+  applyPartyPresentation(snapshot);
   if (host) {
     const locked = Boolean(snapshot?.roomLocked);
     const allowLateJoin = snapshot?.allowLateJoin !== false;
@@ -663,6 +750,10 @@ function renderSessionScreen() {
     byId("partyFriendlyNamesButton").setAttribute("aria-pressed", String(friendlyNames));
     byId("partyMaxPlayersSelect").value = String(maxPlayers);
     [...byId("partyMaxPlayersSelect").options].forEach((option) => { option.disabled = Number(option.value) < players.length; });
+    const setupOpen = partyPhase === "party_lobby";
+    syncPartySettingsControls(snapshot?.partySettings || state.hostPartySettings || partySettingsFromControls());
+    byId("partySetupControls").setAttribute("aria-disabled", String(!setupOpen));
+    byId("partySetupControls").querySelectorAll("select,input").forEach((control) => { control.disabled = !setupOpen; });
   }
   byId("partyStartButton").hidden = !host || partyPhase !== "party_lobby";
   byId("partyStartButton").disabled = connected < 2;
@@ -890,7 +981,7 @@ bindSteerButton(byId("leftButton"), -1);
 bindSteerButton(byId("rightButton"), 1);
 byId("boostButton").addEventListener("click", () => {
   state.connection?.sendInput({ type: "boost" });
-  navigator.vibrate?.(35);
+  vibrate(35);
 });
 byId("gadgetButton").addEventListener("click", () => state.connection?.sendInput({ type: "gadget", action: "use" }));
 document.querySelectorAll("[data-gadget]").forEach((button) => button.addEventListener("click", () => {
@@ -912,19 +1003,19 @@ byId("hornButton").addEventListener("click", () => state.connection?.sendInput({
   state.selectedChoice = choice;
   state.connection?.sendInput({ type: "choice", choice });
   renderController();
-  navigator.vibrate?.(30);
+  vibrate(30);
 }));
 ["left", "right"].forEach((prediction) => byId(prediction === "left" ? "duelPredictLeft" : "duelPredictRight").addEventListener("click", () => {
   state.selectedPrediction = prediction;
   state.connection?.sendInput({ type: "predict", choice: prediction });
   renderController();
-  navigator.vibrate?.(20);
+  vibrate(20);
 }));
 byId("duelHotTake").addEventListener("click", () => {
   state.selectedHotTake = !state.selectedHotTake;
   state.connection?.sendInput({ type: "hot_take" });
   renderController();
-  navigator.vibrate?.([25, 20, 25]);
+  vibrate([25, 20, 25]);
 });
 document.querySelectorAll("[data-crowd-emote]").forEach((button) => button.addEventListener("click", () => {
   state.connection?.sendInput({ type: "emote", emote: button.dataset.crowdEmote });
@@ -939,6 +1030,12 @@ byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snap
 byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
 byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
 byId("partyMaxPlayersSelect").addEventListener("change", (event) => sendPartyHost("set_max_players", { value: Number(event.target.value) }));
+byId("partyDurationSelect").addEventListener("change", sendPartyConfiguration);
+byId("partyPlayStyleSelect").addEventListener("change", sendPartyConfiguration);
+byId("partyAccessibilitySelect").addEventListener("change", (event) => { applyAccessibilityPreset(event.target.value); sendPartyConfiguration(); });
+["partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics"].forEach((id) => {
+  byId(id).addEventListener("change", () => { byId("partyAccessibilitySelect").value = "custom"; sendPartyConfiguration(); });
+});
 byId("partyPauseButton").addEventListener("click", () => sendPartyHost(state.snapshot?.partyPhase === "paused" ? "resume" : "pause"));
 byId("partySkipButton").addEventListener("click", () => sendPartyHost("skip"));
 byId("partyEndButton").addEventListener("click", () => { if (window.confirm("End this party and show the final standings?")) sendPartyHost("end"); });
@@ -969,6 +1066,7 @@ setInterval(() => {
 
 const initialCode = normalizeCode(params.get("code"));
 renderAvatarPicker();
+if (screenMode && !displayMode) loadSavedPartySettings();
 if (!screenMode && initialCode) {
   byId("roomCode").value = initialCode;
   if (localStorage.getItem(tokenKey(initialCode))) {

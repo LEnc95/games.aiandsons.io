@@ -29,6 +29,21 @@ type partyActivity struct {
 	Description string `json:"description"`
 	MinPlayers  int    `json:"minPlayers"`
 	MaxPlayers  int    `json:"maxPlayers"`
+	Style       string `json:"style"`
+}
+
+type partySessionSettings struct {
+	Version             int    `json:"version"`
+	DurationPreset      string `json:"durationPreset"`
+	PlayStyle           string `json:"playStyle"`
+	AccessibilityPreset string `json:"accessibilityPreset"`
+	TargetActivities    int    `json:"targetActivities"`
+	ExtendedTimers      bool   `json:"extendedTimers"`
+	ReducedMotion       bool   `json:"reducedMotion"`
+	HighContrast        bool   `json:"highContrast"`
+	Effects             bool   `json:"effects"`
+	Narration           bool   `json:"narration"`
+	Haptics             bool   `json:"haptics"`
 }
 
 type partySpin struct {
@@ -49,18 +64,42 @@ type partyVoteState struct {
 }
 
 var partyActivityCatalog = []partyActivity{
-	{ID: "turbotilt:classic", GameKey: turboTiltGameKey, ModeKey: "classic", Label: "Turbo Tilt · Classic", Description: "Three heats of pure tilt, dodge, and boost racing.", MinPlayers: 2, MaxPlayers: 8},
-	{ID: "turbotilt:elimination", GameKey: turboTiltGameKey, ModeKey: "elimination", Label: "Turbo Tilt · Elimination", Description: "The last racer drops after each heat.", MinPlayers: 2, MaxPlayers: 8},
-	{ID: "turbotilt:teams", GameKey: turboTiltGameKey, ModeKey: "teams", Label: "Turbo Tilt · Teams", Description: "Balanced squads race for a shared finish.", MinPlayers: 4, MaxPlayers: 8},
-	{ID: "turbotilt:relay", GameKey: turboTiltGameKey, ModeKey: "relay", Label: "Turbo Tilt · Relay", Description: "Control passes between teammates during each heat.", MinPlayers: 4, MaxPlayers: 8},
-	{ID: "turbotilt:survival", GameKey: turboTiltGameKey, ModeKey: "survival", Label: "Turbo Tilt · Survival", Description: "Protect the room's shared health through every hazard.", MinPlayers: 2, MaxPlayers: 8},
-	{ID: "turbotilt:chaos", GameKey: turboTiltGameKey, ModeKey: "chaos", Label: "Turbo Tilt · Chaos", Description: "Wild modifiers change the race every ten seconds.", MinPlayers: 2, MaxPlayers: 8},
-	{ID: "crowdshift:classic_mix", GameKey: crowdShiftGameKey, ModeKey: "classic_mix", Label: "Crowd Shift · Classic Mix", Description: "The scoring rule changes every round.", MinPlayers: 3, MaxPlayers: 8},
-	{ID: "crowdshift:majority", GameKey: crowdShiftGameKey, ModeKey: "majority", Label: "Crowd Shift · Majority Rush", Description: "Read the room and stay with the biggest crowd.", MinPlayers: 3, MaxPlayers: 8},
-	{ID: "crowdshift:minority", GameKey: crowdShiftGameKey, ModeKey: "minority", Label: "Crowd Shift · Underdog Hunt", Description: "Find the smaller side before everyone else does.", MinPlayers: 3, MaxPlayers: 8},
-	{ID: "crowdshift:split", GameKey: crowdShiftGameKey, ModeKey: "split", Label: "Crowd Shift · Perfect Split", Description: "Work together to divide the room as evenly as possible.", MinPlayers: 3, MaxPlayers: 8},
-	{ID: "crowdshift:unanimous", GameKey: crowdShiftGameKey, ModeKey: "unanimous", Label: "Crowd Shift · Unanimous", Description: "Everyone scores only when the whole room agrees.", MinPlayers: 3, MaxPlayers: 8},
-	{ID: "crowdshift:duel", GameKey: crowdShiftGameKey, ModeKey: "duel", Label: "Crowd Shift · Duel Shift", Description: "Two rivals bluff, predict, and risk a Hot Take.", MinPlayers: 2, MaxPlayers: 2},
+	{ID: "turbotilt:classic", GameKey: turboTiltGameKey, ModeKey: "classic", Label: "Turbo Tilt · Classic", Description: "Three heats of pure tilt, dodge, and boost racing.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
+	{ID: "turbotilt:elimination", GameKey: turboTiltGameKey, ModeKey: "elimination", Label: "Turbo Tilt · Elimination", Description: "The last racer drops after each heat.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
+	{ID: "turbotilt:teams", GameKey: turboTiltGameKey, ModeKey: "teams", Label: "Turbo Tilt · Teams", Description: "Balanced squads race for a shared finish.", MinPlayers: 4, MaxPlayers: 8, Style: "competitive"},
+	{ID: "turbotilt:relay", GameKey: turboTiltGameKey, ModeKey: "relay", Label: "Turbo Tilt · Relay", Description: "Control passes between teammates during each heat.", MinPlayers: 4, MaxPlayers: 8, Style: "cooperative"},
+	{ID: "turbotilt:survival", GameKey: turboTiltGameKey, ModeKey: "survival", Label: "Turbo Tilt · Survival", Description: "Protect the room's shared health through every hazard.", MinPlayers: 2, MaxPlayers: 8, Style: "cooperative"},
+	{ID: "turbotilt:chaos", GameKey: turboTiltGameKey, ModeKey: "chaos", Label: "Turbo Tilt · Chaos", Description: "Wild modifiers change the race every ten seconds.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
+	{ID: "crowdshift:classic_mix", GameKey: crowdShiftGameKey, ModeKey: "classic_mix", Label: "Crowd Shift · Classic Mix", Description: "The scoring rule changes every round.", MinPlayers: 3, MaxPlayers: 8, Style: "mixed"},
+	{ID: "crowdshift:majority", GameKey: crowdShiftGameKey, ModeKey: "majority", Label: "Crowd Shift · Majority Rush", Description: "Read the room and stay with the biggest crowd.", MinPlayers: 3, MaxPlayers: 8, Style: "competitive"},
+	{ID: "crowdshift:minority", GameKey: crowdShiftGameKey, ModeKey: "minority", Label: "Crowd Shift · Underdog Hunt", Description: "Find the smaller side before everyone else does.", MinPlayers: 3, MaxPlayers: 8, Style: "competitive"},
+	{ID: "crowdshift:split", GameKey: crowdShiftGameKey, ModeKey: "split", Label: "Crowd Shift · Perfect Split", Description: "Work together to divide the room as evenly as possible.", MinPlayers: 3, MaxPlayers: 8, Style: "cooperative"},
+	{ID: "crowdshift:unanimous", GameKey: crowdShiftGameKey, ModeKey: "unanimous", Label: "Crowd Shift · Unanimous", Description: "Everyone scores only when the whole room agrees.", MinPlayers: 3, MaxPlayers: 8, Style: "cooperative"},
+	{ID: "crowdshift:duel", GameKey: crowdShiftGameKey, ModeKey: "duel", Label: "Crowd Shift · Duel Shift", Description: "Two rivals bluff, predict, and risk a Hot Take.", MinPlayers: 2, MaxPlayers: 2, Style: "competitive"},
+}
+
+func defaultPartySessionSettings() partySessionSettings {
+	return partySessionSettings{Version: 1, DurationPreset: "standard", PlayStyle: "mixed", AccessibilityPreset: "standard", TargetActivities: 6, Effects: true, Narration: true, Haptics: true}
+}
+
+func validatePartySessionSettings(value partySessionSettings) (partySessionSettings, bool) {
+	targets := map[string]int{"quick": 3, "standard": 6, "marathon": 10}
+	target, durationOK := targets[value.DurationPreset]
+	styleOK := containsString([]string{"mixed", "competitive", "cooperative"}, value.PlayStyle)
+	accessibilityOK := containsString([]string{"standard", "family", "relaxed", "custom"}, value.AccessibilityPreset)
+	if value.Version != 1 || !durationOK || !styleOK || !accessibilityOK {
+		return partySessionSettings{}, false
+	}
+	value.TargetActivities = target
+	switch value.AccessibilityPreset {
+	case "standard":
+		value.ExtendedTimers, value.ReducedMotion, value.HighContrast = false, false, false
+	case "family":
+		value.ExtendedTimers, value.ReducedMotion, value.HighContrast = true, false, true
+	case "relaxed":
+		value.ExtendedTimers, value.ReducedMotion, value.HighContrast = true, true, false
+	}
+	return value, true
 }
 
 func (r *partyRoom) applyPartyVoteLocked(p *partyPlayer, optionID string, c *client) {
@@ -111,12 +150,7 @@ func (r *partyRoom) applyRotationHostActionLocked(action string, now int64, c *c
 		}
 		r.skipRotationActivityLocked(now)
 	case "end":
-		r.gameKey = partyRotationGameKey
-		r.partyPhase = "ended"
-		r.phase = "party_podium"
-		r.phaseEndsAt = 0
-		r.endedAt = now
-		r.updatePartyRanksLocked()
+		r.finishPartyLocked(now)
 	default:
 		c.sendErrorCode(r.roomID, "unsupported_input", "That host action is not supported.")
 	}
@@ -128,14 +162,14 @@ func (r *partyRoom) stepRotationLocked(now int64, dt float64) {
 	}
 	switch r.partyPhase {
 	case "voting":
-		if now >= r.partyVote.ClosesAt || (now-r.partyVote.StartedAt >= rotationPhaseDuration(partyVoteMinimumMs) && r.allConnectedPlayersVotedLocked()) {
+		if now >= r.partyVote.ClosesAt || (now-r.partyVote.StartedAt >= r.rotationDurationLocked(partyVoteMinimumMs) && r.allConnectedPlayersVotedLocked()) {
 			r.closePartyVoteLocked(now)
 		}
 	case "spinning":
 		if now >= r.phaseEndsAt {
 			r.partyPhase = "next_up"
 			r.phase = "next_up"
-			r.phaseEndsAt = now + rotationPhaseDuration(partyNextUpMs)
+			r.phaseEndsAt = now + r.rotationDurationLocked(partyNextUpMs)
 		}
 	case "next_up":
 		if now >= r.phaseEndsAt {
@@ -143,7 +177,11 @@ func (r *partyRoom) stepRotationLocked(now int64, dt float64) {
 		}
 	case "results":
 		if now >= r.phaseEndsAt {
-			r.beginPartyVoteLocked(now)
+			if r.activityIndex >= r.partySessionSettingsLocked().TargetActivities {
+				r.finishPartyLocked(now)
+			} else {
+				r.beginPartyVoteLocked(now)
+			}
 		}
 	case "activity":
 		if r.gameKey == crowdShiftGameKey {
@@ -159,10 +197,10 @@ func (r *partyRoom) beginPartyVoteLocked(now int64) {
 	r.gameKey = partyRotationGameKey
 	r.partyPhase = "voting"
 	r.phase = "voting"
-	r.phaseEndsAt = now + rotationPhaseDuration(partyVoteMs)
+	r.phaseEndsAt = now + r.rotationDurationLocked(partyVoteMs)
 	r.partyVote = partyVoteState{
 		Options: r.partyOptionsLocked(connected), Votes: make(map[string]string),
-		StartedAt: now, ClosesAt: now + rotationPhaseDuration(partyVoteMs),
+		StartedAt: now, ClosesAt: now + r.rotationDurationLocked(partyVoteMs),
 	}
 	r.activity = partyActivity{}
 	r.activitySkipped = false
@@ -198,7 +236,7 @@ func (r *partyRoom) closePartyVoteLocked(now int64) {
 	turns := 6 + securePartyIndex(3)
 	r.partyVote.SelectedBallotID = ballots[selected].ID
 	r.partyVote.WinnerOptionID = ballots[selected].OptionID
-	r.partyVote.Spin = partySpin{SelectedIndex: selected, Turns: turns, StartedAt: now, EndsAt: now + rotationPhaseDuration(partySpinMs)}
+	r.partyVote.Spin = partySpin{SelectedIndex: selected, Turns: turns, StartedAt: now, EndsAt: now + r.rotationDurationLocked(partySpinMs)}
 	for _, option := range r.partyVote.Options {
 		if option.ID == r.partyVote.WinnerOptionID {
 			r.activity = option
@@ -207,7 +245,7 @@ func (r *partyRoom) closePartyVoteLocked(now int64) {
 	}
 	r.partyPhase = "spinning"
 	r.phase = "spinning"
-	r.phaseEndsAt = now + rotationPhaseDuration(partySpinMs)
+	r.phaseEndsAt = now + r.rotationDurationLocked(partySpinMs)
 }
 
 func (r *partyRoom) startRotationActivityLocked(now int64) {
@@ -287,7 +325,7 @@ func (r *partyRoom) startRotationCrowdShiftLocked(now int64) {
 	}
 	r.prepareCrowdShiftRoundLocked(now)
 	r.phase = "countdown"
-	r.phaseEndsAt = now + partyPhaseDuration(crowdShiftCountdownMs)
+	r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftCountdownMs)
 }
 
 func (r *partyRoom) completeRotationActivityLocked(now int64) {
@@ -313,7 +351,7 @@ func (r *partyRoom) completeRotationActivityLocked(now int64) {
 	r.updatePartyRanksLocked()
 	r.partyPhase = "results"
 	r.phase = "podium"
-	r.phaseEndsAt = now + rotationPhaseDuration(partyResultsMs)
+	r.phaseEndsAt = now + r.rotationDurationLocked(partyResultsMs)
 	r.endedAt = 0
 }
 
@@ -326,7 +364,7 @@ func (r *partyRoom) skipRotationActivityLocked(now int64) {
 	}
 	r.partyPhase = "results"
 	r.phase = "podium"
-	r.phaseEndsAt = now + rotationPhaseDuration(partySkippedResultsMs)
+	r.phaseEndsAt = now + r.rotationDurationLocked(partySkippedResultsMs)
 	r.endedAt = 0
 }
 
@@ -385,9 +423,11 @@ func (r *partyRoom) updatePartyRanksLocked() []*partyPlayer {
 }
 
 func (r *partyRoom) partyOptionsLocked(playerCount int) []partyActivity {
+	playStyle := r.partySessionSettingsLocked().PlayStyle
 	eligible := make([]partyActivity, 0, len(partyActivityCatalog))
 	for _, option := range partyActivityCatalog {
-		if playerCount >= option.MinPlayers && playerCount <= option.MaxPlayers && option.ID != r.lastActivityID {
+		styleMatches := playStyle == "mixed" || option.Style == playStyle
+		if styleMatches && playerCount >= option.MinPlayers && playerCount <= option.MaxPlayers && option.ID != r.lastActivityID {
 			eligible = append(eligible, option)
 		}
 	}
@@ -416,6 +456,23 @@ func (r *partyRoom) partyOptionsLocked(playerCount int) []partyActivity {
 		}
 	}
 	return options
+}
+
+func (r *partyRoom) finishPartyLocked(now int64) {
+	r.gameKey = partyRotationGameKey
+	r.partyPhase = "ended"
+	r.phase = "party_podium"
+	r.phaseEndsAt = 0
+	r.endedAt = now
+	r.updatePartyRanksLocked()
+}
+
+func (r *partyRoom) rotationDurationLocked(base int64) int64 {
+	duration := rotationPhaseDuration(base)
+	if r.partySessionSettingsLocked().ExtendedTimers {
+		return duration * 3 / 2
+	}
+	return duration
 }
 
 func (r *partyRoom) allConnectedPlayersVotedLocked() bool {

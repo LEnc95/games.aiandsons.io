@@ -118,3 +118,46 @@ func TestPartyRotationSkipAndEnd(t *testing.T) {
 		t.Fatalf("end did not produce final party podium: %#v", r)
 	}
 }
+
+func TestPartySessionSettingsValidateFilterAndExtendTimers(t *testing.T) {
+	settings, ok := validatePartySessionSettings(partySessionSettings{
+		Version: 1, DurationPreset: "quick", PlayStyle: "cooperative", AccessibilityPreset: "family",
+		ExtendedTimers: true, Effects: true, Narration: true, Haptics: true,
+	})
+	if !ok || settings.TargetActivities != 3 {
+		t.Fatalf("quick preset did not validate with a three-activity target: %#v, %v", settings, ok)
+	}
+	if !settings.ExtendedTimers || !settings.HighContrast || settings.ReducedMotion {
+		t.Fatalf("family accessibility preset was not normalized server-side: %#v", settings)
+	}
+	if _, ok := validatePartySessionSettings(partySessionSettings{Version: 1, DurationPreset: "forever", PlayStyle: "mixed", AccessibilityPreset: "standard"}); ok {
+		t.Fatal("unsupported duration preset should be rejected")
+	}
+
+	r := rotationTestRoom(4)
+	r.partyConfig = settings
+	for _, option := range r.partyOptionsLocked(4) {
+		if option.Style != "cooperative" {
+			t.Fatalf("cooperative party included %q activity: %#v", option.Style, option)
+		}
+	}
+	if got := r.rotationDurationLocked(100); got != 150 {
+		t.Fatalf("extended rotation timer = %d, want 150", got)
+	}
+	if got := r.partyDurationLocked(100); got != 150 {
+		t.Fatalf("extended activity timer = %d, want 150", got)
+	}
+}
+
+func TestPartyDurationPresetFinishesAtTarget(t *testing.T) {
+	r := rotationTestRoom(2)
+	r.partyConfig = partySessionSettings{Version: 1, DurationPreset: "quick", PlayStyle: "mixed", AccessibilityPreset: "standard", Effects: true, Narration: true, Haptics: true}
+	r.partyPhase = "results"
+	r.phase = "podium"
+	r.activityIndex = 3
+	r.phaseEndsAt = 1000
+	r.stepRotationLocked(1000, 0)
+	if r.partyPhase != "ended" || r.phase != "party_podium" || r.endedAt != 1000 {
+		t.Fatalf("quick party did not end after three activities: phase=%s gamePhase=%s endedAt=%d", r.partyPhase, r.phase, r.endedAt)
+	}
+}
