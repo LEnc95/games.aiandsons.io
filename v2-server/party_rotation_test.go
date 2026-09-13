@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func rotationTestRoom(playerCount int) *partyRoom {
 	r := &partyRoom{
@@ -204,5 +207,30 @@ func TestPartySelectionMethodsAndHostChoice(t *testing.T) {
 	choice := r.partyVote.Options[1].ID
 	if !r.selectPartyActivityLocked(choice, 4000, "host") || r.partyVote.WinnerOptionID != choice || r.partyPhase != "spinning" {
 		t.Fatalf("host selection did not start the wheel: %#v", r.partyVote)
+	}
+}
+
+func TestPartyLobbyReadyStateIsAuthoritative(t *testing.T) {
+	r := rotationTestRoom(2)
+	p := r.players["p1"]
+	c := &client{id: "ready", role: "player", playerID: p.ID, partyRoom: r, send: make(chan []byte, 4)}
+	p.Client = c
+	r.applyInput(c, inputEnvelope{Seq: 1, Input: json.RawMessage(`{"type":"party_ready","ready":true}`)})
+	if !p.Ready {
+		t.Fatal("player ready input did not update server state")
+	}
+	state := r.decorateRoomControlsLocked(r.rotationSnapshotLocked(p.ID))
+	if state["readyCount"] != 1 {
+		t.Fatalf("ready count missing from snapshot: %#v", state)
+	}
+	players := state["players"].([]map[string]any)
+	found := false
+	for _, player := range players {
+		if player["id"] == p.ID {
+			found = player["ready"] == true
+		}
+	}
+	if !found {
+		t.Fatalf("player ready state missing from snapshot: %#v", players)
 	}
 }

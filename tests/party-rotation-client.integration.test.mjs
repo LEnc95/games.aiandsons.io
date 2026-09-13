@@ -82,3 +82,16 @@ test("party setup supports activity pools, repeat rules, catch-up, and host choi
   assert.match(server, /CatchUp/);
   assert.match(server, /activityHistory/);
 });
+
+test("party lobby explains readiness and preserves reconnect identity", async () => {
+  const [html, app, client, server] = await Promise.all([
+    read("party/index.html"), read("party/app.js"), read("src/net/multiplayerClient.js"), read("v2-server/party.go"),
+  ]);
+  for (const id of ["partyLobbyGuide", "partySelectionHelp", "partyReadyButton"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(app, /type: "party_ready"/);
+  assert.match(app, /Your name, avatar, and score are saved/);
+  assert.match(app, /Welcome back/);
+  assert.match(client, /this\.options\.token = payload\.token/);
+  assert.match(server, /"reconnected": reconnected/);
+  assert.match(server, /state\["readyCount"\]/);
+});

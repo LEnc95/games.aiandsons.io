@@ -42,6 +42,7 @@ type partyInput struct {
 	Settings      partySettings        `json:"settings,omitempty"`
 	Customization partyCustomization   `json:"customization,omitempty"`
 	OptionID      string               `json:"optionId,omitempty"`
+	Ready         bool                 `json:"ready,omitempty"`
 }
 
 type partySettings struct {
@@ -94,6 +95,7 @@ type partyPlayer struct {
 	Avatar           string
 	Client           *client
 	Connected        bool
+	Ready            bool
 	Queued           bool
 	Active           bool
 	X                float64
@@ -415,7 +417,7 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, requestedAvatar, toke
 				p.LastSteerAt = 0
 				p.LastRateErrorAt = 0
 				r.lastActive = nowMillis()
-				r.sendPlayerWelcomeLocked(c, p, false)
+				r.sendPlayerWelcomeLocked(c, p, false, true)
 				return
 			}
 		}
@@ -479,14 +481,14 @@ func (r *partyRoom) attachPlayer(c *client, requestedName, requestedAvatar, toke
 	c.playerID = id
 	c.partyRoom = r
 	r.lastActive = nowMillis()
-	r.sendPlayerWelcomeLocked(c, p, adjusted)
+	r.sendPlayerWelcomeLocked(c, p, adjusted, false)
 }
 
-func (r *partyRoom) sendPlayerWelcomeLocked(c *client, p *partyPlayer, adjusted bool) {
+func (r *partyRoom) sendPlayerWelcomeLocked(c *client, p *partyPlayer, adjusted, reconnected bool) {
 	c.sendEnvelope("welcome", r.roomID, map[string]any{
 		"role": "player", "roomId": r.roomID, "gameKey": r.gameKey,
 		"playerId": p.ID, "playerName": p.Name, "playerColor": p.Color, "playerAvatar": p.Avatar,
-		"token": p.Token, "queued": p.Queued, "nameAdjusted": adjusted,
+		"token": p.Token, "queued": p.Queued, "nameAdjusted": adjusted, "reconnected": reconnected,
 		"sessionMode": r.sessionMode,
 	})
 }
@@ -560,6 +562,14 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 	p.LastSeq = payload.Seq
 	if r.sessionMode == partyRotationSessionMode && input.Type == "party_vote" {
 		r.applyPartyVoteLocked(p, input.OptionID, c)
+		return
+	}
+	if r.sessionMode == partyRotationSessionMode && input.Type == "party_ready" {
+		if r.partyPhase != "party_lobby" {
+			c.sendErrorCode(r.roomID, "invalid_phase", "Ready status only changes in the party lobby.")
+			return
+		}
+		p.Ready = input.Ready
 		return
 	}
 	if r.gameKey == crowdShiftGameKey {
@@ -1206,7 +1216,7 @@ func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 		}
 		players = append(players, map[string]any{
 			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar,
-			"connected": p.Connected, "queued": p.Queued, "active": p.Active,
+			"connected": p.Connected, "ready": p.Ready, "queued": p.Queued, "active": p.Active,
 			"x": roundTo(p.X, 3), "distance": roundTo(p.Distance, 1),
 			"points": p.Points, "heatPoints": p.HeatPoints, "rank": rank,
 			"barrierHits": p.BarrierHits, "totalBarrierHits": p.TotalBarrierHits, "boostCharges": p.BoostCharges,
@@ -1261,6 +1271,13 @@ func (r *partyRoom) decorateRoomControlsLocked(state map[string]any) map[string]
 	state["allowLateJoin"] = r.allowLateJoin
 	state["friendlyNames"] = r.friendlyNames
 	state["maxPlayers"] = r.maxPlayerCountLocked()
+	readyCount := 0
+	for _, p := range r.players {
+		if p.Connected && p.Ready {
+			readyCount++
+		}
+	}
+	state["readyCount"] = readyCount
 	settings := r.partySessionSettingsLocked()
 	state["partySettings"] = settings
 	state["estimatedMinutes"] = settings.TargetActivities * 5

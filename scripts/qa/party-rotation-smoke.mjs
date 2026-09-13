@@ -124,6 +124,20 @@ async function main() {
 
     const alpha = await join("Alpha", "🐸", { verifyPersistence: true });
     const beta = await join("Beta", "🦉");
+    await alpha.click("#partyReadyButton");
+    await beta.click("#partyReadyButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.readyCount === 2);
+    const alphaBeforeReconnect = await stateOf(alpha);
+    if (!await alpha.evaluate(() => window.__partyTestDropConnection())) throw new Error("Could not trigger player reconnect test");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.players?.some((player) => player.name === "Alpha" && !player.connected), null, { timeout: 8000 });
+    await alpha.waitForFunction((playerId) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.player_id === playerId && state.state?.players?.find((player) => player.id === playerId)?.connected;
+    }, alphaBeforeReconnect.player_id, { timeout: 12000 });
+    const alphaAfterReconnect = await stateOf(alpha);
+    if (alphaAfterReconnect.state.players.length !== 2 || !alphaAfterReconnect.state.players.find((player) => player.id === alphaBeforeReconnect.player_id)?.ready) throw new Error("Reconnect did not preserve identity and ready state");
+    await alpha.waitForFunction(() => /Welcome back/.test(document.getElementById("partyMessage")?.textContent || ""), null, { timeout: 4000 });
+    await alpha.screenshot({ path: path.join(outputDir, "rejoined-player-mobile.png"), fullPage: true });
     const display = await makePage({ width: 1280, height: 720 }, "display");
     await display.goto(`${baseUrl}/party/?display=${room}&ws=${encodeURIComponent(ws)}`);
     await display.waitForFunction(() => JSON.parse(window.render_game_to_text()).view === "display", null, { timeout: 15000 });
@@ -204,7 +218,7 @@ async function main() {
     await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partyPhase === "spinning", null, { timeout: 8000 });
     if ((await stateOf(choiceHost)).state.activity.label !== chosenActivity) throw new Error("Host choice did not select the requested activity");
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();
