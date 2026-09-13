@@ -33,17 +33,21 @@ type partyActivity struct {
 }
 
 type partySessionSettings struct {
-	Version             int    `json:"version"`
-	DurationPreset      string `json:"durationPreset"`
-	PlayStyle           string `json:"playStyle"`
-	AccessibilityPreset string `json:"accessibilityPreset"`
-	TargetActivities    int    `json:"targetActivities"`
-	ExtendedTimers      bool   `json:"extendedTimers"`
-	ReducedMotion       bool   `json:"reducedMotion"`
-	HighContrast        bool   `json:"highContrast"`
-	Effects             bool   `json:"effects"`
-	Narration           bool   `json:"narration"`
-	Haptics             bool   `json:"haptics"`
+	Version             int      `json:"version"`
+	DurationPreset      string   `json:"durationPreset"`
+	PlayStyle           string   `json:"playStyle"`
+	AccessibilityPreset string   `json:"accessibilityPreset"`
+	TargetActivities    int      `json:"targetActivities"`
+	ExtendedTimers      bool     `json:"extendedTimers"`
+	ReducedMotion       bool     `json:"reducedMotion"`
+	HighContrast        bool     `json:"highContrast"`
+	Effects             bool     `json:"effects"`
+	Narration           bool     `json:"narration"`
+	Haptics             bool     `json:"haptics"`
+	SelectionMethod     string   `json:"selectionMethod"`
+	RepeatAvoidance     string   `json:"repeatAvoidance"`
+	CatchUp             bool     `json:"catchUp"`
+	EnabledActivities   []string `json:"enabledActivities"`
 }
 
 type partySpin struct {
@@ -79,7 +83,11 @@ var partyActivityCatalog = []partyActivity{
 }
 
 func defaultPartySessionSettings() partySessionSettings {
-	return partySessionSettings{Version: 1, DurationPreset: "standard", PlayStyle: "mixed", AccessibilityPreset: "standard", TargetActivities: 6, Effects: true, Narration: true, Haptics: true}
+	enabled := make([]string, 0, len(partyActivityCatalog))
+	for _, activity := range partyActivityCatalog {
+		enabled = append(enabled, activity.ID)
+	}
+	return partySessionSettings{Version: 1, DurationPreset: "standard", PlayStyle: "mixed", AccessibilityPreset: "standard", TargetActivities: 6, Effects: true, Narration: true, Haptics: true, SelectionMethod: "chaos", RepeatAvoidance: "session", CatchUp: true, EnabledActivities: enabled}
 }
 
 func validatePartySessionSettings(value partySessionSettings) (partySessionSettings, bool) {
@@ -87,9 +95,37 @@ func validatePartySessionSettings(value partySessionSettings) (partySessionSetti
 	target, durationOK := targets[value.DurationPreset]
 	styleOK := containsString([]string{"mixed", "competitive", "cooperative"}, value.PlayStyle)
 	accessibilityOK := containsString([]string{"standard", "family", "relaxed", "custom"}, value.AccessibilityPreset)
+	if value.SelectionMethod == "" {
+		value.SelectionMethod = "chaos"
+	}
+	if value.RepeatAvoidance == "" {
+		value.RepeatAvoidance = "session"
+	}
+	selectionOK := containsString([]string{"chaos", "majority", "unanimous", "host"}, value.SelectionMethod)
+	repeatOK := containsString([]string{"off", "immediate", "session"}, value.RepeatAvoidance)
+	if value.EnabledActivities == nil {
+		value.EnabledActivities = defaultPartySessionSettings().EnabledActivities
+	}
+	allowedActivities := make(map[string]bool, len(partyActivityCatalog))
+	for _, activity := range partyActivityCatalog {
+		allowedActivities[activity.ID] = true
+	}
+	seenActivities := make(map[string]bool, len(value.EnabledActivities))
+	enabledActivities := make([]string, 0, len(value.EnabledActivities))
+	for _, id := range value.EnabledActivities {
+		if !allowedActivities[id] || seenActivities[id] {
+			return partySessionSettings{}, false
+		}
+		seenActivities[id] = true
+		enabledActivities = append(enabledActivities, id)
+	}
 	if value.Version != 1 || !durationOK || !styleOK || !accessibilityOK {
 		return partySessionSettings{}, false
 	}
+	if !selectionOK || !repeatOK || len(enabledActivities) == 0 {
+		return partySessionSettings{}, false
+	}
+	value.EnabledActivities = enabledActivities
 	value.TargetActivities = target
 	switch value.AccessibilityPreset {
 	case "standard":
@@ -128,6 +164,10 @@ func (r *partyRoom) applyRotationHostActionLocked(action string, now int64, c *c
 		}
 		if r.connectedPlayerCountLocked() < partyMinPlayers {
 			c.sendErrorCode(r.roomID, "not_enough_players", "At least two players must be connected.")
+			return
+		}
+		if len(r.partyOptionsLocked(r.connectedPlayerCountLocked())) == 0 {
+			c.sendErrorCode(r.roomID, "no_eligible_activities", "Enable an activity that supports the current player count and play style.")
 			return
 		}
 		r.beginPartyVoteLocked(now)
@@ -233,6 +273,32 @@ func (r *partyRoom) closePartyVoteLocked(now int64) {
 		}
 	}
 	selected := securePartyIndex(len(ballots))
+	method := r.partySessionSettingsLocked().SelectionMethod
+	unanimous := len(ballots) > 0 && len(ids) == r.connectedPlayerCountLocked()
+	for _, current := range ballots[1:] {
+		if current.OptionID != ballots[0].OptionID {
+			unanimous = false
+			break
+		}
+	}
+	if method == "majority" || (method == "unanimous" && unanimous) {
+		counts := make(map[string]int)
+		for _, current := range ballots {
+			counts[current.OptionID]++
+		}
+		best := 0
+		candidateIndexes := make([]int, 0, len(ballots))
+		for index, current := range ballots {
+			if counts[current.OptionID] > best {
+				best = counts[current.OptionID]
+				candidateIndexes = candidateIndexes[:0]
+			}
+			if counts[current.OptionID] == best && !containsInt(candidateIndexes, index) {
+				candidateIndexes = append(candidateIndexes, index)
+			}
+		}
+		selected = candidateIndexes[securePartyIndex(len(candidateIndexes))]
+	}
 	turns := 6 + securePartyIndex(3)
 	r.partyVote.SelectedBallotID = ballots[selected].ID
 	r.partyVote.WinnerOptionID = ballots[selected].OptionID
@@ -246,6 +312,36 @@ func (r *partyRoom) closePartyVoteLocked(now int64) {
 	r.partyPhase = "spinning"
 	r.phase = "spinning"
 	r.phaseEndsAt = now + r.rotationDurationLocked(partySpinMs)
+}
+
+func (r *partyRoom) selectPartyActivityLocked(optionID string, now int64, source string) bool {
+	selectedIndex := -1
+	for index, option := range r.partyVote.Options {
+		if option.ID == optionID {
+			selectedIndex = index
+			r.activity = option
+			break
+		}
+	}
+	if selectedIndex < 0 {
+		return false
+	}
+	r.partyVote.SelectedBallotID = source + ":" + optionID
+	r.partyVote.WinnerOptionID = optionID
+	r.partyVote.Spin = partySpin{SelectedIndex: selectedIndex, Turns: 6 + securePartyIndex(3), StartedAt: now, EndsAt: now + r.rotationDurationLocked(partySpinMs)}
+	r.partyPhase = "spinning"
+	r.phase = "spinning"
+	r.phaseEndsAt = r.partyVote.Spin.EndsAt
+	return true
+}
+
+func containsInt(values []int, target int) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *partyRoom) startRotationActivityLocked(now int64) {
@@ -335,11 +431,20 @@ func (r *partyRoom) completeRotationActivityLocked(now int64) {
 	r.partyAwarded = true
 	r.activitySkipped = false
 	ordered := r.activityRankingLocked()
+	leaderPoints := 0
+	for _, p := range ordered {
+		if p.PartyPoints > leaderPoints {
+			leaderPoints = p.PartyPoints
+		}
+	}
 	for index, p := range ordered {
 		p.Rank = index + 1
 		award := 0
 		if index < len(partyPlacementPoints) {
 			award = partyPlacementPoints[index]
+		}
+		if r.partySessionSettingsLocked().CatchUp && leaderPoints-p.PartyPoints >= 8 {
+			award += 2
 		}
 		p.PartyAward = award
 		p.PartyPoints += award
@@ -348,6 +453,7 @@ func (r *partyRoom) completeRotationActivityLocked(now int64) {
 		}
 	}
 	r.lastActivityID = r.activity.ID
+	r.activityHistory = append(r.activityHistory, r.activity.ID)
 	r.updatePartyRanksLocked()
 	r.partyPhase = "results"
 	r.phase = "podium"
@@ -359,6 +465,7 @@ func (r *partyRoom) skipRotationActivityLocked(now int64) {
 	r.partyAwarded = true
 	r.activitySkipped = true
 	r.lastActivityID = r.activity.ID
+	r.activityHistory = append(r.activityHistory, r.activity.ID)
 	for _, p := range r.players {
 		p.PartyAward = 0
 	}
@@ -423,13 +530,33 @@ func (r *partyRoom) updatePartyRanksLocked() []*partyPlayer {
 }
 
 func (r *partyRoom) partyOptionsLocked(playerCount int) []partyActivity {
-	playStyle := r.partySessionSettingsLocked().PlayStyle
+	settings := r.partySessionSettingsLocked()
+	playStyle := settings.PlayStyle
+	enabled := make(map[string]bool, len(settings.EnabledActivities))
+	for _, id := range settings.EnabledActivities {
+		enabled[id] = true
+	}
+	excluded := make(map[string]bool)
+	if settings.RepeatAvoidance == "immediate" && r.lastActivityID != "" {
+		excluded[r.lastActivityID] = true
+	} else if settings.RepeatAvoidance == "session" {
+		if r.lastActivityID != "" {
+			excluded[r.lastActivityID] = true
+		}
+		for _, id := range r.activityHistory {
+			excluded[id] = true
+		}
+	}
 	eligible := make([]partyActivity, 0, len(partyActivityCatalog))
 	for _, option := range partyActivityCatalog {
 		styleMatches := playStyle == "mixed" || option.Style == playStyle
-		if styleMatches && playerCount >= option.MinPlayers && playerCount <= option.MaxPlayers && option.ID != r.lastActivityID {
+		if enabled[option.ID] && styleMatches && playerCount >= option.MinPlayers && playerCount <= option.MaxPlayers && !excluded[option.ID] {
 			eligible = append(eligible, option)
 		}
+	}
+	if len(eligible) == 0 && len(r.activityHistory) > 0 {
+		r.activityHistory = nil
+		return r.partyOptionsLocked(playerCount)
 	}
 	sort.Slice(eligible, func(i, j int) bool {
 		return partyOptionOrder(r.roomID, r.activityIndex, eligible[i].ID) < partyOptionOrder(r.roomID, r.activityIndex, eligible[j].ID)
@@ -523,6 +650,7 @@ func (r *partyRoom) decorateRotationSnapshotLocked(state map[string]any, selfID 
 	state["activity"] = r.activity
 	state["activitySkipped"] = r.activitySkipped
 	state["partyVote"] = r.partyVoteSnapshotLocked()
+	state["activityCatalog"] = partyActivityCatalog
 	if players, ok := state["players"].([]map[string]any); ok {
 		for _, item := range players {
 			if p := r.players[stringValue(item["id"])]; p != nil {

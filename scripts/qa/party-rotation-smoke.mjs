@@ -60,6 +60,15 @@ async function main() {
     const savedSettings = await host.evaluate(() => JSON.parse(localStorage.getItem("aiandsons-party-host-settings-v1")));
     if (savedSettings?.durationPreset !== "quick" || savedSettings?.accessibilityPreset !== "relaxed") throw new Error("Host party settings did not persist locally");
     if (!await host.locator("body").evaluate((body) => body.classList.contains("party-reduced-motion"))) throw new Error("Reduced-motion presentation was not applied");
+    await host.locator("#partyActivitySettings summary").click();
+    for (const input of await host.locator("#partyActivityPool input[data-activity-id]").all()) {
+      const id = await input.getAttribute("data-activity-id");
+      if (!["turbotilt:classic", "turbotilt:survival"].includes(id)) await input.uncheck();
+    }
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partySettings?.enabledActivities?.length === 2);
+    await host.locator("#partyActivitySettings summary").click();
+    await host.selectOption("#partySelectionSelect", "majority");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partySettings?.selectionMethod === "majority");
     const openJoinPage = async (label) => {
       const page = await makePage({ width: 390, height: 844 }, label);
       await page.goto(`${baseUrl}/party/?code=${room}&ws=${encodeURIComponent(ws)}`);
@@ -142,11 +151,12 @@ async function main() {
     await alpha.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "voting", null, { timeout: 8000 });
     const buttons = alpha.locator("[data-party-vote]");
     await buttons.nth(0).click();
-    await beta.locator("[data-party-vote]").nth(1).click();
+    await beta.locator("[data-party-vote]").nth(0).click();
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "spinning", null, { timeout: 8000 });
     const spinning = await stateOf(host);
     if (!spinning.state.partyVote.ballots || spinning.state.partyVote.ballots.length !== 2) throw new Error("Wheel did not receive two named ballots");
     if (!spinning.state.partyVote.ballots.every((ballot) => ballot.playerAvatar)) throw new Error("Named ballots omitted player avatars");
+    if (spinning.state.partyVote.winnerOptionId !== spinning.state.partyVote.ballots[0].optionId && spinning.state.partyVote.ballots[0].optionId === spinning.state.partyVote.ballots[1].optionId) throw new Error("Majority selection did not honor matching ballots");
     await host.screenshot({ path: path.join(outputDir, "party-wheel.png") });
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "activity", null, { timeout: 8000 });
     const firstActivity = (await stateOf(host)).state.activity;
@@ -170,8 +180,31 @@ async function main() {
     const ended = await stateOf(host);
     if (!ended.state.players.every((player) => Number.isInteger(player.partyPoints))) throw new Error("Party standings missing");
     await host.screenshot({ path: path.join(outputDir, "party-podium.png") });
+
+    const choiceHost = await makePage({ width: 1280, height: 720 }, "host-choice");
+    await choiceHost.goto(`${baseUrl}/party/?host=1&ws=${encodeURIComponent(ws)}`);
+    await choiceHost.waitForFunction(() => /^[A-HJ-NP-Z]{4}$/.test(document.getElementById("sessionRoom")?.textContent || ""), null, { timeout: 15000 });
+    const choiceRoom = await choiceHost.locator("#sessionRoom").textContent();
+    await choiceHost.selectOption("#partySelectionSelect", "host");
+    await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partySettings?.selectionMethod === "host");
+    const choicePlayers = [];
+    for (const [name, avatar] of [["Chooser One", "🦊"], ["Chooser Two", "🐼"]]) {
+      const page = await makePage({ width: 390, height: 844 }, name);
+      choicePlayers.push(page);
+      await page.goto(`${baseUrl}/party/?code=${choiceRoom}&ws=${encodeURIComponent(ws)}`);
+      await submitJoin(page, name, avatar);
+      await page.waitForSelector("#partyController:not([hidden])", { timeout: 15000 });
+    }
+    await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.players?.length === 2);
+    await choiceHost.click("#partyStartButton");
+    await choiceHost.waitForSelector("#partyHostChoice:not([hidden])", { timeout: 8000 });
+    await choiceHost.screenshot({ path: path.join(outputDir, "party-host-choice.png") });
+    const chosenActivity = await choiceHost.locator("#partyHostChoiceButtons button").first().textContent();
+    await choiceHost.locator("#partyHostChoiceButtons button").first().click();
+    await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partyPhase === "spinning", null, { timeout: 8000 });
+    if ((await stateOf(choiceHost)).state.activity.label !== chosenActivity) throw new Error("Host choice did not select the requested activity");
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();
