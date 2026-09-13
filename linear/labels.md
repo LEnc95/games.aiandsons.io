@@ -231,5 +231,6 @@
 - game/thimbletide
 - game/ribbonreversal
 - game/pebbleparade
+- game/chalkchase
 
 Generated from `src/meta/feedback.js`.

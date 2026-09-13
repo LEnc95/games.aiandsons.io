@@ -217,6 +217,7 @@ const BASE_GAMES = [
   { slug:'thimbletide', name:'Thimble Tide',                    emoji:'\u{1F41A}', scoreHint:'pearls', url:'/thimbletide', desc:'Track a hidden pearl through quick shell swaps and chart five moonlit shores.', earnsCoins:true },
   { slug:'ribbonreversal', name:'Ribbon Reversal', emoji:'\u{1F380}', scoreHint:'bundles', url:'/ribbonreversal', desc:'Reverse the top of a ribbon stack, sort lengths from shortest to longest, and organize five colorful puzzle bundles.', earnsCoins:true },
   { slug:'pebbleparade', name:'Pebble Parade', emoji:'\u{1FAA8}', scoreHint:'skips', url:'/pebbleparade', desc:'Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds.', earnsCoins:true },
+  { slug:'chalkchase', name:'Chalk Chase', emoji:'\u{1F58D}', scoreHint:'stars', url:'/chalkchase', desc:'Trace five playground paths through numbered stars without crossing your own chalk line.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.
+
 - Pebble Parade - a five-pond timing game for keyboard and touch.
 
 - Ribbon Reversal - a five-bundle prefix-reversal sorting puzzle for keyboard and touch.

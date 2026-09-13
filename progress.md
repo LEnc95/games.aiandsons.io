@@ -1,5 +1,16 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-13 Chalk Chase automation
+- Started from clean detached origin/main `01a6d87f9df8d8b35b135a83b3aa7fd0f38e0c6b`; `npm ci` passed with 16 existing audit findings.
+- Added Chalk Chase (`/chalkchase`), a five-board ordered-star path puzzle with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ stars, boards, erases }` outcomes.
+- TODO: generators, early gates, complete browser QA, final gates, diff audit, guarded PR, merge, and production verification.
+- SEO, OG, and local Linear generation passed; restored the 42 known nondeterministic existing OG cards and 14 known blank-line-only page edits. Maintenance validation and 217-game preflight passed.
+- Supplied-client smoke passed. Focused QA solved all five boards and verified exact stepping, paused freeze, loss/restart, themes, fullscreen/Escape wiring, feedback, touch controls, mobile width, and zero browser errors. Visual review found and fixed a touch-hover contrast issue.
+- Complete QA rerun passed after the contrast fix. Gameplay, pause, transition, loss, win, feedback, corrected mobile, and OG captures were visually inspected and match text state.
+- TODO: final gates, diff audit, guarded PR, merge, and production verification.
+- Ordered final gates passed: maintenance, 217-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff check. Exact release review found one registry entry, one top-level game folder, matching contract/outcomes/changelog, and only the 11 permitted paths.
+- TODO: branch commit, authoritative audit, guarded PR, merge, and production verification.
+
 ## 2026-09-12 Pebble Parade automation
 - Started from clean detached origin/main `a82bcebf2664ffe0b7669eac37143b42b3f582ab`; `npm ci` passed with 16 existing audit findings.
 - Added Pebble Parade (`/pebbleparade`), a five-pond timing game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ skips, ponds, splashes }` outcomes.
