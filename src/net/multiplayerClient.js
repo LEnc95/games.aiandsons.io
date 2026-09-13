@@ -331,6 +331,10 @@ class MultiplayerConnection {
       return;
     }
 
+    if (type === "welcome" && typeof payload.token === "string" && payload.token) {
+      this.options.token = payload.token;
+    }
+
     this.emitEvent({
       type: type || "message",
       receivedAt: nowMs(),

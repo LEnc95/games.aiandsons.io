@@ -45,6 +45,8 @@ const state = {
   selectedPartyVote: "",
   partyAnimationFrame: 0,
   hostPartySettings: null,
+  connectionStatus: "",
+  rejoinedNoticeUntil: 0,
 };
 
 function loadSavedAvatar() {
@@ -248,9 +250,11 @@ async function joinParty({ withoutToken = false } = {}) {
   state.connection = connection;
   connection.onStatus(({ status }) => {
     if (connection !== state.connection) return;
+    state.connectionStatus = status;
     if (status === "open") setConnectionLabel("Connected", "online");
     else if (status === "reconnecting") setConnectionLabel("Reconnecting…");
     else if (status === "error" || status === "timeout") setConnectionLabel("Connection problem", "problem");
+    renderController();
   });
   connection.onStateUpdate((update) => {
     if (connection !== state.connection) return;
@@ -272,6 +276,8 @@ function handleEvent(connection, event) {
     state.playerAvatar = isAvatarEmoji(payload.playerAvatar) ? payload.playerAvatar : state.playerAvatar;
     state.gameKey = payload.gameKey || state.gameKey || "turbotilt";
     state.sessionMode = payload.sessionMode || state.sessionMode;
+    state.connectionStatus = "open";
+    state.rejoinedNoticeUntil = payload.reconnected ? Date.now() + 3500 : 0;
     if (payload.token) localStorage.setItem(tokenKey(state.roomId), payload.token);
     byId("playerLabel").textContent = state.playerName;
     byId("playerDot").style.background = state.playerColor;
@@ -387,7 +393,21 @@ function renderPartyController(snapshot) {
   else if (phase === "results") message = snapshot?.activitySkipped ? "Activity skipped" : me?.partyAward ? `+${me.partyAward} party points!` : "Activity complete";
   else if (phase === "paused") message = snapshot?.pauseReason === "host_disconnected" ? "Host reconnecting…" : "Party paused";
   else if (phase === "ended") message = me?.partyRank === 1 ? "You won the party!" : `Party finished · #${me?.partyRank || "—"}`;
+  if (["connecting", "reconnecting", "closed"].includes(state.connectionStatus) && state.playerId) message = "Rejoining… Your name, avatar, and score are saved.";
+  else if (state.rejoinedNoticeUntil > Date.now()) message = `Welcome back, ${state.playerName}! Your spot is restored.`;
   byId("partyMessage").textContent = message;
+  const inLobby = phase === "party_lobby";
+  byId("partyLobbyGuide").hidden = !inLobby;
+  const ready = Boolean(me?.ready);
+  byId("partyReadyButton").textContent = ready ? "Ready ✓" : "I’m ready";
+  byId("partyReadyButton").setAttribute("aria-pressed", String(ready));
+  const selectionCopy = {
+    chaos: "Vote for an activity; every ballot becomes a wheel slice.",
+    majority: "Vote for an activity; the most votes wins.",
+    unanimous: "Agree on one activity, or the wheel breaks the tie.",
+    host: "The host will choose the next activity.",
+  }[snapshot?.partySettings?.selectionMethod || "chaos"];
+  byId("partySelectionHelp").textContent = selectionCopy;
   const voting = phase === "voting" && snapshot?.partySettings?.selectionMethod !== "host";
   byId("partyVotePanel").hidden = !voting;
   const ownBallot = vote.ballots?.find((ballot) => ballot.playerId === me?.id);
@@ -793,7 +813,8 @@ function renderSessionScreen() {
   }
   byId("partyStartButton").hidden = !host || partyPhase !== "party_lobby";
   byId("partyStartButton").disabled = connected < 2;
-  byId("partyStartButton").textContent = connected < 2 ? "Start with 2 players" : `Start Party with ${connected}`;
+  const readyCount = Number(snapshot?.readyCount || 0);
+  byId("partyStartButton").textContent = connected < 2 ? "Start with 2 players" : `Start Party · ${readyCount}/${connected} ready`;
   const running = !["party_lobby", "ended"].includes(partyPhase);
   byId("partyPauseButton").hidden = !host || !running;
   byId("partyPauseButton").textContent = partyPhase === "paused" ? "Resume" : "Pause";
@@ -837,7 +858,7 @@ function renderSessionRoster(players) {
     const name = document.createElement("b");
     name.textContent = `${player.partyRank ? `#${player.partyRank} ` : ""}${player.name}${player.connected ? "" : " · offline"}`;
     const score = document.createElement("span");
-    score.textContent = `${player.partyPoints || 0}`;
+    score.textContent = state.snapshot?.partyPhase === "party_lobby" ? (player.ready ? "Ready" : "Not ready") : `${player.partyPoints || 0}`;
     row.append(dot, name, score);
     if (!displayMode) {
       const remove = document.createElement("button");
@@ -942,6 +963,7 @@ function drawPartyLobby(snapshot) {
     const x = 255 + (index % 4) * 230, y = 370 + Math.floor(index / 4) * 100;
     partyAvatar(player, x, y, 28, 34);
     partyText(player.name, x, y + 48, 195, 18, player.connected ? "#fff" : "#8799aa");
+    partyText(player.ready ? "READY" : "JOINED", x, y + 68, 150, 12, player.ready ? "#31e6c1" : "#8799aa");
   });
   partyText("Host starts the opening vote", 600, 605, 800, 25, "#c7b9db");
 }
@@ -1087,6 +1109,10 @@ byId("partyStartButton").addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "auto" });
   sendPartyHost("start");
 });
+byId("partyReadyButton").addEventListener("click", () => {
+  const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
+  state.connection?.sendInput({ type: "party_ready", ready: !me?.ready });
+});
 byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snapshot?.roomLocked ? "unlock" : "lock"));
 byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
 byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
@@ -1173,6 +1199,14 @@ window.render_game_to_text = () => JSON.stringify({
   selected_party_vote: state.selectedPartyVote,
   state: state.snapshot,
 });
+if (["127.0.0.1", "localhost"].includes(location.hostname)) {
+  window.__partyTestDropConnection = () => {
+    const socket = state.connection?.socket;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+    socket.close(4001, "party reconnect test");
+    return true;
+  };
+}
 if (["127.0.0.1", "localhost"].includes(location.hostname)) {
   window.__turbotiltPreviewFeedback = (type) => showRaceFeedback({
     eventId: state.lastEventId + 1,

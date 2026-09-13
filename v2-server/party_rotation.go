@@ -670,7 +670,7 @@ func (r *partyRoom) rotationPlayersLocked() []map[string]any {
 	for _, p := range ordered {
 		players = append(players, map[string]any{
 			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar, "connected": p.Connected,
-			"queued": p.Queued, "active": p.Active, "points": p.Points,
+			"ready": p.Ready, "queued": p.Queued, "active": p.Active, "points": p.Points,
 			"partyPoints": p.PartyPoints, "partyRank": p.PartyRank,
 			"activityWins": p.ActivityWins, "partyAward": p.PartyAward,
 		})
