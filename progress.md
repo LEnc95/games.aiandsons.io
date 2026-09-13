@@ -4683,3 +4683,4 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Added Go and client contract coverage plus expanded the Party Rotation browser smoke to verify locked joins, friendly names, removal, blocked reconnect, capacity enforcement, and late-join enforcement before completing voting, two activities, standings, and party end.
 - Verification passed: focused Party/Turbo/Crowd Node tests, all Go tests, the expanded multi-browser Playwright smoke, `render_game_to_text()` state checks, and diff checks. Visually inspected the 1280x720 host lobby and 390x844 avatar/removal screens; no browser-console errors or layout overflow were reported.
 - TODO: continue the next prioritized sprint after review; deployment was not requested for this sprint.
+- Production follow-up: fixed the controller render loop so a blocked reconnect keeps the dedicated removal notice visible instead of immediately restoring the stale game controller.

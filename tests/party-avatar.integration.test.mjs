@@ -50,6 +50,7 @@ test("party host UI exposes server-backed room safety controls", () => {
   assert.match(html, /id="removedNotice"[\s\S]*role="alert"/);
   assert.match(app, /sendPartyHost\("kick", \{ playerId: player\.id \}\)/);
   assert.match(app, /payload\.code === "removed_from_room"/);
+  assert.match(app, /if \(state\.removed\) return;/);
   assert.match(app, /snapshot\?\.maxPlayers/);
   for (const action of ["room_locked", "late_join_disabled", "set_max_players", "friendly_names_on", "removed_from_room"]) {
     assert.match(server, new RegExp(action));
