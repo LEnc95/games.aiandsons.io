@@ -14,6 +14,10 @@ async function loadPlaywright() {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const stateOf = (page) => page.evaluate(() => JSON.parse(window.render_game_to_text()));
+const assertNoHorizontalOverflow = async (page, label) => {
+  const dimensions = await page.evaluate(() => ({ viewport: window.innerWidth, content: document.documentElement.scrollWidth }));
+  if (dimensions.content > dimensions.viewport + 1) throw new Error(`${label} overflowed horizontally: ${dimensions.content}px > ${dimensions.viewport}px`);
+};
 const waitForEmbeddedAvatars = (page) => page.waitForFunction(() => {
   const frame = document.getElementById("activityFrame");
   if (!frame || frame.hidden || typeof frame.contentWindow?.render_game_to_text !== "function") return false;
@@ -46,9 +50,18 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).view === "host", null, { timeout: 15000 });
     await host.waitForFunction(() => /^[A-HJ-NP-Z]{4}$/.test(document.getElementById("sessionRoom")?.textContent || ""), null, { timeout: 15000 });
     const room = await host.locator("#sessionRoom").textContent();
-    const join = async (name, avatar, { verifyPersistence = false } = {}) => {
-      const page = await makePage({ width: 390, height: 844 }, name);
+    const openJoinPage = async (label) => {
+      const page = await makePage({ width: 390, height: 844 }, label);
       await page.goto(`${baseUrl}/party/?code=${room}&ws=${encodeURIComponent(ws)}`);
+      return page;
+    };
+    const submitJoin = async (page, name, avatar) => {
+      await page.locator(`.avatar-option:has(input[value="${avatar}"])`).click();
+      await page.fill("#playerName", name);
+      await page.click("#joinForm button[type=submit]");
+    };
+    const join = async (name, avatar, { verifyPersistence = false } = {}) => {
+      const page = await openJoinPage(name);
       if (await page.locator("#avatarOptions input").count() !== 16) throw new Error("Avatar picker did not expose all 16 choices");
       await page.locator(`.avatar-option:has(input[value="${avatar}"])`).click();
       if (verifyPersistence) {
@@ -63,6 +76,33 @@ async function main() {
       if (joined.player_avatar !== avatar || await page.locator("#playerDot").textContent() !== avatar) throw new Error(`${name} did not retain selected avatar`);
       return page;
     };
+
+    await host.click("#partyLockButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.roomLocked === true);
+    const lockedPlayer = await openJoinPage("locked-player");
+    await submitJoin(lockedPlayer, "Locked", "🐢");
+    await lockedPlayer.waitForFunction(() => /locked/i.test(document.getElementById("joinError")?.textContent || ""));
+    await host.click("#partyLockButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.roomLocked === false);
+
+    await host.click("#partyFriendlyNamesButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.friendlyNames === true);
+    const friendly = await join("Custom Name", "🐼");
+    const friendlyToken = await friendly.evaluate((roomId) => localStorage.getItem(`aiandsons-party-player:${roomId}`), room);
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.players.length === 1);
+    const friendlyPlayer = (await stateOf(host)).state.players[0];
+    if (!friendlyPlayer || friendlyPlayer.name === "Custom Name") throw new Error("Friendly-name mode did not replace the supplied name");
+    await host.getByRole("button", { name: `Remove ${friendlyPlayer.name} from the room` }).click();
+    await friendly.waitForSelector("#removedNotice:not([hidden])", { timeout: 8000 });
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.players.length === 0);
+    await friendly.evaluate(({ roomId, token }) => localStorage.setItem(`aiandsons-party-player:${roomId}`, token), { roomId: room, token: friendlyToken });
+    await friendly.reload();
+    await friendly.waitForSelector("#removedNotice:not([hidden])", { timeout: 8000 });
+    await assertNoHorizontalOverflow(friendly, "Removed-player phone view");
+    await friendly.screenshot({ path: path.join(outputDir, "removed-player-mobile.png"), fullPage: true });
+    await host.click("#partyFriendlyNamesButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.friendlyNames === false);
+
     const alpha = await join("Alpha", "🐸", { verifyPersistence: true });
     const beta = await join("Beta", "🦉");
     const display = await makePage({ width: 1280, height: 720 }, "display");
@@ -71,9 +111,24 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.players.filter((player) => player.connected).length === 2, null, { timeout: 15000 });
     const lobby = await stateOf(host);
     if (lobby.state.players.find((player) => player.name === "Alpha")?.avatar !== "🐸" || lobby.state.players.find((player) => player.name === "Beta")?.avatar !== "🦉") throw new Error("Host snapshot did not preserve distinct player avatars");
+    await host.selectOption("#partyMaxPlayersSelect", "2");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.maxPlayers === 2);
+    const fullPlayer = await openJoinPage("full-player");
+    await submitJoin(fullPlayer, "Gamma", "🦁");
+    await fullPlayer.waitForFunction(() => /player limit/i.test(document.getElementById("joinError")?.textContent || ""));
+    await host.selectOption("#partyMaxPlayersSelect", "8");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.maxPlayers === 8);
+    await assertNoHorizontalOverflow(host, "Host lobby");
     await host.screenshot({ path: path.join(outputDir, "party-lobby.png") });
+    await host.click("#partyLateJoinButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.allowLateJoin === false);
     await host.click("#partyStartButton");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "voting", null, { timeout: 8000 });
+    const latePlayer = await openJoinPage("late-player");
+    await submitJoin(latePlayer, "Late", "🐙");
+    await latePlayer.waitForFunction(() => /late joining/i.test(document.getElementById("joinError")?.textContent || ""));
+    await host.click("#partyLateJoinButton");
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.allowLateJoin === true);
     await alpha.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "voting", null, { timeout: 8000 });
     const buttons = alpha.locator("[data-party-vote]");
     await buttons.nth(0).click();
@@ -104,7 +159,7 @@ async function main() {
     if (!ended.state.players.every((player) => Number.isInteger(player.partyPoints))) throw new Error("Party standings missing");
     await host.screenshot({ path: path.join(outputDir, "party-podium.png") });
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();

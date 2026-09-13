@@ -13,8 +13,8 @@ test("Crowd Shift is registered as an accountless multiplayer party game", async
 
 test("party hub offers persistent party rotation, watching, group choices, and Duel Shift controls", async () => {
   const [html, app] = await Promise.all([read("party/index.html"), read("party/app.js")]);
-  assert.match(html, /href="\/crowdshift\/"/);
   assert.match(html, /id="startPartyLink"[\s\S]*href="\/party\/\?host=1"/);
+  assert.doesNotMatch(html, /href="\/(?:turbotilt|crowdshift)\/"/);
   assert.doesNotMatch(html, /id="watchGame"/);
   assert.match(html, /id="partyStage"[\s\S]*id="activityFrame"/);
   assert.match(html, /id="partyVoteButtons"/);
