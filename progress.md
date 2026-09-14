@@ -1,5 +1,11 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-14 Weekly content pack 2026-W38
+- Isolated from `origin/main` baseline `c5a43d7caf099fd025a98467c6fb90a327096319`; issue #316 is authoritative. Added Saffron Nocturne for Aurora Accord, Cinder Constellation for Lantern Loom, and Comet Chicane for Turbo Tilt as inventory-gated palette cosmetics, plus four exact 20-coin W38 challenges for Aurora Accord notes, Lantern Loom stars, Turbo Tilt players, and Dewdrop Drift motes.
+- Visually inspected each shop preview plus unowned/equipped game renders with matching deterministic state and no new console errors. The supplied game client could not reach the local server because this environment blocks loopback listeners; its retries reported `ERR_CONNECTION_REFUSED`.
+- Ordered gates passed: maintenance, 218-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, and social 22/22. Required `test:weekly-smoke:raw` failed only because `http://127.0.0.1:4173` is unavailable; per release policy, do not audit, commit, push, or open a PR until that raw smoke passes.
+- Resumed with a permitted server on port 3000. The equivalent raw weekly smoke passed after locally serving a temporary production-API fixture; that fixture was removed before the release audit. TODO: stage the audited 10-file pack, commit, publish the guarded PR, and verify merge/production.
+
 ## 2026-09-14 Paper Bridge automation
 - Started from clean detached origin/main `c79fa1124a6b315da2425a68e33708af1c9d45a0`; `npm ci` passed with 16 existing audit findings.
 - Added Paper Bridge (`/paperbridge`), a five-ravine paper-plank precision game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ bridges, ravines, falls }` outcomes.
