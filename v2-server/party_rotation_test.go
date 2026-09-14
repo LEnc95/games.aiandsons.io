@@ -122,6 +122,53 @@ func TestPartyRotationSkipAndEnd(t *testing.T) {
 	}
 }
 
+func TestPartyPlayAgainKeepsRoomAndResetsSession(t *testing.T) {
+	r := rotationTestRoom(2)
+	r.partyConfig = defaultPartySessionSettings()
+	r.partyConfig.DurationPreset = "quick"
+	r.partyConfig.TargetActivities = 3
+	r.locked = true
+	r.activityIndex = 3
+	r.activityHistory = []string{"turbotilt:classic", "crowdshift:duel"}
+	r.lastActivityID = "crowdshift:duel"
+	for _, p := range r.players {
+		p.Ready = true
+		p.PartyPoints = 18
+		p.ActivityWins = 2
+		p.PartyAward = 8
+	}
+	r.finishPartyLocked(1000)
+	r.applyRotationHostActionLocked("play_again", 2000, &client{})
+	if r.partyPhase != "party_lobby" || r.phase != "lobby" || r.gameKey != partyRotationGameKey || r.endedAt != 0 {
+		t.Fatalf("play again did not restore the party lobby: %#v", r)
+	}
+	if r.activityIndex != 0 || len(r.activityHistory) != 0 || r.lastActivityID != "" || !r.locked || r.partyConfig.DurationPreset != "quick" {
+		t.Fatalf("play again reset room settings or kept old activity progress: %#v", r)
+	}
+	for _, p := range r.players {
+		if p.Ready || p.PartyPoints != 0 || p.ActivityWins != 0 || p.PartyAward != 0 || !p.Active {
+			t.Fatalf("play again did not reset player session state: %#v", p)
+		}
+	}
+	r.applyRotationHostActionLocked("start", 3000, &client{})
+	if r.partyPhase != "voting" {
+		t.Fatalf("reused room could not start another party: %#v", r)
+	}
+}
+
+func TestPartyPlayAgainCannotInterruptActiveSession(t *testing.T) {
+	r := rotationTestRoom(2)
+	r.partyPhase = "voting"
+	r.phase = "voting"
+	r.activityIndex = 1
+	r.players["p1"].PartyPoints = 10
+	c := &client{send: make(chan []byte, 1)}
+	r.applyRotationHostActionLocked("play_again", 2000, c)
+	if r.partyPhase != "voting" || r.activityIndex != 1 || r.players["p1"].PartyPoints != 10 {
+		t.Fatalf("play again interrupted an active session: %#v", r)
+	}
+}
+
 func TestPartySessionSettingsValidateFilterAndExtendTimers(t *testing.T) {
 	settings, ok := validatePartySessionSettings(partySessionSettings{
 		Version: 1, DurationPreset: "quick", PlayStyle: "cooperative", AccessibilityPreset: "family",

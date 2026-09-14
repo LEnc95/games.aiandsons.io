@@ -110,3 +110,16 @@ test("party hosts can safely resume a recent room on the same device", async () 
   assert.match(server, /This host session cannot be resumed on this device/);
   assert.match(server, /"reconnected": wasDisconnected/);
 });
+
+test("finished parties can restart in the same room with fresh standings", async () => {
+  const [html, app, server] = await Promise.all([
+    read("party/index.html"), read("party/app.js"), read("v2-server/party_rotation.go"),
+  ]);
+  for (const id of ["partyAgainButton", "partyEncorePanel"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(app, /sendPartyHost\("play_again"\)/);
+  assert.match(app, /Host can start another party/);
+  assert.match(server, /case "play_again":/);
+  assert.match(server, /func \(r \*partyRoom\) restartPartyLocked/);
+  assert.match(server, /p\.PartyPoints = 0/);
+  assert.match(server, /p\.Ready = false/);
+});
