@@ -66,16 +66,41 @@ func TestPartyWebSocketCreateJoinStartAndReconnect(t *testing.T) {
 		return room.hostDisconnectedAt > 0 && room.phase == "paused"
 	})
 
+	unauthorized := dialTestWebSocket(t, server.URL, "/ws")
+	defer unauthorized.Close()
+	writeTestEnvelope(t, unauthorized, outEnvelope{
+		Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
+		Payload: map[string]any{"role": "host"},
+	})
+	rejected := readPartyEnvelope(t, unauthorized, "error")
+	if stringField(rejected, "code") != "invalid_host_token" {
+		t.Fatalf("disconnected room accepted a host without its recovery token: %#v", rejected)
+	}
+
 	resumed := dialTestWebSocket(t, server.URL, "/ws")
 	defer resumed.Close()
 	writeTestEnvelope(t, resumed, outEnvelope{
 		Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
 		Payload: map[string]any{"role": "host", "token": hostToken},
 	})
-	_ = readPartyEnvelope(t, resumed, "welcome")
+	resumeWelcome := readPartyEnvelope(t, resumed, "welcome")
+	if reconnected, _ := resumeWelcome["reconnected"].(bool); !reconnected {
+		t.Fatalf("host resume welcome was not marked as reconnected: %#v", resumeWelcome)
+	}
 	state = readPartyState(t, resumed)
 	if state["phase"] != "countdown" {
 		t.Fatalf("expected host reconnect to resume countdown, got %#v", state)
+	}
+
+	competing := dialTestWebSocket(t, server.URL, "/ws")
+	defer competing.Close()
+	writeTestEnvelope(t, competing, outEnvelope{
+		Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
+		Payload: map[string]any{"role": "host", "token": hostToken},
+	})
+	rejected = readPartyEnvelope(t, competing, "error")
+	if stringField(rejected, "code") != "host_exists" {
+		t.Fatalf("active host was replaced by a competing recovery: %#v", rejected)
 	}
 }
 
