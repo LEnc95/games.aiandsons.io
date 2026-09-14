@@ -191,6 +191,12 @@ func (r *partyRoom) applyRotationHostActionLocked(action string, now int64, c *c
 		r.skipRotationActivityLocked(now)
 	case "end":
 		r.finishPartyLocked(now)
+	case "play_again":
+		if r.partyPhase != "ended" {
+			c.sendErrorCode(r.roomID, "invalid_phase", "Finish the current party before starting another one.")
+			return
+		}
+		r.restartPartyLocked()
 	default:
 		c.sendErrorCode(r.roomID, "unsupported_input", "That host action is not supported.")
 	}
@@ -592,6 +598,49 @@ func (r *partyRoom) finishPartyLocked(now int64) {
 	r.phaseEndsAt = 0
 	r.endedAt = now
 	r.updatePartyRanksLocked()
+}
+
+func (r *partyRoom) restartPartyLocked() {
+	r.gameKey = partyRotationGameKey
+	r.partyPhase = "party_lobby"
+	r.resumePartyPhase = ""
+	r.phase = "lobby"
+	r.resumePhase = ""
+	r.pauseReason = ""
+	r.pauseRemainingMs = 0
+	r.phaseEndsAt = 0
+	r.endedAt = 0
+	r.activityIndex = 0
+	r.activity = partyActivity{}
+	r.lastActivityID = ""
+	r.activityHistory = nil
+	r.partyVote = partyVoteState{}
+	r.partyAwarded = false
+	r.activitySkipped = false
+	r.awards = nil
+	r.obstacles = nil
+	r.replayFrames = nil
+	r.crowd = nil
+	r.votes = make(map[string]string)
+	for _, p := range r.players {
+		p.Ready = false
+		p.Queued = false
+		p.Active = p.Connected
+		p.Points = 0
+		p.HeatPoints = 0
+		p.Rank = 0
+		p.PartyPoints = 0
+		p.PartyRank = 0
+		p.ActivityWins = 0
+		p.PartyAward = 0
+		p.BoostsUsed = 0
+		p.TotalStylePoints = 0
+		p.TotalBarrierHits = 0
+		p.Eliminated = false
+		p.Driving = false
+		p.Emote = ""
+		p.EmoteAt = 0
+	}
 }
 
 func (r *partyRoom) rotationDurationLocked(base int64) int64 {

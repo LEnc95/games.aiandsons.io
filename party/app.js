@@ -439,6 +439,7 @@ function renderPartyController(snapshot) {
   byId("partyMessage").textContent = message;
   const inLobby = phase === "party_lobby";
   byId("partyLobbyGuide").hidden = !inLobby;
+  byId("partyEncorePanel").hidden = phase !== "ended";
   const ready = Boolean(me?.ready);
   byId("partyReadyButton").textContent = ready ? "Ready ✓" : "I’m ready";
   byId("partyReadyButton").setAttribute("aria-pressed", String(ready));
@@ -863,6 +864,7 @@ function renderSessionScreen() {
   byId("partyStartButton").disabled = connected < 2;
   const readyCount = Number(snapshot?.readyCount || 0);
   byId("partyStartButton").textContent = connected < 2 ? "Start with 2 players" : `Start Party · ${readyCount}/${connected} ready`;
+  byId("partyAgainButton").hidden = !host || partyPhase !== "ended";
   const running = !["party_lobby", "ended"].includes(partyPhase);
   byId("partyPauseButton").hidden = !host || !running;
   byId("partyPauseButton").textContent = partyPhase === "paused" ? "Resume" : "Pause";
@@ -1081,7 +1083,7 @@ function drawPartyResults(snapshot) {
 function drawPartyPodium(snapshot) {
   partyText("PARTY CHAMPION", 600, 65, 1000, 62, "#ffe36e");
   drawPartyStandings(snapshot.players || [], true);
-  partyText(`${snapshot.activityIndex || 0} activities · Thanks for playing!`, 600, 625, 800, 22, "#d5e5ed");
+  partyText(`${snapshot.activityIndex || 0} activities · Host can start another party`, 600, 625, 860, 22, "#d5e5ed");
 }
 
 function drawPartyStandings(players, awards = false) {
@@ -1157,6 +1159,7 @@ byId("partyStartButton").addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "auto" });
   sendPartyHost("start");
 });
+byId("partyAgainButton").addEventListener("click", () => sendPartyHost("play_again"));
 byId("partyReadyButton").addEventListener("click", () => {
   const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
   state.connection?.sendInput({ type: "party_ready", ready: !me?.ready });
