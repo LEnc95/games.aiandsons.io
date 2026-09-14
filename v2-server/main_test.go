@@ -34,6 +34,76 @@ func TestClientSendEnvelopeCanRaceClose(t *testing.T) {
 	}
 }
 
+func TestHealthReportsOnlyEnabledGames(t *testing.T) {
+	h := newHubWithGames(map[string]bool{partyGameID: true}, "party-server")
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	response := httptest.NewRecorder()
+	h.handleHealthz(response, request)
+
+	var body struct {
+		OK         bool     `json:"ok"`
+		Service    string   `json:"service"`
+		Games      []string `json:"games"`
+		PartyGames []string `json:"partyGames"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode health response: %v", err)
+	}
+	if !body.OK || body.Service != "party-server" {
+		t.Fatalf("unexpected health identity: %+v", body)
+	}
+	if len(body.Games) != 1 || body.Games[0] != partyGameID {
+		t.Fatalf("expected only party enabled, got %v", body.Games)
+	}
+	if len(body.PartyGames) != 2 {
+		t.Fatalf("expected party activity catalog, got %v", body.PartyGames)
+	}
+}
+
+func TestEnabledGamesConfigurationFailsClosed(t *testing.T) {
+	t.Setenv("ENABLED_GAMES", "typo")
+	if games := enabledGamesFromEnv(); len(games) != 0 {
+		t.Fatalf("invalid configured games should enable nothing, got %v", games)
+	}
+
+	t.Setenv("ENABLED_GAMES", "")
+	games := enabledGamesFromEnv()
+	if !games[audioAgarGameID] || !games[partyGameID] || len(games) != 2 {
+		t.Fatalf("empty configuration should preserve local compatibility, got %v", games)
+	}
+}
+
+func TestServiceRejectsDisabledGame(t *testing.T) {
+	h := newHubWithGames(map[string]bool{partyGameID: true}, "party-server")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", h.handleWS)
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	conn := dialTestWebSocket(t, server.URL, "/ws")
+	defer conn.Close()
+	writeTestEnvelope(t, conn, outEnvelope{
+		Protocol: protocolName,
+		V:        protocolVersion,
+		Type:     "join",
+		GameID:   audioAgarGameID,
+		RoomID:   "lobby",
+		Payload:  map[string]any{"playerName": "Wrong server"},
+	})
+
+	var message outEnvelope
+	if err := conn.ReadJSON(&message); err != nil {
+		t.Fatalf("read rejection: %v", err)
+	}
+	if message.Type != "error" {
+		t.Fatalf("expected error envelope, got %q", message.Type)
+	}
+	payload, ok := message.Payload.(map[string]any)
+	if !ok || payload["code"] != "game_unavailable" {
+		t.Fatalf("expected game_unavailable payload, got %#v", message.Payload)
+	}
+}
+
 func TestAudioAgarWebSocketJoinMoveAndAction(t *testing.T) {
 	h := newHub()
 	mux := http.NewServeMux()

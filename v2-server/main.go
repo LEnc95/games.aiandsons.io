@@ -127,9 +127,11 @@ type audioAgarState struct {
 }
 
 type hub struct {
-	mu         sync.Mutex
-	rooms      map[string]*audioAgarRoom
-	partyRooms map[string]*partyRoom
+	mu           sync.Mutex
+	rooms        map[string]*audioAgarRoom
+	partyRooms   map[string]*partyRoom
+	enabledGames map[string]bool
+	serviceName  string
 }
 
 type client struct {
@@ -180,19 +182,64 @@ func main() {
 }
 
 func newHub() *hub {
+	return newHubWithGames(enabledGamesFromEnv(), serviceNameFromEnv())
+}
+
+func newHubWithGames(enabledGames map[string]bool, serviceName string) *hub {
 	return &hub{
-		rooms:      make(map[string]*audioAgarRoom),
-		partyRooms: make(map[string]*partyRoom),
+		rooms:        make(map[string]*audioAgarRoom),
+		partyRooms:   make(map[string]*partyRoom),
+		enabledGames: enabledGames,
+		serviceName:  serviceName,
 	}
 }
 
+func enabledGamesFromEnv() map[string]bool {
+	raw := strings.TrimSpace(os.Getenv("ENABLED_GAMES"))
+	configured := strings.Split(raw, ",")
+	enabled := make(map[string]bool, 2)
+	for _, gameID := range configured {
+		switch strings.ToLower(strings.TrimSpace(gameID)) {
+		case audioAgarGameID:
+			enabled[audioAgarGameID] = true
+		case partyGameID:
+			enabled[partyGameID] = true
+		}
+	}
+	if raw == "" {
+		enabled[audioAgarGameID] = true
+		enabled[partyGameID] = true
+	}
+	return enabled
+}
+
+func serviceNameFromEnv() string {
+	if serviceName := strings.TrimSpace(os.Getenv("SERVICE_NAME")); serviceName != "" {
+		return serviceName
+	}
+	if serviceName := strings.TrimSpace(os.Getenv("K_SERVICE")); serviceName != "" {
+		return serviceName
+	}
+	return "v2-server"
+}
+
 func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
+	games := make([]string, 0, len(h.enabledGames))
+	for _, gameID := range []string{audioAgarGameID, partyGameID} {
+		if h.enabledGames[gameID] {
+			games = append(games, gameID)
+		}
+	}
+	partyGames := []string{}
+	if h.enabledGames[partyGameID] {
+		partyGames = []string{turboTiltGameKey, crowdShiftGameKey}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"ok":         true,
-		"service":    "v2-server",
-		"games":      []string{audioAgarGameID, partyGameID},
-		"partyGames": []string{turboTiltGameKey, crowdShiftGameKey},
+		"service":    h.serviceName,
+		"games":      games,
+		"partyGames": partyGames,
 		"protocol":   protocolName,
 	})
 }
@@ -318,6 +365,10 @@ func (h *hub) handleEnvelope(c *client, msg envelope) {
 		var payload joinPayload
 		_ = json.Unmarshal(msg.Payload, &payload)
 		gameID := firstNonEmpty(msg.GameID, payload.GameID, audioAgarGameID)
+		if !h.enabledGames[gameID] {
+			c.sendErrorCode(msg.RoomID, "game_unavailable", "This multiplayer service does not host that game.")
+			return
+		}
 		switch gameID {
 		case audioAgarGameID:
 			roomID := sanitizeRoomID(firstNonEmpty(msg.RoomID, payload.RoomID, "lobby"))

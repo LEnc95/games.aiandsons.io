@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Isolated Party Mode and Audio Agar into game-specific Cloud Run services while retaining their shared versioned multiplayer protocol.
+
 - Paper Bridge - a five-ravine paper-folding precision game for keyboard and touch.
 
 - Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.

@@ -14,11 +14,25 @@ const ROOT = process.cwd();
 test("multiplayer client normalizes versioned WebSocket endpoints", () => {
   assert.equal(multiplayerProtocol.name, "aiandsons.multiplayer.v1");
   assert.equal(multiplayerProtocol.defaultProductionEndpoint, "wss://audioagar-server-6owms56gxq-uc.a.run.app/ws");
+  assert.equal(multiplayerProtocol.defaultAudioAgarProductionEndpoint, "wss://audioagar-server-6owms56gxq-uc.a.run.app/ws");
+  assert.equal(multiplayerProtocol.defaultPartyProductionEndpoint, "wss://party-server-6owms56gxq-uc.a.run.app/ws");
   assert.ok(!multiplayerProtocol.defaultProductionEndpoint.includes("clubpenguin-world"));
   assert.equal(normalizeWebSocketUrl("example.test"), "ws://example.test/ws");
   assert.equal(normalizeWebSocketUrl("https://example.test/ws/game"), "wss://example.test/ws/game");
   assert.equal(normalizeWebSocketUrl("http://127.0.0.1:8081"), "ws://127.0.0.1:8081/ws");
   assert.equal(resolveWebSocketUrl("wss://arena.example/ws/custom"), "wss://arena.example/ws/custom");
+});
+
+test("production multiplayer traffic is isolated by game family", () => {
+  const previousLocation = globalThis.location;
+  globalThis.location = { hostname: "games.aiandsons.io", protocol: "https:", search: "" };
+  try {
+    assert.equal(resolveWebSocketUrl("", "audioagar"), multiplayerProtocol.defaultAudioAgarProductionEndpoint);
+    assert.equal(resolveWebSocketUrl("", "party"), multiplayerProtocol.defaultPartyProductionEndpoint);
+  } finally {
+    if (previousLocation === undefined) delete globalThis.location;
+    else globalThis.location = previousLocation;
+  }
 });
 
 test("audioagar page exposes blind-play and deterministic hooks", () => {

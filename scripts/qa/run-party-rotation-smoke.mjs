@@ -3,7 +3,7 @@ import path from "node:path";
 
 const repoRoot = process.cwd();
 const staticServer = spawn(process.platform === "win32" ? "python" : "python3", ["-m", "http.server", "4173"], { cwd: repoRoot, stdio: "ignore" });
-const multiplayer = spawn("go", ["run", "."], { cwd: path.join(repoRoot, "v2-server"), stdio: "ignore", env: { ...process.env, PORT: "8081", PARTY_TEST_FAST: "1" } });
+const multiplayer = spawn("go", ["run", "."], { cwd: path.join(repoRoot, "v2-server"), stdio: "ignore", env: { ...process.env, PORT: "8081", PARTY_TEST_FAST: "1", ENABLED_GAMES: "party", SERVICE_NAME: "party-server-test" } });
 const waitFor = async (url) => {
   for (let attempt = 0; attempt < 80; attempt++) {
     try { const response = await fetch(url); if (response.ok) return; } catch {}
