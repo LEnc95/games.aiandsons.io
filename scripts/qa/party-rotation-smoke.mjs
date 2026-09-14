@@ -54,6 +54,11 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).view === "host", null, { timeout: 15000 });
     await host.waitForFunction(() => /^[A-HJ-NP-Z]{4}$/.test(document.getElementById("sessionRoom")?.textContent || ""), null, { timeout: 15000 });
     const room = await host.locator("#sessionRoom").textContent();
+    await host.waitForFunction(() => typeof window.__partyAudioDebug === "function");
+    await host.click("#partySoundButton");
+    await host.waitForFunction(() => window.__partyAudioDebug().activated === true);
+    const audioState = await host.evaluate(() => window.__partyAudioDebug());
+    if (!audioState.enabled || !audioState.activated || audioState.lastCue !== "enabled") throw new Error("Party audio did not unlock from the sound control");
     await host.click("#partyInviteButton");
     await host.waitForFunction(() => /copied/i.test(document.getElementById("partyShareStatus")?.textContent || ""));
     const hostInvite = new URL(await host.evaluate(() => window.__partyCopiedText));
@@ -280,7 +285,7 @@ async function main() {
     await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partyPhase === "spinning", null, { timeout: 8000 });
     if ((await stateOf(choiceHost)).state.activity.label !== chosenActivity) throw new Error("Host choice did not select the requested activity");
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "host_player_invite", "phone_player_invite", "invite_policy_states", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end", "play_again", "same_room_restart", "score_reset", "settings_preserved"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_audio", "party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "host_player_invite", "phone_player_invite", "invite_policy_states", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end", "play_again", "same_room_restart", "score_reset", "settings_preserved"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();

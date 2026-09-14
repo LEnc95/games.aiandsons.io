@@ -1,5 +1,6 @@
 import { connect } from "/src/net/multiplayerClient.js";
 import { AVATAR_EMOJI, DEFAULT_AVATAR_EMOJI, isAvatarEmoji } from "/src/social/avatars.js";
+import { createPartyAudio } from "/party/audio.js";
 
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -52,6 +53,7 @@ const state = {
   hostRecoverySavedAt: 0,
   hostRecoveryNoticeTimer: 0,
 };
+const partyAudio = createPartyAudio({ sharedScreen: screenMode });
 
 function loadSavedAvatar() {
   try {
@@ -299,7 +301,9 @@ async function joinParty({ withoutToken = false } = {}) {
   });
   connection.onStateUpdate((update) => {
     if (connection !== state.connection) return;
+    const previous = state.snapshot;
     state.snapshot = update.payload?.state || update.payload || null;
+    partyAudio.handleSnapshot(previous, state.snapshot);
     renderController();
   });
   connection.onEvent((event) => handleEvent(connection, event));
@@ -328,6 +332,7 @@ function handleEvent(connection, event) {
     window.scrollTo({ top: 0, behavior: "auto" });
     renderController();
     setConnectionLabel("Connected", "online");
+    partyAudio.welcome({ reconnected: Boolean(payload.reconnected), playerName: state.playerName }, state.snapshot);
     if (payload.nameAdjusted) byId("tiltHelp").textContent = `You joined as ${state.playerName}. Touch controls always work.`;
     return;
   }
@@ -342,6 +347,7 @@ function handleEvent(connection, event) {
       byId("removedNotice").hidden = false;
       byId("removedNotice").querySelector("p").textContent = `${message} You can return to the Party Mode page and join a different room.`;
       setConnectionLabel("Removed by host", "problem");
+      partyAudio.cue("error", state.snapshot);
       connection.disconnect();
       return;
     }
@@ -356,6 +362,7 @@ function handleEvent(connection, event) {
     byId("joinError").textContent = message;
     if (!byId("controllerView").hidden) byId("controllerMessage").textContent = message;
     setConnectionLabel("Could not join", "problem");
+    partyAudio.cue("error", state.snapshot);
   }
 }
 
@@ -475,6 +482,7 @@ function renderPartyController(snapshot) {
         state.selectedPartyVote = option.id;
         state.connection?.sendInput({ type: "party_vote", optionId: option.id });
         renderPartyController(state.snapshot);
+        partyAudio.cue("select", state.snapshot);
         vibrate(25);
       });
       target.append(button);
@@ -760,7 +768,9 @@ async function connectSessionScreen() {
   });
   connection.onStateUpdate((update) => {
     if (connection !== state.connection) return;
+    const previous = state.snapshot;
     state.snapshot = update.payload?.state || update.payload || null;
+    partyAudio.handleSnapshot(previous, state.snapshot);
     state.gameKey = state.snapshot?.gameKey || state.gameKey;
     state.sessionMode = state.snapshot?.sessionMode || state.sessionMode;
     if (!displayMode && state.hostToken && Date.now() - state.hostRecoverySavedAt > 60000) rememberHostRecovery(state.roomId, state.hostToken);
@@ -787,6 +797,7 @@ async function connectSessionScreen() {
       byId("sessionRoom").textContent = state.roomId || "----";
       renderSessionQr();
       renderSessionScreen();
+      partyAudio.welcome({ reconnected: Boolean(payload.reconnected) }, state.snapshot);
       if (!displayMode && !requestedRoom) {
         syncPartySettingsControls(state.hostPartySettings || defaultPartySettings());
         sendPartyConfiguration();
@@ -795,6 +806,7 @@ async function connectSessionScreen() {
       byId("sessionError").textContent = payload.message || "The party server rejected that action.";
       const failedRoom = state.roomId || requestedRoom;
       if (["invalid_host_token", "room_not_found"].includes(payload.code) && failedRoom) forgetHostRecovery(failedRoom);
+      partyAudio.cue("error", state.snapshot);
     }
   });
 }
@@ -1164,6 +1176,7 @@ bindSteerButton(byId("leftButton"), -1);
 bindSteerButton(byId("rightButton"), 1);
 byId("boostButton").addEventListener("click", () => {
   state.connection?.sendInput({ type: "boost" });
+  partyAudio.cue("select", state.snapshot);
   vibrate(35);
 });
 byId("gadgetButton").addEventListener("click", () => state.connection?.sendInput({ type: "gadget", action: "use" }));
@@ -1186,18 +1199,21 @@ byId("hornButton").addEventListener("click", () => state.connection?.sendInput({
   state.selectedChoice = choice;
   state.connection?.sendInput({ type: "choice", choice });
   renderController();
+  partyAudio.cue("select", state.snapshot);
   vibrate(30);
 }));
 ["left", "right"].forEach((prediction) => byId(prediction === "left" ? "duelPredictLeft" : "duelPredictRight").addEventListener("click", () => {
   state.selectedPrediction = prediction;
   state.connection?.sendInput({ type: "predict", choice: prediction });
   renderController();
+  partyAudio.cue("select", state.snapshot);
   vibrate(20);
 }));
 byId("duelHotTake").addEventListener("click", () => {
   state.selectedHotTake = !state.selectedHotTake;
   state.connection?.sendInput({ type: "hot_take" });
   renderController();
+  partyAudio.cue("select", state.snapshot);
   vibrate([25, 20, 25]);
 });
 document.querySelectorAll("[data-crowd-emote]").forEach((button) => button.addEventListener("click", () => {
@@ -1212,12 +1228,14 @@ byId("partyStartButton").addEventListener("click", () => {
   byId("partyActivitySettings").open = false;
   byId("partyAdvancedSettings").open = false;
   window.scrollTo({ top: 0, behavior: "auto" });
+  partyAudio.cue("select", state.snapshot);
   sendPartyHost("start");
 });
 byId("partyAgainButton").addEventListener("click", () => sendPartyHost("play_again"));
 byId("partyReadyButton").addEventListener("click", () => {
   const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
   state.connection?.sendInput({ type: "party_ready", ready: !me?.ready });
+  partyAudio.cue("select", state.snapshot);
 });
 byId("partyInviteButton").addEventListener("click", () => sharePlayerInvite(byId("partyInviteButton"), byId("partyShareStatus")));
 byId("partyPlayerInviteButton").addEventListener("click", () => sharePlayerInvite(byId("partyPlayerInviteButton"), byId("partyPlayerShareStatus")));
@@ -1319,8 +1337,13 @@ window.render_game_to_text = () => JSON.stringify({
   selected_prediction: state.selectedPrediction,
   hot_take_selected: state.selectedHotTake,
   selected_party_vote: state.selectedPartyVote,
+  audio: (() => {
+    const debug = partyAudio.debug();
+    return { enabled: debug.enabled, activated: debug.activated, last_cue: debug.lastCue };
+  })(),
   state: state.snapshot,
 });
+window.__partyAudioDebug = () => partyAudio.debug();
 if (["127.0.0.1", "localhost"].includes(location.hostname)) {
   window.__partyTestDropConnection = () => {
     const socket = state.connection?.socket;
@@ -1340,3 +1363,14 @@ if (screenMode) connectSessionScreen().catch((error) => {
   byId("sessionError").textContent = error.message || "Unable to open the party room.";
   setConnectionLabel("Connection problem", "problem");
 });
+
+partyAudio.bind(byId("partySoundButton"));
+byId("partySoundButton").addEventListener("click", () => { void partyAudio.toggle(); });
+const activatePartyAudio = (event) => {
+  if (event.target instanceof Element && event.target.closest("#partySoundButton")) return;
+  void partyAudio.activate();
+  document.removeEventListener("pointerdown", activatePartyAudio, true);
+  document.removeEventListener("keydown", activatePartyAudio, true);
+};
+document.addEventListener("pointerdown", activatePartyAudio, true);
+document.addEventListener("keydown", activatePartyAudio, true);
