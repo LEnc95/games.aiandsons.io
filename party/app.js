@@ -10,6 +10,8 @@ const screenMode = params.get("host") === "1" || normalizeCode(params.get("displ
 const displayMode = normalizeCode(params.get("display")).length === 4;
 const avatarStorageKey = "aiandsons-party-avatar";
 const partySettingsStorageKey = "aiandsons-party-host-settings-v1";
+const hostRecoveryStorageKey = "aiandsons-party-recent-host-v1";
+const hostRecoveryTtlMs = 15 * 60 * 1000;
 const state = {
   connection: null,
   roomId: "",
@@ -47,6 +49,8 @@ const state = {
   hostPartySettings: null,
   connectionStatus: "",
   rejoinedNoticeUntil: 0,
+  hostRecoverySavedAt: 0,
+  hostRecoveryNoticeTimer: 0,
 };
 
 function loadSavedAvatar() {
@@ -199,6 +203,43 @@ function normalizeCode(value) {
 
 function tokenKey(roomId) {
   return `aiandsons-party-player:${roomId}`;
+}
+
+function loadHostRecovery() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(hostRecoveryStorageKey) || "null");
+    const roomId = normalizeCode(saved?.roomId);
+    const savedAt = Number(saved?.savedAt || 0);
+    if (roomId.length === 4 && typeof saved?.token === "string" && saved.token && Date.now() - savedAt < hostRecoveryTtlMs) {
+      return { roomId, token: saved.token, savedAt };
+    }
+    localStorage.removeItem(hostRecoveryStorageKey);
+  } catch { /* Storage is optional. */ }
+  return null;
+}
+
+function rememberHostRecovery(roomId, token) {
+  if (normalizeCode(roomId).length !== 4 || !token) return;
+  const savedAt = Date.now();
+  state.hostRecoverySavedAt = savedAt;
+  try {
+    sessionStorage.setItem(hostTokenKey(roomId), token);
+    localStorage.setItem(hostRecoveryStorageKey, JSON.stringify({ roomId, token, savedAt }));
+  } catch { /* Storage is optional. */ }
+}
+
+function forgetHostRecovery(roomId = "") {
+  try {
+    if (roomId) sessionStorage.removeItem(hostTokenKey(roomId));
+    localStorage.removeItem(hostRecoveryStorageKey);
+  } catch { /* Storage is optional. */ }
+}
+
+function renderHostRecoveryCard() {
+  const recovery = loadHostRecovery();
+  const card = byId("resumePartyCard");
+  card.hidden = !recovery;
+  if (recovery) byId("resumePartyRoom").textContent = recovery.roomId;
 }
 
 function setConnectionLabel(label, kind = "") {
@@ -702,7 +743,8 @@ async function connectSessionScreen() {
   byId("sessionRole").textContent = displayMode ? "Synchronized party screen" : "Party host";
   byId("hostControls").hidden = displayMode;
   const requestedRoom = displayMode ? normalizeCode(params.get("display")) : normalizeCode(params.get("room"));
-  const token = !displayMode && requestedRoom ? sessionStorage.getItem(hostTokenKey(requestedRoom)) || "" : "";
+  const recovery = !displayMode && requestedRoom ? loadHostRecovery() : null;
+  const token = !displayMode && requestedRoom ? sessionStorage.getItem(hostTokenKey(requestedRoom)) || (recovery?.roomId === requestedRoom ? recovery.token : "") : "";
   const connection = await connect({
     gameId: "party", gameKey: "party", role: state.screenRole,
     roomId: requestedRoom, token,
@@ -719,6 +761,7 @@ async function connectSessionScreen() {
     state.snapshot = update.payload?.state || update.payload || null;
     state.gameKey = state.snapshot?.gameKey || state.gameKey;
     state.sessionMode = state.snapshot?.sessionMode || state.sessionMode;
+    if (!displayMode && state.hostToken && Date.now() - state.hostRecoverySavedAt > 60000) rememberHostRecovery(state.roomId, state.hostToken);
     renderSessionScreen();
   });
   connection.onEvent((event) => {
@@ -729,11 +772,15 @@ async function connectSessionScreen() {
       state.hostToken = payload.token || state.hostToken;
       state.sessionMode = payload.sessionMode || state.sessionMode;
       if (!displayMode && state.hostToken) {
-        sessionStorage.setItem(hostTokenKey(state.roomId), state.hostToken);
+        rememberHostRecovery(state.roomId, state.hostToken);
         const url = new URL(location.href);
         url.searchParams.set("host", "1");
         url.searchParams.set("room", state.roomId);
         history.replaceState({}, "", url);
+        const notice = byId("hostRecoveryNotice");
+        notice.hidden = !payload.reconnected;
+        clearTimeout(state.hostRecoveryNoticeTimer);
+        if (payload.reconnected) state.hostRecoveryNoticeTimer = setTimeout(() => { notice.hidden = true; }, 5000);
       }
       byId("sessionRoom").textContent = state.roomId || "----";
       renderSessionQr();
@@ -744,7 +791,8 @@ async function connectSessionScreen() {
       }
     } else if (event.type === "error") {
       byId("sessionError").textContent = payload.message || "The party server rejected that action.";
-      if (["invalid_host_token", "room_not_found"].includes(payload.code) && state.roomId) sessionStorage.removeItem(hostTokenKey(state.roomId));
+      const failedRoom = state.roomId || requestedRoom;
+      if (["invalid_host_token", "room_not_found"].includes(payload.code) && failedRoom) forgetHostRecovery(failedRoom);
     }
   });
 }
@@ -1139,6 +1187,20 @@ byId("partyShareButton").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(url); byId("partyShareButton").textContent = "Screen link copied!"; setTimeout(() => { byId("partyShareButton").textContent = "Copy link for another screen"; }, 1600); }
   catch { byId("sessionError").textContent = url; }
 });
+byId("resumePartyButton").addEventListener("click", () => {
+  const recovery = loadHostRecovery();
+  if (!recovery) return renderHostRecoveryCard();
+  const url = new URL("/party/", location.origin);
+  url.searchParams.set("host", "1");
+  url.searchParams.set("room", recovery.roomId);
+  const endpoint = params.get("ws") || params.get("endpoint");
+  if (endpoint) url.searchParams.set("ws", endpoint);
+  location.href = url;
+});
+byId("forgetPartyButton").addEventListener("click", () => {
+  forgetHostRecovery(byId("resumePartyRoom").textContent);
+  renderHostRecoveryCard();
+});
 window.addEventListener("keydown", (event) => { if (event.key.toLowerCase() === "f" && screenMode) byId("partyFullscreenButton").click(); });
 
 setInterval(() => {
@@ -1156,6 +1218,7 @@ setInterval(() => {
 
 const initialCode = normalizeCode(params.get("code"));
 renderAvatarPicker();
+if (!screenMode) renderHostRecoveryCard();
 if (screenMode && !displayMode) loadSavedPartySettings();
 if (!screenMode && initialCode) {
   byId("roomCode").value = initialCode;

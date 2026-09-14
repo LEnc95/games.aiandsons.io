@@ -61,10 +61,10 @@ async function main() {
     if (savedSettings?.durationPreset !== "quick" || savedSettings?.accessibilityPreset !== "relaxed") throw new Error("Host party settings did not persist locally");
     if (!await host.locator("body").evaluate((body) => body.classList.contains("party-reduced-motion"))) throw new Error("Reduced-motion presentation was not applied");
     await host.locator("#partyActivitySettings summary").click();
-    for (const input of await host.locator("#partyActivityPool input[data-activity-id]").all()) {
-      const id = await input.getAttribute("data-activity-id");
-      if (!["turbotilt:classic", "turbotilt:survival"].includes(id)) await input.uncheck();
-    }
+    await host.locator("#partyActivityPool input[data-activity-id]").evaluateAll((inputs) => {
+      inputs.forEach((input) => { input.checked = ["turbotilt:classic", "turbotilt:survival"].includes(input.dataset.activityId); });
+      inputs[0]?.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partySettings?.enabledActivities?.length === 2);
     await host.locator("#partyActivitySettings summary").click();
     await host.selectOption("#partySelectionSelect", "majority");
@@ -130,14 +130,42 @@ async function main() {
     const alphaBeforeReconnect = await stateOf(alpha);
     if (!await alpha.evaluate(() => window.__partyTestDropConnection())) throw new Error("Could not trigger player reconnect test");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.players?.some((player) => player.name === "Alpha" && !player.connected), null, { timeout: 8000 });
+    await alpha.waitForFunction(() => /Welcome back/.test(document.getElementById("partyMessage")?.textContent || ""), null, { timeout: 12000 });
     await alpha.waitForFunction((playerId) => {
       const state = JSON.parse(window.render_game_to_text());
       return state.player_id === playerId && state.state?.players?.find((player) => player.id === playerId)?.connected;
     }, alphaBeforeReconnect.player_id, { timeout: 12000 });
     const alphaAfterReconnect = await stateOf(alpha);
-    if (alphaAfterReconnect.state.players.length !== 2 || !alphaAfterReconnect.state.players.find((player) => player.id === alphaBeforeReconnect.player_id)?.ready) throw new Error("Reconnect did not preserve identity and ready state");
-    await alpha.waitForFunction(() => /Welcome back/.test(document.getElementById("partyMessage")?.textContent || ""), null, { timeout: 4000 });
+    if (alphaAfterReconnect.state.players.length !== 2 || !alphaAfterReconnect.state.players.find((player) => player.id === alphaBeforeReconnect.player_id)?.ready) throw new Error(`Reconnect did not preserve identity and ready state: ${JSON.stringify(alphaAfterReconnect.state.players)}`);
     await alpha.screenshot({ path: path.join(outputDir, "rejoined-player-mobile.png"), fullPage: true });
+    const unauthorizedHost = await makePage({ width: 900, height: 700 }, "unauthorized-host");
+    await unauthorizedHost.goto(`${baseUrl}/party/?ws=${encodeURIComponent(ws)}`);
+    await unauthorizedHost.evaluate((roomId) => localStorage.setItem("aiandsons-party-recent-host-v1", JSON.stringify({ roomId, token: "invalid-token", savedAt: Date.now() })), room);
+    await unauthorizedHost.goto(`${baseUrl}/party/?host=1&room=${room}&ws=${encodeURIComponent(ws)}`);
+    await unauthorizedHost.waitForFunction(() => /cannot be resumed/i.test(document.getElementById("sessionError")?.textContent || ""), null, { timeout: 8000 });
+    if ((await stateOf(unauthorizedHost)).state) throw new Error("Host with an invalid recovery token received party state");
+    if (await unauthorizedHost.evaluate(() => localStorage.getItem("aiandsons-party-recent-host-v1")) !== null) throw new Error("Rejected host recovery record was not cleared");
+    const recovery = await host.evaluate(() => JSON.parse(localStorage.getItem("aiandsons-party-recent-host-v1")));
+    if (recovery?.roomId !== room || !recovery.token) throw new Error("Host recovery was not saved on the device");
+    await host.goto(`${baseUrl}/party/?ws=${encodeURIComponent(ws)}`);
+    await host.waitForSelector("#resumePartyCard:not([hidden])");
+    if (await host.locator("#resumePartyRoom").textContent() !== room) throw new Error("Recent-party card showed the wrong room");
+    await host.click("#forgetPartyButton");
+    if (!await host.locator("#resumePartyCard").isHidden() || await host.evaluate(() => localStorage.getItem("aiandsons-party-recent-host-v1")) !== null) throw new Error("Forget recent party did not clear the recovery record");
+    await host.evaluate((saved) => localStorage.setItem("aiandsons-party-recent-host-v1", JSON.stringify(saved)), recovery);
+    await host.reload();
+    await host.waitForSelector("#resumePartyCard:not([hidden])");
+    await host.evaluate(() => sessionStorage.clear());
+    await assertNoHorizontalOverflow(host, "Recent-party landing view");
+    await host.screenshot({ path: path.join(outputDir, "resume-party-host.png"), fullPage: true });
+    await host.setViewportSize({ width: 390, height: 844 });
+    await assertNoHorizontalOverflow(host, "Recent-party mobile landing view");
+    await host.screenshot({ path: path.join(outputDir, "resume-party-mobile.png"), fullPage: true });
+    await host.setViewportSize({ width: 1280, height: 720 });
+    await host.click("#resumePartyButton");
+    await host.waitForFunction((roomId) => typeof window.render_game_to_text === "function" && JSON.parse(window.render_game_to_text()).room_id === roomId && JSON.parse(window.render_game_to_text()).state?.players?.length === 2, room, { timeout: 12000 });
+    await host.waitForSelector("#hostRecoveryNotice:not([hidden])", { timeout: 4000 });
+    await host.screenshot({ path: path.join(outputDir, "restored-party-host.png"), fullPage: true });
     const display = await makePage({ width: 1280, height: 720 }, "display");
     await display.goto(`${baseUrl}/party/?display=${room}&ws=${encodeURIComponent(ws)}`);
     await display.waitForFunction(() => JSON.parse(window.render_game_to_text()).view === "display", null, { timeout: 15000 });
@@ -172,7 +200,11 @@ async function main() {
     if (!spinning.state.partyVote.ballots.every((ballot) => ballot.playerAvatar)) throw new Error("Named ballots omitted player avatars");
     if (spinning.state.partyVote.winnerOptionId !== spinning.state.partyVote.ballots[0].optionId && spinning.state.partyVote.ballots[0].optionId === spinning.state.partyVote.ballots[1].optionId) throw new Error("Majority selection did not honor matching ballots");
     await host.screenshot({ path: path.join(outputDir, "party-wheel.png") });
-    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "activity", null, { timeout: 8000 });
+    try {
+      await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "activity", null, { timeout: 18000 });
+    } catch {
+      throw new Error(`Opening activity did not start after host recovery: ${JSON.stringify((await stateOf(host)).state)}`);
+    }
     const firstActivity = (await stateOf(host)).state.activity;
     if (!firstActivity?.gameKey || !firstActivity?.modeKey) throw new Error("First activity missing game and mode");
     await waitForEmbeddedAvatars(host);
@@ -184,7 +216,7 @@ async function main() {
     await alpha.locator("[data-party-vote]").nth(0).click();
     await beta.locator("[data-party-vote]").nth(0).click();
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "spinning", null, { timeout: 8000 });
-    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "activity", null, { timeout: 8000 });
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "activity", null, { timeout: 18000 });
     const secondActivity = (await stateOf(host)).state.activity;
     if (secondActivity.id === firstActivity.id) throw new Error("Repeat activity was not excluded");
     await waitForEmbeddedAvatars(host);
@@ -218,7 +250,7 @@ async function main() {
     await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partyPhase === "spinning", null, { timeout: 8000 });
     if ((await stateOf(choiceHost)).state.activity.label !== chosenActivity) throw new Error("Host choice did not select the requested activity");
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();

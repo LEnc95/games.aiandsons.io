@@ -95,3 +95,18 @@ test("party lobby explains readiness and preserves reconnect identity", async ()
   assert.match(server, /"reconnected": reconnected/);
   assert.match(server, /state\["readyCount"\]/);
 });
+
+test("party hosts can safely resume a recent room on the same device", async () => {
+  const [html, app, server] = await Promise.all([
+    read("party/index.html"), read("party/app.js"), read("v2-server/party.go"),
+  ]);
+  for (const id of ["resumePartyCard", "resumePartyRoom", "resumePartyButton", "forgetPartyButton", "hostRecoveryNotice"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /aiandsons-party-recent-host-v1/);
+  assert.match(app, /hostRecoveryTtlMs = 15 \* 60 \* 1000/);
+  assert.match(app, /rememberHostRecovery\(state\.roomId, state\.hostToken\)/);
+  assert.match(html, /Party restored\. Players can keep using the same room code/);
+  assert.match(server, /This host session cannot be resumed on this device/);
+  assert.match(server, /"reconnected": wasDisconnected/);
+});

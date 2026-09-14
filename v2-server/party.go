@@ -245,6 +245,10 @@ func (h *hub) handlePartyJoin(c *client, msg envelope, payload joinPayload) {
 			c.sendErrorCode(roomID, "room_not_found", "That room is no longer available.")
 			return
 		}
+		if payload.Token == "" {
+			c.sendErrorCode(roomID, "invalid_host_token", "This host session cannot be resumed on this device.")
+			return
+		}
 		room.attachHost(c, payload.Token)
 		return
 	}
@@ -366,7 +370,7 @@ func (r *partyRoom) attachHost(c *client, token string) {
 		c.sendErrorCode(r.roomID, "invalid_host_token", "This host session cannot be resumed.")
 		return
 	}
-	if r.host != nil && r.host != c && token == "" {
+	if r.host != nil && r.host != c {
 		c.sendErrorCode(r.roomID, "host_exists", "This room already has a host.")
 		return
 	}
@@ -386,7 +390,7 @@ func (r *partyRoom) attachHost(c *client, token string) {
 	}
 	c.sendEnvelope("welcome", r.roomID, map[string]any{
 		"role": "host", "roomId": r.roomID, "gameKey": r.gameKey,
-		"token": r.hostToken, "sessionMode": r.sessionMode,
+		"token": r.hostToken, "sessionMode": r.sessionMode, "reconnected": wasDisconnected,
 	})
 }
 
