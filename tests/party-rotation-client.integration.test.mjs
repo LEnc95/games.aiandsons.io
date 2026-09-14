@@ -123,3 +123,17 @@ test("finished parties can restart in the same room with fresh standings", async
   assert.match(server, /p\.PartyPoints = 0/);
   assert.match(server, /p\.Ready = false/);
 });
+
+test("hosts and players can share a policy-aware player invite", async () => {
+  const [html, app] = await Promise.all([read("party/index.html"), read("party/app.js")]);
+  for (const id of ["partyInviteButton", "partyPlayerInviteButton", "partyShareStatus", "partyPlayerShareStatus"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /function playerInviteUrl/);
+  assert.match(app, /Join my AI and Sons party/);
+  assert.match(app, /navigator\.share/);
+  assert.match(app, /Player invite link copied/);
+  assert.match(app, /snapshot\?\.roomLocked/);
+  assert.match(app, /snapshot\?\.allowLateJoin/);
+  assert.match(app, /snapshot\?\.maxPlayers/);
+});
