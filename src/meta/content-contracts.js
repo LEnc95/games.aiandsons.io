@@ -2,6 +2,7 @@
 // must add an explicit contract so automated challenges and cosmetics never
 // guess at unbounded metrics or promise effects a game cannot render.
 export const GAME_CONTENT_CONTRACTS = Object.freeze({
+  paperbridge: Object.freeze({ releasedAt: '2026-09-14', outcomes: Object.freeze({ bridges: Object.freeze({ min: 0, max: 5, direction: 'higher' }), ravines: Object.freeze({ min: 0, max: 5, direction: 'higher' }), falls: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'paperbridge-theme', kind: 'palette', tokens: Object.freeze(['sky', 'far', 'near', 'paper', 'line', 'accent']) })]) }),
   chalkchase: Object.freeze({
     releasedAt: '2026-09-13',
     outcomes: Object.freeze({

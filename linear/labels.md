@@ -232,5 +232,6 @@
 - game/ribbonreversal
 - game/pebbleparade
 - game/chalkchase
+- game/paperbridge
 
 Generated from `src/meta/feedback.js`.
