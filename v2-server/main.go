@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -132,6 +133,7 @@ type hub struct {
 	partyRooms   map[string]*partyRoom
 	enabledGames map[string]bool
 	serviceName  string
+	partyStore   partyRoomStore
 }
 
 type client struct {
@@ -182,7 +184,13 @@ func main() {
 }
 
 func newHub() *hub {
-	return newHubWithGames(enabledGamesFromEnv(), serviceNameFromEnv())
+	h := newHubWithGames(enabledGamesFromEnv(), serviceNameFromEnv())
+	store, err := newPartyRoomStoreFromEnv(context.Background())
+	if err != nil {
+		log.Fatalf("party room store initialization failed: %v", err)
+	}
+	h.partyStore = store
+	return h
 }
 
 func newHubWithGames(enabledGames map[string]bool, serviceName string) *hub {
@@ -236,11 +244,12 @@ func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
-		"ok":         true,
-		"service":    h.serviceName,
-		"games":      games,
-		"partyGames": partyGames,
-		"protocol":   protocolName,
+		"ok":           true,
+		"service":      h.serviceName,
+		"games":        games,
+		"partyGames":   partyGames,
+		"roomRecovery": h.partyStore != nil,
+		"protocol":     protocolName,
 	})
 }
 

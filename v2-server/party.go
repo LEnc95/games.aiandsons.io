@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	cryptorand "crypto/rand"
 	"encoding/json"
+	"errors"
 	"hash/fnv"
+	"log"
 	"math"
 	mathrand "math/rand"
 	"os"
@@ -146,57 +149,60 @@ type partyPlayer struct {
 }
 
 type partyRoom struct {
-	mu                 sync.Mutex
-	hub                *hub
-	gameKey            string
-	roomID             string
-	host               *client
-	hostToken          string
-	hostDisconnectedAt int64
-	players            map[string]*partyPlayer
-	displays           map[string]*client
-	tokenToPlayer      map[string]string
-	blockedTokens      map[string]bool
-	locked             bool
-	allowLateJoin      bool
-	maxPlayers         int
-	friendlyNames      bool
-	partyConfig        partySessionSettings
-	phase              string
-	resumePhase        string
-	pauseReason        string
-	pauseRemainingMs   int64
-	phaseEndsAt        int64
-	heat               int
-	totalHeats         int
-	obstacles          []partyObstacle
-	tick               uint64
-	createdAt          int64
-	lastActive         int64
-	endedAt            int64
-	totalBoosts        int
-	settings           partySettings
-	track              string
-	modifier           string
-	voteOptions        []string
-	votes              map[string]string
-	routes             []partyRoute
-	sharedHealth       int
-	raceStartedAt      int64
-	nextChaosAt        int64
-	replayFrames       []partyReplayFrame
-	awards             []map[string]any
-	crowd              *crowdShiftState
-	sessionMode        string
-	partyPhase         string
-	resumePartyPhase   string
-	activityIndex      int
-	activity           partyActivity
-	lastActivityID     string
-	activityHistory    []string
-	partyVote          partyVoteState
-	partyAwarded       bool
-	activitySkipped    bool
+	mu                  sync.Mutex
+	hub                 *hub
+	gameKey             string
+	roomID              string
+	host                *client
+	hostToken           string
+	hostDisconnectedAt  int64
+	players             map[string]*partyPlayer
+	displays            map[string]*client
+	tokenToPlayer       map[string]string
+	blockedTokens       map[string]bool
+	locked              bool
+	allowLateJoin       bool
+	maxPlayers          int
+	friendlyNames       bool
+	partyConfig         partySessionSettings
+	phase               string
+	resumePhase         string
+	pauseReason         string
+	pauseRemainingMs    int64
+	phaseEndsAt         int64
+	heat                int
+	totalHeats          int
+	obstacles           []partyObstacle
+	tick                uint64
+	createdAt           int64
+	lastActive          int64
+	endedAt             int64
+	totalBoosts         int
+	settings            partySettings
+	track               string
+	modifier            string
+	voteOptions         []string
+	votes               map[string]string
+	routes              []partyRoute
+	sharedHealth        int
+	raceStartedAt       int64
+	nextChaosAt         int64
+	replayFrames        []partyReplayFrame
+	awards              []map[string]any
+	crowd               *crowdShiftState
+	sessionMode         string
+	partyPhase          string
+	resumePartyPhase    string
+	activityIndex       int
+	activity            partyActivity
+	lastActivityID      string
+	activityHistory     []string
+	partyVote           partyVoteState
+	partyAwarded        bool
+	activitySkipped     bool
+	lastPersistedAt     int64
+	persistenceInFlight bool
+	removed             bool
 }
 
 func (c *client) currentRoomID() string {
@@ -323,7 +329,16 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 		room.crowd = newCrowdShiftState()
 	}
 	h.partyRooms[roomID] = room
+	var initialSnapshot *partyRoomSnapshot
+	if h.partyStore != nil {
+		room.persistenceInFlight = true
+		room.lastPersistedAt = now
+		initialSnapshot = room.snapshotForPersistenceLocked(now)
+	}
 	go room.loop()
+	if initialSnapshot != nil {
+		go room.persistSnapshot(initialSnapshot)
+	}
 	return room, true
 }
 
@@ -351,16 +366,59 @@ func (r *partyRoom) attachDisplay(c *client) {
 
 func (h *hub) findPartyRoom(roomID string) *partyRoom {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-	return h.partyRooms[roomID]
+	room := h.partyRooms[roomID]
+	h.mu.Unlock()
+	if room != nil || h.partyStore == nil {
+		return room
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	snapshot, err := h.partyStore.Load(ctx, roomID)
+	if err != nil {
+		if !errors.Is(err, errPartyRoomSnapshotNotFound) {
+			log.Printf("party room %s recovery failed: %v", roomID, err)
+		}
+		return nil
+	}
+	restored := restorePartyRoom(h, snapshot)
+	h.mu.Lock()
+	if existing := h.partyRooms[roomID]; existing != nil {
+		h.mu.Unlock()
+		return existing
+	}
+	if len(h.partyRooms) >= partyMaxRooms {
+		h.mu.Unlock()
+		return nil
+	}
+	h.partyRooms[roomID] = restored
+	h.mu.Unlock()
+	go restored.loop()
+	return restored
 }
 
 func (h *hub) removePartyRoom(roomID string, expected *partyRoom) {
 	h.mu.Lock()
+	removed := false
 	if h.partyRooms[roomID] == expected {
 		delete(h.partyRooms, roomID)
+		removed = true
 	}
 	h.mu.Unlock()
+	if !removed {
+		return
+	}
+	expected.mu.Lock()
+	expected.removed = true
+	expected.mu.Unlock()
+	if h.partyStore != nil {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := h.partyStore.Delete(ctx, roomID); err != nil {
+				log.Printf("party room %s snapshot deletion failed: %v", roomID, err)
+			}
+		}()
+	}
 }
 
 func (r *partyRoom) attachHost(c *client, token string) {
@@ -1170,6 +1228,7 @@ func (r *partyRoom) resolveRoutesLocked(p *partyPlayer, previousDistance float64
 
 func (r *partyRoom) broadcastState() {
 	r.mu.Lock()
+	now := nowMillis()
 	tick := r.tick
 	host := r.host
 	displayClients := make([]*client, 0, len(r.displays))
@@ -1187,7 +1246,16 @@ func (r *partyRoom) broadcastState() {
 	for _, c := range playerClients {
 		playerStates[c.id] = r.snapshotLocked(c.playerID)
 	}
+	var checkpoint *partyRoomSnapshot
+	if r.hub != nil && r.hub.partyStore != nil && !r.removed && !r.persistenceInFlight && now-r.lastPersistedAt >= partyRoomCheckpointInterval {
+		r.persistenceInFlight = true
+		r.lastPersistedAt = now
+		checkpoint = r.snapshotForPersistenceLocked(now)
+	}
 	r.mu.Unlock()
+	if checkpoint != nil {
+		go r.persistSnapshot(checkpoint)
+	}
 	if host != nil && tick%2 == 0 {
 		host.sendEnvelope("state", r.roomID, map[string]any{"state": hostState})
 	}
