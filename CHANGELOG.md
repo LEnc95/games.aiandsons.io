@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Paper Bridge - a five-ravine paper-folding precision game for keyboard and touch.
+
 - Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.
 
 - Pebble Parade - a five-pond timing game for keyboard and touch.

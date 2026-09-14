@@ -1,5 +1,15 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-14 Paper Bridge automation
+- Started from clean detached origin/main `c79fa1124a6b315da2425a68e33708af1c9d45a0`; `npm ci` passed with 16 existing audit findings.
+- Added Paper Bridge (`/paperbridge`), a five-ravine paper-plank precision game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ bridges, ravines, falls }` outcomes.
+- TODO: generators, early gates, browser QA, final gates, diff audit, guarded PR, merge, and production verification.
+- SEO, OG, and local Linear generation passed; restored the 42 documented nondeterministic legacy OG renders and 14 blank-line-only legacy page edits. Maintenance validation and 218-game preflight passed.
+- Browser QA found and fixed the plank unfolding direction, ravine metric lag, a missing stylesheet request, and mobile title overlap. Supplied-client and focused QA now pass exact stepping, pause freeze, animation, five-stage win, three-fall loss/restart, palettes, feedback, touch, and 390px layout with zero errors; gameplay, transition, pause, loss, win, feedback, mobile, and OG captures were visually inspected.
+- TODO: final gates, diff audit, guarded PR, merge, and production verification.
+- Ordered final gates passed: maintenance, 218-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff check. Baseline audit found exactly one appended registry entry, one matching game folder, matching contract/outcomes/changelog, and only the 11 permitted release paths.
+- TODO: branch commit, authoritative audit, guarded PR, merge, and production verification.
+
 ## 2026-09-13 Chalk Chase automation
 - Started from clean detached origin/main `01a6d87f9df8d8b35b135a83b3aa7fd0f38e0c6b`; `npm ci` passed with 16 existing audit findings.
 - Added Chalk Chase (`/chalkchase`), a five-board ordered-star path puzzle with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ stars, boards, erases }` outcomes.
