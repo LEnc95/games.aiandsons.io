@@ -119,8 +119,8 @@ test('missions module loading', async (t) => {
       assert.ok(weekly.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
     });
 
-    await t.test('W37 scheduled challenges complete and reward exactly once', () => {
-      const timestamp = new Date('2026-09-07T12:00:00Z').getTime();
+    await t.test('W38 scheduled challenges complete and reward exactly once', () => {
+      const timestamp = new Date('2026-09-14T12:00:00Z').getTime();
       const originalCoins = state.coins;
       const originalBadges = state.badges;
       try {
@@ -133,20 +133,20 @@ test('missions module loading', async (t) => {
         state.missions.completed = [];
         state.missions.rewarded = [];
         state.missions.weekly.activeIds = [
-          'weekly-w37-harborharmony-beacons-45',
-          'weekly-w37-pollenpatrol-flowers-25',
-          'weekly-w37-firebreakcommand-cabins-20',
-          'weekly-w37-nectarmeasure-vessels-18',
+          'weekly-w38-auroraaccord-notes-25',
+          'weekly-w38-lanternloom-stars-55',
+          'weekly-w38-turbotilt-players-8',
+          'weekly-w38-dewdropdrift-motes-14',
         ];
         state.missions.weekly.progress = {};
         state.missions.weekly.completed = [];
         state.missions.weekly.rewarded = [];
 
         const payload = {
-          harborharmony: { beacons: 45 },
-          pollenpatrol: { flowers: 25 },
-          firebreakcommand: { cabins: 20 },
-          nectarmeasure: { vessels: 18 },
+          auroraaccord: { notes: 25 },
+          lanternloom: { stars: 55 },
+          turbotilt: { players: 8 },
+          dewdropdrift: { motes: 14 },
         };
         const first = recordMissionProgress(payload, timestamp);
         assert.equal(first.weeklyCompletedNow.length, 4);

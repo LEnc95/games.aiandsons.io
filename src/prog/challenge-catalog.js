@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w38-auroraaccord-notes-25', weekKey: '2026-09-14', gameSlug: 'auroraaccord', metric: 'notes', name: 'Aurora Chorus', desc: 'Catch all 25 notes in Aurora Accord.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-lanternloom-stars-55', weekKey: '2026-09-14', gameSlug: 'lanternloom', metric: 'stars', name: 'Constellation Keeper', desc: 'Catch all 55 stars in Lantern Loom.', target: 55, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-turbotilt-players-8', weekKey: '2026-09-14', gameSlug: 'turbotilt', metric: 'players', name: 'Full Grid', desc: 'Race with 8 players in Turbo Tilt.', target: 8, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-dewdropdrift-motes-14', weekKey: '2026-09-14', gameSlug: 'dewdropdrift', metric: 'motes', name: 'Mote Mosaic', desc: 'Collect all 14 motes in Dewdrop Drift.', target: 14, rewardCoins: 20 }),
   define({ id: 'weekly-w37-harborharmony-beacons-45', weekKey: '2026-09-07', gameSlug: 'harborharmony', metric: 'beacons', name: 'Beacon Chorus', desc: 'Answer all 45 beacons in Harbor Harmony.', target: 45, rewardCoins: 20 }),
   define({ id: 'weekly-w37-pollenpatrol-flowers-25', weekKey: '2026-09-07', gameSlug: 'pollenpatrol', metric: 'flowers', name: 'Full Bloom Flight', desc: 'Gather all 25 flowers in Pollen Patrol.', target: 25, rewardCoins: 20 }),
   define({ id: 'weekly-w37-firebreakcommand-cabins-20', weekKey: '2026-09-07', gameSlug: 'firebreakcommand', metric: 'cabins', name: 'Ranger Shield', desc: 'Protect all 20 cabins in Firebreak Command.', target: 20, rewardCoins: 20 }),
