@@ -199,7 +199,7 @@
     </main>
     <script type="module">
       import { reportGameOutcome } from "/src/core/outcomes.js";
-      import { addCoins } from "/src/core/state.js";
+      import { addCoins, state as profileState } from "/src/core/state.js";
       import { mountGameFeedback } from "/src/feedback/embed.js";
       const c = document.querySelector("#game"),
         x = c.getContext("2d"),
@@ -231,10 +231,12 @@
           ["Hearth Wheel", 13, 32000],
           ["Dawn Bell", 15, 34000],
         ],
+        CINDER_CONSTELLATION = profileState.inventory instanceof Set && profileState.inventory.has("lanternloom-cinder-constellation"),
         T = [
           ["Indigo Thread", "#121b46", "#4d5ba6", "#ffda7e", "#fa85ac"],
           ["Rose Lantern", "#3a1e45", "#a55286", "#ffe4a5", "#71dce0"],
           ["Pine Moon", "#112d31", "#43817a", "#fff0a4", "#e48cd7"],
+          ...(CINDER_CONSTELLATION ? [["Cinder Constellation", "#2e1d35", "#7a3e47", "#d98d45", "#ffd27a"]] : []),
         ];
       let s,
         keys = { l: false, r: false },
@@ -648,6 +650,7 @@
           metrics: met(),
           timeMs: Math.round(s.elapsed),
           theme: p()[0],
+          cosmetics: { cinderConstellation: CINDER_CONSTELLATION },
           status: s.status,
           lastAction: s.lastAction,
         });

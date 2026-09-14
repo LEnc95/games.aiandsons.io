@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W38 content pack with Saffron Nocturne Aurora Accord, Cinder Constellation Lantern Loom, and Comet Chicane Turbo Tilt cosmetics plus four bounded weekly challenges.
 - Paper Bridge - a five-ravine paper-folding precision game for keyboard and touch.
 
 - Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.
