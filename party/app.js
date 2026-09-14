@@ -443,6 +443,7 @@ function renderPartyController(snapshot) {
   const ready = Boolean(me?.ready);
   byId("partyReadyButton").textContent = ready ? "Ready ✓" : "I’m ready";
   byId("partyReadyButton").setAttribute("aria-pressed", String(ready));
+  updateInviteButton(byId("partyPlayerInviteButton"), snapshot, "Invite another player");
   const selectionCopy = {
     chaos: "Vote for an activity; every ballot becomes a wheel slice.",
     majority: "Vote for an activity; the most votes wins.",
@@ -803,7 +804,7 @@ function renderSessionQr() {
   target.textContent = "";
   if (!state.roomId || typeof window.qrcode !== "function") return;
   const qr = window.qrcode(0, "M");
-  qr.addData(`https://games.aiandsons.io/party?code=${encodeURIComponent(state.roomId)}`);
+  qr.addData(playerInviteUrl().toString());
   qr.make();
   const qrDocument = new DOMParser().parseFromString(
     qr.createSvgTag(4, 1, "Scan to join the party", "Party room QR code"),
@@ -817,6 +818,59 @@ function renderSessionQr() {
 function sendPartyHost(action, details = {}) {
   byId("sessionError").textContent = "";
   state.connection?.sendInput({ type: "host", action, ...details });
+}
+
+function partyUrlWithRoom(parameter) {
+  const url = new URL("/party/", location.origin);
+  url.searchParams.set(parameter, state.roomId);
+  const endpoint = params.get("ws") || params.get("endpoint");
+  if (endpoint) url.searchParams.set("ws", endpoint);
+  return url;
+}
+
+function playerInviteUrl() {
+  return partyUrlWithRoom("code");
+}
+
+function displayInviteUrl() {
+  return partyUrlWithRoom("display");
+}
+
+function inviteAvailability(snapshot) {
+  if (snapshot?.roomLocked) return { available: false, label: "Room is locked" };
+  if (snapshot?.allowLateJoin === false && snapshot?.partyPhase !== "party_lobby") return { available: false, label: "Late joining is off" };
+  if ((snapshot?.players?.length || 0) >= Number(snapshot?.maxPlayers || 8)) return { available: false, label: "Room is full" };
+  return { available: true, label: "" };
+}
+
+function updateInviteButton(button, snapshot, availableLabel) {
+  const availability = inviteAvailability(snapshot);
+  button.disabled = !availability.available;
+  button.textContent = availability.available ? availableLabel : availability.label;
+}
+
+async function sharePlayerInvite(button, statusElement) {
+  if (!state.roomId || button.disabled) return;
+  const url = playerInviteUrl().toString();
+  const shareData = { title: "Join my AI and Sons party", text: `Join room ${state.roomId}`, url };
+  statusElement.textContent = "";
+  try {
+    if (typeof navigator.share === "function") {
+      await navigator.share(shareData);
+      statusElement.textContent = "Invite ready to send.";
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    statusElement.textContent = "Player invite link copied.";
+  } catch (error) {
+    if (error?.name === "AbortError") return;
+    try {
+      await navigator.clipboard.writeText(url);
+      statusElement.textContent = "Player invite link copied.";
+    } catch {
+      statusElement.textContent = `Share this link: ${url}`;
+    }
+  }
 }
 
 function renderSessionScreen() {
@@ -852,6 +906,7 @@ function renderSessionScreen() {
     byId("partyFriendlyNamesButton").textContent = `Friendly names: ${friendlyNames ? "On" : "Off"}`;
     byId("partyFriendlyNamesButton").classList.toggle("is-active", friendlyNames);
     byId("partyFriendlyNamesButton").setAttribute("aria-pressed", String(friendlyNames));
+    updateInviteButton(byId("partyInviteButton"), snapshot, "Invite players");
     byId("partyMaxPlayersSelect").value = String(maxPlayers);
     [...byId("partyMaxPlayersSelect").options].forEach((option) => { option.disabled = Number(option.value) < players.length; });
     const setupOpen = partyPhase === "party_lobby";
@@ -1164,6 +1219,8 @@ byId("partyReadyButton").addEventListener("click", () => {
   const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
   state.connection?.sendInput({ type: "party_ready", ready: !me?.ready });
 });
+byId("partyInviteButton").addEventListener("click", () => sharePlayerInvite(byId("partyInviteButton"), byId("partyShareStatus")));
+byId("partyPlayerInviteButton").addEventListener("click", () => sharePlayerInvite(byId("partyPlayerInviteButton"), byId("partyPlayerShareStatus")));
 byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snapshot?.roomLocked ? "unlock" : "lock"));
 byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
 byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
@@ -1185,8 +1242,7 @@ byId("partyFullscreenButton").addEventListener("click", () => {
   else document.exitFullscreen?.().catch(() => {});
 });
 byId("partyShareButton").addEventListener("click", async () => {
-  const url = new URL("/party/", location.origin); url.searchParams.set("display", state.roomId);
-  const endpoint = params.get("ws") || params.get("endpoint"); if (endpoint) url.searchParams.set("ws", endpoint);
+  const url = displayInviteUrl().toString();
   try { await navigator.clipboard.writeText(url); byId("partyShareButton").textContent = "Screen link copied!"; setTimeout(() => { byId("partyShareButton").textContent = "Copy link for another screen"; }, 1600); }
   catch { byId("sessionError").textContent = url; }
 });

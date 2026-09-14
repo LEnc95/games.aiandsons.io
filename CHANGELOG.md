@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Party Mode player invitations from host screens and connected phones, with native sharing, copy fallback, and room-policy awareness.
+
 - Isolated Party Mode and Audio Agar into game-specific Cloud Run services while retaining their shared versioned multiplayer protocol.
 
 - Added the 2026-W38 content pack with Saffron Nocturne Aurora Accord, Cinder Constellation Lantern Loom, and Comet Chicane Turbo Tilt cosmetics plus four bounded weekly challenges.
