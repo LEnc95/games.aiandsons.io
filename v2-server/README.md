@@ -24,9 +24,12 @@ Endpoints:
 
 The Audio Agar frontend defaults to `ws://127.0.0.1:8081/ws` on localhost. You can also override the endpoint with `?ws=ws://127.0.0.1:8081/ws`.
 
-Production uses the dedicated Cloud Run endpoint:
+Production routes each game family to its own Cloud Run service:
 
-`wss://audioagar-server-6owms56gxq-uc.a.run.app/ws`
+- Audio Agar: `wss://audioagar-server-6owms56gxq-uc.a.run.app/ws`
+- Party Mode: `wss://party-server-6owms56gxq-uc.a.run.app/ws`
+
+Both deployments use this source package, with `ENABLED_GAMES` restricting each runtime to its intended game. Keeping the shared protocol implementation avoids duplicated networking code while isolating room memory, releases, and capacity.
 
 ## Protocol
 
