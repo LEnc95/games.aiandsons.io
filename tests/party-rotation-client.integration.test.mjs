@@ -29,7 +29,7 @@ test("party rotation exposes the bounded lifecycle and activity catalogs", async
   for (const phase of ["voting", "spinning", "next_up", "activity", "results"]) {
     assert.match(server, new RegExp(`partyPhase = "${phase}"`));
   }
-  for (const mode of ["classic", "elimination", "teams", "relay", "survival", "chaos", "majority", "minority", "split", "unanimous", "duel"]) {
+  for (const mode of ["classic", "elimination", "teams", "relay", "survival", "chaos", "majority", "minority", "split", "unanimous", "duel", "blitz"]) {
     assert.match(server, new RegExp(`ModeKey: "${mode}"|ModeKey:.*"${mode}"`));
   }
 });
@@ -136,6 +136,18 @@ test("hosts and players can share a policy-aware player invite", async () => {
   assert.match(app, /snapshot\?\.roomLocked/);
   assert.match(app, /snapshot\?\.allowLateJoin/);
   assert.match(app, /snapshot\?\.maxPlayers/);
+});
+
+test("Crowd Shift Blitz is registered as a short five-round party activity", async () => {
+  const [server, crowdshift, html] = await Promise.all([
+    read("v2-server/party_rotation.go"),
+    read("v2-server/crowdshift.go"),
+    read("party/index.html"),
+  ]);
+  assert.match(server, /crowdshift:blitz/);
+  assert.match(server, /TotalRounds = 5/);
+  assert.match(crowdshift, /crowdShiftChoiceDurationLocked/);
+  assert.match(html, /partyActivityPool/);
 });
 
 test("audience participation, persistent teams, highlights, and diagnostics are exposed", async () => {

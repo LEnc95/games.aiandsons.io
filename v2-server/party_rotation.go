@@ -81,6 +81,7 @@ var partyActivityCatalog = []partyActivity{
 	{ID: "crowdshift:split", GameKey: crowdShiftGameKey, ModeKey: "split", Label: "Crowd Shift · Perfect Split", Description: "Work together to divide the room as evenly as possible.", MinPlayers: 3, MaxPlayers: 8, Style: "cooperative"},
 	{ID: "crowdshift:unanimous", GameKey: crowdShiftGameKey, ModeKey: "unanimous", Label: "Crowd Shift · Unanimous", Description: "Everyone scores only when the whole room agrees.", MinPlayers: 3, MaxPlayers: 8, Style: "cooperative"},
 	{ID: "crowdshift:duel", GameKey: crowdShiftGameKey, ModeKey: "duel", Label: "Crowd Shift · Duel Shift", Description: "Two rivals bluff, predict, and risk a Hot Take.", MinPlayers: 2, MaxPlayers: 2, Style: "competitive"},
+	{ID: "crowdshift:blitz", GameKey: crowdShiftGameKey, ModeKey: "blitz", Label: "Crowd Shift · Blitz", Description: "Five rapid-fire choices with barely a second to overthink them.", MinPlayers: 3, MaxPlayers: 8, Style: "competitive"},
 }
 
 func defaultPartySessionSettings() partySessionSettings {
@@ -426,6 +427,9 @@ func (r *partyRoom) startRotationTurboTiltLocked(now int64) {
 func (r *partyRoom) startRotationCrowdShiftLocked(now int64) {
 	r.crowd = newCrowdShiftState()
 	r.crowd.Mode = r.activity.ModeKey
+	if r.crowd.Mode == "blitz" {
+		r.crowd.TotalRounds = 5
+	}
 	connectedIDs := make([]string, 0, len(r.players))
 	for id, p := range r.players {
 		if p.Connected {

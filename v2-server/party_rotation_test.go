@@ -64,6 +64,19 @@ func TestPartyTeamModePreservesAssignmentsAcrossActivities(t *testing.T) {
 	}
 }
 
+func TestCrowdShiftBlitzUsesShorterFiveRoundFormat(t *testing.T) {
+	r := rotationTestRoom(3)
+	r.activity = partyActivity{ID: "crowdshift:blitz", GameKey: crowdShiftGameKey, ModeKey: "blitz", Label: "Crowd Shift · Blitz", MinPlayers: 3, MaxPlayers: 8}
+	r.partyConfig = defaultPartySessionSettings()
+	r.startRotationCrowdShiftLocked(1000)
+	if r.crowd == nil || r.crowd.TotalRounds != 5 || r.crowd.Mode != "blitz" {
+		t.Fatalf("blitz activity did not configure five rounds: %#v", r.crowd)
+	}
+	if got := r.crowdShiftChoiceDurationLocked(); got >= crowdShiftChoiceMs {
+		t.Fatalf("blitz choice duration = %d, want less than %d", got, crowdShiftChoiceMs)
+	}
+}
+
 func TestPartyRotationOptionsRespectCountsAndAvoidRepeat(t *testing.T) {
 	two := rotationTestRoom(2)
 	options := two.partyOptionsLocked(2)
