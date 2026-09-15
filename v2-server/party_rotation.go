@@ -47,6 +47,7 @@ type partySessionSettings struct {
 	SelectionMethod     string   `json:"selectionMethod"`
 	RepeatAvoidance     string   `json:"repeatAvoidance"`
 	CatchUp             bool     `json:"catchUp"`
+	TeamMode            string   `json:"teamMode"`
 	EnabledActivities   []string `json:"enabledActivities"`
 }
 
@@ -87,7 +88,7 @@ func defaultPartySessionSettings() partySessionSettings {
 	for _, activity := range partyActivityCatalog {
 		enabled = append(enabled, activity.ID)
 	}
-	return partySessionSettings{Version: 1, DurationPreset: "standard", PlayStyle: "mixed", AccessibilityPreset: "standard", TargetActivities: 6, Effects: true, Narration: true, Haptics: true, SelectionMethod: "chaos", RepeatAvoidance: "session", CatchUp: true, EnabledActivities: enabled}
+	return partySessionSettings{Version: 1, DurationPreset: "standard", PlayStyle: "mixed", AccessibilityPreset: "standard", TargetActivities: 6, Effects: true, Narration: true, Haptics: true, SelectionMethod: "chaos", RepeatAvoidance: "session", CatchUp: true, TeamMode: "off", EnabledActivities: enabled}
 }
 
 func validatePartySessionSettings(value partySessionSettings) (partySessionSettings, bool) {
@@ -101,8 +102,12 @@ func validatePartySessionSettings(value partySessionSettings) (partySessionSetti
 	if value.RepeatAvoidance == "" {
 		value.RepeatAvoidance = "session"
 	}
+	if value.TeamMode == "" {
+		value.TeamMode = "off"
+	}
 	selectionOK := containsString([]string{"chaos", "majority", "unanimous", "host"}, value.SelectionMethod)
 	repeatOK := containsString([]string{"off", "immediate", "session"}, value.RepeatAvoidance)
+	teamOK := containsString([]string{"off", "two"}, value.TeamMode)
 	if value.EnabledActivities == nil {
 		value.EnabledActivities = defaultPartySessionSettings().EnabledActivities
 	}
@@ -122,7 +127,7 @@ func validatePartySessionSettings(value partySessionSettings) (partySessionSetti
 	if value.Version != 1 || !durationOK || !styleOK || !accessibilityOK {
 		return partySessionSettings{}, false
 	}
-	if !selectionOK || !repeatOK || len(enabledActivities) == 0 {
+	if !selectionOK || !repeatOK || !teamOK || len(enabledActivities) == 0 {
 		return partySessionSettings{}, false
 	}
 	value.EnabledActivities = enabledActivities
@@ -255,6 +260,19 @@ func (r *partyRoom) beginPartyVoteLocked(now int64) {
 		p.Active = p.Connected
 		p.PartyAward = 0
 	}
+	for _, member := range r.audience {
+		member.Vote = ""
+	}
+}
+
+type partyHighlight struct {
+	ActivityID   string `json:"activityId"`
+	ActivityName string `json:"activityName"`
+	WinnerID     string `json:"winnerId,omitempty"`
+	WinnerName   string `json:"winnerName,omitempty"`
+	WinnerAvatar string `json:"winnerAvatar,omitempty"`
+	Award        int    `json:"award,omitempty"`
+	Skipped      bool   `json:"skipped,omitempty"`
 }
 
 func (r *partyRoom) closePartyVoteLocked(now int64) {
@@ -272,6 +290,10 @@ func (r *partyRoom) closePartyVoteLocked(now int64) {
 	sort.Strings(ids)
 	for _, id := range ids {
 		ballots = append(ballots, ballot{ID: id, OptionID: r.partyVote.Votes[id]})
+	}
+	if optionID, count := r.audienceVoteLocked(); optionID != "" {
+		ballots = append(ballots, ballot{ID: "audience", OptionID: optionID})
+		_ = count
 	}
 	if len(ballots) == 0 {
 		for _, option := range r.partyVote.Options {
@@ -391,7 +413,9 @@ func (r *partyRoom) startRotationTurboTiltLocked(now int64) {
 		p.Queued = !p.Connected
 		p.Active = p.Connected
 		p.Eliminated = false
-		p.Team = index % 2
+		if r.partySessionSettingsLocked().TeamMode != "two" {
+			p.Team = index % 2
+		}
 		p.StartRank = index + 1
 		p.TotalStylePoints = 0
 		p.TotalBarrierHits = 0
@@ -460,6 +484,10 @@ func (r *partyRoom) completeRotationActivityLocked(now int64) {
 	}
 	r.lastActivityID = r.activity.ID
 	r.activityHistory = append(r.activityHistory, r.activity.ID)
+	if len(ordered) > 0 {
+		winner := ordered[0]
+		r.partyHighlights = append(r.partyHighlights, partyHighlight{ActivityID: r.activity.ID, ActivityName: r.activity.Label, WinnerID: winner.ID, WinnerName: winner.Name, WinnerAvatar: winner.Avatar, Award: winner.PartyAward})
+	}
 	r.updatePartyRanksLocked()
 	r.partyPhase = "results"
 	r.phase = "podium"
@@ -472,6 +500,7 @@ func (r *partyRoom) skipRotationActivityLocked(now int64) {
 	r.activitySkipped = true
 	r.lastActivityID = r.activity.ID
 	r.activityHistory = append(r.activityHistory, r.activity.ID)
+	r.partyHighlights = append(r.partyHighlights, partyHighlight{ActivityID: r.activity.ID, ActivityName: r.activity.Label, Skipped: true})
 	for _, p := range r.players {
 		p.PartyAward = 0
 	}
@@ -614,6 +643,7 @@ func (r *partyRoom) restartPartyLocked() {
 	r.activity = partyActivity{}
 	r.lastActivityID = ""
 	r.activityHistory = nil
+	r.partyHighlights = nil
 	r.partyVote = partyVoteState{}
 	r.partyAwarded = false
 	r.activitySkipped = false
@@ -700,6 +730,8 @@ func (r *partyRoom) decorateRotationSnapshotLocked(state map[string]any, selfID 
 	state["activitySkipped"] = r.activitySkipped
 	state["partyVote"] = r.partyVoteSnapshotLocked()
 	state["activityCatalog"] = partyActivityCatalog
+	state["partyTeams"] = r.partyTeamsLocked()
+	state["partyHighlights"] = append([]partyHighlight(nil), r.partyHighlights...)
 	if players, ok := state["players"].([]map[string]any); ok {
 		for _, item := range players {
 			if p := r.players[stringValue(item["id"])]; p != nil {
@@ -713,6 +745,24 @@ func (r *partyRoom) decorateRotationSnapshotLocked(state map[string]any, selfID 
 	return state
 }
 
+func (r *partyRoom) partyTeamsLocked() []map[string]any {
+	if r.partySessionSettingsLocked().TeamMode != "two" {
+		return []map[string]any{}
+	}
+	teams := []map[string]any{
+		{"id": 0, "name": "Comets", "color": "#ffcf4a", "partyPoints": 0, "players": 0},
+		{"id": 1, "name": "Tides", "color": "#31e6c1", "partyPoints": 0, "players": 0},
+	}
+	for _, player := range r.players {
+		if player.Team < 0 || player.Team >= len(teams) {
+			continue
+		}
+		teams[player.Team]["partyPoints"] = teams[player.Team]["partyPoints"].(int) + player.PartyPoints
+		teams[player.Team]["players"] = teams[player.Team]["players"].(int) + 1
+	}
+	return teams
+}
+
 func (r *partyRoom) rotationPlayersLocked() []map[string]any {
 	ordered := r.updatePartyRanksLocked()
 	players := make([]map[string]any, 0, len(ordered))
@@ -721,7 +771,7 @@ func (r *partyRoom) rotationPlayersLocked() []map[string]any {
 			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar, "connected": p.Connected,
 			"ready": p.Ready, "queued": p.Queued, "active": p.Active, "points": p.Points,
 			"partyPoints": p.PartyPoints, "partyRank": p.PartyRank,
-			"activityWins": p.ActivityWins, "partyAward": p.PartyAward,
+			"activityWins": p.ActivityWins, "partyAward": p.PartyAward, "team": p.Team,
 		})
 	}
 	return players
@@ -740,6 +790,15 @@ func (r *partyRoom) partyVoteSnapshotLocked() map[string]any {
 		p := r.players[id]
 		ballots = append(ballots, map[string]any{"id": id, "playerId": id, "playerName": p.Name, "playerColor": p.Color, "playerAvatar": p.Avatar, "optionId": r.partyVote.Votes[id]})
 	}
+	audienceCounts := make(map[string]int)
+	for _, member := range r.audience {
+		if member.Connected && r.partyVoteHasOptionLocked(member.Vote) {
+			audienceCounts[member.Vote]++
+		}
+	}
+	if optionID, count := r.audienceVoteLocked(); optionID != "" {
+		ballots = append(ballots, map[string]any{"id": "audience", "playerName": "Audience", "playerColor": "#8dd8ff", "playerAvatar": "📣", "optionId": optionID, "audienceVotes": count})
+	}
 	if len(ballots) == 0 && (r.partyPhase == "spinning" || r.partyPhase == "next_up") {
 		for _, option := range r.partyVote.Options {
 			ballots = append(ballots, map[string]any{"id": "neutral:" + option.ID, "playerName": "Mystery pick", "playerColor": "#ffcf4a", "optionId": option.ID})
@@ -748,8 +807,31 @@ func (r *partyRoom) partyVoteSnapshotLocked() map[string]any {
 	return map[string]any{
 		"options": r.partyVote.Options, "ballots": ballots, "startedAt": r.partyVote.StartedAt,
 		"closesAt": r.partyVote.ClosesAt, "selectedBallotId": r.partyVote.SelectedBallotID,
-		"winnerOptionId": r.partyVote.WinnerOptionID, "spin": r.partyVote.Spin,
+		"winnerOptionId": r.partyVote.WinnerOptionID, "spin": r.partyVote.Spin, "audienceVoteCounts": audienceCounts,
 	}
+}
+
+func (r *partyRoom) audienceVoteLocked() (string, int) {
+	counts := make(map[string]int)
+	best := 0
+	for _, member := range r.audience {
+		if !member.Connected || !r.partyVoteHasOptionLocked(member.Vote) {
+			continue
+		}
+		counts[member.Vote]++
+		if counts[member.Vote] > best {
+			best = counts[member.Vote]
+		}
+	}
+	if best == 0 {
+		return "", 0
+	}
+	for _, option := range r.partyVote.Options {
+		if counts[option.ID] == best {
+			return option.ID, best
+		}
+	}
+	return "", 0
 }
 
 func partyOptionOrder(roomID string, activityIndex int, optionID string) uint64 {

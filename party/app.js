@@ -20,6 +20,8 @@ const state = {
   playerName: "",
   playerColor: "#31e6c1",
   playerAvatar: DEFAULT_AVATAR_EMOJI,
+  participantRole: "player",
+  audienceId: "",
   gameKey: "",
   snapshot: null,
   tiltEnabled: false,
@@ -49,6 +51,7 @@ const state = {
   partyAnimationFrame: 0,
   hostPartySettings: null,
   connectionStatus: "",
+  connectionDiagnostics: { latencyMs: null, quality: "unknown", lastPongAt: 0 },
   rejoinedNoticeUntil: 0,
   hostRecoverySavedAt: 0,
   hostRecoveryNoticeTimer: 0,
@@ -92,7 +95,7 @@ function renderAvatarPicker() {
 }
 
 function defaultPartySettings() {
-  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true, selectionMethod: "chaos", repeatAvoidance: "session", catchUp: true, enabledActivities: null };
+  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true, selectionMethod: "chaos", repeatAvoidance: "session", catchUp: true, teamMode: "off", enabledActivities: null };
 }
 
 function partySettingsFromControls() {
@@ -111,6 +114,7 @@ function partySettingsFromControls() {
     selectionMethod: byId("partySelectionSelect").value,
     repeatAvoidance: byId("partyRepeatSelect").value,
     catchUp: byId("partyCatchUp").checked,
+    teamMode: byId("partyTeamMode").value,
     enabledActivities: activityInputs.length ? activityInputs.filter((input) => input.checked).map((input) => input.dataset.activityId) : (state.hostPartySettings?.enabledActivities || null),
   };
 }
@@ -154,6 +158,7 @@ function syncPartySettingsControls(settings = defaultPartySettings()) {
   byId("partySelectionSelect").value = accepted.selectionMethod;
   byId("partyRepeatSelect").value = accepted.repeatAvoidance;
   byId("partyCatchUp").checked = accepted.catchUp !== false;
+  byId("partyTeamMode").value = accepted.teamMode || "off";
   document.querySelectorAll("#partyActivityPool input[data-activity-id]").forEach((input) => { input.checked = !accepted.enabledActivities || accepted.enabledActivities.includes(input.dataset.activityId); });
   const counts = { quick: 3, standard: 6, marathon: 10 };
   byId("partyEstimate").textContent = `About ${(counts[accepted.durationPreset] || 6) * 5} min`;
@@ -203,8 +208,8 @@ function normalizeCode(value) {
   return String(value || "").toUpperCase().replace(allowedCode, "").slice(0, 4);
 }
 
-function tokenKey(roomId) {
-  return `aiandsons-party-player:${roomId}`;
+function tokenKey(roomId, role = "player") {
+  return `aiandsons-party-${role}:${roomId}`;
 }
 
 function loadHostRecovery() {
@@ -250,6 +255,17 @@ function setConnectionLabel(label, kind = "") {
   pill.className = `connection-pill ${kind}`.trim();
 }
 
+function updateConnectionDiagnostics(connection, detail = {}) {
+  if (connection !== state.connection) return;
+  const diagnostics = typeof connection.getDiagnostics === "function" ? connection.getDiagnostics() : detail;
+  state.connectionDiagnostics = { ...state.connectionDiagnostics, ...diagnostics, ...detail };
+  const latency = Number(state.connectionDiagnostics.latencyMs);
+  if (state.connectionStatus === "open" && Number.isFinite(latency) && latency >= 0) {
+    const quality = state.connectionDiagnostics.quality || (latency <= 120 ? "good" : latency <= 280 ? "fair" : "poor");
+    setConnectionLabel(`${displayMode ? "Following live" : "Connected"} · ${Math.round(latency)} ms`, `online quality-${quality}`);
+  }
+}
+
 function showController() {
   byId("landingView").hidden = true;
   byId("controllerView").hidden = false;
@@ -266,7 +282,7 @@ function showController() {
   byId("controllerView").setAttribute("aria-label", `${label} phone controller`);
 }
 
-async function joinParty({ withoutToken = false } = {}) {
+async function joinParty({ withoutToken = false, role = "player" } = {}) {
   const code = normalizeCode(byId("roomCode").value || params.get("code"));
   const name = byId("playerName").value.trim();
   byId("joinError").textContent = "";
@@ -281,11 +297,12 @@ async function joinParty({ withoutToken = false } = {}) {
   state.roomId = code;
   setConnectionLabel("Connecting…");
   state.connection?.disconnect();
-  const savedToken = withoutToken ? "" : localStorage.getItem(tokenKey(code)) || "";
+  state.participantRole = role;
+  const savedToken = withoutToken ? "" : localStorage.getItem(tokenKey(code, role)) || "";
   const connection = await connect({
     gameId: "party",
     roomId: code,
-    role: "player",
+    role,
     playerName: name,
     playerAvatar: state.playerAvatar,
     token: savedToken,
@@ -311,11 +328,17 @@ async function joinParty({ withoutToken = false } = {}) {
 
 function handleEvent(connection, event) {
   if (connection !== state.connection) return;
+  if (event.type === "connection_quality") {
+    updateConnectionDiagnostics(connection, event);
+    return;
+  }
   const payload = event.payload || {};
   if (event.type === "welcome") {
     state.removed = false;
     state.roomId = payload.roomId || state.roomId;
     state.playerId = payload.playerId || state.playerId;
+    state.audienceId = payload.audienceId || state.audienceId;
+    state.participantRole = payload.role || state.participantRole;
     state.playerName = payload.playerName || "Racer";
     state.playerColor = payload.playerColor || state.playerColor;
     state.playerAvatar = isAvatarEmoji(payload.playerAvatar) ? payload.playerAvatar : state.playerAvatar;
@@ -323,7 +346,7 @@ function handleEvent(connection, event) {
     state.sessionMode = payload.sessionMode || state.sessionMode;
     state.connectionStatus = "open";
     state.rejoinedNoticeUntil = payload.reconnected ? Date.now() + 3500 : 0;
-    if (payload.token) localStorage.setItem(tokenKey(state.roomId), payload.token);
+    if (payload.token) localStorage.setItem(tokenKey(state.roomId, payload.role || state.participantRole), payload.token);
     byId("playerLabel").textContent = state.playerName;
     byId("playerDot").style.background = state.playerColor;
     byId("playerDot").textContent = state.playerAvatar;
@@ -340,7 +363,7 @@ function handleEvent(connection, event) {
     if (payload.code === "removed_from_room") {
       state.removed = true;
       const message = payload.message || "The host removed you from this room.";
-      if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
+      if (state.roomId) localStorage.removeItem(tokenKey(state.roomId, state.participantRole));
       byId("landingView").hidden = true;
       byId("controllerView").hidden = false;
       document.querySelectorAll("#controllerView .controller-game, #controllerView .controller-head").forEach((element) => { element.hidden = true; });
@@ -353,7 +376,7 @@ function handleEvent(connection, event) {
     }
     if (payload.code === "invalid_player_token" && !state.retryingToken) {
       state.retryingToken = true;
-      localStorage.removeItem(tokenKey(state.roomId));
+      localStorage.removeItem(tokenKey(state.roomId, state.participantRole));
       connection.disconnect();
       joinParty({ withoutToken: true }).finally(() => { state.retryingToken = false; });
       return;
@@ -426,6 +449,7 @@ function renderController() {
 
 function renderPartyController(snapshot) {
   const me = snapshot?.players?.find((player) => player.id === (snapshot?.selfId || state.playerId));
+  const audience = state.participantRole === "audience";
   const phase = snapshot?.partyPhase || "party_lobby";
   const remaining = Math.max(0, (Number(snapshot?.phaseEndsAt || 0) - (Date.now() + state.testOffsetMs)) / 1000);
   const vote = snapshot?.partyVote || {};
@@ -434,6 +458,8 @@ function renderPartyController(snapshot) {
   byId("partyRank").textContent = me?.partyRank ? `#${me.partyRank}` : "—";
   byId("partyPoints").textContent = String(me?.partyPoints || 0);
   byId("partyWins").textContent = String(me?.activityWins || 0);
+  byId("audienceBadge").hidden = !audience;
+  byId("audiencePanel").hidden = !audience;
   let message = "Waiting for the host to start the party";
   if (phase === "voting") message = snapshot?.partySettings?.selectionMethod === "host" ? "The host is choosing the next game" : `${Math.ceil(remaining)} seconds to vote`;
   else if (phase === "spinning") message = "The wheel is spinning!";
@@ -445,9 +471,10 @@ function renderPartyController(snapshot) {
   else if (state.rejoinedNoticeUntil > Date.now()) message = `Welcome back, ${state.playerName}! Your spot is restored.`;
   byId("partyMessage").textContent = message;
   const inLobby = phase === "party_lobby";
-  byId("partyLobbyGuide").hidden = !inLobby;
+  byId("partyLobbyGuide").hidden = !inLobby || audience;
   byId("partyEncorePanel").hidden = phase !== "ended";
   const ready = Boolean(me?.ready);
+  byId("partyReadyButton").hidden = audience;
   byId("partyReadyButton").textContent = ready ? "Ready ✓" : "I’m ready";
   byId("partyReadyButton").setAttribute("aria-pressed", String(ready));
   updateInviteButton(byId("partyPlayerInviteButton"), snapshot, "Invite another player");
@@ -460,7 +487,9 @@ function renderPartyController(snapshot) {
   byId("partySelectionHelp").textContent = selectionCopy;
   const voting = phase === "voting" && snapshot?.partySettings?.selectionMethod !== "host";
   byId("partyVotePanel").hidden = !voting;
-  const ownBallot = vote.ballots?.find((ballot) => ballot.playerId === me?.id);
+  const ownBallot = audience
+    ? vote.ballots?.find((ballot) => ballot.id === "audience")
+    : vote.ballots?.find((ballot) => ballot.playerId === me?.id);
   if (ownBallot) state.selectedPartyVote = ownBallot.optionId;
   const target = byId("partyVoteButtons");
   const signature = (vote.options || []).map((option) => option.id).join("|");
@@ -495,7 +524,9 @@ function renderPartyController(snapshot) {
     button.disabled = !voting;
     button.querySelector(".party-voters").textContent = names.length ? `Voted: ${names.join(", ")}` : "No votes yet";
   });
-  byId("partyVoteStatus").textContent = voting ? "Your named vote appears live. Change it anytime before the spin." : "Watch the shared screen.";
+  byId("partyVoteStatus").textContent = voting
+    ? audience ? "Your audience vote updates the collective ballot." : "Your named vote appears live. Change it anytime before the spin."
+    : "Watch the shared screen.";
   renderPhoneStandings(snapshot);
 }
 
@@ -778,6 +809,10 @@ async function connectSessionScreen() {
   });
   connection.onEvent((event) => {
     if (connection !== state.connection) return;
+    if (event.type === "connection_quality") {
+      updateConnectionDiagnostics(connection, event);
+      return;
+    }
     const payload = event.payload || {};
     if (event.type === "welcome") {
       state.roomId = payload.roomId || state.roomId;
@@ -893,6 +928,7 @@ function renderSessionScreen() {
   byId("sessionRoom").textContent = state.roomId || snapshot?.roomId || "----";
   const maxPlayers = Number(snapshot?.maxPlayers || 8);
   byId("sessionPlayerCount").textContent = `${connected} / ${maxPlayers} players`;
+  byId("sessionAudienceCount").textContent = `${Number(snapshot?.audienceCount || 0)} audience`;
   const targetActivities = Number(snapshot?.partySettings?.targetActivities || 6);
   const completedActivities = Math.min(Number(snapshot?.activityIndex || 0), targetActivities);
   byId("sessionProgress").textContent = partyPhase === "party_lobby"
@@ -900,6 +936,8 @@ function renderSessionScreen() {
     : partyPhase === "ended" ? `${completedActivities} games complete` : `Game ${Math.min(completedActivities + 1, targetActivities)} of ${targetActivities}`;
   byId("sessionScreenCount").textContent = `${1 + Number(snapshot?.displayCount || 0)} live screen${Number(snapshot?.displayCount || 0) ? "s" : ""}`;
   renderSessionRoster(players);
+  renderPartyTeams(snapshot);
+  renderPartyHighlights(snapshot);
   const host = !displayMode;
   applyPartyPresentation(snapshot);
   renderPartyActivityPool(snapshot?.activityCatalog || [], snapshot?.partySettings?.enabledActivities);
@@ -907,6 +945,7 @@ function renderSessionScreen() {
     const locked = Boolean(snapshot?.roomLocked);
     const allowLateJoin = snapshot?.allowLateJoin !== false;
     const friendlyNames = Boolean(snapshot?.friendlyNames);
+    const audienceEnabled = snapshot?.audienceEnabled !== false;
     byId("roomAccessStatus").textContent = locked ? "Locked" : "Open";
     byId("roomAccessStatus").classList.toggle("locked", locked);
     byId("partyLockButton").textContent = locked ? "Unlock room" : "Lock room";
@@ -918,11 +957,16 @@ function renderSessionScreen() {
     byId("partyFriendlyNamesButton").textContent = `Friendly names: ${friendlyNames ? "On" : "Off"}`;
     byId("partyFriendlyNamesButton").classList.toggle("is-active", friendlyNames);
     byId("partyFriendlyNamesButton").setAttribute("aria-pressed", String(friendlyNames));
+    byId("partyAudienceButton").textContent = `Audience: ${audienceEnabled ? "On" : "Off"}`;
+    byId("partyAudienceButton").classList.toggle("is-active", audienceEnabled);
+    byId("partyAudienceButton").setAttribute("aria-pressed", String(audienceEnabled));
+    byId("partyModerationSelect").value = snapshot?.moderationLevel || "standard";
     updateInviteButton(byId("partyInviteButton"), snapshot, "Invite players");
     byId("partyMaxPlayersSelect").value = String(maxPlayers);
     [...byId("partyMaxPlayersSelect").options].forEach((option) => { option.disabled = Number(option.value) < players.length; });
     const setupOpen = partyPhase === "party_lobby";
     syncPartySettingsControls(snapshot?.partySettings || state.hostPartySettings || partySettingsFromControls());
+    byId("partyShuffleTeamsButton").hidden = !setupOpen || (snapshot?.partySettings?.teamMode || "off") !== "two";
     byId("partySetupControls").setAttribute("aria-disabled", String(!setupOpen));
     byId("partySetupControls").querySelectorAll("select,input").forEach((control) => { control.disabled = !setupOpen; });
     renderHostChoice(snapshot);
@@ -943,6 +987,65 @@ function renderSessionScreen() {
   byId("activityFrame").hidden = !showEmbedded;
   if (showEmbedded) mountEmbeddedActivity(snapshot.gameKey, snapshot);
   else drawPartyStage(snapshot);
+}
+
+function renderPartyTeams(snapshot) {
+  const panel = byId("partyTeamsPanel");
+  const teams = snapshot?.partyTeams || [];
+  panel.hidden = !teams.length;
+  const target = byId("partyTeams");
+  target.textContent = "";
+  teams.forEach((team) => {
+    const row = document.createElement("div");
+    row.className = "party-team-row";
+    row.style.setProperty("--team", team.color || "#31e6c1");
+    const dot = document.createElement("i");
+    dot.setAttribute("aria-hidden", "true");
+    const name = document.createElement("b");
+    name.textContent = `${team.name || "Team"} · ${team.players || 0} players`;
+    const score = document.createElement("span");
+    score.textContent = `${team.partyPoints || 0} pts`;
+    row.append(dot, name, score);
+    target.append(row);
+  });
+}
+
+function renderPartyHighlights(snapshot) {
+  const highlights = snapshot?.partyHighlights || [];
+  const panel = byId("partyHighlightsPanel");
+  panel.hidden = !highlights.length;
+  byId("partyHighlightsCount").textContent = `${highlights.length} game${highlights.length === 1 ? "" : "s"}`;
+  const target = byId("partyHighlights");
+  target.textContent = "";
+  highlights.slice(-8).reverse().forEach((highlight) => {
+    const item = document.createElement("li");
+    if (highlight.skipped) item.textContent = `${highlight.activityName || "Activity"} · skipped`;
+    else {
+      const winner = document.createElement("b");
+      winner.textContent = `${highlight.winnerAvatar || DEFAULT_AVATAR_EMOJI} ${highlight.winnerName || "Winner"}`;
+      item.append(document.createTextNode(`${highlight.activityName || "Activity"} · `), winner);
+      if (highlight.award) {
+        const award = document.createElement("span");
+        award.className = "highlight-award";
+        award.textContent = ` +${highlight.award}`;
+        item.append(award);
+      }
+    }
+    target.append(item);
+  });
+}
+
+function partySummaryText(snapshot = state.snapshot) {
+  const highlights = snapshot?.partyHighlights || [];
+  const teams = snapshot?.partyTeams || [];
+  const players = [...(snapshot?.players || [])].sort((a, b) => (a.partyRank || 99) - (b.partyRank || 99));
+  const lines = [`AI and Sons Party Mode · Room ${state.roomId || snapshot?.roomId || "----"}`, `${highlights.length} games played`];
+  if (teams.length) teams.forEach((team) => lines.push(`${team.name}: ${team.partyPoints || 0} points`));
+  players.slice(0, 3).forEach((player, index) => lines.push(`${index + 1}. ${player.avatar || DEFAULT_AVATAR_EMOJI} ${player.name} · ${player.partyPoints || 0} points`));
+  highlights.slice(-3).reverse().forEach((highlight) => {
+    lines.push(highlight.skipped ? `${highlight.activityName || "Activity"}: skipped` : `${highlight.activityName || "Activity"}: ${highlight.winnerAvatar || DEFAULT_AVATAR_EMOJI} ${highlight.winnerName || "Winner"}`);
+  });
+  return lines.join("\n");
 }
 
 function renderHostChoice(snapshot) {
@@ -1075,6 +1178,7 @@ function drawPartyLobby(snapshot) {
   partyText("Everyone joins once, then votes decide what happens next.", 600, 174, 930, 28, "#d5e5ed");
   partyRoundRect(145, 230, 910, 315, 36, "rgba(8,18,43,.72)", "rgba(255,255,255,.16)");
   const players = snapshot?.players || [];
+  drawPartyTeamStrip(snapshot, 600, 215);
   partyText(players.length < 2 ? "Waiting for players" : "The party is ready!", 600, 286, 760, 46, players.length < 2 ? "#fff" : "#31e6c1");
   players.slice(0, 8).forEach((player, index) => {
     const x = 255 + (index % 4) * 230, y = 370 + Math.floor(index / 4) * 100;
@@ -1082,7 +1186,15 @@ function drawPartyLobby(snapshot) {
     partyText(player.name, x, y + 48, 195, 18, player.connected ? "#fff" : "#8799aa");
     partyText(player.ready ? "READY" : "JOINED", x, y + 68, 150, 12, player.ready ? "#31e6c1" : "#8799aa");
   });
-  partyText("Host starts the opening vote", 600, 605, 800, 25, "#c7b9db");
+  const audienceCount = Number(snapshot?.audienceCount || 0);
+  partyText(audienceCount ? `📣 ${audienceCount} audience watching · Host starts the opening vote` : "Host starts the opening vote", 600, 605, 1080, 22, "#c7b9db");
+}
+
+function drawPartyTeamStrip(snapshot, x = 600, y = 620) {
+  const teams = snapshot?.partyTeams || [];
+  if (!teams.length) return;
+  const text = teams.map((team) => `${team.name} ${team.partyPoints || 0} pts`).join("   ·   ");
+  partyText(`TEAMS  ${text}`, x, y, 1050, 17, "#ffe36e");
 }
 
 function drawPartyVoting(snapshot) {
@@ -1106,6 +1218,9 @@ function drawPartyVoting(snapshot) {
     });
     if (!own.length) partyText("Waiting for votes…", x + 164, 425, 270, 17, "#8097aa");
   });
+  const audienceReactions = snapshot?.audienceReactions || {};
+  const reactionCopy = Object.entries(audienceReactions).filter(([, count]) => Number(count) > 0).map(([emote, count]) => `${emote} ${count}`).join("   ");
+  if (reactionCopy) partyText(`Audience ${reactionCopy}`, 600, 585, 1000, 17, "#bfeaff");
   drawPartyStandingsStrip(snapshot.players || []);
 }
 
@@ -1144,12 +1259,14 @@ function drawPartyResults(snapshot) {
   partyText(snapshot.activitySkipped ? "ACTIVITY SKIPPED" : "ACTIVITY COMPLETE", 600, 60, 1000, 52, "#ffe36e");
   partyText(snapshot.activity?.label || "Party standings", 600, 108, 900, 24, "#d5e5ed");
   drawPartyStandings(snapshot.players || [], true);
+  drawPartyTeamStrip(snapshot, 600, 580);
   partyText("Next vote starts automatically", 600, 625, 700, 20, "#b9acd0");
 }
 
 function drawPartyPodium(snapshot) {
   partyText("PARTY CHAMPION", 600, 65, 1000, 62, "#ffe36e");
   drawPartyStandings(snapshot.players || [], true);
+  drawPartyTeamStrip(snapshot, 600, 580);
   partyText(`${snapshot.activityIndex || 0} activities · Host can start another party`, 600, 625, 860, 22, "#d5e5ed");
 }
 
@@ -1170,7 +1287,8 @@ function drawPartyStandingsStrip(players) {
 }
 
 byId("roomCode").addEventListener("input", (event) => { event.target.value = normalizeCode(event.target.value); });
-byId("joinForm").addEventListener("submit", (event) => { event.preventDefault(); joinParty({ withoutToken: true }); });
+byId("joinForm").addEventListener("submit", (event) => { event.preventDefault(); joinParty({ withoutToken: true, role: "player" }); });
+byId("audienceJoinButton").addEventListener("click", () => joinParty({ withoutToken: true, role: "audience" }));
 byId("tiltButton").addEventListener("click", enableTilt);
 bindSteerButton(byId("leftButton"), -1);
 bindSteerButton(byId("rightButton"), 1);
@@ -1219,9 +1337,13 @@ byId("duelHotTake").addEventListener("click", () => {
 document.querySelectorAll("[data-crowd-emote]").forEach((button) => button.addEventListener("click", () => {
   state.connection?.sendInput({ type: "emote", emote: button.dataset.crowdEmote });
 }));
+document.querySelectorAll("[data-audience-reaction]").forEach((button) => button.addEventListener("click", () => {
+  state.connection?.sendInput({ type: "audience_reaction", emote: button.dataset.audienceReaction });
+  byId("audienceReactionStatus").textContent = "Reaction sent to the big screen!";
+}));
 byId("leaveButton").addEventListener("click", () => {
   state.connection?.disconnect();
-  if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
+  if (state.roomId) localStorage.removeItem(tokenKey(state.roomId, state.participantRole));
   location.href = "/party/";
 });
 byId("partyStartButton").addEventListener("click", () => {
@@ -1242,14 +1364,17 @@ byId("partyPlayerInviteButton").addEventListener("click", () => sharePlayerInvit
 byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snapshot?.roomLocked ? "unlock" : "lock"));
 byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
 byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
+byId("partyAudienceButton").addEventListener("click", () => sendPartyHost(state.snapshot?.audienceEnabled === false ? "audience_on" : "audience_off"));
+byId("partyModerationSelect").addEventListener("change", (event) => sendPartyHost("set_moderation", { choice: event.target.value }));
 byId("partyMaxPlayersSelect").addEventListener("change", (event) => sendPartyHost("set_max_players", { value: Number(event.target.value) }));
+byId("partyShuffleTeamsButton").addEventListener("click", () => sendPartyHost("shuffle_teams"));
 byId("partyDurationSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyPlayStyleSelect").addEventListener("change", sendPartyConfiguration);
 byId("partySelectionSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyRepeatSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyCatchUp").addEventListener("change", sendPartyConfiguration);
 byId("partyAccessibilitySelect").addEventListener("change", (event) => { applyAccessibilityPreset(event.target.value); sendPartyConfiguration(); });
-["partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics"].forEach((id) => {
+["partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics", "partyTeamMode"].forEach((id) => {
   byId(id).addEventListener("change", () => { byId("partyAccessibilitySelect").value = "custom"; sendPartyConfiguration(); });
 });
 byId("partyPauseButton").addEventListener("click", () => sendPartyHost(state.snapshot?.partyPhase === "paused" ? "resume" : "pause"));
@@ -1263,6 +1388,15 @@ byId("partyShareButton").addEventListener("click", async () => {
   const url = displayInviteUrl().toString();
   try { await navigator.clipboard.writeText(url); byId("partyShareButton").textContent = "Screen link copied!"; setTimeout(() => { byId("partyShareButton").textContent = "Copy link for another screen"; }, 1600); }
   catch { byId("sessionError").textContent = url; }
+});
+byId("partyCopySummaryButton").addEventListener("click", async () => {
+  const summary = partySummaryText();
+  try {
+    await navigator.clipboard.writeText(summary);
+    byId("partySummaryStatus").textContent = "Summary copied!";
+  } catch {
+    byId("partySummaryStatus").textContent = summary;
+  }
 });
 byId("resumePartyButton").addEventListener("click", () => {
   const recovery = loadHostRecovery();
@@ -1328,6 +1462,8 @@ window.render_game_to_text = () => JSON.stringify({
   room_id: state.roomId,
   player_id: state.playerId,
   player_avatar: state.playerAvatar,
+  participant_role: state.participantRole,
+  audience_id: state.audienceId,
   game_key: state.gameKey,
   tilt_enabled: state.tiltEnabled,
   effective_steer: Number(effectiveSteer().toFixed(2)),
@@ -1341,6 +1477,7 @@ window.render_game_to_text = () => JSON.stringify({
     const debug = partyAudio.debug();
     return { enabled: debug.enabled, activated: debug.activated, last_cue: debug.lastCue };
   })(),
+  connection: state.connectionDiagnostics,
   state: state.snapshot,
 });
 window.__partyAudioDebug = () => partyAudio.debug();

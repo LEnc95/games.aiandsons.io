@@ -68,6 +68,8 @@
               <div id="avatarOptions" class="avatar-options"></div>
             </fieldset>
             <button class="button secondary" type="submit">Join the party</button>
+            <button id="audienceJoinButton" class="button quiet-button" type="button">Join as audience</button>
+            <p id="audienceJoinHint" class="form-help">Audience members can watch, react, and add one collective vote when player slots are full.</p>
             <p id="joinError" class="error" role="alert"></p>
           </form>
         </article>
@@ -91,7 +93,7 @@
     <section id="sessionView" class="session-view" hidden aria-label="Persistent party screen">
       <div class="session-head">
         <div><p id="sessionRole" class="eyebrow">Party host</p><div class="session-code">ROOM <b id="sessionRoom">----</b></div></div>
-        <div class="session-stats"><span id="sessionPlayerCount">0 / 8 players</span><span id="sessionProgress">6-game party</span><span id="sessionScreenCount">1 live screen</span></div>
+        <div class="session-stats"><span id="sessionPlayerCount">0 / 8 players</span><span id="sessionAudienceCount">0 audience</span><span id="sessionProgress">6-game party</span><span id="sessionScreenCount">1 live screen</span></div>
       </div>
       <div class="session-layout">
         <div id="partyStageWrap" class="party-stage-wrap">
@@ -102,6 +104,16 @@
           <div id="sessionQr" class="session-qr" aria-label="Party room QR code"></div>
           <p>Join at <b>games.aiandsons.io/party</b></p>
           <ol id="partyRoster" class="party-roster"></ol>
+          <section id="partyTeamsPanel" class="party-teams-panel" hidden aria-labelledby="partyTeamsTitle">
+            <div class="room-safety-heading"><p id="partyTeamsTitle" class="eyebrow">Team standings</p><span>Persistent</span></div>
+            <div id="partyTeams" class="party-teams"></div>
+          </section>
+          <section id="partyHighlightsPanel" class="party-highlights-panel" hidden aria-labelledby="partyHighlightsTitle">
+            <div class="room-safety-heading"><p id="partyHighlightsTitle" class="eyebrow">Party highlights</p><span id="partyHighlightsCount">0 games</span></div>
+            <ol id="partyHighlights" class="party-highlights"></ol>
+            <button id="partyCopySummaryButton" class="button quiet-button" type="button">Copy party summary</button>
+            <p id="partySummaryStatus" class="share-status" role="status" aria-live="polite"></p>
+          </section>
           <div id="hostControls" class="host-controls">
             <section id="partyHostChoice" class="party-host-choice" aria-labelledby="partyHostChoiceTitle" hidden>
               <p id="partyHostChoiceTitle" class="eyebrow">Choose the next game</p>
@@ -150,6 +162,13 @@
                 </select>
               </label>
               <label class="party-catchup"><input id="partyCatchUp" type="checkbox" checked> Gentle catch-up scoring</label>
+              <label for="partyTeamMode">Teams
+                <select id="partyTeamMode">
+                  <option value="off" selected>Individual standings</option>
+                  <option value="two">Two persistent teams</option>
+                </select>
+              </label>
+              <button id="partyShuffleTeamsButton" class="button quiet-button" type="button" hidden>Shuffle teams</button>
               <details id="partyActivitySettings">
                 <summary>Activity pool</summary>
                 <div id="partyActivityPool" class="party-activity-pool" aria-label="Included activities"></div>
@@ -175,6 +194,13 @@
               <button id="partyLockButton" class="button quiet-button" type="button">Lock room</button>
               <button id="partyLateJoinButton" class="button quiet-button" type="button">Late joining: On</button>
               <button id="partyFriendlyNamesButton" class="button quiet-button" type="button">Friendly names: Off</button>
+              <button id="partyAudienceButton" class="button quiet-button" type="button">Audience: On</button>
+              <label for="partyModerationSelect">Name moderation
+                <select id="partyModerationSelect">
+                  <option value="standard" selected>Standard filter</option>
+                  <option value="family">Family-safe filter</option>
+                </select>
+              </label>
               <label class="player-limit-label" for="partyMaxPlayersSelect">Player limit
                 <select id="partyMaxPlayersSelect" aria-describedby="playerLimitHelp">
                   <option value="2">2 players</option>
@@ -236,6 +262,18 @@
           <button id="partyReadyButton" class="button party-primary" type="button" aria-pressed="false">I’m ready</button>
           <button id="partyPlayerInviteButton" class="button invite-button" type="button">Invite another player</button>
           <p id="partyPlayerShareStatus" class="share-status" role="status" aria-live="polite"></p>
+        </section>
+        <p id="audienceBadge" class="audience-badge" hidden>Audience member · watch, react, and vote with the room</p>
+        <section id="audiencePanel" class="audience-panel" hidden aria-live="polite">
+          <p class="eyebrow">Audience reactions</p>
+          <p>React to the shared screen. Your audience vote counts as one collective ballot.</p>
+          <div class="audience-reactions" role="group" aria-label="Send audience reaction">
+            <button type="button" data-audience-reaction="clap" aria-label="Clap">👏</button>
+            <button type="button" data-audience-reaction="laugh" aria-label="Laugh">😂</button>
+            <button type="button" data-audience-reaction="wow" aria-label="Wow">😮</button>
+            <button type="button" data-audience-reaction="heart" aria-label="Love it">💚</button>
+          </div>
+          <p id="audienceReactionStatus" class="crowd-choice-status">Your reaction appears on the big screen.</p>
         </section>
         <section id="partyVotePanel" class="party-vote-panel" aria-live="polite">
           <p class="eyebrow">Choose what everyone plays next</p>

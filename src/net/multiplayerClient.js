@@ -162,6 +162,9 @@ class MultiplayerConnection {
     this.stateCallbacks = new Set();
     this.eventCallbacks = new Set();
     this.statusCallbacks = new Set();
+    this.latencyMs = null;
+    this.lastPongAt = 0;
+    this.connectionQuality = "unknown";
   }
 
   connectSocket() {
@@ -328,7 +331,15 @@ class MultiplayerConnection {
     }
 
     if (type === "pong") {
-      this.emitEvent({ type: "pong", receivedAt: nowMs(), payload });
+      const receivedAt = nowMs();
+      const clientTime = Number(payload.echo?.clientTime || payload.clientTime || 0);
+      if (clientTime > 0 && receivedAt >= clientTime) {
+        this.latencyMs = Math.max(0, receivedAt - clientTime);
+        this.lastPongAt = receivedAt;
+        this.connectionQuality = this.latencyMs <= 120 ? "good" : this.latencyMs <= 280 ? "fair" : "poor";
+        this.emitEvent({ type: "connection_quality", receivedAt, latencyMs: this.latencyMs, quality: this.connectionQuality, lastPongAt: this.lastPongAt });
+      }
+      this.emitEvent({ type: "pong", receivedAt, payload, latencyMs: this.latencyMs, quality: this.connectionQuality });
       return;
     }
 
@@ -384,6 +395,10 @@ class MultiplayerConnection {
   onStatus(cb) {
     this.statusCallbacks.add(cb);
     return () => this.statusCallbacks.delete(cb);
+  }
+
+  getDiagnostics() {
+    return { latencyMs: this.latencyMs, lastPongAt: this.lastPongAt, quality: this.connectionQuality, endpoint: this.url };
   }
 
   disconnect() {

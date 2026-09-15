@@ -142,6 +142,7 @@ type client struct {
 	gameID     string
 	role       string
 	playerID   string
+	audienceID string
 	hub        *hub
 	audioRoom  *audioAgarRoom
 	partyRoom  *partyRoom
