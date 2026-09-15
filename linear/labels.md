@@ -233,5 +233,6 @@
 - game/pebbleparade
 - game/chalkchase
 - game/paperbridge
+- game/signalgarden
 
 Generated from `src/meta/feedback.js`.

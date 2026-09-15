@@ -1,5 +1,13 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-15 Signal Garden automation
+- Started from clean detached origin/main 03033ce8c7f47a563fa43548eb293c91c29c13e7; npm ci passed with 16 existing audit findings.
+- Added Signal Garden, a five-garden firefly sequence-memory game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded signals/gardens/mistakes outcomes.
+- TODO: run generators, early gates, complete supplied-client visual/browser QA, final gates, audit, publish, and verify production.
+- SEO, OG, and local Linear generators passed; restored the documented 42 nondeterministic legacy OG renders and 14 blank-line-only legacy page edits. Maintenance and 219-game preflight passed.
+- Supplied Playwright client and focused QA passed exact stepping, paused freeze, all five sequences, win/loss/restart, three palettes, fullscreen/Escape, feedback, and 390px mobile layout with zero browser errors. Gameplay, pause, win, loss, theme, feedback, mobile, and OG captures were visually inspected.
+- TODO: final gates, release audit, guarded PR publication, merge, and production verification.
+
 ## 2026-09-14 Weekly content pack 2026-W38
 - Isolated from `origin/main` baseline `c5a43d7caf099fd025a98467c6fb90a327096319`; issue #316 is authoritative. Added Saffron Nocturne for Aurora Accord, Cinder Constellation for Lantern Loom, and Comet Chicane for Turbo Tilt as inventory-gated palette cosmetics, plus four exact 20-coin W38 challenges for Aurora Accord notes, Lantern Loom stars, Turbo Tilt players, and Dewdrop Drift motes.
 - Visually inspected each shop preview plus unowned/equipped game renders with matching deterministic state and no new console errors. The supplied game client could not reach the local server because this environment blocks loopback listeners; its retries reported `ERR_CONNECTION_REFUSED`.
