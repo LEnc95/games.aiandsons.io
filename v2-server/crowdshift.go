@@ -198,7 +198,7 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 	if r.phase == "countdown" && now >= r.phaseEndsAt {
 		r.phase = "choosing"
 		r.crowd.RoundStartedAt = now
-		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftChoiceMs)
+		r.phaseEndsAt = now + r.crowdShiftChoiceDurationLocked()
 		return
 	}
 	if r.phase == "choosing" {
@@ -233,8 +233,15 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 		r.prepareCrowdShiftRoundLocked(now)
 		r.phase = "choosing"
 		r.crowd.RoundStartedAt = now
-		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftChoiceMs)
+		r.phaseEndsAt = now + r.crowdShiftChoiceDurationLocked()
 	}
+}
+
+func (r *partyRoom) crowdShiftChoiceDurationLocked() int64 {
+	if r.crowd != nil && r.crowd.Mode == "blitz" {
+		return r.partyDurationLocked(crowdShiftChoiceMs * 2 / 3)
+	}
+	return r.partyDurationLocked(crowdShiftChoiceMs)
 }
 
 func (r *partyRoom) prepareCrowdShiftRoundLocked(now int64) {

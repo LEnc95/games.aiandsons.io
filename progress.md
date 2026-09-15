@@ -4776,3 +4776,9 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Added server-retained activity highlights, winner avatars, a host-side highlights panel, and a copyable post-party summary.
 - Added client heartbeat latency/quality diagnostics, exposed through `getDiagnostics()`, the connection pill, and `render_game_to_text()`.
 - Added Go coverage for audience join/vote/reaction/reconnect, team persistence, highlights, family moderation, and 8-player/64-audience snapshot capacity. Expanded the Party Rotation Playwright smoke to exercise a full-room audience join and reaction. Focused client tests, Go tests, the supplied Playwright client, visual screenshots, and the full rotation smoke pass with no browser-console errors or horizontal overflow.
+
+## 2026-09-14 Party content Sprint 1 - Crowd Shift Blitz
+- Added `crowdshift:blitz`, a five-round rapid variant that reuses the proven Crowd Shift interaction and scoring contract while giving the activity library a distinct shorter format.
+- Blitz uses a server-authoritative five-round limit and shorter choice windows, and is registered in the Party activity catalog for host pools and voting.
+- Added Go and client contract coverage. Focused Party/Turbo/Crowd tests, Go tests/vet, the complete Party Rotation smoke, supplied Playwright client state, and desktop visual inspection pass with no browser-console errors or layout overflow.
+- TODO: publish through the guarded PR lane, deploy the compatible backend/frontend, and verify the live Party activity catalog before starting the first standalone game sprint.
