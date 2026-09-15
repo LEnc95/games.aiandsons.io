@@ -50,12 +50,16 @@ type partyRoomSnapshot struct {
 	RoomID           string
 	HostToken        string
 	Players          map[string]*partyPlayer
+	Audience         map[string]*partyAudienceMember
 	TokenToPlayer    map[string]string
+	TokenToAudience  map[string]string
 	BlockedTokens    map[string]bool
 	Locked           bool
 	AllowLateJoin    bool
 	MaxPlayers       int
 	FriendlyNames    bool
+	AudienceEnabled  bool
+	ModerationLevel  string
 	PartyConfig      partySessionSettings
 	Phase            string
 	ResumePhase      string
@@ -89,6 +93,7 @@ type partyRoomSnapshot struct {
 	Activity         partyActivity
 	LastActivityID   string
 	ActivityHistory  []string
+	PartyHighlights  []partyHighlight
 	PartyVote        partyVoteState
 	PartyAwarded     bool
 	ActivitySkipped  bool
@@ -163,6 +168,13 @@ func (r *partyRoom) snapshotForPersistenceLocked(now int64) *partyRoomSnapshot {
 		copy.Connected = false
 		players[id] = &copy
 	}
+	audience := make(map[string]*partyAudienceMember, len(r.audience))
+	for id, member := range r.audience {
+		copy := *member
+		copy.Client = nil
+		copy.Connected = false
+		audience[id] = &copy
+	}
 	expiresAt := now + partyRoomRecoveryWindowMs
 	if r.endedAt > 0 && (r.phase == "ended" || r.phase == "podium" || r.partyPhase == "ended") {
 		expiresAt = maxInt64(now, r.endedAt) + partyEndedRetentionMs
@@ -170,9 +182,11 @@ func (r *partyRoom) snapshotForPersistenceLocked(now int64) *partyRoomSnapshot {
 	snapshot := &partyRoomSnapshot{
 		SchemaVersion: partyRoomSnapshotVersion, SavedAt: now, ExpiresAt: expiresAt,
 		GameKey: r.gameKey, RoomID: r.roomID, HostToken: r.hostToken,
-		Players: players, TokenToPlayer: r.tokenToPlayer, BlockedTokens: r.blockedTokens,
+		Players: players, Audience: audience, TokenToPlayer: r.tokenToPlayer, TokenToAudience: r.tokenToAudience, BlockedTokens: r.blockedTokens,
 		Locked: r.locked, AllowLateJoin: r.allowLateJoin, MaxPlayers: r.maxPlayers, FriendlyNames: r.friendlyNames,
-		PartyConfig: r.partyConfig, Phase: r.phase, ResumePhase: r.resumePhase, PauseReason: r.pauseReason,
+		AudienceEnabled: r.audienceEnabled,
+		ModerationLevel: r.moderationLevel,
+		PartyConfig:     r.partyConfig, Phase: r.phase, ResumePhase: r.resumePhase, PauseReason: r.pauseReason,
 		PauseRemainingMs: r.pauseRemainingMs, PhaseEndsAt: r.phaseEndsAt, Heat: r.heat, TotalHeats: r.totalHeats,
 		Obstacles: r.obstacles, Tick: r.tick, CreatedAt: r.createdAt, LastActive: r.lastActive, EndedAt: r.endedAt,
 		TotalBoosts: r.totalBoosts, Settings: r.settings, Track: r.track, Modifier: r.modifier,
@@ -180,7 +194,7 @@ func (r *partyRoom) snapshotForPersistenceLocked(now int64) *partyRoomSnapshot {
 		RaceStartedAt: r.raceStartedAt, NextChaosAt: r.nextChaosAt, ReplayFrames: r.replayFrames, Awards: r.awards,
 		Crowd: r.crowd, SessionMode: r.sessionMode, PartyPhase: r.partyPhase, ResumePartyPhase: r.resumePartyPhase,
 		ActivityIndex: r.activityIndex, Activity: r.activity, LastActivityID: r.lastActivityID,
-		ActivityHistory: r.activityHistory, PartyVote: r.partyVote, PartyAwarded: r.partyAwarded, ActivitySkipped: r.activitySkipped,
+		ActivityHistory: r.activityHistory, PartyHighlights: r.partyHighlights, PartyVote: r.partyVote, PartyAwarded: r.partyAwarded, ActivitySkipped: r.activitySkipped,
 	}
 	// Freeze every nested map and slice while the room lock is held so the
 	// asynchronous Firestore write cannot race the game loop.
@@ -201,9 +215,9 @@ func restorePartyRoom(h *hub, snapshot *partyRoomSnapshot) *partyRoom {
 	now := nowMillis()
 	r := &partyRoom{
 		hub: h, gameKey: snapshot.GameKey, roomID: snapshot.RoomID, hostToken: snapshot.HostToken,
-		players: snapshot.Players, displays: make(map[string]*client), tokenToPlayer: snapshot.TokenToPlayer,
+		players: snapshot.Players, audience: snapshot.Audience, displays: make(map[string]*client), tokenToPlayer: snapshot.TokenToPlayer, tokenToAudience: snapshot.TokenToAudience,
 		blockedTokens: snapshot.BlockedTokens, locked: snapshot.Locked, allowLateJoin: snapshot.AllowLateJoin,
-		maxPlayers: snapshot.MaxPlayers, friendlyNames: snapshot.FriendlyNames, partyConfig: snapshot.PartyConfig,
+		maxPlayers: snapshot.MaxPlayers, friendlyNames: snapshot.FriendlyNames, audienceEnabled: snapshot.AudienceEnabled, moderationLevel: snapshot.ModerationLevel, partyConfig: snapshot.PartyConfig,
 		phase: snapshot.Phase, resumePhase: snapshot.ResumePhase, pauseReason: snapshot.PauseReason,
 		pauseRemainingMs: snapshot.PauseRemainingMs, phaseEndsAt: snapshot.PhaseEndsAt,
 		heat: snapshot.Heat, totalHeats: snapshot.TotalHeats, obstacles: snapshot.Obstacles, tick: snapshot.Tick,
@@ -214,7 +228,7 @@ func restorePartyRoom(h *hub, snapshot *partyRoomSnapshot) *partyRoom {
 		awards: snapshot.Awards, crowd: snapshot.Crowd, sessionMode: snapshot.SessionMode,
 		partyPhase: snapshot.PartyPhase, resumePartyPhase: snapshot.ResumePartyPhase,
 		activityIndex: snapshot.ActivityIndex, activity: snapshot.Activity, lastActivityID: snapshot.LastActivityID,
-		activityHistory: snapshot.ActivityHistory, partyVote: snapshot.PartyVote,
+		activityHistory: snapshot.ActivityHistory, partyHighlights: snapshot.PartyHighlights, partyVote: snapshot.PartyVote,
 		partyAwarded: snapshot.PartyAwarded, activitySkipped: snapshot.ActivitySkipped, hostDisconnectedAt: now,
 	}
 	if r.players == nil {
@@ -222,6 +236,16 @@ func restorePartyRoom(h *hub, snapshot *partyRoomSnapshot) *partyRoom {
 	}
 	if r.tokenToPlayer == nil {
 		r.tokenToPlayer = make(map[string]string)
+	}
+	if r.audience == nil {
+		r.audience = make(map[string]*partyAudienceMember)
+	}
+	if r.tokenToAudience == nil {
+		r.tokenToAudience = make(map[string]string)
+	}
+	// Older snapshots predate the audience toggle and should retain the new default.
+	if snapshot.SchemaVersion == 1 && snapshot.Audience == nil {
+		r.audienceEnabled = true
 	}
 	if r.blockedTokens == nil {
 		r.blockedTokens = make(map[string]bool)
@@ -238,6 +262,10 @@ func restorePartyRoom(h *hub, snapshot *partyRoomSnapshot) *partyRoom {
 		if player.HitRouteIDs == nil {
 			player.HitRouteIDs = make(map[string]bool)
 		}
+	}
+	for _, member := range r.audience {
+		member.Client = nil
+		member.Connected = false
 	}
 	rotationNeedsPause := r.sessionMode == partyRotationSessionMode && r.partyPhase != "party_lobby" && r.partyPhase != "paused" && r.partyPhase != "ended"
 	standaloneNeedsPause := r.sessionMode != partyRotationSessionMode && r.phase != "paused" && r.phase != "lobby" && r.phase != "podium" && r.phase != "ended"

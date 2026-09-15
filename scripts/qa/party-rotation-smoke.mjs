@@ -197,6 +197,17 @@ async function main() {
     const fullPlayer = await openJoinPage("full-player");
     await submitJoin(fullPlayer, "Gamma", "🦁");
     await fullPlayer.waitForFunction(() => /player limit/i.test(document.getElementById("joinError")?.textContent || ""));
+    const audience = await openJoinPage("audience");
+    await audience.locator(`.avatar-option:has(input[value="🐼"])`).click();
+    await audience.fill("#playerName", "Crowd");
+    await audience.click("#audienceJoinButton");
+    await audience.waitForSelector("#partyController:not([hidden])", { timeout: 15000 });
+    const audienceState = await stateOf(audience);
+    if (audienceState.participant_role !== "audience" || audienceState.player_avatar !== "🐼" || !audienceState.audience_id) throw new Error("Audience join did not preserve the audience identity");
+    await audience.click('[data-audience-reaction="clap"]');
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.audienceCount === 1);
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.audienceReactions?.clap === 1);
+    await audience.screenshot({ path: path.join(outputDir, "audience-mobile.png"), fullPage: true });
     await host.selectOption("#partyMaxPlayersSelect", "8");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.maxPlayers === 8);
     await assertNoHorizontalOverflow(host, "Host lobby");
@@ -285,7 +296,7 @@ async function main() {
     await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partyPhase === "spinning", null, { timeout: 8000 });
     if ((await stateOf(choiceHost)).state.activity.label !== chosenActivity) throw new Error("Host choice did not select the requested activity");
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["party_audio", "party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "host_player_invite", "phone_player_invite", "invite_policy_states", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end", "play_again", "same_room_restart", "score_reset", "settings_preserved"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_audio", "party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "audience_participation", "late_join_policy", "host_player_invite", "phone_player_invite", "invite_policy_states", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end", "play_again", "same_room_restart", "score_reset", "settings_preserved"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();

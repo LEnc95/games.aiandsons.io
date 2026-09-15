@@ -4768,3 +4768,11 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Wired cues to joins, ready states, voting, wheel selection, activity countdown/choices/reveals, results, podium, pause, errors, and player actions. Exposed compact audio state through `render_game_to_text()` and a local debug hook.
 - Added static contract coverage and an end-to-end smoke assertion for sound activation. Focused Party/Turbo/Crowd/Audio Agar client tests, syntax checks, full Party Rotation smoke, supplied Playwright client, text-state output, and desktop visual inspection pass with no browser-console errors or overflow.
 - TODO: publish the frontend through the guarded PR lane and verify the production Party room audio control after Vercel deployment.
+
+## 2026-09-14 Party Mode Sprints 10-14 - framework hardening
+- Added an audience lane with 64 reconnectable, non-scoring participants. Audience members retain their server-selected animal avatar, can send rate-limited reactions, and contribute one aggregate ballot during Party voting without consuming player slots.
+- Added persistent two-team mode with server-authoritative team assignment, optional lobby shuffling, team score snapshots, and visible Comets/Tides standings.
+- Added host controls for audience enable/disable and standard versus family-safe nickname moderation; moderation and capacity checks remain server-authoritative.
+- Added server-retained activity highlights, winner avatars, a host-side highlights panel, and a copyable post-party summary.
+- Added client heartbeat latency/quality diagnostics, exposed through `getDiagnostics()`, the connection pill, and `render_game_to_text()`.
+- Added Go coverage for audience join/vote/reaction/reconnect, team persistence, highlights, family moderation, and 8-player/64-audience snapshot capacity. Expanded the Party Rotation Playwright smoke to exercise a full-room audience join and reaction. Focused client tests, Go tests, the supplied Playwright client, visual screenshots, and the full rotation smoke pass with no browser-console errors or horizontal overflow.

@@ -137,3 +137,24 @@ test("hosts and players can share a policy-aware player invite", async () => {
   assert.match(app, /snapshot\?\.allowLateJoin/);
   assert.match(app, /snapshot\?\.maxPlayers/);
 });
+
+test("audience participation, persistent teams, highlights, and diagnostics are exposed", async () => {
+  const [html, app, client, server, party] = await Promise.all([
+    read("party/index.html"), read("party/app.js"), read("src/net/multiplayerClient.js"), read("v2-server/party_rotation.go"), read("v2-server/party.go"),
+  ]);
+  for (const id of ["audienceJoinButton", "audiencePanel", "partyAudienceButton", "partyModerationSelect", "partyTeamMode", "partyShuffleTeamsButton", "partyTeamsPanel", "partyHighlightsPanel", "partyCopySummaryButton"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /role: "audience"/);
+  assert.match(app, /type: "audience_reaction"/);
+  assert.match(app, /partySummaryText/);
+  assert.match(app, /partyTeams/);
+  assert.match(app, /partyHighlights/);
+  assert.match(party, /partyMaxAudience/);
+  assert.match(server, /audienceVoteLocked/);
+  assert.match(server, /TeamMode/);
+  assert.match(party, /sanitizePartyNameForLevel/);
+  assert.match(client, /connection_quality/);
+  assert.match(client, /getDiagnostics/);
+  assert.match(app, /latencyMs/);
+});
