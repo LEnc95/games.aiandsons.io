@@ -219,6 +219,7 @@ const BASE_GAMES = [
   { slug:'pebbleparade', name:'Pebble Parade', emoji:'\u{1FAA8}', scoreHint:'skips', url:'/pebbleparade', desc:'Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds.', earnsCoins:true },
   { slug:'chalkchase', name:'Chalk Chase', emoji:'\u{1F58D}', scoreHint:'stars', url:'/chalkchase', desc:'Trace five playground paths through numbered stars without crossing your own chalk line.', earnsCoins:true },
   { slug:'paperbridge', name:'Paper Bridge', emoji:'\u{1F4C4}', scoreHint:'bridges', url:'/paperbridge', desc:'Fold paper planks to the right length and bridge five increasingly wide ravines.', earnsCoins:true },
+  { slug:'signalgarden', name:'Signal Garden', emoji:'\u{1F331}', scoreHint:'signals', url:'/signalgarden', desc:'Watch fireflies blink across the garden, then echo each growing light pattern.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
