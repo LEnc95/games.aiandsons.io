@@ -540,3 +540,51 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-23] Key PR links: none merged for this date.
 - [nightly 2026-07-24] Tracked changes: 1 commit(s) - 242d1e7 Document maintenance workflows and update sprint board.
 - [nightly 2026-07-24] Key PR links: none merged for this date.
+- [nightly 2026-08-20] No repository commits found for this date.
+- [nightly 2026-08-20] Key PR links: none merged for this date.
+- [nightly 2026-08-21] No repository commits found for this date.
+- [nightly 2026-08-21] Key PR links: none merged for this date.
+- [nightly 2026-08-22] No repository commits found for this date.
+- [nightly 2026-08-22] Key PR links: none merged for this date.
+- [nightly 2026-08-23] No repository commits found for this date.
+- [nightly 2026-08-23] Key PR links: none merged for this date.
+- [nightly 2026-08-24] No repository commits found for this date.
+- [nightly 2026-08-24] Key PR links: none merged for this date.
+- [nightly 2026-08-25] No repository commits found for this date.
+- [nightly 2026-08-25] Key PR links: none merged for this date.
+- [nightly 2026-08-26] No repository commits found for this date.
+- [nightly 2026-08-26] Key PR links: none merged for this date.
+- [nightly 2026-08-27] No repository commits found for this date.
+- [nightly 2026-08-27] Key PR links: none merged for this date.
+- [nightly 2026-08-28] No repository commits found for this date.
+- [nightly 2026-08-28] Key PR links: none merged for this date.
+- [nightly 2026-08-30] No repository commits found for this date.
+- [nightly 2026-08-30] Key PR links: none merged for this date.
+- [nightly 2026-08-31] No repository commits found for this date.
+- [nightly 2026-08-31] Key PR links: none merged for this date.
+- [nightly 2026-09-01] No repository commits found for this date.
+- [nightly 2026-09-01] Key PR links: none merged for this date.
+- [nightly 2026-09-02] No repository commits found for this date.
+- [nightly 2026-09-02] Key PR links: none merged for this date.
+- [nightly 2026-09-04] No repository commits found for this date.
+- [nightly 2026-09-04] Key PR links: none merged for this date.
+- [nightly 2026-09-05] No repository commits found for this date.
+- [nightly 2026-09-05] Key PR links: none merged for this date.
+- [nightly 2026-09-06] No repository commits found for this date.
+- [nightly 2026-09-06] Key PR links: none merged for this date.
+- [nightly 2026-09-07] No repository commits found for this date.
+- [nightly 2026-09-07] Key PR links: none merged for this date.
+- [nightly 2026-09-08] No repository commits found for this date.
+- [nightly 2026-09-08] Key PR links: none merged for this date.
+- [nightly 2026-09-09] No repository commits found for this date.
+- [nightly 2026-09-09] Key PR links: none merged for this date.
+- [nightly 2026-09-10] Tracked changes: 4 commit(s) - 914e4bd Make Crowd Shift fun for two players; 9874058 Add Crowd Shift party game (#301); 6ab43a4 Add Turbo Tilt party platform (#300); ffa398a Add Thimble Tide daily game (#299).
+- [nightly 2026-09-10] Key PR links: none merged for this date.
+- [nightly 2026-09-11] No repository commits found for this date.
+- [nightly 2026-09-11] Key PR links: none merged for this date.
+- [nightly 2026-09-12] Tracked changes: 2 commit(s) - 6801da2 Harden party QR rendering; bc02121 Add Party Mode player avatars.
+- [nightly 2026-09-12] Key PR links: none merged for this date.
+- [nightly 2026-09-13] Tracked changes: 2 commit(s) - d205cd5 Keep removed-player notice visible; 8c17318 Add Party Mode room safety controls.
+- [nightly 2026-09-13] Key PR links: none merged for this date.
+- [nightly 2026-09-15] No repository commits found for this date.
+- [nightly 2026-09-15] Key PR links: none merged for this date.

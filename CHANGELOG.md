@@ -89,6 +89,7 @@ All notable changes to this project will be documented in this file.
 
 - Turbo Tilt now makes energy pickups and barrier impacts unmistakable with shared-screen bursts, crash shake, floating effect labels, phone haptics/status callouts, live race order, boost-charge pips, richer track art, and heat-result boards. Rooms can also mirror the live match to up to sixteen read-only computers or TVs while the original host retains all game controls.
 - Turbo Tilt Party Pack expansion adds Neon City, Glacier Run, Volcano Rush, and Spaceway; safe/risk routes, moving hazards, jumps, streak/style scoring, four phone-selected gadgets, six voted modifiers, Classic/Elimination/Teams/Relay/Survival/Chaos modes, host presets, temporary cars/trails/horns, reactions, synchronized sound and announcing, photo-finish replay, and end-of-match awards.
+- Crowd Shift party mode now supports persistent rotation, player voting, synchronized activity selection, and clip recording across an open room.
 - Bottom of the Ninth series home/away GameState flip so series host actually swaps sides, not only booth copy.
 - Bottom of the Ninth season slash persistence so AVG/OBP/SLG carry across the season slate.
 - Bottom of the Ninth rain-delay booth color lines.
@@ -97,6 +98,10 @@ All notable changes to this project will be documented in this file.
 - Bottom of the Ninth series home/away booth copy so series games read as home or away.
 - Bottom of the Ninth today's broadcast local streak (days attempted).
 - Bottom of the Ninth extras and walk-off booth color lines.
+
+### Operations
+- Added the 2026-W37 daily-game and party-mode rollout coverage, including documented party rotation behavior.
+- Key PRs: [#302](https://github.com/LEnc95/games.aiandsons.io/pull/302), [#301](https://github.com/LEnc95/games.aiandsons.io/pull/301), [#300](https://github.com/LEnc95/games.aiandsons.io/pull/300), [#299](https://github.com/LEnc95/games.aiandsons.io/pull/299), [#298](https://github.com/LEnc95/games.aiandsons.io/pull/298), [#297](https://github.com/LEnc95/games.aiandsons.io/pull/297), [#295](https://github.com/LEnc95/games.aiandsons.io/pull/295), [#293](https://github.com/LEnc95/games.aiandsons.io/pull/293), [#292](https://github.com/LEnc95/games.aiandsons.io/pull/292), [#291](https://github.com/LEnc95/games.aiandsons.io/pull/291), [#290](https://github.com/LEnc95/games.aiandsons.io/pull/290).
 
 ## [1.13.0] - 2026-07-26
 ### Added
