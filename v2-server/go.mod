@@ -1,6 +1,6 @@
 module games.aiandsons.io/v2-server
 
-go 1.23
+go 1.27.1
 
 require (
 	cloud.google.com/go/firestore v1.16.0
