@@ -664,12 +664,34 @@ class ErrorFactory {
     }
 }
 function replaceTemplate(template, data) {
-    return template.replace(PATTERN, (_, key) => {
-        const value = data[key];
-        return value != null ? String(value) : `<${key}?>`;
-    });
+    try {
+        let ptr = 0;
+        let result = '';
+        while (ptr < template.length) {
+            const start = template.indexOf('{$', ptr);
+            if (start === -1) {
+                result += template.substring(ptr);
+                break;
+            }
+            const end = template.indexOf('}', start + 2);
+            if (end === -1) {
+                result += template.substring(ptr);
+                break;
+            }
+            const key = template.substring(start + 2, end);
+            const value = data[key];
+            result +=
+                template.substring(ptr, start) +
+                    (value != null ? String(value) : `<${key}?>`);
+            ptr = end + 1;
+        }
+        return result;
+    }
+    catch (e) {
+        // Should never happen, but fallback just in case
+        return template;
+    }
 }
-const PATTERN = /\{\$([^}]+)}/g;
 /**
  * Deep equal two objects. Support Arrays and Objects.
  */
@@ -1105,6 +1127,42 @@ class ComponentContainer {
         return Array.from(this.providers.values());
     }
 }
+/**
+ * @license
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var InstantiationMode;
+(function (InstantiationMode) {
+    InstantiationMode["LAZY"] = "LAZY";
+    InstantiationMode["EAGER"] = "EAGER";
+    InstantiationMode["EXPLICIT"] = "EXPLICIT"; // component needs to be initialized explicitly by calling Provider.initialize()
+})(InstantiationMode || (InstantiationMode = {}));
+/**
+ * PUBLIC: A public component provides a set of public APIs to customers. A service namespace will be patched
+ * onto `firebase` namespace. Assume the component name is `test`, customers will be able
+ * to get the service by calling `firebase.test()` or `app.test()` where `app` is a `FirebaseApp` instance.
+ *
+ * PRIVATE: A private component provides a set of private APIs that are used internally by other
+ * Firebase SDKs. No service namespace is created in `firebase` namespace and customers have no way to get them.
+ */
+var ComponentType;
+(function (ComponentType) {
+    ComponentType["PUBLIC"] = "PUBLIC";
+    ComponentType["PRIVATE"] = "PRIVATE";
+    ComponentType["VERSION"] = "VERSION";
+})(ComponentType || (ComponentType = {}));
 
 /**
  * @license
@@ -1634,8 +1692,8 @@ function isVersionServiceProvider(provider) {
     const component = provider.getComponent();
     return component?.type === "VERSION" /* ComponentType.VERSION */;
 }
-const name$q = "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-const version$1 = "0.14.10";
+const name$q = "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+const version$1 = "0.16.2";
 /**
  * @license
  * Copyright 2019 Google LLC
@@ -1652,7 +1710,7 @@ const version$1 = "0.14.10";
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const logger = new Logger('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js');
+const logger = new Logger('https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js');
 const name$p = "@firebase/app-compat";
 const name$o = "@firebase/analytics-compat";
 const name$n = "@firebase/analytics";
@@ -1679,7 +1737,7 @@ const name$3 = "@firebase/firestore";
 const name$2 = "@firebase/ai";
 const name$1 = "@firebase/firestore-compat";
 const name$r = "firebase";
-const version$2 = "12.11.0";
+const version$2 = "12.19.0";
 /**
  * @license
  * Copyright 2019 Google LLC
@@ -1905,7 +1963,8 @@ const ERRORS = {
     ["no-app" /* AppError.NO_APP */]: "No Firebase App '{$appName}' has been created - " +
         'call initializeApp() first',
     ["bad-app-name" /* AppError.BAD_APP_NAME */]: "Illegal App name: '{$appName}'",
-    ["duplicate-app" /* AppError.DUPLICATE_APP */]: "Firebase App named '{$appName}' already exists with different options or config",
+    ["duplicate-app" /* AppError.DUPLICATE_APP */]: "Firebase App named '{$appName}' already exists with different {$mismatchedParam}." +
+        " Existing: '{$oldValue}'. New: '{$newValue}'.",
     ["app-deleted" /* AppError.APP_DELETED */]: "Firebase App named '{$appName}' already deleted",
     ["server-app-deleted" /* AppError.SERVER_APP_DELETED */]: 'Firebase Server App has been deleted',
     ["no-options" /* AppError.NO_OPTIONS */]: 'Need to provide options, when not being deployed to hosting via source.',
@@ -2159,12 +2218,24 @@ function initializeApp(_options, rawConfig = {}) {
     const existingApp = _apps.get(name);
     if (existingApp) {
         // return the existing app if options and config deep equal the ones in the existing app.
-        if (deepEqual(options, existingApp.options) &&
-            deepEqual(config, existingApp.config)) {
-            return existingApp;
+        if (!deepEqual(options, existingApp.options)) {
+            throw ERROR_FACTORY.create("duplicate-app" /* AppError.DUPLICATE_APP */, {
+                appName: name,
+                mismatchedParam: 'options',
+                oldValue: JSON.stringify(existingApp.options),
+                newValue: JSON.stringify(options)
+            });
+        }
+        else if (!deepEqual(config, existingApp.config)) {
+            throw ERROR_FACTORY.create("duplicate-app" /* AppError.DUPLICATE_APP */, {
+                appName: name,
+                mismatchedParam: 'config',
+                oldValue: JSON.stringify(existingApp.config),
+                newValue: JSON.stringify(config)
+            });
         }
         else {
-            throw ERROR_FACTORY.create("duplicate-app" /* AppError.DUPLICATE_APP */, { appName: name });
+            return existingApp;
         }
     }
     const container = new ComponentContainer(name);
@@ -2771,10 +2842,26 @@ function registerCoreComponents(variant) {
  * @remarks This package coordinates the communication between the different Firebase components
  * @packageDocumentation
  */
+/**
+ * @license
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 registerCoreComponents('');
 
 var name = "firebase";
-var version = "12.11.0";
+var version = "12.19.0";
 
 /**
  * @license
