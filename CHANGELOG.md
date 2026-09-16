@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Pollen Passage - a five-meadow flower-lane game for keyboard and touch.
+
 - Signal Garden - a five-garden firefly memory game for keyboard and touch.
 
 - Party Mode player invitations from host screens and connected phones, with native sharing, copy fallback, and room-policy awareness.

@@ -220,6 +220,7 @@ const BASE_GAMES = [
   { slug:'chalkchase', name:'Chalk Chase', emoji:'\u{1F58D}', scoreHint:'stars', url:'/chalkchase', desc:'Trace five playground paths through numbered stars without crossing your own chalk line.', earnsCoins:true },
   { slug:'paperbridge', name:'Paper Bridge', emoji:'\u{1F4C4}', scoreHint:'bridges', url:'/paperbridge', desc:'Fold paper planks to the right length and bridge five increasingly wide ravines.', earnsCoins:true },
   { slug:'signalgarden', name:'Signal Garden', emoji:'\u{1F331}', scoreHint:'signals', url:'/signalgarden', desc:'Watch fireflies blink across the garden, then echo each growing light pattern.', earnsCoins:true },
+  { slug:'pollenpassage', name:'Pollen Passage', emoji:'\u{1F41D}', scoreHint:'blooms', url:'/pollenpassage', desc:'Guide a bee through five flower-lane meadows, gathering pollen while dodging thorn gates.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

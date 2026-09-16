@@ -234,5 +234,6 @@
 - game/chalkchase
 - game/paperbridge
 - game/signalgarden
+- game/pollenpassage
 
 Generated from `src/meta/feedback.js`.

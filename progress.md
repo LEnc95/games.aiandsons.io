@@ -1,5 +1,13 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-16 Pollen Passage automation
+- Started from clean detached origin/main ec561ec026f53a12664d43bc13d9de851132e40a; npm ci passed with 16 existing audit findings.
+- Added draft Pollen Passage, a five-meadow bee lane game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded blooms/meadows/stings outcomes.
+- TODO: run generators, early gates, supplied-client and focused visual/browser QA, final gates, audit, publish, and production verification.
+- SEO, OG, and local Linear generators passed; restored the same 42 documented nondeterministic legacy OG cards and 14 blank-line-only legacy page edits. Maintenance and 220-game preflight passed.
+- Supplied-client and focused desktop/mobile QA passed exact stepping, paused freeze, lane controls, five-meadow win, three-sting loss/restart, palettes, fullscreen/Escape, feedback, touch, and 390px no-overflow with zero browser errors. Required screenshots and the OG card were visually inspected.
+- TODO: run final gates, release audit, guarded PR publication, merge, and production verification.
+
 ## 2026-09-15 Signal Garden automation
 - Started from clean detached origin/main 03033ce8c7f47a563fa43548eb293c91c29c13e7; npm ci passed with 16 existing audit findings.
 - Added Signal Garden, a five-garden firefly sequence-memory game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded signals/gardens/mistakes outcomes.
