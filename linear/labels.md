@@ -235,5 +235,6 @@
 - game/paperbridge
 - game/signalgarden
 - game/pollenpassage
+- game/foxfiretrails
 
 Generated from `src/meta/feedback.js`.
