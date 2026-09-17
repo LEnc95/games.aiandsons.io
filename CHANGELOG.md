@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
+
 - Pollen Passage - a five-meadow flower-lane game for keyboard and touch.
 
 - Signal Garden - a five-garden firefly memory game for keyboard and touch.

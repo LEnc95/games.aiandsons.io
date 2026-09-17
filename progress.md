@@ -1,5 +1,16 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-17 Foxfire Trails automation
+- Started from clean detached origin/main `ea398517205e2975026dca4e898544cc0b39bd75`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 2 moderate audit findings and a Node 22 versus required Node 24 warning.
+- Selected Foxfire Trails (`/foxfiretrails`), a distinct five-trail grid-navigation game absent from the 220-game registry and release memory. Implemented keyboard/button/touch movement, sequential wisps, bramble collisions, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ wisps, trails, bumps }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual/browser QA, run final gates and authoritative audit, then publish and verify production.
+- SEO, OG, and local Linear generation completed; restored 17 whitespace-normalized-identical legacy page changes and the same 42 documented nondeterministic legacy OG renders. The release diff is scoped to the new game and approved generated paths. Maintenance validation and the 221-game preflight both pass.
+- TODO: complete supplied-client and focused visual/browser QA, then final gates, authoritative audit, guarded publication, merge, and production verification.
+- Develop-web-game verification passed: the supplied client completed a genuine first trail, and focused desktop/mobile QA covered exact +1,234 ms stepping, paused-time/input freeze, boundaries, three-bramble loss/restart, all five trails with exact completed `{ wisps: 20, trails: 5, bumps: 0 }`, all three palettes, fullscreen/Escape, feedback keyboard isolation, button/touch controls, 390px no-overflow layout, matching text state, and zero console/page/request errors. Gameplay, pause, transition, loss, win, feedback, mobile, palette, supplied-client, and OG captures were visually inspected.
+- TODO: run the feedback smoke and ordered final gates, then audit, guarded publication, merge, and production verification.
+- Shared feedback smoke passed. Ordered final gates passed: maintenance, 221-game preflight, telemetry 16/16, feedback 31/31, shop 69/69, social 22/22, and `git diff --check`. The pre-stage audit found exactly one appended registry entry, one matching top-level game folder, one current contract, one Unreleased mention, matching terminal reporting, and only approved release paths.
+- TODO: stage and inspect the exact release, commit, run the authoritative daily-lane audit, publish through the guarded PR, merge, and verify Actions/production.
+
 ## 2026-09-16 Pollen Passage automation
 - Started from clean detached origin/main ec561ec026f53a12664d43bc13d9de851132e40a; npm ci passed with 16 existing audit findings.
 - Added draft Pollen Passage, a five-meadow bee lane game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded blooms/meadows/stings outcomes.
