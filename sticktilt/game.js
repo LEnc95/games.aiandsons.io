@@ -50,7 +50,7 @@ function handleEvent(connection,event){
   }
   if(event.type==="error"){byId("hostError").textContent=payload.message||"The server rejected that action.";if(["invalid_host_token","room_not_found"].includes(payload.code)){if(state.roomId)sessionStorage.removeItem(tokenKey(state.roomId));status("Room expired","problem");}}
 }
-function renderQr(){const target=byId("qrCode");target.textContent="";if(!state.roomId||typeof window.qrcode!=="function")return;const qr=window.qrcode(0,"M");qr.addData(joinUrl());qr.make();target.innerHTML=qr.createSvgTag(5,1,"Scan to join Stick & Tilt","Stick & Tilt room QR code");}
+function renderQr(){const target=byId("qrCode");target.textContent="";if(!state.roomId||typeof window.qrcode!=="function")return;const qr=window.qrcode(0,"M");qr.addData(joinUrl());qr.make();const image=document.createElement("img");image.src=qr.createDataURL(5,1);image.alt="Stick & Tilt room QR code";image.width=108;image.height=108;target.append(image);}
 function displayUrl(){const url=new URL("/sticktilt/",location.origin);url.searchParams.set("display",state.roomId);const endpoint=params.get("ws")||params.get("endpoint");if(endpoint)url.searchParams.set("ws",endpoint);return url.toString();}
 function sendHost(action){byId("hostError").textContent="";state.connection?.sendInput({type:"host",action});}
 function syncUi(){
