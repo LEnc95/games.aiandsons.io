@@ -241,7 +241,7 @@ func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
 	}
 	partyGames := []string{}
 	if h.enabledGames[partyGameID] {
-		partyGames = []string{turboTiltGameKey, crowdShiftGameKey}
+		partyGames = []string{turboTiltGameKey, crowdShiftGameKey, stickTiltGameKey}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{

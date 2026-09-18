@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Added Stick & Tilt: 2–8-player stick-figure fighting with calibrated phone motion, touch alternatives, punch/jump/guard combat, climbable doodle-box platforms, quick respawns, and standalone or rotating Party sessions.
+
 ### Added
 
 - Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
