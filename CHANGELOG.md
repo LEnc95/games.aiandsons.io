@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
+
 - Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
 
 - Pollen Passage - a five-meadow flower-lane game for keyboard and touch.

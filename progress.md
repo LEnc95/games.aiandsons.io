@@ -1,5 +1,16 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-18 Bottlecap Curl automation
+- Started from clean detached origin/main `92ed3d81c20063f15195f9d900867d85a89a17b6`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 2 moderate audit findings and a Node 22 versus required Node 24 warning.
+- Selected Bottlecap Curl (`/bottlecapcurl`), a distinct five-rink aim-and-flick precision game absent from the 221-game registry and release memory. Implemented keyboard/button/touch aiming, deterministic cap physics, ordered rings, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ targets, rinks, misses }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual/browser QA, run final gates and authoritative audit, then publish and verify production.
+- SEO, OG, and local Linear generation completed; restored 18 verified blank-line-only legacy page changes and 44 existing OG renders whose metadata inputs were unchanged. Maintenance validation and the 223-game preflight both pass.
+- Supplied Playwright client completed a real launch. Focused desktop/mobile QA passed exact stepping, paused physics freeze, input and aim boundaries, genuine scoring physics, all five rinks, loss/restart, palettes, fullscreen/Escape, feedback, touch controls, 390px no-overflow layout, and zero browser/page/request errors. Visual review found and fixed a forced-loss repaint mismatch before the complete rerun.
+- TODO: visually confirm the corrected loss capture, run the feedback smoke and ordered final gates, then audit, guarded publication, merge, and production verification.
+- Corrected loss capture visually matches `render_game_to_text()`. Shared feedback smoke passed. Ordered final gates passed: maintenance, 223-game preflight, telemetry 16/16, feedback 32/32, shop 69/69, social 22/22, and `git diff --check`.
+- Pre-stage audit found one appended registry entry, one matching top-level game folder, one current content contract, one Unreleased changelog mention, matching completed/lost/abandoned reporting, no secrets or dependency changes, and only approved release paths.
+- TODO: create the dated automation branch, stage and inspect the exact release, commit, authoritative audit, guarded PR publication, merge, and production verification.
+
 ## 2026-09-17 Foxfire Trails automation
 - Started from clean detached origin/main `ea398517205e2975026dca4e898544cc0b39bd75`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 2 moderate audit findings and a Node 22 versus required Node 24 warning.
 - Selected Foxfire Trails (`/foxfiretrails`), a distinct five-trail grid-navigation game absent from the 220-game registry and release memory. Implemented keyboard/button/touch movement, sequential wisps, bramble collisions, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ wisps, trails, bumps }` outcomes.
