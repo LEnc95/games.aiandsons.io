@@ -1,5 +1,10 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-17 iPhone double-tap zoom fix
+- User reported accidental iPhone zoom in games that require rapid successive taps.
+- All 220 registered games mount `src/feedback/embed.js`; added a shared `touch-action: manipulation` rule to the page root so double-tap zoom is suppressed while pinch zoom remains available. Existing game canvases with `touch-action: none` keep their stricter gesture handling.
+- Added a feedback coverage contract test for the shared rule. The supplied game client rendered active Whack-a-Mole gameplay cleanly, and focused 390x844 touch QA registered both taps 114ms apart with `visualViewport.scale === 1`, no horizontal overflow, and no browser errors. The screenshot was visually inspected. All 32 feedback tests and the two focused clip/coverage tests pass.
+
 ## 2026-09-16 Pollen Passage automation
 - Started from clean detached origin/main ec561ec026f53a12664d43bc13d9de851132e40a; npm ci passed with 16 existing audit findings.
 - Added draft Pollen Passage, a five-meadow bee lane game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded blooms/meadows/stings outcomes.

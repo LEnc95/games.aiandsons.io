@@ -69,6 +69,7 @@ type partyVoteState struct {
 }
 
 var partyActivityCatalog = []partyActivity{
+	{ID: "sticktilt:rumble", GameKey: stickTiltGameKey, ModeKey: "rumble", Label: "Stick & Tilt · Rumble", Description: "Tilt to move. Punch, jump, and guard. Three rounds; one point per knockout, quick respawns, shared ties.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
 	{ID: "turbotilt:classic", GameKey: turboTiltGameKey, ModeKey: "classic", Label: "Turbo Tilt · Classic", Description: "Three heats of pure tilt, dodge, and boost racing.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
 	{ID: "turbotilt:elimination", GameKey: turboTiltGameKey, ModeKey: "elimination", Label: "Turbo Tilt · Elimination", Description: "The last racer drops after each heat.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
 	{ID: "turbotilt:teams", GameKey: turboTiltGameKey, ModeKey: "teams", Label: "Turbo Tilt · Teams", Description: "Balanced squads race for a shared finish.", MinPlayers: 4, MaxPlayers: 8, Style: "competitive"},
@@ -236,7 +237,9 @@ func (r *partyRoom) stepRotationLocked(now int64, dt float64) {
 			}
 		}
 	case "activity":
-		if r.gameKey == crowdShiftGameKey {
+		if r.gameKey == stickTiltGameKey {
+			r.stepStickTiltLocked(now, dt)
+		} else if r.gameKey == crowdShiftGameKey {
 			r.stepCrowdShiftLocked(now)
 		} else if r.gameKey == turboTiltGameKey {
 			r.stepTurboTiltLocked(now, dt)
@@ -388,6 +391,11 @@ func (r *partyRoom) startRotationActivityLocked(now int64) {
 		p.Queued = !p.Connected
 		p.Active = p.Connected
 	}
+	if r.gameKey == stickTiltGameKey {
+		r.settings.Mode = "rumble"
+		r.startStickTiltLocked(now)
+		return
+	}
 	if r.gameKey == crowdShiftGameKey {
 		r.startRotationCrowdShiftLocked(now)
 		return
@@ -472,17 +480,23 @@ func (r *partyRoom) completeRotationActivityLocked(now int64) {
 		}
 	}
 	for index, p := range ordered {
-		p.Rank = index + 1
+		placement := index
+		if r.gameKey == stickTiltGameKey {
+			for placement > 0 && ordered[placement-1].Points == p.Points {
+				placement--
+			}
+		}
+		p.Rank = placement + 1
 		award := 0
 		if index < len(partyPlacementPoints) {
-			award = partyPlacementPoints[index]
+			award = partyPlacementPoints[placement]
 		}
 		if r.partySessionSettingsLocked().CatchUp && leaderPoints-p.PartyPoints >= 8 {
 			award += 2
 		}
 		p.PartyAward = award
 		p.PartyPoints += award
-		if index == 0 {
+		if placement == 0 {
 			p.ActivityWins++
 		}
 	}
@@ -655,6 +669,7 @@ func (r *partyRoom) restartPartyLocked() {
 	r.obstacles = nil
 	r.replayFrames = nil
 	r.crowd = nil
+	r.stick = nil
 	r.votes = make(map[string]string)
 	for _, p := range r.players {
 		p.Ready = false

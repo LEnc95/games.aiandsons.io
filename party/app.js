@@ -1,3 +1,4 @@
+import { createStickController } from "/sticktilt/controller.js";
 import { connect } from "/src/net/multiplayerClient.js";
 import { AVATAR_EMOJI, DEFAULT_AVATAR_EMOJI, isAvatarEmoji } from "/src/social/avatars.js";
 import { createPartyAudio } from "/party/audio.js";
@@ -56,6 +57,7 @@ const state = {
   hostRecoverySavedAt: 0,
   hostRecoveryNoticeTimer: 0,
 };
+const stickController = createStickController(byId("stickController"), input => { if(state.gameKey === "sticktilt") state.connection?.sendInput(input); }, vibrate);
 const partyAudio = createPartyAudio({ sharedScreen: screenMode });
 
 function loadSavedAvatar() {
@@ -276,9 +278,10 @@ function showController() {
   const isParty = state.sessionMode === "rotation" && !activityControls;
   const isCrowdShift = !isParty && state.gameKey === "crowdshift";
   byId("partyController").hidden = !isParty;
-  byId("turboController").hidden = isParty || isCrowdShift;
+  byId("turboController").hidden = isParty || state.gameKey !== "turbotilt";
+  byId("stickController").hidden = isParty || state.gameKey !== "sticktilt";
   byId("crowdController").hidden = isParty || !isCrowdShift;
-  const label = isParty ? "Party voting" : isCrowdShift ? "Crowd Shift" : "Turbo Tilt";
+  const label = isParty ? "Party voting" : isCrowdShift ? "Crowd Shift" : state.gameKey === "sticktilt" ? "Stick & Tilt" : "Turbo Tilt";
   byId("controllerView").setAttribute("aria-label", `${label} phone controller`);
 }
 
@@ -418,6 +421,10 @@ function renderController() {
     return;
   }
   showController();
+  if (state.gameKey === "sticktilt") {
+    stickController.render(snapshot, snapshot?.selfId || state.playerId);
+    return;
+  }
   if (state.gameKey === "crowdshift") {
     renderCrowdController(snapshot);
     return;
@@ -739,6 +746,7 @@ function effectiveSteer() {
 }
 
 function sendSteer(force = false) {
+  if(state.gameKey !== "turbotilt") return;
   const now = performance.now();
   const value = effectiveSteer();
   if (!force && now - state.lastSentAt < 68) return;
@@ -982,7 +990,7 @@ function renderSessionScreen() {
   const activityPhase = partyPhase === "activity" || (partyPhase === "paused" && snapshot?.resumePartyPhase === "activity");
   byId("partySkipButton").hidden = !host || !activityPhase;
   byId("partyEndButton").hidden = !host || !running;
-  const showEmbedded = activityPhase && ["turbotilt", "crowdshift"].includes(snapshot?.gameKey);
+  const showEmbedded = activityPhase && ["turbotilt", "crowdshift", "sticktilt"].includes(snapshot?.gameKey);
   byId("partyStage").hidden = showEmbedded;
   byId("activityFrame").hidden = !showEmbedded;
   if (showEmbedded) mountEmbeddedActivity(snapshot.gameKey, snapshot);
@@ -1207,7 +1215,7 @@ function drawPartyVoting(snapshot) {
   options.forEach((option, index) => {
     const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : "#ff6b9f";
     partyRoundRect(x, 135, 328, 420, 28, "rgba(10,23,52,.88)", accent);
-    partyText(option.gameKey === "turbotilt" ? "🏎️" : "↔️", x + 164, 195, 120, 52, "#fff");
+    partyText(option.gameKey === "turbotilt" ? "🏎️" : option.gameKey === "sticktilt" ? "🥊" : "↔️", x + 164, 195, 120, 52, "#fff");
     partyText(option.label, x + 164, 264, 290, 29, accent);
     partyText(option.description, x + 164, 322, 280, 19, "#d5e5ed");
     const own = ballots.filter((ballot) => ballot.optionId === option.id);
@@ -1249,7 +1257,7 @@ function drawPartyWheel(snapshot) {
 function drawPartyNextUp(snapshot, override = "") {
   const activity = snapshot.activity || {};
   partyText(override || "NEXT UP", 600, 120, 900, 68, "#ffe36e");
-  partyText(activity.gameKey === "turbotilt" ? "🏎️" : "↔️", 600, 260, 180, 104, "#fff");
+  partyText(activity.gameKey === "turbotilt" ? "🏎️" : activity.gameKey === "sticktilt" ? "🥊" : "↔️", 600, 260, 180, 104, "#fff");
   partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : "#ff82ad");
   partyText(activity.description || "Keep your phone ready", 600, 465, 900, 26, "#d5e5ed");
   partyText("Starting automatically…", 600, 570, 600, 22, "#b9acd0");
@@ -1417,14 +1425,14 @@ window.addEventListener("keydown", (event) => { if (event.key.toLowerCase() === 
 setInterval(() => {
   if (!byId("controllerView").hidden) {
     renderController();
-    if (state.gameKey !== "crowdshift") {
+    if (state.gameKey === "turbotilt") {
       const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
       showRaceFeedback(me);
     }
   }
   if (!byId("sessionView").hidden && state.snapshot && state.snapshot.partyPhase !== "activity") drawPartyStage(state.snapshot);
   const rotationIdle = state.sessionMode === "rotation" && state.snapshot?.partyPhase !== "activity";
-  if (state.gameKey !== "crowdshift" && !rotationIdle) sendSteer();
+  if (state.gameKey === "turbotilt" && !rotationIdle) sendSteer();
 }, 100);
 
 const initialCode = normalizeCode(params.get("code"));

@@ -409,6 +409,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'turbo-theme', kind: 'palette', tokens: Object.freeze(['sky', 'road', 'edge', 'racer', 'barrier', 'energy', 'accent']) }),
     ]),
   }),
+  sticktilt: Object.freeze({
+    releasedAt: '2026-09-16',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      rounds: Object.freeze({ min: 0, max: 3, direction: 'higher' }),
+      knockouts: Object.freeze({ min: 0, max: 300, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'sticktilt-theme', kind: 'palette', tokens: Object.freeze(['paper', 'ink', 'gold', 'fighter']) }),
+    ]),
+  }),
   crowdshift: Object.freeze({
     releasedAt: '2026-09-10',
     outcomes: Object.freeze({
