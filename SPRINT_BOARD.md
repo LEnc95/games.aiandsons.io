@@ -540,3 +540,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-23] Key PR links: none merged for this date.
 - [nightly 2026-07-24] Tracked changes: 1 commit(s) - 242d1e7 Document maintenance workflows and update sprint board.
 - [nightly 2026-07-24] Key PR links: none merged for this date.
+- [nightly 2026-09-16] Tracked changes: 2 commit(s) - fb9e310 Update project dependencies and runtimes; 1394b26 Add Pollen Passage daily game (#326).
+- [nightly 2026-09-16] Key PR links: none merged for this date.
+- [nightly 2026-09-17] No repository commits found for this date.
+- [nightly 2026-09-17] Key PR links: none merged for this date.

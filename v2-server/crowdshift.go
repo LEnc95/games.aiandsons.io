@@ -76,7 +76,7 @@ var crowdShiftPrompts = []crowdShiftPrompt{
 }
 
 func isSupportedPartyGame(gameKey string) bool {
-	return gameKey == turboTiltGameKey || gameKey == crowdShiftGameKey
+	return gameKey == turboTiltGameKey || gameKey == crowdShiftGameKey || gameKey == stickTiltGameKey
 }
 
 func newCrowdShiftState() *crowdShiftState {

@@ -208,6 +208,7 @@ type partyRoom struct {
 	replayFrames        []partyReplayFrame
 	awards              []map[string]any
 	crowd               *crowdShiftState
+	stick               *stickTiltState
 	sessionMode         string
 	partyPhase          string
 	resumePartyPhase    string
@@ -650,7 +651,7 @@ func (r *partyRoom) removeClient(c *client) {
 		r.host = nil
 		r.hostDisconnectedAt = now
 		if r.sessionMode == partyRotationSessionMode && r.partyPhase != "party_lobby" && r.partyPhase != "ended" ||
-			containsString([]string{"countdown", "racing", "choosing", "reveal", "intermission"}, r.phase) {
+			containsString([]string{"countdown", "racing", "fighting", "choosing", "reveal", "intermission"}, r.phase) {
 			r.pauseLocked("host_disconnected", now)
 		}
 	} else if c.role == "display" {
@@ -753,6 +754,10 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 			return
 		}
 		p.Ready = input.Ready
+		return
+	}
+	if r.gameKey == stickTiltGameKey {
+		r.applyStickTiltInputLocked(p, input, c)
 		return
 	}
 	if r.gameKey == crowdShiftGameKey {
@@ -993,6 +998,10 @@ func (r *partyRoom) applyHostActionLocked(action string, now int64, c *client) {
 		r.applyRotationHostActionLocked(action, now, c)
 		return
 	}
+	if r.gameKey == stickTiltGameKey {
+		r.applyStickTiltHostActionLocked(action, now, c)
+		return
+	}
 	if r.gameKey == crowdShiftGameKey {
 		r.applyCrowdShiftHostActionLocked(action, now, c)
 		return
@@ -1111,6 +1120,10 @@ func (r *partyRoom) step(now int64, dt float64) {
 	}
 	if r.sessionMode == partyRotationSessionMode {
 		r.stepRotationLocked(now, dt)
+		return
+	}
+	if r.gameKey == stickTiltGameKey {
+		r.stepStickTiltLocked(now, dt)
 		return
 	}
 	if r.gameKey == crowdShiftGameKey {
@@ -1439,6 +1452,9 @@ func (r *partyRoom) balancePartyTeamsLocked(shuffle bool) {
 }
 
 func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
+	if r.gameKey == stickTiltGameKey {
+		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.stickTiltSnapshotLocked(selfID), selfID))
+	}
 	if r.gameKey == crowdShiftGameKey {
 		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.crowdShiftSnapshotLocked(selfID), selfID))
 	}
@@ -2032,6 +2048,8 @@ func partyPhaseDuration(base int64) int64 {
 		return 300
 	case partyHeatMs:
 		return 8000
+	case stickTiltRoundMs:
+		return 6000
 	case partyIntermissionMs:
 		return 1200
 	case crowdShiftChoiceMs:

@@ -138,7 +138,7 @@ func TestPartyRotationNoVoteFallbackAndActivityStart(t *testing.T) {
 	}
 	r.partyPhase = "next_up"
 	r.startRotationActivityLocked(now + partySpinMs + partyNextUpMs)
-	if r.partyPhase != "activity" || (r.gameKey != turboTiltGameKey && r.gameKey != crowdShiftGameKey) || r.phase != "countdown" {
+	if r.partyPhase != "activity" || !isSupportedPartyGame(r.gameKey) || r.phase != "countdown" {
 		t.Fatalf("selected activity did not start: party=%s game=%s phase=%s", r.partyPhase, r.gameKey, r.phase)
 	}
 	if r.gameKey == crowdShiftGameKey && !r.crowd.Duel {

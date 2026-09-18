@@ -11,6 +11,11 @@ Original prompt: Recreate pacman. The game should have multiple levels and all t
 - Shared feedback smoke passed. Ordered final gates passed: maintenance, 221-game preflight, telemetry 16/16, feedback 31/31, shop 69/69, social 22/22, and `git diff --check`. The pre-stage audit found exactly one appended registry entry, one matching top-level game folder, one current contract, one Unreleased mention, matching terminal reporting, and only approved release paths.
 - TODO: stage and inspect the exact release, commit, run the authoritative daily-lane audit, publish through the guarded PR, merge, and verify Actions/production.
 
+## 2026-09-17 iPhone double-tap zoom fix
+- User reported accidental iPhone zoom in games that require rapid successive taps.
+- All 220 registered games mount `src/feedback/embed.js`; added a shared `touch-action: manipulation` rule to the page root so double-tap zoom is suppressed while pinch zoom remains available. Existing game canvases with `touch-action: none` keep their stricter gesture handling.
+- Added a feedback coverage contract test for the shared rule. The supplied game client rendered active Whack-a-Mole gameplay cleanly, and focused 390x844 touch QA registered both taps 114ms apart with `visualViewport.scale === 1`, no horizontal overflow, and no browser errors. The screenshot was visually inspected. All 32 feedback tests and the two focused clip/coverage tests pass.
+
 ## 2026-09-16 Pollen Passage automation
 - Started from clean detached origin/main ec561ec026f53a12664d43bc13d9de851132e40a; npm ci passed with 16 existing audit findings.
 - Added draft Pollen Passage, a five-meadow bee lane game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded blooms/meadows/stings outcomes.
