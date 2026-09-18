@@ -237,5 +237,6 @@
 - game/signalgarden
 - game/pollenpassage
 - game/foxfiretrails
+- game/bottlecapcurl
 
 Generated from `src/meta/feedback.js`.

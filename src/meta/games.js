@@ -223,6 +223,7 @@ const BASE_GAMES = [
   { slug:'signalgarden', name:'Signal Garden', emoji:'\u{1F331}', scoreHint:'signals', url:'/signalgarden', desc:'Watch fireflies blink across the garden, then echo each growing light pattern.', earnsCoins:true },
   { slug:'pollenpassage', name:'Pollen Passage', emoji:'\u{1F41D}', scoreHint:'blooms', url:'/pollenpassage', desc:'Guide a bee through five flower-lane meadows, gathering pollen while dodging thorn gates.', earnsCoins:true },
   { slug:'foxfiretrails', name:'Foxfire Trails', emoji:'\u{1F98A}', scoreHint:'wisps', url:'/foxfiretrails', desc:'Guide a fox through five forest trails, gather blue wisps in order, and avoid tangled brambles.', earnsCoins:true },
+  { slug:'bottlecapcurl', name:'Bottlecap Curl', emoji:'\u{1F964}', scoreHint:'rings', url:'/bottlecapcurl', desc:'Aim and flick a bottlecap through ordered scoring rings across five colorful tabletop curling rinks.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
