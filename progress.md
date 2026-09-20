@@ -1,5 +1,75 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-18 Bottlecap Curl automation
+- Started from clean detached origin/main `92ed3d81c20063f15195f9d900867d85a89a17b6`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 2 moderate audit findings and a Node 22 versus required Node 24 warning.
+- Selected Bottlecap Curl (`/bottlecapcurl`), a distinct five-rink aim-and-flick precision game absent from the 221-game registry and release memory. Implemented keyboard/button/touch aiming, deterministic cap physics, ordered rings, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ targets, rinks, misses }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual/browser QA, run final gates and authoritative audit, then publish and verify production.
+- SEO, OG, and local Linear generation completed; restored 18 verified blank-line-only legacy page changes and 44 existing OG renders whose metadata inputs were unchanged. Maintenance validation and the 223-game preflight both pass.
+- Supplied Playwright client completed a real launch. Focused desktop/mobile QA passed exact stepping, paused physics freeze, input and aim boundaries, genuine scoring physics, all five rinks, loss/restart, palettes, fullscreen/Escape, feedback, touch controls, 390px no-overflow layout, and zero browser/page/request errors. Visual review found and fixed a forced-loss repaint mismatch before the complete rerun.
+- TODO: visually confirm the corrected loss capture, run the feedback smoke and ordered final gates, then audit, guarded publication, merge, and production verification.
+- Corrected loss capture visually matches `render_game_to_text()`. Shared feedback smoke passed. Ordered final gates passed: maintenance, 223-game preflight, telemetry 16/16, feedback 32/32, shop 69/69, social 22/22, and `git diff --check`.
+- Pre-stage audit found one appended registry entry, one matching top-level game folder, one current content contract, one Unreleased changelog mention, matching completed/lost/abandoned reporting, no secrets or dependency changes, and only approved release paths.
+- TODO: create the dated automation branch, stage and inspect the exact release, commit, authoritative audit, guarded PR publication, merge, and production verification.
+
+## 2026-09-17 Foxfire Trails automation
+- Started from clean detached origin/main `ea398517205e2975026dca4e898544cc0b39bd75`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 2 moderate audit findings and a Node 22 versus required Node 24 warning.
+- Selected Foxfire Trails (`/foxfiretrails`), a distinct five-trail grid-navigation game absent from the 220-game registry and release memory. Implemented keyboard/button/touch movement, sequential wisps, bramble collisions, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ wisps, trails, bumps }` outcomes.
+- TODO: generate support files, run early gates, complete supplied-client and focused visual/browser QA, run final gates and authoritative audit, then publish and verify production.
+- SEO, OG, and local Linear generation completed; restored 17 whitespace-normalized-identical legacy page changes and the same 42 documented nondeterministic legacy OG renders. The release diff is scoped to the new game and approved generated paths. Maintenance validation and the 221-game preflight both pass.
+- TODO: complete supplied-client and focused visual/browser QA, then final gates, authoritative audit, guarded publication, merge, and production verification.
+- Develop-web-game verification passed: the supplied client completed a genuine first trail, and focused desktop/mobile QA covered exact +1,234 ms stepping, paused-time/input freeze, boundaries, three-bramble loss/restart, all five trails with exact completed `{ wisps: 20, trails: 5, bumps: 0 }`, all three palettes, fullscreen/Escape, feedback keyboard isolation, button/touch controls, 390px no-overflow layout, matching text state, and zero console/page/request errors. Gameplay, pause, transition, loss, win, feedback, mobile, palette, supplied-client, and OG captures were visually inspected.
+- TODO: run the feedback smoke and ordered final gates, then audit, guarded publication, merge, and production verification.
+- Shared feedback smoke passed. Ordered final gates passed: maintenance, 221-game preflight, telemetry 16/16, feedback 31/31, shop 69/69, social 22/22, and `git diff --check`. The pre-stage audit found exactly one appended registry entry, one matching top-level game folder, one current contract, one Unreleased mention, matching terminal reporting, and only approved release paths.
+- TODO: stage and inspect the exact release, commit, run the authoritative daily-lane audit, publish through the guarded PR, merge, and verify Actions/production.
+
+## 2026-09-17 iPhone double-tap zoom fix
+- User reported accidental iPhone zoom in games that require rapid successive taps.
+- All 220 registered games mount `src/feedback/embed.js`; added a shared `touch-action: manipulation` rule to the page root so double-tap zoom is suppressed while pinch zoom remains available. Existing game canvases with `touch-action: none` keep their stricter gesture handling.
+- Added a feedback coverage contract test for the shared rule. The supplied game client rendered active Whack-a-Mole gameplay cleanly, and focused 390x844 touch QA registered both taps 114ms apart with `visualViewport.scale === 1`, no horizontal overflow, and no browser errors. The screenshot was visually inspected. All 32 feedback tests and the two focused clip/coverage tests pass.
+
+## 2026-09-16 Pollen Passage automation
+- Started from clean detached origin/main ec561ec026f53a12664d43bc13d9de851132e40a; npm ci passed with 16 existing audit findings.
+- Added draft Pollen Passage, a five-meadow bee lane game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded blooms/meadows/stings outcomes.
+- TODO: run generators, early gates, supplied-client and focused visual/browser QA, final gates, audit, publish, and production verification.
+- SEO, OG, and local Linear generators passed; restored the same 42 documented nondeterministic legacy OG cards and 14 blank-line-only legacy page edits. Maintenance and 220-game preflight passed.
+- Supplied-client and focused desktop/mobile QA passed exact stepping, paused freeze, lane controls, five-meadow win, three-sting loss/restart, palettes, fullscreen/Escape, feedback, touch, and 390px no-overflow with zero browser errors. Required screenshots and the OG card were visually inspected.
+- TODO: run final gates, release audit, guarded PR publication, merge, and production verification.
+
+## 2026-09-15 Signal Garden automation
+- Started from clean detached origin/main 03033ce8c7f47a563fa43548eb293c91c29c13e7; npm ci passed with 16 existing audit findings.
+- Added Signal Garden, a five-garden firefly sequence-memory game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded signals/gardens/mistakes outcomes.
+- TODO: run generators, early gates, complete supplied-client visual/browser QA, final gates, audit, publish, and verify production.
+- SEO, OG, and local Linear generators passed; restored the documented 42 nondeterministic legacy OG renders and 14 blank-line-only legacy page edits. Maintenance and 219-game preflight passed.
+- Supplied Playwright client and focused QA passed exact stepping, paused freeze, all five sequences, win/loss/restart, three palettes, fullscreen/Escape, feedback, and 390px mobile layout with zero browser errors. Gameplay, pause, win, loss, theme, feedback, mobile, and OG captures were visually inspected.
+- TODO: final gates, release audit, guarded PR publication, merge, and production verification.
+
+## 2026-09-14 Weekly content pack 2026-W38
+- Isolated from `origin/main` baseline `c5a43d7caf099fd025a98467c6fb90a327096319`; issue #316 is authoritative. Added Saffron Nocturne for Aurora Accord, Cinder Constellation for Lantern Loom, and Comet Chicane for Turbo Tilt as inventory-gated palette cosmetics, plus four exact 20-coin W38 challenges for Aurora Accord notes, Lantern Loom stars, Turbo Tilt players, and Dewdrop Drift motes.
+- Visually inspected each shop preview plus unowned/equipped game renders with matching deterministic state and no new console errors. The supplied game client could not reach the local server because this environment blocks loopback listeners; its retries reported `ERR_CONNECTION_REFUSED`.
+- Ordered gates passed: maintenance, 218-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, and social 22/22. Required `test:weekly-smoke:raw` failed only because `http://127.0.0.1:4173` is unavailable; per release policy, do not audit, commit, push, or open a PR until that raw smoke passes.
+- Resumed with a permitted server on port 3000. The equivalent raw weekly smoke passed after locally serving a temporary production-API fixture; that fixture was removed before the release audit. TODO: stage the audited 10-file pack, commit, publish the guarded PR, and verify merge/production.
+
+## 2026-09-14 Paper Bridge automation
+- Started from clean detached origin/main `c79fa1124a6b315da2425a68e33708af1c9d45a0`; `npm ci` passed with 16 existing audit findings.
+- Added Paper Bridge (`/paperbridge`), a five-ravine paper-plank precision game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ bridges, ravines, falls }` outcomes.
+- TODO: generators, early gates, browser QA, final gates, diff audit, guarded PR, merge, and production verification.
+- SEO, OG, and local Linear generation passed; restored the 42 documented nondeterministic legacy OG renders and 14 blank-line-only legacy page edits. Maintenance validation and 218-game preflight passed.
+- Browser QA found and fixed the plank unfolding direction, ravine metric lag, a missing stylesheet request, and mobile title overlap. Supplied-client and focused QA now pass exact stepping, pause freeze, animation, five-stage win, three-fall loss/restart, palettes, feedback, touch, and 390px layout with zero errors; gameplay, transition, pause, loss, win, feedback, mobile, and OG captures were visually inspected.
+- TODO: final gates, diff audit, guarded PR, merge, and production verification.
+- Ordered final gates passed: maintenance, 218-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff check. Baseline audit found exactly one appended registry entry, one matching game folder, matching contract/outcomes/changelog, and only the 11 permitted release paths.
+- TODO: branch commit, authoritative audit, guarded PR, merge, and production verification.
+
+## 2026-09-13 Chalk Chase automation
+- Started from clean detached origin/main `01a6d87f9df8d8b35b135a83b3aa7fd0f38e0c6b`; `npm ci` passed with 16 existing audit findings.
+- Added Chalk Chase (`/chalkchase`), a five-board ordered-star path puzzle with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ stars, boards, erases }` outcomes.
+- TODO: generators, early gates, complete browser QA, final gates, diff audit, guarded PR, merge, and production verification.
+- SEO, OG, and local Linear generation passed; restored the 42 known nondeterministic existing OG cards and 14 known blank-line-only page edits. Maintenance validation and 217-game preflight passed.
+- Supplied-client smoke passed. Focused QA solved all five boards and verified exact stepping, paused freeze, loss/restart, themes, fullscreen/Escape wiring, feedback, touch controls, mobile width, and zero browser errors. Visual review found and fixed a touch-hover contrast issue.
+- Complete QA rerun passed after the contrast fix. Gameplay, pause, transition, loss, win, feedback, corrected mobile, and OG captures were visually inspected and match text state.
+- TODO: final gates, diff audit, guarded PR, merge, and production verification.
+- Ordered final gates passed: maintenance, 217-game preflight, telemetry 16/16, feedback 31/31, shop 68/68, social 22/22, and diff check. Exact release review found one registry entry, one top-level game folder, matching contract/outcomes/changelog, and only the 11 permitted paths.
+- TODO: branch commit, authoritative audit, guarded PR, merge, and production verification.
+
 ## 2026-09-12 Pebble Parade automation
 - Started from clean detached origin/main `a82bcebf2664ffe0b7669eac37143b42b3f582ab`; `npm ci` passed with 16 existing audit findings.
 - Added Pebble Parade (`/pebbleparade`), a five-pond timing game with keyboard/touch controls, three palettes, feedback, deterministic hooks, and bounded `{ skips, ponds, splashes }` outcomes.
@@ -4662,3 +4732,96 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Aggregate QA passes: maintenance, telemetry 16/16, shop/billing 68/68, feedback 31/31, social/discovery 22/22, and classroom smoke. Diff/privacy audit confirms strategy data remains ephemeral and no host/display/opponent snapshot leaks choices, predictions, or Hot Takes before reveal.
 - Deployed the backward-compatible backend first as Cloud Run revision `audioagar-server-00010-m69`; it serves 100% of traffic with concurrency 1000 and max instances one, while health continues to advertise Audio Agar and both party games.
 - TODO: publish the frontend/server source through a guarded PR and live-smoke Duel Shift.
+
+## 2026-09-10 Persistent party rotation and player voting
+- Current request: turn `/party` into a persistent 2–8-player session with an opening vote, named live ballots, a server-selected weighted wheel, automatic cross-game rotation, and cumulative normalized standings while preserving standalone Turbo Tilt and Crowd Shift.
+- Implemented the first authoritative server slice on `codex/persistent-party-rotation`: rotating rooms use `gameKey: party`, retain players/tokens/displays, generate three player-count-safe game+mode options, accept replaceable named ballots, select one ballot cryptographically, transition through voting/spinning/next-up/activity/results, award `10/8/6/5/4/3/2/1` party points, and support pause/resume/skip/end. Added fixed Crowd Shift activity modes and rotation-focused Go coverage; all Go tests and vet pass.
+- Completed the persistent host/display and phone UI, embedded Turbo Tilt/Crowd Shift renderers, named voting controller, rotation client coverage, visual iteration, and end-to-end party smoke. The supplied deterministic develop-web-game client also completed a Turbo Tilt action loop with a text snapshot and no browser error artifact. Deployed Cloud Run revision `audioagar-server-00012-pwv`, verified production health and a live rotating-room host join, and published the static frontend through Vercel; preserve the unrelated `SPRINT_BOARD.md` edit.
+- Fixed party-mode clipping: embedded activities now start the existing canvas recorder when the server enters `activity`, finalize it when the activity ends or is skipped, and keep the existing Save clip/share path. Added a mocked MediaRecorder smoke covering start, finalize, and save.
+
+## 2026-09-12 Party Mode navigation and player avatars
+- Added the homepage Party Mode menu link and an accessible 16-animal picker that remembers the device choice. Extended the WebSocket join/welcome/player/ballot contracts with validated, reconnect-stable avatars and rendered them throughout the Party shell, Turbo Tilt, and Crowd Shift.
+- Focused Node/Go suites, social compatibility, supplied game client, Party Rotation smoke with distinct persisted avatars, Turbo Tilt smoke, Crowd Shift smoke, and diff checks pass. Desktop/mobile screenshots for the menu, picker, controllers, lobbies, voting, gameplay, reveals, standings, and podiums were visually inspected with zero reported browser errors. No remaining TODOs.
+## 2026-09-12 Party Mode entry-page refocus
+- Refocused `/party/` on the two primary intents: starting a shared party room or joining one with a code, nickname, and saved animal avatar. Removed the visible Turbo Tilt and Crowd Shift promotional cards/links and moved the extra-screen form into a quieter secondary strip.
+- Updated focused client contracts to prevent game-specific links from returning. The 15-test Party/Turbo/Crowd client set and the full two-player Party Rotation smoke pass. Supplied-client desktop state matches `party-hub`; desktop and 390px full-page mobile captures were visually inspected with no overflow or browser errors.
+- TODO: publish the entry-page-only follow-up when requested; unrelated local `CHANGELOG.md` and `SPRINT_BOARD.md` edits remain outside this work.
+
+## 2026-09-13 Party Mode Sprint 1 - room safety and host controls
+- Added server-authoritative room locking, late-join policy, a dynamic 2–8 player limit, friendly generated animal names, and host removal. Removed-player reconnect tokens are blocked for the lifetime of the room, and player state is cleared from voting plus Crowd Shift maps.
+- Added accessible host controls and state indicators to the shared screen, roster-level Remove actions with confirmation, dynamic capacity counts, and a dedicated mobile-friendly removal notice. All room policies are included in standalone and rotating-party snapshots.
+- Added Go and client contract coverage plus expanded the Party Rotation browser smoke to verify locked joins, friendly names, removal, blocked reconnect, capacity enforcement, and late-join enforcement before completing voting, two activities, standings, and party end.
+- Verification passed: focused Party/Turbo/Crowd Node tests, all Go tests, the expanded multi-browser Playwright smoke, `render_game_to_text()` state checks, and diff checks. Visually inspected the 1280x720 host lobby and 390x844 avatar/removal screens; no browser-console errors or layout overflow were reported.
+- TODO: continue the next prioritized sprint after review; deployment was not requested for this sprint.
+- Production follow-up: fixed the controller render loop so a blocked reconnect keeps the dedicated removal notice visible instead of immediately restoring the stale game controller.
+
+## 2026-09-13 Party Mode Sprint 2 - setup, accessibility, and selection rules
+- Production increment #310 added saved Quick/Standard/Marathon lengths, Mixed/Competitive/Cooperative styles, Standard/Family/Relaxed/Custom accessibility presets, extended timers, motion/contrast/audio/haptics propagation, game progress, and automatic completion. It also fixed a WebSocket send/close race found during browser teardown; Cloud Run revision `audioagar-server-00016-txm` serves 100%.
+- Current increment adds server-authoritative activity include/exclude controls, Chaos Wheel/Majority/Unanimous/Host Choice selection, session/immediate/off repeat avoidance, and optional gentle catch-up points. Host Choice has dedicated high-priority controls above setup during voting.
+- Go and focused client tests pass. The supplied Playwright client produced matching host `render_game_to_text`; expanded two-player smoke passes saved settings, a two-activity pool, majority selection, repeat avoidance, catch-up contract coverage, and a separate host-choice room. Desktop host-choice and wheel screenshots were visually inspected; sticky desktop staging keeps gameplay visible while the longer sidebar scrolls.
+- TODO: final diff review, repeat focused tests, commit, guarded PR, production deploy/verification; then begin the next sprint on onboarding/rejoin polish and player-facing explanations.
+
+## 2026-09-13 Party Mode Sprint 3 - ready and reconnect flow
+- Added a non-blocking, server-authoritative lobby ready check. Players can toggle Ready from their phones, host and player snapshots include readiness, the shared lobby marks each player READY/JOINED, and the host Start control shows the live ready count while remaining available once the minimum player count is met.
+- Added concise phone onboarding that explains the join, ready, vote, and play flow and adapts its selection-rule explanation for Chaos Wheel, Majority, Unanimous, and Host Choice rooms.
+- Fixed automatic reconnect identity by promoting the first welcome token into the live connection options. A dropped socket now rejoins the same player instead of creating a duplicate, and welcome payloads distinguish restored sessions so the phone can show a brief “Welcome back” confirmation.
+- Added Go and client contract coverage plus an end-to-end forced-disconnect regression that proves identity, avatar, ready state, and player count survive automatic reconnect. The complete two-player rotation smoke passes through voting, embedded activities, standings, and party end.
+- The required supplied Playwright client produced matching `render_game_to_text()` state with `readyCount: 0` and no browser error artifact. Desktop/mobile visual inspection confirmed readable ready markers, host counts, onboarding, and reconnect confirmation without overflow.
+- Final focused gate passed: Go tests and vet, 16 Party/Turbo/Crowd client tests, JavaScript syntax checks, the complete multiplayer smoke, supplied-client state/visual QA, and diff checks. TODO: publish through the guarded PR lane, deploy the compatible backend, and verify production health and workflows.
+
+## 2026-09-13 Party Mode Sprint 4 - host recovery
+- Closed a host-takeover gap: an existing room now always requires its server-issued host token, including while the original host is disconnected, and a second host cannot replace an active one even with a copied token.
+- Added a 15-minute same-device recovery record for the active host room. Returning to `/party/` shows a prominent recent-room card with Resume hosting and Forget this room actions; resuming restores the existing room code, players, settings, and game state.
+- Host welcomes now distinguish recovered sessions and show a brief confirmation that players can continue using the same code. Recovery records refresh during long parties and are cleared when the server rejects a stale or invalid room.
+- Expanded the end-to-end rotation smoke to block a tokenless host, navigate the real host away, clear tab-scoped storage, restore through device storage, verify the same two-player roster, exercise the forget path, and continue through both activities and final standings. Stabilized the activity-pool setup and extended-timer waits found during this longer scenario.
+- The supplied Playwright client reports matching host lobby state with no browser error artifact. Desktop, 390px landing, and restored-host screenshots were visually inspected; the recovery UI is readable and has no horizontal overflow.
+- Final focused gate passed: Go tests and vet, 17 Party/Turbo/Crowd client tests, JavaScript syntax and diff checks, the supplied Playwright client, and the complete recovery-aware rotation smoke. TODO: publish through the guarded PR lane, deploy the compatible backend, and verify production health and workflows.
+
+## 2026-09-13 Party Mode Sprint 5 - same-room play again
+- Added a server-authoritative Play another party action to the final podium. It returns the existing room to the setup lobby while preserving the room code, connected players, host recovery, safety choices, activity pool, duration, selection method, and accessibility settings.
+- A fresh party resets cumulative points, activity wins, awards, ranks, activity/repeat history, per-game results, and every player's ready state. Removed-player blocks remain in force and existing player names, avatars, tokens, and cosmetic choices remain attached to the room.
+- Added a clear host button, a player-phone encore panel explaining that everyone should stay in the room, and final-podium copy that advertises the reusable room instead of ending at a dead end.
+- Go and client coverage confirm the reset boundary and preserved setup. The expanded two-player browser smoke completes the first party, verifies the host/player finale, restarts the exact room, checks fresh standings and preserved settings, readies both phones again, and captures the new lobby.
+- The supplied Playwright client reports matching lobby state with no browser error artifact. Final phone encore, host podium, and restarted-lobby screenshots were visually inspected with readable controls and no reported overflow.
+- Final focused gate passed: Go tests and vet, 18 Party/Turbo/Crowd client tests, JavaScript syntax and diff checks, the supplied Playwright client, and the complete play-again rotation smoke. TODO: publish through the guarded PR lane, deploy the compatible backend, and verify production health and workflows.
+
+## 2026-09-14 Party Mode Sprint 6 - service isolation
+- Split production endpoint selection by game family: Party Mode now targets `party-server`, while Audio Agar retains its existing dedicated endpoint. Explicit URL, query-string, global, stored, and localhost overrides remain backward compatible.
+- Added deployment-level `ENABLED_GAMES` enforcement and service-specific health identity so each Cloud Run runtime rejects traffic for the other game. An invalid non-empty allowlist fails closed; an omitted allowlist preserves the combined local development server.
+- Updated the Party rotation launcher to exercise the Party-only runtime configuration. Focused client tests, Go tests/vet, the complete two-player rotation smoke, the supplied Playwright client, `render_game_to_text()`, and visual inspection pass with no browser error artifact.
+- Deployed Party-only revision `party-server-00001-rbd`; its health contract lists only Party/Turbo Tilt/Crowd Shift, a live host join created a four-letter room, and an Audio Agar join was rejected with `game_unavailable`. Deployed the reciprocal Audio Agar build as `audioagar-server-00021-bmt`, then enabled a temporary combined compatibility revision `audioagar-server-00022-t96` until the new frontend bundle reaches production.
+- Production completion: PR #317 merged as `9d3c012`; Main QA and production verification passed. A live browser opened Party Mode on `party-server`, and final Audio Agar revision `audioagar-server-00023-9l9` serves only Audio Agar while rejecting Party joins.
+
+## 2026-09-14 Party Mode Sprint 7 - frictionless player invites
+- Added policy-aware player invitation actions to both the host sidebar and connected-phone lobby. Supported devices open the native share sheet; other browsers copy a deep link that preloads the room code and preserves an explicit test/development WebSocket override.
+- Invitation controls reflect authoritative room policy: locked and full rooms disable invites, and late-join-disabled rooms close invites once play begins. The existing display-sharing link remains separate and clearly labeled.
+- Replaced the Party smoke launcher's fixed Python/low-port frontend with the repository Node static server and overridable high test ports after Windows rejected the old port before browser assertions could start.
+- Focused client contracts and the complete two-player rotation smoke pass, including host/player link payloads and locked/full/late-join states. The supplied Playwright client reports matching lobby state with no browser error artifact; host-sidebar and 390x844 phone screenshots were visually inspected with no overflow. TODO: repeat final focused gates, publish through the guarded PR lane, and verify the production share/copy flow.
+
+## 2026-09-14 Party Mode Sprint 8 - restart recovery
+- Added an optional Firestore-backed Party room store, enabled only by `PARTY_ROOM_STORE=firestore`. Production room state is deep-frozen under the room lock and checkpointed every two seconds with a 15-minute application-enforced expiry; local development and Audio Agar remain storage-free by default.
+- Recovery restores host/player reconnect tokens, names, avatars, room policies, Party setup, votes, activity history, scores, Turbo Tilt state, and Crowd Shift state without restoring sockets. Every player returns disconnected, and an interrupted activity stays paused until the valid host token reconnects.
+- Added stale-checkpoint cleanup after room removal, explicit health reporting, deployment documentation, codec/configuration tests, and a two-hub WebSocket restart test proving host/player identity, avatars, scores, activity, and timers survive a process replacement.
+- Verified a scoped write/read/delete against production Firestore using Application Default Credentials; the document exposed the expected schema, room ID, expiry, and payload fields, then was removed. Go tests/vet, 26 focused multiplayer client tests, the complete Party Rotation smoke, supplied Playwright client state, and visual review pass.
+- Production follow-up: Firestore TTL is ACTIVE for `partyRoomSnapshots.expiresAt`; Party-only revision `party-server-00004-42c` serves 100% with `roomRecovery: true`. A real room created on revision 00002 was restored through revision 00003 with the same host/player identities, 🐸 avatar, ready state, and phase. Audio Agar was not deployed. PR #321 gates pass; merge and post-main verification remain.
+
+## 2026-09-14 Party Mode Sprint 9 - audio feedback
+- Added a lightweight Party shell audio engine using generated Web Audio tones and optional shared-screen speech synthesis; no external audio assets or downloads are required.
+- Added a gesture-unlocked, device-local Sound on/off control. Effects and narration remain gated by the authoritative Party accessibility settings, while narration is restricted to host/display screens so phones stay quiet.
+- Wired cues to joins, ready states, voting, wheel selection, activity countdown/choices/reveals, results, podium, pause, errors, and player actions. Exposed compact audio state through `render_game_to_text()` and a local debug hook.
+- Added static contract coverage and an end-to-end smoke assertion for sound activation. Focused Party/Turbo/Crowd/Audio Agar client tests, syntax checks, full Party Rotation smoke, supplied Playwright client, text-state output, and desktop visual inspection pass with no browser-console errors or overflow.
+- TODO: publish the frontend through the guarded PR lane and verify the production Party room audio control after Vercel deployment.
+
+## 2026-09-14 Party Mode Sprints 10-14 - framework hardening
+- Added an audience lane with 64 reconnectable, non-scoring participants. Audience members retain their server-selected animal avatar, can send rate-limited reactions, and contribute one aggregate ballot during Party voting without consuming player slots.
+- Added persistent two-team mode with server-authoritative team assignment, optional lobby shuffling, team score snapshots, and visible Comets/Tides standings.
+- Added host controls for audience enable/disable and standard versus family-safe nickname moderation; moderation and capacity checks remain server-authoritative.
+- Added server-retained activity highlights, winner avatars, a host-side highlights panel, and a copyable post-party summary.
+- Added client heartbeat latency/quality diagnostics, exposed through `getDiagnostics()`, the connection pill, and `render_game_to_text()`.
+- Added Go coverage for audience join/vote/reaction/reconnect, team persistence, highlights, family moderation, and 8-player/64-audience snapshot capacity. Expanded the Party Rotation Playwright smoke to exercise a full-room audience join and reaction. Focused client tests, Go tests, the supplied Playwright client, visual screenshots, and the full rotation smoke pass with no browser-console errors or horizontal overflow.
+
+## 2026-09-14 Party content Sprint 1 - Crowd Shift Blitz
+- Added `crowdshift:blitz`, a five-round rapid variant that reuses the proven Crowd Shift interaction and scoring contract while giving the activity library a distinct shorter format.
+- Blitz uses a server-authoritative five-round limit and shorter choice windows, and is registered in the Party activity catalog for host pools and voting.
+- Added Go and client contract coverage. Focused Party/Turbo/Crowd tests, Go tests/vet, the complete Party Rotation smoke, supplied Playwright client state, and desktop visual inspection pass with no browser-console errors or layout overflow.
+- TODO: publish through the guarded PR lane, deploy the compatible backend/frontend, and verify the live Party activity catalog before starting the first standalone game sprint.

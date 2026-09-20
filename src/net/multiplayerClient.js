@@ -1,5 +1,6 @@
 const PROTOCOL = "aiandsons.multiplayer.v1";
-const DEFAULT_PRODUCTION_ENDPOINT = "wss://audioagar-server-6owms56gxq-uc.a.run.app/ws";
+const DEFAULT_AUDIOAGAR_PRODUCTION_ENDPOINT = "wss://audioagar-server-6owms56gxq-uc.a.run.app/ws";
+const DEFAULT_PARTY_PRODUCTION_ENDPOINT = "wss://party-server-6owms56gxq-uc.a.run.app/ws";
 const DEFAULT_LOCAL_ENDPOINT = "ws://127.0.0.1:8081/ws";
 const STORAGE_KEY = "aiandsons-multiplayer-ws-endpoint";
 
@@ -77,7 +78,7 @@ function endpointFromQuery() {
   }
 }
 
-export function resolveWebSocketUrl(endpoint) {
+export function resolveWebSocketUrl(endpoint, gameId = "") {
   const explicit = normalizeWebSocketUrl(endpoint);
   if (explicit) return explicit;
 
@@ -92,7 +93,7 @@ export function resolveWebSocketUrl(endpoint) {
 
   const host = String(globalThis.location?.hostname || "");
   if (host.includes("aiandsons.io") || host.includes("vercel.app")) {
-    return DEFAULT_PRODUCTION_ENDPOINT;
+    return gameId === "party" ? DEFAULT_PARTY_PRODUCTION_ENDPOINT : DEFAULT_AUDIOAGAR_PRODUCTION_ENDPOINT;
   }
   return DEFAULT_LOCAL_ENDPOINT;
 }
@@ -134,6 +135,7 @@ class MultiplayerConnection {
       roomId: "",
       token: "",
       playerName: "",
+      playerAvatar: "",
       role: "",
       gameKey: "",
       reconnect: true,
@@ -148,7 +150,7 @@ class MultiplayerConnection {
       throw new Error("connect requires a gameId");
     }
     this.roomId = String(this.options.roomId || "").trim();
-    this.url = resolveWebSocketUrl(this.options.endpoint);
+    this.url = resolveWebSocketUrl(this.options.endpoint, this.gameId);
     this.socket = null;
     this.closedByUser = false;
     this.reconnectAttempt = 0;
@@ -160,6 +162,9 @@ class MultiplayerConnection {
     this.stateCallbacks = new Set();
     this.eventCallbacks = new Set();
     this.statusCallbacks = new Set();
+    this.latencyMs = null;
+    this.lastPongAt = 0;
+    this.connectionQuality = "unknown";
   }
 
   connectSocket() {
@@ -204,6 +209,7 @@ class MultiplayerConnection {
         roomId: this.roomId || undefined,
         token: this.options.token || undefined,
         playerName: this.options.playerName || undefined,
+        playerAvatar: this.options.playerAvatar || undefined,
         role: this.options.role || undefined,
         gameKey: this.options.gameKey || undefined,
         userAgent: globalThis.navigator?.userAgent || "",
@@ -325,8 +331,20 @@ class MultiplayerConnection {
     }
 
     if (type === "pong") {
-      this.emitEvent({ type: "pong", receivedAt: nowMs(), payload });
+      const receivedAt = nowMs();
+      const clientTime = Number(payload.echo?.clientTime || payload.clientTime || 0);
+      if (clientTime > 0 && receivedAt >= clientTime) {
+        this.latencyMs = Math.max(0, receivedAt - clientTime);
+        this.lastPongAt = receivedAt;
+        this.connectionQuality = this.latencyMs <= 120 ? "good" : this.latencyMs <= 280 ? "fair" : "poor";
+        this.emitEvent({ type: "connection_quality", receivedAt, latencyMs: this.latencyMs, quality: this.connectionQuality, lastPongAt: this.lastPongAt });
+      }
+      this.emitEvent({ type: "pong", receivedAt, payload, latencyMs: this.latencyMs, quality: this.connectionQuality });
       return;
+    }
+
+    if (type === "welcome" && typeof payload.token === "string" && payload.token) {
+      this.options.token = payload.token;
     }
 
     this.emitEvent({
@@ -379,6 +397,10 @@ class MultiplayerConnection {
     return () => this.statusCallbacks.delete(cb);
   }
 
+  getDiagnostics() {
+    return { latencyMs: this.latencyMs, lastPongAt: this.lastPongAt, quality: this.connectionQuality, endpoint: this.url };
+  }
+
   disconnect() {
     this.closedByUser = true;
     this.stopHeartbeat();
@@ -407,7 +429,9 @@ export async function connect(options) {
 export const multiplayerProtocol = Object.freeze({
   name: PROTOCOL,
   version: 1,
-  defaultProductionEndpoint: DEFAULT_PRODUCTION_ENDPOINT,
+  defaultProductionEndpoint: DEFAULT_AUDIOAGAR_PRODUCTION_ENDPOINT,
+  defaultAudioAgarProductionEndpoint: DEFAULT_AUDIOAGAR_PRODUCTION_ENDPOINT,
+  defaultPartyProductionEndpoint: DEFAULT_PARTY_PRODUCTION_ENDPOINT,
   defaultLocalEndpoint: DEFAULT_LOCAL_ENDPOINT,
   storageKey: STORAGE_KEY,
 });

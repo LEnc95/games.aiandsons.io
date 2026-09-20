@@ -1,14 +1,18 @@
 import { connect } from "/src/net/multiplayerClient.js";
-import { rememberRecent } from "/src/core/state.js";
+import { rememberRecent, state as profileState } from "/src/core/state.js";
 import { reportGameOutcome } from "/src/core/outcomes.js";
+import { finalizeRecording, startRecording } from "/src/social/record.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const displayCode = String(params.get("display") || "").toUpperCase().replace(/[^A-HJ-NP-Z]/g, "").slice(0, 4);
-const isDisplay = displayCode.length === 4;
+const embedded = params.get("embedded") === "1";
+const isDisplay = embedded || displayCode.length === 4;
+const COMET_CHICANE = profileState.inventory instanceof Set && profileState.inventory.has("turbotilt-comet-chicane");
 if (!isDisplay) rememberRecent("turbotilt");
+let embeddedRecording = false;
 const state = {
   connection: null,
   roomId: "",
@@ -39,6 +43,22 @@ function setServerStatus(label, kind = "") {
 }
 
 async function connectScreen() {
+  if (embedded) {
+    document.body.classList.add("display-mode", "embedded-mode");
+    byId("screenRole").textContent = "Party activity";
+    window.addEventListener("message", (event) => {
+      if (event.origin !== location.origin || event.data?.type !== "party_snapshot") return;
+      const previous = state.snapshot;
+      state.roomId = event.data.roomId || state.roomId;
+      state.snapshot = event.data.snapshot || null;
+      applyPartyPresentation(state.snapshot);
+      syncEmbeddedRecording(previous, state.snapshot);
+      consumeRaceEvents();
+      processRaceAudio(previous, state.snapshot);
+      syncUi();
+    });
+    return;
+  }
   if (state.displayMode) {
     const connection = await connect({
       gameId: "party",
@@ -64,6 +84,18 @@ async function connectScreen() {
     token,
   });
   bindConnection(connection);
+}
+
+function syncEmbeddedRecording(previous, next) {
+  if (!embedded || !next) return;
+  const active = next.partyPhase === "activity";
+  const wasActive = previous?.partyPhase === "activity";
+  if (active && !wasActive) {
+    embeddedRecording = startRecording() || embeddedRecording;
+  } else if (!active && wasActive && embeddedRecording) {
+    embeddedRecording = false;
+    void finalizeRecording();
+  }
 }
 
 function bindConnection(connection) {
@@ -173,6 +205,7 @@ function syncUi() {
     dot.className = "dot";
     dot.style.color = player.color;
     dot.style.background = player.color;
+    dot.textContent = player.avatar || "🦊";
     const name = document.createElement("strong");
     name.textContent = player.name;
     item.append(dot, name);
@@ -245,7 +278,7 @@ function audioContext() {
 }
 
 function playTone(kind) {
-  if (!state.audioEnabled) return;
+  if (!state.audioEnabled || state.snapshot?.partySettings?.effects === false) return;
   const audio = audioContext();
   const now = audio.currentTime;
   const oscillator = audio.createOscillator();
@@ -262,13 +295,18 @@ function playTone(kind) {
 }
 
 function announce(text) {
-  if (!state.audioEnabled || !text || !window.speechSynthesis || performance.now() - state.lastAnnounceAt < 1800) return;
+  if (!state.audioEnabled || state.snapshot?.partySettings?.narration === false || !text || !window.speechSynthesis || performance.now() - state.lastAnnounceAt < 1800) return;
   state.lastAnnounceAt = performance.now();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 1.12;
   utterance.pitch = 1.08;
   utterance.volume = .82;
   window.speechSynthesis.speak(utterance);
+}
+
+function applyPartyPresentation(snapshot) {
+  document.body.classList.toggle("party-reduced-motion", Boolean(snapshot?.partySettings?.reducedMotion));
+  document.body.classList.toggle("party-high-contrast", Boolean(snapshot?.partySettings?.highContrast));
 }
 
 function processRaceAudio(previous, snapshot) {
@@ -356,13 +394,21 @@ const modeHelpText = {
 };
 function trackLabel(track) { return trackNames[track] || "Turbo Circuit"; }
 
+function turboPalette() {
+  if (COMET_CHICANE) {
+    return { sky: "#101d4d", road: "#1d2450", edge: "#5fe3ff", racer: "#ffb34b", barrier: "#ff6f91", energy: "#ffd66b", accent: "#a7f3ff" };
+  }
+  return { sky: "#154b63", road: "#102d39", edge: "#31e6c1", racer: "#ffcf4a", barrier: "#ff6b8a", energy: "#ffcf4a", accent: "#8de9df" };
+}
+
 function drawBackdrop() {
   const track = state.snapshot?.track || "neon";
   const palettes = {
     neon: ["#154b63", "#092838", "#04141e"], glacier: ["#6fa7c2", "#234e68", "#071c2b"],
     volcano: ["#6b241d", "#321a21", "#120c15"], space: ["#251d55", "#111936", "#050817"],
   };
-  const palette = palettes[track] || palettes.neon;
+  const palette = COMET_CHICANE ? [turboPalette().sky, "#263d8f", "#081233"] : (palettes[track] || palettes.neon);
+  const cosmetic = turboPalette();
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
   gradient.addColorStop(0, palette[0]);
   gradient.addColorStop(.55, palette[1]);
@@ -373,12 +419,12 @@ function drawBackdrop() {
   for (let i = 0; i < 55; i++) {
     const x = (i * 173) % canvas.width;
     const y = (i * 97 + state.stripeOffset * .12) % canvas.height;
-    ctx.fillStyle = i % 3 ? "#8de9df" : "#ffd65a";
+    ctx.fillStyle = i % 3 ? cosmetic.accent : cosmetic.energy;
     ctx.fillRect(x, y, 2, 2);
   }
   ctx.globalAlpha = 1;
 
-  ctx.fillStyle = "rgba(49,230,193,.08)";
+  ctx.fillStyle = COMET_CHICANE ? "rgba(95,227,255,.12)" : "rgba(49,230,193,.08)";
   for (let y = -80 + (state.stripeOffset * .55) % 80; y < canvas.height; y += 80) {
     ctx.fillRect(0, y, 240, 2);
     ctx.fillRect(960, y, 240, 2);
@@ -386,7 +432,8 @@ function drawBackdrop() {
 }
 
 function drawRoad() {
-  ctx.fillStyle = "#102d39";
+  const cosmetic = turboPalette();
+  ctx.fillStyle = cosmetic.road;
   ctx.beginPath();
   ctx.moveTo(275, canvas.height);
   ctx.lineTo(440, 0);
@@ -394,7 +441,7 @@ function drawRoad() {
   ctx.lineTo(925, canvas.height);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = "rgba(49,230,193,.7)";
+  ctx.strokeStyle = cosmetic.edge;
   ctx.lineWidth = 5;
   ctx.beginPath(); ctx.moveTo(275, canvas.height); ctx.lineTo(440, 0); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(925, canvas.height); ctx.lineTo(760, 0); ctx.stroke();
@@ -421,6 +468,7 @@ function obstacleRenderX(obstacle) {
 }
 
 function drawObstacle(obstacle, leaderDistance) {
+  const cosmetic = turboPalette();
   const delta = obstacle.distance - leaderDistance;
   const y = 300 - delta * .48;
   if (y < -30 || y > canvas.height + 30) return;
@@ -430,12 +478,12 @@ function drawObstacle(obstacle, leaderDistance) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(pulse, pulse);
-    ctx.shadowColor = "#ffcf4a";
+    ctx.shadowColor = cosmetic.energy;
     ctx.shadowBlur = 25;
-    ctx.fillStyle = "#ffcf4a";
+    ctx.fillStyle = cosmetic.energy;
     ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = "#fff1a6";
+    ctx.strokeStyle = cosmetic.accent;
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = "#6c4600";
@@ -459,7 +507,7 @@ function drawObstacle(obstacle, leaderDistance) {
     ctx.restore();
   } else {
     const track = state.snapshot?.track || "neon";
-    const barrierColor = track === "volcano" ? "#ff6a28" : track === "glacier" ? "#bdefff" : track === "space" ? "#c28cff" : "#ff6b8a";
+    const barrierColor = COMET_CHICANE ? cosmetic.barrier : (track === "volcano" ? "#ff6a28" : track === "glacier" ? "#bdefff" : track === "space" ? "#c28cff" : "#ff6b8a");
     ctx.save();
     ctx.translate(x, y);
     ctx.shadowColor = barrierColor;
@@ -508,6 +556,7 @@ function racerPosition(player, leaderDistance, index = 0) {
 }
 
 function drawRacer(player, leaderDistance, index) {
+  const cosmetic = turboPalette();
   const { x, y } = racerPosition(player, leaderDistance, index);
   if (y > canvas.height + 50) return;
   ctx.save();
@@ -518,7 +567,7 @@ function drawRacer(player, leaderDistance, index) {
     for (let trail = 0; trail < 5; trail++) {
       const trailY = 38 + trail * 11;
       ctx.globalAlpha = Math.max(.15, .75 - trail * .13);
-      ctx.fillStyle = player.trail === "rainbow" ? ["#ff6b8a", "#ffcf4a", "#31e6c1", "#75a7ff", "#c28cff"][trail] : player.trail === "bubbles" ? "#bfefff" : "#ffcf4a";
+      ctx.fillStyle = COMET_CHICANE ? cosmetic.racer : (player.trail === "rainbow" ? ["#ff6b8a", "#ffcf4a", "#31e6c1", "#75a7ff", "#c28cff"][trail] : player.trail === "bubbles" ? "#bfefff" : "#ffcf4a");
       ctx.beginPath(); ctx.arc(Math.sin(trail * 2.1) * 8, trailY, player.trail === "bubbles" ? 5 : 3, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = player.connected ? 1 : .56;
@@ -538,6 +587,11 @@ function drawRacer(player, leaderDistance, index) {
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#08151d";
   ctx.fillRect(-14, -19, 28, 20);
+  ctx.fillStyle = "#fff";
+  ctx.font = "17px \"Segoe UI Emoji\",sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(player.avatar || "🦊", 0, -9);
   ctx.fillStyle = "rgba(255,255,255,.8)";
   ctx.fillRect(-16, 12, 7, 14); ctx.fillRect(9, 12, 7, 14);
   if (player.slowed) {
@@ -557,7 +611,7 @@ function drawRacer(player, leaderDistance, index) {
   ctx.font = "800 15px Trebuchet MS";
   ctx.textAlign = "center";
   ctx.fillStyle = "#fff";
-  ctx.fillText(player.name, 0, -46);
+  ctx.fillText(`${player.avatar || "🦊"} ${player.name}`, 0, -46);
   if (state.snapshot?.settings?.mode === "relay" && player.driving) {
     ctx.fillStyle = "#ffcf4a";
     ctx.font = "900 11px Trebuchet MS";
@@ -631,11 +685,10 @@ function drawLeaderboard(players) {
   ctx.fillText("LIVE ORDER", 46, 52);
   leaders.forEach((player, index) => {
     const y = 84 + index * 42;
-    ctx.fillStyle = player.color;
-    ctx.beginPath(); ctx.arc(48, y - 5, 7, 0, Math.PI * 2); ctx.fill();
+    drawPlayerAvatar(player, 48, y - 5, 14);
     ctx.fillStyle = "#fff";
     ctx.font = "900 18px Trebuchet MS";
-    ctx.fillText(`${index + 1}. ${player.name}`, 64, y);
+    ctx.fillText(`${index + 1}. ${player.name}`, 70, y);
     ctx.textAlign = "right";
     ctx.fillStyle = player.slowed ? "#ff9aaa" : player.boosting ? "#ffcf4a" : "#9cb6c8";
     ctx.font = "800 13px Trebuchet MS";
@@ -658,6 +711,16 @@ function drawLobby(snapshot) {
   ctx.fillStyle = "#9cb6c8";
   ctx.font = "700 24px Trebuchet MS";
   ctx.fillText("Use the room code or scan the QR code", 600, 362);
+}
+
+function drawPlayerAvatar(player, x, y, radius = 18) {
+  ctx.fillStyle = player?.color || "#31e6c1";
+  ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = `${Math.round(radius * 1.25)}px \"Segoe UI Emoji\",sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(player?.avatar || "🦊", x, y + 1);
 }
 
 function drawRace(snapshot) {
@@ -736,8 +799,7 @@ function drawIntermission(snapshot) {
   players.slice(0, 6).forEach((player, index) => {
     const y = 268 + index * 43;
     ctx.textAlign = "left";
-    ctx.fillStyle = player.color;
-    ctx.beginPath(); ctx.arc(402, y - 5, 8, 0, Math.PI * 2); ctx.fill();
+    drawPlayerAvatar(player, 402, y - 5, 14);
     ctx.fillStyle = "#fff";
     ctx.font = "900 20px Trebuchet MS";
     ctx.fillText(`${index + 1}. ${player.name}`, 424, y);
@@ -807,7 +869,7 @@ function drawPodium(snapshot) {
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#fff";
     ctx.font = "900 21px Trebuchet MS";
-    ctx.fillText(player.name, x, 590 - h);
+    ctx.fillText(`${player.avatar || "🦊"} ${player.name}`, x, 590 - h);
     ctx.fillStyle = "#07141d";
     ctx.font = "900 17px Trebuchet MS";
     ctx.fillText(`${player.points} pts`, x, 618 - h);
@@ -892,6 +954,9 @@ window.advanceTime = (ms) => {
   state.stripeOffset += amount * .19;
   draw();
 };
+window.addEventListener("message", (event) => {
+  if (event.origin === location.origin && event.data?.type === "party_advance_time") window.advanceTime(event.data.ms);
+});
 window.render_game_to_text = () => JSON.stringify({
   coordinate_system: { origin: "top-left", x_axis: "right", y_axis: "down", canvas: { width: canvas.width, height: canvas.height }, track_x: "-1 left to +1 right", distance: "increases toward finish" },
   room_id: state.roomId,
@@ -903,7 +968,9 @@ window.render_game_to_text = () => JSON.stringify({
   heat: state.snapshot?.heat || 0,
   mode: state.snapshot?.settings?.mode || "classic",
   settings: state.snapshot?.settings || {},
+  party_settings: state.snapshot?.partySettings || {},
   track: state.snapshot?.track || "",
+  cosmetics: { cometChicane: COMET_CHICANE, palette: COMET_CHICANE ? turboPalette() : null },
   modifier: state.snapshot?.modifier || "",
   vote_options: state.snapshot?.voteOptions || [],
   vote_counts: state.snapshot?.voteCounts || {},

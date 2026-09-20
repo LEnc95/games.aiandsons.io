@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,15 +32,16 @@ func TestPartyWebSocketCreateJoinStartAndReconnect(t *testing.T) {
 	}
 
 	players := make([]*websocket.Conn, 0, 2)
-	for _, name := range []string{"Alpha", "Beta"} {
+	for index, name := range []string{"Alpha", "Beta"} {
 		conn := dialTestWebSocket(t, server.URL, "/ws")
 		players = append(players, conn)
+		avatar := []string{"🐸", "🦉"}[index]
 		writeTestEnvelope(t, conn, outEnvelope{
 			Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
-			Payload: map[string]any{"role": "player", "playerName": name},
+			Payload: map[string]any{"role": "player", "playerName": name, "playerAvatar": avatar},
 		})
 		welcome := readPartyEnvelope(t, conn, "welcome")
-		if stringField(welcome, "playerId") == "" || stringField(welcome, "token") == "" {
+		if stringField(welcome, "playerId") == "" || stringField(welcome, "token") == "" || stringField(welcome, "playerAvatar") != avatar {
 			t.Fatalf("player welcome missing identity: %#v", welcome)
 		}
 	}
@@ -64,16 +66,41 @@ func TestPartyWebSocketCreateJoinStartAndReconnect(t *testing.T) {
 		return room.hostDisconnectedAt > 0 && room.phase == "paused"
 	})
 
+	unauthorized := dialTestWebSocket(t, server.URL, "/ws")
+	defer unauthorized.Close()
+	writeTestEnvelope(t, unauthorized, outEnvelope{
+		Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
+		Payload: map[string]any{"role": "host"},
+	})
+	rejected := readPartyEnvelope(t, unauthorized, "error")
+	if stringField(rejected, "code") != "invalid_host_token" {
+		t.Fatalf("disconnected room accepted a host without its recovery token: %#v", rejected)
+	}
+
 	resumed := dialTestWebSocket(t, server.URL, "/ws")
 	defer resumed.Close()
 	writeTestEnvelope(t, resumed, outEnvelope{
 		Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
 		Payload: map[string]any{"role": "host", "token": hostToken},
 	})
-	_ = readPartyEnvelope(t, resumed, "welcome")
+	resumeWelcome := readPartyEnvelope(t, resumed, "welcome")
+	if reconnected, _ := resumeWelcome["reconnected"].(bool); !reconnected {
+		t.Fatalf("host resume welcome was not marked as reconnected: %#v", resumeWelcome)
+	}
 	state = readPartyState(t, resumed)
 	if state["phase"] != "countdown" {
 		t.Fatalf("expected host reconnect to resume countdown, got %#v", state)
+	}
+
+	competing := dialTestWebSocket(t, server.URL, "/ws")
+	defer competing.Close()
+	writeTestEnvelope(t, competing, outEnvelope{
+		Protocol: protocolName, V: protocolVersion, Type: "join", GameID: partyGameID, RoomID: roomID,
+		Payload: map[string]any{"role": "host", "token": hostToken},
+	})
+	rejected = readPartyEnvelope(t, competing, "error")
+	if stringField(rejected, "code") != "host_exists" {
+		t.Fatalf("active host was replaced by a competing recovery: %#v", rejected)
 	}
 }
 
@@ -95,6 +122,121 @@ func TestPartyNameFilteringAndRoomRules(t *testing.T) {
 	}
 	if sanitizePartyRoomID("ABIO") != "" || sanitizePartyRoomID("ABCD") != "ABCD" {
 		t.Fatal("room code normalization accepted ambiguous letters or rejected a valid code")
+	}
+	if name, adjusted := sanitizePartyNameForLevel("You are stupid", "family"); !adjusted || strings.Contains(strings.ToLower(name), "stupid") {
+		t.Fatalf("family moderation did not remove blocked language: %q/%v", name, adjusted)
+	}
+}
+
+func TestPartyAvatarValidation(t *testing.T) {
+	if actual := partyPlayerAvatar("🐲", 0); actual != "🐲" {
+		t.Fatalf("valid avatar changed to %q", actual)
+	}
+	if actual := partyPlayerAvatar("<script>", 1); actual != "🐼" {
+		t.Fatalf("invalid avatar fallback = %q, want player-slot fallback", actual)
+	}
+	if actual := partyPlayerAvatar("", 16); actual != "🦊" {
+		t.Fatalf("legacy avatar fallback = %q, want wrapped first avatar", actual)
+	}
+}
+
+func TestPartyAudienceJoinVoteReactionAndReconnect(t *testing.T) {
+	h := newHub()
+	host := &client{id: "host", role: "host", send: make(chan []byte, 16)}
+	r := &partyRoom{hub: h, roomID: "AUDI", gameKey: partyRotationGameKey, sessionMode: partyRotationSessionMode,
+		phase: "lobby", partyPhase: "party_lobby", host: host, audienceEnabled: true, maxPlayers: partyMaxPlayers,
+		players: make(map[string]*partyPlayer), audience: make(map[string]*partyAudienceMember), tokenToPlayer: make(map[string]string),
+		tokenToAudience: make(map[string]string), blockedTokens: make(map[string]bool), votes: make(map[string]string),
+		partyConfig: defaultPartySessionSettings()}
+	host.partyRoom = r
+	for index := 0; index < 2; index++ {
+		id := "p" + strconvItoa(index+1)
+		r.players[id] = &partyPlayer{ID: id, Name: "Player " + strconvItoa(index+1), Color: partyPlayerColor(index), Avatar: partyPlayerAvatar("", index), Connected: true, Active: true}
+	}
+	memberClient := &client{id: "audience", send: make(chan []byte, 16)}
+	r.attachAudience(memberClient, "Crowd", "🐼", "")
+	welcome := readQueuedAnyEnvelope(t, memberClient.send)
+	if stringField(welcome, "role") != "audience" || stringField(welcome, "playerAvatar") != "🐼" || stringField(welcome, "token") == "" {
+		t.Fatalf("audience welcome missing identity: %#v", welcome)
+	}
+	audienceID, token := stringField(welcome, "audienceId"), stringField(welcome, "token")
+	r.beginPartyVoteLocked(1000)
+	option := r.partyVote.Options[0].ID
+	r.applyInput(memberClient, inputEnvelope{Seq: 1, Input: mustJSON(t, map[string]any{"type": "party_vote", "optionId": option})})
+	r.applyInput(memberClient, inputEnvelope{Seq: 2, Input: mustJSON(t, map[string]any{"type": "audience_reaction", "emote": "clap"})})
+	if r.audience[audienceID].Vote != option || r.audience[audienceID].Reaction != "clap" {
+		t.Fatalf("audience input did not persist: %#v", r.audience[audienceID])
+	}
+	reconnected := &client{id: "audience-reconnect", send: make(chan []byte, 16)}
+	r.attachAudience(reconnected, "Changed", "🦊", token)
+	reconnectWelcome := readQueuedAnyEnvelope(t, reconnected.send)
+	if stringField(reconnectWelcome, "audienceId") != audienceID || stringField(reconnectWelcome, "playerAvatar") != "🐼" || !boolField(reconnectWelcome, "reconnected") {
+		t.Fatalf("audience reconnect did not preserve identity: %#v", reconnectWelcome)
+	}
+}
+
+func TestPartyRoomSafetyControlsAreServerAuthoritative(t *testing.T) {
+	host := &client{id: "host", role: "host", send: make(chan []byte, 16)}
+	r := &partyRoom{
+		roomID: "SAFE", gameKey: partyRotationGameKey, sessionMode: partyRotationSessionMode,
+		phase: "lobby", partyPhase: "party_lobby", host: host, allowLateJoin: true, maxPlayers: partyMaxPlayers,
+		players: make(map[string]*partyPlayer), tokenToPlayer: make(map[string]string), blockedTokens: make(map[string]bool),
+		votes: make(map[string]string), partyVote: partyVoteState{Votes: make(map[string]string)},
+	}
+	host.partyRoom = r
+
+	r.applyRoomHostActionLocked(partyInput{Action: "lock"}, host)
+	blocked := &client{id: "blocked", send: make(chan []byte, 8)}
+	r.attachPlayer(blocked, "Blocked", "🦊", "")
+	if payload := readQueuedEnvelope(t, blocked.send); stringField(payload, "code") != "room_locked" {
+		t.Fatalf("expected room_locked, got %#v", payload)
+	}
+
+	r.applyRoomHostActionLocked(partyInput{Action: "unlock"}, host)
+	r.applyRoomHostActionLocked(partyInput{Action: "friendly_names_on"}, host)
+	r.applyRoomHostActionLocked(partyInput{Action: "set_max_players", Value: 2}, host)
+	firstClient := &client{id: "first", send: make(chan []byte, 8)}
+	r.attachPlayer(firstClient, "Custom Name", "🐸", "")
+	var first *partyPlayer
+	for _, player := range r.players {
+		first = player
+	}
+	if first == nil || first.Name == "Custom Name" || !strings.Contains(first.Name, " ") {
+		t.Fatalf("friendly-name mode did not replace the supplied name: %#v", first)
+	}
+	firstToken := first.Token
+
+	secondClient := &client{id: "second", send: make(chan []byte, 8)}
+	r.attachPlayer(secondClient, "Second", "🦉", "")
+	fullClient := &client{id: "full", send: make(chan []byte, 8)}
+	r.attachPlayer(fullClient, "Third", "🐼", "")
+	if payload := readQueuedEnvelope(t, fullClient.send); stringField(payload, "code") != "room_full" {
+		t.Fatalf("expected dynamic room_full, got %#v", payload)
+	}
+
+	r.applyRoomHostActionLocked(partyInput{Action: "kick", PlayerID: first.ID}, host)
+	if payload := readQueuedEnvelope(t, firstClient.send); stringField(payload, "code") != "removed_from_room" {
+		t.Fatalf("expected removed player notification, got %#v", payload)
+	}
+	if r.players[first.ID] != nil || !r.blockedTokens[firstToken] {
+		t.Fatal("removed player remained on the roster or reconnect token was not blocked")
+	}
+	reconnect := &client{id: "reconnect", send: make(chan []byte, 8)}
+	r.attachPlayer(reconnect, "Custom Name", "🐸", firstToken)
+	if payload := readQueuedEnvelope(t, reconnect.send); stringField(payload, "code") != "removed_from_room" {
+		t.Fatalf("expected blocked reconnect token, got %#v", payload)
+	}
+
+	r.allowLateJoin = false
+	r.partyPhase = "voting"
+	late := &client{id: "late", send: make(chan []byte, 8)}
+	r.attachPlayer(late, "Late", "🐢", "")
+	if payload := readQueuedEnvelope(t, late.send); stringField(payload, "code") != "late_join_disabled" {
+		t.Fatalf("expected late_join_disabled, got %#v", payload)
+	}
+	state := r.snapshotLocked("")
+	if state["roomLocked"] != false || state["allowLateJoin"] != false || state["friendlyNames"] != true || int(state["maxPlayers"].(int)) != 2 {
+		t.Fatalf("room safety settings missing from snapshot: %#v", state)
 	}
 }
 
@@ -375,7 +517,7 @@ func TestPartyReconnectResetsSequenceAndRateLimitsSteering(t *testing.T) {
 	c := &client{id: "player", role: "player", playerID: "r-one", send: make(chan []byte, 8)}
 	p := &partyPlayer{
 		ID: "r-one", Token: "secret", Client: c, Connected: true, Active: true,
-		LastSeq: 40, LastSteerAt: now, HitObstacleIDs: make(map[string]bool),
+		Avatar: "🐙", LastSeq: 40, LastSteerAt: now, HitObstacleIDs: make(map[string]bool),
 	}
 	r := &partyRoom{
 		roomID: "RACE", gameKey: turboTiltGameKey, phase: "racing", players: map[string]*partyPlayer{p.ID: p},
@@ -383,9 +525,12 @@ func TestPartyReconnectResetsSequenceAndRateLimitsSteering(t *testing.T) {
 	}
 	c.partyRoom = r
 	reconnected := &client{id: "replacement", send: make(chan []byte, 8)}
-	r.attachPlayer(reconnected, "", p.Token)
+	r.attachPlayer(reconnected, "", "🦁", p.Token)
 	if p.LastSeq != 0 || p.LastSteerAt != 0 || p.Client != reconnected {
 		t.Fatal("reconnect did not reset connection-scoped input sequence state")
+	}
+	if p.Avatar != "🐙" {
+		t.Fatalf("reconnect replaced server-authoritative avatar with %q", p.Avatar)
 	}
 
 	r.applyInput(reconnected, inputEnvelope{Seq: 1, Input: json.RawMessage(`{"type":"steer","value":0.5}`)})
@@ -417,6 +562,25 @@ func readQueuedEnvelope(t *testing.T, queue <-chan []byte) map[string]any {
 			t.Fatal("timed out waiting for queued envelope")
 		}
 	}
+}
+
+func readQueuedAnyEnvelope(t *testing.T, queue <-chan []byte) map[string]any {
+	t.Helper()
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	select {
+	case raw := <-queue:
+		var message struct {
+			Payload map[string]any `json:"payload"`
+		}
+		if err := json.Unmarshal(raw, &message); err != nil {
+			t.Fatal(err)
+		}
+		return message.Payload
+	case <-deadline.C:
+		t.Fatal("timed out waiting for queued envelope")
+	}
+	return nil
 }
 
 func readPartyEnvelope(t *testing.T, conn *websocket.Conn, wanted string) map[string]any {
@@ -459,6 +623,20 @@ func readPartyState(t *testing.T, conn *websocket.Conn) map[string]any {
 func stringField(source map[string]any, key string) string {
 	value, _ := source[key].(string)
 	return value
+}
+
+func boolField(source map[string]any, key string) bool {
+	value, _ := source[key].(bool)
+	return value
+}
+
+func mustJSON(t *testing.T, value any) json.RawMessage {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return raw
 }
 
 func waitFor(t *testing.T, timeout time.Duration, predicate func() bool) {

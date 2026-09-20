@@ -26,6 +26,7 @@ type crowdShiftPrompt struct {
 }
 
 type crowdShiftState struct {
+	Mode             string
 	Round            int
 	TotalRounds      int
 	Prompt           crowdShiftPrompt
@@ -75,11 +76,12 @@ var crowdShiftPrompts = []crowdShiftPrompt{
 }
 
 func isSupportedPartyGame(gameKey string) bool {
-	return gameKey == turboTiltGameKey || gameKey == crowdShiftGameKey
+	return gameKey == turboTiltGameKey || gameKey == crowdShiftGameKey || gameKey == stickTiltGameKey
 }
 
 func newCrowdShiftState() *crowdShiftState {
 	return &crowdShiftState{
+		Mode:        "classic_mix",
 		TotalRounds: crowdShiftRounds, Choices: make(map[string]string), Predictions: make(map[string]string),
 		HotTakes: make(map[string]bool), HotTakeAvailable: make(map[string]bool), ReadStreaks: make(map[string]int),
 		ReadCorrect: make(map[string]bool), ReadPoints: make(map[string]int), ObjectivePoints: make(map[string]int), StealPoints: make(map[string]int),
@@ -124,7 +126,7 @@ func (r *partyRoom) applyCrowdShiftHostActionLocked(action string, now int64, c 
 		}
 		r.prepareCrowdShiftRoundLocked(now)
 		r.phase = "countdown"
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftCountdownMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftCountdownMs)
 	case "pause":
 		if !containsString([]string{"countdown", "choosing", "reveal", "intermission"}, r.phase) {
 			c.sendErrorCode(r.roomID, "invalid_phase", "The game cannot be paused right now.")
@@ -196,24 +198,24 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 	if r.phase == "countdown" && now >= r.phaseEndsAt {
 		r.phase = "choosing"
 		r.crowd.RoundStartedAt = now
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftChoiceMs)
+		r.phaseEndsAt = now + r.crowdShiftChoiceDurationLocked()
 		return
 	}
 	if r.phase == "choosing" {
 		allChosen := r.crowdShiftAllConnectedChosenLocked()
-		minimumRevealAt := r.crowd.RoundStartedAt + partyPhaseDuration(crowdShiftMinimumChoiceMs)
+		minimumRevealAt := r.crowd.RoundStartedAt + r.partyDurationLocked(crowdShiftMinimumChoiceMs)
 		if r.crowd.Duel {
 			if !allChosen {
 				r.crowd.DuelReadyAt = 0
 			} else if r.crowd.DuelReadyAt == 0 {
 				r.crowd.DuelReadyAt = now
 			}
-			minimumRevealAt = maxInt64(minimumRevealAt, r.crowd.DuelReadyAt+partyPhaseDuration(crowdShiftDuelGraceMs))
+			minimumRevealAt = maxInt64(minimumRevealAt, r.crowd.DuelReadyAt+r.partyDurationLocked(crowdShiftDuelGraceMs))
 		}
 		if now >= r.phaseEndsAt || (allChosen && now >= minimumRevealAt) {
 			r.scoreCrowdShiftRoundLocked()
 			r.phase = "reveal"
-			r.phaseEndsAt = now + partyPhaseDuration(crowdShiftRevealMs)
+			r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftRevealMs)
 		}
 		return
 	}
@@ -223,7 +225,7 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 			return
 		}
 		r.phase = "intermission"
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftIntermissionMs)
+		r.phaseEndsAt = now + r.partyDurationLocked(crowdShiftIntermissionMs)
 		return
 	}
 	if r.phase == "intermission" && now >= r.phaseEndsAt {
@@ -231,8 +233,15 @@ func (r *partyRoom) stepCrowdShiftLocked(now int64) {
 		r.prepareCrowdShiftRoundLocked(now)
 		r.phase = "choosing"
 		r.crowd.RoundStartedAt = now
-		r.phaseEndsAt = now + partyPhaseDuration(crowdShiftChoiceMs)
+		r.phaseEndsAt = now + r.crowdShiftChoiceDurationLocked()
 	}
+}
+
+func (r *partyRoom) crowdShiftChoiceDurationLocked() int64 {
+	if r.crowd != nil && r.crowd.Mode == "blitz" {
+		return r.partyDurationLocked(crowdShiftChoiceMs * 2 / 3)
+	}
+	return r.partyDurationLocked(crowdShiftChoiceMs)
 }
 
 func (r *partyRoom) prepareCrowdShiftRoundLocked(now int64) {
@@ -243,8 +252,12 @@ func (r *partyRoom) prepareCrowdShiftRoundLocked(now int64) {
 		rules := []string{"duel_sync", "duel_clash"}
 		r.crowd.Rule = rules[(seed+r.crowd.Round-1)%len(rules)]
 	} else {
-		rules := []string{"majority", "minority", "split", "unanimous"}
-		r.crowd.Rule = rules[(seed+r.crowd.Round-1)%len(rules)]
+		if containsString([]string{"majority", "minority", "split", "unanimous"}, r.crowd.Mode) {
+			r.crowd.Rule = r.crowd.Mode
+		} else {
+			rules := []string{"majority", "minority", "split", "unanimous"}
+			r.crowd.Rule = rules[(seed+r.crowd.Round-1)%len(rules)]
+		}
 	}
 	r.crowd.Choices = make(map[string]string)
 	r.crowd.Predictions = make(map[string]string)
@@ -443,6 +456,9 @@ func (r *partyRoom) finishCrowdShiftMatchLocked(now int64) {
 	r.phase = "podium"
 	r.phaseEndsAt = 0
 	r.endedAt = now
+	if r.sessionMode == partyRotationSessionMode {
+		r.completeRotationActivityLocked(now)
+	}
 }
 
 func (r *partyRoom) updateCrowdShiftRanksLocked() []*partyPlayer {
@@ -486,8 +502,8 @@ func (r *partyRoom) crowdShiftSnapshotLocked(selfID string) map[string]any {
 			hotTake = r.crowd.HotTakes[p.ID]
 		}
 		players = append(players, map[string]any{
-			"id": p.ID, "name": p.Name, "color": p.Color, "connected": p.Connected,
-			"queued": p.Queued, "active": p.Active, "points": p.Points,
+			"id": p.ID, "name": p.Name, "color": p.Color, "avatar": p.Avatar, "connected": p.Connected,
+			"ready": p.Ready, "queued": p.Queued, "active": p.Active, "points": p.Points,
 			"roundPoints": p.HeatPoints, "rank": p.Rank, "choice": choice,
 			"hasChosen": r.crowd.Choices[p.ID] != "", "emote": p.Emote, "emoteAt": p.EmoteAt,
 			"prediction": prediction, "hasPredicted": r.crowd.Predictions[p.ID] != "", "hotTake": hotTake,
@@ -506,7 +522,7 @@ func (r *partyRoom) crowdShiftSnapshotLocked(selfID string) map[string]any {
 		"rightCount": r.crowd.RightCount, "winnerSide": r.crowd.WinnerSide,
 		"resultHeadline": r.crowd.ResultHeadline, "unanimousRounds": r.crowd.UnanimousRounds,
 		"displayCount": len(r.displays), "duel": r.crowd.Duel, "duelObjectiveMet": r.crowd.DuelObjectiveMet,
-		"readyCount": r.crowdShiftReadyCountLocked(),
+		"readyCount": r.crowdShiftReadyCountLocked(), "mode": r.crowd.Mode,
 	}
 	if selfID != "" {
 		state["selfId"] = selfID

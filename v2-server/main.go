@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -62,13 +63,14 @@ type outEnvelope struct {
 }
 
 type joinPayload struct {
-	GameID     string `json:"gameId"`
-	RoomID     string `json:"roomId"`
-	Token      string `json:"token"`
-	PlayerName string `json:"playerName"`
-	UserAgent  string `json:"userAgent"`
-	Role       string `json:"role"`
-	GameKey    string `json:"gameKey"`
+	GameID       string `json:"gameId"`
+	RoomID       string `json:"roomId"`
+	Token        string `json:"token"`
+	PlayerName   string `json:"playerName"`
+	PlayerAvatar string `json:"playerAvatar"`
+	UserAgent    string `json:"userAgent"`
+	Role         string `json:"role"`
+	GameKey      string `json:"gameKey"`
 }
 
 type inputEnvelope struct {
@@ -126,23 +128,29 @@ type audioAgarState struct {
 }
 
 type hub struct {
-	mu         sync.Mutex
-	rooms      map[string]*audioAgarRoom
-	partyRooms map[string]*partyRoom
+	mu           sync.Mutex
+	rooms        map[string]*audioAgarRoom
+	partyRooms   map[string]*partyRoom
+	enabledGames map[string]bool
+	serviceName  string
+	partyStore   partyRoomStore
 }
 
 type client struct {
-	id        string
-	name      string
-	gameID    string
-	role      string
-	playerID  string
-	hub       *hub
-	audioRoom *audioAgarRoom
-	partyRoom *partyRoom
-	conn      *websocket.Conn
-	send      chan []byte
-	closeOnce sync.Once
+	id         string
+	name       string
+	gameID     string
+	role       string
+	playerID   string
+	audienceID string
+	hub        *hub
+	audioRoom  *audioAgarRoom
+	partyRoom  *partyRoom
+	conn       *websocket.Conn
+	send       chan []byte
+	sendMu     sync.RWMutex
+	sendClosed bool
+	closeOnce  sync.Once
 }
 
 type audioAgarRoom struct {
@@ -177,20 +185,72 @@ func main() {
 }
 
 func newHub() *hub {
+	h := newHubWithGames(enabledGamesFromEnv(), serviceNameFromEnv())
+	store, err := newPartyRoomStoreFromEnv(context.Background())
+	if err != nil {
+		log.Fatalf("party room store initialization failed: %v", err)
+	}
+	h.partyStore = store
+	return h
+}
+
+func newHubWithGames(enabledGames map[string]bool, serviceName string) *hub {
 	return &hub{
-		rooms:      make(map[string]*audioAgarRoom),
-		partyRooms: make(map[string]*partyRoom),
+		rooms:        make(map[string]*audioAgarRoom),
+		partyRooms:   make(map[string]*partyRoom),
+		enabledGames: enabledGames,
+		serviceName:  serviceName,
 	}
 }
 
+func enabledGamesFromEnv() map[string]bool {
+	raw := strings.TrimSpace(os.Getenv("ENABLED_GAMES"))
+	configured := strings.Split(raw, ",")
+	enabled := make(map[string]bool, 2)
+	for _, gameID := range configured {
+		switch strings.ToLower(strings.TrimSpace(gameID)) {
+		case audioAgarGameID:
+			enabled[audioAgarGameID] = true
+		case partyGameID:
+			enabled[partyGameID] = true
+		}
+	}
+	if raw == "" {
+		enabled[audioAgarGameID] = true
+		enabled[partyGameID] = true
+	}
+	return enabled
+}
+
+func serviceNameFromEnv() string {
+	if serviceName := strings.TrimSpace(os.Getenv("SERVICE_NAME")); serviceName != "" {
+		return serviceName
+	}
+	if serviceName := strings.TrimSpace(os.Getenv("K_SERVICE")); serviceName != "" {
+		return serviceName
+	}
+	return "v2-server"
+}
+
 func (h *hub) handleHealthz(w http.ResponseWriter, _ *http.Request) {
+	games := make([]string, 0, len(h.enabledGames))
+	for _, gameID := range []string{audioAgarGameID, partyGameID} {
+		if h.enabledGames[gameID] {
+			games = append(games, gameID)
+		}
+	}
+	partyGames := []string{}
+	if h.enabledGames[partyGameID] {
+		partyGames = []string{turboTiltGameKey, crowdShiftGameKey, stickTiltGameKey}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
-		"ok":         true,
-		"service":    "v2-server",
-		"games":      []string{audioAgarGameID, partyGameID},
-		"partyGames": []string{turboTiltGameKey, crowdShiftGameKey},
-		"protocol":   protocolName,
+		"ok":           true,
+		"service":      h.serviceName,
+		"games":        games,
+		"partyGames":   partyGames,
+		"roomRecovery": h.partyStore != nil,
+		"protocol":     protocolName,
 	})
 }
 
@@ -315,6 +375,10 @@ func (h *hub) handleEnvelope(c *client, msg envelope) {
 		var payload joinPayload
 		_ = json.Unmarshal(msg.Payload, &payload)
 		gameID := firstNonEmpty(msg.GameID, payload.GameID, audioAgarGameID)
+		if !h.enabledGames[gameID] {
+			c.sendErrorCode(msg.RoomID, "game_unavailable", "This multiplayer service does not host that game.")
+			return
+		}
 		switch gameID {
 		case audioAgarGameID:
 			roomID := sanitizeRoomID(firstNonEmpty(msg.RoomID, payload.RoomID, "lobby"))
@@ -421,6 +485,9 @@ func (r *audioAgarRoom) removeClient(c *client) {
 
 func (c *client) closeSend() {
 	c.closeOnce.Do(func() {
+		c.sendMu.Lock()
+		defer c.sendMu.Unlock()
+		c.sendClosed = true
 		close(c.send)
 	})
 }
@@ -446,15 +513,26 @@ func (c *client) sendEnvelope(messageType, roomID string, payload any) {
 		log.Printf("marshal envelope failed: %v", err)
 		return
 	}
+	c.sendMu.RLock()
+	if c.sendClosed {
+		c.sendMu.RUnlock()
+		return
+	}
+	slow := false
 	select {
 	case c.send <- raw:
 	default:
-		log.Printf("dropping slow client %s", c.id)
-		go func() {
-			c.leaveCurrentRoom()
-			c.closeSend()
-		}()
+		slow = true
 	}
+	c.sendMu.RUnlock()
+	if !slow {
+		return
+	}
+	log.Printf("dropping slow client %s", c.id)
+	go func() {
+		c.leaveCurrentRoom()
+		c.closeSend()
+	}()
 }
 
 func marshalEnvelope(gameID, messageType, roomID string, payload any) ([]byte, error) {

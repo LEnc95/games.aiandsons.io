@@ -4,7 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Added Stick & Tilt: 2–8-player stick-figure fighting with calibrated phone motion, touch alternatives, punch/jump/guard combat, climbable doodle-box platforms, quick respawns, and standalone or rotating Party sessions.
+
 ### Added
+
+- Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
+
+- Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
+
+- Pollen Passage - a five-meadow flower-lane game for keyboard and touch.
+
+- Signal Garden - a five-garden firefly memory game for keyboard and touch.
+
+- Party Mode player invitations from host screens and connected phones, with native sharing, copy fallback, and room-policy awareness.
+
+- Isolated Party Mode and Audio Agar into game-specific Cloud Run services while retaining their shared versioned multiplayer protocol.
+
+- Added the 2026-W38 content pack with Saffron Nocturne Aurora Accord, Cinder Constellation Lantern Loom, and Comet Chicane Turbo Tilt cosmetics plus four bounded weekly challenges.
+- Paper Bridge - a five-ravine paper-folding precision game for keyboard and touch.
+
+- Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.
 
 - Pebble Parade - a five-pond timing game for keyboard and touch.
 
@@ -12,6 +31,7 @@ All notable changes to this project will be documented in this file.
 
 - Crowd Shift — a seven-round shared-screen party game with a dedicated two-player Duel Shift for secret choices, mind reads, streaks, and risky Hot Takes, plus rotating crowd rules for 3–8 phones.
 - Turbo Tilt party games foundation with four-letter rooms, shared-screen racing, phone tilt and touch controllers, reconnect support, and server-authoritative cups for 2–8 players.
+- Persistent Party Rotation — keep one room open while players vote on named Turbo Tilt and Crowd Shift modes, watch a synchronized wheel choose the next activity, and carry normalized standings through an unlimited party.
 
 - Thimble Tide — a five-shore shell-tracking game for keyboard and touch.
 

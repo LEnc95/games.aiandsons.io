@@ -4,6 +4,7 @@ const BASE_GAMES = [
   { slug:'clubpenguin-world', name:'Club Penguin World', emoji:'\u{1F427}', scoreHint:'coins', url:'/clubpenguin-world/public/', desc:'Multiplayer social world prototype with rooms, quick chat, and live movement.', earnsCoins:true },
   { slug:'audioagar',      name:'Audio Agar',           emoji:'\u{1F535}', scoreHint:'mass',       url:'/audioagar',     desc:'Audio-first multiplayer orb arena with keyboard movement, spatial cues, and screen-reader status for blind play.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
   { slug:'turbotilt',      name:'Turbo Tilt',           emoji:'\u{1F3CE}\uFE0F', scoreHint:'points', url:'/turbotilt/', desc:'Host a customizable party cup where up to eight players tilt, boost, use gadgets, and vote from their phones.', earnsCoins:false },
+  { slug:'sticktilt', name:'Stick & Tilt', emoji:'🥊', scoreHint:'knockouts', url:'/sticktilt/', desc:'Tilt your phone to move a stick fighter. Punch, jump, and guard through three quick rounds with 2–8 friends.', earnsCoins:false },
   { slug:'crowdshift',     name:'Crowd Shift',          emoji:'\u{1F500}', scoreHint:'points', url:'/crowdshift/', desc:'Read your rival in two-player Duel Shift, or tackle rotating crowd rules with up to eight phones.', earnsCoins:false },
   { slug:'2048',           name:'2048',                emoji:'\u{1F522}', scoreHint:'best tile',  url:'/2048',          desc:'Slide and merge matching tiles until you reach 2048.', earnsCoins:true },
   { slug:'pong',           name:'Pong',                emoji:'\u{1F3D3}', scoreHint:'returns',    url:'/pong',          desc:'Classic paddle game. Play against the computer!', earnsCoins:true },
@@ -217,6 +218,12 @@ const BASE_GAMES = [
   { slug:'thimbletide', name:'Thimble Tide',                    emoji:'\u{1F41A}', scoreHint:'pearls', url:'/thimbletide', desc:'Track a hidden pearl through quick shell swaps and chart five moonlit shores.', earnsCoins:true },
   { slug:'ribbonreversal', name:'Ribbon Reversal', emoji:'\u{1F380}', scoreHint:'bundles', url:'/ribbonreversal', desc:'Reverse the top of a ribbon stack, sort lengths from shortest to longest, and organize five colorful puzzle bundles.', earnsCoins:true },
   { slug:'pebbleparade', name:'Pebble Parade', emoji:'\u{1FAA8}', scoreHint:'skips', url:'/pebbleparade', desc:'Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds.', earnsCoins:true },
+  { slug:'chalkchase', name:'Chalk Chase', emoji:'\u{1F58D}', scoreHint:'stars', url:'/chalkchase', desc:'Trace five playground paths through numbered stars without crossing your own chalk line.', earnsCoins:true },
+  { slug:'paperbridge', name:'Paper Bridge', emoji:'\u{1F4C4}', scoreHint:'bridges', url:'/paperbridge', desc:'Fold paper planks to the right length and bridge five increasingly wide ravines.', earnsCoins:true },
+  { slug:'signalgarden', name:'Signal Garden', emoji:'\u{1F331}', scoreHint:'signals', url:'/signalgarden', desc:'Watch fireflies blink across the garden, then echo each growing light pattern.', earnsCoins:true },
+  { slug:'pollenpassage', name:'Pollen Passage', emoji:'\u{1F41D}', scoreHint:'blooms', url:'/pollenpassage', desc:'Guide a bee through five flower-lane meadows, gathering pollen while dodging thorn gates.', earnsCoins:true },
+  { slug:'foxfiretrails', name:'Foxfire Trails', emoji:'\u{1F98A}', scoreHint:'wisps', url:'/foxfiretrails', desc:'Guide a fox through five forest trails, gather blue wisps in order, and avoid tangled brambles.', earnsCoins:true },
+  { slug:'bottlecapcurl', name:'Bottlecap Curl', emoji:'\u{1F964}', scoreHint:'rings', url:'/bottlecapcurl', desc:'Aim and flick a bottlecap through ordered scoring rings across five colorful tabletop curling rinks.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -302,7 +309,7 @@ const EASY_SLUGS = Object.freeze(new Set([
   'whackamole', 'colorcatch', 'plinko', 'skeeball',
 ]));
 
-const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar', 'turbotilt', 'crowdshift']));
+const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar', 'turbotilt', 'crowdshift', 'sticktilt']));
 const TWO_PLAYER_SLUGS = Object.freeze(DISCOVERY_CATEGORY_GROUPS['two-player']);
 const BASE_RELEASE_TIME = Date.UTC(2026, 1, 10);
 const DAY_MS = 24 * 60 * 60 * 1000;

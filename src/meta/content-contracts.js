@@ -2,6 +2,22 @@
 // must add an explicit contract so automated challenges and cosmetics never
 // guess at unbounded metrics or promise effects a game cannot render.
 export const GAME_CONTENT_CONTRACTS = Object.freeze({
+  bottlecapcurl: Object.freeze({ releasedAt: '2026-09-18', outcomes: Object.freeze({ targets: Object.freeze({ min: 0, max: 20, direction: 'higher' }), rinks: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'bottlecapcurl-theme', kind: 'palette', tokens: Object.freeze(['table', 'rail', 'line', 'ring', 'cap', 'cap2', 'ink', 'accent']) })]) }),
+  foxfiretrails: Object.freeze({ releasedAt: '2026-09-17', outcomes: Object.freeze({ wisps: Object.freeze({ min: 0, max: 20, direction: 'higher' }), trails: Object.freeze({ min: 0, max: 5, direction: 'higher' }), bumps: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'foxfiretrails-theme', kind: 'palette', tokens: Object.freeze(['sky', 'far', 'ground', 'tile', 'edge', 'wisp', 'glow', 'thorn', 'fox', 'tail', 'ink', 'trail']) })]) }),
+  pollenpassage: Object.freeze({ releasedAt: '2026-09-16', outcomes: Object.freeze({ blooms: Object.freeze({ min: 0, max: 25, direction: 'higher' }), meadows: Object.freeze({ min: 0, max: 5, direction: 'higher' }), stings: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'pollenpassage-theme', kind: 'palette', tokens: Object.freeze(['sky', 'hill', 'field', 'lane', 'flower', 'center', 'thorn', 'bee', 'wing', 'accent', 'ink']) })]) }),
+  signalgarden: Object.freeze({ releasedAt: '2026-09-15', outcomes: Object.freeze({ signals: Object.freeze({ min: 0, max: 25, direction: 'higher' }), gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }), mistakes: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'signalgarden-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'leaf', 'light', 'accent', 'ink']) })]) }),
+  paperbridge: Object.freeze({ releasedAt: '2026-09-14', outcomes: Object.freeze({ bridges: Object.freeze({ min: 0, max: 5, direction: 'higher' }), ravines: Object.freeze({ min: 0, max: 5, direction: 'higher' }), falls: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'paperbridge-theme', kind: 'palette', tokens: Object.freeze(['sky', 'far', 'near', 'paper', 'line', 'accent']) })]) }),
+  chalkchase: Object.freeze({
+    releasedAt: '2026-09-13',
+    outcomes: Object.freeze({
+      stars: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      boards: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      erases: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'chalkchase-theme', kind: 'palette', tokens: Object.freeze(['sky', 'board', 'grid', 'chalk', 'star', 'flag', 'ink']) }),
+    ]),
+  }),
   pebbleparade: Object.freeze({
     releasedAt: '2026-09-12',
     outcomes: Object.freeze({
@@ -393,6 +409,17 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
     }),
     cosmeticSlots: Object.freeze([
       Object.freeze({ key: 'turbo-theme', kind: 'palette', tokens: Object.freeze(['sky', 'road', 'edge', 'racer', 'barrier', 'energy', 'accent']) }),
+    ]),
+  }),
+  sticktilt: Object.freeze({
+    releasedAt: '2026-09-16',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      rounds: Object.freeze({ min: 0, max: 3, direction: 'higher' }),
+      knockouts: Object.freeze({ min: 0, max: 300, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'sticktilt-theme', kind: 'palette', tokens: Object.freeze(['paper', 'ink', 'gold', 'fighter']) }),
     ]),
   }),
   crowdshift: Object.freeze({
