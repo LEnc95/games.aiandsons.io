@@ -238,5 +238,6 @@
 - game/pollenpassage
 - game/foxfiretrails
 - game/bottlecapcurl
+- game/runeroots
 
 Generated from `src/meta/feedback.js`.

@@ -1,5 +1,14 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-20 Rune Roots automation
+- Started from clean detached origin/main `854545951edfe1de89402be76e3036a631228217`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 8 moderate audit findings.
+- Selected Rune Roots (`/runeroots`), a distinct five-grove 4x4 rotation puzzle absent from the 223-game registry and recent release memory. Implemented keyboard/touch selection and rotation, turn limits and wilt loss, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ roots, groves, wilts }` outcomes.
+- SEO, OG, and local Linear generation completed; restored 19 verified whitespace-only legacy page changes and 44 unchanged-input existing OG rerenders. Maintenance validation and the 224-game preflight pass.
+- Supplied client passed. Focused desktop/mobile QA passed exact stepping, pause freeze, controls and boundaries, five-grove win, three-wilt loss, palette, fullscreen/Escape, feedback, touch layout, and zero browser/page/request errors. Visual review found an inflated between-grove root count caused by comparing the completed board with the next target; fixed the transition metric and queued the full rerun.
+- Complete supplied-client and focused QA rerun passed after the metric fix. Visually inspected menu, gameplay, pause, alternate palette, corrected 16-root transition, five-grove win, three-wilt loss, feedback modal, 390px mobile layout, and OG card; feedback smoke passed with zero new errors.
+- Ordered final local gate passed: maintenance, 224-game preflight, telemetry 16/16, feedback 32/32, shop 69/69, social 22/22, and diff checks. Release audit contains exactly one appended registry entry, one matching top-level game folder, its contract/outcomes/changelog mention, and 11 allowed paths; no same-date remote branch or open PR exists.
+- TODO: commit the audited release, run the authoritative lane audit, publish through the guarded PR, and verify merged production.
+
 ## 2026-09-18 Bottlecap Curl automation
 - Started from clean detached origin/main `92ed3d81c20063f15195f9d900867d85a89a17b6`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 2 moderate audit findings and a Node 22 versus required Node 24 warning.
 - Selected Bottlecap Curl (`/bottlecapcurl`), a distinct five-rink aim-and-flick precision game absent from the 221-game registry and release memory. Implemented keyboard/button/touch aiming, deterministic cap physics, ordered rings, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ targets, rinks, misses }` outcomes.

@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Rune Roots - a five-grove root-rotation puzzle for keyboard and touch.
+
 - Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
 
 - Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
