@@ -78,3 +78,7 @@
 ## 2026-07-03 - Optimizing category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
+
+## 2024-05-14 - Optimize start control checks by avoiding array allocations
+**Learning:** Using `Array.from()` or spread syntax to iterate over NodeLists/iterables when only a `some` or `find` operation is needed creates unnecessary O(N) memory allocations and is inefficient.
+**Action:** Always use a `for...of` loop or a standard `for` loop to iterate directly over NodeLists or other iterables when searching or checking for a condition to avoid the allocation overhead.
