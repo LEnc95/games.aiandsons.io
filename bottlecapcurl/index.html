@@ -19,7 +19,7 @@
   <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Bottlecap Curl","description":"Aim and flick a bottlecap through ordered scoring rings across five colorful tabletop curling rinks. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/bottlecapcurl","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
   <!-- SEO:END -->
 </head><body><main><h1>🥤 Bottlecap Curl</h1><canvas id="game" width="840" height="600" tabindex="0" aria-label="Bottlecap Curl game"></canvas><div class="controls"><button data-action="left">Aim ←</button><button data-action="right">Aim →</button><button data-action="down">Power −</button><button data-action="up">Power +</button><button data-action="launch">Flick</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="theme">Colors</button><button id="full">Full</button><button id="feedback">Feedback</button></div><p class="help"><b>Clear five tabletop rinks.</b> Aim the dashed guide and flick the cap through four numbered rings in order. Side-wall banks are allowed; three misses end the run. Use arrows or WASD to aim and set power, Space/Enter to flick, P to pause, R to restart, T for colors, and F for fullscreen.</p></main><script type="module">
-import { addCoins } from '/src/core/state.js';import { reportGameOutcome } from '/src/core/outcomes.js';import { mountGameFeedback } from '/src/feedback/embed.js';
+import { addCoins,state as profileState } from '/src/core/state.js';import { reportGameOutcome } from '/src/core/outcomes.js';import { mountGameFeedback } from '/src/feedback/embed.js';
 const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),W=840,H=600,start={x:420,y:515};
 const rinks=[
  [{x:260,y:350},{x:580,y:250},{x:330,y:150},{x:530,y:105}],
@@ -28,10 +28,12 @@ const rinks=[
  [{x:535,y:390},{x:250,y:315},{x:575,y:230},{x:315,y:115}],
  [{x:240,y:390},{x:600,y:340},{x:285,y:230},{x:555,y:105}]
 ];
+const COPPER_RIPPLE=profileState.inventory instanceof Set&&profileState.inventory.has('bottlecapcurl-copper-ripple');
 const palettes=[
  {name:'Diner',table:'#dff4ef',rail:'#2a7774',line:'#8fcfc2',ring:'#f5b942',cap:'#e64b55',cap2:'#fff4dc',ink:'#173b42',accent:'#0caaa2'},
  {name:'Arcade',table:'#18213c',rail:'#643e88',line:'#48527b',ring:'#ffd857',cap:'#ff5dbe',cap2:'#f9edff',ink:'#edf5ff',accent:'#55e8ff'},
- {name:'Picnic',table:'#fff0d4',rail:'#a94d54',line:'#e0ae83',ring:'#2f8f62',cap:'#ef713d',cap2:'#fff7cf',ink:'#4c2930',accent:'#2587a0'}
+ {name:'Picnic',table:'#fff0d4',rail:'#a94d54',line:'#e0ae83',ring:'#2f8f62',cap:'#ef713d',cap2:'#fff7cf',ink:'#4c2930',accent:'#2587a0'},
+ ...(COPPER_RIPPLE?[{name:'Copper Ripple',table:'#23434a',rail:'#bf7046',line:'#5a8990',ring:'#f4c66c',cap:'#da7851',cap2:'#fff0c5',ink:'#f3f8e8',accent:'#8de0d1'}]:[])
 ];
 const state={mode:'menu',rink:0,target:0,targets:0,misses:0,angle:0,power:.78,cap:{...start,vx:0,vy:0},elapsed:0,theme:0,started:false,reported:false,message:''};let manual=false,previous=performance.now();const p=()=>palettes[state.theme],goal=()=>rinks[Math.min(state.rink,4)][state.target],metrics=()=>({targets:state.targets,rinks:state.rink,misses:state.misses});
 function report(result){if(!state.started||state.reported)return;state.reported=true;reportGameOutcome({slug:'bottlecapcurl',result,durationMs:Math.round(state.elapsed),metrics:metrics()})}

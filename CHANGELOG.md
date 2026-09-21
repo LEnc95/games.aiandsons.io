@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W39 content pack with Willow Wish Nest Stack, Copper Scoreboard Bottom of the Ninth, and Copper Ripple Bottlecap Curl cosmetics plus four bounded weekly challenges.
+
 - Rune Roots - a five-grove root-rotation puzzle for keyboard and touch.
 
 - Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
