@@ -39,6 +39,9 @@ const GAME_FILE_BY_PREFIX = {
   asteroids: 'asteroids/index.html',
   bomberman: 'bomberman/index.html',
   colorcatch: 'colorcatch/index.html',
+  neststack: 'neststack/index.html',
+  baseballradio: 'baseballradio/index.html',
+  bottlecapcurl: 'bottlecapcurl/index.html',
 };
 
 function extractItems(shopHtml) {

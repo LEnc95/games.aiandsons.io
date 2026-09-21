@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-21 Weekly content pack 2026-W39
+- Isolated from `origin/main` baseline `642d60d1e8373e5447d1cbbe03be36da301f198b`; issue #337 is authoritative. Added Willow Wish for Nest Stack, Copper Scoreboard for Bottom of the Ninth, and Copper Ripple for Bottlecap Curl as inventory-gated palette cosmetics, plus four exact 20-coin W39 challenges for Nest Stack branches, Bottom of the Ninth wins, Bottlecap Curl targets, and Moon Mender stones.
+- Local/browser QA passed: shop preview plus baseline/equipped captures were inspected for every cosmetic; gameplay, deterministic text state, pause/restart/fullscreen, and 390px layouts passed without new browser errors. Ordered maintenance, preflight, telemetry, feedback, shop, social, weekly smoke, and diff checks are green. TODO: publish the audited guarded PR and verify merge plus production.
+
 ## 2026-09-20 Rune Roots automation
 - Started from clean detached origin/main `854545951edfe1de89402be76e3036a631228217`; read current repository, skill, progress, and automation guidance after syncing; `npm ci` passed with 8 moderate audit findings.
 - Selected Rune Roots (`/runeroots`), a distinct five-grove 4x4 rotation puzzle absent from the 223-game registry and recent release memory. Implemented keyboard/touch selection and rotation, turn limits and wilt loss, three rendered palettes, pause/restart/fullscreen, shared feedback, deterministic hooks, and bounded `{ roots, groves, wilts }` outcomes.

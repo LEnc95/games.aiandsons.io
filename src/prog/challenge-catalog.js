@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w39-neststack-branches-20', weekKey: '2026-09-21', gameSlug: 'neststack', metric: 'branches', name: 'Treetop Builder', desc: 'Place all 20 branches in Nest Stack.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-baseballradio-wins-1', weekKey: '2026-09-21', gameSlug: 'baseballradio', metric: 'wins', name: 'Ninth-Inning Win', desc: 'Win a Bottom of the Ninth broadcast.', target: 1, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-bottlecapcurl-targets-20', weekKey: '2026-09-21', gameSlug: 'bottlecapcurl', metric: 'targets', name: 'Tabletop Sweep', desc: 'Score all 20 targets in Bottlecap Curl.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-moonmender-stones-6', weekKey: '2026-09-21', gameSlug: 'moonmender', metric: 'stones', name: 'Lunar Mason', desc: 'Mend all 6 moonstones in Moon Mender.', target: 6, rewardCoins: 20 }),
   define({ id: 'weekly-w38-auroraaccord-notes-25', weekKey: '2026-09-14', gameSlug: 'auroraaccord', metric: 'notes', name: 'Aurora Chorus', desc: 'Catch all 25 notes in Aurora Accord.', target: 25, rewardCoins: 20 }),
   define({ id: 'weekly-w38-lanternloom-stars-55', weekKey: '2026-09-14', gameSlug: 'lanternloom', metric: 'stars', name: 'Constellation Keeper', desc: 'Catch all 55 stars in Lantern Loom.', target: 55, rewardCoins: 20 }),
   define({ id: 'weekly-w38-turbotilt-players-8', weekKey: '2026-09-14', gameSlug: 'turbotilt', metric: 'players', name: 'Full Grid', desc: 'Race with 8 players in Turbo Tilt.', target: 8, rewardCoins: 20 }),
