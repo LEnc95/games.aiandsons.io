@@ -78,3 +78,7 @@
 ## 2026-07-03 - Optimizing category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
+
+## 2024-05-18 - Optimized Feedback Submission Retrieval Filters
+**Learning:** Chained array methods like `.map().filter()` inside a data retrieval function result in O(N) memory allocations, especially inefficient when operating over a list where early exits are possible.
+**Action:** Replace functional `.filter()` pipelines with an imperative `for...of` loop when applying multiple filter conditions on data collections, leveraging early `continue` statements to bypass array allocation and loop logic safely.
