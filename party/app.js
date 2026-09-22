@@ -1,5 +1,6 @@
 import { createStickController } from "/sticktilt/controller.js";
 import { connect } from "/src/net/multiplayerClient.js";
+import { SketchStrokeBuffer } from "/party/sketch-input.js";
 import { AVATAR_EMOJI, DEFAULT_AVATAR_EMOJI, isAvatarEmoji } from "/src/social/avatars.js";
 import { createPartyAudio } from "/party/audio.js";
 
@@ -57,7 +58,7 @@ const state = {
   hostRecoverySavedAt: 0,
   hostRecoveryNoticeTimer: 0,
 };
-const stickController = createStickController(byId("stickController"), input => { if(state.gameKey === "sticktilt") state.connection?.sendInput(input); }, vibrate);
+const stickController = createStickController(byId("stickController"), (input) => { if (state.gameKey === "sticktilt") state.connection?.sendInput(input); }, vibrate);
 const partyAudio = createPartyAudio({ sharedScreen: screenMode });
 
 function loadSavedAvatar() {
@@ -277,11 +278,14 @@ function showController() {
   const activityControls = partyPhase === "activity" || (partyPhase === "paused" && state.snapshot?.resumePartyPhase === "activity");
   const isParty = state.sessionMode === "rotation" && !activityControls;
   const isCrowdShift = !isParty && state.gameKey === "crowdshift";
+  const isSketchClash = !isParty && state.gameKey === "sketchclash";
+  const isStickTilt = !isParty && state.gameKey === "sticktilt";
   byId("partyController").hidden = !isParty;
-  byId("turboController").hidden = isParty || state.gameKey !== "turbotilt";
-  byId("stickController").hidden = isParty || state.gameKey !== "sticktilt";
+  byId("turboController").hidden = isParty || isCrowdShift || isSketchClash || isStickTilt;
   byId("crowdController").hidden = isParty || !isCrowdShift;
-  const label = isParty ? "Party voting" : isCrowdShift ? "Crowd Shift" : state.gameKey === "sticktilt" ? "Stick & Tilt" : "Turbo Tilt";
+  byId("stickController").hidden = !isStickTilt;
+  ensureSketchController().hidden = !isSketchClash;
+  const label = isParty ? "Party voting" : isStickTilt ? "Stick & Tilt" : isSketchClash ? "Sketch Clash" : isCrowdShift ? "Crowd Shift" : "Turbo Tilt";
   byId("controllerView").setAttribute("aria-label", `${label} phone controller`);
 }
 
@@ -421,14 +425,12 @@ function renderController() {
     return;
   }
   showController();
-  if (state.gameKey === "sticktilt") {
-    stickController.render(snapshot, snapshot?.selfId || state.playerId);
-    return;
-  }
+  if (state.gameKey === "sticktilt") { stickController.render(snapshot, snapshot?.selfId || state.playerId); return; }
   if (state.gameKey === "crowdshift") {
     renderCrowdController(snapshot);
     return;
   }
+  if (state.gameKey === "sketchclash") { renderSketchController(snapshot); return; }
   const me = snapshot?.players?.find((player) => player.id === (snapshot.selfId || state.playerId));
   const phase = snapshot?.phase || "lobby";
   const mode = String(snapshot?.settings?.mode || "classic").replaceAll("_", " ");
@@ -452,6 +454,40 @@ function renderController() {
   state.selectedGadget = me?.nextGadget || state.selectedGadget;
   document.querySelectorAll("[data-gadget]").forEach((button) => button.classList.toggle("selected", button.dataset.gadget === state.selectedGadget));
   renderVotes(snapshot);
+}
+
+function ensureSketchController() {
+  let panel = byId("sketchController");
+  if (panel) return panel;
+  panel = document.createElement("section"); panel.id = "sketchController"; panel.className = "controller-game";
+  panel.innerHTML = `<div class="sketch-status"><p class="eyebrow" id="sketchPhase" aria-live="polite">Sketch Clash</p><strong id="sketchTimer"></strong></div><h2 id="sketchTitle">Watch the shared screen</h2><p id="sketchRule">Draw pictures only — no letters or numbers.</p><div id="sketchChoices"></div><div class="sketch-canvas-wrap"><canvas id="sketchCanvas" width="900" height="600" aria-label="Private drawing canvas"></canvas></div><div id="sketchTools" class="sketch-tools"><fieldset><legend>Ink color</legend><div class="sketch-palette"><button class="swatch" data-sketch-color="#111827" aria-label="Charcoal"></button><button class="swatch" data-sketch-color="#ef476f" aria-label="Coral red"></button><button class="swatch" data-sketch-color="#ff9f1c" aria-label="Orange"></button><button class="swatch" data-sketch-color="#ffd166" aria-label="Sun yellow"></button><button class="swatch" data-sketch-color="#06d6a0" aria-label="Mint green"></button><button class="swatch" data-sketch-color="#118ab2" aria-label="Ocean blue"></button><button class="swatch" data-sketch-color="#6c5ce7" aria-label="Violet"></button><button class="swatch" data-sketch-color="#d946ef" aria-label="Magenta"></button><label class="custom-swatch" aria-label="Custom ink color"><input id="sketchCustomColor" type="color" value="#3b82f6"><span>+</span></label></div></fieldset><fieldset><legend>Pen size <output id="sketchPenSizeValue">12</output></legend><input id="sketchPenSize" type="range" min="2" max="30" value="12" step="1"></fieldset><fieldset><legend>Eraser size <output id="sketchEraserSizeValue">28</output></legend><input id="sketchEraserSize" type="range" min="8" max="48" value="28" step="2"></fieldset><div class="sketch-tool-actions"><button id="sketchPen" class="selected" type="button">✎ Pen</button><button id="sketchErase" type="button">◯ Eraser</button><button id="sketchUndo" type="button">↶ Undo</button><button id="sketchClear" type="button">Clear</button></div></div><form id="sketchGuessForm"><label>Your guess <input id="sketchGuess" maxlength="80" autocomplete="off" placeholder="What is it?"></label><button>Send</button></form><p id="sketchResult" aria-live="polite"></p>`;
+  byId("controllerView").append(panel);
+  const canvas = panel.querySelector("canvas"), ctx=canvas.getContext("2d"), strokeBuffer=new SketchStrokeBuffer(); let drawing=false, sequence=0, color=localStorage.getItem("aiandsons-sketch-color")||"#111827", penWidth=Number(localStorage.getItem("aiandsons-sketch-pen")||12), eraserWidth=Number(localStorage.getItem("aiandsons-sketch-eraser")||28), tool="pen", lastSentAt=0, strokeCounter=0, strokeId="";
+  panel._sketchRedraw=(snapshot)=>{if(drawing||panel.dataset.canvasRevision===String(snapshot?.canvasRevision??""))return;ctx.clearRect(0,0,canvas.width,canvas.height);for(const stroke of snapshot?.strokes||[]){if(!stroke.points?.length)continue;ctx.strokeStyle=stroke.tool==="eraser"?"#fff":stroke.color;ctx.lineWidth=stroke.width;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(stroke.points[0].x*canvas.width,stroke.points[0].y*canvas.height);for(const p of stroke.points.slice(1))ctx.lineTo(p.x*canvas.width,p.y*canvas.height);ctx.stroke();}panel.dataset.canvasRevision=String(snapshot?.canvasRevision??"");};
+  const send=(keepTail=true)=>{
+    const batch=strokeBuffer.drain({keepTail});if(!batch.length)return;
+    const snap=state.snapshot;
+    state.connection?.sendInput({type:"stroke",roundId:snap?.roundId,stroke:{roundId:snap?.roundId,strokeId,sequence:++sequence,tool,color,width:tool==="eraser"?eraserWidth:penWidth,points:batch}});
+    lastSentAt=performance.now();
+  };
+  const point=(event)=>{const r=canvas.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(event.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(event.clientY-r.top)/r.height)),t:Date.now()};};
+  canvas.addEventListener("pointerdown",e=>{if(state.snapshot?.currentArtistId!==(state.snapshot?.selfId||state.playerId)||state.snapshot?.phase!=="drawing")return;e.preventDefault();drawing=true;sequence=Math.max(sequence,state.snapshot.strokeSequence||0);strokeId=`${state.playerId||"artist"}-${Date.now()}-${++strokeCounter}`;lastSentAt=performance.now();canvas.setPointerCapture(e.pointerId);strokeBuffer.begin(point(e));});
+  canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();const coalesced=e.getCoalescedEvents?.()||[],samples=coalesced.length?coalesced:[e];for(const sample of samples){const p=point(sample), q=strokeBuffer.last;if(!q){strokeBuffer.begin(p);continue;}ctx.strokeStyle=tool==="eraser"?"#fff":color;ctx.lineWidth=tool==="eraser"?eraserWidth:penWidth;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(q.x*900,q.y*600);ctx.lineTo(p.x*900,p.y*600);ctx.stroke();strokeBuffer.add(p);}if(performance.now()-lastSentAt>=25||strokeBuffer.length>=64)send(true);});
+  const finishStroke=()=>{if(!drawing)return;drawing=false;send(false);strokeBuffer.clear();};
+  canvas.addEventListener("pointerup",finishStroke);canvas.addEventListener("pointercancel",finishStroke);canvas.addEventListener("lostpointercapture",finishStroke);
+  const selectTool=(next)=>{tool=next;byId("sketchPen").classList.toggle("selected",tool==="pen");byId("sketchErase").classList.toggle("selected",tool==="eraser");};
+  const selectColor=(next)=>{color=next;localStorage.setItem("aiandsons-sketch-color",color);selectTool("pen");panel.querySelectorAll("[data-sketch-color]").forEach(b=>b.classList.toggle("selected",b.dataset.sketchColor.toLowerCase()===color.toLowerCase()));};
+  panel.querySelectorAll("[data-sketch-color]").forEach(b=>{b.style.setProperty("--swatch",b.dataset.sketchColor);b.onclick=()=>selectColor(b.dataset.sketchColor);});byId("sketchCustomColor").oninput=e=>selectColor(e.target.value);byId("sketchPen").onclick=()=>selectTool("pen");byId("sketchErase").onclick=()=>selectTool("eraser");
+  byId("sketchPenSize").value=String(penWidth);byId("sketchPenSizeValue").value=String(penWidth);byId("sketchPenSize").oninput=e=>{penWidth=Number(e.target.value);byId("sketchPenSizeValue").value=String(penWidth);localStorage.setItem("aiandsons-sketch-pen",String(penWidth));selectTool("pen");};
+  byId("sketchEraserSize").value=String(eraserWidth);byId("sketchEraserSizeValue").value=String(eraserWidth);byId("sketchEraserSize").oninput=e=>{eraserWidth=Number(e.target.value);byId("sketchEraserSizeValue").value=String(eraserWidth);localStorage.setItem("aiandsons-sketch-eraser",String(eraserWidth));selectTool("eraser");};
+  byId("sketchUndo").onclick=()=>state.connection?.sendInput({type:"canvas_action",action:"undo"});byId("sketchClear").onclick=()=>{if(confirm("Clear the canvas? You can undo this once."))state.connection?.sendInput({type:"canvas_action",action:"clear"});};selectColor(color);
+  byId("sketchGuessForm").addEventListener("submit",e=>{e.preventDefault();const input=byId("sketchGuess");state.connection?.sendInput({type:"guess",guess:input.value});input.value="";}); return panel;
+}
+function renderSketchController(snapshot) {
+ const panel=ensureSketchController(), me=snapshot?.selfId||state.playerId, artist=snapshot?.players?.find(p=>p.id===snapshot?.currentArtistId), isArtist=me===snapshot?.currentArtistId, phase=snapshot?.phase||"lobby", seconds=Math.max(0,Math.ceil((Number(snapshot?.phaseEndsAt||0)-Date.now())/1000));
+ panel._sketchRedraw?.(snapshot);
+ byId("sketchPhase").textContent=`${phase.replaceAll("_"," ")} · ${seconds}s`;byId("sketchTimer").textContent=seconds?`${seconds} seconds remaining`:"";byId("sketchChoices").textContent="";byId("sketchCanvas").hidden=!(isArtist&&phase==="drawing");byId("sketchTools").hidden=!(isArtist&&phase==="drawing");byId("sketchGuessForm").hidden=isArtist||phase!=="drawing"||Boolean(snapshot?.hasGuessedCorrectly);
+ if(phase==="choosing_prompt"&&isArtist){byId("sketchTitle").textContent="Choose a secret word";(snapshot?.promptChoices||[]).forEach(p=>{const b=document.createElement("button");b.textContent=p.text;b.onclick=()=>state.connection?.sendInput({type:"choose_prompt",choice:p.id});byId("sketchChoices").append(b);});} else if(phase==="drawing"&&isArtist){byId("sketchTitle").textContent=`Draw: ${snapshot?.selectedPrompt?.text||"your word"}`;} else if(snapshot?.hasGuessedCorrectly){byId("sketchTitle").textContent="✓ Correct! Watch the display.";} else if(phase==="round_recap"||phase==="podium"){byId("sketchTitle").textContent=`Answer: ${snapshot?.answer||"—"}`;} else {byId("sketchTitle").textContent=`${artist?.name||"Artist"} is drawing — watch the shared screen`;}
 }
 
 function renderPartyController(snapshot) {
@@ -746,7 +782,7 @@ function effectiveSteer() {
 }
 
 function sendSteer(force = false) {
-  if(state.gameKey !== "turbotilt") return;
+  if (state.gameKey !== "turbotilt") return;
   const now = performance.now();
   const value = effectiveSteer();
   if (!force && now - state.lastSentAt < 68) return;
@@ -990,7 +1026,7 @@ function renderSessionScreen() {
   const activityPhase = partyPhase === "activity" || (partyPhase === "paused" && snapshot?.resumePartyPhase === "activity");
   byId("partySkipButton").hidden = !host || !activityPhase;
   byId("partyEndButton").hidden = !host || !running;
-  const showEmbedded = activityPhase && ["turbotilt", "crowdshift", "sticktilt"].includes(snapshot?.gameKey);
+  const showEmbedded = activityPhase && ["turbotilt", "crowdshift", "sticktilt", "sketchclash"].includes(snapshot?.gameKey);
   byId("partyStage").hidden = showEmbedded;
   byId("activityFrame").hidden = !showEmbedded;
   if (showEmbedded) mountEmbeddedActivity(snapshot.gameKey, snapshot);
@@ -1213,9 +1249,9 @@ function drawPartyVoting(snapshot) {
   const methodCopy = { chaos: "Every player gets one wheel slice", majority: "The activity with the most votes wins", unanimous: "Agree together or the wheel breaks the tie", host: "The host chooses from the activity pool" }[method];
   partyText(`${seconds}s · ${methodCopy}`, 600, 99, 850, 20, "#d5e5ed");
   options.forEach((option, index) => {
-    const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : "#ff6b9f";
+    const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : option.gameKey === "sticktilt" ? "#ffd560" : option.gameKey === "sketchclash" ? "#ffe36e" : "#ff6b9f";
     partyRoundRect(x, 135, 328, 420, 28, "rgba(10,23,52,.88)", accent);
-    partyText(option.gameKey === "turbotilt" ? "🏎️" : option.gameKey === "sticktilt" ? "🥊" : "↔️", x + 164, 195, 120, 52, "#fff");
+    partyText(option.gameKey === "turbotilt" ? "🏎️" : option.gameKey === "sticktilt" ? "🥊" : option.gameKey === "sketchclash" ? "✎" : "↔️", x + 164, 195, 120, 52, "#fff");
     partyText(option.label, x + 164, 264, 290, 29, accent);
     partyText(option.description, x + 164, 322, 280, 19, "#d5e5ed");
     const own = ballots.filter((ballot) => ballot.optionId === option.id);
@@ -1257,8 +1293,8 @@ function drawPartyWheel(snapshot) {
 function drawPartyNextUp(snapshot, override = "") {
   const activity = snapshot.activity || {};
   partyText(override || "NEXT UP", 600, 120, 900, 68, "#ffe36e");
-  partyText(activity.gameKey === "turbotilt" ? "🏎️" : activity.gameKey === "sticktilt" ? "🥊" : "↔️", 600, 260, 180, 104, "#fff");
-  partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : "#ff82ad");
+  partyText(activity.gameKey === "turbotilt" ? "🏎️" : activity.gameKey === "sticktilt" ? "🥊" : activity.gameKey === "sketchclash" ? "✎" : "↔️", 600, 260, 180, 104, "#fff");
+  partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : activity.gameKey === "sticktilt" ? "#ffd560" : activity.gameKey === "sketchclash" ? "#ffe36e" : "#ff82ad");
   partyText(activity.description || "Keep your phone ready", 600, 465, 900, 26, "#d5e5ed");
   partyText("Starting automatically…", 600, 570, 600, 22, "#b9acd0");
 }

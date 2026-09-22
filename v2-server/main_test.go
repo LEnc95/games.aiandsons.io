@@ -56,7 +56,7 @@ func TestHealthReportsOnlyEnabledGames(t *testing.T) {
 	if len(body.Games) != 1 || body.Games[0] != partyGameID {
 		t.Fatalf("expected only party enabled, got %v", body.Games)
 	}
-	if len(body.PartyGames) != 3 || !containsString(body.PartyGames, stickTiltGameKey) {
+	if len(body.PartyGames) != 4 || !containsString(body.PartyGames, stickTiltGameKey) || !containsString(body.PartyGames, sketchClashGameKey) {
 		t.Fatalf("expected party activity catalog, got %v", body.PartyGames)
 	}
 	if body.RoomRecovery {

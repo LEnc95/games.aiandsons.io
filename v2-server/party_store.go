@@ -87,6 +87,7 @@ type partyRoomSnapshot struct {
 	Awards           []map[string]any
 	Crowd            *crowdShiftState
 	Stick            *stickTiltState
+	Sketch           *sketchClashState
 	SessionMode      string
 	PartyPhase       string
 	ResumePartyPhase string
@@ -193,7 +194,7 @@ func (r *partyRoom) snapshotForPersistenceLocked(now int64) *partyRoomSnapshot {
 		TotalBoosts: r.totalBoosts, Settings: r.settings, Track: r.track, Modifier: r.modifier,
 		VoteOptions: r.voteOptions, Votes: r.votes, Routes: r.routes, SharedHealth: r.sharedHealth,
 		RaceStartedAt: r.raceStartedAt, NextChaosAt: r.nextChaosAt, ReplayFrames: r.replayFrames, Awards: r.awards,
-		Stick: r.stick, Crowd: r.crowd, SessionMode: r.sessionMode, PartyPhase: r.partyPhase, ResumePartyPhase: r.resumePartyPhase,
+		Crowd: r.crowd, Stick: r.stick, Sketch: r.sketch, SessionMode: r.sessionMode, PartyPhase: r.partyPhase, ResumePartyPhase: r.resumePartyPhase,
 		ActivityIndex: r.activityIndex, Activity: r.activity, LastActivityID: r.lastActivityID,
 		ActivityHistory: r.activityHistory, PartyHighlights: r.partyHighlights, PartyVote: r.partyVote, PartyAwarded: r.partyAwarded, ActivitySkipped: r.activitySkipped,
 	}
@@ -226,7 +227,7 @@ func restorePartyRoom(h *hub, snapshot *partyRoomSnapshot) *partyRoom {
 		settings: snapshot.Settings, track: snapshot.Track, modifier: snapshot.Modifier, voteOptions: snapshot.VoteOptions,
 		votes: snapshot.Votes, routes: snapshot.Routes, sharedHealth: snapshot.SharedHealth,
 		raceStartedAt: snapshot.RaceStartedAt, nextChaosAt: snapshot.NextChaosAt, replayFrames: snapshot.ReplayFrames,
-		awards: snapshot.Awards, stick: snapshot.Stick, crowd: snapshot.Crowd, sessionMode: snapshot.SessionMode,
+		awards: snapshot.Awards, crowd: snapshot.Crowd, stick: snapshot.Stick, sketch: snapshot.Sketch, sessionMode: snapshot.SessionMode,
 		partyPhase: snapshot.PartyPhase, resumePartyPhase: snapshot.ResumePartyPhase,
 		activityIndex: snapshot.ActivityIndex, activity: snapshot.Activity, lastActivityID: snapshot.LastActivityID,
 		activityHistory: snapshot.ActivityHistory, partyHighlights: snapshot.PartyHighlights, partyVote: snapshot.PartyVote,

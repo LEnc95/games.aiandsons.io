@@ -5,6 +5,7 @@ const BASE_GAMES = [
   { slug:'audioagar',      name:'Audio Agar',           emoji:'\u{1F535}', scoreHint:'mass',       url:'/audioagar',     desc:'Audio-first multiplayer orb arena with keyboard movement, spatial cues, and screen-reader status for blind play.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
   { slug:'turbotilt',      name:'Turbo Tilt',           emoji:'\u{1F3CE}\uFE0F', scoreHint:'points', url:'/turbotilt/', desc:'Host a customizable party cup where up to eight players tilt, boost, use gadgets, and vote from their phones.', earnsCoins:false },
   { slug:'sticktilt', name:'Stick & Tilt', emoji:'🥊', scoreHint:'knockouts', url:'/sticktilt/', desc:'Tilt your phone to move a stick fighter. Punch, jump, and guard through three quick rounds with 2–8 friends.', earnsCoins:false },
+  { slug:'sketchclash', name:'Sketch Clash', emoji:'✎', scoreHint:'points', url:'/sketchclash/', desc:'A shared-screen draw-and-guess party game with private phone canvases for 2–8 players.', earnsCoins:false },
   { slug:'crowdshift',     name:'Crowd Shift',          emoji:'\u{1F500}', scoreHint:'points', url:'/crowdshift/', desc:'Read your rival in two-player Duel Shift, or tackle rotating crowd rules with up to eight phones.', earnsCoins:false },
   { slug:'2048',           name:'2048',                emoji:'\u{1F522}', scoreHint:'best tile',  url:'/2048',          desc:'Slide and merge matching tiles until you reach 2048.', earnsCoins:true },
   { slug:'pong',           name:'Pong',                emoji:'\u{1F3D3}', scoreHint:'returns',    url:'/pong',          desc:'Classic paddle game. Play against the computer!', earnsCoins:true },
@@ -310,7 +311,7 @@ const EASY_SLUGS = Object.freeze(new Set([
   'whackamole', 'colorcatch', 'plinko', 'skeeball',
 ]));
 
-const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar', 'turbotilt', 'crowdshift', 'sticktilt']));
+const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar', 'turbotilt', 'crowdshift', 'sticktilt', 'sketchclash']));
 const TWO_PLAYER_SLUGS = Object.freeze(DISCOVERY_CATEGORY_GROUPS['two-player']);
 const BASE_RELEASE_TIME = Date.UTC(2026, 1, 10);
 const DAY_MS = 24 * 60 * 60 * 1000;

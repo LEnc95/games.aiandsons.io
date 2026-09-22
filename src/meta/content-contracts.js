@@ -423,6 +423,7 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
       Object.freeze({ key: 'sticktilt-theme', kind: 'palette', tokens: Object.freeze(['paper', 'ink', 'gold', 'fighter']) }),
     ]),
   }),
+  sketchclash: Object.freeze({ releasedAt: '2026-09-21', outcomes: Object.freeze({ players: Object.freeze({ min: 0, max: 8, direction: 'higher' }), rounds: Object.freeze({ min: 0, max: 8, direction: 'higher' }), solved: Object.freeze({ min: 0, max: 56, direction: 'higher' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'sketchclash-ink', kind: 'palette', tokens: Object.freeze(['ink', 'paper', 'accent']) })]) }),
   crowdshift: Object.freeze({
     releasedAt: '2026-09-10',
     outcomes: Object.freeze({

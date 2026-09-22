@@ -19,6 +19,7 @@ import (
 
 const (
 	turboTiltGameKey       = "turbotilt"
+	sketchClashGameKey     = "sketchclash"
 	partyTickRate          = 30
 	partyMaxRooms          = 100
 	partyMaxPlayers        = 8
@@ -47,6 +48,9 @@ type partyInput struct {
 	Customization partyCustomization   `json:"customization,omitempty"`
 	OptionID      string               `json:"optionId,omitempty"`
 	Ready         bool                 `json:"ready,omitempty"`
+	RoundID       string               `json:"roundId,omitempty"`
+	Guess         string               `json:"guess,omitempty"`
+	Stroke        sketchStroke         `json:"stroke,omitempty"`
 }
 
 type partySettings struct {
@@ -209,6 +213,7 @@ type partyRoom struct {
 	awards              []map[string]any
 	crowd               *crowdShiftState
 	stick               *stickTiltState
+	sketch              *sketchClashState
 	sessionMode         string
 	partyPhase          string
 	resumePartyPhase    string
@@ -355,6 +360,8 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 	}
 	if gameKey == crowdShiftGameKey {
 		room.crowd = newCrowdShiftState()
+	} else if gameKey == sketchClashGameKey {
+		room.sketch = newSketchClashState()
 	}
 	h.partyRooms[roomID] = room
 	var initialSnapshot *partyRoomSnapshot
@@ -764,6 +771,10 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 		r.applyCrowdShiftPlayerInputLocked(p, input, now, c)
 		return
 	}
+	if r.gameKey == sketchClashGameKey {
+		r.applySketchClashPlayerInputLocked(p, input, now, c)
+		return
+	}
 	switch input.Type {
 	case "steer":
 		if now-p.LastSteerAt < 60 {
@@ -1006,6 +1017,10 @@ func (r *partyRoom) applyHostActionLocked(action string, now int64, c *client) {
 		r.applyCrowdShiftHostActionLocked(action, now, c)
 		return
 	}
+	if r.gameKey == sketchClashGameKey {
+		r.applySketchClashHostActionLocked(action, now, c)
+		return
+	}
 	switch action {
 	case "start":
 		if r.phase != "lobby" && r.phase != "podium" && r.phase != "ended" {
@@ -1128,6 +1143,10 @@ func (r *partyRoom) step(now int64, dt float64) {
 	}
 	if r.gameKey == crowdShiftGameKey {
 		r.stepCrowdShiftLocked(now)
+		return
+	}
+	if r.gameKey == sketchClashGameKey {
+		r.stepSketchClashLocked(now)
 		return
 	}
 	r.stepTurboTiltLocked(now, dt)
@@ -1457,6 +1476,9 @@ func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 	}
 	if r.gameKey == crowdShiftGameKey {
 		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.crowdShiftSnapshotLocked(selfID), selfID))
+	}
+	if r.gameKey == sketchClashGameKey {
+		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.sketchClashSnapshotLocked(selfID), selfID))
 	}
 	if r.gameKey == partyRotationGameKey {
 		return r.decorateRoomControlsLocked(r.rotationSnapshotLocked(selfID))

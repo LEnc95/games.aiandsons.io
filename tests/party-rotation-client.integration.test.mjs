@@ -32,6 +32,8 @@ test("party rotation exposes the bounded lifecycle and activity catalogs", async
   for (const mode of ["classic", "elimination", "teams", "relay", "survival", "chaos", "majority", "minority", "split", "unanimous", "duel", "blitz"]) {
     assert.match(server, new RegExp(`ModeKey: "${mode}"|ModeKey:.*"${mode}"`));
   }
+  assert.match(server, /sticktilt:rumble/);
+  assert.match(server, /sketchclash:classic/);
 });
 
 test("embedded activities start and finalize the existing clip recorder", async () => {
