@@ -296,12 +296,17 @@ async function listFeedbackSubmissionsFromFirestore(filters = {}) {
     .limit(queryLimit)
     .get();
 
-  const items = snapshot.docs.map((doc) => normalizeStoredSubmission(doc.data()));
-  return items
-    .filter((item) => !gameSlug || item.gameSlug === gameSlug)
-    .filter((item) => !triageStatus || item.triageStatus === triageStatus)
-    .filter((item) => !syncStatus || item.syncStatus === syncStatus)
-    .slice(0, limit);
+  // ⚡ Bolt Optimization: Replace chained filters and map allocations with an imperative loop
+  const items = [];
+  for (const doc of snapshot.docs) {
+    const item = normalizeStoredSubmission(doc.data());
+    if (gameSlug && item.gameSlug !== gameSlug) continue;
+    if (triageStatus && item.triageStatus !== triageStatus) continue;
+    if (syncStatus && item.syncStatus !== syncStatus) continue;
+    items.push(item);
+    if (items.length >= limit) break;
+  }
+  return items;
 }
 
 async function saveFeedbackAttachmentToFirestore(attachment) {
@@ -493,13 +498,20 @@ async function listFeedbackSubmissions(filters = {}) {
   const limit = normalizeInteger(filters.limit, { min: 1, max: FEEDBACK_INDEX_LIMIT, fallback: 200 });
 
   const index = await getSubmissionIndex();
-  const items = await Promise.all(index.slice(0, limit).map((id) => getFeedbackSubmission(id)));
-  return items
-    .filter(Boolean)
-    .filter((item) => !gameSlug || item.gameSlug === gameSlug)
-    .filter((item) => !triageStatus || item.triageStatus === triageStatus)
-    .filter((item) => !syncStatus || item.syncStatus === syncStatus)
-    .sort((a, b) => b.submittedAt - a.submittedAt);
+  const fetchedItems = await Promise.all(index.slice(0, limit).map((id) => getFeedbackSubmission(id)));
+
+  // ⚡ Bolt Optimization: Replace chained filters and map allocations with an imperative loop
+  const items = [];
+  for (const data of fetchedItems) {
+    if (!data) continue;
+    // fetchedItems from getFeedbackSubmission are already normalized
+    if (gameSlug && data.gameSlug !== gameSlug) continue;
+    if (triageStatus && data.triageStatus !== triageStatus) continue;
+    if (syncStatus && data.syncStatus !== syncStatus) continue;
+    items.push(data);
+    if (items.length >= limit) break;
+  }
+  return items.sort((a, b) => b.submittedAt - a.submittedAt);
 }
 
 async function enforceFeedbackRateLimit({
