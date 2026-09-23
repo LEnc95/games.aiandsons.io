@@ -1,71 +1,112 @@
 # Deployment Instructions
 
-## Vercel Deployment
+## Vercel static deployment
 
-This Pong game is configured for deployment to Vercel at `cadesgames.aiandsons.io/pingpong`.
+This repository deploys as a static arcade plus Vercel serverless functions. It
+does not use a framework build step: `vercel.json` sets `buildCommand`,
+`devCommand`, and `installCommand` to `null`, uses `"framework": null`, and
+serves the repository root as the output directory.
 
-### Quick Deploy
+## Project shape
 
-1. **Connect to Vercel**
-   - Push this repository to GitHub
-   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
-   - Click "New Project" and import your repository
-
-2. **Configure Domain**
-   - In project settings, go to "Domains"
-   - Add `cadesgames.aiandsons.io` as a domain
-   - The game will be accessible at `cadesgames.aiandsons.io/pingpong`
-
-3. **Deploy**
-   - Vercel will automatically detect the static site
-   - No build command needed - pure static HTML
-   - Deployment happens automatically on git push
-
-### File Structure
-
-```
+```text
 /
-├── pingpong/
-│   ├── index.html    # Main game file (self-contained)
-│   └── assets/      # Game-specific assets (future)
-├── vercel.json       # Root-level routing configuration
-├── v2-server/       # Future multiplayer server (not deployed)
-└── (future games can be added as additional folders)
+|- index.html                 # Launcher, missions, discovery, profile
+|- <game-slug>/index.html     # Self-contained game shells
+|- shop.html                  # Cosmetics and premium inventory
+|- teacher/                   # Classroom mode pages
+|- ops/feedback/              # Feedback triage UI
+|- api/                       # Vercel functions and routers
+|- src/                       # Shared browser modules and metadata
+|- assets/og/                 # Per-game share cards
+`- vercel.json                # Rewrites, headers, and static hosting config
 ```
 
-### Configuration Details
+`v2-server/` and `clubpenguin-world/` include separate Go server code and are
+not deployed by the static Vercel site unless their own deployment instructions
+are followed.
 
-The `vercel.json` file includes:
-- **Rewrites**: Maps `/pingpong` and `/pingpong/` to `/pingpong/index.html`
-- **Cache Headers**: 1-hour cache for optimal performance (no-cache for index.html)
-- **Security Headers**: X-Content-Type-Options and X-Frame-Options
+## Routing model
 
-This monorepo structure allows multiple games to coexist:
-- Each game lives in its own folder (e.g., `pingpong/`, `game2/`, etc.)
-- Root `vercel.json` handles routing to each game's `index.html`
-- Future games can follow the same pattern
+- The launcher lives at `/`.
+- Standard games live in `<slug>/index.html` and are linked as `/<slug>` from
+  `src/meta/games.js`.
+- Existing `vercel.json` rewrites keep legacy clean URLs and aliases working,
+  including `/pingpong` -> `/pong/index.html`.
+- API clean URLs are rewritten into router functions, for example
+  `/api/stripe/:route` -> `/api/billing?route=:route`,
+  `/api/social/:route` -> `/api/social?route=:route`, and
+  `/api/discovery/events` -> `/api/social?route=discovery-events`.
+- Share landing routes use `/challenge/:id`, `/race/:code`, and `/g/:slug`.
 
-### URL Structure
+For normal new game folders, update `src/meta/games.js`, run the generated
+asset/metadata commands, and avoid adding a `vercel.json` route unless the URL
+is an alias or does not match the folder path. `npm run game:preflight` checks
+that registered game folders, discovery metadata, sitemap entries, OG cards,
+and clean-URL cache headers are in sync.
 
-- **Main game**: `https://cadesgames.aiandsons.io/pingpong`
-- **With parameters**: `https://cadesgames.aiandsons.io/pingpong?difficulty=3&speed=1.5&seed=12345`
+## Cache and security headers
 
-### Versioning
+The header rules in `vercel.json` intentionally split static asset caching from
+runtime shells:
 
-- The site displays a version badge in the bottom-right of the homepage.
-- Source of truth: `version.json` at the repo root with `{ "version": "x.y.z" }`.
-- Before merging/deploying changes that affect the app, bump `version.json` (e.g., 0.1.0 → 0.1.1).
-- The homepage fetches `version.json` and shows `vX.Y.Z`.
+- `/api/(.*)` is `private, no-store` and disables Vercel CDN caching.
+- `/(.*)` defaults to one-hour public caching and carries common security
+  headers, including `X-Content-Type-Options`, `X-Frame-Options`,
+  `Strict-Transport-Security`, and the site CSP.
+- `/`, `/:slug`, `/:slug/`, and `/:slug/index.html` are
+  `public, max-age=0, must-revalidate` so launcher and game shell updates are
+  visible immediately.
+- `/src/(.*)` and selected runtime assets such as `audioagar/game.js` also use
+  no-cache headers because games import shared browser modules directly.
 
-### Testing
+Pitfall: Vercel matches header `source` values against the request URL before
+rewrites. Keep the clean-URL `/:slug` and `/:slug/` rules when changing headers;
+an `/:slug/index.html` rule alone does not cover user traffic to `/<slug>`.
 
-After deployment, test:
-- Game loads at `/pingpong` path
-- All controls work (W/S, Arrow keys, P, R, 1/2/3)
-- URL parameters work (`?difficulty=X&speed=Y&seed=Z`)
-- Game works offline (no external dependencies)
+## Environment variables
 
-### Offline Support
+The static shell can load without backend credentials, but production account,
+feedback, billing, and cloud-save features depend on the Firebase, Stripe, and
+app-session variables listed in `README.md`.
 
-The game is fully self-contained and works offline. No service worker is currently implemented, but one could be added for true offline-first experience.
+Notable groups:
+
+- Firebase Admin and client config for auth, Firestore, and Storage.
+- Stripe price/webhook/admin variables for checkout, portal, webhooks, and
+  reconcile jobs.
+- `APP_SESSION_SECRET` for signed app sessions.
+- Optional Slack/Linear variables for feedback and CI notifications.
+
+## Versioning
+
+- `package.json` and `version.json` both currently use the runtime version.
+- The homepage fetches `version.json` and displays the version badge.
+- Bump version files for user-visible releases as described in
+  `RELEASE_CHECKLIST.md`.
+
+## Local smoke test
+
+Serve the repository root statically:
+
+```bash
+python -m http.server 4173
+```
+
+Then open:
+
+```text
+http://127.0.0.1:4173
+```
+
+Useful checks before or after deployment:
+
+- `npm run maintenance:validate`
+- `npm run game:preflight`
+- `npm run test:qa`
+- `npm run test:launch-readiness-smoke`
+
+For a specific changed game, verify both `/<slug>` and `/<slug>/` load, shared
+widgets initialize, and any score, feedback, challenge, or shop cosmetic wiring
+matches the relevant smoke test in `scripts/qa/`.
 

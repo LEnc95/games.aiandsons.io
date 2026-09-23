@@ -29,8 +29,10 @@ Static browser arcade platform with:
 
 ## Game catalog
 
-The catalog is maintained in `src/meta/games.js` and currently has `60` games.
-Use that file as the source of truth instead of maintaining a duplicated list in this README.
+The catalog is maintained in `src/meta/games.js`. Use that file as the
+source of truth instead of maintaining a duplicated count or slug list in this
+README. `src/meta/content-contracts.js` extends catalog entries with explicit
+release dates, bounded outcome metrics, and cosmetic slots for automation.
 
 ## Quick start
 
@@ -212,4 +214,53 @@ Optional env vars:
 - Sunday automation promotes `CHANGELOG.md` for players and parents, updates `TECHNICAL_CHANGELOG.md` for maintainers, and synchronizes package/runtime versions.
 - Production verification runs after Main QA and retries after 5 and 15 minutes before alerting. It does not automatically revert a failed deployment.
 - Aggregate gameplay telemetry stores only daily counters and bounded numeric summaries. Client transmission remains disabled until privacy approval is recorded and the runtime flag is enabled.
+
+### Weekly content pack runbook
+
+Intent: keep the live arcade fresh without expanding the release surface. A
+weekly pack adds up to three inventory-backed cosmetics and four bounded weekly
+challenges that pay at most 80 coins total.
+
+Source of truth:
+
+- `scripts/automation/prepare-weekly-pack.mjs` builds the brief from games that
+  have both `contentContract.cosmeticSlots` and bounded `contentContract.outcomes`.
+- `src/prog/shop-catalog.js` holds pack policy constants: 3 cosmetics, prices
+  between 20 and 90 coins, and at least 2 contract-ready games.
+- `src/prog/challenge-catalog.js` defines challenge metadata and the weekly
+  reward ceiling. Dated weekly drops use local-Monday `weekKey` values such as
+  `2026-08-31`; undated legacy challenges remain eligible for fallback rotation.
+- `src/prog/missions.js` chooses exactly 4 active weekly challenges, preferring
+  a scheduled 4-item pack for the current local week before falling back to the
+  deterministic rotation.
+
+Implementation checklist:
+
+1. Generate or inspect the brief with `npm run automation:weekly-brief`.
+2. Add shop entries to `shop.html` using stable inventory IDs prefixed by the
+   game slug, for example `dapplegrove-starlit-moss`.
+3. Wire each inventory item into its game shell and expose enough deterministic
+   state for screenshots/text-state checks to prove the cosmetic renders.
+4. Add four `WEEKLY_CHALLENGE_DEFS` entries with the current local-Monday
+   `weekKey`, bounded metrics from the game content contracts, and rewards that
+   sum to no more than 80 coins.
+5. Update `CHANGELOG.md` and `progress.md` with the pack contents and validation.
+
+Constraints:
+
+- Do not add dependencies, billing changes, new storage keys, network calls, or
+  free-form telemetry in a weekly pack.
+- Weekly-pack diffs may touch at most three top-level game shells; the
+  `weekly-pack` audit lane enforces this separately from the daily-game allowlist.
+- Normal new game folders do not need per-game `vercel.json` edits; the generic
+  clean-URL header rules are checked by `npm run game:preflight`.
+
+Validation:
+
+- Focused logic: `node --test tests/unit/prog/missions.test.mjs`
+- Shop/game wiring: `npm run test:shop`
+- Automation contracts: `npm run maintenance:validate` and `npm run test:telemetry`
+- Release surface: `AUTOMATION_LANE=weekly-pack npm run automation:audit-diff`
+- Browser smoke: start `python -m http.server 4173`, then run
+  `npm run test:weekly-smoke:raw`
 
