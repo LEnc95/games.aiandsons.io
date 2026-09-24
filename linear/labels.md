@@ -19,6 +19,7 @@
 - game/audioagar
 - game/turbotilt
 - game/sticktilt
+- game/sketchclash
 - game/crowdshift
 - game/2048
 - game/pong
