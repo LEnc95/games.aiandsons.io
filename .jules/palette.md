@@ -52,3 +52,6 @@
 ## 2026-06-25 - Enter key submission for school license billing input
 **Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
 **Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
+## 2026-07-15 - Explicit Label for Teacher PIN Modal
+**Learning:** Relying solely on placeholders and `aria-label` for critical inputs creates an accessibility failure and poor UX for sighted users. The WCAG requires visible `<label>` elements.
+**Action:** Replaced the `aria-label` on the Teacher PIN input with an explicit, visible `<label>` containing a required indicator to improve form accessibility.
