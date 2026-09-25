@@ -550,3 +550,5 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-09-22] Key PR links: none merged for this date.
 - [nightly 2026-09-23] No repository commits found for this date.
 - [nightly 2026-09-23] Key PR links: none merged for this date.
+- [nightly 2026-09-24] Tracked changes: 2 commit(s) - 7d48072 Sync Sketch Clash discovery metadata and sitemap; 19c2f2a Fix nightly feedback readiness checks.
+- [nightly 2026-09-24] Key PR links: [PR #343 — Fix nightly feedback readiness checks](https://github.com/LEnc95/games.aiandsons.io/pull/343).
