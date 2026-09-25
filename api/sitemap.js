@@ -1,5 +1,5 @@
-// Serves /sitemap.xml when the committed static file is missing from a deployment.
-// vercel.json rewrites /sitemap.xml -> /api/sitemap only in that case.
+// Serves /sitemap.xml via vercel.json rewrite when no static sitemap.xml is deployed.
+// When buildCommand generates root sitemap.xml, Vercel serves that static file first.
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
