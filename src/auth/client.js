@@ -24,6 +24,7 @@ let firebaseAuthPromise = null;
 let redirectResultPromise = null;
 let cachedSession = null;
 let cachedSessionFetchedAt = 0;
+let sessionRevision = 0;
 const SESSION_CACHE_TTL_MS = 60_000;
 const listeners = new Set();
 const LOOPBACK_AUTH_SESSION = Object.freeze({
@@ -71,7 +72,10 @@ function shouldSkipAuthApiProbe() {
   }
 }
 
-function emitSession(session) {
+function emitSession(session, { authoritative = false } = {}) {
+  if (authoritative) {
+    sessionRevision += 1;
+  }
   cachedSession = session;
   cachedSessionFetchedAt = Date.now();
   for (const listener of listeners) {
@@ -126,6 +130,7 @@ async function parseResponse(response) {
 async function postJson(url, body) {
   const response = await fetch(url, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -228,7 +233,7 @@ async function finalizeRedirectSignIn() {
       const idToken = await result.user.getIdToken();
       const payload = await postJson("/api/auth/google-login", { idToken });
       const session = normalizeSessionPayload(payload);
-      emitSession(session);
+      emitSession(session, { authoritative: true });
       return session;
     } catch (error) {
       if (String(error?.message || "").includes("not configured yet")) {
@@ -252,17 +257,25 @@ export async function fetchAuthSession({ force = false } = {}) {
   if (!force && cachedSession && (now - cachedSessionFetchedAt) < SESSION_CACHE_TTL_MS) {
     return cachedSession;
   }
+  const observedRevision = sessionRevision;
 
   const redirectedSession = await finalizeRedirectSignIn().catch(() => null);
   if (redirectedSession) {
     return redirectedSession;
   }
+  if (sessionRevision !== observedRevision && cachedSession) {
+    return cachedSession;
+  }
 
   const response = await fetch("/api/auth/session", {
     method: "GET",
+    credentials: "same-origin",
     headers: { Accept: "application/json" },
   });
   const payload = await parseResponse(response);
+  if (sessionRevision !== observedRevision && cachedSession) {
+    return cachedSession;
+  }
   const session = normalizeSessionPayload(payload);
   emitSession(session);
   return session;
@@ -303,7 +316,7 @@ export async function signInWithGoogle() {
     const idToken = await result.user.getIdToken();
     const payload = await postJson("/api/auth/google-login", { idToken });
     const session = normalizeSessionPayload(payload);
-    emitSession(session);
+    emitSession(session, { authoritative: true });
     return session;
   } catch (error) {
     if (shouldUseRedirectFallback(error)) {
@@ -317,7 +330,7 @@ export async function signInWithGoogle() {
 export async function signOutFromApp() {
   if (shouldSkipAuthApiProbe()) {
     const session = normalizeSessionPayload(LOOPBACK_AUTH_SESSION);
-    emitSession(session);
+    emitSession(session, { authoritative: true });
     return session;
   }
 
@@ -330,6 +343,6 @@ export async function signOutFromApp() {
 
   const payload = await postJson("/api/auth/logout", {});
   const session = normalizeSessionPayload(payload);
-  emitSession(session);
+  emitSession(session, { authoritative: true });
   return session;
 }
