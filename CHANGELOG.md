@@ -116,6 +116,8 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 
+- Sketch Clash Party Mode rotation is restored, with clearer guess feedback for correct, near-miss, and incorrect answers.
+
 - Turbo Tilt now makes energy pickups and barrier impacts unmistakable with shared-screen bursts, crash shake, floating effect labels, phone haptics/status callouts, live race order, boost-charge pips, richer track art, and heat-result boards. Rooms can also mirror the live match to up to sixteen read-only computers or TVs while the original host retains all game controls.
 - Turbo Tilt Party Pack expansion adds Neon City, Glacier Run, Volcano Rush, and Spaceway; safe/risk routes, moving hazards, jumps, streak/style scoring, four phone-selected gadgets, six voted modifiers, Classic/Elimination/Teams/Relay/Survival/Chaos modes, host presets, temporary cars/trails/horns, reactions, synchronized sound and announcing, photo-finish replay, and end-of-match awards.
 - Bottom of the Ninth series home/away GameState flip so series host actually swaps sides, not only booth copy.
@@ -126,6 +128,11 @@ All notable changes to this project will be documented in this file.
 - Bottom of the Ninth series home/away booth copy so series games read as home or away.
 - Bottom of the Ninth today's broadcast local streak (days attempted).
 - Bottom of the Ninth extras and walk-off booth color lines.
+
+### Operations
+
+- Fixed nightly feedback readiness checks and synchronized Sketch Clash discovery metadata and sitemap coverage.
+- Key PRs: [#343](https://github.com/LEnc95/games.aiandsons.io/pull/343), [#338](https://github.com/LEnc95/games.aiandsons.io/pull/338), [#335](https://github.com/LEnc95/games.aiandsons.io/pull/335).
 
 ## [1.13.0] - 2026-07-26
 ### Added
