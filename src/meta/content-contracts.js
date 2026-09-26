@@ -424,6 +424,7 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
     ]),
   }),
   sketchclash: Object.freeze({ releasedAt: '2026-09-21', outcomes: Object.freeze({ players: Object.freeze({ min: 0, max: 8, direction: 'higher' }), rounds: Object.freeze({ min: 0, max: 8, direction: 'higher' }), solved: Object.freeze({ min: 0, max: 56, direction: 'higher' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'sketchclash-ink', kind: 'palette', tokens: Object.freeze(['ink', 'paper', 'accent']) })]) }),
+  riffrally: Object.freeze({ releasedAt: '2026-09-26', outcomes: Object.freeze({ score: Object.freeze({ min: 0, max: 12000, direction: 'higher' }), hits: Object.freeze({ min: 0, max: 60, direction: 'higher' }), perfect: Object.freeze({ min: 0, max: 60, direction: 'higher' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'riffrally-stage', kind: 'palette', tokens: Object.freeze(['sky', 'lane1', 'lane2', 'lane3', 'lane4', 'glow']) })]) }),
   crowdshift: Object.freeze({
     releasedAt: '2026-09-10',
     outcomes: Object.freeze({

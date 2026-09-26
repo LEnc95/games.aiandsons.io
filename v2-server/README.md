@@ -5,7 +5,7 @@ Authoritative WebSocket game server for multiplayer AI and Sons games.
 ## Current Games
 
 - `audioagar`: real-time orb arena with server-owned movement, pellets, bots, mass growth, split/eject actions, eating, death events, and per-player snapshots.
-- `party` / `turbotilt` / `crowdshift`: four-letter rooms with a dedicated host screen, 2–8 phone controllers, up to 16 read-only synchronized displays, reconnect tokens, and role-specific authoritative game snapshots. A rotating `gameKey: "party"` room keeps the roster and standings while players vote on the next game and mode. Production checkpoints short-lived server-only recovery snapshots to Firestore so a room can survive an instance replacement.
+- `party` / `turbotilt` / `crowdshift` / `sketchclash` / `riffrally`: four-letter rooms with a dedicated host screen, 2–8 phone controllers, up to 16 read-only synchronized displays, reconnect tokens, and role-specific authoritative game snapshots. Riff Rally runs a server-timed four-lane rhythm chart with authoritative hit scoring. A rotating `gameKey: "party"` room keeps the roster and standings while players vote on the next game and mode. Production checkpoints short-lived server-only recovery snapshots to Firestore so a room can survive an instance replacement.
 
 ## Run Locally
 

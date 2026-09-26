@@ -20,6 +20,7 @@
 - game/turbotilt
 - game/sticktilt
 - game/sketchclash
+- game/riffrally
 - game/crowdshift
 - game/2048
 - game/pong

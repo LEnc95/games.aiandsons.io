@@ -84,6 +84,7 @@ var partyActivityCatalog = []partyActivity{
 	{ID: "crowdshift:duel", GameKey: crowdShiftGameKey, ModeKey: "duel", Label: "Crowd Shift · Duel Shift", Description: "Two rivals bluff, predict, and risk a Hot Take.", MinPlayers: 2, MaxPlayers: 2, Style: "competitive"},
 	{ID: "crowdshift:blitz", GameKey: crowdShiftGameKey, ModeKey: "blitz", Label: "Crowd Shift · Blitz", Description: "Five rapid-fire choices with barely a second to overthink them.", MinPlayers: 3, MaxPlayers: 8, Style: "competitive"},
 	{ID: "sketchclash:classic", GameKey: sketchClashGameKey, ModeKey: "classic", Label: "Sketch Clash · Draw & Guess", Description: "Take turns drawing secret prompts while the room races to guess.", MinPlayers: 2, MaxPlayers: 8, Style: "mixed"},
+	{ID: "riffrally:classic", GameKey: riffRallyGameKey, ModeKey: "classic", Label: "Riff Rally · Setlist", Description: "Tap four color lanes to hit an original arcade beat chart and build a streak.", MinPlayers: 2, MaxPlayers: 8, Style: "competitive"},
 }
 
 func defaultPartySessionSettings() partySessionSettings {
@@ -246,6 +247,8 @@ func (r *partyRoom) stepRotationLocked(now int64, dt float64) {
 			r.stepTurboTiltLocked(now, dt)
 		} else if r.gameKey == sketchClashGameKey {
 			r.stepSketchClashLocked(now)
+		} else if r.gameKey == riffRallyGameKey {
+			r.stepRiffRallyLocked(now)
 		}
 	}
 }
@@ -407,6 +410,10 @@ func (r *partyRoom) startRotationActivityLocked(now int64) {
 		r.startRotationSketchClashLocked(now)
 		return
 	}
+	if r.gameKey == riffRallyGameKey {
+		r.startRiffRallyLocked(now)
+		return
+	}
 	r.startRotationTurboTiltLocked(now)
 }
 
@@ -488,7 +495,7 @@ func (r *partyRoom) completeRotationActivityLocked(now int64) {
 	}
 	for index, p := range ordered {
 		placement := index
-		if r.gameKey == stickTiltGameKey {
+		if r.gameKey == stickTiltGameKey || r.gameKey == riffRallyGameKey {
 			for placement > 0 && ordered[placement-1].Points == p.Points {
 				placement--
 			}

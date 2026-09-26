@@ -26,6 +26,7 @@ const state = {
   audienceId: "",
   gameKey: "",
   snapshot: null,
+  serverClockOffsetMs: 0,
   tiltEnabled: false,
   calibrating: false,
   calibration: [],
@@ -280,12 +281,14 @@ function showController() {
   const isCrowdShift = !isParty && state.gameKey === "crowdshift";
   const isSketchClash = !isParty && state.gameKey === "sketchclash";
   const isStickTilt = !isParty && state.gameKey === "sticktilt";
+  const isRiffRally = !isParty && state.gameKey === "riffrally";
   byId("partyController").hidden = !isParty;
-  byId("turboController").hidden = isParty || isCrowdShift || isSketchClash || isStickTilt;
+  byId("turboController").hidden = isParty || isCrowdShift || isSketchClash || isStickTilt || isRiffRally;
   byId("crowdController").hidden = isParty || !isCrowdShift;
   byId("stickController").hidden = !isStickTilt;
   ensureSketchController().hidden = !isSketchClash;
-  const label = isParty ? "Party voting" : isStickTilt ? "Stick & Tilt" : isSketchClash ? "Sketch Clash" : isCrowdShift ? "Crowd Shift" : "Turbo Tilt";
+  ensureRiffController().hidden = !isRiffRally;
+  const label = isParty ? "Party voting" : isStickTilt ? "Stick & Tilt" : isSketchClash ? "Sketch Clash" : isRiffRally ? "Riff Rally" : isCrowdShift ? "Crowd Shift" : "Turbo Tilt";
   byId("controllerView").setAttribute("aria-label", `${label} phone controller`);
 }
 
@@ -327,6 +330,7 @@ async function joinParty({ withoutToken = false, role = "player" } = {}) {
     if (connection !== state.connection) return;
     const previous = state.snapshot;
     state.snapshot = update.payload?.state || update.payload || null;
+    if (Number.isFinite(Number(state.snapshot?.serverTime))) state.serverClockOffsetMs = Number(state.snapshot.serverTime) - Date.now();
     partyAudio.handleSnapshot(previous, state.snapshot);
     renderController();
   });
@@ -431,6 +435,7 @@ function renderController() {
     return;
   }
   if (state.gameKey === "sketchclash") { renderSketchController(snapshot); return; }
+  if (state.gameKey === "riffrally") { renderRiffController(snapshot); return; }
   const me = snapshot?.players?.find((player) => player.id === (snapshot.selfId || state.playerId));
   const phase = snapshot?.phase || "lobby";
   const mode = String(snapshot?.settings?.mode || "classic").replaceAll("_", " ");
@@ -454,6 +459,26 @@ function renderController() {
   state.selectedGadget = me?.nextGadget || state.selectedGadget;
   document.querySelectorAll("[data-gadget]").forEach((button) => button.classList.toggle("selected", button.dataset.gadget === state.selectedGadget));
   renderVotes(snapshot);
+}
+
+const riffLaneNames = ["CYAN", "GOLD", "CORAL", "VIOLET"];
+function ensureRiffController() {
+  let panel = byId("riffController");
+  if (panel) return panel;
+  panel = document.createElement("section"); panel.id = "riffController"; panel.className = "controller-game riff-controller";
+  panel.innerHTML = `<div class="controller-status"><p id="riffPhase" class="eyebrow">Riff Rally</p><h1 id="riffMessage">Waiting for the host</h1><div class="controller-metrics"><span>Points <b id="riffPoints">0</b></span><span>Streak <b id="riffStreak">0</b></span><span>Hits <b id="riffHits">0</b></span></div></div><p id="riffRule" class="riff-rule">Perfect +100 · Good +60 · streak adds up to +50</p><p id="riffFeedback" class="riff-feedback" aria-live="polite">Watch the shared screen. Tap the matching color on the beat.</p><div class="riff-lanes" role="group" aria-label="Rhythm lanes"></div>`;
+  byId("controllerView").append(panel);
+  const wrap=panel.querySelector(".riff-lanes");riffLaneNames.forEach((name,lane)=>{const button=document.createElement("button");button.type="button";button.className=`riff-lane lane-${lane}`;button.textContent=name;button.setAttribute("aria-label",`Tap ${name} lane`);button.onclick=()=>{const snapshot=state.snapshot,now=Date.now()+state.serverClockOffsetMs,note=(snapshot?.notes||[]).filter(n=>n.lane===lane&&Number(n.at)>=now-190).sort((a,b)=>a.at-b.at)[0];if(!note||snapshot?.phase!=="racing")return;state.connection?.sendInput({type:"riff_hit",noteId:note.id,lane});button.classList.add("pressed");setTimeout(()=>button.classList.remove("pressed"),110);};wrap.append(button)});return panel;
+}
+function renderRiffController(snapshot) {
+  const serverNow=Date.now()+state.serverClockOffsetMs+state.testOffsetMs;
+  const me=snapshot?.players?.find(p=>p.id===(snapshot?.selfId||state.playerId))||{},phase=snapshot?.phase||"lobby",sec=Math.max(0,Math.ceil((Number(snapshot?.phaseEndsAt||0)-serverNow)/1000));
+  byId("riffPhase").textContent=`${phase.replaceAll("_"," ")}${phase==="racing"?` · ${sec}s`:""}`;byId("riffPoints").textContent=Number(me.score||0).toLocaleString();byId("riffStreak").textContent=String(me.streak||0);byId("riffHits").textContent=String(me.hits||0);
+  byId("riffMessage").textContent=phase==="racing"?"Tap the note on the line!":phase==="countdown"?`Get ready · ${sec}`:phase==="paused"?"Set paused":phase==="podium"?`Set complete · #${me.rank||"—"}`:"Waiting for the host";
+  const result=snapshot?.selfResult;
+  const recent=phase==="racing"&&result?.lastResult&&serverNow-Number(result.lastAt||0)<1300;
+  byId("riffFeedback").textContent=phase==="podium"?`${me.perfect||0} perfect · ${me.misses||0} misses`:recent&&result.lastResult==="MISS"?"MISS · +0 · streak reset":recent?`${result.lastResult} · +${result.lastAward} (${result.lastBase} timing + ${result.lastBonus} streak)`:"Match the color lane when its note reaches the line.";
+  document.querySelectorAll(".riff-lane").forEach((b,i)=>{b.disabled=phase!=="racing";b.setAttribute("aria-label",`Tap ${riffLaneNames[i]} lane`)});
 }
 
 function ensureSketchController() {
@@ -846,6 +871,7 @@ async function connectSessionScreen() {
     if (connection !== state.connection) return;
     const previous = state.snapshot;
     state.snapshot = update.payload?.state || update.payload || null;
+    if (Number.isFinite(Number(state.snapshot?.serverTime))) state.serverClockOffsetMs = Number(state.snapshot.serverTime) - Date.now();
     partyAudio.handleSnapshot(previous, state.snapshot);
     state.gameKey = state.snapshot?.gameKey || state.gameKey;
     state.sessionMode = state.snapshot?.sessionMode || state.sessionMode;
@@ -1250,9 +1276,9 @@ function drawPartyVoting(snapshot) {
   const methodCopy = { chaos: "Every player gets one wheel slice", majority: "The activity with the most votes wins", unanimous: "Agree together or the wheel breaks the tie", host: "The host chooses from the activity pool" }[method];
   partyText(`${seconds}s · ${methodCopy}`, 600, 99, 850, 20, "#d5e5ed");
   options.forEach((option, index) => {
-    const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : option.gameKey === "sticktilt" ? "#ffd560" : option.gameKey === "sketchclash" ? "#ffe36e" : "#ff6b9f";
+    const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : option.gameKey === "sticktilt" ? "#ffd560" : option.gameKey === "sketchclash" ? "#ffe36e" : option.gameKey === "riffrally" ? "#a889ff" : "#ff6b9f";
     partyRoundRect(x, 135, 328, 420, 28, "rgba(10,23,52,.88)", accent);
-    partyText(option.gameKey === "turbotilt" ? "🏎️" : option.gameKey === "sticktilt" ? "🥊" : option.gameKey === "sketchclash" ? "✎" : "↔️", x + 164, 195, 120, 52, "#fff");
+    partyText(option.gameKey === "turbotilt" ? "🏎️" : option.gameKey === "sticktilt" ? "🥊" : option.gameKey === "sketchclash" ? "✎" : option.gameKey === "riffrally" ? "🎸" : "↔️", x + 164, 195, 120, 52, "#fff");
     partyText(option.label, x + 164, 264, 290, 29, accent);
     partyText(option.description, x + 164, 322, 280, 19, "#d5e5ed");
     const own = ballots.filter((ballot) => ballot.optionId === option.id);
@@ -1294,8 +1320,8 @@ function drawPartyWheel(snapshot) {
 function drawPartyNextUp(snapshot, override = "") {
   const activity = snapshot.activity || {};
   partyText(override || "NEXT UP", 600, 120, 900, 68, "#ffe36e");
-  partyText(activity.gameKey === "turbotilt" ? "🏎️" : activity.gameKey === "sticktilt" ? "🥊" : activity.gameKey === "sketchclash" ? "✎" : "↔️", 600, 260, 180, 104, "#fff");
-  partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : activity.gameKey === "sticktilt" ? "#ffd560" : activity.gameKey === "sketchclash" ? "#ffe36e" : "#ff82ad");
+  partyText(activity.gameKey === "turbotilt" ? "🏎️" : activity.gameKey === "sticktilt" ? "🥊" : activity.gameKey === "sketchclash" ? "✎" : activity.gameKey === "riffrally" ? "🎸" : "↔️", 600, 260, 180, 104, "#fff");
+  partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : activity.gameKey === "sticktilt" ? "#ffd560" : activity.gameKey === "sketchclash" ? "#ffe36e" : activity.gameKey === "riffrally" ? "#b99eff" : "#ff82ad");
   partyText(activity.description || "Keep your phone ready", 600, 465, 900, 26, "#d5e5ed");
   partyText("Starting automatically…", 600, 570, 600, 22, "#b9acd0");
 }

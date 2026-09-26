@@ -20,6 +20,7 @@ import (
 const (
 	turboTiltGameKey       = "turbotilt"
 	sketchClashGameKey     = "sketchclash"
+	riffRallyGameKey       = "riffrally"
 	partyTickRate          = 30
 	partyMaxRooms          = 100
 	partyMaxPlayers        = 8
@@ -50,6 +51,8 @@ type partyInput struct {
 	Ready         bool                 `json:"ready,omitempty"`
 	RoundID       string               `json:"roundId,omitempty"`
 	Guess         string               `json:"guess,omitempty"`
+	NoteID        int                  `json:"noteId,omitempty"`
+	Lane          int                  `json:"lane,omitempty"`
 	Stroke        sketchStroke         `json:"stroke,omitempty"`
 }
 
@@ -214,6 +217,7 @@ type partyRoom struct {
 	crowd               *crowdShiftState
 	stick               *stickTiltState
 	sketch              *sketchClashState
+	riff                *riffRallyState
 	sessionMode         string
 	partyPhase          string
 	resumePartyPhase    string
@@ -362,6 +366,8 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 		room.crowd = newCrowdShiftState()
 	} else if gameKey == sketchClashGameKey {
 		room.sketch = newSketchClashState()
+	} else if gameKey == riffRallyGameKey {
+		room.riff = newRiffRallyState()
 	}
 	h.partyRooms[roomID] = room
 	var initialSnapshot *partyRoomSnapshot
@@ -775,6 +781,10 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 		r.applySketchClashPlayerInputLocked(p, input, now, c)
 		return
 	}
+	if r.gameKey == riffRallyGameKey {
+		r.applyRiffRallyPlayerInputLocked(p, input, now, c)
+		return
+	}
 	switch input.Type {
 	case "steer":
 		if now-p.LastSteerAt < 60 {
@@ -1021,6 +1031,10 @@ func (r *partyRoom) applyHostActionLocked(action string, now int64, c *client) {
 		r.applySketchClashHostActionLocked(action, now, c)
 		return
 	}
+	if r.gameKey == riffRallyGameKey {
+		r.applyRiffRallyHostActionLocked(action, now, c)
+		return
+	}
 	switch action {
 	case "start":
 		if r.phase != "lobby" && r.phase != "podium" && r.phase != "ended" {
@@ -1083,6 +1097,9 @@ func (r *partyRoom) pauseLocked(reason string, now int64) {
 		r.partyPhase = "paused"
 	}
 	r.pauseRemainingMs = maxInt64(0, r.phaseEndsAt-now)
+	if r.riff != nil && r.gameKey == riffRallyGameKey {
+		r.riff.PausedAt = now
+	}
 	r.pauseReason = reason
 	r.phase = "paused"
 	r.phaseEndsAt = 0
@@ -1098,6 +1115,14 @@ func (r *partyRoom) resumeLocked(now int64) {
 		r.resumePartyPhase = ""
 	}
 	r.phaseEndsAt = now + r.pauseRemainingMs
+	if r.riff != nil && r.riff.PausedAt > 0 {
+		shift := now - r.riff.PausedAt
+		r.riff.StartAt += shift
+		for i := range r.riff.Notes {
+			r.riff.Notes[i].At += shift
+		}
+		r.riff.PausedAt = 0
+	}
 	r.resumePhase = ""
 	r.pauseReason = ""
 	r.pauseRemainingMs = 0
@@ -1147,6 +1172,10 @@ func (r *partyRoom) step(now int64, dt float64) {
 	}
 	if r.gameKey == sketchClashGameKey {
 		r.stepSketchClashLocked(now)
+		return
+	}
+	if r.gameKey == riffRallyGameKey {
+		r.stepRiffRallyLocked(now)
 		return
 	}
 	r.stepTurboTiltLocked(now, dt)
@@ -1479,6 +1508,9 @@ func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
 	}
 	if r.gameKey == sketchClashGameKey {
 		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.sketchClashSnapshotLocked(selfID), selfID))
+	}
+	if r.gameKey == riffRallyGameKey {
+		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.riffRallySnapshotLocked(selfID), selfID))
 	}
 	if r.gameKey == partyRotationGameKey {
 		return r.decorateRoomControlsLocked(r.rotationSnapshotLocked(selfID))
