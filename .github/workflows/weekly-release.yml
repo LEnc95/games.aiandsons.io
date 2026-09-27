@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -43,19 +44,34 @@ jobs:
         run: npm run test:shop
       - if: steps.changes.outputs.changed == 'true'
         run: npm run test:social
-      - name: Open release PR and enable auto-merge
+      - name: Open release PR and run its validation gate
         if: steps.changes.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          BRANCH="automation/weekly-release/v${VERSION}"
+          WEEK=$(node -p "require('./release/weekly-state.json').lastReleasedWeek")
+          BRANCH="automation/weekly-release/${WEEK}"
+          EXISTING_PR=$(gh pr list --state open --limit 100 --json headRefName,url --jq '[.[] | select(.headRefName | startswith("automation/weekly-release/"))] | .[0].url // empty')
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Release PR already exists: $EXISTING_PR"
+            EXISTING_BRANCH=$(gh pr view "$EXISTING_PR" --json headRefName --jq .headRefName)
+            gh workflow run automation-premerge.yml --ref "$EXISTING_BRANCH" -f lane=weekly-release
+            exit 0
+          fi
           git config user.name "cade-maintenance-bot"
           git config user.email "actions@users.noreply.github.com"
           git switch -c "$BRANCH"
           git add CHANGELOG.md TECHNICAL_CHANGELOG.md package.json package-lock.json version.json release/weekly-state.json
           git commit -m "Prepare weekly release ${VERSION}"
-          git push origin "$BRANCH"
+          REMOTE_SHA=$(git ls-remote --heads origin "$BRANCH" | cut -f1)
+          if [ -n "$REMOTE_SHA" ]; then
+            # Recover an orphaned branch left by a run that failed before PR creation.
+            git push --force-with-lease="refs/heads/$BRANCH:$REMOTE_SHA" origin "HEAD:$BRANCH"
+          else
+            git push origin "HEAD:$BRANCH"
+          fi
           PR_URL=$(gh pr create --base main --head "$BRANCH" --title "Weekly release ${VERSION}" --body "Automated public and technical release feeds, synchronized version, and validated maintenance state.")
-          gh pr merge "$PR_URL" --auto --squash
+          echo "Release PR: $PR_URL"
+          gh workflow run automation-premerge.yml --ref "$BRANCH" -f lane=weekly-release
