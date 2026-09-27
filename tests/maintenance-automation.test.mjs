@@ -244,3 +244,15 @@ test('trusted auto-merge uses workflow_run fields that GitHub populates', () => 
   );
 });
 
+test('trusted weekly release merge requires the validated commit and release-only files', () => {
+  const workflow = fs.readFileSync(
+    path.join(process.cwd(), '.github', 'workflows', 'automation-auto-merge.yml'),
+    'utf8',
+  );
+  assert.match(workflow, /workflow_run\.event == 'workflow_dispatch'/);
+  assert.match(workflow, /workflow_run\.head_branch, 'automation\/weekly-release\/'/);
+  assert.match(workflow, /\[ "\$PR_HEAD_SHA" != "\$RUN_HEAD_SHA" \]/);
+  assert.match(workflow, /\[ "\$ACTUAL_FILES" != "\$EXPECTED_FILES" \]/);
+  assert.match(workflow, /--match-head-commit "\$RUN_HEAD_SHA"/);
+});
+
