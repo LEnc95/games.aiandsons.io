@@ -17,7 +17,7 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -44,7 +44,13 @@ jobs:
         run: npm run test:shop
       - if: steps.changes.outputs.changed == 'true'
         run: npm run test:social
-      - name: Open release PR and run its validation gate
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run test:feedback
+      - if: steps.changes.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run test:launch-readiness-smoke
+      - name: Open and merge the validated release PR
         if: steps.changes.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -57,21 +63,36 @@ jobs:
           if [ -n "$EXISTING_PR" ]; then
             echo "Release PR already exists: $EXISTING_PR"
             EXISTING_BRANCH=$(gh pr view "$EXISTING_PR" --json headRefName --jq .headRefName)
-            gh workflow run automation-premerge.yml --ref "$EXISTING_BRANCH" -f lane=weekly-release
-            exit 0
-          fi
-          git config user.name "cade-maintenance-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git switch -c "$BRANCH"
-          git add CHANGELOG.md TECHNICAL_CHANGELOG.md package.json package-lock.json version.json release/weekly-state.json
-          git commit -m "Prepare weekly release ${VERSION}"
-          REMOTE_SHA=$(git ls-remote --heads origin "$BRANCH" | cut -f1)
-          if [ -n "$REMOTE_SHA" ]; then
-            # Recover an orphaned branch left by a run that failed before PR creation.
-            git push --force-with-lease="refs/heads/$BRANCH:$REMOTE_SHA" origin "HEAD:$BRANCH"
+            git fetch origin "$EXISTING_BRANCH"
+            if ! git diff --quiet FETCH_HEAD -- CHANGELOG.md TECHNICAL_CHANGELOG.md package.json package-lock.json version.json release/weekly-state.json; then
+              echo "::error::The existing release PR differs from the files validated in this run."
+              exit 1
+            fi
+            PR_URL="$EXISTING_PR"
+            HEAD_SHA=$(gh pr view "$PR_URL" --json headRefOid --jq .headRefOid)
           else
-            git push origin "HEAD:$BRANCH"
+            git config user.name "cade-maintenance-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git switch -c "$BRANCH"
+            git add CHANGELOG.md TECHNICAL_CHANGELOG.md package.json package-lock.json version.json release/weekly-state.json
+            git commit -m "Prepare weekly release ${VERSION}"
+            REMOTE_SHA=$(git ls-remote --heads origin "$BRANCH" | cut -f1)
+            if [ -n "$REMOTE_SHA" ]; then
+              # Recover an orphaned branch left by a run that failed before PR creation.
+              git push --force-with-lease="refs/heads/$BRANCH:$REMOTE_SHA" origin "HEAD:$BRANCH"
+            else
+              git push origin "HEAD:$BRANCH"
+            fi
+            HEAD_SHA=$(git rev-parse HEAD)
+            PR_URL=$(gh pr create --base main --head "$BRANCH" --title "Weekly release ${VERSION}" --body "Automated public and technical release feeds, synchronized version, and validated maintenance state.")
           fi
-          PR_URL=$(gh pr create --base main --head "$BRANCH" --title "Weekly release ${VERSION}" --body "Automated public and technical release feeds, synchronized version, and validated maintenance state.")
           echo "Release PR: $PR_URL"
-          gh workflow run automation-premerge.yml --ref "$BRANCH" -f lane=weekly-release
+          EXPECTED_FILES=$(printf '%s\n' CHANGELOG.md TECHNICAL_CHANGELOG.md package.json package-lock.json version.json release/weekly-state.json | LC_ALL=C sort)
+          ACTUAL_FILES=$(gh pr view "$PR_URL" --json files --jq '.files[].path' | LC_ALL=C sort)
+          if [ "$ACTUAL_FILES" != "$EXPECTED_FILES" ]; then
+            echo "::error::The weekly release PR contains unexpected or missing paths."
+            exit 1
+          fi
+          gh pr merge "$PR_URL" --squash --match-head-commit "$HEAD_SHA"
+          gh workflow run main-qa.yml --ref main
+          gh workflow run production-maintenance-verify.yml --ref main
