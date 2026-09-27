@@ -205,6 +205,18 @@ test('weekly release audit retains the three-game-shell limit without the daily 
   assert.ok(errors.some((error) => error.includes('maximum is 3')));
 });
 
+test('weekly release audit accepts only the synchronized release files', () => {
+  const files = [
+    'CHANGELOG.md', 'TECHNICAL_CHANGELOG.md', 'package.json',
+    'package-lock.json', 'version.json', 'release/weekly-state.json',
+  ];
+  assert.deepEqual(auditReleaseDiff({ files, lane: 'weekly-release' }), []);
+  const errors = auditReleaseDiff({ files: [...files, 'api/social.js'], lane: 'weekly-release' });
+  assert.ok(errors.some((error) => error.includes('outside its allowlist')));
+  const missing = auditReleaseDiff({ files: files.slice(1), lane: 'weekly-release' });
+  assert.ok(missing.some((error) => error.includes('missing required paths')));
+});
+
 test('weekly content workflow deduplicates and supersedes generated work items', () => {
   const workflow = fs.readFileSync(
     path.join(process.cwd(), '.github', 'workflows', 'weekly-content-pack.yml'),
