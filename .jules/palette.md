@@ -52,3 +52,7 @@
 ## 2026-06-25 - Enter key submission for school license billing input
 **Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
 **Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
+
+## 2026-09-28 - Enter key submission for boolean inputs in modals
+**Learning:** Boolean toggle inputs like checkboxes (e.g., classroomEnabled, shopLock) inside custom settings modals often do not trigger native \`Enter\` key form submissions. This prevents keyboard-only users from quickly submitting forms directly from the active input.
+**Action:** Always add a \`keydown\` event listener specifically for the \`Enter\` key to checkbox or toggle inputs in settings modals to explicitly trigger the save or submit action.
