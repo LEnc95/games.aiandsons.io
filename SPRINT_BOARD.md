@@ -554,3 +554,7 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-09-24] Key PR links: [PR #343 — Fix nightly feedback readiness checks](https://github.com/LEnc95/games.aiandsons.io/pull/343).
 - [nightly 2026-09-25] Tracked changes: 2 commit(s) - ec1f09a Record September 24 sprint board activity; 0859c7f Improve Sketch Clash guess feedback.
 - [nightly 2026-09-25] Key PR links: none merged for this date.
+- [nightly 2026-09-26] Tracked changes: 3 commit(s) - 0fe0ffb Record September 25 sprint updates; 937a61a Add Riff Rally party game; 37eec39 Fix stale auth session state after Google sign-in.
+- [nightly 2026-09-26] Key PR links: none merged for this date.
+- [nightly 2026-09-27] No repository commits found for this date.
+- [nightly 2026-09-27] Key PR links: none merged for this date.
