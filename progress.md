@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-09-28 Weekly content pack 2026-W40
+- Isolated from `origin/main` baseline `20db1d0cfd645610634f20452bcc7cb76c544eb9`; issue #349 is authoritative. Added Cedar Cipher for Ribbon Reversal, Saffron Spar for Stick & Tilt, and Tideglass Vigil for Lantern Wake as inventory-gated palette cosmetics. Added four exact 20-coin challenges for Ribbon Reversal bundles, Stick & Tilt players, Lantern Wake lanterns, and Rainkeeper raindrops (80 total).
+- Browser proof and ordered local gates passed; TODO: commit the audited weekly pack, publish through the guarded PR lane, then verify merge and production.
+
 ## 2026-09-21 Weekly content pack 2026-W39
 - Isolated from `origin/main` baseline `642d60d1e8373e5447d1cbbe03be36da301f198b`; issue #337 is authoritative. Added Willow Wish for Nest Stack, Copper Scoreboard for Bottom of the Ninth, and Copper Ripple for Bottlecap Curl as inventory-gated palette cosmetics, plus four exact 20-coin W39 challenges for Nest Stack branches, Bottom of the Ninth wins, Bottlecap Curl targets, and Moon Mender stones.
 - Local/browser QA passed: shop preview plus baseline/equipped captures were inspected for every cosmetic; gameplay, deterministic text state, pause/restart/fullscreen, and 390px layouts passed without new browser errors. Ordered maintenance, preflight, telemetry, feedback, shop, social, weekly smoke, and diff checks are green. TODO: publish the audited guarded PR and verify merge plus production.

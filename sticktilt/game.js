@@ -1,6 +1,6 @@
 import { drawArena } from "./renderer.js";
 import { connect } from "/src/net/multiplayerClient.js";
-import { rememberRecent } from "/src/core/state.js";
+import { rememberRecent, state as profileState } from "/src/core/state.js";
 import { reportGameOutcome } from "/src/core/outcomes.js";
 import { finalizeRecording, startRecording } from "/src/social/record.js";
 
@@ -10,6 +10,7 @@ const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const displayCode = String(params.get("display") || "").toUpperCase().replace(/[^A-HJ-NP-Z]/g, "").slice(0, 4);
 const embedded=params.get("embedded")==="1";
+const SAFFRON_SPAR=profileState.inventory instanceof Set&&profileState.inventory.has("sticktilt-saffron-spar");
 const state = { connection:null,roomId:"",hostToken:"",snapshot:null,displayMode:embedded||displayCode.length===4,testOffsetMs:0,reported:false,sound:false,audio:null,lastPhase:"",lastRound:0 };
 let embeddedRecording=false;
 if (!state.displayMode) rememberRecent("sticktilt");
@@ -66,7 +67,7 @@ function syncUi(){
 
 function joinUrl(){const url=new URL("/party/",location.origin);url.searchParams.set("code",state.roomId);const ws=params.get("ws");if(ws)url.searchParams.set("ws",ws);return url.href;}
 
-function draw(){drawArena(ctx,state.snapshot,remaining(),Boolean(state.snapshot?.partySettings?.reducedMotion)||matchMedia("(prefers-reduced-motion: reduce)").matches);}
+function draw(){drawArena(ctx,state.snapshot,remaining(),Boolean(state.snapshot?.partySettings?.reducedMotion)||matchMedia("(prefers-reduced-motion: reduce)").matches,SAFFRON_SPAR);}
 function ensureAudio(){if(!state.audio){const AudioCtor=window.AudioContext||window.webkitAudioContext;if(AudioCtor)state.audio=new AudioCtor();}state.audio?.resume?.();}
 function tone(freq,duration=.12){if(!state.sound||state.snapshot?.partySettings?.effects===false)return;ensureAudio();if(!state.audio)return;const osc=state.audio.createOscillator(),gain=state.audio.createGain();osc.frequency.value=freq;gain.gain.setValueAtTime(.08,state.audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,state.audio.currentTime+duration);osc.connect(gain).connect(state.audio.destination);osc.start();osc.stop(state.audio.currentTime+duration);}
 function applyPartyPresentation(snapshot){document.body.classList.toggle("party-reduced-motion",Boolean(snapshot?.partySettings?.reducedMotion));document.body.classList.toggle("party-high-contrast",Boolean(snapshot?.partySettings?.highContrast));}
@@ -78,5 +79,5 @@ byId("startButton").addEventListener("click",()=>sendHost("start"));byId("pauseB
 function loop(){draw();requestAnimationFrame(loop);}
 window.advanceTime=(ms)=>{state.testOffsetMs+=Math.max(0,Math.min(60000,Number(ms)||0));draw();};
 window.addEventListener("message",event=>{if(event.origin===location.origin&&event.data?.type==="party_advance_time")window.advanceTime(event.data.ms);});
-window.render_game_to_text=()=>JSON.stringify({screen_role:state.displayMode?"display":"host",coordinate_system:"1200x675, x right; fighter y is height above floor",room_id:state.roomId,phase:state.snapshot?.phase||"connecting",seconds_remaining:Number(remaining().toFixed(1)),...state.snapshot});
+window.render_game_to_text=()=>JSON.stringify({screen_role:state.displayMode?"display":"host",coordinate_system:"1200x675, x right; fighter y is height above floor",room_id:state.roomId,phase:state.snapshot?.phase||"connecting",seconds_remaining:Number(remaining().toFixed(1)),cosmetics:{saffronSpar:SAFFRON_SPAR},...state.snapshot});
 connectScreen().catch(()=>status("Unable to connect","problem"));loop();
