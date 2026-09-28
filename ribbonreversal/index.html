@@ -62,17 +62,19 @@
   <p class="help"><b>Sort five bundles:</b> shortest ribbon at the top, longest at the bottom. Select 2 or more ribbons from the top, then reverse their order. Tap a ribbon to select the cut, or use ↑/↓, then Space to flip. You have 80 flips for the whole studio. No timer pressure. P pauses, R restarts, T changes colors, F toggles fullscreen.</p>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
 const stage = document.querySelector('#stage');
+const CEDAR_CIPHER = profileState.inventory instanceof Set && profileState.inventory.has('ribbonreversal-cedar-cipher');
 const palettes = [
   { name: 'Botanical', paper: '#fff8e9', ink: '#293b47', accent: '#28726a', ribbons: ['#e67d68','#e8b95e','#8cb878','#63b7b2','#70a0cb','#a295cb','#cd94b0','#bf9c7e'] },
   { name: 'Seaside', paper: '#edf8fa', ink: '#193e59', accent: '#266c96', ribbons: ['#f5bd68','#ec9b75','#e68397','#b19acb','#84a7d6','#69babc','#83cbb0','#b6c97a'] },
   { name: 'Rosewater', paper: '#fff0f1', ink: '#53364d', accent: '#9b426b', ribbons: ['#d99cbd','#ac9ed4','#91b9d6','#8ab9aa','#bfd18e','#edcc87','#e9a48a','#d78499'] },
+  ...(CEDAR_CIPHER ? [{ name: 'Cedar Cipher', paper: '#eff1df', ink: '#27433f', accent: '#bd6a43', ribbons: ['#d9845b','#e0b65d','#90a95f','#4d9083','#5d91a1','#8f77a8','#c17d94','#b39367'] }] : []),
 ];
 const bundles = [[3,1,4,2], [4,2,5,1,3], [3,6,2,5,1,4], [5,2,7,3,1,6,4], [6,3,8,2,5,1,7,4]];
 const state = { mode: 'menu', level: 0, stack: [...bundles[0]], cut: 2, flips: 0, sorted: 0, elapsed: 0, theme: 0, animation: 0, oldStack: [], reported: false, started: false };
@@ -212,7 +214,7 @@ document.addEventListener('keydown',e=>{
   if(key==='escape'&&document.fullscreenElement)document.exitFullscreen();
 });
 window.advanceTime=ms=>{manual=true;step(ms);};
-window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'840x600 canvas; origin top-left; x right, y down; ribbon rows start y136, spaced 43; stack listed top-to-bottom',mode:state.mode,bundle:state.level+1,totalBundles:5,stack:state.stack,goal:state.stack.map((_,i)=>i+1),cut:state.cut,animationMs:state.animation,previousStack:state.mode==='flipping'?state.oldStack:null,flipsLeft:80-state.flips,timeMs:Math.round(state.elapsed),theme:palette().name,metrics:metrics(),controls:'Up/Down or tap ribbon selects cut; Space/Flip reverses top; P pause; R restart; T palette; F fullscreen'});
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'840x600 canvas; origin top-left; x right, y down; ribbon rows start y136, spaced 43; stack listed top-to-bottom',mode:state.mode,bundle:state.level+1,totalBundles:5,stack:state.stack,goal:state.stack.map((_,i)=>i+1),cut:state.cut,animationMs:state.animation,previousStack:state.mode==='flipping'?state.oldStack:null,flipsLeft:80-state.flips,timeMs:Math.round(state.elapsed),theme:palette().name,cosmetics:{cedarCipher:CEDAR_CIPHER},metrics:metrics(),controls:'Up/Down or tap ribbon selects cut; Space/Flip reverses top; P pause; R restart; T palette; F fullscreen'});
 window.addEventListener('pagehide',()=>report('abandoned'));
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&['playing','flipping'].includes(state.mode))pause();});
 mountGameFeedback({gameSlug:'ribbonreversal',gameName:'Ribbon Reversal'});

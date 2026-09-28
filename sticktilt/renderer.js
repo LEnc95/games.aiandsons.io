@@ -1,6 +1,6 @@
 // The arena uses plain canvas strokes so fighters remain crisp on a shared TV.
-export function drawArena(ctx, snapshot, seconds, reducedMotion = false) {
-  const ink = "#253349", paper = "#faf4e7", gold = "#f3bb3e";
+export function drawArena(ctx, snapshot, seconds, reducedMotion = false, saffronSpar = false) {
+  const ink = saffronSpar ? "#3c2837" : "#253349", paper = saffronSpar ? "#fff4db" : "#faf4e7", gold = saffronSpar ? "#d56b43" : "#f3bb3e";
   const s = snapshot || {}, players = s.players || [], clock = s.fightClock || 0;
   const text = (value, x, y, size = 24, color = ink, align = "center", max = 1100) => {
     ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = "middle";
@@ -24,7 +24,7 @@ export function drawArena(ctx, snapshot, seconds, reducedMotion = false) {
     ctx.beginPath();ctx.moveTo(0,-74);ctx.lineTo(0,-39);ctx.lineTo(-19-walk,0);ctx.moveTo(0,-39);ctx.lineTo(20+walk,0);
     ctx.moveTo(0,-65);ctx.lineTo(-facing*22,-49);ctx.lineTo(-facing*29,-61);
     ctx.moveTo(0,-65);ctx.lineTo(facing*23,-59);ctx.lineTo(facing*(f.punchUntil>clock?76:32),f.punchUntil>clock?-65:-76);ctx.stroke();
-    ctx.strokeStyle=p.color||"#008b80";ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(-12,-96);ctx.lineTo(13,-96);ctx.moveTo(0,-69);ctx.lineTo(0,-48);ctx.stroke();
+    ctx.strokeStyle=saffronSpar?"#c45b4b":(p.color||"#008b80");ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(-12,-96);ctx.lineTo(13,-96);ctx.moveTo(0,-69);ctx.lineTo(0,-48);ctx.stroke();
     if(f.guardUntil>clock || f.shieldUntil>clock){ctx.strokeStyle=f.guardUntil>clock?"#278eaa":"#c29531";ctx.lineWidth=3;ctx.setLineDash(f.guardUntil>clock?[]:[5,7]);ctx.beginPath();ctx.ellipse(0,-56,48,66,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     ctx.restore();
   };

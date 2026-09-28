@@ -42,6 +42,9 @@ const GAME_FILE_BY_PREFIX = {
   neststack: 'neststack/index.html',
   baseballradio: 'baseballradio/index.html',
   bottlecapcurl: 'bottlecapcurl/index.html',
+  ribbonreversal: 'ribbonreversal/index.html',
+  sticktilt: 'sticktilt/index.html',
+  lanternwake: 'lanternwake/index.html',
 };
 
 function extractItems(shopHtml) {
