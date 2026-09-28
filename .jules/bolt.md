@@ -78,3 +78,6 @@
 ## 2026-07-03 - Optimizing category array membership checks
 **Learning:** Using an array and calling `includes` repeatedly during high-volume mapping functions (like `inferCategories` mapping over all games) results in O(N*M) complexity which scales poorly for large inputs.
 **Action:** Always replace `Array.prototype.includes()` with a `Set.has()` mechanism (O(1) lookup) when defining lookup groups that are checked repeatedly in hot paths or mapping loops, dropping time complexity to linear O(N).
+## 2024-05-30 - Optimizing array lookups in module-scoped fast-paths
+**Learning:** Functions like `isStalePlayerError` or `isAvatarEmoji` that define static arrays and check `.includes()` result in redundant array allocations and O(N) lookup operations every time they are called.
+**Action:** Always extract static lookup arrays into module-scoped `Set` objects, eliminating per-call allocation and ensuring fast O(1) membership queries without bloating the runtime footprint.

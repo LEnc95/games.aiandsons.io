@@ -60,8 +60,10 @@ const clearStoredPlayer = () => {
   registerPromise = null;
 };
 
+const STALE_PLAYER_ERROR_CODES = new Set(['invalid_player_token', 'unknown_player']);
+
 const isStalePlayerError = (error) =>
-  error && ['invalid_player_token', 'unknown_player'].includes(error.code);
+  error && STALE_PLAYER_ERROR_CODES.has(error.code);
 
 const postJsonWithPlayer = async (route, buildPayload) => {
   let player = await ensurePlayer();
