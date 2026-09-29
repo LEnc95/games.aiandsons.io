@@ -139,6 +139,7 @@ async function readServerSession() {
   const response = await fetch("/api/auth/session", {
     method: "GET",
     credentials: "same-origin",
+    cache: "no-store",
     headers: { Accept: "application/json" },
   });
   return normalizeSessionPayload(await parseResponse(response));

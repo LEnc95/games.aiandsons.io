@@ -53,6 +53,7 @@ async function createHarness({ persistedUser = null, retainCookie = true } = {})
     }
     if (url === "/api/auth/session") {
       assert.equal(options.credentials, "same-origin");
+      assert.equal(options.cache, "no-store");
       return Response.json(serverAuthenticated
         ? { ok: true, firebaseUid: user.uid, isAuthenticated: true }
         : { ok: true, userId: "guest", isAuthenticated: false });
@@ -84,4 +85,12 @@ test("mobile sign-in tries the popup and confirms the app session", async () => 
 test("sign-in reports when the browser does not retain the app session", async () => {
   const { client } = await createHarness({ retainCookie: false });
   await assert.rejects(client.signInWithGoogle(), /did not retain the account session/);
+});
+
+test("API cache headers override the broad public site headers", async () => {
+  const config = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
+  const broadIndex = config.headers.findIndex((rule) => rule.source === "/(.*)");
+  const apiIndex = config.headers.findIndex((rule) => rule.source === "/api/(.*)");
+  assert.ok(apiIndex > broadIndex);
+  assert.match(config.headers[apiIndex].headers.find((header) => header.key === "Cache-Control").value, /no-store/);
 });
