@@ -3,8 +3,9 @@
 ## Vercel static deployment
 
 This repository deploys as a static arcade plus Vercel serverless functions. It
-does not use a framework build step: `vercel.json` sets `buildCommand`,
-`devCommand`, and `installCommand` to `null`, uses `"framework": null`, and
+does not use a framework build step: `vercel.json` regenerates the sitemap with
+`node scripts/generate-sitemap.mjs`, sets `devCommand` and `installCommand`
+to `null`, uses `"framework": null`, and
 serves the repository root as the output directory.
 
 ## Project shape
