@@ -1,6 +1,12 @@
 import { get, set } from './storage.js';
 
-const DEFAULT_COSMETICS = { paddle: 'default', snake: 'default', marioShirt: 'red', memoryCardBack: 'default' };
+const DEFAULT_COSMETICS = {
+  paddle: 'default',
+  snake: 'default',
+  marioShirt: 'red',
+  memoryCardBack: 'default',
+  broadcastTheme: 'default',
+};
 const DEFAULT_CLASSROOM = {
   enabled: false,
   teacherPin: '',

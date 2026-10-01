@@ -2,6 +2,45 @@
 // must add an explicit contract so automated challenges and cosmetics never
 // guess at unbounded metrics or promise effects a game cannot render.
 export const GAME_CONTENT_CONTRACTS = Object.freeze({
+  runeroots: Object.freeze({ releasedAt: '2026-09-20', outcomes: Object.freeze({ roots: Object.freeze({ min: 0, max: 80, direction: 'higher' }), groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }), wilts: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'runeroots-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'tile', 'edge', 'root', 'glow', 'seed', 'ink']) })]) }),
+  bottlecapcurl: Object.freeze({ releasedAt: '2026-09-18', outcomes: Object.freeze({ targets: Object.freeze({ min: 0, max: 20, direction: 'higher' }), rinks: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'bottlecapcurl-theme', kind: 'palette', tokens: Object.freeze(['table', 'rail', 'line', 'ring', 'cap', 'cap2', 'ink', 'accent']) })]) }),
+  foxfiretrails: Object.freeze({ releasedAt: '2026-09-17', outcomes: Object.freeze({ wisps: Object.freeze({ min: 0, max: 20, direction: 'higher' }), trails: Object.freeze({ min: 0, max: 5, direction: 'higher' }), bumps: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'foxfiretrails-theme', kind: 'palette', tokens: Object.freeze(['sky', 'far', 'ground', 'tile', 'edge', 'wisp', 'glow', 'thorn', 'fox', 'tail', 'ink', 'trail']) })]) }),
+  pollenpassage: Object.freeze({ releasedAt: '2026-09-16', outcomes: Object.freeze({ blooms: Object.freeze({ min: 0, max: 25, direction: 'higher' }), meadows: Object.freeze({ min: 0, max: 5, direction: 'higher' }), stings: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'pollenpassage-theme', kind: 'palette', tokens: Object.freeze(['sky', 'hill', 'field', 'lane', 'flower', 'center', 'thorn', 'bee', 'wing', 'accent', 'ink']) })]) }),
+  signalgarden: Object.freeze({ releasedAt: '2026-09-15', outcomes: Object.freeze({ signals: Object.freeze({ min: 0, max: 25, direction: 'higher' }), gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }), mistakes: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'signalgarden-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'leaf', 'light', 'accent', 'ink']) })]) }),
+  paperbridge: Object.freeze({ releasedAt: '2026-09-14', outcomes: Object.freeze({ bridges: Object.freeze({ min: 0, max: 5, direction: 'higher' }), ravines: Object.freeze({ min: 0, max: 5, direction: 'higher' }), falls: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'paperbridge-theme', kind: 'palette', tokens: Object.freeze(['sky', 'far', 'near', 'paper', 'line', 'accent']) })]) }),
+  chalkchase: Object.freeze({
+    releasedAt: '2026-09-13',
+    outcomes: Object.freeze({
+      stars: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      boards: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      erases: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'chalkchase-theme', kind: 'palette', tokens: Object.freeze(['sky', 'board', 'grid', 'chalk', 'star', 'flag', 'ink']) }),
+    ]),
+  }),
+  pebbleparade: Object.freeze({
+    releasedAt: '2026-09-12',
+    outcomes: Object.freeze({
+      skips: Object.freeze({ min: 0, max: 20, direction: 'higher' }),
+      ponds: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      splashes: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'pebbleparade-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'deep', 'bank', 'stone', 'ring', 'ink']) }),
+    ]),
+  }),
+  ribbonreversal: Object.freeze({
+    releasedAt: '2026-09-11',
+    outcomes: Object.freeze({
+      bundles: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      ribbons: Object.freeze({ min: 0, max: 30, direction: 'higher' }),
+      flips: Object.freeze({ min: 0, max: 80, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'ribbonreversal-theme', kind: 'palette', tokens: Object.freeze(['paper', 'ink', 'accent', 'ribbons']) }),
+    ]),
+  }),
   pong: Object.freeze({
     releasedAt: '2026-02-13',
     outcomes: Object.freeze({ winMargin: Object.freeze({ min: 0, max: 20, direction: 'higher' }) }),
@@ -175,6 +214,225 @@ export const GAME_CONTENT_CONTRACTS = Object.freeze({
     }),
     cosmeticSlots: Object.freeze([
       Object.freeze({ key: 'garden-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'grid', 'shadow', 'stone', 'nightBloom', 'sunBloom', 'accent']) }),
+    ]),
+  }),
+  quiltquest: Object.freeze({
+    releasedAt: '2026-08-04',
+    outcomes: Object.freeze({
+      patches: Object.freeze({ min: 0, max: 30, direction: 'higher' }),
+      panels: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      placements: Object.freeze({ min: 0, max: 300, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'quilt-theme', kind: 'palette', tokens: Object.freeze(['background', 'cloth', 'grid', 'patches', 'stitch', 'accent']) }),
+    ]),
+  }),
+  riverriddle: Object.freeze({
+    releasedAt: '2026-08-05',
+    outcomes: Object.freeze({
+      travelers: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      rivers: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      voyages: Object.freeze({ min: 0, max: 200, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'river-theme', kind: 'palette', tokens: Object.freeze(['background', 'sky', 'water', 'banks', 'boat', 'cards', 'accent']) }),
+    ]),
+  }),
+  choruscurrent: Object.freeze({
+    releasedAt: '2026-08-06',
+    outcomes: Object.freeze({
+      waves: Object.freeze({ min: 0, max: 15, direction: 'higher' }),
+      harbors: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      adjustments: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'harbor-theme', kind: 'palette', tokens: Object.freeze(['background', 'sky', 'horizon', 'water', 'panel', 'grid', 'current', 'beacon', 'accent']) }),
+    ]),
+  }),
+  kiteparade: Object.freeze({
+    releasedAt: '2026-08-07',
+    outcomes: Object.freeze({
+      patches: Object.freeze({ min: 0, max: 40, direction: 'higher' }),
+      kites: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      checks: Object.freeze({ min: 0, max: 15, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'kite-theme', kind: 'palette', tokens: Object.freeze(['sky', 'cloud', 'hills', 'kite', 'seam', 'tail', 'dyes', 'accent']) }),
+    ]),
+  }),
+  shellshift: Object.freeze({
+    releasedAt: '2026-08-08',
+    outcomes: Object.freeze({
+      shells: Object.freeze({ min: 0, max: 124, direction: 'higher' }),
+      tidepools: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      shifts: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'shell-theme', kind: 'palette', tokens: Object.freeze(['background', 'water', 'sand', 'tray', 'shells', 'accent']) }),
+    ]),
+  }),
+  flockfold: Object.freeze({
+    releasedAt: '2026-08-09',
+    outcomes: Object.freeze({
+      gates: Object.freeze({ min: 0, max: 25, direction: 'higher' }),
+      skies: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      folds: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'flock-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'cloud', 'gate', 'birds', 'trail', 'accent']) }),
+    ]),
+  }),
+  baseballradio: Object.freeze({
+    releasedAt: '2026-08-10',
+    outcomes: Object.freeze({
+      wins: Object.freeze({ min: 0, max: 1, direction: 'higher' }),
+      runs: Object.freeze({ min: 0, max: 100, direction: 'higher' }),
+      opponentRuns: Object.freeze({ min: 0, max: 100, direction: 'lower' }),
+      innings: Object.freeze({ min: 3, max: 30, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'broadcast-theme', kind: 'palette', tokens: Object.freeze(['background', 'panel', 'accent', 'score', 'warning']) }),
+    ]),
+  }),
+  geargrove: Object.freeze({
+    releasedAt: '2026-08-10',
+    outcomes: Object.freeze({
+      gears: Object.freeze({ min: 0, max: 27, direction: 'higher' }),
+      groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      turns: Object.freeze({ min: 0, max: 500, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'gear-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'leaf', 'edge', 'gear', 'teeth', 'target', 'accent']) }),
+    ]),
+  }),
+  nectarmeasure: Object.freeze({
+    releasedAt: '2026-08-11',
+    outcomes: Object.freeze({
+      vessels: Object.freeze({ min: 0, max: 18, direction: 'higher' }),
+      hives: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      pours: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'nectar-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'ground', 'hill', 'panel', 'edge', 'nectar', 'nectar2', 'target', 'accent', 'ink']) }),
+    ]),
+  }),
+  glassgarden: Object.freeze({
+    releasedAt: '2026-08-12',
+    outcomes: Object.freeze({
+      panes: Object.freeze({ min: 0, max: 43, direction: 'higher' }),
+      windows: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      turns: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'glass-theme', kind: 'palette', tokens: Object.freeze(['wall', 'frame', 'lead', 'glass', 'glow', 'accent']) }),
+    ]),
+  }),
+  dapplegrove: Object.freeze({
+    releasedAt: '2026-08-13',
+    outcomes: Object.freeze({
+      leaves: Object.freeze({ min: 0, max: 107, direction: 'higher' }),
+      groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      marks: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'grove-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'trunk', 'bark', 'panel', 'leaf', 'leaf2', 'shade', 'sun', 'accent']) }),
+    ]),
+  }),
+  fireflyslants: Object.freeze({
+    releasedAt: '2026-08-14',
+    outcomes: Object.freeze({
+      trails: Object.freeze({ min: 0, max: 127, direction: 'higher' }),
+      clearings: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      strokes: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'firefly-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'hill', 'panel', 'grid', 'trail', 'glow', 'knot', 'accent']) }),
+    ]),
+  }),
+  magnetmeadow: Object.freeze({
+    releasedAt: '2026-08-15',
+    outcomes: Object.freeze({
+      magnets: Object.freeze({ min: 0, max: 40, direction: 'higher' }),
+      meadows: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      flips: Object.freeze({ min: 0, max: 1000, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'magnet-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'ground', 'hill', 'panel', 'grid', 'plus', 'minus', 'grass', 'accent']) }),
+    ]),
+  }),
+  rainkeeper: Object.freeze({
+    releasedAt: '2026-08-16',
+    outcomes: Object.freeze({
+      raindrops: Object.freeze({ min: 0, max: 60, direction: 'higher' }),
+      gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      hailHits: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'rain-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'cloud', 'ground', 'water', 'umbrella', 'hail', 'flower', 'accent']) }),
+    ]),
+  }),
+  harborharmony: Object.freeze({
+    releasedAt: '2026-08-22',
+    outcomes: Object.freeze({
+      beacons: Object.freeze({ min: 0, max: 45, direction: 'higher' }),
+      harbors: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      misfires: Object.freeze({ min: 0, max: 3, direction: 'lower' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'harbor-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sea', 'dock', 'boat', 'signal', 'accent']) }),
+    ]),
+  }),
+  lanternloom: Object.freeze({ releasedAt: '2026-08-21', outcomes: Object.freeze({ stars: Object.freeze({ min: 0, max: 55, direction: 'higher' }), nights: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'lantern-theme', kind: 'palette', tokens: Object.freeze(['sky', 'halo', 'beam', 'lantern']) })]) }),
+  tideglass: Object.freeze({ releasedAt: '2026-08-23', outcomes: Object.freeze({ shells: Object.freeze({ min: 0, max: 25, direction: 'higher' }), trails: Object.freeze({ min: 0, max: 5, direction: 'higher' }), cracks: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'tideglass-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'sand', 'path', 'accent']) })]) }),
+  auroraaccord: Object.freeze({ releasedAt: '2026-08-24', outcomes: Object.freeze({ notes: Object.freeze({ min: 0, max: 25, direction: 'higher' }), accords: Object.freeze({ min: 0, max: 5, direction: 'higher' }), misses: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'aurora-theme', kind: 'palette', tokens: Object.freeze(['sky', 'horizon', 'lane', 'note', 'beam', 'accent']) })]) }),
+  cindercompass: Object.freeze({ releasedAt: '2026-08-25', outcomes: Object.freeze({ beacons: Object.freeze({ min: 0, max: 25, direction: 'higher' }), charts: Object.freeze({ min: 0, max: 5, direction: 'higher' }), scorches: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'compass-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'sector', 'ember', 'ring', 'accent']) })]) }),
+  prismpulse: Object.freeze({ releasedAt: '2026-08-26', outcomes: Object.freeze({ pulses: Object.freeze({ min: 0, max: 25, direction: 'higher' }), rounds: Object.freeze({ min: 0, max: 5, direction: 'higher' }), fractures: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'prism-theme', kind: 'palette', tokens: Object.freeze(['sky', 'panel', 'beam', 'crystal', 'accent']) })]) }),
+  kitecircuit: Object.freeze({ releasedAt: '2026-08-28', outcomes: Object.freeze({ rings: Object.freeze({ min: 0, max: 25, direction: 'higher' }), courses: Object.freeze({ min: 0, max: 5, direction: 'higher' }), strikes: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'kitecircuit-theme', kind: 'palette', tokens: Object.freeze(['skyTop', 'skyBottom', 'kite', 'ring', 'storm']) })]) }),
+  seedskip: Object.freeze({ releasedAt: '2026-08-27', outcomes: Object.freeze({ flowers: Object.freeze({ min: 0, max: 5, direction: 'higher' }), gardens: Object.freeze({ min: 0, max: 5, direction: 'higher' }), shots: Object.freeze({ min: 0, max: 100, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'seedskip-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'stone', 'seed', 'flower', 'accent']) })]) }),
+  echoferry: Object.freeze({ releasedAt: '2026-08-29', outcomes: Object.freeze({ buoys: Object.freeze({ min: 0, max: 20, direction: 'higher' }), channels: Object.freeze({ min: 0, max: 5, direction: 'higher' }), pings: Object.freeze({ min: 0, max: 100, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'echoferry-theme', kind: 'palette', tokens: Object.freeze(['water', 'fog', 'ferry', 'buoy', 'reef', 'dock', 'sonar']) })]) }),
+  cloudquilt: Object.freeze({ releasedAt: '2026-08-30', outcomes: Object.freeze({ patches: Object.freeze({ min: 0, max: 91, direction: 'higher' }), quilts: Object.freeze({ min: 0, max: 5, direction: 'higher' }), flips: Object.freeze({ min: 0, max: 250, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'cloudquilt-theme', kind: 'palette', tokens: Object.freeze(['sky', 'cloud', 'lit', 'thread', 'accent']) })]) }),
+  moonmender: Object.freeze({ releasedAt: '2026-08-31', outcomes: Object.freeze({ stones: Object.freeze({ min: 0, max: 6, direction: 'higher' }), sites: Object.freeze({ min: 0, max: 5, direction: 'higher' }), pushes: Object.freeze({ min: 0, max: 200, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'moonmender-theme', kind: 'palette', tokens: Object.freeze(['sky', 'floor', 'wall', 'dust', 'target', 'stone', 'rover']) })]) }),
+  frostfootprints: Object.freeze({ releasedAt: '2026-09-01', outcomes: Object.freeze({ stars: Object.freeze({ min: 0, max: 9, direction: 'higher' }), floes: Object.freeze({ min: 0, max: 5, direction: 'higher' }), slides: Object.freeze({ min: 0, max: 60, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'frostfootprints-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ice', 'edge', 'snow', 'star', 'scarf', 'igloo']) })]) }),
+  bramblebounce: Object.freeze({ releasedAt: '2026-09-02', outcomes: Object.freeze({ blooms: Object.freeze({ min: 0, max: 22, direction: 'higher' }), groves: Object.freeze({ min: 0, max: 5, direction: 'higher' }), drops: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'bramblebounce-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'leaf', 'seed', 'bloom', 'thorn']) })]) }),
+  dewdropdrift: Object.freeze({ releasedAt: '2026-09-04', outcomes: Object.freeze({ motes: Object.freeze({ min: 0, max: 14, direction: 'higher' }), leaves: Object.freeze({ min: 0, max: 5, direction: 'higher' }), tilts: Object.freeze({ min: 0, max: 80, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'dewdropdrift-theme', kind: 'palette', tokens: Object.freeze(['background', 'leaf', 'vein', 'drop', 'mote', 'bloom']) })]) }),
+  mushroommorse: Object.freeze({ releasedAt: '2026-09-05', outcomes: Object.freeze({ notes: Object.freeze({ min: 0, max: 25, direction: 'higher' }), clearings: Object.freeze({ min: 0, max: 5, direction: 'higher' }), mistakes: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'mushroommorse-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'spots', 'stem', 'glow']) })]) }),
+  reedrelay: Object.freeze({ releasedAt: '2026-09-06', outcomes: Object.freeze({ glowseeds: Object.freeze({ min: 0, max: 20, direction: 'higher' }), reaches: Object.freeze({ min: 0, max: 5, direction: 'higher' }), snags: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'reedrelay-theme', kind: 'palette', tokens: Object.freeze(['sky', 'water', 'bank', 'raft', 'glowseed', 'snag']) })]) }),
+  belltowerbloom: Object.freeze({ releasedAt: '2026-09-07', outcomes: Object.freeze({ chimes: Object.freeze({ min: 0, max: 20, direction: 'higher' }), towers: Object.freeze({ min: 0, max: 5, direction: 'higher' }), tangles: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'belltowerbloom-theme', kind: 'palette', tokens: Object.freeze(['sky', 'stone', 'bell', 'note', 'vine']) })]) }),
+  neststack: Object.freeze({ releasedAt: '2026-09-08', outcomes: Object.freeze({ branches: Object.freeze({ min: 0, max: 20, direction: 'higher' }), nests: Object.freeze({ min: 0, max: 5, direction: 'higher' }), tumbles: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'neststack-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sky2', 'trunk', 'leaf', 'branch', 'nest', 'bird']) })]) }),
+  clockworkclover: Object.freeze({ releasedAt: '2026-09-09', outcomes: Object.freeze({ beams: Object.freeze({ min: 0, max: 20, direction: 'higher' }), courtyards: Object.freeze({ min: 0, max: 5, direction: 'higher' }), shadows: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'clockworkclover-theme', kind: 'palette', tokens: Object.freeze(['sky', 'ground', 'stone', 'line', 'beam', 'flower']) })]) }),
+  thimbletide: Object.freeze({ releasedAt: '2026-09-10', outcomes: Object.freeze({ pearls: Object.freeze({ min: 0, max: 20, direction: 'higher' }), shores: Object.freeze({ min: 0, max: 5, direction: 'higher' }), mistakes: Object.freeze({ min: 0, max: 3, direction: 'lower' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'thimbletide-theme', kind: 'palette', tokens: Object.freeze(['sky', 'sea', 'sand', 'shell', 'edge', 'pearl']) })]) }),
+  turbotilt: Object.freeze({
+    releasedAt: '2026-09-09',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      heats: Object.freeze({ min: 0, max: 5, direction: 'higher' }),
+      boosts: Object.freeze({ min: 0, max: 200, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'turbo-theme', kind: 'palette', tokens: Object.freeze(['sky', 'road', 'edge', 'racer', 'barrier', 'energy', 'accent']) }),
+    ]),
+  }),
+  sticktilt: Object.freeze({
+    releasedAt: '2026-09-16',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      rounds: Object.freeze({ min: 0, max: 3, direction: 'higher' }),
+      knockouts: Object.freeze({ min: 0, max: 300, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'sticktilt-theme', kind: 'palette', tokens: Object.freeze(['paper', 'ink', 'gold', 'fighter']) }),
+    ]),
+  }),
+  sketchclash: Object.freeze({ releasedAt: '2026-09-21', outcomes: Object.freeze({ players: Object.freeze({ min: 0, max: 8, direction: 'higher' }), rounds: Object.freeze({ min: 0, max: 8, direction: 'higher' }), solved: Object.freeze({ min: 0, max: 56, direction: 'higher' }) }), cosmeticSlots: Object.freeze([Object.freeze({ key: 'sketchclash-ink', kind: 'palette', tokens: Object.freeze(['ink', 'paper', 'accent']) })]) }),
+  crowdshift: Object.freeze({
+    releasedAt: '2026-09-10',
+    outcomes: Object.freeze({
+      players: Object.freeze({ min: 0, max: 8, direction: 'higher' }),
+      rounds: Object.freeze({ min: 0, max: 7, direction: 'higher' }),
+      unanimous: Object.freeze({ min: 0, max: 7, direction: 'higher' }),
+    }),
+    cosmeticSlots: Object.freeze([
+      Object.freeze({ key: 'crowd-theme', kind: 'palette', tokens: Object.freeze(['background', 'left', 'right', 'rule', 'accent']) }),
     ]),
   }),
 });

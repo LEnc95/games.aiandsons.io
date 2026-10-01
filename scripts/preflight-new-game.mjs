@@ -18,7 +18,7 @@ const require = createRequire(import.meta.url);
 
 // Top-level folders that contain an index.html but are not games.
 const NON_GAME_DIRS = new Set([
-  'rooms', 'teacher', 'changelog', 'ops', 'output', 'node_modules',
+  'rooms', 'party', 'teacher', 'changelog', 'ops', 'output', 'node_modules',
   'clubpenguin-world', 'public', 'docs', 'assets',
 ]);
 

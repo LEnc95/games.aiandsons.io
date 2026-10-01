@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Quilt Quest | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#221937;color:#fff9ec;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#dccfea;font-weight:650}
+    .home{color:#2a1733;font-weight:850;text-decoration:none;border:2px solid #ffe2ab;border-radius:999px;padding:8px 13px;background:#f0ad5c}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#38264d;border:2px solid #79558a;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #10091a}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#d4bfe2}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #8c6599;border-radius:22px;overflow:hidden;background:#50335f;box-shadow:0 10px 0 #10091a}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #ffe09b}
+    .stage:fullscreen{display:grid;place-items:center;background:#10091a}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 45 / 31));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #79558a;border-radius:13px;background:#412b55;color:#fff7ee;font:800 clamp(.61rem,1.45vw,.84rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #10091a;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #10091a}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #10091a;background:#efad5e;color:#2a1733;border-color:#ffe2aa}
+    button.primary{background:#e99b55;border-color:#ffd9a0;color:#2a1733}
+    button.danger{background:#a84168;border-color:#ef8eae;color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    #feedback{grid-column:span 2}
+    .help{background:#38264d;border:2px solid #79558a;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#eadcf1}
+    .help b{color:#ffe09b}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.5rem}.stat strong{font-size:.68rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #10091a}.controls{grid-template-columns:repeat(3,1fr);gap:6px}#feedback{grid-column:span 2}button{min-height:42px;padding:7px 3px}.help{font-size:.68rem;padding:8px 10px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(12,7,19,.97)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Quilt Quest | AI and Sons Games">
+  <meta property="og:description" content="Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/quiltquest">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/quiltquest.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Quilt Quest | AI and Sons Games">
+  <meta name="twitter:description" content="Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/quiltquest.png">
+  <link rel="canonical" href="https://games.aiandsons.io/quiltquest">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Quilt Quest","description":"Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/quiltquest","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Quilt Quest</h1><small>Fit every patch. Finish five festival quilts.</small></div>
+    <a class="home" href="/">All Games</a>
+  </header>
+  <section class="stats" aria-label="Game status">
+    <div class="stat"><span>Panel</span><strong id="panel">1 / 5</strong></div>
+    <div class="stat"><span>Placed</span><strong id="placed">0 / 0</strong></div>
+    <div class="stat"><span>Covered</span><strong id="covered">0%</strong></div>
+    <div class="stat"><span>Checks</span><strong id="checksLeft">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00.0</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="Quilt Quest packing board. Select patches, move with arrow keys, rotate with Z, and place with Space."></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="piecePrev" type="button">◀ Patch</button>
+    <button id="pieceNext" type="button">Patch ▶</button>
+    <button id="rotate" type="button">Rotate (Z)</button>
+    <button id="place" class="primary" type="button">Place (Space)</button>
+    <button id="undo" type="button">Undo (U)</button>
+    <button id="hint" type="button">Hint (H)</button>
+    <button id="check" class="primary" type="button">Start</button>
+    <button id="pause" type="button">Pause (P)</button>
+    <button id="restart" class="danger" type="button">Restart (R)</button>
+    <button id="theme" type="button">Theme</button>
+    <button id="fullscreen" type="button">Fullscreen (F)</button>
+    <button id="feedback" type="button">Send feedback</button>
+  </section>
+  <div class="help"><b>Goal:</b> cover the quilt with every patch, with no gaps or overlaps. Use <b>Q/E</b> to select, <b>arrows</b> to move, <b>Z</b> to rotate, and <b>Space</b> to place or lift. <b>C</b> checks, <b>U</b> undoes, <b>H</b> hints, <b>P</b> pauses, and <b>F</b> toggles fullscreen.</div>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={panel:document.querySelector('#panel'),placed:document.querySelector('#placed'),covered:document.querySelector('#covered'),checksLeft:document.querySelector('#checksLeft'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),piecePrev:document.querySelector('#piecePrev'),pieceNext:document.querySelector('#pieceNext'),rotate:document.querySelector('#rotate'),place:document.querySelector('#place'),undo:document.querySelector('#undo'),hint:document.querySelector('#hint'),check:document.querySelector('#check'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=900,HEIGHT=620,MAX_CHECKS=3;
+const rect=(w,h)=>Object.freeze(Array.from({length:w*h},(_,i)=>Object.freeze([i%w,Math.floor(i/w)])));
+const LEVELS=Object.freeze([
+  Object.freeze({name:'Four-Patch Porch',w:4,h:4,pieces:Object.freeze([
+    Object.freeze({name:'Berry',shape:rect(2,2),solution:[0,0,0]}),Object.freeze({name:'Sun',shape:rect(2,2),solution:[2,0,0]}),Object.freeze({name:'Mint',shape:rect(2,2),solution:[0,2,0]}),Object.freeze({name:'Sky',shape:rect(2,2),solution:[2,2,0]})])}),
+  Object.freeze({name:'Ribbon Row',w:5,h:4,pieces:Object.freeze([
+    Object.freeze({name:'Rose',shape:rect(1,4),solution:[0,0,0]}),Object.freeze({name:'Honey',shape:rect(1,4),solution:[1,0,0]}),Object.freeze({name:'Leaf',shape:rect(1,4),solution:[2,0,0]}),Object.freeze({name:'Lake',shape:rect(1,4),solution:[3,0,0]}),Object.freeze({name:'Plum',shape:rect(1,4),solution:[4,0,0]})])}),
+  Object.freeze({name:'Pinwheel Picnic',w:6,h:5,pieces:Object.freeze([
+    Object.freeze({name:'Coral',shape:rect(3,2),solution:[0,0,0]}),Object.freeze({name:'Gold',shape:rect(3,2),solution:[3,0,0]}),Object.freeze({name:'Fern',shape:rect(2,3),solution:[0,2,0]}),Object.freeze({name:'Indigo',shape:rect(2,3),solution:[2,2,0]}),Object.freeze({name:'Violet',shape:rect(2,3),solution:[4,2,0]})])}),
+  Object.freeze({name:'Stair-Step Sampler',w:6,h:6,pieces:Object.freeze([
+    Object.freeze({name:'Apple',shape:rect(3,2),solution:[0,0,0]}),Object.freeze({name:'Marigold',shape:rect(3,2),solution:[3,0,0]}),Object.freeze({name:'Clover',shape:rect(2,4),solution:[0,2,0]}),Object.freeze({name:'River',shape:rect(2,4),solution:[2,2,0]}),Object.freeze({name:'Grape',shape:rect(2,4),solution:[4,2,0]})])}),
+  Object.freeze({name:'Festival Banner',w:7,h:6,pieces:Object.freeze([
+    Object.freeze({name:'Cherry',shape:rect(3,2),solution:[0,0,0]}),Object.freeze({name:'Amber',shape:rect(3,2),solution:[3,0,0]}),Object.freeze({name:'Emerald',shape:rect(2,4),solution:[0,2,0]}),Object.freeze({name:'Cobalt',shape:rect(2,4),solution:[2,2,0]}),Object.freeze({name:'Mulberry',shape:rect(2,4),solution:[4,2,0]}),Object.freeze({name:'Silver',shape:rect(1,6),solution:[6,0,0]})])})
+]);
+const THEMES=Object.freeze([
+  Object.freeze({name:'Harvest Hall',background:'#2b1d3a',cloth:'#f5ddbd',cloth2:'#d9b88b',grid:'#8e674e',stitch:'#fff3d7',ink:'#28162d',hud:'#fff7ea',accent:'#f1ad5c',patches:Object.freeze(['#d95367','#efa83c','#4ca778','#4f83c3','#8b61b5','#d9d2c3'])}),
+  Object.freeze({name:'Midnight Market',background:'#12283b',cloth:'#d8e7e2',cloth2:'#9dbdb7',grid:'#477177',stitch:'#f7fff7',ink:'#122f35',hud:'#effffc',accent:'#6bd4c4',patches:Object.freeze(['#ef657a','#ffc857','#54b884','#579bd6','#a97adb','#dfe9e4'])}),
+  Object.freeze({name:'Berry Parlor',background:'#40213f',cloth:'#f1d8e0',cloth2:'#c99dac',grid:'#84546a',stitch:'#fff7f5',ink:'#3e2034',hud:'#fff4f8',accent:'#f28eae',patches:Object.freeze(['#c84964','#efaa4e','#62a56f','#4f7db0','#8f61a7','#ead7cf'])})
+]);
+const game={mode:'menu',resumeMode:'playing',levelIndex:0,pieces:[],selected:0,history:[],checksRemaining:MAX_CHECKS,elapsedMs:0,patches:0,panels:0,placements:0,themeIndex:0,status:'Choose a patch, fit it onto the quilt, and cover every square.',lastAction:{type:'ready'},shakeMs:0,started:false,reported:false,rewarded:false};
+let lastFrame=performance.now(),manualUntil=0;
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const formatTime=ms=>{const tenths=Math.floor(ms/100)%10,total=Math.floor(ms/1000);return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}.${tenths}`};
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function rotated(shape,turns){let cells=shape.map(([x,y])=>[x,y]);for(let t=0;t<((turns%4)+4)%4;t++){cells=cells.map(([x,y])=>[-y,x]);const minX=Math.min(...cells.map(c=>c[0])),minY=Math.min(...cells.map(c=>c[1]));cells=cells.map(([x,y])=>[x-minX,y-minY])}return cells}
+function cellsFor(piece){return rotated(level().pieces[piece.id].shape,piece.rot).map(([x,y])=>[x+piece.x,y+piece.y])}
+function dimensions(piece){const cells=rotated(level().pieces[piece.id].shape,piece.rot);return{w:Math.max(...cells.map(c=>c[0]))+1,h:Math.max(...cells.map(c=>c[1]))+1}}
+function placedCount(){return game.pieces.filter(piece=>piece.placed).length}
+function occupied(ignoreId=-1){const cells=new Map();for(const piece of game.pieces){if(!piece.placed||piece.id===ignoreId)continue;for(const [x,y] of cellsFor(piece))cells.set(`${x},${y}`,piece.id)}return cells}
+function coverage(){return occupied().size}
+function currentMetrics(){const live=['playing','paused','lost'].includes(game.mode)?placedCount():0;return{patches:game.patches+live,panels:game.panels,placements:game.placements}}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'quiltquest',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function snapshot(){return{pieces:game.pieces.map(piece=>({...piece})),selected:game.selected}}
+function restore(state){game.pieces=state.pieces.map(piece=>({...piece}));game.selected=state.selected}
+function pushHistory(){game.history.push(snapshot());if(game.history.length>100)game.history.shift()}
+function resetPieces(){game.pieces=level().pieces.map((piece,id)=>{const w=Math.max(...piece.shape.map(cell=>cell[0]))+1,h=Math.max(...piece.shape.map(cell=>cell[1]))+1;return{id,x:clamp(id,0,level().w-w),y:clamp(Math.floor(id/level().w),0,level().h-h),rot:0,placed:false}});game.selected=0;game.history=[]}
+function loadPanel(index,mode='playing'){
+  game.levelIndex=clamp(index,0,LEVELS.length-1);resetPieces();game.checksRemaining=MAX_CHECKS;game.mode=mode;game.resumeMode='playing';game.shakeMs=0;game.status=mode==='menu'?'Choose a patch, fit it onto the quilt, and cover every square.':`${level().name}: place all ${level().pieces.length} patches.`;game.lastAction={type:mode==='menu'?'ready':'panel-start',panel:game.levelIndex+1};syncUi();render();
+}
+function resetCampaign(mode='menu'){game.elapsedMs=0;game.patches=0;game.panels=0;game.placements=0;game.started=mode!=='menu';game.reported=false;game.rewarded=false;loadPanel(0,mode)}
+function startOrContinue(){
+  if(game.mode==='menu'){game.started=true;game.mode='playing';game.status=`${level().name}: place all ${level().pieces.length} patches.`;game.lastAction={type:'start'};canvas.focus();announce('Quilt Quest begun. Berry patch selected.');syncUi();render();return}
+  if(game.mode==='panel-complete'){loadPanel(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} begun.`);return}
+  if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Quilt Quest campaign has begun.')}
+}
+function restart(){if(game.started&&['playing','paused','panel-complete'].includes(game.mode))report('abandoned');resetCampaign('playing');game.status='Quilt campaign restarted at Four-Patch Porch.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status)}
+function selectPiece(delta){if(game.mode!=='playing')return false;game.selected=(game.selected+delta+game.pieces.length)%game.pieces.length;const def=level().pieces[game.selected],piece=game.pieces[game.selected];game.status=`${def.name} patch selected${piece.placed?'; it is sewn down.':'.'}`;game.lastAction={type:'select',piece:def.name};syncUi();render();return true}
+function movePiece(dx,dy,source='keyboard'){
+  if(game.mode!=='playing')return false;const piece=game.pieces[game.selected];if(piece.placed){game.status='Lift this patch before moving it.';game.lastAction={type:'move-blocked',reason:'placed',source};syncUi();render();announce(game.status);return false}
+  const size=dimensions(piece),nx=clamp(piece.x+dx,0,level().w-size.w),ny=clamp(piece.y+dy,0,level().h-size.h);if(nx===piece.x&&ny===piece.y){game.status='The patch is already at the quilt edge.';game.lastAction={type:'move-blocked',reason:'boundary',source};syncUi();render();return false}
+  pushHistory();piece.x=nx;piece.y=ny;game.status=`Moved ${level().pieces[piece.id].name} to column ${nx+1}, row ${ny+1}.`;game.lastAction={type:'move',piece:level().pieces[piece.id].name,x:nx,y:ny,source};syncUi();render();return true;
+}
+function rotatePiece(source='keyboard'){
+  if(game.mode!=='playing')return false;const piece=game.pieces[game.selected];if(piece.placed){game.status='Lift this patch before rotating it.';game.lastAction={type:'rotate-blocked',source};syncUi();render();announce(game.status);return false}
+  pushHistory();piece.rot=(piece.rot+1)%4;const size=dimensions(piece);piece.x=clamp(piece.x,0,level().w-size.w);piece.y=clamp(piece.y,0,level().h-size.h);game.status=`Rotated ${level().pieces[piece.id].name} clockwise.`;game.lastAction={type:'rotate',piece:level().pieces[piece.id].name,rotation:piece.rot,source};syncUi();render();return true;
+}
+function canPlace(piece){const used=occupied(piece.id);for(const [x,y] of cellsFor(piece)){if(x<0||x>=level().w||y<0||y>=level().h||used.has(`${x},${y}`))return false}return true}
+function togglePlace(source='keyboard'){
+  if(game.mode!=='playing')return false;const piece=game.pieces[game.selected];pushHistory();if(piece.placed){piece.placed=false;game.placements++;game.status=`Lifted the ${level().pieces[piece.id].name} patch.`;game.lastAction={type:'lift',piece:level().pieces[piece.id].name,source}}
+  else if(!canPlace(piece)){game.history.pop();game.shakeMs=280;game.status='That patch overlaps one already sewn down. Move or rotate it.';game.lastAction={type:'place-blocked',piece:level().pieces[piece.id].name,source};syncUi();render();announce(game.status);return false}
+  else{piece.placed=true;game.placements++;game.status=`Sewed down the ${level().pieces[piece.id].name} patch.`;game.lastAction={type:'place',piece:level().pieces[piece.id].name,source}}
+  syncUi();render();announce(game.status);return true;
+}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;restore(game.history.pop());game.status='Last patch change undone.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true}
+function solutionPose(pieceId){const [x,y,rot]=level().pieces[pieceId].solution;return{x,y,rot}}
+function hint(){
+  if(game.mode!=='playing')return false;const target=game.pieces.find(piece=>!piece.placed);if(!target){game.status='Every patch is placed. Check the quilt.';game.lastAction={type:'hint-complete'};syncUi();render();announce(game.status);return false}
+  pushHistory();const pose=solutionPose(target.id);target.x=pose.x;target.y=pose.y;target.rot=pose.rot;const solutionCells=new Set(cellsFor(target).map(([x,y])=>`${x},${y}`));for(const other of game.pieces){if(other.id===target.id||!other.placed)continue;if(cellsFor(other).some(([x,y])=>solutionCells.has(`${x},${y}`)))other.placed=false}target.placed=true;game.selected=target.id;game.placements++;game.status=`Hint: ${level().pieces[target.id].name} is fitted into its festival position.`;game.lastAction={type:'hint',piece:level().pieces[target.id].name};syncUi();render();announce(game.status);return true;
+}
+function failCheck(){game.checksRemaining--;game.shakeMs=420;const gaps=level().w*level().h-coverage();game.lastAction={type:'check-failed',gaps,checksRemaining:game.checksRemaining};if(game.checksRemaining<=0){game.mode='lost';game.status='The third bell rang before the quilt was complete.';report('lost');announce('Quilt Quest ended after three incomplete checks.')}else{game.status=`${gaps} quilt square${gaps===1?' is':'s are'} still uncovered. ${game.checksRemaining} checks remain.`}syncUi();render();announce(game.status);return false}
+function checkPanel(){
+  if(game.mode==='menu'||game.mode==='panel-complete'||['won','lost'].includes(game.mode)){startOrContinue();return false}if(game.mode!=='playing')return false;
+  if(placedCount()!==level().pieces.length||coverage()!==level().w*level().h)return failCheck();game.patches+=level().pieces.length;game.panels++;
+  if(game.levelIndex===LEVELS.length-1){game.mode='won';game.status='All five festival quilts are ready for the parade.';game.lastAction={type:'campaign-complete',metrics:currentMetrics()};if(!game.rewarded){addCoins(50);game.rewarded=true}report('completed');announce('Quilt Quest complete. Fifty coins earned.')}
+  else{game.mode='panel-complete';game.status=`${level().name} is stitched without a gap.`;game.lastAction={type:'panel-complete',panel:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`)}syncUi();render();return true;
+}
+function togglePause(){if(game.mode==='playing'){game.resumeMode='playing';game.mode='paused';game.status='Needle, patches, and clock are frozen.';game.lastAction={type:'pause'};announce(game.status)}else if(game.mode==='paused'){game.mode=game.resumeMode;game.status='Stitching resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render()}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} fabric palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-error'};syncUi();render();announce(game.status)}}
+function syncUi(){
+  const total=level().w*level().h;el.panel.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.placed.textContent=`${placedCount()} / ${level().pieces.length}`;el.covered.textContent=`${Math.round(coverage()/total*100)}%`;el.checksLeft.textContent=`${game.checksRemaining} / ${MAX_CHECKS}`;el.time.textContent=formatTime(game.elapsedMs);
+  el.check.textContent=game.mode==='menu'?'Start':game.mode==='panel-complete'?'Next panel':game.mode==='won'||game.mode==='lost'?'Play again':'Check (C)';el.pause.textContent=game.mode==='paused'?'Resume (P)':'Pause (P)';el.place.textContent=game.pieces[game.selected]?.placed?'Lift (Space)':'Place (Space)';
+  const playing=game.mode==='playing';for(const button of [el.piecePrev,el.pieceNext,el.rotate,el.place,el.undo,el.hint])button.disabled=!playing;el.undo.disabled=!playing||!game.history.length;el.pause.disabled=!['playing','paused'].includes(game.mode);
+  el.theme.textContent=`Theme: ${game.themeIndex+1}/3`;
+}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawStitches(x,y,size,color){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.strokeRect(x+5,y+5,size-10,size-10);ctx.restore()}
+function layout(){const cell=Math.min(72,Math.floor(420/Math.max(level().w,level().h))),boardW=cell*level().w,boardH=cell*level().h;return{cell,boardX:Math.round(72+(420-boardW)/2),boardY:Math.round(94+(420-boardH)/2),boardW,boardH,trayX:575,trayY:112}}
+function drawBackdrop(){const t=theme();ctx.fillStyle=t.background;ctx.fillRect(0,0,WIDTH,HEIGHT);for(let i=0;i<32;i++){const x=(i*97+game.levelIndex*43)%WIDTH,y=(i*61+37)%HEIGHT,r=2+(i%3);ctx.globalAlpha=.16;ctx.fillStyle=i%2?t.accent:t.stitch;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;ctx.fillStyle=t.hud;ctx.font='900 24px system-ui';ctx.fillText(level().name,36,48);ctx.font='700 14px system-ui';ctx.globalAlpha=.78;ctx.fillText('A gapless patchwork challenge',36,72);ctx.globalAlpha=1}
+function drawBoard(){
+  const t=theme(),l=layout();ctx.save();if(game.shakeMs>0)ctx.translate(Math.sin(game.shakeMs*.1)*6,0);ctx.fillStyle=t.cloth2;roundedRect(l.boardX-16,l.boardY-16,l.boardW+32,l.boardH+32,22);ctx.fill();ctx.fillStyle=t.cloth;ctx.fillRect(l.boardX,l.boardY,l.boardW,l.boardH);
+  for(let y=0;y<level().h;y++)for(let x=0;x<level().w;x++){ctx.fillStyle=(x+y)%2===0?'rgba(255,255,255,.09)':'rgba(0,0,0,.035)';ctx.fillRect(l.boardX+x*l.cell,l.boardY+y*l.cell,l.cell,l.cell);ctx.strokeStyle=t.grid;ctx.lineWidth=1.5;ctx.strokeRect(l.boardX+x*l.cell,l.boardY+y*l.cell,l.cell,l.cell)}
+  for(const piece of game.pieces){if(!piece.placed)continue;drawPieceOnBoard(piece,false)}
+  const selected=game.pieces[game.selected];if(selected&&!selected.placed&&game.mode!=='menu')drawPieceOnBoard(selected,true);ctx.restore();
+}
+function drawPieceOnBoard(piece,ghost){const t=theme(),l=layout(),color=t.patches[piece.id%t.patches.length],valid=canPlace(piece);for(const [x,y] of cellsFor(piece)){const px=l.boardX+x*l.cell,py=l.boardY+y*l.cell;ctx.globalAlpha=ghost?.7:1;ctx.fillStyle=ghost&&!valid?'#db4965':color;ctx.fillRect(px+2,py+2,l.cell-4,l.cell-4);drawStitches(px,py,l.cell,t.stitch);ctx.globalAlpha=1}if(piece.id===game.selected){const cells=cellsFor(piece),minX=Math.min(...cells.map(c=>c[0])),maxX=Math.max(...cells.map(c=>c[0])),minY=Math.min(...cells.map(c=>c[1])),maxY=Math.max(...cells.map(c=>c[1]));ctx.strokeStyle=t.accent;ctx.lineWidth=4;ctx.strokeRect(l.boardX+minX*l.cell+1,l.boardY+minY*l.cell+1,(maxX-minX+1)*l.cell-2,(maxY-minY+1)*l.cell-2)}}
+function drawTray(){
+  const t=theme(),l=layout();ctx.fillStyle='rgba(10,6,18,.3)';roundedRect(l.trayX,l.trayY,270,332,22);ctx.fill();ctx.fillStyle=t.hud;ctx.font='900 18px system-ui';ctx.fillText('PATCH BASKET',l.trayX+18,l.trayY+30);
+  const rowH=game.pieces.length>5?40:45;game.pieces.forEach((piece,index)=>{const y=l.trayY+48+index*rowH,selected=index===game.selected;ctx.fillStyle=selected?t.accent:'rgba(255,255,255,.09)';roundedRect(l.trayX+12,y,246,rowH-8,10);ctx.fill();ctx.fillStyle=selected?t.ink:t.hud;ctx.font='800 15px system-ui';ctx.fillText(`${index+1}. ${level().pieces[index].name}`,l.trayX+24,y+22);ctx.textAlign='right';ctx.fillText(piece.placed?'SEWN':'LOOSE',l.trayX+245,y+22);ctx.textAlign='left'});
+  ctx.fillStyle=t.hud;ctx.globalAlpha=.78;ctx.font='700 13px system-ui';ctx.fillText('Move: arrow keys',l.trayX+18,l.trayY+298);ctx.fillText('Rotate: Z  •  Place: Space',l.trayX+18,l.trayY+319);ctx.globalAlpha=1;
+}
+function drawFooter(){const t=theme();ctx.fillStyle='rgba(9,5,15,.44)';roundedRect(36,540,828,55,16);ctx.fill();ctx.fillStyle=t.hud;ctx.font='750 15px system-ui';const text=game.status.length>94?`${game.status.slice(0,91)}…`:game.status;ctx.fillText(text,54,573)}
+function drawOverlay(){
+  if(!['menu','paused','panel-complete','won','lost'].includes(game.mode))return;const t=theme();ctx.fillStyle='rgba(12,7,18,.76)';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.textAlign='center';ctx.fillStyle=t.hud;ctx.font='900 42px system-ui';const title=game.mode==='menu'?'QUILT QUEST':game.mode==='paused'?'STITCHING PAUSED':game.mode==='panel-complete'?'PANEL COMPLETE':game.mode==='won'?'FESTIVAL READY':'THREAD RAN OUT';ctx.fillText(title,WIDTH/2,238);ctx.font='750 18px system-ui';ctx.globalAlpha=.9;const message=game.mode==='menu'?'Fit, rotate, and sew every patch without gaps.':game.status;ctx.fillText(message,WIDTH/2,278);ctx.globalAlpha=1;ctx.fillStyle=t.accent;roundedRect(WIDTH/2-112,310,224,52,16);ctx.fill();ctx.fillStyle=t.ink;ctx.font='900 18px system-ui';const action=game.mode==='menu'?'PRESS START':game.mode==='paused'?'PRESS P TO RESUME':game.mode==='panel-complete'?'NEXT PANEL':game.mode==='won'||game.mode==='lost'?'PLAY AGAIN':'';ctx.fillText(action,WIDTH/2,343);ctx.textAlign='left';
+}
+function render(){drawBackdrop();drawBoard();drawTray();drawFooter();drawOverlay()}
+function update(ms){if(game.mode==='playing')game.elapsedMs+=ms;if(game.shakeMs>0)game.shakeMs=Math.max(0,game.shakeMs-ms);syncUi()}
+function frame(now){const dt=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(dt);render();requestAnimationFrame(frame)}
+function pointerPosition(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function handlePointer(event){
+  if(game.mode!=='playing')return;event.preventDefault();const p=pointerPosition(event),l=layout(),rowH=game.pieces.length>5?40:45;if(p.x>=l.trayX+12&&p.x<=l.trayX+258&&p.y>=l.trayY+48){const index=Math.floor((p.y-(l.trayY+48))/rowH);if(index>=0&&index<game.pieces.length){game.selected=index;game.status=`${level().pieces[index].name} patch selected.`;game.lastAction={type:'select',piece:level().pieces[index].name,source:event.pointerType};syncUi();render();canvas.focus();return}}
+  if(p.x>=l.boardX&&p.x<l.boardX+l.boardW&&p.y>=l.boardY&&p.y<l.boardY+l.boardH){const x=Math.floor((p.x-l.boardX)/l.cell),y=Math.floor((p.y-l.boardY)/l.cell),hit=[...game.pieces].reverse().find(piece=>piece.placed&&cellsFor(piece).some(cell=>cell[0]===x&&cell[1]===y));if(hit){game.selected=hit.id;game.status=`${level().pieces[hit.id].name} patch selected; lift it to move.`;game.lastAction={type:'select-board',piece:level().pieces[hit.id].name,source:event.pointerType}}
+    else{const piece=game.pieces[game.selected];if(!piece.placed){const size=dimensions(piece);pushHistory();piece.x=clamp(x-Math.floor(size.w/2),0,level().w-size.w);piece.y=clamp(y-Math.floor(size.h/2),0,level().h-size.h);game.status=`Positioned ${level().pieces[piece.id].name} near column ${x+1}, row ${y+1}.`;game.lastAction={type:'position',x:piece.x,y:piece.y,source:event.pointerType}}}syncUi();render();canvas.focus()}
+}
+canvas.addEventListener('pointerdown',handlePointer);
+el.piecePrev.addEventListener('click',()=>selectPiece(-1));el.pieceNext.addEventListener('click',()=>selectPiece(1));el.rotate.addEventListener('click',()=>rotatePiece('button'));el.place.addEventListener('click',()=>togglePlace('button'));el.undo.addEventListener('click',undo);el.hint.addEventListener('click',hint);el.check.addEventListener('click',checkPanel);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+window.addEventListener('keydown',event=>{
+  if(document.documentElement.dataset.cadeFeedbackOpen==='1')return;const key=event.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' ','q','e','z','c','u','h','p','r','t','f','enter','escape'].includes(key))event.preventDefault();
+  if(key==='escape'&&document.fullscreenElement){document.exitFullscreen();return}
+  if(key==='p'){togglePause();return}if(key==='f'){toggleFullscreen();return}if(key==='t'){cycleTheme();return}if(key==='r'){restart();return}if(key==='c'||key==='enter'){checkPanel();return}if(game.mode!=='playing')return;
+  if(key==='q')selectPiece(-1);else if(key==='e')selectPiece(1);else if(key==='arrowleft')movePiece(-1,0);else if(key==='arrowright')movePiece(1,0);else if(key==='arrowup')movePiece(0,-1);else if(key==='arrowdown')movePiece(0,1);else if(key==='z')rotatePiece();else if(key===' ')togglePlace();else if(key==='u')undo();else if(key==='h')hint();
+});
+document.addEventListener('fullscreenchange',()=>{game.lastAction={type:'fullscreen',active:Boolean(document.fullscreenElement)};render()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.mode==='playing')togglePause()});
+window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+300;lastFrame=performance.now();update(amount);render()};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'quilt cells use origin (0,0) at top-left; x increases right and y increases down',mode:game.mode,panel:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,width:level().w,height:level().h},selectedPiece:game.selected,pieces:game.pieces.map(piece=>({id:piece.id,name:level().pieces[piece.id].name,x:piece.x,y:piece.y,rotation:piece.rot,placed:piece.placed,cells:cellsFor(piece)})),placed:placedCount(),coveredCells:coverage(),totalCells:level().w*level().h,checksRemaining:game.checksRemaining,elapsedMs:Math.round(game.elapsedMs),theme:theme().name,status:game.status,lastAction:game.lastAction,metrics:currentMetrics()});
+window.__QUILT_QUEST_GAME__={
+  snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadPanel:index=>loadPanel(index,'playing'),select:index=>{game.selected=clamp(index,0,game.pieces.length-1);syncUi();render()},move:(dx,dy)=>movePiece(dx,dy,'qa'),rotate:()=>rotatePiece('qa'),toggle:()=>togglePlace('qa'),check:()=>checkPanel(),pause:()=>togglePause(),theme:()=>cycleTheme(),fail:()=>failCheck(),solvePanel:()=>{for(const piece of game.pieces){const pose=solutionPose(piece.id);piece.x=pose.x;piece.y=pose.y;piece.rot=pose.rot;if(!piece.placed)game.placements++;piece.placed=true}game.lastAction={type:'qa-solution'};syncUi();render()},levels:LEVELS
+};
+mountGameFeedback({gameSlug:'quiltquest',gameName:'Quilt Quest'});
+resetCampaign('menu');syncUi();render();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

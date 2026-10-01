@@ -4,15 +4,19 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const {
+  STRIPE_API_VERSION,
+  getStripeClient,
   summarizeEntitlementsFromSubscriptions,
 } = require("../api/stripe/_shared.js");
 
 const originalEnv = {
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_PRICE_FAMILY_MONTHLY: process.env.STRIPE_PRICE_FAMILY_MONTHLY,
   STRIPE_PAST_DUE_GRACE_DAYS: process.env.STRIPE_PAST_DUE_GRACE_DAYS,
 };
 
 test.beforeEach(() => {
+  delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_PRICE_FAMILY_MONTHLY;
   delete process.env.STRIPE_PAST_DUE_GRACE_DAYS;
 });
@@ -51,6 +55,15 @@ function createSubscription({
     },
   };
 }
+
+test("Stripe SDK upgrades retain the existing API contract", () => {
+  process.env.STRIPE_SECRET_KEY = "sk_test_dependency_upgrade";
+
+  const stripe = getStripeClient();
+
+  assert.equal(STRIPE_API_VERSION, "2026-02-25.clover");
+  assert.equal(stripe.getApiField("version"), STRIPE_API_VERSION);
+});
 
 test("summarizeEntitlementsFromSubscriptions keeps past_due family access during grace period", () => {
   process.env.STRIPE_PRICE_FAMILY_MONTHLY = "price_family_monthly";

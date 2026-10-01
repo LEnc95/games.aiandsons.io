@@ -1,6 +1,7 @@
 const Stripe = require("stripe");
 
 const APP_TAG = "cade-games";
+const STRIPE_API_VERSION = "2026-02-25.clover";
 const PLAN_PRICE_ENV_MAP = Object.freeze({
   "family-monthly": "STRIPE_PRICE_FAMILY_MONTHLY",
   "family-annual": "STRIPE_PRICE_FAMILY_ANNUAL",
@@ -20,7 +21,9 @@ function getStripeClient() {
     : "";
   if (!secretKey) return null;
   if (!cachedStripeClient) {
-    cachedStripeClient = new Stripe(secretKey);
+    cachedStripeClient = new Stripe(secretKey, {
+      apiVersion: STRIPE_API_VERSION,
+    });
   }
   return cachedStripeClient;
 }
@@ -484,6 +487,7 @@ async function forwardWebhookEvent(event) {
 
 module.exports = {
   APP_TAG,
+  STRIPE_API_VERSION,
   FAMILY_PLAN_IDS,
   SCHOOL_PLAN_IDS,
   PLAN_PRICE_ENV_MAP,

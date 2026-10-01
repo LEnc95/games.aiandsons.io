@@ -5,6 +5,7 @@ import {
   signInWithGoogle,
   signOutFromApp,
 } from "../auth/client.js";
+import { mountClipControls } from "../social/clip-controls.js";
 
 const ROOT_ID = "cadeFeedbackRoot";
 const STYLE_ID = "cadeFeedbackStyles";
@@ -14,6 +15,10 @@ function injectStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
+    html,
+    body {
+      touch-action: manipulation;
+    }
     .cade-feedback-launcher {
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -245,6 +250,7 @@ function readFileAsDataUrl(file) {
 
 export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   if (!gameSlug || !gameName || document.getElementById(ROOT_ID)) return;
+  mountClipControls({ gameSlug, gameName });
   injectStyles();
 
   const root = document.createElement("div");

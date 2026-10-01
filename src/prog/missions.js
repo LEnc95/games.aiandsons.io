@@ -300,9 +300,13 @@ const resetDailyMissions = (dayKey) => {
 };
 
 const resetWeeklyChallenges = (weekKey) => {
+  const scheduledPack = WEEKLY_CHALLENGE_DEFS.filter((entry) => entry.weekKey === weekKey);
+  const activeIds = scheduledPack.length === WEEKLY_CHALLENGE_COUNT
+    ? scheduledPack.map((entry) => entry.id)
+    : pickRotatingIds(WEEKLY_CHALLENGE_DEFS, `weekly:${weekKey}`, WEEKLY_CHALLENGE_COUNT);
   state.missions.weekly = {
     weekKey,
-    activeIds: pickRotatingIds(WEEKLY_CHALLENGE_DEFS, `weekly:${weekKey}`, WEEKLY_CHALLENGE_COUNT),
+    activeIds,
     progress: {},
     completed: [],
     rewarded: [],

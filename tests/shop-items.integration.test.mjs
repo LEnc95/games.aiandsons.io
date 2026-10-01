@@ -23,9 +23,28 @@ const GAME_FILE_BY_PREFIX = {
   ski: 'ski/index.html',
   '2048': '2048/index.html',
   tetris: 'tetris/index.html',
+  aquariumlogic: 'aquariumlogic/index.html',
+  auroraaccord: 'auroraaccord/index.html',
+  lanternloom: 'lanternloom/index.html',
+  turbotilt: 'turbotilt/index.html',
+  harborharmony: 'harborharmony/index.html',
+  pollenpatrol: 'pollenpatrol/index.html',
+  firebreakcommand: 'firebreakcommand/index.html',
+  dapplegrove: 'dapplegrove/index.html',
+  geargrove: 'geargrove/index.html',
+  glassgarden: 'glassgarden/index.html',
+  meteorminer: 'meteorminer/index.html',
+  prismpulse: 'prismpulse/index.html',
+  acornascent: 'acornascent/index.html',
   asteroids: 'asteroids/index.html',
   bomberman: 'bomberman/index.html',
   colorcatch: 'colorcatch/index.html',
+  neststack: 'neststack/index.html',
+  baseballradio: 'baseballradio/index.html',
+  bottlecapcurl: 'bottlecapcurl/index.html',
+  ribbonreversal: 'ribbonreversal/index.html',
+  sticktilt: 'sticktilt/index.html',
+  lanternwake: 'lanternwake/index.html',
 };
 
 function extractItems(shopHtml) {
@@ -60,7 +79,7 @@ function gatherTextFiles(dir) {
   while (stack.length) {
     const current = stack.pop();
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      if (entry.name === '.git') continue;
+      if (entry.name === '.git' || entry.name === 'node_modules') continue;
       const full = path.join(current, entry.name);
       if (entry.isDirectory()) {
         stack.push(full);

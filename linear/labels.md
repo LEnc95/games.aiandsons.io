@@ -17,6 +17,10 @@
 
 - game/clubpenguin-world
 - game/audioagar
+- game/turbotilt
+- game/sticktilt
+- game/sketchclash
+- game/crowdshift
 - game/2048
 - game/pong
 - game/airhockey
@@ -43,6 +47,7 @@
 - game/micro-mario
 - game/ski
 - game/homerunderby
+- game/baseballradio
 - game/micro-rc-racer
 - game/oregontrail
 - game/neonrally
@@ -193,5 +198,47 @@
 - game/acornascent
 - game/moonscale
 - game/shadowbloom
+- game/quiltquest
+- game/riverriddle
+- game/choruscurrent
+- game/kiteparade
+- game/shellshift
+- game/flockfold
+- game/geargrove
+- game/nectarmeasure
+- game/glassgarden
+- game/dapplegrove
+- game/fireflyslants
+- game/magnetmeadow
+- game/rainkeeper
+- game/harborharmony
+- game/lanternloom
+- game/tideglass
+- game/auroraaccord
+- game/cindercompass
+- game/prismpulse
+- game/seedskip
+- game/kitecircuit
+- game/echoferry
+- game/cloudquilt
+- game/moonmender
+- game/frostfootprints
+- game/bramblebounce
+- game/dewdropdrift
+- game/mushroommorse
+- game/reedrelay
+- game/belltowerbloom
+- game/neststack
+- game/clockworkclover
+- game/thimbletide
+- game/ribbonreversal
+- game/pebbleparade
+- game/chalkchase
+- game/paperbridge
+- game/signalgarden
+- game/pollenpassage
+- game/foxfiretrails
+- game/bottlecapcurl
+- game/runeroots
 
 Generated from `src/meta/feedback.js`.

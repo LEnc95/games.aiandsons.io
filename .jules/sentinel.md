@@ -56,3 +56,7 @@
 **Vulnerability:** In `rooms/index.html`, the `player.handle` was interpolated directly into the `row.innerHTML` when constructing the scoreboard rows. This allowed untrusted player names to execute arbitrary JavaScript (DOM-based XSS). Additionally, the scoreboard `tbody` was being cleared using `.innerHTML = ''`.
 **Learning:** Even internal HTML structures constructed using template literals can be vulnerable to XSS if they interpolate untrusted user data without escaping. And, `innerHTML = ''` triggers static analysis blockers even if empty.
 **Prevention:** Always include and use an `escapeHtml` utility function when rendering user-provided values like handles or names into DOM elements via `innerHTML` or `insertAdjacentHTML`. Also, use `.textContent = ''` for clearing elements.
+## 2026-10-27 - [Fix HTML Injection in Email Templates]
+**Vulnerability:** In `api/_email.js`, dynamically provided variables like `inviterName` and `memberName` were being embedded directly into HTML email templates without escaping. This allowed malicious display names to inject arbitrary HTML into emails.
+**Learning:** Even internal backend services like email senders can be vulnerable to HTML injection if they construct HTML manually and incorporate user-provided data without encoding it properly.
+**Prevention:** Always use an `escapeHtml` utility function when rendering user-provided values into HTML templates on the backend to neutralize special characters.

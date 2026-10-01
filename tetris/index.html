@@ -212,6 +212,7 @@
       auroraStack: hasInventory && profileState.inventory.has('tetris-aurora-stack'),
       candyStack: hasInventory && profileState.inventory.has('tetris-candy-stack'),
       meteorWell: hasInventory && profileState.inventory.has('tetris-meteor-well'),
+      prismTide: hasInventory && profileState.inventory.has('tetris-prism-tide'),
     };
     const PIECES = {
       I: { color: '#4de4ff', cells:[[-1,0],[0,0],[1,0],[2,0]] },
@@ -222,6 +223,11 @@
       J: { color: '#6f8fff', cells:[[-1,0],[0,0],[1,0],[1,1]] },
       L: { color: '#ffb05b', cells:[[-1,0],[0,0],[1,0],[-1,1]] },
     };
+    const PRISM_TIDE_COLORS = {
+      I: '#2dd4bf', O: '#f0abfc', T: '#c084fc', S: '#5eead4',
+      Z: '#fb7185', J: '#818cf8', L: '#fbbf24',
+    };
+    const pieceColor = (type) => COSMETICS.prismTide ? PRISM_TIDE_COLORS[type] : PIECES[type].color;
     const SCORE_TABLE = [0, 100, 300, 500, 800];
     const BEST_KEY = 'tetris-best-score';
 
@@ -352,7 +358,7 @@
 
     function lockCurrentPiece() {
       if (!state.current) return;
-      const color = PIECES[state.current.type].color;
+      const color = pieceColor(state.current.type);
       for (const cell of pieceCells(state.current)) {
         if (cell.y >= 0 && cell.y < ROWS) {
           state.board[cell.y][cell.x] = color;
@@ -387,7 +393,7 @@
       state.coinsGiven += bonus;
       addCoins(bonus);
       state.clearFlash = 0.28;
-      spawnSparks(clearedRows, 12 + cleared * 3, COSMETICS.auroraStack ? '#ffd4ff' : '#9fd8ff');
+      spawnSparks(clearedRows, 12 + cleared * 3, COSMETICS.prismTide ? '#5eead4' : COSMETICS.auroraStack ? '#ffd4ff' : '#9fd8ff');
       emitUnlocks();
 
       if (state.lines >= 40 && !state.playedOnce) {
@@ -404,7 +410,7 @@
       }
       state.score += cells * 2;
       const rows = [...new Set(pieceCells(state.current).map((cell) => Math.max(0, cell.y)))];
-      spawnSparks(rows, 3, COSMETICS.neonGrid ? '#63f3ff' : '#a7c6ff');
+      spawnSparks(rows, 3, COSMETICS.prismTide ? '#c084fc' : COSMETICS.neonGrid ? '#63f3ff' : '#a7c6ff');
       lockCurrentPiece();
     }
 
@@ -529,7 +535,13 @@
     }
 
     function drawBoardGrid() {
-      if (COSMETICS.meteorWell) {
+      if (COSMETICS.prismTide) {
+        const g = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        g.addColorStop(0, '#061827');
+        g.addColorStop(0.58, '#0f4c5c');
+        g.addColorStop(1, '#4c1d95');
+        ctx.fillStyle = g;
+      } else if (COSMETICS.meteorWell) {
         const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
         g.addColorStop(0, '#111827');
         g.addColorStop(0.55, '#7c2d12');
@@ -563,7 +575,7 @@
 
       for (let y = 0; y < ROWS; y += 1) {
         for (let x = 0; x < COLS; x += 1) {
-          ctx.strokeStyle = COSMETICS.neonGrid ? 'rgba(114,227,255,0.24)' : 'rgba(149,178,226,0.12)';
+          ctx.strokeStyle = COSMETICS.prismTide ? 'rgba(94,234,212,0.28)' : COSMETICS.neonGrid ? 'rgba(114,227,255,0.24)' : 'rgba(149,178,226,0.12)';
           ctx.strokeRect(x * TILE + 0.5, y * TILE + 0.5, TILE - 1, TILE - 1);
         }
       }
@@ -578,9 +590,9 @@
         const candy = ['#f9a8d4', '#fde68a', '#a7f3d0', '#bfdbfe'];
         color = candy[(x + y) % candy.length];
       }
-      if (COSMETICS.neonGrid || COSMETICS.auroraStack || COSMETICS.meteorWell) {
+      if (COSMETICS.neonGrid || COSMETICS.auroraStack || COSMETICS.meteorWell || COSMETICS.prismTide) {
         ctx.shadowBlur = 10;
-        ctx.shadowColor = COSMETICS.meteorWell ? '#fb923c' : color;
+        ctx.shadowColor = COSMETICS.prismTide ? '#5eead4' : COSMETICS.meteorWell ? '#fb923c' : color;
       }
       ctx.fillStyle = color;
       ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
@@ -591,7 +603,7 @@
     }
 
     function drawPiece(piece, alpha = 1) {
-      const color = PIECES[piece.type].color;
+      const color = pieceColor(piece.type);
       for (const cell of pieceCells(piece)) {
         drawCell(cell.x, cell.y, color, alpha);
       }
@@ -701,6 +713,7 @@
           aurora_stack: COSMETICS.auroraStack,
           candy_stack: COSMETICS.candyStack,
           meteor_well: COSMETICS.meteorWell,
+          prism_tide: COSMETICS.prismTide,
         },
         current_piece: state.current ? {
           type: state.current.type,

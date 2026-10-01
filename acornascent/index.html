@@ -95,17 +95,19 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
 const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
 const el={grove:document.querySelector('#grove'),branch:document.querySelector('#branch'),acorns:document.querySelector('#acorns'),tails:document.querySelector('#tails'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),angleDown:document.querySelector('#angleDown'),angleUp:document.querySelector('#angleUp'),powerDown:document.querySelector('#powerDown'),powerUp:document.querySelector('#powerUp'),launch:document.querySelector('#launch'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
 const WIDTH=900,HEIGHT=620,GRAVITY=.00125,MAX_TAILS=3,SQUIRREL_RADIUS=15;
+const FIREFLY_CANOPY=profileState.inventory instanceof Set&&profileState.inventory.has('acornascent-firefly-canopy');
 const THEMES=[
   {name:'Canopy',sky:'#78cbd4',haze:'#e6f2bf',far:'#5e9b70',leaf:'#317755',leaf2:'#68a853',wood:'#70472d',wood2:'#a26a3d',squirrel:'#b96835',belly:'#f1c58e',acorn:'#f1bd48',cap:'#7a4a2b',nest:'#b88a48',trail:'#fff1a1',ink:'#102f32',panel:'#f8f0cb',danger:'#bd3f4a'},
   {name:'Autumn',sky:'#e99a68',haze:'#ffe3a4',far:'#9f6c58',leaf:'#a74435',leaf2:'#e1873e',wood:'#683b2b',wood2:'#a76236',squirrel:'#7e4937',belly:'#f4c58d',acorn:'#ffd35e',cap:'#613826',nest:'#c1904d',trail:'#fff2b1',ink:'#3c2022',panel:'#fff1c8',danger:'#992f42'},
-  {name:'Moon',sky:'#25265c',haze:'#7775ad',far:'#344f68',leaf:'#174f51',leaf2:'#2f7b67',wood:'#4a3540',wood2:'#76505b',squirrel:'#d58c61',belly:'#ffd7a8',acorn:'#f6d76e',cap:'#734f47',nest:'#94704f',trail:'#9ff4e4',ink:'#f7f1d9',panel:'#142b3c',danger:'#ff7082'}
+  {name:'Moon',sky:'#25265c',haze:'#7775ad',far:'#344f68',leaf:'#174f51',leaf2:'#2f7b67',wood:'#4a3540',wood2:'#76505b',squirrel:'#d58c61',belly:'#ffd7a8',acorn:'#f6d76e',cap:'#734f47',nest:'#94704f',trail:'#9ff4e4',ink:'#f7f1d9',panel:'#142b3c',danger:'#ff7082'},
+  ...(FIREFLY_CANOPY?[{name:'Firefly',sky:'#071f2a',haze:'#14532d',far:'#0d3b32',leaf:'#166534',leaf2:'#4d7c0f',wood:'#78350f',wood2:'#b45309',squirrel:'#c26f3d',belly:'#fde68a',acorn:'#fde047',cap:'#92400e',nest:'#a16207',trail:'#bef264',ink:'#fef9c3',panel:'#102f2b',danger:'#fb7185'}]:[])
 ];
 const LEVELS=[
   {name:'Hazel Steps',wind:0,branches:[[110,440,150],[335,365,140],[560,415,140],[790,320,150]],solutions:[[50,72],[27,40],[50,81]],acornFractions:[[.45],[.42],[.54]]},
@@ -117,7 +119,7 @@ const LEVELS=[
 const level=()=>LEVELS[game.levelIndex],theme=()=>THEMES[game.themeIndex],branch=()=>level().branches[game.perchIndex];
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
-const game={mode:'menu',resumeMode:'perched',started:false,levelIndex:0,perchIndex:0,squirrel:{x:110,y:425,vx:0,vy:0},aimAngle:45,power:65,tails:MAX_TAILS,flightMs:0,elapsedMs:0,acornStates:[],acorns:0,groves:0,leaps:0,themeIndex:0,status:'Press Enter or tune the first flight, then launch.',lastAction:{type:'ready'},trail:[],reported:false,rewarded:false};
+const game={mode:'menu',resumeMode:'perched',started:false,levelIndex:0,perchIndex:0,squirrel:{x:110,y:425,vx:0,vy:0},aimAngle:45,power:65,tails:MAX_TAILS,flightMs:0,elapsedMs:0,acornStates:[],acorns:0,groves:0,leaps:0,themeIndex:FIREFLY_CANOPY?THEMES.length-1:0,status:'Press Enter or tune the first flight, then launch.',lastAction:{type:'ready'},trail:[],reported:false,rewarded:false};
 let lastFrame=performance.now(),manualUntil=0,pointerId=null;
 
 function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
@@ -184,9 +186,10 @@ async function toggleFullscreen(){try{if(document.fullscreenElement)await docume
 function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
 function drawBackground(colors){
   const gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,colors.sky);gradient.addColorStop(1,colors.haze);ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);
-  ctx.globalAlpha=theme().name==='Moon'?.7:.36;ctx.fillStyle=theme().name==='Moon'?'#fff1b4':'#fff7ce';ctx.beginPath();ctx.arc(760,92,42,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const night=['Moon','Firefly'].includes(theme().name);ctx.globalAlpha=night ? .7 : .36;ctx.fillStyle=night?'#fff1b4':'#fff7ce';ctx.beginPath();ctx.arc(760,92,42,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
   ctx.fillStyle=colors.far;ctx.beginPath();ctx.moveTo(0,385);for(let x=0;x<=WIDTH;x+=75)ctx.lineTo(x,330+Math.sin(x/110+game.levelIndex)*48);ctx.lineTo(WIDTH,HEIGHT);ctx.lineTo(0,HEIGHT);ctx.fill();
   for(let row=0;row<2;row++){for(let index=0;index<14;index++){const x=(index*79+row*34)%950-25,y=470+row*72+Math.sin(index*1.7)*18;ctx.fillStyle=row?colors.leaf:colors.leaf2;ctx.beginPath();ctx.arc(x,y,54-row*8,0,Math.PI*2);ctx.fill()}}
+  if(theme().name==='Firefly'){ctx.save();ctx.fillStyle=colors.trail;ctx.shadowColor=colors.trail;ctx.shadowBlur=12;for(let i=0;i<18;i++){const x=35+(i*137%830),y=105+(i*83%350)+Math.sin(game.elapsedMs/420+i)*9;ctx.globalAlpha=.45+(i%4)*.13;ctx.beginPath();ctx.arc(x,y,2.5+(i%3),0,Math.PI*2);ctx.fill()}ctx.restore()}
 }
 function drawBranch(item,index,colors){
   const [x,y,w]=item,target=index===game.perchIndex+1&&['perched','flying'].includes(game.mode),reached=index<=game.perchIndex;ctx.save();if(target){ctx.shadowColor=colors.trail;ctx.shadowBlur=18}ctx.fillStyle=colors.wood;roundedRect(x-w/2,y,w,24,12);ctx.fill();ctx.fillStyle=colors.wood2;roundedRect(x-w/2+10,y+4,w-24,6,4);ctx.fill();ctx.shadowBlur=0;
@@ -238,7 +241,7 @@ window.render_game_to_text=()=>JSON.stringify({
   grove:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,windAcceleration:Number(level().wind.toFixed(5))},branch:{index:game.perchIndex+1,total:level().branches.length,targetIndex:game.perchIndex<level().branches.length-1?game.perchIndex+2:null},
   squirrel:{x:Number(game.squirrel.x.toFixed(2)),y:Number(game.squirrel.y.toFixed(2)),vx:Number(game.squirrel.vx.toFixed(4)),vy:Number(game.squirrel.vy.toFixed(4)),flightMs:Math.round(game.flightMs),tails:game.tails},aim:{angle:game.aimAngle,power:game.power,predictedLanding:prediction()?{x:Number(prediction().x.toFixed(2)),y:Number(prediction().y.toFixed(2)),insideTarget:prediction().inside}:null},
   branches:level().branches.map(([x,y,width],index)=>({index:index+1,x,y,width,reached:index<=game.perchIndex,target:index===game.perchIndex+1,nest:index===level().branches.length-1})),acorns:game.acornStates.map((acorn,index)=>({index,segment:acorn.segment+1,x:Number(acorn.x.toFixed(1)),y:Number(acorn.y.toFixed(1)),collected:acorn.collected})),
-  campaign:{acorns:game.acorns,groves:game.groves,leaps:game.leaps,totalGroves:LEVELS.length},theme:theme().name,status:game.status,lastAction:game.lastAction,controls:{angle:'Up/Down or W/S',power:'Left/Right or A/D',launch:'Space or drag/release canvas',pause:'P',restart:'R',theme:'T',fullscreen:'F',continue:'Enter'}
+  campaign:{acorns:game.acorns,groves:game.groves,leaps:game.leaps,totalGroves:LEVELS.length},theme:theme().name,cosmetics:{fireflyCanopy:FIREFLY_CANOPY},status:game.status,lastAction:game.lastAction,controls:{angle:'Up/Down or W/S',power:'Left/Right or A/D',launch:'Space or drag/release canvas',pause:'P',restart:'R',theme:'T',fullscreen:'F',continue:'Enter'}
 });
 window.__ACORN_ASCENT_GAME__={
   getState:()=>JSON.parse(window.render_game_to_text()),reset:(mode='perched')=>resetCampaign(mode),getLevels:()=>LEVELS.map(item=>({name:item.name,wind:item.wind,branches:item.branches.map(branchItem=>[...branchItem]),solutions:item.solutions.map(solution=>[...solution]),acornFractions:item.acornFractions.map(fractions=>[...fractions])})),

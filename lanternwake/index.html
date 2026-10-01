@@ -93,17 +93,19 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
 const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
 const el={crossing:document.querySelector('#crossing'),lanterns:document.querySelector('#lanterns'),hull:document.querySelector('#hull'),current:document.querySelector('#current'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),start:document.querySelector('#start'),up:document.querySelector('#up'),down:document.querySelector('#down'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
 const WIDTH=900,HEIGHT=620,RIVER_TOP=76,RIVER_BOTTOM=544,FERRY_X=84,DOCK_X=828,MAX_HULL=3;
+const TIDEGLASS_VIGIL=profileState.inventory instanceof Set&&profileState.inventory.has('lanternwake-tideglass-vigil');
 const THEMES=[
   {name:'Moon',sky:'#071b2b',haze:'#16445a',water:'#0d5871',water2:'#13768a',bank:'#243d38',bank2:'#49634e',foam:'#b7f2ed',lantern:'#ffd464',glow:'#ffb53d',hull:'#e7ddd0',trim:'#b5443f',log:'#70452f',ink:'#f6f0d6',danger:'#ff7777'},
   {name:'Dawn',sky:'#6b4264',haze:'#d88779',water:'#397f91',water2:'#6da6a6',bank:'#47563b',bank2:'#73835a',foam:'#e9ffff',lantern:'#fff09a',glow:'#ffba62',hull:'#fff1d0',trim:'#2e6d73',log:'#76513d',ink:'#fff9ea',danger:'#b72f43'},
-  {name:'Festival',sky:'#241544',haze:'#623778',water:'#234c82',water2:'#3276a3',bank:'#193c3a',bank2:'#2f6b53',foam:'#a9f4ff',lantern:'#ff8bd6',glow:'#ffd769',hull:'#f7deff',trim:'#f2a340',log:'#633956',ink:'#fff1fb',danger:'#ff647f'}
+  {name:'Festival',sky:'#241544',haze:'#623778',water:'#234c82',water2:'#3276a3',bank:'#193c3a',bank2:'#2f6b53',foam:'#a9f4ff',lantern:'#ff8bd6',glow:'#ffd769',hull:'#f7deff',trim:'#f2a340',log:'#633956',ink:'#fff1fb',danger:'#ff647f'},
+  ...(TIDEGLASS_VIGIL?[{name:'Tideglass Vigil',sky:'#122d4a',haze:'#4f7891',water:'#1f6277',water2:'#4a9aa3',bank:'#334a42',bank2:'#759278',foam:'#d1fff0',lantern:'#ffd886',glow:'#e99d52',hull:'#f7e8c2',trim:'#c96d48',log:'#785743',ink:'#f6f6df',danger:'#ff7e78'}]:[])
 ];
 const LEVELS=[
   {name:'Quiet Reach',speed:52,steer:156,current:18,phase:.2,lanterns:[[245,214],[470,390],[690,248]],logs:[[350,278,90,28],[575,168,82,26]]},
@@ -248,7 +250,7 @@ window.render_game_to_text=()=>JSON.stringify({
   crossing:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,progress:Number(clamp((game.ferry.x-FERRY_X)/(DOCK_X-FERRY_X),0,1).toFixed(3))},elapsedMs:Math.round(game.elapsedMs),routeMs:Math.round(game.routeMs),
   ferry:{x:Number(game.ferry.x.toFixed(2)),y:Number(game.ferry.y.toFixed(2)),verticalVelocity:Number(game.ferry.vy.toFixed(2)),steering:game.intent,hull:game.hull,invulnerableMs:Math.round(game.invulnerableMs)},
   current:{verticalVelocity:Number(currentVector().toFixed(2)),label:currentLabel()},lanterns:level().lanterns.map(([x,y],index)=>({index,x,y,collected:game.lanternStates[index]})),
-  driftwood:level().logs.map(([x,y,width,height],index)=>({index,x,y,width,height})),campaign:{lanterns:game.lanterns,crossings:game.crossings,collisions:game.collisions,totalCrossings:LEVELS.length},theme:theme().name,status:game.status,lastAction:game.lastAction,
+  driftwood:level().logs.map(([x,y,width,height],index)=>({index,x,y,width,height})),campaign:{lanterns:game.lanterns,crossings:game.crossings,collisions:game.collisions,totalCrossings:LEVELS.length},theme:theme().name,cosmetics:{tideglassVigil:TIDEGLASS_VIGIL},status:game.status,lastAction:game.lastAction,
   controls:{steer:'Up/Down or W/S; hold buttons or press/drag canvas',pause:'P',restart:'R',theme:'T',fullscreen:'F',continue:'Enter'}
 });
 window.__LANTERN_WAKE_GAME__={
