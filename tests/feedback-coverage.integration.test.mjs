@@ -13,6 +13,7 @@ const ROOT = process.cwd();
 const LABELS_PATH = path.join(ROOT, "linear", "labels.md");
 const ISSUES_PATH = path.join(ROOT, "linear", "game-issues.csv");
 const OPS_FEEDBACK_PATH = path.join(ROOT, "ops", "feedback", "index.html");
+const FEEDBACK_EMBED_PATH = path.join(ROOT, "src", "feedback", "embed.js");
 
 test("every feedback game page mounts the shared feedback widget", () => {
   const missing = [];
@@ -31,6 +32,13 @@ test("every feedback game page mounts the shared feedback widget", () => {
   }
 
   assert.deepEqual(missing, [], `Game pages missing feedback widget mount: ${missing.join(", ")}`);
+});
+
+test("shared game styles disable double-tap zoom without disabling pinch zoom", () => {
+  const source = fs.readFileSync(FEEDBACK_EMBED_PATH, "utf8");
+
+  assert.match(source, /html,\s*\n\s*body\s*\{\s*touch-action:\s*manipulation;/);
+  assert.doesNotMatch(source, /html,\s*\n\s*body\s*\{[^}]*touch-action:\s*none;/s);
 });
 
 test("Linear label seed file includes feedback and per-game labels", () => {

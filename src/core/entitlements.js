@@ -1,4 +1,5 @@
 import { get, set } from './storage.js';
+import { isPremiumCatalogItem } from '../prog/shop-catalog.js';
 
 export const ENTITLEMENT_KEYS = Object.freeze({
   FAMILY_PREMIUM: 'familyPremium',
@@ -36,39 +37,6 @@ export const DEFAULT_SCHOOL_LICENSE_REQUEST = Object.freeze({
   submittedAt: 0,
   approvedAt: 0,
 });
-
-const PREMIUM_SHOP_ITEM_ID_LIST = Object.freeze([
-  'paddle-gold',
-  'paddle-void',
-  'snake-cosmic',
-  'snake-glacier',
-  'mario-gold',
-  'mario-galaxy',
-  'ski-gold-skier',
-  'spaceinvaders-omega',
-  'frogger-neon-rain',
-  'tetris-aurora-stack',
-  'asteroids-nebula-drift',
-  'bomberman-jade-maze',
-  'tictactoe-candy-marks',
-  'rps-cyber-throw',
-  'memory-rainbow-match',
-  'breakout-crystal-wall',
-  'connect4-royal-frame',
-  'minesweeper-moonfield',
-  'flappy-rainbow-pipes',
-  'dino-night-runner',
-  'spaceinvaders-starfield',
-  'frogger-golden-logs',
-  'ski-northern-lights',
-  '2048-galaxy-numbers',
-  'tetris-meteor-well',
-  'asteroids-solar-sail',
-  'bomberman-shadow-arena',
-  'colorcatch-rainbow-bucket',
-]);
-
-const PREMIUM_SHOP_ITEM_IDS = new Set(PREMIUM_SHOP_ITEM_ID_LIST);
 
 const SCHOOL_LICENSE_REQUEST_STORAGE_KEY = 'schoolLicenseRequest';
 const MAX_SCHOOL_LICENSE_SEATS = 100000;
@@ -306,7 +274,7 @@ const toItemId = (itemOrId) => {
 
 export const isPremiumShopItem = (itemOrId) => {
   const id = toItemId(itemOrId);
-  return PREMIUM_SHOP_ITEM_IDS.has(id);
+  return isPremiumCatalogItem(id);
 };
 
 export const getRequiredEntitlementForShopItem = (itemOrId) => {

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Kite Parade | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#102d52;color:#fffaf0;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#d7eaff;font-weight:650}
+    .home{color:#2f2341;font-weight:850;text-decoration:none;border:2px solid #fff0a8;border-radius:999px;padding:8px 13px;background:#ffd766}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#173f6d;border:2px solid #3d79a7;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #07172c}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#b9dcf5}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #4a82ad;border-radius:22px;overflow:hidden;background:#70b7df;box-shadow:0 10px 0 #07172c}
+    canvas{width:100%;aspect-ratio:8/5;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #fff09a}
+    .stage:fullscreen{display:grid;place-items:center;background:#07172c}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 8 / 5));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+    button{border:2px solid #4a82ad;border-radius:13px;background:#173f6d;color:#fffaf0;font:800 clamp(.59rem,1.35vw,.82rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #07172c;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #07172c}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #07172c;background:#ffd766;color:#2f2341;border-color:#fff0a8}
+    button.primary{background:#f3bd3c;border-color:#ffe98a;color:#2f2341}
+    button.danger{background:#9b4662;border-color:#ed91a8;color:#fff}
+    button.dye{position:relative;padding-left:21px}
+    button.dye::before{content:"";position:absolute;left:7px;top:50%;width:10px;height:10px;border-radius:50%;transform:translateY(-50%);background:var(--swatch);border:1px solid rgba(255,255,255,.8)}
+    button:disabled{opacity:.43;cursor:not-allowed}
+    .help{background:#173f6d;border:2px solid #4a82ad;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#dceeff}
+    .help b{color:#ffe27a}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}header>div{max-width:140px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.49rem}.stat strong{font-size:.67rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #07172c}.controls{grid-template-columns:repeat(3,1fr);gap:6px}button{min-height:42px;padding:7px 3px}.help{font-size:.68rem;padding:8px 10px}
+      button.dye{padding-left:18px}button.dye::before{left:5px;width:9px;height:9px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(7,23,44,.98)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Dye connected fabric patches with different colors and send five bright festival kites into the sky. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Kite Parade | AI and Sons Games">
+  <meta property="og:description" content="Dye connected fabric patches with different colors and send five bright festival kites into the sky. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/kiteparade">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/kiteparade.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Kite Parade | AI and Sons Games">
+  <meta name="twitter:description" content="Dye connected fabric patches with different colors and send five bright festival kites into the sky. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/kiteparade.png">
+  <link rel="canonical" href="https://games.aiandsons.io/kiteparade">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Kite Parade","description":"Dye connected fabric patches with different colors and send five bright festival kites into the sky. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/kiteparade","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Kite Parade</h1><small>Dye every patch. Keep matching colors apart.</small></div>
+    <a class="home" href="/">All Games</a>
+  </header>
+  <section class="stats" aria-label="Game status">
+    <div class="stat"><span>Kite</span><strong id="kite">1 / 5</strong></div>
+    <div class="stat"><span>Dyed</span><strong id="dyed">0 / 6</strong></div>
+    <div class="stat"><span>Checks</span><strong id="checks">0</strong></div>
+    <div class="stat"><span>Ribbons</span><strong id="ribbons">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00.0</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="960" height="600" tabindex="0" aria-label="Kite Parade coloring puzzle. Select fabric patches and dye them so connected patches have different colors."></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="previous" type="button">◀ Patch</button>
+    <button id="next" type="button">Patch ▶</button>
+    <button id="dye1" class="dye" style="--swatch:#f05f74" type="button">1 Coral</button>
+    <button id="dye2" class="dye" style="--swatch:#f6c84b" type="button">2 Gold</button>
+    <button id="dye3" class="dye" style="--swatch:#49bde8" type="button">3 Sky</button>
+    <button id="dye4" class="dye" style="--swatch:#63c58a" type="button">4 Leaf</button>
+    <button id="clear" type="button">Clear (X)</button>
+    <button id="inspect" class="primary" type="button">Inspect (Enter)</button>
+    <button id="undo" type="button">Undo (U)</button>
+    <button id="hint" type="button">Hint (H)</button>
+    <button id="action" class="primary" type="button">Start</button>
+    <button id="pause" type="button">Pause (P)</button>
+    <button id="restart" class="danger" type="button">Restart (R)</button>
+    <button id="theme" type="button">Theme</button>
+    <button id="fullscreen" type="button">Fullscreen (F)</button>
+    <button id="feedback" type="button">Send feedback</button>
+  </section>
+  <div class="help"><b>Goal:</b> dye every numbered patch so patches joined by a seam use different colors. Gold-star patches are fixed. Select with <b>arrows</b> or a tap, dye with <b>1–4</b>, clear with <b>X</b>, inspect with <b>Enter</b>, undo with <b>U</b>, hint with <b>H</b>, pause with <b>P</b>, and fullscreen with <b>F</b>.</div>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={kite:document.querySelector('#kite'),dyed:document.querySelector('#dyed'),checks:document.querySelector('#checks'),ribbons:document.querySelector('#ribbons'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),previous:document.querySelector('#previous'),next:document.querySelector('#next'),dyes:[1,2,3,4].map(index=>document.querySelector(`#dye${index}`)),clear:document.querySelector('#clear'),inspect:document.querySelector('#inspect'),undo:document.querySelector('#undo'),hint:document.querySelector('#hint'),action:document.querySelector('#action'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=960,HEIGHT=600,MAX_RIBBONS=3;
+const patch=(x,y)=>Object.freeze({x,y});
+const edge=(a,b)=>Object.freeze([a,b]);
+const kite=(name,colors,nodes,edges,solution,presets)=>Object.freeze({name,colors,nodes:Object.freeze(nodes),edges:Object.freeze(edges),solution:Object.freeze(solution),presets:Object.freeze(presets)});
+const LEVELS=Object.freeze([
+  kite('Sunrise Diamond',3,[patch(480,105),patch(350,215),patch(610,215),patch(385,350),patch(575,350),patch(480,455)],[edge(0,1),edge(0,2),edge(1,2),edge(1,3),edge(2,4),edge(3,4),edge(3,5),edge(4,5)],[0,1,2,2,0,1],[0,5]),
+  kite('Breezy Bow',4,[patch(480,95),patch(340,190),patch(620,190),patch(480,245),patch(335,345),patch(625,345),patch(480,455)],[edge(0,1),edge(0,2),edge(1,2),edge(1,3),edge(2,3),edge(1,4),edge(3,4),edge(2,5),edge(3,5),edge(4,6),edge(5,6)],[0,1,2,3,2,0,1],[0,3]),
+  kite('Cloudstep Chevron',3,[patch(480,90),patch(340,175),patch(620,175),patch(410,255),patch(550,255),patch(315,350),patch(645,350),patch(480,445)],[edge(0,1),edge(0,2),edge(1,2),edge(1,3),edge(2,4),edge(3,4),edge(1,5),edge(3,5),edge(2,6),edge(4,6),edge(4,7),edge(5,7),edge(6,7)],[0,1,2,2,1,0,0,2],[0,4]),
+  kite('Festival Pinwheel',4,[patch(480,85),patch(340,165),patch(620,165),patch(405,245),patch(555,245),patch(300,335),patch(480,345),patch(660,335),patch(480,455)],[edge(0,1),edge(0,2),edge(1,2),edge(1,3),edge(2,4),edge(3,4),edge(1,5),edge(3,5),edge(3,6),edge(4,6),edge(2,7),edge(4,7),edge(5,6),edge(6,7),edge(5,8),edge(6,8),edge(7,8)],[0,1,2,3,1,2,0,3,1],[0,7]),
+  kite('Grand Skywheel',4,[patch(480,80),patch(330,155),patch(630,155),patch(400,230),patch(560,230),patch(285,325),patch(430,330),patch(530,330),patch(675,325),patch(480,455)],[edge(0,1),edge(0,2),edge(1,2),edge(1,3),edge(2,4),edge(3,4),edge(1,5),edge(3,5),edge(3,6),edge(4,7),edge(2,8),edge(4,8),edge(5,6),edge(6,7),edge(7,8),edge(5,9),edge(6,9),edge(7,9),edge(8,9)],[0,1,2,3,1,2,0,2,3,1],[0,4,8])
+]);
+const THEMES=Object.freeze([
+  Object.freeze({name:'Sunbeam Parade',skyTop:'#66bce8',skyBottom:'#eaf8ff',cloud:'#ffffff',hills:'#72bd79',hill2:'#3d8f63',kite:'#fff4cb',seam:'#493b65',ink:'#2f2341',muted:'#6d6480',accent:'#ffd34e',danger:'#d94561',tail:'#f37d8e',dyes:['#f05f74','#f6c84b','#49bde8','#63c58a'],names:['Coral','Gold','Sky','Leaf']}),
+  Object.freeze({name:'Moonwing Parade',skyTop:'#263467',skyBottom:'#9c75bd',cloud:'#ded9fa',hills:'#33486f',hill2:'#172943',kite:'#f8eaff',seam:'#302747',ink:'#251d38',muted:'#62577d',accent:'#f2caff',danger:'#ff6f94',tail:'#d895ff',dyes:['#ef6fa7','#9c7bea','#55cce3','#f2a55d'],names:['Rose','Violet','Aqua','Ember']}),
+  Object.freeze({name:'Meadow Parade',skyTop:'#69c7bc',skyBottom:'#e9ffd7',cloud:'#fbfff4',hills:'#63a95b',hill2:'#2d724d',kite:'#fff9dc',seam:'#214b45',ink:'#173b37',muted:'#537169',accent:'#ffdc58',danger:'#d74d50',tail:'#f09c48',dyes:['#e95c58','#efbf3f','#3bb39d','#735fb5'],names:['Berry','Sun','Mint','Iris']})
+]);
+const game={mode:'menu',levelIndex:0,colors:[],selected:0,history:[],ribbons:MAX_RIBBONS,elapsedMs:0,patches:0,kites:0,checks:0,themeIndex:0,status:'Color every patch without matching across a seam.',lastAction:{type:'ready'},pulseMs:0,started:false,reported:false,rewarded:false};
+let lastFrame=performance.now(),manualUntil=0,hitRegions=[];
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const formatTime=ms=>{const tenths=Math.floor(ms/100)%10,total=Math.floor(ms/1000);return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}.${tenths}`};
+const isPreset=index=>level().presets.includes(index);
+const filledCount=()=>game.colors.reduce((sum,color)=>sum+(color!==null?1:0),0);
+const conflicts=()=>level().edges.filter(([a,b])=>game.colors[a]!==null&&game.colors[a]===game.colors[b]);
+const currentMetrics=()=>({patches:game.patches+(['playing','paused','lost'].includes(game.mode)?filledCount():0),kites:game.kites,checks:game.checks});
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'kiteparade',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function initialColors(){return level().nodes.map((_,index)=>isPreset(index)?level().solution[index]:null)}
+function loadKite(index,mode='playing'){game.levelIndex=clamp(index,0,LEVELS.length-1);game.colors=initialColors();game.selected=0;game.history=[];game.ribbons=MAX_RIBBONS;game.mode=mode;game.pulseMs=0;game.status=mode==='menu'?'Color every patch without matching across a seam.':`${level().name}: ${level().colors} dyes are in the basket.`;game.lastAction={type:mode==='menu'?'ready':'kite-start',kite:game.levelIndex+1};syncUi();render()}
+function resetCampaign(mode='menu'){game.elapsedMs=0;game.patches=0;game.kites=0;game.checks=0;game.started=mode!=='menu';game.reported=false;game.rewarded=false;loadKite(0,mode)}
+function startOrContinue(){if(game.mode==='menu'){game.started=true;game.mode='playing';game.status=`${level().name}: fill the open patches.`;game.lastAction={type:'start'};canvas.focus();announce('Kite Parade begun. Patch one selected.');syncUi();render();return}if(game.mode==='kite-complete'){loadKite(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} begun.`);return}if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh Kite Parade has begun.')}}
+function restart(){if(game.started&&['playing','paused','kite-complete'].includes(game.mode))report('abandoned');resetCampaign('playing');game.status='Parade restarted at Sunrise Diamond.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status)}
+function selectPatch(index,source='keyboard'){if(game.mode!=='playing')return false;const next=clamp(index,0,level().nodes.length-1);if(next===game.selected&&index!==game.selected){game.status=`Patch ${game.selected+1} is at the selection boundary.`;game.lastAction={type:'select-blocked',patch:game.selected+1,source};syncUi();render();announce(game.status);return false}game.selected=next;const color=game.colors[next];game.status=`Patch ${next+1}${isPreset(next)?' is a fixed star patch':color===null?' is waiting for dye':` uses ${theme().names[color]}`}.`;game.lastAction={type:'select',patch:next+1,source};syncUi();render();return true}
+function moveDirectional(key){if(game.mode!=='playing')return false;const origin=level().nodes[game.selected],vectors={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]},[vx,vy]=vectors[key];let best=-1,bestScore=Infinity;level().nodes.forEach((node,index)=>{if(index===game.selected)return;const dx=node.x-origin.x,dy=node.y-origin.y,forward=dx*vx+dy*vy;if(forward<=8)return;const sideways=Math.abs(dx*vy-dy*vx),score=forward+sideways*2.2;if(score<bestScore){best=index;bestScore=score}});if(best<0){game.status=`Patch ${game.selected+1} is at the ${key.slice(5)} edge.`;game.lastAction={type:'select-blocked',patch:game.selected+1,direction:key.slice(5)};syncUi();render();announce(game.status);return false}return selectPatch(best,'arrow')}
+function pushHistory(){game.history.push(game.colors.slice());if(game.history.length>100)game.history.shift()}
+function setColor(color,source='keyboard'){if(game.mode!=='playing')return false;if(isPreset(game.selected)){game.status=`Patch ${game.selected+1} is fixed by its gold star.`;game.lastAction={type:'dye-blocked',reason:'preset',patch:game.selected+1,source};syncUi();render();announce(game.status);return false}if(color!==null&&(color<0||color>=level().colors)){game.status=`${theme().names[color]||'That dye'} is not used on this kite.`;game.lastAction={type:'dye-blocked',reason:'unavailable',patch:game.selected+1,source};syncUi();render();announce(game.status);return false}if(game.colors[game.selected]===color){game.status=color===null?`Patch ${game.selected+1} is already clear.`:`Patch ${game.selected+1} already uses ${theme().names[color]}.`;game.lastAction={type:'dye-blocked',reason:'unchanged',patch:game.selected+1,source};syncUi();render();announce(game.status);return false}pushHistory();game.colors[game.selected]=color;const conflictCount=conflicts().length;game.status=color===null?`Patch ${game.selected+1} was cleared.`:`Patch ${game.selected+1} dyed ${theme().names[color]}${conflictCount?' — a matching seam is glowing red.':'.'}`;game.lastAction={type:color===null?'clear':'dye',patch:game.selected+1,color:color===null?null:theme().names[color],conflicts:conflictCount,source};syncUi();render();announce(game.status);return true}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;game.colors=game.history.pop();game.status='The previous dye change was undone.';game.lastAction={type:'undo'};syncUi();render();announce(game.status);return true}
+function hint(){if(game.mode!=='playing')return false;const index=game.colors.findIndex((color,patchIndex)=>!isPreset(patchIndex)&&color!==level().solution[patchIndex]);if(index<0){game.status='Every patch matches a parade pattern. Inspect the kite.';game.lastAction={type:'hint-complete'};syncUi();render();announce(game.status);return true}game.selected=index;const changed=setColor(level().solution[index],'hint');if(changed){game.status=`Hint: patch ${index+1} now uses ${theme().names[level().solution[index]]}.`;game.lastAction={type:'hint',patch:index+1,color:theme().names[level().solution[index]]};syncUi();render();announce(game.status)}return changed}
+function finishKite(){game.patches+=level().nodes.length;game.kites++;game.pulseMs=900;if(game.levelIndex===LEVELS.length-1){game.mode='won';game.status='Five bright kites are dancing together above the festival.';game.lastAction={type:'campaign-complete',metrics:currentMetrics()};if(!game.rewarded){addCoins(50);game.rewarded=true}report('completed');announce('Kite Parade complete. Fifty coins earned.')}else{game.mode='kite-complete';game.status=`${level().name} passed inspection. The next kite is ready.`;game.lastAction={type:'kite-complete',kite:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`)}syncUi();render();return true}
+function inspect(source='keyboard'){if(game.mode!=='playing')return false;game.checks++;const open=game.colors.filter(color=>color===null).length,bad=conflicts();if(open===0&&bad.length===0)return finishKite();game.ribbons--;game.pulseMs=520;game.status=open?`${open} patch${open===1?' is':'es are'} still waiting for dye.`:`${bad.length} matching seam${bad.length===1?' needs':'s need'} different colors.`;game.lastAction={type:'inspection-failed',openPatches:open,conflicts:bad.map(([a,b])=>[a+1,b+1]),ribbonsRemaining:game.ribbons,source};if(game.ribbons<=0){game.mode='lost';game.status='Three failed inspections grounded this parade.';game.lastAction={type:'campaign-lost',reason:open?'incomplete':'conflicts',metrics:currentMetrics()};report('lost');announce('Kite Parade ended after three failed inspections.')}else announce(`${game.status} ${game.ribbons} ribbons remain.`);syncUi();render();return false}
+function togglePause(){if(game.mode==='playing'){game.mode='paused';game.status='Kite, clouds, clock, and dye controls are frozen.';game.lastAction={type:'pause'};announce(game.status)}else if(game.mode==='paused'){game.mode='playing';game.status='Parade coloring resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render()}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} fabric palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-error'};syncUi();render();announce(game.status)}}
+function syncUi(){el.kite.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.dyed.textContent=`${filledCount()} / ${level().nodes.length}`;el.checks.textContent=game.checks;el.ribbons.textContent=`${game.ribbons} / ${MAX_RIBBONS}`;el.time.textContent=formatTime(game.elapsedMs);const playing=game.mode==='playing';for(const button of [el.previous,el.next,...el.dyes,el.clear,el.inspect,el.undo,el.hint])button.disabled=!playing;el.previous.disabled=!playing||game.selected===0;el.next.disabled=!playing||game.selected===level().nodes.length-1;el.undo.disabled=!playing||!game.history.length;el.dyes.forEach((button,index)=>{button.disabled=!playing||index>=level().colors;button.style.setProperty('--swatch',theme().dyes[index]);button.textContent=`${index+1} ${theme().names[index]}`});el.pause.disabled=!['playing','paused'].includes(game.mode);el.action.disabled=playing||game.mode==='paused';el.action.textContent=game.mode==='menu'?'Start':game.mode==='kite-complete'?'Next kite':game.mode==='won'||game.mode==='lost'?'Play again':'Continue';el.pause.textContent=game.mode==='paused'?'Resume (P)':'Pause (P)';el.theme.textContent=`Theme: ${game.themeIndex+1}/3`}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawBackdrop(){const t=theme(),gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,t.skyTop);gradient.addColorStop(.68,t.skyBottom);gradient.addColorStop(1,t.hills);ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);for(let i=0;i<6;i++){const x=((i*211-game.elapsedMs*.012)%(WIDTH+260)+WIDTH+260)%(WIDTH+260)-130,y=58+(i%3)*55;ctx.fillStyle=t.cloud;ctx.globalAlpha=.72;ctx.beginPath();ctx.ellipse(x,y,58,20,0,0,Math.PI*2);ctx.ellipse(x-38,y+5,34,15,0,0,Math.PI*2);ctx.ellipse(x+42,y+7,38,14,0,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;ctx.fillStyle=t.hills;ctx.beginPath();ctx.moveTo(0,520);ctx.quadraticCurveTo(175,430,350,518);ctx.quadraticCurveTo(565,410,770,515);ctx.quadraticCurveTo(875,465,960,510);ctx.lineTo(960,600);ctx.lineTo(0,600);ctx.closePath();ctx.fill();ctx.fillStyle=t.hill2;ctx.globalAlpha=.7;ctx.beginPath();ctx.moveTo(0,552);ctx.quadraticCurveTo(210,485,420,556);ctx.quadraticCurveTo(650,476,960,548);ctx.lineTo(960,600);ctx.lineTo(0,600);ctx.closePath();ctx.fill();ctx.globalAlpha=1}
+function drawKite(){const t=theme(),wobble=Math.sin(game.elapsedMs*.002)*3;ctx.save();ctx.translate(wobble,0);ctx.fillStyle='rgba(20,34,58,.2)';ctx.beginPath();ctx.moveTo(486,63);ctx.lineTo(818,279);ctx.lineTo(486,509);ctx.lineTo(154,279);ctx.closePath();ctx.fill();ctx.fillStyle=t.kite;ctx.beginPath();ctx.moveTo(480,52);ctx.lineTo(805,272);ctx.lineTo(480,495);ctx.lineTo(155,272);ctx.closePath();ctx.fill();ctx.strokeStyle=t.seam;ctx.lineWidth=7;ctx.lineJoin='round';ctx.stroke();ctx.strokeStyle=t.tail;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(480,495);ctx.bezierCurveTo(550,522,420,544,500,575);ctx.stroke();for(let i=0;i<4;i++){const x=493+(i%2?18:-14),y=515+i*17;ctx.fillStyle=t.dyes[(i+game.levelIndex)%level().colors];ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+14,y+7);ctx.lineTo(x,y+14);ctx.lineTo(x-14,y+7);ctx.closePath();ctx.fill()}const bad=new Set(conflicts().map(pair=>pair.join('-')));level().edges.forEach(([a,b])=>{const p1=level().nodes[a],p2=level().nodes[b],conflict=bad.has(`${a}-${b}`);ctx.strokeStyle=conflict?t.danger:t.seam;ctx.lineWidth=conflict?10:5;ctx.globalAlpha=conflict?.98:.58;ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke()});ctx.globalAlpha=1;hitRegions=[];level().nodes.forEach((node,index)=>{const color=game.colors[index],selected=index===game.selected,preset=isPreset(index),radius=34;ctx.fillStyle=color===null?'#fffaf0':t.dyes[color];ctx.beginPath();ctx.arc(node.x,node.y,radius,0,Math.PI*2);ctx.fill();ctx.strokeStyle=selected?t.accent:t.seam;ctx.lineWidth=selected?8:4;ctx.stroke();if(selected){ctx.strokeStyle=t.ink;ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(node.x,node.y,radius+8,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=t.ink;ctx.font='900 18px system-ui';ctx.fillText(String(index+1),node.x,node.y+1);if(preset){ctx.fillStyle=t.accent;ctx.strokeStyle=t.ink;ctx.lineWidth=1.5;ctx.font='900 19px system-ui';ctx.strokeText('★',node.x+23,node.y-22);ctx.fillText('★',node.x+23,node.y-22)}hitRegions.push({index,x:node.x,y:node.y,r:radius+10})});ctx.restore()}
+function drawHud(){const t=theme();ctx.fillStyle='rgba(20,32,58,.78)';roundedRect(24,16,332,58,16);ctx.fill();ctx.fillStyle='#fff';ctx.font='900 19px system-ui';ctx.fillText(level().name,42,42);ctx.fillStyle='#dceeff';ctx.font='700 12px system-ui';ctx.fillText(`${level().colors} dyes • ${level().nodes.length} patches • ${level().edges.length} seams`,42,61);ctx.fillStyle='rgba(20,32,58,.82)';roundedRect(24,534,912,46,15);ctx.fill();ctx.fillStyle='#fff';ctx.font='750 14px system-ui';const message=game.status.length>122?`${game.status.slice(0,119)}…`:game.status;ctx.fillText(message,43,562)}
+function drawOverlay(){if(!['menu','paused','kite-complete','won','lost'].includes(game.mode))return;const t=theme();ctx.fillStyle='rgba(17,26,51,.83)';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle='#fff';ctx.font='900 42px system-ui';const title=game.mode==='menu'?'KITE PARADE':game.mode==='paused'?'PARADE PAUSED':game.mode==='kite-complete'?'KITE APPROVED':game.mode==='won'?'SKY FULL OF COLOR':'KITES GROUNDED';ctx.fillText(title,WIDTH/2,227);ctx.font='750 18px system-ui';ctx.globalAlpha=.95;const message=game.mode==='menu'?'Dye every patch. Never match colors across a seam.':game.status;ctx.fillText(message,WIDTH/2,271);ctx.globalAlpha=1;ctx.fillStyle=t.accent;roundedRect(WIDTH/2-125,307,250,55,17);ctx.fill();ctx.fillStyle=t.ink;ctx.font='900 18px system-ui';const action=game.mode==='menu'?'PRESS START':game.mode==='paused'?'PRESS P TO RESUME':game.mode==='kite-complete'?'NEXT KITE':'PLAY AGAIN';ctx.fillText(action,WIDTH/2,342);ctx.textAlign='left';ctx.textBaseline='alphabetic'}
+function render(){drawBackdrop();drawKite();drawHud();drawOverlay()}
+function update(ms){if(game.mode==='playing')game.elapsedMs+=ms;if(game.pulseMs>0)game.pulseMs=Math.max(0,game.pulseMs-ms);syncUi()}
+function frame(now){const dt=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(dt);render();requestAnimationFrame(frame)}
+function pointerPosition(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function handlePointer(event){event.preventDefault();if(game.mode!=='playing'){if(['menu','kite-complete','won','lost'].includes(game.mode))startOrContinue();return}const point=pointerPosition(event),hit=hitRegions.find(region=>(point.x-region.x)**2+(point.y-region.y)**2<=region.r**2);if(hit){selectPatch(hit.index,event.pointerType||'pointer');canvas.focus()}}
+canvas.addEventListener('pointerdown',handlePointer);
+el.previous.addEventListener('click',()=>selectPatch(game.selected-1,'button'));el.next.addEventListener('click',()=>selectPatch(game.selected+1,'button'));el.dyes.forEach((button,index)=>button.addEventListener('click',()=>setColor(index,'button')));el.clear.addEventListener('click',()=>setColor(null,'button'));el.inspect.addEventListener('click',()=>inspect('button'));el.undo.addEventListener('click',undo);el.hint.addEventListener('click',hint);el.action.addEventListener('click',startOrContinue);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+window.addEventListener('keydown',event=>{if(document.documentElement.dataset.cadeFeedbackOpen==='1')return;const key=event.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' ','q','e','1','2','3','4','x','u','h','p','r','t','f','enter','escape'].includes(key))event.preventDefault();if(key==='escape'&&document.fullscreenElement){document.exitFullscreen();return}if(key==='p'){togglePause();return}if(key==='f'){toggleFullscreen();return}if(key==='t'){cycleTheme();return}if(key==='r'){restart();return}if((key==='enter'||key===' ')&&game.mode!=='playing'){startOrContinue();return}if(game.mode!=='playing')return;if(key.startsWith('arrow'))moveDirectional(key);else if(key==='q')selectPatch(game.selected-1);else if(key==='e')selectPatch(game.selected+1);else if(['1','2','3','4'].includes(key))setColor(Number(key)-1);else if(key==='x')setColor(null);else if(key==='enter'||key===' ')inspect();else if(key==='u')undo();else if(key==='h')hint()});
+document.addEventListener('fullscreenchange',()=>{game.lastAction={type:'fullscreen',active:Boolean(document.fullscreenElement)};render()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.mode==='playing')togglePause()});
+window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+300;lastFrame=performance.now();update(amount);render()};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; kite patches are circular nodes joined by seam edges',mode:game.mode,kite:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,availableDyes:theme().names.slice(0,level().colors)},selectedPatch:game.selected+1,patches:level().nodes.map((node,index)=>({index:index+1,x:node.x,y:node.y,color:game.colors[index]===null?null:theme().names[game.colors[index]],preset:isPreset(index)})),seams:level().edges.map(([a,b])=>({patches:[a+1,b+1],conflict:game.colors[a]!==null&&game.colors[a]===game.colors[b]})),openPatches:game.colors.filter(color=>color===null).length,conflicts:conflicts().map(([a,b])=>[a+1,b+1]),ribbonsRemaining:game.ribbons,elapsedMs:Math.round(game.elapsedMs),theme:theme().name,status:game.status,lastAction:game.lastAction,metrics:currentMetrics()});
+window.__KITE_PARADE_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadKite:index=>loadKite(index,'playing'),select:index=>selectPatch(index,'qa'),dye:color=>setColor(color,'qa'),clear:()=>setColor(null,'qa'),check:()=>inspect('qa'),undo:()=>undo(),hint:()=>hint(),pause:()=>togglePause(),theme:()=>cycleTheme(),solveKite:()=>{for(let index=0;index<level().nodes.length;index++){if(!isPreset(index)){game.selected=index;setColor(level().solution[index],'qa-solution')}}return inspect('qa-solution')},fail:()=>{let guard=0;while(game.mode==='playing'&&guard++<MAX_RIBBONS)inspect('qa-failure');return game.mode==='lost'},levels:LEVELS};
+mountGameFeedback({gameSlug:'kiteparade',gameName:'Kite Parade'});
+resetCampaign('menu');syncUi();render();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

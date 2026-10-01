@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pebble Parade | AI and Sons Games</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    *{box-sizing:border-box}body{margin:0;padding:18px;background:#e9f2ed;color:#203e45;font-family:system-ui,sans-serif}main{max-width:880px;margin:auto}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 18px}h1{margin:0;font-size:clamp(1.55rem,4vw,2.4rem);letter-spacing:-.06em}header p{margin:4px 0 0}a{color:#203e45}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.stats div{background:#fffdf4;padding:10px 14px;border:1px solid #8ca8a3;border-radius:12px}.stats small{display:block;text-transform:uppercase;font-size:.65rem;letter-spacing:.1em}.stage{overflow:hidden;border-radius:18px;border:2px solid #356b72;background:#fffdf4}.stage:fullscreen{display:grid;place-items:center}.stage:fullscreen canvas{width:min(100vw,calc(100vh * 1.4));height:auto}canvas{display:block;width:100%;aspect-ratio:7/5;touch-action:none}.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}button{min-height:46px;border:1px solid #356b72;border-radius:10px;background:#fffdf4;color:#203e45;font:700 .85rem system-ui;cursor:pointer}button:hover{background:#d9ece4}button:focus-visible,canvas:focus-visible{outline:3px solid #b54f36;outline-offset:2px}#skip{background:#286c68;color:#fff}.help{line-height:1.6;font-size:.88rem}#cadeFeedbackOpenBtn{display:none!important}@media(max-width:600px){body{padding:8px}header{margin-top:52px}header p,header a{font-size:.75rem}.stats{gap:4px}.stats div{padding:7px;font-size:.8rem}.stats small{font-size:.53rem}.controls{grid-template-columns:repeat(2,1fr);gap:6px}.help{font-size:.76rem}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Pebble Parade | AI and Sons Games">
+  <meta property="og:description" content="Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pebbleparade">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/pebbleparade.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pebble Parade | AI and Sons Games">
+  <meta name="twitter:description" content="Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/pebbleparade.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pebbleparade">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Pebble Parade","description":"Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/pebbleparade","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body><main>
+  <header><div><h1>Pebble Parade</h1><p>Skip bright stones across five quiet ponds.</p></div><a href="/">All games</a></header>
+  <section class="stats" aria-label="Game progress"><div><small>Pond</small><b id="pond">1 / 5</b></div><div><small>Skips</small><b id="skips">0 / 20</b></div><div><small>Splashes</small><b id="misses">0 / 3</b></div><div><small>Time</small><b id="time">0.0s</b></div></section>
+  <section class="stage" id="stage"><canvas id="game" width="840" height="600" tabindex="0" aria-label="Pebble skipping meter. Left and right adjust the target; Space throws."></canvas></section>
+  <section class="controls"><button id="left">Aim left (←)</button><button id="skip">Start / Skip (Space)</button><button id="right">Aim right (→)</button><button id="pause">Pause (P)</button><button id="restart">Restart (R)</button><button id="theme">Palette (T)</button><button id="full">Fullscreen (F)</button><button id="feedback">Feedback</button></section>
+  <p class="help"><b>Make four skips on each pond.</b> Move the golden landing ring with ←/→, then press Space when the sweeping pebble passes through it. Each pond gets faster; three splashes end the run. Tap the water to move the ring and throw. P pauses, R restarts, T changes colors, F toggles fullscreen.</p>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),stage=document.querySelector('#stage');
+const palettes=[
+  {name:'Willow',sky:'#dff2e5',water:'#85c5bd',deep:'#347b7c',bank:'#8db66c',stone:'#fff4cf',ring:'#f1aa45',ink:'#203e45'},
+  {name:'Twilight',sky:'#e7e2fa',water:'#8ca6d6',deep:'#4b6098',bank:'#8479a8',stone:'#fff1c7',ring:'#ffb35b',ink:'#2c3158'},
+  {name:'Coral',sky:'#fff0df',water:'#75bdc4',deep:'#247887',bank:'#d88d6c',stone:'#fff8e6',ring:'#cf4f55',ink:'#49383c'}
+];
+const state={mode:'menu',pond:0,pondSkips:0,skips:0,misses:0,elapsed:0,theme:0,marker:0.12,direction:1,target:0.5,flight:0,lastHit:null,started:false,reported:false};let manual=false,previous=performance.now();
+const p=()=>palettes[state.theme],metrics=()=>({skips:state.skips,ponds:state.pond+(state.pondSkips===4?1:0),splashes:state.misses});
+function report(result){if(!state.started||state.reported)return;state.reported=true;reportGameOutcome({slug:'pebbleparade',result,durationMs:Math.round(state.elapsed),metrics:metrics()})}
+function restart(){report('abandoned');Object.assign(state,{mode:'menu',pond:0,pondSkips:0,skips:0,misses:0,elapsed:0,marker:.12,direction:1,target:.5,flight:0,lastHit:null,started:false,reported:false});render()}
+function start(){if(state.mode==='menu'){state.mode='playing';state.started=true}else if(state.mode==='pond-complete'){state.pond++;state.pondSkips=0;state.marker=.12;state.direction=1;state.mode='playing'}else if(['won','lost'].includes(state.mode)){restart();state.started=true;state.mode='playing'}render()}
+function throwPebble(){if(state.mode!=='playing'){start();return}const tolerance=Math.max(.055,.085-state.pond*.006),hit=Math.abs(state.marker-state.target)<=tolerance;state.flight=420;state.lastHit=hit;if(hit){state.skips++;state.pondSkips++;if(state.pondSkips===4){if(state.pond===4){state.mode='won';addCoins(15);report('completed')}else state.mode='pond-complete'}}else{state.misses++;if(state.misses>=3){state.mode='lost';report('lost')}}render()}
+function aim(delta){if(state.mode!=='playing')return;state.target=Math.max(.12,Math.min(.88,state.target+delta*.06));render()}
+function pause(){if(state.mode==='playing')state.mode='paused';else if(state.mode==='paused')state.mode='playing';render()}
+function update(ms){if(state.mode!=='playing')return;state.elapsed+=ms;const speed=.00026+state.pond*.000035;state.marker+=state.direction*speed*ms;if(state.marker>=.92){state.marker=.92;state.direction=-1}else if(state.marker<=.08){state.marker=.08;state.direction=1}state.flight=Math.max(0,state.flight-ms)}
+function step(ms){let remaining=Math.max(0,Number(ms)||0);if(!Number.isFinite(remaining))return;while(remaining>0){const slice=Math.min(10,remaining);update(slice);remaining-=slice}render()}
+function text(s,x,y,size=20,color=p().ink){ctx.fillStyle=color;ctx.font=`700 ${size}px system-ui`;ctx.textAlign='center';ctx.fillText(s,x,y)}
+function render(){const q=p();ctx.fillStyle=q.sky;ctx.fillRect(0,0,840,600);ctx.fillStyle=q.bank;ctx.fillRect(0,82,840,54);ctx.fillStyle=q.water;ctx.fillRect(0,136,840,464);for(let i=0;i<8;i++){ctx.strokeStyle=i%2?q.deep+'38':'#ffffff44';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(100+i*105,210+i%3*112,85,18,0,0,Math.PI*2);ctx.stroke()}text(`POND ${state.pond+1}`,420,48,18,q.deep);text('Move the landing ring. Meet it with the sweeping pebble.',420,112,20);
+  const x=80+state.marker*680,tx=80+state.target*680;ctx.strokeStyle=q.ring;ctx.lineWidth=8;ctx.beginPath();ctx.ellipse(tx,370,43,16,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle=q.stone;ctx.shadowColor=q.deep;ctx.shadowBlur=12;ctx.beginPath();ctx.ellipse(x,300,17,10,0,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=q.deep;ctx.beginPath();ctx.moveTo(x-11,318);ctx.lineTo(x+11,318);ctx.lineTo(x,340);ctx.fill();
+  if(state.flight>0){ctx.globalAlpha=state.flight/420;ctx.strokeStyle=state.lastHit?q.ring:'#fff';ctx.lineWidth=5;ctx.beginPath();ctx.arc(tx,405,38+(420-state.flight)/5,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1}text(`${state.pondSkips} of 4 stones across`,420,520,23,q.deep);text(q.name+' palette',420,566,14,q.deep);
+  if(['menu','paused','pond-complete','won','lost'].includes(state.mode)){ctx.fillStyle=q.sky+'f2';ctx.fillRect(0,145,840,390);const title={menu:'Pebble Parade',paused:'Pond paused','pond-complete':`Pond ${state.pond+1} crossed!`,won:'Every pebble danced',lost:'The stones sank'}[state.mode];text(title,420,270,38);text(state.mode==='menu'?'Line up the ring, then time your skip.':state.mode==='paused'?'The water is holding still.':`${state.skips} skips · ${state.misses} splashes`,420,325,21,q.deep);text(state.mode==='paused'?'Press P or Pause to resume':state.mode==='pond-complete'?'Press Space for the next pond':'Press Space or Start / Skip',420,385,20)}
+  document.querySelector('#pond').textContent=`${state.pond+1} / 5`;document.querySelector('#skips').textContent=`${state.skips} / 20`;document.querySelector('#misses').textContent=`${state.misses} / 3`;document.querySelector('#time').textContent=(state.elapsed/1000).toFixed(1)+'s';document.querySelector('#pause').textContent=state.mode==='paused'?'Resume (P)':'Pause (P)'}
+function cycleTheme(){state.theme=(state.theme+1)%palettes.length;render()}async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await stage.requestFullscreen()}catch{}}
+document.querySelector('#left').onclick=()=>aim(-1);document.querySelector('#right').onclick=()=>aim(1);document.querySelector('#skip').onclick=throwPebble;document.querySelector('#pause').onclick=pause;document.querySelector('#restart').onclick=restart;document.querySelector('#theme').onclick=cycleTheme;document.querySelector('#full').onclick=fullscreen;document.querySelector('#feedback').onclick=()=>{if(state.mode==='playing')pause();document.querySelector('#cadeFeedbackOpenBtn')?.click()};
+canvas.addEventListener('pointerdown',e=>{canvas.focus();if(state.mode!=='playing'){start();return}const r=canvas.getBoundingClientRect();state.target=Math.max(.12,Math.min(.88,((e.clientX-r.left)/r.width-80/840)/(680/840)));throwPebble()});document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]')||document.documentElement.dataset.cadeFeedbackOpen==='1')return;const k=e.key.toLowerCase();if(['arrowleft','arrowright',' ','enter','p','r','t','f'].includes(k)){if((k===' '||k==='enter')&&e.target.tagName==='BUTTON')return;e.preventDefault();if(e.repeat)return;if(k==='arrowleft')aim(-1);else if(k==='arrowright')aim(1);else if(k===' '||k==='enter')throwPebble();else if(k==='p')pause();else if(k==='r')restart();else if(k==='t')cycleTheme();else if(k==='f')fullscreen()}if(k==='escape'&&document.fullscreenElement)document.exitFullscreen()});
+window.advanceTime=ms=>{manual=true;step(ms)};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'840x600 canvas; origin top-left; x right, y down; meter spans normalized 0 to 1',mode:state.mode,pond:state.pond+1,totalPonds:5,pondSkips:state.pondSkips,marker:Number(state.marker.toFixed(4)),target:Number(state.target.toFixed(4)),targetTolerance:Number(Math.max(.055,.085-state.pond*.006).toFixed(3)),direction:state.direction,skips:state.skips,splashes:state.misses,timeMs:Math.round(state.elapsed),theme:p().name,metrics:metrics(),controls:'Left/Right aim; Space throws; tap aims and throws; P pause; R restart; T palette; F fullscreen'});window.addEventListener('pagehide',()=>report('abandoned'));document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.mode==='playing')pause()});mountGameFeedback({gameSlug:'pebbleparade',gameName:'Pebble Parade'});function frame(now){if(!manual)step(Math.min(50,now-previous));previous=now;requestAnimationFrame(frame)}render();requestAnimationFrame(frame);
+</script></body></html>

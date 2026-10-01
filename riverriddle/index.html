@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>River Riddle | AI and Sons Games</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#102b35;color:#f5fff6;display:flex;justify-content:center;padding:clamp(7px,2vw,22px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:10px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.55rem,4.8vw,2.6rem);line-height:1;margin:0;letter-spacing:-.05em}
+    small{color:#bde2d5;font-weight:650}
+    .home{color:#12302f;font-weight:850;text-decoration:none;border:2px solid #fff0a9;border-radius:999px;padding:8px 13px;background:#f2c85b}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .stat{min-width:0;background:#173f49;border:2px solid #3f7d7e;border-radius:15px;padding:7px 8px;text-align:center;box-shadow:0 4px 0 #081b22}
+    .stat span{display:block;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#a7d7d0}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.78rem,2.4vw,1rem)}
+    .stage{position:relative;border:3px solid #559698;border-radius:22px;overflow:hidden;background:#1c5665;box-shadow:0 10px 0 #081b22}
+    canvas{width:100%;aspect-ratio:45/31;display:block;touch-action:none;outline:none}
+    canvas:focus-visible{box-shadow:inset 0 0 0 4px #fff0a9}
+    .stage:fullscreen{display:grid;place-items:center;background:#081b22}
+    .stage:fullscreen canvas{width:min(100vw,calc(100vh * 45 / 31));height:auto}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+    button{border:2px solid #3f7d7e;border-radius:13px;background:#1a4b55;color:#f4fff8;font:800 clamp(.61rem,1.45vw,.84rem)/1.1 inherit;padding:9px 4px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #081b22;touch-action:none}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #081b22}
+    button:active:not(:disabled),button.active{transform:translateY(2px);box-shadow:0 1px 0 #081b22;background:#f2c85b;color:#12302f;border-color:#fff0a9}
+    button.primary{background:#e9bd4e;border-color:#ffe897;color:#12302f}
+    button.danger{background:#9d4a50;border-color:#ef9996;color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    #feedback{grid-column:span 2}
+    .help{background:#173f49;border:2px solid #3f7d7e;border-radius:15px;padding:10px 14px;font-size:.83rem;line-height:1.45;color:#d7eee9}
+    .help b{color:#ffe992}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    #cadeFeedbackOpenBtn{display:none!important}
+    html[data-cade-feedback-open="1"] #feedback{display:none!important}
+    @media(max-width:680px){
+      body{padding:7px}header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:6px}.home{padding:6px 10px;font-size:.77rem}
+      .stats{gap:4px}.stat{padding:5px 2px;border-radius:11px}.stat span{font-size:.5rem}.stat strong{font-size:.68rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #081b22}.controls{grid-template-columns:repeat(3,1fr);gap:6px}#feedback{grid-column:span 2}button{min-height:42px;padding:7px 3px}.help{font-size:.68rem;padding:8px 10px}
+      html[data-cade-feedback-open="1"] .cade-feedback-backdrop{background:rgba(6,22,28,.97)!important;backdrop-filter:none!important}
+    }
+    @media(max-height:710px) and (min-width:681px){canvas{aspect-ratio:2/1}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Ferry every traveler across five storybook rivers without leaving incompatible pairs unsupervised. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="River Riddle | AI and Sons Games">
+  <meta property="og:description" content="Ferry every traveler across five storybook rivers without leaving incompatible pairs unsupervised. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/riverriddle">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/riverriddle.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="River Riddle | AI and Sons Games">
+  <meta name="twitter:description" content="Ferry every traveler across five storybook rivers without leaving incompatible pairs unsupervised. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/riverriddle.png">
+  <link rel="canonical" href="https://games.aiandsons.io/riverriddle">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"River Riddle","description":"Ferry every traveler across five storybook rivers without leaving incompatible pairs unsupervised. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/riverriddle","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>River Riddle</h1><small>Keep the peace. Ferry everyone across five rivers.</small></div>
+    <a class="home" href="/">All Games</a>
+  </header>
+  <section class="stats" aria-label="Game status">
+    <div class="stat"><span>River</span><strong id="river">1 / 5</strong></div>
+    <div class="stat"><span>Across</span><strong id="across">0 / 3</strong></div>
+    <div class="stat"><span>Voyages</span><strong id="voyages">0</strong></div>
+    <div class="stat"><span>Bells</span><strong id="bells">3 / 3</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00.0</strong></div>
+  </section>
+  <section class="stage" id="stage">
+    <canvas id="game" width="900" height="620" tabindex="0" aria-label="River Riddle logic crossing. Select travelers, board them with Space, and cross with Enter."></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="previous" type="button">◀ Traveler</button>
+    <button id="next" type="button">Traveler ▶</button>
+    <button id="board" type="button">Board (Space)</button>
+    <button id="cross" class="primary" type="button">Cross (Enter)</button>
+    <button id="undo" type="button">Undo (U)</button>
+    <button id="hint" type="button">Hint (H)</button>
+    <button id="action" class="primary" type="button">Start</button>
+    <button id="pause" type="button">Pause (P)</button>
+    <button id="restart" class="danger" type="button">Restart (R)</button>
+    <button id="theme" type="button">Theme</button>
+    <button id="fullscreen" type="button">Fullscreen (F)</button>
+    <button id="feedback" type="button">Send feedback</button>
+  </section>
+  <div class="help"><b>Goal:</b> move every traveler to the far bank. The guide keeps peace only on the boat's bank, so never leave a listed pair alone together. Use <b>Q/E</b> or arrows to select, <b>Space</b> to board, <b>Enter</b> to cross, <b>U</b> to undo, <b>H</b> for a shortest-path hint, <b>P</b> to pause, and <b>F</b> for fullscreen.</div>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={river:document.querySelector('#river'),across:document.querySelector('#across'),voyages:document.querySelector('#voyages'),bells:document.querySelector('#bells'),time:document.querySelector('#time'),stage:document.querySelector('#stage'),previous:document.querySelector('#previous'),next:document.querySelector('#next'),board:document.querySelector('#board'),cross:document.querySelector('#cross'),undo:document.querySelector('#undo'),hint:document.querySelector('#hint'),action:document.querySelector('#action'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const WIDTH=900,HEIGHT=620,MAX_BELLS=3;
+const person=(name,icon)=>Object.freeze({name,icon});
+const LEVELS=Object.freeze([
+  Object.freeze({name:'Meadow Bend',capacity:1,travelers:Object.freeze([person('Fox','🦊'),person('Goose','🪿'),person('Grain','🌾')]),conflicts:Object.freeze([Object.freeze([0,1]),Object.freeze([1,2])])}),
+  Object.freeze({name:'Picnic Fork',capacity:2,travelers:Object.freeze([person('Bear','🐻'),person('Honey','🍯'),person('Berries','🫐'),person('Picnic','🧺')]),conflicts:Object.freeze([Object.freeze([0,1]),Object.freeze([0,2]),Object.freeze([0,3])])}),
+  Object.freeze({name:'Forest Chain',capacity:2,travelers:Object.freeze([person('Cat','🐈'),person('Mouse','🐁'),person('Cheese','🧀'),person('Ant','🐜'),person('Crumb','🍪')]),conflicts:Object.freeze([Object.freeze([0,1]),Object.freeze([1,2]),Object.freeze([2,3]),Object.freeze([3,4])])}),
+  Object.freeze({name:'Shimmer Shore',capacity:2,travelers:Object.freeze([person('Magpie','🐦'),person('Bell','🔔'),person('Brooch','💎'),person('Key','🔑'),person('Coin','🪙'),person('Ring','💍')]),conflicts:Object.freeze([Object.freeze([0,1]),Object.freeze([0,2]),Object.freeze([0,3]),Object.freeze([0,4]),Object.freeze([0,5])])}),
+  Object.freeze({name:'Mischief Delta',capacity:2,travelers:Object.freeze([person('Monkey','🐒'),person('Bananas','🍌'),person('Mango','🥭'),person('Coconut','🥥'),person('Hat','🎩'),person('Drum','🥁'),person('Cake','🎂')]),conflicts:Object.freeze([Object.freeze([0,1]),Object.freeze([0,2]),Object.freeze([0,3]),Object.freeze([0,4]),Object.freeze([0,5]),Object.freeze([0,6])])})
+]);
+const THEMES=Object.freeze([
+  Object.freeze({name:'Storybook Stream',background:'#143642',sky:'#bde7df',water:'#2c8da0',waterLine:'#8de0db',leftBank:'#4e8b57',rightBank:'#79a65b',soil:'#8a633f',boat:'#d18b43',boatTrim:'#ffe08a',card:'#f6edd1',ink:'#17343a',hud:'#f5fff6',accent:'#ffd766',danger:'#e66b64'}),
+  Object.freeze({name:'Moonlit Crossing',background:'#121f3b',sky:'#344d79',water:'#263f74',waterLine:'#78b9da',leftBank:'#385e55',rightBank:'#4c7464',soil:'#5a4d4b',boat:'#9b6447',boatTrim:'#e8c77d',card:'#dbe7e8',ink:'#172b3f',hud:'#eef9ff',accent:'#f6d66f',danger:'#ef7d86'}),
+  Object.freeze({name:'Autumn Ferry',background:'#3d2430',sky:'#e8ab75',water:'#43828b',waterLine:'#b8e0d2',leftBank:'#a8643d',rightBank:'#c48745',soil:'#74442f',boat:'#6e3829',boatTrim:'#ffc85a',card:'#fff0cd',ink:'#482a2d',hud:'#fff9e9',accent:'#ffe070',danger:'#d95055'})
+]);
+const game={mode:'menu',levelIndex:0,sides:[],boatSide:0,boarded:new Set(),selected:0,history:[],bells:MAX_BELLS,elapsedMs:0,travelers:0,rivers:0,voyages:0,themeIndex:0,status:'Choose who rides. The guide must keep every feuding pair supervised.',lastAction:{type:'ready'},shakeMs:0,started:false,reported:false,rewarded:false};
+let lastFrame=performance.now(),manualUntil=0,hitRegions=[];
+const level=()=>LEVELS[game.levelIndex];
+const theme=()=>THEMES[game.themeIndex];
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const formatTime=ms=>{const tenths=Math.floor(ms/100)%10,total=Math.floor(ms/1000);return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}.${tenths}`};
+function announce(message){el.live.textContent='';requestAnimationFrame(()=>{el.live.textContent=message})}
+function maskFromSides(sides=game.sides){return sides.reduce((mask,side,index)=>mask|(side?1<<index:0),0)}
+function sidesFromMask(mask){return level().travelers.map((_,index)=>(mask>>index)&1)}
+function pairName(pair){return `${level().travelers[pair[0]].name} + ${level().travelers[pair[1]].name}`}
+function unsafePairs(mask,boatSide){const unsupervised=1-boatSide;return level().conflicts.filter(([a,b])=>((mask>>a)&1)===unsupervised&&((mask>>b)&1)===unsupervised)}
+function isSafe(mask,boatSide){return unsafePairs(mask,boatSide).length===0}
+function passengerChoices(mask,boatSide){const available=level().travelers.map((_,index)=>index).filter(index=>((mask>>index)&1)===boatSide),choices=[[]];for(const index of available){for(let i=choices.length-1;i>=0;i--){const next=[...choices[i],index];if(next.length<=level().capacity)choices.push(next)}}return choices}
+function nextMask(mask,passengers){let result=mask;for(const index of passengers)result^=1<<index;return result}
+function shortestPath(startMask=maskFromSides(),startBoat=game.boatSide){const goal=(1<<level().travelers.length)-1,queue=[{mask:startMask,boat:startBoat,path:[]}],seen=new Set([`${startMask}:${startBoat}`]);while(queue.length){const state=queue.shift();if(state.mask===goal&&state.boat===1)return state.path;for(const passengers of passengerChoices(state.mask,state.boat)){const mask=nextMask(state.mask,passengers),boat=1-state.boat;if(!isSafe(mask,boat))continue;const key=`${mask}:${boat}`;if(seen.has(key))continue;seen.add(key);queue.push({mask,boat,path:[...state.path,passengers]})}}return null}
+function rightCount(){return game.sides.filter(Boolean).length}
+function currentMetrics(){const live=['playing','paused','lost'].includes(game.mode)?rightCount():0;return{travelers:game.travelers+live,rivers:game.rivers,voyages:game.voyages}}
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'riverriddle',result,durationMs:Math.round(game.elapsedMs),metrics:currentMetrics()})}
+function snapshot(){return{sides:[...game.sides],boatSide:game.boatSide,boarded:[...game.boarded],selected:game.selected,bells:game.bells}}
+function restore(state){game.sides=[...state.sides];game.boatSide=state.boatSide;game.boarded=new Set(state.boarded);game.selected=state.selected;game.bells=state.bells}
+function loadRiver(index,mode='playing'){game.levelIndex=clamp(index,0,LEVELS.length-1);game.sides=level().travelers.map(()=>0);game.boatSide=0;game.boarded=new Set();game.selected=0;game.history=[];game.bells=MAX_BELLS;game.mode=mode;game.shakeMs=0;game.status=mode==='menu'?'Choose who rides. The guide must keep every feuding pair supervised.':`${level().name}: ferry all ${level().travelers.length} travelers safely.`;game.lastAction={type:mode==='menu'?'ready':'river-start',river:game.levelIndex+1};syncUi();render()}
+function resetCampaign(mode='menu'){game.elapsedMs=0;game.travelers=0;game.rivers=0;game.voyages=0;game.started=mode!=='menu';game.reported=false;game.rewarded=false;loadRiver(0,mode)}
+function startOrContinue(){if(game.mode==='menu'){game.started=true;game.mode='playing';game.status=`${level().name}: ferry all ${level().travelers.length} travelers safely.`;game.lastAction={type:'start'};canvas.focus();announce('River Riddle begun. Fox selected.');syncUi();render();return}if(game.mode==='river-complete'){loadRiver(game.levelIndex+1,'playing');canvas.focus();announce(`${level().name} begun.`);return}if(['won','lost'].includes(game.mode)){resetCampaign('playing');canvas.focus();announce('A fresh River Riddle campaign has begun.')}}
+function restart(){if(game.started&&['playing','paused','river-complete'].includes(game.mode))report('abandoned');resetCampaign('playing');game.status='River campaign restarted at Meadow Bend.';game.lastAction={type:'restart'};syncUi();render();canvas.focus();announce(game.status)}
+function cycleTraveler(delta){if(game.mode!=='playing')return false;game.selected=(game.selected+delta+level().travelers.length)%level().travelers.length;const traveler=level().travelers[game.selected],side=game.sides[game.selected]?'far':'home';game.status=`${traveler.name} selected on the ${side} bank${game.boarded.has(game.selected)?'; boarded.':'.'}`;game.lastAction={type:'select',traveler:traveler.name,side};syncUi();render();return true}
+function togglePassenger(index=game.selected,source='keyboard'){if(game.mode!=='playing')return false;game.selected=clamp(index,0,level().travelers.length-1);const traveler=level().travelers[game.selected];if(game.sides[game.selected]!==game.boatSide){game.status=`${traveler.name} is on the other bank. Cross back first.`;game.lastAction={type:'board-blocked',reason:'other-bank',traveler:traveler.name,source};syncUi();render();announce(game.status);return false}if(game.boarded.has(game.selected)){game.boarded.delete(game.selected);game.status=`${traveler.name} stepped out of the boat.`;game.lastAction={type:'unboard',traveler:traveler.name,source}}else if(game.boarded.size>=level().capacity){game.status=`The boat holds only ${level().capacity} traveler${level().capacity===1?'':'s'}.`;game.lastAction={type:'board-blocked',reason:'capacity',traveler:traveler.name,source};syncUi();render();announce(game.status);return false}else{game.boarded.add(game.selected);game.status=`${traveler.name} boarded the boat.`;game.lastAction={type:'board',traveler:traveler.name,source}}syncUi();render();announce(game.status);return true}
+function finishRiver(){if(rightCount()!==level().travelers.length||game.boatSide!==1)return false;game.travelers+=level().travelers.length;game.rivers++;if(game.levelIndex===LEVELS.length-1){game.mode='won';game.status='Every traveler reached the festival safely across all five rivers.';game.lastAction={type:'campaign-complete',metrics:currentMetrics()};if(!game.rewarded){addCoins(50);game.rewarded=true}report('completed');announce('River Riddle complete. Fifty coins earned.')}else{game.mode='river-complete';game.status=`${level().name} solved in ${game.voyages} total voyage${game.voyages===1?'':'s'}.`;game.lastAction={type:'river-complete',river:game.levelIndex+1,metrics:currentMetrics()};announce(`${game.status} Continue when ready.`)}syncUi();render();return true}
+function crossRiver(source='keyboard'){if(game.mode!=='playing')return false;const passengers=[...game.boarded].sort((a,b)=>a-b);if(passengers.some(index=>game.sides[index]!==game.boatSide)){game.boarded=new Set();game.status='Only travelers beside the boat may board.';game.lastAction={type:'cross-blocked',reason:'wrong-bank',source};syncUi();render();return false}const before=snapshot(),from=game.boatSide,to=1-from,mask=nextMask(maskFromSides(),passengers);game.history.push(before);if(game.history.length>100)game.history.shift();game.voyages++;const conflicts=unsafePairs(mask,to);if(conflicts.length){game.boarded=new Set();game.bells--;game.shakeMs=420;game.status=`Safety bell! ${pairName(conflicts[0])} would be left unsupervised.`;game.lastAction={type:'unsafe-crossing',from:from?'far':'home',passengers:passengers.map(index=>level().travelers[index].name),conflict:pairName(conflicts[0]),bellsRemaining:game.bells,source};if(game.bells<=0){game.mode='lost';game.status='The third safety bell ended this river expedition.';report('lost');announce('River Riddle ended after three unsafe crossings.')}else announce(`${game.status} ${game.bells} bells remain.`);syncUi();render();return false}game.sides=sidesFromMask(mask);game.boatSide=to;game.boarded=new Set();const passengerNames=passengers.map(index=>level().travelers[index].name);game.selected=Math.max(0,game.sides.findIndex(side=>side===game.boatSide));game.status=passengerNames.length?`${passengerNames.join(' and ')} crossed to the ${to?'far':'home'} bank.`:`The guide crossed alone to the ${to?'far':'home'} bank.`;game.lastAction={type:'cross',from:from?'far':'home',to:to?'far':'home',passengers:passengerNames,source};syncUi();render();announce(game.status);finishRiver();return true}
+function undo(){if(game.mode!=='playing'||!game.history.length)return false;restore(game.history.pop());game.status='The previous crossing decision was undone.';game.lastAction={type:'undo',boatSide:game.boatSide?'far':'home'};syncUi();render();announce(game.status);return true}
+function hint(){if(game.mode!=='playing')return false;const path=shortestPath();if(!path){game.status='No safe route remains. Undo a crossing or restart.';game.lastAction={type:'hint-blocked'};syncUi();render();announce(game.status);return false}const passengers=path[0]||[];game.boarded=new Set(passengers);if(passengers.length)game.selected=passengers[0];const names=passengers.map(index=>level().travelers[index].name);game.status=names.length?`Hint: board ${names.join(' and ')}, then cross.`:'Hint: the guide should cross alone.';game.lastAction={type:'hint',passengers:names};syncUi();render();announce(game.status);return true}
+function togglePause(){if(game.mode==='playing'){game.mode='paused';game.status='Boat, guide, and clock are frozen.';game.lastAction={type:'pause'};announce(game.status)}else if(game.mode==='paused'){game.mode='playing';game.status='River crossing resumed.';game.lastAction={type:'resume'};canvas.focus();announce(game.status)}syncUi();render()}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${theme().name} river palette selected.`;game.lastAction={type:'theme',theme:theme().name};syncUi();render();announce(game.status)}
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await el.stage.requestFullscreen()}catch{game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-error'};syncUi();render();announce(game.status)}}
+function syncUi(){el.river.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.across.textContent=`${rightCount()} / ${level().travelers.length}`;el.voyages.textContent=game.voyages;el.bells.textContent=`${game.bells} / ${MAX_BELLS}`;el.time.textContent=formatTime(game.elapsedMs);const playing=game.mode==='playing';for(const button of [el.previous,el.next,el.board,el.cross,el.undo,el.hint])button.disabled=!playing;el.undo.disabled=!playing||!game.history.length;el.pause.disabled=!['playing','paused'].includes(game.mode);el.action.disabled=playing||game.mode==='paused';el.action.textContent=game.mode==='menu'?'Start':game.mode==='river-complete'?'Next river':game.mode==='won'||game.mode==='lost'?'Play again':'Continue';el.pause.textContent=game.mode==='paused'?'Resume (P)':'Pause (P)';el.board.textContent=game.boarded.has(game.selected)?'Unboard (Space)':'Board (Space)';el.cross.textContent=game.boarded.size?`Cross ${game.boarded.size} (Enter)`:'Cross alone (Enter)';el.theme.textContent=`Theme: ${game.themeIndex+1}/3`}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawBackdrop(){const t=theme();ctx.fillStyle=t.background;ctx.fillRect(0,0,WIDTH,HEIGHT);const gradient=ctx.createLinearGradient(0,0,0,HEIGHT);gradient.addColorStop(0,t.sky);gradient.addColorStop(.56,t.background);gradient.addColorStop(1,t.background);ctx.globalAlpha=.85;ctx.fillStyle=gradient;ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.globalAlpha=1;for(let i=0;i<15;i++){ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc((i*131+game.levelIndex*29)%WIDTH,35+(i%4)*19,2+(i%3),0,Math.PI*2);ctx.fill()}}
+function drawRiver(){const t=theme();ctx.fillStyle=t.water;ctx.fillRect(326,82,248,462);for(let y=104;y<530;y+=34){ctx.strokeStyle=t.waterLine;ctx.globalAlpha=.35;ctx.lineWidth=3;ctx.beginPath();for(let x=338;x<=562;x+=32){const wave=Math.sin((x+y+game.elapsedMs*.03)/26)*5;if(x===338)ctx.moveTo(x,y+wave);else ctx.lineTo(x,y+wave)}ctx.stroke()}ctx.globalAlpha=1}
+function drawBank(side){const t=theme(),x=side?574:0,w=326;ctx.fillStyle=side?t.rightBank:t.leftBank;ctx.fillRect(x,82,w,462);ctx.fillStyle=t.soil;ctx.globalAlpha=.36;for(let y=96;y<544;y+=42)ctx.fillRect(x,y,w,10);ctx.globalAlpha=1;ctx.fillStyle=t.hud;ctx.font='900 17px system-ui';ctx.textAlign=side?'right':'left';ctx.fillText(side?'FAR BANK':'HOME BANK',side?850:50,116);ctx.textAlign='left'}
+function cardPosition(index,side){return{x:side?596:44,y:136+index*54,w:260,h:46}}
+function drawTravelers(){const t=theme();hitRegions=[];level().travelers.forEach((traveler,index)=>{const side=game.sides[index],p=cardPosition(index,side),selected=index===game.selected,boarded=game.boarded.has(index);ctx.globalAlpha=boarded?.48:1;ctx.fillStyle=t.card;roundedRect(p.x,p.y,p.w,p.h,13);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=selected?t.accent:'rgba(255,255,255,.28)';ctx.lineWidth=selected?4:2;ctx.stroke();ctx.font='25px "Apple Color Emoji","Segoe UI Emoji",sans-serif';ctx.fillText(traveler.icon,p.x+12,p.y+31);ctx.fillStyle=t.ink;ctx.font='850 15px system-ui';ctx.fillText(traveler.name,p.x+52,p.y+28);if(boarded){ctx.textAlign='right';ctx.fillStyle=t.ink;ctx.font='900 11px system-ui';ctx.fillText('IN BOAT',p.x+p.w-12,p.y+27);ctx.textAlign='left'}hitRegions.push({index,...p})})}
+function drawConflictLegend(){const t=theme(),x=344,y=113;ctx.fillStyle='rgba(5,22,29,.55)';roundedRect(x,y,212,Math.min(268,58+level().conflicts.length*29),18);ctx.fill();ctx.fillStyle=t.hud;ctx.font='900 14px system-ui';ctx.textAlign='center';ctx.fillText('KEEP APART',450,y+25);ctx.font='700 11px system-ui';ctx.globalAlpha=.84;ctx.fillText('unless the guide is here',450,y+42);ctx.textAlign='left';level().conflicts.forEach((pair,index)=>{const a=level().travelers[pair[0]],b=level().travelers[pair[1]],py=y+65+index*29;ctx.globalAlpha=1;ctx.fillStyle=t.danger;ctx.beginPath();ctx.arc(x+17,py-4,4,0,Math.PI*2);ctx.fill();ctx.fillStyle=t.hud;ctx.font='750 12px system-ui';ctx.fillText(`${a.icon} ${a.name} + ${b.icon} ${b.name}`,x+29,py)}) ;ctx.globalAlpha=1}
+function drawBoat(){const t=theme(),x=game.boatSide?484:326,y=440;ctx.save();if(game.shakeMs>0)ctx.translate(Math.sin(game.shakeMs*.1)*7,0);ctx.fillStyle='rgba(4,19,26,.3)';ctx.beginPath();ctx.ellipse(x+45,y+58,88,14,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=t.boat;ctx.beginPath();ctx.moveTo(x-9,y+15);ctx.lineTo(x+100,y+15);ctx.lineTo(x+78,y+61);ctx.lineTo(x+13,y+61);ctx.closePath();ctx.fill();ctx.strokeStyle=t.boatTrim;ctx.lineWidth=5;ctx.stroke();ctx.fillStyle=t.boatTrim;ctx.fillRect(x+42,y-14,7,31);ctx.font='24px "Apple Color Emoji","Segoe UI Emoji",sans-serif';ctx.fillText('🧭',x+31,y+9);const boarded=[...game.boarded];boarded.forEach((index,i)=>ctx.fillText(level().travelers[index].icon,x+20+i*42,y+48));ctx.restore()}
+function drawLabels(){const t=theme();ctx.fillStyle=t.hud;ctx.font='900 24px system-ui';ctx.fillText(level().name,34,45);ctx.font='700 14px system-ui';ctx.globalAlpha=.82;ctx.fillText(`Boat capacity ${level().capacity} • Guide may cross alone`,34,69);ctx.globalAlpha=1;ctx.fillStyle='rgba(5,22,29,.62)';roundedRect(36,556,828,46,15);ctx.fill();ctx.fillStyle=t.hud;ctx.font='750 14px system-ui';const text=game.status.length>106?`${game.status.slice(0,103)}…`:game.status;ctx.fillText(text,52,585)}
+function drawOverlay(){if(!['menu','paused','river-complete','won','lost'].includes(game.mode))return;const t=theme();ctx.fillStyle='rgba(5,18,25,.79)';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.textAlign='center';ctx.fillStyle=t.hud;ctx.font='900 42px system-ui';const title=game.mode==='menu'?'RIVER RIDDLE':game.mode==='paused'?'CROSSING PAUSED':game.mode==='river-complete'?'RIVER SOLVED':game.mode==='won'?'FESTIVAL REACHED':'BELLS EXHAUSTED';ctx.fillText(title,WIDTH/2,235);ctx.font='750 18px system-ui';ctx.globalAlpha=.92;const message=game.mode==='menu'?'Ferry everyone without leaving a feuding pair alone.':game.status;ctx.fillText(message,WIDTH/2,278);ctx.globalAlpha=1;ctx.fillStyle=t.accent;roundedRect(WIDTH/2-118,310,236,53,16);ctx.fill();ctx.fillStyle=t.ink;ctx.font='900 18px system-ui';const action=game.mode==='menu'?'PRESS START':game.mode==='paused'?'PRESS P TO RESUME':game.mode==='river-complete'?'NEXT RIVER':'PLAY AGAIN';ctx.fillText(action,WIDTH/2,344);ctx.textAlign='left'}
+function render(){drawBackdrop();drawRiver();drawBank(0);drawBank(1);drawTravelers();drawConflictLegend();drawBoat();drawLabels();drawOverlay()}
+function update(ms){if(game.mode==='playing')game.elapsedMs+=ms;if(game.shakeMs>0)game.shakeMs=Math.max(0,game.shakeMs-ms);syncUi()}
+function frame(now){const dt=Math.min(50,Math.max(0,now-lastFrame));lastFrame=now;if(now>=manualUntil)update(dt);render();requestAnimationFrame(frame)}
+function pointerPosition(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*WIDTH/rect.width,y:(event.clientY-rect.top)*HEIGHT/rect.height}}
+function handlePointer(event){event.preventDefault();if(game.mode!=='playing'){if(['menu','river-complete','won','lost'].includes(game.mode))startOrContinue();return}const p=pointerPosition(event),hit=hitRegions.find(region=>p.x>=region.x&&p.x<=region.x+region.w&&p.y>=region.y&&p.y<=region.y+region.h);if(hit){togglePassenger(hit.index,event.pointerType||'pointer');canvas.focus();return}if(p.x>=326&&p.x<=574&&p.y>=420&&p.y<=530){crossRiver(event.pointerType||'pointer');canvas.focus()}}
+canvas.addEventListener('pointerdown',handlePointer);
+el.previous.addEventListener('click',()=>cycleTraveler(-1));el.next.addEventListener('click',()=>cycleTraveler(1));el.board.addEventListener('click',()=>togglePassenger(game.selected,'button'));el.cross.addEventListener('click',()=>crossRiver('button'));el.undo.addEventListener('click',undo);el.hint.addEventListener('click',hint);el.action.addEventListener('click',startOrContinue);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+window.addEventListener('keydown',event=>{if(document.documentElement.dataset.cadeFeedbackOpen==='1')return;const key=event.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' ','q','e','x','u','h','p','r','t','f','enter','escape'].includes(key))event.preventDefault();if(key==='escape'&&document.fullscreenElement){document.exitFullscreen();return}if(key==='p'){togglePause();return}if(key==='f'){toggleFullscreen();return}if(key==='t'){cycleTheme();return}if(key==='r'){restart();return}if((key==='enter'||key==='x')&&game.mode!=='playing'){startOrContinue();return}if(game.mode!=='playing')return;if(key==='q'||key==='arrowleft'||key==='arrowup')cycleTraveler(-1);else if(key==='e'||key==='arrowright'||key==='arrowdown')cycleTraveler(1);else if(key===' ')togglePassenger();else if(key==='enter'||key==='x')crossRiver();else if(key==='u')undo();else if(key==='h')hint()});
+document.addEventListener('fullscreenchange',()=>{game.lastAction={type:'fullscreen',active:Boolean(document.fullscreenElement)};render()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.mode==='playing')togglePause()});
+window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+300;lastFrame=performance.now();update(amount);render()};
+window.render_game_to_text=()=>{const solution=game.mode==='playing'?shortestPath():null;return JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; home bank is left and far bank is right',mode:game.mode,river:{index:game.levelIndex+1,total:LEVELS.length,name:level().name,boatCapacity:level().capacity},boatSide:game.boatSide?'far':'home',selectedTraveler:level().travelers[game.selected]?.name,boarded:[...game.boarded].map(index=>level().travelers[index].name),travelers:level().travelers.map((traveler,index)=>({name:traveler.name,icon:traveler.icon,bank:game.sides[index]?'far':'home',selected:index===game.selected,boarded:game.boarded.has(index)})),keepApart:level().conflicts.map(pair=>pairName(pair)),optimalNextPassengers:solution?.[0]?.map(index=>level().travelers[index].name)??null,bellsRemaining:game.bells,elapsedMs:Math.round(game.elapsedMs),theme:theme().name,status:game.status,lastAction:game.lastAction,metrics:currentMetrics()})};
+window.__RIVER_RIDDLE_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadRiver:index=>loadRiver(index,'playing'),select:index=>{game.selected=clamp(index,0,level().travelers.length-1);syncUi();render()},toggle:index=>togglePassenger(index,'qa'),cross:passengers=>{if(Array.isArray(passengers))game.boarded=new Set(passengers);return crossRiver('qa')},undo:()=>undo(),hint:()=>hint(),pause:()=>togglePause(),theme:()=>cycleTheme(),solveRiver:()=>{let guard=0;while(game.mode==='playing'&&guard++<40){const path=shortestPath();if(!path)return false;game.boarded=new Set(path[0]);crossRiver('qa-solution')}return game.mode==='river-complete'||game.mode==='won'},fail:()=>{if(game.mode!=='playing')return false;const conflict=level().conflicts[0],boat=game.boatSide,available=conflict.filter(index=>game.sides[index]===boat);game.boarded=new Set(available.slice(0,level().capacity));return crossRiver('qa-failure')},levels:LEVELS};
+mountGameFeedback({gameSlug:'riverriddle',gameName:'River Riddle'});
+resetCampaign('menu');syncUi();render();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

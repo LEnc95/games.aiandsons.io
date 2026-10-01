@@ -227,13 +227,19 @@ function renderSeoBlock(page) {
 `;
 }
 
-function injectSeoTags(filePath, page) {
+function detectLineEnding(content) {
+  return content.includes('\r\n') ? '\r\n' : '\n';
+}
+
+export function injectSeoTags(filePath, page, logger = console) {
   if (!fs.existsSync(filePath)) {
-    console.warn(`File not found: ${filePath}`);
-    return;
+    logger.warn(`File not found: ${filePath}`);
+    return false;
   }
 
-  let content = fs.readFileSync(filePath, 'utf8');
+  const originalContent = fs.readFileSync(filePath, 'utf8');
+  const lineEnding = detectLineEnding(originalContent);
+  let content = originalContent.replace(/\r\n?/g, '\n');
 
   // Remove previously generated SEO block and legacy tags that this script manages.
   content = content.replace(/<!-- SEO:BEGIN -->[\s\S]*?<!-- SEO:END -->\s*/gi, '');
@@ -257,11 +263,27 @@ function injectSeoTags(filePath, page) {
   }
 
   content = content.replace(/\n\s*\n\s*\n/g, '\n\n');
-  fs.writeFileSync(filePath, content);
-  console.log(`Injected SEO into ${filePath}`);
+  const nextContent = lineEnding === '\r\n' ? content.replace(/\n/g, '\r\n') : content;
+  if (nextContent === originalContent) {
+    logger.log(`SEO already current in ${filePath}`);
+    return false;
+  }
+
+  fs.writeFileSync(filePath, nextContent);
+  logger.log(`Injected SEO into ${filePath}`);
+  return true;
 }
 
-for (const page of allPages) {
-  const fullPath = path.join(ROOT, page.file);
-  injectSeoTags(fullPath, page);
+export function injectAllSeo() {
+  for (const page of allPages) {
+    const fullPath = path.join(ROOT, page.file);
+    injectSeoTags(fullPath, page);
+  }
+}
+
+const isMain = process.argv[1]
+  && path.resolve(process.argv[1]).toLowerCase() === path.resolve(__filename).toLowerCase();
+
+if (isMain) {
+  injectAllSeo();
 }

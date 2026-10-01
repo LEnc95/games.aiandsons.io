@@ -19,10 +19,10 @@ export const PREMIUM_CHALLENGE_DEFS = Object.freeze([
   {
     id: 'premium-weekly-commit',
     name: 'Weekly Commit',
-    desc: 'Complete both weekly challenges this week.',
-    target: 2,
+    desc: 'Complete all four weekly challenges this week.',
+    target: 4,
     rewardLabel: '+40 coins bonus',
-    readProgress: ({ missions }) => clamp(toCount(missions?.weekly?.completed), 0, 2),
+    readProgress: ({ missions }) => clamp(toCount(missions?.weekly?.completed), 0, 4),
   },
   {
     id: 'premium-assignment-helper',

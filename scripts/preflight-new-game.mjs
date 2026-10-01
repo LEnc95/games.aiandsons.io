@@ -1,6 +1,6 @@
-// Preflight for the daily add-a-game flow (codex drops a game, a human
-// commits it to main). Validates that everything a new game needs is
-// wired before the commit ships to prod:
+// Preflight for the daily add-a-game flow (Codex builds and validates a
+// game, then the scheduled automation commits it to main). Validates that
+// everything a new game needs is wired before the commit ships to prod:
 //
 //   node scripts/preflight-new-game.mjs   (or: npm run game:preflight)
 //
@@ -10,6 +10,7 @@ import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { GAMES } from '../src/meta/games.js';
+import { validateMaintenance } from './automation/validate-maintenance.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -17,7 +18,7 @@ const require = createRequire(import.meta.url);
 
 // Top-level folders that contain an index.html but are not games.
 const NON_GAME_DIRS = new Set([
-  'rooms', 'teacher', 'changelog', 'ops', 'output', 'node_modules',
+  'rooms', 'party', 'teacher', 'changelog', 'ops', 'output', 'node_modules',
   'clubpenguin-world', 'public', 'docs', 'assets',
 ]);
 
@@ -114,6 +115,15 @@ console.log(`Preflight: ${GAMES.length} games in src/meta/games.js\n`);
   } catch (err) {
     fail(`vercel.json does not parse: ${err.message}`);
   }
+}
+
+// 7. The newest game and recurring content satisfy the unattended release
+// contract (explicit date/outcomes/theme slots, current changelog, economy).
+{
+  const maintenanceErrors = validateMaintenance(ROOT);
+  if (maintenanceErrors.length) {
+    maintenanceErrors.forEach((message) => fail(message, 'run `npm run maintenance:validate` for the complete contract check'));
+  } else ok('maintenance contracts and release feeds are current');
 }
 
 console.log('');

@@ -86,13 +86,19 @@ async function main() {
       const cards = [...document.querySelectorAll("#weeklyChallengesList [data-challenge-id]")];
       return {
         challengeCount: cards.length,
+        gameLinkCount: cards.filter((card) => card.querySelector('.mission-game-link[href^="/"]')).length,
         metaText: document.getElementById("weeklyChallengesMeta")?.textContent?.trim() || "",
         todayWeeklyVisible: Boolean(document.querySelector('#todayPanel [data-today-kind="weekly"]')),
+        todayWeeklyHref: document.querySelector('#todayPanel a[data-today-kind="weekly"]')?.getAttribute('href') || '',
+        todayCtaHref: document.querySelector('#todayChallengeCta')?.getAttribute('href') || '',
         todayRows: document.querySelectorAll("#todayPanel [data-today-kind]").length,
       };
     });
     assert(initialState.challengeCount >= 2, "Expected at least two weekly challenges to be visible on home.");
+    assert(initialState.gameLinkCount === initialState.challengeCount, `Expected every weekly challenge to link to its game: ${JSON.stringify(initialState)}`);
     assert(initialState.todayWeeklyVisible, "Expected Today panel to include weekly challenge progress.");
+    assert(initialState.todayWeeklyHref.startsWith('/'), `Expected the Today weekly challenge to link to its game: ${JSON.stringify(initialState)}`);
+    assert(initialState.todayCtaHref === initialState.todayWeeklyHref, `Expected the featured challenge button to open the weekly game: ${JSON.stringify(initialState)}`);
     assert(initialState.todayRows >= 3, "Expected Today panel to include compact challenge rows.");
     summary.checks.push({ name: "weekly_challenges_rendered", pass: true, data: initialState });
 
@@ -103,7 +109,21 @@ async function main() {
       }
       const update = window.maybeUnlock({
         anyPlay: true,
-        snake: { length: 32 },
+        glassgarden: { panes: 43 },
+        aquariumlogic: { boards: 5 },
+        meteorminer: { score: 3000 },
+        auroraaccord: { notes: 25 },
+        lanternloom: { stars: 55 },
+        turbotilt: { players: 8 },
+        dewdropdrift: { motes: 14 },
+        neststack: { branches: 20 },
+        baseballradio: { wins: 1 },
+        bottlecapcurl: { targets: 20 },
+        moonmender: { stones: 6 },
+        ribbonreversal: { bundles: 5 },
+        sticktilt: { players: 8 },
+        lanternwake: { lanterns: 30 },
+        rainkeeper: { raindrops: 60 },
         pong: { winMargin: 7 },
         tetris: { lines: 60, score: 5200, level: 9 },
         asteroids: { wave: 9, score: 6500, lives: 3 },
@@ -119,7 +139,8 @@ async function main() {
     });
 
     assert(!result.error, "Expected maybeUnlock to be available in home runtime.");
-    assert(result.weeklyRewardsNow.length >= 1, "Expected weekly challenge reward payout from progress update.");
+    assert(result.weeklyRewardsNow.length === 4, "Expected all four W40 weekly challenges to reward from the synthetic progress update.");
+    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W40 weekly reward total to stay within the 80-coin policy maximum.");
 
     await page.reload({ waitUntil: "networkidle" });
     const afterState = await page.evaluate(() => {

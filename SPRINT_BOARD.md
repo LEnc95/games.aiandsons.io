@@ -516,3 +516,39 @@ Build a school-safe arcade platform with classroom controls, parent/school monet
 - [nightly 2026-07-11] Key PR links: none merged for this date.
 - [nightly 2026-07-12] Tracked changes: 1 commit(s) - 7be1d21 Add Island Walls to discovery metadata.
 - [nightly 2026-07-12] Key PR links: none merged for this date.
+- [nightly 2026-07-13] Tracked changes: 1 commit(s) - 7e3a0ed Add Binary Grid to discovery metadata.
+- [nightly 2026-07-13] Key PR links: none merged for this date.
+- [nightly 2026-07-14] Tracked changes: 1 commit(s) - 3248dac Clarify daily game preflight workflow docs.
+- [nightly 2026-07-14] Key PR links: none merged for this date.
+- [nightly 2026-07-15] No repository commits found for this date.
+- [nightly 2026-07-15] Key PR links: none merged for this date.
+- [nightly 2026-07-16] No repository commits found for this date.
+- [nightly 2026-07-16] Key PR links: none merged for this date.
+- [nightly 2026-07-17] Tracked changes: 1 commit(s) - 95d2995 Document updated unit and integration test commands.
+- [nightly 2026-07-17] Key PR links: none merged for this date.
+- [nightly 2026-07-18] Tracked changes: 1 commit(s) - a0e7ec9 Document release 1.12.0 and update sprint tracking.
+- [nightly 2026-07-18] Key PR links: none merged for this date.
+- [nightly 2026-07-19] No repository commits found for this date.
+- [nightly 2026-07-19] Key PR links: none merged for this date.
+- [nightly 2026-07-20] Tracked changes: 5 commit(s) - 0eb3f8e Bump release version to 1.12.0; a5021e8 Document release 1.12.0 and update sprint tracking; 9afacf1 Document updated unit and integration test commands; 12da5e7 Clarify daily game preflight workflow docs; 8b2196a Add Knight's Tour daily game.
+- [nightly 2026-07-20] Key PR links: none merged for this date.
+- [nightly 2026-07-21] Tracked changes: 3 commit(s) - bd5b622 Set readable colors for search filter options; 085e8fe Link daily and weekly challenges directly to their games (#220); 2503c07 Add Lure Line daily game.
+- [nightly 2026-07-21] Key PR links: none merged for this date.
+- [nightly 2026-07-22] No repository commits found for this date.
+- [nightly 2026-07-22] Key PR links: none merged for this date.
+- [nightly 2026-07-23] No repository commits found for this date.
+- [nightly 2026-07-23] Key PR links: none merged for this date.
+- [nightly 2026-07-24] Tracked changes: 1 commit(s) - 242d1e7 Document maintenance workflows and update sprint board.
+- [nightly 2026-07-24] Key PR links: none merged for this date.
+- [nightly 2026-09-16] Tracked changes: 2 commit(s) - fb9e310 Update project dependencies and runtimes; 1394b26 Add Pollen Passage daily game (#326).
+- [nightly 2026-09-16] Key PR links: none merged for this date.
+- [nightly 2026-09-17] No repository commits found for this date.
+- [nightly 2026-09-17] Key PR links: none merged for this date.
+- [nightly 2026-09-21] No repository commits found for this date.
+- [nightly 2026-09-21] Key PR links: none merged for this date.
+- [nightly 2026-09-22] No repository commits found for this date.
+- [nightly 2026-09-22] Key PR links: none merged for this date.
+- [nightly 2026-09-23] No repository commits found for this date.
+- [nightly 2026-09-23] Key PR links: none merged for this date.
+- [nightly 2026-09-24] Tracked changes: 2 commit(s) - 7d48072 Sync Sketch Clash discovery metadata and sitemap; 19c2f2a Fix nightly feedback readiness checks.
+- [nightly 2026-09-24] Key PR links: [PR #343 — Fix nightly feedback readiness checks](https://github.com/LEnc95/games.aiandsons.io/pull/343).
