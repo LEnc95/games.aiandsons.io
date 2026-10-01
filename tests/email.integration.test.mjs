@@ -7,6 +7,9 @@ const {
   getEmailConfig,
   sendBillingCancellationScheduledEmail,
   sendBillingPaymentFailedEmail,
+  sendFamilyInviteEmail,
+  sendFamilyInviteAcceptedEmail,
+  sendFamilyMemberRemovedEmail,
 } = require("../api/_email.js");
 const {
   __resetFamilyStoreForTests,
@@ -26,6 +29,30 @@ const originalEnv = {
   GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
 };
 const originalFetch = global.fetch;
+
+test("family email templates escape names and invite URL attributes", async () => {
+  process.env.RESEND_API_KEY = "re_test";
+  process.env.EMAIL_FROM = "hello@example.com";
+  const messages = [];
+  global.fetch = async (_url, options) => {
+    messages.push(JSON.parse(options.body));
+    return { ok: true, json: async () => ({ id: "re_test_email" }) };
+  };
+  const name = '<img src=x onerror="alert(1)"> & organizer';
+  const inviteUrl = 'https://example.com/accept?token=a&next=" onclick="alert(1)';
+  await sendFamilyInviteEmail({ to: "parent@example.com", inviterName: name,
+    familyPlanLabel: "<b>Family</b>", inviteUrl });
+  await sendFamilyInviteAcceptedEmail({ to: "parent@example.com", memberName: name });
+  await sendFamilyMemberRemovedEmail({ to: "parent@example.com", memberName: name });
+  assert.equal(messages.length, 3);
+  for (const message of messages) {
+    assert.doesNotMatch(message.html, /<img|<b>Family<\/b>/);
+    assert.match(message.html, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; &amp; organizer/);
+    assert.ok(message.text.includes(name));
+  }
+  assert.ok(messages[0].html.includes('href="https://example.com/accept?token=a&amp;next=&quot; onclick=&quot;alert(1)"'));
+  assert.match(messages[0].html, /&lt;b&gt;Family&lt;\/b&gt;/);
+});
 
 function restoreEnv() {
   for (const [key, value] of Object.entries(originalEnv)) {
