@@ -52,6 +52,6 @@
 ## 2026-06-25 - Enter key submission for school license billing input
 **Learning:** The billing email input in the school license checkout lacked native Enter key form submission. This violates keyboard accessibility standards since users should be able to submit settings efficiently.
 **Action:** Always ensure all settings and standalone inputs have a `keydown` event listener attached that natively simulates submission by listening for `Enter` and triggering the primary action.
-## 2026-10-01 - Native Enter Form Submission on Hangman Setup Inputs
-**Learning:** In the Hangman friend setup screen, the standalone text inputs (word and hint) lack a wrapping <form> element. This prevents the native browser behavior of pressing Enter to submit, which causes friction for users expecting standard form mechanics and keyboard-only navigators.
-**Action:** Always bind a keydown event listener to standalone inputs that lack a wrapping <form> element. Check for event.key === 'Enter' to programmatically trigger the associated submission function, restoring native-like accessibility and UX flow.
+## 2026-10-01 - Avoid duplicating global keydown logic
+**Learning:** Some views implement native Enter key submission via a global window.addEventListener('keydown') state machine rather than attaching listeners directly to inputs. Attaching individual event listeners to inputs in these cases introduces duplicate submissions and side-effects.
+**Action:** Before adding keydown listeners for Enter on inputs, search the file for global window.addEventListener('keydown') handlers to ensure the input submission isn't already handled by a centralized state machine.

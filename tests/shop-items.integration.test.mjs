@@ -79,7 +79,7 @@ function gatherTextFiles(dir) {
   while (stack.length) {
     const current = stack.pop();
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      if (['.git', 'node_modules', 'test-results'].includes(entry.name)) continue;
+      if (entry.name === '.git') continue;
       const full = path.join(current, entry.name);
       if (entry.isDirectory()) {
         stack.push(full);
