@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       lane:
-        description: Automation lane (daily-game or weekly-pack)
+        description: Automation lane (daily-game, weekly-pack, or weekly-release)
         required: false
         default: daily-game
 
@@ -23,19 +23,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Audit release diff
         env:
           AUTOMATION_BASE_SHA: ${{ github.event.pull_request.base.sha || 'origin/main' }}
-          AUTOMATION_LANE: ${{ inputs.lane || (startsWith(github.head_ref, 'automation/weekly-pack/') && 'weekly-pack') || 'daily-game' }}
+          AUTOMATION_LANE: ${{ inputs.lane || (startsWith(github.head_ref, 'automation/weekly-release/') && 'weekly-release') || (startsWith(github.head_ref, 'automation/weekly-pack/') && 'weekly-pack') || 'daily-game' }}
         run: node scripts/automation/audit-release-diff.mjs
       - run: npm run game:preflight
       - run: npm run test:telemetry
@@ -45,7 +45,7 @@ jobs:
       - run: npm run test:launch-readiness-smoke
       - name: Upload validation artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: automation-premerge-artifacts
           path: output/web-game

@@ -15,6 +15,10 @@ function injectStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
+    html,
+    body {
+      touch-action: manipulation;
+    }
     .cade-feedback-launcher {
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + 12px);

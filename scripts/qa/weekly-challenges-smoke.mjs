@@ -112,10 +112,18 @@ async function main() {
         glassgarden: { panes: 43 },
         aquariumlogic: { boards: 5 },
         meteorminer: { score: 3000 },
-        dapplegrove: { leaves: 107 },
-        geargrove: { gears: 27 },
-        prismpulse: { pulses: 25 },
-        snake: { length: 500 },
+        auroraaccord: { notes: 25 },
+        lanternloom: { stars: 55 },
+        turbotilt: { players: 8 },
+        dewdropdrift: { motes: 14 },
+        neststack: { branches: 20 },
+        baseballradio: { wins: 1 },
+        bottlecapcurl: { targets: 20 },
+        moonmender: { stones: 6 },
+        ribbonreversal: { bundles: 5 },
+        sticktilt: { players: 8 },
+        lanternwake: { lanterns: 30 },
+        rainkeeper: { raindrops: 60 },
         pong: { winMargin: 7 },
         tetris: { lines: 60, score: 5200, level: 9 },
         asteroids: { wave: 9, score: 6500, lives: 3 },
@@ -131,8 +139,8 @@ async function main() {
     });
 
     assert(!result.error, "Expected maybeUnlock to be available in home runtime.");
-    assert(result.weeklyRewardsNow.length === 4, "Expected all four W36 weekly challenges to reward from the synthetic progress update.");
-    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W36 weekly reward total to stay within the 80-coin policy maximum.");
+    assert(result.weeklyRewardsNow.length === 4, "Expected all four W40 weekly challenges to reward from the synthetic progress update.");
+    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W40 weekly reward total to stay within the 80-coin policy maximum.");
 
     await page.reload({ waitUntil: "networkidle" });
     const afterState = await page.evaluate(() => {

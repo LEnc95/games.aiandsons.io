@@ -6,6 +6,54 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W40 content pack with Cedar Cipher Ribbon Reversal, Saffron Spar Stick & Tilt, and Tideglass Vigil Lantern Wake cosmetics plus four bounded weekly challenges.
+
+## [1.14.0] - 2026-09-27
+- Added Stick & Tilt: 2–8-player stick-figure fighting with calibrated phone motion, touch alternatives, punch/jump/guard combat, climbable doodle-box platforms, quick respawns, and standalone or rotating Party sessions.
+
+### Added
+
+- Added the 2026-W39 content pack with Willow Wish Nest Stack, Copper Scoreboard Bottom of the Ninth, and Copper Ripple Bottlecap Curl cosmetics plus four bounded weekly challenges.
+
+- Rune Roots - a five-grove root-rotation puzzle for keyboard and touch.
+
+- Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
+
+- Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
+
+- Pollen Passage - a five-meadow flower-lane game for keyboard and touch.
+
+- Signal Garden - a five-garden firefly memory game for keyboard and touch.
+
+- Party Mode player invitations from host screens and connected phones, with native sharing, copy fallback, and room-policy awareness.
+
+- Isolated Party Mode and Audio Agar into game-specific Cloud Run services while retaining their shared versioned multiplayer protocol.
+
+- Added the 2026-W38 content pack with Saffron Nocturne Aurora Accord, Cinder Constellation Lantern Loom, and Comet Chicane Turbo Tilt cosmetics plus four bounded weekly challenges.
+- Paper Bridge - a five-ravine paper-folding precision game for keyboard and touch.
+
+- Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.
+
+- Pebble Parade - a five-pond timing game for keyboard and touch.
+
+- Ribbon Reversal - a five-bundle prefix-reversal sorting puzzle for keyboard and touch.
+
+- Crowd Shift — a seven-round shared-screen party game with a dedicated two-player Duel Shift for secret choices, mind reads, streaks, and risky Hot Takes, plus rotating crowd rules for 3–8 phones.
+- Turbo Tilt party games foundation with four-letter rooms, shared-screen racing, phone tilt and touch controllers, reconnect support, and server-authoritative cups for 2–8 players.
+- Persistent Party Rotation — keep one room open while players vote on named Turbo Tilt and Crowd Shift modes, watch a synchronized wheel choose the next activity, and carry normalized standings through an unlimited party.
+
+- Thimble Tide — a five-shore shell-tracking game for keyboard and touch.
+
+- Clockwork Clover — a five-garden timing game for keyboard and touch.
+
+- Nest Stack — a five-nest branch-balancing game for keyboard and touch.
+- Added the 2026-W37 content pack with Opaline Regatta Harbor Harmony, Violet Pollinator Pollen Patrol, and Glacier Watch Firebreak Command cosmetics plus four bounded weekly challenges.
+- Belltower Bloom — a five-tower musical bell-timing game for keyboard and touch.
+- Reed Relay — a five-reach river-lane glowseed relay for keyboard and touch.
+- Mushroom Morse — a five-clearing short-and-long pulse decoding game for keyboard and touch.
+- Dewdrop Drift — a five-leaf dewdrop sliding maze for keyboard and touch.
+- Bramble Bounce — a five-grove seed-and-leaf paddle game for keyboard and touch.
+- Frost Footprints — a five-floe penguin ice-sliding puzzle for keyboard and touch.
 - Added the 2026-W36 content pack with Starlit Moss Dapple Grove, Copper Bloom Gear Grove, and Solar Flare Prism Prism Pulse cosmetics plus four bounded weekly challenges.
 - Moon Mender — a five-site lunar rover pushing puzzle for keyboard and touch.
 - Cloud Quilt — a five-pattern cloud-patch flipping puzzle for keyboard and touch.
@@ -71,6 +119,8 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 
+- Turbo Tilt now makes energy pickups and barrier impacts unmistakable with shared-screen bursts, crash shake, floating effect labels, phone haptics/status callouts, live race order, boost-charge pips, richer track art, and heat-result boards. Rooms can also mirror the live match to up to sixteen read-only computers or TVs while the original host retains all game controls.
+- Turbo Tilt Party Pack expansion adds Neon City, Glacier Run, Volcano Rush, and Spaceway; safe/risk routes, moving hazards, jumps, streak/style scoring, four phone-selected gadgets, six voted modifiers, Classic/Elimination/Teams/Relay/Survival/Chaos modes, host presets, temporary cars/trails/horns, reactions, synchronized sound and announcing, photo-finish replay, and end-of-match awards.
 - Bottom of the Ninth series home/away GameState flip so series host actually swaps sides, not only booth copy.
 - Bottom of the Ninth season slash persistence so AVG/OBP/SLG carry across the season slate.
 - Bottom of the Ninth rain-delay booth color lines.

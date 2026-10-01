@@ -17,6 +17,10 @@
 
 - game/clubpenguin-world
 - game/audioagar
+- game/turbotilt
+- game/sticktilt
+- game/sketchclash
+- game/crowdshift
 - game/2048
 - game/pong
 - game/airhockey
@@ -218,5 +222,23 @@
 - game/echoferry
 - game/cloudquilt
 - game/moonmender
+- game/frostfootprints
+- game/bramblebounce
+- game/dewdropdrift
+- game/mushroommorse
+- game/reedrelay
+- game/belltowerbloom
+- game/neststack
+- game/clockworkclover
+- game/thimbletide
+- game/ribbonreversal
+- game/pebbleparade
+- game/chalkchase
+- game/paperbridge
+- game/signalgarden
+- game/pollenpassage
+- game/foxfiretrails
+- game/bottlecapcurl
+- game/runeroots
 
 Generated from `src/meta/feedback.js`.

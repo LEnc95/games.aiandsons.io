@@ -1,5 +1,6 @@
 // Client for /api/social/* — player identity, scores, challenges, rooms.
 import { del, get, set } from '../core/storage.js';
+export { handleEmoji } from './avatars.js';
 
 const PLAYER_STORAGE_KEY = 'socialPlayer';
 
@@ -190,22 +191,6 @@ export const getRoomCodeFromUrl = () => {
   } catch {
     return '';
   }
-};
-
-// Deterministic emoji avatar derived from a handle, so the same player
-// always shows the same face on leaderboards and scoreboards.
-const AVATAR_EMOJI = [
-  '🦊', '🐼', '🐸', '🦖', '🐙', '🦉', '🐯', '🐧',
-  '🦄', '🐲', '🦈', '🐺', '🦜', '🐢', '🦁', '🐹',
-];
-
-export const handleEmoji = (handle) => {
-  const text = String(handle || '');
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
-  }
-  return AVATAR_EMOJI[Math.abs(hash) % AVATAR_EMOJI.length];
 };
 
 export const fetchChampions = (slugs) =>

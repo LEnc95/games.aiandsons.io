@@ -119,8 +119,8 @@ test('missions module loading', async (t) => {
       assert.ok(weekly.every((entry) => typeof entry.gameSlug === 'string' && entry.gameSlug.length > 0));
     });
 
-    await t.test('W36 scheduled challenges complete and reward exactly once', () => {
-      const timestamp = new Date('2026-08-31T12:00:00Z').getTime();
+    await t.test('W38 scheduled challenges complete and reward exactly once', () => {
+      const timestamp = new Date('2026-09-14T12:00:00Z').getTime();
       const originalCoins = state.coins;
       const originalBadges = state.badges;
       try {
@@ -128,25 +128,25 @@ test('missions module loading', async (t) => {
         state.badges = new Set();
         ensureDailyMissions(timestamp);
         ensureWeeklyChallenges(timestamp);
-        state.missions.activeIds = ['tetris-lines-16'];
+        state.missions.activeIds = ['snake-length-14'];
         state.missions.progress = {};
         state.missions.completed = [];
         state.missions.rewarded = [];
         state.missions.weekly.activeIds = [
-          'weekly-w36-dapplegrove-leaves-107',
-          'weekly-w36-geargrove-gears-27',
-          'weekly-w36-prismpulse-pulses-25',
-          'weekly-w36-snake-length-500',
+          'weekly-w38-auroraaccord-notes-25',
+          'weekly-w38-lanternloom-stars-55',
+          'weekly-w38-turbotilt-players-8',
+          'weekly-w38-dewdropdrift-motes-14',
         ];
         state.missions.weekly.progress = {};
         state.missions.weekly.completed = [];
         state.missions.weekly.rewarded = [];
 
         const payload = {
-          dapplegrove: { leaves: 107 },
-          geargrove: { gears: 27 },
-          prismpulse: { pulses: 25 },
-          snake: { length: 500 },
+          auroraaccord: { notes: 25 },
+          lanternloom: { stars: 55 },
+          turbotilt: { players: 8 },
+          dewdropdrift: { motes: 14 },
         };
         const first = recordMissionProgress(payload, timestamp);
         assert.equal(first.weeklyCompletedNow.length, 4);

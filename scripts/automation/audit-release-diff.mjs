@@ -3,6 +3,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const MAX_UNATTENDED_PATHS = 40;
+const WEEKLY_RELEASE_PATHS = new Set([
+  'CHANGELOG.md',
+  'TECHNICAL_CHANGELOG.md',
+  'package.json',
+  'package-lock.json',
+  'version.json',
+  'release/weekly-state.json',
+]);
 const DAILY_FIXED_PATHS = new Set([
   'src/meta/games.js',
   'src/meta/content-contracts.js',
@@ -215,6 +223,15 @@ export function auditReleaseDiff({
     const gameShells = normalizedFiles.filter((file) => /^[^/]+\/index\.html$/.test(file));
     if (gameShells.length > 3) {
       errors.push(`Weekly pack changes ${gameShells.length} game shells; maximum is 3.`);
+    }
+  } else if (normalizedLane === 'weekly-release') {
+    const unexpectedPaths = normalizedFiles.filter((file) => !WEEKLY_RELEASE_PATHS.has(file));
+    if (unexpectedPaths.length) {
+      errors.push(`Weekly release contains paths outside its allowlist: ${unexpectedPaths.join(', ')}.`);
+    }
+    const missingPaths = [...WEEKLY_RELEASE_PATHS].filter((file) => !normalizedFiles.includes(file));
+    if (missingPaths.length) {
+      errors.push(`Weekly release is missing required paths: ${missingPaths.join(', ')}.`);
     }
   }
 
