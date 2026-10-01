@@ -146,6 +146,11 @@ Data/audit ops:
 
 ## CI workflows
 
+- `.github/workflows/main-qa.yml`
+- `.github/workflows/automation-premerge.yml`
+- `.github/workflows/automation-auto-merge.yml`
+- `.github/workflows/weekly-content-pack.yml`
+- `.github/workflows/weekly-release.yml`
 - `.github/workflows/classroom-smoke.yml`
 - `.github/workflows/nightly-launch-readiness.yml`
 - `.github/workflows/daily-feedback-provisioning.yml`
