@@ -3,6 +3,19 @@ const {
   updateEmailDeliveryRecord,
 } = require("./stripe/_family-store");
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (match) => {
+    switch (match) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#39;";
+      default: return match;
+    }
+  });
+}
+
 function normalizeText(value, maxLength = 400) {
   return String(value || "").trim().slice(0, maxLength);
 }
@@ -178,10 +191,10 @@ async function sendFamilyInviteEmail({
   const html = `
     <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
       <h2 style="margin:0 0 12px;">You're invited to join Ai and Sons</h2>
-      <p style="margin:0 0 12px;">${safeInviter} invited you to join their <strong>${safePlanLabel}</strong>.</p>
+      <p style="margin:0 0 12px;">${escapeHtml(safeInviter)} invited you to join their <strong>${escapeHtml(safePlanLabel)}</strong>.</p>
       <p style="margin:0 0 16px;">Sign in with Google, then accept the invite to share family access.</p>
       <p style="margin:0 0 16px;">
-        <a href="${inviteUrl}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#0b5fff;color:#ffffff;text-decoration:none;font-weight:700;">Accept invite</a>
+        <a href="${escapeHtml(inviteUrl)}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#0b5fff;color:#ffffff;text-decoration:none;font-weight:700;">Accept invite</a>
       </p>
       <p style="margin:0;color:#5f6f86;font-size:13px;">This invite expires ${expiresLabel}.</p>
     </div>
@@ -208,7 +221,7 @@ async function sendFamilyInviteAcceptedEmail({
   const html = `
     <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
       <h2 style="margin:0 0 12px;">Family invite accepted</h2>
-      <p style="margin:0;">${safeMemberName} accepted your invite and now has access through your family plan.</p>
+      <p style="margin:0;">${escapeHtml(safeMemberName)} accepted your invite and now has access through your family plan.</p>
     </div>
   `;
   return sendEmail({
@@ -233,7 +246,7 @@ async function sendFamilyMemberRemovedEmail({
   const html = `
     <div style="font-family:Arial,sans-serif;color:#132238;line-height:1.6;">
       <h2 style="margin:0 0 12px;">Family access updated</h2>
-      <p style="margin:0;">${safeMemberName}, your access through the shared Ai and Sons family plan has been removed. You can still sign in and start your own plan anytime.</p>
+      <p style="margin:0;">${escapeHtml(safeMemberName)}, your access through the shared Ai and Sons family plan has been removed. You can still sign in and start your own plan anytime.</p>
     </div>
   `;
   return sendEmail({
