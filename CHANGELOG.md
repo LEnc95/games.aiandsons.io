@@ -2,6 +2,169 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Added the 2026-W40 content pack with Cedar Cipher Ribbon Reversal, Saffron Spar Stick & Tilt, and Tideglass Vigil Lantern Wake cosmetics plus four bounded weekly challenges.
+
+## [1.14.0] - 2026-09-27
+- Added Stick & Tilt: 2–8-player stick-figure fighting with calibrated phone motion, touch alternatives, punch/jump/guard combat, climbable doodle-box platforms, quick respawns, and standalone or rotating Party sessions.
+
+### Added
+
+- Added the 2026-W39 content pack with Willow Wish Nest Stack, Copper Scoreboard Bottom of the Ninth, and Copper Ripple Bottlecap Curl cosmetics plus four bounded weekly challenges.
+
+- Rune Roots - a five-grove root-rotation puzzle for keyboard and touch.
+
+- Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
+
+- Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
+
+- Pollen Passage - a five-meadow flower-lane game for keyboard and touch.
+
+- Signal Garden - a five-garden firefly memory game for keyboard and touch.
+
+- Party Mode player invitations from host screens and connected phones, with native sharing, copy fallback, and room-policy awareness.
+
+- Isolated Party Mode and Audio Agar into game-specific Cloud Run services while retaining their shared versioned multiplayer protocol.
+
+- Added the 2026-W38 content pack with Saffron Nocturne Aurora Accord, Cinder Constellation Lantern Loom, and Comet Chicane Turbo Tilt cosmetics plus four bounded weekly challenges.
+- Paper Bridge - a five-ravine paper-folding precision game for keyboard and touch.
+
+- Chalk Chase - a five-board no-retrace path puzzle for keyboard and touch.
+
+- Pebble Parade - a five-pond timing game for keyboard and touch.
+
+- Ribbon Reversal - a five-bundle prefix-reversal sorting puzzle for keyboard and touch.
+
+- Crowd Shift — a seven-round shared-screen party game with a dedicated two-player Duel Shift for secret choices, mind reads, streaks, and risky Hot Takes, plus rotating crowd rules for 3–8 phones.
+- Turbo Tilt party games foundation with four-letter rooms, shared-screen racing, phone tilt and touch controllers, reconnect support, and server-authoritative cups for 2–8 players.
+- Persistent Party Rotation — keep one room open while players vote on named Turbo Tilt and Crowd Shift modes, watch a synchronized wheel choose the next activity, and carry normalized standings through an unlimited party.
+
+- Thimble Tide — a five-shore shell-tracking game for keyboard and touch.
+
+- Clockwork Clover — a five-garden timing game for keyboard and touch.
+
+- Nest Stack — a five-nest branch-balancing game for keyboard and touch.
+- Added the 2026-W37 content pack with Opaline Regatta Harbor Harmony, Violet Pollinator Pollen Patrol, and Glacier Watch Firebreak Command cosmetics plus four bounded weekly challenges.
+- Belltower Bloom — a five-tower musical bell-timing game for keyboard and touch.
+- Reed Relay — a five-reach river-lane glowseed relay for keyboard and touch.
+- Mushroom Morse — a five-clearing short-and-long pulse decoding game for keyboard and touch.
+- Dewdrop Drift — a five-leaf dewdrop sliding maze for keyboard and touch.
+- Bramble Bounce — a five-grove seed-and-leaf paddle game for keyboard and touch.
+- Frost Footprints — a five-floe penguin ice-sliding puzzle for keyboard and touch.
+- Added the 2026-W36 content pack with Starlit Moss Dapple Grove, Copper Bloom Gear Grove, and Solar Flare Prism Prism Pulse cosmetics plus four bounded weekly challenges.
+- Moon Mender — a five-site lunar rover pushing puzzle for keyboard and touch.
+- Cloud Quilt — a five-pattern cloud-patch flipping puzzle for keyboard and touch.
+- Echo Ferry — a five-channel fog-and-sonar navigation game for keyboard and touch.
+- Kite Circuit — a five-course wind-steering game for keyboard and touch.
+- Seedskip — a five-garden seed-ricochet puzzle for keyboard and touch.
+- Redesigned Prism Pulse as a five-board spatial beam-routing puzzle with rotatable mirrors.
+- Prism Pulse — a five-round color-timing game for keyboard and touch.
+- Cinder Compass — a five-chart ember-navigation game for keyboard and touch.
+- Added the 2026-W35 content pack with Twilight Conservatory Glass Garden, Coral Dawn Aquarium Logic, and Ion Orchard Drone Meteor Miner cosmetics plus four bounded weekly challenges.
+- Aurora Accord — a five-part aurora lane-conducting game for keyboard and touch.
+
+- Tideglass Trails, a five-shore pathfinding campaign with glass shells, three rendered tide palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Harbor Harmony, a five-crossing signal-boat arcade campaign with matching harbor lights, three rendered sea palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Lantern Loom (released August 21, 2026) — weave five fading star constellations with a rotating lantern beam.
+- Bottom of the Ninth spoken batting order: compact nine announced at each new game and at the first Continue-series at-bat.
+- Bottom of the Ninth intentional walk: Controls rail plus I, one pitch, when you're pitching.
+- Bottom of the Ninth steal of second: human Send him / G once per at-bat with first occupied and second open (0–1 out); AI steals remain rare.
+- Bottom of the Ninth Extra-inning hold and Inherited ninth challenges: extras-hold and inherited-save scoreboard presets with clear win/lose rules.
+- Bottom of the Ninth season of series: a season can be a slate of best-of-3 series (3 or 6) with series wins and losses, not only exhibition games.
+- Bottom of the Ninth playoff depth: Bracket (Bo3 pennant → Bo5 championship) or Pennant only (Bo3), with a spoken round break between series.
+- Bottom of the Ninth situation challenges: fixed scoreboard presets (Today's broadcast, Hold the ninth, Bottom of the Ninth, Escape act, and more) with clear win/lose rules and deep-link support.
+- Bottom of the Ninth call the closer: late-inning one-shot closer swap from the Controls rail.
+- Bottom of the Ninth shareable broadcast moments: end-card and mid-game share with copyable links and optional PNG cards.
+- Rainkeeper, a five-storm umbrella arcade campaign with nourishing raindrops, hazardous hail, three rendered garden palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Magnet Meadow, a five-board polarity-placement puzzle with paired magnets, positive and negative edge clues, three rendered field palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Firefly Slants, a five-clearing diagonal-trail logic campaign with numbered lantern knots, loop-free paths, three rendered meadow palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Dapple Grove, a five-board leaf-shading logic campaign with connectivity rules, three rendered woodland palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Glass Garden, a five-window stained-glass rotation puzzle with matching seams and frame jewels, three rendered glass palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Nectar Measure, a five-hive exact-volume pouring campaign with solver-backed hints, three rendered apiary palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Gear Grove, a five-grove linked-gear orientation puzzle with solver-backed hints, three rendered garden palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Flock Fold, a five-sky formation-shifting flight with 25 cloud gates, three rendered paper palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Shell Shift, a five-tidepool row-rotation puzzle with target shell patterns, three rendered shore palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Kite Parade, a five-kite graph-coloring campaign with fixed star patches, conflict-aware inspections, three fabric palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- Bottom of the Ninth, a full nine-inning audio-first baseball broadcast with player batting and pitching, stereo timing cues, screen-reader-friendly live state, bounded outcomes, and shared feedback.
+- Bottom of the Ninth retention polish: phone Swing/Release control, touch calibration, 3/6/9-inning and practice modes, bus mix and a11y prefs, broadcast-theme shop cosmetics, and arcade sync/smoke tooling.
+- Bottom of the Ninth accessibility fix: Space no longer blocks Skip calibration / Start at-bat, rail Swing button stays available to screen readers, and screen-reader mode widens timing windows with an assertive Swing cue.
+- Bottom of the Ninth defense balance: AI batters no longer inherit human Rookie timing assists; solid-contact HR rates and mistimed-release meatballs are cooler when you pitch.
+- Bottom of the Ninth booth voice seam: delivery tones (calm/lift/hot/wry) and SampledVoiceBackend with Web Speech fallback; empty clip bank until directed VO is generated.
+- Bottom of the Ninth directed booth seed bank: 20 priority play-by-play/color WAVs (hot/lift/calm/wry) with Edge neural house voices and speech fallback for the long tail.
+- Bottom of the Ninth booth cast: ElevenLabs Adam (PBP) / Brian (color), denser sample coverage for routine calls, and clip-variant fallback so rolled lines use `.0` samples instead of system TTS.
+- Bottom of the Ninth utility mic: Eric handles station IDs and vendor calls (hot dogs / beer / programs) as directed samples.
+- Bottom of the Ninth cast clarity: AM filter defaults off so Adam/Brian/Eric stay intelligible; booth assets fetch with no-store cache busting so stale manifests cannot silence the booth.
+- Bottom of the Ninth voice cast lock: expanded Adam/Brian sample coverage for bridges, situations, and color lines; OS speech fallback never picks a female voice for booth roles.
+- Bottom of the Ninth live cast TTS: Adam/Brian/Eric speak the real situation text (batter and pitcher names, count, field) via `/api/booth/tts`, with the directed sample bank and system speech as fallback.
+- Bottom of the Ninth booth location language: inside/outside calls follow batter handedness (lefties reverse the plate sides); the pitch-call pad mirrors the same way.
+- Bottom of the Ninth color mic level: Brian matches Adam — equal booth bus levels and a color clip gain boost (live cast + samples).
+- Bottom of the Ninth save/resume: mid-game progress persists between pitches (and on tab hide) so a phone call or refresh can Resume broadcast from the gate.
+- Bottom of the Ninth campaign modes: Best of 3 series, Playoff (pennant) Bo3, and Season (6/12 games) with spoken between-game booth breaks and end cards.
+- Bottom of the Ninth rosters: Pirates vs Phillies with MLB-stat-derived ability ratings (contact/eye/power/speed and pitcher velo/command/stuff).
+- Added the 2026-W32 content pack with Prism Tide Tetris, Moonlit Reef Aquarium Logic, and Firefly Canopy Acorn Ascent cosmetics plus four bounded weekly challenges.
+- Chorus Current, a five-harbor waveform-tuning puzzle with strength and phase controls, three rendered harbor palettes, deterministic stepping, bounded outcomes, and shared feedback.
+- River Riddle, a five-stage riverbank logic campaign with supervised-pair constraints, shortest-path hints, three river palettes, deterministic stepping, and shared feedback.
+- Quilt Quest, a five-panel spatial packing campaign with rotatable fabric patches, keyboard and touch controls, three quilt palettes, deterministic stepping, and shared feedback.
+- Added Pollen Patrol, a five-garden tactical pollination game with deterministic beetle patrols, bounded outcomes, and rendered garden themes.
+- Added Starwheel, a five-lock concentric-ring puzzle with coupled rotations, bounded outcomes, and rendered dial themes.
+- Added Firebreak Command, a five-zone wildfire planning game with deterministic spread, bounded outcomes, and rendered terrain themes.
+- Added Sumshade, a five-board weighted-sum logic game with unique puzzles, bounded outcomes, and rendered paper themes.
+- Added Lantern Wake, a five-crossing current-steering game with collectible lanterns, bounded outcomes, and rendered wake themes.
+- Added Acorn Ascent, a five-grove precision-launch game with collectible acorns, bounded outcomes, and rendered canopy themes.
+- Added Moonscale, a five-sky celestial balance puzzle with torque-based moonstone placement, bounded outcomes, and rendered scale themes.
+- Added Shadow Bloom, a five-garden moon-shadow puzzle with protected sun blossoms, bounded outcomes, and rendered garden themes.
+
+### Improved
+
+- Turbo Tilt now makes energy pickups and barrier impacts unmistakable with shared-screen bursts, crash shake, floating effect labels, phone haptics/status callouts, live race order, boost-charge pips, richer track art, and heat-result boards. Rooms can also mirror the live match to up to sixteen read-only computers or TVs while the original host retains all game controls.
+- Turbo Tilt Party Pack expansion adds Neon City, Glacier Run, Volcano Rush, and Spaceway; safe/risk routes, moving hazards, jumps, streak/style scoring, four phone-selected gadgets, six voted modifiers, Classic/Elimination/Teams/Relay/Survival/Chaos modes, host presets, temporary cars/trails/horns, reactions, synchronized sound and announcing, photo-finish replay, and end-of-match awards.
+- Bottom of the Ninth series home/away GameState flip so series host actually swaps sides, not only booth copy.
+- Bottom of the Ninth season slash persistence so AVG/OBP/SLG carry across the season slate.
+- Bottom of the Ninth rain-delay booth color lines.
+- Bottom of the Ninth gate polish: hide inapplicable Mode/Schedule/Challenge controls, Resume/Continue copy, and abort from a saved broadcast.
+- Bottom of the Ninth closer unlocks in a late save window (protecting a lead), not mid-game fatigue.
+- Bottom of the Ninth series home/away booth copy so series games read as home or away.
+- Bottom of the Ninth today's broadcast local streak (days attempted).
+- Bottom of the Ninth extras and walk-off booth color lines.
+
+## [1.13.0] - 2026-07-26
+### Added
+- Added Star Battle, Parcel Patch, Domino Mosaic, Windbow Trials, Knight's Tour, Neon Divide, and Lure Line.
+- Added Aquarium Logic, a five-board aquarium deduction game with bounded outcome telemetry and a tank-theme cosmetic contract.
+- Added Morris Meadow, a deterministic Nine Men's Morris strategy game with complete placement, mill, capture, movement, flying, and board-theme support.
+- Added Rebound Relay, a five-board slide-until-stopped circuit puzzle with beacon, energy, and circuit-theme support.
+- Added Meteor Miner, a three-sector arcade mining game with ore delivery, shield defense, bounded outcomes, and a drone-theme cosmetic contract.
+- Added Ripple Shepherd, a five-pond physics puzzle with firefly guidance, bounded ripple outcomes, and rendered pond themes.
+- Added the first standardized game outcome and cosmetic-slot contract for unattended engagement content.
+
+### Improved
+- Feedback dialogs now isolate keyboard input so game shortcuts (fullscreen, restart, etc.) no longer block typing bug reports.
+- Expanded the active weekly challenge board from two to four challenges.
+- Linked daily missions and weekly challenges directly to their games.
+- Improved search filter option readability.
+- Added privacy-preserving aggregate outcome buckets; collection remains disabled until release-specific privacy approval is recorded.
+
+### Operations
+- Began the self-maintaining release train with contract validation, pre-production automation gates, and production verification.
+- Hardened automated daily game releases by auditing generated changes and waiting for required PR checks before merge.
+- Key PRs: [#229](https://github.com/LEnc95/games.aiandsons.io/pull/229), [#228](https://github.com/LEnc95/games.aiandsons.io/pull/228), [#227](https://github.com/LEnc95/games.aiandsons.io/pull/227), [#226](https://github.com/LEnc95/games.aiandsons.io/pull/226), [#221](https://github.com/LEnc95/games.aiandsons.io/pull/221), [#220](https://github.com/LEnc95/games.aiandsons.io/pull/220).
+
+## [1.12.0] - 2026-07-17
+
+### Added
+- Added and wired five new games: `islandwalls`, `binarygrid`, `thermotrail`, `kropkidots`, and `pearlloop`.
+- Added deterministic test hooks, feedback mounting, coin rewards, fullscreen support, and mobile controls across the new daily game surfaces where applicable.
+
+### Improved
+- Refreshed discovery metadata, homepage entries, sitemap coverage, OG cards, and local Linear feedback seed files for the new games.
+
+### Operations
+- Clarified the daily game preflight workflow and updated documented unit and integration test commands.
+- Key PRs: not recorded in the local repo history for this release window.
+
 ## [1.11.0] - 2026-07-11
 
 ### Added

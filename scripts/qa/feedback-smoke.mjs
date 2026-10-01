@@ -54,13 +54,27 @@ async function main() {
   const mobilePage = await mobileContext.newPage();
 
   const consoleErrors = [];
+  const isBenignStaticApiConsoleError = (text) => {
+    const normalized = String(text || "");
+    // Pure static `python -m http.server` returns 501 for POST and has no API routes.
+    return (
+      normalized.includes("Unsupported method ('POST')")
+      || normalized.includes("api/social")
+      || normalized.includes("api/auth/")
+      || normalized.includes("api/feedback/")
+      || normalized.includes("api/stripe/")
+      || /\b404\b/.test(normalized)
+    );
+  };
   const recordConsole = (pageName, page) => {
     page.on("pageerror", (err) => {
       consoleErrors.push({ page: pageName, type: "pageerror", text: String(err) });
     });
     page.on("console", (msg) => {
       if (msg.type() === "error") {
-        consoleErrors.push({ page: pageName, type: "console.error", text: msg.text() });
+        const text = msg.text();
+        if (isBenignStaticApiConsoleError(text)) return;
+        consoleErrors.push({ page: pageName, type: "console.error", text });
       }
     });
   };
@@ -97,6 +111,25 @@ async function main() {
     const mobileBox = await mobilePage.locator("#cadeFeedbackOpenBtn").boundingBox();
     assert(mobileBox && mobileBox.width > 0 && mobileBox.height > 0, "Expected feedback button visible on mobile game page.");
     summary.checks.push({ name: "mobile_button_visible", pass: true, data: mobileBox });
+
+    // Tetris binds F/R/Space/etc. at document level with preventDefault; those chars
+    // must still land in the shared feedback modal while it is open.
+    await mobilePage.click("#cadeFeedbackOpenBtn");
+    await mobilePage.waitForSelector("#cadeFeedbackBackdrop.active");
+    const shortcutProbe = "frps wad";
+    await mobilePage.locator("#cadeFeedbackSummary").click();
+    await mobilePage.locator("#cadeFeedbackSummary").pressSequentially(shortcutProbe, { delay: 20 });
+    const typedSummary = await mobilePage.locator("#cadeFeedbackSummary").inputValue();
+    assert(
+      typedSummary === shortcutProbe,
+      `Expected feedback summary to accept game shortcut letters, got ${JSON.stringify(typedSummary)}`,
+    );
+    const stayedOpen = await mobilePage.locator("#cadeFeedbackBackdrop").evaluate((el) => el.classList.contains("active"));
+    assert(stayedOpen, "Feedback modal should stay open while typing shortcut letters.");
+    const notFullscreen = await mobilePage.evaluate(() => !document.fullscreenElement);
+    assert(notFullscreen, "Typing F in feedback should not toggle fullscreen.");
+    summary.checks.push({ name: "modal_accepts_shortcut_letters", pass: true, data: { typedSummary } });
+
     const mobileShot = path.join(OUTPUT_DIR, "tetris-feedback-mobile.png");
     await mobilePage.screenshot({ path: mobileShot, fullPage: true });
     summary.screenshots.push(mobileShot);

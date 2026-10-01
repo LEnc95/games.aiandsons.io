@@ -5,6 +5,7 @@ import {
   signInWithGoogle,
   signOutFromApp,
 } from "../auth/client.js";
+import { mountClipControls } from "../social/clip-controls.js";
 
 const ROOT_ID = "cadeFeedbackRoot";
 const STYLE_ID = "cadeFeedbackStyles";
@@ -14,6 +15,10 @@ function injectStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
+    html,
+    body {
+      touch-action: manipulation;
+    }
     .cade-feedback-launcher {
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -245,6 +250,7 @@ function readFileAsDataUrl(file) {
 
 export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   if (!gameSlug || !gameName || document.getElementById(ROOT_ID)) return;
+  mountClipControls({ gameSlug, gameName });
   injectStyles();
 
   const root = document.createElement("div");
@@ -396,10 +402,15 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
     signOutBtn.hidden = true;
   }
 
+  function isModalOpen() {
+    return backdrop.classList.contains("active");
+  }
+
   function openModal() {
     lastFocusedElement = document.activeElement;
     backdrop.classList.add("active");
     backdrop.setAttribute("aria-hidden", "false");
+    document.documentElement.dataset.cadeFeedbackOpen = "1";
     setStatus("");
     requestAnimationFrame(() => summaryInput?.focus());
   }
@@ -407,9 +418,20 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   function closeModal() {
     backdrop.classList.remove("active");
     backdrop.setAttribute("aria-hidden", "true");
+    delete document.documentElement.dataset.cadeFeedbackOpen;
     if (lastFocusedElement) {
       lastFocusedElement.focus();
       lastFocusedElement = null;
+    }
+  }
+
+  // Keep game document/window shortcut handlers from seeing keys typed in the
+  // dialog (e.g. F fullscreen, R restart). Without this, those handlers call
+  // preventDefault and block characters from landing in the feedback fields.
+  function isolateModalKeyboard(event) {
+    event.stopPropagation();
+    if (event.type === "keydown" && event.key === "Escape") {
+      closeModal();
     }
   }
 
@@ -437,8 +459,11 @@ export function mountGameFeedback({ gameSlug = "", gameName = "" } = {}) {
   backdrop.addEventListener("click", (event) => {
     if (event.target === backdrop) closeModal();
   });
+  for (const type of ["keydown", "keyup", "keypress"]) {
+    backdrop.addEventListener(type, isolateModalKeyboard);
+  }
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && backdrop.classList.contains("active")) {
+    if (event.key === "Escape" && isModalOpen()) {
       closeModal();
     }
   });

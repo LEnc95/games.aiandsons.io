@@ -1,6 +1,12 @@
+import { getGameContentContract } from './content-contracts.js';
+
 const BASE_GAMES = [
   { slug:'clubpenguin-world', name:'Club Penguin World', emoji:'\u{1F427}', scoreHint:'coins', url:'/clubpenguin-world/public/', desc:'Multiplayer social world prototype with rooms, quick chat, and live movement.', earnsCoins:true },
   { slug:'audioagar',      name:'Audio Agar',           emoji:'\u{1F535}', scoreHint:'mass',       url:'/audioagar',     desc:'Audio-first multiplayer orb arena with keyboard movement, spatial cues, and screen-reader status for blind play.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
+  { slug:'turbotilt',      name:'Turbo Tilt',           emoji:'\u{1F3CE}\uFE0F', scoreHint:'points', url:'/turbotilt/', desc:'Host a customizable party cup where up to eight players tilt, boost, use gadgets, and vote from their phones.', earnsCoins:false },
+  { slug:'sticktilt', name:'Stick & Tilt', emoji:'🥊', scoreHint:'knockouts', url:'/sticktilt/', desc:'Tilt your phone to move a stick fighter. Punch, jump, and guard through three quick rounds with 2–8 friends.', earnsCoins:false },
+  { slug:'sketchclash', name:'Sketch Clash', emoji:'✎', scoreHint:'points', url:'/sketchclash/', desc:'A shared-screen draw-and-guess party game with private phone canvases for 2–8 players.', earnsCoins:false },
+  { slug:'crowdshift',     name:'Crowd Shift',          emoji:'\u{1F500}', scoreHint:'points', url:'/crowdshift/', desc:'Read your rival in two-player Duel Shift, or tackle rotating crowd rules with up to eight phones.', earnsCoins:false },
   { slug:'2048',           name:'2048',                emoji:'\u{1F522}', scoreHint:'best tile',  url:'/2048',          desc:'Slide and merge matching tiles until you reach 2048.', earnsCoins:true },
   { slug:'pong',           name:'Pong',                emoji:'\u{1F3D3}', scoreHint:'returns',    url:'/pong',          desc:'Classic paddle game. Play against the computer!', earnsCoins:true },
   { slug:'airhockey',      name:'Air Hockey',          emoji:'\u{1F3D2}', scoreHint:'goals',      url:'/airhockey',     desc:'Drag your striker, bank the puck, and beat the table AI to seven goals.', earnsCoins:true },
@@ -27,6 +33,7 @@ const BASE_GAMES = [
   { slug:'micro-mario',    name:'Micro Mario',         emoji:'\u{1F344}', scoreHint:'coins',      url:'/mario',         desc:'Tiny platformer. Collect coins and reach the flag.', earnsCoins:true },
   { slug:'ski',            name:'Retro Downhill Ski',  emoji:'\u26F7\uFE0F', scoreHint:'distance', url:'/ski',         desc:'Dodge trees and rocks as you race down the mountain!', earnsCoins:true },
   { slug:'homerunderby',   name:'Home Run Derby',      emoji:'\u26BE',    scoreHint:'homeruns',   url:'/homerunderby/', desc:'Time your swing to crush home runs before you rack up 10 outs.', earnsCoins:true },
+  { slug:'baseballradio',  name:'Bottom of the Ninth', emoji:'\u{1F4FB}', scoreHint:'wins',       url:'/baseballradio/', desc:'Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings.', earnsCoins:false, category:'audio-only-blind-accessible', accessibilityTags:['100% playable without sight; keyboard and screen reader friendly'] },
   { slug:'micro-rc-racer', name:'Micro RC Racer',      emoji:'\u{1F3CE}\uFE0F', scoreHint:'best lap', url:'/microrc',   desc:'Top-down RC dirt racing with tank steering and slippery drifts.', earnsCoins:false },
   { slug:'oregontrail',    name:'Oregon Trail',        emoji:'\u{1F40E}', scoreHint:'miles',      url:'/oregontrail/', desc:'Lead a wagon party across 2,000 miles, ration supplies, and survive trail disasters.', earnsCoins:false },
   { slug:'neonrally',      name:'Neon Rally',          emoji:'\u{1F3C1}', scoreHint:'position',   url:'/neonrally',     desc:'Race AI rivals through neon turns, chain boosts, and finish 3 laps before time runs out.', earnsCoins:true },
@@ -156,6 +163,69 @@ const BASE_GAMES = [
   { slug:'binarygrid',     name:'Binary Grid',          emoji:'\u{1F522}', scoreHint:'solves',     url:'/binarygrid',   desc:'Fill binary logic grids with balanced 0s and 1s while avoiding triples and duplicate lines.', earnsCoins:true },
   { slug:'thermotrail',    name:'Thermo Trail',         emoji:'\u{1F321}\uFE0F', scoreHint:'solves', url:'/thermotrail', desc:'Fill Latin-grid digits while every thermometer trail strictly rises from bulb to tip.', earnsCoins:true },
   { slug:'kropkidots',     name:'Kropki Dots',          emoji:'\u26AB',    scoreHint:'solves', url:'/kropkidots', desc:'Fill Latin-grid digits while white and black dots enforce consecutive and double-neighbor clues.', earnsCoins:true },
+  { slug:'pearlloop',      name:'Pearl Loop',           emoji:'\u26AA',    scoreHint:'loops', url:'/pearlloop', desc:'Draw one continuous loop through black and white pearls while satisfying every turn and straight-line clue.', earnsCoins:true },
+  { slug:'starbattle',     name:'Star Battle',          emoji:'\u{2B50}',  scoreHint:'solves', url:'/starbattle', desc:'Place one star in each row, column, and colored region without letting stars touch, then clear five logic boards.', earnsCoins:true },
+  { slug:'parcelpatch',    name:'Parcel Patch',         emoji:'\u{1F5FA}\uFE0F', scoreHint:'patches', url:'/parcelpatch', desc:'Divide each grid into rectangles so every parcel contains one number and covers exactly that many squares.', earnsCoins:true },
+  { slug:'dominomosaic',   name:'Domino Mosaic',        emoji:'\u{1F517}', scoreHint:'mosaics', url:'/dominomosaic', desc:'Link adjacent numbered cells into dominoes while using every pair from 0-0 through 4-4 exactly once.', earnsCoins:true },
+  { slug:'windbow',        name:'Windbow Trials',       emoji:'\u{1F3F9}', scoreHint:'score', url:'/windbow', desc:'Read shifting winds, charge each arrow, and strike the target rings across five archery rounds.', earnsCoins:true },
+  { slug:'knightstour',    name:"Knight's Tour",       emoji:'\u265E\uFE0F', scoreHint:'tours', url:'/knightstour', desc:'Guide a chess knight across every square exactly once, avoid dead ends, and complete five pathfinding puzzle boards.', earnsCoins:true },
+  { slug:'neondivide',     name:'Neon Divide',          emoji:'\u{1F4A0}', scoreHint:'territory', url:'/neondivide', desc:'Cut glowing trails across a live arcade field, dodge roaming sparks, and claim three increasingly dangerous neon zones.', earnsCoins:true },
+  { slug:'lureline',       name:'Lure Line',            emoji:'\u{1F3A3}', scoreHint:'catch', url:'/lureline', desc:'Charge each cast, react to fish bites, and alternate reel strokes to land the target catch across three lively ponds.', earnsCoins:true },
+  { slug:'aquariumlogic',  name:'Aquarium Logic',       emoji:'\u{1F420}', scoreHint:'tanks', url:'/aquariumlogic', desc:'Fill glass tanks from the bottom up, match every row and column clue, and solve five colorful aquarium puzzles.', earnsCoins:true },
+  { slug:'morrismeadow',   name:'Morris Meadow',        emoji:'\u{1F33C}', scoreHint:'mills', url:'/morrismeadow', desc:'Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris.', earnsCoins:true },
+  { slug:'reboundrelay',   name:'Rebound Relay',        emoji:'\u{1F916}', scoreHint:'relays', url:'/reboundrelay', desc:'Slide a relay bot until walls stop it, spark every beacon, and dock five increasingly intricate circuit boards.', earnsCoins:true },
+  { slug:'meteorminer',    name:'Meteor Miner',         emoji:'\u2604\uFE0F', scoreHint:'ore', url:'/meteorminer', desc:'Pilot a mining drone, collect ore, dock at the refinery, and shield through meteors across three sectors.', earnsCoins:true },
+  { slug:'rippleshepherd', name:'Ripple Shepherd',      emoji:'\u{1F4A7}', scoreHint:'fireflies', url:'/rippleshepherd', desc:'Place moonlit ripples to guide drifting fireflies around pond stones and into matching lily lanterns across five physics puzzles.', earnsCoins:true },
+  { slug:'pollenpatrol',   name:'Pollen Patrol',        emoji:'\u{1F41D}', scoreHint:'flowers', url:'/pollenpatrol', desc:'Guide a pollen bee through five tactical gardens, gather every flower, avoid beetle patrols, and return safely to the hive.', earnsCoins:true },
+  { slug:'starwheel',      name:'Starwheel',             emoji:'\u2699\uFE0F', scoreHint:'locks', url:'/starwheel', desc:'Rotate coupled rings, align every starlit gate, and open five intricate celestial locks before your turns run out.', earnsCoins:true },
+  { slug:'firebreakcommand', name:'Firebreak Command',   emoji:'\u{1F525}', scoreHint:'cabins', url:'/firebreakcommand', desc:'Plan limited firelines, run deterministic wildfire forecasts, and protect every cabin across five rugged zones.', earnsCoins:true },
+  { slug:'sumshade',       name:'Sumshade',              emoji:'\u{1F9EE}', scoreHint:'boards', url:'/sumshade', desc:'Shade weighted cells so every row and column reaches its exact clue total across five crisp logic boards.', earnsCoins:true },
+  { slug:'lanternwake',    name:'Lantern Wake',          emoji:'\u{1F3EE}', scoreHint:'lanterns', url:'/lanternwake', desc:'Steer a moonlit ferry, collect every floating lantern, and dodge driftwood across five current-swept crossings.', earnsCoins:true },
+  { slug:'acornascent',    name:'Acorn Ascent',          emoji:'\u{1F43F}\uFE0F', scoreHint:'acorns', url:'/acornascent', desc:'Tune each launch arc, gather airborne acorns, and land a nimble squirrel on rising branches across five canopy groves.', earnsCoins:true },
+  { slug:'moonscale',      name:'Moonscale',             emoji:'\u{1F319}', scoreHint:'skies', url:'/moonscale', desc:'Place every numbered moonstone on a celestial balance, match the torque on both sides, and restore five starry skies.', earnsCoins:true },
+  { slug:'shadowbloom',    name:'Shadow Bloom',          emoji:'\u{1F311}', scoreHint:'blooms', url:'/shadowbloom', desc:'Cast moonlight around stone guardians, shade every night bloom, and protect sun blossoms across five lantern gardens.', earnsCoins:true },
+  { slug:'quiltquest',     name:'Quilt Quest',           emoji:'\u{1FAA1}', scoreHint:'panels', url:'/quiltquest', desc:'Rotate, position, and sew colorful fabric patches to cover five festival quilts without gaps or overlaps.', earnsCoins:true },
+  { slug:'riverriddle',    name:'River Riddle',          emoji:'\u{1F6F6}', scoreHint:'rivers', url:'/riverriddle', desc:'Ferry every traveler across five storybook rivers without leaving incompatible pairs unsupervised.', earnsCoins:true },
+  { slug:'choruscurrent',  name:'Chorus Current',        emoji:'\u{1F30A}', scoreHint:'harbors', url:'/choruscurrent', desc:'Tune the strength and phase of three colorful sea currents to match five glowing beacon waveforms.', earnsCoins:true },
+  { slug:'kiteparade',     name:'Kite Parade',           emoji:'\u{1FA81}', scoreHint:'kites', url:'/kiteparade', desc:'Dye connected fabric patches with different colors and send five bright festival kites into the sky.', earnsCoins:true },
+  { slug:'shellshift',     name:'Shell Shift',           emoji:'\u{1F41A}', scoreHint:'tidepools', url:'/shellshift', desc:'Rotate rows of colorful seashells to match five tidepool patterns before all three pearls are gone.', earnsCoins:true },
+  { slug:'flockfold',      name:'Flock Fold',            emoji:'\u{1F426}', scoreHint:'gates', url:'/flockfold', desc:'Fold seven paper birds into line, wedge, and column formations to clear five skies of cloud gates.', earnsCoins:true },
+  { slug:'geargrove',      name:'Gear Grove',            emoji:'\u2699\uFE0F', scoreHint:'groves', url:'/geargrove', desc:'Turn linked flower gears in opposite directions, align every engraved arrow, and awaken five clockwork groves.', earnsCoins:true },
+  { slug:'nectarmeasure',  name:'Nectar Measure',        emoji:'\u{1F36F}', scoreHint:'hives', url:'/nectarmeasure', desc:'Pour finite nectar among capacity-marked vessels, match every exact target, and balance five colorful apiary harvests.', earnsCoins:true },
+  { slug:'glassgarden',    name:'Glass Garden',          emoji:'\u{1FA9F}', scoreHint:'windows', url:'/glassgarden', desc:'Rotate jewel-toned stained-glass panes, match every colored seam and frame jewel, and restore five radiant windows.', earnsCoins:true },
+  { slug:'dapplegrove',    name:'Dapple Grove',          emoji:'\u{1F343}', scoreHint:'groves', url:'/dapplegrove', desc:'Shade duplicate numbered leaves, keep every sunlit leaf connected, and restore five woodland logic puzzles.', earnsCoins:true },
+  { slug:'fireflyslants',  name:'Firefly Slants',        emoji:'\u2728', scoreHint:'clearings', url:'/fireflyslants', desc:'Draw diagonal firefly trails, match every numbered lantern knot, and light five loop-free meadow lattices.', earnsCoins:true },
+  { slug:'magnetmeadow',   name:'Magnet Meadow',         emoji:'\u{1F9F2}', scoreHint:'meadows', url:'/magnetmeadow', desc:'Place paired magnets, match every positive and negative edge clue, and balance five polarity puzzle meadows.', earnsCoins:true },
+  { slug:'rainkeeper',     name:'Rainkeeper',            emoji:'\u2614', scoreHint:'gardens', url:'/rainkeeper', desc:'Steer a bright umbrella through five passing storms, catch nourishing raindrops, dodge hail, and wake each waiting garden.', earnsCoins:true },
+  { slug:'harborharmony',  name:'Harbor Harmony',         emoji:'\u2693', scoreHint:'harbors', url:'/harborharmony', desc:'Guide bright signal boats into matching harbor lights, protect the lanterns, and calm five moonlit crossings.', earnsCoins:true },
+  { slug:'lanternloom',    name:'Lantern Loom',          emoji:'\u{1F3EE}', scoreHint:'nights', url:'/lanternloom', desc:'Turn a shining lantern beam, catch fading stars in sequence, and weave five constellations before dawn.', earnsCoins:true },
+  { slug:'tideglass',      name:'Tideglass Trails',      emoji:'\u{1F30A}', scoreHint:'trails', url:'/tideglass', desc:'Walk five shimmering shore paths, gather glass shells, and reach each lighthouse before the tide breaks the trail.', earnsCoins:true },
+  { slug:'auroraaccord',   name:'Aurora Accord',          emoji:'\u2728', scoreHint:'accords', url:'/auroraaccord', desc:'Conduct five skyward light accords: catch drifting notes in their glowing lanes before the aurora fades.', earnsCoins:true },
+  { slug:'cindercompass',  name:'Cinder Compass',         emoji:'\u{1F9ED}', scoreHint:'charts', url:'/cindercompass', desc:'Turn a brass compass toward glowing beacons and map five volcanic star charts before the cinders cool.', earnsCoins:true },
+  { slug:'prismpulse',     name:'Prism Pulse',            emoji:'\u{1F308}', scoreHint:'rounds', url:'/prismpulse', desc:'Rotate crystal mirrors, trace bending beams, and route light through five spatial prism chambers.', earnsCoins:true },
+  { slug:'seedskip',       name:'Seedskip',               emoji:'\u{1F331}', scoreHint:'gardens', url:'/seedskip', desc:'Aim spring-loaded seeds, bank them around stone walls, and bloom five pocket gardens with clever ricochets.', earnsCoins:true },
+  { slug:'kitecircuit',     name:'Kite Circuit',           emoji:'\u{1FA81}', scoreHint:'rings', url:'/kitecircuit', desc:'Steer a bright kite through ordered sky rings, ride shifting winds, and dodge storm clouds across five aerial courses.', earnsCoins:true },
+  { slug:'echoferry',       name:'Echo Ferry',             emoji:'\u{1F6A2}', scoreHint:'channels', url:'/echoferry', desc:'Navigate five fogbound channels, reveal hidden buoys and reefs with sonar pings, and guide a tiny ferry safely to each dock.', earnsCoins:true },
+  { slug:'cloudquilt',      name:'Cloud Quilt',            emoji:'\u{1F9F5}', scoreHint:'quilts', url:'/cloudquilt', desc:'Flip connected cloud patches, match five glowing sky quilts, and finish each pattern before the thread runs out.', earnsCoins:true },
+  { slug:'moonmender',      name:'Moon Mender',            emoji:'\u{1F319}', scoreHint:'sites', url:'/moonmender', desc:'Drive a tiny lunar rover, roll loose moonstones into glowing craters, and mend five handcrafted moon sites.', earnsCoins:true },
+  { slug:'frostfootprints', name:'Frost Footprints',       emoji:'\u{1F427}', scoreHint:'floes', url:'/frostfootprints', desc:'Slide a scarfed penguin across five icy floes, sweep up every gold star, and reach each glowing igloo.', earnsCoins:true },
+  { slug:'bramblebounce', name:'Bramble Bounce',           emoji:'\u{1F331}', scoreHint:'blooms', url:'/bramblebounce', desc:'Bounce a glowing seed from a leaf paddle, wake every flower, and clear five tangled groves before three drops.', earnsCoins:true },
+  { slug:'dewdropdrift', name:'Dewdrop Drift',             emoji:'\u{1F4A7}', scoreHint:'leaves', url:'/dewdropdrift', desc:'Tilt five leafy mazes, gather every sun mote, and roll a sparkling dewdrop into each waiting blossom.', earnsCoins:true },
+  { slug:'mushroommorse', name:'Mushroom Morse',            emoji:'\u{1F344}', scoreHint:'clearings', url:'/mushroommorse', desc:'Read short and long lantern pulses, choose the matching mushroom code cap, and decode five woodland clearings.', earnsCoins:true },
+  { slug:'reedrelay', name:'Reed Relay',                    emoji:'\u{1F6F6}', scoreHint:'glowseeds', url:'/reedrelay', desc:'Switch river lanes, gather drifting glowseeds, and dodge snags across five moonlit reaches.', earnsCoins:true },
+  { slug:'belltowerbloom', name:'Belltower Bloom',           emoji:'\u{1F514}', scoreHint:'chimes', url:'/belltowerbloom', desc:'Read falling notes, ring three hanging bells on the golden line, and wake five moonlit towers into bloom.', earnsCoins:true },
+  { slug:'neststack', name:'Nest Stack',                       emoji:'\u{1FAB9}', scoreHint:'branches', url:'/neststack', desc:'Guide swaying branches onto a growing stack and weave five balanced treetop nests.', earnsCoins:true },
+  { slug:'clockworkclover', name:'Clockwork Clover',            emoji:'\u{1F340}', scoreHint:'beams', url:'/clockworkclover', desc:'Turn a garden clock, catch bright timing arcs, and wake five flower courtyards before sunset.', earnsCoins:true },
+  { slug:'thimbletide', name:'Thimble Tide',                    emoji:'\u{1F41A}', scoreHint:'pearls', url:'/thimbletide', desc:'Track a hidden pearl through quick shell swaps and chart five moonlit shores.', earnsCoins:true },
+  { slug:'ribbonreversal', name:'Ribbon Reversal', emoji:'\u{1F380}', scoreHint:'bundles', url:'/ribbonreversal', desc:'Reverse the top of a ribbon stack, sort lengths from shortest to longest, and organize five colorful puzzle bundles.', earnsCoins:true },
+  { slug:'pebbleparade', name:'Pebble Parade', emoji:'\u{1FAA8}', scoreHint:'skips', url:'/pebbleparade', desc:'Aim a landing ring, time skipping stones across the water, and cross five increasingly quick ponds.', earnsCoins:true },
+  { slug:'chalkchase', name:'Chalk Chase', emoji:'\u{1F58D}', scoreHint:'stars', url:'/chalkchase', desc:'Trace five playground paths through numbered stars without crossing your own chalk line.', earnsCoins:true },
+  { slug:'paperbridge', name:'Paper Bridge', emoji:'\u{1F4C4}', scoreHint:'bridges', url:'/paperbridge', desc:'Fold paper planks to the right length and bridge five increasingly wide ravines.', earnsCoins:true },
+  { slug:'signalgarden', name:'Signal Garden', emoji:'\u{1F331}', scoreHint:'signals', url:'/signalgarden', desc:'Watch fireflies blink across the garden, then echo each growing light pattern.', earnsCoins:true },
+  { slug:'pollenpassage', name:'Pollen Passage', emoji:'\u{1F41D}', scoreHint:'blooms', url:'/pollenpassage', desc:'Guide a bee through five flower-lane meadows, gathering pollen while dodging thorn gates.', earnsCoins:true },
+  { slug:'foxfiretrails', name:'Foxfire Trails', emoji:'\u{1F98A}', scoreHint:'wisps', url:'/foxfiretrails', desc:'Guide a fox through five forest trails, gather blue wisps in order, and avoid tangled brambles.', earnsCoins:true },
+  { slug:'bottlecapcurl', name:'Bottlecap Curl', emoji:'\u{1F964}', scoreHint:'rings', url:'/bottlecapcurl', desc:'Aim and flick a bottlecap through ordered scoring rings across five colorful tabletop curling rinks.', earnsCoins:true },
+  { slug:'runeroots', name:'Rune Roots', emoji:'\u{1F33F}', scoreHint:'roots', url:'/runeroots', desc:'Rotate mossy root runes toward the center seed and awaken five ancient forest groves before they wilt.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
@@ -179,7 +249,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'fifteenpuzzle', 'pegsolitaire', 'towerhanoi', 'sudokusprint', 'marblecircuit',
     'switchyard', 'canallock', 'wobble-drop', 'tangletuner', 'mosaicmatch', 'mahjongsolitaire',
     'nonogram', 'tenttrail', 'inkislands', 'vistatowers', 'futoshiki', 'blackbox', 'chronosort',
-    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
+    'minicrossword', 'fillomino', 'islandwalls', 'binarygrid', 'thermotrail', 'kropkidots', 'pearlloop', 'starbattle', 'parcelpatch', 'dominomosaic', 'knightstour', 'reboundrelay', 'rippleshepherd', 'starwheel', 'firebreakcommand', 'sumshade', 'moonscale', 'shadowbloom', 'riverriddle', 'choruscurrent', 'kiteparade', 'shellshift', 'nectarmeasure', 'glassgarden', 'rushhour', 'jigsaw', 'kakuro', 'calccages',
   ]),
   arcade: new Set([
     'pong', 'airhockey', 'skeeball', 'plinko', 'snake', 'breakout', 'flappy',
@@ -187,7 +257,7 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
     'asteroids', 'missilecommand', 'skyjoust', 'bomberman', 'whackamole',
     'colorcatch', 'pyramidhopper', 'pinball', 'starfielddodger', 'reactiongrid',
     'gravityswitch', 'orbburst', 'lasermaze', 'keystrike', 'pulseparry',
-    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider',
+    'bubbleshooter', 'caverncrush', 'wobble-drop', 'canyonglider', 'neondivide', 'lureline', 'meteorminer', 'lanternwake', 'acornascent',
   ]),
   word: new Set(['hangman', 'wordweave', 'letterlock', 'wordsearch', 'wordladder', 'minicrossword']),
   cards: new Set([
@@ -196,18 +266,19 @@ const DISCOVERY_CATEGORY_GROUPS = Object.freeze({
   ]),
   sports: new Set([
     'airhockey', 'skeeball', 'pool', 'plinko', 'darts', 'minigolf', 'ski',
-    'homerunderby', 'nebulacurl',
+    'homerunderby', 'baseballradio', 'nebulacurl', 'windbow', 'lureline',
   ]),
   racing: new Set([
     'dino', 'micro-rc-racer', 'neonrally', 'skywire', 'gravityswitch',
     'trailblazer', 'aerocourier', 'sundialsprint', 'canyonglider',
+    'turbotilt',
   ]),
   strategy: new Set([
     'prisonersdilemma', 'connect4', 'towerdefense', 'waterballoon', 'battleship',
     'dotsandboxes', 'reversi', 'checkers', 'nimgrove', 'mancala', 'backgammon',
-    'chess', 'gomokugrid', 'oregontrail', 'pokemon',
+    'chess', 'gomokugrid', 'oregontrail', 'pokemon', 'riverriddle',
   ]),
-  'audio-accessible': new Set(['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio']),
+  'audio-accessible': new Set(['audioagar', 'echolabyrinth', 'beatrail', 'branchingaudio', 'baseballradio']),
   'two-player': new Set([
     'pong', 'airhockey', 'tictactoe', 'rps', 'connect4', 'waterballoon',
     'battleship', 'dotsandboxes', 'reversi', 'checkers', 'mancala',
@@ -226,7 +297,7 @@ const TOP_PLAYED_SLUGS = Object.freeze([
 ]);
 
 const LONG_SLUGS = Object.freeze(new Set([
-  'clubpenguin-world', 'prisonersdilemma', 'oregontrail', 'pokemon',
+  'clubpenguin-world', 'prisonersdilemma', 'oregontrail', 'pokemon', 'baseballradio',
   'towerdefense', 'chess', 'backgammon', 'mahjongsolitaire',
 ]));
 
@@ -240,7 +311,7 @@ const EASY_SLUGS = Object.freeze(new Set([
   'whackamole', 'colorcatch', 'plinko', 'skeeball',
 ]));
 
-const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar']));
+const MULTIPLAYER_SLUGS = Object.freeze(new Set(['clubpenguin-world', 'audioagar', 'turbotilt', 'crowdshift', 'sticktilt', 'sketchclash']));
 const TWO_PLAYER_SLUGS = Object.freeze(DISCOVERY_CATEGORY_GROUPS['two-player']);
 const BASE_RELEASE_TIME = Date.UTC(2026, 1, 10);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -326,13 +397,16 @@ export const GAMES = BASE_GAMES.map((game, index) => {
   if (TRENDING_RANKS[game.slug]) featured.trendingRank = TRENDING_RANKS[game.slug];
   if (TOP_PLAYED_RANKS[game.slug]) featured.topPlayedRank = TOP_PLAYED_RANKS[game.slug];
 
+  const contentContract = getGameContentContract(game.slug);
   return {
     ...game,
     categories: [...categoriesSet],
     modes,
     duration,
     difficulty,
-    releasedAt: releaseDateForIndex(index),
+    releasedAt: contentContract?.releasedAt || releaseDateForIndex(index),
+    releaseDateSource: contentContract?.releasedAt ? 'explicit' : 'legacy-derived',
+    contentContract,
     featured,
     ...(FEATURED_ART[game.slug] ? { art: FEATURED_ART[game.slug] } : {}),
   };

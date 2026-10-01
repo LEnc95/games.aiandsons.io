@@ -258,7 +258,7 @@ async function main() {
     }));
     assert(discoveryInitialState.todayRows.includes("daily"), "Expected Today panel to include daily mission progress.");
     assert(discoveryInitialState.todayRows.includes("weekly"), "Expected Today panel to include weekly challenge progress.");
-    assert(discoveryInitialState.todayCta === "Continue Challenge", "Expected Today panel to expose challenge CTA.");
+    assert(discoveryInitialState.todayCta.startsWith("Play "), "Expected Today panel to expose a direct game challenge CTA.");
     assert(discoveryInitialState.onboardingVisible === false, "Expected onboarding section to stay out of the main home feed.");
     assert(discoveryInitialState.dayTitle.length > 0, "Expected Game of the Day to render a title.");
     assert(discoveryInitialState.weekTitle.length > 0, "Expected Game of the Week to render a title.");

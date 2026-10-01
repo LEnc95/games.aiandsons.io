@@ -1,0 +1,67 @@
+const define = (entry) => Object.freeze({
+  ...entry,
+  readProgress: (context) => context?.[entry.gameSlug]?.[entry.metric] ?? 0,
+});
+
+export const DAILY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'snake-length-14', gameSlug: 'snake', metric: 'length', name: 'Stretch Goal', desc: 'Reach length 14 in Snake.', target: 14, rewardCoins: 8 }),
+  define({ id: 'pong-margin-3', gameSlug: 'pong', metric: 'winMargin', name: 'Paddle Power', desc: 'Win Pong by at least 3 points.', target: 3, rewardCoins: 7 }),
+  define({ id: 'tetris-lines-16', gameSlug: 'tetris', metric: 'lines', name: 'Line Cleaner', desc: 'Clear 16 lines in Tetris.', target: 16, rewardCoins: 10 }),
+  define({ id: 'asteroids-wave-4', gameSlug: 'asteroids', metric: 'wave', name: 'Field Survivor', desc: 'Reach wave 4 in Asteroids.', target: 4, rewardCoins: 9 }),
+  define({ id: 'bomberman-level-3', gameSlug: 'bomberman', metric: 'level', name: 'Maze Breaker', desc: 'Reach level 3 in Bomberman Lite.', target: 3, rewardCoins: 9 }),
+  define({ id: 'dino-distance-700', gameSlug: 'dino', metric: 'dist', name: 'Long Sprint', desc: 'Reach 700 distance in Dino Run.', target: 700, rewardCoins: 8 }),
+  define({ id: 'frogger-score-12', gameSlug: 'frogger', metric: 'score', name: 'River Champ', desc: 'Score 12 in Frogger.', target: 12, rewardCoins: 8 }),
+  define({ id: 'pokemon-badge-1', gameSlug: 'pokemon', metric: 'badges', name: 'Trainer Badge', desc: 'Earn at least 1 badge in Pokemon.', target: 1, rewardCoins: 12 }),
+  define({ id: 'tetris-score-2500', gameSlug: 'tetris', metric: 'score', name: 'Stack Scorer', desc: 'Reach 2500 score in Tetris.', target: 2500, rewardCoins: 11 }),
+  define({ id: 'colorcatch-score-1200', gameSlug: 'colorcatch', metric: 'score', name: 'Color Chain', desc: 'Reach 1200 score in Color Catch Arcade.', target: 1200, rewardCoins: 10 }),
+  define({ id: 'colorcatch-stage-2', gameSlug: 'colorcatch', metric: 'stage', name: 'Stage Sprint', desc: 'Reach stage 2 in Color Catch Arcade.', target: 2, rewardCoins: 9 }),
+]);
+
+export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w40-ribbonreversal-bundles-5', weekKey: '2026-09-28', gameSlug: 'ribbonreversal', metric: 'bundles', name: 'Studio Sorter', desc: 'Sort all 5 bundles in Ribbon Reversal.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w40-sticktilt-players-8', weekKey: '2026-09-28', gameSlug: 'sticktilt', metric: 'players', name: 'Full Dojo', desc: 'Start a Stick & Tilt rumble with 8 players.', target: 8, rewardCoins: 20 }),
+  define({ id: 'weekly-w40-lanternwake-lanterns-30', weekKey: '2026-09-28', gameSlug: 'lanternwake', metric: 'lanterns', name: 'Wake Keeper', desc: 'Gather all 30 lanterns in Lantern Wake.', target: 30, rewardCoins: 20 }),
+  define({ id: 'weekly-w40-rainkeeper-raindrops-60', weekKey: '2026-09-28', gameSlug: 'rainkeeper', metric: 'raindrops', name: 'Garden Shower', desc: 'Catch all 60 raindrops in Rainkeeper.', target: 60, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-neststack-branches-20', weekKey: '2026-09-21', gameSlug: 'neststack', metric: 'branches', name: 'Treetop Builder', desc: 'Place all 20 branches in Nest Stack.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-baseballradio-wins-1', weekKey: '2026-09-21', gameSlug: 'baseballradio', metric: 'wins', name: 'Ninth-Inning Win', desc: 'Win a Bottom of the Ninth broadcast.', target: 1, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-bottlecapcurl-targets-20', weekKey: '2026-09-21', gameSlug: 'bottlecapcurl', metric: 'targets', name: 'Tabletop Sweep', desc: 'Score all 20 targets in Bottlecap Curl.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w39-moonmender-stones-6', weekKey: '2026-09-21', gameSlug: 'moonmender', metric: 'stones', name: 'Lunar Mason', desc: 'Mend all 6 moonstones in Moon Mender.', target: 6, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-auroraaccord-notes-25', weekKey: '2026-09-14', gameSlug: 'auroraaccord', metric: 'notes', name: 'Aurora Chorus', desc: 'Catch all 25 notes in Aurora Accord.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-lanternloom-stars-55', weekKey: '2026-09-14', gameSlug: 'lanternloom', metric: 'stars', name: 'Constellation Keeper', desc: 'Catch all 55 stars in Lantern Loom.', target: 55, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-turbotilt-players-8', weekKey: '2026-09-14', gameSlug: 'turbotilt', metric: 'players', name: 'Full Grid', desc: 'Race with 8 players in Turbo Tilt.', target: 8, rewardCoins: 20 }),
+  define({ id: 'weekly-w38-dewdropdrift-motes-14', weekKey: '2026-09-14', gameSlug: 'dewdropdrift', metric: 'motes', name: 'Mote Mosaic', desc: 'Collect all 14 motes in Dewdrop Drift.', target: 14, rewardCoins: 20 }),
+  define({ id: 'weekly-w37-harborharmony-beacons-45', weekKey: '2026-09-07', gameSlug: 'harborharmony', metric: 'beacons', name: 'Beacon Chorus', desc: 'Answer all 45 beacons in Harbor Harmony.', target: 45, rewardCoins: 20 }),
+  define({ id: 'weekly-w37-pollenpatrol-flowers-25', weekKey: '2026-09-07', gameSlug: 'pollenpatrol', metric: 'flowers', name: 'Full Bloom Flight', desc: 'Gather all 25 flowers in Pollen Patrol.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w37-firebreakcommand-cabins-20', weekKey: '2026-09-07', gameSlug: 'firebreakcommand', metric: 'cabins', name: 'Ranger Shield', desc: 'Protect all 20 cabins in Firebreak Command.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w37-nectarmeasure-vessels-18', weekKey: '2026-09-07', gameSlug: 'nectarmeasure', metric: 'vessels', name: 'Measured Harvest', desc: 'Balance all 18 vessels in Nectar Measure.', target: 18, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-dapplegrove-leaves-107', weekKey: '2026-08-31', gameSlug: 'dapplegrove', metric: 'leaves', name: 'Crown Canopy', desc: 'Shade all 107 leaves in Dapple Grove.', target: 107, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-geargrove-gears-27', weekKey: '2026-08-31', gameSlug: 'geargrove', metric: 'gears', name: 'Clockwork Gardener', desc: 'Align all 27 gears in Gear Grove.', target: 27, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-prismpulse-pulses-25', weekKey: '2026-08-31', gameSlug: 'prismpulse', metric: 'pulses', name: 'Prism Conductor', desc: 'Send 25 pulses in Prism Pulse.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w36-snake-length-500', weekKey: '2026-08-31', gameSlug: 'snake', metric: 'length', name: 'Serpent Summit', desc: 'Reach length 500 in Snake.', target: 500, rewardCoins: 20 }),
+  define({ id: 'weekly-w35-glassgarden-panes-43', weekKey: '2026-08-24', gameSlug: 'glassgarden', metric: 'panes', name: 'Conservatory Restorer', desc: 'Restore all 43 panes in Glass Garden.', target: 43, rewardCoins: 20 }),
+  define({ id: 'weekly-w35-aquariumlogic-boards-5', weekKey: '2026-08-24', gameSlug: 'aquariumlogic', metric: 'boards', name: 'Dawn Reef Keeper', desc: 'Balance all 5 boards in Aquarium Logic.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w35-meteorminer-score-3000', weekKey: '2026-08-24', gameSlug: 'meteorminer', metric: 'score', name: 'Ion Survey', desc: 'Reach 3000 score in Meteor Miner.', target: 3000, rewardCoins: 20 }),
+  define({ id: 'weekly-w35-dapplegrove-leaves-50', weekKey: '2026-08-24', gameSlug: 'dapplegrove', metric: 'leaves', name: 'Canopy Counter', desc: 'Shade 50 leaves in Dapple Grove.', target: 50, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-tetris-score-6000', gameSlug: 'tetris', metric: 'score', name: 'Prism Stack', desc: 'Reach 6000 score in Tetris.', target: 6000, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-aquariumlogic-boards-5', gameSlug: 'aquariumlogic', metric: 'boards', name: 'Reef Architect', desc: 'Balance all 5 boards in Aquarium Logic.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-acornascent-acorns-18', gameSlug: 'acornascent', metric: 'acorns', name: 'Summit Squirrel', desc: 'Gather 18 acorns in Acorn Ascent.', target: 18, rewardCoins: 20 }),
+  define({ id: 'weekly-w32-pong-margin-8', gameSlug: 'pong', metric: 'winMargin', name: 'Perfect Paddle', desc: 'Win Pong by at least 8 points.', target: 8, rewardCoins: 20 }),
+  define({ id: 'weekly-snake-length-22', gameSlug: 'snake', metric: 'length', name: 'Weekly Snake Master', desc: 'Reach length 22 in Snake.', target: 22, rewardCoins: 14 }),
+  define({ id: 'weekly-pong-margin-6', gameSlug: 'pong', metric: 'winMargin', name: 'Weekly Pong Ace', desc: 'Win Pong by at least 6 points.', target: 6, rewardCoins: 14 }),
+  define({ id: 'weekly-tetris-lines-40', gameSlug: 'tetris', metric: 'lines', name: 'Weekly Line Boss', desc: 'Clear 40 lines in Tetris.', target: 40, rewardCoins: 18 }),
+  define({ id: 'weekly-asteroids-wave-7', gameSlug: 'asteroids', metric: 'wave', name: 'Weekly Deep Space', desc: 'Reach wave 7 in Asteroids.', target: 7, rewardCoins: 18 }),
+  define({ id: 'weekly-bomberman-level-5', gameSlug: 'bomberman', metric: 'level', name: 'Weekly Blast Route', desc: 'Reach level 5 in Bomberman Lite.', target: 5, rewardCoins: 17 }),
+  define({ id: 'weekly-dino-distance-1800', gameSlug: 'dino', metric: 'dist', name: 'Weekly Dino Dash', desc: 'Reach 1800 distance in Dino Run.', target: 1800, rewardCoins: 15 }),
+  define({ id: 'weekly-frogger-score-20', gameSlug: 'frogger', metric: 'score', name: 'Weekly River Captain', desc: 'Score 20 in Frogger.', target: 20, rewardCoins: 14 }),
+  define({ id: 'weekly-pokemon-badges-2', gameSlug: 'pokemon', metric: 'badges', name: 'Weekly Gym Push', desc: 'Earn 2 badges in Pokemon.', target: 2, rewardCoins: 20 }),
+  define({ id: 'weekly-colorcatch-score-2400', gameSlug: 'colorcatch', metric: 'score', name: 'Weekly Spectrum Rush', desc: 'Reach 2400 score in Color Catch Arcade.', target: 2400, rewardCoins: 18 }),
+  define({ id: 'weekly-colorcatch-stage-3', gameSlug: 'colorcatch', metric: 'stage', name: 'Weekly Full Prism', desc: 'Reach stage 3 in Color Catch Arcade.', target: 3, rewardCoins: 17 }),
+]);
+
+export const CHALLENGE_POLICY = Object.freeze({
+  dailyActiveCount: 3,
+  weeklyActiveCount: 4,
+  maxDailyRewardCoins: 36,
+  maxWeeklyRewardCoins: 80,
+});
+

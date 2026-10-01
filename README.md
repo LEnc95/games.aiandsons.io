@@ -195,9 +195,21 @@ Optional env vars:
 ## Daily game ship checklist
 
 1. Add the game route and update `src/meta/games.js`.
-2. Mount `mountGameFeedback({ gameSlug, gameName })`.
-3. Run `npm run feedback:sync-linear`.
-4. Run `npm run test:feedback`.
-5. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
-6. Confirm Linear baseline issue coverage or let daily provisioning backfill it.
+2. Add an explicit `src/meta/content-contracts.js` entry with a release date, bounded outcome metrics, and at least one cosmetic slot.
+3. Report completion through `reportGameOutcome({ slug, result, durationMs, metrics })`.
+4. Mount `mountGameFeedback({ gameSlug, gameName })`.
+5. Add the game to the `CHANGELOG.md` Unreleased section.
+6. Run `npm run seo`, `npm run og`, and `npm run feedback:sync-linear:files`.
+7. Run `npm run maintenance:validate`, `npm run game:preflight`, `npm run test:telemetry`, `npm run test:feedback`, `npm run test:shop`, and `npm run test:social`.
+8. Run `npm run test:feedback-smoke:raw` when gameplay shell or feedback surface changed.
+9. Commit one game as `Add <Game Name> daily game` on `automation/daily-game/YYYY-MM-DD`, then open a guarded pull request. Unattended releases never push directly to `main`.
+10. Let the required premerge checks and trusted squash auto-merge update `main`, then verify Main QA and the production game route.
+
+## Self-maintaining release train
+
+- Every new daily game declares bounded outcomes and cosmetic slots in the engagement contract registry and reports results through the shared outcome API.
+- Monday automation produces a deterministic brief for three agent-designed cosmetics and four challenges. Automation PRs receive the full premerge gate and enable auto-merge after required checks.
+- Sunday automation promotes `CHANGELOG.md` for players and parents, updates `TECHNICAL_CHANGELOG.md` for maintainers, and synchronizes package/runtime versions.
+- Production verification runs after Main QA and retries after 5 and 15 minutes before alerting. It does not automatically revert a failed deployment.
+- Aggregate gameplay telemetry stores only daily counters and bounded numeric summaries. Client transmission remains disabled until privacy approval is recorded and the runtime flag is enabled.
 

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Morris Meadow | AI and Sons Games</title>
+
+  <style>
+    :root{color-scheme:light;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#eef7df;color:#183b35;display:flex;justify-content:center;padding:clamp(10px,2vw,24px);overflow-x:hidden}
+    .shell{width:min(980px,100%);display:grid;gap:12px;align-content:start}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px}
+    h1{font-size:clamp(1.45rem,4.5vw,2.35rem);line-height:1;margin:0;letter-spacing:-.04em}
+    .home{color:#176b58;font-weight:850;text-decoration:none;border:2px solid #76aa6c;border-radius:999px;padding:8px 13px;background:#fffdf4}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .stat{min-width:0;background:#fffdf4;border:2px solid #acd18a;border-radius:15px;padding:7px 10px;text-align:center;box-shadow:0 4px 0 #c6dfa9}
+    .stat span{display:block;font-size:.68rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#55705f}
+    .stat strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.86rem,2.7vw,1.05rem)}
+    .stage{position:relative;border:3px solid #6b9d63;border-radius:22px;overflow:hidden;background:#cfe7a9;box-shadow:0 10px 0 #aac987}
+    canvas{width:100%;aspect-ratio:4/3;display:block;touch-action:none;outline:none}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    button{border:2px solid #4f8569;border-radius:13px;background:#fffdf4;color:#183b35;font:800 clamp(.75rem,2vw,.95rem)/1.1 inherit;padding:10px 7px;min-height:43px;cursor:pointer;box-shadow:0 3px 0 #9fc392}
+    button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #9fc392}
+    button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #9fc392}
+    button.primary{background:#ffd66e;border-color:#986c24;color:#3d2d14}
+    button:disabled{opacity:.48;cursor:not-allowed}
+    .help{background:#fffdf4;border:2px solid #acd18a;border-radius:15px;padding:10px 14px;font-size:.84rem;line-height:1.45}
+    .help b{color:#176b58}
+    #live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    @media(max-width:620px){
+      body{padding:8px}
+      header{display:grid;grid-template-columns:1fr;align-items:start;justify-items:start;gap:7px}
+      .home{padding:6px 10px;font-size:.78rem}
+      .stats{gap:5px}.stat{padding:5px 3px;border-radius:11px}.stat span{font-size:.57rem}.stat strong{font-size:.76rem}
+      .stage{border-radius:16px;box-shadow:0 6px 0 #aac987}
+      .controls{grid-template-columns:repeat(3,1fr);gap:6px}
+      button{min-height:42px;padding:8px 4px}
+      .help{font-size:.74rem;padding:8px 10px}
+    }
+    @media(max-height:700px) and (min-width:621px){canvas{aspect-ratio:16/9}.help{display:none}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Morris Meadow | AI and Sons Games">
+  <meta property="og:description" content="Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/morrismeadow">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/morrismeadow.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Morris Meadow | AI and Sons Games">
+  <meta name="twitter:description" content="Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/morrismeadow.png">
+  <link rel="canonical" href="https://games.aiandsons.io/morrismeadow">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Morris Meadow","description":"Form mills, capture rival stones, and outmaneuver a deterministic opponent in Nine Men’s Morris. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/morrismeadow","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div><h1>Morris Meadow</h1><small>Three in a row makes a mill.</small></div>
+    <a class="home" href="/">All games</a>
+  </header>
+  <section class="stats" aria-label="Match status">
+    <div class="stat"><span>Phase</span><strong id="phase">Ready</strong></div>
+    <div class="stat"><span>Your stones</span><strong id="player-count">9 to place</strong></div>
+    <div class="stat"><span>Rival stones</span><strong id="rival-count">9 to place</strong></div>
+    <div class="stat"><span>Time</span><strong id="time">0:00</strong></div>
+  </section>
+  <section class="stage">
+    <canvas id="game" width="900" height="675" tabindex="0" aria-label="Morris Meadow game board"></canvas>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="start" class="primary">Start match</button>
+    <button id="pause">Pause</button>
+    <button id="restart">Restart</button>
+    <button id="theme">Theme: Meadow</button>
+    <button id="fullscreen">Fullscreen</button>
+    <button id="feedback">Feedback</button>
+  </section>
+  <section class="help">
+    <b>Play:</b> click an empty flower to place a stone. Form a row of three along a board line, then capture a rival stone. After placing nine stones, move along connected lines; with only three stones, you may fly anywhere. Keyboard: <b>Arrows</b> choose, <b>Enter</b> act, <b>Escape</b> cancel, <b>P</b> pause, <b>R</b> restart, <b>T</b> theme, <b>F</b> fullscreen.
+  </section>
+  <div id="live" aria-live="polite"></div>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const el={phase:document.querySelector('#phase'),player:document.querySelector('#player-count'),rival:document.querySelector('#rival-count'),time:document.querySelector('#time'),start:document.querySelector('#start'),pause:document.querySelector('#pause'),restart:document.querySelector('#restart'),theme:document.querySelector('#theme'),fullscreen:document.querySelector('#fullscreen'),feedback:document.querySelector('#feedback'),live:document.querySelector('#live')};
+const POINTS=[
+  [.1,.1],[.5,.1],[.9,.1],[.25,.25],[.5,.25],[.75,.25],[.4,.4],[.5,.4],[.6,.4],
+  [.1,.5],[.25,.5],[.4,.5],[.6,.5],[.75,.5],[.9,.5],[.4,.6],[.5,.6],[.6,.6],
+  [.25,.75],[.5,.75],[.75,.75],[.1,.9],[.5,.9],[.9,.9]
+];
+const EDGES=[[0,1],[1,2],[0,9],[2,14],[3,4],[4,5],[3,10],[5,13],[6,7],[7,8],[6,11],[8,12],[9,10],[10,11],[12,13],[13,14],[15,16],[16,17],[15,11],[17,12],[18,19],[19,20],[18,10],[20,13],[21,22],[22,23],[21,9],[23,14],[1,4],[4,7],[16,19],[19,22]];
+const MILLS=[[0,1,2],[3,4,5],[6,7,8],[9,10,11],[12,13,14],[15,16,17],[18,19,20],[21,22,23],[0,9,21],[3,10,18],[6,11,15],[1,4,7],[16,19,22],[8,12,17],[5,13,20],[2,14,23]];
+const NEIGHBORS=Array.from({length:24},()=>[]);
+for(const[a,b]of EDGES){NEIGHBORS[a].push(b);NEIGHBORS[b].push(a)}
+const THEMES=[
+  {name:'Meadow',background:['#e9f5c9','#9ccc72'],board:'#775934',lines:'#fff5c4',player:'#fff8df',rival:'#4e775f',accent:'#ffd65e',leaf:'#5c9d55'},
+  {name:'Moonlit',background:['#dce8ff','#6676a8'],board:'#2f3455',lines:'#b9d9ff',player:'#f3e7ff',rival:'#35406c',accent:'#ffe084',leaf:'#657cc1'},
+  {name:'Sunset',background:['#ffe9c3','#e9966a'],board:'#793f45',lines:'#fff0c9',player:'#fff7dd',rival:'#7d3554',accent:'#ffcf68',leaf:'#b85655'}
+];
+const game={mode:'menu',resumeMode:'playing',pieces:Array(24).fill(0),toPlace:{1:9,2:9},turn:1,captureRequired:0,selected:-1,focus:0,elapsedMs:0,aiDelayMs:0,pulse:0,themeIndex:0,mills:0,captures:0,turns:0,rewarded:false,reported:false,status:'Start a match and place the first stone.',lastAction:{type:'ready'}};
+let view={left:160,top:70,size:540,radius:20},manualUntil=0,lastFrame=performance.now();
+
+const actorName=actor=>actor===1?'you':'the garden keeper';
+const pieceCount=actor=>game.pieces.filter(value=>value===actor).length;
+const formatTime=ms=>{const seconds=Math.floor(ms/1000);return`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`};
+const currentPhase=actor=>game.toPlace[actor]>0?'placing':pieceCount(actor)===3?'flying':'moving';
+const formsMill=(index,actor,pieces=game.pieces)=>MILLS.some(line=>line.includes(index)&&line.every(point=>pieces[point]===actor));
+const allInMills=actor=>game.pieces.every((value,index)=>value!==actor||formsMill(index,actor));
+const canCapture=index=>game.pieces[index]===2&&(!formsMill(index,2)||allInMills(2));
+const canMove=(from,to,actor=1)=>game.pieces[from]===actor&&game.pieces[to]===0&&(pieceCount(actor)===3||NEIGHBORS[from].includes(to));
+const legalMoves=actor=>{const result=[];for(let from=0;from<24;from++)if(game.pieces[from]===actor)for(let to=0;to<24;to++)if(canMove(from,to,actor))result.push([from,to]);return result};
+const metrics=()=>({mills:game.mills,captures:game.captures,turns:game.turns});
+function report(result){if(game.reported)return;game.reported=true;reportGameOutcome({slug:'morrismeadow',result,durationMs:game.elapsedMs,metrics:metrics()})}
+function finish(result,reason){game.mode=result==='completed'?'won':'lost';game.captureRequired=0;game.selected=-1;game.aiDelayMs=0;game.status=reason;game.lastAction={type:game.mode,result,reason,metrics:metrics()};if(result==='completed'&&!game.rewarded){addCoins(30);game.rewarded=true}report(result);syncUi();render()}
+function checkTerminal(){
+  if(game.toPlace[1]>0||game.toPlace[2]>0)return false;
+  if(pieceCount(2)<3){finish('completed','The garden keeper has fewer than three stones. Meadow victory!');return true}
+  if(pieceCount(1)<3){finish('lost','You have fewer than three stones. The garden keeper wins.');return true}
+  if(!legalMoves(2).length){finish('completed','The garden keeper is blocked. Meadow victory!');return true}
+  if(!legalMoves(1).length){finish('lost','Every path is blocked. The garden keeper wins.');return true}
+  return false
+}
+function resetState(mode='playing'){
+  game.mode=mode;game.resumeMode='playing';game.pieces=Array(24).fill(0);game.toPlace={1:9,2:9};game.turn=1;game.captureRequired=0;game.selected=-1;game.focus=0;game.elapsedMs=0;game.aiDelayMs=0;game.pulse=0;game.mills=0;game.captures=0;game.turns=0;game.rewarded=false;game.reported=false;game.status=mode==='menu'?'Start a match and place the first stone.':'Your turn: place a stone on any open flower.';game.lastAction={type:mode==='menu'?'ready':'start'};syncUi();render()
+}
+function start(){if(game.mode==='playing')return;resetState('playing');canvas.focus()}
+function restart(){if(['playing','paused'].includes(game.mode)&&game.turns>0)report('abandoned');resetState('playing');game.lastAction={type:'restart'};game.status='Fresh match. Place the first stone.';syncUi();render();canvas.focus()}
+function cancel(){if(game.mode!=='playing'||game.turn!==1)return false;game.selected=-1;game.status=game.captureRequired===1?'Choose a rival stone to capture.':'Selection cleared.';game.lastAction={type:'cancel'};syncUi();render();return true}
+function finishPlayerTurn(){
+  if(checkTerminal())return;
+  game.turn=2;game.selected=-1;game.aiDelayMs=480;game.status='The garden keeper is considering the board…';game.lastAction={type:'await-ai',phase:currentPhase(2)};syncUi();render()
+}
+function placePlayer(index){
+  if(game.pieces[index]!==0)return false;
+  game.pieces[index]=1;game.toPlace[1]--;game.turns++;game.focus=index;
+  if(formsMill(index,1)){game.mills++;game.captureRequired=1;game.status='Mill formed! Capture a highlighted rival stone.';game.lastAction={type:'player-mill',at:index,mills:game.mills};syncUi();render();return true}
+  game.status=`Stone placed at flower ${index+1}.`;game.lastAction={type:'player-place',at:index,to_place:game.toPlace[1]};finishPlayerTurn();return true
+}
+function movePlayer(index){
+  if(game.selected<0){
+    if(game.pieces[index]!==1){game.status='Choose one of your ivory stones first.';game.lastAction={type:'select-rejected',at:index};syncUi();render();return false}
+    game.selected=index;game.focus=index;game.status=currentPhase(1)==='flying'?'Stone selected. Fly to any open flower.':'Stone selected. Choose a connected open flower.';game.lastAction={type:'select',at:index,legal:legalMoves(1).filter(([from])=>from===index).map(([,to])=>to)};syncUi();render();return true
+  }
+  if(game.pieces[index]===1){game.selected=index;game.focus=index;game.status='Different stone selected.';game.lastAction={type:'reselect',at:index};syncUi();render();return true}
+  const from=game.selected;
+  if(!canMove(from,index,1)){game.status='That flower is not a legal destination.';game.lastAction={type:'move-rejected',from,to:index};syncUi();render();return false}
+  game.pieces[from]=0;game.pieces[index]=1;game.selected=-1;game.focus=index;game.turns++;
+  if(formsMill(index,1)){game.mills++;game.captureRequired=1;game.status='Mill formed! Capture a highlighted rival stone.';game.lastAction={type:'player-mill',from,to:index,mills:game.mills};syncUi();render();return true}
+  game.status=`Stone moved from ${from+1} to ${index+1}.`;game.lastAction={type:'player-move',from,to:index,phase:currentPhase(1)};finishPlayerTurn();return true
+}
+function capturePlayer(index){
+  if(!canCapture(index)){game.status='Choose a highlighted rival stone. Stones in mills are protected while another is available.';game.lastAction={type:'capture-rejected',at:index};syncUi();render();return false}
+  game.pieces[index]=0;game.captures++;game.captureRequired=0;game.focus=index;game.status=`Rival stone ${index+1} returned to the garden.`;game.lastAction={type:'player-capture',at:index,captures:game.captures};if(!checkTerminal())finishPlayerTurn();return true
+}
+function activate(index=game.focus){
+  if(game.mode==='menu'){start();return true}
+  if(game.mode!=='playing'||game.turn!==1||index<0||index>23)return false;
+  if(game.captureRequired===1)return capturePlayer(index);
+  if(game.toPlace[1]>0)return placePlayer(index);
+  return movePlayer(index)
+}
+function simulatedMillAt(index,actor,pieces){return MILLS.some(line=>line.includes(index)&&line.every(point=>pieces[point]===actor))}
+function placementScore(index,actor){
+  const pieces=[...game.pieces];pieces[index]=actor;let score=simulatedMillAt(index,actor,pieces)?1000:0;
+  const opponent=actor===1?2:1,piecesOpponent=[...game.pieces];piecesOpponent[index]=opponent;
+  if(simulatedMillAt(index,opponent,piecesOpponent))score+=420;
+  score+=NEIGHBORS[index].length*8-index*.001;return score
+}
+function movementScore(from,to,actor){
+  const pieces=[...game.pieces];pieces[from]=0;pieces[to]=actor;let score=simulatedMillAt(to,actor,pieces)?1000:0;
+  const opponent=actor===1?2:1,piecesOpponent=[...game.pieces];piecesOpponent[to]=opponent;
+  if(simulatedMillAt(to,opponent,piecesOpponent))score+=300;
+  score+=NEIGHBORS[to].filter(point=>pieces[point]===0).length*5-to*.001;return score
+}
+function aiCapture(){
+  const candidates=game.pieces.map((value,index)=>value===1&&(!formsMill(index,1)||allInMills(1))?index:-1).filter(index=>index>=0);
+  const target=candidates.sort((a,b)=>{const aThreat=MILLS.filter(line=>line.includes(a)&&line.filter(point=>game.pieces[point]===1).length===2).length;const bThreat=MILLS.filter(line=>line.includes(b)&&line.filter(point=>game.pieces[point]===1).length===2).length;return bThreat-aThreat||a-b})[0];
+  if(target!==undefined)game.pieces[target]=0;
+  return target
+}
+function runAi(){
+  if(game.mode!=='playing'||game.turn!==2)return false;
+  const phase=currentPhase(2);let action;
+  if(phase==='placing'){
+    const target=game.pieces.map((value,index)=>value===0?index:-1).filter(index=>index>=0).sort((a,b)=>placementScore(b,2)-placementScore(a,2)||a-b)[0];
+    game.pieces[target]=2;game.toPlace[2]--;game.turns++;action={type:'ai-place',at:target,to_place:game.toPlace[2]};
+    if(formsMill(target,2)){const captured=aiCapture();action={type:'ai-mill',at:target,captured}}
+  }else{
+    const move=legalMoves(2).sort((a,b)=>movementScore(b[0],b[1],2)-movementScore(a[0],a[1],2)||a[0]-b[0]||a[1]-b[1])[0];
+    if(!move){checkTerminal();return false}
+    const[from,to]=move;game.pieces[from]=0;game.pieces[to]=2;game.turns++;action={type:'ai-move',from,to,phase};
+    if(formsMill(to,2)){const captured=aiCapture();action={type:'ai-mill',from,to,captured,phase}}
+  }
+  game.lastAction=action;
+  if(checkTerminal())return true;
+  game.turn=1;game.status=game.toPlace[1]>0?'Your turn: place a stone on an open flower.':currentPhase(1)==='flying'?'Your turn: only three stones remain, so you may fly anywhere.':'Your turn: select a stone, then a connected flower.';syncUi();render();return true
+}
+function update(ms){
+  if(game.mode!=='playing')return;
+  const safe=Math.max(0,Math.min(5000,Number(ms)||0));game.elapsedMs+=safe;game.pulse=(game.pulse+safe/700)%(Math.PI*2);
+  if(game.turn===2&&game.aiDelayMs>0){game.aiDelayMs-=safe;if(game.aiDelayMs<=0){game.aiDelayMs=0;runAi()}}
+}
+function togglePause(){
+  if(game.mode==='paused'){game.mode=game.resumeMode;game.status=game.turn===2?'The garden keeper resumes thinking.':'Meadow match resumed.';game.lastAction={type:'resume'}}
+  else if(game.mode==='playing'){game.resumeMode='playing';game.mode='paused';game.status='Paused. Match time and the garden keeper are frozen.';game.lastAction={type:'pause'}}
+  syncUi();render()
+}
+function cycleTheme(){game.themeIndex=(game.themeIndex+1)%THEMES.length;game.status=`${THEMES[game.themeIndex].name} board theme applied.`;game.lastAction={type:'theme',theme:THEMES[game.themeIndex].name};syncUi();render()}
+async function toggleFullscreen(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();else await document.exitFullscreen?.()}catch(error){game.status='Fullscreen is unavailable in this browser.';game.lastAction={type:'fullscreen-error',message:String(error?.message||error)};syncUi();render()}}
+function moveFocus(key){
+  const current=POINTS[game.focus],direction={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[key];let best=game.focus,bestScore=Infinity;
+  POINTS.forEach((point,index)=>{if(index===game.focus)return;const dx=point[0]-current[0],dy=point[1]-current[1],forward=dx*direction[0]+dy*direction[1],side=Math.abs(dx*direction[1]-dy*direction[0]);if(forward<=.001)return;const score=forward+side*2.7;if(score<bestScore){bestScore=score;best=index}});
+  const changed=best!==game.focus;game.focus=best;game.status=changed?`Keyboard focus moved to flower ${best+1}.`:'Board edge reached.';game.lastAction={type:changed?'focus':'focus-boundary',at:best,key};syncUi();render();return changed
+}
+function computeView(){const width=canvas.width,height=canvas.height,size=Math.min(width*.68,height*.73),left=(width-size)/2,top=(height-size)/2+height*.025,radius=Math.max(12,Math.min(24,size*.038));view={width,height,size,left,top,radius};return view}
+function pointPosition(index){const[x,y]=POINTS[index];return{x:view.left+x*view.size,y:view.top+y*view.size}}
+function rounded(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,Math.min(r,w/2,h/2))}
+function drawBackground(theme){
+  const gradient=ctx.createLinearGradient(0,0,0,view.height);gradient.addColorStop(0,theme.background[0]);gradient.addColorStop(1,theme.background[1]);ctx.fillStyle=gradient;ctx.fillRect(0,0,view.width,view.height);
+  ctx.fillStyle=theme.leaf;ctx.globalAlpha=.18;
+  for(let i=0;i<30;i++){const x=(i*193%997)/997*view.width,y=(i*89%601)/601*view.height,r=4+(i%5)*2;ctx.beginPath();ctx.ellipse(x,y,r*1.8,r,(i%7)*.3,0,Math.PI*2);ctx.fill()}
+  ctx.globalAlpha=1
+}
+function drawBoard(theme){
+  const pad=view.size*.075;rounded(view.left-pad,view.top-pad,view.size+pad*2,view.size+pad*2,view.size*.06);ctx.fillStyle=theme.board;ctx.fill();ctx.strokeStyle='#ffffff66';ctx.lineWidth=Math.max(3,view.size*.012);ctx.stroke();
+  ctx.strokeStyle=theme.lines;ctx.lineWidth=Math.max(4,view.size*.012);ctx.lineCap='round';
+  for(const[a,b]of EDGES){const p=pointPosition(a),q=pointPosition(b);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}
+  for(let index=0;index<24;index++)drawPoint(index,theme)
+}
+function drawPoint(index,theme){
+  const p=pointPosition(index),value=game.pieces[index],selected=index===game.selected,focused=index===game.focus&&game.mode==='playing'&&game.turn===1;
+  const capturable=game.captureRequired===1&&canCapture(index),destination=game.selected>=0&&canMove(game.selected,index,1);
+  if(capturable||destination){ctx.beginPath();ctx.arc(p.x,p.y,view.radius*(1.65+.08*Math.sin(game.pulse)),0,Math.PI*2);ctx.fillStyle=theme.accent+'88';ctx.fill()}
+  ctx.beginPath();ctx.arc(p.x,p.y,view.radius*.62,0,Math.PI*2);ctx.fillStyle=theme.lines;ctx.fill();
+  if(value){
+    const gradient=ctx.createRadialGradient(p.x-view.radius*.3,p.y-view.radius*.35,2,p.x,p.y,view.radius*1.12);gradient.addColorStop(0,value===1?'#ffffff':theme.rival);gradient.addColorStop(1,value===1?theme.player:'#172e2a');ctx.beginPath();ctx.arc(p.x,p.y,view.radius*1.03,0,Math.PI*2);ctx.fillStyle=gradient;ctx.shadowColor='#15281c88';ctx.shadowBlur=view.radius*.45;ctx.shadowOffsetY=view.radius*.18;ctx.fill();ctx.shadowColor='transparent';ctx.strokeStyle=value===1?'#967c4b':'#e5f3c8';ctx.lineWidth=Math.max(2,view.radius*.15);ctx.stroke()
+  }
+  if(selected||focused){ctx.beginPath();ctx.arc(p.x,p.y,view.radius*1.45,0,Math.PI*2);ctx.strokeStyle=selected?theme.accent:'#fff';ctx.lineWidth=Math.max(3,view.radius*.18);ctx.setLineDash(focused&&!selected?[5,5]:[]);ctx.stroke();ctx.setLineDash([])}
+}
+function drawHeader(theme){
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#173b35';ctx.font=`900 ${Math.max(17,Math.min(34,view.width*.038))}px Inter,system-ui`;
+  const turnLabel=game.turn===1?'YOUR TURN':'GARDEN KEEPER';ctx.fillText(game.mode==='menu'?'MORRIS MEADOW':game.mode==='won'?'MEADOW CHAMPION':game.mode==='lost'?'MATCH COMPLETE':turnLabel,view.width/2,Math.max(24,view.top*.43));
+  if(game.mode==='playing'){const label=game.captureRequired===1?'CAPTURE A HIGHLIGHTED RIVAL':currentPhase(game.turn).toUpperCase(),fontSize=Math.max(11,Math.min(17,view.width*.019)),y=Math.max(48,view.top*.73);ctx.font=`850 ${fontSize}px Inter,system-ui`;const w=Math.max(105,ctx.measureText(label).width+30);rounded(view.width/2-w/2,y-fontSize*.9,w,fontSize*1.8,fontSize*.9);ctx.fillStyle='#fff9dce8';ctx.fill();ctx.strokeStyle='#5f805e';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#244f43';ctx.fillText(label,view.width/2,y)}
+}
+function overlay(title,lines,theme){
+  ctx.fillStyle='#18382caf';ctx.fillRect(0,0,view.width,view.height);const w=Math.min(view.width*.8,650),h=Math.min(view.height*.56,330),x=(view.width-w)/2,y=(view.height-h)/2;rounded(x,y,w,h,24);ctx.fillStyle='#fffdf2f5';ctx.fill();ctx.strokeStyle=theme.accent;ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#183b35';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`900 ${Math.max(24,Math.min(46,w*.072))}px Inter,system-ui`;ctx.fillText(title,x+w/2,y+h*.25);ctx.font=`750 ${Math.max(12,Math.min(18,w*.029))}px Inter,system-ui`;lines.forEach((line,index)=>ctx.fillText(line,x+w/2,y+h*(.47+index*.14)))
+}
+function render(){
+  computeView();const theme=THEMES[game.themeIndex];drawBackground(theme);drawBoard(theme);drawHeader(theme);
+  if(game.mode==='menu')overlay('MORRIS MEADOW',['Place nine stones and make rows of three.','Each mill lets you capture one rival stone.','Click Start match or press Enter.'],theme);
+  else if(game.mode==='paused')overlay('MEADOW PAUSED',['Match time and the rival are frozen.','Your board position is safe.','Press P or Pause to continue.'],theme);
+  else if(game.mode==='won')overlay('MEADOW VICTORY',[game.status,'30 coins added to your collection.',`Mills ${game.mills} · Captures ${game.captures} · Turns ${game.turns}`],theme);
+  else if(game.mode==='lost')overlay('GARDEN KEEPER WINS',[game.status,'Study the open lines and try a new opening.',`Mills ${game.mills} · Captures ${game.captures} · Turns ${game.turns}`],theme)
+}
+function syncUi(){
+  const phase=game.mode==='menu'?'Ready':game.mode==='paused'?'Paused':game.mode==='won'?'Victory':game.mode==='lost'?'Defeat':game.captureRequired===1?'Capture':currentPhase(game.turn);
+  el.phase.textContent=phase[0].toUpperCase()+phase.slice(1);el.player.textContent=game.toPlace[1]>0?`${game.toPlace[1]} to place`:`${pieceCount(1)} on board`;el.rival.textContent=game.toPlace[2]>0?`${game.toPlace[2]} to place`:`${pieceCount(2)} on board`;el.time.textContent=formatTime(game.elapsedMs);el.start.hidden=game.mode!=='menu';el.pause.disabled=!['playing','paused'].includes(game.mode);el.pause.textContent=game.mode==='paused'?'Resume':'Pause';el.theme.textContent=`Theme: ${THEMES[game.themeIndex].name}`;el.live.textContent=game.status
+}
+function canvasIndex(event){
+  const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)/rect.width*canvas.width,y=(event.clientY-rect.top)/rect.height*canvas.height;let best=-1,distance=Infinity;
+  POINTS.forEach((_,index)=>{const p=pointPosition(index),d=Math.hypot(x-p.x,y-p.y);if(d<distance){distance=d;best=index}});
+  return distance<=view.radius*2.1?best:-1
+}
+canvas.addEventListener('pointerdown',event=>{if(game.mode==='menu'){start();event.preventDefault();return}const index=canvasIndex(event);if(index>=0){game.focus=index;activate(index)}else{game.status='Choose one of the board flowers.';game.lastAction={type:'pointer-boundary'};syncUi();render()}canvas.focus();event.preventDefault()});
+el.start.addEventListener('click',start);el.pause.addEventListener('click',togglePause);el.restart.addEventListener('click',restart);el.theme.addEventListener('click',cycleTheme);el.fullscreen.addEventListener('click',toggleFullscreen);
+document.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();moveFocus(event.key);return}const key=event.key.toLowerCase();if(key==='enter'||key===' '){event.preventDefault();activate();return}if(key==='escape'){if(document.fullscreenElement)document.exitFullscreen?.();else if(game.selected>=0||game.captureRequired===1)cancel();return}if(key==='p'){togglePause();return}if(key==='r'){restart();return}if(key==='t'){cycleTheme();return}if(key==='f'){toggleFullscreen()}});
+function resizeCanvas(){const rect=canvas.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.round(rect.width*dpr)),height=Math.max(240,Math.round(rect.height*dpr));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}computeView();render()}
+document.addEventListener('fullscreenchange',resizeCanvas);window.addEventListener('resize',resizeCanvas);
+window.advanceTime=ms=>{manualUntil=performance.now()+180;let remaining=Math.max(0,Math.min(30000,Number(ms)||0));while(remaining>0){const step=Math.min(1000/60,remaining);update(step);remaining-=step}syncUi();render()};
+window.render_game_to_text=()=>JSON.stringify({
+  coordinate_system:'24 numbered flowers; canvas origin is top-left, x increases right, y increases down; normalized point coordinates are included',
+  mode:game.mode,paused_from:game.mode==='paused'?game.resumeMode:null,turn:game.turn===1?'player':'garden-keeper',phase:game.mode==='playing'?currentPhase(game.turn):null,capture_required:game.captureRequired===1,
+  points:POINTS.map(([x,y],index)=>({id:index+1,x,y,occupant:game.pieces[index]===1?'player':game.pieces[index]===2?'rival':'empty',neighbors:NEIGHBORS[index].map(value=>value+1)})),
+  focus:game.focus+1,selected:game.selected>=0?game.selected+1:null,legal_destinations:game.selected>=0?legalMoves(1).filter(([from])=>from===game.selected).map(([,to])=>to+1):[],capturable:game.captureRequired===1?game.pieces.map((_,index)=>canCapture(index)?index+1:null).filter(Boolean):[],
+  stones:{player:pieceCount(1),rival:pieceCount(2),player_to_place:game.toPlace[1],rival_to_place:game.toPlace[2]},stats:metrics(),elapsed_ms:Math.round(game.elapsedMs),ai_delay_ms:Math.max(0,Math.round(game.aiDelayMs)),theme:THEMES[game.themeIndex].name,status:game.status,last_action:game.lastAction,
+  controls:{navigate:'Arrow keys',act:'Enter or pointer',cancel:'Escape',pause:'P',restart:'R',theme:'T',fullscreen:'F'}
+});
+function loadScenario(name){
+  game.mode='playing';game.resumeMode='playing';game.pieces=Array(24).fill(0);game.toPlace={1:0,2:0};game.turn=1;game.captureRequired=0;game.selected=-1;game.focus=0;game.aiDelayMs=0;game.elapsedMs=2000;game.mills=0;game.captures=0;game.turns=18;game.rewarded=false;game.reported=false;
+  if(name==='capture'){[0,1,14,21,22,23].forEach(index=>game.pieces[index]=1);[3,4,5,6,10].forEach(index=>game.pieces[index]=2);game.selected=14;game.focus=2;game.status='QA capture setup: move stone 15 to flower 3 to form a mill.'}
+  else if(name==='flying'){[0,9,21].forEach(index=>game.pieces[index]=1);[2,5,14,23].forEach(index=>game.pieces[index]=2);game.selected=0;game.focus=19;game.status='QA flying setup: three ivory stones may fly to any open flower.'}
+  else{throw new Error(`Unknown scenario: ${name}`)}
+  game.lastAction={type:'qa-scenario',name};syncUi();render();return true
+}
+window.__MORRIS_MEADOW_GAME__={getState:()=>game,getView:()=>view,start,restart,activate,moveFocus,cancel,pause:togglePause,cycleTheme,runAi:()=>{game.aiDelayMs=0;return runAi()},loadScenario,forceWin:()=>finish('completed','QA victory: the rival has fewer than three stones.'),forceLoss:()=>finish('lost','QA defeat: fewer than three ivory stones remain.')};
+window.addEventListener('pagehide',()=>{if(['playing','paused'].includes(game.mode)&&game.turns>0)report('abandoned')},{once:true});
+mountGameFeedback({gameSlug:'morrismeadow',gameName:'Morris Meadow'});
+el.feedback.addEventListener('click',()=>document.querySelector('#cadeFeedbackOpenBtn')?.click());
+function frame(now){if(now>=manualUntil){const dt=Math.min(50,Math.max(0,now-lastFrame));update(dt);syncUi();render()}lastFrame=now;requestAnimationFrame(frame)}
+resizeCanvas();syncUi();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

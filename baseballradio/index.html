@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bottom of the Ninth | AI and Sons Games</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="./assets/index-B-Et6z7H.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Ds22Bq99.css">
+    
+    <style>
+      .back-home {
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 999px;
+        background: rgba(6,12,24,.82);
+        color: #eef5ff;
+        font: 700 14px/1 system-ui, sans-serif;
+        text-decoration: none;
+        backdrop-filter: blur(10px);
+      }
+      @media (max-width: 640px) {
+        .masthead { justify-content: flex-start; }
+        /* Keep tagline available to screen readers; hide visually only. */
+        .masthead .tagline {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+      }
+    </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Bottom of the Ninth | AI and Sons Games">
+  <meta property="og:description" content="Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/baseballradio">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/baseballradio.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bottom of the Ninth | AI and Sons Games">
+  <meta name="twitter:description" content="Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/baseballradio.png">
+  <link rel="canonical" href="https://games.aiandsons.io/baseballradio">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Bottom of the Ninth","description":"Play a full audio-first baseball broadcast: bat by timing stereo cues, call every pitch, and guide your club through nine innings. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/baseballradio","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+  <body>
+
+    <!--
+      Audio-only game, Gameday-style interface: scorebug, pitch tracker, live stats.
+      There is still no animated field — the ballgame lives in your ears; the board
+      is the broadcast graphic layer (location, velocity, box score).
+    -->
+    <a class="skip-link" href="#gd-controls">Skip to broadcast controls</a>
+    <main class="shell">
+      <header class="masthead">
+        <a class="back-home" href="/" aria-label="Back to all games">← Back</a>
+        <div class="masthead-brand">
+          <p class="eyebrow">Live Gameday</p>
+          <h1>Bottom of the Ninth</h1>
+        </div>
+        <p class="tagline">
+          Headphones · Tap or <kbd>SPACE</kbd> to swing / release · pick your club
+        </p>
+      </header>
+
+      <section id="gate" class="gate" aria-labelledby="gate-heading">
+        <h2 id="gate-heading" class="sr-only">Start game</h2>
+        <p class="sr-only">
+          Audio-first baseball. Timing cues are stereo field sounds, not the visual board.
+          Use headphones. Tap or press Space to swing when batting, or to release when pitching.
+        </p>
+        <label class="side-pick" for="player-side">
+          <span>Play as</span>
+          <select id="player-side" name="player-side">
+            <option value="home">Pirates (home) — bat bottom, pitch top</option>
+            <option value="away">Phillies (away) — bat top, pitch bottom</option>
+          </select>
+        </label>
+        <div class="gate-featured" id="todays-broadcast-card">
+          <button id="todays-broadcast" class="gate-featured-btn" type="button" aria-describedby="todays-broadcast-hint">
+            <span class="gate-featured-kicker">Today's broadcast</span>
+            <span class="gate-featured-title" id="todays-broadcast-title">Hold the ninth</span>
+          </button>
+          <p id="todays-streak" class="gate-streak">No streak yet — tune in today.</p>
+          <p id="todays-broadcast-hint" class="sr-only">
+            Today's situation challenge, rotating by date. Activating selects it; then Play Ball starts that broadcast.
+            Optional local streak counts days you attempted today's broadcast.
+          </p>
+        </div>
+        <label class="side-pick" for="session-mode" id="session-mode-label">
+          <span>Mode</span>
+          <select id="session-mode" name="session-mode">
+            <option value="exhibition">Exhibition game (single)</option>
+            <option value="series">Best of 3 series</option>
+            <option value="playoff">Playoff</option>
+            <option value="practice">Practice cage</option>
+          </select>
+        </label>
+        <label class="side-pick" for="playoff-format" id="playoff-format-label" hidden>
+          <span>Playoff depth</span>
+          <select id="playoff-format" name="playoff-format" aria-describedby="playoff-format-hint">
+            <option value="bracket" selected>Bracket (Bo3 pennant → Bo5 final)</option>
+            <option value="pennant">Pennant only (Bo3)</option>
+          </select>
+        </label>
+        <p id="playoff-format-hint" class="sr-only">
+          Bracket plays two series with a spoken round break. Pennant is a single best-of-3.
+        </p>
+        <label class="side-pick" for="challenge-pick" id="challenge-pick-label">
+          <span>Challenge</span>
+          <select id="challenge-pick" name="challenge-pick" aria-describedby="challenge-pick-hint">
+            <option value="none">None (normal game)</option>
+            <option value="today">Today's broadcast</option>
+            <option value="hold-ninth">Hold the ninth</option>
+            <option value="bottom-ninth">Bottom of the Ninth</option>
+            <option value="escape-act">Escape act</option>
+            <option value="practice-cage-plus">Practice cage++</option>
+            <option value="tie-breaker">Tie-breaker</option>
+            <option value="traffic-jam">Traffic jam</option>
+            <option value="extras-hold">Extra-inning hold</option>
+            <option value="inherited-save">Inherited ninth</option>
+          </select>
+        </label>
+        <p id="challenge-pick-hint" class="sr-only">
+          Situation challenges start from a fixed scoreboard with clear win and lose rules.
+          Today's broadcast rotates by date. Deep link with question-mark challenge equals id, or series equals bo3 for Best of 3.
+          Choosing a challenge overrides Mode length and roles for that preset.
+        </p>
+        <label class="side-pick" for="campaign-kind" id="campaign-kind-label">
+          <span>Schedule</span>
+          <select id="campaign-kind" name="campaign-kind" aria-describedby="campaign-kind-hint">
+            <option value="none">Single game</option>
+            <option value="season">Season</option>
+          </select>
+        </label>
+        <p id="campaign-kind-hint" class="sr-only">
+          Season plays a short slate of games or best-of-3 series against the other club.
+          Best of 3 and Playoff are chosen under Mode. Schedule is hidden during series, playoff, practice, or challenge.
+        </p>
+        <label class="side-pick" for="season-unit" id="season-unit-label" hidden>
+          <span>Season of</span>
+          <select id="season-unit" name="season-unit" aria-describedby="season-unit-hint">
+            <option value="game" selected>Games (exhibitions)</option>
+            <option value="series">Series (best of 3)</option>
+          </select>
+        </label>
+        <p id="season-unit-hint" class="sr-only">
+          Season of series plays a Bo3 for each schedule slot and tracks series wins and losses.
+        </p>
+        <label class="side-pick" for="season-schedule" id="season-schedule-label">
+          <span>Season length</span>
+          <select id="season-schedule" name="season-schedule">
+            <option value="3" hidden data-season-unit="series">3 series</option>
+            <option value="6" selected data-season-unit="both">6</option>
+            <option value="12" data-season-unit="game">12 games</option>
+          </select>
+        </label>
+        <label class="side-pick" for="session-length" id="session-length-label">
+          <span>Length</span>
+          <select id="session-length" name="session-length">
+            <option value="3">3 innings</option>
+            <option value="6">6 innings</option>
+            <option value="9" selected>Full 9 innings</option>
+          </select>
+        </label>
+        <label class="side-pick" for="role-lock" id="role-lock-label">
+          <span>Roles</span>
+          <select id="role-lock" name="role-lock">
+            <option value="both">Bat and pitch</option>
+            <option value="bat">Bat only (AI pitches)</option>
+            <option value="pitch">Pitch only (AI bats)</option>
+          </select>
+        </label>
+        <button id="resume-game" class="secondary" type="button" hidden>
+          Resume broadcast
+        </button>
+        <button id="play-ball" class="primary" type="button">Play Ball</button>
+        <p id="resume-hint" class="gate-note gate-resume-hint" hidden></p>
+        <p class="gate-note">
+          Headphones or stereo speakers recommended — pitch location is left/right and high/low in your ears.
+          Audio starts on tap. When batting: count four, swing on five. When pitching: call the pitch,
+          then release on four. Calibrate latency (tap along) before your first pitch.
+          Leave mid-game and come back — we save between pitches.
+        </p>
+      </section>
+
+      <section id="booth" class="booth" hidden aria-label="Broadcast booth">
+        <div class="gd-board-column">
+          <details id="gameday-fold" class="gameday-fold" open>
+            <summary class="gameday-fold-summary">Visual board (optional)</summary>
+            <div id="gameday" class="gameday" role="region" aria-label="Visual game board"></div>
+          </details>
+
+          <p id="live-score" class="live-score">Game not started.</p>
+
+          <section class="gd-feed" aria-labelledby="pbp-heading">
+            <h2 id="pbp-heading" class="section-label">Play-by-Play</h2>
+            <ol id="radio-log" class="radio-log"></ol>
+          </section>
+
+          <section class="gd-diagnostics" aria-labelledby="diag-heading">
+            <h2 id="diag-heading" class="section-label">Diagnostics</h2>
+            <div id="diagnostics" class="diagnostics"></div>
+          </section>
+        </div>
+
+        <aside class="gd-rail" aria-label="Broadcast controls">
+          <div class="gd-controls" id="gd-controls">
+            <h2 class="section-label">Controls</h2>
+            <div class="transport">
+              <button id="next-pitch" class="primary" type="button" aria-describedby="cal-gate-hint space-hint">
+                Start at-bat
+              </button>
+              <button id="timing-action" class="timing-action primary" type="button" data-timing-action="true">
+                Swing
+              </button>
+              <p id="space-hint" class="hint-text">
+                During the pitch: activate Swing (or press Space) on beat five. Count four, swing on five.
+              </p>
+              <button id="calibrate" class="secondary" type="button">Calibrate latency</button>
+              <button id="skip-cal" class="secondary" type="button" hidden>
+                Skip calibration — start playing
+              </button>
+              <p id="cal-gate-hint" class="cal-gate-hint" hidden>
+                Start is locked until you calibrate latency or choose Skip calibration.
+              </p>
+              <button id="announce-situation" class="secondary" type="button">Announce situation</button>
+              <button
+                id="call-closer"
+                class="secondary"
+                type="button"
+                aria-describedby="call-closer-hint"
+                disabled
+              >
+                Call the closer
+              </button>
+              <p id="call-closer-hint" class="hint-text">
+                Save situations: bring in your closer once per game, late, protecting a lead (Controls rail).
+              </p>
+              <button
+                id="intentional-walk"
+                class="secondary"
+                type="button"
+                aria-describedby="intentional-walk-hint"
+                disabled
+              >
+                Intentional walk
+              </button>
+              <p id="intentional-walk-hint" class="hint-text">
+                When you're pitching: put the batter on with one pitch (or press I).
+              </p>
+              <button
+                id="send-runner"
+                class="secondary"
+                type="button"
+                aria-describedby="send-runner-hint"
+                disabled
+              >
+                Send him
+              </button>
+              <p id="send-runner-hint" class="hint-text">
+                When you're batting, runner on first and second open (0–1 out): send him once per at-bat (or press G).
+              </p>
+              <p id="calibration-status" class="cal-status" role="status" aria-live="polite">Not calibrated.</p>
+              <p id="timing-cue" class="timing-cue sr-only" role="status" aria-live="assertive" aria-atomic="true"></p>
+            </div>
+            <div id="cal-tap-zone" class="cal-tap-zone" hidden>
+              <p class="cal-tap-label" id="cal-tap-label">Tap here with each click</p>
+              <button
+                id="cal-tap-target"
+                class="cal-tap-target"
+                type="button"
+                data-timing-action="true"
+                aria-labelledby="cal-tap-label"
+              >
+                Tap
+              </button>
+            </div>
+            <div id="pitch-call" class="pitch-call" hidden></div>
+            <div id="timing-coach" class="timing-coach" aria-hidden="true"></div>
+            <p id="swing-readout" class="swing-readout" role="status" aria-live="polite">
+              Calibrate first, then start the at-bat. Count four, swing on five.
+            </p>
+            <p id="difficulty-announce" class="difficulty-announce" role="status" aria-live="polite"></p>
+            <div id="end-card" hidden></div>
+          </div>
+
+          <div class="gd-settings">
+            <h2 class="section-label">Mix &amp; accessibility</h2>
+            <div class="mixer">
+              <label class="difficulty-label" for="difficulty">
+                <span>Difficulty</span>
+                <select id="difficulty" name="difficulty">
+                  <option value="rookie">Rookie — learn the beat</option>
+                  <option value="pro">Pro — mostly fastballs</option>
+                  <option value="all-star">All-Star — full mix</option>
+                  <option value="legend">Legend — tight windows</option>
+                </select>
+              </label>
+              <label class="difficulty-label" for="announce-mode">
+                <span>Announce mode</span>
+                <select id="announce-mode" name="announce-mode" aria-describedby="announce-mode-hint">
+                  <option value="booth">Booth speech (recommended)</option>
+                  <option value="screen-reader">Screen reader play-by-play</option>
+                  <option value="both">Both (may double-speak)</option>
+                </select>
+              </label>
+              <p id="announce-mode-hint" class="sr-only">
+                Screen reader mode turns off booth speech and announces play-by-play lines through your screen reader.
+                Both may double-speak with VoiceOver or NVDA.
+              </p>
+              <label class="difficulty-label" for="booth-voice">
+                <span>Booth voice</span>
+                <select id="booth-voice" name="booth-voice" aria-describedby="booth-voice-hint">
+                  <option value="sampled">Cast voices — Adam, Brian, Eric (recommended)</option>
+                  <option value="speech">System speech</option>
+                </select>
+              </label>
+              <p id="booth-voice-hint" class="sr-only">
+                Cast voices speak the live call with batter and pitcher names as Adam, Brian, or Eric.
+                If cast audio is unavailable, directed samples or system speech keep the booth alive.
+                Screen reader announce mode skips booth audio either way.
+              </p>
+              <label class="toggle">
+                <input type="checkbox" id="radio-filter" checked />
+                <span>AM radio filter</span>
+              </label>
+              <label class="slider">
+                <span>Crowd energy bias</span>
+                <input type="range" id="crowd-level" min="-2" max="2" step="1" value="0" />
+                <output id="crowd-level-out">0</output>
+              </label>
+              <label class="slider">
+                <span>Field (timing cues)</span>
+                <input type="range" id="field-gain" min="40" max="100" step="1" value="95" />
+                <output id="field-gain-out">95</output>
+              </label>
+              <label class="slider">
+                <span>Crowd bus</span>
+                <input type="range" id="crowd-bus-gain" min="0" max="100" step="1" value="40" />
+                <output id="crowd-bus-gain-out">40</output>
+              </label>
+              <label class="slider">
+                <span>Booth</span>
+                <input type="range" id="booth-gain" min="0" max="100" step="1" value="100" />
+                <output id="booth-gain-out">100</output>
+              </label>
+              <label class="slider">
+                <span>Master</span>
+                <input type="range" id="master-gain" min="0" max="100" step="1" value="80" />
+                <output id="master-gain-out">80</output>
+              </label>
+              <label class="slider">
+                <span>Booth speech rate</span>
+                <input type="range" id="speech-rate" min="70" max="140" step="5" value="100" aria-describedby="speech-rate-hint" />
+                <output id="speech-rate-out">100%</output>
+              </label>
+              <p id="speech-rate-hint" class="sr-only">
+                Affects Web Speech booth voice only. Screen reader rate is controlled by your assistive technology.
+              </p>
+              <label class="difficulty-label" for="coach-verbosity">
+                <span>Coach verbosity</span>
+                <select id="coach-verbosity" name="coach-verbosity" aria-describedby="coach-verbosity-hint">
+                  <option value="full">Full</option>
+                  <option value="short">Short</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+              <p id="coach-verbosity-hint" class="sr-only">
+                Coaching tips only. The booth broadcast and field timing cues stay on.
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        <button id="action-fab" class="action-fab" type="button" hidden>Swing</button>
+      </section>
+    </main>
+
+    <script type="module" src="./site-integration.js"></script>
+    <script type="module">
+      import { state as profileState } from '../src/core/state.js';
+      const COPPER_SCOREBOARD = profileState.inventory instanceof Set && profileState.inventory.has('baseballradio-copper-scoreboard');
+      if (COPPER_SCOREBOARD) {
+        const palette = { background:'#201b2d', panel:'#3a2941', accent:'#d87843', score:'#fff0d0', warning:'#f6c96a' };
+        const style = document.createElement('style');
+        style.textContent = `:root{--bg:${palette.background};--bg-2:#30233b;--panel:${palette.panel};--panel-2:#4a3040;--accent:${palette.accent};--accent-2:#e7a95a;--ink:${palette.score};--warn:${palette.warning};--line:#765264}body{background:radial-gradient(90% 60% at 50% -10%,#674052 0%,transparent 55%),linear-gradient(180deg,var(--bg-2),var(--bg) 40%)}`;
+        document.head.append(style);
+      }
+    </script>
+    <script type="module">
+      import { mountGameFeedback } from '../src/feedback/embed.js';
+      mountGameFeedback({ gameSlug: "baseballradio", gameName: "Bottom of the Ninth" });
+    </script>
+
+  </body>
+</html>

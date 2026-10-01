@@ -40,3 +40,33 @@ export const memoryCardBackStyle = () => {
       return 'default';
   }
 };
+
+/** Bottom of the Ninth broadcast palette tokens (contract: broadcast-theme). */
+export const broadcastThemeStyle = () => {
+  switch (state.cosmetics.broadcastTheme) {
+    case 'night-signal':
+      return {
+        background: '#070b14',
+        panel: '#121c30',
+        accent: '#41b6e6',
+        score: '#e8f4ff',
+        warning: '#7dd3fc',
+      };
+    case 'day-call':
+      return {
+        background: '#1a2438',
+        panel: '#243552',
+        accent: '#e8a317',
+        score: '#fff8e7',
+        warning: '#ffd56a',
+      };
+    default:
+      return {
+        background: '#0b1220',
+        panel: '#162238',
+        accent: '#c41230',
+        score: '#f2f5fa',
+        warning: '#f0c14b',
+      };
+  }
+};

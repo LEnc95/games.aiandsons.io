@@ -33,7 +33,7 @@ function safeLastModified(filePath) {
   }
 }
 
-const staticPages = [
+export const staticPages = [
   { route: '/', file: 'index.html' },
   { route: '/changelog', file: 'changelog/index.html' },
   { route: '/shop.html', file: 'shop.html' },
@@ -54,37 +54,93 @@ const gamePages = GAMES.map((game) => {
   return {
     route: normalizeRoute(sourceRoute),
     file: path.join(relativeSource, 'index.html'),
+    releasedAt: game.contentContract?.releasedAt || null,
   };
 });
 
 const pages = [...staticPages, ...gamePages];
-const deduped = new Map();
-for (const page of pages) {
-  if (!deduped.has(page.route)) {
-    deduped.set(page.route, page);
+
+export function parseExistingLastModified(xml, baseUrl = BASE_URL) {
+  const lastModifiedByRoute = new Map();
+  for (const match of String(xml || '').matchAll(/<url>([\s\S]*?)<\/url>/gi)) {
+    const block = match[1];
+    const location = block.match(/<loc>\s*([^<]+?)\s*<\/loc>/i)?.[1];
+    const lastModified = block.match(/<lastmod>\s*(\d{4}-\d{2}-\d{2})\s*<\/lastmod>/i)?.[1];
+    if (!location || !lastModified || !location.startsWith(baseUrl)) continue;
+    const route = location.slice(baseUrl.length) || '/';
+    lastModifiedByRoute.set(normalizeRoute(route), lastModified);
   }
+  return lastModifiedByRoute;
 }
 
-let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-`;
+export function buildSitemap({
+  root = ROOT,
+  pageDefinitions = pages,
+  existingXml = '',
+  baseUrl = BASE_URL,
+} = {}) {
+  const lineEnding = existingXml.includes('\r\n') ? '\r\n' : '\n';
+  const existingLastModified = parseExistingLastModified(existingXml, baseUrl);
+  const deduped = new Map();
+  for (const page of pageDefinitions) {
+    const route = normalizeRoute(page.route);
+    if (!deduped.has(route)) {
+      deduped.set(route, { ...page, route });
+    }
+  }
 
-for (const page of deduped.values()) {
-  const filePath = path.join(ROOT, page.file);
-  const lastmod = safeLastModified(filePath);
-  const priority = page.route === '/' ? '1.0' : '0.8';
+  const lines = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  ];
 
-  xml += `  <url>\n`;
-  xml += `    <loc>${BASE_URL}${page.route}</loc>\n`;
-  xml += `    <lastmod>${lastmod}</lastmod>\n`;
-  xml += `    <changefreq>weekly</changefreq>\n`;
-  xml += `    <priority>${priority}</priority>\n`;
-  xml += `  </url>\n`;
+  for (const page of deduped.values()) {
+    const filePath = path.join(root, page.file);
+    const lastmod = existingLastModified.get(page.route)
+      || page.releasedAt
+      || safeLastModified(filePath);
+    const priority = page.route === '/' ? '1.0' : '0.8';
+
+    lines.push(
+      '  <url>',
+      `    <loc>${baseUrl}${page.route}</loc>`,
+      `    <lastmod>${lastmod}</lastmod>`,
+      '    <changefreq>weekly</changefreq>',
+      `    <priority>${priority}</priority>`,
+      '  </url>',
+    );
+  }
+
+  lines.push('</urlset>');
+  return {
+    xml: `${lines.join(lineEnding)}${lineEnding}`,
+    urlCount: deduped.size,
+  };
 }
-
-xml += `</urlset>\n`;
 
 const outputPath = path.join(ROOT, 'sitemap.xml');
-fs.writeFileSync(outputPath, xml);
+export function generateSitemap({
+  root = ROOT,
+  pageDefinitions = pages,
+  outputFile = path.join(root, 'sitemap.xml'),
+  baseUrl = BASE_URL,
+  logger = console,
+} = {}) {
+  const existingXml = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, 'utf8') : '';
+  const result = buildSitemap({ root, pageDefinitions, existingXml, baseUrl });
+  if (result.xml === existingXml) {
+    logger.log(`Sitemap already current with ${result.urlCount} URLs at ${outputFile}`);
+    return { ...result, changed: false };
+  }
 
-console.log(`Generated sitemap with ${deduped.size} URLs at ${outputPath}`);
+  fs.writeFileSync(outputFile, result.xml);
+  logger.log(`Generated sitemap with ${result.urlCount} URLs at ${outputFile}`);
+  return { ...result, changed: true };
+}
+
+const isMain = process.argv[1]
+  && path.resolve(process.argv[1]).toLowerCase() === path.resolve(__filename).toLowerCase();
+
+if (isMain) {
+  generateSitemap({ outputFile: outputPath });
+}

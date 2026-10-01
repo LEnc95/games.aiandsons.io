@@ -117,10 +117,12 @@
     <script type="module">
       import { addCoins as addCoinsFn, rememberRecent } from '../src/core/state.js';
       import { maybeUnlock } from '../src/prog/achievements.js';
+      import { reportGameOutcome } from '../src/core/outcomes.js';
       import { snakeSkinStyle } from '../src/prog/cosmetics.js';
       import { initSocial, reportScore } from '../src/social/embed.js';
       window.addCoins = addCoinsFn;
       window.maybeUnlock = maybeUnlock;
+      window.reportGameOutcome = reportGameOutcome;
       window.snakeSkinStyle = snakeSkinStyle;
       window.cadeReportScore = reportScore;
       initSocial({ slug: 'snake' });
@@ -485,6 +487,9 @@
       // Check achievements: snake-15 (length 15), first-run
       if (typeof maybeUnlock === 'function') {
         maybeUnlock({ anyPlay: true, snake: { length: state.snake.length } });
+      }
+      if (typeof reportGameOutcome === 'function') {
+        reportGameOutcome({ slug: 'snake', result: 'completed', metrics: { length: state.snake.length } });
       }
       if (typeof window.cadeReportScore === 'function') {
         window.cadeReportScore(state.score);

@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Pearl Loop | AI and Sons Games</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<style>
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #162227;
+  background:
+    radial-gradient(circle at 18% 16%, #ffe1b6 0 10%, transparent 29%),
+    radial-gradient(circle at 84% 12%, #b7ece2 0 11%, transparent 30%),
+    linear-gradient(145deg, #f7fbf4 0%, #d5e9ec 48%, #f5d7cf 100%);
+}
+button { font: inherit; }
+.back {
+  position: fixed;
+  z-index: 20;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #ffffffc9;
+  border-radius: 8px;
+  background: #162227ec;
+  color: #f9fffb;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 12px 28px #1622272f;
+}
+.app {
+  width: min(100%, 1160px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(68px, calc(env(safe-area-inset-top) + 64px)) 12px max(12px, env(safe-area-inset-bottom));
+}
+.stage {
+  flex: 0 1 auto;
+  height: clamp(318px, calc(100dvh - 258px), 594px);
+  min-height: 306px;
+  max-height: 594px;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 2px solid #ffffffe0;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 24px 58px #1622272d;
+}
+.hud,
+.controls,
+.dir-pad {
+  display: grid;
+  gap: 8px;
+}
+.hud { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.controls { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.dir-pad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.chip,
+button {
+  min-height: 42px;
+  border: 1px solid #ffffffbd;
+  border-radius: 8px;
+  background: #162227e8;
+  color: #f9fffb;
+  box-shadow: inset 0 1px 0 #ffffff35;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.chip span {
+  color: #c9dddf;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.chip b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.good b { color: #98ffd1; }
+.chip.warn b { color: #ffd971; }
+.chip.danger b { color: #ff9a88; }
+button {
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+button:hover { background: #254c54; }
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.primary {
+  background: #ffd05d;
+  border-color: #fff1bc;
+  color: #162227;
+}
+.primary:hover { background: #ffdf89; }
+.action { background: #1f7b67; }
+.utility { background: #46586f; }
+.danger { background: #7a4a55; }
+.dir { background: #ef9060; color: #162227; }
+button:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #ffd05d;
+  outline-offset: 2px;
+}
+@media (max-width: 840px) {
+  .app {
+    padding: max(56px, calc(env(safe-area-inset-top) + 54px)) 9px max(12px, env(safe-area-inset-bottom));
+    gap: 7px;
+  }
+  .stage { max-height: 53dvh; }
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .dir-pad { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+}
+@media (max-width: 540px) {
+  .back { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .app { padding-top: max(48px, calc(env(safe-area-inset-top) + 46px)); }
+  .stage {
+    flex: 0 0 clamp(304px, 42vh, 364px);
+    height: clamp(304px, 42vh, 364px);
+    min-height: 0;
+    max-height: none;
+  }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip:nth-child(6) { display: none; }
+  button { min-height: 39px; padding: 0 5px; font-size: 13px; }
+}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Draw one continuous loop through black and white pearls while satisfying every turn and straight-line clue. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Pearl Loop | AI and Sons Games">
+  <meta property="og:description" content="Draw one continuous loop through black and white pearls while satisfying every turn and straight-line clue. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/pearlloop">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/pearlloop.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pearl Loop | AI and Sons Games">
+  <meta name="twitter:description" content="Draw one continuous loop through black and white pearls while satisfying every turn and straight-line clue. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/pearlloop.png">
+  <link rel="canonical" href="https://games.aiandsons.io/pearlloop">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Pearl Loop","description":"Draw one continuous loop through black and white pearls while satisfying every turn and straight-line clue. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/pearlloop","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<a class="back" href="/">&larr; Games</a>
+<main class="app" aria-label="Pearl Loop game">
+  <div class="stage">
+    <canvas id="game" width="1080" height="700" aria-label="Pearl Loop puzzle board"></canvas>
+  </div>
+  <section class="hud" aria-label="Game status">
+    <div class="chip"><span>Puzzle</span><b id="puzzleLabel">1 / 5</b></div>
+    <div class="chip"><span>Edges</span><b id="edgeLabel">0 / 0</b></div>
+    <div class="chip"><span>Moves</span><b id="movesLabel">0</b></div>
+    <div class="chip warn"><span>Hints</span><b id="hintsLabel">0</b></div>
+    <div class="chip good"><span>Score</span><b id="scoreLabel">0</b></div>
+    <div class="chip"><span>Coins</span><b id="coinsLabel">0</b></div>
+  </section>
+  <section class="controls" aria-label="Game controls">
+    <button id="startBtn" class="primary" type="button">Start</button>
+    <button id="checkBtn" class="action" type="button">Check</button>
+    <button id="hintBtn" class="action" type="button">Hint</button>
+    <button id="undoBtn" class="utility" type="button">Undo</button>
+    <button id="pauseBtn" class="utility" type="button">Pause</button>
+    <button id="restartBtn" class="utility" type="button">Restart</button>
+    <button id="fullBtn" class="utility" type="button">Full</button>
+  </section>
+  <section class="dir-pad" aria-label="Edge drawing controls">
+    <button class="dir" data-dir="up" type="button">Up</button>
+    <button class="dir" data-dir="left" type="button">Left</button>
+    <button class="dir" data-dir="right" type="button">Right</button>
+    <button class="dir" data-dir="down" type="button">Down</button>
+  </section>
+</main>
+<script type="module">
+import { state as profileState, addCoins } from '/src/core/state.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const els = {
+  puzzle: document.getElementById('puzzleLabel'),
+  edges: document.getElementById('edgeLabel'),
+  moves: document.getElementById('movesLabel'),
+  hints: document.getElementById('hintsLabel'),
+  score: document.getElementById('scoreLabel'),
+  coins: document.getElementById('coinsLabel'),
+  start: document.getElementById('startBtn'),
+  check: document.getElementById('checkBtn'),
+  hint: document.getElementById('hintBtn'),
+  undo: document.getElementById('undoBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  full: document.getElementById('fullBtn'),
+  dirs: [...document.querySelectorAll('[data-dir]')],
+};
+
+const SIZE = 5;
+const STORAGE_BEST = 'pearlloop:best';
+const DIRS = {
+  up: { dr: -1, dc: 0 },
+  down: { dr: 1, dc: 0 },
+  left: { dr: 0, dc: -1 },
+  right: { dr: 0, dc: 1 },
+};
+
+const rawPuzzles = [
+  {
+    id: 'tide-square',
+    name: 'Tide Square',
+    path: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1],[4,0],[3,0],[2,0],[1,0]],
+  },
+  {
+    id: 'market-knot',
+    name: 'Market Knot',
+    path: [[0,1],[0,2],[0,3],[1,3],[1,4],[2,4],[3,4],[4,4],[4,3],[3,3],[3,2],[4,2],[4,1],[3,1],[2,1],[2,0],[1,0],[0,0]],
+  },
+  {
+    id: 'reef-steps',
+    name: 'Reef Steps',
+    path: [[0,0],[0,1],[0,2],[1,2],[2,2],[2,3],[1,3],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[3,2],[3,1],[4,1],[4,0],[3,0],[2,0],[1,0]],
+  },
+  {
+    id: 'lantern-run',
+    name: 'Lantern Run',
+    path: [[0,1],[0,2],[1,2],[1,3],[0,3],[0,4],[1,4],[2,4],[2,3],[3,3],[3,4],[4,4],[4,3],[4,2],[3,2],[3,1],[4,1],[4,0],[3,0],[2,0],[2,1],[1,1],[1,0],[0,0]],
+  },
+  {
+    id: 'pearl-harbor',
+    name: 'Pearl Harbor',
+    path: [[0,0],[0,1],[1,1],[1,2],[0,2],[0,3],[0,4],[1,4],[1,3],[2,3],[2,4],[3,4],[4,4],[4,3],[3,3],[3,2],[4,2],[4,1],[3,1],[2,1],[2,0],[1,0]],
+  },
+];
+
+const cellKey = (row, col) => `${row},${col}`;
+const parseCellKey = (key) => {
+  const [row, col] = key.split(',').map(Number);
+  return { row, col };
+};
+const inBounds = (row, col) => row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+const edgeKey = (a, b) => {
+  const left = cellKey(a.row, a.col);
+  const right = cellKey(b.row, b.col);
+  return left < right ? `${left}|${right}` : `${right}|${left}`;
+};
+const parseEdgeKey = (key) => {
+  const [a, b] = key.split('|').map(parseCellKey);
+  return { a, b };
+};
+const directionBetween = (from, to) => ({ dr: Math.sign(to.row - from.row), dc: Math.sign(to.col - from.col) });
+const sameAxis = (d1, d2) => (d1.dr && d2.dr) || (d1.dc && d2.dc);
+const isTurn = (d1, d2) => !sameAxis(d1, d2);
+
+function buildPuzzle(raw) {
+  const path = raw.path.map(([row, col]) => ({ row, col }));
+  const solution = new Set();
+  for (let i = 0; i < path.length; i += 1) {
+    solution.add(edgeKey(path[i], path[(i + 1) % path.length]));
+  }
+  const pathMap = new Map(path.map((cell, index) => [cellKey(cell.row, cell.col), index]));
+  const candidates = [];
+  for (let i = 0; i < path.length; i += 1) {
+    const prev = path[(i - 1 + path.length) % path.length];
+    const cell = path[i];
+    const next = path[(i + 1) % path.length];
+    const inDir = directionBetween(cell, prev);
+    const outDir = directionBetween(cell, next);
+    const turn = isTurn(inDir, outDir);
+    const prevPrev = path[(i - 2 + path.length) % path.length];
+    const nextNext = path[(i + 2) % path.length];
+    const prevStraight = sameAxis(directionBetween(prev, cell), directionBetween(prev, prevPrev));
+    const nextStraight = sameAxis(directionBetween(next, cell), directionBetween(next, nextNext));
+    const prevTurns = isTurn(directionBetween(prev, cell), directionBetween(prev, prevPrev));
+    const nextTurns = isTurn(directionBetween(next, cell), directionBetween(next, nextNext));
+    if (turn && prevStraight && nextStraight) candidates.push({ row: cell.row, col: cell.col, type: 'black' });
+    if (!turn && (prevTurns || nextTurns)) candidates.push({ row: cell.row, col: cell.col, type: 'white' });
+  }
+  const pearls = [];
+  const targetPearls = Math.min(10, Math.max(7, Math.floor(candidates.length * 0.7)));
+  for (const type of ['black', 'white']) {
+    for (const candidate of candidates.filter(item => item.type === type)) {
+      if (pearls.length >= targetPearls) break;
+      if (!pearls.some(item => Math.abs(item.row - candidate.row) + Math.abs(item.col - candidate.col) <= 1 && item.type === candidate.type)) {
+        pearls.push(candidate);
+      }
+    }
+  }
+  for (const candidate of candidates) {
+    if (pearls.length >= targetPearls) break;
+    if (!pearls.some(item => item.row === candidate.row && item.col === candidate.col)) pearls.push(candidate);
+  }
+  return {
+    ...raw,
+    path,
+    solution,
+    solutionEdges: [...solution].map(parseEdgeKey),
+    pearls,
+    pearlMap: new Map(pearls.map(pearl => [cellKey(pearl.row, pearl.col), pearl.type])),
+    pathMap,
+  };
+}
+
+const PUZZLES = rawPuzzles.map(buildPuzzle);
+
+const game = {
+  mode: 'menu',
+  previousMode: 'playing',
+  puzzleIndex: 0,
+  edges: new Set(),
+  selected: { row: 0, col: 0 },
+  history: [],
+  moves: 0,
+  hints: 0,
+  checks: 0,
+  score: 0,
+  bestScore: Number(localStorage.getItem(STORAGE_BEST) || 0),
+  coinsEarned: 0,
+  lastCoins: 0,
+  solvedIds: new Set(),
+  message: 'Draw one closed loop through the pearls. Black pearls turn; white pearls go straight.',
+  errorEdges: new Set(),
+  missingEdges: new Set(),
+  errorCells: new Set(),
+  successPulse: 0,
+  shake: 0,
+  elapsedMs: 0,
+  lastAction: { type: 'load' },
+};
+
+let view = {
+  width: 1080,
+  height: 700,
+  board: { left: 48, top: 48, size: 500, cell: 100 },
+  sidePanel: null,
+};
+let lastFrame = performance.now();
+let manualStepping = false;
+
+const currentPuzzle = () => PUZZLES[game.puzzleIndex];
+
+function startPuzzle(index = game.puzzleIndex) {
+  game.puzzleIndex = Math.max(0, Math.min(PUZZLES.length - 1, index));
+  game.edges = new Set();
+  game.selected = { ...currentPuzzle().path[0] };
+  game.history = [];
+  game.moves = 0;
+  game.hints = 0;
+  game.checks = 0;
+  game.lastCoins = 0;
+  game.errorEdges = new Set();
+  game.missingEdges = new Set();
+  game.errorCells = new Set();
+  game.successPulse = 0;
+  game.shake = 0;
+  game.mode = 'playing';
+  game.message = `Puzzle ${game.puzzleIndex + 1}: ${currentPuzzle().name}. Toggle edges to make one closed pearl loop.`;
+  game.lastAction = { type: 'start', puzzle: currentPuzzle().id };
+  updateHud();
+  draw();
+}
+
+function restartPuzzle() {
+  if (game.mode === 'complete') {
+    game.solvedIds.clear();
+    game.score = 0;
+    game.coinsEarned = 0;
+    startPuzzle(0);
+    return;
+  }
+  startPuzzle(game.puzzleIndex);
+}
+
+function nextPuzzleOrStart() {
+  if (game.mode === 'menu') {
+    game.score = 0;
+    game.coinsEarned = 0;
+    game.solvedIds.clear();
+    startPuzzle(0);
+  } else if (game.mode === 'solved') {
+    startPuzzle(Math.min(PUZZLES.length - 1, game.puzzleIndex + 1));
+  } else if (game.mode === 'complete') {
+    game.score = 0;
+    game.coinsEarned = 0;
+    game.solvedIds.clear();
+    startPuzzle(0);
+  } else if (game.mode === 'paused') {
+    togglePause();
+  } else {
+    restartPuzzle();
+  }
+}
+
+function pushHistory() {
+  game.history.push({
+    edges: [...game.edges],
+    moves: game.moves,
+    hints: game.hints,
+    checks: game.checks,
+    selected: { ...game.selected },
+    message: game.message,
+  });
+  if (game.history.length > 90) game.history.shift();
+}
+
+function undoMove() {
+  if (game.mode !== 'playing' || !game.history.length) return;
+  const snapshot = game.history.pop();
+  game.edges = new Set(snapshot.edges);
+  game.moves = snapshot.moves;
+  game.hints = snapshot.hints;
+  game.checks = snapshot.checks;
+  game.selected = { ...snapshot.selected };
+  game.message = 'Undo restored the previous loop.';
+  clearHighlights();
+  game.lastAction = { type: 'undo' };
+  updateHud();
+  draw();
+}
+
+function clearHighlights() {
+  game.errorEdges = new Set();
+  game.missingEdges = new Set();
+  game.errorCells = new Set();
+}
+
+function selectCell(row, col) {
+  if (!inBounds(row, col)) return false;
+  game.selected = { row, col };
+  game.lastAction = { type: 'select', row, col };
+  draw();
+  return true;
+}
+
+function moveSelection(dr, dc) {
+  return selectCell(
+    Math.max(0, Math.min(SIZE - 1, game.selected.row + dr)),
+    Math.max(0, Math.min(SIZE - 1, game.selected.col + dc)),
+  );
+}
+
+function toggleEdgeBetween(a, b, source = 'input') {
+  if (game.mode !== 'playing' || !inBounds(a.row, a.col) || !inBounds(b.row, b.col)) return false;
+  if (Math.abs(a.row - b.row) + Math.abs(a.col - b.col) !== 1) return false;
+  const key = edgeKey(a, b);
+  pushHistory();
+  if (game.edges.has(key)) {
+    game.edges.delete(key);
+    game.message = `Removed edge from row ${a.row + 1}, column ${a.col + 1}.`;
+  } else {
+    game.edges.add(key);
+    game.message = `Drew edge from row ${a.row + 1}, column ${a.col + 1}.`;
+  }
+  game.moves += 1;
+  game.selected = { ...b };
+  clearHighlights();
+  game.lastAction = { type: 'toggle-edge', source, edge: parseEdgeKey(key), active: game.edges.has(key) };
+  const analysis = analyzeLoop(game.edges);
+  if (analysis.solved) handleSolved();
+  else updateHud();
+  draw();
+  return true;
+}
+
+function toggleDirection(name) {
+  const dir = DIRS[name];
+  if (!dir) return false;
+  const from = { ...game.selected };
+  const to = { row: from.row + dir.dr, col: from.col + dir.dc };
+  if (!inBounds(to.row, to.col)) {
+    game.message = 'That edge would leave the board.';
+    game.shake = 1;
+    game.lastAction = { type: 'boundary', direction: name };
+    updateHud();
+    draw();
+    return false;
+  }
+  return toggleEdgeBetween(from, to, `dir:${name}`);
+}
+
+function revealHint() {
+  if (game.mode !== 'playing') return false;
+  const puzzle = currentPuzzle();
+  const missing = [...puzzle.solution].find(key => !game.edges.has(key));
+  if (!missing) {
+    checkBoard();
+    return false;
+  }
+  pushHistory();
+  game.edges.add(missing);
+  game.moves += 1;
+  game.hints += 1;
+  const edge = parseEdgeKey(missing);
+  game.selected = { ...edge.b };
+  game.message = `Hint drew a required edge near row ${edge.a.row + 1}, column ${edge.a.col + 1}.`;
+  clearHighlights();
+  game.lastAction = { type: 'hint', edge };
+  const analysis = analyzeLoop(game.edges);
+  if (analysis.solved) handleSolved();
+  else updateHud();
+  draw();
+  return true;
+}
+
+function checkBoard() {
+  if (game.mode !== 'playing') return false;
+  const analysis = analyzeLoop(game.edges);
+  game.checks += 1;
+  game.errorEdges = analysis.extraEdges;
+  game.missingEdges = analysis.missingEdges;
+  game.errorCells = analysis.errorCells;
+  game.lastAction = {
+    type: 'check',
+    active_edges: game.edges.size,
+    extra_edges: analysis.extraEdges.size,
+    missing_edges: analysis.missingEdges.size,
+    rule_errors: analysis.errorCells.size,
+    components: analysis.components,
+  };
+  if (analysis.solved) {
+    handleSolved();
+    return true;
+  }
+  game.shake = analysis.extraEdges.size || analysis.errorCells.size ? 1 : 0;
+  if (!game.edges.size) game.message = 'Draw at least one loop edge before checking.';
+  else if (analysis.extraEdges.size) game.message = `${analysis.extraEdges.size} extra edge${analysis.extraEdges.size === 1 ? '' : 's'} do not belong to this solution.`;
+  else if (analysis.missingEdges.size) game.message = `${analysis.missingEdges.size} required edge${analysis.missingEdges.size === 1 ? '' : 's'} still missing.`;
+  else if (analysis.errorCells.size) game.message = `${analysis.errorCells.size} pearl or loop rule issue${analysis.errorCells.size === 1 ? '' : 's'} highlighted.`;
+  else game.message = 'The loop is close, but it is not a single solved loop yet.';
+  updateHud();
+  draw();
+  return false;
+}
+
+function analyzeLoop(edgeSet) {
+  const puzzle = currentPuzzle();
+  const extraEdges = new Set();
+  const missingEdges = new Set();
+  const errorCells = new Set();
+  for (const key of edgeSet) {
+    if (!puzzle.solution.has(key)) extraEdges.add(key);
+  }
+  for (const key of puzzle.solution) {
+    if (!edgeSet.has(key)) missingEdges.add(key);
+  }
+
+  const adjacency = new Map();
+  for (const key of edgeSet) {
+    const { a, b } = parseEdgeKey(key);
+    const ak = cellKey(a.row, a.col);
+    const bk = cellKey(b.row, b.col);
+    if (!adjacency.has(ak)) adjacency.set(ak, []);
+    if (!adjacency.has(bk)) adjacency.set(bk, []);
+    adjacency.get(ak).push(b);
+    adjacency.get(bk).push(a);
+  }
+
+  for (const [key, neighbors] of adjacency.entries()) {
+    if (neighbors.length !== 2) errorCells.add(key);
+  }
+
+  let components = 0;
+  const visited = new Set();
+  for (const key of adjacency.keys()) {
+    if (visited.has(key)) continue;
+    components += 1;
+    const stack = [key];
+    while (stack.length) {
+      const current = stack.pop();
+      if (visited.has(current)) continue;
+      visited.add(current);
+      for (const next of adjacency.get(current) || []) {
+        const nk = cellKey(next.row, next.col);
+        if (!visited.has(nk)) stack.push(nk);
+      }
+    }
+  }
+  if (edgeSet.size && components !== 1) {
+    for (const key of adjacency.keys()) errorCells.add(key);
+  }
+
+  for (const pearl of puzzle.pearls) {
+    const key = cellKey(pearl.row, pearl.col);
+    const neighbors = adjacency.get(key) || [];
+    if (neighbors.length !== 2) {
+      errorCells.add(key);
+      continue;
+    }
+    const d1 = directionBetween(pearl, neighbors[0]);
+    const d2 = directionBetween(pearl, neighbors[1]);
+    const turn = isTurn(d1, d2);
+    if (pearl.type === 'black') {
+      if (!turn) {
+        errorCells.add(key);
+        continue;
+      }
+      for (const neighbor of neighbors) {
+        const nkey = cellKey(neighbor.row, neighbor.col);
+        const nextNeighbors = (adjacency.get(nkey) || []).filter(item => item.row !== pearl.row || item.col !== pearl.col);
+        if (nextNeighbors.length !== 1 || !sameAxis(directionBetween(neighbor, pearl), directionBetween(neighbor, nextNeighbors[0]))) {
+          errorCells.add(key);
+          errorCells.add(nkey);
+        }
+      }
+    } else if (pearl.type === 'white') {
+      if (turn) {
+        errorCells.add(key);
+        continue;
+      }
+      const hasAdjacentTurn = neighbors.some((neighbor) => {
+        const nkey = cellKey(neighbor.row, neighbor.col);
+        const nextNeighbors = adjacency.get(nkey) || [];
+        if (nextNeighbors.length !== 2) return false;
+        return isTurn(directionBetween(neighbor, nextNeighbors[0]), directionBetween(neighbor, nextNeighbors[1]));
+      });
+      if (!hasAdjacentTurn) errorCells.add(key);
+    }
+  }
+
+  const solved = edgeSet.size === puzzle.solution.size
+    && extraEdges.size === 0
+    && missingEdges.size === 0
+    && errorCells.size === 0
+    && components === 1;
+  return { extraEdges, missingEdges, errorCells, components, solved };
+}
+
+function scoreForSolve() {
+  const base = 210 + game.puzzleIndex * 42;
+  const movePenalty = Math.max(0, game.moves - currentPuzzle().solution.size - 2) * 3;
+  const hintPenalty = game.hints * 16;
+  const checkPenalty = Math.max(0, game.checks - 1) * 5;
+  return Math.max(50, base - movePenalty - hintPenalty - checkPenalty);
+}
+
+function addReward(coins) {
+  const amount = Math.max(0, Math.floor(coins));
+  if (!amount) return;
+  game.coinsEarned += amount;
+  addCoins(amount);
+}
+
+function handleSolved() {
+  const puzzle = currentPuzzle();
+  const score = scoreForSolve();
+  game.score += score;
+  game.bestScore = Math.max(game.bestScore, game.score);
+  localStorage.setItem(STORAGE_BEST, String(game.bestScore));
+  let coins = 0;
+  if (!game.solvedIds.has(puzzle.id)) {
+    coins = 8 + game.puzzleIndex * 2 + Math.max(0, 3 - game.hints);
+    if (game.puzzleIndex === PUZZLES.length - 1) coins += 24;
+    addReward(coins);
+    game.solvedIds.add(puzzle.id);
+  }
+  game.lastCoins = coins;
+  game.successPulse = 1;
+  clearHighlights();
+  game.mode = game.puzzleIndex === PUZZLES.length - 1 ? 'complete' : 'solved';
+  game.message = game.mode === 'complete'
+    ? `Campaign complete. Earned ${coins} coins on this puzzle.`
+    : `Solved ${puzzle.name}. Earned ${coins} coins.`;
+  game.lastAction = { type: 'solve', puzzle: puzzle.id, score, coins };
+  updateHud();
+  draw();
+}
+
+function togglePause() {
+  if (game.mode === 'paused') {
+    game.mode = game.previousMode || 'playing';
+    game.message = 'Resumed. Keep the loop continuous.';
+    game.lastAction = { type: 'resume' };
+  } else if (game.mode === 'playing') {
+    game.previousMode = game.mode;
+    game.mode = 'paused';
+    game.message = 'Paused.';
+    game.lastAction = { type: 'pause' };
+  }
+  updateHud();
+  draw();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function updateHud() {
+  els.puzzle.textContent = `${game.puzzleIndex + 1} / ${PUZZLES.length}`;
+  els.edges.textContent = `${game.edges.size} / ${currentPuzzle().solution.size}`;
+  els.moves.textContent = String(game.moves);
+  els.hints.textContent = String(game.hints);
+  els.score.textContent = String(game.score);
+  els.coins.textContent = String(Number(profileState.coins || 0));
+  els.start.textContent = game.mode === 'solved' ? 'Next' : game.mode === 'complete' ? 'Replay' : game.mode === 'paused' ? 'Resume' : game.mode === 'menu' ? 'Start' : 'New';
+  els.pause.textContent = game.mode === 'paused' ? 'Resume' : 'Pause';
+  const playing = game.mode === 'playing';
+  els.check.disabled = !playing;
+  els.hint.disabled = !playing;
+  els.undo.disabled = !playing || !game.history.length;
+  for (const button of els.dirs) button.disabled = !playing;
+}
+
+function update(dt) {
+  game.elapsedMs += dt * 1000;
+  game.successPulse = Math.max(0, game.successPulse - dt * 1.65);
+  game.shake = Math.max(0, game.shake - dt * 5);
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = Math.max(320, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(240, Math.floor(rect.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  view.width = rect.width;
+  view.height = rect.height;
+  draw();
+}
+
+function computeLayout() {
+  const w = view.width;
+  const h = view.height;
+  const wide = w >= 780;
+  const compact = !wide && w < 520;
+  const panelMin = compact ? 96 : 74;
+  const top = wide ? 34 : compact ? 24 : 38;
+  const side = wide
+    ? Math.min(528, h - 68, w - 340)
+    : Math.min(w - 28, h - top - panelMin - 16, 404);
+  const size = Math.max(compact ? 174 : 218, side);
+  const left = wide ? 34 : (w - size) / 2;
+  view.board = { left, top, size, cell: size / SIZE };
+  view.sidePanel = wide
+    ? { left: left + size + 30, top, width: Math.max(240, w - (left + size + 62)), height: size }
+    : { left: 14, top: top + size + 10, width: w - 28, height: Math.max(panelMin, h - (top + size + 18)) };
+}
+
+function draw() {
+  computeLayout();
+  const w = view.width;
+  const h = view.height;
+  ctx.clearRect(0, 0, w, h);
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, '#fffdf8');
+  gradient.addColorStop(0.48, '#e8f6f4');
+  gradient.addColorStop(1, '#f7ded5');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+  drawAmbient(w, h);
+  drawBoard();
+  drawPanel();
+  if (game.mode === 'menu') drawOverlay('Pearl Loop', 'Draw one closed loop. Black pearls turn; white pearls go straight.');
+  if (game.mode === 'paused') drawOverlay('Paused', 'Resume when you are ready.');
+  if (game.mode === 'solved') drawOverlay('Solved', 'Use Next to continue the campaign.');
+  if (game.mode === 'complete') drawOverlay('Campaign Complete', 'Replay to chase a cleaner route.');
+}
+
+function drawAmbient(w, h) {
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  for (let i = 0; i < 22; i += 1) {
+    const x = ((i * 127) % Math.max(1, w)) + 6;
+    const y = ((i * 73) % Math.max(1, h)) + 6;
+    ctx.beginPath();
+    ctx.arc(x, y, 6 + (i % 4) * 3, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 ? '#1f7b67' : '#ef9060';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function cellCenter(row, col) {
+  const { left, top, cell } = view.board;
+  return {
+    x: left + col * cell + cell / 2,
+    y: top + row * cell + cell / 2,
+  };
+}
+
+function drawBoard() {
+  const { left, top, size, cell } = view.board;
+  const offset = game.shake ? Math.sin(game.elapsedMs / 24) * 4 * game.shake : 0;
+  ctx.save();
+  ctx.translate(offset, 0);
+  roundRect(left - 8, top - 8, size + 16, size + 16, 8, '#fffaf0e9', '#ffffffc9', 2);
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) drawCell(r, c);
+  }
+  drawEdges();
+  for (const pearl of currentPuzzle().pearls) drawPearl(pearl);
+  ctx.strokeStyle = '#29343b55';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i <= SIZE; i += 1) {
+    const p = left + i * cell;
+    ctx.beginPath();
+    ctx.moveTo(p, top);
+    ctx.lineTo(p, top + size);
+    ctx.stroke();
+    const q = top + i * cell;
+    ctx.beginPath();
+    ctx.moveTo(left, q);
+    ctx.lineTo(left + size, q);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCell(row, col) {
+  const { left, top, cell } = view.board;
+  const x = left + col * cell;
+  const y = top + row * cell;
+  const key = cellKey(row, col);
+  const selected = game.selected.row === row && game.selected.col === col;
+  const error = game.errorCells.has(key);
+  let fill = '#fffaf2';
+  if (selected) fill = '#fff0bd';
+  if (error) fill = '#ffd9d1';
+  if (game.successPulse > 0 && game.mode !== 'playing') fill = '#dfffe9';
+  ctx.fillStyle = fill;
+  ctx.fillRect(x, y, cell, cell);
+  if (selected) {
+    ctx.strokeStyle = '#ef9060';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x + 5, y + 5, cell - 10, cell - 10);
+  }
+  const center = cellCenter(row, col);
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, Math.max(3, cell * 0.04), 0, Math.PI * 2);
+  ctx.fillStyle = '#29343b8c';
+  ctx.fill();
+}
+
+function drawEdges() {
+  for (const key of game.missingEdges) drawEdgeKey(key, '#ffd05d88', Math.max(6, view.board.cell * 0.11), [8, 8]);
+  for (const key of game.edges) {
+    const bad = game.errorEdges.has(key);
+    drawEdgeKey(key, bad ? '#df3c2e' : '#1f7b67', Math.max(8, view.board.cell * 0.13), []);
+  }
+}
+
+function drawEdgeKey(key, color, width, dash) {
+  const { a, b } = parseEdgeKey(key);
+  const pa = cellCenter(a.row, a.col);
+  const pb = cellCenter(b.row, b.col);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.setLineDash(dash);
+  ctx.beginPath();
+  ctx.moveTo(pa.x, pa.y);
+  ctx.lineTo(pb.x, pb.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPearl(pearl) {
+  const center = cellCenter(pearl.row, pearl.col);
+  const radius = Math.max(12, view.board.cell * 0.16);
+  const key = cellKey(pearl.row, pearl.col);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius + 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#fffaf2';
+  ctx.fill();
+  ctx.lineWidth = game.errorCells.has(key) ? 5 : 2.5;
+  ctx.strokeStyle = game.errorCells.has(key) ? '#df3c2e' : '#29343b';
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = pearl.type === 'black' ? '#162227' : '#fffdf8';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPanel() {
+  const panel = view.sidePanel;
+  roundRect(panel.left, panel.top, panel.width, panel.height, 8, '#162227df', '#ffffffbd', 1.5);
+  const puzzle = currentPuzzle();
+  if (panel.height < 150) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#f9fffb';
+    ctx.font = '900 17px Inter, Segoe UI, sans-serif';
+    ctx.fillText('PEARL LOOP', panel.left + 14, panel.top + 11);
+    ctx.fillStyle = '#ffd05d';
+    ctx.font = '850 14px Inter, Segoe UI, sans-serif';
+    ctx.fillText(puzzle.name, panel.left + 14, panel.top + 36);
+    ctx.fillStyle = '#d8e9e8';
+    ctx.font = '750 12px Inter, Segoe UI, sans-serif';
+    ctx.fillText(`Edges ${game.edges.size}/${puzzle.solution.size}  Moves ${game.moves}`, panel.left + 14, panel.top + 60);
+    if (panel.height >= 104) wrapText(game.message, panel.left + 14, panel.top + 80, panel.width - 28, 15, 2);
+    return;
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#f9fffb';
+  ctx.font = '900 22px Inter, Segoe UI, sans-serif';
+  ctx.fillText('PEARL LOOP', panel.left + 16, panel.top + 15);
+  ctx.font = '800 15px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#ffd05d';
+  ctx.fillText(puzzle.name, panel.left + 16, panel.top + 45);
+  ctx.font = '700 13px Inter, Segoe UI, sans-serif';
+  ctx.fillStyle = '#d8e9e8';
+  const lines = [
+    `Edges ${game.edges.size}/${puzzle.solution.size}`,
+    `Black: turn, then straight`,
+    `White: straight, near a turn`,
+    `Best ${game.bestScore}`,
+  ];
+  let y = panel.top + 74;
+  for (const line of lines) {
+    ctx.fillText(line, panel.left + 16, y);
+    y += 21;
+  }
+  ctx.fillStyle = '#f9fffb';
+  ctx.font = '800 13px Inter, Segoe UI, sans-serif';
+  wrapText(game.message, panel.left + 16, Math.min(panel.top + panel.height - 58, y + 8), panel.width - 32, 18, 3);
+}
+
+function drawOverlay(title, body) {
+  const { left, top, size } = view.board;
+  const width = Math.min(size - 34, 386);
+  const height = 116;
+  const x = left + (size - width) / 2;
+  const y = top + (size - height) / 2;
+  roundRect(x, y, width, height, 8, '#162227ee', '#ffffffd6', 1.5);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#ffd05d';
+  ctx.font = '900 25px Inter, Segoe UI, sans-serif';
+  ctx.fillText(title, x + width / 2, y + 17);
+  ctx.fillStyle = '#f9fffb';
+  ctx.font = '750 13px Inter, Segoe UI, sans-serif';
+  wrapText(body, x + 18, y + 55, width - 36, 17, 3, 'center');
+}
+
+function roundRect(x, y, width, height, radius, fill, stroke, lineWidth = 1) {
+  const r = Math.max(0, Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 4, align = 'left') {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  ctx.textAlign = align;
+  const tx = align === 'center' ? x + maxWidth / 2 : x;
+  for (let i = 0; i < lines.length; i += 1) ctx.fillText(lines[i], tx, y + i * lineHeight);
+}
+
+function pointerToCell(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const { left, top, size, cell } = view.board;
+  if (x < left || x > left + size || y < top || y > top + size) return null;
+  return {
+    row: Math.max(0, Math.min(SIZE - 1, Math.floor((y - top) / cell))),
+    col: Math.max(0, Math.min(SIZE - 1, Math.floor((x - left) / cell))),
+  };
+}
+
+function nearestEdgeFromPointer(event) {
+  const cell = pointerToCell(event);
+  if (!cell) return null;
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const center = cellCenter(cell.row, cell.col);
+  const dx = x - center.x;
+  const dy = y - center.y;
+  let dir;
+  if (Math.abs(dx) > Math.abs(dy)) dir = dx >= 0 ? DIRS.right : DIRS.left;
+  else dir = dy >= 0 ? DIRS.down : DIRS.up;
+  const other = { row: cell.row + dir.dr, col: cell.col + dir.dc };
+  if (!inBounds(other.row, other.col)) return { cell, other: null };
+  return { cell, other };
+}
+
+function handlePointerDown(event) {
+  event.preventDefault();
+  if (game.mode === 'menu') {
+    nextPuzzleOrStart();
+    return;
+  }
+  const target = nearestEdgeFromPointer(event);
+  if (!target) return;
+  selectCell(target.cell.row, target.cell.col);
+  if (target.other) toggleEdgeBetween(target.cell, target.other, 'pointer');
+  else {
+    game.message = 'Choose an edge inside the board.';
+    game.shake = 1;
+    updateHud();
+    draw();
+  }
+}
+
+function handleKey(event) {
+  const keyName = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'enter', 'backspace'].includes(keyName)) event.preventDefault();
+  if (keyName === 'f') {
+    event.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (keyName === 'enter' || keyName === ' ') {
+    if (game.mode !== 'playing') nextPuzzleOrStart();
+    else checkBoard();
+    return;
+  }
+  if (keyName === 'p') {
+    togglePause();
+    return;
+  }
+  if (keyName === 'r') {
+    restartPuzzle();
+    return;
+  }
+  if (keyName === 'h') {
+    revealHint();
+    return;
+  }
+  if (keyName === 'c') {
+    checkBoard();
+    return;
+  }
+  if (keyName === 'z') {
+    undoMove();
+    return;
+  }
+  if (event.key === 'ArrowUp') moveSelection(-1, 0);
+  else if (event.key === 'ArrowDown') moveSelection(1, 0);
+  else if (event.key === 'ArrowLeft') moveSelection(0, -1);
+  else if (event.key === 'ArrowRight') moveSelection(0, 1);
+  else if (keyName === 'w') toggleDirection('up');
+  else if (keyName === 'a') toggleDirection('left');
+  else if (keyName === 's') toggleDirection('down');
+  else if (keyName === 'd') toggleDirection('right');
+}
+
+function renderGameToText() {
+  const analysis = analyzeLoop(game.edges);
+  const puzzle = currentPuzzle();
+  const cells = [];
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      const key = cellKey(r, c);
+      cells.push({
+        row: r,
+        col: c,
+        pearl: puzzle.pearlMap.get(key) || null,
+        selected: game.selected.row === r && game.selected.col === c,
+        error: game.errorCells.has(key),
+      });
+    }
+  }
+  return JSON.stringify({
+    game: 'pearlloop',
+    coordinate_system: 'Rows and columns are zero-based from the top-left. Canvas x increases right and y increases down. Loop edges connect orthogonally adjacent cell centers.',
+    mode: game.mode,
+    puzzle: {
+      index: game.puzzleIndex,
+      total: PUZZLES.length,
+      id: puzzle.id,
+      name: puzzle.name,
+    },
+    selected: { ...game.selected },
+    cells,
+    pearls: puzzle.pearls.map(pearl => ({
+      ...pearl,
+      error: game.errorCells.has(cellKey(pearl.row, pearl.col)),
+    })),
+    active_edges: [...game.edges].sort().map(parseEdgeKey),
+    active_edge_count: game.edges.size,
+    target_edge_count: puzzle.solution.size,
+    extra_edges: [...analysis.extraEdges].sort().map(parseEdgeKey),
+    missing_edges: [...analysis.missingEdges].sort().map(parseEdgeKey),
+    rule_error_cells: [...analysis.errorCells].sort().map(parseCellKey),
+    components: analysis.components,
+    solved: analysis.solved,
+    moves: game.moves,
+    hints: game.hints,
+    checks: game.checks,
+    score: game.score,
+    best_score: game.bestScore,
+    coins: Number(profileState.coins || 0),
+    coins_earned_this_session: game.coinsEarned,
+    last_coins: game.lastCoins,
+    elapsed_ms: Math.round(game.elapsedMs),
+    message: game.message,
+    last_action: game.lastAction,
+  });
+}
+
+function toggleEdgeForTest(rowA, colA, rowB, colB) {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  return toggleEdgeBetween({ row: rowA, col: colA }, { row: rowB, col: colB }, 'test');
+}
+
+function solveCurrentForTest() {
+  if (game.mode !== 'playing') startPuzzle(game.puzzleIndex);
+  pushHistory();
+  game.edges = new Set(currentPuzzle().solution);
+  game.moves += 1;
+  clearHighlights();
+  game.lastAction = { type: 'test-solve', puzzle: currentPuzzle().id };
+  handleSolved();
+  return renderGameToText();
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = (ms = 16.67) => {
+  manualStepping = true;
+  const steps = Math.max(1, Math.round(Number(ms || 16.67) / (1000 / 60)));
+  for (let i = 0; i < steps; i += 1) update(1 / 60);
+  draw();
+  manualStepping = false;
+  return renderGameToText();
+};
+window.__PEARL_LOOP_GAME__ = {
+  start: startPuzzle,
+  restart: restartPuzzle,
+  pause: togglePause,
+  check: checkBoard,
+  hint: revealHint,
+  undo: undoMove,
+  select: selectCell,
+  toggleDirection,
+  toggleEdge: toggleEdgeForTest,
+  solveCurrent: solveCurrentForTest,
+  state: () => JSON.parse(renderGameToText()),
+  puzzles: PUZZLES.map(puzzle => ({
+    id: puzzle.id,
+    name: puzzle.name,
+    pearls: puzzle.pearls.map(pearl => ({ ...pearl })),
+    solutionEdges: puzzle.solutionEdges.map(edge => ({ a: { ...edge.a }, b: { ...edge.b } })),
+  })),
+};
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('resize', resizeCanvas);
+document.addEventListener('fullscreenchange', resizeCanvas);
+document.addEventListener('keydown', handleKey);
+els.start.addEventListener('click', nextPuzzleOrStart);
+els.check.addEventListener('click', checkBoard);
+els.hint.addEventListener('click', revealHint);
+els.undo.addEventListener('click', undoMove);
+els.pause.addEventListener('click', togglePause);
+els.restart.addEventListener('click', restartPuzzle);
+els.full.addEventListener('click', toggleFullscreen);
+for (const button of els.dirs) {
+  button.addEventListener('click', () => toggleDirection(button.dataset.dir));
+}
+
+function frame(now) {
+  if (!manualStepping) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    update(dt);
+  }
+  lastFrame = now;
+  draw();
+  requestAnimationFrame(frame);
+}
+
+updateHud();
+resizeCanvas();
+mountGameFeedback({ gameSlug: 'pearlloop', gameName: 'Pearl Loop' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
