@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w40-ribbonreversal-bundles-5', weekKey: '2026-09-28', gameSlug: 'ribbonreversal', metric: 'bundles', name: 'Studio Sorter', desc: 'Sort all 5 bundles in Ribbon Reversal.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w40-sticktilt-players-8', weekKey: '2026-09-28', gameSlug: 'sticktilt', metric: 'players', name: 'Full Dojo', desc: 'Start a Stick & Tilt rumble with 8 players.', target: 8, rewardCoins: 20 }),
+  define({ id: 'weekly-w40-lanternwake-lanterns-30', weekKey: '2026-09-28', gameSlug: 'lanternwake', metric: 'lanterns', name: 'Wake Keeper', desc: 'Gather all 30 lanterns in Lantern Wake.', target: 30, rewardCoins: 20 }),
+  define({ id: 'weekly-w40-rainkeeper-raindrops-60', weekKey: '2026-09-28', gameSlug: 'rainkeeper', metric: 'raindrops', name: 'Garden Shower', desc: 'Catch all 60 raindrops in Rainkeeper.', target: 60, rewardCoins: 20 }),
   define({ id: 'weekly-w39-neststack-branches-20', weekKey: '2026-09-21', gameSlug: 'neststack', metric: 'branches', name: 'Treetop Builder', desc: 'Place all 20 branches in Nest Stack.', target: 20, rewardCoins: 20 }),
   define({ id: 'weekly-w39-baseballradio-wins-1', weekKey: '2026-09-21', gameSlug: 'baseballradio', metric: 'wins', name: 'Ninth-Inning Win', desc: 'Win a Bottom of the Ninth broadcast.', target: 1, rewardCoins: 20 }),
   define({ id: 'weekly-w39-bottlecapcurl-targets-20', weekKey: '2026-09-21', gameSlug: 'bottlecapcurl', metric: 'targets', name: 'Tabletop Sweep', desc: 'Score all 20 targets in Bottlecap Curl.', target: 20, rewardCoins: 20 }),

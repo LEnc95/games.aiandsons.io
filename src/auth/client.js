@@ -87,11 +87,6 @@ function emitSession(session, { authoritative = false } = {}) {
   }
 }
 
-function isProbablyMobileBrowser() {
-  if (typeof navigator === "undefined") return false;
-  return /android|iphone|ipad|ipod|mobile/i.test(String(navigator.userAgent || ""));
-}
-
 function shouldUseRedirectFallback(error) {
   const code = typeof error?.code === "string" ? error.code : "";
   const message = String(error?.message || "");
@@ -138,6 +133,31 @@ async function postJson(url, body) {
     body: JSON.stringify(body || {}),
   });
   return parseResponse(response);
+}
+
+async function readServerSession() {
+  const response = await fetch("/api/auth/session", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  return normalizeSessionPayload(await parseResponse(response));
+}
+
+async function exchangeFirebaseUser(user) {
+  const idToken = await user.getIdToken();
+  const payload = await postJson("/api/auth/google-login", { idToken });
+  const session = normalizeSessionPayload(payload);
+  if (!session.isAuthenticated || !session.firebaseUid) {
+    throw new Error("Google sign-in did not create an account session.");
+  }
+  const persistedSession = await readServerSession();
+  if (!persistedSession.isAuthenticated || persistedSession.firebaseUid !== session.firebaseUid) {
+    throw new Error("Google sign-in finished, but this browser did not retain the account session. Check that site cookies are allowed, then try again.");
+  }
+  emitSession(persistedSession, { authoritative: true });
+  return persistedSession;
 }
 
 export async function getFirebaseWebConfig() {
@@ -230,11 +250,7 @@ async function finalizeRedirectSignIn() {
       if (!result?.user) {
         return null;
       }
-      const idToken = await result.user.getIdToken();
-      const payload = await postJson("/api/auth/google-login", { idToken });
-      const session = normalizeSessionPayload(payload);
-      emitSession(session, { authoritative: true });
-      return session;
+      return exchangeFirebaseUser(result.user);
     } catch (error) {
       if (String(error?.message || "").includes("not configured yet")) {
         return null;
@@ -267,16 +283,18 @@ export async function fetchAuthSession({ force = false } = {}) {
     return cachedSession;
   }
 
-  const response = await fetch("/api/auth/session", {
-    method: "GET",
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-  });
-  const payload = await parseResponse(response);
+  const session = await readServerSession();
   if (sessionRevision !== observedRevision && cachedSession) {
     return cachedSession;
   }
-  const session = normalizeSessionPayload(payload);
+  if (!session.isAuthenticated) {
+    const firebaseUser = await ensureFirebaseAuth()
+      .then(({ auth }) => auth.authStateReady().then(() => auth.currentUser))
+      .catch(() => null);
+    if (firebaseUser) {
+      return exchangeFirebaseUser(firebaseUser);
+    }
+  }
   emitSession(session);
   return session;
 }
@@ -307,17 +325,8 @@ export async function signInWithGoogle() {
   provider.setCustomParameters({ prompt: "select_account" });
 
   try {
-    if (isProbablyMobileBrowser()) {
-      await sdk.signInWithRedirect(auth, provider);
-      return cachedSession || normalizeSessionPayload({ ok: true, pendingRedirect: true });
-    }
-
     const result = await sdk.signInWithPopup(auth, provider);
-    const idToken = await result.user.getIdToken();
-    const payload = await postJson("/api/auth/google-login", { idToken });
-    const session = normalizeSessionPayload(payload);
-    emitSession(session, { authoritative: true });
-    return session;
+    return exchangeFirebaseUser(result.user);
   } catch (error) {
     if (shouldUseRedirectFallback(error)) {
       await sdk.signInWithRedirect(auth, provider);
