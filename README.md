@@ -312,3 +312,40 @@ Validation:
 - Browser smoke: start `python -m http.server 4173`, then run
   `npm run test:weekly-smoke:raw`
 
+
+### Weekly release automation runbook
+
+The Sunday release workflow keeps public and technical release feeds in sync
+without hand-editing the version files:
+
+1. `.github/workflows/weekly-release.yml` checks out full history, installs with
+   `npm ci`, and runs `npm run release:prepare-weekly`.
+2. `scripts/release/prepare-weekly-release.mjs` exits cleanly when
+   `release/weekly-state.json` already matches the current ISO week. Otherwise
+   it publishes the `CHANGELOG.md` Unreleased section, prepends a
+   `TECHNICAL_CHANGELOG.md` entry from git history since the previous release
+   date, bumps `package.json` / `package-lock.json` / `version.json`, and records
+   the released week in `release/weekly-state.json`.
+3. When files changed, the workflow validates the generated release with
+   `npm run game:preflight`, `npm run test:policy-gate`, `npm run test:telemetry`,
+   `npm run test:shop`, `npm run test:social`, `npm run test:feedback`, and
+   `npm run test:launch-readiness-smoke`.
+4. The release PR is limited to exactly `CHANGELOG.md`,
+   `TECHNICAL_CHANGELOG.md`, `package.json`, `package-lock.json`,
+   `version.json`, and `release/weekly-state.json`. That allowlist is enforced
+   both in the workflow and by `scripts/automation/audit-release-diff.mjs`.
+5. If an open `automation/weekly-release/*` PR already exists, the workflow
+   reuses it only when its release files match the just-validated output. If an
+   orphaned branch exists without a PR, it updates the branch with
+   `--force-with-lease` before creating the PR.
+6. The weekly workflow merges with `--match-head-commit` after commit and
+   file-list checks pass, then dispatches Main QA and production maintenance
+   verification on `main`. The trusted merge path in
+   `.github/workflows/automation-auto-merge.yml` keeps the same SHA and
+   file-list guards for workflow-dispatched premerge runs.
+
+Manual reruns should use the workflow dispatch button on `weekly-release.yml`.
+Do not add product code, generated game assets, or dependency changes beyond
+the synchronized package metadata to a weekly release PR; use a separate PR and
+let the next release run pick it up through the changelogs.
+
