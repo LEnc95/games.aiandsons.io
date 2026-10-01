@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       lane:
-        description: Automation lane (daily-game or weekly-pack)
+        description: Automation lane (daily-game, weekly-pack, or weekly-release)
         required: false
         default: daily-game
 
@@ -35,7 +35,7 @@ jobs:
       - name: Audit release diff
         env:
           AUTOMATION_BASE_SHA: ${{ github.event.pull_request.base.sha || 'origin/main' }}
-          AUTOMATION_LANE: ${{ inputs.lane || (startsWith(github.head_ref, 'automation/weekly-pack/') && 'weekly-pack') || 'daily-game' }}
+          AUTOMATION_LANE: ${{ inputs.lane || (startsWith(github.head_ref, 'automation/weekly-release/') && 'weekly-release') || (startsWith(github.head_ref, 'automation/weekly-pack/') && 'weekly-pack') || 'daily-game' }}
         run: node scripts/automation/audit-release-diff.mjs
       - run: npm run game:preflight
       - run: npm run test:telemetry

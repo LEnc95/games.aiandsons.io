@@ -109,6 +109,7 @@ export const ensureBillingSession = async ({ force = false } = {}) => {
   try {
     const response = await fetch("/api/auth/session", {
       method: "GET",
+      cache: "no-store",
       headers: { Accept: "application/json" },
     });
     const payload = await parseApiResponse(response);

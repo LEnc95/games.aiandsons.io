@@ -205,6 +205,18 @@ test('weekly release audit retains the three-game-shell limit without the daily 
   assert.ok(errors.some((error) => error.includes('maximum is 3')));
 });
 
+test('weekly release audit accepts only the synchronized release files', () => {
+  const files = [
+    'CHANGELOG.md', 'TECHNICAL_CHANGELOG.md', 'package.json',
+    'package-lock.json', 'version.json', 'release/weekly-state.json',
+  ];
+  assert.deepEqual(auditReleaseDiff({ files, lane: 'weekly-release' }), []);
+  const errors = auditReleaseDiff({ files: [...files, 'api/social.js'], lane: 'weekly-release' });
+  assert.ok(errors.some((error) => error.includes('outside its allowlist')));
+  const missing = auditReleaseDiff({ files: files.slice(1), lane: 'weekly-release' });
+  assert.ok(missing.some((error) => error.includes('missing required paths')));
+});
+
 test('weekly content workflow deduplicates and supersedes generated work items', () => {
   const workflow = fs.readFileSync(
     path.join(process.cwd(), '.github', 'workflows', 'weekly-content-pack.yml'),
@@ -230,5 +242,17 @@ test('trusted auto-merge uses workflow_run fields that GitHub populates', () => 
     /if ! gh pr checks "\$PR_NUMBER"[\s\S]+refusing to merge\.[\s\S]+fi\s+gh pr merge "\$PR_NUMBER"/,
     'trusted auto-merge must fail closed on PR checks before invoking merge',
   );
+});
+
+test('trusted weekly release merge requires the validated commit and release-only files', () => {
+  const workflow = fs.readFileSync(
+    path.join(process.cwd(), '.github', 'workflows', 'automation-auto-merge.yml'),
+    'utf8',
+  );
+  assert.match(workflow, /workflow_run\.event == 'workflow_dispatch'/);
+  assert.match(workflow, /workflow_run\.head_branch, 'automation\/weekly-release\/'/);
+  assert.match(workflow, /\[ "\$PR_HEAD_SHA" != "\$RUN_HEAD_SHA" \]/);
+  assert.match(workflow, /\[ "\$ACTUAL_FILES" != "\$EXPECTED_FILES" \]/);
+  assert.match(workflow, /--match-head-commit "\$RUN_HEAD_SHA"/);
 });
 

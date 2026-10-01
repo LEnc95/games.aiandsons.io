@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Added the 2026-W40 content pack with Cedar Cipher Ribbon Reversal, Saffron Spar Stick & Tilt, and Tideglass Vigil Lantern Wake cosmetics plus four bounded weekly challenges.
+
+## [1.14.0] - 2026-09-27
 - Added Stick & Tilt: 2–8-player stick-figure fighting with calibrated phone motion, touch alternatives, punch/jump/guard combat, climbable doodle-box platforms, quick respawns, and standalone or rotating Party sessions.
 
 ### Added
