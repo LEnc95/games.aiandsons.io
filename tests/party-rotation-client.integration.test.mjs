@@ -29,9 +29,11 @@ test("party rotation exposes the bounded lifecycle and activity catalogs", async
   for (const phase of ["voting", "spinning", "next_up", "activity", "results"]) {
     assert.match(server, new RegExp(`partyPhase = "${phase}"`));
   }
-  for (const mode of ["classic", "elimination", "teams", "relay", "survival", "chaos", "majority", "minority", "split", "unanimous", "duel"]) {
+  for (const mode of ["classic", "elimination", "teams", "relay", "survival", "chaos", "majority", "minority", "split", "unanimous", "duel", "blitz"]) {
     assert.match(server, new RegExp(`ModeKey: "${mode}"|ModeKey:.*"${mode}"`));
   }
+  assert.match(server, /sticktilt:rumble/);
+  assert.match(server, /sketchclash:classic/);
 });
 
 test("embedded activities start and finalize the existing clip recorder", async () => {
@@ -122,4 +124,51 @@ test("finished parties can restart in the same room with fresh standings", async
   assert.match(server, /func \(r \*partyRoom\) restartPartyLocked/);
   assert.match(server, /p\.PartyPoints = 0/);
   assert.match(server, /p\.Ready = false/);
+});
+
+test("hosts and players can share a policy-aware player invite", async () => {
+  const [html, app] = await Promise.all([read("party/index.html"), read("party/app.js")]);
+  for (const id of ["partyInviteButton", "partyPlayerInviteButton", "partyShareStatus", "partyPlayerShareStatus"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /function playerInviteUrl/);
+  assert.match(app, /Join my AI and Sons party/);
+  assert.match(app, /navigator\.share/);
+  assert.match(app, /Player invite link copied/);
+  assert.match(app, /snapshot\?\.roomLocked/);
+  assert.match(app, /snapshot\?\.allowLateJoin/);
+  assert.match(app, /snapshot\?\.maxPlayers/);
+});
+
+test("Crowd Shift Blitz is registered as a short five-round party activity", async () => {
+  const [server, crowdshift, html] = await Promise.all([
+    read("v2-server/party_rotation.go"),
+    read("v2-server/crowdshift.go"),
+    read("party/index.html"),
+  ]);
+  assert.match(server, /crowdshift:blitz/);
+  assert.match(server, /TotalRounds = 5/);
+  assert.match(crowdshift, /crowdShiftChoiceDurationLocked/);
+  assert.match(html, /partyActivityPool/);
+});
+
+test("audience participation, persistent teams, highlights, and diagnostics are exposed", async () => {
+  const [html, app, client, server, party] = await Promise.all([
+    read("party/index.html"), read("party/app.js"), read("src/net/multiplayerClient.js"), read("v2-server/party_rotation.go"), read("v2-server/party.go"),
+  ]);
+  for (const id of ["audienceJoinButton", "audiencePanel", "partyAudienceButton", "partyModerationSelect", "partyTeamMode", "partyShuffleTeamsButton", "partyTeamsPanel", "partyHighlightsPanel", "partyCopySummaryButton"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(app, /role: "audience"/);
+  assert.match(app, /type: "audience_reaction"/);
+  assert.match(app, /partySummaryText/);
+  assert.match(app, /partyTeams/);
+  assert.match(app, /partyHighlights/);
+  assert.match(party, /partyMaxAudience/);
+  assert.match(server, /audienceVoteLocked/);
+  assert.match(server, /TeamMode/);
+  assert.match(party, /sanitizePartyNameForLevel/);
+  assert.match(client, /connection_quality/);
+  assert.match(client, /getDiagnostics/);
+  assert.match(app, /latencyMs/);
 });

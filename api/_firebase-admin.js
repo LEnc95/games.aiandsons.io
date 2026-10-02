@@ -1,4 +1,12 @@
-const admin = require("firebase-admin");
+const {
+  applicationDefault,
+  cert,
+  getApps,
+  initializeApp,
+} = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
+const { getFirestore: getAdminFirestore } = require("firebase-admin/firestore");
+const { getStorage } = require("firebase-admin/storage");
 
 let cachedServiceAccount = undefined;
 let cachedApp = null;
@@ -253,7 +261,7 @@ function getFirebaseAdminApp() {
   }
 
   const appName = "cade-games-backend";
-  const existing = admin.apps.find((entry) => entry?.name === appName);
+  const existing = getApps().find((entry) => entry?.name === appName);
   if (existing) {
     cachedApp = existing;
     return cachedApp;
@@ -262,9 +270,9 @@ function getFirebaseAdminApp() {
   const options = {};
   const serviceAccount = getFirebaseServiceAccount();
   if (serviceAccount) {
-    options.credential = admin.credential.cert(serviceAccount);
+    options.credential = cert(serviceAccount);
   } else {
-    options.credential = admin.credential.applicationDefault();
+    options.credential = applicationDefault();
   }
 
   const projectId = getFirebaseProjectId();
@@ -272,13 +280,13 @@ function getFirebaseAdminApp() {
   const storageBucket = getFirebaseStorageBucketName();
   if (storageBucket) options.storageBucket = storageBucket;
 
-  cachedApp = admin.initializeApp(options, appName);
+  cachedApp = initializeApp(options, appName);
   return cachedApp;
 }
 
 function getFirestore() {
   const app = getFirebaseAdminApp();
-  const firestore = admin.firestore(app);
+  const firestore = getAdminFirestore(app);
   if (!firestoreConfigured) {
     firestore.settings({ ignoreUndefinedProperties: true });
     firestoreConfigured = true;
@@ -287,7 +295,7 @@ function getFirestore() {
 }
 
 function getFirebaseAuth() {
-  return admin.auth(getFirebaseAdminApp());
+  return getAuth(getFirebaseAdminApp());
 }
 
 function getFirebaseStorageBucket() {
@@ -295,7 +303,7 @@ function getFirebaseStorageBucket() {
   if (!bucketName) {
     throw new Error("firebase_storage_not_configured");
   }
-  return admin.storage(getFirebaseAdminApp()).bucket(bucketName);
+  return getStorage(getFirebaseAdminApp()).bucket(bucketName);
 }
 
 function __resetFirebaseAdminForTests() {

@@ -9,6 +9,7 @@ func rotationTestRoom(playerCount int) *partyRoom {
 	r := &partyRoom{
 		roomID: "VOTE", gameKey: partyRotationGameKey, sessionMode: partyRotationSessionMode,
 		partyPhase: "party_lobby", phase: "lobby", players: make(map[string]*partyPlayer),
+		audience: make(map[string]*partyAudienceMember), tokenToAudience: make(map[string]string),
 		displays: make(map[string]*client), tokenToPlayer: make(map[string]string), votes: make(map[string]string),
 		settings: partySettings{Mode: "classic", Heats: 3, Chaos: "standard", TrackRotation: "all"},
 	}
@@ -17,6 +18,63 @@ func rotationTestRoom(playerCount int) *partyRoom {
 		r.players[id] = &partyPlayer{ID: id, Name: "Player " + strconvItoa(index+1), Color: partyPlayerColor(index), Avatar: partyPlayerAvatar("", index), Connected: true, Active: true, Team: index % 2}
 	}
 	return r
+}
+
+func TestPartyAudienceTeamsAndHighlightsFlowThroughSnapshots(t *testing.T) {
+	r := rotationTestRoom(4)
+	r.partyConfig = defaultPartySessionSettings()
+	r.partyConfig.TeamMode = "two"
+	r.audience["a1"] = &partyAudienceMember{ID: "a1", Name: "Crowd", Avatar: "🐼", Connected: true, Vote: ""}
+	r.partyHighlights = []partyHighlight{{ActivityID: "turbotilt:classic", ActivityName: "Turbo Tilt", WinnerID: "p1", WinnerName: "Player 1", WinnerAvatar: "🦊", Award: 10}}
+	snapshot := r.rotationSnapshotLocked("p1")
+	teams, ok := snapshot["partyTeams"].([]map[string]any)
+	if !ok || len(teams) != 2 || teams[0]["players"].(int) != 2 || teams[1]["players"].(int) != 2 {
+		t.Fatalf("expected two balanced persistent teams, got %#v", snapshot["partyTeams"])
+	}
+	highlights, ok := snapshot["partyHighlights"].([]partyHighlight)
+	if !ok || len(highlights) != 1 || highlights[0].WinnerAvatar != "🦊" {
+		t.Fatalf("expected highlight with winner avatar, got %#v", snapshot["partyHighlights"])
+	}
+	r.beginPartyVoteLocked(1000)
+	option := r.partyVote.Options[0].ID
+	r.audience["a1"].Vote = option
+	ballots := r.partyVoteSnapshotLocked()["ballots"].([]map[string]any)
+	if len(ballots) != 1 || ballots[0]["id"] != "audience" || ballots[0]["playerAvatar"] != "📣" {
+		t.Fatalf("expected aggregate audience ballot, got %#v", ballots)
+	}
+}
+
+func TestPartyTeamModePreservesAssignmentsAcrossActivities(t *testing.T) {
+	r := rotationTestRoom(4)
+	r.partyConfig = defaultPartySessionSettings()
+	r.partyConfig.TeamMode = "two"
+	r.activity = partyActivityCatalog[2]
+	r.partyPhase = "next_up"
+	r.startRotationActivityLocked(1000)
+	first := make(map[string]int, len(r.players))
+	for id, player := range r.players {
+		first[id] = player.Team
+	}
+	r.partyPhase = "next_up"
+	r.startRotationActivityLocked(2000)
+	for id, player := range r.players {
+		if player.Team != first[id] {
+			t.Fatalf("team assignment changed between activities for %s: %d -> %d", id, first[id], player.Team)
+		}
+	}
+}
+
+func TestCrowdShiftBlitzUsesShorterFiveRoundFormat(t *testing.T) {
+	r := rotationTestRoom(3)
+	r.activity = partyActivity{ID: "crowdshift:blitz", GameKey: crowdShiftGameKey, ModeKey: "blitz", Label: "Crowd Shift · Blitz", MinPlayers: 3, MaxPlayers: 8}
+	r.partyConfig = defaultPartySessionSettings()
+	r.startRotationCrowdShiftLocked(1000)
+	if r.crowd == nil || r.crowd.TotalRounds != 5 || r.crowd.Mode != "blitz" {
+		t.Fatalf("blitz activity did not configure five rounds: %#v", r.crowd)
+	}
+	if got := r.crowdShiftChoiceDurationLocked(); got >= crowdShiftChoiceMs {
+		t.Fatalf("blitz choice duration = %d, want less than %d", got, crowdShiftChoiceMs)
+	}
 }
 
 func TestPartyRotationOptionsRespectCountsAndAvoidRepeat(t *testing.T) {
@@ -80,7 +138,7 @@ func TestPartyRotationNoVoteFallbackAndActivityStart(t *testing.T) {
 	}
 	r.partyPhase = "next_up"
 	r.startRotationActivityLocked(now + partySpinMs + partyNextUpMs)
-	if r.partyPhase != "activity" || (r.gameKey != turboTiltGameKey && r.gameKey != crowdShiftGameKey) || r.phase != "countdown" {
+	if r.partyPhase != "activity" || !isSupportedPartyGame(r.gameKey) || r.phase != "countdown" {
 		t.Fatalf("selected activity did not start: party=%s game=%s phase=%s", r.partyPhase, r.gameKey, r.phase)
 	}
 	if r.gameKey == crowdShiftGameKey && !r.crowd.Duel {

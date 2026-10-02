@@ -18,6 +18,8 @@
 - game/clubpenguin-world
 - game/audioagar
 - game/turbotilt
+- game/sticktilt
+- game/sketchclash
 - game/crowdshift
 - game/2048
 - game/pong
@@ -233,5 +235,10 @@
 - game/pebbleparade
 - game/chalkchase
 - game/paperbridge
+- game/signalgarden
+- game/pollenpassage
+- game/foxfiretrails
+- game/bottlecapcurl
+- game/runeroots
 
 Generated from `src/meta/feedback.js`.

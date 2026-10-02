@@ -37,6 +37,10 @@ async function main() {
   const makePage = async (viewport, label) => {
     const context = await browser.newContext({ viewport, hasTouch: viewport.width < 600, isMobile: viewport.width < 600 });
     contexts.push(context);
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value) => { window.__partyCopiedText = String(value); } } });
+    });
     const page = await context.newPage();
     page.on("dialog", (dialog) => dialog.accept());
     page.on("pageerror", (error) => errors.push(`${label}: ${error}`));
@@ -50,6 +54,15 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).view === "host", null, { timeout: 15000 });
     await host.waitForFunction(() => /^[A-HJ-NP-Z]{4}$/.test(document.getElementById("sessionRoom")?.textContent || ""), null, { timeout: 15000 });
     const room = await host.locator("#sessionRoom").textContent();
+    await host.waitForFunction(() => typeof window.__partyAudioDebug === "function");
+    await host.click("#partySoundButton");
+    await host.waitForFunction(() => window.__partyAudioDebug().activated === true);
+    const audioState = await host.evaluate(() => window.__partyAudioDebug());
+    if (!audioState.enabled || !audioState.activated || audioState.lastCue !== "enabled") throw new Error("Party audio did not unlock from the sound control");
+    await host.click("#partyInviteButton");
+    await host.waitForFunction(() => /copied/i.test(document.getElementById("partyShareStatus")?.textContent || ""));
+    const hostInvite = new URL(await host.evaluate(() => window.__partyCopiedText));
+    if (hostInvite.searchParams.get("code") !== room || hostInvite.searchParams.get("ws") !== ws) throw new Error(`Host player invite was incorrect: ${hostInvite}`);
     await host.selectOption("#partyDurationSelect", "quick");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partySettings?.targetActivities === 3);
     await host.selectOption("#partyAccessibilitySelect", "relaxed");
@@ -98,6 +111,7 @@ async function main() {
 
     await host.click("#partyLockButton");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.roomLocked === true);
+    if (!await host.locator("#partyInviteButton").isDisabled() || !/locked/i.test(await host.locator("#partyInviteButton").textContent())) throw new Error("Locked room did not close host invitations");
     const lockedPlayer = await openJoinPage("locked-player");
     await submitJoin(lockedPlayer, "Locked", "🐢");
     await lockedPlayer.waitForFunction(() => /locked/i.test(document.getElementById("joinError")?.textContent || ""));
@@ -123,6 +137,11 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.friendlyNames === false);
 
     const alpha = await join("Alpha", "🐸", { verifyPersistence: true });
+    await alpha.click("#partyPlayerInviteButton");
+    await alpha.waitForFunction(() => /copied/i.test(document.getElementById("partyPlayerShareStatus")?.textContent || ""));
+    const playerInvite = new URL(await alpha.evaluate(() => window.__partyCopiedText));
+    if (playerInvite.searchParams.get("code") !== room || playerInvite.searchParams.get("ws") !== ws) throw new Error(`Player invite was incorrect: ${playerInvite}`);
+    await alpha.screenshot({ path: path.join(outputDir, "player-invite-mobile.png"), fullPage: true });
     const beta = await join("Beta", "🦉");
     await alpha.click("#partyReadyButton");
     await beta.click("#partyReadyButton");
@@ -174,9 +193,21 @@ async function main() {
     if (lobby.state.players.find((player) => player.name === "Alpha")?.avatar !== "🐸" || lobby.state.players.find((player) => player.name === "Beta")?.avatar !== "🦉") throw new Error("Host snapshot did not preserve distinct player avatars");
     await host.selectOption("#partyMaxPlayersSelect", "2");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.maxPlayers === 2);
+    if (!await host.locator("#partyInviteButton").isDisabled() || !/full/i.test(await host.locator("#partyInviteButton").textContent())) throw new Error("Full room did not close host invitations");
     const fullPlayer = await openJoinPage("full-player");
     await submitJoin(fullPlayer, "Gamma", "🦁");
     await fullPlayer.waitForFunction(() => /player limit/i.test(document.getElementById("joinError")?.textContent || ""));
+    const audience = await openJoinPage("audience");
+    await audience.locator(`.avatar-option:has(input[value="🐼"])`).click();
+    await audience.fill("#playerName", "Crowd");
+    await audience.click("#audienceJoinButton");
+    await audience.waitForSelector("#partyController:not([hidden])", { timeout: 15000 });
+    const audienceState = await stateOf(audience);
+    if (audienceState.participant_role !== "audience" || audienceState.player_avatar !== "🐼" || !audienceState.audience_id) throw new Error("Audience join did not preserve the audience identity");
+    await audience.click('[data-audience-reaction="clap"]');
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.audienceCount === 1);
+    await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.audienceReactions?.clap === 1);
+    await audience.screenshot({ path: path.join(outputDir, "audience-mobile.png"), fullPage: true });
     await host.selectOption("#partyMaxPlayersSelect", "8");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.maxPlayers === 8);
     await assertNoHorizontalOverflow(host, "Host lobby");
@@ -185,6 +216,7 @@ async function main() {
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.allowLateJoin === false);
     await host.click("#partyStartButton");
     await host.waitForFunction(() => JSON.parse(window.render_game_to_text()).state.partyPhase === "voting", null, { timeout: 8000 });
+    if (!await host.locator("#partyInviteButton").isDisabled() || !/late joining/i.test(await host.locator("#partyInviteButton").textContent())) throw new Error("Late-join policy did not close host invitations during play");
     const latePlayer = await openJoinPage("late-player");
     await submitJoin(latePlayer, "Late", "🐙");
     await latePlayer.waitForFunction(() => /late joining/i.test(document.getElementById("joinError")?.textContent || ""));
@@ -264,7 +296,7 @@ async function main() {
     await choiceHost.waitForFunction(() => JSON.parse(window.render_game_to_text()).state?.partyPhase === "spinning", null, { timeout: 8000 });
     if ((await stateOf(choiceHost)).state.activity.label !== chosenActivity) throw new Error("Host choice did not select the requested activity");
     if (errors.length) throw new Error(errors.join(" | "));
-    console.log(JSON.stringify({ checks: ["party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "late_join_policy", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end", "play_again", "same_room_restart", "score_reset", "settings_preserved"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
+    console.log(JSON.stringify({ checks: ["party_audio", "party_settings", "settings_persistence", "activity_pool", "majority_selection", "host_choice", "ready_check", "automatic_rejoin", "rejoin_identity", "host_takeover_blocked", "host_recovery", "host_recovery_identity", "host_recovery_forget", "accessibility_propagation", "room_lock", "friendly_names", "remove_player", "blocked_reconnect", "player_limit", "audience_participation", "late_join_policy", "host_player_invite", "phone_player_invite", "invite_policy_states", "avatar_picker", "avatar_persistence", "avatar_snapshots", "opening_vote", "named_ballots", "weighted_wheel", "auto_activity", "repeat_exclusion", "cross_activity", "persistent_standings", "party_end", "play_again", "same_room_restart", "score_reset", "settings_preserved"], firstActivity: firstActivity.id, secondActivity: secondActivity.id }));
   } finally {
     await Promise.all(contexts.map((context) => context.close().catch(() => {})));
     await browser.close();

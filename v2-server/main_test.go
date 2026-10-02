@@ -41,10 +41,11 @@ func TestHealthReportsOnlyEnabledGames(t *testing.T) {
 	h.handleHealthz(response, request)
 
 	var body struct {
-		OK         bool     `json:"ok"`
-		Service    string   `json:"service"`
-		Games      []string `json:"games"`
-		PartyGames []string `json:"partyGames"`
+		OK           bool     `json:"ok"`
+		Service      string   `json:"service"`
+		Games        []string `json:"games"`
+		PartyGames   []string `json:"partyGames"`
+		RoomRecovery bool     `json:"roomRecovery"`
 	}
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode health response: %v", err)
@@ -55,8 +56,11 @@ func TestHealthReportsOnlyEnabledGames(t *testing.T) {
 	if len(body.Games) != 1 || body.Games[0] != partyGameID {
 		t.Fatalf("expected only party enabled, got %v", body.Games)
 	}
-	if len(body.PartyGames) != 2 {
+	if len(body.PartyGames) != 4 || !containsString(body.PartyGames, stickTiltGameKey) || !containsString(body.PartyGames, sketchClashGameKey) {
 		t.Fatalf("expected party activity catalog, got %v", body.PartyGames)
+	}
+	if body.RoomRecovery {
+		t.Fatal("test hub unexpectedly enabled durable room recovery")
 	}
 }
 

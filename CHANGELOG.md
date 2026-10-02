@@ -6,6 +6,27 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added the 2026-W40 content pack with Cedar Cipher Ribbon Reversal, Saffron Spar Stick & Tilt, and Tideglass Vigil Lantern Wake cosmetics plus four bounded weekly challenges.
+
+## [1.14.0] - 2026-09-27
+- Added Stick & Tilt: 2–8-player stick-figure fighting with calibrated phone motion, touch alternatives, punch/jump/guard combat, climbable doodle-box platforms, quick respawns, and standalone or rotating Party sessions.
+
+### Added
+
+- Added the 2026-W39 content pack with Willow Wish Nest Stack, Copper Scoreboard Bottom of the Ninth, and Copper Ripple Bottlecap Curl cosmetics plus four bounded weekly challenges.
+
+- Rune Roots - a five-grove root-rotation puzzle for keyboard and touch.
+
+- Bottlecap Curl - a five-rink bottlecap precision game for keyboard and touch.
+
+- Foxfire Trails - a five-trail wisp-gathering forest game for keyboard and touch.
+
+- Pollen Passage - a five-meadow flower-lane game for keyboard and touch.
+
+- Signal Garden - a five-garden firefly memory game for keyboard and touch.
+
+- Party Mode player invitations from host screens and connected phones, with native sharing, copy fallback, and room-policy awareness.
+
 - Isolated Party Mode and Audio Agar into game-specific Cloud Run services while retaining their shared versioned multiplayer protocol.
 
 - Added the 2026-W38 content pack with Saffron Nocturne Aurora Accord, Cinder Constellation Lantern Loom, and Comet Chicane Turbo Tilt cosmetics plus four bounded weekly challenges.

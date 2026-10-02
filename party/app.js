@@ -1,5 +1,8 @@
+import { createStickController } from "/sticktilt/controller.js";
 import { connect } from "/src/net/multiplayerClient.js";
+import { SketchStrokeBuffer } from "/party/sketch-input.js";
 import { AVATAR_EMOJI, DEFAULT_AVATAR_EMOJI, isAvatarEmoji } from "/src/social/avatars.js";
+import { createPartyAudio } from "/party/audio.js";
 
 const byId = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -19,6 +22,8 @@ const state = {
   playerName: "",
   playerColor: "#31e6c1",
   playerAvatar: DEFAULT_AVATAR_EMOJI,
+  participantRole: "player",
+  audienceId: "",
   gameKey: "",
   snapshot: null,
   tiltEnabled: false,
@@ -48,10 +53,13 @@ const state = {
   partyAnimationFrame: 0,
   hostPartySettings: null,
   connectionStatus: "",
+  connectionDiagnostics: { latencyMs: null, quality: "unknown", lastPongAt: 0 },
   rejoinedNoticeUntil: 0,
   hostRecoverySavedAt: 0,
   hostRecoveryNoticeTimer: 0,
 };
+const stickController = createStickController(byId("stickController"), (input) => { if (state.gameKey === "sticktilt") state.connection?.sendInput(input); }, vibrate);
+const partyAudio = createPartyAudio({ sharedScreen: screenMode });
 
 function loadSavedAvatar() {
   try {
@@ -90,7 +98,7 @@ function renderAvatarPicker() {
 }
 
 function defaultPartySettings() {
-  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true, selectionMethod: "chaos", repeatAvoidance: "session", catchUp: true, enabledActivities: null };
+  return { version: 1, durationPreset: "standard", playStyle: "mixed", accessibilityPreset: "standard", extendedTimers: false, reducedMotion: false, highContrast: false, effects: true, narration: true, haptics: true, selectionMethod: "chaos", repeatAvoidance: "session", catchUp: true, teamMode: "off", enabledActivities: null };
 }
 
 function partySettingsFromControls() {
@@ -109,6 +117,7 @@ function partySettingsFromControls() {
     selectionMethod: byId("partySelectionSelect").value,
     repeatAvoidance: byId("partyRepeatSelect").value,
     catchUp: byId("partyCatchUp").checked,
+    teamMode: byId("partyTeamMode").value,
     enabledActivities: activityInputs.length ? activityInputs.filter((input) => input.checked).map((input) => input.dataset.activityId) : (state.hostPartySettings?.enabledActivities || null),
   };
 }
@@ -152,6 +161,7 @@ function syncPartySettingsControls(settings = defaultPartySettings()) {
   byId("partySelectionSelect").value = accepted.selectionMethod;
   byId("partyRepeatSelect").value = accepted.repeatAvoidance;
   byId("partyCatchUp").checked = accepted.catchUp !== false;
+  byId("partyTeamMode").value = accepted.teamMode || "off";
   document.querySelectorAll("#partyActivityPool input[data-activity-id]").forEach((input) => { input.checked = !accepted.enabledActivities || accepted.enabledActivities.includes(input.dataset.activityId); });
   const counts = { quick: 3, standard: 6, marathon: 10 };
   byId("partyEstimate").textContent = `About ${(counts[accepted.durationPreset] || 6) * 5} min`;
@@ -201,8 +211,8 @@ function normalizeCode(value) {
   return String(value || "").toUpperCase().replace(allowedCode, "").slice(0, 4);
 }
 
-function tokenKey(roomId) {
-  return `aiandsons-party-player:${roomId}`;
+function tokenKey(roomId, role = "player") {
+  return `aiandsons-party-${role}:${roomId}`;
 }
 
 function loadHostRecovery() {
@@ -248,6 +258,17 @@ function setConnectionLabel(label, kind = "") {
   pill.className = `connection-pill ${kind}`.trim();
 }
 
+function updateConnectionDiagnostics(connection, detail = {}) {
+  if (connection !== state.connection) return;
+  const diagnostics = typeof connection.getDiagnostics === "function" ? connection.getDiagnostics() : detail;
+  state.connectionDiagnostics = { ...state.connectionDiagnostics, ...diagnostics, ...detail };
+  const latency = Number(state.connectionDiagnostics.latencyMs);
+  if (state.connectionStatus === "open" && Number.isFinite(latency) && latency >= 0) {
+    const quality = state.connectionDiagnostics.quality || (latency <= 120 ? "good" : latency <= 280 ? "fair" : "poor");
+    setConnectionLabel(`${displayMode ? "Following live" : "Connected"} · ${Math.round(latency)} ms`, `online quality-${quality}`);
+  }
+}
+
 function showController() {
   byId("landingView").hidden = true;
   byId("controllerView").hidden = false;
@@ -257,14 +278,18 @@ function showController() {
   const activityControls = partyPhase === "activity" || (partyPhase === "paused" && state.snapshot?.resumePartyPhase === "activity");
   const isParty = state.sessionMode === "rotation" && !activityControls;
   const isCrowdShift = !isParty && state.gameKey === "crowdshift";
+  const isSketchClash = !isParty && state.gameKey === "sketchclash";
+  const isStickTilt = !isParty && state.gameKey === "sticktilt";
   byId("partyController").hidden = !isParty;
-  byId("turboController").hidden = isParty || isCrowdShift;
+  byId("turboController").hidden = isParty || isCrowdShift || isSketchClash || isStickTilt;
   byId("crowdController").hidden = isParty || !isCrowdShift;
-  const label = isParty ? "Party voting" : isCrowdShift ? "Crowd Shift" : "Turbo Tilt";
+  byId("stickController").hidden = !isStickTilt;
+  ensureSketchController().hidden = !isSketchClash;
+  const label = isParty ? "Party voting" : isStickTilt ? "Stick & Tilt" : isSketchClash ? "Sketch Clash" : isCrowdShift ? "Crowd Shift" : "Turbo Tilt";
   byId("controllerView").setAttribute("aria-label", `${label} phone controller`);
 }
 
-async function joinParty({ withoutToken = false } = {}) {
+async function joinParty({ withoutToken = false, role = "player" } = {}) {
   const code = normalizeCode(byId("roomCode").value || params.get("code"));
   const name = byId("playerName").value.trim();
   byId("joinError").textContent = "";
@@ -279,11 +304,12 @@ async function joinParty({ withoutToken = false } = {}) {
   state.roomId = code;
   setConnectionLabel("Connecting…");
   state.connection?.disconnect();
-  const savedToken = withoutToken ? "" : localStorage.getItem(tokenKey(code)) || "";
+  state.participantRole = role;
+  const savedToken = withoutToken ? "" : localStorage.getItem(tokenKey(code, role)) || "";
   const connection = await connect({
     gameId: "party",
     roomId: code,
-    role: "player",
+    role,
     playerName: name,
     playerAvatar: state.playerAvatar,
     token: savedToken,
@@ -299,7 +325,9 @@ async function joinParty({ withoutToken = false } = {}) {
   });
   connection.onStateUpdate((update) => {
     if (connection !== state.connection) return;
+    const previous = state.snapshot;
     state.snapshot = update.payload?.state || update.payload || null;
+    partyAudio.handleSnapshot(previous, state.snapshot);
     renderController();
   });
   connection.onEvent((event) => handleEvent(connection, event));
@@ -307,11 +335,17 @@ async function joinParty({ withoutToken = false } = {}) {
 
 function handleEvent(connection, event) {
   if (connection !== state.connection) return;
+  if (event.type === "connection_quality") {
+    updateConnectionDiagnostics(connection, event);
+    return;
+  }
   const payload = event.payload || {};
   if (event.type === "welcome") {
     state.removed = false;
     state.roomId = payload.roomId || state.roomId;
     state.playerId = payload.playerId || state.playerId;
+    state.audienceId = payload.audienceId || state.audienceId;
+    state.participantRole = payload.role || state.participantRole;
     state.playerName = payload.playerName || "Racer";
     state.playerColor = payload.playerColor || state.playerColor;
     state.playerAvatar = isAvatarEmoji(payload.playerAvatar) ? payload.playerAvatar : state.playerAvatar;
@@ -319,7 +353,7 @@ function handleEvent(connection, event) {
     state.sessionMode = payload.sessionMode || state.sessionMode;
     state.connectionStatus = "open";
     state.rejoinedNoticeUntil = payload.reconnected ? Date.now() + 3500 : 0;
-    if (payload.token) localStorage.setItem(tokenKey(state.roomId), payload.token);
+    if (payload.token) localStorage.setItem(tokenKey(state.roomId, payload.role || state.participantRole), payload.token);
     byId("playerLabel").textContent = state.playerName;
     byId("playerDot").style.background = state.playerColor;
     byId("playerDot").textContent = state.playerAvatar;
@@ -328,6 +362,7 @@ function handleEvent(connection, event) {
     window.scrollTo({ top: 0, behavior: "auto" });
     renderController();
     setConnectionLabel("Connected", "online");
+    partyAudio.welcome({ reconnected: Boolean(payload.reconnected), playerName: state.playerName }, state.snapshot);
     if (payload.nameAdjusted) byId("tiltHelp").textContent = `You joined as ${state.playerName}. Touch controls always work.`;
     return;
   }
@@ -335,19 +370,20 @@ function handleEvent(connection, event) {
     if (payload.code === "removed_from_room") {
       state.removed = true;
       const message = payload.message || "The host removed you from this room.";
-      if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
+      if (state.roomId) localStorage.removeItem(tokenKey(state.roomId, state.participantRole));
       byId("landingView").hidden = true;
       byId("controllerView").hidden = false;
       document.querySelectorAll("#controllerView .controller-game, #controllerView .controller-head").forEach((element) => { element.hidden = true; });
       byId("removedNotice").hidden = false;
       byId("removedNotice").querySelector("p").textContent = `${message} You can return to the Party Mode page and join a different room.`;
       setConnectionLabel("Removed by host", "problem");
+      partyAudio.cue("error", state.snapshot);
       connection.disconnect();
       return;
     }
     if (payload.code === "invalid_player_token" && !state.retryingToken) {
       state.retryingToken = true;
-      localStorage.removeItem(tokenKey(state.roomId));
+      localStorage.removeItem(tokenKey(state.roomId, state.participantRole));
       connection.disconnect();
       joinParty({ withoutToken: true }).finally(() => { state.retryingToken = false; });
       return;
@@ -356,6 +392,7 @@ function handleEvent(connection, event) {
     byId("joinError").textContent = message;
     if (!byId("controllerView").hidden) byId("controllerMessage").textContent = message;
     setConnectionLabel("Could not join", "problem");
+    partyAudio.cue("error", state.snapshot);
   }
 }
 
@@ -388,10 +425,12 @@ function renderController() {
     return;
   }
   showController();
+  if (state.gameKey === "sticktilt") { stickController.render(snapshot, snapshot?.selfId || state.playerId); return; }
   if (state.gameKey === "crowdshift") {
     renderCrowdController(snapshot);
     return;
   }
+  if (state.gameKey === "sketchclash") { renderSketchController(snapshot); return; }
   const me = snapshot?.players?.find((player) => player.id === (snapshot.selfId || state.playerId));
   const phase = snapshot?.phase || "lobby";
   const mode = String(snapshot?.settings?.mode || "classic").replaceAll("_", " ");
@@ -417,8 +456,44 @@ function renderController() {
   renderVotes(snapshot);
 }
 
+function ensureSketchController() {
+  let panel = byId("sketchController");
+  if (panel) return panel;
+  panel = document.createElement("section"); panel.id = "sketchController"; panel.className = "controller-game";
+  panel.innerHTML = `<div class="sketch-status"><p class="eyebrow" id="sketchPhase" aria-live="polite">Sketch Clash</p><strong id="sketchTimer"></strong></div><h2 id="sketchTitle">Watch the shared screen</h2><p id="sketchRule">Draw pictures only — no letters or numbers.</p><div id="sketchChoices"></div><div class="sketch-canvas-wrap"><canvas id="sketchCanvas" width="900" height="600" aria-label="Private drawing canvas"></canvas></div><div id="sketchTools" class="sketch-tools"><fieldset><legend>Ink color</legend><div class="sketch-palette"><button class="swatch" data-sketch-color="#111827" aria-label="Charcoal"></button><button class="swatch" data-sketch-color="#ef476f" aria-label="Coral red"></button><button class="swatch" data-sketch-color="#ff9f1c" aria-label="Orange"></button><button class="swatch" data-sketch-color="#ffd166" aria-label="Sun yellow"></button><button class="swatch" data-sketch-color="#06d6a0" aria-label="Mint green"></button><button class="swatch" data-sketch-color="#118ab2" aria-label="Ocean blue"></button><button class="swatch" data-sketch-color="#6c5ce7" aria-label="Violet"></button><button class="swatch" data-sketch-color="#d946ef" aria-label="Magenta"></button><label class="custom-swatch" aria-label="Custom ink color"><input id="sketchCustomColor" type="color" value="#3b82f6"><span>+</span></label></div></fieldset><fieldset><legend>Pen size <output id="sketchPenSizeValue">12</output></legend><input id="sketchPenSize" type="range" min="2" max="30" value="12" step="1"></fieldset><fieldset><legend>Eraser size <output id="sketchEraserSizeValue">28</output></legend><input id="sketchEraserSize" type="range" min="8" max="48" value="28" step="2"></fieldset><div class="sketch-tool-actions"><button id="sketchPen" class="selected" type="button">✎ Pen</button><button id="sketchErase" type="button">◯ Eraser</button><button id="sketchUndo" type="button">↶ Undo</button><button id="sketchClear" type="button">Clear</button></div></div><form id="sketchGuessForm"><label>Your guess <input id="sketchGuess" maxlength="80" autocomplete="off" placeholder="What is it?" required></label><button>Send</button></form><p id="sketchResult" aria-live="polite"></p>`;
+  byId("controllerView").append(panel);
+  const canvas = panel.querySelector("canvas"), ctx=canvas.getContext("2d"), strokeBuffer=new SketchStrokeBuffer(); let drawing=false, sequence=0, color=localStorage.getItem("aiandsons-sketch-color")||"#111827", penWidth=Number(localStorage.getItem("aiandsons-sketch-pen")||12), eraserWidth=Number(localStorage.getItem("aiandsons-sketch-eraser")||28), tool="pen", lastSentAt=0, strokeCounter=0, strokeId="";
+  panel._sketchRedraw=(snapshot)=>{if(drawing||panel.dataset.canvasRevision===String(snapshot?.canvasRevision??""))return;ctx.clearRect(0,0,canvas.width,canvas.height);for(const stroke of snapshot?.strokes||[]){if(!stroke.points?.length)continue;ctx.strokeStyle=stroke.tool==="eraser"?"#fff":stroke.color;ctx.lineWidth=stroke.width;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(stroke.points[0].x*canvas.width,stroke.points[0].y*canvas.height);for(const p of stroke.points.slice(1))ctx.lineTo(p.x*canvas.width,p.y*canvas.height);ctx.stroke();}panel.dataset.canvasRevision=String(snapshot?.canvasRevision??"");};
+  const send=(keepTail=true)=>{
+    const batch=strokeBuffer.drain({keepTail});if(!batch.length)return;
+    const snap=state.snapshot;
+    state.connection?.sendInput({type:"stroke",roundId:snap?.roundId,stroke:{roundId:snap?.roundId,strokeId,sequence:++sequence,tool,color,width:tool==="eraser"?eraserWidth:penWidth,points:batch}});
+    lastSentAt=performance.now();
+  };
+  const point=(event)=>{const r=canvas.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(event.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(event.clientY-r.top)/r.height)),t:Date.now()};};
+  canvas.addEventListener("pointerdown",e=>{if(state.snapshot?.currentArtistId!==(state.snapshot?.selfId||state.playerId)||state.snapshot?.phase!=="drawing")return;e.preventDefault();drawing=true;sequence=Math.max(sequence,state.snapshot.strokeSequence||0);strokeId=`${state.playerId||"artist"}-${Date.now()}-${++strokeCounter}`;lastSentAt=performance.now();canvas.setPointerCapture(e.pointerId);strokeBuffer.begin(point(e));});
+  canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();const coalesced=e.getCoalescedEvents?.()||[],samples=coalesced.length?coalesced:[e];for(const sample of samples){const p=point(sample), q=strokeBuffer.last;if(!q){strokeBuffer.begin(p);continue;}ctx.strokeStyle=tool==="eraser"?"#fff":color;ctx.lineWidth=tool==="eraser"?eraserWidth:penWidth;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(q.x*900,q.y*600);ctx.lineTo(p.x*900,p.y*600);ctx.stroke();strokeBuffer.add(p);}if(performance.now()-lastSentAt>=25||strokeBuffer.length>=64)send(true);});
+  const finishStroke=()=>{if(!drawing)return;drawing=false;send(false);strokeBuffer.clear();};
+  canvas.addEventListener("pointerup",finishStroke);canvas.addEventListener("pointercancel",finishStroke);canvas.addEventListener("lostpointercapture",finishStroke);
+  const selectTool=(next)=>{tool=next;byId("sketchPen").classList.toggle("selected",tool==="pen");byId("sketchErase").classList.toggle("selected",tool==="eraser");};
+  const selectColor=(next)=>{color=next;localStorage.setItem("aiandsons-sketch-color",color);selectTool("pen");panel.querySelectorAll("[data-sketch-color]").forEach(b=>b.classList.toggle("selected",b.dataset.sketchColor.toLowerCase()===color.toLowerCase()));};
+  panel.querySelectorAll("[data-sketch-color]").forEach(b=>{b.style.setProperty("--swatch",b.dataset.sketchColor);b.onclick=()=>selectColor(b.dataset.sketchColor);});byId("sketchCustomColor").oninput=e=>selectColor(e.target.value);byId("sketchPen").onclick=()=>selectTool("pen");byId("sketchErase").onclick=()=>selectTool("eraser");
+  byId("sketchPenSize").value=String(penWidth);byId("sketchPenSizeValue").value=String(penWidth);byId("sketchPenSize").oninput=e=>{penWidth=Number(e.target.value);byId("sketchPenSizeValue").value=String(penWidth);localStorage.setItem("aiandsons-sketch-pen",String(penWidth));selectTool("pen");};
+  byId("sketchEraserSize").value=String(eraserWidth);byId("sketchEraserSizeValue").value=String(eraserWidth);byId("sketchEraserSize").oninput=e=>{eraserWidth=Number(e.target.value);byId("sketchEraserSizeValue").value=String(eraserWidth);localStorage.setItem("aiandsons-sketch-eraser",String(eraserWidth));selectTool("eraser");};
+  byId("sketchUndo").onclick=()=>state.connection?.sendInput({type:"canvas_action",action:"undo"});byId("sketchClear").onclick=()=>{if(confirm("Clear the canvas? You can undo this once."))state.connection?.sendInput({type:"canvas_action",action:"clear"});};selectColor(color);
+  byId("sketchGuessForm").addEventListener("submit",e=>{e.preventDefault();const input=byId("sketchGuess"), guess=input.value.trim();if(!guess)return;state.connection?.sendInput({type:"guess",guess});byId("sketchResult").textContent="Guess sent — keep trying if it isn't right.";input.value="";}); return panel;
+}
+function renderSketchController(snapshot) {
+ const panel=ensureSketchController(), me=snapshot?.selfId||state.playerId, artist=snapshot?.players?.find(p=>p.id===snapshot?.currentArtistId), isArtist=me===snapshot?.currentArtistId, phase=snapshot?.phase||"lobby", seconds=Math.max(0,Math.ceil((Number(snapshot?.phaseEndsAt||0)-Date.now())/1000));
+ panel._sketchRedraw?.(snapshot);
+ byId("sketchPhase").textContent=`${phase.replaceAll("_"," ")} · ${seconds}s`;byId("sketchTimer").textContent=seconds?`${seconds} seconds remaining`:"";byId("sketchChoices").textContent="";byId("sketchCanvas").hidden=!(isArtist&&phase==="drawing");byId("sketchTools").hidden=!(isArtist&&phase==="drawing");byId("sketchGuessForm").hidden=isArtist||phase!=="drawing"||Boolean(snapshot?.hasGuessedCorrectly);
+ if(snapshot?.hasGuessedCorrectly)byId("sketchResult").textContent="Correct! Nice guess.";else if(phase!=="drawing")byId("sketchResult").textContent="";
+ if(phase==="choosing_prompt"&&isArtist){byId("sketchTitle").textContent="Choose a secret word";(snapshot?.promptChoices||[]).forEach(p=>{const b=document.createElement("button");b.textContent=p.text;b.onclick=()=>state.connection?.sendInput({type:"choose_prompt",choice:p.id});byId("sketchChoices").append(b);});} else if(phase==="drawing"&&isArtist){byId("sketchTitle").textContent=`Draw: ${snapshot?.selectedPrompt?.text||"your word"}`;} else if(snapshot?.hasGuessedCorrectly){byId("sketchTitle").textContent="✓ Correct! Watch the display.";} else if(phase==="round_recap"||phase==="podium"){byId("sketchTitle").textContent=`Answer: ${snapshot?.answer||"—"}`;} else {byId("sketchTitle").textContent=`${artist?.name||"Artist"} is drawing — watch the shared screen`;}
+}
+
 function renderPartyController(snapshot) {
   const me = snapshot?.players?.find((player) => player.id === (snapshot?.selfId || state.playerId));
+  const audience = state.participantRole === "audience";
   const phase = snapshot?.partyPhase || "party_lobby";
   const remaining = Math.max(0, (Number(snapshot?.phaseEndsAt || 0) - (Date.now() + state.testOffsetMs)) / 1000);
   const vote = snapshot?.partyVote || {};
@@ -427,6 +502,8 @@ function renderPartyController(snapshot) {
   byId("partyRank").textContent = me?.partyRank ? `#${me.partyRank}` : "—";
   byId("partyPoints").textContent = String(me?.partyPoints || 0);
   byId("partyWins").textContent = String(me?.activityWins || 0);
+  byId("audienceBadge").hidden = !audience;
+  byId("audiencePanel").hidden = !audience;
   let message = "Waiting for the host to start the party";
   if (phase === "voting") message = snapshot?.partySettings?.selectionMethod === "host" ? "The host is choosing the next game" : `${Math.ceil(remaining)} seconds to vote`;
   else if (phase === "spinning") message = "The wheel is spinning!";
@@ -438,11 +515,13 @@ function renderPartyController(snapshot) {
   else if (state.rejoinedNoticeUntil > Date.now()) message = `Welcome back, ${state.playerName}! Your spot is restored.`;
   byId("partyMessage").textContent = message;
   const inLobby = phase === "party_lobby";
-  byId("partyLobbyGuide").hidden = !inLobby;
+  byId("partyLobbyGuide").hidden = !inLobby || audience;
   byId("partyEncorePanel").hidden = phase !== "ended";
   const ready = Boolean(me?.ready);
+  byId("partyReadyButton").hidden = audience;
   byId("partyReadyButton").textContent = ready ? "Ready ✓" : "I’m ready";
   byId("partyReadyButton").setAttribute("aria-pressed", String(ready));
+  updateInviteButton(byId("partyPlayerInviteButton"), snapshot, "Invite another player");
   const selectionCopy = {
     chaos: "Vote for an activity; every ballot becomes a wheel slice.",
     majority: "Vote for an activity; the most votes wins.",
@@ -452,7 +531,9 @@ function renderPartyController(snapshot) {
   byId("partySelectionHelp").textContent = selectionCopy;
   const voting = phase === "voting" && snapshot?.partySettings?.selectionMethod !== "host";
   byId("partyVotePanel").hidden = !voting;
-  const ownBallot = vote.ballots?.find((ballot) => ballot.playerId === me?.id);
+  const ownBallot = audience
+    ? vote.ballots?.find((ballot) => ballot.id === "audience")
+    : vote.ballots?.find((ballot) => ballot.playerId === me?.id);
   if (ownBallot) state.selectedPartyVote = ownBallot.optionId;
   const target = byId("partyVoteButtons");
   const signature = (vote.options || []).map((option) => option.id).join("|");
@@ -474,6 +555,7 @@ function renderPartyController(snapshot) {
         state.selectedPartyVote = option.id;
         state.connection?.sendInput({ type: "party_vote", optionId: option.id });
         renderPartyController(state.snapshot);
+        partyAudio.cue("select", state.snapshot);
         vibrate(25);
       });
       target.append(button);
@@ -486,7 +568,9 @@ function renderPartyController(snapshot) {
     button.disabled = !voting;
     button.querySelector(".party-voters").textContent = names.length ? `Voted: ${names.join(", ")}` : "No votes yet";
   });
-  byId("partyVoteStatus").textContent = voting ? "Your named vote appears live. Change it anytime before the spin." : "Watch the shared screen.";
+  byId("partyVoteStatus").textContent = voting
+    ? audience ? "Your audience vote updates the collective ballot." : "Your named vote appears live. Change it anytime before the spin."
+    : "Watch the shared screen.";
   renderPhoneStandings(snapshot);
 }
 
@@ -699,6 +783,7 @@ function effectiveSteer() {
 }
 
 function sendSteer(force = false) {
+  if (state.gameKey !== "turbotilt") return;
   const now = performance.now();
   const value = effectiveSteer();
   if (!force && now - state.lastSentAt < 68) return;
@@ -759,7 +844,9 @@ async function connectSessionScreen() {
   });
   connection.onStateUpdate((update) => {
     if (connection !== state.connection) return;
+    const previous = state.snapshot;
     state.snapshot = update.payload?.state || update.payload || null;
+    partyAudio.handleSnapshot(previous, state.snapshot);
     state.gameKey = state.snapshot?.gameKey || state.gameKey;
     state.sessionMode = state.snapshot?.sessionMode || state.sessionMode;
     if (!displayMode && state.hostToken && Date.now() - state.hostRecoverySavedAt > 60000) rememberHostRecovery(state.roomId, state.hostToken);
@@ -767,6 +854,10 @@ async function connectSessionScreen() {
   });
   connection.onEvent((event) => {
     if (connection !== state.connection) return;
+    if (event.type === "connection_quality") {
+      updateConnectionDiagnostics(connection, event);
+      return;
+    }
     const payload = event.payload || {};
     if (event.type === "welcome") {
       state.roomId = payload.roomId || state.roomId;
@@ -786,6 +877,7 @@ async function connectSessionScreen() {
       byId("sessionRoom").textContent = state.roomId || "----";
       renderSessionQr();
       renderSessionScreen();
+      partyAudio.welcome({ reconnected: Boolean(payload.reconnected) }, state.snapshot);
       if (!displayMode && !requestedRoom) {
         syncPartySettingsControls(state.hostPartySettings || defaultPartySettings());
         sendPartyConfiguration();
@@ -794,6 +886,7 @@ async function connectSessionScreen() {
       byId("sessionError").textContent = payload.message || "The party server rejected that action.";
       const failedRoom = state.roomId || requestedRoom;
       if (["invalid_host_token", "room_not_found"].includes(payload.code) && failedRoom) forgetHostRecovery(failedRoom);
+      partyAudio.cue("error", state.snapshot);
     }
   });
 }
@@ -803,7 +896,7 @@ function renderSessionQr() {
   target.textContent = "";
   if (!state.roomId || typeof window.qrcode !== "function") return;
   const qr = window.qrcode(0, "M");
-  qr.addData(`https://games.aiandsons.io/party?code=${encodeURIComponent(state.roomId)}`);
+  qr.addData(playerInviteUrl().toString());
   qr.make();
   const qrDocument = new DOMParser().parseFromString(
     qr.createSvgTag(4, 1, "Scan to join the party", "Party room QR code"),
@@ -819,6 +912,59 @@ function sendPartyHost(action, details = {}) {
   state.connection?.sendInput({ type: "host", action, ...details });
 }
 
+function partyUrlWithRoom(parameter) {
+  const url = new URL("/party/", location.origin);
+  url.searchParams.set(parameter, state.roomId);
+  const endpoint = params.get("ws") || params.get("endpoint");
+  if (endpoint) url.searchParams.set("ws", endpoint);
+  return url;
+}
+
+function playerInviteUrl() {
+  return partyUrlWithRoom("code");
+}
+
+function displayInviteUrl() {
+  return partyUrlWithRoom("display");
+}
+
+function inviteAvailability(snapshot) {
+  if (snapshot?.roomLocked) return { available: false, label: "Room is locked" };
+  if (snapshot?.allowLateJoin === false && snapshot?.partyPhase !== "party_lobby") return { available: false, label: "Late joining is off" };
+  if ((snapshot?.players?.length || 0) >= Number(snapshot?.maxPlayers || 8)) return { available: false, label: "Room is full" };
+  return { available: true, label: "" };
+}
+
+function updateInviteButton(button, snapshot, availableLabel) {
+  const availability = inviteAvailability(snapshot);
+  button.disabled = !availability.available;
+  button.textContent = availability.available ? availableLabel : availability.label;
+}
+
+async function sharePlayerInvite(button, statusElement) {
+  if (!state.roomId || button.disabled) return;
+  const url = playerInviteUrl().toString();
+  const shareData = { title: "Join my AI and Sons party", text: `Join room ${state.roomId}`, url };
+  statusElement.textContent = "";
+  try {
+    if (typeof navigator.share === "function") {
+      await navigator.share(shareData);
+      statusElement.textContent = "Invite ready to send.";
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    statusElement.textContent = "Player invite link copied.";
+  } catch (error) {
+    if (error?.name === "AbortError") return;
+    try {
+      await navigator.clipboard.writeText(url);
+      statusElement.textContent = "Player invite link copied.";
+    } catch {
+      statusElement.textContent = `Share this link: ${url}`;
+    }
+  }
+}
+
 function renderSessionScreen() {
   const snapshot = state.snapshot;
   const players = snapshot?.players || [];
@@ -827,6 +973,7 @@ function renderSessionScreen() {
   byId("sessionRoom").textContent = state.roomId || snapshot?.roomId || "----";
   const maxPlayers = Number(snapshot?.maxPlayers || 8);
   byId("sessionPlayerCount").textContent = `${connected} / ${maxPlayers} players`;
+  byId("sessionAudienceCount").textContent = `${Number(snapshot?.audienceCount || 0)} audience`;
   const targetActivities = Number(snapshot?.partySettings?.targetActivities || 6);
   const completedActivities = Math.min(Number(snapshot?.activityIndex || 0), targetActivities);
   byId("sessionProgress").textContent = partyPhase === "party_lobby"
@@ -834,6 +981,8 @@ function renderSessionScreen() {
     : partyPhase === "ended" ? `${completedActivities} games complete` : `Game ${Math.min(completedActivities + 1, targetActivities)} of ${targetActivities}`;
   byId("sessionScreenCount").textContent = `${1 + Number(snapshot?.displayCount || 0)} live screen${Number(snapshot?.displayCount || 0) ? "s" : ""}`;
   renderSessionRoster(players);
+  renderPartyTeams(snapshot);
+  renderPartyHighlights(snapshot);
   const host = !displayMode;
   applyPartyPresentation(snapshot);
   renderPartyActivityPool(snapshot?.activityCatalog || [], snapshot?.partySettings?.enabledActivities);
@@ -841,6 +990,7 @@ function renderSessionScreen() {
     const locked = Boolean(snapshot?.roomLocked);
     const allowLateJoin = snapshot?.allowLateJoin !== false;
     const friendlyNames = Boolean(snapshot?.friendlyNames);
+    const audienceEnabled = snapshot?.audienceEnabled !== false;
     byId("roomAccessStatus").textContent = locked ? "Locked" : "Open";
     byId("roomAccessStatus").classList.toggle("locked", locked);
     byId("partyLockButton").textContent = locked ? "Unlock room" : "Lock room";
@@ -852,10 +1002,16 @@ function renderSessionScreen() {
     byId("partyFriendlyNamesButton").textContent = `Friendly names: ${friendlyNames ? "On" : "Off"}`;
     byId("partyFriendlyNamesButton").classList.toggle("is-active", friendlyNames);
     byId("partyFriendlyNamesButton").setAttribute("aria-pressed", String(friendlyNames));
+    byId("partyAudienceButton").textContent = `Audience: ${audienceEnabled ? "On" : "Off"}`;
+    byId("partyAudienceButton").classList.toggle("is-active", audienceEnabled);
+    byId("partyAudienceButton").setAttribute("aria-pressed", String(audienceEnabled));
+    byId("partyModerationSelect").value = snapshot?.moderationLevel || "standard";
+    updateInviteButton(byId("partyInviteButton"), snapshot, "Invite players");
     byId("partyMaxPlayersSelect").value = String(maxPlayers);
     [...byId("partyMaxPlayersSelect").options].forEach((option) => { option.disabled = Number(option.value) < players.length; });
     const setupOpen = partyPhase === "party_lobby";
     syncPartySettingsControls(snapshot?.partySettings || state.hostPartySettings || partySettingsFromControls());
+    byId("partyShuffleTeamsButton").hidden = !setupOpen || (snapshot?.partySettings?.teamMode || "off") !== "two";
     byId("partySetupControls").setAttribute("aria-disabled", String(!setupOpen));
     byId("partySetupControls").querySelectorAll("select,input").forEach((control) => { control.disabled = !setupOpen; });
     renderHostChoice(snapshot);
@@ -871,11 +1027,70 @@ function renderSessionScreen() {
   const activityPhase = partyPhase === "activity" || (partyPhase === "paused" && snapshot?.resumePartyPhase === "activity");
   byId("partySkipButton").hidden = !host || !activityPhase;
   byId("partyEndButton").hidden = !host || !running;
-  const showEmbedded = activityPhase && ["turbotilt", "crowdshift"].includes(snapshot?.gameKey);
+  const showEmbedded = activityPhase && ["turbotilt", "crowdshift", "sticktilt", "sketchclash"].includes(snapshot?.gameKey);
   byId("partyStage").hidden = showEmbedded;
   byId("activityFrame").hidden = !showEmbedded;
   if (showEmbedded) mountEmbeddedActivity(snapshot.gameKey, snapshot);
   else drawPartyStage(snapshot);
+}
+
+function renderPartyTeams(snapshot) {
+  const panel = byId("partyTeamsPanel");
+  const teams = snapshot?.partyTeams || [];
+  panel.hidden = !teams.length;
+  const target = byId("partyTeams");
+  target.textContent = "";
+  teams.forEach((team) => {
+    const row = document.createElement("div");
+    row.className = "party-team-row";
+    row.style.setProperty("--team", team.color || "#31e6c1");
+    const dot = document.createElement("i");
+    dot.setAttribute("aria-hidden", "true");
+    const name = document.createElement("b");
+    name.textContent = `${team.name || "Team"} · ${team.players || 0} players`;
+    const score = document.createElement("span");
+    score.textContent = `${team.partyPoints || 0} pts`;
+    row.append(dot, name, score);
+    target.append(row);
+  });
+}
+
+function renderPartyHighlights(snapshot) {
+  const highlights = snapshot?.partyHighlights || [];
+  const panel = byId("partyHighlightsPanel");
+  panel.hidden = !highlights.length;
+  byId("partyHighlightsCount").textContent = `${highlights.length} game${highlights.length === 1 ? "" : "s"}`;
+  const target = byId("partyHighlights");
+  target.textContent = "";
+  highlights.slice(-8).reverse().forEach((highlight) => {
+    const item = document.createElement("li");
+    if (highlight.skipped) item.textContent = `${highlight.activityName || "Activity"} · skipped`;
+    else {
+      const winner = document.createElement("b");
+      winner.textContent = `${highlight.winnerAvatar || DEFAULT_AVATAR_EMOJI} ${highlight.winnerName || "Winner"}`;
+      item.append(document.createTextNode(`${highlight.activityName || "Activity"} · `), winner);
+      if (highlight.award) {
+        const award = document.createElement("span");
+        award.className = "highlight-award";
+        award.textContent = ` +${highlight.award}`;
+        item.append(award);
+      }
+    }
+    target.append(item);
+  });
+}
+
+function partySummaryText(snapshot = state.snapshot) {
+  const highlights = snapshot?.partyHighlights || [];
+  const teams = snapshot?.partyTeams || [];
+  const players = [...(snapshot?.players || [])].sort((a, b) => (a.partyRank || 99) - (b.partyRank || 99));
+  const lines = [`AI and Sons Party Mode · Room ${state.roomId || snapshot?.roomId || "----"}`, `${highlights.length} games played`];
+  if (teams.length) teams.forEach((team) => lines.push(`${team.name}: ${team.partyPoints || 0} points`));
+  players.slice(0, 3).forEach((player, index) => lines.push(`${index + 1}. ${player.avatar || DEFAULT_AVATAR_EMOJI} ${player.name} · ${player.partyPoints || 0} points`));
+  highlights.slice(-3).reverse().forEach((highlight) => {
+    lines.push(highlight.skipped ? `${highlight.activityName || "Activity"}: skipped` : `${highlight.activityName || "Activity"}: ${highlight.winnerAvatar || DEFAULT_AVATAR_EMOJI} ${highlight.winnerName || "Winner"}`);
+  });
+  return lines.join("\n");
 }
 
 function renderHostChoice(snapshot) {
@@ -1008,6 +1223,7 @@ function drawPartyLobby(snapshot) {
   partyText("Everyone joins once, then votes decide what happens next.", 600, 174, 930, 28, "#d5e5ed");
   partyRoundRect(145, 230, 910, 315, 36, "rgba(8,18,43,.72)", "rgba(255,255,255,.16)");
   const players = snapshot?.players || [];
+  drawPartyTeamStrip(snapshot, 600, 215);
   partyText(players.length < 2 ? "Waiting for players" : "The party is ready!", 600, 286, 760, 46, players.length < 2 ? "#fff" : "#31e6c1");
   players.slice(0, 8).forEach((player, index) => {
     const x = 255 + (index % 4) * 230, y = 370 + Math.floor(index / 4) * 100;
@@ -1015,7 +1231,15 @@ function drawPartyLobby(snapshot) {
     partyText(player.name, x, y + 48, 195, 18, player.connected ? "#fff" : "#8799aa");
     partyText(player.ready ? "READY" : "JOINED", x, y + 68, 150, 12, player.ready ? "#31e6c1" : "#8799aa");
   });
-  partyText("Host starts the opening vote", 600, 605, 800, 25, "#c7b9db");
+  const audienceCount = Number(snapshot?.audienceCount || 0);
+  partyText(audienceCount ? `📣 ${audienceCount} audience watching · Host starts the opening vote` : "Host starts the opening vote", 600, 605, 1080, 22, "#c7b9db");
+}
+
+function drawPartyTeamStrip(snapshot, x = 600, y = 620) {
+  const teams = snapshot?.partyTeams || [];
+  if (!teams.length) return;
+  const text = teams.map((team) => `${team.name} ${team.partyPoints || 0} pts`).join("   ·   ");
+  partyText(`TEAMS  ${text}`, x, y, 1050, 17, "#ffe36e");
 }
 
 function drawPartyVoting(snapshot) {
@@ -1026,9 +1250,9 @@ function drawPartyVoting(snapshot) {
   const methodCopy = { chaos: "Every player gets one wheel slice", majority: "The activity with the most votes wins", unanimous: "Agree together or the wheel breaks the tie", host: "The host chooses from the activity pool" }[method];
   partyText(`${seconds}s · ${methodCopy}`, 600, 99, 850, 20, "#d5e5ed");
   options.forEach((option, index) => {
-    const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : "#ff6b9f";
+    const x = 55 + index * 382, accent = option.gameKey === "turbotilt" ? "#31e6c1" : option.gameKey === "sticktilt" ? "#ffd560" : option.gameKey === "sketchclash" ? "#ffe36e" : "#ff6b9f";
     partyRoundRect(x, 135, 328, 420, 28, "rgba(10,23,52,.88)", accent);
-    partyText(option.gameKey === "turbotilt" ? "🏎️" : "↔️", x + 164, 195, 120, 52, "#fff");
+    partyText(option.gameKey === "turbotilt" ? "🏎️" : option.gameKey === "sticktilt" ? "🥊" : option.gameKey === "sketchclash" ? "✎" : "↔️", x + 164, 195, 120, 52, "#fff");
     partyText(option.label, x + 164, 264, 290, 29, accent);
     partyText(option.description, x + 164, 322, 280, 19, "#d5e5ed");
     const own = ballots.filter((ballot) => ballot.optionId === option.id);
@@ -1039,6 +1263,9 @@ function drawPartyVoting(snapshot) {
     });
     if (!own.length) partyText("Waiting for votes…", x + 164, 425, 270, 17, "#8097aa");
   });
+  const audienceReactions = snapshot?.audienceReactions || {};
+  const reactionCopy = Object.entries(audienceReactions).filter(([, count]) => Number(count) > 0).map(([emote, count]) => `${emote} ${count}`).join("   ");
+  if (reactionCopy) partyText(`Audience ${reactionCopy}`, 600, 585, 1000, 17, "#bfeaff");
   drawPartyStandingsStrip(snapshot.players || []);
 }
 
@@ -1067,8 +1294,8 @@ function drawPartyWheel(snapshot) {
 function drawPartyNextUp(snapshot, override = "") {
   const activity = snapshot.activity || {};
   partyText(override || "NEXT UP", 600, 120, 900, 68, "#ffe36e");
-  partyText(activity.gameKey === "turbotilt" ? "🏎️" : "↔️", 600, 260, 180, 104, "#fff");
-  partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : "#ff82ad");
+  partyText(activity.gameKey === "turbotilt" ? "🏎️" : activity.gameKey === "sticktilt" ? "🥊" : activity.gameKey === "sketchclash" ? "✎" : "↔️", 600, 260, 180, 104, "#fff");
+  partyText(activity.label || "Loading the next activity", 600, 390, 1000, 58, activity.gameKey === "turbotilt" ? "#31e6c1" : activity.gameKey === "sticktilt" ? "#ffd560" : activity.gameKey === "sketchclash" ? "#ffe36e" : "#ff82ad");
   partyText(activity.description || "Keep your phone ready", 600, 465, 900, 26, "#d5e5ed");
   partyText("Starting automatically…", 600, 570, 600, 22, "#b9acd0");
 }
@@ -1077,12 +1304,14 @@ function drawPartyResults(snapshot) {
   partyText(snapshot.activitySkipped ? "ACTIVITY SKIPPED" : "ACTIVITY COMPLETE", 600, 60, 1000, 52, "#ffe36e");
   partyText(snapshot.activity?.label || "Party standings", 600, 108, 900, 24, "#d5e5ed");
   drawPartyStandings(snapshot.players || [], true);
+  drawPartyTeamStrip(snapshot, 600, 580);
   partyText("Next vote starts automatically", 600, 625, 700, 20, "#b9acd0");
 }
 
 function drawPartyPodium(snapshot) {
   partyText("PARTY CHAMPION", 600, 65, 1000, 62, "#ffe36e");
   drawPartyStandings(snapshot.players || [], true);
+  drawPartyTeamStrip(snapshot, 600, 580);
   partyText(`${snapshot.activityIndex || 0} activities · Host can start another party`, 600, 625, 860, 22, "#d5e5ed");
 }
 
@@ -1103,12 +1332,14 @@ function drawPartyStandingsStrip(players) {
 }
 
 byId("roomCode").addEventListener("input", (event) => { event.target.value = normalizeCode(event.target.value); });
-byId("joinForm").addEventListener("submit", (event) => { event.preventDefault(); joinParty({ withoutToken: true }); });
+byId("joinForm").addEventListener("submit", (event) => { event.preventDefault(); joinParty({ withoutToken: true, role: "player" }); });
+byId("audienceJoinButton").addEventListener("click", () => joinParty({ withoutToken: true, role: "audience" }));
 byId("tiltButton").addEventListener("click", enableTilt);
 bindSteerButton(byId("leftButton"), -1);
 bindSteerButton(byId("rightButton"), 1);
 byId("boostButton").addEventListener("click", () => {
   state.connection?.sendInput({ type: "boost" });
+  partyAudio.cue("select", state.snapshot);
   vibrate(35);
 });
 byId("gadgetButton").addEventListener("click", () => state.connection?.sendInput({ type: "gadget", action: "use" }));
@@ -1131,50 +1362,64 @@ byId("hornButton").addEventListener("click", () => state.connection?.sendInput({
   state.selectedChoice = choice;
   state.connection?.sendInput({ type: "choice", choice });
   renderController();
+  partyAudio.cue("select", state.snapshot);
   vibrate(30);
 }));
 ["left", "right"].forEach((prediction) => byId(prediction === "left" ? "duelPredictLeft" : "duelPredictRight").addEventListener("click", () => {
   state.selectedPrediction = prediction;
   state.connection?.sendInput({ type: "predict", choice: prediction });
   renderController();
+  partyAudio.cue("select", state.snapshot);
   vibrate(20);
 }));
 byId("duelHotTake").addEventListener("click", () => {
   state.selectedHotTake = !state.selectedHotTake;
   state.connection?.sendInput({ type: "hot_take" });
   renderController();
+  partyAudio.cue("select", state.snapshot);
   vibrate([25, 20, 25]);
 });
 document.querySelectorAll("[data-crowd-emote]").forEach((button) => button.addEventListener("click", () => {
   state.connection?.sendInput({ type: "emote", emote: button.dataset.crowdEmote });
 }));
+document.querySelectorAll("[data-audience-reaction]").forEach((button) => button.addEventListener("click", () => {
+  state.connection?.sendInput({ type: "audience_reaction", emote: button.dataset.audienceReaction });
+  byId("audienceReactionStatus").textContent = "Reaction sent to the big screen!";
+}));
 byId("leaveButton").addEventListener("click", () => {
   state.connection?.disconnect();
-  if (state.roomId) localStorage.removeItem(tokenKey(state.roomId));
+  if (state.roomId) localStorage.removeItem(tokenKey(state.roomId, state.participantRole));
   location.href = "/party/";
 });
 byId("partyStartButton").addEventListener("click", () => {
   byId("partyActivitySettings").open = false;
   byId("partyAdvancedSettings").open = false;
   window.scrollTo({ top: 0, behavior: "auto" });
+  partyAudio.cue("select", state.snapshot);
   sendPartyHost("start");
 });
 byId("partyAgainButton").addEventListener("click", () => sendPartyHost("play_again"));
 byId("partyReadyButton").addEventListener("click", () => {
   const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
   state.connection?.sendInput({ type: "party_ready", ready: !me?.ready });
+  partyAudio.cue("select", state.snapshot);
 });
+byId("partyInviteButton").addEventListener("click", () => sharePlayerInvite(byId("partyInviteButton"), byId("partyShareStatus")));
+byId("partyPlayerInviteButton").addEventListener("click", () => sharePlayerInvite(byId("partyPlayerInviteButton"), byId("partyPlayerShareStatus")));
 byId("partyLockButton").addEventListener("click", () => sendPartyHost(state.snapshot?.roomLocked ? "unlock" : "lock"));
 byId("partyLateJoinButton").addEventListener("click", () => sendPartyHost(state.snapshot?.allowLateJoin === false ? "late_join_on" : "late_join_off"));
 byId("partyFriendlyNamesButton").addEventListener("click", () => sendPartyHost(state.snapshot?.friendlyNames ? "friendly_names_off" : "friendly_names_on"));
+byId("partyAudienceButton").addEventListener("click", () => sendPartyHost(state.snapshot?.audienceEnabled === false ? "audience_on" : "audience_off"));
+byId("partyModerationSelect").addEventListener("change", (event) => sendPartyHost("set_moderation", { choice: event.target.value }));
 byId("partyMaxPlayersSelect").addEventListener("change", (event) => sendPartyHost("set_max_players", { value: Number(event.target.value) }));
+byId("partyShuffleTeamsButton").addEventListener("click", () => sendPartyHost("shuffle_teams"));
 byId("partyDurationSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyPlayStyleSelect").addEventListener("change", sendPartyConfiguration);
 byId("partySelectionSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyRepeatSelect").addEventListener("change", sendPartyConfiguration);
 byId("partyCatchUp").addEventListener("change", sendPartyConfiguration);
 byId("partyAccessibilitySelect").addEventListener("change", (event) => { applyAccessibilityPreset(event.target.value); sendPartyConfiguration(); });
-["partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics"].forEach((id) => {
+["partyExtendedTimers", "partyReducedMotion", "partyHighContrast", "partyEffects", "partyNarration", "partyHaptics", "partyTeamMode"].forEach((id) => {
   byId(id).addEventListener("change", () => { byId("partyAccessibilitySelect").value = "custom"; sendPartyConfiguration(); });
 });
 byId("partyPauseButton").addEventListener("click", () => sendPartyHost(state.snapshot?.partyPhase === "paused" ? "resume" : "pause"));
@@ -1185,10 +1430,18 @@ byId("partyFullscreenButton").addEventListener("click", () => {
   else document.exitFullscreen?.().catch(() => {});
 });
 byId("partyShareButton").addEventListener("click", async () => {
-  const url = new URL("/party/", location.origin); url.searchParams.set("display", state.roomId);
-  const endpoint = params.get("ws") || params.get("endpoint"); if (endpoint) url.searchParams.set("ws", endpoint);
+  const url = displayInviteUrl().toString();
   try { await navigator.clipboard.writeText(url); byId("partyShareButton").textContent = "Screen link copied!"; setTimeout(() => { byId("partyShareButton").textContent = "Copy link for another screen"; }, 1600); }
   catch { byId("sessionError").textContent = url; }
+});
+byId("partyCopySummaryButton").addEventListener("click", async () => {
+  const summary = partySummaryText();
+  try {
+    await navigator.clipboard.writeText(summary);
+    byId("partySummaryStatus").textContent = "Summary copied!";
+  } catch {
+    byId("partySummaryStatus").textContent = summary;
+  }
 });
 byId("resumePartyButton").addEventListener("click", () => {
   const recovery = loadHostRecovery();
@@ -1209,14 +1462,14 @@ window.addEventListener("keydown", (event) => { if (event.key.toLowerCase() === 
 setInterval(() => {
   if (!byId("controllerView").hidden) {
     renderController();
-    if (state.gameKey !== "crowdshift") {
+    if (state.gameKey === "turbotilt") {
       const me = state.snapshot?.players?.find((player) => player.id === (state.snapshot?.selfId || state.playerId));
       showRaceFeedback(me);
     }
   }
   if (!byId("sessionView").hidden && state.snapshot && state.snapshot.partyPhase !== "activity") drawPartyStage(state.snapshot);
   const rotationIdle = state.sessionMode === "rotation" && state.snapshot?.partyPhase !== "activity";
-  if (state.gameKey !== "crowdshift" && !rotationIdle) sendSteer();
+  if (state.gameKey === "turbotilt" && !rotationIdle) sendSteer();
 }, 100);
 
 const initialCode = normalizeCode(params.get("code"));
@@ -1254,6 +1507,8 @@ window.render_game_to_text = () => JSON.stringify({
   room_id: state.roomId,
   player_id: state.playerId,
   player_avatar: state.playerAvatar,
+  participant_role: state.participantRole,
+  audience_id: state.audienceId,
   game_key: state.gameKey,
   tilt_enabled: state.tiltEnabled,
   effective_steer: Number(effectiveSteer().toFixed(2)),
@@ -1263,8 +1518,14 @@ window.render_game_to_text = () => JSON.stringify({
   selected_prediction: state.selectedPrediction,
   hot_take_selected: state.selectedHotTake,
   selected_party_vote: state.selectedPartyVote,
+  audio: (() => {
+    const debug = partyAudio.debug();
+    return { enabled: debug.enabled, activated: debug.activated, last_cue: debug.lastCue };
+  })(),
+  connection: state.connectionDiagnostics,
   state: state.snapshot,
 });
+window.__partyAudioDebug = () => partyAudio.debug();
 if (["127.0.0.1", "localhost"].includes(location.hostname)) {
   window.__partyTestDropConnection = () => {
     const socket = state.connection?.socket;
@@ -1284,3 +1545,14 @@ if (screenMode) connectSessionScreen().catch((error) => {
   byId("sessionError").textContent = error.message || "Unable to open the party room.";
   setConnectionLabel("Connection problem", "problem");
 });
+
+partyAudio.bind(byId("partySoundButton"));
+byId("partySoundButton").addEventListener("click", () => { void partyAudio.toggle(); });
+const activatePartyAudio = (event) => {
+  if (event.target instanceof Element && event.target.closest("#partySoundButton")) return;
+  void partyAudio.activate();
+  document.removeEventListener("pointerdown", activatePartyAudio, true);
+  document.removeEventListener("keydown", activatePartyAudio, true);
+};
+document.addEventListener("pointerdown", activatePartyAudio, true);
+document.addEventListener("keydown", activatePartyAudio, true);

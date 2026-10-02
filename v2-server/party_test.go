@@ -123,6 +123,9 @@ func TestPartyNameFilteringAndRoomRules(t *testing.T) {
 	if sanitizePartyRoomID("ABIO") != "" || sanitizePartyRoomID("ABCD") != "ABCD" {
 		t.Fatal("room code normalization accepted ambiguous letters or rejected a valid code")
 	}
+	if name, adjusted := sanitizePartyNameForLevel("You are stupid", "family"); !adjusted || strings.Contains(strings.ToLower(name), "stupid") {
+		t.Fatalf("family moderation did not remove blocked language: %q/%v", name, adjusted)
+	}
 }
 
 func TestPartyAvatarValidation(t *testing.T) {
@@ -134,6 +137,41 @@ func TestPartyAvatarValidation(t *testing.T) {
 	}
 	if actual := partyPlayerAvatar("", 16); actual != "🦊" {
 		t.Fatalf("legacy avatar fallback = %q, want wrapped first avatar", actual)
+	}
+}
+
+func TestPartyAudienceJoinVoteReactionAndReconnect(t *testing.T) {
+	h := newHub()
+	host := &client{id: "host", role: "host", send: make(chan []byte, 16)}
+	r := &partyRoom{hub: h, roomID: "AUDI", gameKey: partyRotationGameKey, sessionMode: partyRotationSessionMode,
+		phase: "lobby", partyPhase: "party_lobby", host: host, audienceEnabled: true, maxPlayers: partyMaxPlayers,
+		players: make(map[string]*partyPlayer), audience: make(map[string]*partyAudienceMember), tokenToPlayer: make(map[string]string),
+		tokenToAudience: make(map[string]string), blockedTokens: make(map[string]bool), votes: make(map[string]string),
+		partyConfig: defaultPartySessionSettings()}
+	host.partyRoom = r
+	for index := 0; index < 2; index++ {
+		id := "p" + strconvItoa(index+1)
+		r.players[id] = &partyPlayer{ID: id, Name: "Player " + strconvItoa(index+1), Color: partyPlayerColor(index), Avatar: partyPlayerAvatar("", index), Connected: true, Active: true}
+	}
+	memberClient := &client{id: "audience", send: make(chan []byte, 16)}
+	r.attachAudience(memberClient, "Crowd", "🐼", "")
+	welcome := readQueuedAnyEnvelope(t, memberClient.send)
+	if stringField(welcome, "role") != "audience" || stringField(welcome, "playerAvatar") != "🐼" || stringField(welcome, "token") == "" {
+		t.Fatalf("audience welcome missing identity: %#v", welcome)
+	}
+	audienceID, token := stringField(welcome, "audienceId"), stringField(welcome, "token")
+	r.beginPartyVoteLocked(1000)
+	option := r.partyVote.Options[0].ID
+	r.applyInput(memberClient, inputEnvelope{Seq: 1, Input: mustJSON(t, map[string]any{"type": "party_vote", "optionId": option})})
+	r.applyInput(memberClient, inputEnvelope{Seq: 2, Input: mustJSON(t, map[string]any{"type": "audience_reaction", "emote": "clap"})})
+	if r.audience[audienceID].Vote != option || r.audience[audienceID].Reaction != "clap" {
+		t.Fatalf("audience input did not persist: %#v", r.audience[audienceID])
+	}
+	reconnected := &client{id: "audience-reconnect", send: make(chan []byte, 16)}
+	r.attachAudience(reconnected, "Changed", "🦊", token)
+	reconnectWelcome := readQueuedAnyEnvelope(t, reconnected.send)
+	if stringField(reconnectWelcome, "audienceId") != audienceID || stringField(reconnectWelcome, "playerAvatar") != "🐼" || !boolField(reconnectWelcome, "reconnected") {
+		t.Fatalf("audience reconnect did not preserve identity: %#v", reconnectWelcome)
 	}
 }
 
@@ -526,6 +564,25 @@ func readQueuedEnvelope(t *testing.T, queue <-chan []byte) map[string]any {
 	}
 }
 
+func readQueuedAnyEnvelope(t *testing.T, queue <-chan []byte) map[string]any {
+	t.Helper()
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	select {
+	case raw := <-queue:
+		var message struct {
+			Payload map[string]any `json:"payload"`
+		}
+		if err := json.Unmarshal(raw, &message); err != nil {
+			t.Fatal(err)
+		}
+		return message.Payload
+	case <-deadline.C:
+		t.Fatal("timed out waiting for queued envelope")
+	}
+	return nil
+}
+
 func readPartyEnvelope(t *testing.T, conn *websocket.Conn, wanted string) map[string]any {
 	t.Helper()
 	deadline := time.Now().Add(3 * time.Second)
@@ -566,6 +623,20 @@ func readPartyState(t *testing.T, conn *websocket.Conn) map[string]any {
 func stringField(source map[string]any, key string) string {
 	value, _ := source[key].(string)
 	return value
+}
+
+func boolField(source map[string]any, key string) bool {
+	value, _ := source[key].(bool)
+	return value
+}
+
+func mustJSON(t *testing.T, value any) json.RawMessage {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return raw
 }
 
 func waitFor(t *testing.T, timeout time.Duration, predicate func() bool) {

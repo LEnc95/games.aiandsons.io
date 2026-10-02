@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	cryptorand "crypto/rand"
 	"encoding/json"
+	"errors"
 	"hash/fnv"
+	"log"
 	"math"
 	mathrand "math/rand"
 	"os"
@@ -16,10 +19,12 @@ import (
 
 const (
 	turboTiltGameKey       = "turbotilt"
+	sketchClashGameKey     = "sketchclash"
 	partyTickRate          = 30
 	partyMaxRooms          = 100
 	partyMaxPlayers        = 8
 	partyMaxDisplays       = 16
+	partyMaxAudience       = 64
 	partyMinPlayers        = 2
 	partyCountdownMs       = int64(3000)
 	partyHeatMs            = int64(45000)
@@ -43,6 +48,9 @@ type partyInput struct {
 	Customization partyCustomization   `json:"customization,omitempty"`
 	OptionID      string               `json:"optionId,omitempty"`
 	Ready         bool                 `json:"ready,omitempty"`
+	RoundID       string               `json:"roundId,omitempty"`
+	Guess         string               `json:"guess,omitempty"`
+	Stroke        sketchStroke         `json:"stroke,omitempty"`
 }
 
 type partySettings struct {
@@ -145,58 +153,81 @@ type partyPlayer struct {
 	PartyAward       int
 }
 
+type partyAudienceMember struct {
+	ID        string
+	Token     string
+	Name      string
+	Avatar    string
+	Client    *client
+	Connected bool
+	LastSeq   int
+	Vote      string
+	Reaction  string
+	ReactedAt int64
+}
+
 type partyRoom struct {
-	mu                 sync.Mutex
-	hub                *hub
-	gameKey            string
-	roomID             string
-	host               *client
-	hostToken          string
-	hostDisconnectedAt int64
-	players            map[string]*partyPlayer
-	displays           map[string]*client
-	tokenToPlayer      map[string]string
-	blockedTokens      map[string]bool
-	locked             bool
-	allowLateJoin      bool
-	maxPlayers         int
-	friendlyNames      bool
-	partyConfig        partySessionSettings
-	phase              string
-	resumePhase        string
-	pauseReason        string
-	pauseRemainingMs   int64
-	phaseEndsAt        int64
-	heat               int
-	totalHeats         int
-	obstacles          []partyObstacle
-	tick               uint64
-	createdAt          int64
-	lastActive         int64
-	endedAt            int64
-	totalBoosts        int
-	settings           partySettings
-	track              string
-	modifier           string
-	voteOptions        []string
-	votes              map[string]string
-	routes             []partyRoute
-	sharedHealth       int
-	raceStartedAt      int64
-	nextChaosAt        int64
-	replayFrames       []partyReplayFrame
-	awards             []map[string]any
-	crowd              *crowdShiftState
-	sessionMode        string
-	partyPhase         string
-	resumePartyPhase   string
-	activityIndex      int
-	activity           partyActivity
-	lastActivityID     string
-	activityHistory    []string
-	partyVote          partyVoteState
-	partyAwarded       bool
-	activitySkipped    bool
+	mu                  sync.Mutex
+	hub                 *hub
+	gameKey             string
+	roomID              string
+	host                *client
+	hostToken           string
+	hostDisconnectedAt  int64
+	players             map[string]*partyPlayer
+	audience            map[string]*partyAudienceMember
+	displays            map[string]*client
+	tokenToPlayer       map[string]string
+	tokenToAudience     map[string]string
+	blockedTokens       map[string]bool
+	locked              bool
+	allowLateJoin       bool
+	maxPlayers          int
+	friendlyNames       bool
+	audienceEnabled     bool
+	moderationLevel     string
+	partyConfig         partySessionSettings
+	phase               string
+	resumePhase         string
+	pauseReason         string
+	pauseRemainingMs    int64
+	phaseEndsAt         int64
+	heat                int
+	totalHeats          int
+	obstacles           []partyObstacle
+	tick                uint64
+	createdAt           int64
+	lastActive          int64
+	endedAt             int64
+	totalBoosts         int
+	settings            partySettings
+	track               string
+	modifier            string
+	voteOptions         []string
+	votes               map[string]string
+	routes              []partyRoute
+	sharedHealth        int
+	raceStartedAt       int64
+	nextChaosAt         int64
+	replayFrames        []partyReplayFrame
+	awards              []map[string]any
+	crowd               *crowdShiftState
+	stick               *stickTiltState
+	sketch              *sketchClashState
+	sessionMode         string
+	partyPhase          string
+	resumePartyPhase    string
+	activityIndex       int
+	activity            partyActivity
+	lastActivityID      string
+	activityHistory     []string
+	partyHighlights     []partyHighlight
+	partyVote           partyVoteState
+	partyAwarded        bool
+	activitySkipped     bool
+	lastPersistedAt     int64
+	persistenceInFlight bool
+	removed             bool
 }
 
 func (c *client) currentRoomID() string {
@@ -253,8 +284,8 @@ func (h *hub) handlePartyJoin(c *client, msg envelope, payload joinPayload) {
 		return
 	}
 
-	if role != "player" && role != "display" {
-		c.sendErrorCode(roomID, "invalid_role", "Choose host, player, or display before joining.")
+	if role != "player" && role != "display" && role != "audience" {
+		c.sendErrorCode(roomID, "invalid_role", "Choose host, player, audience, or display before joining.")
 		return
 	}
 	if roomID == "" {
@@ -268,6 +299,10 @@ func (h *hub) handlePartyJoin(c *client, msg envelope, payload joinPayload) {
 	}
 	if role == "display" {
 		room.attachDisplay(c)
+		return
+	}
+	if role == "audience" {
+		room.attachAudience(c, payload.PlayerName, payload.PlayerAvatar, payload.Token)
 		return
 	}
 	room.attachPlayer(c, payload.PlayerName, payload.PlayerAvatar, payload.Token)
@@ -292,21 +327,25 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 	}
 	now := nowMillis()
 	room := &partyRoom{
-		hub:           h,
-		gameKey:       gameKey,
-		roomID:        roomID,
-		hostToken:     randomID(16),
-		players:       make(map[string]*partyPlayer),
-		displays:      make(map[string]*client),
-		tokenToPlayer: make(map[string]string),
-		blockedTokens: make(map[string]bool),
-		allowLateJoin: true,
-		maxPlayers:    partyMaxPlayers,
-		partyConfig:   defaultPartySessionSettings(),
-		phase:         "lobby",
-		totalHeats:    3,
-		createdAt:     now,
-		lastActive:    now,
+		hub:             h,
+		gameKey:         gameKey,
+		roomID:          roomID,
+		hostToken:       randomID(16),
+		players:         make(map[string]*partyPlayer),
+		audience:        make(map[string]*partyAudienceMember),
+		displays:        make(map[string]*client),
+		tokenToPlayer:   make(map[string]string),
+		tokenToAudience: make(map[string]string),
+		blockedTokens:   make(map[string]bool),
+		allowLateJoin:   true,
+		maxPlayers:      partyMaxPlayers,
+		audienceEnabled: true,
+		moderationLevel: "standard",
+		partyConfig:     defaultPartySessionSettings(),
+		phase:           "lobby",
+		totalHeats:      3,
+		createdAt:       now,
+		lastActive:      now,
 		settings: partySettings{
 			Mode: "classic", Heats: 3, Chaos: "standard", TrackRotation: "all",
 		},
@@ -321,9 +360,20 @@ func (h *hub) createPartyRoom(gameKey string) (*partyRoom, bool) {
 	}
 	if gameKey == crowdShiftGameKey {
 		room.crowd = newCrowdShiftState()
+	} else if gameKey == sketchClashGameKey {
+		room.sketch = newSketchClashState()
 	}
 	h.partyRooms[roomID] = room
+	var initialSnapshot *partyRoomSnapshot
+	if h.partyStore != nil {
+		room.persistenceInFlight = true
+		room.lastPersistedAt = now
+		initialSnapshot = room.snapshotForPersistenceLocked(now)
+	}
 	go room.loop()
+	if initialSnapshot != nil {
+		go room.persistSnapshot(initialSnapshot)
+	}
 	return room, true
 }
 
@@ -351,16 +401,59 @@ func (r *partyRoom) attachDisplay(c *client) {
 
 func (h *hub) findPartyRoom(roomID string) *partyRoom {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-	return h.partyRooms[roomID]
+	room := h.partyRooms[roomID]
+	h.mu.Unlock()
+	if room != nil || h.partyStore == nil {
+		return room
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	snapshot, err := h.partyStore.Load(ctx, roomID)
+	if err != nil {
+		if !errors.Is(err, errPartyRoomSnapshotNotFound) {
+			log.Printf("party room %s recovery failed: %v", roomID, err)
+		}
+		return nil
+	}
+	restored := restorePartyRoom(h, snapshot)
+	h.mu.Lock()
+	if existing := h.partyRooms[roomID]; existing != nil {
+		h.mu.Unlock()
+		return existing
+	}
+	if len(h.partyRooms) >= partyMaxRooms {
+		h.mu.Unlock()
+		return nil
+	}
+	h.partyRooms[roomID] = restored
+	h.mu.Unlock()
+	go restored.loop()
+	return restored
 }
 
 func (h *hub) removePartyRoom(roomID string, expected *partyRoom) {
 	h.mu.Lock()
+	removed := false
 	if h.partyRooms[roomID] == expected {
 		delete(h.partyRooms, roomID)
+		removed = true
 	}
 	h.mu.Unlock()
+	if !removed {
+		return
+	}
+	expected.mu.Lock()
+	expected.removed = true
+	expected.mu.Unlock()
+	if h.partyStore != nil {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := h.partyStore.Delete(ctx, roomID); err != nil {
+				log.Printf("party room %s snapshot deletion failed: %v", roomID, err)
+			}
+		}()
+	}
 }
 
 func (r *partyRoom) attachHost(c *client, token string) {
@@ -497,6 +590,67 @@ func (r *partyRoom) sendPlayerWelcomeLocked(c *client, p *partyPlayer, adjusted,
 	})
 }
 
+func (r *partyRoom) attachAudience(c *client, requestedName, requestedAvatar, token string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if !r.audienceEnabled {
+		c.sendErrorCode(r.roomID, "audience_disabled", "The host has closed the audience for this room.")
+		return
+	}
+	if token != "" {
+		if memberID := r.tokenToAudience[token]; memberID != "" {
+			if member := r.audience[memberID]; member != nil {
+				if member.Client != nil && member.Client != c {
+					member.Client.partyRoom = nil
+					member.Client.audienceID = ""
+				}
+				if c.partyRoom != r {
+					c.leaveCurrentRoom()
+				}
+				c.gameID, c.role, c.playerID, c.audienceID, c.partyRoom = partyGameID, "audience", "", member.ID, r
+				member.Client, member.Connected, member.LastSeq = c, true, 0
+				r.lastActive = nowMillis()
+				r.sendAudienceWelcomeLocked(c, member, false, true)
+				return
+			}
+		}
+		c.sendErrorCode(r.roomID, "invalid_audience_token", "Your saved audience session has expired.")
+		return
+	}
+	connected := 0
+	for _, member := range r.audience {
+		if member.Connected {
+			connected++
+		}
+	}
+	if connected >= partyMaxAudience {
+		c.sendErrorCode(r.roomID, "audience_full", "This room's audience is full.")
+		return
+	}
+	if c.partyRoom != r {
+		c.leaveCurrentRoom()
+	}
+	name, adjusted := r.uniqueAudienceNameLocked(requestedName)
+	member := &partyAudienceMember{
+		ID: "a-" + randomID(6), Token: randomID(16), Name: name,
+		Avatar: partyPlayerAvatar(requestedAvatar, len(r.audience)), Client: c, Connected: true,
+	}
+	r.audience[member.ID] = member
+	r.tokenToAudience[member.Token] = member.ID
+	c.gameID, c.role, c.playerID, c.audienceID, c.partyRoom = partyGameID, "audience", "", member.ID, r
+	r.lastActive = nowMillis()
+	r.sendAudienceWelcomeLocked(c, member, adjusted, false)
+}
+
+func (r *partyRoom) sendAudienceWelcomeLocked(c *client, member *partyAudienceMember, adjusted, reconnected bool) {
+	c.sendEnvelope("welcome", r.roomID, map[string]any{
+		"role": "audience", "roomId": r.roomID, "gameKey": r.gameKey,
+		"audienceId": member.ID, "playerName": member.Name, "playerAvatar": member.Avatar,
+		"token": member.Token, "nameAdjusted": adjusted, "reconnected": reconnected,
+		"sessionMode": r.sessionMode,
+	})
+}
+
 func (r *partyRoom) removeClient(c *client) {
 	r.mu.Lock()
 	now := nowMillis()
@@ -504,11 +658,16 @@ func (r *partyRoom) removeClient(c *client) {
 		r.host = nil
 		r.hostDisconnectedAt = now
 		if r.sessionMode == partyRotationSessionMode && r.partyPhase != "party_lobby" && r.partyPhase != "ended" ||
-			containsString([]string{"countdown", "racing", "choosing", "reveal", "intermission"}, r.phase) {
+			containsString([]string{"countdown", "racing", "fighting", "choosing", "reveal", "intermission"}, r.phase) {
 			r.pauseLocked("host_disconnected", now)
 		}
 	} else if c.role == "display" {
 		delete(r.displays, c.id)
+	} else if c.role == "audience" && c.audienceID != "" {
+		if member := r.audience[c.audienceID]; member != nil && member.Client == c {
+			member.Client = nil
+			member.Connected = false
+		}
 	} else if c.playerID != "" {
 		if p := r.players[c.playerID]; p != nil && p.Client == c {
 			p.Client = nil
@@ -521,6 +680,7 @@ func (r *partyRoom) removeClient(c *client) {
 	r.mu.Unlock()
 	if c.partyRoom == r {
 		c.partyRoom = nil
+		c.audienceID = ""
 	}
 }
 
@@ -537,6 +697,33 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 	r.lastActive = now
 	if c.role == "display" {
 		c.sendErrorCode(r.roomID, "display_read_only", "Shared screens follow the host and cannot control the game.")
+		return
+	}
+	if c.role == "audience" {
+		member := r.audience[c.audienceID]
+		if member == nil || member.Client != c {
+			c.sendErrorCode(r.roomID, "invalid_audience_token", "Rejoin the audience before participating.")
+			return
+		}
+		if payload.Seq <= member.LastSeq {
+			return
+		}
+		member.LastSeq = payload.Seq
+		switch input.Type {
+		case "party_vote":
+			if r.partyPhase != "voting" || !r.partyVoteHasOptionLocked(strings.TrimSpace(input.OptionID)) {
+				c.sendErrorCode(r.roomID, "vote_closed", "Audience voting is not open right now.")
+				return
+			}
+			member.Vote = strings.TrimSpace(input.OptionID)
+		case "audience_reaction":
+			if now-member.ReactedAt < 750 || !containsString([]string{"clap", "laugh", "wow", "heart"}, input.Emote) {
+				return
+			}
+			member.Reaction, member.ReactedAt = input.Emote, now
+		default:
+			c.sendErrorCode(r.roomID, "audience_read_only", "Audience members can vote and react.")
+		}
 		return
 	}
 
@@ -576,8 +763,16 @@ func (r *partyRoom) applyInput(c *client, payload inputEnvelope) {
 		p.Ready = input.Ready
 		return
 	}
+	if r.gameKey == stickTiltGameKey {
+		r.applyStickTiltInputLocked(p, input, c)
+		return
+	}
 	if r.gameKey == crowdShiftGameKey {
 		r.applyCrowdShiftPlayerInputLocked(p, input, now, c)
+		return
+	}
+	if r.gameKey == sketchClashGameKey {
+		r.applySketchClashPlayerInputLocked(p, input, now, c)
 		return
 	}
 	switch input.Type {
@@ -647,6 +842,17 @@ func (r *partyRoom) applyRoomHostActionLocked(input partyInput, c *client) bool 
 		r.friendlyNames = true
 	case "friendly_names_off":
 		r.friendlyNames = false
+	case "audience_on":
+		r.audienceEnabled = true
+	case "audience_off":
+		r.audienceEnabled = false
+	case "set_moderation":
+		level := strings.ToLower(strings.TrimSpace(input.Choice))
+		if !containsString([]string{"standard", "family"}, level) {
+			c.sendErrorCode(r.roomID, "invalid_moderation", "Choose standard or family-safe moderation.")
+			return true
+		}
+		r.moderationLevel = level
 	case "set_max_players":
 		limit := int(input.Value)
 		if math.Trunc(input.Value) != input.Value || limit < partyMinPlayers || limit > partyMaxPlayers {
@@ -673,6 +879,15 @@ func (r *partyRoom) applyRoomHostActionLocked(input partyInput, c *client) bool 
 			return true
 		}
 		r.partyConfig = settings
+		if settings.TeamMode == "two" {
+			r.balancePartyTeamsLocked(false)
+		}
+	case "shuffle_teams":
+		if r.sessionMode != partyRotationSessionMode || r.partyPhase != "party_lobby" || r.partySessionSettingsLocked().TeamMode != "two" {
+			c.sendErrorCode(r.roomID, "invalid_phase", "Teams can only be shuffled in a team party lobby.")
+			return true
+		}
+		r.balancePartyTeamsLocked(true)
 	case "choose_activity":
 		if r.sessionMode != partyRotationSessionMode || r.partyPhase != "voting" || r.partySessionSettingsLocked().SelectionMethod != "host" {
 			c.sendErrorCode(r.roomID, "invalid_phase", "Host choice is not available right now.")
@@ -794,8 +1009,16 @@ func (r *partyRoom) applyHostActionLocked(action string, now int64, c *client) {
 		r.applyRotationHostActionLocked(action, now, c)
 		return
 	}
+	if r.gameKey == stickTiltGameKey {
+		r.applyStickTiltHostActionLocked(action, now, c)
+		return
+	}
 	if r.gameKey == crowdShiftGameKey {
 		r.applyCrowdShiftHostActionLocked(action, now, c)
+		return
+	}
+	if r.gameKey == sketchClashGameKey {
+		r.applySketchClashHostActionLocked(action, now, c)
 		return
 	}
 	switch action {
@@ -914,8 +1137,16 @@ func (r *partyRoom) step(now int64, dt float64) {
 		r.stepRotationLocked(now, dt)
 		return
 	}
+	if r.gameKey == stickTiltGameKey {
+		r.stepStickTiltLocked(now, dt)
+		return
+	}
 	if r.gameKey == crowdShiftGameKey {
 		r.stepCrowdShiftLocked(now)
+		return
+	}
+	if r.gameKey == sketchClashGameKey {
+		r.stepSketchClashLocked(now)
 		return
 	}
 	r.stepTurboTiltLocked(now, dt)
@@ -1170,6 +1401,7 @@ func (r *partyRoom) resolveRoutesLocked(p *partyPlayer, previousDistance float64
 
 func (r *partyRoom) broadcastState() {
 	r.mu.Lock()
+	now := nowMillis()
 	tick := r.tick
 	host := r.host
 	displayClients := make([]*client, 0, len(r.displays))
@@ -1182,12 +1414,29 @@ func (r *partyRoom) broadcastState() {
 			playerClients = append(playerClients, p.Client)
 		}
 	}
+	audienceClients := make([]*client, 0, len(r.audience))
+	for _, member := range r.audience {
+		if member.Client != nil {
+			audienceClients = append(audienceClients, member.Client)
+		}
+	}
 	hostState := r.snapshotLocked("")
 	playerStates := make(map[string]map[string]any, len(playerClients))
 	for _, c := range playerClients {
 		playerStates[c.id] = r.snapshotLocked(c.playerID)
 	}
+	audienceState := r.snapshotLocked("")
+	audienceState["audienceView"] = true
+	var checkpoint *partyRoomSnapshot
+	if r.hub != nil && r.hub.partyStore != nil && !r.removed && !r.persistenceInFlight && now-r.lastPersistedAt >= partyRoomCheckpointInterval {
+		r.persistenceInFlight = true
+		r.lastPersistedAt = now
+		checkpoint = r.snapshotForPersistenceLocked(now)
+	}
 	r.mu.Unlock()
+	if checkpoint != nil {
+		go r.persistSnapshot(checkpoint)
+	}
 	if host != nil && tick%2 == 0 {
 		host.sendEnvelope("state", r.roomID, map[string]any{"state": hostState})
 	}
@@ -1200,12 +1449,36 @@ func (r *partyRoom) broadcastState() {
 		for _, c := range playerClients {
 			c.sendEnvelope("state", r.roomID, map[string]any{"state": playerStates[c.id]})
 		}
+		for _, c := range audienceClients {
+			c.sendEnvelope("state", r.roomID, map[string]any{"state": audienceState})
+		}
+	}
+}
+
+func (r *partyRoom) balancePartyTeamsLocked(shuffle bool) {
+	players := make([]*partyPlayer, 0, len(r.players))
+	for _, player := range r.players {
+		players = append(players, player)
+	}
+	sort.Slice(players, func(i, j int) bool { return players[i].ID < players[j].ID })
+	if shuffle && len(players) > 1 {
+		offset := securePartyIndex(len(players))
+		players = append(players[offset:], players[:offset]...)
+	}
+	for index, player := range players {
+		player.Team = index % 2
 	}
 }
 
 func (r *partyRoom) snapshotLocked(selfID string) map[string]any {
+	if r.gameKey == stickTiltGameKey {
+		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.stickTiltSnapshotLocked(selfID), selfID))
+	}
 	if r.gameKey == crowdShiftGameKey {
 		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.crowdShiftSnapshotLocked(selfID), selfID))
+	}
+	if r.gameKey == sketchClashGameKey {
+		return r.decorateRoomControlsLocked(r.decorateRotationSnapshotLocked(r.sketchClashSnapshotLocked(selfID), selfID))
 	}
 	if r.gameKey == partyRotationGameKey {
 		return r.decorateRoomControlsLocked(r.rotationSnapshotLocked(selfID))
@@ -1274,6 +1547,11 @@ func (r *partyRoom) decorateRoomControlsLocked(state map[string]any) map[string]
 	state["roomLocked"] = r.locked
 	state["allowLateJoin"] = r.allowLateJoin
 	state["friendlyNames"] = r.friendlyNames
+	state["audienceEnabled"] = r.audienceEnabled
+	state["moderationLevel"] = r.partyModerationLevelLocked()
+	state["audienceCount"] = r.connectedAudienceCountLocked()
+	state["audienceCapacity"] = partyMaxAudience
+	state["audienceReactions"] = r.audienceReactionCountsLocked()
 	state["maxPlayers"] = r.maxPlayerCountLocked()
 	readyCount := 0
 	for _, p := range r.players {
@@ -1522,7 +1800,7 @@ func (r *partyRoom) uniquePlayerNameLocked(raw string) (string, bool) {
 	if forcedFriendlyName {
 		raw = friendlyPartyName()
 	}
-	name, adjusted := sanitizePartyName(raw)
+	name, adjusted := sanitizePartyNameForLevel(raw, r.partyModerationLevelLocked())
 	adjusted = adjusted || forcedFriendlyName
 	if name == "" {
 		name = "Racer " + strings.ToUpper(randomID(2))
@@ -1536,6 +1814,48 @@ func (r *partyRoom) uniquePlayerNameLocked(raw string) (string, bool) {
 	for suffix := 2; used[strings.ToLower(name)]; suffix++ {
 		trimmed := truncateRunes(base, 13)
 		name = trimmed + " " + strconvItoa(suffix)
+		adjusted = true
+	}
+	return name, adjusted
+}
+
+func (r *partyRoom) connectedAudienceCountLocked() int {
+	count := 0
+	for _, member := range r.audience {
+		if member.Connected {
+			count++
+		}
+	}
+	return count
+}
+
+func (r *partyRoom) audienceReactionCountsLocked() map[string]int {
+	counts := map[string]int{"clap": 0, "laugh": 0, "wow": 0, "heart": 0}
+	cutoff := nowMillis() - 5000
+	for _, member := range r.audience {
+		if member.Connected && member.ReactedAt >= cutoff {
+			counts[member.Reaction]++
+		}
+	}
+	return counts
+}
+
+func (r *partyRoom) uniqueAudienceNameLocked(raw string) (string, bool) {
+	name, adjusted := sanitizePartyNameForLevel(raw, r.partyModerationLevelLocked())
+	if name == "" {
+		name = friendlyPartyName()
+		adjusted = true
+	}
+	used := make(map[string]bool, len(r.players)+len(r.audience))
+	for _, player := range r.players {
+		used[strings.ToLower(player.Name)] = true
+	}
+	for _, member := range r.audience {
+		used[strings.ToLower(member.Name)] = true
+	}
+	base := name
+	for suffix := 2; used[strings.ToLower(name)]; suffix++ {
+		name = truncateRunes(base, 13) + " " + strconvItoa(suffix)
 		adjusted = true
 	}
 	return name, adjusted
@@ -1561,6 +1881,10 @@ func sanitizePartyRoomID(raw string) string {
 }
 
 func sanitizePartyName(raw string) (string, bool) {
+	return sanitizePartyNameForLevel(raw, "standard")
+}
+
+func sanitizePartyNameForLevel(raw, level string) (string, bool) {
 	original := strings.TrimSpace(raw)
 	var out []rune
 	lastSpace := false
@@ -1591,6 +1915,9 @@ func sanitizePartyName(raw string) (string, bool) {
 		return -1
 	}, name))
 	blocked := []string{"admin", "moderator", "system", "fuck", "shit", "bitch", "nigger", "nigga", "cunt", "porn", "sex"}
+	if level == "family" {
+		blocked = append(blocked, "idiot", "stupid", "hate", "kill", "loser", "dumb")
+	}
 	for _, term := range blocked {
 		if strings.Contains(compact, term) {
 			return "", true
@@ -1600,6 +1927,13 @@ func sanitizePartyName(raw string) (string, bool) {
 		return "", true
 	}
 	return name, name != original
+}
+
+func (r *partyRoom) partyModerationLevelLocked() string {
+	if r.moderationLevel == "family" {
+		return "family"
+	}
+	return "standard"
 }
 
 func buildTurboTiltObstacles(roomID string, heat int, track, chaos string) []partyObstacle {
@@ -1736,6 +2070,8 @@ func partyPhaseDuration(base int64) int64 {
 		return 300
 	case partyHeatMs:
 		return 8000
+	case stickTiltRoundMs:
+		return 6000
 	case partyIntermissionMs:
 		return 1200
 	case crowdShiftChoiceMs:
