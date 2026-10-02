@@ -5,7 +5,7 @@ Authoritative WebSocket game server for multiplayer AI and Sons games.
 ## Current Games
 
 - `audioagar`: real-time orb arena with server-owned movement, pellets, bots, mass growth, split/eject actions, eating, death events, and per-player snapshots.
-- `party` / `turbotilt` / `crowdshift`: four-letter rooms with a dedicated host screen, 2–8 phone controllers, up to 16 read-only synchronized displays, reconnect tokens, and role-specific authoritative game snapshots. A rotating `gameKey: "party"` room keeps the roster and standings while players vote on the next game and mode. Production checkpoints short-lived server-only recovery snapshots to Firestore so a room can survive an instance replacement.
+- `party` / `turbotilt` / `crowdshift` / `sticktilt` / `sketchclash`: four-letter rooms with a dedicated host screen, 2–8 phone controllers, up to 16 read-only synchronized displays, reconnect tokens, and role-specific authoritative game snapshots. A rotating `gameKey: "party"` room keeps the roster and standings while players vote on the next game and mode. Production checkpoints short-lived server-only recovery snapshots to Firestore so a room can survive an instance replacement.
 
 ## Run Locally
 
@@ -30,6 +30,73 @@ Production routes each game family to its own Cloud Run service:
 - Party Mode: `wss://party-server-6owms56gxq-uc.a.run.app/ws`
 
 Both deployments use this source package, with `ENABLED_GAMES` restricting each runtime to its intended game. `PARTY_ROOM_STORE=firestore` enables 15-minute restart recovery only on the Party deployment. Keeping the shared protocol implementation avoids duplicated networking code while isolating room memory, releases, and capacity.
+
+## Party Mode engineering runbook
+
+Party Mode is the multi-screen room system served from `/party/` and backed by the Go server in this package. Use these files when changing the flow:
+
+- `party/app.js`: shared host/display screen, phone controller, saved settings, reconnect tokens, and embedded-activity iframe bridge.
+- `turbotilt/game.js`, `crowdshift/game.js`, `sticktilt/game.js`, and `sketchclash/game.js`: standalone hosts plus Party Mode embedded activity renderers.
+- `src/net/multiplayerClient.js`: endpoint resolution, version-one message envelope, reconnects, heartbeats, and input sequencing.
+- `v2-server/party.go`: room creation, joins, roles, safety controls, host recovery, Turbo Tilt actions, snapshots, and room expiry.
+- `v2-server/party_rotation.go`: rotating party settings, activity catalog, voting/spin lifecycle, ranking, catch-up scoring, and play-again reset.
+- `v2-server/party_store.go`: server-only recovery snapshots, expiry, and room restoration.
+
+### Runtime constraints
+
+- Live room coordination is process-owned. Keep Party Mode on a single Cloud Run instance even when recovery persistence is enabled; Firestore snapshots do not support concurrent room ownership across instances.
+- Without `PARTY_ROOM_STORE=firestore`, instance replacement drops active rooms. With that setting and `FIRESTORE_PROJECT_ID` (or `GOOGLE_CLOUD_PROJECT`), the server checkpoints recovery snapshots to `partyRoomSnapshots` every two seconds. Valid snapshots can restore rooms for 15 minutes after the last checkpoint; recovered active games pause until the host reconnects. See `DEPLOY.md` for configuration and rollout checks.
+- Room codes are four uppercase letters from `ABCDEFGHJKLMNPQRSTUVWXYZ` so ambiguous `I` and `O` are not accepted.
+- Capacity is capped at 100 rooms, 2-8 phone players per room, 16 read-only display clients per room, and 64 connected audience members per room.
+- Empty `ENABLED_GAMES` enables both `audioagar` and `party` for local compatibility. A non-empty value only enables recognized game families; typos enable nothing and joins fail with `game_unavailable`.
+- `/healthz` must report the runtime's enabled family. The Party service should list `games:["party"]` and `partyGames:["turbotilt","crowdshift","sticktilt","sketchclash"]`, with `roomRecovery:true` when persistence is configured; the Audio Agar service should list only `games:["audioagar"]` with recovery disabled.
+
+### Endpoint selection
+
+Browser clients resolve WebSocket URLs in this order:
+
+1. An explicit `endpoint` passed to `connect()`.
+2. `?ws=` or `?endpoint=` in the page URL.
+3. `globalThis.__AIANDSONS_WS_ENDPOINT`.
+4. The `aiandsons-multiplayer-ws-endpoint` localStorage override.
+5. Production defaults when the host contains `aiandsons.io` or `vercel.app`.
+6. `ws://127.0.0.1:8081/ws` for local static-server testing.
+
+Production defaults are family-specific: `gameId:"party"` goes to `party-server`, while every other game family defaults to `audioagar-server`.
+
+### Join contract
+
+All clients use the shared `aiandsons.multiplayer.v1` envelope. Rotating Party Mode hosts create a room by joining with `gameId:"party"`, `role:"host"`, `gameKey:"party"`, and no room ID:
+
+```json
+{
+  "protocol": "aiandsons.multiplayer.v1",
+  "v": 1,
+  "type": "join",
+  "gameId": "party",
+  "payload": { "role": "host", "gameKey": "party" }
+}
+```
+
+Phone controllers join the returned room with `role:"player"`, `playerName`, `playerAvatar`, and an optional saved `token`. Extra TVs or computers join the same room with `role:"display"`; displays receive host snapshots at 15 Hz, do not consume player capacity, and any attempted input is rejected as `display_read_only`.
+
+The Party page stores player reconnect tokens in localStorage under `aiandsons-party-player:<room>` and host tokens in sessionStorage under `aiandsons-party-host:<room>`. It also stores the latest host recovery card in localStorage for 15 minutes. Reconnecting requires a matching token and either a live room or an unexpired server recovery snapshot; the browser card alone cannot restore a room.
+
+### Lifecycle, settings, and host controls
+
+Rotating rooms move through `party_lobby`, `voting`, `spinning`, `next_up`, `activity`, `results`, and `ended`. The host can `start`, `pause`, `resume`, `skip`, `end`, and, after `ended`, `play_again`. Active rooms pause when the host disconnects; if the host does not reconnect within 60 seconds the server marks the room ended. Lobby rooms expire after 15 minutes of inactivity, and ended/podium rooms are retained for 2 minutes.
+
+`configure_party` is accepted only before the party starts. Supported settings are:
+
+- `durationPreset`: `quick` (3 activities), `standard` (6), or `marathon` (10).
+- `playStyle`: `mixed`, `competitive`, or `cooperative`; activity options are filtered by style and player count.
+- `accessibilityPreset`: `standard`, `family`, `relaxed`, or `custom`. The first three presets normalize extended timers, reduced motion, and high contrast on the server.
+- `selectionMethod`: `chaos`, `majority`, `unanimous`, or `host`. `host` exposes the host-only `choose_activity` action during voting.
+- `repeatAvoidance`: `off`, `immediate`, or `session`. When the session pool is exhausted, history resets and selection continues.
+- `enabledActivities`: non-empty list of IDs from `partyActivityCatalog`.
+- `catchUp`: when enabled, activity awards add 2 points for players at least 8 party points behind the leader.
+
+Room safety controls are host-only: `lock`/`unlock`, `late_join_on`/`late_join_off`, `friendly_names_on`/`friendly_names_off`, `set_max_players`, and `kick`. Kicked player tokens are blocked from reconnecting to that room.
 
 ## Protocol
 
@@ -80,3 +147,14 @@ See `DEPLOY.md` for the single-instance Cloud Run beta configuration and rollout
 cd v2-server
 go test ./...
 ```
+
+Focused client and smoke coverage for Party Mode lives outside this package:
+
+```powershell
+npm run test:turbotilt
+npm run test:crowdshift
+node --test tests/party-rotation-client.integration.test.mjs tests/party-avatar.integration.test.mjs
+npm run test:party-rotation-smoke
+```
+
+When changing endpoint selection or service isolation, also run `npm run test:audioagar` because Audio Agar and Party Mode share `src/net/multiplayerClient.js`.
