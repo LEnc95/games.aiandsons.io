@@ -1,4 +1,6 @@
 # Release Notes - Sprint 6 Launch Candidate
+
+These are historical launch notes and policy context. Current player-facing releases live in [CHANGELOG.md](CHANGELOG.md), and engineering history lives in [TECHNICAL_CHANGELOG.md](TECHNICAL_CHANGELOG.md). Before tagging a release, review the risk register, rollback plan, and policy signoff using [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 ## Weekly Highlights (2026-04-18 to 2026-04-24)
 - Added and wired six new game routes this week: `prism-pipeline`, `glacier-guard`, `storm-vault`, `drift-dredger`, `cindercrash`, and `solarskiff`.
 - Refined game differentiation work by separating Reactor Relay and Prism Pipeline gameplay loops and visual themes.

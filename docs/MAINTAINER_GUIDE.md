@@ -4,6 +4,19 @@
 
 Operational details below are checked against repository configuration. Run commands from the repository root. Cloud resource location and provider-console settings must be confirmed in the relevant deployment environment.
 
+## Find what you need
+
+| Task | Section |
+| --- | --- |
+| Set up locally | [Quick start](#quick-start) · [Core commands](#core-commands) |
+| Configure backend services | [Firebase](#firebase-backend-configuration) · [Stripe billing](#stripe-billing-optional) |
+| Understand outcome reporting | [Engagement contracts and telemetry](#engagement-contracts-and-outcome-telemetry) |
+| Triage player feedback | [Feedback and Linear](#feedback-and-linear-workflow) |
+| Maintain releases | [Daily-game checklist](#daily-game-ship-checklist) · [Release train](#self-maintaining-release-train) |
+| Prepare weekly work | [Content packs](#weekly-content-pack-runbook) · [Release automation](#weekly-release-automation-runbook) |
+
+For contribution workflow and review expectations, see [CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## Engagement contracts and outcome telemetry
 
 New daily games also need an explicit content contract in `src/meta/content-contracts.js`.
