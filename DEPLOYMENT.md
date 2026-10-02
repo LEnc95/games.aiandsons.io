@@ -69,7 +69,7 @@ an `/:slug/index.html` rule alone does not cover user traffic to `/<slug>`.
 
 The static shell can load without backend credentials, but production account,
 feedback, billing, and cloud-save features depend on the Firebase, Stripe, and
-app-session variables listed in `README.md`.
+app-session variables listed in the [maintainer guide](docs/MAINTAINER_GUIDE.md#firebase-backend-configuration).
 
 Notable groups:
 
