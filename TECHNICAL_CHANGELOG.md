@@ -2,6 +2,33 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.15.0 — 2026-10-04
+
+- Release week: 2026-W40
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- ab7e822 Clarify contribution workflow and release documentation
+- 9672f42 Refresh GitHub repository presentation and maintainer documentation
+- a471984 ⚡ Bolt: Optimize room status validation with O(1) Set lookup (#356)
+- 2cc5d9b Bump firebase-admin from 13.10.0 to 14.5.0 (#354)
+- 9f27811 Document Party Mode engineering runbook (#319)
+- c691334 Document current deployment, telemetry, and weekly automation runbooks (#287)
+- e6f06a2 feat: Add explicit label to Teacher PIN input (#214)
+- 98ca4b8 Fix sitemap.xml serving with build-time generation and API fallback (#344)
+- bb2f3f6 🎨 Palette: Add tooltips and ARIA labels for disabled shop buttons (#217)
+- 543870b 🛡️ Sentinel: [HIGH] Fix HTML injection in email templates (#342)
+- 8d8e975 Refine arcade homepage layout and accessibility
+- 83e890e Prevent cached guest sessions after Google sign-in
+- 26377d9 Restore Google sign-in sessions across devices
+- d8ae063 Add 2026-W40 weekly content pack (#352)
+- 20db1d0 Prepare weekly release 1.14.0 (#346)
+- 2b90a9a Complete weekly release in the scheduled workflow (#348)
+- 3ad3f32 Merge validated weekly release PRs through trusted gate (#347)
+- dea6214 Fix weekly release PR creation and rerun handling (#345)
+
 ## 1.14.0 — 2026-09-27
 
 - Release week: 2026-W39
