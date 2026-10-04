@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.15.0] - 2026-10-04
 ### Added
 
 - Added the 2026-W40 content pack with Cedar Cipher Ribbon Reversal, Saffron Spar Stick & Tilt, and Tideglass Vigil Lantern Wake cosmetics plus four bounded weekly challenges.
