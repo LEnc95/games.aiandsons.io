@@ -45,6 +45,9 @@ const GAME_FILE_BY_PREFIX = {
   ribbonreversal: 'ribbonreversal/index.html',
   sticktilt: 'sticktilt/index.html',
   lanternwake: 'lanternwake/index.html',
+  kitecircuit: 'kitecircuit/index.html',
+  magnetmeadow: 'magnetmeadow/index.html',
+  pollenpassage: 'pollenpassage/index.html',
 };
 
 function extractItems(shopHtml) {
@@ -109,6 +112,21 @@ const items = extractItems(shopHtml);
 test('shop item IDs are unique', () => {
   const ids = items.map((item) => item.id);
   assert.equal(new Set(ids).size, ids.length, 'Duplicate shop item id(s) found.');
+});
+
+test('2026-W41 weekly cosmetic inventory is unique and within the generated price policy', () => {
+  const expected = new Map([
+    ['kitecircuit-aerial-aurora', 48],
+    ['magnetmeadow-polar-orchard', 57],
+    ['pollenpassage-marigold-drift', 71],
+  ]);
+  const sourceById = new Map(items.map((item) => [item.id, item]));
+  assert.equal(expected.size, 3);
+  for (const [id, price] of expected) {
+    assert.equal(sourceById.get(id)?.type, 'inventory', `Expected ${id} to be a shop inventory item.`);
+    assert.equal(Number(shopHtml.match(new RegExp(`id: "${id}"[\\s\\S]*?price: (\\d+)`))?.[1]), price);
+    assert.ok(price >= 20 && price <= 90, `Expected ${id} price to stay within the weekly policy.`);
+  }
 });
 
 test('every cosmetic item has a style handler in cosmetics logic', () => {
