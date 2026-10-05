@@ -60,8 +60,12 @@ const clearStoredPlayer = () => {
   registerPromise = null;
 };
 
+// ⚡ Bolt Optimization: Extracted inline fallback array into a module-scoped Set.
+// This upgrades the lookup from O(N) to O(1) and eliminates the overhead of reallocating the array on every function call.
+const STALE_PLAYER_ERRORS = new Set(['invalid_player_token', 'unknown_player']);
+
 const isStalePlayerError = (error) =>
-  error && ['invalid_player_token', 'unknown_player'].includes(error.code);
+  error && STALE_PLAYER_ERRORS.has(error.code);
 
 const postJsonWithPlayer = async (route, buildPayload) => {
   let player = await ensurePlayer();
