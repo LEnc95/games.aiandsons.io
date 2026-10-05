@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-10-05 Weekly content pack 2026-W41
+- Isolated from `origin/main` baseline `a5bbc600f60bec07cc4ce0f6702ca686202b4dcb`; issue #359 is authoritative. Added Aerial Aurora (Kite Circuit, 48), Polar Orchard (Magnet Meadow, 57), and Marigold Drift (Pollen Passage, 71), all inventory-gated palette cosmetics, plus four exact 20-coin challenges for Kite Circuit rings, Magnet Meadow magnets, Pollen Passage blooms, and Lure Line score (80 total).
+- Visual, mobile, deterministic state, gameplay, pause/restart/fullscreen-request, and ownership-gating checks passed. Fixed Kite Circuit's theme cycle to use the dynamic palette count so its owned fourth palette is selectable. TODO: run ordered release gates, audit, commit, and publish via the guarded PR lane.
+
 ## 2026-09-28 Weekly content pack 2026-W40
 - Isolated from `origin/main` baseline `20db1d0cfd645610634f20452bcc7cb76c544eb9`; issue #349 is authoritative. Added Cedar Cipher for Ribbon Reversal, Saffron Spar for Stick & Tilt, and Tideglass Vigil for Lantern Wake as inventory-gated palette cosmetics. Added four exact 20-coin challenges for Ribbon Reversal bundles, Stick & Tilt players, Lantern Wake lanterns, and Rainkeeper raindrops (80 total).
 - Browser proof and ordered local gates passed; TODO: commit the audited weekly pack, publish through the guarded PR lane, then verify merge and production.

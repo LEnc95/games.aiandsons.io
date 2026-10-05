@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Added the 2026-W41 content pack with Aerial Aurora Kite Circuit, Polar Orchard Magnet Meadow, and Marigold Drift Pollen Passage cosmetics plus four bounded weekly challenges.
+
 ## [1.15.0] - 2026-10-04
 ### Added
 
