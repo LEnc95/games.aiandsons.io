@@ -9,7 +9,7 @@ Operational details below are checked against repository configuration. Run comm
 | Task | Section |
 | --- | --- |
 | Set up locally | [Quick start](#quick-start) · [Core commands](#core-commands) |
-| Configure backend services | [Firebase](#firebase-backend-configuration) · [Stripe billing](#stripe-billing-optional) |
+| Configure backend services | [Firebase](#firebase-backend-configuration) · [Account sessions](#account-sessions-and-google-sign-in) · [Stripe billing](#stripe-billing-optional) |
 | Understand outcome reporting | [Engagement contracts and telemetry](#engagement-contracts-and-outcome-telemetry) |
 | Triage player feedback | [Feedback and Linear](#feedback-and-linear-workflow) |
 | Maintain releases | [Daily-game checklist](#daily-game-ship-checklist) · [Release train](#self-maintaining-release-train) |
@@ -188,6 +188,64 @@ Alternative server credential formats:
 - `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64`
 
 Google sign-in still requires provider setup and authorized domains in Firebase/Google Cloud.
+
+## Account sessions and Google sign-in
+
+Intent: keep anonymous play, Google profiles, cloud save, and billing tied to
+one server-issued app session instead of trusting client-only Firebase state.
+
+Key codepaths:
+
+- `api/auth.js` routes `/api/auth/:route` into `api/auth/_handlers.js`.
+- `api/auth/_session.js` signs the `cade_session` cookie.
+- `src/auth/client.js` owns Firebase web SDK loading, sign-in, sign-out, and
+  browser-side session caching.
+- `src/core/billing.js` calls `GET /api/auth/session` before Stripe/family-plan
+  APIs so billing requests share the same app user.
+
+Session contract:
+
+- `GET /api/auth/session` returns the current session or creates an anonymous
+  one when the cookie is missing.
+- `POST /api/auth/google-login` accepts a Firebase ID token, verifies it with
+  Firebase Admin, upserts the authenticated profile, and replaces the anonymous
+  cookie with a Google-authenticated session.
+- `POST /api/auth/logout` clears the current cookie and returns a fresh
+  anonymous session.
+- Cookies are `HttpOnly`, `SameSite=Lax`, path-scoped to `/`, valid for 180
+  days, and marked `Secure` on HTTPS/production requests.
+- Production must set `APP_SESSION_SECRET`; local development falls back to a
+  deterministic dev secret.
+
+Client behavior to preserve:
+
+- Auth session reads use `credentials: "same-origin"` and `cache: "no-store"`.
+  Keep `/api/(.*)` response headers no-store in `vercel.json`; a cached guest
+  session can hide a successful Google login.
+- `fetchAuthSession()` caches normalized session data for 60 seconds. Pass
+  `{ force: true }` after account-changing actions that need immediate state.
+- After `signInWithGoogle()`, the client exchanges the Firebase user, then
+  immediately re-reads `/api/auth/session` and verifies the server retained the
+  cookie for the same Firebase UID. Failure means the browser blocked or dropped
+  the app cookie.
+- If Firebase still has a persisted Google user while the app session is
+  anonymous, `fetchAuthSession()` exchanges that Firebase user again to restore
+  the server session.
+- Local static servers skip auth API probes on `localhost` and `127.0.0.1`.
+  Add `?authApiProbe=1` when intentionally testing live auth APIs from a
+  loopback URL.
+
+Troubleshooting checks:
+
+1. Confirm `/api/auth/firebase-config` reports `enabled: true` and no missing
+   public Firebase fields.
+2. Confirm `APP_SESSION_SECRET` is set in production and Firebase Admin
+   credentials are configured for `/api/auth/google-login`.
+3. In browser devtools, verify `POST /api/auth/google-login` is followed by a
+   no-store `GET /api/auth/session` that returns `isAuthenticated: true`.
+4. If checkout or family-plan calls act anonymous after sign-in, force-refresh
+   the auth/billing session and check that `/api/(.*)` cache headers still
+   override the broad public static-site cache rule.
 
 ## Stripe billing (optional)
 
