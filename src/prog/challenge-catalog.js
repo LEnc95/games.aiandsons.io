@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w41-kitecircuit-rings-25', weekKey: '2026-10-05', gameSlug: 'kitecircuit', metric: 'rings', name: 'Sky Ring Sweep', desc: 'Fly through all 25 rings in Kite Circuit.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w41-magnetmeadow-magnets-40', weekKey: '2026-10-05', gameSlug: 'magnetmeadow', metric: 'magnets', name: 'Polarity Garden', desc: 'Balance 40 magnets in Magnet Meadow.', target: 40, rewardCoins: 20 }),
+  define({ id: 'weekly-w41-pollenpassage-blooms-25', weekKey: '2026-10-05', gameSlug: 'pollenpassage', metric: 'blooms', name: 'Meadow Nectar', desc: 'Gather all 25 blooms in Pollen Passage.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w41-lureline-score-500', weekKey: '2026-10-05', gameSlug: 'lureline', metric: 'score', name: 'River Record', desc: 'Reel in a 500-point score in Lure Line.', target: 500, rewardCoins: 20 }),
   define({ id: 'weekly-w40-ribbonreversal-bundles-5', weekKey: '2026-09-28', gameSlug: 'ribbonreversal', metric: 'bundles', name: 'Studio Sorter', desc: 'Sort all 5 bundles in Ribbon Reversal.', target: 5, rewardCoins: 20 }),
   define({ id: 'weekly-w40-sticktilt-players-8', weekKey: '2026-09-28', gameSlug: 'sticktilt', metric: 'players', name: 'Full Dojo', desc: 'Start a Stick & Tilt rumble with 8 players.', target: 8, rewardCoins: 20 }),
   define({ id: 'weekly-w40-lanternwake-lanterns-30', weekKey: '2026-09-28', gameSlug: 'lanternwake', metric: 'lanterns', name: 'Wake Keeper', desc: 'Gather all 30 lanterns in Lantern Wake.', target: 30, rewardCoins: 20 }),

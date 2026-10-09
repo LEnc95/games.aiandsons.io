@@ -56,7 +56,7 @@
   <div class="help"><b>Goal:</b> fill every outlined pair with a magnet or grass. The edge clues show how many + and − poles belong in each row and column; equal poles may not touch side-to-side. <b>Desktop:</b> arrows move, Space cycles, Z places +−, X places −+, and C plants grass. <b>Touch:</b> tap a pair to cycle. I inspects, H hints, U undoes, P pauses, R restarts, T changes the field, and F toggles fullscreen.</div><div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -70,10 +70,12 @@ const LEVELS=Object.freeze([
   makeLevel('Foxglove Field',4,6,'Set the long foxglove rows humming in harmony.','00:01,02:03,04:05,10:20,11:21,12:22,13:23,14:24,15:25,30:31,32:33,34:35','AAAGABGBAGBB'),
   makeLevel('Aurora Acre',6,4,'Finish the final acre beneath the green aurora.','00:10,01:11,02:12,03:13,20:21,22:23,30:31,32:33,40:50,41:51,42:52,43:53','ABABAABBAGAG')
 ]);
+const POLAR_ORCHARD=profileState.inventory instanceof Set&&profileState.inventory.has('magnetmeadow-polar-orchard');
 const THEMES=Object.freeze([
   Object.freeze({name:'Clover Morning',sky:'#6bb7bd',sky2:'#b9dfc6',ground:'#315b45',hill:'#47785b',panel:'#173d3f',grid:'#8eb99b',plus:'#ef6c67',minus:'#6cb7ee',grass:'#d8e96b',ink:'#20323a',accent:'#f2cf62',glow:'#fff3a9',bad:'#ff6f8d'}),
   Object.freeze({name:'Foxglove Dusk',sky:'#625889',sky2:'#c58aa5',ground:'#38485a',hill:'#536174',panel:'#302e50',grid:'#b59ac0',plus:'#ff8f91',minus:'#79d3e4',grass:'#b8dc7c',ink:'#302a43',accent:'#ffd06f',glow:'#fff0b0',bad:'#ff6e70'}),
-  Object.freeze({name:'Amber Harvest',sky:'#b66e4f',sky2:'#f2be72',ground:'#4c5a36',hill:'#6c7545',panel:'#49382c',grid:'#d1b273',plus:'#ff7168',minus:'#70bdd0',grass:'#d7df61',ink:'#382c28',accent:'#fff0a1',glow:'#fff4be',bad:'#ff5e7a'})
+  Object.freeze({name:'Amber Harvest',sky:'#b66e4f',sky2:'#f2be72',ground:'#4c5a36',hill:'#6c7545',panel:'#49382c',grid:'#d1b273',plus:'#ff7168',minus:'#70bdd0',grass:'#d7df61',ink:'#382c28',accent:'#fff0a1',glow:'#fff4be',bad:'#ff5e7a'}),
+  ...(POLAR_ORCHARD?[Object.freeze({name:'Polar Orchard',sky:'#284d64',sky2:'#9cd9c2',ground:'#284b3d',hill:'#49705c',panel:'#193941',grid:'#a7d9b4',plus:'#ff9275',minus:'#72c7e6',grass:'#cbe56c',ink:'#18343d',accent:'#f4d376',glow:'#fff3b3',bad:'#ff7185'})]:[])
 ]);
 const game={mode:'menu',levelIndex:0,marks:[],focus:0,history:[],totalFlips:0,levelFlips:0,petals:3,completedMagnets:0,completedMeadows:0,elapsedMs:0,themeIndex:0,status:'Press Enter Meadow to begin.',lastAction:'menu',reported:false};
 let pairRegions=[],lastFrame=performance.now(),manualUntil=0;
