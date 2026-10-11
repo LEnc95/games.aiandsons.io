@@ -2,6 +2,21 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.16.0 — 2026-10-11
+
+- Release week: 2026-W41
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- 15aabdd Explicit tooltips and accessible labels for disabled shop buttons (#357)
+- 26e15e7 Document account session sign-in flow (#362)
+- 3f5cd60 Optimize error code lookup in client (#361)
+- fa82026 🎨 Palette: Add keyboard shortcut hint to search input placeholder (#360)
+- f9e275d Add 2026-W41 weekly content pack (#363)
+- a5bbc60 Prepare weekly release 1.15.0 (#358)
+
 ## 1.15.0 — 2026-10-04
 
 - Release week: 2026-W40
