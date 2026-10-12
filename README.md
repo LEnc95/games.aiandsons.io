@@ -72,6 +72,7 @@ Start with [AGENTS.md](AGENTS.md) for repository commands and the [maintainer gu
 | --- | --- |
 | [Contributing](CONTRIBUTING.md) | Find the right source, validate a focused change, and open a reviewable PR |
 | [Deployment](DEPLOYMENT.md) | Static hosting, sitemap generation, routing, cache headers, and environment setup |
+| [Shop catalog](docs/MAINTAINER_GUIDE.md#shop-and-cosmetic-catalog-runbook) | Coin shop items, premium locks, cosmetic inventory, and weekly pack validation |
 | [Party Mode](v2-server/README.md#party-mode-engineering-runbook) | Rooms, roles, reconnects, activity rotation, and recovery |
 | [Multiplayer deployment](v2-server/DEPLOY.md) | Separate services, single-instance coordination, and rollout checks |
 | [Release checklist](RELEASE_CHECKLIST.md) | Versioning and release validation |
