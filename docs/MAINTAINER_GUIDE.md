@@ -12,6 +12,7 @@ Operational details below are checked against repository configuration. Run comm
 | Configure backend services | [Firebase](#firebase-backend-configuration) · [Account sessions](#account-sessions-and-google-sign-in) · [Stripe billing](#stripe-billing-optional) |
 | Understand outcome reporting | [Engagement contracts and telemetry](#engagement-contracts-and-outcome-telemetry) |
 | Triage player feedback | [Feedback and Linear](#feedback-and-linear-workflow) |
+| Maintain shop items | [Shop and cosmetic catalog](#shop-and-cosmetic-catalog-runbook) |
 | Maintain releases | [Daily-game checklist](#daily-game-ship-checklist) · [Release train](#self-maintaining-release-train) |
 | Prepare weekly work | [Content packs](#weekly-content-pack-runbook) · [Release automation](#weekly-release-automation-runbook) |
 
@@ -308,6 +309,64 @@ Optional env vars:
 - Sunday automation promotes `CHANGELOG.md` for players and parents, updates `TECHNICAL_CHANGELOG.md` for maintainers, and synchronizes package/runtime versions.
 - Production verification runs after Main QA and retries after 5 and 15 minutes before alerting. It does not automatically revert a failed deployment.
 - Aggregate gameplay telemetry stores only daily counters and bounded numeric summaries. Client transmission remains disabled until privacy approval is recorded and the runtime flag is enabled.
+
+### Shop and cosmetic catalog runbook
+
+Intent: keep the coin shop, Family Premium catalog, and weekly cosmetic packs
+consistent with the games that actually render those unlocks.
+
+Key codepaths:
+
+- `shop.html` still owns the rendered item array, search/filter UI, purchase
+  flow, coin spending, and button states.
+- `src/prog/shop-catalog.js` owns shared shop policy constants and the
+  `PREMIUM_SHOP_ITEM_ID_LIST` used by entitlement checks.
+- `src/core/entitlements.js` maps premium shop item IDs to the
+  `familyPremium` entitlement.
+- `src/core/state.js` stores `inventory`, `cosmetics`, and `cosmeticsOwned` in
+  the browser state namespace. Cloud save unions inventory and owned cosmetics.
+- Game shells consume inventory IDs directly for game-specific palette or theme
+  changes; legacy shared cosmetics can also use `src/prog/cosmetics.js`.
+
+Shop item contract:
+
+```js
+{
+  id: 'aquariumlogic-tidepool-twilight',
+  type: 'inventory',
+  game: 'Aquarium Logic',
+  name: 'Tidepool Twilight',
+  desc: 'Balance tanks in tidepool teal with sea-glass panels.',
+  price: 46,
+  preview: '<div>...</div>',
+}
+```
+
+Constraints:
+
+- Use stable IDs prefixed by the game slug for game-specific inventory. The
+  shop integration test maps these prefixes to real game folders.
+- Keep weekly generated prices within `SHOP_POLICY.minGeneratedPrice` and
+  `SHOP_POLICY.maxGeneratedPrice` (currently 20 to 90 coins).
+- Add Family Premium items to `PREMIUM_SHOP_ITEM_ID_LIST`; unowned premium
+  entries render as locked unless `familyPremium` is active. Free players must
+  retain access to all core gameplay.
+- Classroom sessions call `isShopLocked()` and disable purchases/equips while
+  `classroom.shopDisabledDuringClass` is true.
+- Disabled shop buttons need visible text, an explicit `aria-label`, and a
+  `title` explaining the block reason. Preserve this for classroom locks,
+  premium locks, insufficient coins, and already-owned inventory.
+- Inventory items must be implemented outside `shop.html`; add the ID to the
+  relevant game shell or shared cosmetic logic so ownership changes are visible
+  in gameplay.
+
+Validation:
+
+- `npm run test:shop` for billing, entitlement, and shop catalog checks.
+- `node --test tests/shop-items.integration.test.mjs` for focused item ID,
+  prefix, premium, and implementation coverage.
+- For weekly packs, also run `AUTOMATION_LANE=weekly-pack npm run automation:audit-diff`
+  and `npm run test:weekly-smoke:raw` after starting a local server.
 
 ### Weekly content pack runbook
 
