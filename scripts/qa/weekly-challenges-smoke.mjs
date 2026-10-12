@@ -128,6 +128,8 @@ async function main() {
         magnetmeadow: { magnets: 40 },
         pollenpassage: { blooms: 25 },
         lureline: { score: 500 },
+        quiltquest: { patches: 30 },
+        kiteparade: { patches: 40 },
         pong: { winMargin: 7 },
         tetris: { lines: 60, score: 5200, level: 9 },
         asteroids: { wave: 9, score: 6500, lives: 3 },
@@ -143,12 +145,12 @@ async function main() {
     });
 
     assert(!result.error, "Expected maybeUnlock to be available in home runtime.");
-    assert(result.weeklyRewardsNow.length === 4, "Expected all four W41 weekly challenges to reward from the synthetic progress update.");
-    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W41 weekly reward total to stay within the 80-coin policy maximum.");
+    assert(result.weeklyRewardsNow.length === 4, "Expected all four W42 weekly challenges to reward from the synthetic progress update.");
+    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W42 weekly reward total to stay within the 80-coin policy maximum.");
     const repeat = await page.evaluate(() => window.maybeUnlock({
-      kitecircuit: { rings: 25 }, magnetmeadow: { magnets: 40 }, pollenpassage: { blooms: 25 }, lureline: { score: 500 },
+      aquariumlogic: { boards: 5 }, quiltquest: { patches: 30 }, kiteparade: { patches: 40 }, dewdropdrift: { motes: 14 },
     }));
-    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W41 weekly challenges to reward exactly once.");
+    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W42 weekly challenges to reward exactly once.");
 
     await page.reload({ waitUntil: "networkidle" });
     const afterState = await page.evaluate(() => {

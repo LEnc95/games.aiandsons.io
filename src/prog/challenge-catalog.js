@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w42-aquariumlogic-boards-5', weekKey: '2026-10-12', gameSlug: 'aquariumlogic', metric: 'boards', name: 'Tidepool Steward', desc: 'Balance all 5 boards in Aquarium Logic.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w42-quiltquest-patches-30', weekKey: '2026-10-12', gameSlug: 'quiltquest', metric: 'patches', name: 'Festival Stitcher', desc: 'Sew all 30 patches in Quilt Quest.', target: 30, rewardCoins: 20 }),
+  define({ id: 'weekly-w42-kiteparade-patches-40', weekKey: '2026-10-12', gameSlug: 'kiteparade', metric: 'patches', name: 'Sky Dye Sweep', desc: 'Dye all 40 patches in Kite Parade.', target: 40, rewardCoins: 20 }),
+  define({ id: 'weekly-w42-dewdropdrift-motes-14', weekKey: '2026-10-12', gameSlug: 'dewdropdrift', metric: 'motes', name: 'Morning Motes', desc: 'Collect all 14 motes in Dewdrop Drift.', target: 14, rewardCoins: 20 }),
   define({ id: 'weekly-w41-kitecircuit-rings-25', weekKey: '2026-10-05', gameSlug: 'kitecircuit', metric: 'rings', name: 'Sky Ring Sweep', desc: 'Fly through all 25 rings in Kite Circuit.', target: 25, rewardCoins: 20 }),
   define({ id: 'weekly-w41-magnetmeadow-magnets-40', weekKey: '2026-10-05', gameSlug: 'magnetmeadow', metric: 'magnets', name: 'Polarity Garden', desc: 'Balance 40 magnets in Magnet Meadow.', target: 40, rewardCoins: 20 }),
   define({ id: 'weekly-w41-pollenpassage-blooms-25', weekKey: '2026-10-05', gameSlug: 'pollenpassage', metric: 'blooms', name: 'Meadow Nectar', desc: 'Gather all 25 blooms in Pollen Passage.', target: 25, rewardCoins: 20 }),

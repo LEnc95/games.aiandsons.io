@@ -98,7 +98,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -118,10 +118,12 @@ const LEVELS=Object.freeze([
   Object.freeze({name:'Festival Banner',w:7,h:6,pieces:Object.freeze([
     Object.freeze({name:'Cherry',shape:rect(3,2),solution:[0,0,0]}),Object.freeze({name:'Amber',shape:rect(3,2),solution:[3,0,0]}),Object.freeze({name:'Emerald',shape:rect(2,4),solution:[0,2,0]}),Object.freeze({name:'Cobalt',shape:rect(2,4),solution:[2,2,0]}),Object.freeze({name:'Mulberry',shape:rect(2,4),solution:[4,2,0]}),Object.freeze({name:'Silver',shape:rect(1,6),solution:[6,0,0]})])})
 ]);
+const COBALT_KEEPSAKE=profileState.inventory instanceof Set&&profileState.inventory.has('quiltquest-cobalt-keepsake');
 const THEMES=Object.freeze([
   Object.freeze({name:'Harvest Hall',background:'#2b1d3a',cloth:'#f5ddbd',cloth2:'#d9b88b',grid:'#8e674e',stitch:'#fff3d7',ink:'#28162d',hud:'#fff7ea',accent:'#f1ad5c',patches:Object.freeze(['#d95367','#efa83c','#4ca778','#4f83c3','#8b61b5','#d9d2c3'])}),
   Object.freeze({name:'Midnight Market',background:'#12283b',cloth:'#d8e7e2',cloth2:'#9dbdb7',grid:'#477177',stitch:'#f7fff7',ink:'#122f35',hud:'#effffc',accent:'#6bd4c4',patches:Object.freeze(['#ef657a','#ffc857','#54b884','#579bd6','#a97adb','#dfe9e4'])}),
-  Object.freeze({name:'Berry Parlor',background:'#40213f',cloth:'#f1d8e0',cloth2:'#c99dac',grid:'#84546a',stitch:'#fff7f5',ink:'#3e2034',hud:'#fff4f8',accent:'#f28eae',patches:Object.freeze(['#c84964','#efaa4e','#62a56f','#4f7db0','#8f61a7','#ead7cf'])})
+  Object.freeze({name:'Berry Parlor',background:'#40213f',cloth:'#f1d8e0',cloth2:'#c99dac',grid:'#84546a',stitch:'#fff7f5',ink:'#3e2034',hud:'#fff4f8',accent:'#f28eae',patches:Object.freeze(['#c84964','#efaa4e','#62a56f','#4f7db0','#8f61a7','#ead7cf'])}),
+  ...(COBALT_KEEPSAKE?[Object.freeze({name:'Cobalt Keepsake',background:'#18294a',cloth:'#d7e5ed',cloth2:'#8caec4',grid:'#416d8c',stitch:'#f8f4d8',ink:'#16324a',hud:'#f4fbff',accent:'#f0ba61',patches:Object.freeze(['#cf5d72','#e9aa4e','#5a9d85','#4d83bd','#7966aa','#d9d5c6'])})]:[])
 ]);
 const game={mode:'menu',resumeMode:'playing',levelIndex:0,pieces:[],selected:0,history:[],checksRemaining:MAX_CHECKS,elapsedMs:0,patches:0,panels:0,placements:0,themeIndex:0,status:'Choose a patch, fit it onto the quilt, and cover every square.',lastAction:{type:'ready'},shakeMs:0,started:false,reported:false,rewarded:false};
 let lastFrame=performance.now(),manualUntil=0;
@@ -189,7 +191,7 @@ function syncUi(){
   const total=level().w*level().h;el.panel.textContent=`${game.levelIndex+1} / ${LEVELS.length}`;el.placed.textContent=`${placedCount()} / ${level().pieces.length}`;el.covered.textContent=`${Math.round(coverage()/total*100)}%`;el.checksLeft.textContent=`${game.checksRemaining} / ${MAX_CHECKS}`;el.time.textContent=formatTime(game.elapsedMs);
   el.check.textContent=game.mode==='menu'?'Start':game.mode==='panel-complete'?'Next panel':game.mode==='won'||game.mode==='lost'?'Play again':'Check (C)';el.pause.textContent=game.mode==='paused'?'Resume (P)':'Pause (P)';el.place.textContent=game.pieces[game.selected]?.placed?'Lift (Space)':'Place (Space)';
   const playing=game.mode==='playing';for(const button of [el.piecePrev,el.pieceNext,el.rotate,el.place,el.undo,el.hint])button.disabled=!playing;el.undo.disabled=!playing||!game.history.length;el.pause.disabled=!['playing','paused'].includes(game.mode);
-  el.theme.textContent=`Theme: ${game.themeIndex+1}/3`;
+  el.theme.textContent=`Theme: ${game.themeIndex+1}/${THEMES.length}`;
 }
 function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
 function drawStitches(x,y,size,color){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.strokeRect(x+5,y+5,size-10,size-10);ctx.restore()}
