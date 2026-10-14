@@ -2,6 +2,17 @@
 
 // @ts-check
 
+const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (match) => {
+  switch (match) {
+    case '&': return '&amp;';
+    case '<': return '&lt;';
+    case '>': return '&gt;';
+    case '"': return '&quot;';
+    case "'": return '&#39;';
+    default: return match;
+  }
+});
+
 export class ResultsDashboard {
   #element;
   #metrics;
@@ -106,8 +117,8 @@ export class ResultsDashboard {
         const element = document.createElement("article");
         element.className = "pd-metric";
         element.innerHTML = `
-          <span class="pd-metric-label">${card.label}</span>
-          <span class="pd-metric-value">${card.value}</span>
+          <span class="pd-metric-label">${escapeHtml(card.label)}</span>
+          <span class="pd-metric-value">${escapeHtml(card.value)}</span>
         `;
         return element;
       }),
@@ -125,7 +136,7 @@ export class ResultsDashboard {
     this.#matrixBody.replaceChildren(
       ...rows.map(([pair, value]) => {
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${pair}</td><td>${value}</td>`;
+        row.innerHTML = `<td>${escapeHtml(pair)}</td><td>${escapeHtml(value)}</td>`;
         return row;
       }),
     );
@@ -142,11 +153,11 @@ export class ResultsDashboard {
     const rows = [...history].reverse().map((round) => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>${round.roundNumber}</td>
-        <td>${this.#shortAction(round.playerAction)}</td>
-        <td>${this.#shortAction(round.opponentAction)}</td>
-        <td>${round.playerDelta} / ${round.opponentDelta}</td>
-        <td>${this.#humanizeOutcome(round.classification)}</td>
+        <td>${escapeHtml(String(round.roundNumber))}</td>
+        <td>${escapeHtml(this.#shortAction(round.playerAction))}</td>
+        <td>${escapeHtml(this.#shortAction(round.opponentAction))}</td>
+        <td>${escapeHtml(String(round.playerDelta))} / ${escapeHtml(String(round.opponentDelta))}</td>
+        <td>${escapeHtml(this.#humanizeOutcome(round.classification))}</td>
       `;
       return row;
     });
