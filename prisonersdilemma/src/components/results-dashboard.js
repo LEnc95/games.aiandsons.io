@@ -30,42 +30,61 @@ export class ResultsDashboard {
 
     const matrixPanel = document.createElement("section");
     matrixPanel.className = "pd-panel";
-    matrixPanel.innerHTML = `
-      <h3>Payoff Matrix</h3>
-      <table class="pd-matrix">
-        <thead>
-          <tr>
-            <th>Decision Pair</th>
-            <th>Player / Opponent</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    `;
-    this.#matrixBody = matrixPanel.querySelector("tbody");
+
+    const matrixHeader = document.createElement("h3");
+    matrixHeader.textContent = "Payoff Matrix";
+
+    const matrixTable = document.createElement("table");
+    matrixTable.className = "pd-matrix";
+    const matrixThead = document.createElement("thead");
+    const matrixTr = document.createElement("tr");
+    const thPair = document.createElement("th");
+    thPair.textContent = "Decision Pair";
+    const thOpponent = document.createElement("th");
+    thOpponent.textContent = "Player / Opponent";
+    matrixTr.append(thPair, thOpponent);
+    matrixThead.append(matrixTr);
+
+    this.#matrixBody = document.createElement("tbody");
+    matrixTable.append(matrixThead, this.#matrixBody);
+    matrixPanel.append(matrixHeader, matrixTable);
 
     const historyPanel = document.createElement("section");
     historyPanel.className = "pd-panel";
-    historyPanel.innerHTML = `
-      <h3>Round Ledger</h3>
-      <div class="pd-history-wrap">
-        <table class="pd-history">
-          <thead>
-            <tr>
-              <th>Round</th>
-              <th>You</th>
-              <th>Opponent</th>
-              <th>Delta</th>
-              <th>Outcome</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="pd-empty">No rounds resolved yet.</p>
-    `;
-    this.#historyBody = historyPanel.querySelector("tbody");
-    this.#historyEmpty = historyPanel.querySelector(".pd-empty");
+
+    const historyHeader = document.createElement("h3");
+    historyHeader.textContent = "Round Ledger";
+
+    const historyWrap = document.createElement("div");
+    historyWrap.className = "pd-history-wrap";
+
+    const historyTable = document.createElement("table");
+    historyTable.className = "pd-history";
+
+    const historyThead = document.createElement("thead");
+    const historyTr = document.createElement("tr");
+    const thRound = document.createElement("th");
+    thRound.textContent = "Round";
+    const thYou = document.createElement("th");
+    thYou.textContent = "You";
+    const thOpp = document.createElement("th");
+    thOpp.textContent = "Opponent";
+    const thDelta = document.createElement("th");
+    thDelta.textContent = "Delta";
+    const thOutcome = document.createElement("th");
+    thOutcome.textContent = "Outcome";
+    historyTr.append(thRound, thYou, thOpp, thDelta, thOutcome);
+    historyThead.append(historyTr);
+
+    this.#historyBody = document.createElement("tbody");
+    historyTable.append(historyThead, this.#historyBody);
+    historyWrap.append(historyTable);
+
+    this.#historyEmpty = document.createElement("p");
+    this.#historyEmpty.className = "pd-empty";
+    this.#historyEmpty.textContent = "No rounds resolved yet.";
+
+    historyPanel.append(historyHeader, historyWrap, this.#historyEmpty);
 
     subgrid.append(matrixPanel, historyPanel);
     this.#element.append(title, this.#strategyCopy, this.#metrics, subgrid);
@@ -105,10 +124,16 @@ export class ResultsDashboard {
       ...cards.map((card) => {
         const element = document.createElement("article");
         element.className = "pd-metric";
-        element.innerHTML = `
-          <span class="pd-metric-label">${card.label}</span>
-          <span class="pd-metric-value">${card.value}</span>
-        `;
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "pd-metric-label";
+        labelEl.textContent = card.label;
+
+        const valueEl = document.createElement("span");
+        valueEl.className = "pd-metric-value";
+        valueEl.textContent = card.value;
+
+        element.append(labelEl, valueEl);
         return element;
       }),
     );
@@ -125,7 +150,14 @@ export class ResultsDashboard {
     this.#matrixBody.replaceChildren(
       ...rows.map(([pair, value]) => {
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${pair}</td><td>${value}</td>`;
+
+        const tdPair = document.createElement("td");
+        tdPair.textContent = pair;
+
+        const tdValue = document.createElement("td");
+        tdValue.textContent = value;
+
+        row.append(tdPair, tdValue);
         return row;
       }),
     );
@@ -141,13 +173,23 @@ export class ResultsDashboard {
     this.#historyEmpty.hidden = true;
     const rows = [...history].reverse().map((round) => {
       const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${round.roundNumber}</td>
-        <td>${this.#shortAction(round.playerAction)}</td>
-        <td>${this.#shortAction(round.opponentAction)}</td>
-        <td>${round.playerDelta} / ${round.opponentDelta}</td>
-        <td>${this.#humanizeOutcome(round.classification)}</td>
-      `;
+
+      const tdRound = document.createElement("td");
+      tdRound.textContent = String(round.roundNumber);
+
+      const tdPlayer = document.createElement("td");
+      tdPlayer.textContent = this.#shortAction(round.playerAction);
+
+      const tdOpponent = document.createElement("td");
+      tdOpponent.textContent = this.#shortAction(round.opponentAction);
+
+      const tdDelta = document.createElement("td");
+      tdDelta.textContent = `${round.playerDelta} / ${round.opponentDelta}`;
+
+      const tdOutcome = document.createElement("td");
+      tdOutcome.textContent = this.#humanizeOutcome(round.classification);
+
+      row.append(tdRound, tdPlayer, tdOpponent, tdDelta, tdOutcome);
       return row;
     });
     this.#historyBody.replaceChildren(...rows);
