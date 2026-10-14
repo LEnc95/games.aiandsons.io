@@ -65,3 +65,8 @@
 **Vulnerability:** In `prisonersdilemma/src/components/results-dashboard.js` and `prisonersdilemma/src/components/decision-panel.js`, unsanitized strings were being interpolated into `innerHTML`.
 **Learning:** Constructing DOM strings with template literals containing unsanitized dynamic data exposes the application to DOM-based XSS attacks.
 **Prevention:** Apply a robust `escapeHtml` utility to safely escape HTML entities when interpolating variables into `.innerHTML`, or use `.textContent`/`insertAdjacentHTML` instead.
+
+## 2026-10-14 - [Fix DOM XSS with strict innerHTML removal]
+**Vulnerability:** Static analysis tools (like Sourcery CI) completely block assignments to `.innerHTML` due to DOM-based XSS risks, even when variables are escaped via `escapeHtml()`.
+**Learning:** Relying on template literal strings and `escapeHtml` within `.innerHTML` is insufficient to pass strict CI rules and creates brittle code if an escaping call is missed.
+**Prevention:** Completely replace `.innerHTML` templates with native DOM APIs (`document.createElement`, `.textContent`, `.append()`) to guarantee immunity to XSS and ensure compliance with automated static analysis constraints.

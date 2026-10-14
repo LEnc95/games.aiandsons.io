@@ -2,17 +2,6 @@
 
 // @ts-check
 
-const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (match) => {
-  switch (match) {
-    case '&': return '&amp;';
-    case '<': return '&lt;';
-    case '>': return '&gt;';
-    case '"': return '&quot;';
-    case "'": return '&#39;';
-    default: return match;
-  }
-});
-
 export class DecisionPanel {
   #element;
   #title;
@@ -69,7 +58,13 @@ export class DecisionPanel {
     button.type = "button";
     button.className = "pd-button pd-action-button";
     button.addEventListener("click", () => onDecision(action));
-    button.innerHTML = `<strong>${escapeHtml(label)}</strong><span>${escapeHtml(description)}</span>`;
+
+    const strong = document.createElement("strong");
+    strong.textContent = label;
+    const span = document.createElement("span");
+    span.textContent = description;
+
+    button.append(strong, span);
     return button;
   }
 
