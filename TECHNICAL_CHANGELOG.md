@@ -2,6 +2,17 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.17.0 — 2026-10-18
+
+- Release week: 2026-W42
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- 0fabe77 Add 2026-W42 weekly content pack (#369)
+- aeed4f6 Prepare weekly release 1.16.0 (#367)
+
 ## 1.16.0 — 2026-10-11
 
 - Release week: 2026-W41
