@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.17.0] - 2026-10-18
 - Added the 2026-W42 content pack with Tidepool Twilight Aquarium Logic, Cobalt Keepsake Quilt Quest, and Saffron Skylark Kite Parade cosmetics plus four bounded weekly challenges.
 
 ## [1.16.0] - 2026-10-11
