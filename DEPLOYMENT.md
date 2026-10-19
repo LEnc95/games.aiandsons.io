@@ -46,6 +46,49 @@ is an alias or does not match the folder path. `npm run game:preflight` checks
 that registered game folders, discovery metadata, sitemap entries, OG cards,
 and clean-URL cache headers are in sync.
 
+## Sitemap generation and serving
+
+`sitemap.xml` is a tracked artifact and a deploy-time generated file. The
+source of truth is `src/meta/games.js` plus the static page list in
+`scripts/generate-sitemap.mjs`.
+
+Generation contract:
+
+- `npm run seo` runs `scripts/generate-sitemap.mjs`, SEO injection, and
+  discovery metadata generation for catalog changes.
+- Vercel also runs `node scripts/generate-sitemap.mjs` through
+  `vercel.json`'s `buildCommand` so deploys recover from a stale or missing
+  committed `sitemap.xml`.
+- Existing `<lastmod>` dates are preserved when routes stay present. New game
+  routes use `contentContract.releasedAt` when available, then fall back to the
+  source file modification date.
+- Game URLs are normalized to clean routes without a trailing slash.
+  `/clubpenguin-world/public` is published as `/clubpenguin-world`.
+
+Serving contract:
+
+- `/sitemap.xml` is served from the static output root, not an API route.
+- `vercel.json` gives `/sitemap.xml` an explicit
+  `Content-Type: application/xml; charset=utf-8` header and one-hour public
+  cache headers.
+- `robots.txt` points crawlers to
+  `https://games.aiandsons.io/sitemap.xml`.
+
+Validation and recovery:
+
+- Run `npm run test:telemetry` to include the sitemap integration tests that
+  verify builder output and committed registry coverage.
+- Run `npm run game:preflight` after adding a game; it fails if
+  `sitemap.xml` is missing any registered game route.
+- Run `npm run test:production-maintenance` for production, or
+  `node scripts/qa/production-maintenance-smoke.mjs --base-url <deployment-url>`
+  for another deployment, to confirm `/sitemap.xml` is XML and includes the
+  newest game route.
+- If production serves HTML, a 404, or a stale route list for `/sitemap.xml`,
+  inspect `vercel.json` before adding rewrites: the expected fix is usually to
+  keep the static file in the output root, preserve the `/sitemap.xml` header
+  rule, and rerun `npm run seo` or trigger a deploy build.
+
 ## Cache and security headers
 
 The header rules in `vercel.json` intentionally split static asset caching from
