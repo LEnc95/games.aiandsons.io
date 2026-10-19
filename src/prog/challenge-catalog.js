@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w43-nectarmeasure-vessels-18', weekKey: '2026-10-19', gameSlug: 'nectarmeasure', metric: 'vessels', name: 'Iris Measure', desc: 'Balance all 18 vessels in Nectar Measure.', target: 18, rewardCoins: 20 }),
+  define({ id: 'weekly-w43-rippleshepherd-fireflies-16', weekKey: '2026-10-19', gameSlug: 'rippleshepherd', metric: 'fireflies', name: 'Glasswater Guide', desc: 'Guide all 16 fireflies in Ripple Shepherd.', target: 16, rewardCoins: 20 }),
+  define({ id: 'weekly-w43-lanternloom-stars-55', weekKey: '2026-10-19', gameSlug: 'lanternloom', metric: 'stars', name: 'Starfall Keeper', desc: 'Catch all 55 stars in Lantern Loom.', target: 55, rewardCoins: 20 }),
+  define({ id: 'weekly-w43-moonmender-stones-6', weekKey: '2026-10-19', gameSlug: 'moonmender', metric: 'stones', name: 'Moonstone Mason', desc: 'Mend all 6 moonstones in Moon Mender.', target: 6, rewardCoins: 20 }),
   define({ id: 'weekly-w42-aquariumlogic-boards-5', weekKey: '2026-10-12', gameSlug: 'aquariumlogic', metric: 'boards', name: 'Tidepool Steward', desc: 'Balance all 5 boards in Aquarium Logic.', target: 5, rewardCoins: 20 }),
   define({ id: 'weekly-w42-quiltquest-patches-30', weekKey: '2026-10-12', gameSlug: 'quiltquest', metric: 'patches', name: 'Festival Stitcher', desc: 'Sew all 30 patches in Quilt Quest.', target: 30, rewardCoins: 20 }),
   define({ id: 'weekly-w42-kiteparade-patches-40', weekKey: '2026-10-12', gameSlug: 'kiteparade', metric: 'patches', name: 'Sky Dye Sweep', desc: 'Dye all 40 patches in Kite Parade.', target: 40, rewardCoins: 20 }),

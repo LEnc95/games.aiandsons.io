@@ -110,6 +110,8 @@ async function main() {
       const update = window.maybeUnlock({
         anyPlay: true,
         glassgarden: { panes: 43 },
+        nectarmeasure: { vessels: 18 },
+        rippleshepherd: { fireflies: 16 },
         aquariumlogic: { boards: 5 },
         meteorminer: { score: 3000 },
         auroraaccord: { notes: 25 },
@@ -145,12 +147,12 @@ async function main() {
     });
 
     assert(!result.error, "Expected maybeUnlock to be available in home runtime.");
-    assert(result.weeklyRewardsNow.length === 4, "Expected all four W42 weekly challenges to reward from the synthetic progress update.");
-    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W42 weekly reward total to stay within the 80-coin policy maximum.");
+    assert(result.weeklyRewardsNow.length === 4, "Expected all four W43 weekly challenges to reward from the synthetic progress update.");
+    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W43 weekly reward total to stay within the 80-coin policy maximum.");
     const repeat = await page.evaluate(() => window.maybeUnlock({
-      aquariumlogic: { boards: 5 }, quiltquest: { patches: 30 }, kiteparade: { patches: 40 }, dewdropdrift: { motes: 14 },
+      nectarmeasure: { vessels: 18 }, rippleshepherd: { fireflies: 16 }, lanternloom: { stars: 55 }, moonmender: { stones: 6 },
     }));
-    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W42 weekly challenges to reward exactly once.");
+    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W43 weekly challenges to reward exactly once.");
 
     await page.reload({ waitUntil: "networkidle" });
     const afterState = await page.evaluate(() => {

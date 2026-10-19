@@ -96,7 +96,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -110,10 +110,12 @@ const LEVELS=Object.freeze([
   Object.freeze({name:'Lavender Larder',capacities:[4,6,9,13],start:[0,0,0,13],target:[1,5,7,0],story:'Pour the lavender harvest into one, five, and seven.'}),
   Object.freeze({name:'Royal Reserve',capacities:[5,8,11,14],start:[0,0,0,14],target:[3,7,4,0],story:'Finish the royal reserve with three, seven, and four drops.'}),
 ]);
+const IRIS_HONEYCOMB=profileState.inventory instanceof Set&&profileState.inventory.has('nectarmeasure-iris-honeycomb');
 const THEMES=Object.freeze([
   Object.freeze({name:'Lavender',sky:'#5d3f79',sky2:'#9d72b9',ground:'#f4cf63',hill:'#79a75a',panel:'#fff5c8',edge:'#5c3973',nectar:'#f0a52f',nectar2:'#ffe071',target:'#6b2b57',accent:'#fff0a0',ink:'#3b2747'}),
   Object.freeze({name:'Bluebell',sky:'#286a83',sky2:'#65aec2',ground:'#f5db86',hill:'#4f9279',panel:'#edfaff',edge:'#174b61',nectar:'#f5b72e',nectar2:'#fff09a',target:'#aa3157',accent:'#d6fbff',ink:'#163846'}),
   Object.freeze({name:'Rosewood',sky:'#793f51',sky2:'#bd7583',ground:'#f4ca79',hill:'#77945a',panel:'#fff0df',edge:'#5c2938',nectar:'#e98a35',nectar2:'#ffd66d',target:'#772c67',accent:'#ffe9b3',ink:'#44212d'}),
+  ...(IRIS_HONEYCOMB?[Object.freeze({name:'Iris Honeycomb',sky:'#30245e',sky2:'#7466b6',ground:'#e7c86a',hill:'#627d55',panel:'#f2edff',edge:'#3e356d',nectar:'#bf6ca9',nectar2:'#ffd9f0',target:'#6e346f',accent:'#b8f0dc',ink:'#292348'})]:[]),
 ]);
 const game={mode:'menu',levelIndex:0,amounts:[],focus:0,source:null,history:[],pours:0,levelPours:0,drops:3,completedVessels:0,completedHives:0,elapsedMs:0,themeIndex:0,status:'Press Start Harvest to begin.',lastAction:'menu',reported:false};
 let vesselRegions=[],lastFrame=performance.now(),manualUntil=0;
@@ -248,7 +250,7 @@ window.addEventListener('keydown',event=>{
 document.addEventListener('fullscreenchange',render);
 function frame(now){if(now>=manualUntil)update(Math.min(50,now-lastFrame));lastFrame=now;render();requestAnimationFrame(frame)}
 window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+350;lastFrame=performance.now();update(amount);render()};
-window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; vessels are ordered left to right',mode:game.mode,hive:{index:game.levelIndex+1,total:LEVELS.length,name:level().name},focusedVessel:game.focus+1,sourceVessel:game.source===null?null:game.source+1,vessels:level().capacities.map((capacity,index)=>({id:index+1,x:vesselRegions[index]?.x??null,amount:game.amounts[index],capacity,target:level().target[index],matched:game.amounts[index]===level().target[index]})),matched:matchedCount(),dropsRemaining:game.drops,pours:game.pours,levelPours:game.levelPours,elapsedMs:Math.round(game.elapsedMs),theme:palette().name,status:game.status,lastAction:game.lastAction,nextHint:game.mode==='playing'?(solvePath()?.[0]??null):null,metrics:currentMetrics()});
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; vessels are ordered left to right',mode:game.mode,hive:{index:game.levelIndex+1,total:LEVELS.length,name:level().name},focusedVessel:game.focus+1,sourceVessel:game.source===null?null:game.source+1,vessels:level().capacities.map((capacity,index)=>({id:index+1,x:vesselRegions[index]?.x??null,amount:game.amounts[index],capacity,target:level().target[index],matched:game.amounts[index]===level().target[index]})),matched:matchedCount(),dropsRemaining:game.drops,pours:game.pours,levelPours:game.levelPours,elapsedMs:Math.round(game.elapsedMs),theme:palette().name,cosmetics:{irisHoneycomb:IRIS_HONEYCOMB},status:game.status,lastAction:game.lastAction,nextHint:game.mode==='playing'?(solvePath()?.[0]??null):null,metrics:currentMetrics()});
 function qaSolveHive(){let guard=0;while(game.mode==='playing'&&guard++<40){const path=solvePath();if(!path||!path.length)break;tryPour(path[0].from,path[0].to,'qa')}return game.mode}
 window.__NECTAR_MEASURE_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadHive:index=>loadLevel(index,'playing'),focus:index=>{game.focus=Math.max(0,Math.min(level().capacities.length-1,index));render()},activate:index=>activateVessel(index,'qa'),pour:(from,to)=>tryPour(from,to,'qa'),hint:()=>hint(),undo:()=>undo(),spill:()=>loseDrop('Impossible test pour.'),solveHive:()=>qaSolveHive(),solveCampaign:()=>{if(game.mode==='menu'||game.mode==='lost'||game.mode==='won')startOrContinue();let guard=0;while(game.mode!=='won'&&guard++<10){if(game.mode==='playing')qaSolveHive();if(game.mode==='hive-complete')startOrContinue();if(game.mode==='lost')break}return game.mode},path:()=>solvePath(),levels:LEVELS,themes:THEMES};
 mountGameFeedback({gameSlug:'nectarmeasure',gameName:'Nectar Measure'});
