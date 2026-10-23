@@ -1,6 +1,7 @@
 # Server dependency compatibility
 
-The server supports Node 22; CI also exercises Node 24.
+The server declares Node 22 in package.json. CI reads that declaration with
+setup-node node-version-file so installs use the same major as production.
 
 ## Native DOMException export
 
@@ -30,3 +31,12 @@ Firebase signing/Firestore serialization/signed URLs, and real Storage multipart
 upload/download/delete against a loopback HTTP fixture. These run in the feedback
 suite and Main QA. Both clean install and audit must remain warning-free and
 report zero known vulnerabilities; do not suppress npm warnings to satisfy this.
+
+## Reviewed install scripts
+
+npm 11 approvals are pinned to @firebase/util 1.15.3 and protobufjs 7.6.6.
+The former generates Firebase default-config exports (and only reads/fetches
+configuration when FIREBASE_WEBAPP_CONFIG is supplied); the latter validates
+protobufjs dependency version schemes. Both scripts ran under the existing
+npm 10 installation behavior. Review their source again when either pinned
+version changes; do not replace these entries with blanket script approval.
