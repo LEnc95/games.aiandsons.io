@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teapot Pour | AI and Sons Games</title><style>
+*{box-sizing:border-box}body{margin:0;background:#eee8da;color:#263e39;font-family:system-ui,sans-serif}main{max-width:920px;margin:auto;padding:18px;text-align:center}h1{margin:0;font-size:1.8rem}header p{letter-spacing:.14em;font-size:.8rem}canvas{display:block;width:100%;aspect-ratio:3/2;border-radius:20px;touch-action:none;box-shadow:0 14px 40px #263e3920}.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0}button{border:1px solid #709488;background:#fff9e8;color:#263e39;border-radius:10px;min-height:46px;padding:10px 15px;font-weight:750;touch-action:none;cursor:pointer}button:focus-visible{outline:3px solid #d87235;outline-offset:3px}#pour{background:#315f50;color:white;min-width:145px}.help{font-size:.9rem;line-height:1.6}a{color:inherit}@media(max-width:600px){main{padding:60px 8px 12px}.controls{gap:5px}button{padding:8px 11px}.help{font-size:.8rem}}:fullscreen main{max-width:min(1100px,145vh)}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Hold to pour, allow for the falling stream, and fill fifteen teacups to their target bands across five brisk tea services. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Teapot Pour | AI and Sons Games">
+  <meta property="og:description" content="Hold to pour, allow for the falling stream, and fill fifteen teacups to their target bands across five brisk tea services. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/teapotpour">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/teapotpour.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Teapot Pour | AI and Sons Games">
+  <meta name="twitter:description" content="Hold to pour, allow for the falling stream, and fill fifteen teacups to their target bands across five brisk tea services. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/teapotpour.png">
+  <link rel="canonical" href="https://games.aiandsons.io/teapotpour">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Teapot Pour","description":"Hold to pour, allow for the falling stream, and fill fifteen teacups to their target bands across five brisk tea services. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/teapotpour","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><header><h1>Teapot Pour</h1><p>A LITTLE PATIENCE IN EVERY CUP</p></header><canvas id="game" width="900" height="600" tabindex="0" aria-label="Teapot Pour: hold to fill the cup, release before the target band"></canvas><div class="controls"><button id="start">Start / Next</button><button id="pour">Hold to pour</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="theme">Table colors</button><button id="full">Fullscreen</button><button id="feedback">Feedback</button></div><p class="help"><b>Hold Space or the Pour button. Release early:</b> tea already falling takes 0.4 seconds to land. Stop inside the gold target band, then wait for the cup to settle. Fifteen cups, five services, three spills. Enter starts the next service. P pauses, R restarts, T changes colors, F toggles fullscreen; Escape exits. Tap and hold the canvas on a phone. <a href="/">More games</a></p></main><script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+const palettes=[{name:'Sage porcelain',table:'#b5cdb5',paper:'#fff7df',pot:'#396c5a',tea:'#be7138'},{name:'Blue willow',table:'#acc9dc',paper:'#f0f7ff',pot:'#365a88',tea:'#aa6737'},{name:'Rose garden',table:'#ddb4b4',paper:'#fff0e2',pot:'#8b4563',tea:'#ad672d'}];
+const s={mode:'menu',service:0,cups:0,order:0,spills:0,volume:0,queue:[],holding:false,elapsed:0,settle:0,poured:false,theme:0,started:false,reported:false,message:'A fresh cup is waiting.'};let manual=false,last=performance.now(),accumulator=0;
+const q=()=>palettes[s.theme],rate=()=>18+s.service*4,target=()=>[56,70,62,78,59][s.order%5],metrics=()=>({cups:s.cups,services:s.mode==='won'?5:s.service,spills:s.spills});
+function report(result){if(!s.started||s.reported)return;s.reported=true;reportGameOutcome({slug:'teapotpour',result,durationMs:Math.round(s.elapsed+(result==='abandoned'?accumulator:0)),metrics:metrics()})}
+function cup(){s.order=s.cups;s.volume=0;s.queue=[];s.holding=false;s.settle=0;s.poured=false;s.message='Release before the gold band. The stream keeps falling.'}
+function restart(){report('abandoned');Object.assign(s,{mode:'menu',service:0,cups:0,spills:0,elapsed:0,started:false,reported:false});accumulator=0;cup();sync();render()}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='playing';cup()}else if(s.mode==='between'){s.mode='playing';cup()}render()}
+function hold(value){if(s.mode==='playing'){s.holding=value;if(value){s.poured=true;s.settle=0}}render()}
+function pause(){if(s.mode==='playing'){s.mode='paused';s.holding=false}else if(s.mode==='paused')s.mode='playing';sync();render()}
+function sync(){document.querySelector('#pause').textContent=s.mode==='paused'?'Resume':'Pause'}
+function miss(message){s.spills++;s.holding=false;s.queue=[];s.mode=s.spills===3?'lost':'result';s.message=message;if(s.mode==='lost')report('lost')}
+function tick(){if(s.mode!=='playing')return;s.elapsed+=10;
+ for(const drop of s.queue)drop.left-=10;
+ while(s.queue.length&&s.queue[0].left<=0)s.volume+=s.queue.shift().amount;
+ if(s.holding)s.queue.push({left:400,amount:rate()/100});
+ if(s.volume>target()+5){miss('Too full. A little less tea next time.');return}
+ if(s.poured&&!s.holding&&s.queue.length===0){s.settle+=10;if(s.settle>=600){if(s.volume>=target()-5){s.cups++;s.mode='result';s.message='Perfect pour. A moment to savor.';if(s.cups===15){s.mode='won';addCoins(15);report('completed')}else if(s.cups%3===0){s.service++;s.mode='between'}}else miss('Too little. Keep the stream flowing a little longer.')}}
+}
+function advance(ms){const n=Number(ms);if(!Number.isFinite(n)||n<=0)return;if(s.mode==='playing'){accumulator+=n;while(accumulator>=10){accumulator-=10;tick();if(s.mode!=='playing'){accumulator=0;break}}}render()}
+function next(){if(s.mode==='result'){s.mode='playing';cup();render()}else start()}
+function box(x,y,w,h,color,r=14){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function text(t,x,y,size=20,color='#263e39'){ctx.fillStyle=color;ctx.font=`700 ${size}px system-ui`;ctx.textAlign='center';ctx.fillText(t,x,y)}
+function render(){const p=q();ctx.fillStyle=p.table;ctx.fillRect(0,0,900,600);for(let y=130;y<600;y+=80){ctx.strokeStyle='#ffffff25';ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke()}box(24,20,852,70,p.paper);text(`SERVICE ${Math.min(5,s.service+1)} / 5`,160,63,20);text(`${s.cups} / 15 cups`,450,63,27);text(`Spills ${s.spills} / 3`,743,63,20);
+box(52,115,260,327,p.paper);text('TODAY’S ORDER',182,160,18);text(`${target()} ml`,182,216,44);text(`Accept ${target()-5} – ${target()+5} ml`,182,254,19);text(`Flow ${rate()} ml / sec`,182,313,18);text('Falling tea: 0.4 sec',182,347,17);text(`In flight: ${(s.queue.reduce((a,d)=>a+d.amount,0)).toFixed(1)} ml`,182,393,17);
+ctx.save();ctx.translate(610,194);ctx.rotate(s.holding?.2:0);box(-60,-70,144,95,p.pot,40);box(-25,-83,70,15,p.pot);ctx.strokeStyle=p.pot;ctx.lineWidth=15;ctx.beginPath();ctx.arc(94,-22,35,-1.4,1.4);ctx.stroke();ctx.beginPath();ctx.moveTo(-50,-35);ctx.lineTo(-111,10);ctx.lineTo(-104,29);ctx.lineTo(-22,1);ctx.closePath();ctx.fillStyle=p.pot;ctx.fill();ctx.restore();
+box(430,464,355,18,p.paper,9);ctx.strokeStyle=p.pot;ctx.lineWidth=12;ctx.beginPath();ctx.arc(755,371,47,-1.5,1.5);ctx.stroke();box(468,297,272,165,p.paper,12);
+const top=440-Math.min(100,s.volume)*1.3;box(481,top,246,440-top,p.tea,3);const bandTop=440-(target()+5)*1.3;ctx.fillStyle='#e5ad3880';ctx.fillRect(478,bandTop,252,13);ctx.strokeStyle='#855c16';ctx.lineWidth=2;ctx.setLineDash([7,5]);ctx.strokeRect(478,bandTop,252,13);ctx.setLineDash([]);
+for(const drop of s.queue.filter((_,i)=>i%5===0)){ctx.fillStyle=p.tea;ctx.beginPath();ctx.ellipse(505,225+(400-drop.left)/400*75,4,7,0,0,7);ctx.fill()}
+text(`${s.volume.toFixed(1)} ml`,605,492,23);box(24,514,852,63,p.paper);text(s.message,450,552,19);
+const overlays={menu:['TEA IS SERVED','Hold to pour. Release early. Let the stream settle.','Enter / Start to begin'],paused:['A QUIET MOMENT','The tea and clock are frozen.','P / Resume to continue'],result:[s.message.startsWith('Perfect')?'BEAUTIFULLY BREWED':'TRY A FRESH CUP',s.message,'Enter / Next for a fresh cup'],between:['SERVICE COMPLETE','The next service has a faster stream.','Enter / Next to continue'],won:['FIFTEEN PERFECT CUPS','Five services complete. Earned 15 coins.','Enter / Start to play again'],lost:['TIME TO CLOSE',`${s.cups} cups served before three spills.`,'Enter / Start to try again']};if(overlays[s.mode]){box(70,185,760,230,'#203e37f5');overlays[s.mode].forEach((t,i)=>text(t,450,245+i*57,i===0?32:20,p.paper))}}
+async function full(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{s.message='Fullscreen unavailable.';render()}}
+document.querySelector('#start').onclick=next;document.querySelector('#restart').onclick=restart;document.querySelector('#pause').onclick=pause;document.querySelector('#theme').onclick=()=>{s.theme=(s.theme+1)%palettes.length;render()};document.querySelector('#full').onclick=full;document.querySelector('#feedback').onclick=()=>{if(s.mode==='playing')pause();document.querySelector('#cadeFeedbackOpenBtn')?.click()};
+for(const el of [canvas,document.querySelector('#pour')]){el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture(e.pointerId);if(s.mode==='playing')hold(true);else if(el===canvas)next()});el.addEventListener('pointerup',()=>hold(false));el.addEventListener('pointercancel',()=>hold(false));el.addEventListener('lostpointercapture',()=>hold(false))}
+const blocked=e=>e.target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]')||document.documentElement.dataset.cadeFeedbackOpen==='1';
+document.addEventListener('keydown',e=>{if(blocked(e))return;const k=e.key.toLowerCase();if([' ','enter','p','r','t','f'].includes(k)){e.preventDefault();if(e.repeat)return;if(k===' ')hold(true);else if(k==='enter')next();else if(k==='p')pause();else if(k==='r')restart();else if(k==='t')document.querySelector('#theme').click();else full()}if(k==='escape'&&document.fullscreenElement)full()});document.addEventListener('keyup',e=>{if(e.key===' ')hold(false)});window.addEventListener('blur',()=>{if(s.mode==='playing')pause()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='playing')pause()});window.addEventListener('pagehide',()=>report('abandoned'));
+window.advanceTime=ms=>{manual=true;advance(ms)};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x600; origin top-left, x right, y down; canvas hold pours',mode:s.mode,service:Math.min(5,s.service+1),volumeMl:+s.volume.toFixed(2),targetMl:target(),toleranceMl:5,flowMlPerSecond:rate(),inFlightMl:+s.queue.reduce((a,d)=>a+d.amount,0).toFixed(2),holding:s.holding,settleMs:s.settle,timeMs:+(s.elapsed+accumulator).toFixed(3),theme:q().name,metrics:metrics(),message:s.message});mountGameFeedback({gameSlug:'teapotpour',gameName:'Teapot Pour'});function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame)}render();requestAnimationFrame(frame);
+</script></body></html>
