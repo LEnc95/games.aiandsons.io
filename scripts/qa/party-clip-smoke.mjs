@@ -23,7 +23,7 @@ await page.waitForSelector("#cadeClipControl");
 const snapshot = (phase, partyPhase) => ({ gameKey: "turbotilt", partyPhase, phase, phaseEndsAt: Date.now() + 45000, players: [] });
 await page.evaluate((state) => window.postMessage({ type: "party_snapshot", roomId: "ABCD", snapshot: state }, location.origin), snapshot("countdown", "activity"));
 await page.waitForFunction(() => document.querySelector("#cadeClipControl")?.dataset.state === "recording");
-assert.equal(await page.locator("#cadeClipControl").textContent(), "Save clip");
+assert.equal(await page.locator("#cadeClipControl").textContent(), "Finish clip");
 await page.evaluate((state) => window.postMessage({ type: "party_snapshot", roomId: "ABCD", snapshot: state }, location.origin), snapshot("podium", "results"));
 await page.waitForFunction(() => document.querySelector("#cadeClipControl")?.dataset.state === "ready");
 await page.click("#cadeClipControl");
