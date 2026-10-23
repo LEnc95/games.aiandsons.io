@@ -10,6 +10,7 @@
 //
 // Usage:
 //   npm run og                 # default banner + every game card
+//   npm run og -- --slug stampstudio  # only this card; keep existing cards/banner
 //   node scripts/marketing/og-cards.mjs --default-only
 //   node scripts/marketing/og-cards.mjs --limit 5
 //
@@ -21,19 +22,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GAMES } from '../../src/meta/games.js';
+import { parseGameScope, selectGame } from '../lib/game-scope.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
-const ASSETS_DIR = path.join(ROOT, 'assets');
-const OG_DIR = path.join(ASSETS_DIR, 'og');
 
 const CARD_W = 1200;
 const CARD_H = 630;
-
-const args = process.argv.slice(2);
-const defaultOnly = args.includes('--default-only');
-const limitArg = args.indexOf('--limit');
-const limit = limitArg !== -1 ? Number(args[limitArg + 1]) || 0 : 0;
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -74,50 +69,56 @@ const cardHtml = ({ emoji, title, tagline, footer }) => `<!doctype html>
 
 async function renderCard(page, html, outPath) {
   await page.setContent(html, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: outPath, type: 'png', clip: { x: 0, y: 0, width: CARD_W, height: CARD_H } });
 }
 
-async function main() {
-  fs.mkdirSync(OG_DIR, { recursive: true });
-
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--use-gl=angle', '--use-angle=swiftshader'],
-  });
-  const page = await browser.newPage({
-    viewport: { width: CARD_W, height: CARD_H },
-    deviceScaleFactor: 1,
-  });
-
-  const bannerPath = path.join(ASSETS_DIR, 'social-banner.png');
-  await renderCard(page, cardHtml({
-    emoji: '\u{1F579}️',
-    title: 'AI & Sons Arcade',
-    tagline: '130+ free browser games — no downloads, no sign-up. Play instantly.',
-    footer: 'games.aiandsons.io',
-  }), bannerPath);
-  console.log(`Rendered ${path.relative(ROOT, bannerPath)}`);
-
-  if (!defaultOnly) {
-    const games = limit > 0 ? GAMES.slice(0, limit) : GAMES;
-    let count = 0;
-    for (const game of games) {
-      const outPath = path.join(OG_DIR, `${game.slug}.png`);
-      await renderCard(page, cardHtml({
-        emoji: game.emoji,
-        title: game.name,
-        tagline: game.desc || `Play ${game.name} free`,
-        footer: 'Play free • games.aiandsons.io',
-      }), outPath);
-      count += 1;
-    }
-    console.log(`Rendered ${count} game cards into ${path.relative(ROOT, OG_DIR)}/`);
+export function cardJobs({ games = GAMES, slug, defaultOnly = false, limit = 0, root = ROOT } = {}) {
+  if (slug && (defaultOnly || limit)) throw new Error('--slug cannot be combined with --limit or --default-only');
+  const selected = slug ? [selectGame(games, slug)] : limit > 0 ? games.slice(0, limit) : games;
+  const jobs = slug ? [] : [{
+    outPath: path.join(root, 'assets', 'social-banner.png'),
+    html: cardHtml({ emoji: '\u{1F579}️', title: 'AI & Sons Arcade',
+      tagline: '130+ free browser games — no downloads, no sign-up. Play instantly.', footer: 'games.aiandsons.io' }),
+  }];
+  if (!defaultOnly) for (const game of selected) {
+    jobs.push({ outPath: path.join(root, 'assets', 'og', `${game.slug}.png`),
+      html: cardHtml({ emoji: game.emoji, title: game.name,
+        tagline: game.desc || `Play ${game.name} free`, footer: 'Play free • games.aiandsons.io' }) });
   }
-
-  await browser.close();
+  return jobs;
 }
 
-main().catch((error) => {
+export async function generateOgCards(options = {}, render) {
+  const jobs = cardJobs(options);
+  for (const job of jobs) {
+    fs.mkdirSync(path.dirname(job.outPath), { recursive: true });
+    await render(job.html, job.outPath);
+  }
+  return jobs.length;
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  let options;
+  if (args.length === 1 && args[0] === '--default-only') options = { defaultOnly: true };
+  else if (args.length === 2 && args[0] === '--limit' && /^[1-9]\d*$/.test(args[1])) options = { limit: Number(args[1]) };
+  else options = parseGameScope(args);
+  cardJobs(options); // Validate scope before launching Chromium or touching output.
+  const browser = await chromium.launch({ headless: true,
+    args: ['--use-gl=angle', '--use-angle=swiftshader'] });
+  try {
+    const page = await browser.newPage({ viewport: { width: CARD_W, height: CARD_H }, deviceScaleFactor: 1 });
+    const count = await generateOgCards(options, (html, output) => renderCard(page, html, output));
+    console.log(`Rendered ${count} card(s)${options.slug ? ` for ${options.slug}` : ''}`);
+  } finally {
+    await browser.close();
+  }
+}
+
+const isMain = process.argv[1]
+  && path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase();
+if (isMain) main().catch((error) => {
   console.error(error);
   process.exit(1);
 });

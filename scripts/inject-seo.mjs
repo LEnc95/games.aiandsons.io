@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GAMES } from '../src/meta/games.js';
+import { parseGameScope, selectGame } from './lib/game-scope.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -241,18 +242,21 @@ export function injectSeoTags(filePath, page, logger = console) {
   const lineEnding = detectLineEnding(originalContent);
   let content = originalContent.replace(/\r\n?/g, '\n');
 
-  // Remove previously generated SEO block and legacy tags that this script manages.
-  content = content.replace(/<!-- SEO:BEGIN -->[\s\S]*?<!-- SEO:END -->\s*/gi, '');
-  content = content.replace(/<meta name="description"[\s\S]*?>/gi, '');
-  content = content.replace(/<meta name="robots"[\s\S]*?>/gi, '');
-  content = content.replace(/<meta property="og:[\s\S]*?>/gi, '');
-  content = content.replace(/<meta name="twitter:[\s\S]*?>/gi, '');
-  content = content.replace(/<link rel="canonical"[\s\S]*?>/gi, '');
-  content = content.replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*data-seo-managed=["']true["'][^>]*>[\s\S]*?<\/script>/gi, '');
-
   const seoBlock = renderSeoBlock(page);
-  if (content.includes('</head>')) {
-    content = content.replace('</head>', `${seoBlock}</head>`);
+  const managedBlock = /<!-- SEO:BEGIN -->[\s\S]*?<!-- SEO:END -->/gi;
+  if (managedBlock.test(content)) {
+    // Replace only the managed span. Its surrounding indentation and newlines
+    // belong to the source page, including compact single-line game heads.
+    content = content.replace(managedBlock, () => seoBlock.trim());
+  } else {
+    // Migrate legacy tags only on pages without a managed block.
+    content = content.replace(/<meta name="description"[\s\S]*?>/gi, '');
+    content = content.replace(/<meta name="robots"[\s\S]*?>/gi, '');
+    content = content.replace(/<meta property="og:[\s\S]*?>/gi, '');
+    content = content.replace(/<meta name="twitter:[\s\S]*?>/gi, '');
+    content = content.replace(/<link rel="canonical"[\s\S]*?>/gi, '');
+    content = content.replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*data-seo-managed=["']true["'][^>]*>[\s\S]*?<\/script>/gi, '');
+    content = content.replace('</head>', () => `${seoBlock}</head>`);
   }
 
   const safeTitle = escapeHtmlText(page.title);
@@ -262,7 +266,6 @@ export function injectSeoTags(filePath, page, logger = console) {
     content = content.replace('<head>', `<head>\n  <title>${safeTitle}</title>`);
   }
 
-  content = content.replace(/\n\s*\n\s*\n/g, '\n\n');
   const nextContent = lineEnding === '\r\n' ? content.replace(/\n/g, '\r\n') : content;
   if (nextContent === originalContent) {
     logger.log(`SEO already current in ${filePath}`);
@@ -274,10 +277,13 @@ export function injectSeoTags(filePath, page, logger = console) {
   return true;
 }
 
-export function injectAllSeo() {
-  for (const page of allPages) {
-    const fullPath = path.join(ROOT, page.file);
-    injectSeoTags(fullPath, page);
+export function injectAllSeo({ slug, root = ROOT, logger = console } = {}) {
+  const selected = slug ? selectGame(GAMES, slug) : null;
+  const pages = selected
+    ? [staticPages[0], gamePages[GAMES.indexOf(selected)]]
+    : allPages;
+  for (const page of pages) {
+    injectSeoTags(path.join(root, page.file), page, logger);
   }
 }
 
@@ -285,5 +291,5 @@ const isMain = process.argv[1]
   && path.resolve(process.argv[1]).toLowerCase() === path.resolve(__filename).toLowerCase();
 
 if (isMain) {
-  injectAllSeo();
+  injectAllSeo(parseGameScope(process.argv.slice(2)));
 }

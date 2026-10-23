@@ -6,7 +6,9 @@ import path from 'node:path';
 import { auditReleaseDiff } from '../scripts/automation/audit-release-diff.mjs';
 import { generateDiscoveryMetadata } from '../scripts/generate-discovery-metadata.mjs';
 import { generateSitemap } from '../scripts/generate-sitemap.mjs';
-import { injectSeoTags } from '../scripts/inject-seo.mjs';
+import { cardJobs, generateOgCards } from '../scripts/marketing/og-cards.mjs';
+import { parseGameScope } from '../scripts/lib/game-scope.mjs';
+import { injectAllSeo, injectSeoTags } from '../scripts/inject-seo.mjs';
 import { buildWeeklyPackBrief } from '../scripts/automation/prepare-weekly-pack.mjs';
 import { validateMaintenance } from '../scripts/automation/validate-maintenance.mjs';
 
@@ -256,3 +258,68 @@ test('trusted weekly release merge requires the validated commit and release-onl
   assert.match(workflow, /--match-head-commit "\$RUN_HEAD_SHA"/);
 });
 
+
+
+test('existing game SEO is byte-identical on the first regeneration', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'seo-existing-'));
+  try {
+    for (const slug of ['stampstudio', 'sketchclash', 'auroraaccord']) {
+      const source = fs.readFileSync(new URL(`../${slug}/index.html`, import.meta.url), 'utf8');
+      const normalized = source.replace(/\r\n/g, '\n');
+      const title = normalized.match(/<title>(.*?)<\/title>/)[1];
+      const desc = normalized.match(/<meta name="description" content="(.*?)">/)[1];
+      for (const eol of ['\n', '\r\n']) {
+        const fixture = normalized.replace(/\n/g, eol);
+        const file = path.join(root, `${slug}.html`);
+        fs.writeFileSync(file, fixture);
+        const page = { kind: 'game', url: `/${slug}`, title, desc,
+          gameName: title.split(' | ')[0], image: `https://games.aiandsons.io/assets/og/${slug}.png` };
+        assert.equal(injectSeoTags(file, page, silentLogger), false, `${slug} ${JSON.stringify(eol)}`);
+        assert.equal(fs.readFileSync(file, 'utf8'), fixture);
+        const changed = { ...page, desc: 'Changed description.' };
+        assert.equal(injectSeoTags(file, changed, silentLogger), true);
+        assert.equal(injectSeoTags(file, changed, silentLogger), false);
+        assert.equal(fs.readFileSync(file, 'utf8'), fixture.replaceAll(desc, changed.desc));
+      }
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('scoped SEO touches only homepage and selected game; invalid scope writes nothing', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'seo-scope-'));
+  try {
+    for (const slug of ['stampstudio', 'sketchclash']) fs.mkdirSync(path.join(root, slug));
+    const html = '<html><head><title>Old</title></head><body>Keep me</body></html>';
+    for (const file of ['index.html', 'stampstudio/index.html', 'sketchclash/index.html']) fs.writeFileSync(path.join(root, file), html);
+    assert.throws(() => injectAllSeo({ root, slug: 'missing-game', logger: silentLogger }), /Unknown game slug/);
+    assert.equal(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), html);
+    injectAllSeo({ root, slug: 'stampstudio', logger: silentLogger });
+    assert.match(fs.readFileSync(path.join(root, 'stampstudio/index.html'), 'utf8'), /Stamp Studio/);
+    assert.match(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), /ItemList/);
+    assert.equal(fs.readFileSync(path.join(root, 'sketchclash/index.html'), 'utf8'), html);
+    const before = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    injectAllSeo({ root, slug: 'stampstudio', logger: silentLogger });
+    assert.equal(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), before);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('scoped OG generation preserves every existing card and banner', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'og-scope-'));
+  try {
+    fs.mkdirSync(path.join(root, 'assets', 'og'), { recursive: true });
+    for (const file of ['assets/social-banner.png', 'assets/og/sketchclash.png']) fs.writeFileSync(path.join(root, file), 'existing bytes');
+    const render = async (html, output) => { assert.match(html, /Stamp Studio/); fs.writeFileSync(output, 'new card'); };
+    assert.equal(await generateOgCards({ root, slug: 'stampstudio' }, render), 1);
+    assert.equal(fs.readFileSync(path.join(root, 'assets/social-banner.png'), 'utf8'), 'existing bytes');
+    assert.equal(fs.readFileSync(path.join(root, 'assets/og/sketchclash.png'), 'utf8'), 'existing bytes');
+    assert.equal(fs.readFileSync(path.join(root, 'assets/og/stampstudio.png'), 'utf8'), 'new card');
+    assert.throws(() => cardJobs({ slug: 'missing-game' }), /Unknown game slug/);
+    assert.throws(() => cardJobs({ slug: 'stampstudio', defaultOnly: true }), /cannot be combined/);
+    assert.equal(cardJobs({ defaultOnly: true }).length, 1);
+    assert.equal(cardJobs({ limit: 2 }).length, 3);
+    assert.deepEqual(parseGameScope(['--slug', 'stampstudio']), { slug: 'stampstudio' });
+    for (const args of [['--slug'], ['--slug', '--limit'], ['--slgu', 'stampstudio'], ['--slug', 'stampstudio', '--default-only']]) {
+      assert.throws(() => parseGameScope(args), /Usage/);
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
