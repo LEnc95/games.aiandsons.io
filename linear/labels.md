@@ -240,5 +240,6 @@
 - game/foxfiretrails
 - game/bottlecapcurl
 - game/runeroots
+- game/stampstudio
 
 Generated from `src/meta/feedback.js`.

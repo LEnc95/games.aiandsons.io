@@ -226,6 +226,7 @@ const BASE_GAMES = [
   { slug:'foxfiretrails', name:'Foxfire Trails', emoji:'\u{1F98A}', scoreHint:'wisps', url:'/foxfiretrails', desc:'Guide a fox through five forest trails, gather blue wisps in order, and avoid tangled brambles.', earnsCoins:true },
   { slug:'bottlecapcurl', name:'Bottlecap Curl', emoji:'\u{1F964}', scoreHint:'rings', url:'/bottlecapcurl', desc:'Aim and flick a bottlecap through ordered scoring rings across five colorful tabletop curling rinks.', earnsCoins:true },
   { slug:'runeroots', name:'Rune Roots', emoji:'\u{1F33F}', scoreHint:'roots', url:'/runeroots', desc:'Rotate mossy root runes toward the center seed and awaken five ancient forest groves before they wilt.', earnsCoins:true },
+  { slug:'stampstudio', name:'Stamp Studio', emoji:'\u{1F4EE}', scoreHint:'seals', url:'/stampstudio', desc:'Set the seal shape and ink, stamp each requested envelope before its deadline, and complete five busy print-shop shifts.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
