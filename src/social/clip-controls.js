@@ -132,7 +132,8 @@ export function mountClipControls({ gameSlug = '', gameName = '' } = {}) {
     try {
       // The prepared Blob is available synchronously, keeping navigator.share
       // inside this new tap's user activation on mobile browsers.
-      await shareClip(getFinishedClip(), { slug: gameSlug, name: gameName });
+      const saved = await shareClip(getFinishedClip(), { slug: gameSlug, name: gameName });
+      if (!saved) { render(); return; }
       trackKpiEvent('social_clip_saved', { game: gameSlug });
       button.dataset.state = 'ready';
       button.disabled = false;

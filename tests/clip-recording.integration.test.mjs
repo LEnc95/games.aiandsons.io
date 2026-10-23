@@ -121,13 +121,18 @@ test('canvas recording waits for gameplay and finalizes a playable clip', async 
 });
 
 test('MP4-only recording preserves its format and downloads when file sharing is unsupported', async () => {
-  const originals = Object.fromEntries(['document', 'window', 'MediaRecorder', 'navigator', 'setTimeout']
+  const originals = Object.fromEntries(['document', 'window', 'MediaRecorder', 'navigator']
     .map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   const track = { stopped: false, stop() { this.stopped = true; } };
   let sharedFile;
   let downloadName;
   let clicked = false;
   let recorderInstance;
+  let downloadedBlob;
+  const createObjectURL = URL.createObjectURL;
+  const revokeObjectURL = URL.revokeObjectURL;
+  URL.createObjectURL = (blob) => { downloadedBlob = blob; return 'blob:test-video'; };
+  URL.revokeObjectURL = () => {};
   const link = { click() { clicked = true; downloadName = this.download; }, remove() {} };
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {
     canShare: () => true,
@@ -163,26 +168,46 @@ test('MP4-only recording preserves its format and downloads when file sharing is
     await recorder.shareClip(clip, { slug: 'teapotpour', name: 'Teapot Pour' });
     assert.equal(sharedFile.name, 'teapotpour-run.mp4');
     assert.equal(sharedFile.type, 'video/mp4');
+    assert.equal(await sharedFile.text(), 'mp4-video');
     assert.equal(clicked, false);
+    navigator.share = async () => { throw new DOMException('Canceled', 'AbortError'); };
+    assert.equal(await recorder.shareClip(clip, { slug: 'teapotpour' }), false);
+    assert.equal(clicked, false, 'canceling must not download the video');
     navigator.canShare = () => false;
     navigator.share = async () => assert.fail('must not silently share text without the clip');
-    // Avoid keeping the test alive for delayed object URL cleanup.
-    globalThis.setTimeout = (fn) => { fn(); return 1; };
     await recorder.shareClip(clip, { slug: 'teapotpour' });
     assert.equal(clicked, true);
     assert.equal(downloadName, 'teapotpour-run.mp4');
-    globalThis.setTimeout = originals.setTimeout.value;
+    assert.equal(await downloadedBlob.text(), 'mp4-video');
     assert.equal(recorder.startRecording(), true);
     const pending = recorder.finalizeRecording();
     recorderInstance.onerror();
-    await pending;
+    recorderInstance.ondataavailable({ data: new Blob(['-final']) });
+    assert.equal(await (await pending).text(), 'mp4-video-final');
     assert.equal(track.stopped, true);
     assert.equal(recorder.getRecordingState().active, false);
+    const mp4Recorder = globalThis.MediaRecorder;
+    const attempts = [];
+    globalThis.MediaRecorder = class extends mp4Recorder {
+      static isTypeSupported() { return true; }
+      constructor(stream, options) {
+        attempts.push(options.mimeType);
+        if (options.mimeType.startsWith('video/mp4')) throw new Error('MP4 encoder rejected');
+        // The base test encoder only accepts MP4; emulate WebM after construction.
+        super(stream, { ...options, mimeType: 'video/mp4' });
+        this.mimeType = options.mimeType;
+      }
+    };
+    assert.equal(recorder.startRecording(), true);
+    assert.deepEqual(attempts, ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9']);
+    await recorder.finalizeRecording();
     globalThis.MediaRecorder = class { constructor() { throw new Error('encoder unavailable'); } };
     track.stopped = false;
     assert.equal(recorder.startRecording(), false);
     assert.equal(track.stopped, true, 'failed encoder initialization releases capture tracks');
   } finally {
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
     for (const [key, descriptor] of Object.entries(originals)) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);
       else delete globalThis[key];

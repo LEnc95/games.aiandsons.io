@@ -389,7 +389,11 @@ const renderResultPanel = ({ score, result, clip = null }) => {
       clipButton.disabled = true;
       clipButton.textContent = 'Saving…';
       try {
-        await shareClip(clip, { slug: context.slug, name: gameLabel });
+        const saved = await shareClip(clip, { slug: context.slug, name: gameLabel });
+        if (!saved) {
+          clipButton.textContent = '\u{1F3A5} Save clip';
+          return;
+        }
         trackKpiEvent('social_clip_saved', { game: context.slug, score });
         clipButton.textContent = '✅ Saved!';
       } catch {

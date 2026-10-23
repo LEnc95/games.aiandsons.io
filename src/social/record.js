@@ -8,7 +8,7 @@
 // DOM-based games (no <canvas>, e.g. 2048) are unsupported: isClipSupported()
 // returns false and the caller simply hides the "Save clip" button. Everything
 // is wrapped so a recording failure can never break gameplay.
-import { canNativeShare, nativeShare } from './share.js';
+import { canNativeShare } from './share.js';
 import { downloadBlob } from './card.js';
 
 let recorder = null;
@@ -48,15 +48,15 @@ const findCanvas = () => {
 };
 
 const pickMimeType = () => {
-  if (typeof MediaRecorder === 'undefined') return '';
+  if (typeof MediaRecorder === 'undefined') return [];
   const candidates = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-  return candidates.find((type) => {
+  return candidates.filter((type) => {
     try {
       return MediaRecorder.isTypeSupported(type);
     } catch {
       return false;
     }
-  }) || '';
+  }).concat('');
 };
 
 const stopTracks = () => {
@@ -117,20 +117,29 @@ export const startRecording = ({ fps = 30 } = {}) => {
     finishedClip = null;
     const canvas = findCanvas();
     stream = canvas.captureStream(fps);
-    const mimeType = pickMimeType();
-    recorder = new MediaRecorder(
-      stream,
-      mimeType ? { mimeType, videoBitsPerSecond: BITRATE } : { videoBitsPerSecond: BITRATE },
-    );
-    chunks = [];
-    recordedMimeType = recorder.mimeType || mimeType;
-    const current = recorder;
-    recorder.ondataavailable = (event) => {
-      if (recorder === current && event.data && event.data.size) chunks.push(event.data);
-    };
-    recorder.onstop = () => { if (recorder === current) completeRecording(); };
-    recorder.onerror = () => { if (recorder === current) completeRecording(); };
-    recorder.start(1000);
+    for (const mimeType of pickMimeType()) {
+      try {
+        recorder = new MediaRecorder(
+          stream,
+          mimeType ? { mimeType, videoBitsPerSecond: BITRATE } : { videoBitsPerSecond: BITRATE },
+        );
+        chunks = [];
+        recordedMimeType = recorder.mimeType || mimeType;
+        const current = recorder;
+        recorder.ondataavailable = (event) => {
+          if (recorder === current && event.data && event.data.size) chunks.push(event.data);
+        };
+        recorder.onstop = () => { if (recorder === current) completeRecording(); };
+        // Errors are followed by final dataavailable and stop events. Keep the
+        // recorder alive until onstop so the final video chunk is included.
+        recorder.onerror = () => {};
+        recorder.start(1000);
+        break;
+      } catch {
+        recorder = null;
+      }
+    }
+    if (!recorder) throw new Error('No working video encoder');
     active = true;
     setPhase('recording');
     autoStopTimer = setTimeout(() => {
@@ -286,13 +295,20 @@ export const shareClip = async (blob, { slug, name } = {}) => {
   } catch {
     file = null;
   }
-  const shared = file && canNativeShare([file])
-    ? await nativeShare({
+  let supportsFiles = false;
+  try { supportsFiles = !!file && canNativeShare([file]); } catch { /* Download below. */ }
+  if (supportsFiles) {
+    try {
+      await navigator.share({
         title: name ? `${name} run` : 'My run',
         text: `My ${name || 'arcade'} run — play free at games.aiandsons.io`,
         files: [file],
-      })
-    : false;
-  if (!shared) downloadBlob(blob, filename);
+      });
+      return true;
+    } catch (error) {
+      if (error?.name === 'AbortError') return false;
+    }
+  }
+  downloadBlob(blob, filename);
   return true;
 };
