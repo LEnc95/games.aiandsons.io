@@ -4854,3 +4854,18 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - Blitz uses a server-authoritative five-round limit and shorter choice windows, and is registered in the Party activity catalog for host pools and voting.
 - Added Go and client contract coverage. Focused Party/Turbo/Crowd tests, Go tests/vet, the complete Party Rotation smoke, supplied Playwright client state, and desktop visual inspection pass with no browser-console errors or layout overflow.
 - TODO: publish through the guarded PR lane, deploy the compatible backend/frontend, and verify the live Party activity catalog before starting the first standalone game sprint.
+
+## 2026-10-22 Stamp Studio automation
+- Clean isolated detached baseline: `0c4bf8ac739fc864fb01021d2d49e32b213be306`. Read current instructions, skill, progress context, and memory after sync; npm ci passed (2 moderate, 1 high audit findings).
+- Selected distinct seal-shape/ink deadline game `/stampstudio`; implementing one self-contained canvas game with bounded seals/shifts/rejects and rendered desk palettes.
+- TODO: generation, early validation, complete browser QA, ordered final gates, audited guarded publication and production verification.
+
+- STOPPED at generation audit: SEO inserted blank lines into 21 unrelated game shells; OG changed 45 existing unrelated PNGs. Neither qualifies for the prompt's line-ending-only restoration permission. All generation commands passed, but generator output violates the scoped release contract. Changes preserved. No browser QA, early/final gates, staging, commit, push, PR, merge or production verification performed. See automation memory for details. Run time: 2026-10-22T07:02:31.477768-04:00
+
+- Resumed with user direction to append only the new game. Restored exactly the 45 existing OG PNGs and 21 existing game pages changed by generators; kept new Stamp Studio and required metadata. No shared generator changes. Continuing full validation and guarded release.
+
+- Early maintenance and 226-game preflight passed. Supplied client plus focused desktop/mobile QA passed full real 30-letter campaign, exact stepping, pause/drying freeze, controls, outcomes, feedback, and zero browser errors. Visual inspection caught deadline-bar overflow after a shift changed its time limit; clamped the bar, refreshed transition/terminal labels, and kept final ticket on letter 30. Added explicit fullscreen Escape handling. Repeating the full relevant matrix.
+
+- Full repeated browser regression passed with zero errors, genuine 30-letter win and 3-reject loss, deterministic timers, all keyboard/touch controls, pause/restart/fullscreen/Escape, three palettes, feedback isolation and background pause. Visually inspected gameplay, drying, transition, win/loss, desktop/mobile pause and feedback, fullscreen, palettes, supplied-client and OG captures. Raw feedback smoke passed. Preserved baseline homepage structured metadata and appended only Stamp Studio (generator also attempted to backfill existing Sketch Clash).
+
+- Final ordered local gates passed: maintenance, 226-game preflight, telemetry 20/20, feedback 37/37, shop 73/73, social 22/22, and diff check. Pre-stage audit confirms exactly 11 allowed files, one appended game entry/folder/contract/changelog mention, unchanged existing games/cards, and only Stamp Studio appended to homepage SEO. TODO: guarded commit, authoritative audit, concurrency check, PR checks/merge, exact main and production verification.

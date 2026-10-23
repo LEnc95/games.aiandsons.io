@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Stamp Studio: match seal shapes and inks across five timed print-shop shifts.
+
 - Added the 2026-W43 content pack with Iris Honeycomb Nectar Measure, Glasswater Gleam Ripple Shepherd, and Starfall Gilding Lantern Loom cosmetics plus four bounded weekly challenges.
 
 ## [1.17.0] - 2026-10-18
