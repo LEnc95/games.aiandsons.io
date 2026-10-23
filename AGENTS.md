@@ -90,7 +90,7 @@ Operational command reference for contributors and automations in this repositor
 - Add an explicit entry to `src/meta/content-contracts.js` with release date, bounded outcome metrics, and at least one cosmetic slot
 - Report completion through `reportGameOutcome({ slug, result, durationMs, metrics })`
 - Add the game to the `CHANGELOG.md` Unreleased section
-- Run `npm run seo` and `npm run og` after metadata/content changes
+- Daily games: run `npm run seo -- --slug <slug>` and `npm run og -- --slug <slug>` after metadata/content changes. Scoped SEO updates the selected game plus homepage/sitemap/discovery; scoped OG renders only that card. Full-site commands remain available for intentional site-wide refreshes.
 - Run `npm run game:preflight` before committing a new game
 - Mount `mountGameFeedback({ gameSlug, gameName })`
 - Scheduled runs use `npm run feedback:sync-linear:files`; the daily provisioning workflow handles live Linear resources
