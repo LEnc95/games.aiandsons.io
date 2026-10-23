@@ -8,7 +8,7 @@
 // DOM-based games (no <canvas>, e.g. 2048) are unsupported: isClipSupported()
 // returns false and the caller simply hides the "Save clip" button. Everything
 // is wrapped so a recording failure can never break gameplay.
-import { nativeShare } from './share.js';
+import { canNativeShare, nativeShare } from './share.js';
 import { downloadBlob } from './card.js';
 
 let recorder = null;
@@ -21,6 +21,7 @@ let finishPromise = null;
 let resolveFinish = null;
 let startIntentArmed = false;
 let phase = 'idle';
+let recordedMimeType = '';
 
 const MAX_MS = 120000; // safety cap on capture length (bounds memory use)
 const BITRATE = 2_500_000;
@@ -48,7 +49,7 @@ const findCanvas = () => {
 
 const pickMimeType = () => {
   if (typeof MediaRecorder === 'undefined') return '';
-  const candidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  const candidates = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
   return candidates.find((type) => {
     try {
       return MediaRecorder.isTypeSupported(type);
@@ -75,7 +76,7 @@ const clearAutoStop = () => {
 const completeRecording = () => {
   clearAutoStop();
   stopTracks();
-  const type = chunks[0] && chunks[0].type ? chunks[0].type : 'video/webm';
+  const type = chunks[0] && chunks[0].type ? chunks[0].type : (recordedMimeType || 'video/webm');
   const blob = chunks.length ? new Blob(chunks, { type }) : null;
   finishedClip = blob && blob.size ? blob : null;
   recorder = null;
@@ -93,6 +94,8 @@ export const isClipSupported = () => {
   const canvas = findCanvas();
   return !!(canvas && typeof canvas.captureStream === 'function');
 };
+
+export const getFinishedClip = () => finishedClip;
 
 export const getRecordingState = () => ({
   phase,
@@ -120,10 +123,13 @@ export const startRecording = ({ fps = 30 } = {}) => {
       mimeType ? { mimeType, videoBitsPerSecond: BITRATE } : { videoBitsPerSecond: BITRATE },
     );
     chunks = [];
+    recordedMimeType = recorder.mimeType || mimeType;
+    const current = recorder;
     recorder.ondataavailable = (event) => {
-      if (event.data && event.data.size) chunks.push(event.data);
+      if (recorder === current && event.data && event.data.size) chunks.push(event.data);
     };
-    recorder.onstop = completeRecording;
+    recorder.onstop = () => { if (recorder === current) completeRecording(); };
+    recorder.onerror = () => { if (recorder === current) completeRecording(); };
     recorder.start(1000);
     active = true;
     setPhase('recording');
@@ -136,6 +142,7 @@ export const startRecording = ({ fps = 30 } = {}) => {
     }, MAX_MS);
     return true;
   } catch {
+    stopTracks();
     recorder = null;
     stream = null;
     active = false;
@@ -223,12 +230,23 @@ export const armRecordingOnGameStart = () => {
   startIntentArmed = true;
   const handleIntent = (event) => {
     if (active || !isGameplayIntent(event)) return;
-    if (hasPendingStartControl() && !isExplicitStartIntent(event)) return;
     if (finishedClip && !isExplicitStartIntent(event)) return;
+    if (hasPendingStartControl() && !isExplicitStartIntent(event)) return;
     startRecording();
   };
   document.addEventListener('pointerdown', handleIntent, true);
   document.addEventListener('keydown', handleIntent, true);
+  // Bubble after the game's own input handler. A capture-phase microtask may
+  // run between listeners, before a canvas tap has actually started the game.
+  const handleStartedGame = (event) => {
+    if (active || finishedClip || !isGameplayIntent(event)) return;
+    try {
+      const state = JSON.parse(window.render_game_to_text?.() || '{}');
+      if (state.mode === 'playing') startRecording();
+    } catch { /* The public text hook is optional for legacy games. */ }
+  };
+  document.addEventListener('pointerdown', handleStartedGame);
+  document.addEventListener('keydown', handleStartedGame);
 };
 
 // Stop capturing and return the finished clip as a Blob (or null if nothing was
@@ -259,14 +277,16 @@ export const finalizeRecording = async () => {
 // platform supports it) or fall back to a download.
 export const shareClip = async (blob, { slug, name } = {}) => {
   if (!blob) return false;
-  const filename = `${slug || 'arcade'}-run.webm`;
+  const type = String(blob.type || recordedMimeType || 'video/webm').split(';')[0].toLowerCase();
+  const extension = type === 'video/mp4' ? 'mp4' : 'webm';
+  const filename = `${slug || 'arcade'}-run.${extension}`;
   let file = null;
   try {
-    file = new File([blob], filename, { type: blob.type || 'video/webm' });
+    file = new File([blob], filename, { type });
   } catch {
     file = null;
   }
-  const shared = file
+  const shared = file && canNativeShare([file])
     ? await nativeShare({
         title: name ? `${name} run` : 'My run',
         text: `My ${name || 'arcade'} run — play free at games.aiandsons.io`,

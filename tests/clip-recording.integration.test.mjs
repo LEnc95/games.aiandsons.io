@@ -26,8 +26,8 @@ test('canvas recording waits for gameplay and finalizes a playable clip', async 
     querySelector(selector) {
       return selector.includes('canvas') ? canvas : null;
     },
-    addEventListener(type, handler) {
-      listeners.set(type, handler);
+    addEventListener(type, handler, capture) {
+      listeners.set(`${type}:${capture ? 'capture' : 'bubble'}`, handler);
     },
     querySelectorAll() {
       return [startTarget];
@@ -74,13 +74,13 @@ test('canvas recording waits for gameplay and finalizes a playable clip', async 
     assert.equal(recorderStarts, 0, 'arming must not start the recorder');
     assert.equal(recorder.getRecordingState().phase, 'idle');
 
-    listeners.get('pointerdown')({
+    listeners.get('pointerdown:capture')({
       type: 'pointerdown',
       target: target({ buttonLabel: 'Fullscreen' }),
     });
     assert.equal(recorderStarts, 0, 'utility controls must not start a clip');
 
-    listeners.get('keydown')({
+    listeners.get('keydown:capture')({
       type: 'keydown',
       target: target(),
       key: 'ArrowLeft',
@@ -90,10 +90,15 @@ test('canvas recording waits for gameplay and finalizes a playable clip', async 
     });
     assert.equal(recorderStarts, 0, 'movement before an explicit Start action must not record menu time');
 
-    listeners.get('pointerdown')({
-      type: 'pointerdown',
-      target: startTarget,
-    });
+    const canvasTap = { type: 'pointerdown', target: target({ canvasTarget: true }) };
+    fakeWindow.render_game_to_text = () => JSON.stringify({ mode: 'menu' });
+    listeners.get('pointerdown:capture')(canvasTap);
+    listeners.get('pointerdown:bubble')(canvasTap);
+    assert.equal(recorderStarts, 0, 'menu canvas input alone must not record');
+    // Target game handler runs between capture and bubble, with Start still visible.
+    listeners.get('pointerdown:capture')(canvasTap);
+    fakeWindow.render_game_to_text = () => JSON.stringify({ mode: 'playing' });
+    listeners.get('pointerdown:bubble')(canvasTap);
     assert.equal(recorderStarts, 1);
     assert.equal(recorder.getRecordingState().phase, 'recording');
 
@@ -102,11 +107,86 @@ test('canvas recording waits for gameplay and finalizes a playable clip', async 
     assert.ok(clip.size > 0);
     assert.equal(recorder.getRecordingState().phase, 'ready');
     assert.equal(track.stopped, true);
+    listeners.get('pointerdown:bubble')(canvasTap);
+    assert.equal(recorderStarts, 1, 'gameplay must preserve a finished clip');
+    listeners.get('pointerdown:capture')({ type: 'pointerdown', target: startTarget });
+    assert.equal(recorderStarts, 2, 'explicit Start begins a new clip');
+    await recorder.finalizeRecording();
   } finally {
     globalThis.document = originalDocument;
     globalThis.window = originalWindow;
     globalThis.MediaRecorder = originalMediaRecorder;
     globalThis.CustomEvent = originalCustomEvent;
+  }
+});
+
+test('MP4-only recording preserves its format and downloads when file sharing is unsupported', async () => {
+  const originals = Object.fromEntries(['document', 'window', 'MediaRecorder', 'navigator', 'setTimeout']
+    .map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  const track = { stopped: false, stop() { this.stopped = true; } };
+  let sharedFile;
+  let downloadName;
+  let clicked = false;
+  let recorderInstance;
+  const link = { click() { clicked = true; downloadName = this.download; }, remove() {} };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {
+    canShare: () => true,
+    share: async ({ files }) => { sharedFile = files[0]; },
+  } });
+  globalThis.document = {
+    querySelector: () => ({ captureStream: () => ({ getTracks: () => [track] }) }),
+    createElement: () => link,
+    body: { appendChild() {} },
+  };
+  globalThis.window = new EventTarget();
+  globalThis.MediaRecorder = class {
+    static isTypeSupported(type) { return type === 'video/mp4'; }
+    constructor(stream, options) {
+      assert.equal(options.mimeType, 'video/mp4');
+      this.mimeType = options.mimeType;
+      this.state = 'inactive';
+      recorderInstance = this;
+    }
+    start() { this.state = 'recording'; }
+    stop() {
+      this.state = 'inactive';
+      this.ondataavailable({ data: new Blob(['mp4-video']) });
+      queueMicrotask(() => this.onstop());
+    }
+  };
+  try {
+    const recorder = await import(`../src/social/record.js?mp4-test=${Date.now()}`);
+    assert.equal(recorder.startRecording(), true);
+    const clip = await recorder.finalizeRecording();
+    assert.equal(clip.type, 'video/mp4');
+    assert.equal(recorder.getFinishedClip(), clip);
+    await recorder.shareClip(clip, { slug: 'teapotpour', name: 'Teapot Pour' });
+    assert.equal(sharedFile.name, 'teapotpour-run.mp4');
+    assert.equal(sharedFile.type, 'video/mp4');
+    assert.equal(clicked, false);
+    navigator.canShare = () => false;
+    navigator.share = async () => assert.fail('must not silently share text without the clip');
+    // Avoid keeping the test alive for delayed object URL cleanup.
+    globalThis.setTimeout = (fn) => { fn(); return 1; };
+    await recorder.shareClip(clip, { slug: 'teapotpour' });
+    assert.equal(clicked, true);
+    assert.equal(downloadName, 'teapotpour-run.mp4');
+    globalThis.setTimeout = originals.setTimeout.value;
+    assert.equal(recorder.startRecording(), true);
+    const pending = recorder.finalizeRecording();
+    recorderInstance.onerror();
+    await pending;
+    assert.equal(track.stopped, true);
+    assert.equal(recorder.getRecordingState().active, false);
+    globalThis.MediaRecorder = class { constructor() { throw new Error('encoder unavailable'); } };
+    track.stopped = false;
+    assert.equal(recorder.startRecording(), false);
+    assert.equal(track.stopped, true, 'failed encoder initialization releases capture tracks');
+  } finally {
+    for (const [key, descriptor] of Object.entries(originals)) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else delete globalThis[key];
+    }
   }
 });
 

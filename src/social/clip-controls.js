@@ -3,6 +3,7 @@ import {
   armRecordingOnGameStart,
   finalizeRecording,
   getRecordingState,
+  getFinishedClip,
   isClipSupported,
   shareClip,
 } from './record.js';
@@ -88,8 +89,8 @@ export function mountClipControls({ gameSlug = '', gameName = '' } = {}) {
     button.dataset.state = state.phase;
     if (state.phase === 'recording') {
       button.disabled = false;
-      button.textContent = 'Save clip';
-      button.title = 'Stop recording and save this gameplay clip';
+      button.textContent = 'Finish clip';
+      button.title = 'Finish recording, then tap Save clip to share or download it';
       return;
     }
     if (state.phase === 'ready') {
@@ -110,16 +111,31 @@ export function mountClipControls({ gameSlug = '', gameName = '' } = {}) {
 
   window.addEventListener('cade:clip-state', render);
   button.addEventListener('click', async () => {
-    if (!getRecordingState().active && !getRecordingState().hasClip) return;
-    button.dataset.state = 'saving';
+    const state = getRecordingState();
+    if (!state.active && !state.hasClip) return;
     button.disabled = true;
+    if (state.active) {
+      button.textContent = 'Finishing clip…';
+      try {
+        const clip = await finalizeRecording();
+        if (!clip) throw new Error('No clip data was captured.');
+        render();
+        button.title = 'Clip ready. Tap Save clip to share or download it';
+      } catch {
+        render();
+        button.textContent = 'No clip captured — restart';
+      }
+      return;
+    }
+    button.dataset.state = 'saving';
     button.textContent = 'Saving clip…';
     try {
-      const clip = await finalizeRecording();
-      if (!clip) throw new Error('No clip data was captured.');
-      await shareClip(clip, { slug: gameSlug, name: gameName });
+      // The prepared Blob is available synchronously, keeping navigator.share
+      // inside this new tap's user activation on mobile browsers.
+      await shareClip(getFinishedClip(), { slug: gameSlug, name: gameName });
       trackKpiEvent('social_clip_saved', { game: gameSlug });
       button.dataset.state = 'ready';
+      button.disabled = false;
       button.textContent = 'Clip saved!';
       setTimeout(render, 2500);
     } catch {
