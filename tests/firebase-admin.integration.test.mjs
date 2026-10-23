@@ -2,6 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, verify } from "node:crypto";
 import { createRequire } from "node:module";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { createServer } from "node:http";
 
 const require = createRequire(import.meta.url);
 const backend = require("../api/_firebase-admin.js");
@@ -57,5 +61,91 @@ test("configured Firebase clients retain signing, validation, and serialization 
       else process.env[key] = value;
     }
     backend.__resetFirebaseAdminForTests();
+  }
+});
+
+
+test("file-backed Blob errors retain native DOMException identity", async () => {
+  const { default: NativeException } = await import("node-domexception");
+  assert.equal(NativeException, globalThis.DOMException);
+  assert.equal(require("node-domexception"), globalThis.DOMException);
+  const { blobFrom } = await import("fetch-blob/from.js");
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "native-blob-contract-"));
+  try {
+    const file = path.join(directory, "attachment.txt");
+    fs.writeFileSync(file, "feedback attachment");
+    const blob = await blobFrom(file, "text/plain");
+    assert.equal(await blob.text(), "feedback attachment");
+    fs.utimesSync(file, new Date(), new Date(Date.now() + 5000));
+    await assert.rejects(blob.text(), (error) => {
+      assert.ok(error instanceof globalThis.DOMException);
+      assert.equal(error.name, "NotReadableError");
+      return true;
+    });
+  } finally {
+    assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("legacy Google clients resolve compatible async and sync cleanup APIs", async () => {
+  const firestoreApi = createRequire(require.resolve("@google-cloud/firestore-api"));
+  const gax = createRequire(firestoreApi.resolve("google-gax"));
+  const auth = createRequire(gax.resolve("google-auth-library"));
+  const metadata = createRequire(auth.resolve("gcp-metadata"));
+  const transport = createRequire(metadata.resolve("gaxios"));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "sdk-cleanup-contract-"));
+  try {
+    for (const [index, consumer] of [gax, transport].entries()) {
+      const { rimraf, rimrafSync } = consumer("rimraf");
+      for (const [name, remove] of [["async", rimraf], ["sync", rimrafSync]]) {
+        const target = path.join(directory, `${index}-${name}`);
+        fs.mkdirSync(path.join(target, "nested"), { recursive: true });
+        fs.writeFileSync(path.join(target, "nested", "temporary.txt"), "temporary SDK data");
+        assert.ok(path.resolve(target).startsWith(`${path.resolve(directory)}${path.sep}`));
+        assert.equal(await remove(target), true);
+        assert.equal(fs.existsSync(target), false);
+      }
+    }
+  } finally {
+    assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("Storage transport preserves multipart upload, download and delete", async () => {
+  const { Storage } = require("@google-cloud/storage");
+  const payload = Buffer.from("feedback attachment transport contract");
+  const requests = [];
+  const server = createServer(async (req, res) => {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    requests.push({ method: req.method, contentType: req.headers["content-type"], body: Buffer.concat(chunks) });
+    if (req.method === "POST") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({ bucket: "sdk-contract-test", name: "feedback/test.txt", size: String(payload.length) }));
+    } else if (req.method === "GET") {
+      res.setHeader("content-type", "text/plain");
+      res.end(payload);
+    } else {
+      res.statusCode = req.method === "DELETE" ? 204 : 400;
+      res.end();
+    }
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const storage = new Storage({ projectId: "sdk-contract-test",
+      apiEndpoint: `http://127.0.0.1:${server.address().port}`, useAuthWithCustomEndpoint: false,
+      retryOptions: { autoRetry: false } });
+    const file = storage.bucket("sdk-contract-test").file("feedback/test.txt");
+    await file.save(payload, { resumable: false, validation: false, metadata: { contentType: "text/plain" } });
+    const [download] = await file.download({ validation: false });
+    assert.deepEqual(download, payload);
+    await file.delete();
+    assert.deepEqual(requests.map((entry) => entry.method), ["POST", "GET", "DELETE"]);
+    assert.match(requests[0].contentType, /multipart\/related/);
+    assert.ok(requests[0].body.includes(payload));
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 });
