@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Teapot Pour: account for the falling stream and fill fifteen cups across five tea services.
 - Stamp Studio: match seal shapes and inks across five timed print-shop shifts.
 
 - Added the 2026-W43 content pack with Iris Honeycomb Nectar Measure, Glasswater Gleam Ripple Shepherd, and Starfall Gilding Lantern Loom cosmetics plus four bounded weekly challenges.

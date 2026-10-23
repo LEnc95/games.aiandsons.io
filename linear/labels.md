@@ -241,5 +241,6 @@
 - game/bottlecapcurl
 - game/runeroots
 - game/stampstudio
+- game/teapotpour
 
 Generated from `src/meta/feedback.js`.
