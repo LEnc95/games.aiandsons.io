@@ -23,6 +23,30 @@ exception. Remove it when the upstream clients no longer request Rimraf 5.
 Review it whenever the Firebase/Google SDK dependency tree changes.
 Upstream reference: https://github.com/isaacs/rimraf#v5-to-v6
 
+## jwks-rsa asynchronous ESM loading
+
+Vercel's production auth functions failed at startup because jwks-rsa 4.1.0
+uses CommonJS `require('jose')`, while jose 6 is ESM-only. Local Node 22's
+`require(esm)` support masked the error. The production runtime log showed
+`ERR_REQUIRE_ESM` in jwks-rsa/src/utils.js before any auth handler executed.
+
+The local dependency in `vendor/jwks-rsa` preserves the published 4.1.0 source
+and MIT license with two async-import changes, documented in its PATCH.md.
+Both key retrieval and the Passport callback load jose with native `import()`.
+Firebase Admin 14.5.0, jose 6, all verification algorithms, and application auth
+and session logic remain unchanged. No downgrade, loader hook, install-time
+patching, or replacement cryptography is used. Upstream's dev-only toolchain is
+omitted from the local package metadata so it is not installed in this app.
+
+Remove this local dependency after an upstream release fixes both imports.
+Upstream issue: https://github.com/auth0/node-jwks-rsa/issues/507
+
+The feedback suite launches a child with `--no-experimental-require-module` to
+reproduce a strict CommonJS runtime. It checks both auth handler readiness paths,
+malformed Google tokens, actual Firebase JWKS verification of RSA/EC signatures,
+Passport key retrieval, and rejection of tampered, expired, and unsupported
+algorithm tokens against a loopback JWKS endpoint, with no cloud credentials.
+
 ## Required regression checks
 
 `tests/firebase-admin.integration.test.mjs` exercises native exception identity,

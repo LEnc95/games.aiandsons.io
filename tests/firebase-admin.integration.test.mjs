@@ -6,10 +6,21 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createServer } from "node:http";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const backend = require("../api/_firebase-admin.js");
 const { deleteApp } = require("firebase-admin/app");
+
+test("strict CommonJS runtime starts auth and preserves real JWKS signature verification", () => {
+  const child = spawnSync(process.execPath, ["--no-experimental-require-module", fileURLToPath(new URL("./fixtures/firebase-cjs-runtime.cjs", import.meta.url))], {
+    encoding: "utf8", timeout: 20000, windowsHide: true, shell: false,
+  });
+  assert.equal(child.error, undefined);
+  assert.equal(child.status, 0, `${child.stdout}\n${child.stderr}`);
+  assert.match(child.stdout, /Strict CJS startup.*signature rejection passed/);
+});
 
 test("configured Firebase clients retain signing, validation, and serialization contracts", async () => {
   const keys = ["FIREBASE_SERVICE_ACCOUNT_JSON_BASE64", "FIREBASE_STORAGE_BUCKET"];
