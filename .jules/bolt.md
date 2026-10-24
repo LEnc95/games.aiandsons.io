@@ -82,3 +82,11 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2025-05-18 - Avoid redundant normalizer allocations by filtering raw properties
+**Learning:** Functions that parse through a large array of database query results (like `listFeedbackSubmissionsFromFirestore` iterating through `snapshot.docs`) can suffer from excessive O(N) allocation overhead if they pass every raw document into an expensive normalization function (like `normalizeStoredSubmission`) before filtering the results down and dropping the rejected items.
+**Action:** When gathering items conditionally from a dataset, refactor chained `.map().filter()` operations into a single imperative loop. Evaluate the match conditions using fast-path validation directly on the raw document properties (mirroring the fallback logic of the formal normalization functions), and only execute the expensive object mapping when you definitively know the item satisfies all requirements and should be pushed to the results array.
+
+## 2025-05-18 - Avoid multiple O(N) array allocations via chained .filter calls
+**Learning:** Sequential mapped pipelines (like `.filter(Boolean).filter(conditionA).filter(conditionB)`) generate a new throwaway array on each step, creating unnecessary garbage collection overhead when parsing through potentially large lists of items.
+**Action:** Replace chained `.filter()` or `.map()` data pipelines with explicitly allocated arrays (e.g. `const items = [];`) populated by an imperative `for...of` loop. Apply boolean and fast-path criteria through early `continue` statements to efficiently bypass unneeded entries without the overhead of successive array instantiations.
