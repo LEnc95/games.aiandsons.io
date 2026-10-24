@@ -82,3 +82,7 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2024-05-14 - Optimize normalizeRankList chained array operations
+**Learning:** Replaced chained `.map().filter().map()` operations in data processing with a single pass imperative `for` loop to significantly reduce intermediate array allocations, reducing runtime overhead and improving overall speed.
+**Action:** When performing multiple list operations like mapping and filtering sequentially, prefer an imperative loop that builds the final array in one pass instead of allocating intermediate arrays.
