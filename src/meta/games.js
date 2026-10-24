@@ -228,6 +228,7 @@ const BASE_GAMES = [
   { slug:'runeroots', name:'Rune Roots', emoji:'\u{1F33F}', scoreHint:'roots', url:'/runeroots', desc:'Rotate mossy root runes toward the center seed and awaken five ancient forest groves before they wilt.', earnsCoins:true },
   { slug:'stampstudio', name:'Stamp Studio', emoji:'\u{1F4EE}', scoreHint:'seals', url:'/stampstudio', desc:'Set the seal shape and ink, stamp each requested envelope before its deadline, and complete five busy print-shop shifts.', earnsCoins:true },
   { slug:'teapotpour', name:'Teapot Pour', emoji:'\u{1FAD6}', scoreHint:'cups', url:'/teapotpour', desc:'Hold to pour, allow for the falling stream, and fill fifteen teacups to their target bands across five brisk tea services.', earnsCoins:true },
+  { slug:'potteryspin', name:'Pottery Spin', emoji:'\u{1F3FA}', scoreHint:'vases', url:'/potteryspin', desc:'Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
