@@ -193,8 +193,9 @@ window.addEventListener('keyup',e=>{if(e.key===' '||e.key==='ArrowLeft'||(e.key=
 document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='playing')pause();},true);
 window.addEventListener('blur',()=>{if(s.mode==='playing')pause();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='playing')pause();});
-window.addEventListener('pagehide',()=>report('abandoned'));
-document.querySelector('nav a').addEventListener('click',()=>report('abandoned'));
+// A cached page is suspended, not abandoned: keep its eventual outcome available.
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='playing')pause();}else report('abandoned');});
+window.addEventListener('pageshow',e=>{if(e.persisted){s.holding=false;last=performance.now();if(s.mode==='playing')pause();else render();}});
 window.advanceTime=ms=>{manual=true;advance(ms);};
 window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x600; origin top-left; x right, y down; band centers y=185+41.4*i, clay centered x=410',mode:s.mode,design:target().name,piece:s.piece+1,selectedBand:s.selected+1,radii:s.radii.map(r=>+r.toFixed(4)),targetRadii:target().radii,tolerance:5,minimumRadius:24,shaveUnitsPerSecond:26,holding:s.holding,timeMs:+s.elapsed.toFixed(4),theme:colors().name,metrics:metrics(),message:s.message});
 mountGameFeedback({gameSlug:'potteryspin',gameName:'Pottery Spin'});
