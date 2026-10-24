@@ -14,6 +14,8 @@ Operational command reference for contributors and automations in this repositor
 - Capture marketing gameplay clips: `npm run marketing:clips`
 - Validate daily new-game wiring before commit: `npm run game:preflight`
 - Validate self-maintenance contracts and release feeds: `npm run maintenance:validate`
+- Run the ordered daily release gates: `node scripts/automation/run-release-gates.mjs`
+- On Windows PowerShell, use `npm.cmd` / `npx.cmd` for direct CLI commands; avoid the `npm.ps1` wrapper in call-operator loops. The release runner invokes npm through Node without a shell.
 - Generate the current weekly agent content brief: `npm run automation:weekly-brief`
 - Run aggregate telemetry and maintenance automation tests: `npm run test:telemetry`
 - Run integration tests: `npm run test:shop`
@@ -98,6 +100,7 @@ Operational command reference for contributors and automations in this repositor
 - Run `npm run test:feedback-smoke:raw` when the game shell or feedback surface changed
 - Confirm Linear baseline coverage or let the daily provisioning workflow backfill it
 - After every required gate passes, commit as `Add <Game Name> daily game` on `automation/daily-game/YYYY-MM-DD` and open a guarded pull request
+- Run the final gates, and repeat them after rebasing, through `node scripts/automation/run-release-gates.mjs`. It stops on the first failure and never stages, commits, pushes, or skips checks. See `docs/daily-release-runner.md` for launcher-error recovery.
 - Passing automation PRs enable trusted squash auto-merge; then verify Main QA and the production game route
 
 ## Self-Maintenance Privacy Boundary
