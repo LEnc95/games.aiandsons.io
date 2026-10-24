@@ -35,6 +35,9 @@ export async function verifyProduction({ baseUrl = 'https://games.aiandsons.io',
       if (route.endsWith('session') && (typeof body.userId !== 'string' || !body.userId)) {
         throw new Error('Production anonymous session did not initialize.');
       }
+      if (route.endsWith('session') && !/\bcade_session=[^;,\s]+/.test(response.headers.get('set-cookie') || '')) {
+        throw new Error('Production anonymous session did not set its session cookie.');
+      }
       // Do not log config values, session identifiers, or Set-Cookie headers.
     }
   }

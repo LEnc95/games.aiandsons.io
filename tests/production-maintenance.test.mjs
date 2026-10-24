@@ -12,7 +12,7 @@ function fixture(overrides = {}) {
     if (route === '/sitemap.xml') return new Response('<loc>https://games.aiandsons.io/fixture</loc>', { headers: { 'content-type': 'application/xml' } });
     if (route === '/CHANGELOG.md') return new Response('Added Fixture Game');
     if (route === '/api/auth/firebase-config') return Response.json({ ok: true, enabled: true, config: { projectId: 'fixture-project', apiKey: 'not-for-logs' } });
-    if (route === '/api/auth/session') return Response.json({ ok: true, userId: 'not-for-logs', isAuthenticated: false }, { headers: { 'Set-Cookie': 'not-for-logs' } });
+    if (route === '/api/auth/session') return Response.json({ ok: true, userId: 'not-for-logs', isAuthenticated: false }, { headers: { 'Set-Cookie': 'cade_session=not-for-logs; Path=/; HttpOnly; Secure; SameSite=Lax' } });
     return new Response('Page');
   } };
 }
@@ -38,6 +38,8 @@ for (const [name, route, response, message] of [
   ['disabled config', 'firebase-config', () => Response.json({ ok: true, enabled: false }), /not configured/],
   ['missing session', 'session', () => Response.json({ ok: true }), /did not initialize/],
   ['API error payload', 'session', () => Response.json({ ok: false }), /readiness/],
+  ['missing session cookie', 'session', () => Response.json({ ok: true, userId: 'fixture' }), /session cookie/],
+  ['unrelated cookie', 'session', () => Response.json({ ok: true, userId: 'fixture' }, { headers: { 'Set-Cookie': 'other=value' } }), /session cookie/],
 ]) {
   test(`production verification rejects ${name}`, async () => {
     const mock = fixture({ [`/api/auth/${route}`]: response });
