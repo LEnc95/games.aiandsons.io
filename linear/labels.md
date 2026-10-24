@@ -242,5 +242,6 @@
 - game/runeroots
 - game/stampstudio
 - game/teapotpour
+- game/potteryspin
 
 Generated from `src/meta/feedback.js`.

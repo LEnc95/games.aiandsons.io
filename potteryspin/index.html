@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pottery Spin | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3ebdf;color:#342d38;font:16px system-ui,sans-serif}main{max-width:960px;margin:auto;padding:18px}nav a{display:inline-flex;align-items:center;min-height:44px;color:inherit;font-weight:700}header{text-align:center}h1{margin:4px 0;font-family:Georgia,serif;font-size:2.2rem}header p{margin:6px 0 18px;letter-spacing:.16em;font-size:.75rem}canvas{display:block;width:100%;aspect-ratio:3/2;border-radius:22px;touch-action:none;box-shadow:0 15px 45px #49312220}.controls{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:16px 0}button,select{min-height:46px;border:1px solid #b0a19b;border-radius:12px;background:#fffaf0;color:#342d38;padding:10px 14px;font:700 .9rem system-ui;cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #7f4774;outline-offset:3px}#shave{background:#79543d;color:white;min-width:140px;touch-action:none}#fire{background:#725479;color:white}.help{text-align:center;font-size:.9rem;line-height:1.7}#status{min-height:24px;text-align:center;font-weight:650}select{max-width:180px}@media(max-width:600px){main{padding:64px 8px 14px}h1{font-size:1.8rem}.controls{gap:6px}button,select{padding:9px 11px}.help{font-size:.8rem}}@media(max-width:350px){main{padding-top:110px}}:fullscreen main{max-width:min(1100px,140vh)}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Pottery Spin | AI and Sons Games">
+  <meta property="og:description" content="Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/potteryspin">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/potteryspin.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pottery Spin | AI and Sons Games">
+  <meta name="twitter:description" content="Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/potteryspin.png">
+  <link rel="canonical" href="https://games.aiandsons.io/potteryspin">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Pottery Spin","description":"Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/potteryspin","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body><main>
+<nav aria-label="Game navigation"><a href="/">← Back to games</a></nav>
+<header><h1>Pottery Spin</h1><p>FIND THE VASE INSIDE THE CLAY</p></header>
+<canvas id="game" width="900" height="600" tabindex="0" aria-label="Pottery wheel. Select a band with up and down, hold left or Space to shave, Enter to fire."></canvas>
+<div class="controls">
+<button id="start">Start pottery</button><button id="up" aria-label="Select band above">↑ Band</button><button id="down" aria-label="Select band below">↓ Band</button><button id="shave">Hold to shave</button><button id="fire">Fire vase</button>
+<button id="pause">Pause</button><button id="restart">Restart</button><button id="fullscreen">Fullscreen</button>
+<select id="theme" aria-label="Workshop palette"><option>Terracotta</option><option>Blue porcelain</option><option>Rose stoneware</option></select>
+</div>
+<div id="readout" style="text-align:center;font-weight:750"></div>
+<div id="status" role="status" aria-live="polite"></div>
+<p class="help">Select a band: ↑ ↓ or tap the clay. Hold Space / ← / the shave button to trim.<br>Match all seven dashed outlines within 5 units, then Enter / Fire vase. Clay cannot grow back!<br>P: pause · R: restart · F: fullscreen · Five vases, three cracks. No time limit.</p>
+</main>
+<script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas=document.querySelector('#game'), ctx=canvas.getContext('2d');
+const designs=[
+  {name:'The Bud Vase',radii:[44,44,56,76,84,74,58]},
+  {name:'The Honey Jar',radii:[72,55,78,86,86,76,64]},
+  {name:'The Moon Bottle',radii:[38,38,48,72,88,80,56]},
+  {name:'The Tulip Cup',radii:[88,80,72,62,54,50,62]},
+  {name:'The Keepsake Urn',radii:[68,48,62,86,90,72,52]},
+];
+const palettes=[
+  {name:'Terracotta',wall:'#e9ddc8',desk:'#b17f57',clay:'#c97c53',glaze:'#795684'},
+  {name:'Blue porcelain',wall:'#dce9ed',desk:'#77949e',clay:'#b9d5de',glaze:'#2d648c'},
+  {name:'Rose stoneware',wall:'#eddfdf',desk:'#b68d8a',clay:'#d59eaa',glaze:'#8d4562'},
+];
+const s={mode:'menu',piece:0,pots:0,cracks:0,selected:0,radii:Array(7).fill(100),holding:false,elapsed:0,theme:0,started:false,reported:false,message:'A lump of clay. Five possibilities.'};
+let manual=false,last=performance.now();
+const target=()=>designs[s.piece], colors=()=>palettes[s.theme];
+const metrics=()=>({vases:s.pots,bands:s.pots*7,cracks:s.cracks});
+function report(result){
+  if(!s.started||s.reported)return;
+  s.reported=true;
+  reportGameOutcome({slug:'potteryspin',result,durationMs:Math.round(s.elapsed),metrics:metrics()});
+}
+function fresh(){s.radii=Array(7).fill(100);s.selected=0;s.holding=false;}
+function restart(){report('abandoned');Object.assign(s,{mode:'menu',piece:0,pots:0,cracks:0,elapsed:0,started:false,reported:false,message:'A lump of clay. Five possibilities.'});fresh();render();}
+function start(){
+  if(s.mode==='won'||s.mode==='lost')restart();
+  if(s.mode==='menu'){s.started=true;s.mode='playing';}
+  else if(s.mode==='between'){s.piece++;fresh();s.mode='playing';}
+  else if(s.mode==='cracked'){fresh();s.mode='playing';}
+  else return;
+  s.message='Trim gently. The dashed line is your target.';canvas.focus({preventScroll:true});render();
+}
+function pause(){if(s.mode==='playing'){s.mode='paused';s.holding=false;}else if(s.mode==='paused')s.mode='playing';render();}
+function selectBand(delta){if(s.mode!=='playing')return;s.holding=false;s.selected=Math.max(0,Math.min(6,s.selected+delta));render();}
+function hold(value){if(s.mode==='playing')s.holding=value;else s.holding=false;render();}
+function fire(){
+  if(s.mode!=='playing')return;s.holding=false;
+  const matches=s.radii.every((r,i)=>Math.abs(r-target().radii[i])<=5+1e-8);
+  if(matches){
+    s.pots++;s.mode=s.pots===5?'won':'between';
+    s.message=s.mode==='won'?'Five beautiful vases. Your shelf is complete!':'Kiln cooled. A lovely new vase for the shelf.';
+    addCoins(5);if(s.mode==='won')report('completed');
+  }else{
+    s.cracks++;s.mode=s.cracks===3?'lost':'cracked';
+    s.message=s.mode==='lost'?'The kiln needs a rest. Try a fresh collection.':'A crack! Match every band before firing. Try fresh clay.';
+    if(s.mode==='lost')report('lost');
+  }render();
+}
+function advance(ms){
+  if(!Number.isFinite(ms)||ms<0)return;
+  if(s.mode==='playing'){
+    s.elapsed+=ms;
+    if(s.holding)s.radii[s.selected]=Math.max(24,s.radii[s.selected]-ms*.026);
+  }render();
+}
+function box(x,y,w,h,color,r=14){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function text(t,x,y,size=20,color='#342d38',align='center'){ctx.fillStyle=color;ctx.font=`${size>=30?'bold ':''}${size}px ${size>=30?'Georgia':'system-ui'}`;ctx.textAlign=align;ctx.fillText(t,x,y);}
+function vase(radii,cx,top,scale,color){
+  ctx.fillStyle=color;ctx.beginPath();
+  ctx.moveTo(cx-radii[0]*scale,top);
+  radii.forEach((r,i)=>ctx.lineTo(cx-r*scale,top+i*36*scale));
+  for(let i=6;i>=0;i--)ctx.lineTo(cx+radii[i]*scale,top+i*36*scale);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#ffffff55';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#342d3850';ctx.beginPath();ctx.ellipse(cx,top,radii[0]*scale,7*scale,0,0,Math.PI*2);ctx.fill();
+}
+function render(){
+  const c=colors(), t=target();ctx.clearRect(0,0,900,600);
+  box(0,0,900,600,c.wall,0);box(0,440,900,160,c.desk,0);
+  // Sunlit workshop window and quiet shelf keep the silhouette readable.
+  box(48,82,160,196,'#fff8e4');ctx.strokeStyle=c.desk;ctx.lineWidth=6;
+  ctx.beginPath();ctx.moveTo(128,82);ctx.lineTo(128,278);ctx.moveTo(48,178);ctx.lineTo(208,178);ctx.stroke();
+  box(630,225,228,12,c.desk,3);
+  for(let i=0;i<s.pots;i++)vase(designs[i].radii,650+i*44,170,.19,c.glaze);
+  text('POTTERY / '+String(Math.min(5,s.piece+1)).padStart(2,'0'),45,43,17,'#65535a','left');
+  text(`${s.pots} / 5 vases   ·   ${s.cracks} / 3 cracks`,855,43,17,'#65535a','right');
+  text(t.name,450,90,34);
+  ctx.fillStyle='#6f5750';ctx.beginPath();ctx.ellipse(410,475,153,27,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e7ccac';ctx.beginPath();ctx.ellipse(410,461,153,27,0,0,Math.PI*2);ctx.fill();
+  vase(s.radii,410,185,1.15,['between','won'].includes(s.mode)?c.glaze:c.clay);
+  // All seven target widths remain visible while the tool is moving.
+  ctx.setLineDash([5,5]);ctx.strokeStyle='#342d38';ctx.lineWidth=2;
+  for(let i=0;i<7;i++){
+    const y=185+i*41.4,r=t.radii[i]*1.15;
+    ctx.beginPath();ctx.moveTo(410-r,y-12);ctx.lineTo(410-r,y+12);ctx.moveTo(410+r,y-12);ctx.lineTo(410+r,y+12);ctx.stroke();
+  }ctx.setLineDash([]);
+  const y=185+s.selected*41.4, r=s.radii[s.selected]*1.15;
+  ctx.strokeStyle=c.glaze;ctx.lineWidth=3;ctx.strokeRect(410-r-8,y-18,r*2+16,36);
+  ctx.fillStyle='#342d38';ctx.beginPath();ctx.moveTo(560,y);ctx.lineTo(590,y-13);ctx.lineTo(590,y+13);ctx.fill();
+  box(609,286,247,139,'#fff9ed');text('BAND '+(s.selected+1)+' / 7',732,316,16);
+  text(`${s.radii[s.selected].toFixed(1)} → ${t.radii[s.selected]}`,732,352,30);
+  text('Target ±5 · trim only',732,383,16);
+  const good=s.radii.filter((radius,i)=>Math.abs(radius-t.radii[i])<=5+1e-8).length;
+  text(`${good} / 7 bands ready`,732,408,14);
+  // Light wheel rings visibly rotate only while active time advances.
+  ctx.strokeStyle='#795c4e';ctx.lineWidth=3;const a=s.elapsed/330;
+  ctx.beginPath();ctx.ellipse(410+Math.sin(a)*30,461,65,10,0,0,Math.PI*2);ctx.stroke();
+  text(s.mode==='playing'?(s.holding?'Shaving… release early.':'Choose a band. Trim a little at a time.'):'Handmade, one careful band at a time.',450,548,21,'#fffaf0');
+  if(s.mode!=='playing'){
+    box(0,0,900,600,'#342d3840',0);
+    box(195,128,510,325,'#fffaf0',22);
+    const titles={menu:'Shape something lovely',paused:'Wheel paused',between:'Fresh from the kiln',cracked:'Give it another spin',won:'The collection is complete',lost:'A lesson in letting go'};
+    text(titles[s.mode],450,186,32);
+    const lines=s.mode==='menu'?['Trim seven bands to the dashed outline.','Hold to shave; release to stop.','Clay cannot grow back. Fire when all fit.']:s.mode==='paused'?['Your clay and wheel are resting.','Press P or Resume to continue.']:s.mode==='won'?['Five designs, shaped by your own hand.','Your workshop shelf is full.']:s.mode==='lost'?['Three cracks. A new batch of clay awaits.','Start again, and trim a little less.']:s.mode==='cracked'?['Some bands missed their target.','Use the width readout and ±5 tolerance.']:['A new glaze and a place on the shelf.','Ready for the next silhouette?'];
+    lines.forEach((line,i)=>text(line,450,239+i*35,20));
+    text(s.mode==='paused'?'RESUME BELOW':s.mode==='menu'?'START BELOW OR PRESS ENTER':s.mode==='won'||s.mode==='lost'?'START A NEW COLLECTION BELOW':'CONTINUE BELOW OR PRESS ENTER',450,401,15,c.glaze);
+  }
+  document.querySelector('#status').textContent=s.message;
+  document.querySelector('#readout').textContent=`Band ${s.selected+1}: ${s.radii[s.selected].toFixed(1)} → ${t.radii[s.selected]} (±5) · ${good}/7 ready`;
+  document.querySelector('#pause').textContent=s.mode==='paused'?'Resume':'Pause';
+  document.querySelector('#start').textContent=s.mode==='between'?'Next design':s.mode==='cracked'?'Fresh clay':s.mode==='won'||s.mode==='lost'?'New collection':'Start pottery';
+}
+document.querySelector('#start').onclick=start;
+document.querySelector('#up').onclick=()=>selectBand(-1);
+document.querySelector('#down').onclick=()=>selectBand(1);
+document.querySelector('#fire').onclick=fire;
+document.querySelector('#pause').onclick=pause;
+document.querySelector('#restart').onclick=restart;
+document.querySelector('#theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}render();}
+document.querySelector('#fullscreen').onclick=fullscreen;
+const shave=document.querySelector('#shave');
+shave.addEventListener('pointerdown',e=>{e.preventDefault();shave.setPointerCapture(e.pointerId);hold(true);});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])shave.addEventListener(event,()=>hold(false));
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();canvas.focus();if(s.mode!=='playing')return;
+  const bounds=canvas.getBoundingClientRect(),y=(e.clientY-bounds.top)*600/bounds.height;
+  s.selected=Math.max(0,Math.min(6,Math.round((y-185)/41.4)));s.holding=false;render();
+});
+function editing(e){return e.target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]');}
+window.addEventListener('keydown',e=>{
+  if(editing(e))return;const key=e.key.toLowerCase();
+  if(e.target===shave&&(key===' '||key==='enter')){e.preventDefault();hold(true);return;}
+  // Native focused buttons keep Enter/Space activation, including feedback.
+  if(e.target.closest('button')&&(key==='enter'||key===' '))return;
+  if(['arrowup','arrowdown','arrowleft',' ','enter'].includes(key))e.preventDefault();
+  if(e.repeat)return;
+  if(key==='arrowup')selectBand(-1);if(key==='arrowdown')selectBand(1);
+  if(key===' '||key==='arrowleft')hold(true);
+  if(key==='enter'){if(s.mode==='playing')fire();else start();}
+  if(key==='p')pause();if(key==='r')restart();if(key==='f')fullscreen();
+  if(key==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+window.addEventListener('keyup',e=>{if(e.key===' '||e.key==='ArrowLeft'||(e.key==='Enter'&&e.target===shave))hold(false);});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='playing')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='playing')pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='playing')pause();});
+window.addEventListener('pagehide',()=>report('abandoned'));
+document.querySelector('nav a').addEventListener('click',()=>report('abandoned'));
+window.advanceTime=ms=>{manual=true;advance(ms);};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x600; origin top-left; x right, y down; band centers y=185+41.4*i, clay centered x=410',mode:s.mode,design:target().name,piece:s.piece+1,selectedBand:s.selected+1,radii:s.radii.map(r=>+r.toFixed(4)),targetRadii:target().radii,tolerance:5,minimumRadius:24,shaveUnitsPerSecond:26,holding:s.holding,timeMs:+s.elapsed.toFixed(4),theme:colors().name,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'potteryspin',gameName:'Pottery Spin'});
+function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}
+render();requestAnimationFrame(frame);
+</script></body></html>
