@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.18.0] - 2026-10-25
 ### Fixed
 - Teapot Pour now has a visible Back to games link; canvas-start clip capture, video formats, and saving finished clips work through the shared recorder.
 

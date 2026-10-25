@@ -2,6 +2,27 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.18.0 — 2026-10-25
+
+- Release week: 2026-W43
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- cd2387f Add Orchard Order daily game (#389)
+- a8642a9 Fix Firebase auth startup on Vercel (#388)
+- 1328332 Add Pottery Spin daily game (#387)
+- f52701a Fix Windows daily release command execution (#386)
+- b61250a Fix Teapot Pour navigation and gameplay clip recording (#385)
+- 1c20655 Remove remaining dependency deprecation warnings (#384)
+- 23d2ff0 Fix vulnerable Firebase transitive dependencies (#383)
+- ca2a62b Add Teapot Pour daily game (#382)
+- 3b68e6d Fix daily game generator scope and SEO idempotence (#381)
+- 5389be1 Add Stamp Studio daily game (#380)
+- 0c4bf8a Add 2026-W43 weekly content pack (#377)
+- 777cca8 Prepare weekly release 1.17.0 (#374)
+
 ## 1.17.0 — 2026-10-18
 
 - Release week: 2026-W42
