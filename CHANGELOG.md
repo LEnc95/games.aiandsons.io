@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Teapot Pour now has a visible Back to games link; canvas-start clip capture, video formats, and saving finished clips work through the shared recorder.
 
 ### Added
+- Orchard Order: solve five number orchards with row, column, and neighboring inequality clues.
 - Pottery Spin: trim seven clay bands to five vase silhouettes and fire a handmade collection.
 - Teapot Pour: account for the falling stream and fill fifteen cups across five tea services.
 - Stamp Studio: match seal shapes and inks across five timed print-shop shifts.

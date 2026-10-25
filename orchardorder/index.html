@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orchard Order | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#faf4e5;color:#293e36;font:16px system-ui,sans-serif}main{max-width:900px;margin:auto;padding:20px}nav a{display:inline-flex;min-height:44px;align-items:center;color:inherit;font-weight:700}header{text-align:center}h1{font:700 2.5rem Georgia,serif;margin:4px 0}header p{font-size:.75rem;letter-spacing:.2em;margin:8px 0 18px}canvas{display:block;width:100%;aspect-ratio:4/3;box-shadow:0 12px 40px #37493220;border-radius:22px;touch-action:manipulation}.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0}button,select{min-height:46px;border:1px solid #a2b2a1;border-radius:12px;background:#fffdf4;color:#293e36;padding:10px 14px;font:700 .9rem system-ui;cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #be602f;outline-offset:3px}.number{min-width:52px;background:#e2edce}#check{background:#3f684e;color:white}#readout,#status{text-align:center;min-height:24px}#readout{font-weight:700}#status{font-size:.9rem}.help{text-align:center;line-height:1.7;font-size:.9rem}select{max-width:170px}@media(max-width:600px){main{padding:64px 8px 16px}h1{font-size:2rem}.controls{gap:6px}button,select{padding:9px 11px}.help{font-size:.8rem}}@media(max-width:350px){main{padding-top:110px}}:fullscreen main{max-width:min(1000px,115vh)}
+</style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Plant numbers one through four, obey neighboring inequality signs, and solve five orchard Latin-square puzzles before three mistaken harvests. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Orchard Order | AI and Sons Games">
+  <meta property="og:description" content="Plant numbers one through four, obey neighboring inequality signs, and solve five orchard Latin-square puzzles before three mistaken harvests. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/orchardorder">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/orchardorder.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Orchard Order | AI and Sons Games">
+  <meta name="twitter:description" content="Plant numbers one through four, obey neighboring inequality signs, and solve five orchard Latin-square puzzles before three mistaken harvests. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/orchardorder.png">
+  <link rel="canonical" href="https://games.aiandsons.io/orchardorder">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Orchard Order","description":"Plant numbers one through four, obey neighboring inequality signs, and solve five orchard Latin-square puzzles before three mistaken harvests. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/orchardorder","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body><main>
+<nav aria-label="Game navigation"><a href="/">← Back to games</a></nav>
+<header><h1>Orchard Order</h1><p>A LITTLE LOGIC, A LOVELY HARVEST</p></header>
+<canvas id="game" width="800" height="600" tabindex="0" aria-label="Four by four number orchard. Arrow keys select a plot. Number keys one through four plant. Enter checks the orchard."></canvas>
+<div class="controls" aria-label="Plant a number"><button class="number" data-value="1">1</button><button class="number" data-value="2">2</button><button class="number" data-value="3">3</button><button class="number" data-value="4">4</button><button id="erase">Erase</button><button id="undo">Undo</button><button id="check">Check harvest</button></div>
+<div class="controls"><button id="start">Start orchard</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="fullscreen">Fullscreen</button><select id="theme" aria-label="Orchard palette"><option>Apple morning</option><option>Plum evening</option><option>Apricot grove</option></select></div>
+<div id="readout"></div><div id="status" role="status" aria-live="polite"></div>
+<p class="help">Use 1–4 exactly once in each row and column. The open side of &lt; or &gt; faces the larger number.<br>Tap a plot, then a number. Dark numbers are fixed clues. Three incorrect checks end the harvest.<br>Arrows: select · 1–4: plant · Delete: erase · U: undo · Enter: check / continue<br>P: pause · R: restart · F: fullscreen · No time limit. Undo freely.</p>
+</main><script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const canvas = document.querySelector('#game'), ctx = canvas.getContext('2d');
+// Each board is a permuted Latin square. Inequalities are explicit visible clues.
+const layouts = [
+  { rows:[0,1,2,3], cols:[0,1,2,3], values:[1,2,3,4], given:[0,3,5,10,12,15] },
+  { rows:[2,0,3,1], cols:[1,3,0,2], values:[2,4,1,3], given:[0,6,9,15] },
+  { rows:[1,3,0,2], cols:[2,0,3,1], values:[3,1,4,2], given:[1,4,11,14] },
+  { rows:[3,1,2,0], cols:[3,2,0,1], values:[4,2,3,1], given:[2,5,8] },
+  { rows:[2,3,1,0], cols:[0,2,1,3], values:[2,1,4,3], given:[3,6,13] },
+];
+const boards = layouts.map((p, level) => {
+  const solution = Array.from({length:16}, (_,i) => p.values[(p.rows[i>>2]+p.cols[i%4])%4]);
+  const edges=[];
+  for(let i=0;i<16;i++) {
+    if(i%4<3) edges.push([i,i+1]);
+    if(i<12) edges.push([i,i+4]);
+  }
+  // All neighboring relationships are shown; fewer fixed digits increase deduction.
+  return { name:['Apple Gate','Plum Walk','Pear Terrace','Apricot Hill','The Walled Orchard'][level], solution,
+    givens:p.given, clues:edges.map(([a,b])=>({a,b,sign:solution[a]<solution[b]?'<':'>'})) };
+});
+const palettes = [
+  {name:'Apple morning',sky:'#e5eddb',soil:'#e5d4ae',leaf:'#42694e',fruit:'#c85c3f'},
+  {name:'Plum evening',sky:'#e8dfef',soil:'#d7c4d8',leaf:'#665078',fruit:'#914e85'},
+  {name:'Apricot grove',sky:'#fff0cd',soil:'#e6c499',leaf:'#697343',fruit:'#b45b28'},
+];
+const s={mode:'menu',level:0,grid:[],selected:0,orchards:0,mistakes:0,elapsed:0,theme:0,history:[],started:false,reported:false,message:'Every plot has its place.'};
+let manual=false,last=performance.now();
+const board=()=>boards[s.level], palette=()=>palettes[s.theme];
+const metrics=()=>({orchards:s.orchards,plots:s.orchards*16,mistakes:s.mistakes});
+function report(result) {
+  if(!s.started||s.reported)return;
+  s.reported=true;
+  reportGameOutcome({slug:'orchardorder',result,durationMs:Math.round(s.elapsed),metrics:metrics()});
+}
+function load(){s.grid=Array(16).fill(0);board().givens.forEach(i=>s.grid[i]=board().solution[i]);s.selected=0;s.history=[];}
+function restart(){report('abandoned');Object.assign(s,{mode:'menu',level:0,orchards:0,mistakes:0,elapsed:0,started:false,reported:false,message:'Every plot has its place.'});load();render();}
+function start(){
+  if(s.mode==='won'||s.mode==='lost')restart();
+  if(s.mode==='menu'){s.mode='playing';s.started=true;}
+  else if(s.mode==='between'){s.level++;load();s.mode='playing';}
+  else return;
+  s.message='Follow the signs. Open sides face larger numbers.';canvas.focus({preventScroll:true});render();
+}
+function pause(){if(s.mode==='playing')s.mode='paused';else if(s.mode==='paused')s.mode='playing';render();}
+function select(i){if(s.mode!=='playing')return;s.selected=Math.max(0,Math.min(15,i));render();}
+function plant(value){
+  if(s.mode!=='playing')return;
+  if(board().givens.includes(s.selected)){s.message='A fixed clue. Choose a pale plot.';render();return;}
+  if(s.grid[s.selected]===value)return;
+  s.history.push({i:s.selected,value:s.grid[s.selected]});s.grid[s.selected]=value;
+  s.message='Plant, compare, and check when the orchard is full.';render();
+}
+function undo(){if(s.mode!=='playing'||!s.history.length)return;const prev=s.history.pop();s.grid[prev.i]=prev.value;s.selected=prev.i;s.message='Last planting undone.';render();}
+function conflicts(){
+  const bad=new Set();
+  for(let i=0;i<16;i++)for(let j=i+1;j<16;j++)if(s.grid[i]&&s.grid[i]===s.grid[j]&&((i>>2)===(j>>2)||i%4===j%4)){bad.add(i);bad.add(j);}
+  for(const {a,b,sign} of board().clues)if(s.grid[a]&&s.grid[b]&&!(sign==='<'?s.grid[a]<s.grid[b]:s.grid[a]>s.grid[b])){bad.add(a);bad.add(b);}
+  return bad;
+}
+function check(){
+  if(s.mode!=='playing')return;
+  if(s.grid.includes(0)){s.message='Some plots are empty. Fill all sixteen before checking.';render();return;}
+  if(conflicts().size){s.mistakes++;s.message='Conflicting plots are outlined. Undo or change them.';if(s.mistakes===3){s.mode='lost';s.message='Three mistaken harvests. A fresh orchard awaits.';report('lost');}}
+  else{s.orchards++;s.mode=s.orchards===5?'won':'between';s.message=s.mode==='won'?'Five orchards in perfect order. A beautiful harvest!':'Orchard complete. On to the next garden.';addCoins(5);if(s.mode==='won')report('completed');}
+  render();
+}
+function advance(ms){if(!Number.isFinite(ms)||ms<0)return;if(s.mode==='playing')s.elapsed+=ms;render();}
+function box(x,y,w,h,color,r=12){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function text(t,x,y,size=20,color='#293e36',align='center'){ctx.fillStyle=color;ctx.font=`600 ${size}px system-ui`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+const center=i=>({x:235+(i%4)*110,y:174+(i>>2)*110});
+function render(){
+  const p=palette(),bad=conflicts();
+  box(0,0,800,600,p.sky,0);box(0,525,800,75,p.soil,0);
+  // Rows of small trees frame the orchard without obscuring its clues.
+  for(const x of [54,746])for(const y of [170,290,410]){box(x-5,y,10,48,'#9b7954',3);ctx.fillStyle=p.leaf;ctx.beginPath();ctx.arc(x,y,27,0,Math.PI*2);ctx.fill();ctx.fillStyle=p.fruit;ctx.beginPath();ctx.arc(x+10,y+3,7,0,Math.PI*2);ctx.fill();}
+  text(`ORCHARD ${s.level+1} / 5`,35,34,16,p.leaf,'left');text(`${s.orchards} harvested · ${s.mistakes} / 3 mistakes`,765,34,16,p.leaf,'right');
+  text(board().name,400,82,30,p.leaf);box(175,114,450,450,p.soil,20);
+  for(let i=0;i<16;i++){
+    const {x,y}=center(i),fixed=board().givens.includes(i);
+    box(x-40,y-40,80,80,fixed?'#cad8b9':'#fffbee');
+    if(s.selected===i){ctx.strokeStyle=p.leaf;ctx.lineWidth=4;ctx.strokeRect(x-43,y-43,86,86);}
+    if(bad.has(i)){ctx.strokeStyle=p.fruit;ctx.lineWidth=3;ctx.strokeRect(x-35,y-35,70,70);}
+    text(s.grid[i]||'·',x,y,fixed?34:38,fixed?'#293e36':p.fruit);
+    if(fixed)text('•',x+28,y-26,10,p.leaf);
+  }
+  for(const {a,b,sign} of board().clues){const A=center(a),B=center(b);if(b-a===1)text(sign,(A.x+B.x)/2,A.y,25,p.leaf);else{ctx.save();ctx.translate(A.x,(A.y+B.y)/2);ctx.rotate(Math.PI/2);text(sign,0,0,25,p.leaf);ctx.restore();}}
+  if(s.mode!=='playing'){
+    box(0,0,800,600,'#293e3655',0);box(110,140,580,310,'#fffbee',24);
+    const title={menu:'A place for every number',paused:'The orchard is resting',between:'A lovely harvest',won:'Perfectly planted',lost:'A fresh start awaits'};
+    text(title[s.mode],400,196,30,p.leaf);
+    const lines=s.mode==='menu'?['Use 1–4 once in each row and column.','The open side of a sign faces the larger number.','Select a plot, plant a number, then check.']:s.mode==='paused'?['Take your time. Nothing grows while paused.','Press P or Resume to return.']:s.mode==='between'?['Every row, column, and sign agrees.','A new orchard is ready for you.']:s.mode==='won'?['Five gardens. Every plot in its place.','Your harvest is complete.']:['Three incorrect checks ended this campaign.','Try again; use Undo and the colored conflict outlines.'];
+    lines.forEach((line,i)=>text(line,400,252+i*36,19));
+    text(s.mode==='paused'?'RESUME BELOW':'START / CONTINUE BELOW OR PRESS ENTER',400,408,15,p.fruit);
+  }
+  document.querySelector('#status').textContent=s.message;
+  document.querySelector('#readout').textContent=`Row ${(s.selected>>2)+1}, column ${s.selected%4+1}: ${s.grid[s.selected]||'empty'}${board().givens.includes(s.selected)?' (fixed)':''} · ${s.grid.filter(Boolean).length}/16 planted · ${s.orchards}/5 orchards · ${s.mistakes}/3 mistakes`;
+  document.querySelector('#pause').textContent=s.mode==='paused'?'Resume':'Pause';
+  document.querySelector('#start').textContent=s.mode==='between'?'Next orchard':s.mode==='won'||s.mode==='lost'?'New harvest':'Start orchard';
+}
+document.querySelectorAll('[data-value]').forEach(b=>b.onclick=()=>plant(Number(b.dataset.value)));
+document.querySelector('#erase').onclick=()=>plant(0);document.querySelector('#undo').onclick=undo;
+document.querySelector('#start').onclick=start;document.querySelector('#check').onclick=check;
+document.querySelector('#pause').onclick=pause;document.querySelector('#restart').onclick=restart;
+document.querySelector('#theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}render();}
+document.querySelector('#fullscreen').onclick=fullscreen;
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();canvas.focus();if(s.mode!=='playing')return;
+  const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*800/r.width,y=(e.clientY-r.top)*600/r.height;
+  for(let i=0;i<16;i++){const c=center(i);if(Math.abs(x-c.x)<=40&&Math.abs(y-c.y)<=40){select(i);break;}}
+});
+window.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]'))return;
+  const k=e.key.toLowerCase();
+  if(e.target.closest('button')&&(k==='enter'||k===' '))return;
+  if(['arrowup','arrowdown','arrowleft','arrowright','enter','backspace','delete'].includes(k))e.preventDefault();
+  if(e.repeat)return;
+  if(/^[1-4]$/.test(k))plant(Number(k));
+  const row=s.selected>>2,col=s.selected%4;
+  if(k==='arrowleft')select(row*4+Math.max(0,col-1));if(k==='arrowright')select(row*4+Math.min(3,col+1));
+  if(k==='arrowup')select(Math.max(0,row-1)*4+col);if(k==='arrowdown')select(Math.min(3,row+1)*4+col);
+  if(k==='delete'||k==='backspace')plant(0);if(k==='u')undo();
+  if(k==='enter'){if(s.mode==='playing')check();else start();}if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();
+  if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='playing')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='playing')pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='playing')pause();});
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='playing')pause();}else report('abandoned');});
+window.addEventListener('pageshow',e=>{if(e.persisted){last=performance.now();if(s.mode==='playing')pause();else render();}});
+window.advanceTime=ms=>{manual=true;advance(ms);};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'800x600; origin top-left; x right, y down; cells row-major, centers (235+110*column,174+110*row)',mode:s.mode,orchard:board().name,level:s.level+1,grid:s.grid,givens:board().givens,inequalities:board().clues,selected:s.selected,conflicts:[...conflicts()],undoCount:s.history.length,timeMs:s.elapsed,theme:palette().name,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'orchardorder',gameName:'Orchard Order'});
+function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}
+load();render();requestAnimationFrame(frame);
+
+</script></body></html>
