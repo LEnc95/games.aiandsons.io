@@ -243,5 +243,6 @@
 - game/stampstudio
 - game/teapotpour
 - game/potteryspin
+- game/orchardorder
 
 Generated from `src/meta/feedback.js`.
