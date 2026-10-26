@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Button Bot | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#faf2df;color:#263d48;font:16px system-ui,sans-serif}main{max-width:880px;margin:auto;padding:18px}nav a{display:inline-flex;align-items:center;min-height:44px;color:inherit;font-weight:700}header{text-align:center}h1{font:700 2.6rem Georgia,serif;margin:5px}header p{font-size:.75rem;letter-spacing:.2em}canvas{display:block;width:100%;aspect-ratio:4/3;border-radius:20px;box-shadow:0 14px 40px #20374624;touch-action:manipulation}.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0}button,select{font:700 .9rem system-ui;min-height:46px;padding:10px 14px;background:#fffaf0;color:#263d48;border:1px solid #96aaa6;border-radius:10px;cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #d17336;outline-offset:3px}#run{background:#27746c;color:white}.commands button{background:#dce9e6}#queue{min-height:48px;padding:10px;background:#e6dfcc;border-radius:10px;text-align:center;overflow-wrap:anywhere;letter-spacing:.12em;font-weight:700}#status,#readout{text-align:center;min-height:24px}.help{text-align:center;font-size:.9rem;line-height:1.7}select{max-width:165px}@media(max-width:600px){main{padding:64px 8px 16px}h1{font-size:2rem}.controls{gap:6px}button,select{padding:9px 10px}.help{font-size:.8rem}}@media(max-width:350px){main{padding-top:110px}}:fullscreen main{max-width:min(950px,115vh)}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Button Bot | AI and Sons Games">
+  <meta property="og:description" content="Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/buttonbot">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/buttonbot.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Button Bot | AI and Sons Games">
+  <meta name="twitter:description" content="Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/buttonbot.png">
+  <link rel="canonical" href="https://games.aiandsons.io/buttonbot">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Button Bot","description":"Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/buttonbot","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main>
+<nav aria-label="Game navigation"><a href="/">← Back to games</a></nav><header><h1>Button Bot</h1><p>SMALL COMMANDS. BRIGHT IDEAS.</p></header>
+<canvas id="game" width="800" height="600" tabindex="0" aria-label="Robot workshop. Program forward and quarter turns to gather three bolts and reach the exit."></canvas>
+<div id="queue" aria-label="Command queue"></div>
+<div class="controls commands"><button data-command="F">↑ Forward</button><button data-command="L">↶ Left turn</button><button data-command="R">↷ Right turn</button><button id="undo">Undo</button><button id="clear">Clear</button><button id="run">Run program</button></div>
+<div class="controls"><button id="start">Start workshop</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="fullscreen">Fullscreen</button><select id="theme" aria-label="Workshop palette"><option>Seafoam brass</option><option>Berry enamel</option><option>Blue porcelain</option></select></div>
+<div id="readout"></div><div id="status" role="status" aria-live="polite"></div>
+<p class="help">Collect all three bolts, then finish on the marked exit. The arrow shows the bot's heading.<br>Forward moves one tile. Left / Right rotate 90° in place. Plan up to 24 commands.<br>↑ or W: forward · ← or A: left turn · → or D: right turn · Backspace: undo · C: clear<br>Enter: run / continue · P: pause · R: restart · F: fullscreen. No time limit.<br>Hitting a wall, leaving the floor, or ending away from the completed exit costs a fault. Three faults end the campaign.</p>
+</main><script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+// Hand-authored corridors introduce turns, returning routes, and open-floor choices.
+const boards=[
+ {name:'First spark',rows:['######','#....#','####.#','#....#','######'],start:[1,1,1],bolts:[[3,1],[4,2],[3,3]],exit:[1,3]},
+ {name:'Copper corner',rows:['######','#....#','#.##.#','#....#','######'],start:[1,3,0],bolts:[[1,1],[3,1],[4,3]],exit:[2,3]},
+ {name:'The long way',rows:['......','.####.','......','.####.','......'],start:[0,4,0],bolts:[[0,2],[3,2],[5,3]],exit:[3,4]},
+ {name:'Switchback studio',rows:['......','#####.','......','.#####','......'],start:[0,0,1],bolts:[[4,0],[3,2],[1,4]],exit:[5,4]},
+ {name:'Grand assembly',rows:['......','.##.#.','......','.##.#.','......'],start:[2,4,3],bolts:[[0,2],[2,0],[5,2]],exit:[5,4]},
+];
+const palettes=[{name:'Seafoam brass',wall:'#dce8dc',floor:'#fff4d5',metal:'#27746c',bot:'#d98a37'},{name:'Berry enamel',wall:'#ecdfea',floor:'#fff2e5',metal:'#805478',bot:'#c45c70'},{name:'Blue porcelain',wall:'#dce6f1',floor:'#f9f5e7',metal:'#416b9b',bot:'#d78b45'}];
+const s={mode:'menu',phase:'editing',level:0,queue:[],pc:0,robot:{x:0,y:0,dir:0},collected:[],workshops:0,faults:0,elapsed:0,accumulator:0,theme:0,started:false,reported:false,message:'Write a little route. Wind up a little friend.'};
+let manual=false,last=performance.now();
+const board=()=>boards[s.level],pal=()=>palettes[s.theme];
+const metrics=()=>({workshops:s.workshops,bolts:s.workshops*3,faults:s.faults});
+function report(result){if(!s.started||s.reported)return;s.reported=true;reportGameOutcome({slug:'buttonbot',result,durationMs:Math.round(s.elapsed),metrics:metrics()});}
+function resetRobot(){const [x,y,dir]=board().start;s.robot={x,y,dir};s.collected=[];s.pc=0;s.accumulator=0;}
+function load(){s.queue=[];s.phase='editing';resetRobot();}
+function restart(){report('abandoned');Object.assign(s,{mode:'menu',level:0,workshops:0,faults:0,elapsed:0,started:false,reported:false,message:'Write a little route. Wind up a little friend.'});load();render();}
+function start(){if(s.mode==='won'||s.mode==='lost')restart();if(s.mode==='menu'){s.started=true;s.mode='playing';}else if(s.mode==='between'){s.level++;load();s.mode='playing';}else return;s.message='Plan your route, then Run program.';canvas.focus({preventScroll:true});render();}
+function edit(command){if(s.mode!=='playing'||s.phase!=='editing')return;if(s.queue.length===24){s.message='The tape is full. Undo or clear a command.';}else{s.queue.push(command);s.message='Turns rotate in place; forward moves one tile.';}render();}
+function undo(){if(s.mode==='playing'&&s.phase==='editing'){s.queue.pop();render();}}
+function clear(){if(s.mode==='playing'&&s.phase==='editing'){s.queue=[];resetRobot();render();}}
+function run(){if(s.mode!=='playing'||s.phase!=='editing')return;if(!s.queue.length){s.message='Add a command first.';render();return;}resetRobot();s.phase='running';s.message='Following the tape…';render();}
+function fault(message){s.faults++;s.phase='editing';s.accumulator=0;s.message=message+' Rewound to start. Edit the tape and try again.';if(s.faults<3)resetRobot();if(s.faults===3){s.mode='lost';s.message='Three faults. Restart for a fresh assembly.';report('lost');}}
+function execute(){
+ const cmd=s.queue[s.pc++];
+ if(cmd==='L')s.robot.dir=(s.robot.dir+3)%4;
+ if(cmd==='R')s.robot.dir=(s.robot.dir+1)%4;
+ if(cmd==='F'){
+  const dx=[0,1,0,-1],dy=[-1,0,1,0],x=s.robot.x+dx[s.robot.dir],y=s.robot.y+dy[s.robot.dir];
+  if(x<0||x>=6||y<0||y>=5||board().rows[y][x]==='#'){fault('Bump! The next tile is outside the floor.');return;}
+  s.robot.x=x;s.robot.y=y;
+  board().bolts.forEach(([bx,by],i)=>{if(x===bx&&y===by&&!s.collected.includes(i))s.collected.push(i);});
+ }
+ if(s.pc===s.queue.length){
+  if(s.collected.length===3&&s.robot.x===board().exit[0]&&s.robot.y===board().exit[1]){
+   s.workshops++;s.phase='editing';s.mode=s.workshops===5?'won':'between';s.accumulator=0;
+   s.message=s.mode==='won'?'Five workshops humming. Brilliant programming!':'Assembly complete. A new workshop awaits.';
+   if(s.mode==='won')report('completed');addCoins(5);
+  }else fault('Tape finished. Collect three bolts and stop on the exit.');
+ }
+}
+function pause(){if(s.mode==='playing')s.mode='paused';else if(s.mode==='paused')s.mode='playing';render();}
+function advance(ms){if(!Number.isFinite(ms)||ms<0)return;if(s.mode==='playing'){
+ if(s.phase==='running'){let remaining=ms;while(remaining>0&&s.mode==='playing'&&s.phase==='running'){const slice=Math.min(remaining,400-s.accumulator);s.elapsed+=slice;s.accumulator+=slice;remaining-=slice;if(s.accumulator>=400){s.accumulator=0;execute();}}if(s.mode==='playing'&&s.phase==='editing')s.elapsed+=remaining;}
+ else s.elapsed+=ms;
+ }render();}
+function box(x,y,w,h,color,r=12){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function text(t,x,y,size=20,color='#263d48',align='center'){ctx.fillStyle=color;ctx.font=`600 ${size}px system-ui`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+const center=(x,y)=>({x:175+x*90,y:140+y*76});
+function render(){const p=pal();box(0,0,800,600,p.wall,0);box(0,535,800,65,p.metal,0);text(`WORKSHOP ${s.level+1} / 5`,30,34,17,p.metal,'left');text(`${s.faults} / 3 faults`,770,34,17,p.metal,'right');text(board().name,400,79,29,p.metal);
+ for(let y=0;y<5;y++)for(let x=0;x<6;x++){const c=center(x,y);box(c.x-41,c.y-35,82,70,board().rows[y][x]==='#'?p.metal:p.floor,8);if(board().rows[y][x]==='#'){text('×',c.x,c.y,26,p.wall);}}
+ const e=center(...board().exit);box(e.x-34,e.y-28,68,56,'#cae4c0',6);text('EXIT',e.x,e.y,17);
+ board().bolts.forEach(([x,y],i)=>{if(s.collected.includes(i))return;const c=center(x,y);ctx.fillStyle=p.bot;ctx.beginPath();for(let k=0;k<6;k++){const a=k*Math.PI/3;const px=c.x+17*Math.cos(a),py=c.y+17*Math.sin(a);if(k===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.closePath();ctx.fill();text('•',c.x,c.y,22,p.floor);});
+ const c=center(s.robot.x,s.robot.y);ctx.save();ctx.translate(c.x,c.y);ctx.rotate(s.robot.dir*Math.PI/2);box(-26,-25,52,50,p.bot,12);box(-17,-16,34,19,p.floor,6);text('••',0,-6,19,p.metal);ctx.fillStyle=p.metal;ctx.beginPath();ctx.moveTo(0,-36);ctx.lineTo(-9,-25);ctx.lineTo(9,-25);ctx.fill();ctx.restore();
+ text(`${s.collected.length}/3 BOLTS   ·   ${s.phase==='running'?`COMMAND ${s.pc+1}/${s.queue.length}`:'PLAN → RUN → REFINE'}`,400,508,17,p.metal);text('A TINY WIND-UP WORKSHOP',400,566,17,p.floor);
+ if(s.mode!=='playing'){box(0,0,800,600,'#263d4855',0);box(75,155,650,285,'#fff9eb',20);const titles={menu:'Meet your button-powered bot',paused:'Tools down. Take a breath.',between:'Beautifully assembled',won:'A brilliant little engineer',lost:'Back to the drawing board'};text(titles[s.mode],400,205,28,p.metal);const lines=s.mode==='menu'?['Queue forward steps and quarter turns.','Collect three bolts, then stop on the exit.','Watch the arrow: turns happen in place.']:s.mode==='paused'?['Your bot and tape are frozen.','Press P or Resume to continue.']:s.mode==='between'?['Three bolts collected. Exit reached.','The next workshop needs a new program.']:s.mode==='won'?['Five workshops. Fifteen bolts. One clever bot.','Start again to design another solution.']:['Three programs went off course.','Restart and refine your route.'];lines.forEach((line,i)=>text(line,400,261+i*36,20));text(s.mode==='paused'?'RESUME BELOW':'START / CONTINUE BELOW OR PRESS ENTER',400,408,15,p.bot);}
+ document.querySelector('#queue').textContent=s.queue.length?s.queue.map((v,i)=>(s.phase==='running'&&i===s.pc?'▶':'')+({F:'↑',L:'↶',R:'↷'}[v])).join(' '):'Your command tape · 0 / 24';
+ document.querySelector('#readout').textContent=`${s.queue.length}/24 commands · ${s.collected.length}/3 bolts · ${s.workshops}/5 workshops · ${s.phase==='running'?'Running':'Editing'}`;
+ document.querySelector('#status').textContent=s.message;document.querySelector('#pause').textContent=s.mode==='paused'?'Resume':'Pause';document.querySelector('#start').textContent=s.mode==='between'?'Next workshop':s.mode==='won'||s.mode==='lost'?'New campaign':'Start workshop';
+}
+document.querySelectorAll('[data-command]').forEach(b=>b.onclick=()=>edit(b.dataset.command));
+document.querySelector('#undo').onclick=undo;document.querySelector('#clear').onclick=clear;document.querySelector('#run').onclick=run;document.querySelector('#start').onclick=start;document.querySelector('#restart').onclick=restart;document.querySelector('#pause').onclick=pause;document.querySelector('#theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}render();}
+document.querySelector('#fullscreen').onclick=fullscreen;
+window.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,a[href],[contenteditable="true"],[role="dialog"]'))return;const k=e.key.toLowerCase();if(e.target.closest('button')&&(k==='enter'||k===' '))return;if(['arrowup','arrowleft','arrowright','enter','backspace',' '].includes(k))e.preventDefault();if(e.repeat)return;if(k==='arrowup'||k==='w')edit('F');if(k==='arrowleft'||k==='a')edit('L');if(k==='arrowright'||k==='d')edit('R');if(k==='backspace')undo();if(k==='c')clear();if(k==='enter'){if(s.mode==='playing')run();else start();}if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});});
+canvas.addEventListener('pointerdown',()=>canvas.focus({preventScroll:true}));
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='playing')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='playing')pause();});
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='playing')pause();}else report('abandoned');});window.addEventListener('pageshow',e=>{if(e.persisted){last=performance.now();if(s.mode==='playing')pause();else render();}});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'800x600; origin top-left; x right, y down; grid 6x5 centers (175+90*x,140+76*y); directions 0 north,1 east,2 south,3 west',mode:s.mode,phase:s.phase,level:s.level+1,rows:board().rows,robot:s.robot,bolts:board().bolts,collected:s.collected,exit:board().exit,queue:s.queue,pc:s.pc,commandRemainderMs:s.accumulator,timeMs:s.elapsed,theme:pal().name,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'buttonbot',gameName:'Button Bot'});function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}load();render();requestAnimationFrame(frame);
+</script></body></html>
