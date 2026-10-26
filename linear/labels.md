@@ -244,5 +244,6 @@
 - game/teapotpour
 - game/potteryspin
 - game/orchardorder
+- game/buttonbot
 
 Generated from `src/meta/feedback.js`.

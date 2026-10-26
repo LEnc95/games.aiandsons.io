@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Button Bot: program a wind-up robot to collect bolts and reach the exit across five workshops.
+
 ## [1.18.0] - 2026-10-25
 ### Fixed
 - Teapot Pour now has a visible Back to games link; canvas-start clip capture, video formats, and saving finished clips work through the shared recorder.
