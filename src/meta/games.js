@@ -230,7 +230,7 @@ const BASE_GAMES = [
   { slug:'teapotpour', name:'Teapot Pour', emoji:'\u{1FAD6}', scoreHint:'cups', url:'/teapotpour', desc:'Hold to pour, allow for the falling stream, and fill fifteen teacups to their target bands across five brisk tea services.', earnsCoins:true },
   { slug:'potteryspin', name:'Pottery Spin', emoji:'\u{1F3FA}', scoreHint:'vases', url:'/potteryspin', desc:'Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks.', earnsCoins:true },
   { slug:'orchardorder', name:'Orchard Order', emoji:'\u{1F34E}', scoreHint:'orchards', url:'/orchardorder', desc:'Plant numbers one through four, obey neighboring inequality signs, and solve five orchard Latin-square puzzles before three mistaken harvests.', earnsCoins:true },
-  { slug:'buttonbot', name:'Button Bot', emoji:'\u{1F916}', scoreHint:'workshops', url:'/buttonbot', desc:'Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshops.', earnsCoins:true },
+  { slug:'buttonbot', name:'Button Bot', emoji:'\u{1F916}', scoreHint:'workshops', url:'/buttonbot', desc:'Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
