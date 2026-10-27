@@ -245,5 +245,6 @@
 - game/potteryspin
 - game/orchardorder
 - game/buttonbot
+- game/postpath
 
 Generated from `src/meta/feedback.js`.

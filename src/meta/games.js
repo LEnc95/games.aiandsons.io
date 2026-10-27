@@ -231,6 +231,7 @@ const BASE_GAMES = [
   { slug:'potteryspin', name:'Pottery Spin', emoji:'\u{1F3FA}', scoreHint:'vases', url:'/potteryspin', desc:'Shave seven spinning clay bands to match each silhouette, fire five handmade vases, and fill your workshop shelf before three cracks.', earnsCoins:true },
   { slug:'orchardorder', name:'Orchard Order', emoji:'\u{1F34E}', scoreHint:'orchards', url:'/orchardorder', desc:'Plant numbers one through four, obey neighboring inequality signs, and solve five orchard Latin-square puzzles before three mistaken harvests.', earnsCoins:true },
   { slug:'buttonbot', name:'Button Bot', emoji:'\u{1F916}', scoreHint:'workshops', url:'/buttonbot', desc:'Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles.', earnsCoins:true },
+  { slug:'postpath', name:'Post Path', emoji:'\u{1F4EE}', scoreHint:'maps', url:'/postpath', desc:'Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
