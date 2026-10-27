@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Post Path: cross every harbor lane exactly once and deliver five letters without getting stranded.
 - Button Bot: program a wind-up robot to collect bolts and reach the exit across five workshops.
 
 ## [1.18.0] - 2026-10-25

@@ -44,7 +44,7 @@ const DISCOVERY_GAME_SLUGS = Object.freeze([
   "mushroommorse", "reedrelay", "belltowerbloom", "neststack", "clockworkclover", "thimbletide",
   "ribbonreversal", "pebbleparade", "chalkchase", "paperbridge", "signalgarden", "pollenpassage",
   "foxfiretrails", "bottlecapcurl", "runeroots", "stampstudio", "teapotpour", "potteryspin",
-  "orchardorder", "buttonbot",
+  "orchardorder", "buttonbot", "postpath",
 ]);
 
 const CURATED_TRENDING_SLUGS = Object.freeze([

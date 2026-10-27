@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Post Path | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3eddc;color:#253e45;font-family:system-ui,sans-serif}main{max-width:900px;margin:auto;padding:24px 16px}nav a{color:#285f67;font-weight:700}header{text-align:center}h1{font-family:Georgia,serif;font-size:3rem;margin:12px 0 0}header p{letter-spacing:.18em;font-size:.75rem;margin:8px 0 20px}canvas{display:block;width:100%;height:auto;border-radius:20px;box-shadow:0 12px 35px #253e4526;touch-action:manipulation}.controls,#destinations{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0}button,select{font:700 .95rem system-ui;min-height:46px;border:1px solid #91a6a1;border-radius:10px;padding:10px 15px;background:#fffaf0;color:#253e45;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,select:focus-visible,a:focus-visible,canvas:focus-visible{outline:3px solid #bc6537;outline-offset:3px}#start{background:#28636a;color:white}#status,#readout{text-align:center;min-height:24px}.help{text-align:center;font-size:.9rem;line-height:1.7}select{max-width:180px}@media(max-width:600px){main{padding:64px 8px 16px}h1{font-size:2.2rem}button,select{padding:9px 12px}.help{font-size:.8rem}}@media(max-width:350px){main{padding-top:110px}}:fullscreen main{max-width:min(980px,115vh)}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Post Path | AI and Sons Games">
+  <meta property="og:description" content="Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/postpath">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/postpath.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Post Path | AI and Sons Games">
+  <meta name="twitter:description" content="Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/postpath.png">
+  <link rel="canonical" href="https://games.aiandsons.io/postpath">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Post Path","description":"Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/postpath","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main>
+<nav aria-label="Game navigation"><a href="/">← Back to games</a></nav><header><h1>Post Path</h1><p>EVERY LANE. ONE LITTLE LETTER.</p></header>
+<canvas id="game" width="800" height="600" tabindex="0" aria-label="Courier map. Cross every lane exactly once and finish at the gold postbox. Islands may be revisited."></canvas>
+<div id="destinations" aria-label="Available destinations"></div>
+<div class="controls"><button id="start">Start delivery</button><button id="undo">Undo lane</button><button id="retry">Retry map</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="fullscreen">Fullscreen</button><select id="theme" aria-label="Map palette"><option>Lagoon letter</option><option>Rose postcard</option><option>Blue airmail</option></select></div>
+<div id="readout"></div><div id="status" role="status" aria-live="polite"></div>
+<p class="help">Cross every lane once, then finish at the gold postbox. Revisit islands, never reuse a lane.<br>Lane crossings are not stops unless marked by a lettered island.<br>Tap an adjacent island or its destination button. Keys 1–8 choose island A–H.<br>← / → select a destination · Enter / Space cross · U undo · P pause · R restart · F fullscreen.<br>Getting stranded or finishing at the wrong island costs a tangle. Three tangles end the trip.<br>Retry map clears your route without a penalty. No time limit.</p>
+</main><script type="module">
+import { addCoins } from '/src/core/state.js';
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+// Each route defines an Euler trail. Repeated islands are deliberate; lanes are unique.
+const maps=[
+ {name:'Twin quays',points:[[190,200],[390,140],[400,300],[610,230],[590,420],[190,430]],route:[0,1,2,0,5,2,3,4,2]},
+ {name:'Lagoon loop',points:[[160,220],[340,130],[570,180],[640,380],[410,450],[160,410],[395,300]],route:[0,1,2,3,4,5,0,6,2]},
+ {name:'Three little coves',points:[[180,180],[350,125],[590,180],[640,360],[420,465],[170,420],[390,300],[110,300]],route:[6,0,1,6,2,3,6,4,5,6,7]},
+ {name:'The long postcard',points:[[130,200],[300,130],[510,145],[670,260],[580,430],[350,460],[145,390],[390,290]],route:[0,1,2,3,4,5,6,0,7,2,5,7,4]},
+ {name:'Harbor finale',points:[[170,180],[390,120],[620,190],[650,390],[410,465],[160,410],[310,300],[90,300]],route:[6,0,1,2,6,3,4,5,6,1,4,6,7]},
+].map(m=>({...m,start:m.route[0],end:m.route.at(-1),edges:m.route.slice(1).map((v,i)=>[m.route[i],v])}));
+const palettes=[{name:'Lagoon letter',water:'#c9e5df',island:'#fff4d8',lane:'#497e82',post:'#c57b36'},{name:'Rose postcard',water:'#ecd9df',island:'#fff2df',lane:'#8d617c',post:'#a55a44'},{name:'Blue airmail',water:'#d4e3f0',island:'#fff8e6',lane:'#4a739d',post:'#bd7533'}];
+const s={mode:'menu',level:0,at:0,path:[],used:[],maps:0,delivered:0,tangles:0,elapsed:0,theme:0,selected:0,started:false,reported:false,message:'One letter. A whole harbor of possibilities.'};
+let manual=false,last=performance.now(),destinationKey='';
+const map=()=>maps[s.level],pal=()=>palettes[s.theme],label=i=>String.fromCharCode(65+i);
+const options=()=>map().edges.flatMap(([a,b],i)=>s.used.includes(i)?[]:a===s.at?[{node:b,edge:i}]:b===s.at?[{node:a,edge:i}]:[]).sort((a,b)=>a.node-b.node);
+const metrics=()=>({maps:s.maps,lanes:s.delivered+(['between','won'].includes(s.mode)?0:s.used.length),tangles:s.tangles});
+function report(result){if(!s.started||s.reported)return;s.reported=true;reportGameOutcome({slug:'postpath',result,durationMs:Math.round(s.elapsed),metrics:metrics()});}
+function load(){s.at=map().start;s.path=[s.at];s.used=[];s.selected=0;destinationKey='';}
+function restart(){report('abandoned');Object.assign(s,{mode:'menu',level:0,maps:0,delivered:0,tangles:0,elapsed:0,started:false,reported:false,message:'One letter. A whole harbor of possibilities.'});load();render();}
+function start(){if(s.mode==='won'||s.mode==='lost')restart();if(s.mode==='menu'){s.started=true;s.mode='playing';}else if(s.mode==='between'){s.level++;load();s.mode='playing';}else if(s.mode==='stranded'){load();s.mode='playing';}else return;s.message='Visit every lane once. Save the gold postbox for last.';canvas.focus({preventScroll:true});render();}
+function cross(node){if(s.mode!=='playing')return;const choice=options().find(o=>o.node===node);if(!choice){s.message='Choose a connected island on an unused lane.';render();return;}s.used.push(choice.edge);s.at=node;s.path.push(node);s.selected=0;
+ if(s.used.length===map().edges.length&&s.at===map().end){s.maps++;s.delivered+=s.used.length;s.mode=s.maps===5?'won':'between';s.message=s.mode==='won'?'All five letters delivered. A perfect postal route!':'Letter delivered. Your next map is ready.';if(s.mode==='won')report('completed');addCoins(5);}
+ else if(!options().length){s.tangles++;s.mode=s.tangles===3?'lost':'stranded';s.message=s.mode==='lost'?'Three tangles. Restart to plan a fresh trip.':'Stranded with lanes left. Try saving this island for later.';if(s.mode==='lost')report('lost');}
+ else s.message='Lane crossed. You may revisit islands by a different lane.';render();}
+function undo(){if(s.mode!=='playing'||!s.used.length)return;s.used.pop();s.path.pop();s.at=s.path.at(-1);s.selected=0;s.message='Last lane reopened.';render();}
+function retry(){if(s.mode!=='playing')return;load();s.message='Fresh route, same letter. No tangle added.';render();}
+function pause(){if(s.mode==='playing')s.mode='paused';else if(s.mode==='paused')s.mode='playing';render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='playing')s.elapsed+=ms;render();}
+function box(x,y,w,h,color,r=12){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function text(t,x,y,size=20,color='#253e45',align='center'){ctx.fillStyle=color;ctx.font=`600 ${size}px system-ui`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+function render(){const p=pal(),m=map(),opts=options();box(0,0,800,600,p.water,0);for(let y=100;y<520;y+=45){ctx.strokeStyle='#ffffff50';ctx.lineWidth=2;ctx.beginPath();for(let x=0;x<=800;x+=10){const yy=y+Math.sin(x/40+y)*5;x?ctx.lineTo(x,yy):ctx.moveTo(x,yy);}ctx.stroke();}
+ text(`DELIVERY ${s.level+1} / 5`,30,32,17,p.lane,'left');text(`${s.tangles} / 3 tangles`,770,32,17,p.lane,'right');text(m.name,400,74,29,p.lane);
+ m.edges.forEach(([a,b],i)=>{const [x,y]=m.points[a],[xx,yy]=m.points[b];ctx.strokeStyle=s.used.includes(i)?'#71838366':p.lane;ctx.lineWidth=s.used.includes(i)?4:9;ctx.setLineDash(s.used.includes(i)?[6,9]:[]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(xx,yy);ctx.stroke();ctx.setLineDash([]);if(s.used.includes(i))text('✓',(x+xx)/2,(y+yy)/2,17,p.lane);});
+ m.points.forEach(([x,y],i)=>{const available=opts.some(o=>o.node===i),chosen=opts[s.selected]?.node===i;ctx.fillStyle=p.island;ctx.beginPath();ctx.ellipse(x,y+6,37,29,0,0,7);ctx.fill();ctx.strokeStyle=i===m.end?p.post:chosen?'#253e45':available?p.lane:'#ffffff';ctx.lineWidth=chosen?5:3;ctx.stroke();text(label(i),x,y,24,p.lane);if(i===m.end){box(x-16,y+32,32,22,p.post,3);text('✉',x,y+43,21,p.island);}if(i===m.start)text('START',x,y-42,12,p.lane);});
+ const [x,y]=m.points[s.at];box(x-19,y-27,38,27,p.lane,5);ctx.strokeStyle=p.island;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-15,y-23);ctx.lineTo(x,y-13);ctx.lineTo(x+15,y-23);ctx.stroke();
+ box(0,535,800,65,p.lane,0);text(`${s.mode==='between'||s.mode==='won'?m.edges.length:s.used.length} / ${m.edges.length} LANES  ·  FINISH AT ${label(m.end)}`,400,566,18,p.island);
+ if(s.mode!=='playing'){box(0,0,800,600,'#253e4544',0);box(65,150,670,295,'#fff9eb',20);const titles={menu:'The harbor needs a postie',paused:'Postbag on the hook',between:'Signed, sealed, delivered',stranded:'A little postal tangle',won:'The whole harbor says thanks',lost:'Time for a fresh route'};text(titles[s.mode],400,204,28,p.lane);const lines=s.mode==='menu'?['Cross every lane exactly once.','Islands may be revisited. Lanes may not.','Finish at the gold postbox.']:s.mode==='paused'?['Your route and clock are frozen.','Press P or Resume to continue.']:s.mode==='stranded'?['There are unused lanes behind you.','Plan a new route and leave the dead end last.']:s.mode==='between'?['Every lane crossed. One letter home.','The next harbor has a new route to discover.']:s.mode==='won'?['Five letters, five maps, one thoughtful postie.','Start again to find another route.']:['Three routes got tangled.','Restart and try a different order.'];lines.forEach((line,i)=>text(line,400,264+i*34,20));text(s.mode==='paused'?'RESUME BELOW':'START / CONTINUE BELOW OR PRESS ENTER',400,410,15,p.post);}
+ const key=s.mode+':'+s.at+':'+s.used.join(',');if(key!==destinationKey){destinationKey=key;const row=document.querySelector('#destinations');row.replaceChildren();if(s.mode==='playing')opts.forEach(o=>{const b=document.createElement('button');b.textContent=`${o.node+1} · To ${label(o.node)}`;b.dataset.node=o.node;b.onclick=()=>{cross(o.node);canvas.focus({preventScroll:true});};row.append(b);});}
+ document.querySelectorAll('#destinations button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.node)===opts[s.selected]?.node)));
+ document.querySelector('#readout').textContent=`Island ${label(s.at)} · ${s.used.length}/${m.edges.length} lanes this map · ${s.maps}/5 letters delivered`;
+ document.querySelector('#status').textContent=s.message;document.querySelector('#pause').textContent=s.mode==='paused'?'Resume':'Pause';document.querySelector('#start').textContent=s.mode==='between'?'Next delivery':s.mode==='stranded'?'Try route again':s.mode==='won'||s.mode==='lost'?'New trip':'Start delivery';document.querySelector('#start').disabled=s.mode==='playing'||s.mode==='paused';document.querySelector('#undo').disabled=s.mode!=='playing'||!s.used.length;document.querySelector('#retry').disabled=s.mode!=='playing';
+}
+document.querySelector('#start').onclick=start;document.querySelector('#undo').onclick=undo;document.querySelector('#retry').onclick=retry;document.querySelector('#pause').onclick=pause;document.querySelector('#restart').onclick=restart;document.querySelector('#theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}render();}document.querySelector('#fullscreen').onclick=fullscreen;
+canvas.addEventListener('pointerdown',e=>{canvas.focus({preventScroll:true});const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*800/r.width,y=(e.clientY-r.top)*600/r.height;const node=map().points.findIndex(([xx,yy])=>Math.hypot(x-xx,y-yy)<42);if(node>=0)cross(node);});
+window.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,a[href],[contenteditable="true"],[role="dialog"]'))return;const k=e.key.toLowerCase();if(e.target.closest('button')&&(k==='enter'||k===' '))return;if(['arrowleft','arrowright','enter',' '].includes(k))e.preventDefault();if(e.repeat)return;if(k==='p')pause();if(k==='r')restart();if(k==='u')undo();if(k==='f')fullscreen();if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(s.mode==='playing'){const opts=options();if(k==='arrowleft'||k==='arrowright')s.selected=(s.selected+(k==='arrowleft'?-1:1)+opts.length)%opts.length;if(k==='enter'||k===' ')cross(opts[s.selected]?.node);if(/^[1-8]$/.test(k))cross(Number(k)-1);}else if(k==='enter')start();render();});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='playing')pause();},true);window.addEventListener('blur',()=>{if(s.mode==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='playing')pause();});window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='playing')pause();}else report('abandoned');});window.addEventListener('pageshow',e=>{if(e.persisted){last=performance.now();if(s.mode==='playing')pause();else render();}});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'800x600; origin top-left, x right, y down; islands A=0 through H=7',mode:s.mode,level:s.level+1,name:map().name,points:map().points,edges:map().edges,start:map().start,end:map().end,at:s.at,path:s.path,used:s.used,available:options(),selected:s.selected,timeMs:s.elapsed,theme:pal().name,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'postpath',gameName:'Post Path'});function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}load();render();requestAnimationFrame(frame);
+</script></body></html>
