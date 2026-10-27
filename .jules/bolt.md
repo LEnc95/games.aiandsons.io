@@ -82,3 +82,7 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2024-05-18 - Fast-path Filtering on Raw Database Objects
+**Learning:** Mapping an entire database query result through an expensive normalizer function before filtering introduces severe O(N) object allocation overhead, particularly when most documents will be discarded by the filter.
+**Action:** Replace `snapshot.docs.map(normalize).filter(...)` pipelines with an imperative `for...of` loop. Only call the expensive normalization function once per item, and check the filter conditions against that initialized object before pushing to prevent redundant object allocation and mapping overhead, without duplicating internal logic inline.
