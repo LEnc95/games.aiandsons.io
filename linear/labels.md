@@ -246,5 +246,6 @@
 - game/orchardorder
 - game/buttonbot
 - game/postpath
+- game/ovenorder
 
 Generated from `src/meta/feedback.js`.
