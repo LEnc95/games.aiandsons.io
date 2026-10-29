@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Mint Mystery: find a heavier coin with two balance-scale weighings across three mint investigations.
 - Oven Order: arrange single-oven bake queues and meet every deadline across five bakery scheduling puzzles.
 - Post Path: cross every harbor lane exactly once and deliver five letters without getting stranded.
 - Button Bot: program a wind-up robot to collect bolts and reach the exit across five workshops.
