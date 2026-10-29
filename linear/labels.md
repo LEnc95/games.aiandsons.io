@@ -247,5 +247,6 @@
 - game/buttonbot
 - game/postpath
 - game/ovenorder
+- game/mintmystery
 
 Generated from `src/meta/feedback.js`.

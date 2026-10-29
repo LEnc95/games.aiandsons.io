@@ -233,6 +233,7 @@ const BASE_GAMES = [
   { slug:'buttonbot', name:'Button Bot', emoji:'\u{1F916}', scoreHint:'workshops', url:'/buttonbot', desc:'Program a wind-up robot with forward steps and quarter turns, gather every bolt, and reach the exit across five handcrafted workshop puzzles.', earnsCoins:true },
   { slug:'postpath', name:'Post Path', emoji:'\u{1F4EE}', scoreHint:'maps', url:'/postpath', desc:'Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox.', earnsCoins:true },
   { slug:'ovenorder', name:'Oven Order', emoji:'\u{1F35E}', scoreHint:'menus', url:'/ovenorder', desc:'Arrange bakery tickets into a single-oven queue, meet every finish deadline, and solve five warm scheduling puzzles.', earnsCoins:true },
+  { slug:'mintmystery', name:'Mint Mystery', emoji:'⚖', scoreHint:'cases', url:'/mintmystery', desc:'Find the heavier coin among nine with two balance-scale weighings in each of three deduction puzzles.', earnsCoins:false, category:'puzzle' },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
