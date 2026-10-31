@@ -82,3 +82,7 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2026-10-31 - Optimize Firestore Query Results Processing
+**Learning:** When processing Firestore query results (e.g., `snapshot.docs`), using chained methods like `.map(normalize).filter(...).slice(0, limit)` creates unnecessary object allocations and normalizes documents that may eventually be discarded by the filter or slice operations.
+**Action:** Always refactor these sequential pipelines into an explicitly initialized empty array `[]` and a `for...of` loop over `snapshot.docs`. Normalize each item inside the loop, test it against the filter conditions, push matches to the array, and `break` early once the desired limit is reached.
