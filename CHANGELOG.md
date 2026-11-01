@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.19.0] - 2026-11-01
 ### Added
 - Mint Mystery: find a heavier coin with two balance-scale weighings across three mint investigations.
 - Oven Order: arrange single-oven bake queues and meet every deadline across five bakery scheduling puzzles.

@@ -2,6 +2,21 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.19.0 — 2026-11-01
+
+- Release week: 2026-W44
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- f090c91 Add Mint Mystery daily game (#399)
+- de04c32 Add Oven Order daily game (#397)
+- b69bced Add Post Path daily game (#395)
+- 6bb56f8 Add Button Bot daily game (#391)
+- 456feaa Prepare weekly release 1.18.0 (#390)
+- cd2387f Add Orchard Order daily game (#389)
+
 ## 1.18.0 — 2026-10-25
 
 - Release week: 2026-W43
