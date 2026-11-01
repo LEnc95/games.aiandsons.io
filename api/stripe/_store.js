@@ -485,9 +485,14 @@ async function findStripeBillingProfiles({
       .where("customerEmail", "==", normalizedCustomerEmail)
       .limit(normalizedLimit)
       .get();
-    return snapshot.docs
-      .map((doc) => normalizeBillingProfile(doc.data(), doc.id))
-      .filter((profile) => profile.userId);
+    const matches = [];
+    for (const doc of snapshot.docs) {
+      const profile = normalizeBillingProfile(doc.data(), doc.id);
+      if (profile.userId) {
+        matches.push(profile);
+      }
+    }
+    return matches;
   }
 
   const matches = [];
@@ -538,10 +543,15 @@ async function listStripeBillingProfiles({
       .orderBy("updatedAt", "desc")
       .limit(normalizedLimit * 2)
       .get();
-    const profiles = snapshot.docs
-      .map((doc) => normalizeBillingProfile(doc.data(), doc.id))
-      .filter((profile) => shouldIncludeListedProfile(profile, { withCustomerOnly, activeOnly }));
-    return profiles.slice(0, normalizedLimit);
+    const profiles = [];
+    for (const doc of snapshot.docs) {
+      const profile = normalizeBillingProfile(doc.data(), doc.id);
+      if (shouldIncludeListedProfile(profile, { withCustomerOnly, activeOnly })) {
+        profiles.push(profile);
+        if (profiles.length >= normalizedLimit) break;
+      }
+    }
+    return profiles;
   }
 
   const profiles = [];
