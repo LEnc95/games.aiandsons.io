@@ -52,6 +52,8 @@ const GAME_FILE_BY_PREFIX = {
   kiteparade: 'kiteparade/index.html',
   nectarmeasure: 'nectarmeasure/index.html',
   rippleshepherd: 'rippleshepherd/index.html',
+  echoferry: 'echoferry/index.html',
+  paperbridge: 'paperbridge/index.html',
 };
 
 function extractItems(shopHtml) {
@@ -153,6 +155,21 @@ test('2026-W43 weekly cosmetic inventory is unique and within the generated pric
     ['nectarmeasure-iris-honeycomb', 43],
     ['rippleshepherd-glasswater-gleam', 59],
     ['lanternloom-starfall-gilding', 77],
+  ]);
+  const sourceById = new Map(items.map((item) => [item.id, item]));
+  assert.equal(expected.size, 3);
+  for (const [id, price] of expected) {
+    assert.equal(sourceById.get(id)?.type, 'inventory', `Expected ${id} to be a shop inventory item.`);
+    assert.equal(Number(shopHtml.match(new RegExp(`id: "${id}"[\\s\\S]*?price: (\\d+)`))?.[1]), price);
+    assert.ok(price >= 20 && price <= 90, `Expected ${id} price to stay within the weekly policy.`);
+  }
+});
+
+test('2026-W45 weekly cosmetic inventory is unique and within the generated price policy', () => {
+  const expected = new Map([
+    ['geargrove-cobalt-canopy', 49],
+    ['echoferry-saffron-sounding', 64],
+    ['paperbridge-rosefold-radiance', 82],
   ]);
   const sourceById = new Map(items.map((item) => [item.id, item]));
   assert.equal(expected.size, 3);
