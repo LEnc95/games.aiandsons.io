@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Torch Bridge: escort four travelers with one fading lantern across three timed crossing puzzles.
 - Added the 2026-W45 content pack with Cobalt Canopy Gear Grove, Saffron Sounding Echo Ferry, and Rosefold Radiance Paper Bridge cosmetics plus four bounded weekly challenges.
 
 ## [1.19.0] - 2026-11-01

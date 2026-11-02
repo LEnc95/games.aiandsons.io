@@ -234,6 +234,7 @@ const BASE_GAMES = [
   { slug:'postpath', name:'Post Path', emoji:'\u{1F4EE}', scoreHint:'maps', url:'/postpath', desc:'Plan a courier trail through five harbor puzzles, cross every lane exactly once, revisit islands, and finish at the gold postbox.', earnsCoins:true },
   { slug:'ovenorder', name:'Oven Order', emoji:'\u{1F35E}', scoreHint:'menus', url:'/ovenorder', desc:'Arrange bakery tickets into a single-oven queue, meet every finish deadline, and solve five warm scheduling puzzles.', earnsCoins:true },
   { slug:'mintmystery', name:'Mint Mystery', emoji:'⚖', scoreHint:'cases', url:'/mintmystery', desc:'Find the heavier coin among nine with two balance-scale weighings in each of three deduction puzzles.', earnsCoins:false, category:'puzzle' },
+  { slug:'torchbridge', name:'Torch Bridge', emoji:'\u{1F526}', scoreHint:'bridges', url:'/torchbridge', desc:'Escort four travelers across three bridges with one fading lantern and carefully planned return trips.', earnsCoins:true },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

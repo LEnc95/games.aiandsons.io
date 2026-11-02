@@ -248,5 +248,6 @@
 - game/postpath
 - game/ovenorder
 - game/mintmystery
+- game/torchbridge
 
 Generated from `src/meta/feedback.js`.
