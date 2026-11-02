@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-11-02 Weekly content pack 2026-W45
+- Isolated from `origin/main` baseline `18c5378519f7d1b501da57d2c6984f76a86afc89`; issue #404 is authoritative. Added inventory-gated Cobalt Canopy (Gear Grove, 49), Saffron Sounding (Echo Ferry, 64), and Rosefold Radiance (Paper Bridge, 82), plus four one-time 20-coin challenges: Gear Grove gears 27, Echo Ferry buoys 20, Paper Bridge bridges 5, and Reed Relay glowseeds 20 (80 total).
+- Visual ownership proof, 390px layouts, campaign/state checks, pause/restart/fullscreen controls, and the ordered local gates passed. TODO: staged audit, guarded PR publication, merge, and production verification.
+
 ## 2026-10-19 Weekly content pack 2026-W43
 - Isolated from `origin/main` baseline `777cca8498f52d19acfd0e564df97d9fdb852595`; issue #375 is authoritative. Drafted the permitted three inventory-gated palette cosmetics (Iris Honeycomb, Glasswater Gleam, Starfall Gilding) and the four exact 20-coin bounded challenges for Nectar Measure vessels, Ripple Shepherd fireflies, Lantern Loom stars, and Moon Mender stones. Browser playthrough proved Ripple Shepherd has 16 campaign fireflies, so its target is safely set to 16 (within the issue's 0..20 registered bound).
 - Browser proof passed for every shop preview plus unowned/equipped desktop and 390px layouts; each palette is inventory-gated, text state agrees with the render, pause/restart/fullscreen paths are exercised, and no browser errors were recorded. Ordered gates passed: maintenance, 225-game preflight, telemetry 20/20, feedback 37/37, shop 73/73, social 22/22, raw weekly smoke, and diff check. Exact audit has nine scoped paths and three game shells; committed as `81fd377` and ready for guarded PR publication.

@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Added the 2026-W45 content pack with Cobalt Canopy Gear Grove, Saffron Sounding Echo Ferry, and Rosefold Radiance Paper Bridge cosmetics plus four bounded weekly challenges.
+
 ## [1.19.0] - 2026-11-01
 ### Added
 - Mint Mystery: find a heavier coin with two balance-scale weighings across three mint investigations.

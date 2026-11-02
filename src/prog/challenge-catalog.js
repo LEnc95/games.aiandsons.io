@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w45-geargrove-gears-27', weekKey: '2026-11-02', gameSlug: 'geargrove', metric: 'gears', name: 'Cobalt Clockwork', desc: 'Align all 27 gears in Gear Grove.', target: 27, rewardCoins: 20 }),
+  define({ id: 'weekly-w45-echoferry-buoys-20', weekKey: '2026-11-02', gameSlug: 'echoferry', metric: 'buoys', name: 'Saffron Signal', desc: 'Find all 20 buoys in Echo Ferry.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w45-paperbridge-bridges-5', weekKey: '2026-11-02', gameSlug: 'paperbridge', metric: 'bridges', name: 'Rosefold Span', desc: 'Hold all 5 bridges in Paper Bridge.', target: 5, rewardCoins: 20 }),
+  define({ id: 'weekly-w45-reedrelay-glowseeds-20', weekKey: '2026-11-02', gameSlug: 'reedrelay', metric: 'glowseeds', name: 'Reedlight Relay', desc: 'Gather all 20 glowseeds in Reed Relay.', target: 20, rewardCoins: 20 }),
   define({ id: 'weekly-w43-nectarmeasure-vessels-18', weekKey: '2026-10-19', gameSlug: 'nectarmeasure', metric: 'vessels', name: 'Iris Measure', desc: 'Balance all 18 vessels in Nectar Measure.', target: 18, rewardCoins: 20 }),
   define({ id: 'weekly-w43-rippleshepherd-fireflies-16', weekKey: '2026-10-19', gameSlug: 'rippleshepherd', metric: 'fireflies', name: 'Glasswater Guide', desc: 'Guide all 16 fireflies in Ripple Shepherd.', target: 16, rewardCoins: 20 }),
   define({ id: 'weekly-w43-lanternloom-stars-55', weekKey: '2026-10-19', gameSlug: 'lanternloom', metric: 'stars', name: 'Starfall Keeper', desc: 'Catch all 55 stars in Lantern Loom.', target: 55, rewardCoins: 20 }),
