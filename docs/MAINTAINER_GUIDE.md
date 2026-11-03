@@ -328,6 +328,20 @@ Source of truth:
   a scheduled 4-item pack for the current local week before falling back to the
   deterministic rotation.
 
+Runtime behavior:
+
+- `weekKey` is a local-Monday date string (`YYYY-MM-DD`) computed in the
+  browser. A dated pack becomes active only when exactly four definitions share
+  the current key; three or five matching entries trigger the fallback rotation.
+- Mission progress is persisted under `cadegames:v1:missions`. The weekly
+  bucket resets when the local week changes, then stores active IDs, clamped
+  progress, completed IDs, and rewarded IDs.
+- `recordMissionProgress()` accepts a nested payload shaped like
+  `{ [gameSlug]: { [metric]: value } }`. Values are floored, clamped to the
+  challenge target, and rewards are paid once per challenge ID.
+- Keep challenge IDs stable after release. Renaming an active ID makes existing
+  local progress look like a new challenge and can pay coins again.
+
 Implementation checklist:
 
 1. Generate or inspect the brief with `npm run automation:weekly-brief`.
@@ -338,7 +352,13 @@ Implementation checklist:
 4. Add four `WEEKLY_CHALLENGE_DEFS` entries with the current local-Monday
    `weekKey`, bounded metrics from the game content contracts, and rewards that
    sum to no more than 80 coins.
-5. Update `CHANGELOG.md` and `progress.md` with the pack contents and validation.
+5. Refresh the weekly smoke fixture in `scripts/qa/weekly-challenges-smoke.mjs`
+   so its synthetic `maybeUnlock()` payload completes the current four
+   challenges and its assertion labels name the current pack.
+6. Add the new cosmetic IDs and generated prices to the dated weekly inventory
+   assertion in `tests/shop-items.integration.test.mjs`. If a new item prefix is
+   checked against a game shell, add that prefix to `GAME_FILE_BY_PREFIX`.
+7. Update `CHANGELOG.md` and `progress.md` with the pack contents and validation.
 
 Constraints:
 
@@ -346,13 +366,17 @@ Constraints:
   free-form telemetry in a weekly pack.
 - Weekly-pack diffs may touch at most three top-level game shells; the
   `weekly-pack` audit lane enforces this separately from the daily-game allowlist.
+- `scripts/qa/weekly-challenges-smoke.mjs` intentionally carries older pack
+  metrics in its broad payload so fallback rotations can still complete during
+  local-date testing. Keep those historical entries when adding the current pack.
 - Normal new game folders do not need per-game `vercel.json` edits; the generic
   clean-URL header rules are checked by `npm run game:preflight`.
 
 Validation:
 
 - Focused logic: `node --test tests/unit/prog/missions.test.mjs`
-- Shop/game wiring: `npm run test:shop`
+- Shop/game wiring: `node --test tests/shop-items.integration.test.mjs` or the
+  broader `npm run test:shop`
 - Automation contracts: `npm run maintenance:validate` and `npm run test:telemetry`
 - Release surface: `AUTOMATION_LANE=weekly-pack npm run automation:audit-diff`
 - Browser smoke: start `python -m http.server 4173`, then run
