@@ -249,5 +249,6 @@
 - game/ovenorder
 - game/mintmystery
 - game/torchbridge
+- game/sidingdispatch
 
 Generated from `src/meta/feedback.js`.

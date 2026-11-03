@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Siding Dispatch | AI and Sons Games</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f4efdf;color:#243f3a;font-family:system-ui,sans-serif}
+    main{max-width:940px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}
+    header{text-align:center}h1{font:700 clamp(32px,6vw,52px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.2em;font-size:12px;font-weight:750}
+    .intro{max-width:620px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:20px;touch-action:manipulation}
+    .controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #718a79;border-radius:9px;color:#243f3a;background:#fffdf3}
+    button.primary{background:#24594e;color:white;border-color:#24594e}button[aria-pressed=true]{background:#e9bc66;border-color:#6b4825}button:disabled{opacity:.45}
+    button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #ce693f;outline-offset:3px}
+    #readout{text-align:center;font-weight:650;line-height:1.6;margin:12px 0}#status{text-align:center;min-height:3em;line-height:1.5}.help{border-top:1px solid #c7cfba;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}
+    @media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px;margin-bottom:16px}.controls{gap:6px}button,select{padding:10px 12px}.help{font-size:13px}}
+    @media(max-width:350px){main{padding-top:112px}}
+  </style>
+
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Sort numbered wagons through three limited sidings, dispatch them in order, and solve five pocket railway puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Siding Dispatch | AI and Sons Games">
+  <meta property="og:description" content="Sort numbered wagons through three limited sidings, dispatch them in order, and solve five pocket railway puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/sidingdispatch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/sidingdispatch.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Siding Dispatch | AI and Sons Games">
+  <meta name="twitter:description" content="Sort numbered wagons through three limited sidings, dispatch them in order, and solve five pocket railway puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/sidingdispatch.png">
+  <link rel="canonical" href="https://games.aiandsons.io/sidingdispatch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Siding Dispatch","description":"Sort numbered wagons through three limited sidings, dispatch them in order, and solve five pocket railway puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/sidingdispatch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head>
+<body>
+<main>
+  <a href="/">← Back to games</a>
+  <header><p class="eyebrow">THE POCKET RAILWAY · LOGIC COLLECTION</p><h1>Siding Dispatch</h1>
+  <p class="intro">Three sidings. One departure order. Tuck incoming wagons into short tracks, then pull them out <strong>last in, first out</strong>.</p></header>
+  <canvas id="game" width="900" height="550" tabindex="0" aria-label="Rail yard with an arrival queue, three sidings, and an ordered departure track"></canvas>
+  <p id="readout"></p>
+  <div class="controls" id="sidings"><button data-track="0">A · siding</button><button data-track="1">B · siding</button><button data-track="2">C · siding</button></div>
+  <div class="controls"><button id="store" class="primary">Store incoming · S</button><button id="dispatch" class="primary">Dispatch top · D</button></div>
+  <div class="controls"><button id="start">Open yard</button><button id="retry">Retry yard · T</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="full">Fullscreen</button><select id="theme" aria-label="Railway palette"><option>Meadow brass</option><option>Coastal blue</option></select></div>
+  <p id="status" role="status"></p>
+  <p class="help">Dispatch wagons in order: 1, 2, 3… Each siding holds three wagons; only its newest wagon can leave.<br>
+    A wrong dispatch or retry costs one signal. Three red signals end the shift. Full or empty tracks cost nothing.<br>
+    Select A/B/C with keys 1/2/3 or tap a track. S stores · D dispatches · Enter opens/continues.<br>
+    P pauses · T retries this yard · R restarts the shift · F fullscreen · Escape exits.</p>
+</main>
+<script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const $ = id => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+const levels = [
+  [3,1,2,5,4], [4,2,1,6,3,5], [5,3,1,7,2,6,4],
+  [6,2,4,1,8,3,7,5], [7,3,5,1,9,2,8,4,6],
+];
+const palettes = [
+  {paper:'#f7edcf',grass:'#d8e1bd',rail:'#50685c',wagon:'#d2794c',accent:'#efd07a',ink:'#243f3a'},
+  {paper:'#eef3ed',grass:'#c7e0df',rail:'#47737e',wagon:'#597cb0',accent:'#f1d08a',ink:'#203b53'},
+];
+let s, manual = false, last = performance.now();
+function metrics(){return {yards:s.solved,wagons:s.wagons,faults:s.faults};}
+function report(result){
+  if(s.started && !s.reported){
+    s.reported = true;
+    reportGameOutcome({slug:'sidingdispatch',result,durationMs:s.time,metrics:metrics()});
+  }
+}
+function loadYard(){
+  s.queue = [...levels[s.level]]; s.tracks = [[],[],[]]; s.output = []; s.selected = 0;
+  s.message = 'Store the front arrival in a siding. Dispatch wagon 1 first.';
+}
+function restart(){
+  if(s) report('abandoned');
+  const theme = s?.theme || 0;
+  s = {mode:'menu',level:0,solved:0,wagons:0,faults:0,time:0,theme,started:false,reported:false};
+  loadYard(); render();
+}
+function start(){
+  if(['won','lost'].includes(s.mode)) restart();
+  if(s.mode==='menu'){s.started=true;s.mode='play';}
+  else if(s.mode==='between'){s.level++;loadYard();s.mode='play';}
+  render();
+}
+function select(i){if(s.mode==='play'){s.selected=i;s.message=`Siding ${'ABC'[i]} selected. Last wagon in is first out.`;render();}}
+function store(){
+  if(s.mode!=='play') return;
+  const track = s.tracks[s.selected];
+  if(!s.queue.length) s.message='All arrivals stored. Dispatch the remaining wagons.';
+  else if(track.length===3) s.message='This siding is full. Choose another track or dispatch its top wagon.';
+  else{const n=s.queue.shift();track.push(n);s.message=`Wagon ${n} stored in siding ${'ABC'[s.selected]}.`;}
+  render();
+}
+function fault(message){
+  s.faults++;
+  if(s.faults===3){s.mode='lost';s.message='Three red signals. The shift is closed. Start a new shift to try again.';report('lost');}
+  else s.message=message+` ${3-s.faults} signals remain.`;
+}
+function dispatch(){
+  if(s.mode!=='play') return;
+  const track=s.tracks[s.selected], next=s.output.length+1;
+  if(!track.length) s.message='This siding is empty. Store a wagon or choose another track.';
+  else if(track.at(-1)!==next) fault(`Departure needs wagon ${next}, but wagon ${track.at(-1)} blocks this siding.`);
+  else{
+    s.output.push(track.pop());s.wagons++;
+    s.message=`Wagon ${next} dispatched. Next departure: ${next+1}.`;
+    if(s.output.length===levels[s.level].length){
+      s.solved++;s.mode=s.solved===5?'won':'between';
+      s.message=s.mode==='won'?'All 35 wagons dispatched. A perfectly ordered railway!':'Yard cleared. Open the next yard when ready.';
+      if(s.mode==='won') report('completed');
+    }
+  }
+  render();
+}
+function retry(){
+  if(s.mode!=='play') return;
+  fault('Yard reset for a new plan.');
+  if(s.mode!=='lost'){s.wagons-=s.output.length;loadYard();s.message=`Yard reset. ${3-s.faults} signals remain.`;}
+  render();
+}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused')s.mode='play';render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function label(t,x,y,size=20,align='left',color=palettes[s.theme].ink){
+  ctx.font=`${size}px system-ui`;ctx.textAlign=align;ctx.fillStyle=color;ctx.fillText(t,x,y);
+}
+function rail(x1,x2,y,p){
+  ctx.fillStyle=p.rail;
+  for(let x=x1;x<x2;x+=22)ctx.fillRect(x,y-13,6,26);
+  ctx.fillRect(x1,y-7,x2-x1,3);ctx.fillRect(x1,y+6,x2-x1,3);
+}
+function wagon(n,x,y,p,top=false){
+  ctx.fillStyle=top?p.accent:p.wagon;
+  ctx.beginPath();ctx.roundRect(x,y-34,52,37,7);ctx.fill();
+  ctx.strokeStyle=p.ink;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=p.ink;for(const dx of [12,40]){ctx.beginPath();ctx.arc(x+dx,y+7,6,0,Math.PI*2);ctx.fill();}
+  label(String(n),x+26,y-8,22,'center',p.ink);
+}
+function render(){
+  const p=palettes[s.theme], n=levels[s.level].length;
+  ctx.fillStyle=p.paper;ctx.fillRect(0,0,900,550);
+  ctx.fillStyle=p.grass;ctx.beginPath();ctx.roundRect(22,135,856,310,18);ctx.fill();
+  label(`YARD 0${s.level+1} / 05`,32,35,16);label('SIDING DISPATCH',450,36,21,'center');
+  label(`SIGNALS ${'●'.repeat(3-s.faults)}${'○'.repeat(s.faults)}`,870,35,17,'right');
+  label('ARRIVALS → front wagon first',32,80,18);rail(335,867,112,p);
+  s.queue.forEach((v,i)=>wagon(v,340+i*58,108,p,i===0));
+  ctx.strokeStyle=p.rail;ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(315,112);ctx.lineTo(275,112);ctx.lineTo(275,389);ctx.stroke();
+  for(let i=0;i<3;i++){
+    const y=210+i*94;
+    if(s.selected===i){ctx.strokeStyle=p.wagon;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(36,y-48,814,75,12);ctx.stroke();}
+    label(`SIDING ${'ABC'[i]}`,58,y-12,21);label(`${s.tracks[i].length} / 3`,58,y+14,16);
+    rail(285,822,y+6,p);
+    for(let j=0;j<3;j++){ctx.strokeStyle=p.rail;ctx.lineWidth=1;ctx.strokeRect(635-j*82,y-34,52,38);}
+    s.tracks[i].forEach((v,j)=>wagon(v,635-j*82,y,p,j===s.tracks[i].length-1));
+    label('← OUT',350,y-12,16);label('BUFFER',755,y-12,16);
+  }
+  label('DEPARTURES →',32,489,18);rail(285,870,520,p);
+  for(let i=0;i<n;i++){
+    if(i<s.output.length)wagon(i+1,300+i*60,514,p);
+    else label(String(i+1),326+i*60,506,20,'center');
+  }
+  if(s.mode!=='play'){
+    ctx.fillStyle=p.paper;ctx.beginPath();ctx.roundRect(80,150,740,285,16);ctx.fill();
+    ctx.strokeStyle=p.rail;ctx.lineWidth=2;ctx.stroke();
+    label({menu:'A little room. A clever plan.',paused:'Signals on hold',between:'Right on schedule',won:'A master dispatcher',lost:'End of the shift'}[s.mode],450,240,34,'center');
+    label({menu:'Store in sidings. Pull the newest wagon out first.',paused:'Your yard and clock are frozen.',between:'Every wagon departed in order.',won:'Five yards · 35 wagons · one fine railway.',lost:'Start fresh and try a different siding plan.'}[s.mode],450,300,22,'center');
+    label(s.mode==='paused'?'Press P or Resume to return.':s.mode==='between'?'Press Enter or Next yard.':'Use the button below to begin.',450,355,19,'center');
+  }
+  for(const b of $('sidings').children){b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(Number(b.dataset.track)===s.selected));}
+  $('start').disabled=['play','paused'].includes(s.mode);
+  $('start').textContent=s.mode==='between'?'Next yard':['won','lost'].includes(s.mode)?'New shift':'Open yard';
+  for(const id of ['store','dispatch','retry'])$(id).disabled=s.mode!=='play';
+  $('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume':'Pause';
+  const readout=`Yard ${s.level+1}/5 · Departed ${s.output.length}/${n} · Need: ${s.output.length===n?'complete':s.output.length+1} · Arrivals: ${s.queue.join(' → ')||'none'} · Siding ${'ABC'[s.selected]} (next out first): ${[...s.tracks[s.selected]].reverse().join(' · ')||'empty'} · ${3-s.faults} signals`;
+  if($('readout').textContent!==readout)$('readout').textContent=readout;
+  if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+function focus(){canvas.focus({preventScroll:true});}
+for(const b of $('sidings').children)b.onclick=()=>{select(Number(b.dataset.track));focus();};
+for(const [id,fn] of [['start',start],['store',store],['dispatch',dispatch],['retry',retry],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{
+  focus();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*900/r.width,y=(e.clientY-r.top)*550/r.height;
+  const i=Math.round((y-210)/94);if(x>=36&&x<=850&&i>=0&&i<3&&Math.abs(y-(210+i*94))<=40)select(i);
+};
+window.addEventListener('keydown',e=>{
+  const launcher=e.target.closest('.cade-feedback-launcher');
+  if(e.target.closest('input,textarea,select,a,[contenteditable],[role="dialog"]')||(e.target.closest('button')&&!launcher))return;
+  const k=e.key.toLowerCase();
+  if(launcher&&['enter',' '].includes(k))return;
+  if(['1','2','3','s','d','t','p','r','f','enter'].includes(k))e.preventDefault();if(e.repeat)return;
+  if(/^[1-3]$/.test(k))select(Number(k)-1);
+  if(k==='s')store();if(k==='d')dispatch();if(k==='t')retry();if(k==='p')pause();if(k==='r')restart();if(k==='enter')start();if(k==='f')fullscreen();
+  if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x550 origin top-left; sidings A/B/C centered y=210/304/398; newest wagon at left',mode:s.mode,yard:s.level+1,capacity:3,queue:s.queue,tracks:s.tracks,selected:'ABC'[s.selected],departed:s.output,next:s.output.length+1,timeMs:s.time,theme:s.theme,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'sidingdispatch',gameName:'Siding Dispatch'});
+restart();
+function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script>
+</body>
+</html>
