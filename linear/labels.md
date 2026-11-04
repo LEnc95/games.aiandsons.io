@@ -250,5 +250,6 @@
 - game/mintmystery
 - game/torchbridge
 - game/sidingdispatch
+- game/trailpantry
 
 Generated from `src/meta/feedback.js`.

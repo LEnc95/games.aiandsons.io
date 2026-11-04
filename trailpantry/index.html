@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trail Pantry | AI and Sons Games</title>  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f4efdf;color:#243f3a;font-family:system-ui,sans-serif}
+    main{max-width:940px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}
+    header{text-align:center}h1{font:700 clamp(32px,6vw,52px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.2em;font-size:12px;font-weight:750}
+    .intro{max-width:620px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:20px;touch-action:manipulation}
+    .controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #718a79;border-radius:9px;color:#243f3a;background:#fffdf3}
+    button.primary{background:#24594e;color:white;border-color:#24594e}button[aria-pressed=true]{background:#e9bc66;border-color:#6b4825}button:disabled{opacity:.45}
+    button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #ce693f;outline-offset:3px}
+    #readout{text-align:center;font-weight:650;line-height:1.6;margin:12px 0}#status{text-align:center;min-height:3em;line-height:1.5}.help{border-top:1px solid #c7cfba;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}
+    @media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px;margin-bottom:16px}.controls{gap:6px}button,select{padding:10px 12px}.help{font-size:13px}}
+    @media(max-width:350px){main{padding-top:112px}}
+  </style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Trail Pantry | AI and Sons Games">
+  <meta property="og:description" content="Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/trailpantry">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/trailpantry.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Trail Pantry | AI and Sons Games">
+  <meta name="twitter:description" content="Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/trailpantry.png">
+  <link rel="canonical" href="https://games.aiandsons.io/trailpantry">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Trail Pantry","description":"Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/trailpantry","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><a href="/">← Back to games</a>
+<header><p class="eyebrow">THE LITTLE OUTFITTER · LOGIC COLLECTION</p><h1>Trail Pantry</h1><p class="intro">A small backpack. A precise picnic. Choose supply bundles to match <strong>both food and water</strong> for five woodland hikes.</p></header>
+<canvas id="game" width="900" height="650" tabindex="0" aria-label="Supply bundles with food and water values; pack the exact trail requirements"></canvas>
+<p id="readout"></p><div class="controls" id="items" aria-label="Supply bundles"></div>
+<div class="controls"><button id="check" class="primary">Seal pack · Enter</button><button id="clear">Empty pack · C</button></div>
+<div class="controls"><button id="start">Visit pantry</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="full">Fullscreen</button><select id="theme" aria-label="Pantry palette"><option>Pine &amp; apricot</option><option>Lake &amp; lilac</option></select></div>
+<p id="status" role="status"></p><p class="help">Match the food AND water targets exactly, using no more than the listed slots. Each bundle uses one slot.<br>Tap a bundle to add/remove it. Arrows move the cursor · Space toggles · Enter seals or continues.<br>Wrong seals cost one trail pass. Three wrong seals end the trip. Editing is free; there is no time limit.<br>C empties the pack · P pauses · R restarts · F fullscreen · Escape exits.</p>
+</main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const levels=[
+ {items:[[2,3],[2,1],[1,3],[1,1],[4,4],[3,4]],slots:3,food:8,water:11},
+ {items:[[2,4],[2,0],[1,2],[0,3],[2,2],[3,1],[1,0]],slots:3,food:7,water:7},
+ {items:[[3,3],[0,1],[4,3],[4,1],[3,0],[2,1],[1,1],[1,0]],slots:4,food:6,water:6},
+ {items:[[1,3],[3,1],[1,1],[4,3],[2,0],[0,3],[4,4],[4,1],[3,2]],slots:4,food:7,water:10},
+ {items:[[1,4],[1,1],[0,3],[4,2],[0,1],[2,1],[2,0],[3,4],[3,2]],slots:5,food:13,water:12},
+];
+const names=['Fern Gate','Copper Creek','Mossy Ridge','Heron Lake','Summit Picnic'];
+const palettes=[{paper:'#fff3dc',hill:'#c7d7af',ink:'#25453d',food:'#c45c32',water:'#236c8a',accent:'#edbd68'}, {paper:'#f3f1ff',hill:'#c4d9dc',ink:'#293d5b',food:'#925278',water:'#246b96',accent:'#c9b3e8'}];
+let s,manual=false,last=performance.now();
+function metrics(){return {hikes:s.solved,bundles:s.bundles,mistakes:s.mistakes};}
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'trailpantry',result,durationMs:s.time,metrics:metrics()});}}
+function load(){s.selected=[];s.cursor=0;s.message='Read both targets. Choose bundles, then seal your pack.';buildButtons();}
+function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'menu',level:0,solved:0,bundles:0,mistakes:0,time:0,theme,started:false,reported:false};load();render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
+function totals(){return s.selected.reduce((a,i)=>[a[0]+levels[s.level].items[i][0],a[1]+levels[s.level].items[i][1]],[0,0]);}
+function toggle(i){if(s.mode!=='play')return;s.cursor=i;const j=s.selected.indexOf(i);if(j>=0){s.selected.splice(j,1);s.message=`Bundle ${i+1} returned to the shelf.`;}else if(s.selected.length>=levels[s.level].slots)s.message='The backpack is full. Remove a bundle first.';else{s.selected.push(i);s.message=`Bundle ${i+1} packed.`;}render();}
+function move(dx,dy){if(s.mode!=='play')return;const n=levels[s.level].items.length,col=s.cursor%3,row=Math.floor(s.cursor/3);const x=Math.max(0,Math.min(2,col+dx)),y=Math.max(0,Math.min(Math.ceil(n/3)-1,row+dy));s.cursor=Math.min(n-1,y*3+x);render();}
+function check(){if(s.mode!=='play')return;const l=levels[s.level],[f,w]=totals();if(f===l.food&&w===l.water){s.solved++;s.bundles+=s.selected.length;s.mode=s.solved===5?'won':'between';s.message=s.mode==='won'?'Five perfect picnics. Every hiker is ready for the trail!':'Pack approved. Continue to the next trail.';if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=`Pack mismatch: food ${f}/${l.food}, water ${w}/${l.water}. Adjust the bundles.`;if(s.mistakes===3){s.mode='lost';s.message='Three wrong seals. Visit the pantry again for a fresh trip.';report('lost');}}render();}
+function clear(){if(s.mode==='play'){s.selected=[];s.message='Backpack emptied. Try another combination.';render();}}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused')s.mode='play';render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function text(t,x,y,size=22,align='left',color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign=align;ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function box(x,y,w,h,fill,stroke){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,14);ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();}}
+function cardRect(i){return {x:40+(i%3)*282,y:205+Math.floor(i/3)*126,w:256,h:108};}
+function render(){
+ const p=palettes[s.theme],l=levels[s.level],[f,w]=totals();
+ ctx.fillStyle=p.paper;ctx.fillRect(0,0,900,650);
+ ctx.fillStyle=p.hill;ctx.beginPath();ctx.moveTo(0,170);ctx.quadraticCurveTo(160,10,320,155);ctx.quadraticCurveTo(620,-10,900,145);ctx.lineTo(900,650);ctx.lineTo(0,650);ctx.fill();
+ text(`TRAIL ${s.level+1} / 5`,32,38,18);text(names[s.level],450,42,28,'center');text(`PASSES ${3-s.mistakes} / 3`,868,38,18,'right');
+ box(32,67,836,115,p.paper);
+ text(`FOOD  ${f} / ${l.food}`,65,108,26,'left',p.food);text(`WATER  ${w} / ${l.water}`,355,108,26,'left',p.water);text(`SLOTS  ${s.selected.length} / ${l.slots}`,650,108,23);
+ for(const [value,target,x,color] of [[f,l.food,65,p.food],[w,l.water,355,p.water]]){box(x,125,220,12,p.hill);box(x,125,Math.max(2,220*Math.min(1,value/target)),12,color);if(value>target)text('OVER',x+220,163,16,'right',color);}
+ text('Exact totals · limited slots',650,150,16);
+ l.items.forEach(([a,b],i)=>{const r=cardRect(i),sel=s.selected.includes(i);box(r.x,r.y,r.w,r.h,sel?p.accent:p.paper,s.cursor===i?p.ink:undefined);text(`${i+1} · ${sel?'PACKED':'ON SHELF'}`,r.x+18,r.y+30,18);text(`Food ${a}`,r.x+18,r.y+73,25,'left',p.food);text(`Water ${b}`,r.x+133,r.y+73,25,'left',p.water);});
+ text('YOUR PACK',40,607,17);text(s.selected.length?s.selected.map(i=>i+1).join('  ·  '):'empty',235,609,25);text(`${s.solved} hikes ready`,855,609,18,'right');
+ if(s.mode!=='play'){
+  box(60,210,780,320,p.paper,p.ink);
+  text({menu:'Pack a little possibility',paused:'A rest along the trail',between:'Picnic packed perfectly',won:'The whole trail is ready',lost:'Time for a fresh plan'}[s.mode],450,292,34,'center');
+  text({menu:'Match both supplies. Make every slot count.',paused:'Your pack and clock are frozen.',between:`${s.selected.length} bundles · exact food and water.`,won:'Five hikes. Five perfectly packed picnics.',lost:'Three wrong seals used all your trail passes.'}[s.mode],450,365,23,'center');
+  text(s.mode==='paused'?'P or Resume to return.':s.mode==='between'?'Enter or Next trail to continue.':'Use the button below to begin.',450,440,21,'center');
+ }
+ for(const b of $('items').children){b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(s.selected.includes(Number(b.dataset.item))));}
+ $('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next trail':['won','lost'].includes(s.mode)?'New trip':'Visit pantry';
+ for(const id of ['check','clear'])$(id).disabled=s.mode!=='play';$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume':'Pause';
+ const readout=`Trail ${s.level+1}/5 · Food ${f}/${l.food} · Water ${w}/${l.water} · Slots ${s.selected.length}/${l.slots} · Cursor: bundle ${s.cursor+1} · ${3-s.mistakes} passes`;
+ if($('readout').textContent!==readout)$('readout').textContent=readout;if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+function focus(){canvas.focus({preventScroll:true});}
+function buildButtons(){const fragment=document.createDocumentFragment();levels[s.level].items.forEach(([f,w],i)=>{const b=document.createElement('button');b.dataset.item=i;b.textContent=`${i+1}: Food ${f} · Water ${w}`;b.onclick=()=>{toggle(i);focus();};fragment.append(b);});$('items').replaceChildren(fragment);}
+for(const [id,fn] of [['start',start],['check',check],['clear',clear],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*900/r.width,y=(e.clientY-r.top)*650/r.height;levels[s.level].items.forEach((_,i)=>{const b=cardRect(i);if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)toggle(i);});};
+window.addEventListener('keydown',e=>{
+ const launcher=e.target.closest('.cade-feedback-launcher');if(e.target.closest('input,textarea,select,a,[contenteditable],[role="dialog"]')||(e.target.closest('button')&&!launcher))return;
+ const k=e.key.toLowerCase();if(launcher&&['enter',' '].includes(k))return;
+ if(['arrowleft','arrowright','arrowup','arrowdown',' ','enter','c','p','r','f'].includes(k))e.preventDefault();if(e.repeat)return;
+ if(k==='arrowleft')move(-1,0);if(k==='arrowright')move(1,0);if(k==='arrowup')move(0,-1);if(k==='arrowdown')move(0,1);if(k===' ')toggle(s.cursor);
+ if(k==='enter'){if(s.mode==='play')check();else start();}if(k==='c')clear();if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();
+ if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x650 origin top-left; 3-column bundle cards x=40+282*col y=205+126*row size256x108; cursor zero-based',mode:s.mode,trail:s.level+1,name:names[s.level],target:{food:levels[s.level].food,water:levels[s.level].water,slots:levels[s.level].slots},items:levels[s.level].items.map(([food,water],i)=>({id:i+1,food,water,packed:s.selected.includes(i)})),cursor:s.cursor,selected:s.selected.map(i=>i+1),totals:{food:totals()[0],water:totals()[1]},timeMs:s.time,theme:s.theme,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'trailpantry',gameName:'Trail Pantry'});restart();
+function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+
+</script></body></html>
