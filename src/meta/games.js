@@ -236,6 +236,7 @@ const BASE_GAMES = [
   { slug:'mintmystery', name:'Mint Mystery', emoji:'⚖', scoreHint:'cases', url:'/mintmystery', desc:'Find the heavier coin among nine with two balance-scale weighings in each of three deduction puzzles.', earnsCoins:false, category:'puzzle' },
   { slug:'torchbridge', name:'Torch Bridge', emoji:'\u{1F526}', scoreHint:'bridges', url:'/torchbridge', desc:'Escort four travelers across three bridges with one fading lantern and carefully planned return trips.', earnsCoins:false },
   { slug:'sidingdispatch', name:'Siding Dispatch', emoji:'\u{1F683}', scoreHint:'yards', url:'/sidingdispatch', desc:'Sort numbered wagons through three limited sidings, dispatch them in order, and solve five pocket railway puzzles.', earnsCoins:false },
+  { slug:'trailpantry', name:'Trail Pantry', emoji:'\u{1F392}', scoreHint:'hikes', url:'/trailpantry', desc:'Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
