@@ -296,12 +296,21 @@ async function listFeedbackSubmissionsFromFirestore(filters = {}) {
     .limit(queryLimit)
     .get();
 
-  const items = snapshot.docs.map((doc) => normalizeStoredSubmission(doc.data()));
-  return items
-    .filter((item) => !gameSlug || item.gameSlug === gameSlug)
-    .filter((item) => !triageStatus || item.triageStatus === triageStatus)
-    .filter((item) => !syncStatus || item.syncStatus === syncStatus)
-    .slice(0, limit);
+  const items = [];
+  for (const doc of snapshot.docs) {
+    const raw = doc.data() || {};
+    // ⚡ Bolt Optimization: Normalize each document only once and check conditions
+    // against the normalized object before pushing to the items array.
+    // This avoids mapping over the entire result set, which incurs O(N) allocation overhead.
+    const item = normalizeStoredSubmission(raw);
+    if (gameSlug && item.gameSlug !== gameSlug) continue;
+    if (triageStatus && item.triageStatus !== triageStatus) continue;
+    if (syncStatus && item.syncStatus !== syncStatus) continue;
+
+    items.push(item);
+    if (items.length >= limit) break;
+  }
+  return items;
 }
 
 async function saveFeedbackAttachmentToFirestore(attachment) {
