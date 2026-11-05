@@ -60,3 +60,13 @@
 **Vulnerability:** In `api/_email.js`, dynamically provided variables like `inviterName` and `memberName` were being embedded directly into HTML email templates without escaping. This allowed malicious display names to inject arbitrary HTML into emails.
 **Learning:** Even internal backend services like email senders can be vulnerable to HTML injection if they construct HTML manually and incorporate user-provided data without encoding it properly.
 **Prevention:** Always use an `escapeHtml` utility function when rendering user-provided values into HTML templates on the backend to neutralize special characters.
+
+## 2026-10-14 - [Fix DOM XSS in Prisoner's Dilemma]
+**Vulnerability:** In `prisonersdilemma/src/components/results-dashboard.js` and `prisonersdilemma/src/components/decision-panel.js`, unsanitized strings were being interpolated into `innerHTML`.
+**Learning:** Constructing DOM strings with template literals containing unsanitized dynamic data exposes the application to DOM-based XSS attacks.
+**Prevention:** Apply a robust `escapeHtml` utility to safely escape HTML entities when interpolating variables into `.innerHTML`, or use `.textContent`/`insertAdjacentHTML` instead.
+
+## 2026-10-14 - [Fix DOM XSS with strict innerHTML removal]
+**Vulnerability:** Static analysis tools (like Sourcery CI) completely block assignments to `.innerHTML` due to DOM-based XSS risks, even when variables are escaped via `escapeHtml()`.
+**Learning:** Relying on template literal strings and `escapeHtml` within `.innerHTML` is insufficient to pass strict CI rules and creates brittle code if an escaping call is missed.
+**Prevention:** Completely replace `.innerHTML` templates with native DOM APIs (`document.createElement`, `.textContent`, `.append()`) to guarantee immunity to XSS and ensure compliance with automated static analysis constraints.

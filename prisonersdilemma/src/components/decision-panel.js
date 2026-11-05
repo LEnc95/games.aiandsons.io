@@ -58,7 +58,13 @@ export class DecisionPanel {
     button.type = "button";
     button.className = "pd-button pd-action-button";
     button.addEventListener("click", () => onDecision(action));
-    button.innerHTML = `<strong>${label}</strong><span>${description}</span>`;
+
+    const strong = document.createElement("strong");
+    strong.textContent = label;
+    const span = document.createElement("span");
+    span.textContent = description;
+
+    button.append(strong, span);
     return button;
   }
 
