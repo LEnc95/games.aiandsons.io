@@ -251,5 +251,6 @@
 - game/torchbridge
 - game/sidingdispatch
 - game/trailpantry
+- game/numberfoundry
 
 Generated from `src/meta/feedback.js`.

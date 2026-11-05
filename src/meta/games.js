@@ -237,6 +237,7 @@ const BASE_GAMES = [
   { slug:'torchbridge', name:'Torch Bridge', emoji:'\u{1F526}', scoreHint:'bridges', url:'/torchbridge', desc:'Escort four travelers across three bridges with one fading lantern and carefully planned return trips.', earnsCoins:false },
   { slug:'sidingdispatch', name:'Siding Dispatch', emoji:'\u{1F683}', scoreHint:'yards', url:'/sidingdispatch', desc:'Sort numbered wagons through three limited sidings, dispatch them in order, and solve five pocket railway puzzles.', earnsCoins:false },
   { slug:'trailpantry', name:'Trail Pantry', emoji:'\u{1F392}', scoreHint:'hikes', url:'/trailpantry', desc:'Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles.', earnsCoins:false },
+  { slug:'numberfoundry', name:'Number Foundry', emoji:'\u{1F525}', scoreHint:'orders', url:'/numberfoundry', desc:'Combine numbered ingots with arithmetic, use every number, and forge five exact-target workshop puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
