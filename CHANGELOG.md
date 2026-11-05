@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Number Foundry: combine four numbered ingots with arithmetic to forge five exact-target workshop puzzles.
 - Trail Pantry: pack exact food and water totals into limited backpacks across five woodland supply puzzles.
 - Siding Dispatch: sort 35 wagons through three limited sidings across five pocket railway puzzles.
 - Torch Bridge: escort four travelers with one fading lantern across three timed crossing puzzles.
