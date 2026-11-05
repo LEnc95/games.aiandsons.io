@@ -199,17 +199,19 @@ const hasPendingStartControl = () => {
   const controls = document.querySelectorAll(
     'button, [role="button"], input[type="button"], input[type="submit"]',
   );
-  return Array.from(controls).some((control) => {
-    if (control.disabled || control.getAttribute?.('aria-hidden') === 'true') return false;
-    if (typeof control.getClientRects === 'function' && control.getClientRects().length === 0) return false;
+  // ⚡ Bolt Optimization: Use a for...of loop to iterate directly over the NodeList instead of Array.from to avoid unnecessary O(N) memory allocation overhead.
+  for (const control of controls) {
+    if (control.disabled || control.getAttribute?.('aria-hidden') === 'true') continue;
+    if (typeof control.getClientRects === 'function' && control.getClientRects().length === 0) continue;
     const label = eventTargetLabel(control);
     const looksLikeStart = /(^|\s)start(\s|$)/i.test(label)
       || /(^|\s)begin(\s|$)/i.test(label)
       || /(^|\s)play again(\s|$)/i.test(label)
       || /(^|\s)play now(\s|$)/i.test(label)
       || /(^|\s)play-btn(\s|$)/i.test(label);
-    return looksLikeStart;
-  });
+    if (looksLikeStart) return true;
+  }
+  return false;
 };
 
 const isGameplayIntent = (event) => {
