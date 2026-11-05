@@ -28,14 +28,16 @@ const normalizeRankItem = (item, index) => {
 const normalizeRankList = (items) => {
   if (!Array.isArray(items)) return [];
   const seen = new Set();
-  return items
-    .map((item, index) => normalizeRankItem(item, index))
-    .filter((item) => {
-      if (!item || seen.has(item.slug)) return false;
-      seen.add(item.slug);
-      return true;
-    })
-    .map((item, index) => ({ ...item, rank: index + 1 }));
+  const results = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = normalizeRankItem(items[i], i);
+    if (!item || seen.has(item.slug)) continue;
+    seen.add(item.slug);
+    results.push({ ...item, rank: results.length + 1 });
+  }
+
+  return results;
 };
 
 export const normalizeDiscoveryRankings = (payload) => {
