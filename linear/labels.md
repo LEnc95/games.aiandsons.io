@@ -252,5 +252,6 @@
 - game/sidingdispatch
 - game/trailpantry
 - game/numberfoundry
+- game/gallerywatch
 
 Generated from `src/meta/feedback.js`.

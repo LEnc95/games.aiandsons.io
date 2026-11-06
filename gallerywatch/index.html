@@ -1,0 +1,100 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gallery Watch | AI and Sons Games</title><style>
+    *{box-sizing:border-box}body{margin:0;background:#f4efdf;color:#243f3a;font-family:system-ui,sans-serif}
+    main{max-width:940px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}
+    header{text-align:center}h1{font:700 clamp(32px,6vw,52px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.2em;font-size:12px;font-weight:750}
+    .intro{max-width:620px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:20px;touch-action:manipulation}
+    .controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #718a79;border-radius:9px;color:#243f3a;background:#fffdf3}
+    button.primary{background:#24594e;color:white;border-color:#24594e}button[aria-pressed=true]{background:#e9bc66;border-color:#6b4825}button:disabled{opacity:.45}
+    button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #ce693f;outline-offset:3px}
+    #readout{text-align:center;font-weight:650;line-height:1.6;margin:12px 0}#status{text-align:center;min-height:3em;line-height:1.5}.help{border-top:1px solid #c7cfba;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}
+    @media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px;margin-bottom:16px}.controls{gap:6px}button,select{padding:10px 12px}.help{font-size:13px}}
+    @media(max-width:350px){main{padding-top:112px}}
+    #social .cade-feedback-launcher,#social .cade-clip-control{position:static;z-index:auto}
+  </style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Station a limited team of docents in rooms, watch every corridor from one endpoint, and solve five museum graph puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Gallery Watch | AI and Sons Games">
+  <meta property="og:description" content="Station a limited team of docents in rooms, watch every corridor from one endpoint, and solve five museum graph puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/gallerywatch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/gallerywatch.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gallery Watch | AI and Sons Games">
+  <meta name="twitter:description" content="Station a limited team of docents in rooms, watch every corridor from one endpoint, and solve five museum graph puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/gallerywatch.png">
+  <link rel="canonical" href="https://games.aiandsons.io/gallerywatch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Gallery Watch","description":"Station a limited team of docents in rooms, watch every corridor from one endpoint, and solve five museum graph puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/gallerywatch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><a href="/">← Back to games</a>
+<header><p class="eyebrow">THE POCKET MUSEUM · CORRIDOR LOGIC</p><h1>Gallery Watch</h1><p class="intro">A tiny museum, a handful of docents. Choose rooms so <strong>every corridor has a watcher at either end</strong>. Cover five gallery maps within their staff budgets.</p></header>
+<canvas id="game" width="900" height="620" tabindex="0" aria-label="Museum rooms joined by corridors; choose rooms to station docents"></canvas>
+<p id="readout"></p><div class="controls" id="rooms" aria-label="Station or remove docents"></div>
+<div class="controls"><button id="check" class="primary">Inspect · V</button><button id="undo">Undo · U</button><button id="clear">Clear map · C</button></div>
+<div class="controls"><button id="start">Open museum</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="full">Fullscreen</button><select id="theme" aria-label="Museum palette"><option>Sage &amp; sandstone</option><option>Indigo &amp; rose</option></select></div>
+<p id="status" role="status"></p><div id="social" class="controls" aria-label="Feedback and clips"></div><p class="help">Tap a room or its numbered button to station or remove a docent. A solid corridor is watched; a dashed corridor needs a docent at one of its two numbered endpoints. Line crossings are not rooms.<br>Use at most the staff budget, then Inspect. Three incomplete inspections end the tour. Explore, undo, and clear for free; there is no time limit.<br>1–8 toggle rooms · Arrows move cursor · Space toggles · Enter starts or continues<br>V inspect · U undo · C clear map · P pause · R restart · F fullscreen · Escape exits.</p>
+</main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const levels=[
+ {name:'The Two Wings',rooms:6,budget:2,edges:[[0,1],[0,2],[0,3],[4,2],[4,3],[4,5]]},
+ {name:'Sculpture Circle',rooms:6,budget:3,edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]},
+ {name:'Portrait Arcade',rooms:7,budget:3,edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[2,6],[4,6]]},
+ {name:'The Glass Court',rooms:8,budget:4,edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,4],[2,6]]},
+ {name:'The Grand Opening',rooms:8,budget:4,edges:[[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[6,0],[6,3],[7,1],[7,4]]}
+];
+const palettes=[{paper:'#fff6e4',wall:'#e8dfc9',ink:'#253f3b',watched:'#3e7764',open:'#a9452c',accent:'#efbb64'},{paper:'#fff1ef',wall:'#e0deee',ink:'#30385b',watched:'#5969a2',open:'#a33e60',accent:'#efb7ce'}];
+let s,manual=false,last=performance.now();
+const level=()=>levels[s.level];
+const uncovered=()=>level().edges.filter(([a,b])=>!s.selected.includes(a)&&!s.selected.includes(b));
+function metrics(){return {galleries:s.solved,placements:s.placements,mistakes:s.mistakes};}
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'gallerywatch',result,durationMs:s.time,metrics:metrics()});}}
+function load(){s.selected=[];s.history=[];s.cursor=0;s.message='Choose rooms to watch every corridor, then Inspect.';}
+function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'menu',level:0,solved:0,placements:0,mistakes:0,time:0,theme,started:false,reported:false};load();render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
+function toggle(i){if(s.mode!=='play'||i<0||i>=level().rooms)return;s.cursor=i;const at=s.selected.indexOf(i);if(at<0&&s.selected.length===level().budget){s.message='All docents are stationed. Remove one before choosing another room.';render();return;}
+ s.history.push([...s.selected]);if(at>=0){s.selected.splice(at,1);s.message=`Docent removed from room ${i+1}.`;}else{s.selected.push(i);s.placements=Math.min(999,s.placements+1);s.message=`Docent stationed in room ${i+1}.`;}render();}
+function undo(){if(s.mode!=='play'||!s.history.length)return;s.selected=s.history.pop();s.message='Last room change undone.';render();}
+function clear(){if(s.mode!=='play'||!s.selected.length)return;s.history.push([...s.selected]);s.selected=[];s.message='Map cleared. Try a different group of rooms.';render();}
+function check(){if(s.mode!=='play')return;const missing=uncovered();if(!missing.length){s.solved++;s.mode=s.solved===5?'won':'between';s.message=s.mode==='won'?'Every gallery is watched. A splendid grand opening!':'Every corridor watched. Continue to the next gallery.';if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=`${missing.length} corridors still need a watcher. For example, rooms ${missing[0][0]+1}–${missing[0][1]+1}.`;if(s.mistakes===3){s.mode='lost';s.message='Three incomplete inspections. Begin a fresh tour and try again.';report('lost');}}render();}
+function focus(){canvas.focus({preventScroll:true});}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused'){s.mode='play';focus();}render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function text(t,x,y,size=22,align='left',color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign=align;ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function box(x,y,w,h,fill,stroke){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,14);ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();}}
+function position(i){const a=-Math.PI/2+i*2*Math.PI/level().rooms;return {x:450+295*Math.cos(a),y:324+187*Math.sin(a)};}
+function render(){const p=palettes[s.theme],l=level();ctx.fillStyle=p.wall;ctx.fillRect(0,0,900,620);
+ for(let x=20;x<900;x+=70){ctx.strokeStyle=p.paper;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,620);ctx.stroke();}
+ box(22,20,856,580,p.paper,p.ink);text(`GALLERY ${s.level+1} / 5`,44,55,18);text(l.name,450,57,27,'center');text(`PASSES ${3-s.mistakes} / 3`,856,55,18,'right');
+ text(`DOCENTS ${s.selected.length} / ${l.budget}`,45,94,19);text(`${l.edges.length-uncovered().length} / ${l.edges.length} corridors watched`,855,94,19,'right');
+ l.edges.forEach(([a,b])=>{const from=position(a),to=position(b),covered=s.selected.includes(a)||s.selected.includes(b);ctx.strokeStyle=covered?p.watched:p.open;ctx.lineWidth=covered?8:5;ctx.setLineDash(covered?[]:[11,8]);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();});ctx.setLineDash([]);
+ for(let i=0;i<l.rooms;i++){const {x,y}=position(i),on=s.selected.includes(i);if(s.cursor===i)box(x-47,y-37,94,74,p.accent,p.ink);box(x-39,y-29,78,58,on?p.watched:p.paper,p.ink);text(String(i+1),x,y+9,29,'center',on?p.paper:p.ink);if(on){ctx.fillStyle=p.accent;ctx.beginPath();ctx.arc(x+29,y-23,10,0,Math.PI*2);ctx.fill();}}
+ text('SOLID = WATCHED',50,563,17,'left',p.watched);text('DASHED = UNWATCHED',850,563,17,'right',p.open);
+ if(s.mode!=='play'){box(95,190,710,280,p.paper,p.ink);text({menu:'A small museum. A clever plan.',paused:'The museum is resting',between:'A well-watched gallery',won:'Ready for the grand opening',lost:'A fresh tour awaits'}[s.mode],450,260,31,'center');text({menu:'Watch every corridor from one of its endpoints.',paused:'Your rooms and clock are frozen.',between:`All ${l.edges.length} corridors watched with ${s.selected.length} docents.`,won:'Five galleries secured. Beautifully planned.',lost:'Three incomplete inspections used your passes.'}[s.mode],450,330,23,'center');text(s.mode==='paused'?'P or Resume to return.':s.mode==='between'?'Enter or Next gallery to continue.':'Use the button below to begin.',450,408,22,'center');}
+ buildButtons();for(const id of ['check','clear'])$(id).disabled=s.mode!=='play';$('undo').disabled=s.mode!=='play'||!s.history.length;
+ $('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next gallery':['won','lost'].includes(s.mode)?'New tour':'Open museum';$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume':'Pause';
+ const readout=`Gallery ${s.level+1}/5 · Docents ${s.selected.length}/${l.budget} in rooms: ${s.selected.map(i=>i+1).join(', ')||'none'} · Unwatched: ${uncovered().map(([a,b])=>`${a+1}–${b+1}`).join(', ')||'none'} · Cursor ${s.cursor+1} · Placements ${s.placements===999?'999+':s.placements} · ${3-s.mistakes} inspection passes`;
+ if($('readout').textContent!==readout)$('readout').textContent=readout;if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+function buildButtons(){const items=$('rooms');while(items.children.length>level().rooms)items.lastChild.remove();for(let i=0;i<level().rooms;i++){let b=items.children[i];if(!b){b=document.createElement('button');b.onclick=()=>{toggle(i);focus();};items.append(b);}b.textContent=`Room ${i+1}${s.selected.includes(i)?' · staffed':''}`;b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(s.selected.includes(i)));}}
+for(const [id,fn] of [['start',start],['undo',undo],['clear',clear],['check',check],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*900/r.width,y=(e.clientY-r.top)*620/r.height;for(let i=0;i<level().rooms;i++){const p=position(i);if(Math.abs(x-p.x)<=44&&Math.abs(y-p.y)<=34){toggle(i);break;}}};
+window.addEventListener('keydown',e=>{const launcher=e.target.closest('.cade-feedback-launcher');if(e.target.closest('input,textarea,select,a,[contenteditable],[role="dialog"]')||(e.target.closest('button')&&!launcher))return;const k=e.key.toLowerCase();if(launcher&&['enter',' '].includes(k))return;
+ if(['arrowleft','arrowright','arrowup','arrowdown',' ','enter','u','c','v','p','r','f','1','2','3','4','5','6','7','8'].includes(k))e.preventDefault();if(e.repeat)return;
+ if(['arrowleft','arrowup'].includes(k)&&s.mode==='play'){s.cursor=Math.max(0,s.cursor-1);render();}if(['arrowright','arrowdown'].includes(k)&&s.mode==='play'){s.cursor=Math.min(level().rooms-1,s.cursor+1);render();}
+ if(k===' ')toggle(s.cursor);if(/^[1-8]$/.test(k))toggle(Number(k)-1);if(k==='enter')start();if(k==='v')check();if(k==='u')undo();if(k==='c')clear();if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x620 origin top-left; room indices zero-based; crossings are not rooms',mode:s.mode,gallery:s.level+1,name:level().name,budget:level().budget,rooms:Array.from({length:level().rooms},(_,i)=>({id:i,...position(i),staffed:s.selected.includes(i)})),corridors:level().edges,unwatched:uncovered(),selected:s.selected,cursor:s.cursor,undoDepth:s.history.length,timeMs:s.time,theme:s.theme,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'gallerywatch',gameName:'Gallery Watch'});for(const id of ['cadeFeedbackOpenBtn','cadeClipControl']){if($(id))$('social').append($(id));}restart();function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script></body></html>
