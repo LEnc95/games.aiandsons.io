@@ -5,7 +5,9 @@ export const AVATAR_EMOJI = Object.freeze([
 
 export const DEFAULT_AVATAR_EMOJI = AVATAR_EMOJI[0];
 
-export const isAvatarEmoji = (value) => AVATAR_EMOJI.includes(String(value || ''));
+const AVATAR_EMOJI_SET = new Set(AVATAR_EMOJI);
+
+export const isAvatarEmoji = (value) => AVATAR_EMOJI_SET.has(String(value || ''));
 
 // Deterministic emoji avatar derived from a handle, so the same player
 // always shows the same face on leaderboards and scoreboards.
