@@ -59,3 +59,7 @@
 ## 2026-07-17 - Explicit Tooltips for Disabled States
 **Learning:** Disabled buttons without explanation (e.g., "Not enough coins") create dead ends for users, especially those using screen readers, who may not understand why an action is unavailable. Additionally, ARIA labels for disabled states can easily drift from the visible text if dynamically generated.
 **Action:** Always provide an explicit `title` attribute for `disabled` buttons that explains why it is disabled (e.g., "You need X more coins to buy this item"). Simultaneously ensure `aria-label` exactly matches the dynamically updated disabled text content.
+
+## 2026-10-28 - Enter-key submission for Hangman Setup
+**Learning:** The Hangman friend setup form inputs lacked native Enter-key submission and visual required indicators, causing friction for keyboard users and ambiguity for sighted users.
+**Action:** Always ensure standalone configuration inputs wire the Enter key to the primary action and clearly mark required fields with an accessible visual indicator.
