@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cable Canopy | AI and Sons Games</title><style>
+    *{box-sizing:border-box}body{margin:0;background:#f4efdf;color:#243f3a;font-family:system-ui,sans-serif}
+    main{max-width:940px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}
+    header{text-align:center}h1{font:700 clamp(32px,6vw,52px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.2em;font-size:12px;font-weight:750}
+    .intro{max-width:620px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:20px;touch-action:manipulation}
+    .controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #718a79;border-radius:9px;color:#243f3a;background:#fffdf3}
+    button.primary{background:#24594e;color:white;border-color:#24594e}button[aria-pressed=true]{background:#e9bc66;border-color:#6b4825}button:disabled{opacity:.45}
+    button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #ce693f;outline-offset:3px}
+    #readout{text-align:center;font-weight:650;line-height:1.6;margin:12px 0}#status{text-align:center;min-height:3em;line-height:1.5}.help{border-top:1px solid #c7cfba;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}
+    @media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px;margin-bottom:16px}.controls{gap:6px}button,select{padding:10px 12px}.help{font-size:13px}}
+    @media(max-width:350px){main{padding-top:112px}}
+    #social .cade-feedback-launcher,#social .cade-clip-control{position:static;z-index:auto}
+  </style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Cable Canopy | AI and Sons Games">
+  <meta property="og:description" content="Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/cablecanopy">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/cablecanopy.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cable Canopy | AI and Sons Games">
+  <meta name="twitter:description" content="Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/cablecanopy.png">
+  <link rel="canonical" href="https://games.aiandsons.io/cablecanopy">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Cable Canopy","description":"Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/cablecanopy","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><a href="/">← Back to games</a>
+<header><p class="eyebrow">THE TREETOP TELEPHONE COMPANY</p><h1>Cable Canopy</h1><p class="intro">Link every cabin to the treetop network. Each cable uses the number of spools printed on its tag. <strong>Connect all cabins within the spool budget</strong> across five woodland puzzles.</p></header>
+<canvas id="game" width="900" height="620" tabindex="0" aria-label="Cabins and numbered cable links; tap a cable tag to toggle it"></canvas>
+<p id="readout"></p><div class="controls" id="links" aria-label="Install or remove cable links"></div>
+<div class="controls"><button id="check" class="primary">Test network · V</button><button id="undo">Undo · U</button><button id="clear">Clear links · C</button></div>
+<div class="controls"><button id="start">Begin wiring</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="full">Fullscreen</button><select id="theme" data-cade-clip-control aria-label="Canopy palette"><option>Fern &amp; amber</option><option>Plum &amp; copper</option></select></div>
+<p id="status" role="status"></p><div id="social" class="controls" aria-label="Feedback and clips"></div>
+<p class="help">Tap a numbered cable tag or its button to install or remove it. A solid line is installed; a dashed line is available. Cabin letters identify endpoints; line crossings are not junctions.<br>All cabins must connect, directly or indirectly, using no more than the budget. Three failed network tests end the shift. Undo and clear are free; there is no time limit.<br>1–9 toggle cables · Arrows select tag · Space toggles · Enter starts or continues<br>V test · U undo · C clear · P pause · R restart · F fullscreen · Escape exits.</p>
+</main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const levels=[
+ {name:'Fern Landing',cabins:4,budget:6,edges:[[0,1,2],[1,2,1],[2,3,3],[3,0,6],[0,2,5]]},
+ {name:'The Cedar Ring',cabins:5,budget:10,edges:[[0,1,4],[1,2,2],[2,3,5],[3,4,1],[4,0,3],[0,2,6],[1,4,7]]},
+ {name:'Copper Grove',cabins:5,budget:10,edges:[[0,1,6],[1,2,3],[2,3,4],[3,4,2],[4,0,5],[0,2,1],[1,4,4]]},
+ {name:'High Boughs',cabins:6,budget:12,edges:[[0,1,4],[1,2,2],[2,3,7],[3,4,3],[4,5,2],[5,0,6],[0,3,3],[1,4,5],[2,5,2]]},
+ {name:'The Crown Exchange',cabins:6,budget:11,edges:[[0,1,5],[1,2,1],[2,3,4],[3,4,2],[4,5,6],[5,0,3],[0,2,2],[1,4,5],[3,5,3]]}
+];
+const palettes=[{paper:'#fff6df',wall:'#dce8ce',ink:'#293f31',cable:'#377353',open:'#8a6743',accent:'#eab75f'}, {paper:'#fff0df',wall:'#e8d9e3',ink:'#49354e',cable:'#815887',open:'#906044',accent:'#e8ad81'}];
+let s,manual=false,last=performance.now();
+const level=()=>levels[s.level],letter=i=>String.fromCharCode(65+i);
+function cost(){return s.selected.reduce((sum,i)=>sum+level().edges[i][2],0);}
+function connected(){const seen=new Set([0]);let changed=true;while(changed){changed=false;for(const i of s.selected){const [a,b]=level().edges[i];if(seen.has(a)!==seen.has(b)){seen.add(a);seen.add(b);changed=true;}}}return [...seen].sort();}
+function metrics(){return {networks:s.solved,installations:s.installations,mistakes:s.mistakes};}
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'cablecanopy',result,durationMs:s.time,metrics:metrics()});}}
+function load(){s.selected=[];s.history=[];s.cursor=0;s.message='Choose cable links, then test the network.';}
+function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'menu',level:0,solved:0,installations:0,mistakes:0,time:0,theme,started:false,reported:false};load();render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
+function toggle(i){if(s.mode!=='play'||i<0||i>=level().edges.length)return;s.cursor=i;s.history.push([...s.selected]);const at=s.selected.indexOf(i);if(at>=0)s.selected.splice(at,1);else{s.selected.push(i);s.installations=Math.min(999,s.installations+1);}s.message=`Cable ${i+1} ${at>=0?'removed':'installed'}. ${cost()} of ${level().budget} spools used.`;render();}
+function undo(){if(s.mode!=='play'||!s.history.length)return;s.selected=s.history.pop();s.message='Last cable change undone.';render();}
+function clear(){if(s.mode!=='play'||!s.selected.length)return;s.history.push([...s.selected]);s.selected=[];s.message='Cables cleared. Plan a fresh network.';render();}
+function check(){if(s.mode!=='play')return;const missing=level().cabins-connected().length,over=cost()>level().budget;if(!missing&&!over){s.solved++;s.mode=s.solved===5?'won':'between';s.message=s.mode==='won'?'Five treetop networks connected. The forest is calling!':'All cabins connected within budget. Continue to the next grove.';if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=missing?`${missing} cabins cannot reach cabin A. Check the missing connections.`:`All cabins connected, but ${cost()-level().budget} spools over budget. Try cheaper links.`;if(s.mistakes===3){s.mode='lost';s.message='Three failed tests. Start a fresh shift and try a new plan.';report('lost');}}render();}
+function focus(){canvas.focus({preventScroll:true});}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused'){s.mode='play';focus();}render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function text(t,x,y,size=22,align='left',color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign=align;ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function box(x,y,w,h,fill,stroke){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,12);ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();}}
+function position(i){const a=-Math.PI/2+i*2*Math.PI/level().cabins;return {x:450+310*Math.cos(a),y:320+185*Math.sin(a)};}
+function tag(i){const [a,b]=level().edges[i],p=position(a),q=position(b);const t=level().cabins===6&&Math.abs(a-b)===3?.32+(i%3)*.18:.5;return {x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t};}
+function render(){const p=palettes[s.theme],l=level();ctx.fillStyle=p.wall;ctx.fillRect(0,0,900,620);
+ for(let i=0;i<9;i++){ctx.fillStyle=i%2?p.cable:p.open;ctx.globalAlpha=.08;ctx.beginPath();ctx.arc(i*120,590,160,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+ box(22,20,856,580,p.paper,p.ink);text(`GROVE ${s.level+1} / 5`,44,55,18);text(l.name,450,57,27,'center');text(`TESTS ${3-s.mistakes} / 3`,856,55,18,'right');
+ text(`SPOOLS ${cost()} / ${l.budget}`,45,94,20,'left',cost()>l.budget?'#a43d2e':p.ink);text(`${connected().length} / ${l.cabins} cabins linked to A`,855,94,20,'right');
+ l.edges.forEach(([a,b],i)=>{const from=position(a),to=position(b),on=s.selected.includes(i);ctx.strokeStyle=on?p.cable:p.open;ctx.lineWidth=on?8:3;ctx.setLineDash(on?[]:[8,9]);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();});ctx.setLineDash([]);
+ l.edges.forEach(([a,b,w],i)=>{const {x,y}=tag(i);box(x-36,y-23,72,46,s.cursor===i?p.accent:p.paper,s.selected.includes(i)?p.cable:p.ink);text(`${i+1}: ${w}`,x,y+7,20,'center');});
+ for(let i=0;i<l.cabins;i++){const {x,y}=position(i);ctx.fillStyle=p.accent;ctx.beginPath();ctx.moveTo(x-39,y-23);ctx.lineTo(x,y-48);ctx.lineTo(x+39,y-23);ctx.fill();box(x-28,y-24,56,51,connected().includes(i)?p.cable:p.paper,p.ink);text(letter(i),x,y+12,28,'center',connected().includes(i)?p.paper:p.ink);}
+ text('TAG = CABLE NUMBER : SPOOL COST',450,560,18,'center');text('Solid = installed · Dashed = available',450,585,16,'center');
+ if(s.mode!=='play'){box(80,190,740,275,p.paper,p.ink);text({menu:'A forest full of conversations',paused:'The canopy is resting',between:'A connected grove',won:'The forest is calling',lost:'A fresh shift awaits'}[s.mode],450,255,31,'center');text({menu:'Connect all cabins. Spend your spools wisely.',paused:'Your links and clock are frozen.',between:`All ${l.cabins} cabins connected using ${cost()} spools.`,won:'Five networks ready. Every cabin connected.',lost:'Three failed tests used your inspection passes.'}[s.mode],450,325,23,'center');text(s.mode==='paused'?'P or Resume to return.':s.mode==='between'?'Enter or Next grove to continue.':'Use the button below to begin.',450,403,22,'center');}
+ buildButtons();for(const id of ['check','clear'])$(id).disabled=s.mode!=='play';$('undo').disabled=s.mode!=='play'||!s.history.length;
+ $('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next grove':['won','lost'].includes(s.mode)?'New shift':'Begin wiring';$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume':'Pause';
+ const readout=`Grove ${s.level+1}/5 · Spools ${cost()}/${l.budget} · Linked to A: ${connected().map(letter).join(', ')} · Selected cable ${s.cursor+1} · Installations ${s.installations===999?'999+':s.installations} · ${3-s.mistakes} tests remaining`;
+ if($('readout').textContent!==readout)$('readout').textContent=readout;if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+function buildButtons(){const items=$('links');while(items.children.length>level().edges.length)items.lastChild.remove();level().edges.forEach(([a,b,w],i)=>{let btt=items.children[i];if(!btt){btt=document.createElement('button');btt.onclick=()=>{toggle(i);focus();};items.append(btt);}btt.textContent=`${i+1}: ${letter(a)}–${letter(b)} · ${w} spools`;btt.disabled=s.mode!=='play';btt.setAttribute('aria-pressed',String(s.selected.includes(i)));});}
+for(const [id,fn] of [['start',start],['undo',undo],['clear',clear],['check',check],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*900/r.width,y=(e.clientY-r.top)*620/r.height;for(let i=0;i<level().edges.length;i++){const p=tag(i);if(Math.abs(x-p.x)<=38&&Math.abs(y-p.y)<=25){toggle(i);break;}}};
+window.addEventListener('keydown',e=>{const launcher=e.target.closest('.cade-feedback-launcher');if(e.target.closest('input,textarea,select,a,[contenteditable],[role="dialog"]')||(e.target.closest('button')&&!launcher))return;const k=e.key.toLowerCase();if(launcher&&['enter',' '].includes(k))return;
+ if(['arrowleft','arrowright','arrowup','arrowdown',' ','enter','u','c','v','p','r','f','1','2','3','4','5','6','7','8','9'].includes(k))e.preventDefault();if(e.repeat)return;
+ if(['arrowleft','arrowup'].includes(k)&&s.mode==='play'){s.cursor=Math.max(0,s.cursor-1);render();}if(['arrowright','arrowdown'].includes(k)&&s.mode==='play'){s.cursor=Math.min(level().edges.length-1,s.cursor+1);render();}
+ if(k===' ')toggle(s.cursor);if(/^[1-9]$/.test(k))toggle(Number(k)-1);if(k==='enter')start();if(k==='v')check();if(k==='u')undo();if(k==='c')clear();if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});
+window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x620 origin top-left; cable indices zero-based; crossings are not junctions',mode:s.mode,grove:s.level+1,name:level().name,budget:level().budget,cost:cost(),cabins:Array.from({length:level().cabins},(_,i)=>({id:letter(i),...position(i)})),cables:level().edges.map(([a,b,cost],i)=>({id:i,from:letter(a),to:letter(b),cost,...tag(i),installed:s.selected.includes(i)})),linkedToA:connected().map(letter),selected:s.selected,cursor:s.cursor,undoDepth:s.history.length,timeMs:s.time,theme:s.theme,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'cablecanopy',gameName:'Cable Canopy'});for(const id of ['cadeFeedbackOpenBtn','cadeClipControl']){if($(id))$('social').append($(id));}restart();function frame(now){if(!manual)advance(Math.min(50,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script></body></html>

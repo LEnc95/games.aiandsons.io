@@ -253,5 +253,6 @@
 - game/trailpantry
 - game/numberfoundry
 - game/gallerywatch
+- game/cablecanopy
 
 Generated from `src/meta/feedback.js`.

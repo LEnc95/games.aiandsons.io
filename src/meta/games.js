@@ -239,6 +239,7 @@ const BASE_GAMES = [
   { slug:'trailpantry', name:'Trail Pantry', emoji:'\u{1F392}', scoreHint:'hikes', url:'/trailpantry', desc:'Pack exact food and water totals into a limited backpack and solve five woodland supply puzzles.', earnsCoins:false },
   { slug:'numberfoundry', name:'Number Foundry', emoji:'\u{1F525}', scoreHint:'orders', url:'/numberfoundry', desc:'Combine numbered ingots with arithmetic, use every number, and forge five exact-target workshop puzzles.', earnsCoins:false },
   { slug:'gallerywatch', name:'Gallery Watch', emoji:'\u{1F5BC}\uFE0F', scoreHint:'galleries', url:'/gallerywatch', desc:'Station a limited team of docents in rooms, watch every corridor from one endpoint, and solve five museum graph puzzles.', earnsCoins:false },
+  { slug:'cablecanopy', name:'Cable Canopy', emoji:'\u{1F332}', scoreHint:'networks', url:'/cablecanopy', desc:'Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

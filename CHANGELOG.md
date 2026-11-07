@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Cable Canopy: connect treetop cabins with weighted cable links and solve five spool-budget network puzzles.
 - Gallery Watch: station a limited team of docents to watch every corridor across five museum graph puzzles.
 - Number Foundry: combine four numbered ingots with arithmetic to forge five exact-target workshop puzzles.
 - Trail Pantry: pack exact food and water totals into limited backpacks across five woodland supply puzzles.
