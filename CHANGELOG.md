@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.20.0] - 2026-11-08
 ### Added
 - Ribbon Ruler: place marks with unique pairwise distances across five measuring puzzles.
 - Cable Canopy: connect treetop cabins with weighted cable links and solve five spool-budget network puzzles.

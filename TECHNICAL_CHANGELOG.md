@@ -2,6 +2,25 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.20.0 — 2026-11-08
+
+- Release week: 2026-W45
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- 75fd671 Add Ribbon Ruler daily game (#417)
+- 8500c40 Add Cable Canopy daily game (#416)
+- 3a82c78 Add Gallery Watch daily game (#415)
+- 94a411f Add Number Foundry daily game (#412)
+- 6e2bea4 Add Trail Pantry daily game (#411)
+- e045deb Add Siding Dispatch daily game (#410)
+- 4aef047 Add Torch Bridge daily game (#409)
+- 794a046 Fix production glob and minimatch vulnerabilities (#407)
+- f3a4ab1 Add 2026-W45 weekly content pack (#406)
+- 18c5378 Prepare weekly release 1.19.0 (#402)
+
 ## 1.19.0 — 2026-11-01
 
 - Release week: 2026-W44
