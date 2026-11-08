@@ -240,6 +240,7 @@ const BASE_GAMES = [
   { slug:'numberfoundry', name:'Number Foundry', emoji:'\u{1F525}', scoreHint:'orders', url:'/numberfoundry', desc:'Combine numbered ingots with arithmetic, use every number, and forge five exact-target workshop puzzles.', earnsCoins:false },
   { slug:'gallerywatch', name:'Gallery Watch', emoji:'\u{1F5BC}\uFE0F', scoreHint:'galleries', url:'/gallerywatch', desc:'Station a limited team of docents in rooms, watch every corridor from one endpoint, and solve five museum graph puzzles.', earnsCoins:false },
   { slug:'cablecanopy', name:'Cable Canopy', emoji:'\u{1F332}', scoreHint:'networks', url:'/cablecanopy', desc:'Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles.', earnsCoins:false },
+  { slug:'ribbonruler', name:'Ribbon Ruler', emoji:'\u{1F4CF}', scoreHint:'rulers', url:'/ribbonruler', desc:'Place ribbon marks so every pair has a unique distance across five measuring puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
