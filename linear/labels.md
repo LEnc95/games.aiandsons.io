@@ -254,5 +254,6 @@
 - game/numberfoundry
 - game/gallerywatch
 - game/cablecanopy
+- game/ribbonruler
 
 Generated from `src/meta/feedback.js`.
