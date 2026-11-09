@@ -94,7 +94,7 @@
   <div id="live" aria-live="polite"></div>
 </main>
 <script type="module">
-import { addCoins } from '/src/core/state.js';
+import { addCoins, state as profileState } from '/src/core/state.js';
 import { reportGameOutcome } from '/src/core/outcomes.js';
 import { mountGameFeedback } from '/src/feedback/embed.js';
 
@@ -114,10 +114,12 @@ const OFFSETS=Object.freeze({
   wedge:Object.freeze([[0,-62],[-42,-28],[42,-28],[-78,12],[78,12],[-116,54],[116,54]]),
   column:Object.freeze([[0,-108],[0,-72],[0,-36],[0,0],[0,36],[0,72],[0,108]])
 });
+const FLOCKFOLD_TWILIGHT_TERN=profileState.inventory instanceof Set&&profileState.inventory.has('flockfold-twilight-tern');
 const THEMES=Object.freeze([
   Object.freeze({name:'Storybook Dawn',sky:'#74c7ee',horizon:'#f8d18a',cloud:'#fffaf0',cloudShade:'#caddef',gate:'#345f9a',birds:['#f25f72','#ffbd4a','#f4f1de','#4aa6c8','#7c6dc5','#eb7d4f','#74b76b'],trail:'#fff4a8',accent:'#ffd258',ink:'#18324f',panel:'rgba(22,61,102,.86)',danger:'#d94363'}),
   Object.freeze({name:'Plum Twilight',sky:'#5c609e',horizon:'#e895a6',cloud:'#f1e9ff',cloudShade:'#b3a9d8',gate:'#623b79',birds:['#ff7d9e','#facf62','#9de1e6','#a89cf5','#e8a5df','#f68b69','#85c49b'],trail:'#f7d9ff',accent:'#ffd580',ink:'#302548',panel:'rgba(49,34,78,.88)',danger:'#ff6487'}),
-  Object.freeze({name:'Mint Daybreak',sky:'#81cdb8',horizon:'#f5dea0',cloud:'#f8fff4',cloudShade:'#b9d8cb',gate:'#276b68',birds:['#e76569','#f0b848','#56a6b8','#7389cf','#a66aa3','#ed8c5a','#62a871'],trail:'#fff1a9',accent:'#ffdc63',ink:'#214843',panel:'rgba(25,75,70,.87)',danger:'#d84b59'})
+  Object.freeze({name:'Mint Daybreak',sky:'#81cdb8',horizon:'#f5dea0',cloud:'#f8fff4',cloudShade:'#b9d8cb',gate:'#276b68',birds:['#e76569','#f0b848','#56a6b8','#7389cf','#a66aa3','#ed8c5a','#62a871'],trail:'#fff1a9',accent:'#ffdc63',ink:'#214843',panel:'rgba(25,75,70,.87)',danger:'#d84b59'}),
+  ...(FLOCKFOLD_TWILIGHT_TERN?[Object.freeze({name:'Twilight Tern',sky:'#28345f',horizon:'#a8799d',cloud:'#f5edf7',cloudShade:'#c7b9d5',gate:'#4e3d79',birds:['#f4977f','#f1c66b','#d9edf4','#87b9d8','#a996d4','#df8ca1','#7bb99e'],trail:'#e8d8ff',accent:'#ffd480',ink:'#251d45',panel:'rgba(37,29,69,.88)',danger:'#e45d7a'})]:[])
 ]);
 const game={mode:'menu',skyIndex:0,formation:'wedge',gates:[],nextGate:0,skyResolved:0,gatesPassed:0,skies:0,folds:0,feathers:MAX_FEATHERS,elapsedMs:0,themeIndex:0,status:'Fold the flock to match each approaching cloud gate.',lastAction:{type:'ready'},hitFlashMs:0,started:false,reported:false,rewarded:false};
 let lastFrame=performance.now(),manualUntil=0,formationRegions=[];
@@ -164,7 +166,7 @@ document.addEventListener('fullscreenchange',()=>{game.lastAction={type:'fullscr
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.mode==='playing')togglePause()});
 window.addEventListener('pagehide',()=>{if(game.started&&game.mode==='playing')report('abandoned')});
 window.advanceTime=ms=>{const amount=Math.max(0,Number(ms)||0);manualUntil=performance.now()+300;lastFrame=performance.now();update(amount);render()};
-window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; the flock center is fixed near x 238 while cloud gates travel from right to left',mode:game.mode,sky:{index:game.skyIndex+1,total:SKIES.length,name:currentSky().name,speed:currentSky().speed},formation:game.formation,formationOptions:FORMATIONS,flock:{center:{x:PLAYER_X,y:PLAYER_Y},birds:birdPoints()},nextGate:pendingGate()?{id:pendingGate().id,requirement:pendingGate().requirement,x:Math.round(pendingGate().x),secondsToFlock:Number(Math.max(0,(pendingGate().x-PLAYER_X)/currentSky().speed).toFixed(2))}:null,visibleGates:visibleGates().map(gate=>({id:gate.id,requirement:gate.requirement,x:Math.round(gate.x),resolved:gate.resolved,hit:gate.hit})),skyGatesResolved:game.skyResolved,feathersRemaining:game.feathers,elapsedMs:Math.round(game.elapsedMs),theme:theme().name,status:game.status,lastAction:game.lastAction,metrics:currentMetrics()});
+window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'canvas origin is top-left; x increases right and y increases down; the flock center is fixed near x 238 while cloud gates travel from right to left',mode:game.mode,sky:{index:game.skyIndex+1,total:SKIES.length,name:currentSky().name,speed:currentSky().speed},formation:game.formation,formationOptions:FORMATIONS,flock:{center:{x:PLAYER_X,y:PLAYER_Y},birds:birdPoints()},nextGate:pendingGate()?{id:pendingGate().id,requirement:pendingGate().requirement,x:Math.round(pendingGate().x),secondsToFlock:Number(Math.max(0,(pendingGate().x-PLAYER_X)/currentSky().speed).toFixed(2))}:null,visibleGates:visibleGates().map(gate=>({id:gate.id,requirement:gate.requirement,x:Math.round(gate.x),resolved:gate.resolved,hit:gate.hit})),skyGatesResolved:game.skyResolved,feathersRemaining:game.feathers,elapsedMs:Math.round(game.elapsedMs),theme:theme().name,cosmetics:{twilightTern:FLOCKFOLD_TWILIGHT_TERN},status:game.status,lastAction:game.lastAction,metrics:currentMetrics()});
 function qaResolveNext(correct=true){const gate=pendingGate();if(!gate||game.mode!=='playing')return false;const formation=correct?gate.requirement:FORMATIONS.find(name=>name!==gate.requirement);setFormation(formation,'qa');gate.x=PLAYER_X+1;update(10);render();return true}
 window.__FLOCK_FOLD_GAME__={snapshot:()=>JSON.parse(window.render_game_to_text()),start:()=>startOrContinue(),reset:()=>resetCampaign('menu'),loadSky:index=>loadSky(index,'playing'),setFormation:name=>setFormation(name,'qa'),cycle:delta=>cycleFormation(delta,'qa'),resolveNext:correct=>qaResolveNext(correct!==false),solveSky:()=>{let guard=0;while(game.mode==='playing'&&pendingGate()&&guard++<12)qaResolveNext(true);return game.mode},solveCampaign:()=>{if(game.mode==='menu')startOrContinue();let guard=0;while(game.mode!=='won'&&guard++<8){while(game.mode==='playing'&&pendingGate())qaResolveNext(true);if(game.mode==='sky-complete')startOrContinue();else if(game.mode==='lost')break}return game.mode},fail:()=>{let guard=0;while(game.mode==='playing'&&guard++<MAX_FEATHERS)qaResolveNext(false);return game.mode==='lost'},pause:()=>togglePause(),theme:()=>cycleTheme(),skies:SKIES,formations:FORMATIONS};
 mountGameFeedback({gameSlug:'flockfold',gameName:'Flock Fold'});

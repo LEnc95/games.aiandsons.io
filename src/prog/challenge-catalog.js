@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w46-flockfold-gates-25', weekKey: '2026-11-09', gameSlug: 'flockfold', metric: 'gates', name: 'Twilight Formation', desc: 'Clear all 25 cloud gates in Flock Fold.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w46-rainkeeper-raindrops-60', weekKey: '2026-11-09', gameSlug: 'rainkeeper', metric: 'raindrops', name: 'Citrine Shower', desc: 'Catch all 60 raindrops in Rainkeeper.', target: 60, rewardCoins: 20 }),
+  define({ id: 'weekly-w46-signalgarden-signals-25', weekKey: '2026-11-09', gameSlug: 'signalgarden', metric: 'signals', name: 'Verdant Echo', desc: 'Remember all 25 signals in Signal Garden.', target: 25, rewardCoins: 20 }),
+  define({ id: 'weekly-w46-cindercompass-beacons-25', weekKey: '2026-11-09', gameSlug: 'cindercompass', metric: 'beacons', name: 'Cinder Bearing', desc: 'Mark all 25 beacons in Cinder Compass.', target: 25, rewardCoins: 20 }),
   define({ id: 'weekly-w45-geargrove-gears-27', weekKey: '2026-11-02', gameSlug: 'geargrove', metric: 'gears', name: 'Cobalt Clockwork', desc: 'Align all 27 gears in Gear Grove.', target: 27, rewardCoins: 20 }),
   define({ id: 'weekly-w45-echoferry-buoys-20', weekKey: '2026-11-02', gameSlug: 'echoferry', metric: 'buoys', name: 'Saffron Signal', desc: 'Find all 20 buoys in Echo Ferry.', target: 20, rewardCoins: 20 }),
   define({ id: 'weekly-w45-paperbridge-bridges-5', weekKey: '2026-11-02', gameSlug: 'paperbridge', metric: 'bridges', name: 'Rosefold Span', desc: 'Hold all 5 bridges in Paper Bridge.', target: 5, rewardCoins: 20 }),

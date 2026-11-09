@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Added the 2026-W46 content pack with Twilight Tern Flock Fold, Citrine Cloudburst Rainkeeper, and Verdant Voltage Signal Garden cosmetics plus four bounded weekly challenges.
+
 ## [1.20.0] - 2026-11-08
 ### Added
 - Ribbon Ruler: place marks with unique pairwise distances across five measuring puzzles.
