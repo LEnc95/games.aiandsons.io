@@ -358,6 +358,24 @@ Validation:
 - Browser smoke: start `python -m http.server 4173`, then run
   `npm run test:weekly-smoke:raw`
 
+Rotating fixture maintenance:
+
+- `tests/shop-items.integration.test.mjs` keeps dated assertions for each
+  generated 3-cosmetic pack. Add a new test named for the ISO week, assert the
+  exact three inventory IDs and prices from `shop.html`, and keep each price
+  within the 20-90 coin policy enforced by `src/prog/shop-catalog.js`.
+- `scripts/qa/weekly-challenges-smoke.mjs` uses a synthetic
+  `window.maybeUnlock()` progress payload to complete the active scheduled
+  weekly challenges in a browser. When a new dated `weekKey` becomes current,
+  add the four game/metric values for that pack and update the assertion text
+  so the smoke proves the current pack rewards exactly once for 80 coins total.
+- `tests/unit/prog/missions.test.mjs` should keep at least one scheduled-week
+  regression that calls `recordMissionProgress(payload, timestamp)` with a
+  fixed local-Monday timestamp. Use it when changing mission selection or reward
+  persistence logic, not merely to mirror every content pack.
+- The raw weekly smoke writes screenshots and `summary.json` under
+  `output/web-game/weekly-challenges-e2e/`; those are QA artifacts and should
+  not be committed.
 
 ### Weekly release automation runbook
 
