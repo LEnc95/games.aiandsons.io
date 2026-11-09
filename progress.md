@@ -1,5 +1,9 @@
 Original prompt: Recreate pacman. The game should have multiple levels and all the features one would expect. The controls should work on Mobile and Desktop browsers.
 
+## 2026-11-09 Weekly content pack 2026-W46
+- Isolated from `origin/main` baseline `d6e5ed5a2db566877eea6d469b2d873ee9853bc2`; issue #419 is authoritative. Added inventory-gated Twilight Tern (Flock Fold, 45), Citrine Cloudburst (Rainkeeper, 62), and Verdant Voltage (Signal Garden, 79), plus four one-time 20-coin challenges: Flock Fold gates 25, Rainkeeper raindrops 60, Signal Garden signals 25, and Cinder Compass beacons 25 (80 total).
+- Supplied Playwright client plus ownership-seeded desktop/mobile visual review passed for every shop preview and unowned/equipped palette; all four challenge targets were reached in deterministic campaign checks with no new browser errors. Ordered gates passed: maintenance, 240-game preflight, telemetry 39/39, feedback 41/41, shop 75/75, social 23/23, raw weekly smoke, and diff check. TODO: audited guarded PR publication, merge, and production verification.
+
 ## 2026-11-02 Weekly content pack 2026-W45
 - Isolated from `origin/main` baseline `18c5378519f7d1b501da57d2c6984f76a86afc89`; issue #404 is authoritative. Added inventory-gated Cobalt Canopy (Gear Grove, 49), Saffron Sounding (Echo Ferry, 64), and Rosefold Radiance (Paper Bridge, 82), plus four one-time 20-coin challenges: Gear Grove gears 27, Echo Ferry buoys 20, Paper Bridge bridges 5, and Reed Relay glowseeds 20 (80 total).
 - Visual ownership proof, 390px layouts, campaign/state checks, pause/restart/fullscreen controls, and the ordered local gates passed. TODO: staged audit, guarded PR publication, merge, and production verification.

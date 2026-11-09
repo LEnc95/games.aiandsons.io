@@ -109,6 +109,10 @@ async function main() {
       }
       const update = window.maybeUnlock({
         anyPlay: true,
+        flockfold: { gates: 25 },
+        rainkeeper: { raindrops: 60 },
+        signalgarden: { signals: 25 },
+        cindercompass: { beacons: 25 },
         geargrove: { gears: 27 },
         echoferry: { buoys: 20 },
         paperbridge: { bridges: 5 },
@@ -151,12 +155,12 @@ async function main() {
     });
 
     assert(!result.error, "Expected maybeUnlock to be available in home runtime.");
-    assert(result.weeklyRewardsNow.length === 4, "Expected all four W45 weekly challenges to reward from the synthetic progress update.");
-    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W45 weekly reward total to stay within the 80-coin policy maximum.");
+    assert(result.weeklyRewardsNow.length === 4, "Expected all four W46 weekly challenges to reward from the synthetic progress update.");
+    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W46 weekly reward total to stay within the 80-coin policy maximum.");
     const repeat = await page.evaluate(() => window.maybeUnlock({
-      geargrove: { gears: 27 }, echoferry: { buoys: 20 }, paperbridge: { bridges: 5 }, reedrelay: { glowseeds: 20 },
+      flockfold: { gates: 25 }, rainkeeper: { raindrops: 60 }, signalgarden: { signals: 25 }, cindercompass: { beacons: 25 },
     }));
-    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W45 weekly challenges to reward exactly once.");
+    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W46 weekly challenges to reward exactly once.");
 
     await page.reload({ waitUntil: "networkidle" });
     const afterState = await page.evaluate(() => {
