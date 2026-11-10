@@ -255,5 +255,6 @@
 - game/gallerywatch
 - game/cablecanopy
 - game/ribbonruler
+- game/festivalflags
 
 Generated from `src/meta/feedback.js`.

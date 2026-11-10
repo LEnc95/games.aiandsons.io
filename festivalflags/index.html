@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Festival Flags | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4eddc;color:#293d48;font-family:system-ui,sans-serif}main{max-width:940px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}header{text-align:center}h1{font:700 clamp(32px,6vw,52px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.2em;font-size:12px;font-weight:750}.intro{max-width:640px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:20px;touch-action:manipulation}.controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #71858a;border-radius:9px;color:#293d48;background:#fffdf3}button.primary{background:#315b72;color:white}button[aria-pressed=true]{outline:3px solid #9b4b1e;outline-offset:1px}button:disabled{opacity:.45}button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #b75022;outline-offset:3px}#readout{text-align:center;font-weight:650;line-height:1.6;margin:12px 0}#status{text-align:center;min-height:3em;line-height:1.5}.help{border-top:1px solid #c7cfba;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}#social .cade-feedback-launcher,#social .cade-clip-control{position:static;z-index:auto}@media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px}.controls{gap:6px}button,select{padding:10px 12px}.help{font-size:13px}}@media(max-width:350px){main{padding-top:112px}}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Dye connected flags with three letters, keep neighboring flags different, and solve five courtyard graph-coloring puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Festival Flags | AI and Sons Games">
+  <meta property="og:description" content="Dye connected flags with three letters, keep neighboring flags different, and solve five courtyard graph-coloring puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/festivalflags">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/festivalflags.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Festival Flags | AI and Sons Games">
+  <meta name="twitter:description" content="Dye connected flags with three letters, keep neighboring flags different, and solve five courtyard graph-coloring puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/festivalflags.png">
+  <link rel="canonical" href="https://games.aiandsons.io/festivalflags">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Festival Flags","description":"Dye connected flags with three letters, keep neighboring flags different, and solve five courtyard graph-coloring puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/festivalflags","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><a href="/">← Back to games</a>
+<header><p class="eyebrow">THE COURTYARD COLORIST</p><h1>Festival Flags</h1><p class="intro">Dye every flag with A, B, or C. Flags joined by a string must have <strong>different letters</strong>. Decorate five festival courtyards with just three dyes.</p></header>
+<canvas id="game" width="900" height="620" tabindex="0" aria-label="Connected numbered festival flags; tap a flag to cycle its dye"></canvas>
+<p id="readout"></p><div class="controls" id="flags" aria-label="Select a flag"></div>
+<div class="controls" id="dyes" aria-label="Dye the selected flag"><button data-dye="0">Blank · 0</button><button data-dye="1">A · 1</button><button data-dye="2">B · 2</button><button data-dye="3">C · 3</button></div>
+<div class="controls"><button id="check" class="primary">Inspect flags · V</button><button id="undo">Undo · U</button><button id="clear">Clear dyes · C</button></div>
+<div class="controls"><button id="start">Open festival</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="full">Fullscreen</button><select id="theme" data-cade-clip-control aria-label="Festival palette"><option>Harbor festival</option><option>Orchard festival</option></select></div>
+<p id="status" role="status"></p><div id="social" class="controls" aria-label="Feedback and clips"></div>
+<p class="help">Tap a flag to cycle blank → A → B → C. Or select its numbered button and choose a dye.<br>Arrows select a flag · 0–3 dye · Space cycles · Enter starts or continues · V inspects<br>U undo · C clear · P pause · R restart · F fullscreen · Escape exits.<br>Three failed inspections end the festival. Undo and clear are free; no time limit.</p>
+</main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const levels=[
+ {name:'Market Square',points:[[290,235],[610,235],[610,445],[290,445]],edges:[[0,1],[1,2],[2,3],[3,0],[0,2]]},
+ {name:'Fountain Court',points:[[450,340],[240,190],[660,190],[660,490],[240,490]],edges:[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]]},
+ {name:'Lantern Walk',points:[[200,220],[450,220],[700,220],[200,450],[450,450],[700,450]],edges:[[0,1],[1,2],[3,4],[4,5],[0,3],[1,4],[2,5],[0,4],[1,5]]},
+ {name:'Maypole Circle',points:[[450,340],[450,170],[665,255],[665,425],[450,510],[235,425],[235,255]],edges:[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[1,2],[2,3],[3,4],[4,5],[5,6],[6,1]]},
+ {name:'Grand Promenade',points:[[150,225],[350,225],[550,225],[750,225],[150,455],[350,455],[550,455],[750,455]],edges:[[0,1],[1,2],[2,3],[4,5],[5,6],[6,7],[0,4],[1,5],[2,6],[3,7],[0,5],[1,6],[2,7]]}
+];
+const palettes=[{paper:'#fff8e8',wall:'#d9e7ec',ink:'#293d48',string:'#6d7f83',a:'#28618a',b:'#a4404a',c:'#547136',accent:'#e4a73e'}, {paper:'#fff4df',wall:'#e6e6cd',ink:'#443c43',string:'#8d7c73',a:'#75518c',b:'#a94d28',c:'#326e69',accent:'#dfaa43'}];
+let s,manual=false,last=performance.now();
+const level=()=>levels[s.level],letter=n=>['–','A','B','C'][n];
+const conflicts=()=>level().edges.filter(([a,b])=>s.colors[a]&&s.colors[a]===s.colors[b]);
+const metrics=()=>({courtyards:s.solved,dyes:s.dyes,mistakes:s.mistakes});
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'festivalflags',result,durationMs:s.time,metrics:metrics()});}}
+function load(){s.colors=level().points.map(()=>0);s.history=[];s.cursor=0;s.message='Choose dyes for every flag. Follow the connecting strings.';}
+function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'menu',level:0,solved:0,dyes:0,mistakes:0,time:0,theme,started:false,reported:false};load();render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
+function dye(n){if(s.mode!=='play'||n===s.colors[s.cursor])return;s.history.push([...s.colors]);s.colors[s.cursor]=n;if(n)s.dyes=Math.min(999,s.dyes+1);s.message=conflicts().length?'Matching neighbors: '+conflicts().map(([a,b])=>`${a+1}–${b+1}`).join(', '):'No matching neighbors. Fill every flag, then inspect.';render();}
+function undo(){if(s.mode!=='play'||!s.history.length)return;s.colors=s.history.pop();s.message='Last dye change undone.';render();}
+function clear(){if(s.mode!=='play'||!s.colors.some(Boolean))return;s.history.push([...s.colors]);s.colors.fill(0);s.message='All flags washed clean.';render();}
+function check(){if(s.mode!=='play')return;if(s.colors.every(Boolean)&&!conflicts().length){s.solved++;s.mode=s.solved===5?'won':'between';s.message=s.mode==='won'?'All five courtyards are ready for the festival!':'Every string joins different letters. Continue to the next courtyard.';if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=s.colors.includes(0)?'Some flags are still blank. Dye every flag.':'Connected flags share a letter. Follow the red strings.';if(s.mistakes===3){s.mode='lost';s.message='Three inspections used. Open a fresh festival and try again.';report('lost');}}render();}
+function focus(){canvas.focus({preventScroll:true});}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused'){s.mode='play';focus();}render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function text(t,x,y,size=22,align='left',color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign=align;ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function box(x,y,w,h,fill,stroke){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,12);ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();}}
+function render(){const p=palettes[s.theme],l=level();ctx.fillStyle=p.wall;ctx.fillRect(0,0,900,620);box(22,20,856,580,p.paper,p.ink);text('COURT '+(s.level+1)+' / 5',45,60,22);text(l.name,450,108,32,'center');text('TESTS '+(3-s.mistakes),850,60,20,'right');
+ for(const [a,b] of l.edges){const bad=s.colors[a]&&s.colors[a]===s.colors[b];ctx.strokeStyle=bad?'#c52f38':p.string;ctx.lineWidth=bad?7:4;ctx.beginPath();ctx.moveTo(...l.points[a]);ctx.lineTo(...l.points[b]);ctx.stroke();}
+ for(let i=0;i<l.points.length;i++){const [x,y]=l.points[i],color=s.colors[i],fill=[p.paper,p.a,p.b,p.c][color];if(s.cursor===i)box(x-46,y-46,92,92,p.accent,p.ink);ctx.fillStyle=fill;ctx.strokeStyle=p.ink;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-34,y-36);ctx.lineTo(x+34,y-36);ctx.lineTo(x+34,y+21);ctx.lineTo(x,y+38);ctx.lineTo(x-34,y+21);ctx.closePath();ctx.fill();ctx.stroke();text(letter(color),x,y+8,30,'center',color?p.paper:p.ink);text(String(i+1),x+52,y+7,19,'center');}
+ text('Strings join different letters · A / B / C',450,575,22,'center');
+ if(s.mode!=='play'){box(65,165,770,360,p.paper,p.ink);text({menu:'Three dyes. Endless possibilities.',paused:'The festival can wait',between:'A courtyard in harmony',won:'Let the festival begin!',lost:'A fresh festival awaits'}[s.mode],450,255,32,'center');text(s.mode==='paused'?'Flags and clock are frozen.':s.mode==='between'?'Every neighboring flag has a different letter.':s.mode==='won'?'Five courtyards decorated with three dyes.':s.mode==='lost'?'Three inspections used. Try a new arrangement.':'Connected flags must have different letters.',450,335,25,'center');text(s.mode==='paused'?'P or Resume':s.mode==='between'?'Enter or Next courtyard':'Use the button below to begin',450,435,24,'center');}
+ const items=$('flags');while(items.children.length>l.points.length)items.lastChild.remove();for(let i=0;i<l.points.length;i++){let b=items.children[i];if(!b){b=document.createElement('button');b.onclick=()=>{if(s.mode==='play'){s.cursor=i;render();}focus();};items.append(b);}b.textContent=`${i+1} · ${letter(s.colors[i])}`;b.setAttribute('aria-label',`Select flag ${i+1}, dye ${letter(s.colors[i])}`);b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(i===s.cursor));}
+ for(const b of $('dyes').children){b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(Number(b.dataset.dye)===s.colors[s.cursor]));}
+ for(const id of ['check','clear'])$(id).disabled=s.mode!=='play';$('undo').disabled=s.mode!=='play'||!s.history.length;$('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next courtyard':['won','lost'].includes(s.mode)?'New festival':'Open festival';$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume':'Pause';
+ const neighbors=l.edges.flatMap(([a,b])=>a===s.cursor?[b+1]:b===s.cursor?[a+1]:[]);const readout=`Court ${s.level+1}/5 · Selected flag ${s.cursor+1}: ${letter(s.colors[s.cursor])} · Neighbors ${neighbors.join(', ')} · ${s.colors.filter(Boolean).length}/${s.colors.length} dyed · ${conflicts().length} conflicts · ${3-s.mistakes} tests left`;
+ if($('readout').textContent!==readout)$('readout').textContent=readout;if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+for(const b of $('dyes').children)b.onclick=()=>{dye(Number(b.dataset.dye));focus();};
+for(const [id,fn] of [['start',start],['undo',undo],['clear',clear],['check',check],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*900/r.width,y=(e.clientY-r.top)*620/r.height;if(s.mode!=='play')return;for(let i=0;i<level().points.length;i++){const [px,py]=level().points[i];if(Math.abs(x-px)<=43&&Math.abs(y-py)<=43){s.cursor=i;dye((s.colors[i]+1)%4);break;}}};
+window.addEventListener('keydown',e=>{const launcher=e.target.closest('.cade-feedback-launcher');if(e.target.closest('input,textarea,select,a,[contenteditable],[role="dialog"]')||(e.target.closest('button')&&!launcher))return;const k=e.key.toLowerCase();if(launcher&&['enter',' '].includes(k))return;if(['arrowleft','arrowright','arrowup','arrowdown',' ','enter','u','c','v','p','r','f','0','1','2','3'].includes(k))e.preventDefault();if(e.repeat)return;
+ if(['arrowleft','arrowup'].includes(k)&&s.mode==='play'){s.cursor=Math.max(0,s.cursor-1);render();}if(['arrowright','arrowdown'].includes(k)&&s.mode==='play'){s.cursor=Math.min(level().points.length-1,s.cursor+1);render();}
+ if(k===' ')dye((s.colors[s.cursor]+1)%4);if(/^[0-3]$/.test(k))dye(Number(k));if(k==='enter')start();if(k==='v')check();if(k==='u')undo();if(k==='c')clear();if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'900x620; origin top-left, x right, y down; zero-based edges and selected index',mode:s.mode,courtyard:s.level+1,name:level().name,flags:level().points.map(([x,y],i)=>({number:i+1,x,y,dye:s.colors[i],letter:letter(s.colors[i])})),edges:level().edges,conflicts:conflicts(),cursor:s.cursor,undoDepth:s.history.length,timeMs:s.time,theme:s.theme,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'festivalflags',gameName:'Festival Flags'});for(const id of ['cadeFeedbackOpenBtn','cadeClipControl'])if($(id))$('social').append($(id));restart();function frame(now){if(!manual)advance(Math.max(0,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script></body></html>
