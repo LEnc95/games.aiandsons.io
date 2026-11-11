@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Harbor Match | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6efdd;color:#173f4a;font-family:system-ui,sans-serif}main{max-width:880px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}header{text-align:center}h1{font:700 clamp(34px,6vw,54px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.22em;font-size:12px;font-weight:750}.intro{max-width:620px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:18px;touch-action:manipulation}.controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #637e83;border-radius:9px;color:#173f4a;background:#fffdf2}button.primary{background:#235b68;color:white}button[aria-pressed=true]{outline:3px solid #aa561a;outline-offset:1px}button:disabled{opacity:.45}button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #aa561a;outline-offset:3px}#readout,#status{text-align:center;line-height:1.6}#readout{font-weight:650}#status{min-height:3em}.help{border-top:1px solid #b9cecb;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}#social .cade-feedback-launcher,#social .cade-clip-control{position:static;z-index:auto}@media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px}.controls{gap:6px}button,select{padding:10px 12px}}@media(max-width:350px){main{padding-top:112px}}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Assign compatible berths to every boat, avoid double bookings, and solve five harbor matching puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Harbor Match | AI and Sons Games">
+  <meta property="og:description" content="Assign compatible berths to every boat, avoid double bookings, and solve five harbor matching puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/harbormatch">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/harbormatch.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Harbor Match | AI and Sons Games">
+  <meta name="twitter:description" content="Assign compatible berths to every boat, avoid double bookings, and solve five harbor matching puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/harbormatch.png">
+  <link rel="canonical" href="https://games.aiandsons.io/harbormatch">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Harbor Match","description":"Assign compatible berths to every boat, avoid double bookings, and solve five harbor matching puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/harbormatch","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><a href="/">← Back to games</a>
+<header><p class="eyebrow">THE HARBORMASTER'S LEDGER</p><h1>Harbor Match</h1><p class="intro">Find a berth for every boat. Each row needs one anchor on an <strong>open circle</strong>, and each berth can host <strong>only one boat</strong>. Fit the whole fleet across five harbor manifests.</p></header>
+<canvas id="game" width="800" height="660" tabindex="0" aria-label="Boat and berth compatibility ledger; tap an open circle to assign that berth"></canvas>
+<p id="readout"></p><div class="controls" id="boats" aria-label="Select a boat"></div><div class="controls" id="berths" aria-label="Assign a berth to selected boat"></div>
+<div class="controls"><button id="check" class="primary">Inspect fleet · V</button><button id="undo">Undo · U</button><button id="clear">Clear ledger · C</button></div>
+<div class="controls"><button id="start">Open harbor</button><button id="pause">Pause</button><button id="restart">Restart</button><button id="full">Fullscreen</button><select id="theme" data-cade-clip-control aria-label="Harbor palette"><option>Sea glass</option><option>Sunset port</option></select></div>
+<p id="status" role="status"></p><div id="social" class="controls" aria-label="Feedback and clips"></div>
+<p class="help">Tap an open circle, or select a boat button and then a lettered berth.<br>↑/↓ select boat · ←/→ select berth · Space assigns · 1–5 assign A–E · 0 unassigns<br>Enter starts/continues · V inspects · U undo · C clear · P pause · R restart<br>F fullscreen · Escape exits. Three failed inspections end the shift. No time limit.<br>An anchor marks an assignment; a red ring marks a berth booked twice. × means incompatible.</p>
+</main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const levels=[
+ {name:'Quiet Quay',allowed:[[0,1],[1],[0,2]]},
+ {name:'Market Moorings',allowed:[[0,2],[0,1],[1,3],[1]]},
+ {name:'Lighthouse Landing',allowed:[[0,2],[1,3],[0,4],[0,1],[1]]},
+ {name:'Customs Cove',allowed:[[0,2],[1,2],[0,1],[2,3,4],[3]]},
+ {name:'Regatta Return',allowed:[[0,1,3],[0,2],[1,4],[0,1],[0,2]]}
+];
+const palettes=[{paper:'#fff9e9',water:'#b4d9d9',ink:'#173f4a',wood:'#e1c18c',anchor:'#24736c',accent:'#edb645'}, {paper:'#fff0dc',water:'#d3c4dd',ink:'#4c354d',wood:'#deb08d',anchor:'#81558b',accent:'#e5a055'}];
+let s,manual=false,last=performance.now();
+const level=()=>levels[s.level],n=()=>level().allowed.length,letter=i=>i<0?'–':String.fromCharCode(65+i);
+const duplicates=()=>[...new Set(s.assigned.filter((x,i,a)=>x>=0&&a.indexOf(x)!==i))];
+const metrics=()=>({manifests:s.solved,assignments:s.actions,mistakes:s.mistakes});
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'harbormatch',result,durationMs:s.time,metrics:metrics()});}}
+function load(){s.assigned=Array(n()).fill(-1);s.history=[];s.row=0;s.col=0;s.message='Open circles are compatible. Save scarce berths for boats with fewer choices.';}
+function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'menu',level:0,solved:0,actions:0,mistakes:0,time:0,theme,started:false,reported:false};load();render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
+function assign(col){if(s.mode!=='play'||col>=n()||col< -1)return;if(col>=0){s.col=col;if(!level().allowed[s.row].includes(col)){s.message='That berth cannot host boat '+(s.row+1)+'. Choose an open circle.';render();return;}}
+ if(s.assigned[s.row]===col){render();return;}s.history.push([...s.assigned]);s.assigned[s.row]=col;if(col>=0)s.actions=Math.min(999,s.actions+1);s.message=duplicates().length?'Double booking at '+duplicates().map(letter).join(', ')+'. Move one of those boats.':'Assignment saved. Each boat and berth must be used exactly once.';render();}
+function undo(){if(s.mode!=='play'||!s.history.length)return;s.assigned=s.history.pop();s.message='Last ledger change undone.';render();}
+function clear(){if(s.mode!=='play'||s.assigned.every(x=>x<0))return;s.history.push([...s.assigned]);s.assigned.fill(-1);s.message='Ledger cleared. Your inspection count stays the same.';render();}
+function check(){if(s.mode!=='play')return;if(s.assigned.every((x,i)=>level().allowed[i].includes(x))&&!duplicates().length){s.solved++;s.mode=s.solved===levels.length?'won':'between';s.message=s.mode==='won'?'Five fleets safely berthed. A fine shift, harbormaster!':'Every boat has its own compatible berth. Continue to the next manifest.';if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=s.assigned.includes(-1)?'Some boats still need a berth. Fill every row.':'A berth is booked twice. Each column needs exactly one anchor.';if(s.mistakes===3){s.mode='lost';s.message='Three inspections used. Start a fresh shift and try again.';report('lost');}}render();}
+function focus(){canvas.focus({preventScroll:true});}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused'){s.mode='play';focus();}render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function text(t,x,y,size=22,align='left',color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign=align;ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function box(x,y,w,h,fill,stroke){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,10);ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();}}
+function cell(row,col){return {x:260+col*82,y:225+row*72};}
+function anchor(x,y,color){ctx.strokeStyle=color;ctx.lineWidth=5;ctx.beginPath();ctx.arc(x,y-12,6,0,Math.PI*2);ctx.moveTo(x,y-6);ctx.lineTo(x,y+20);ctx.moveTo(x-16,y+5);ctx.quadraticCurveTo(x-16,y+28,x,y+20);ctx.quadraticCurveTo(x+16,y+28,x+16,y+5);ctx.moveTo(x-11,y-1);ctx.lineTo(x+11,y-1);ctx.stroke();}
+function render(){const p=palettes[s.theme],count=n(),dupes=duplicates();ctx.fillStyle=p.water;ctx.fillRect(0,0,800,660);
+ for(let y=16;y<660;y+=40){ctx.strokeStyle=p.paper+'70';ctx.lineWidth=2;ctx.beginPath();for(let x=0;x<=800;x+=20){const yy=y+Math.sin(x/30)*5;x?ctx.lineTo(x,yy):ctx.moveTo(x,yy);}ctx.stroke();}
+ box(22,20,756,620,p.paper,p.ink);text('MANIFEST '+(s.level+1)+' / 5',45,60,21);text('TESTS '+(3-s.mistakes),750,60,20,'right');text(level().name,400,112,32,'center');text('One boat per berth. Follow the open circles.',400,151,21,'center');
+ for(let col=0;col<count;col++)text(letter(col),cell(0,col).x,192,27,'center');
+ for(let row=0;row<count;row++){const y=cell(row,0).y;if(s.row===row)box(47,y-30,130,60,p.accent);ctx.fillStyle=p.wood;ctx.beginPath();ctx.moveTo(62,y);ctx.lineTo(152,y);ctx.lineTo(137,y+22);ctx.lineTo(77,y+22);ctx.closePath();ctx.fill();text(String(row+1),107,y-4,25,'center');
+ for(let col=0;col<count;col++){const {x,y}=cell(row,col),allowed=level().allowed[row].includes(col),assigned=s.assigned[row]===col;box(x-34,y-30,68,60,assigned?p.wood:p.paper,s.row===row&&s.col===col?p.ink:undefined);if(assigned)anchor(x,y,p.anchor);else if(allowed){ctx.strokeStyle=p.anchor;ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.stroke();}else text('×',x,y+8,27,'center','#6f7774');if(assigned&&dupes.includes(col)){ctx.strokeStyle='#b52b35';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,27,0,Math.PI*2);ctx.stroke();}}}
+ text('○ compatible    × unavailable    anchor = booked',400,612,21,'center');
+ if(s.mode!=='play'){box(55,180,690,350,p.paper,p.ink);text({menu:'A berth for every boat',paused:'Harbor on hold',between:'Fleet safely berthed',won:'A shipshape shift!',lost:'The tide will turn'}[s.mode],400,260,34,'center');text(s.mode==='paused'?'Ledger and clock are frozen.':s.mode==='between'?'One anchor in every row and column.':s.mode==='won'?'All five manifests complete.':s.mode==='lost'?'Three inspections used. Try a fresh shift.':'Choose compatible berths for the whole fleet.',400,340,24,'center');text(s.mode==='paused'?'P or Resume':s.mode==='between'?'Enter or Next manifest':'Use the button below to begin',400,442,24,'center');}
+ const boats=$('boats');while(boats.children.length>count)boats.lastChild.remove();for(let i=0;i<count;i++){let b=boats.children[i];if(!b){b=document.createElement('button');b.onclick=()=>{if(s.mode==='play'){s.row=i;render();}focus();};boats.append(b);}b.textContent=`Boat ${i+1} · ${letter(s.assigned[i])}`;b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(i===s.row));}
+ const berths=$('berths');if(berths.children.length!==count+1){berths.replaceChildren();for(let i=-1;i<count;i++){const b=document.createElement('button');b.dataset.col=i;b.onclick=()=>{assign(i);focus();};berths.append(b);}}
+ for(const b of berths.children){const col=Number(b.dataset.col),ok=col<0||level().allowed[s.row].includes(col);b.textContent=col<0?'Unassign · 0':`Berth ${letter(col)}${ok?'':' ×'}`;b.disabled=s.mode!=='play'||!ok;b.setAttribute('aria-pressed',String(s.assigned[s.row]===col));}
+ for(const id of ['check','clear'])$(id).disabled=s.mode!=='play';$('undo').disabled=s.mode!=='play'||!s.history.length;$('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next manifest':['won','lost'].includes(s.mode)?'New shift':'Open harbor';$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume':'Pause';
+ const readout=`Manifest ${s.level+1}/5 · Boat ${s.row+1} → ${letter(s.assigned[s.row])} · Fits ${level().allowed[s.row].map(letter).join(', ')} · ${s.assigned.filter(x=>x>=0).length}/${count} assigned · ${3-s.mistakes} tests left`;if($('readout').textContent!==readout)$('readout').textContent=readout;if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+for(const [id,fn] of [['start',start],['undo',undo],['clear',clear],['check',check],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();if(s.mode!=='play')return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*800/r.width,y=(e.clientY-r.top)*660/r.height;for(let row=0;row<n();row++)for(let col=0;col<n();col++){const c=cell(row,col);if(Math.abs(x-c.x)<=34&&Math.abs(y-c.y)<=30){s.row=row;s.col=col;assign(s.assigned[row]===col?-1:col);return;}}};
+window.addEventListener('keydown',e=>{const launcher=e.target.closest('.cade-feedback-launcher');if(e.target.closest('input,textarea,select,a,[contenteditable],[role="dialog"]')||(e.target.closest('button')&&!launcher))return;const k=e.key.toLowerCase();if(launcher&&['enter',' '].includes(k))return;if(['arrowleft','arrowright','arrowup','arrowdown',' ','enter','u','c','v','p','r','f','0','1','2','3','4','5'].includes(k))e.preventDefault();if(e.repeat)return;
+ if(s.mode==='play'){if(k==='arrowup')s.row=Math.max(0,s.row-1);if(k==='arrowdown')s.row=Math.min(n()-1,s.row+1);if(k==='arrowleft')s.col=Math.max(0,s.col-1);if(k==='arrowright')s.col=Math.min(n()-1,s.col+1);if(k.startsWith('arrow'))render();}
+ if(k===' ')assign(s.assigned[s.row]===s.col?-1:s.col);if(/^[1-5]$/.test(k))assign(Number(k)-1);if(k==='0')assign(-1);if(k==='enter')start();if(k==='v')check();if(k==='u')undo();if(k==='c')clear();if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'800x660; origin top-left, x right, y down; zero-based allowed/assignments/selection; -1 unassigned',mode:s.mode,manifest:s.level+1,name:level().name,allowed:level().allowed,assigned:s.assigned,duplicates:duplicates(),row:s.row,col:s.col,cells:level().allowed.map((a,row)=>a.map(col=>({...cell(row,col),col}))),undoDepth:s.history.length,timeMs:s.time,theme:s.theme,metrics:metrics(),message:s.message});
+mountGameFeedback({gameSlug:'harbormatch',gameName:'Harbor Match'});for(const id of ['cadeFeedbackOpenBtn','cadeClipControl'])if($(id))$('social').append($(id));restart();function frame(now){if(!manual)advance(Math.max(0,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script></body></html>
