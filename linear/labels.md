@@ -256,5 +256,6 @@
 - game/cablecanopy
 - game/ribbonruler
 - game/festivalflags
+- game/harbormatch
 
 Generated from `src/meta/feedback.js`.

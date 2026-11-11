@@ -242,6 +242,7 @@ const BASE_GAMES = [
   { slug:'cablecanopy', name:'Cable Canopy', emoji:'\u{1F332}', scoreHint:'networks', url:'/cablecanopy', desc:'Connect treetop cabins with weighted cable links, stay within the spool budget, and solve five woodland network puzzles.', earnsCoins:false },
   { slug:'ribbonruler', name:'Ribbon Ruler', emoji:'\u{1F4CF}', scoreHint:'rulers', url:'/ribbonruler', desc:'Place ribbon marks so every pair has a unique distance across five measuring puzzles.', earnsCoins:false },
   { slug:'festivalflags', name:'Festival Flags', emoji:'\u{1F38F}', scoreHint:'courtyards', url:'/festivalflags', desc:'Dye connected flags with three letters, keep neighboring flags different, and solve five courtyard graph-coloring puzzles.', earnsCoins:false },
+  { slug:'harbormatch', name:'Harbor Match', emoji:'\u2693', scoreHint:'manifests', url:'/harbormatch', desc:'Assign compatible berths to every boat, avoid double bookings, and solve five harbor matching puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([

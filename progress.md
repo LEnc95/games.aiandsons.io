@@ -5045,3 +5045,14 @@ pm run test:feedback and the Playwright gameplay validation loop for /solarskiff
 - TODO: complete final runner, exact diff/staged audit, guarded PR and exact-SHA production verification.
 - All seven ordered final gates PASS: maintenance,241-game preflight,telemetry39/39,feedback41/41,shop75/75,social23/23,diff check. Semantic/lane pre-stage audit confirms exactly11 allowed paths, one appended registry entry/folder/contract/Unreleased mention; previous registry/contracts preserved, homepage only appends SEO ItemList/count. No dependency/shared tooling/secret/artifact or line-ending-only changes. Proof comparison normalizes Git LF versus worktree CRLF.
 - Next: committed authoritative audit, concurrency fetch, guarded PR checks/merge and exact-SHA production verification.
+
+
+## 2026-11-11 Harbor Match
+- Clean isolated 96cd worktree synced to baseline 82437fbe0babb2f77797320188f4c07fabc936c3. Current release instructions, skill, progress and automation memory reviewed after sync. npm.cmd ci passed; one low fast-xml-parser advisory is pre-existing dependency scope.
+- Exactly one /harbormatch boat-to-berth perfect-matching puzzle across five manifests, distinct from existing routing games. Keyboard/touch, undo/clear, three-inspection loss, two rendered palettes, bounded outcomes, deterministic hooks and shared feedback.
+- TODO: scoped generation/idempotence, early gates, supplied client/full browser matrix, final runner/audit and guarded PR/exact-SHA production verification.
+- Scoped SEO/OG repeated byte-identically across 960 tracked/new files; existing pages/cards/banner unchanged; local Linear seeds only. Early maintenance and 242-game preflight PASS.
+- Supplied client and 87-check full keyboard/real-touch five-manifest campaigns PASS: exact/partition/invalid time, pause/input freeze, undo/clear/unassign, incompatible/double/out-of-range assignments, saturation, transitions/loss/win, normalized single completed/lost/abandoned outcomes, lifecycle, fullscreen/Escape, feedback typing, two palettes and mobile390/320. Zero browser errors. Corrected test-only cancel selector and synthetic-event target before successful complete rerun; no product defect or skipped assertion.
+- Latest gameplay, mobile, transitions, pause, loss/win, feedback and OG captures visually inspected and agree with state. Shared raw feedback smoke4200 PASS.
+- TODO: ordered final gates, semantic/staged audit, guarded PR and exact-SHA production verification.
+- Final review aligned earnsCoins:false with the game having no coin payout; regenerated scoped outputs twice with identical bytes and reran supplied client. All seven ordered local gates PASS (maintenance,242 preflight,telemetry39,feedback41,shop75,social23,diff). Semantic review checks exactly eleven allowed paths and preserves existing registry/contracts/homepage content; test-only homepage JSON-LD traversal corrected for its @graph wrapper.
