@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Cipher Grove: decode five woodland substitution cryptograms with word clues and optional letter reveals.
 - Harbor Match: assign one compatible berth to every boat across five harbor matching puzzles.
 - Festival Flags: dye every flag with three letters while keeping connected neighbors different across five courtyard puzzles.
 - Added the 2026-W46 content pack with Twilight Tern Flock Fold, Citrine Cloudburst Rainkeeper, and Verdant Voltage Signal Garden cosmetics plus four bounded weekly challenges.

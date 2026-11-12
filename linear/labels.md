@@ -257,5 +257,6 @@
 - game/ribbonruler
 - game/festivalflags
 - game/harbormatch
+- game/ciphergrove
 
 Generated from `src/meta/feedback.js`.
