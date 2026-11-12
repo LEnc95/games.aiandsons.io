@@ -5,10 +5,10 @@
 </style>
 
   <!-- SEO:BEGIN -->
-  <meta name="description" content="Decode five nature cryptograms with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.">
+  <meta name="description" content="Decode five nature cryptogram puzzles with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
   <meta property="og:title" content="Cipher Grove | AI and Sons Games">
-  <meta property="og:description" content="Decode five nature cryptograms with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.">
+  <meta property="og:description" content="Decode five nature cryptogram puzzles with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://games.aiandsons.io/ciphergrove">
   <meta property="og:image" content="https://games.aiandsons.io/assets/og/ciphergrove.png">
@@ -18,10 +18,10 @@
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Cipher Grove | AI and Sons Games">
-  <meta name="twitter:description" content="Decode five nature cryptograms with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.">
+  <meta name="twitter:description" content="Decode five nature cryptogram puzzles with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.">
   <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/ciphergrove.png">
   <link rel="canonical" href="https://games.aiandsons.io/ciphergrove">
-  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Cipher Grove","description":"Decode five nature cryptograms with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/ciphergrove","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Cipher Grove","description":"Decode five nature cryptogram puzzles with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/ciphergrove","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
   <!-- SEO:END -->
 </head><body><main><a href="/">← Back to games</a><header><p class="eyebrow">LETTERS FROM THE WOODLAND</p><h1>Cipher Grove</h1><p class="intro">Decode five hidden nature phrases. Each cipher letter always stands for the <strong>same plain letter</strong>; two cipher letters cannot share a plain letter. Gold leaves are given. Use the word clue or reveal a letter when stuck.</p></header>
 <canvas id="game" width="800" height="640" tabindex="0" aria-label="Woodland cryptogram; tap a cipher tile then choose its plain letter"></canvas>
@@ -55,8 +55,8 @@ function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'men
 function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
 function snapshot(){s.history.push({...s.map});}
 function assign(value){if(s.mode!=='play')return;const c=symbols()[s.selected];if(s.fixed.includes(c)){s.message='This gold leaf is given. Select an unsolved cipher tile.';render();return;}if(s.map[c]===value||(!value&&!s.map[c]))return;if(value&&Object.entries(s.map).some(([k,v])=>k!==c&&v===value)){s.message=value+' is already used. Erase its other guess first.';render();return;}snapshot();if(value)s.map[c]=value;else delete s.map[c];s.edits=Math.min(999,s.edits+1);s.message=value?'Every '+c+' now reads '+value+'.':'Guess erased.';render();}
-function undo(){if(s.mode!=='play'||!s.history.length)return;s.map=s.history.pop();s.message='Last guess undone.';render();}
-function clear(){if(s.mode!=='play'||!Object.keys(s.map).some(c=>!s.fixed.includes(c)))return;snapshot();for(const c of Object.keys(s.map))if(!s.fixed.includes(c))delete s.map[c];s.message='Guesses cleared; given leaves stay.';render();}
+function undo(){if(s.mode!=='play'||!s.history.length)return;const previous=s.history.pop();s.edits=Math.min(999,s.edits+symbols().filter(c=>s.map[c]!==previous[c]).length);s.map=previous;s.message='Last guess undone.';render();}
+function clear(){if(s.mode!=='play'||!Object.keys(s.map).some(c=>!s.fixed.includes(c)))return;snapshot();s.edits=Math.min(999,s.edits+Object.keys(s.map).filter(c=>!s.fixed.includes(c)).length);for(const c of Object.keys(s.map))if(!s.fixed.includes(c))delete s.map[c];s.message='Guesses cleared; given leaves stay.';render();}
 function hint(){if(s.mode!=='play')return;const cs=symbols(),selected=cs[s.selected],c=!s.fixed.includes(selected)&&s.map[selected]!==answer(selected)?selected:cs.find(k=>s.map[k]!==answer(k));if(!c){s.message='All letters read correctly. Check the phrase!';render();return;}const value=answer(c);for(const k of Object.keys(s.map))if(k!==c&&s.map[k]===value)delete s.map[k];s.map[c]=value;s.fixed.push(c);s.history=[];s.reveals=Math.min(130,s.reveals+1);s.message='Revealed '+c+' → '+value+'. Undo history cleared to keep this leaf.';render();}
 function check(){if(s.mode!=='play')return;if(symbols().every(c=>s.map[c]===answer(c))){s.solved++;s.mode=s.solved===levels.length?'won':'between';s.message=s.mode==='won'?'All five woodland messages uncovered. A wonderful walk!':'Message uncovered: '+level().phrase+'. Continue into the grove.';if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=symbols().some(c=>!s.map[c])?'Some letters are still blank. Use the clue or reveal a leaf.':'The phrase does not fit yet. Reconsider a guessed letter.';if(s.mistakes===3){s.mode='lost';s.message='Three incorrect checks. Start another walk and try the clues or reveals.';report('lost');}}render();}
 function focus(){canvas.focus({preventScroll:true});}
