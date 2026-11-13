@@ -258,5 +258,6 @@
 - game/festivalflags
 - game/harbormatch
 - game/ciphergrove
+- game/factorfern
 
 Generated from `src/meta/feedback.js`.

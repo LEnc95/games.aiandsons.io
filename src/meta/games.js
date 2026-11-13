@@ -244,6 +244,7 @@ const BASE_GAMES = [
   { slug:'festivalflags', name:'Festival Flags', emoji:'\u{1F38F}', scoreHint:'courtyards', url:'/festivalflags', desc:'Dye connected flags with three letters, keep neighboring flags different, and solve five courtyard graph-coloring puzzles.', earnsCoins:false },
   { slug:'harbormatch', name:'Harbor Match', emoji:'\u2693', scoreHint:'manifests', url:'/harbormatch', desc:'Assign compatible berths to every boat, avoid double bookings, and solve five harbor matching puzzles.', earnsCoins:false },
   { slug:'ciphergrove', name:'Cipher Grove', emoji:'\u{1F343}', scoreHint:'phrases', url:'/ciphergrove', desc:'Decode five nature cryptogram puzzles with one-to-one letter substitutions, follow word clues, and uncover a hidden woodland message.', earnsCoins:false },
+  { slug:'factorfern', name:'Factor Fern', emoji:'\u{1F33F}', scoreHint:'ferns', url:'/factorfern', desc:'Split numbered seed pods into factor pairs, grow prime leaves, and complete five branching arithmetic puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
