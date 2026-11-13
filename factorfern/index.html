@@ -1,0 +1,74 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Factor Fern | AI and Sons Games</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f5f0df;color:#234b3b;font-family:system-ui,sans-serif}main{max-width:880px;margin:auto;padding:24px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:10px 0}header{text-align:center}h1{font:700 clamp(34px,6vw,54px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.22em;font-size:12px;font-weight:750}.intro{max-width:620px;margin:14px auto 22px;line-height:1.6}canvas{display:block;width:100%;height:auto;border-radius:18px;touch-action:manipulation}.controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}button,select{font:inherit;min-height:46px;padding:10px 15px;border:1px solid #637e83;border-radius:9px;color:#234b3b;background:#fffdf2}button.primary{background:#235b68;color:white}button[aria-pressed=true]{outline:3px solid #aa561a;outline-offset:1px}button:disabled{opacity:.45}button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #aa561a;outline-offset:3px}#readout,#status{text-align:center;line-height:1.6}#readout{font-weight:650}#status{min-height:3em}.help{border-top:1px solid #b9cecb;padding-top:18px;line-height:1.7;font-size:14px;text-align:center}#social .cade-feedback-launcher,#social .cade-clip-control{position:static;z-index:auto}@media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px}.controls{gap:6px}button,select{padding:10px 12px}}@media(max-width:350px){main{padding-top:112px}}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Split numbered seed pods into factor pairs, grow prime leaves, and complete five branching arithmetic puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Factor Fern | AI and Sons Games">
+  <meta property="og:description" content="Split numbered seed pods into factor pairs, grow prime leaves, and complete five branching arithmetic puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/factorfern">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/factorfern.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Factor Fern | AI and Sons Games">
+  <meta name="twitter:description" content="Split numbered seed pods into factor pairs, grow prime leaves, and complete five branching arithmetic puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/factorfern.png">
+  <link rel="canonical" href="https://games.aiandsons.io/factorfern">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Factor Fern","description":"Split numbered seed pods into factor pairs, grow prime leaves, and complete five branching arithmetic puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/factorfern","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main><a href="/">← Back to games</a><header><p class="eyebrow">A LITTLE GARDEN OF NUMBERS</p><h1>Factor Fern</h1><p class="intro">Grow five factor ferns. Select a numbered pod, then choose a divisor to split it into <strong>two whole-number factors greater than one</strong>. Finish when every pod is prime: divisible only by itself and one. Gold pods are finished.</p></header>
+<canvas id="game" width="800" height="600" tabindex="0" aria-label="Factor fern; select a pod below and a divisor to split it"></canvas><p id="readout"></p><div id="pods" class="controls" aria-label="Select pod"></div><div id="divisors" class="controls" aria-label="Split by divisor"></div>
+<div class="controls"><button id="start" class="primary">Plant fern</button><button id="undo">Undo · U</button><button id="pause">Pause · P</button><button id="restart">Restart · R</button><button id="full">Fullscreen · F</button><select id="theme" aria-label="Fern palette" data-cade-clip-control><option>Fern &amp; parchment</option><option>Lavender dusk</option></select></div>
+<p id="status" role="status"></p><div id="social" class="controls" aria-label="Feedback and clips"></div><p class="help">Tap a pod then a divisor. All divisors you need are available below.<br>←/→ select pod · 2–9 split by that number · U undo · Enter start/continue<br>P or Escape pause · R restart · F fullscreen · Escape exits fullscreen.<br>Three invalid splits end the walk. No time limit. Undo reverses a split, but keeps attempt counts.</p></main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const targets=[12,30,36,60,84],divisors=[2,3,4,5,6,7,8,9,10,11,12];
+const palettes=[{paper:'#fff9e9',garden:'#bad2b0',ink:'#234b3b',pod:'#deebd3',stem:'#4c7650',accent:'#e7b64c'},{paper:'#fff2e9',garden:'#c7bed8',ink:'#49395f',pod:'#e7d9ec',stem:'#7c5a94',accent:'#dfad60'}];
+const prime=n=>n>1&&!Array.from({length:Math.max(0,Math.floor(Math.sqrt(n))-1)},(_,i)=>i+2).some(d=>n%d===0);
+let s,manual=false,last=performance.now();
+const leaves=()=>s.nodes.filter(n=>!n.children);
+const metrics=()=>({ferns:s.solved,splits:s.splits,mistakes:s.mistakes});
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'factorfern',result,durationMs:s.time,metrics:metrics()});}}
+function load(){s.nodes=[{id:0,value:targets[s.level],depth:0}];s.selected=0;s.history=[];s.message='Select a green pod, then a divisor. Gold pods are prime.';}
+function restart(){if(s)report('abandoned');const theme=s?.theme||0;s={mode:'menu',level:0,solved:0,splits:0,mistakes:0,time:0,theme,started:false,reported:false};load();render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.mode='play';s.started=true;}else if(s.mode==='between'){s.level++;load();s.mode='play';}render();}
+function split(d){if(s.mode!=='play'||!divisors.includes(d))return;const n=s.nodes[s.selected];if(prime(n.value)){s.message='This gold pod is prime and already finished. Select a green pod.';render();return;}
+ if(n.value%d!==0||d>=n.value){s.mistakes++;s.message=`${d} does not split ${n.value} into two whole factors greater than one.`;if(s.mistakes===3){s.mode='lost';s.message='Three invalid splits. Plant a new fern and try smaller divisors.';report('lost');}render();return;}
+ s.history.push({nodes:structuredClone(s.nodes),selected:s.selected});const a=s.nodes.length,b=a+1;n.children=[a,b];s.nodes.push({id:a,value:d,depth:n.depth+1},{id:b,value:n.value/d,depth:n.depth+1});s.splits=Math.min(999,s.splits+1);s.selected=leaves().find(n=>!prime(n.value))?.id??a;s.message=`${n.value} = ${d} × ${n.value/d}. Keep splitting the green pods.`;
+ if(leaves().every(n=>prime(n.value))){s.solved++;s.mode=s.solved===5?'won':'between';s.message='Prime leaves: '+leaves().map(n=>n.value).join(' × ')+` = ${targets[s.level]}. `+(s.mode==='won'?'Five ferns fully grown!':'Continue to plant the next fern.');if(s.mode==='won')report('completed');}render();}
+function undo(){if(s.mode!=='play'||!s.history.length)return;const old=s.history.pop();s.nodes=old.nodes;s.selected=old.selected;s.message='Last branch undone. Split and mistake counts stay.';render();}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused')s.mode='play';render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;render();}
+function layout(){const ls=leaves(),positions={};ls.forEach((n,i)=>positions[n.id]={x:100+(i+.5)*600/ls.length,y:155+n.depth*85});function place(id){if(positions[id])return positions[id];const n=s.nodes[id],a=place(n.children[0]),b=place(n.children[1]);return positions[id]={x:(a.x+b.x)/2,y:155+n.depth*85};}place(0);return positions;}
+function text(t,x,y,size=22,color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign='center';ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function render(){const p=palettes[s.theme],pos=layout();ctx.fillStyle=p.garden;ctx.fillRect(0,0,800,600);ctx.fillStyle=p.paper;ctx.beginPath();ctx.roundRect(22,20,756,560,20);ctx.fill();text('GARDEN '+(s.level+1)+' / 5',150,62);text('ATTEMPTS '+(3-s.mistakes),650,62);text('Grow '+targets[s.level]+' into prime leaves',400,110,28);
+ ctx.strokeStyle=p.stem;ctx.lineWidth=5;for(const n of s.nodes)if(n.children)for(const id of n.children){ctx.beginPath();ctx.moveTo(pos[n.id].x,pos[n.id].y);ctx.lineTo(pos[id].x,pos[id].y);ctx.stroke();}
+ for(const n of s.nodes){const {x,y}=pos[n.id];ctx.fillStyle=n.children?p.paper:prime(n.value)?p.accent:p.pod;ctx.strokeStyle=n.id===s.selected?p.ink:p.stem;ctx.lineWidth=n.id===s.selected?5:2;ctx.beginPath();ctx.ellipse(x,y,32,27,0,0,Math.PI*2);ctx.fill();ctx.stroke();text(n.value,x,y+8,24);}
+ text('GOLD = PRIME   ·   GREEN = SPLIT AGAIN',400,553,18);
+ if(s.mode!=='play'&&s.mode!=='between'&&s.mode!=='won'){ctx.fillStyle=p.paper;ctx.fillRect(60,190,680,280);text({menu:'Plant a number. Grow a fern.',paused:'A quiet moment',lost:'A new seed awaits'}[s.mode],400,260,32);text(s.mode==='paused'?'Pods and clock are frozen.':s.mode==='lost'?'Try divisors that leave no remainder.':'Split each green pod until only primes remain.',400,330,24);text(s.mode==='paused'?'Press P or Resume':'Use the button below to begin',400,410,22);}
+ const ls=leaves(),podList=$('pods');
+ if(podList.dataset.ids!==ls.map(n=>n.id).join(',')){podList.dataset.ids=ls.map(n=>n.id).join(',');podList.replaceChildren(...ls.map(n=>{const b=document.createElement('button');b.dataset.id=n.id;b.onclick=()=>{if(s.mode==='play')s.selected=n.id;render();focus();};return b;}));}
+ ls.forEach((n,i)=>{const b=podList.children[i];b.textContent=`Pod ${i+1}: ${n.value}${prime(n.value)?' · prime':''}`;b.disabled=s.mode!=='play';b.setAttribute('aria-pressed',String(s.selected===n.id));});
+ for(const b of $('divisors').children)b.disabled=s.mode!=='play'||prime(s.nodes[s.selected].value);
+ $('undo').disabled=s.mode!=='play'||!s.history.length;$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume · P':'Pause · P';$('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next fern':['won','lost'].includes(s.mode)?'New walk':'Plant fern';
+ const readout=`Fern ${s.level+1}/5 · ${s.solved} grown · ${s.splits} splits · ${3-s.mistakes} attempts left`;if($('readout').textContent!==readout)$('readout').textContent=readout;if($('status').textContent!==s.message)$('status').textContent=s.message;
+}
+function focus(){canvas.focus({preventScroll:true});}
+for(const d of divisors){const b=document.createElement('button');b.textContent='÷ '+d;b.dataset.divisor=d;b.onclick=()=>{split(d);focus();};$('divisors').append(b);}
+for(const [id,fn]of[['start',start],['undo',undo],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();if(s.mode!=='play')return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*800/r.width,y=(e.clientY-r.top)*600/r.height,pos=layout();for(const n of leaves())if(Math.hypot((x-pos[n.id].x)/32,(y-pos[n.id].y)/27)<=1)s.selected=n.id;render();};
+window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,textarea,select,a,button,[contenteditable],[role="dialog"]'))return;const k=e.key.toLowerCase();if(['arrowleft','arrowright','enter','escape','p','r','f','u'].includes(k)||/^[2-9]$/.test(k))e.preventDefault();if(e.repeat)return;if(k==='escape'){if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else pause();return;}if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='u')undo();if(k==='enter')start();if(s.mode==='play'){if(/^[2-9]$/.test(k))split(Number(k));const ls=leaves(),i=ls.findIndex(n=>n.id===s.selected);if(k==='arrowleft')s.selected=ls[Math.max(0,i-1)].id;if(k==='arrowright')s.selected=ls[Math.min(ls.length-1,i+1)].id;render();}});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'800x600; origin top-left; x right, y down; pod ellipse radii 32x27',mode:s.mode,garden:s.level+1,target:targets[s.level],nodes:s.nodes.map(n=>({...n,...layout()[n.id],prime:prime(n.value)})),selected:s.selected,divisors,undoDepth:s.history.length,timeMs:s.time,theme:s.theme,metrics:metrics(),status:s.message});
+mountGameFeedback({gameSlug:'factorfern',gameName:'Factor Fern'});for(const id of ['cadeFeedbackOpenBtn','cadeClipControl'])if($(id))$('social').append($(id));restart();function frame(now){if(!manual)advance(Math.max(0,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+
+</script></body></html>

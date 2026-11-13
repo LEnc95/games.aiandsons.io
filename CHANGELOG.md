@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Factor Fern: split numbered seed pods into prime leaves across five branching arithmetic puzzles.
 - Cipher Grove: decode five woodland substitution cryptograms with word clues and optional letter reveals.
 - Harbor Match: assign one compatible berth to every boat across five harbor matching puzzles.
 - Festival Flags: dye every flag with three letters while keeping connected neighbors different across five courtyard puzzles.
