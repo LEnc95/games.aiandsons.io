@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Pollen Knights: exchange two chess-knight flocks across a tiny garden and fill all six opposite nests within 30 hops.
 - Factor Fern: split numbered seed pods into prime leaves across five branching arithmetic puzzles.
 - Cipher Grove: decode five woodland substitution cryptograms with word clues and optional letter reveals.
 - Harbor Match: assign one compatible berth to every boat across five harbor matching puzzles.

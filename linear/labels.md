@@ -259,5 +259,6 @@
 - game/harbormatch
 - game/ciphergrove
 - game/factorfern
+- game/pollenknights
 
 Generated from `src/meta/feedback.js`.
