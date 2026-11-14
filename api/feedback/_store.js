@@ -296,12 +296,22 @@ async function listFeedbackSubmissionsFromFirestore(filters = {}) {
     .limit(queryLimit)
     .get();
 
-  const items = snapshot.docs.map((doc) => normalizeStoredSubmission(doc.data()));
-  return items
-    .filter((item) => !gameSlug || item.gameSlug === gameSlug)
-    .filter((item) => !triageStatus || item.triageStatus === triageStatus)
-    .filter((item) => !syncStatus || item.syncStatus === syncStatus)
-    .slice(0, limit);
+  // ⚡ Bolt Optimization: Avoid O(N) normalizer allocations by filtering on raw data first
+  const items = [];
+  for (const doc of snapshot.docs) {
+    const raw = doc.data();
+    if (!raw) continue;
+    if (gameSlug && normalizeSingleLine(raw.gameSlug, 80) !== gameSlug) continue;
+    if (triageStatus && normalizeTriageStatus(raw.triageStatus) !== triageStatus) continue;
+    if (syncStatus && normalizeSyncStatus(raw.syncStatus) !== syncStatus) continue;
+
+    items.push(normalizeStoredSubmission(raw));
+    if (items.length >= limit) {
+      break;
+    }
+  }
+
+  return items;
 }
 
 async function saveFeedbackAttachmentToFirestore(attachment) {
@@ -493,13 +503,22 @@ async function listFeedbackSubmissions(filters = {}) {
   const limit = normalizeInteger(filters.limit, { min: 1, max: FEEDBACK_INDEX_LIMIT, fallback: 200 });
 
   const index = await getSubmissionIndex();
-  const items = await Promise.all(index.slice(0, limit).map((id) => getFeedbackSubmission(id)));
-  return items
-    .filter(Boolean)
-    .filter((item) => !gameSlug || item.gameSlug === gameSlug)
-    .filter((item) => !triageStatus || item.triageStatus === triageStatus)
-    .filter((item) => !syncStatus || item.syncStatus === syncStatus)
-    .sort((a, b) => b.submittedAt - a.submittedAt);
+  // We only fetch enough from the index based on the limit since the index limits how many we have anyway,
+  // but to correctly filter we could potentially check more, but the index is bounded by FEEDBACK_INDEX_LIMIT.
+  const rawItems = await Promise.all(index.slice(0, limit).map((id) => getFeedbackSubmission(id)));
+
+  // ⚡ Bolt Optimization: Avoid multiple O(N) array allocations via chained .filter calls
+  const items = [];
+  for (const item of rawItems) {
+    if (!item) continue;
+    if (gameSlug && item.gameSlug !== gameSlug) continue;
+    if (triageStatus && item.triageStatus !== triageStatus) continue;
+    if (syncStatus && item.syncStatus !== syncStatus) continue;
+
+    items.push(item);
+  }
+
+  return items.sort((a, b) => b.submittedAt - a.submittedAt);
 }
 
 async function enforceFeedbackRateLimit({
