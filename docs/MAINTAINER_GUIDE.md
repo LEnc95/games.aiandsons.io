@@ -12,6 +12,7 @@ Operational details below are checked against repository configuration. Run comm
 | Configure backend services | [Firebase](#firebase-backend-configuration) · [Account sessions](#account-sessions-and-google-sign-in) · [Stripe billing](#stripe-billing-optional) |
 | Understand outcome reporting | [Engagement contracts and telemetry](#engagement-contracts-and-outcome-telemetry) |
 | Triage player feedback | [Feedback and Linear](#feedback-and-linear-workflow) |
+| Maintain social sharing | [Social sharing and gameplay clips](#social-sharing-and-gameplay-clips) |
 | Maintain releases | [Daily-game checklist](#daily-game-ship-checklist) · [Release train](#self-maintaining-release-train) |
 | Prepare weekly work | [Content packs](#weekly-content-pack-runbook) · [Release automation](#weekly-release-automation-runbook) |
 
@@ -287,6 +288,81 @@ Optional env vars:
 - Admin triage runs from `ops/feedback/index.html` against protected `/api/feedback/admin/*` APIs.
 - `linear/labels.md` and `linear/game-issues.csv` are generated artifacts from `src/meta/feedback.js`.
 - `npm run feedback:check-daily` is the strict drift guard for those artifacts.
+
+## Social sharing and gameplay clips
+
+Intent: keep game-over sharing consistent without making each game own
+leaderboards, challenge links, score cards, or video capture edge cases.
+
+Shared surfaces and codepaths:
+
+- `src/feedback/embed.js` exports `mountGameFeedback({ gameSlug, gameName })`.
+  Every catalog game should call it; it mounts the feedback launcher and the
+  optional floating gameplay-clip control.
+- `src/social/embed.js` exports `initSocial({ slug })` and `reportScore(score)`.
+  Games that participate in leaderboards, challenges, or race rooms call
+  `initSocial` once during setup and `reportScore` at game over.
+- `src/social/client.js` owns the `/api/social/:route` calls for player identity,
+  score submission, leaderboards, challenges, room scores, and cloud-save sync.
+- `src/social/share.js` builds native share, copy-link, and social intent links
+  without loading third-party scripts. This keeps the strict CSP in
+  `vercel.json` valid.
+- `src/social/card.js` renders downloadable/shareable PNG score cards from an
+  offscreen canvas, so it works for canvas and DOM games.
+- `src/social/record.js` captures gameplay clips from the first matching
+  `<canvas>` with `captureStream()` and `MediaRecorder`.
+
+Basic game wiring:
+
+```js
+import { mountGameFeedback } from "../src/feedback/embed.js";
+import { initSocial, reportScore } from "../src/social/embed.js";
+
+mountGameFeedback({ gameSlug: "snake", gameName: "Snake" });
+initSocial({ slug: "snake" });
+
+// After the game has finalized its own terminal state:
+await reportScore(finalScore);
+```
+
+Gameplay clip contract:
+
+- Clips are optional and must never block gameplay. Unsupported browsers,
+  missing canvas elements, encoder failures, or failed downloads are handled as
+  no-ops or fallbacks.
+- DOM-only games do not get video clips. They still get feedback, sharing, and
+  score cards.
+- Clips are video-only in v1. Game audio is not captured.
+- Recording is armed when the shared feedback or social embed loads, but it
+  does not capture menu or loading time. It starts on the first real gameplay
+  pointer or keyboard gesture; feedback, leaderboard, fullscreen, sound, pause,
+  settings, help, hint, undo, and link interactions are ignored.
+- If a visible Start/Begin/Play/Restart-style button is present, recording waits
+  for that explicit start action. Legacy games can also expose
+  `window.render_game_to_text()` with `{ "mode": "playing" }` so the recorder
+  starts after the game has accepted the gesture.
+- `reportScore()` finalizes the recording before submitting the score. The
+  result panel shows "Save clip" only when a Blob was captured.
+- The floating clip control can also finish a clip before game over, then save
+  it from a fresh tap. This preserves mobile browser user activation for
+  `navigator.share()`.
+- Clip duration is capped at two minutes to bound memory usage. The recorder
+  prefers MP4 when the browser supports it, then falls back to WebM. Sharing
+  uses native file sharing when available and otherwise downloads
+  `<slug>-run.mp4` or `<slug>-run.webm`.
+
+Maintenance rules:
+
+- Keep new sharing targets as plain anchors or browser APIs; do not add CDN
+  scripts or SDKs to satisfy a share integration.
+- Do not special-case individual games in the recorder unless the shared
+  heuristics cannot express the behavior.
+- When changing game HUD placement, check that the fixed feedback, clip, and
+  social controls remain reachable on narrow screens.
+- When changing score submission or clip behavior, run
+  `node --test tests/clip-recording.integration.test.mjs` or the broader
+  `npm run test:social`. Run `npm run test:feedback` when changing
+  `mountGameFeedback` coverage.
 
 ## Daily game ship checklist
 
