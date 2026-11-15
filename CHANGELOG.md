@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.21.0] - 2026-11-15
 ### Added
 - Radix Grove: set place-value beads in bases two through six and restore five groves by matching decimal seed counts.
 - Pollen Knights: exchange two chess-knight flocks across a tiny garden and fill all six opposite nests within 30 hops.

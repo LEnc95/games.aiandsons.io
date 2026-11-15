@@ -2,6 +2,24 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.21.0 — 2026-11-15
+
+- Release week: 2026-W46
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- cb46c70 Add Radix Grove daily game (#429)
+- 18f0d3b Add Pollen Knights daily game (#428)
+- 8472f4b Add Factor Fern daily game (#427)
+- ce07e4b Add Cipher Grove daily game (#426)
+- 5f79005 Add Harbor Match daily game (#425)
+- 82437fb Add Festival Flags daily game (#423)
+- 226bb1f Add 2026-W46 weekly content pack (#421)
+- d6e5ed5 Prepare weekly release 1.20.0 (#418)
+- 75fd671 Add Ribbon Ruler daily game (#417)
+
 ## 1.20.0 — 2026-11-08
 
 - Release week: 2026-W45
