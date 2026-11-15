@@ -260,5 +260,6 @@
 - game/ciphergrove
 - game/factorfern
 - game/pollenknights
+- game/radixgrove
 
 Generated from `src/meta/feedback.js`.
