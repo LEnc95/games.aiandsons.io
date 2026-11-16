@@ -261,5 +261,6 @@
 - game/factorfern
 - game/pollenknights
 - game/radixgrove
+- game/acornalibis
 
 Generated from `src/meta/feedback.js`.

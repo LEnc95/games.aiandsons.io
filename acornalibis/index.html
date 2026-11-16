@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acorn Alibis | AI and Sons Games</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6f0e3;color:#343c32;font-family:system-ui,sans-serif}main{max-width:880px;margin:auto;padding:20px 16px}a{color:inherit;display:inline-block;min-height:44px;padding:12px 0}header{text-align:center}h1{font:700 clamp(36px,6vw,56px) Georgia;margin:8px 0}.eyebrow{letter-spacing:.18em;font-size:12px;font-weight:750}.intro{max-width:660px;line-height:1.6;margin:16px auto 22px}canvas{width:100%;height:auto;display:block;border-radius:18px;touch-action:manipulation}button,select{font:inherit;min-height:46px;padding:10px 12px;border:1px solid #8d947d;border-radius:10px;background:#fffcf2;color:#343c32}button.primary{background:#365b46;color:white}button:disabled{opacity:.5}button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #a65328;outline-offset:3px}button[aria-pressed=true]{outline:3px solid #a65328}.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}#witnesses{display:grid;grid-template-columns:1fr 1fr;gap:12px}.witness{background:#fffcf2;border:1px solid #b9bda7;border-radius:14px;padding:14px;min-width:0}.witness h2{font-size:18px;margin:0 0 8px}.witness p{line-height:1.5;min-height:3em;margin:8px 0}.witness .actions{display:flex;gap:8px;flex-wrap:wrap}.witness button{flex:1}#readout,#status,#rule{text-align:center;line-height:1.6}#rule{font-weight:750;font-size:18px}#status{min-height:3.2em}.help{text-align:center;font-size:14px;line-height:1.7;border-top:1px solid #b9bda7;padding-top:16px}#social .cade-feedback-launcher,#social .cade-clip-control{position:static;z-index:auto}@media(max-width:600px){main{padding:72px 10px 20px}.intro{font-size:14px}#witnesses{grid-template-columns:1fr;gap:10px}.witness p{min-height:0}.controls{gap:6px}}@media(max-width:350px){main{padding-top:112px}}
+</style>
+  <!-- SEO:BEGIN -->
+  <meta name="description" content="Read four woodland alibis and a truth count. Find the hidden acorn in five deduction puzzles. Play for free on AI and Sons Games.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:title" content="Acorn Alibis | AI and Sons Games">
+  <meta property="og:description" content="Read four woodland alibis and a truth count. Find the hidden acorn in five deduction puzzles. Play for free on AI and Sons Games.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.aiandsons.io/acornalibis">
+  <meta property="og:image" content="https://games.aiandsons.io/assets/og/acornalibis.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="AI and Sons Games">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Acorn Alibis | AI and Sons Games">
+  <meta name="twitter:description" content="Read four woodland alibis and a truth count. Find the hidden acorn in five deduction puzzles. Play for free on AI and Sons Games.">
+  <meta name="twitter:image" content="https://games.aiandsons.io/assets/og/acornalibis.png">
+  <link rel="canonical" href="https://games.aiandsons.io/acornalibis">
+  <script type="application/ld+json" data-seo-managed="true">{"@context":"https://schema.org","@type":"VideoGame","name":"Acorn Alibis","description":"Read four woodland alibis and a truth count. Find the hidden acorn in five deduction puzzles. Play for free on AI and Sons Games.","url":"https://games.aiandsons.io/acornalibis","gamePlatform":"Web Browser","genre":"Arcade","applicationCategory":"Game","inLanguage":"en-US","isAccessibleForFree":true,"publisher":{"@id":"https://games.aiandsons.io#organization"},"isPartOf":{"@id":"https://games.aiandsons.io#games"}}</script>
+  <!-- SEO:END -->
+</head><body><main>
+<a href="/">← Back to games</a><header><p class="eyebrow">FOUR WITNESSES. ONE HIDDEN ACORN.</p><h1>Acorn Alibis</h1><p class="intro">One of four woodland friends hid the golden acorn. Each witness makes one statement. The case tells you <strong>exactly how many statements are true</strong>. Try each possible hider in your head: only one fits. Solve five cases before three wrong accusations.</p></header>
+<canvas id="game" width="840" height="350" tabindex="0" aria-label="Four woodland suspects. Left and right select; A through D select by letter; Enter accuses."></canvas>
+<p id="rule"></p><p id="readout"></p><div id="witnesses"></div>
+<div class="controls"><button id="accuse" class="primary">Accuse selected · Enter</button><button id="undo">Undo note · U</button><button id="clear">Clear notes</button></div>
+<div class="controls"><button id="start" class="primary">Open casebook</button><button id="pause">Pause · P</button><button id="restart">Restart · R</button><button id="full">Fullscreen · F</button><select id="theme" aria-label="Casebook palette" data-cade-clip-control><option>Moss &amp; gold</option><option>Berry &amp; rose</option></select></div>
+<p id="status" role="status"></p><div id="social" class="controls" aria-label="Feedback and clips"></div>
+<p class="help">A–D or ← / → select a suspect · Enter accuse / continue<br>1–4 cycle witness notes: ? → true → false · U undo note<br>P or Escape pause · R restart · F fullscreen · Escape exits fullscreen.<br>Notes are your own pencil marks; they do not change the statements. No time limit.</p>
+</main><script type="module">
+import { reportGameOutcome } from '/src/core/outcomes.js';
+import { mountGameFeedback } from '/src/feedback/embed.js';
+const $=id=>document.getElementById(id),canvas=$('game'),ctx=canvas.getContext('2d');
+const names=['Aster','Birch','Clover','Dew'];
+// Each bit identifies a possible hider for which that statement is true.
+const cases=[
+ {name:'The hollow oak',truths:1,masks:[10,8,3,13]},
+ {name:'The fern path',truths:2,masks:[10,8,11,7]},
+ {name:'The moonlit pond',truths:3,masks:[11,2,9,12]},
+ {name:'The berry thicket',truths:2,masks:[10,12,11,8]},
+ {name:'The golden clearing',truths:1,masks:[14,13,10,2]},
+];
+function statement(mask){const included=names.filter((_,i)=>mask&(1<<i));if(included.length===1)return `${included[0]} hid the acorn.`;if(included.length===3)return `${names.find((_,i)=>!(mask&(1<<i)))} did not hide the acorn.`;return `Either ${included[0]} or ${included[1]} hid the acorn.`;}
+const palettes=[{paper:'#fffaeb',grove:'#ccd9b9',ink:'#343c32',coat:'#607c59',acorn:'#d49a34',accent:'#a65328'},{paper:'#fff1ec',grove:'#dfc7d7',ink:'#53364d',coat:'#967098',acorn:'#d7907e',accent:'#913c65'}];
+let s,manual=false,last=performance.now();
+const current=()=>cases[s.level],countFor=i=>current().masks.filter(m=>m&(1<<i)).length;
+const metrics=()=>({cases:s.solved,accusations:s.accusations,mistakes:s.mistakes});
+function report(result){if(s.started&&!s.reported){s.reported=true;reportGameOutcome({slug:'acornalibis',result,durationMs:s.time,metrics:metrics()});}}
+function restart(){if(s)report('abandoned');s={mode:'menu',level:0,solved:0,selected:0,notes:[0,0,0,0],history:[],accusations:0,mistakes:0,time:0,theme:$('theme').selectedIndex,started:false,reported:false,message:'Open the casebook. The truth count applies to statements, not to people’s other words.'};render();}
+function start(){if(['won','lost'].includes(s.mode))restart();if(s.mode==='menu'){s.started=true;s.mode='play';s.message='Suppose each friend hid it. Which possibility makes exactly one statement true?';}else if(s.mode==='between'){s.level++;s.selected=0;s.notes=[0,0,0,0];s.history=[];s.mode='play';s.message='A new case: read its truth count and all four statements.';}render();}
+function select(i){if(s.mode!=='play'||!Number.isInteger(i)||i<0||i>3)return;s.selected=i;render();}
+function note(i){if(s.mode!=='play'||!Number.isInteger(i)||i<0||i>3)return;s.history.push([...s.notes]);s.notes[i]=(s.notes[i]+1)%3;s.message='Pencil notes are optional. Only the selected hider is checked.';render();}
+function undo(){if(s.mode==='play'&&s.history.length){s.notes=s.history.pop();s.message='Last note change undone.';render();}}
+function clear(){if(s.mode==='play'&&s.notes.some(Boolean)){s.history.push([...s.notes]);s.notes=[0,0,0,0];s.message='Pencil notes cleared. Undo restores them.';render();}}
+function accuse(){if(s.mode!=='play')return;s.accusations++;const count=countFor(s.selected);if(count===current().truths){s.solved++;s.mode=s.solved===5?'won':'between';const truth=current().masks.map((m,i)=>`${names[i]}: ${m&(1<<s.selected)?'true':'false'}`).join(' · ');s.message=`${names[s.selected]} hid it! ${truth}. ${s.mode==='won'?'All five cases solved!':'Continue to the next case.'}`;if(s.mode==='won')report('completed');}else{s.mistakes++;s.message=`If ${names[s.selected]} hid it, ${count} statements would be true. This case requires ${current().truths}.`;if(s.mistakes===3){s.mode='lost';s.message+=' Three wrong accusations: restart the casebook.';report('lost');}}render();}
+function pause(){if(s.mode==='play')s.mode='paused';else if(s.mode==='paused')s.mode='play';render();}
+function advance(ms){if(Number.isFinite(ms)&&ms>=0&&s.mode==='play')s.time+=ms;}
+function text(t,x,y,size=22,color=palettes[s.theme].ink){ctx.fillStyle=color;ctx.textAlign='center';ctx.font=`${size}px system-ui`;ctx.fillText(t,x,y);}
+function render(){const p=palettes[s.theme],q=current();ctx.fillStyle=p.grove;ctx.fillRect(0,0,840,350);ctx.fillStyle=p.paper;ctx.beginPath();ctx.roundRect(18,18,804,314,20);ctx.fill();text(`CASE ${s.level+1} / 5`,125,60,22);text(q.name,420,60,26);text(`${3-s.mistakes} chances`,710,60,22);
+ for(let i=0;i<4;i++){const x=120+i*200;ctx.fillStyle=p.grove;ctx.beginPath();ctx.arc(x,160,52,0,Math.PI*2);ctx.fill();ctx.fillStyle=p.coat;ctx.beginPath();ctx.ellipse(x,180,37,31,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=p.paper;ctx.beginPath();ctx.arc(x,141,23,0,Math.PI*2);ctx.fill();ctx.fillStyle=p.ink;ctx.beginPath();ctx.arc(x-8,139,3,0,7);ctx.arc(x+8,139,3,0,7);ctx.fill();text(String.fromCharCode(65+i),x,190,24,p.paper);text(names[i],x,245,24);if(i===s.selected){ctx.strokeStyle=p.accent;ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(x-73,90,146,177,16);ctx.stroke();}if(['between','won'].includes(s.mode)&&i===s.selected){ctx.fillStyle=p.acorn;ctx.beginPath();ctx.ellipse(x+48,180,12,17,0,0,7);ctx.fill();ctx.fillStyle=p.coat;ctx.fillRect(x+35,164,26,9);}}
+ text(`Exactly ${q.truths} of the 4 statements ${q.truths===1?'is':'are'} true`,420,304,25);
+ if(['menu','paused','lost','won'].includes(s.mode)){ctx.fillStyle=p.paper;ctx.fillRect(42,85,756,190);text({menu:'The Case of the Golden Acorn',paused:'Casebook paused',lost:'The trail has gone cold',won:'Five mysteries, neatly solved!'}[s.mode],420,160,31);text({menu:'Open the casebook below to begin.',paused:'Clues, notes and clock are frozen.',lost:'Restart and test every possible hider.',won:'Your woodland detective work is complete.'}[s.mode],420,208,23);}
+ for(let i=0;i<4;i++){const card=$('witnesses').children[i];card.querySelector('p').textContent=statement(q.masks[i]);const [pick,mark]=card.querySelectorAll('button');pick.textContent=`Select ${names[i]} · ${String.fromCharCode(65+i)}`;pick.setAttribute('aria-pressed',String(s.selected===i));mark.textContent=`Note: ${['?','true','false'][s.notes[i]]} · ${i+1}`;mark.setAttribute('aria-label',`${names[i]} statement note: ${['unknown','true','false'][s.notes[i]]}`);pick.disabled=mark.disabled=s.mode!=='play';}
+ $('accuse').disabled=s.mode!=='play';$('undo').disabled=s.mode!=='play'||!s.history.length;$('clear').disabled=s.mode!=='play'||!s.notes.some(Boolean);$('pause').disabled=!['play','paused'].includes(s.mode);$('pause').textContent=s.mode==='paused'?'Resume · P':'Pause · P';$('start').disabled=['play','paused'].includes(s.mode);$('start').textContent=s.mode==='between'?'Next case · Enter':['won','lost'].includes(s.mode)?'New casebook':'Open casebook';
+ $('rule').textContent=`Case ${s.level+1}: exactly ${q.truths} true statement${q.truths===1?'':'s'}.`;$('readout').textContent=`Selected: ${names[s.selected]} · ${s.solved}/5 solved · ${s.mistakes}/3 wrong accusations`;$('status').textContent=s.message;
+}
+function focus(){canvas.focus({preventScroll:true});}
+for(let i=0;i<4;i++){const card=document.createElement('section');card.className='witness';const title=document.createElement('h2');title.textContent=`${String.fromCharCode(65+i)} · ${names[i]} says`;const clue=document.createElement('p'),actions=document.createElement('div');actions.className='actions';for(const [kind,fn]of[['pick',()=>select(i)],['note',()=>note(i)]]){const b=document.createElement('button');b.dataset[kind]=i;b.onclick=()=>{fn();focus();};actions.append(b);}card.append(title,clue,actions);$('witnesses').append(card);}
+for(const [id,fn]of[['start',start],['accuse',accuse],['undo',undo],['clear',clear],['pause',pause],['restart',restart]])$(id).onclick=()=>{fn();focus();};
+$('theme').onchange=e=>{s.theme=e.target.selectedIndex;render();};
+async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{s.message='Fullscreen is unavailable. You can keep investigating here.';render();}}
+$('full').onclick=()=>{fullscreen();focus();};
+canvas.onpointerdown=e=>{focus();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*840/r.width,y=(e.clientY-r.top)*350/r.height;if(y<90||y>267)return;for(let i=0;i<4;i++)if(Math.abs(x-(120+200*i))<=73)select(i);};
+window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,textarea,select,a,button,[contenteditable],[role="dialog"]'))return;const k=e.key.toLowerCase();if(['arrowleft','arrowright','enter',' ','p','r','f','u','escape','a','b','c','d','1','2','3','4'].includes(k))e.preventDefault();if(e.repeat)return;if(k==='escape'){if(document.fullscreenElement)fullscreen();else pause();return;}if(k==='p')pause();if(k==='r')restart();if(k==='f')fullscreen();if(k==='u')undo();if(k==='enter'||k===' '){if(s.mode==='play')accuse();else if(s.mode!=='paused')start();}if(s.mode==='play'){if(k==='arrowleft')select(Math.max(0,s.selected-1));if(k==='arrowright')select(Math.min(3,s.selected+1));if(/^[a-d]$/.test(k))select(k.charCodeAt(0)-97);if(/^[1-4]$/.test(k))note(Number(k)-1);}});
+document.addEventListener('click',e=>{if(e.target.closest('.cade-feedback-launcher')&&s.mode==='play')pause();},true);
+window.addEventListener('blur',()=>{if(s.mode==='play')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='play')pause();});window.addEventListener('pagehide',e=>{if(e.persisted){if(s.mode==='play')pause();}else report('abandoned');});
+window.advanceTime=ms=>{manual=true;advance(ms);};window.render_game_to_text=()=>JSON.stringify({coordinateSystem:'840x350, origin top-left, x right/y down; suspects 0..3 at x=120+200*i, selectable y=90..267',mode:s.mode,level:s.level,caseName:current().name,requiredTruths:current().truths,selected:s.selected,suspects:names,statements:current().masks.map(statement),notes:s.notes.map(n=>['?','true','false'][n]),undoDepth:s.history.length,timeMs:s.time,theme:s.theme,metrics:metrics(),status:s.message});
+mountGameFeedback({gameSlug:'acornalibis',gameName:'Acorn Alibis'});for(const id of ['cadeFeedbackOpenBtn','cadeClipControl'])if($(id))$('social').append($(id));restart();function frame(now){if(!manual)advance(Math.max(0,now-last));last=now;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script></body></html>

@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Acorn Alibis: follow four witness statements and an exact truth count to solve five woodland deduction cases.
+
 ## [1.21.0] - 2026-11-15
 ### Added
 - Radix Grove: set place-value beads in bases two through six and restore five groves by matching decimal seed counts.
