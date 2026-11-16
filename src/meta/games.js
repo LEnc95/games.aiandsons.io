@@ -247,6 +247,7 @@ const BASE_GAMES = [
   { slug:'factorfern', name:'Factor Fern', emoji:'\u{1F33F}', scoreHint:'ferns', url:'/factorfern', desc:'Split numbered seed pods into factor pairs, grow prime leaves, and complete five branching arithmetic puzzles.', earnsCoins:false },
   { slug:'pollenknights', name:'Pollen Knights', emoji:'\u265E', scoreHint:'nests', url:'/pollenknights', desc:'Swap two knight flocks into six opposite nests. Solve the garden exchange puzzle within 30 hops.', earnsCoins:false },
   { slug:'radixgrove', name:'Radix Grove', emoji:'\u{1F331}', scoreHint:'groves', url:'/radixgrove', desc:'Set place-value beads in bases two through six. Match five decimal seed counts in this abacus puzzle.', earnsCoins:false },
+  { slug:'acornalibis', name:'Acorn Alibis', emoji:'\u{1F330}', scoreHint:'cases', url:'/acornalibis', desc:'Read four woodland alibis and a truth count. Find the hidden acorn in five deduction puzzles.', earnsCoins:false },
 ];
 
 export const GAME_DISCOVERY_CATEGORIES = Object.freeze([
