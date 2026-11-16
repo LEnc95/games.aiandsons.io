@@ -328,6 +328,32 @@ Source of truth:
   a scheduled 4-item pack for the current local week before falling back to the
   deterministic rotation.
 
+Runtime contract:
+
+- `weekKey` is the local Monday date for the week (`YYYY-MM-DD`). For example,
+  a pack that goes live any time from Monday 2026-11-16 through Sunday
+  2026-11-22 uses `weekKey: "2026-11-16"`.
+- A scheduled pack is active only when exactly 4 challenge definitions share the
+  current `weekKey`. If fewer or more entries match, the runtime falls back to
+  the deterministic weekly rotation instead of mixing scheduled and legacy IDs.
+- `ensureWeeklyChallenges()` will replace same-week fallback IDs when a full
+  scheduled pack is added after a player has already opened the arcade that
+  week. That reset clears weekly progress/reward state so the player sees the
+  authoritative pack.
+- `maybeUnlock()` and `recordMissionProgress()` expect payloads shaped by game
+  slug and metric, matching `challenge-catalog.js` entries:
+
+```js
+maybeUnlock({
+  reedrelay: { glowseeds: 20 },
+  pong: { winMargin: 7 },
+});
+```
+
+- Rewards are granted once per challenge ID. Replaying the same completion
+  payload should return no new `weeklyRewardsNow` entries and should not add
+  coins again.
+
 Implementation checklist:
 
 1. Generate or inspect the brief with `npm run automation:weekly-brief`.
@@ -358,6 +384,11 @@ Validation:
 - Browser smoke: start `python -m http.server 4173`, then run
   `npm run test:weekly-smoke:raw`
 
+When rotating the smoke fixture to a new week, update
+`scripts/qa/weekly-challenges-smoke.mjs` together with the catalog entries:
+freeze `Date` to a timestamp inside the scheduled week, include every active
+`gameSlug: { metric: target }` payload needed for that pack, assert 4 rewards
+and 80 total coins, and assert a repeated payload does not reward again.
 
 ### Weekly release automation runbook
 
