@@ -57,6 +57,7 @@ const GAME_FILE_BY_PREFIX = {
   flockfold: 'flockfold/index.html',
   rainkeeper: 'rainkeeper/index.html',
   signalgarden: 'signalgarden/index.html',
+  reedrelay: 'reedrelay/index.html',
 };
 
 function extractItems(shopHtml) {
@@ -188,6 +189,21 @@ test('2026-W46 weekly cosmetic inventory is unique and within the generated pric
     ['flockfold-twilight-tern', 45],
     ['rainkeeper-citrine-cloudburst', 62],
     ['signalgarden-verdant-voltage', 79],
+  ]);
+  const sourceById = new Map(items.map((item) => [item.id, item]));
+  assert.equal(expected.size, 3);
+  for (const [id, price] of expected) {
+    assert.equal(sourceById.get(id)?.type, 'inventory', `Expected ${id} to be a shop inventory item.`);
+    assert.equal(Number(shopHtml.match(new RegExp(`id: "${id}"[\\s\\S]*?price: (\\d+)`))?.[1]), price);
+    assert.ok(price >= 20 && price <= 90, `Expected ${id} price to stay within the weekly policy.`);
+  }
+});
+
+test('2026-W47 weekly cosmetic inventory is unique and within the generated price policy', () => {
+  const expected = new Map([
+    ['reedrelay-moonlit-mangrove', 47],
+    ['echoferry-harbor-hush', 63],
+    ['baseballradio-velvet-broadcast', 81],
   ]);
   const sourceById = new Map(items.map((item) => [item.id, item]));
   assert.equal(expected.size, 3);
