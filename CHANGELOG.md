@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Acorn Alibis: follow four witness statements and an exact truth count to solve five woodland deduction cases.
+- Added the 2026-W47 content pack with Moonlit Mangrove Reed Relay, Harbor Hush Echo Ferry, and Velvet Broadcast Bottom of the Ninth cosmetics plus four bounded weekly challenges.
 
 ## [1.21.0] - 2026-11-15
 ### Added

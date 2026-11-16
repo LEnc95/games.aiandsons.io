@@ -18,6 +18,10 @@ export const DAILY_CHALLENGE_DEFS = Object.freeze([
 ]);
 
 export const WEEKLY_CHALLENGE_DEFS = Object.freeze([
+  define({ id: 'weekly-w47-reedrelay-glowseeds-20', weekKey: '2026-11-16', gameSlug: 'reedrelay', metric: 'glowseeds', name: 'Mangrove Glow', desc: 'Gather all 20 glowseeds in Reed Relay.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w47-echoferry-buoys-20', weekKey: '2026-11-16', gameSlug: 'echoferry', metric: 'buoys', name: 'Quiet Sounding', desc: 'Find all 20 buoys in Echo Ferry.', target: 20, rewardCoins: 20 }),
+  define({ id: 'weekly-w47-baseballradio-wins-1', weekKey: '2026-11-16', gameSlug: 'baseballradio', metric: 'wins', name: 'Velvet Victory', desc: 'Win a Bottom of the Ninth broadcast.', target: 1, rewardCoins: 20 }),
+  define({ id: 'weekly-w47-pong-winmargin-7', weekKey: '2026-11-16', gameSlug: 'pong', metric: 'winMargin', name: 'Harbor Rally', desc: 'Win Pong by at least 7 points.', target: 7, rewardCoins: 20 }),
   define({ id: 'weekly-w46-flockfold-gates-25', weekKey: '2026-11-09', gameSlug: 'flockfold', metric: 'gates', name: 'Twilight Formation', desc: 'Clear all 25 cloud gates in Flock Fold.', target: 25, rewardCoins: 20 }),
   define({ id: 'weekly-w46-rainkeeper-raindrops-60', weekKey: '2026-11-09', gameSlug: 'rainkeeper', metric: 'raindrops', name: 'Citrine Shower', desc: 'Catch all 60 raindrops in Rainkeeper.', target: 60, rewardCoins: 20 }),
   define({ id: 'weekly-w46-signalgarden-signals-25', weekKey: '2026-11-09', gameSlug: 'signalgarden', metric: 'signals', name: 'Verdant Echo', desc: 'Remember all 25 signals in Signal Garden.', target: 25, rewardCoins: 20 }),

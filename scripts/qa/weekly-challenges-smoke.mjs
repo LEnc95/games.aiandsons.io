@@ -58,6 +58,19 @@ async function main() {
   });
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    const FixedDate = Date;
+    const fixedNow = new FixedDate('2026-11-18T12:00:00Z').getTime();
+    class W47Date extends FixedDate {
+      constructor(...args) {
+        super(...(args.length ? args : [fixedNow]));
+      }
+      static now() {
+        return fixedNow;
+      }
+    }
+    window.Date = W47Date;
+  });
 
   const consoleErrors = [];
   page.on("pageerror", (err) => {
@@ -117,6 +130,7 @@ async function main() {
         echoferry: { buoys: 20 },
         paperbridge: { bridges: 5 },
         reedrelay: { glowseeds: 20 },
+        pong: { winMargin: 7 },
         glassgarden: { panes: 43 },
         nectarmeasure: { vessels: 18 },
         rippleshepherd: { fireflies: 16 },
@@ -155,12 +169,12 @@ async function main() {
     });
 
     assert(!result.error, "Expected maybeUnlock to be available in home runtime.");
-    assert(result.weeklyRewardsNow.length === 4, "Expected all four W46 weekly challenges to reward from the synthetic progress update.");
-    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W46 weekly reward total to stay within the 80-coin policy maximum.");
+    assert(result.weeklyRewardsNow.length === 4, "Expected all four W47 weekly challenges to reward from the synthetic progress update.");
+    assert(result.weeklyRewardsNow.reduce((sum, reward) => sum + reward.coins, 0) === 80, "Expected the W47 weekly reward total to stay within the 80-coin policy maximum.");
     const repeat = await page.evaluate(() => window.maybeUnlock({
-      flockfold: { gates: 25 }, rainkeeper: { raindrops: 60 }, signalgarden: { signals: 25 }, cindercompass: { beacons: 25 },
+      reedrelay: { glowseeds: 20 }, echoferry: { buoys: 20 }, baseballradio: { wins: 1 }, pong: { winMargin: 7 },
     }));
-    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W46 weekly challenges to reward exactly once.");
+    assert((repeat?.missions?.weeklyRewardsNow || []).length === 0, "Expected W47 weekly challenges to reward exactly once.");
 
     await page.reload({ waitUntil: "networkidle" });
     const afterState = await page.evaluate(() => {

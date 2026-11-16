@@ -330,8 +330,15 @@ export const ensureWeeklyChallenges = (timestamp = Date.now()) => {
   const weekKey = toLocalWeekKey(timestamp);
   const weekly = state.missions.weekly;
   const hasActiveIds = weekly.activeIds.length > 0;
+  const scheduledIds = WEEKLY_CHALLENGE_DEFS
+    .filter((entry) => entry.weekKey === weekKey)
+    .map((entry) => entry.id);
+  const hasScheduledPack = scheduledIds.length === WEEKLY_CHALLENGE_COUNT;
+  const hasScheduledIds = hasScheduledPack
+    && scheduledIds.length === weekly.activeIds.length
+    && scheduledIds.every((id) => weekly.activeIds.includes(id));
 
-  if (weekly.weekKey === weekKey && hasActiveIds) return false;
+  if (weekly.weekKey === weekKey && hasActiveIds && (!hasScheduledPack || hasScheduledIds)) return false;
 
   resetWeeklyChallenges(weekKey);
   save();
