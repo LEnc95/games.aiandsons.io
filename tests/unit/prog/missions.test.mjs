@@ -93,6 +93,27 @@ test('missions module loading', async (t) => {
         assert.equal(changed, false);
       });
 
+      await t.test('replaces same-week fallback IDs when a scheduled pack is available', () => {
+        const timestamp = new Date('2026-11-18T12:00:00Z').getTime();
+        ensureWeeklyChallenges(timestamp);
+        state.missions.weekly = {
+          weekKey: '2026-11-16',
+          activeIds: ['weekly-snake-length-22', 'weekly-pong-margin-6', 'weekly-tetris-lines-40', 'weekly-asteroids-wave-7'],
+          progress: { 'weekly-snake-length-22': 9 },
+          completed: ['weekly-snake-length-22'],
+          rewarded: ['weekly-snake-length-22'],
+        };
+
+        assert.equal(ensureWeeklyChallenges(timestamp), true);
+        assert.deepEqual(state.missions.weekly.activeIds, [
+          'weekly-w47-reedrelay-glowseeds-20',
+          'weekly-w47-echoferry-buoys-20',
+          'weekly-w47-baseballradio-wins-1',
+          'weekly-w47-pong-winmargin-7',
+        ]);
+        assert.deepEqual(state.missions.weekly.progress, {});
+      });
+
       await t.test('returns true, picks new active IDs, clears progress if the week has changed', () => {
         ensureWeeklyChallenges(new Date('2024-05-01T12:00:00Z').getTime());
 

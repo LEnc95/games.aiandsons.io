@@ -80,7 +80,7 @@
           <h1>Bottom of the Ninth</h1>
         </div>
         <p class="tagline">
-          Headphones · Tap or <kbd>SPACE</kbd> to swing / release · pick your club
+          Headphones · Tap or <kbd>SPACE</kbd> to swing / release · <kbd>T</kbd> swaps an owned booth palette
         </p>
       </header>
 
@@ -400,16 +400,36 @@
 
     <script type="module" src="./site-integration.js"></script>
     <script type="module">
-      import { state as profileState } from '../src/core/state.js';
+      import { save, state as profileState } from '../src/core/state.js';
       const COPPER_SCOREBOARD = profileState.inventory instanceof Set && profileState.inventory.has('baseballradio-copper-scoreboard');
       const VELVET_BROADCAST = profileState.inventory instanceof Set && profileState.inventory.has('baseballradio-velvet-broadcast');
-      if (COPPER_SCOREBOARD || VELVET_BROADCAST) {
-        const palette = VELVET_BROADCAST
-          ? { background:'#20243a', panel:'#403553', accent:'#d97979', score:'#f7ead5', warning:'#efc66f' }
-          : { background:'#201b2d', panel:'#3a2941', accent:'#d87843', score:'#fff0d0', warning:'#f6c96a' };
+      const BROADCAST_PALETTES = {
+        'copper-scoreboard': { background:'#201b2d', panel:'#3a2941', accent:'#d87843', score:'#fff0d0', warning:'#f6c96a' },
+        'velvet-broadcast': { background:'#20243a', panel:'#403553', accent:'#d97979', score:'#f7ead5', warning:'#efc66f' },
+      };
+      const ownedBroadcastThemes = [
+        ...(COPPER_SCOREBOARD ? ['copper-scoreboard'] : []),
+        ...(VELVET_BROADCAST ? ['velvet-broadcast'] : []),
+      ];
+      let broadcastTheme = ownedBroadcastThemes.includes(profileState.cosmetics.broadcastTheme)
+        ? profileState.cosmetics.broadcastTheme
+        : ownedBroadcastThemes[0];
+      if (broadcastTheme) {
         const style = document.createElement('style');
-        style.textContent = `:root{--bg:${palette.background};--bg-2:#30233b;--panel:${palette.panel};--panel-2:#4a3040;--accent:${palette.accent};--accent-2:#e7a95a;--ink:${palette.score};--warn:${palette.warning};--line:#765264}body{background:radial-gradient(90% 60% at 50% -10%,#674052 0%,transparent 55%),linear-gradient(180deg,var(--bg-2),var(--bg) 40%)}`;
+        const applyPalette = () => {
+          const palette = BROADCAST_PALETTES[broadcastTheme];
+          style.textContent = `:root{--bg:${palette.background};--bg-2:#30233b;--panel:${palette.panel};--panel-2:#4a3040;--accent:${palette.accent};--accent-2:#e7a95a;--ink:${palette.score};--warn:${palette.warning};--line:#765264}body{background:radial-gradient(90% 60% at 50% -10%,#674052 0%,transparent 55%),linear-gradient(180deg,var(--bg-2),var(--bg) 40%)}`;
+        };
+        applyPalette();
         document.head.append(style);
+        if (ownedBroadcastThemes.length > 1) document.addEventListener('keydown', (event) => {
+          if (event.key.toLowerCase() !== 't' || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+          event.preventDefault();
+          broadcastTheme = ownedBroadcastThemes[(ownedBroadcastThemes.indexOf(broadcastTheme) + 1) % ownedBroadcastThemes.length];
+          profileState.cosmetics.broadcastTheme = broadcastTheme;
+          save();
+          applyPalette();
+        });
       }
     </script>
     <script type="module">

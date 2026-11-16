@@ -58,6 +58,19 @@ async function main() {
   });
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    const FixedDate = Date;
+    const fixedNow = new FixedDate('2026-11-18T12:00:00Z').getTime();
+    class W47Date extends FixedDate {
+      constructor(...args) {
+        super(...(args.length ? args : [fixedNow]));
+      }
+      static now() {
+        return fixedNow;
+      }
+    }
+    window.Date = W47Date;
+  });
 
   const consoleErrors = [];
   page.on("pageerror", (err) => {
