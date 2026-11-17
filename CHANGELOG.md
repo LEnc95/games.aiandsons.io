@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Leafpress: merge weighted paper bundles in the right order and bind five woodland books within their ink budgets.
 - Acorn Alibis: follow four witness statements and an exact truth count to solve five woodland deduction cases.
 - Added the 2026-W47 content pack with Moonlit Mangrove Reed Relay, Harbor Hush Echo Ferry, and Velvet Broadcast Bottom of the Ninth cosmetics plus four bounded weekly challenges.
 

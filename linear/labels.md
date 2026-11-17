@@ -262,5 +262,6 @@
 - game/pollenknights
 - game/radixgrove
 - game/acornalibis
+- game/leafpress
 
 Generated from `src/meta/feedback.js`.
