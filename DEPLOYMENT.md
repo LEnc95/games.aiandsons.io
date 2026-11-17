@@ -3,10 +3,23 @@
 ## Vercel static deployment
 
 This repository deploys as a static arcade plus Vercel serverless functions. It
-does not use a framework build step: `vercel.json` regenerates the sitemap with
-`node scripts/generate-sitemap.mjs`, sets `devCommand` and `installCommand`
-to `null`, uses `"framework": null`, and serves the repository root as the
-output directory.
+does not use a framework: `vercel.json` runs `node scripts/build-vercel.mjs`,
+which regenerates the sitemap and copies browser files into `dist/`. API
+sources remain at the repository root for Vercel's function builder. Development
+tools, tests, source maps and Go/Windows server files are excluded from static
+output. New game directories are discovered automatically. The public changelog
+and Sprint Board markdown remain available because the site links to them.
+
+Validate the output with `node --test tests/vercel-output.test.mjs` and
+`node scripts/build-vercel.mjs`. Preview a deployment before promoting changes
+to the output rules, including static game routes and API functions.
+
+The live Vercel project is `pingpong` (`prj_Bu7jleLq986MNDdpIc7Vzq9u2rj2`),
+which owns `games.aiandsons.io` and `cadesgames.aiandsons.io`. The separate
+`games.aiandsons.io` Vercel project is a duplicate; keep its Ignored Build Step
+set to `exit 0` (Don't build anything) to avoid retaining two builds per commit.
+Review deployment retention separately; shorter retention removes older rollback
+history and is subject to Vercel's protected-deployment exceptions.
 
 ## Project shape
 
