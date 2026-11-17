@@ -59,3 +59,7 @@
 ## 2026-07-17 - Explicit Tooltips for Disabled States
 **Learning:** Disabled buttons without explanation (e.g., "Not enough coins") create dead ends for users, especially those using screen readers, who may not understand why an action is unavailable. Additionally, ARIA labels for disabled states can easily drift from the visible text if dynamically generated.
 **Action:** Always provide an explicit `title` attribute for `disabled` buttons that explains why it is disabled (e.g., "You need X more coins to buy this item"). Simultaneously ensure `aria-label` exactly matches the dynamically updated disabled text content.
+
+## 2026-11-05 - Explicit Label Indicators for Party Setup Forms
+**Learning:** Depending entirely on HTML5 `required` attributes for form field identification creates an accessibility failure and poor UX for sighted users who don't know what is required until they submit the form and hit a validation error.
+**Action:** Always provide a clear, visual indicator, such as `<span aria-hidden="true" title="Required">*</span>`, to the label of required fields in all forms, including Party setup forms. Ensure `aria-hidden="true"` is used to prevent redundant screen reader announcements, since the `required` attribute on the input already handles the semantic announcement.
