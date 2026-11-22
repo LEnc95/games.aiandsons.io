@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [1.22.0] - 2026-11-22
 ### Added
 - Leafpress: merge weighted paper bundles in the right order and bind five woodland books within their ink budgets.
 - Acorn Alibis: follow four witness statements and an exact truth count to solve five woodland deduction cases.
