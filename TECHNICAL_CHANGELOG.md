@@ -2,6 +2,21 @@
 
 This feed records automation, validation, deployment, schema, and operational changes. Player-facing highlights remain in `CHANGELOG.md`.
 
+## 1.22.0 — 2026-11-22
+
+- Release week: 2026-W47
+- Automated maintenance validation required before merge.
+- Production verification retries at 0, 5, and 20 minutes.
+
+### Included commits
+
+- 7e5190b Exclude development artifacts from Vercel deployment output (#436)
+- d1ade92 Add Leafpress daily game (#435)
+- 3cbb2f5 Add 2026-W47 weekly content pack (#433)
+- c63ed4d Add Acorn Alibis daily game (#431)
+- 50f831c Prepare weekly release 1.21.0 (#430)
+- cb46c70 Add Radix Grove daily game (#429)
+
 ## 1.21.0 — 2026-11-15
 
 - Release week: 2026-W46
