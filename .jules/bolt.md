@@ -82,3 +82,7 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2026-11-01 - Replace mapped array with specific memory checks
+**Learning:** Functions that return a subset of entries from a Firestore snapshot using `[...snapshot.docs].map(normalize).filter(condition).slice()` creates temporary arrays and calls an expensive normalize function on every single entry before dropping most of them.
+**Action:** Always refactor these sequential pipelines into an explicitly initialized empty array `[]` and a `for...of` loop over `snapshot.docs` to normalize only what is needed, and conditionally push the entries that pass the filtering condition, breaking early if a limit is reached.
