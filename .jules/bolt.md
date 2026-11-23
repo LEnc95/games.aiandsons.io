@@ -82,3 +82,7 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2026-11-02 - Extract static verification arrays into O(1) Sets
+**Learning:** Using `Array.prototype.includes()` for repetitive validation logic on static arrays (like emoji whitelists in avatars.js) creates unnecessary O(N) lookup overhead which degrades performance as usage scales during hot-path render or validation cycles.
+**Action:** When validating values against a known static or default array, instantiate a module-scoped constant `Set` and replace `.includes()` with `.has()` to upgrade the lookup to O(1).
