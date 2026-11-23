@@ -21,6 +21,53 @@ set to `exit 0` (Don't build anything) to avoid retaining two builds per commit.
 Review deployment retention separately; shorter retention removes older rollback
 history and is subject to Vercel's protected-deployment exceptions.
 
+## Static output contract
+
+`scripts/build-vercel.mjs` is the source of truth for the static files Vercel
+serves from `dist/`. It runs during Vercel builds and in Main QA, and it is safe
+to run locally because `dist/` is generated and ignored by git.
+
+What the build copies:
+
+- Browser assets with known public extensions: HTML, JavaScript modules, CSS,
+  JSON, images, fonts, audio, video, text/XML, WebAssembly, and 3D assets.
+- Standard top-level game folders automatically, as long as the files use those
+  public asset extensions.
+- Shared browser modules under `src/`, generated discovery assets under
+  `assets/`, operational pages such as `teacher/` and `ops/feedback/`, and the
+  `clubpenguin-world/public/` static client.
+- Only the public markdown files linked by the site: `CHANGELOG.md` and
+  `SPRINT_BOARD.md`.
+
+What stays out of `dist/`:
+
+- Vercel function sources in `api/`; Vercel builds those from the repository
+  root, not from the static output directory.
+- Development and automation directories such as `docs/`, `scripts/`, `tests/`,
+  `linear/`, `release/`, `output/`, `subagents/`, `test-results/`, `v2-server/`,
+  `node_modules/`, `build/`, and previous `dist/` output.
+- Dotfiles, package manifests, `vercel.json`, `firebase.json`, `test-ws.js`,
+  source maps, private casting caches, and non-public `clubpenguin-world/`
+  server files.
+
+When adding a new public route or asset type:
+
+1. Prefer placing browser-facing files in an existing public surface (a game
+   folder, `src/`, `assets/`, `public/`, `teacher/`, or `ops/feedback/`).
+2. If a new extension or intentionally public top-level markdown file is
+   required, update the allowlist in `scripts/build-vercel.mjs`.
+3. Add both a positive fixture and a negative fixture to
+   `tests/vercel-output.test.mjs` so future changes preserve the boundary.
+4. Run:
+
+   ```bash
+   node --test tests/vercel-output.test.mjs
+   node scripts/build-vercel.mjs
+   ```
+
+5. Spot-check `dist/` for the expected public file and confirm no development
+   source became public.
+
 ## Project shape
 
 ```text
