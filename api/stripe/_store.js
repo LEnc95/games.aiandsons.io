@@ -485,9 +485,16 @@ async function findStripeBillingProfiles({
       .where("customerEmail", "==", normalizedCustomerEmail)
       .limit(normalizedLimit)
       .get();
-    return snapshot.docs
-      .map((doc) => normalizeBillingProfile(doc.data(), doc.id))
-      .filter((profile) => profile.userId);
+    // ⚡ Bolt Optimization: Avoid O(N) .map().filter() allocation and redundant normalizations
+    const profiles = [];
+    for (const doc of snapshot.docs) {
+      const profile = normalizeBillingProfile(doc.data(), doc.id);
+      if (profile.userId) {
+        profiles.push(profile);
+        if (profiles.length >= normalizedLimit) break;
+      }
+    }
+    return profiles;
   }
 
   const matches = [];
@@ -538,10 +545,16 @@ async function listStripeBillingProfiles({
       .orderBy("updatedAt", "desc")
       .limit(normalizedLimit * 2)
       .get();
-    const profiles = snapshot.docs
-      .map((doc) => normalizeBillingProfile(doc.data(), doc.id))
-      .filter((profile) => shouldIncludeListedProfile(profile, { withCustomerOnly, activeOnly }));
-    return profiles.slice(0, normalizedLimit);
+    // ⚡ Bolt Optimization: Replace O(N) allocation pipeline with early breaking loop to save memory
+    const profiles = [];
+    for (const doc of snapshot.docs) {
+      const profile = normalizeBillingProfile(doc.data(), doc.id);
+      if (shouldIncludeListedProfile(profile, { withCustomerOnly, activeOnly })) {
+        profiles.push(profile);
+        if (profiles.length >= normalizedLimit) break;
+      }
+    }
+    return profiles;
   }
 
   const profiles = [];
