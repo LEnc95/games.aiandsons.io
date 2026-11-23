@@ -82,3 +82,7 @@
 ## 2024-05-30 - Extract inline arrays into module-scoped Sets
 **Learning:** Initializing an inline array like `['invalid_player_token', 'unknown_player']` and calling `.includes()` inside a function (like `isStalePlayerError`) causes O(N) lookup and unnecessary array allocation on every single function call.
 **Action:** When optimizing static or fallback arrays checked repeatedly via `.includes()`, extract them into a module-scoped constant `Set`. This upgrades the lookup from O(N) to O(1) and eliminates reallocation overhead on every function invocation.
+
+## 2026-11-05 - Avoid O(N) allocation when iterating NodeLists
+**Learning:** Functions doing inner membership or condition checks inside loops over `NodeList` objects (like `document.querySelectorAll`) using `Array.from(controls).some(...)` create unnecessary O(N) memory allocations, degrading execution speed and triggering garbage collection.
+**Action:** Always replace `Array.from()` with an imperative `for...of` loop to iterate directly over the `NodeList` to avoid the overhead.
